@@ -1,4 +1,5 @@
 package org.eclipse.e4.internal.webide.server.servlets;
+
 /*******************************************************************************
  * Copyright (c) 2010 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
@@ -10,7 +11,6 @@ package org.eclipse.e4.internal.webide.server.servlets;
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 
-
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 
@@ -20,19 +20,19 @@ import org.eclipse.core.runtime.Status;
  * is specified.
  */
 public class ServerStatus extends Status {
-    private int httpCode;
+	private int httpCode;
 
-    public ServerStatus(int severity, int httpCode, String message, Throwable exception) {
-        super(severity, Activator.PI_SERVER_SERVLETS, message, exception);
-        this.httpCode = httpCode;
-    }
+	public ServerStatus(int severity, int httpCode, String message, Throwable exception) {
+		super(severity, Activator.PI_SERVER_SERVLETS, message, exception);
+		this.httpCode = httpCode;
+	}
 
-    public ServerStatus(IStatus status, int httpCode) {
-        super(status.getSeverity(), status.getPlugin(), status.getCode(), status.getMessage(), status.getException());
-        this.httpCode=httpCode;
-    }
+	public ServerStatus(IStatus status, int httpCode) {
+		super(status.getSeverity(), status.getPlugin(), status.getCode(), status.getMessage(), status.getException());
+		this.httpCode = httpCode;
+	}
 
-    public int getHttpCode() {
-        return httpCode;
-    }
+	public int getHttpCode() {
+		return httpCode;
+	}
 }

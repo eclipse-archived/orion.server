@@ -12,7 +12,6 @@ package org.eclipse.e4.internal.webide.server.servlets.file;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -28,19 +27,21 @@ import org.eclipse.osgi.util.NLS;
 /**
  * Servlet to handle file system access.
  */
-public class NewFileServlet extends EclipseWebSecureServlet implements IAliasRegistry {
+public class NewFileServlet extends EclipseWebSecureServlet {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private Map<String, URI> aliases = Collections.synchronizedMap(new HashMap<String, URI>());
 	private ServletResourceHandler<IFileStore> fileSerializer;
 	private final URI rootStoreURI;
 
-	public NewFileServlet(URI root) {
-		rootStoreURI = root;
-		fileSerializer = new ServletFileStoreHandler(root, getStatusHandler());
+	private IAliasRegistry aliasRegistry;
+
+	public NewFileServlet() {
+		aliasRegistry = Activator.getDefault();
+		rootStoreURI = Activator.getDefault().getRootLocationURI();
+		fileSerializer = new ServletFileStoreHandler(rootStoreURI, getStatusHandler());
 	}
 
 	@Override
@@ -91,7 +92,7 @@ public class NewFileServlet extends EclipseWebSecureServlet implements IAliasReg
 	protected IFileStore getFileStore(IPath path, String authority) {
 		//first check if we have an alias registered
 		if (path.segmentCount() > 0) {
-			URI alias = aliases.get(path.segment(0));
+			URI alias = aliasRegistry.lookupAlias(path.segment(0));
 			if (alias != null)
 				try {
 					return EFS.getStore(Util.getURIWithAuthority(alias, authority)).getFileStore(path.removeFirstSegments(1));
@@ -109,12 +110,5 @@ public class NewFileServlet extends EclipseWebSecureServlet implements IAliasReg
 		}
 
 		return null;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.e4.internal.webide.server.IAliasRegistry#registerAlias(java.lang.String, org.eclipse.core.filesystem.IFileStore)
-	 */
-	public void registerAlias(String alias, URI location) {
-		aliases.put(alias, location);
 	}
 }

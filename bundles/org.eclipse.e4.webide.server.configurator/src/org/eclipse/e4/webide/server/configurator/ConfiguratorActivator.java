@@ -10,41 +10,37 @@
  *******************************************************************************/
 package org.eclipse.e4.webide.server.configurator;
 
-import static org.eclipse.e4.internal.webide.server.servlets.Activator.LOCATION_FILE_SERVLET;
-import static org.eclipse.e4.internal.webide.server.servlets.Activator.LOCATION_PROJECT_SERVLET;
+import static org.eclipse.e4.webide.server.configurator.configuration.ConfigurationFormat.AUTHENTICATION_NAME;
+import static org.eclipse.e4.webide.server.configurator.configuration.ConfigurationFormat.DEFAULT_AUTHENTICATION_NAME;
+import static org.eclipse.e4.webide.server.configurator.configuration.ConfigurationFormat.HTTPS_PORT;
+import static org.eclipse.e4.webide.server.configurator.configuration.ConfigurationFormat.HTTP_PORT;
+import static org.eclipse.e4.webide.server.configurator.configuration.ConfigurationFormat.SSL_KEYPASSWORD;
+import static org.eclipse.e4.webide.server.configurator.configuration.ConfigurationFormat.SSL_KEYSTORE;
+import static org.eclipse.e4.webide.server.configurator.configuration.ConfigurationFormat.SSL_PASSWORD;
+import static org.eclipse.e4.webide.server.configurator.configuration.ConfigurationFormat.SSL_PROTOCOL;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.util.Dictionary;
 import java.util.Hashtable;
-
-import javax.servlet.ServletException;
+import java.util.Properties;
 
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.e4.internal.webide.server.servlets.file.FileSystemsServlet;
-import org.eclipse.e4.internal.webide.server.servlets.file.NewFileServlet;
-import org.eclipse.e4.internal.webide.server.servlets.project.ProjectServlet;
-import org.eclipse.e4.internal.webide.server.servlets.workspace.WorkspaceServlet;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.e4.webide.server.LogHelper;
-import org.eclipse.e4.webide.server.configurator.authentication.IAuthenticationService;
-import org.eclipse.e4.webide.server.configurator.authentication.NoneAuthenticationService;
+import org.eclipse.e4.webide.server.authentication.IAuthenticationService;
+import org.eclipse.e4.webide.server.authentication.NoneAuthenticationService;
 import org.eclipse.e4.webide.server.configurator.configuration.ConfigurationFormat;
-import org.eclipse.e4.webide.server.configurator.configuration.PropertyReader;
-import org.eclipse.e4.webide.server.configurator.httpcontext.BundleEntryHttpContext;
-import org.eclipse.e4.webide.server.servlets.PreferencesServlet;
 import org.eclipse.equinox.http.jetty.JettyConfigurator;
 import org.eclipse.equinox.http.jetty.JettyConstants;
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Filter;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
-import org.osgi.service.http.HttpContext;
-import org.osgi.service.http.HttpService;
-import org.osgi.service.http.NamespaceException;
+import org.osgi.service.packageadmin.PackageAdmin;
 import org.osgi.util.tracker.ServiceTracker;
 
 public class ConfiguratorActivator implements BundleActivator {
@@ -53,56 +49,16 @@ public class ConfiguratorActivator implements BundleActivator {
 	 * The symbolic id of this bundle.
 	 */
 	public static final String PI_CONFIGURATOR = "org.eclipse.e4.webide.server.configurator"; //$NON-NLS-1$
-	private PropertyReader propertyReader;
-
 	static ConfiguratorActivator singleton;
 
-	private ServiceTracker<HttpService, HttpService> httpServiceTracker;
 	private ServiceTracker<IAuthenticationService, IAuthenticationService> authServiceTracker;
-
-	private class HttpServiceTracker extends ServiceTracker<HttpService, HttpService> {
-
-		public HttpServiceTracker(BundleContext context) {
-			super(context, HttpService.class.getName(), null);
-		}
-
-		public HttpService addingService(ServiceReference<HttpService> reference) {
-			HttpService httpService = super.addingService(reference);
-			if (httpService == null)
-				return null;
-
-			HttpContext httpContext = new BundleEntryHttpContext(context.getBundle(), propertyReader.getProperties());
-
-			try {
-				NewFileServlet fileServlet = new NewFileServlet(org.eclipse.e4.internal.webide.server.servlets.Activator.getDefault().getRootLocationURI());
-				httpService.registerServlet(LOCATION_FILE_SERVLET, fileServlet, null, httpContext);
-				httpService.registerServlet("/filesystems", new FileSystemsServlet(), null, httpContext); //$NON-NLS-1$
-				httpService.registerServlet("/prefs", new PreferencesServlet(), null, httpContext);//$NON-NLS-1$
-				httpService.registerServlet(LOCATION_PROJECT_SERVLET, new ProjectServlet(), null, httpContext);
-				httpService.registerServlet("/workspace", new WorkspaceServlet(fileServlet), null, httpContext); //$NON-NLS-1$
-			} catch (ServletException e) {
-				LogHelper.log(new Status(IStatus.ERROR, PI_CONFIGURATOR, 1, "An error occured when registering servlets", e));
-			} catch (NamespaceException e) {
-				LogHelper.log(new Status(IStatus.ERROR, PI_CONFIGURATOR, 1,	"A namespace error occured when registering servlets", e));
-			}
-			return httpService;
-		}
-
-		public void removedService(ServiceReference<HttpService> reference, HttpService httpService) {
-			httpService.unregister(LOCATION_FILE_SERVLET);
-			httpService.unregister("/filesystems");//$NON-NLS-1$
-			httpService.unregister("/prefs");//$NON-NLS-1$
-			httpService.unregister(LOCATION_PROJECT_SERVLET);
-			httpService.unregister("/workspace"); //$NON-NLS-1$
-			super.removedService(reference, httpService);
-		}
-	}
+	private ServiceTracker<PackageAdmin, PackageAdmin> packageAdminTracker;
 
 	private Filter getAuthFilter() throws InvalidSyntaxException {
 		StringBuilder sb = new StringBuilder("(");
-		sb.append(ConfigurationFormat.AUTH_NAME);
+		sb.append(ConfigurationFormat.AUTHENTICATION_NAME);
 		sb.append("=");
-		sb.append(propertyReader.getAuthName());
+		sb.append(getAuthName());
 		sb.append(")");
 		return FrameworkUtil.createFilter(sb.toString());
 	}
@@ -112,9 +68,9 @@ public class ConfiguratorActivator implements BundleActivator {
 		public AuthServiceTracker(BundleContext context) throws InvalidSyntaxException {
 			super(context, getAuthFilter(), null);
 			// TODO: Filters are case sensitive, we should be too
-			if (NoneAuthenticationService.AUTH_TYPE.equalsIgnoreCase(propertyReader.getAuthName())) {
+			if (NoneAuthenticationService.AUTH_TYPE.equalsIgnoreCase(getAuthName())) {
 				Dictionary<String, String> properties = new Hashtable<String, String>();
-				properties.put(ConfigurationFormat.AUTH_NAME, propertyReader.getAuthName());
+				properties.put(ConfigurationFormat.AUTHENTICATION_NAME, getAuthName());
 				// TODO: shouldn't we always register the none-auth service?
 				context.registerService(IAuthenticationService.class, new NoneAuthenticationService(), properties);
 			}
@@ -122,8 +78,17 @@ public class ConfiguratorActivator implements BundleActivator {
 
 		@Override
 		public IAuthenticationService addingService(ServiceReference<IAuthenticationService> reference) {
+
+			if ("true".equals(reference.getProperty("configured")))
+				return null;
+
 			IAuthenticationService authService = super.addingService(reference);
-			authService.configure(propertyReader.getProperties());
+			// TODO need to read auth properties from InstanceScope preferences
+			authService.configure(new Properties());
+
+			Dictionary dictionary = new Properties();
+			dictionary.put("configured", "true");
+			context.registerService(IAuthenticationService.class.getName(), authService, dictionary);
 			return authService;
 		}
 	}
@@ -135,58 +100,75 @@ public class ConfiguratorActivator implements BundleActivator {
 	public void start(BundleContext context) throws Exception {
 		singleton = this;
 
-		String configurationFile = Platform.getConfigurationLocation().getURL().getPath() + "/configuration.xml"; //$NON-NLS-1$
-
-		if (!(new File(configurationFile).exists())) {
-			configurationFile = "configuration.xml"; //$NON-NLS-1$
-			propertyReader = new PropertyReader(context.getBundle().getEntry(configurationFile).openStream());
-		} else {
-			propertyReader = new PropertyReader(new FileInputStream(new File(configurationFile)));
-		}
-
-		Boolean httpsEnabled = propertyReader.getHttpsEnabled();
-
-		Dictionary<String, Object> properties = new Hashtable<String, Object>();
-
-		if (httpsEnabled) {
-			LogHelper.log(new Status(IStatus.INFO, PI_CONFIGURATOR,	"Https is enabled", null));
-			// properties.put(JettyConstants.HTTP_PORT,8080);
-			properties.put(JettyConstants.HTTPS_ENABLED, propertyReader.getHttpsEnabled());
-			properties.put(JettyConstants.HTTPS_PORT, propertyReader.getHttpsPort());
-			properties.put(JettyConstants.SSL_KEYSTORE, propertyReader.getSslKeystore());
-			LogHelper.log(new Status(IStatus.INFO, PI_CONFIGURATOR,	"Jetty Constant for SSL Keystore is " + properties.get(JettyConstants.SSL_KEYSTORE), null));
-			properties.put(JettyConstants.SSL_PASSWORD, propertyReader.getSslPassword());
-			properties.put(JettyConstants.SSL_KEYPASSWORD, propertyReader.getSslKeyPassword());
-			properties.put(JettyConstants.SSL_PROTOCOL, propertyReader.getSslProtocol());
-		}
-
-		if (!httpsEnabled) {
-			// TODO HTTP_PORT should also be configurable by the user
-			properties.put(JettyConstants.HTTP_ENABLED, true);
-			properties.put(JettyConstants.HTTP_PORT, 8080);
-		}
-
-		JettyConfigurator.startServer("MasterJetty", properties);
-
-		httpServiceTracker = new HttpServiceTracker(context);
-		httpServiceTracker.open();
+		packageAdminTracker = new ServiceTracker<PackageAdmin, PackageAdmin>(context, PackageAdmin.class.getName(), null);
+		packageAdminTracker.open();
 
 		authServiceTracker = new AuthServiceTracker(context);
 		authServiceTracker.open();
+
+		IEclipsePreferences preferences = (new InstanceScope()).getNode("org.eclipse.e4.webide.server.configurator");
+		Boolean httpsEnabled = new Boolean(preferences.get(ConfigurationFormat.HTTPS_ENABLED, "false"));
+
+		Dictionary<String, Object> properties = new Hashtable<String, Object>();
+		if (httpsEnabled) {
+			LogHelper.log(new Status(IStatus.INFO, PI_CONFIGURATOR, "Https is enabled", null));
+
+			properties.put(JettyConstants.HTTPS_ENABLED, true);
+			properties.put(JettyConstants.HTTPS_PORT, new Integer(preferences.get(HTTPS_PORT, System.getProperty("org.eclipse.equinox.http.jetty.https.port", "8443"))));
+			properties.put(JettyConstants.SSL_KEYSTORE, preferences.get(SSL_KEYSTORE, "keystore"));
+
+			LogHelper.log(new Status(IStatus.INFO, PI_CONFIGURATOR, "Keystore absolute path is " + preferences.get(SSL_KEYSTORE, "keystore")));
+
+			properties.put(JettyConstants.SSL_PASSWORD, preferences.get(SSL_PASSWORD, "password"));
+			properties.put(JettyConstants.SSL_KEYPASSWORD, preferences.get(SSL_KEYPASSWORD, "password"));
+			properties.put(JettyConstants.SSL_PROTOCOL, preferences.get(SSL_PROTOCOL, "SSLv3"));
+		}
+
+		if (!httpsEnabled) {
+			properties.put(JettyConstants.HTTP_ENABLED, true);
+			properties.put(JettyConstants.HTTP_PORT, new Integer(preferences.get(HTTP_PORT, System.getProperty("org.eclipse.equinox.http.jetty.http.port", "8080"))));
+		}
+
+		JettyConfigurator.startServer("MasterJetty", properties);
 	}
 
 	public void stop(BundleContext context) throws Exception {
-		if (httpServiceTracker != null) {
-			httpServiceTracker.close();
-			httpServiceTracker = null;
-		}
+
+		JettyConfigurator.stopServer("MasterJetty");
+
 		if (authServiceTracker != null) {
 			authServiceTracker.close();
 			authServiceTracker = null;
 		}
+
+		if (packageAdminTracker != null) {
+			packageAdminTracker.close();
+			packageAdminTracker = null;
+		}
+	}
+
+	Bundle getBundle(String symbolicName) {
+		PackageAdmin packageAdmin = packageAdminTracker.getService();
+		if (packageAdmin == null)
+			return null;
+		Bundle[] bundles = packageAdmin.getBundles(symbolicName, null);
+		if (bundles == null)
+			return null;
+		// Return the first bundle that is not installed or uninstalled
+		for (int i = 0; i < bundles.length; i++) {
+			if ((bundles[i].getState() & (Bundle.INSTALLED | Bundle.UNINSTALLED)) == 0) {
+				return bundles[i];
+			}
+		}
+		return null;
 	}
 
 	public IAuthenticationService getAuthService() {
 		return authServiceTracker.getService();
+	}
+
+	private String getAuthName() {
+		IEclipsePreferences preferences = (new InstanceScope()).getNode("org.eclipse.e4.webide.server.configurator");
+		return preferences.get(AUTHENTICATION_NAME, DEFAULT_AUTHENTICATION_NAME);
 	}
 }

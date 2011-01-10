@@ -18,4 +18,8 @@ import java.net.URI;
  */
 public interface IAliasRegistry {
 	public void registerAlias(String alias, URI location);
+
+	public void unregisterAlias(String alias);
+
+	public URI lookupAlias(String alias);
 }

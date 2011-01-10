@@ -55,20 +55,14 @@ public class FormAuthHelper {
 	 * @param resp
 	 * @throws IOException
 	 */
-	public static void writeLoginResponse(String user, HttpServletResponse resp)
-			throws IOException {
+	public static void writeLoginResponse(String user, HttpServletResponse resp) throws IOException {
 		resp.setStatus(HttpServletResponse.SC_OK);
 		try {
 			JSONObject array = new JSONObject();
 			array.put("login", user); //$NON-NLS-1$
 			resp.getWriter().print(array.toString());
 		} catch (JSONException e) {
-			LogHelper
-					.log(new Status(
-							IStatus.ERROR,
-							Activator.PI_FORM_CORE,
-							"An error occured when creating JSON object for logged in user",
-							e));
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORM_CORE, "An error occured when creating JSON object for logged in user", e));
 		}
 	}
 
@@ -83,8 +77,7 @@ public class FormAuthHelper {
 	 * @return
 	 * @throws IOException
 	 */
-	public static boolean performAuthentication(HttpServletRequest req,
-			HttpServletResponse resp) throws IOException {
+	public static boolean performAuthentication(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		User user = getUserForCredentials((String) req.getParameter("login"), //$NON-NLS-1$
 				req.getParameter("password")); //$NON-NLS-1$
 		if (user != null) {
@@ -96,8 +89,7 @@ public class FormAuthHelper {
 	}
 
 	private static User getUserForCredentials(String login, String password) {
-		UserAdmin userAdmin = UserAdminActivator.getDefault()
-				.getUserAdminService();
+		UserAdmin userAdmin = UserAdminActivator.getDefault().getUserAdminService();
 		User user = userAdmin.getUser("login", login); //$NON-NLS-1$
 		if (user != null && user.hasCredential("password", password)) { //$NON-NLS-1$
 			return user;
@@ -114,8 +106,7 @@ public class FormAuthHelper {
 
 	public static boolean canAddUsers() {
 		if (UserAdminActivator.getDefault().getUserAdminService() instanceof EclipseWebUserAdmin) {
-			return ((EclipseWebUserAdmin) UserAdminActivator.getDefault()
-					.getUserAdminService()).canCreateUsers();
+			return ((EclipseWebUserAdmin) UserAdminActivator.getDefault().getUserAdminService()).canCreateUsers();
 		}
 		return false;
 	}

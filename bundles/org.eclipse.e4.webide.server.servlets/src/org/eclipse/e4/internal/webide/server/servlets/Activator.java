@@ -12,10 +12,11 @@ package org.eclipse.e4.internal.webide.server.servlets;
 
 import java.net.URI;
 import java.net.URL;
-import java.util.Collection;
+import java.util.*;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
+import org.eclipse.e4.internal.webide.server.IAliasRegistry;
 import org.eclipse.e4.internal.webide.server.IWebResourceDecorator;
 import org.eclipse.osgi.service.datalocation.Location;
 import org.osgi.framework.*;
@@ -25,7 +26,7 @@ import org.osgi.util.tracker.ServiceTracker;
  * Activator for the server servlet bundle. Responsible for tracking the HTTP
  * service and registering/unregistering servlets.
  */
-public class Activator implements BundleActivator {
+public class Activator implements BundleActivator, IAliasRegistry {
 
 	/**
 	 * Global flag for enabling debug tracing
@@ -41,6 +42,8 @@ public class Activator implements BundleActivator {
 	static Activator singleton;
 
 	private URI rootStoreURI;
+	private Map<String, URI> aliases = Collections.synchronizedMap(new HashMap<String, URI>());
+
 	private ServiceTracker<IWebResourceDecorator, IWebResourceDecorator> searchTracker;
 
 	public static Activator getDefault() {
@@ -154,4 +157,17 @@ public class Activator implements BundleActivator {
 		}
 		bundleContext = null;
 	}
+
+	public URI lookupAlias(String alias) {
+		return aliases.get(alias);
+	}
+
+	public void registerAlias(String alias, URI location) {
+		aliases.put(alias, location);
+	}
+
+	public void unregisterAlias(String alias) {
+		aliases.remove(alias);
+	}
+
 }

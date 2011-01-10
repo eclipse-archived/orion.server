@@ -39,20 +39,24 @@
 	<tr>
 		<td class="loginWindow" colspan=2>
 		<h2 class="loginWindow" id="openidLink"><a class="loginWindow"
-			href="javascript:openidLogin()">OpenID login</a></h2>
+			href="javascript:openidLogin()">Use OpenID</a></h2>
 		</td>
 	</tr>
 	<tbody id="openidLogin" style="display: none;">
 		<tr>
 			<td class="loginWindow" colspan=2>
-			<h2 class="loginWindow openidLogin">OpenID login</h2>
+			<h2 class="loginWindow openidLogin">OpenID</h2>
 			</td>
 		</tr>
 		<tr>
-			<td class="loginWindow openidLogin">OpenID provider:</td>
-			<td class="loginWindow openidLogin"><input
-				class="loginWindow openidLogin" name=openid id=openidSite tabindex=4
-				onkeypress="var event = window.event ? window.event : event ? event : evt; if (event.keyCode === 13) { confirmOpenId(); } else {return true;}"><br>
+			<td class="loginWindow openidLogin">Sign in using:</td>
+			<td class="loginWindow openidLogin"><select name=openid id=openidSite 
+			onkeypress="var event = window.event ? window.event : event ? event : evt; if (event.keyCode === 13) { confirmOpenId(); } else {return true;}">
+			<option value="http://openid.aol.com/">AOL</option>
+			<option value="https://www.google.com/accounts/o8/id">Google</option>
+			<option value="http://myopenid.com">myOpenID</option>
+			<option value="http://me.yahoo.com">Yahoo!</option>
+			</select><br>
 			</td>
 		</tr>
 		<tr>

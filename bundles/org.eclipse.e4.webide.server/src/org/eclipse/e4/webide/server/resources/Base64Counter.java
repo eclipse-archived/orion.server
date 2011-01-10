@@ -16,14 +16,14 @@ package org.eclipse.e4.webide.server.resources;
  */
 public class Base64Counter {
 	private byte[] counter = new byte[6];
-	
+
 	/**
 	 * Constructs a new counter that starts at zero.
 	 */
 	public Base64Counter() {
 		super();
 	}
-	
+
 	/**
 	 * Constructs a new counter that starts at the given base-64 encoded number.
 	 */

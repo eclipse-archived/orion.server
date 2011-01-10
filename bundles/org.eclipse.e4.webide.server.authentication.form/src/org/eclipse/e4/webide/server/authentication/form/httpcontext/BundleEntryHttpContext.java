@@ -17,7 +17,7 @@ import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.eclipse.e4.webide.server.configurator.authentication.IAuthenticationService;
+import org.eclipse.e4.webide.server.authentication.IAuthenticationService;
 import org.osgi.framework.Bundle;
 import org.osgi.service.http.HttpContext;
 import org.osgi.util.tracker.ServiceTracker;
@@ -27,21 +27,14 @@ public class BundleEntryHttpContext implements HttpContext {
 	private String bundlePath;
 
 	public BundleEntryHttpContext(Bundle bundle) {
-        this.bundle = bundle;
-    }
-	
-	public BundleEntryHttpContext(
-			Bundle bundle,
-			ServiceTracker<IAuthenticationService, IAuthenticationService> authServiceTracker,
-			Properties authProperties) {
 		this.bundle = bundle;
 	}
 
-	public BundleEntryHttpContext(
-			Bundle bundle,
-			String bundlePath,
-			ServiceTracker<IAuthenticationService, IAuthenticationService> authServiceTracker,
-			Properties authProperties) {
+	public BundleEntryHttpContext(Bundle bundle, ServiceTracker<IAuthenticationService, IAuthenticationService> authServiceTracker, Properties authProperties) {
+		this.bundle = bundle;
+	}
+
+	public BundleEntryHttpContext(Bundle bundle, String bundlePath, ServiceTracker<IAuthenticationService, IAuthenticationService> authServiceTracker, Properties authProperties) {
 		this(bundle, authServiceTracker, authProperties);
 		if (bundlePath != null) {
 			if (bundlePath.endsWith("/")) //$NON-NLS-1$
@@ -57,8 +50,7 @@ public class BundleEntryHttpContext implements HttpContext {
 		return null;
 	}
 
-	public boolean handleSecurity(HttpServletRequest req,
-			HttpServletResponse resp) throws IOException {
+	public boolean handleSecurity(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		return true;
 	}
 

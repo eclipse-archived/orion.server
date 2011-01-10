@@ -27,8 +27,7 @@ public class AuthInitServlet extends HttpServlet {
 	private Properties properties;
 
 	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		sendAuthInit(req, resp, properties);
 	}
 
@@ -37,19 +36,15 @@ public class AuthInitServlet extends HttpServlet {
 		this.properties = properties;
 	}
 
-	private void sendAuthInit(HttpServletRequest req, HttpServletResponse resp,
-			Properties properties) throws IOException {
+	private void sendAuthInit(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException {
 		if (properties == null) {
 			properties = new Properties();
 		}
 		resp.setHeader("WWW-Authenticate", HttpServletRequest.FORM_AUTH);
 		resp.setStatus(HttpServletResponse.SC_OK);
 		resp.setContentType("application/json");
-		String putStyle = properties.getProperty(CSS_LINK_PROPERTY) == null ? ""
-				: "&styles=" + properties.getProperty(CSS_LINK_PROPERTY);
-		RequestDispatcher rd = req
-				.getRequestDispatcher("/loginform/checkuser?redirect="
-						+ req.getRequestURI() + putStyle);
+		String putStyle = properties.getProperty(CSS_LINK_PROPERTY) == null ? "" : "&styles=" + properties.getProperty(CSS_LINK_PROPERTY);
+		RequestDispatcher rd = req.getRequestDispatcher("/loginform/checkuser?redirect=" + req.getRequestURI() + putStyle);
 		try {
 			rd.forward(req, resp);
 		} catch (ServletException e) {

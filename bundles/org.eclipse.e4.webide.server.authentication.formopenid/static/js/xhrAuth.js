@@ -20,10 +20,10 @@ function login(error) {
 		dojo.byId('login').focus();
 	}, 0);
 	if (error) {
-		document.getElementById("loginError").style.display = '';
+		document.getElementById("errorWin").style.display = '';
 		document.getElementById("errorMessage").innerHTML = error;
 	} else {
-		document.getElementById("loginError").style.display = 'none';
+		document.getElementById("errorWin").style.display = 'none';
 	}
 };
 

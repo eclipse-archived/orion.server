@@ -43,14 +43,12 @@ public class XmlUserAdmin extends EclipseWebUserAdmin {
 			usersMap = usersLoader.getUsersMap();
 			rolesMap = usersLoader.getRolesMap();
 		} catch (Exception e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USERADMIN_XML,
-					1, "An error occured when building user maps", e));
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USERADMIN_XML, 1, "An error occured when building user maps", e));
 		}
 	}
 
 	public Role createRole(String name, int type) {
-		org.eclipse.e4.webide.server.useradmin.Role role = new org.eclipse.e4.webide.server.useradmin.Role(
-				name, type);
+		org.eclipse.e4.webide.server.useradmin.Role role = new org.eclipse.e4.webide.server.useradmin.Role(name, type);
 		rolesMap.put(name, role);
 		usersLoader.createRole(name);
 		return role;
@@ -80,8 +78,7 @@ public class XmlUserAdmin extends EclipseWebUserAdmin {
 		return usersMap.values();
 	}
 
-	public org.eclipse.e4.webide.server.useradmin.User createUser(
-			org.eclipse.e4.webide.server.useradmin.User user) {
+	public org.eclipse.e4.webide.server.useradmin.User createUser(org.eclipse.e4.webide.server.useradmin.User user) {
 		if (usersMap.containsKey(user.getLogin())) {
 			return null;
 		}
@@ -91,16 +88,14 @@ public class XmlUserAdmin extends EclipseWebUserAdmin {
 	}
 
 	public boolean deleteUser(User user) {
-		if (usersMap.containsKey(user.getCredentials().get(
-				UsersLoader.USER_LOGIN))) {
+		if (usersMap.containsKey(user.getCredentials().get(UsersLoader.USER_LOGIN))) {
 			usersMap.remove(user.getCredentials().get(UsersLoader.USER_LOGIN));
 			return usersLoader.deleteUser(user);
 		}
 		return false;
 	}
 
-	public boolean updateUser(String oldLogin,
-			org.eclipse.e4.webide.server.useradmin.User user) {
+	public boolean updateUser(String oldLogin, org.eclipse.e4.webide.server.useradmin.User user) {
 		if (usersMap.containsKey(oldLogin)) {
 			usersMap.remove(oldLogin);
 			usersMap.put(user.getLogin(), user);
@@ -119,8 +114,7 @@ public class XmlUserAdmin extends EclipseWebUserAdmin {
 
 	public Authorization getAuthorization(User user) {
 		if (user instanceof org.eclipse.e4.webide.server.useradmin.User) {
-			return new WebIdeAuthorization(
-					(org.eclipse.e4.webide.server.useradmin.User) user);
+			return new WebIdeAuthorization((org.eclipse.e4.webide.server.useradmin.User) user);
 		}
 		return new EmptyAuthorization();
 	}

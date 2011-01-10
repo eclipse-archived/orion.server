@@ -23,9 +23,7 @@ import org.eclipse.e4.internal.webide.server.servlets.*;
 import org.eclipse.e4.internal.webide.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.e4.webide.server.LogHelper;
 import org.eclipse.e4.webide.server.servlets.EclipseWebSecureServlet;
-import org.json.JSONException;
 import org.json.JSONObject;
-import org.osgi.service.prefs.BackingStoreException;
 
 /**
  * Servlet for accessing workspace metadata.
@@ -46,8 +44,8 @@ public class WorkspaceServlet extends EclipseWebSecureServlet {
 
 	private final IAliasRegistry aliasRegistry;
 
-	public WorkspaceServlet(IAliasRegistry aliasRegistry) {
-		this.aliasRegistry = aliasRegistry;
+	public WorkspaceServlet() {
+		aliasRegistry = Activator.getDefault();
 		workspaceResourceHandler = new WorkspaceResourceHandler(getStatusHandler(), aliasRegistry);
 		projectResourceHandler = new WebProjectResourceHandler();
 	}
@@ -133,21 +131,16 @@ public class WorkspaceServlet extends EclipseWebSecureServlet {
 		try {
 			WebUser user = WebUser.fromUserName(userName);
 			WebWorkspace workspace = user.createWorkspace(workspaceName);
-			createSampleContent(workspace);
+			createSampleContent(workspace, userName);
 			JSONObject result = WorkspaceResourceHandler.toJSON(workspace, ServletResourceHandler.getURI(req));
 			writeJSONResponse(req, resp, result);
-			resp.setHeader(ProtocolConstants.KEY_LOCATION, result.optString(ProtocolConstants.KEY_LOCATION));
+			String resultLocation = result.optString(ProtocolConstants.KEY_LOCATION);
+			resp.setHeader(ProtocolConstants.KEY_LOCATION, resultLocation);
 
 			// add user rights for the workspace
-			AuthorizationService.addUserRight(req.getRemoteUser(), URI.create(result.getString(ProtocolConstants.KEY_LOCATION)).getPath());
+			AuthorizationService.addUserRight(req.getRemoteUser(), URI.create(resultLocation).getPath());
 		} catch (CoreException e) {
 			handleException(resp, e.getStatus());
-			return;
-		} catch (JSONException e) {
-			handleException(resp, e.getMessage(), e);
-			return;
-		} catch (BackingStoreException e) {
-			handleException(resp, e.getMessage(), e);
 			return;
 		}
 	}
@@ -155,15 +148,15 @@ public class WorkspaceServlet extends EclipseWebSecureServlet {
 	/**
 	 * This code is only temporary for demo purposes.
 	 */
-	private void createSampleContent(WebWorkspace workspace) {
-		createSampleProject(workspace, WEBIDE_PROJECT_NAME);
-		createSampleProject(workspace, EDITOR_PROJECT_NAME);
+	private void createSampleContent(WebWorkspace workspace, String userName) {
+		createSampleProject(workspace, WEBIDE_PROJECT_NAME, userName);
+		createSampleProject(workspace, EDITOR_PROJECT_NAME, userName);
 	}
 
 	/**
 	 * This code is only temporary for demo purposes.
 	 */
-	private void createSampleProject(WebWorkspace workspace, String projectName) {
+	private void createSampleProject(WebWorkspace workspace, String projectName, String userName) {
 		File location = findSampleProject(projectName);
 		if (location == null)
 			return;
@@ -178,6 +171,7 @@ public class WorkspaceServlet extends EclipseWebSecureServlet {
 			}
 			workspace.addProject(project);
 			workspace.save();
+			AuthorizationService.addUserRight(userName, "/file/" + projectName);
 		} catch (CoreException e) {
 			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "Error creating sample project", e)); //$NON-NLS-1$
 		}

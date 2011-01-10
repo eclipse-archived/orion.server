@@ -16,7 +16,6 @@ import org.osgi.service.useradmin.Authorization;
 import org.osgi.service.useradmin.Role;
 
 public class WebIdeAuthorization implements Authorization {
-	
 
 	public WebIdeAuthorization(User user) {
 		super();
@@ -31,8 +30,8 @@ public class WebIdeAuthorization implements Authorization {
 
 	public boolean hasRole(String name) {
 		Set<Role> userRoles = user.getRoles();
-		for(Role role : userRoles){
-			if(role.getName().equals(name)){
+		for (Role role : userRoles) {
+			if (role.getName().equals(name)) {
 				return true;
 			}
 		}
@@ -43,7 +42,7 @@ public class WebIdeAuthorization implements Authorization {
 		Set<Role> userRoles = user.getRoles();
 		String[] roleNames = new String[userRoles.size()];
 		int i = 0;
-		for(Role role : userRoles){
+		for (Role role : userRoles) {
 			roleNames[i] = role.getName();
 			i++;
 		}

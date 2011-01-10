@@ -29,13 +29,11 @@ public class OpenidServlet extends HttpServlet {
 	private OpenidConsumer consumer;
 
 	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
 		String openid = req.getParameter(OpenIdHelper.OPENID);
 		if (openid != null) {
-			consumer = OpenIdHelper.redirectToOpenIdProvider(req, resp,
-					consumer);
+			consumer = OpenIdHelper.redirectToOpenIdProvider(req, resp, consumer);
 			return;
 		}
 
@@ -46,8 +44,7 @@ public class OpenidServlet extends HttpServlet {
 		}
 
 		if (OpenIdHelper.getAuthenticatedUser(req) != null) {
-			OpenIdHelper.writeLoginResponse(
-					OpenIdHelper.getAuthenticatedUser(req), resp);
+			OpenIdHelper.writeLoginResponse(OpenIdHelper.getAuthenticatedUser(req), resp);
 			return;
 		}
 
@@ -55,11 +52,9 @@ public class OpenidServlet extends HttpServlet {
 	}
 
 	@Override
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		if (OpenIdHelper.getAuthenticatedUser(req) != null) {
-			OpenIdHelper.writeLoginResponse(
-					OpenIdHelper.getAuthenticatedUser(req), resp);
+			OpenIdHelper.writeLoginResponse(OpenIdHelper.getAuthenticatedUser(req), resp);
 			return;
 		}
 	}

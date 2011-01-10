@@ -27,8 +27,7 @@ public class AuthInitServlet extends HttpServlet {
 	private Properties properties;
 
 	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		sendAuthInit(req, resp, properties);
 	}
 
@@ -37,8 +36,7 @@ public class AuthInitServlet extends HttpServlet {
 		this.properties = properties;
 	}
 
-	private void sendAuthInit(HttpServletRequest req, HttpServletResponse resp,
-			Properties properties) throws IOException {
+	private void sendAuthInit(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException {
 		if (properties == null) {
 			properties = new Properties();
 		}
@@ -46,9 +44,8 @@ public class AuthInitServlet extends HttpServlet {
 		resp.setStatus(HttpServletResponse.SC_OK);
 		String putStyle = properties.getProperty(CSS_LINK_PROPERTY) == null ? "" //$NON-NLS-1$
 				: "&styles=" + properties.getProperty(CSS_LINK_PROPERTY); //$NON-NLS-1$
-		RequestDispatcher rd = req
-				.getRequestDispatcher("/mixlogin/checkuser?redirect=" //$NON-NLS-1$
-						+ req.getRequestURI() + putStyle);
+		RequestDispatcher rd = req.getRequestDispatcher("/mixlogin/checkuser?redirect=" //$NON-NLS-1$
+				+ req.getRequestURI() + putStyle);
 		try {
 			rd.forward(req, resp);
 		} catch (ServletException e) {

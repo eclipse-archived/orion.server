@@ -11,11 +11,9 @@
 package org.eclipse.e4.internal.webide.server.servlets.file;
 
 import java.io.IOException;
-
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
@@ -28,33 +26,27 @@ import org.eclipse.osgi.util.NLS;
  * such as a web browser.
  */
 class GenericFileHandler extends ServletResourceHandler<IFileStore> {
-	protected void handleFileContents(HttpServletRequest request,
-			HttpServletResponse response, IFileStore file)
-			throws CoreException, IOException {
+	protected void handleFileContents(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws CoreException, IOException {
 		switch (getMethod(request)) {
-		case GET:
-			IOUtilities.pipe(file.openInputStream(EFS.NONE, null),
-					response.getOutputStream(), true, false);
-			break;
-		case PUT:
-			IOUtilities.pipe(request.getInputStream(),
-					file.openOutputStream(EFS.NONE, null), false, true);
-			break;
+			case GET :
+				IOUtilities.pipe(file.openInputStream(EFS.NONE, null), response.getOutputStream(), true, false);
+				break;
+			case PUT :
+				IOUtilities.pipe(request.getInputStream(), file.openOutputStream(EFS.NONE, null), false, true);
+				break;
 		}
+		response.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
 	@Override
-	public boolean handleRequest(HttpServletRequest request,
-			HttpServletResponse response, IFileStore file)
-			throws ServletException {
+	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws ServletException {
 		// generic variant doesn't handle queries
 		if (request.getQueryString() != null)
 			return false;
 		try {
 			handleFileContents(request, response, file);
 		} catch (Exception e) {
-			throw new ServletException(NLS.bind("Error retrieving file: {0}",
-					file), e);
+			throw new ServletException(NLS.bind("Error retrieving file: {0}", file), e);
 		}
 		return true;
 	}

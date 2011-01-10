@@ -64,45 +64,36 @@ public class UsersLoader {
 		this.entry = entry;
 	}
 
-	public void buildMaps() throws SAXException, IOException,
-			ParserConfigurationException {
+	public void buildMaps() throws SAXException, IOException, ParserConfigurationException {
 		if (doc == null) {
 			parseDocument();
 		}
 		if (!doc.getDocumentElement().getNodeName().equals(MAIN_NODE)) {
-			throw new SAXParseException(
-					"Invalid file format, does not begin with " + MAIN_NODE,
-					null);
+			throw new SAXParseException("Invalid file format, does not begin with " + MAIN_NODE, null);
 		}
 
 		rolesMap = new HashMap<String, Role>();
 		usersMap = new HashMap<String, User>();
 
-		NodeList roleNodes = ((Element) doc.getElementsByTagName(ROLES).item(0))
-				.getElementsByTagName(ROLE);
+		NodeList roleNodes = ((Element) doc.getElementsByTagName(ROLES).item(0)).getElementsByTagName(ROLE);
 		for (int i = 0; i < roleNodes.getLength(); i++) {
 			Element roleElement = (Element) roleNodes.item(i);
 			Role role = new Role(roleElement.getAttribute(ROLE_NAME), Role.ROLE);
 			rolesMap.put(role.getName(), role);
 		}
 
-		NodeList userNodes = ((Element) doc.getElementsByTagName(USERS).item(0))
-				.getElementsByTagName(USER);
+		NodeList userNodes = ((Element) doc.getElementsByTagName(USERS).item(0)).getElementsByTagName(USER);
 
 		for (int i = 0; i < userNodes.getLength(); i++) {
 			Element userElement = (Element) userNodes.item(i);
-			User user = new User(userElement.getAttribute(USER_LOGIN),
-					userElement.getAttribute(USER_NAME),
-					userElement.getAttribute(USER_PASSWORD));
+			User user = new User(userElement.getAttribute(USER_LOGIN), userElement.getAttribute(USER_NAME), userElement.getAttribute(USER_PASSWORD));
 
 			NodeList userRoles = userElement.getElementsByTagName(USER_ROLES);
 			if (userRoles.getLength() > 0) {
-				NodeList userRole = ((Element) userRoles.item(0))
-						.getElementsByTagName(USER_ROLE);
+				NodeList userRole = ((Element) userRoles.item(0)).getElementsByTagName(USER_ROLE);
 				for (int role_id = 0; role_id < userRole.getLength(); role_id++) {
 					Element roleElem = (Element) userRole.item(role_id);
-					user.addRole(rolesMap.get(roleElem
-							.getAttribute(USER_ROLE_NAME)));
+					user.addRole(rolesMap.get(roleElem.getAttribute(USER_ROLE_NAME)));
 				}
 			}
 			usersMap.put(user.getLogin(), user);
@@ -117,10 +108,8 @@ public class UsersLoader {
 		return rolesMap;
 	}
 
-	private void parseDocument() throws SAXException, IOException,
-			ParserConfigurationException {
-		doc = DocumentBuilderFactory.newInstance().newDocumentBuilder()
-				.parse(entry.openStream());
+	private void parseDocument() throws SAXException, IOException, ParserConfigurationException {
+		doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(entry.openStream());
 		doc.getDocumentElement().normalize();
 	}
 
@@ -136,14 +125,11 @@ public class UsersLoader {
 			DOMSource source = new DOMSource(doc);
 			transformer.transform(source, result);
 		} catch (TransformerException e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USERADMIN_XML,
-					1, "A transformation error occured during flush", e));
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USERADMIN_XML, 1, "A transformation error occured during flush", e));
 		} catch (IOException e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USERADMIN_XML,
-					1, "Couldn't convert bundle entry to file", e));
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USERADMIN_XML, 1, "Couldn't convert bundle entry to file", e));
 		} catch (URISyntaxException e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USERADMIN_XML,
-					1, "File URL cannot be parsed as a URI reference", e));
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USERADMIN_XML, 1, "File URL cannot be parsed as a URI reference", e));
 		}
 	}
 
@@ -157,8 +143,7 @@ public class UsersLoader {
 	}
 
 	public boolean removeRole(String name) {
-		NodeList roleNodes = ((Element) doc.getElementsByTagName(ROLES).item(0))
-				.getElementsByTagName(ROLE);
+		NodeList roleNodes = ((Element) doc.getElementsByTagName(ROLES).item(0)).getElementsByTagName(ROLE);
 		for (int i = 0; i < roleNodes.getLength(); i++) {
 			Element roleElement = (Element) roleNodes.item(i);
 			if (roleElement.getAttribute(ROLE_NAME).equals(name)) {
@@ -192,12 +177,10 @@ public class UsersLoader {
 	}
 
 	public boolean deleteUser(org.osgi.service.useradmin.User user) {
-		NodeList userNodes = ((Element) doc.getElementsByTagName(USERS).item(0))
-				.getElementsByTagName(USER);
+		NodeList userNodes = ((Element) doc.getElementsByTagName(USERS).item(0)).getElementsByTagName(USER);
 		for (int i = 0; i < userNodes.getLength(); i++) {
 			Element userElement = (Element) userNodes.item(i);
-			if (userElement.getAttribute(USER_LOGIN).equals(
-					user.getCredentials().get(USER_LOGIN))) {
+			if (userElement.getAttribute(USER_LOGIN).equals(user.getCredentials().get(USER_LOGIN))) {
 				userElement.getParentNode().removeChild(userElement);
 				flush();
 				return true;
@@ -206,10 +189,8 @@ public class UsersLoader {
 		return false;
 	}
 
-	public boolean updateUser(String oldLogin,
-			org.eclipse.e4.webide.server.useradmin.User user) {
-		NodeList userNodes = ((Element) doc.getElementsByTagName(USERS).item(0))
-				.getElementsByTagName(USER);
+	public boolean updateUser(String oldLogin, org.eclipse.e4.webide.server.useradmin.User user) {
+		NodeList userNodes = ((Element) doc.getElementsByTagName(USERS).item(0)).getElementsByTagName(USER);
 		for (int i = 0; i < userNodes.getLength(); i++) {
 			Element userElement = (Element) userNodes.item(i);
 			if (userElement.getAttribute(USER_LOGIN).equals(oldLogin)) {

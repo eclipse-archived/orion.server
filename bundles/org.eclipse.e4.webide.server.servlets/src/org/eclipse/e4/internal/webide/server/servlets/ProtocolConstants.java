@@ -106,6 +106,8 @@ public class ProtocolConstants {
 	 */
 	public static final String KEY_NAME = "Name"; //$NON-NLS-1$
 
+	public static final String KEY_CREATE_IF_DOEASNT_EXIST = "CreateIfDoesntExist"; //$NON-NLS-1$
+
 	/**
 	 * JSON representation key for an object's parents. The value's data
 	 * type is a JSON array of objects with name and location values.

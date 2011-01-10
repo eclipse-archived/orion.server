@@ -10,12 +10,15 @@ Require-Bundle: org.eclipse.core.filesystem;bundle-version="1.3.100",
 Bundle-Activator: org.eclipse.e4.internal.webide.server.Activator
 Export-Package: org.eclipse.e4.internal.webide.server;x-friends:="org.eclipse.e4.webide.server.servlets,org.eclipse.e4.webide.server.search,org.eclipse.e4.webide.server.configurator",
  org.eclipse.e4.webide.server,
+ org.eclipse.e4.webide.server.authentication,
  org.eclipse.e4.webide.server.resources,
  org.eclipse.e4.webide.server.users
 Bundle-ActivationPolicy: lazy
 Bundle-Vendor: Eclipse.org
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
-Import-Package: org.eclipse.osgi.framework.log;version="1.0.0",
+Import-Package: javax.servlet;version="2.5.0",
+ javax.servlet.http;version="2.5.0",
+ org.eclipse.osgi.framework.log;version="1.0.0",
  org.eclipse.osgi.service.datalocation;version="1.3.0",
  org.osgi.framework;version="1.6.0",
  org.osgi.service.useradmin;version="1.1.0",

@@ -34,8 +34,7 @@ public class FormOpenIdLoginServlet extends EclipseWebServlet {
 	private FormOpenIdAuthenticationService authenticationService;
 	private OpenidConsumer consumer;
 
-	public FormOpenIdLoginServlet(
-			FormOpenIdAuthenticationService authenticationService) {
+	public FormOpenIdLoginServlet(FormOpenIdAuthenticationService authenticationService) {
 		super();
 		this.authenticationService = authenticationService;
 	}
@@ -46,15 +45,13 @@ public class FormOpenIdLoginServlet extends EclipseWebServlet {
 	private static final long serialVersionUID = 1L;
 
 	@Override
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
 		String pathInfo = req.getPathInfo() == null ? "" : req.getPathInfo(); //$NON-NLS-1$
 
 		if (pathInfo.startsWith("/form")) { //$NON-NLS-1$
 			if (FormAuthHelper.performAuthentication(req, resp)) {
-				if (req.getParameter(OpenIdHelper.REDIRECT) != null
-						&& !req.getParameter(OpenIdHelper.REDIRECT).equals("")) { //$NON-NLS-1$
+				if (req.getParameter(OpenIdHelper.REDIRECT) != null && !req.getParameter(OpenIdHelper.REDIRECT).equals("")) { //$NON-NLS-1$
 					resp.sendRedirect(req.getParameter(OpenIdHelper.REDIRECT));
 				} else {
 					resp.flushBuffer();
@@ -63,8 +60,7 @@ public class FormOpenIdLoginServlet extends EclipseWebServlet {
 				// redirection from
 				// FormAuthenticationService.setNotAuthenticated
 				String versionString = req.getHeader("EclipseWeb-Version"); //$NON-NLS-1$
-				Version version = versionString == null ? null : new Version(
-						versionString);
+				Version version = versionString == null ? null : new Version(versionString);
 
 				// TODO: This is a workaround for calls
 				// that does not include the WebEclipse version header
@@ -73,8 +69,7 @@ public class FormOpenIdLoginServlet extends EclipseWebServlet {
 				String invalidLoginError = "Invalid user or password";
 
 				if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) { //$NON-NLS-1$
-					RequestDispatcher rd = req
-							.getRequestDispatcher("/mixlogin?error=" + new String(Base64.encode(invalidLoginError.getBytes()))); //$NON-NLS-1$
+					RequestDispatcher rd = req.getRequestDispatcher("/mixlogin?error=" + new String(Base64.encode(invalidLoginError.getBytes()))); //$NON-NLS-1$
 					rd.include(req, resp);
 				} else {
 					PrintWriter writer = resp.getWriter();
@@ -95,8 +90,7 @@ public class FormOpenIdLoginServlet extends EclipseWebServlet {
 		if (pathInfo.startsWith("/openid")) { //$NON-NLS-1$
 			String openid = req.getParameter(OpenIdHelper.OPENID);
 			if (openid != null) {
-				consumer = OpenIdHelper.redirectToOpenIdProvider(req, resp,
-						consumer);
+				consumer = OpenIdHelper.redirectToOpenIdProvider(req, resp, consumer);
 				return;
 			}
 
@@ -108,29 +102,23 @@ public class FormOpenIdLoginServlet extends EclipseWebServlet {
 		}
 
 		String user;
-		if ((user = authenticationService.getAuthenticatedUser(req, resp,
-				new Properties())) != null) {
+		if ((user = authenticationService.getAuthenticatedUser(req, resp, new Properties())) != null) {
 			resp.setStatus(HttpServletResponse.SC_OK);
 			try {
 				JSONObject array = new JSONObject();
 				array.put("login", user); //$NON-NLS-1$
 				resp.getWriter().print(array.toString());
 			} catch (JSONException e) {
-				handleException(
-						resp,
-						"An error occured when creating JSON object for logged in user",
-						e);
+				handleException(resp, "An error occured when creating JSON object for logged in user", e);
 			}
 			return;
 		}
 	}
 
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		String pathInfo = req.getPathInfo() == null ? "" : req.getPathInfo(); //$NON-NLS-1$
 		if (pathInfo.startsWith("/openid") //$NON-NLS-1$
-				&& (req.getParameter(OpenIdHelper.OPENID) != null || req
-						.getParameter(OpenIdHelper.OP_RETURN) != null)) {
+				&& (req.getParameter(OpenIdHelper.OPENID) != null || req.getParameter(OpenIdHelper.OP_RETURN) != null)) {
 			doPost(req, resp);
 			return;
 		}

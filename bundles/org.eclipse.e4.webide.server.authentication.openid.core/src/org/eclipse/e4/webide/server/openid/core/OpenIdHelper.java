@@ -46,8 +46,7 @@ public class OpenIdHelper {
 	 *         user is not authenticated
 	 * @throws IOException
 	 */
-	public static String getAuthenticatedUser(HttpServletRequest req)
-			throws IOException {
+	public static String getAuthenticatedUser(HttpServletRequest req) throws IOException {
 		HttpSession s = req.getSession(true);
 		if (s.getAttribute(OPENID_IDENTIFIER) != null) {
 			return (String) s.getAttribute(OPENID_IDENTIFIER);
@@ -71,14 +70,11 @@ public class OpenIdHelper {
 	 * @return
 	 * @throws IOException
 	 */
-	public static OpenidConsumer redirectToOpenIdProvider(
-			HttpServletRequest req, HttpServletResponse resp,
-			OpenidConsumer consumer) throws IOException {
+	public static OpenidConsumer redirectToOpenIdProvider(HttpServletRequest req, HttpServletResponse resp, OpenidConsumer consumer) throws IOException {
 		String redirect = req.getParameter(REDIRECT);
 		try {
 			StringBuffer sb = getRequestServer(req);
-			sb.append(req.getServletPath()
-					+ (req.getPathInfo() == null ? "" : req.getPathInfo())); //$NON-NLS-1$
+			sb.append(req.getServletPath() + (req.getPathInfo() == null ? "" : req.getPathInfo())); //$NON-NLS-1$
 			sb.append("?").append(OP_RETURN).append("=true"); //$NON-NLS-1$ //$NON-NLS-2$
 			if (redirect != null && redirect.length() > 0) {
 				sb.append("&").append(REDIRECT).append("="); //$NON-NLS-1$ //$NON-NLS-2$
@@ -89,18 +85,15 @@ public class OpenIdHelper {
 			// redirection takes place in the authRequest method
 		} catch (ConsumerException e) {
 			writeOpenIdError(e.getMessage(), req, resp);
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_OPENID_CORE,
-					"An error occured when creating OpenidConsumer", e));
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_OPENID_CORE, "An error occured when creating OpenidConsumer", e));
 		} catch (CoreException e) {
 			writeOpenIdError(e.getMessage(), req, resp);
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_OPENID_CORE,
-					"An error occured when authenticing request", e));
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_OPENID_CORE, "An error occured when authenticing request", e));
 		}
 		return consumer;
 	}
 
-	private static void writeOpenIdError(String error, HttpServletRequest req,
-			HttpServletResponse resp) throws IOException {
+	private static void writeOpenIdError(String error, HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		if (req.getParameter(REDIRECT) == null) {
 			PrintWriter out = resp.getWriter();
 			out.println("<html><head></head>"); //$NON-NLS-1$
@@ -123,10 +116,9 @@ public class OpenIdHelper {
 		// /org.eclipse.e4.webide/static/js/message.js
 
 		String url = req.getParameter(REDIRECT);
-		url = url.replaceAll(
-				"/&error(\\=[^&]*)?(?=&|$)|^error(\\=[^&]*)?(&|$)/", ""); // remove
-																			// "error"
-																			// parameter
+		url = url.replaceAll("/&error(\\=[^&]*)?(?=&|$)|^error(\\=[^&]*)?(&|$)/", ""); // remove
+																						// "error"
+																						// parameter
 		out.print("<body onload=\"window.location.replace('");
 		out.print(url.toString());
 		if (url.contains("?")) {
@@ -151,9 +143,7 @@ public class OpenIdHelper {
 	 *            {@link #redirectToOpenIdProvider(HttpServletRequest, HttpServletResponse, OpenidConsumer)}
 	 * @throws IOException
 	 */
-	public static void handleOpenIdReturn(HttpServletRequest req,
-			HttpServletResponse resp, OpenidConsumer consumer)
-			throws IOException {
+	public static void handleOpenIdReturn(HttpServletRequest req, HttpServletResponse resp, OpenidConsumer consumer) throws IOException {
 		String redirect = req.getParameter(REDIRECT);
 		String op_return = req.getParameter(OP_RETURN);
 		if (Boolean.parseBoolean(op_return) && consumer != null) {
@@ -211,20 +201,14 @@ public class OpenIdHelper {
 	 * @param resp
 	 * @throws IOException
 	 */
-	public static void writeLoginResponse(String login, HttpServletResponse resp)
-			throws IOException {
+	public static void writeLoginResponse(String login, HttpServletResponse resp) throws IOException {
 		resp.setStatus(HttpServletResponse.SC_OK);
 		try {
 			JSONObject array = new JSONObject();
 			array.put("login", login); //$NON-NLS-1$
 			resp.getWriter().print(array.toString());
 		} catch (JSONException e) {
-			LogHelper
-					.log(new Status(
-							IStatus.ERROR,
-							Activator.PI_OPENID_CORE,
-							"An error occured when creating JSON object for logged in user",
-							e));
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_OPENID_CORE, "An error occured when creating JSON object for logged in user", e));
 		}
 	}
 

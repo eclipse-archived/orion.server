@@ -28,19 +28,14 @@ public class BundleEntryHttpContext implements HttpContext {
 	private String bundlePath;
 
 	public BundleEntryHttpContext(Bundle bundle) {
-        this.bundle = bundle;
-    }
-	
-	public BundleEntryHttpContext(
-			Bundle bundle,
-			Properties authProperties) {
 		this.bundle = bundle;
 	}
 
-	public BundleEntryHttpContext(
-			Bundle bundle,
-			String bundlePath,
-			Properties authProperties) {
+	public BundleEntryHttpContext(Bundle bundle, Properties authProperties) {
+		this.bundle = bundle;
+	}
+
+	public BundleEntryHttpContext(Bundle bundle, String bundlePath, Properties authProperties) {
 		this(bundle, authProperties);
 		if (bundlePath != null) {
 			if (bundlePath.endsWith("/")) //$NON-NLS-1$
@@ -56,8 +51,7 @@ public class BundleEntryHttpContext implements HttpContext {
 		return null;
 	}
 
-	public boolean handleSecurity(HttpServletRequest req,
-			HttpServletResponse resp) throws IOException {
+	public boolean handleSecurity(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		return true;
 	}
 

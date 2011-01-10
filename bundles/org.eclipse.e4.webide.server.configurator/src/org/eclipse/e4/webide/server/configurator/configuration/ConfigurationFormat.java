@@ -10,18 +10,19 @@
  *******************************************************************************/
 package org.eclipse.e4.webide.server.configurator.configuration;
 
+import org.eclipse.equinox.http.jetty.JettyConstants;
+
 public class ConfigurationFormat {
-	public static final String CONF_ROOT = "configuration";
-	public static final String AUTH_NAME = "Auth-name";
-	public static final String AUTH_PROPERTIES = "Auth-properties";
-	public static final String AUTH_PROPERTY = "property";
-	public static final String AUTH_PROPERTY_KEY = "key";
-	public static final String NONE_AUTH_NAME = "None";
-	public static final String SSL = "SSL";
-	public static final String HTTPS_ENABLED = "Https-Enabled";
-	public static final String HTTPS_PORT="Https-Port";
-	public static final String SSL_KEYSTORE = "Ssl-Keystore";
-	public static final String SSL_PASSWORD = "Ssl-Password";
-	public static final String SSL_KEYPASSWORD = "Ssl-Password";
-	public static final String SSL_PROTOCOL = "Ssl-Protocol";
+	public static final String AUTHENTICATION_NAME = "Auth-name";
+	public static final String DEFAULT_AUTHENTICATION_NAME = "FORM+OpenID";
+
+	private static final String JETTY = "jetty";
+
+	public static final String HTTPS_ENABLED = JETTY + "." + JettyConstants.HTTPS_ENABLED;
+	public static final String HTTPS_PORT = JETTY + "." + JettyConstants.HTTPS_PORT;
+	public static final String HTTP_PORT = JETTY + "." + JettyConstants.HTTP_PORT;
+	public static final String SSL_KEYSTORE = JETTY + "." + JettyConstants.SSL_KEYSTORE;
+	public static final String SSL_PASSWORD = JETTY + "." + JettyConstants.SSL_PASSWORD;
+	public static final String SSL_KEYPASSWORD = JETTY + "." + JettyConstants.SSL_KEYPASSWORD;
+	public static final String SSL_PROTOCOL = JETTY + "." + JettyConstants.SSL_PROTOCOL;
 }

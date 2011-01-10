@@ -19,55 +19,54 @@ import org.osgi.service.useradmin.Role;
 
 public class User implements org.osgi.service.useradmin.User {
 
+	private Set<Role> roles = new HashSet<Role>();
 
-    private Set<Role> roles = new HashSet<Role>();
-    
-    private Properties userCredentials = new Properties();
-    
-    public Set<Role> getRoles() {
+	private Properties userCredentials = new Properties();
+
+	public Set<Role> getRoles() {
 		return roles;
 	}
 
-	public void addRole(Role role){
-    	roles.add(role);
-    }
-    
-    public void removeRole(Role role){
-    	roles.remove(role);
-    }
+	public void addRole(Role role) {
+		roles.add(role);
+	}
+
+	public void removeRole(Role role) {
+		roles.remove(role);
+	}
 
 	public User() {
-    }
+	}
 
-    public User(String login, String name, String password) {
-        setLogin(login);
-        setName(name);
-        setPassword(password);
-    }
+	public User(String login, String name, String password) {
+		setLogin(login);
+		setName(name);
+		setPassword(password);
+	}
 
-    public String getLogin() {
-        return userCredentials.getProperty("login");
-    }
+	public String getLogin() {
+		return userCredentials.getProperty("login");
+	}
 
-    public void setLogin(String login) {
-    	userCredentials.setProperty("login", login);
-    }
+	public void setLogin(String login) {
+		userCredentials.setProperty("login", login);
+	}
 
-    public String getName() {
-        return userCredentials.getProperty("name");
-    }
+	public String getName() {
+		return userCredentials.getProperty("name");
+	}
 
-    public void setName(String name) {
-        userCredentials.setProperty("name", name);
-    }
+	public void setName(String name) {
+		userCredentials.setProperty("name", name);
+	}
 
-    public String getPassword() {
-        return userCredentials.getProperty("password");
-    }
+	public String getPassword() {
+		return userCredentials.getProperty("password");
+	}
 
-    public void setPassword(String password) {
-        userCredentials.setProperty("password", password);
-    }
+	public void setPassword(String password) {
+		userCredentials.setProperty("password", password);
+	}
 
 	public int getType() {
 		return Role.USER;

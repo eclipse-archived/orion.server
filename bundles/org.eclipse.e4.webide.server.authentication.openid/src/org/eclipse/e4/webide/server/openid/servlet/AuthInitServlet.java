@@ -23,7 +23,6 @@ import org.eclipse.e4.webide.server.openid.core.OpenIdHelper;
 
 public class AuthInitServlet extends HttpServlet {
 
-
 	/**
 	 * 
 	 */
@@ -34,8 +33,7 @@ public class AuthInitServlet extends HttpServlet {
 	private Properties properties;
 
 	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		sendAuthInit(req, resp, properties);
 	}
 
@@ -44,18 +42,14 @@ public class AuthInitServlet extends HttpServlet {
 		this.properties = properties;
 	}
 
-	private void sendAuthInit(HttpServletRequest req, HttpServletResponse resp,
-			Properties properties) throws IOException {
+	private void sendAuthInit(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException {
 		if (properties == null) {
 			properties = new Properties();
 		}
 		resp.setHeader("WWW-Authenticate", OpenIdHelper.getAuthType());
 		resp.setStatus(HttpServletResponse.SC_OK);
-		String putStyle = properties.getProperty(CSS_LINK_PROPERTY) == null ? ""
-				: "&styles=" + properties.getProperty(CSS_LINK_PROPERTY);
-		RequestDispatcher rd = req
-				.getRequestDispatcher("/openidform/checkuser?redirect="
-						+ req.getRequestURI() + putStyle);
+		String putStyle = properties.getProperty(CSS_LINK_PROPERTY) == null ? "" : "&styles=" + properties.getProperty(CSS_LINK_PROPERTY);
+		RequestDispatcher rd = req.getRequestDispatcher("/openidform/checkuser?redirect=" + req.getRequestURI() + putStyle);
 		try {
 			rd.forward(req, resp);
 		} catch (ServletException e) {

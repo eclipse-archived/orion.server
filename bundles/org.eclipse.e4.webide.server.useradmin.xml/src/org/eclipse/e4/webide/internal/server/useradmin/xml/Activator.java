@@ -37,10 +37,8 @@ public class Activator implements BundleActivator {
 	 */
 	public void start(BundleContext bundleContext) throws Exception {
 		Activator.bundleContext = bundleContext;
-		URL entry = Activator.bundleContext.getBundle()
-				.getEntry("data/users.xml");
-		registerService = bundleContext.registerService(UserAdmin.class,
-				new XmlUserAdmin(entry), null);
+		URL entry = Activator.bundleContext.getBundle().getEntry("data/users.xml");
+		registerService = bundleContext.registerService(UserAdmin.class, new XmlUserAdmin(entry), null);
 	}
 
 	/*

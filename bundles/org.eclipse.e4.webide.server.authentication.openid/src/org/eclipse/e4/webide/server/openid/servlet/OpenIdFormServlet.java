@@ -32,38 +32,32 @@ public class OpenIdFormServlet extends HttpServlet {
 	private static final long serialVersionUID = -3291715275586171400L;
 
 	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		// handled by service()
 	}
 
 	@Override
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		// handled by service()
 	}
 
 	@Override
-	protected void doPut(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
+	protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		// handled by service()
 	}
 
 	@Override
-	protected void doDelete(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
+	protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		// handled by service()
 	}
 
 	@Override
-	protected void service(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
+	protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		super.service(req, resp);
 		if (!resp.isCommitted()) {
 			// redirection from FormAuthenticationService.setNotAuthenticated
 			String versionString = req.getHeader("EclipseWeb-Version");
-			Version version = versionString == null ? null : new Version(
-					versionString);
+			Version version = versionString == null ? null : new Version(versionString);
 
 			// TODO: This is a workaround for calls
 			// that does not include the WebEclipse version header
@@ -77,8 +71,7 @@ public class OpenIdFormServlet extends HttpServlet {
 		}
 	}
 
-	private void writeJavaScriptResponse(HttpServletRequest req,
-			HttpServletResponse resp) throws IOException {
+	private void writeJavaScriptResponse(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		resp.setContentType("text/javascript");
 		PrintWriter writer = resp.getWriter();
 		writer.print("if(!stylg)\n");
@@ -107,8 +100,7 @@ public class OpenIdFormServlet extends HttpServlet {
 			return "/openidstatic/css/defaultLoginWindow.css";
 		} else {
 
-			return stylesParam.replaceAll("'", "\\\\'").replaceAll("\\t+", " ")
-					.replaceAll("\n", "");
+			return stylesParam.replaceAll("'", "\\\\'").replaceAll("\\t+", " ").replaceAll("\n", "");
 		}
 	}
 
@@ -131,8 +123,7 @@ public class OpenIdFormServlet extends HttpServlet {
 
 	private String getFileContents(String filename) throws IOException {
 		StringBuilder sb = new StringBuilder();
-		InputStream is = Activator.getDefault().getContext().getBundle()
-				.getEntry(filename).openStream();
+		InputStream is = Activator.getDefault().getContext().getBundle().getEntry(filename).openStream();
 		BufferedReader br = new BufferedReader(new InputStreamReader(is));
 		String line = "";
 		while ((line = br.readLine()) != null) {
@@ -141,10 +132,8 @@ public class OpenIdFormServlet extends HttpServlet {
 		return sb.toString();
 	}
 
-	private void appendFileContentAsJsString(StringBuilder sb, String filename)
-			throws IOException {
-		InputStream is = Activator.getDefault().getContext().getBundle()
-				.getEntry(filename).openStream();
+	private void appendFileContentAsJsString(StringBuilder sb, String filename) throws IOException {
+		InputStream is = Activator.getDefault().getContext().getBundle().getEntry(filename).openStream();
 		BufferedReader br = new BufferedReader(new InputStreamReader(is));
 		String line = "";
 		while ((line = br.readLine()) != null) {
@@ -156,16 +145,14 @@ public class OpenIdFormServlet extends HttpServlet {
 		}
 	}
 
-	private void writeHtmlResponse(HttpServletRequest req,
-			HttpServletResponse response) throws IOException {
+	private void writeHtmlResponse(HttpServletRequest req, HttpServletResponse response) throws IOException {
 
 		PrintWriter writer = response.getWriter();
 		writer.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2 Final//EN\">");
 		writer.println("<html>");
 		writer.println("<head>");
 		writer.println("<title>Login Page</title>");
-		if (req.getParameter("styles") == null
-				|| "".equals(req.getParameter("styles"))) {
+		if (req.getParameter("styles") == null || "".equals(req.getParameter("styles"))) {
 			writer.println("<style type=\"text/css\">");
 			writer.print("@import \"");
 			writer.print("/openidstatic/css/defaultLoginWindow.css");
@@ -197,10 +184,12 @@ public class OpenIdFormServlet extends HttpServlet {
 			return authSite;
 		}
 		StringBuilder sb = new StringBuilder();
+		sb.append("<div id=\"errorWin\">");
 		sb.append("<ul id=\"loginError\">"); //$NON-NLS-1$
 		sb.append("<li id=\"errorMessage\">"); //$NON-NLS-1$
 		sb.append(new String(Base64.decode(error.trim().getBytes())));
 		sb.append("</li></ul>"); //$NON-NLS-1$
+		sb.append("</div>");
 		return authSite.replaceAll("<!--ERROR-->", sb.toString()); //$NON-NLS-1$
 	}
 }

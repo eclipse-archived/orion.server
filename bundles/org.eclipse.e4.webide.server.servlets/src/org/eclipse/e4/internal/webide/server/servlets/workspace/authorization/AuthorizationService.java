@@ -10,10 +10,12 @@
  *******************************************************************************/
 package org.eclipse.e4.internal.webide.server.servlets.workspace.authorization;
 
-import java.util.HashMap;
-import java.util.List;
+import javax.servlet.http.HttpServletResponse;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.e4.internal.webide.server.servlets.ProtocolConstants;
+import org.eclipse.e4.internal.webide.server.servlets.ServerStatus;
 import org.eclipse.e4.webide.server.users.EclipseWebScope;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -21,18 +23,21 @@ import org.osgi.service.prefs.BackingStoreException;
 
 public class AuthorizationService {
 
-	public static HashMap<String, List<String>> userMap = new HashMap<String, List<String>>();
+	public static void addUserRight(String name, String uri) throws CoreException {
+		try {
+			IEclipsePreferences users = new EclipseWebScope().getNode("Users"); //$NON-NLS-1$
+			IEclipsePreferences result = (IEclipsePreferences) users.node(name);
+			String userRights = result.get(ProtocolConstants.KEY_USER_RIGHTS, null);
 
-	public static void addUserRight(String name, String uri) throws JSONException, BackingStoreException {
-		IEclipsePreferences users = new EclipseWebScope().getNode("Users"); //$NON-NLS-1$
-		IEclipsePreferences result = (IEclipsePreferences) users.node(name);
-		String userRights = result.get(ProtocolConstants.KEY_USER_RIGHTS, null);
+			JSONArray userRightArray = (userRights != null ? new JSONArray(userRights) : new JSONArray());
 
-		JSONArray userRightArray = (userRights != null ? new JSONArray(userRights) : new JSONArray());
-
-		userRightArray.put(uri);
-		result.put(ProtocolConstants.KEY_USER_RIGHTS, userRightArray.toString());
-		result.flush();
+			userRightArray.put(uri);
+			result.put(ProtocolConstants.KEY_USER_RIGHTS, userRightArray.toString());
+			result.flush();
+		} catch (Exception e) {
+			String msg = "Error persisting user rights";
+			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+		}
 	}
 
 	public static void removeUserRight(String name, String uri) throws JSONException, BackingStoreException {

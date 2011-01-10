@@ -1,5 +1,5 @@
-#Wed Oct 06 10:03:01 CEST 2010
-pluginProject.equinox=false
+#Wed Dec 08 10:12:34 EST 2010
 eclipse.preferences.version=1
+pluginProject.equinox=false
+pluginProject.extensions=true
 resolve.requirebundle=false
-pluginProject.extensions=false

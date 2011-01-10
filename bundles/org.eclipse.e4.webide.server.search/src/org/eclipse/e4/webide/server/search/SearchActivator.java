@@ -12,14 +12,11 @@ package org.eclipse.e4.webide.server.search;
 
 import java.io.*;
 import java.net.*;
-import javax.servlet.ServletException;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
 import org.apache.solr.core.*;
-import org.apache.solr.servlet.SolrServlet;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.runtime.*;
-import org.eclipse.e4.internal.webide.BundleEntryHttpContext;
 import org.eclipse.e4.internal.webide.server.IOUtilities;
 import org.eclipse.e4.internal.webide.server.IWebResourceDecorator;
 import org.eclipse.e4.internal.webide.server.servlets.Activator;
@@ -28,52 +25,19 @@ import org.eclipse.e4.webide.server.LogHelper;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.framework.*;
-import org.osgi.service.http.*;
-import org.osgi.util.tracker.ServiceTracker;
 
 public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 	private static final String INDEX_GENERATION_FILE = "index.generation";//$NON-NLS-1$
 	/**
-	 * Indicates the version number of the eclipse web search index. This version
-	 * should be incremented whenever there are breaking changes to the indexing
-	 * schema or format.
+	 * Indicates the version number of the eclipse web search index. This
+	 * version should be incremented whenever there are breaking changes to the
+	 * indexing schema or format.
 	 */
 	private static final int CURRENT_INDEX_GENERATION = 3;
 
-	private class HttpServiceTracker extends ServiceTracker<HttpService, HttpService> {
-
-		public HttpServiceTracker(BundleContext context) {
-			super(context, HttpService.class.getName(), null);
-		}
-
-		public HttpService addingService(ServiceReference<HttpService> reference) {
-			HttpService httpService = super.addingService(reference); // calls context.getService(reference);
-			if (httpService == null)
-				return null;
-			HttpContext httpContext = new BundleEntryHttpContext(context.getBundle());
-
-			try {
-				httpService.registerServlet(LOCATION_SEARCH_SERVLET, new SolrServlet(), null, httpContext);
-			} catch (ServletException e) {
-				e.printStackTrace();
-			} catch (NamespaceException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			return httpService;
-		}
-
-		public void removedService(ServiceReference<HttpService> reference, HttpService httpService) {
-			httpService.unregister(LOCATION_SEARCH_SERVLET);
-			super.removedService(reference, httpService); // calls context.ungetService(reference);
-		}
-	}
-
 	private static BundleContext context;
-	public static final String LOCATION_SEARCH_SERVLET = "/solrsearch"; //$NON-NLS-1$
 	public static final boolean DEBUG = true;
 	public static final String PI_SEARCH = "org.eclipse.e4.webide.server.search"; //$NON-NLS-1$
-	private ServiceTracker<HttpService, HttpService> httpServiceTracker;
 	private Indexer indexer;
 	private CoreContainer solrContainer;
 	private ServiceRegistration<IWebResourceDecorator> searchDecoratorRegistration;
@@ -88,32 +52,34 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 
 	public void addAtributesFor(URI resource, JSONObject representation) {
 		IPath resourcePath = new Path(resource.getPath());
-		//currently we only know how to search the file and workspace services
+		// currently we only know how to search the file and workspace services
 		if (resourcePath.segmentCount() == 0)
 			return;
 		String service = resourcePath.segment(0);
 		if (!("file".equals(service) || "workspace".equals(service))) //$NON-NLS-1$ //$NON-NLS-2$
 			return;
 		try {
-			//we can also augment with a query argument that includes the resource path
+			// we can also augment with a query argument that includes the
+			// resource path
 			URI result = new URI(resource.getScheme(), resource.getUserInfo(), resource.getHost(), resource.getPort(), "/solrsearch", "wt=json&fl=Id,Name,Length,Directory,LastModified,Location&hl=true&q=", null);
 			representation.put(ProtocolConstants.KEY_SEARCH_LOCATION, result.toString());
 		} catch (URISyntaxException e) {
 			LogHelper.log(e);
 		} catch (JSONException e) {
-			//key and value are well-formed strings so this should not happen
+			// key and value are well-formed strings so this should not happen
 			throw new RuntimeException(e);
 		}
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.osgi.framework.BundleActivator#start(org.osgi.framework.BundleContext)
+	 * 
+	 * @see
+	 * org.osgi.framework.BundleActivator#start(org.osgi.framework.BundleContext
+	 * )
 	 */
 	public void start(BundleContext bundleContext) throws Exception {
 		SearchActivator.context = bundleContext;
-		httpServiceTracker = new HttpServiceTracker(context);
-		httpServiceTracker.open();
 		SolrServer server = createServer();
 		if (server != null) {
 			indexer = new Indexer(server);
@@ -123,20 +89,21 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 	}
 
 	/**
-	 * Creates and returns a search server instance. Returns null if there was a failure instantiating the server.
+	 * Creates and returns a search server instance. Returns null if there was a
+	 * failure instantiating the server.
 	 */
 	private SolrServer createServer() {
 		try {
 			File rootFile = Activator.getDefault().getPlatformLocation().toFile();
 			File baseDir = new File(rootFile, ".metadata/.plugins/" + PI_SEARCH); //$NON-NLS-1$
-			//discard all server data if the index generation has changed
+			// discard all server data if the index generation has changed
 			if (readIndexGeneration(baseDir) != CURRENT_INDEX_GENERATION) {
 				delete(baseDir);
 				writeIndexGeneration(baseDir);
 			}
 			File configFile = createSolrConfig(baseDir);
 			String solrDataDir = baseDir.toString();
-			solrContainer = new CoreContainer(solrDataDir, configFile);
+			solrContainer = new CoreContainer(solrDataDir);
 			CoreDescriptor descriptor = new CoreDescriptor(solrContainer, "Eclipse Web Search", solrDataDir); //$NON-NLS-1$
 			descriptor.setDataDir(solrDataDir.toString() + File.separatorChar + "data"); //$NON-NLS-1$
 			SolrCore solrCore = solrContainer.create(descriptor);
@@ -144,7 +111,7 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 			SolrServer server = new EmbeddedSolrServer(solrContainer, "Eclipse Web Search"); //$NON-NLS-1$
 			return server;
 		} catch (Exception e) {
-			e.printStackTrace();
+			LogHelper.log(e);
 		}
 		return null;
 	}
@@ -174,6 +141,7 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 
 	/**
 	 * Returns the generation number of the current index on disk.
+	 * 
 	 * @return the current index generation, or -1 if no index was found.
 	 */
 	private int readIndexGeneration(File baseDir) {
@@ -186,7 +154,7 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 			int generation = Integer.valueOf(in.readUTF());
 			return generation;
 		} catch (Exception e) {
-			//ignore and return false below
+			// ignore and return false below
 		} finally {
 			IOUtilities.safeClose(in);
 		}
@@ -194,8 +162,8 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 	}
 
 	/**
-	 * Ensure solr configuration files exist. Copy them from the search plugin if necessary.
-	 * Returns the solrconfig.xml file.
+	 * Ensure solr configuration files exist. Copy them from the search plugin
+	 * if necessary. Returns the solrconfig.xml file.
 	 */
 	private File createSolrConfig(File baseDir) throws FileNotFoundException, IOException {
 		File configDir = new File(baseDir, "conf"); //$NON-NLS-1$
@@ -212,9 +180,11 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 	}
 
 	/**
-	 * Create a configuration file expected by solr (either solrconfig.xml or schema.xml).
-	 * @throws IOException 
-	 * @throws FileNotFoundException 
+	 * Create a configuration file expected by solr (either solrconfig.xml or
+	 * schema.xml).
+	 * 
+	 * @throws IOException
+	 * @throws FileNotFoundException
 	 */
 	private void createSolrFile(File solrFile) throws FileNotFoundException, IOException {
 		if (solrFile.exists())
@@ -226,7 +196,9 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.osgi.framework.BundleActivator#stop(org.osgi.framework.BundleContext)
+	 * 
+	 * @see
+	 * org.osgi.framework.BundleActivator#stop(org.osgi.framework.BundleContext)
 	 */
 	public void stop(BundleContext bundleContext) throws Exception {
 		searchDecoratorRegistration.unregister();

@@ -40,38 +40,32 @@ public class LoginFormServlet extends HttpServlet {
 	private String newAccountJsFunction = "javascript:addUser"; //$NON-NLS-1$
 
 	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		// handled by service()
 	}
 
 	@Override
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		// handled by service()
 	}
 
 	@Override
-	protected void doPut(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
+	protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		// handled by service()
 	}
 
 	@Override
-	protected void doDelete(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
+	protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		// handled by service()
 	}
 
 	@Override
-	protected void service(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
+	protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		super.service(req, resp);
 		if (!resp.isCommitted()) {
 			// redirection from FormAuthenticationService.setNotAuthenticated
 			String versionString = req.getHeader("EclipseWeb-Version"); //$NON-NLS-1$
-			Version version = versionString == null ? null : new Version(
-					versionString);
+			Version version = versionString == null ? null : new Version(versionString);
 
 			// TODO: This is a workaround for calls
 			// that does not include the WebEclipse version header
@@ -85,8 +79,7 @@ public class LoginFormServlet extends HttpServlet {
 		}
 	}
 
-	private void writeJavaScriptResponse(HttpServletRequest req,
-			HttpServletResponse resp) throws IOException {
+	private void writeJavaScriptResponse(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		resp.setContentType("text/javascript"); //$NON-NLS-1$
 		PrintWriter writer = resp.getWriter();
 		writer.print("if(!stylg)\n"); //$NON-NLS-1$
@@ -125,8 +118,7 @@ public class LoginFormServlet extends HttpServlet {
 		StringBuilder sb = new StringBuilder();
 		StringBuilder authString = new StringBuilder();
 		appendFileContentAsJsString(authString, "static/auth.html"); //$NON-NLS-1$
-		String authSite = replaceNewAccount(authString.toString(),
-				req.getHeader("Referer"), true); //$NON-NLS-1$
+		String authSite = replaceNewAccount(authString.toString(), req.getHeader("Referer"), true); //$NON-NLS-1$
 		authSite = replaceError(authSite, ""); //$NON-NLS-1$
 		sb.append(authSite);
 		sb.append("';\n"); //$NON-NLS-1$
@@ -141,8 +133,7 @@ public class LoginFormServlet extends HttpServlet {
 
 	private String getFileContents(String filename) throws IOException {
 		StringBuilder sb = new StringBuilder();
-		InputStream is = Activator.getBundleContext().getBundle()
-				.getEntry(filename).openStream();
+		InputStream is = Activator.getBundleContext().getBundle().getEntry(filename).openStream();
 		BufferedReader br = new BufferedReader(new InputStreamReader(is));
 		String line = ""; //$NON-NLS-1$
 		while ((line = br.readLine()) != null) {
@@ -151,10 +142,8 @@ public class LoginFormServlet extends HttpServlet {
 		return sb.toString();
 	}
 
-	private void appendFileContentAsJsString(StringBuilder sb, String filename)
-			throws IOException {
-		InputStream is = Activator.getBundleContext().getBundle()
-				.getEntry(filename).openStream();
+	private void appendFileContentAsJsString(StringBuilder sb, String filename) throws IOException {
+		InputStream is = Activator.getBundleContext().getBundle().getEntry(filename).openStream();
 		BufferedReader br = new BufferedReader(new InputStreamReader(is));
 		String line = ""; //$NON-NLS-1$
 		while ((line = br.readLine()) != null) {
@@ -166,8 +155,7 @@ public class LoginFormServlet extends HttpServlet {
 		}
 	}
 
-	private void writeHtmlResponse(HttpServletRequest req,
-			HttpServletResponse response) throws IOException {
+	private void writeHtmlResponse(HttpServletRequest req, HttpServletResponse response) throws IOException {
 		response.setContentType("text/html"); //$NON-NLS-1$
 		PrintWriter writer = response.getWriter();
 		writer.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2 Final//EN\">"); //$NON-NLS-1$
@@ -195,9 +183,8 @@ public class LoginFormServlet extends HttpServlet {
 
 		String authSite = getFileContents("static/auth.html"); //$NON-NLS-1$
 		authSite = replaceForm(authSite, req.getParameter("redirect")); //$NON-NLS-1$
-		authSite = replaceNewAccount(authSite,
-				((req.getParameter("redirect") == null) ? req.getRequestURI() //$NON-NLS-1$
-						: req.getParameter("redirect")), false); //$NON-NLS-1$
+		authSite = replaceNewAccount(authSite, ((req.getParameter("redirect") == null) ? req.getRequestURI() //$NON-NLS-1$
+				: req.getParameter("redirect")), false); //$NON-NLS-1$
 		authSite = replaceError(authSite, req.getParameter("error")); //$NON-NLS-1$
 		writer.println(authSite);
 
@@ -211,17 +198,18 @@ public class LoginFormServlet extends HttpServlet {
 			return authSite;
 		}
 		StringBuilder sb = new StringBuilder();
+		sb.append("<div id=\"errorWin\">");
 		sb.append("<ul id=\"loginError\">"); //$NON-NLS-1$
 		sb.append("<li id=\"errorMessage\">"); //$NON-NLS-1$
 		sb.append(new String(Base64.decode(error.getBytes())));
 		sb.append("</li></ul>"); //$NON-NLS-1$
+		sb.append("</div>");
 		return authSite.replaceAll("<!--ERROR-->", sb.toString()); //$NON-NLS-1$
 	}
 
 	private String replaceForm(String authSite, String redirect) {
 		StringBuilder formBegin = new StringBuilder();
-		formBegin
-				.append("<form name=\"AuthForm\" method=post action=\"/login/form"); //$NON-NLS-1$
+		formBegin.append("<form name=\"AuthForm\" method=post action=\"/login/form"); //$NON-NLS-1$
 		if (redirect != null && !redirect.equals("")) { //$NON-NLS-1$
 			formBegin.append("?redirect="); //$NON-NLS-1$
 			formBegin.append(redirect);
@@ -231,8 +219,7 @@ public class LoginFormServlet extends HttpServlet {
 				"<!--/form-->", "</form>"); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
-	private String replaceNewAccount(String authSite, String redirect,
-			boolean javascriptResp) {
+	private String replaceNewAccount(String authSite, String redirect, boolean javascriptResp) {
 		if (!FormAuthHelper.canAddUsers()) {
 			return authSite;
 		}

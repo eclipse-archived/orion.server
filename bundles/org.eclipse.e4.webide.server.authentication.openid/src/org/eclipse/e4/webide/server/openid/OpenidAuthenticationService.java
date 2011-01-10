@@ -21,7 +21,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.e4.webide.server.LogHelper;
-import org.eclipse.e4.webide.server.configurator.authentication.IAuthenticationService;
+import org.eclipse.e4.webide.server.authentication.IAuthenticationService;
 import org.eclipse.e4.webide.server.openid.core.OpenIdHelper;
 import org.eclipse.e4.webide.server.openid.servlet.AuthInitServlet;
 import org.eclipse.e4.webide.server.openid.servlet.OpenIdFormServlet;
@@ -40,8 +40,7 @@ public class OpenidAuthenticationService implements IAuthenticationService {
 	}
 
 	@Override
-	public String getAuthenticatedUser(HttpServletRequest req,
-			HttpServletResponse resp, Properties properties) throws IOException {
+	public String getAuthenticatedUser(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException {
 		return OpenIdHelper.getAuthenticatedUser(req);
 	}
 
@@ -49,14 +48,12 @@ public class OpenidAuthenticationService implements IAuthenticationService {
 		return OpenIdHelper.getAuthType();
 	}
 
-	private void setNotAuthenticated(HttpServletRequest req,
-			HttpServletResponse resp) throws IOException {
+	private void setNotAuthenticated(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 
 		resp.setHeader("WWW-Authenticate", HttpServletRequest.FORM_AUTH); //$NON-NLS-1$
 		resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-		RequestDispatcher rd = req
-				.getRequestDispatcher("/openidform/login?redirect=" //$NON-NLS-1$
-						+ req.getRequestURI());
+		RequestDispatcher rd = req.getRequestDispatcher("/openidform/login?redirect=" //$NON-NLS-1$
+				+ req.getRequestURI());
 		try {
 			rd.forward(req, resp);
 		} catch (ServletException e) {
@@ -70,40 +67,27 @@ public class OpenidAuthenticationService implements IAuthenticationService {
 	public void configure(Properties properties) {
 		try {
 			httpService.registerServlet("/auth2", new AuthInitServlet( //$NON-NLS-1$
-					properties), null, new BundleEntryHttpContext(Activator
-					.getDefault().getContext().getBundle()));
+					properties), null, new BundleEntryHttpContext(Activator.getDefault().getContext().getBundle()));
 		} catch (Exception e) {
-			LogHelper.log(new Status(IStatus.WARNING,
-					Activator.PI_OPENID_SERVLETS,
-					"Reconfiguring OpenidAuthenticationService"));
+			LogHelper.log(new Status(IStatus.WARNING, Activator.PI_OPENID_SERVLETS, "Reconfiguring OpenidAuthenticationService"));
 
 			try {
 				httpService.unregister("/auth2");
 				httpService.registerServlet("/auth2", new AuthInitServlet( //$NON-NLS-1$
-						properties), null, new BundleEntryHttpContext(Activator
-						.getDefault().getContext().getBundle()));
+						properties), null, new BundleEntryHttpContext(Activator.getDefault().getContext().getBundle()));
 			} catch (ServletException e1) {
-				LogHelper.log(new Status(IStatus.ERROR,
-						Activator.PI_OPENID_SERVLETS, 1,
-						"An error occured when registering servlets", e1));
+				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_OPENID_SERVLETS, 1, "An error occured when registering servlets", e1));
 			} catch (NamespaceException e1) {
-				LogHelper.log(new Status(IStatus.ERROR,
-						Activator.PI_OPENID_SERVLETS, 1,
-						"A namespace error occured when registering servlets",
-						e1));
+				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_OPENID_SERVLETS, 1, "A namespace error occured when registering servlets", e1));
 			} catch (IllegalArgumentException e1) {
-				LogHelper.log(new Status(IStatus.ERROR,
-						Activator.PI_OPENID_SERVLETS, 1,
-						"OpenidAuthenticationService could not be configured",
-						e1));
+				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_OPENID_SERVLETS, 1, "OpenidAuthenticationService could not be configured", e1));
 			}
 
 		}
 	}
 
 	@Override
-	public String authenticateUser(HttpServletRequest req,
-			HttpServletResponse resp, Properties properties) throws IOException {
+	public String authenticateUser(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException {
 		String user = getAuthenticatedUser(req, resp, properties);
 		if (user == null) {
 			setNotAuthenticated(req, resp);
@@ -112,26 +96,18 @@ public class OpenidAuthenticationService implements IAuthenticationService {
 	}
 
 	public void setHttpService(HttpService httpService) {
-		HttpContext httpContext = new BundleEntryHttpContext(Activator
-				.getDefault().getContext().getBundle());
+		HttpContext httpContext = new BundleEntryHttpContext(Activator.getDefault().getContext().getBundle());
 		this.httpService = httpService;
 		try {
-			httpService.registerServlet(
-					"/openid", new OpenidServlet(), null, httpContext); //$NON-NLS-1$
-			httpService.registerServlet(
-					"/logout", new OpenIdLogoutServlet(), null, httpContext); //$NON-NLS-1$
-			httpService.registerServlet(
-					"/openidform", new OpenIdFormServlet(), null, httpContext); //$NON-NLS-1$
+			httpService.registerServlet("/openid", new OpenidServlet(), null, httpContext); //$NON-NLS-1$
+			httpService.registerServlet("/logout", new OpenIdLogoutServlet(), null, httpContext); //$NON-NLS-1$
+			httpService.registerServlet("/openidform", new OpenIdFormServlet(), null, httpContext); //$NON-NLS-1$
 			httpService.registerResources("/openidstatic", "/static", //$NON-NLS-1$ //$NON-NLS-2$
 					httpContext);
 		} catch (ServletException e) {
-			LogHelper.log(new Status(IStatus.ERROR,
-					Activator.PI_OPENID_SERVLETS, 1,
-					"An error occured when registering servlets", e));
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_OPENID_SERVLETS, 1, "An error occured when registering servlets", e));
 		} catch (NamespaceException e) {
-			LogHelper.log(new Status(IStatus.ERROR,
-					Activator.PI_OPENID_SERVLETS, 1,
-					"A namespace error occured when registering servlets", e));
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_OPENID_SERVLETS, 1, "A namespace error occured when registering servlets", e));
 		}
 	}
 

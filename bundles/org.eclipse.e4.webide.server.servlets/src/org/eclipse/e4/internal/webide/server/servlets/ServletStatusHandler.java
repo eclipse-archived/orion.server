@@ -1,4 +1,5 @@
 package org.eclipse.e4.internal.webide.server.servlets;
+
 /*******************************************************************************
  * Copyright (c) 2010 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
@@ -9,7 +10,6 @@ package org.eclipse.e4.internal.webide.server.servlets;
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-
 
 import java.io.IOException;
 

@@ -21,13 +21,13 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.e4.webide.server.LogHelper;
+import org.eclipse.e4.webide.server.authentication.IAuthenticationService;
 import org.eclipse.e4.webide.server.authentication.form.core.FormAuthHelper;
 import org.eclipse.e4.webide.server.authentication.form.httpcontext.BundleEntryHttpContext;
 import org.eclipse.e4.webide.server.authentication.form.servlets.AuthInitServlet;
 import org.eclipse.e4.webide.server.authentication.form.servlets.LoginFormServlet;
 import org.eclipse.e4.webide.server.authentication.form.servlets.LoginServlet;
 import org.eclipse.e4.webide.server.authentication.form.servlets.LogoutServlet;
-import org.eclipse.e4.webide.server.configurator.authentication.IAuthenticationService;
 import org.osgi.service.http.HttpContext;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.http.NamespaceException;
@@ -41,8 +41,7 @@ public class FormAuthenticationService implements IAuthenticationService {
 	}
 
 	@Override
-	public String authenticateUser(HttpServletRequest req,
-			HttpServletResponse resp, Properties properties) throws IOException {
+	public String authenticateUser(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException {
 		String user = getAuthenticatedUser(req, resp, properties);
 		if (user == null) {
 			setNotAuthenticated(req, resp, properties);
@@ -51,8 +50,7 @@ public class FormAuthenticationService implements IAuthenticationService {
 	}
 
 	@Override
-	public String getAuthenticatedUser(HttpServletRequest req,
-			HttpServletResponse resp, Properties properties) throws IOException {
+	public String getAuthenticatedUser(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException {
 		String username = FormAuthHelper.getAuthenticatedUser(req);
 		if (username != null) {
 			return username;
@@ -73,8 +71,7 @@ public class FormAuthenticationService implements IAuthenticationService {
 		return HttpServletRequest.FORM_AUTH;
 	}
 
-	private void setNotAuthenticated(HttpServletRequest req,
-			HttpServletResponse resp, Properties properties) throws IOException {
+	private void setNotAuthenticated(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException {
 		if (properties == null) {
 			properties = new Properties();
 		}
@@ -82,9 +79,8 @@ public class FormAuthenticationService implements IAuthenticationService {
 		resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 		String putStyle = properties.getProperty(CSS_LINK_PROPERTY) == null ? "" //$NON-NLS-1$
 				: "&styles=" + properties.getProperty(CSS_LINK_PROPERTY); //$NON-NLS-1$
-		RequestDispatcher rd = req
-				.getRequestDispatcher("/loginform/login?redirect=" //$NON-NLS-1$
-						+ req.getRequestURI() + putStyle);
+		RequestDispatcher rd = req.getRequestDispatcher("/loginform/login?redirect=" //$NON-NLS-1$
+				+ req.getRequestURI() + putStyle);
 		try {
 			rd.forward(req, resp);
 		} catch (ServletException e) {
@@ -99,35 +95,19 @@ public class FormAuthenticationService implements IAuthenticationService {
 		try {
 
 			httpService.registerServlet("/auth2", new AuthInitServlet( //$NON-NLS-1$
-					properties), null, new BundleEntryHttpContext(Activator
-					.getBundleContext().getBundle()));
+					properties), null, new BundleEntryHttpContext(Activator.getBundleContext().getBundle()));
 		} catch (Exception e) {
-			LogHelper.log(new Status(IStatus.WARNING,
-					Activator.PI_FORM_SERVLETS,
-					"Reconfiguring FormAutneticationService"));
+			LogHelper.log(new Status(IStatus.WARNING, Activator.PI_FORM_SERVLETS, "Reconfiguring FormAutneticationService"));
 
 			try {
 				httpService.unregister("/auth2");
-				httpService.registerServlet("/auth2", new AuthInitServlet(
-						properties), null, new BundleEntryHttpContext(Activator
-						.getBundleContext().getBundle()));
+				httpService.registerServlet("/auth2", new AuthInitServlet(properties), null, new BundleEntryHttpContext(Activator.getBundleContext().getBundle()));
 			} catch (ServletException e1) {
-				LogHelper.log(new Status(IStatus.ERROR,
-						Activator.PI_FORM_SERVLETS, 1,
-						"An error occured when registering servlets", e1));
+				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORM_SERVLETS, 1, "An error occured when registering servlets", e1));
 			} catch (NamespaceException e1) {
-				LogHelper.log(new Status(IStatus.ERROR,
-						Activator.PI_FORM_SERVLETS, 1,
-						"A namespace error occured when registering servlets",
-						e1));
+				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORM_SERVLETS, 1, "A namespace error occured when registering servlets", e1));
 			} catch (IllegalArgumentException e1) {
-				LogHelper
-						.log(new Status(
-								IStatus.ERROR,
-								Activator.PI_FORM_SERVLETS,
-								1,
-								"FormAuthenticationService could not be configured",
-								e1));
+				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORM_SERVLETS, 1, "FormAuthenticationService could not be configured", e1));
 			}
 
 		}
@@ -138,8 +118,7 @@ public class FormAuthenticationService implements IAuthenticationService {
 	public/* synchronized? */void setHttpService(HttpService hs) {
 		httpService = hs;
 
-		HttpContext httpContext = new BundleEntryHttpContext(Activator
-				.getBundleContext().getBundle());
+		HttpContext httpContext = new BundleEntryHttpContext(Activator.getBundleContext().getBundle());
 
 		try {
 			httpService.registerServlet("/login", new LoginServlet(), null, //$NON-NLS-1$
@@ -151,16 +130,9 @@ public class FormAuthenticationService implements IAuthenticationService {
 			httpService.registerResources("/loginstatic", "/static", //$NON-NLS-1$ //$NON-NLS-2$
 					httpContext);
 		} catch (ServletException e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORM_SERVLETS,
-					1, "An error occured when registering servlets", e));
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORM_SERVLETS, 1, "An error occured when registering servlets", e));
 		} catch (NamespaceException e) {
-			LogHelper
-					.log(new Status(
-							IStatus.ERROR,
-							Activator.PI_FORM_SERVLETS,
-							1,
-							"A namespace error occured when registering servlets",
-							e));
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORM_SERVLETS, 1, "A namespace error occured when registering servlets", e));
 		}
 	}
 

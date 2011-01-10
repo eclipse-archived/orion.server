@@ -15,6 +15,16 @@ img.closeLoginWindow:hover {
 	opacity: 1;
 }
 
+#errorWin {
+	backgroud: #bcd5f0;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#FFFFFF', endColorstr='#bcd5f0'); /* for IE */
+	background: -webkit-gradient(linear, left top, left bottom, from(#FFF), to(#bcd5f0)); /* for webkit browsers */
+	background: -moz-linear-gradient(top, #FFF, #bcd5f0); /* for firefox 3.6+ */
+	border: 1px solid #8ba0bd;
+	margin: 10px;
+	max-width: 300px;
+}
+
 #loginError {
 	background: url("/openidstatic/images/error_tsk.gif") no-repeat left
 		center;
@@ -22,7 +32,8 @@ img.closeLoginWindow:hover {
 	list-style: none;
 	padding-left: 20px;
 	line-height: 20px;
-	font-style: italic;
+	font-size: 0.8em;
+	display: block;
 }
 
 #loginWindowMask {

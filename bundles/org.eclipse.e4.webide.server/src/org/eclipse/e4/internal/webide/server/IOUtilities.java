@@ -33,16 +33,17 @@ public class IOUtilities {
 				safeClose(outputStream);
 		}
 	}
-    public static void pipe(Reader input, Writer output) throws IOException {
+
+	public static void pipe(Reader input, Writer output) throws IOException {
 		pipe(input, output, false, false);
 	}
 
 	public static void pipe(Reader reader, Writer writer, boolean closeReader, boolean closeWriter) throws IOException {
 		try {
-		char[] buffer = new char[4096];
-		int read = 0;
-		while ((read = reader.read(buffer)) != -1)
-			writer.write(buffer, 0, read);
+			char[] buffer = new char[4096];
+			int read = 0;
+			while ((read = reader.read(buffer)) != -1)
+				writer.write(buffer, 0, read);
 		} finally {
 			if (closeReader)
 				safeClose(reader);
@@ -66,10 +67,10 @@ public class IOUtilities {
 	}
 
 	public static String toString(InputStream is) throws IOException {
-		if (is==null)
+		if (is == null)
 			return ""; //$NON-NLS-1$
 		StringWriter writer = new StringWriter();
 		pipe(new InputStreamReader(is, "UTF-8"), writer, true, false); //$NON-NLS-1$
 		return writer.toString();
-    }
+	}
 }

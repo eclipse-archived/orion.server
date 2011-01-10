@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.e4.webide.server.authentication.form.core.FormAuthHelper;
+import org.eclipse.e4.webide.server.resources.Base64;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.framework.Version;
@@ -32,17 +33,14 @@ public class LoginServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
 	@Override
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		if (FormAuthHelper.getAuthenticatedUser(req) != null) {
-			FormAuthHelper.writeLoginResponse(
-					FormAuthHelper.getAuthenticatedUser(req), resp);
+			FormAuthHelper.writeLoginResponse(FormAuthHelper.getAuthenticatedUser(req), resp);
 			return;
 		}
 
 		if (FormAuthHelper.performAuthentication(req, resp)) {
-			if (req.getParameter("redirect") != null
-					&& !req.getParameter("redirect").equals(""))
+			if (req.getParameter("redirect") != null && !req.getParameter("redirect").equals(""))
 				resp.sendRedirect(req.getParameter("redirect"));
 			else {
 				resp.flushBuffer();
@@ -51,8 +49,7 @@ public class LoginServlet extends HttpServlet {
 			// redirection from
 			// FormAuthenticationService.setNotAuthenticated
 			String versionString = req.getHeader("EclipseWeb-Version"); //$NON-NLS-1$
-			Version version = versionString == null ? null : new Version(
-					versionString);
+			Version version = versionString == null ? null : new Version(versionString);
 
 			// TODO: This is a workaround for calls
 			// that does not include the WebEclipse version header
@@ -61,8 +58,7 @@ public class LoginServlet extends HttpServlet {
 			String invalidLoginError = "Invalid user or password";
 
 			if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) { //$NON-NLS-1$
-				RequestDispatcher rd = req
-						.getRequestDispatcher("/loginform?error=" + invalidLoginError); //$NON-NLS-1$
+				RequestDispatcher rd = req.getRequestDispatcher("/loginform?error=" + new String(Base64.encode(invalidLoginError.getBytes()))); //$NON-NLS-1$
 				rd.include(req, resp);
 			} else {
 				PrintWriter writer = resp.getWriter();
@@ -80,8 +76,7 @@ public class LoginServlet extends HttpServlet {
 
 	}
 
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		RequestDispatcher rd = req.getRequestDispatcher("/loginform/login");
 		rd.forward(req, resp);
 	}

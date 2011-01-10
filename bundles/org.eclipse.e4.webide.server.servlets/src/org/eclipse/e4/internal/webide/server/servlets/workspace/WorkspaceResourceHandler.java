@@ -99,12 +99,15 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 			//use the content location specified by the user
 			try {
 				contentURI = Util.getURIWithAuthority(new URI(location), authority);//new URI(location);
-				if (init) {
-					IFileStore child = EFS.getStore(contentURI);
-					child.mkdir(EFS.NONE, null);
-				}
+				EFS.getFileSystem(contentURI.getScheme());//check if we support this scheme
 			} catch (URISyntaxException e) {
-				contentURI = new File(location).toURI();
+				contentURI = new File(location).toURI(); //if this is not a valid URI try to parse it as file path
+			} catch (CoreException e) {
+				contentURI = new File(location).toURI();//if we don't support given scheme try to parse as location as a file path
+			}
+			if (init) {
+				IFileStore child = EFS.getStore(contentURI);
+				child.mkdir(EFS.NONE, null);
 			}
 
 			//TODO ensure the location is somewhere reasonable
@@ -212,7 +215,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, msg, null));
 		}
 		try {
-			computeProjectLocation(project, content, request.getRemoteUser(), getInit(request));
+			computeProjectLocation(project, content, request.getRemoteUser(), getInit(toAdd));
 		} catch (CoreException e) {
 			//we are unable to write in the platform location!
 			String msg = NLS.bind("Server content location could not be written: {0}", Activator.getDefault().getRootLocationURI());
@@ -244,17 +247,15 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		// add user rights for the project
 		try {
 			AuthorizationService.addUserRight(request.getRemoteUser(), URI.create(result.getString(ProtocolConstants.KEY_LOCATION)).getPath());
-		} catch (BackingStoreException e) {
-			String msg = "Error persisting user rights";
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+		} catch (CoreException e) {
+			statusHandler.handleRequest(request, response, e.getStatus());
 		}
 
 		return true;
 	}
 
-	private boolean getInit(HttpServletRequest request) {
-		// TODO: Gosia
-		return true;
+	private boolean getInit(JSONObject toAdd) {
+		return Boolean.valueOf(toAdd.optBoolean(ProtocolConstants.KEY_CREATE_IF_DOEASNT_EXIST));
 	}
 
 	private boolean isAllowedLinkDestination(String content) {

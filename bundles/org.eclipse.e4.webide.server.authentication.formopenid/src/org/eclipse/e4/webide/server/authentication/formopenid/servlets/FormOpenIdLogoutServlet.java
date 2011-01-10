@@ -22,17 +22,13 @@ import org.eclipse.e4.webide.server.openid.core.OpenIdHelper;
 
 public class FormOpenIdLogoutServlet extends HttpServlet {
 
-	
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1143015041529139868L;
 
-
-
 	@Override
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		FormAuthHelper.performLogout(req);
 		OpenIdHelper.performLogout(req);
 	}

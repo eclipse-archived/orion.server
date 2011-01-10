@@ -62,9 +62,7 @@ public class OpenidConsumer {
 	}
 
 	// --- placing the authentication request ---
-	public String authRequest(String userSuppliedString,
-			HttpServletRequest httpReq, HttpServletResponse httpResp)
-			throws CoreException {
+	public String authRequest(String userSuppliedString, HttpServletRequest httpReq, HttpServletResponse httpResp) throws CoreException {
 		AuthRequest authReq = null;
 
 		// --- Forward proxy setup (only if needed) ---
@@ -78,9 +76,7 @@ public class OpenidConsumer {
 		try {
 			discoveries = manager.discover(userSuppliedString);
 		} catch (DiscoveryException e) {
-			throw new CoreException(new Status(IStatus.ERROR,
-					Activator.PI_OPENID_CORE, 1, "Cound not discover: "
-							+ userSuppliedString, e));
+			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_OPENID_CORE, 1, "Cound not discover: " + userSuppliedString, e));
 		}
 
 		// attempt to associate with the OpenID provider
@@ -94,10 +90,7 @@ public class OpenidConsumer {
 		try {
 			authReq = manager.authenticate(discovered, returnToUrl);
 		} catch (Exception e) {
-			throw new CoreException(new Status(IStatus.ERROR,
-					Activator.PI_OPENID_CORE, 1,
-					"An error occured when authenticating request for "
-							+ userSuppliedString, e));
+			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_OPENID_CORE, 1, "An error occured when authenticating request for " + userSuppliedString, e));
 		}
 
 		// redirect location in the OpenID popup window
@@ -105,10 +98,7 @@ public class OpenidConsumer {
 			httpResp.sendRedirect(authReq.getDestinationUrl(true));
 			httpResp.flushBuffer();
 		} catch (IOException e) {
-			throw new CoreException(new Status(IStatus.ERROR,
-					Activator.PI_OPENID_CORE, 1,
-					"An error occured when trying to redirect to "
-							+ authReq.getDestinationUrl(true), e));
+			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_OPENID_CORE, 1, "An error occured when trying to redirect to " + authReq.getDestinationUrl(true), e));
 		}
 
 		return null;
@@ -119,12 +109,10 @@ public class OpenidConsumer {
 		try {
 			// extract the parameters from the authentication response
 			// (which comes in as a HTTP request from the OpenID provider)
-			ParameterList response = new ParameterList(
-					httpReq.getParameterMap());
+			ParameterList response = new ParameterList(httpReq.getParameterMap());
 
 			// retrieve the previously stored discovery information
-			DiscoveryInformation discovered = (DiscoveryInformation) httpReq
-					.getSession().getAttribute(OpenIdHelper.OPENID_DISC);
+			DiscoveryInformation discovered = (DiscoveryInformation) httpReq.getSession().getAttribute(OpenIdHelper.OPENID_DISC);
 
 			// extract the receiving URL from the HTTP request
 			StringBuffer receivingURL = httpReq.getRequestURL();
@@ -134,19 +122,16 @@ public class OpenidConsumer {
 
 			// verify the response; ConsumerManager needs to be the same
 			// (static) instance used to place the authentication request
-			VerificationResult verification = manager.verify(
-					receivingURL.toString(), response, discovered);
+			VerificationResult verification = manager.verify(receivingURL.toString(), response, discovered);
 
 			// examine the verification result and extract the verified
 			// identifier
 			Identifier verified = verification.getVerifiedId();
 			if (verified != null) {
-				AuthSuccess authSuccess = (AuthSuccess) verification
-						.getAuthResponse();
+				AuthSuccess authSuccess = (AuthSuccess) verification.getAuthResponse();
 
 				HttpSession session = httpReq.getSession(true);
-				session.setAttribute(OpenIdHelper.OPENID_IDENTIFIER,
-						authSuccess.getIdentity());
+				session.setAttribute(OpenIdHelper.OPENID_IDENTIFIER, authSuccess.getIdentity());
 
 				return verified; // success
 			}
