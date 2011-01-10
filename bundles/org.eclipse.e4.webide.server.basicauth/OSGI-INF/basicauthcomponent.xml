@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" enabled="true" name="org.eclipse.e4.webide.server.basicauth.ds">
+   <implementation class="org.eclipse.e4.webide.server.basicauth.BasicAuthenticationService"/>
+   <service>
+      <provide interface="org.eclipse.e4.webide.server.configurator.authentication.IAuthenticationService"/>
+   </service>
+   <property name="Auth-name" type="String" value="Basic"/>
+</scr:component>

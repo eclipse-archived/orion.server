@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Doc
+Bundle-SymbolicName: org.eclipse.e4.webide.doc;singleton:=true
+Bundle-Version: 1.0.0.qualifier

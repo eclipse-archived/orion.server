@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         id="preferences"
+         name="Eclipse Web Local Preferences"
+         point="org.eclipse.equinox.preferences.preferences">
+      <scope
+            class="org.eclipse.e4.webide.server.users.EclipseWebPreferencesLocal"
+            name="eclipseweb">
+      </scope>
+   </extension>
+
+</plugin>

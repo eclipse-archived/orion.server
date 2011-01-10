@@ -1,0 +1,36 @@
+<div id="loginWindow" class="loginWindow">
+<p id="closeLoginWindow" class="closeLoginWindow" style="visibility: hidden;">
+<a title="Close" href="javascript:closeLoginWindow()" class="closeLoginWindow">
+	<img class="closeLoginWindow"	src="/loginstatic/images/close-tab.gif">
+</a></p>
+<!--ERROR-->
+<h2 class="loginWindow">Please sign in:</h2>
+<table class="loginWindow">
+	<tr>
+		<td class="loginWindow"><label class="loginWindow" id=loginLabel
+			for=login>Name:</label></td>
+		<td class="loginWindow"><input class="loginWindow" name=login
+			id=login tabindex=1><br>
+		</td>
+	</tr>
+	<tr>
+		<td class="loginWindow"><label class="loginWindow"
+			id=passwordLabel for=password>Password:</label></td>
+		<td class="loginWindow"><input class="loginWindow" name=password
+			type=password id=password tabindex=2 onkeypress="var event = dojo.isIE ? window.event : dojo.isFF ? event : evt; if (event.keyCode === dojo.keys.ENTER) { confirmLogin(); } else {return true;}"><br>
+		</td>
+	</tr>
+	<tr>
+	<td class="loginWindow" colspan=2>
+		<!--NEW_ACCOUNT_LINK-->
+	</td>
+	</tr>
+	<tr>
+		<td class="loginWindow loginWindowButtonTd" colspan=2>
+		<button class="loginWindow" onClick=confirmLogin()
+			dojoType=dijit.form.Button type=submit value=OK tabindex=3>Sign in</button>
+		</td>
+	</tr>
+</table>
+</div>
+<div id="loginWindowMask"></div>  

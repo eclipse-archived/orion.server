@@ -1,0 +1,7 @@
+# can map a single word to one or more synonyms
+aaa => aaaa
+bbb => bbbb1 bbbb2
+
+# can mark a group of words as synonyms of each other
+GB,gigabyte,gigabytes
+MB,megabyte,megabytes

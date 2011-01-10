@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?NLS TYPE="org.eclipse.help.toc"?>
+<!-- ========================== -->
+<!-- Define topics for the Reference -->
+<!-- ========================== -->
+<toc label="Reference">
+
+	<topic label="REST API" href="reference/restapi/index.html">
+		<topic label="Search API" href="reference/restapi/search.html"></topic>
+	</topic>
+
+</toc>
