@@ -5,4 +5,5 @@
       <provide interface="org.eclipse.e4.webide.server.authentication.IAuthenticationService"/>
    </service>
    <property name="Auth-name" type="String" value="Basic"/>
+     <reference bind="setUserAdminRegistry" cardinality="1..1" interface="org.eclipse.e4.webide.server.useradmin.IEclipseWebUserAdminRegistry" name="IEclipseWebUserAdminRegistry" policy="dynamic" unbind="unsetUserAdminRegistry"/>
 </scr:component>

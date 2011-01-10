@@ -11,6 +11,9 @@
 package org.eclipse.e4.webide.server.authentication.form.core;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -20,7 +23,8 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.e4.webide.server.LogHelper;
 import org.eclipse.e4.webide.server.useradmin.EclipseWebUserAdmin;
-import org.eclipse.e4.webide.server.useradmin.UserAdminActivator;
+import org.eclipse.e4.webide.server.useradmin.IEclipseWebUserAdminRegistry;
+import org.eclipse.e4.webide.server.useradmin.UnsupportedUserStoreException;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.service.useradmin.User;
@@ -31,6 +35,8 @@ import org.osgi.service.useradmin.UserAdmin;
  * 
  */
 public class FormAuthHelper {
+
+	private static IEclipseWebUserAdminRegistry userAdminRegistry;
 
 	/**
 	 * Returns the name of the user stored in session.
@@ -78,8 +84,14 @@ public class FormAuthHelper {
 	 * @throws IOException
 	 */
 	public static boolean performAuthentication(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		User user = getUserForCredentials((String) req.getParameter("login"), //$NON-NLS-1$
-				req.getParameter("password")); //$NON-NLS-1$
+		User user;
+		try {
+			user = getUserForCredentials((String) req.getParameter("login"), //$NON-NLS-1$
+					req.getParameter("password"), req.getParameter("store"));
+		} catch (UnsupportedUserStoreException e) {
+			LogHelper.log(e);
+			return false;
+		} //$NON-NLS-1$
 		if (user != null) {
 			req.getSession().setAttribute("user", req.getParameter("login")); //$NON-NLS-1$//$NON-NLS-2$
 			return true;
@@ -88,8 +100,8 @@ public class FormAuthHelper {
 		}
 	}
 
-	private static User getUserForCredentials(String login, String password) {
-		UserAdmin userAdmin = UserAdminActivator.getDefault().getUserAdminService();
+	private static User getUserForCredentials(String login, String password, String userStoreId) throws UnsupportedUserStoreException {
+		UserAdmin userAdmin = (userStoreId == null) ? userAdminRegistry.getUserStore() : userAdminRegistry.getUserStore(userStoreId);
 		User user = userAdmin.getUser("login", login); //$NON-NLS-1$
 		if (user != null && user.hasCredential("password", password)) { //$NON-NLS-1$
 			return user;
@@ -104,11 +116,45 @@ public class FormAuthHelper {
 		}
 	}
 
+	public static boolean isSupportedUserStore(String userStoreId) {
+		return getSupportedUserStores().contains(userStoreId);
+	}
+
+	/**
+	 * 
+	 * @param userStoreId if <code>null</code> checks for default user store
+	 * @return
+	 * @throws UnsupportedUserStoreException
+	 */
+	public static boolean canAddUsers(String userStoreId) throws UnsupportedUserStoreException {
+		return userStoreId == null ? userAdminRegistry.getUserStore().canCreateUsers() : userAdminRegistry.getUserStore(userStoreId).canCreateUsers();
+	}
+
+	public static Collection<String> getSupportedUserStores() {
+		List<String> list = new ArrayList<String>(userAdminRegistry.getSupportedUserStores());
+		list.remove(userAdminRegistry.getUserStore().getStoreName());
+		list.add(0, userAdminRegistry.getUserStore().getStoreName());
+		return list;
+	}
+
+	/**
+	 * Uses default user store
+	 * @return
+	 */
 	public static boolean canAddUsers() {
-		if (UserAdminActivator.getDefault().getUserAdminService() instanceof EclipseWebUserAdmin) {
-			return ((EclipseWebUserAdmin) UserAdminActivator.getDefault().getUserAdminService()).canCreateUsers();
-		}
-		return false;
+		return userAdminRegistry.getUserStore().canCreateUsers();
+	}
+
+	public static EclipseWebUserAdmin getDefaultUserAdmin() {
+		return userAdminRegistry.getUserStore();
+	}
+
+	public void setUserAdminRegistry(IEclipseWebUserAdminRegistry userAdminStore) {
+		FormAuthHelper.userAdminRegistry = userAdminStore;
+	}
+
+	public void unsetUserAdminRegistry(IEclipseWebUserAdminRegistry userAdminStore) {
+		FormAuthHelper.userAdminRegistry = null;
 	}
 
 }

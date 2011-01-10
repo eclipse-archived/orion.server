@@ -21,6 +21,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.eclipse.e4.webide.server.useradmin.EclipseWebUserAdminRegistry;
 import org.eclipse.e4.webide.server.useradmin.UserAdminActivator;
 import org.osgi.service.useradmin.Authorization;
 import org.osgi.service.useradmin.UserAdmin;
@@ -52,7 +53,8 @@ public class AdminFilter implements Filter {
 
 		// TODO: We need a better way to get the authentication service that is configured
 		String user = UserAdminActivator.getDefault().getAuthenticationService().authenticateUser(httpRequest, httpResponse, null);
-		UserAdmin userAdmin = UserAdminActivator.getDefault().getUserAdminService();
+		UserAdmin userAdmin;
+		userAdmin = EclipseWebUserAdminRegistry.getDefault().getUserStore();
 		Authorization authorization = userAdmin.getAuthorization(userAdmin.getUser("login", user));
 
 		if (authorization.hasRole(ADMIN_ROLE)) {

@@ -16,7 +16,6 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.Filter;
 import org.osgi.framework.FrameworkUtil;
-import org.osgi.service.useradmin.UserAdmin;
 import org.osgi.util.tracker.ServiceTracker;
 
 public class UserAdminActivator implements BundleActivator {
@@ -37,7 +36,6 @@ public class UserAdminActivator implements BundleActivator {
 		return singleton;
 	}
 
-	private ServiceTracker<UserAdmin, UserAdmin> userAdminServiceTracker;
 	private ServiceTracker<IAuthenticationService, IAuthenticationService> authServiceTracker;
 
 	/*
@@ -50,9 +48,6 @@ public class UserAdminActivator implements BundleActivator {
 	public void start(BundleContext bundleContext) throws Exception {
 		singleton = this;
 		this.bundleContext = bundleContext;
-
-		userAdminServiceTracker = new ServiceTracker<UserAdmin, UserAdmin>(bundleContext, UserAdmin.class, null);
-		userAdminServiceTracker.open();
 
 		Filter authFilter = FrameworkUtil.createFilter("(&(" + Constants.OBJECTCLASS + "=" + IAuthenticationService.class.getName() + ")(configured=true))");
 
@@ -72,15 +67,7 @@ public class UserAdminActivator implements BundleActivator {
 			authServiceTracker = null;
 		}
 
-		if (userAdminServiceTracker != null) {
-			userAdminServiceTracker.close();
-			userAdminServiceTracker = null;
-		}
 		this.bundleContext = null;
-	}
-
-	public UserAdmin getUserAdminService() {
-		return userAdminServiceTracker.getService();
 	}
 
 	public IAuthenticationService getAuthenticationService() {

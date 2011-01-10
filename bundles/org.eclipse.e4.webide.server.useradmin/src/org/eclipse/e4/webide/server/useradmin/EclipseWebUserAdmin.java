@@ -33,6 +33,8 @@ public abstract class EclipseWebUserAdmin implements UserAdmin {
 	public org.eclipse.e4.webide.server.useradmin.User createUser(User newUser) {
 		throw new UnsupportedOperationException();
 	}
+	
+	public abstract String getStoreName();
 
 	/**
 	 * Indicates if users' store used by useradmin allows to create new users.

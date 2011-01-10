@@ -36,6 +36,12 @@ import org.osgi.service.http.NamespaceException;
 public class FormOpenIdAuthenticationService implements IAuthenticationService {
 
 	private HttpService httpService;
+	private Properties defaultAuthenticationProperties;
+	public static final String OPENIDS_PROPERTY = "openids"; //$NON-NLS-1$
+
+	public Properties getDefaultAuthenticationProperties() {
+		return defaultAuthenticationProperties;
+	}
 
 	@Override
 	public String authenticateUser(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException {
@@ -60,6 +66,7 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 	}
 
 	public void configure(Properties properties) {
+		this.defaultAuthenticationProperties = properties;
 		try {
 			httpService.registerServlet("/auth2", new AuthInitServlet( //$NON-NLS-1$
 					properties), null, new BundleEntryHttpContext(Activator.getBundleContext().getBundle()));
@@ -87,6 +94,9 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 		resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 		RequestDispatcher rd = req.getRequestDispatcher("/mixlogin/login?redirect=" //$NON-NLS-1$
 				+ req.getRequestURI());
+		if (properties != null) {
+			req.setAttribute(OPENIDS_PROPERTY, properties.get(OPENIDS_PROPERTY));
+		}
 		try {
 			rd.forward(req, resp);
 		} catch (ServletException e) {
@@ -103,9 +113,10 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 
 		try {
 			httpService.registerServlet("/mixlogin", //$NON-NLS-1$
-					new LoginFormServlet(), null, httpContext);
+					new LoginFormServlet(this), null, httpContext);
 			httpService.registerResources("/mixloginstatic", "/static", //$NON-NLS-1$ //$NON-NLS-2$
 					httpContext);
+			httpService.registerResources("/openids", "/openids", httpContext);
 			httpService.registerServlet("/login", new FormOpenIdLoginServlet(this), null, httpContext); //$NON-NLS-1$
 			httpService.registerServlet("/logout", new FormOpenIdLogoutServlet(), null, httpContext); //$NON-NLS-1$
 		} catch (ServletException e) {
@@ -122,6 +133,7 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 			httpService.unregister("/mixloginstatic"); //$NON-NLS-1$
 			httpService.unregister("/login"); //$NON-NLS-1$
 			httpService.unregister("/logout"); //$NON-NLS-1$
+			httpService.unregister("/openids"); //$NON-NLS-1$
 			httpService = null;
 		}
 	}

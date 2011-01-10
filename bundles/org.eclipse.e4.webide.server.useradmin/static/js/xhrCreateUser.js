@@ -23,7 +23,8 @@ function closeCreateUserForm() {
 	dojo.byId('createUserErrorsList').innerHTML = ''
 }
 
-var userCreatedNotifier = function(userLogin, userPassword) {};
+var userCreatedNotifier = function(userLogin, userPassword, userStore) {};
+var userStore;
 
 function confirmCreateUser() {
 	var userLogin = dojo.byId("loginCreateUser").value;
@@ -36,12 +37,13 @@ function confirmCreateUser() {
 		content : {
 			login : userLogin,
 			password : userPassword,
+			store: userStore,
 			passwordConf : dojo.byId("passwordConfCreateUser").value
 		},
 		handleAs : "text",
 		timeout : 15000,
 		load : function(response, ioArgs) {
-			userCreatedNotifier(userLogin, userPassword);
+			userCreatedNotifier(userLogin, userPassword, userStore);
 			dojo.byId('createUserForm').style.visibility = 'hidden';
 			dojo.byId('createUserFormMask').style.visibility = 'hidden';
 			dojo.byId('createUserErrorsList').innerHTML = '';

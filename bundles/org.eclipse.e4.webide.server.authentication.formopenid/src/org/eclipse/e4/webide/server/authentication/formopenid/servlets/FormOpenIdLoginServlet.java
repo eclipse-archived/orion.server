@@ -12,7 +12,6 @@ package org.eclipse.e4.webide.server.authentication.formopenid.servlets;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Properties;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -102,7 +101,7 @@ public class FormOpenIdLoginServlet extends EclipseWebServlet {
 		}
 
 		String user;
-		if ((user = authenticationService.getAuthenticatedUser(req, resp, new Properties())) != null) {
+		if ((user = authenticationService.getAuthenticatedUser(req, resp, authenticationService.getDefaultAuthenticationProperties())) != null) {
 			resp.setStatus(HttpServletResponse.SC_OK);
 			try {
 				JSONObject array = new JSONObject();

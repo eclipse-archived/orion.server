@@ -19,6 +19,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.eclipse.e4.webide.server.authentication.formopenid.FormOpenIdAuthenticationService;
+
 public class AuthInitServlet extends HttpServlet {
 
 	private static final long serialVersionUID = 1L;
@@ -44,6 +46,7 @@ public class AuthInitServlet extends HttpServlet {
 		resp.setStatus(HttpServletResponse.SC_OK);
 		String putStyle = properties.getProperty(CSS_LINK_PROPERTY) == null ? "" //$NON-NLS-1$
 				: "&styles=" + properties.getProperty(CSS_LINK_PROPERTY); //$NON-NLS-1$
+		req.setAttribute(FormOpenIdAuthenticationService.OPENIDS_PROPERTY, properties.get(FormOpenIdAuthenticationService.OPENIDS_PROPERTY));
 		RequestDispatcher rd = req.getRequestDispatcher("/mixlogin/checkuser?redirect=" //$NON-NLS-1$
 				+ req.getRequestURI() + putStyle);
 		try {

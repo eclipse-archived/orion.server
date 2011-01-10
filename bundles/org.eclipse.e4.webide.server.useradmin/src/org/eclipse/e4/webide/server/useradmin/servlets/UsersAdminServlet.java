@@ -29,6 +29,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.e4.webide.server.servlets.EclipseWebServlet;
 import org.eclipse.e4.webide.server.useradmin.EclipseWebUserAdmin;
+import org.eclipse.e4.webide.server.useradmin.EclipseWebUserAdminRegistry;
+import org.eclipse.e4.webide.server.useradmin.UnsupportedUserStoreException;
 import org.eclipse.e4.webide.server.useradmin.User;
 import org.eclipse.e4.webide.server.useradmin.UserAdminActivator;
 import org.json.JSONException;
@@ -87,8 +89,7 @@ public class UsersAdminServlet extends EclipseWebServlet {
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		String pathInfo = req.getPathInfo();
 		if (pathInfo == null || "/".equals(pathInfo)) {
-
-			String createError = createUser(req.getParameter("login"), req.getParameter("name"), req.getParameter("email"), req.getParameter("workspace"), req.getParameter("password"), req.getParameter("roles"));
+			String createError = createUser(req.getParameter("store"), req.getParameter("login"), req.getParameter("name"), req.getParameter("email"), req.getParameter("workspace"), req.getParameter("password"), req.getParameter("roles"));
 
 			if (createError != null) {
 				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, createError);
@@ -105,7 +106,7 @@ public class UsersAdminServlet extends EclipseWebServlet {
 				displayCreateUserForm(req, resp, errors);
 				return;
 			}
-			String createError = createUser(req.getParameter("login"), req.getParameter("name"), req.getParameter("email"), req.getParameter("workspace"), req.getParameter("password"), req.getParameter("roles"));
+			String createError = createUser(req.getParameter("store"), req.getParameter("login"), req.getParameter("name"), req.getParameter("email"), req.getParameter("workspace"), req.getParameter("password"), req.getParameter("roles"));
 			if (createError != null) {
 				List<String> errors = new ArrayList<String>();
 				errors.add(createError);
@@ -122,17 +123,24 @@ public class UsersAdminServlet extends EclipseWebServlet {
 					// Redirecting to login page only for plain calls
 				}
 			} else {
-				RequestDispatcher rd = getServletContext().getRequestDispatcher("/login?redirect=" + req.getParameter("redirect"));
+				RequestDispatcher rd = getServletContext().getRequestDispatcher("/login/form?redirect=" + req.getParameter("redirect"));
 				rd.forward(req, resp);
+				return;
 			}
 		}
 	}
 
-	private String createUser(String login, String name, String email, String workspace, String password, String roles) {
+	private String createUser(String userStore, String login, String name, String email, String workspace, String password, String roles) {
 		if (login == null || login.length() == 0) {
 			return "User login is required";
 		}
-		if (getUserAdmin().getUser("login", login) != null) {
+		EclipseWebUserAdmin userAdmin;
+		try {
+			userAdmin = (userStore == null || "".equals(userStore)) ? getUserAdmin() : getUserAdmin(userStore);
+		} catch (UnsupportedUserStoreException e) {
+			return "User store is not available: " + userStore;
+		}
+		if (userAdmin.getUser("login", login) != null) {
 			return "User " + login + " already exists";
 		}
 		User newUser = new User(login, name == null ? "" : name, password == null ? "" : password);
@@ -140,10 +148,10 @@ public class UsersAdminServlet extends EclipseWebServlet {
 			StringTokenizer tokenizer = new StringTokenizer(roles, ",");
 			while (tokenizer.hasMoreTokens()) {
 				String role = tokenizer.nextToken();
-				newUser.addRole(getUserAdmin().getRole(role));
+				newUser.addRole(userAdmin.getRole(role));
 			}
 		}
-		if (getUserAdmin().createUser(newUser) == null) {
+		if (userAdmin.createUser(newUser) == null) {
 			return "User could not be created";
 		}
 		return null;
@@ -173,7 +181,14 @@ public class UsersAdminServlet extends EclipseWebServlet {
 
 		} else if (pathString.startsWith("/")) {
 			String login = pathString.substring(1);
-			User user = (User) getUserAdmin().getUser("login", login);
+			EclipseWebUserAdmin userAdmin;
+			try {
+				userAdmin = req.getParameter("store") == null ? getUserAdmin() : getUserAdmin(req.getParameter("store"));
+			} catch (UnsupportedUserStoreException e) {
+				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User store not be found: " + req.getParameter("store"));
+				return;
+			}
+			User user = (User) userAdmin.getUser("login", login);
 			if (user == null) {
 				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User could not be found");
 				return;
@@ -194,11 +209,11 @@ public class UsersAdminServlet extends EclipseWebServlet {
 					StringTokenizer tokenizer = new StringTokenizer(roles, ",");
 					while (tokenizer.hasMoreTokens()) {
 						String role = tokenizer.nextToken();
-						user.addRole(getUserAdmin().getRole(role));
+						user.addRole(userAdmin.getRole(role));
 					}
 				}
 			}
-			getUserAdmin().updateUser(login, user);
+			userAdmin.updateUser(login, user);
 		}
 	}
 
@@ -223,15 +238,26 @@ public class UsersAdminServlet extends EclipseWebServlet {
 			}
 		} else if (pathString.startsWith("/")) {
 			String login = pathString.substring(1);
-			if (getUserAdmin().deleteUser((User) getUserAdmin().getUser("login", login)) == false) {
+			EclipseWebUserAdmin userAdmin;
+			try {
+				userAdmin = req.getParameter("store") == null ? getUserAdmin() : getUserAdmin(req.getParameter("store"));
+			} catch (UnsupportedUserStoreException e) {
+				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User store could not be found: " + req.getParameter("store"));
+				return;
+			}
+			if (userAdmin.deleteUser((User) userAdmin.getUser("login", login)) == false) {
 				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User could not be found");
 			}
 		}
 
 	}
 
+	private EclipseWebUserAdmin getUserAdmin(String userStoreId) throws UnsupportedUserStoreException {
+		return EclipseWebUserAdminRegistry.getDefault().getUserStore(userStoreId);
+	}
+
 	private EclipseWebUserAdmin getUserAdmin() {
-		return (EclipseWebUserAdmin) UserAdminActivator.getDefault().getUserAdminService();
+		return EclipseWebUserAdminRegistry.getDefault().getUserStore();
 	}
 
 	private JSONObject formJson(User user) throws JSONException {
@@ -298,6 +324,10 @@ public class UsersAdminServlet extends EclipseWebServlet {
 			writer.print("?redirect=");
 			writer.print(req.getParameter("redirect"));
 		}
+		if (req.getParameter("store") != null && !req.getParameter("store").equals("")) {
+			writer.print("&store=");
+			writer.print(req.getParameter("store"));
+		}
 		writer.println("\">");
 
 		writer.println(addErrors(getFileContents("static/createUser.html"), errors));
@@ -324,7 +354,10 @@ public class UsersAdminServlet extends EclipseWebServlet {
 		writer.print("divf.innerHTML='");
 		writer.print(loadJSResponse(req));
 		if (req.getParameter("onUserCreated") != null && req.getParameter("onUserCreated").length() > 0) {
-			writer.print("userCreatedNotifier=" + req.getParameter("onUserCreated"));
+			writer.println("userCreatedNotifier=" + req.getParameter("onUserCreated") + ";");
+		}
+		if (req.getParameter("store") != null && req.getParameter("store").length() > 0) {
+			writer.println("userStore='" + req.getParameter("store") + "';");
 		}
 		writer.flush();
 	}

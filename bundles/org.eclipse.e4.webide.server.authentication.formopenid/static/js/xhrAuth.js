@@ -8,14 +8,13 @@
  ******************************************************************************/
 
 var notify = false;
+var userStore;
 
 function login(error) {
 	notify = false;
 	dojo.byId('loginWindowMask').style.visibility = 'visible';
 	dojo.byId('loginWindow').style.visibility = 'visible';
 	dojo.byId('closeLoginWindow').style.visibility = 'inherit';
-	document.getElementById('openidLogin').style.display = 'none';
-	document.getElementById('openidLink').style.display = '';
 	setTimeout(function() {
 		dojo.byId('login').focus();
 	}, 0);
@@ -27,18 +26,17 @@ function login(error) {
 	}
 };
 
-function openidLogin() {
-	document.getElementById('openidLogin').style.display = '';
-	document.getElementById('openidLink').style.display = 'none';
-	setTimeout(function() {
-		dojo.byId('openidSite').focus();
-	}, 0);
+function setUserStore(userStoreToSet){
+	if(userStore){
+		document.getElementById('Login_'+userStore).style.color = '';
+	}
+	userStore = userStoreToSet;
+	document.getElementById('Login_'+userStore).style.color = '#444';
 }
 
-function confirmOpenId() {
+function confirmOpenId(openid) {
 	/* don't wait for the login response, notify anyway */
 	notify = true;
-	var openid = dojo.byId('openidSite').value;
 	if (openid != "" && openid != null) {
 		win = window.open("/login/openid?openid=" + encodeURIComponent(openid),
 				"openid_popup", "width=790,height=580");
@@ -63,7 +61,6 @@ function handleOpenIDResponse(openid_args, error) {
 	 */
 	if (error) {
 		login(error);
-		openidLogin();
 	} else {
 		authDone();
 		checkUser();
@@ -103,7 +100,8 @@ function confirmLogin() {
 				},
 				content : {
 					login : dojo.byId("login").value,
-					password : dojo.byId("password").value
+					password : dojo.byId("password").value,
+					store: userStore
 				},
 				handleAs : "json",
 				timeout : 15000,
@@ -147,7 +145,7 @@ function handleLoginError(error, ioArgs) {
 	return error;
 }
 
-function addUser(redirectVal) {
+function addUser(redirectVal, userStore) {
 	dojo.xhrGet({
 		url : "/users/create",
 		headers : {
@@ -156,7 +154,8 @@ function addUser(redirectVal) {
 		handleAs : "text",
 		content : {
 			redirect : redirectVal,
-			onUserCreated : "userCreated"
+			onUserCreated : "userCreated",
+			store: userStore
 		},
 		timeout : 15000,
 		load : function(javascript, ioArgs) {
@@ -170,7 +169,7 @@ function addUser(redirectVal) {
 	});
 };
 
-function userCreated(username, password) {
+function userCreated(username, password, store) {
 	notify = true;
 	dojo.xhrPost({
 		url : "/login/form",
@@ -179,7 +178,8 @@ function userCreated(username, password) {
 		},
 		content : {
 			login : username,
-			password : password
+			password : password,
+			store: store
 		},
 		handleAs : "json",
 		timeout : 15000,

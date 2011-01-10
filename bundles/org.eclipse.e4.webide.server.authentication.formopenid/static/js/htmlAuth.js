@@ -8,6 +8,8 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
+var userStore;
+
 function openidLogin() {
 	document.getElementById('openidLogin').style.display = '';
 	document.getElementById('openidLink').style.display = 'none';
@@ -16,15 +18,23 @@ function openidLogin() {
 	}, 0);
 }
 
-function confirmOpenId() {
+function confirmOpenId(openid) {
 	/* don't wait for the login response, notify anyway */
 	notify = true;
-	var openid = document.getElementById('openidSite').value;
 	if (openid != "" && openid != null) {
 		window.location = "/login/openid?openid=" + encodeURIComponent(openid)
 				+ "&redirect=" + window.location;
 	}
 };
+
+function setUserStore(userStoreToSet){
+	if(userStore){
+		document.getElementById('Login_'+userStore).style.color = '';
+	}
+	userStore = userStoreToSet;
+	document.getElementById('Login_'+userStore).style.color = '#444';
+	document.getElementById('store').value=userStore;
+}
 
 function confirmLogin() {
 	/* handled by submit form */

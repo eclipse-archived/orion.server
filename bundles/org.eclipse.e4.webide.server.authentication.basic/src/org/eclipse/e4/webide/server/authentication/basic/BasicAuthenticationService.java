@@ -22,12 +22,14 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.e4.webide.server.LogHelper;
 import org.eclipse.e4.webide.server.authentication.IAuthenticationService;
 import org.eclipse.e4.webide.server.resources.Base64;
-import org.eclipse.e4.webide.server.useradmin.UserAdminActivator;
+import org.eclipse.e4.webide.server.useradmin.IEclipseWebUserAdminRegistry;
 import org.osgi.service.useradmin.Authorization;
 import org.osgi.service.useradmin.User;
 import org.osgi.service.useradmin.UserAdmin;
 
 public class BasicAuthenticationService implements IAuthenticationService {
+
+	private IEclipseWebUserAdminRegistry userAdminRegistry;
 
 	public BasicAuthenticationService() {
 		super();
@@ -57,7 +59,7 @@ public class BasicAuthenticationService implements IAuthenticationService {
 			String password = authString.substring(authString.indexOf(':') + 1);
 			User user = getUserForCredentials(login, password);
 			if (user != null) {
-				Authorization authorization = UserAdminActivator.getDefault().getUserAdminService().getAuthorization(user);
+				Authorization authorization = userAdminRegistry.getUserStore().getAuthorization(user);
 				// TODO handle authorization
 				return login;
 			}
@@ -76,7 +78,7 @@ public class BasicAuthenticationService implements IAuthenticationService {
 	}
 
 	private User getUserForCredentials(String login, String password) {
-		UserAdmin userAdmin = UserAdminActivator.getDefault().getUserAdminService();
+		UserAdmin userAdmin = userAdminRegistry.getUserStore();
 		if (userAdmin == null) {
 			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_SERVER_BASICAUTH, "User admin server is not available"));
 			return null;
@@ -94,4 +96,11 @@ public class BasicAuthenticationService implements IAuthenticationService {
 
 	}
 
+	public void setUserAdminRegistry(IEclipseWebUserAdminRegistry userAdminStore) {
+		this.userAdminRegistry = userAdminStore;
+	}
+
+	public void unsetUserAdminRegistry(IEclipseWebUserAdminRegistry userAdminStore) {
+		this.userAdminRegistry = null;
+	}
 }

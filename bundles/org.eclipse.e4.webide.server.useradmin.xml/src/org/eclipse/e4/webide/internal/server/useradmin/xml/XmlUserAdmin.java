@@ -124,4 +124,9 @@ public class XmlUserAdmin extends EclipseWebUserAdmin {
 		return true;
 	}
 
+	@Override
+	public String getStoreName() {
+		return "EclipseWeb";
+	}
+
 }
