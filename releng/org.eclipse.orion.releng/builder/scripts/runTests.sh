@@ -1,0 +1,83 @@
+#*******************************************************************************
+# Copyright (c) 2010 IBM Corporation and others.
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v1.0
+# which accompanies this distribution, and is available at
+# http://www.eclipse.org/legal/epl-v10.html
+#
+# Contributors:
+#     IBM Corporation - initial API and implementation
+#*******************************************************************************
+#!/bin/bash
+
+writableBuildRoot=/web/builds
+
+while [ $# -gt 0 ]
+do
+	case "$1" in
+		"-id")
+			buildId="$2"; shift;;
+			
+		"-testConf")
+			testConf="$2"; shift;;
+			
+		"-root")
+			writableBuildRoot="$2"; shift;;
+			
+		"-display")
+			DISPLAY="$2"; shift;;
+			
+		"-xvfb")
+			xvfbCommand=-xvfb; shift;;
+			
+		"-javaHome")
+			javaHome="$2"; shift;;
+			
+		 *) break;;	 # terminate while loop
+	esac
+	shift
+done
+
+if [ ! -z "$xvfbCommand" ]; then
+	xvfb=`which Xvfb`
+	if [ "$?" -eq 1 ];
+	then
+	    echo "Xvfb not found."
+	    exit 1
+	fi
+	
+	$xvfb :99 -ac > /dev/null 2>&1 &	# launch virtual frame buffer into the background
+	pid_xvfb="$!"			# take the process ID
+	echo $pid_xvfb
+	exit
+fi
+ 
+testDir=$writableBuildRoot/tests/$buildId
+if [[ ! -d $testDir ]]; 
+then
+mkdir $testDir
+fi
+
+firefox=/usr/lib/firefox-3.6.12/firefox
+if [[ ! -e "$firefox" ]]; then
+firefox=`which firefox`
+fi
+
+chrome=/usr/local/chromium/chrome-wrapper
+if [[ ! -e "$chrome" ]]; then
+	chrome=/opt/google/chrome/chrome
+fi
+
+export DISPLAY=:99		# set display to use that of the xvfb
+
+#read the port number from the testConf file
+port=`head -1 $testConf | sed 's_.*:\([0-9]*\)$_\1_'`
+
+echo Running $testConf on port $port
+# run the tests
+if [ ! -z "$javaHome" ]; then
+	$javaHome/bin/java -jar $testDir/../JsTestDriver.jar --config $testConf --port $port --browser $firefox,$chrome --tests all --testOutput $testDir
+else
+	java -jar $testDir/../JsTestDriver.jar --config $testConf --port $port --browser $firefox,$chrome --tests all --testOutput $testDir
+fi
+

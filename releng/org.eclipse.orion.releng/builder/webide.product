@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?pde version="3.5"?>
+
+<product name="Eclipse Web IDE" uid="org.eclipse.webide" application="org.eclipse.e4.webide.application" version="0.0.2.qualifier" useFeatures="true" includeLaunchers="true">
+
+   <configIni use="default">
+   </configIni>
+
+   <launcherArgs>
+      <programArgs>-consoleLog -console -data serverworkspace</programArgs>
+      <vmArgs>-Dorg.eclipse.equinox.http.jetty.http.port=8080
+-Dorg.eclipse.equinox.http.jetty.autostart=false</vmArgs>
+      <vmArgsMac>-XstartOnFirstThread -Dorg.eclipse.swt.internal.carbon.smallFonts</vmArgsMac>
+   </launcherArgs>
+
+   <launcher name="eclipse">
+      <solaris/>
+      <win useIco="false">
+         <bmp/>
+      </win>
+   </launcher>
+
+   <vm>
+   </vm>
+
+   <features>
+      <feature id="org.eclipse.e4.webide.server.feature" version="0.1.0.qualifier"/>
+      <feature id="org.eclipse.e4.webide.search.feature" version="0.1.0.qualifier"/>
+      <feature id="org.eclipse.e4.webide.authentication.feature" version="0.1.0.qualifier"/>
+      <feature id="org.eclipse.e4.webide.client.feature" version="0.1.0.qualifier"/>
+   </features>
+
+   <configurations>
+      <plugin id="org.eclipse.core.runtime" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.e4.webide.server.configurator" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.e4.webide.server.search" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.e4.webide.server.servlets" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.e4.webide.server.useradmin.xml" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.equinox.common" autoStart="true" startLevel="2" />
+      <plugin id="org.eclipse.equinox.ds" autoStart="true" startLevel="2" />
+      <plugin id="org.eclipse.equinox.simpleconfigurator" autoStart="true" startLevel="1" />
+      <plugin id="org.eclipse.osgi" autoStart="true" startLevel="-1" />
+      <property name="org.eclipse.update.reconcile" value="false" />
+   </configurations>
+
+</product>
