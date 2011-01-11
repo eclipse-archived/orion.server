@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
-      id="org.eclipse.e4.webide.search.feature"
+      id="org.eclipse.orion.server.search.feature"
       label="Feature"
       version="0.1.0.qualifier">
 
@@ -17,11 +17,11 @@
    </license>
 
    <requires>
-      <import feature="org.eclipse.e4.webide.server.feature" version="0.1.0.qualifier"/>
+      <import feature="org.eclipse.orion.server.feature" version="0.1.0.qualifier"/>
    </requires>
 
    <plugin
-         id="org.eclipse.e4.webide.server.search"
+         id="org.eclipse.orion.server.search"
          download-size="0"
          install-size="0"
          version="0.0.0"

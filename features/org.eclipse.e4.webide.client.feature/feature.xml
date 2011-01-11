@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
-      id="org.eclipse.e4.webide.client.feature"
+      id="org.eclipse.orion.client.feature"
       label="Feature"
       version="0.1.0.qualifier">
 
@@ -17,19 +17,19 @@
    </license>
 
    <plugin
-         id="org.eclipse.e4.webide.doc"
+         id="org.eclipse.orion.doc.isv"
          download-size="0"
          install-size="0"
          version="0.0.0"/>
 
    <plugin
-         id="org.eclipse.e4.webide"
+         id="org.eclipse.orion.client.core"
          download-size="0"
          install-size="0"
          version="0.0.0"/>
 
    <plugin
-         id="org.eclipse.e4.webeditor"
+         id="org.eclipse.orion.client.webeditor"
          download-size="0"
          install-size="0"
          version="0.0.0"/>

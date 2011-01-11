@@ -1,18 +1,18 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Web IDE (Incubation) Server
-Bundle-SymbolicName: org.eclipse.e4.webide.server;singleton:=true
+Bundle-SymbolicName: org.eclipse.orion.server.core;singleton:=true
 Bundle-Version: 0.1.0.qualifier
 Require-Bundle: org.eclipse.core.filesystem;bundle-version="1.3.100",
  org.eclipse.equinox.common;bundle-version="3.6.0",
  org.eclipse.equinox.preferences;bundle-version="3.3.0",
  org.json;bundle-version="1.0.0"
-Bundle-Activator: org.eclipse.e4.internal.webide.server.Activator
-Export-Package: org.eclipse.e4.internal.webide.server;x-friends:="org.eclipse.e4.webide.server.servlets,org.eclipse.e4.webide.server.search,org.eclipse.e4.webide.server.configurator",
- org.eclipse.e4.webide.server,
- org.eclipse.e4.webide.server.authentication,
- org.eclipse.e4.webide.server.resources,
- org.eclipse.e4.webide.server.users
+Bundle-Activator: org.eclipse.orion.internal.server.core.Activator
+Export-Package: org.eclipse.orion.internal.server.core;x-friends:="org.eclipse.orion.server.configurator,org.eclipse.orion.server.servlets,org.eclipse.orion.server.search",
+ org.eclipse.orion.server.core,
+ org.eclipse.orion.server.core.authentication,
+ org.eclipse.orion.server.core.resources,
+ org.eclipse.orion.server.core.users
 Bundle-ActivationPolicy: lazy
 Bundle-Vendor: Eclipse.org
 Bundle-RequiredExecutionEnvironment: J2SE-1.5

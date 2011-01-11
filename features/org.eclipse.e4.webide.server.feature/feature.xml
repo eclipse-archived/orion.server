@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
-      id="org.eclipse.e4.webide.server.feature"
+      id="org.eclipse.orion.server.feature"
       label="Feature"
       version="0.1.0.qualifier">
 
@@ -17,38 +17,38 @@
    </license>
 
    <includes
-         id="org.eclipse.e4.webide.base.feature"
+         id="org.eclipse.orion.base.feature"
          version="0.0.0"/>
 
    <plugin
-         id="org.eclipse.e4.webide.server"
+         id="org.eclipse.orion.server.core"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.e4.webide.server.configurator"
+         id="org.eclipse.orion.server.configurator"
          download-size="0"
          install-size="0"
          version="0.0.0"/>
 
    <plugin
-         id="org.eclipse.e4.webide.server.servlets"
+         id="org.eclipse.orion.server.servlets"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.e4.webide.server.useradmin"
+         id="org.eclipse.orion.server.useradmin"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.e4.webide.server.useradmin.xml"
+         id="org.eclipse.orion.server.useradmin.xml"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -77,7 +77,7 @@
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.e4.webide.logback.config"
+         id="org.eclipse.orion.server.logback.config"
          download-size="0"
          install-size="0"
          version="0.0.0"

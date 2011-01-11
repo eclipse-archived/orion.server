@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+	<extension point="org.eclipse.debug.core.launchConfigurationTypes">
+		<launchConfigurationType
+			delegate="org.eclipse.orion.internal.server.launching.WebLaunchConfiguration"
+			id="org.eclipse.e4.webide.launching.WebLaunchConfiguration"
+			modes="run"
+			name="%launchConfigurationType.name">
+		</launchConfigurationType>
+	</extension>
+
+	<extension point="org.eclipse.equinox.http.registry.servlets">
+		<servlet alias="/launching" class="org.eclipse.orion.server.launching.LaunchingServlet" />
+	</extension>
+</plugin>
