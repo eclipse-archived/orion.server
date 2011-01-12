@@ -89,7 +89,7 @@
                path="/static"></resource-mapping>
       </httpcontext>
       <httpcontext
-            id="org.eclipse.orion.server.configurator.httpcontext.webeditor">
+            id="org.eclipse.orion.server.configurator.httpcontext.editor">
          <resource-mapping
                bundle="org.eclipse.orion.client.editor"
                path="/web">
@@ -131,8 +131,8 @@
             httpcontextId="org.eclipse.orion.server.configurator.httpcontext.webide">
       </resource>
       <resource
-            alias="/webeditor"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.webeditor">
+            alias="/editor"
+            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.editor">
       </resource>
       <resource
             alias="/org.dojotoolkit"
