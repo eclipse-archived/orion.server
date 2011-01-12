@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" enabled="true" name="org.eclipse.e4.webide.server.authentication.basic.ds">
-   <implementation class="org.eclipse.e4.webide.server.authentication.basic.BasicAuthenticationService"/>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" enabled="true" name="org.eclipse.orion.server.authentication.basic.ds">
+   <implementation class="org.eclipse.orion.server.authentication.basic.BasicAuthenticationService"/>
    <service>
-      <provide interface="org.eclipse.e4.webide.server.authentication.IAuthenticationService"/>
+      <provide interface="org.eclipse.orion.server.core.authentication.IAuthenticationService"/>
    </service>
    <property name="Auth-name" type="String" value="Basic"/>
-     <reference bind="setUserAdminRegistry" cardinality="1..1" interface="org.eclipse.e4.webide.server.useradmin.IEclipseWebUserAdminRegistry" name="IEclipseWebUserAdminRegistry" policy="dynamic" unbind="unsetUserAdminRegistry"/>
+     <reference bind="setUserAdminRegistry" cardinality="1..1" interface="org.eclipse.orion.server.useradmin.IEclipseWebUserAdminRegistry" name="IEclipseWebUserAdminRegistry" policy="dynamic" unbind="unsetUserAdminRegistry"/>
 </scr:component>

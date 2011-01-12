@@ -1,0 +1,154 @@
+<project name="WebIDE customTargets overrides" >
+
+	<property name="super" value="Build specific targets and properties" />
+	<import file="${eclipse.pdebuild.templates}/headless-build/customTargets.xml"/>
+	
+	<!-- Map files are here in the releng project -->
+	<target name="getMapFiles"  unless="skipMaps">
+		<!--<property name="mapsCheckoutTag" value="HEAD" />
+		<cvs cvsRoot="${mapsRepo}" package="${mapsRoot}" dest="${buildDirectory}/maps" tag="${mapsCheckoutTag}" />
+		-->
+		<antcall target="${super}.getMapFiles" />
+			
+		<antcall target="compareMapFiles"/>
+		<antcall target="tagMapFiles" />
+		<copy todir="${buildDirectory}/maps">
+			<fileset dir="${builder}/../maps" />
+		</copy>
+		
+		<replace dir="${buildDirectory}/maps/" value="${cvsuser}" token=":ext:ottawa" />
+		<replace dir="${buildDirectory}/maps/" value="${eclipsePlatformRepo}" token="ECLIPSE_PLATFORM_REPO" />
+	</target>
+	
+	<target name="tagMapFiles" if="tagMaps" >
+		<echo file="${mapTagFile}">
+lastMapTag=${mapsTagTag}
+		</echo>
+		<antcall target="${super}.tagMapFiles" />
+	</target>
+		
+	<target name="compareMapFiles" if="compareMaps">
+		<echo message="${mapTagFile}" />
+		<property file="${mapTagFile}" />
+		<property name="cvsDiff" value="${buildDirectory}/cvsDiff.txt" />
+		<cvs cvsRoot="${mapsRepo}" dest="${builder}/../maps" command="diff -w -r ${lastMapTag}" output="${cvsDiff}" />
+		<modifiedMaps mapDiffFile="${cvsDiff}" />
+	</target>
+	
+	<!-- ===================================================================== -->
+	<!-- Steps to do before fetching the build elements -->
+	<!-- ===================================================================== -->
+	<target name="preProcessRepos">
+		<p2.mirror source="${eclipsePlatformRepo}" destination="${repoBaseLocation}/launchers">
+			<slicingOptions includeOptional="false" includeNonGreedy="false" latestVersionOnly="true"/>
+			<iu id="org.eclipse.equinox.executable.feature.group" version=""/>
+		</p2.mirror>
+	</target>
+		
+	<target name="postFetch">
+		<replace file="${buildDirectory}/pluginVersions.properties" token="HEAD" value="${buildType}${timestamp}" />
+		<property name="jsdocHome" value="${base}/base/jsdoc-toolkit" />
+		<java jar="${jsdocHome}/jsrun.jar" fork="true"> 
+			<arg line="${jsdocHome}/app/run.js -s -v -a " />
+			<arg value="-t=${jsdocHome}/templates/jsdoc" />
+			<arg value="-d=${buildDirectory}/plugins/org.eclipse.e4.webide.doc/jsdoc" />
+			<arg value="${buildDirectory}/plugins/org.eclipse.e4.webide/static/js/" />
+			<arg value="${buildDirectory}/plugins/org.eclipse.e4.webeditor/web/js/" />
+		</java>
+	</target>
+	
+	<target name="preGenerate">
+		<replace file="${buildDirectory}/features/org.eclipse.pde.build.container.feature/feature.xml" token="1.0.0" value="0.2.0.qualifier" />
+	</target>
+	
+	<target name="postBuild" >
+		<antcall target="gatherLogs" />
+		<available property="webServer" file="/web/.server" />
+		<antcall target="runTests" />
+		<antcall target="launchWebIDE" />
+		<antcall target="copyResults" />
+	</target>
+	
+	<target name="copyResults" if="webServer" >
+		<property name="buildResultLocation" value="${buildDirectory}/${buildLabel}" />
+		<property name="webLocation" value="/web/http/drops/${buildLabel}" />
+		<mkdir dir="${webLocation}" />
+		<zip destFile="${webLocation}/compileLogs-${buildLabel}.zip" basedir="${buildResultLocation}/compilelogs/plugins" includes="**" />
+		<copy todir="${webLocation}" >
+			<fileset dir="${buildResultLocation}" includes="${archiveNamePrefix}*" />
+		</copy>	
+
+		<mkdir dir="${webLocation}/tests" />
+		<copy todir="${webLocation}/tests">
+			<fileset dir="/web/builds/tests/${buildLabel}" includes="**/*.xml" />
+		</copy>
+		<replace dir="${webLocation}/tests" token="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;" value="" >
+			<include name="*.xml" />
+		</replace>
+		
+		<!-- merge test results into a single xml -->
+		<echo file="${webLocation}/testResults.xml" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;${line.separator}&lt;testsuites&gt;" />
+		<concat destfile="${webLocation}/testResults.xml" append="true">
+			<fileset dir="${webLocation}/tests" includes="*.xml" />
+		</concat>
+		<echo file="${webLocation}/testResults.xml" message="&lt;/testsuites&gt;" append="true" />
+		
+		<!-- transform into html -->
+		<xslt style="${builder}/html/JUNIT.XSL" in="${webLocation}/testResults.xml" out="${webLocation}/testResults.html" />
+		<delete dir="${webLocation}/tests" />
+		<delete file="${webLocation}/testResults.xml" />
+		
+		<!-- generate the build index, guess the component version numbers -->
+		<filter token="repbuildid" value="${buildLabel}" />
+		<filter token="repmaindate" value="${TODAY}" />
+		<filter token="repbuilddate" value="${buildId}" />
+		<copy filtering="true" file="${builder}/html/build.index.html" tofile="${webLocation}/index.html" />
+
+		<copy file="${buildResultLocation}/../directory.txt" tofile="${webLocation}/directory.txt" />
+		<copy file="/web/builds/current.log" tofile="${webLocation}/buildLog-${buildLabel}.txt" />
+		
+		<copy file="${builder}/html/createIndex.php" tofile="${webLocation}/../../createIndex.php" />
+		<delete file="${webLocation}/../../index.html" />
+		<get src="http://eclbld1/web/createIndex.php" dest="${webLocation}/../../index.html" />
+	</target>
+	
+	<target name="runTests" if="runTests" >
+		<echo message="Launching Xvfb" />
+		<exec executable="bash" failonerror="false" outputproperty="xvfbPID" >
+			<arg value="${builder}/scripts/runTests.sh" />
+			<arg line="-xvfb" />
+		</exec>
+		<apply executable="bash" parallel="false">
+			<arg value="${builder}/scripts/runTests.sh" />
+			<arg line="-id ${buildLabel}" />
+			<arg value="-javaHome"/>
+			<arg value="${java.home}"/>
+			<arg value="-testConf" />
+			<fileset dir="${buildDirectory}/plugins" includes="**/jsTestDriver.conf" />
+		</apply>
+	
+		<condition property="killXvfb" >
+			<not><or>
+				<length string="${xvfbPID}" length="1" />
+				<length string="${xvfbPID}" length="2" />
+			</or></not>
+		</condition>
+		<antcall target="killXvfb" />
+	</target>
+	
+	<target name="killXvfb" if="killXvfb">
+		<exec executable="kill">
+			<arg value="${xvfbPID}" />
+		</exec>
+	</target>
+	
+	<target name="launchWebIDE" if="launchWebIDE" >
+		<exec executable="bash" >
+			<arg value="${builder}/scripts/launchWebIDE.sh" />
+			<arg value="-archive" />
+			<arg value="${buildDirectory}/${buildLabel}/${archiveNamePrefix}-linux.gtk.x86.zip"/>
+		</exec>
+		<echo message="${buildLabel}" file="/web/http/build.label" />
+	</target>
+	
+</project>

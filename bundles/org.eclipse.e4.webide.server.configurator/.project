@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>org.eclipse.e4.webide.server.configurator</name>
+	<name>org.eclipse.orion.server.configurator</name>
 	<comment></comment>
 	<projects>
 	</projects>

@@ -1,0 +1,15 @@
+<project name="Custom Assemble targets" default="noDefault">
+
+	<import file="${eclipse.pdebuild.templates}/headless-build/customAssembly.xml" />
+
+	<target name="pre.archive">
+		<mkdir dir="${eclipse.base}/serverworkspace" />
+		<copy todir="${eclipse.base}/serverworkspace">
+			<fileset dir="${eclipse.base}/plugins">
+				<include name="org.eclipse.e4.webide_*/static/**" />
+				<include name="org.eclipse.e4.webeditor_*/web/**" />
+			</fileset>
+		</copy>
+	</target>
+	
+</project>

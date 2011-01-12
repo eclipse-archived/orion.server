@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
-      id="org.eclipse.e4.webide.base.feature"
+      id="org.eclipse.orion.base.feature"
       label="Feature"
       version="0.1.0.qualifier">
 

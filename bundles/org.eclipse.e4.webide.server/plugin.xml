@@ -6,7 +6,7 @@
          name="Eclipse Web Local Preferences"
          point="org.eclipse.equinox.preferences.preferences">
       <scope
-            class="org.eclipse.e4.webide.server.users.EclipseWebPreferencesLocal"
+            class="org.eclipse.orion.server.core.users.EclipseWebPreferencesLocal"
             name="eclipseweb">
       </scope>
    </extension>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>org.eclipse.e4.webide.server.useradmin.xml</name>
+	<name>org.eclipse.orion.server.useradmin.xml</name>
 	<comment></comment>
 	<projects>
 	</projects>

@@ -1,0 +1,64 @@
+1.0 M4 Demo script
+------------------
+
+
+1. Login: http://<host>:<port> (e.g., http://localhost:8080),
+	or via the secured connection 
+		https://<host>:<port> (e.g., https://localhost:443)
+  a1) OpenID authentication
+	- enter existing openID, or
+  a2) Form authentication
+	- create username/password
+	- login using username/password
+	
+2. You should have been directed to navigate-table.html unless you had already set up the
+	tree view as your default navigation view.
+3. Create a project
+4. Create a folder
+5. Create a file
+6. Open editor on new file
+	- Enter content in editor (paste .js file contents) and save
+	- Use Ctrl+F to find text
+	- Use Ctrl+H to search for highlighted taken
+	- Use Ctrl+L to go to a particular line
+	- Use Ctrl+A to select all
+	- Copy a selection (Ctrl+C) and paste it into an external editor (eg, Notepad)
+	- Ctrl+S and then Close and reopen file to see that the content changes took effect
+7. From the root of the navigator (in table view), or anywhere in tree view,
+	push the add link button.  Use server path type of "file" and type in the path name for a folder 
+	that is visible to the web server.  This path (or a parent folder) must be specified in the launch 
+	config using something like:
+	-Dorg.eclipse.e4.webide.server.allowedPathPrefixes=c:\
+8. You should be able to see the files/folders on the server in this location.
+9. Open the editor on an existing js file on the server (such as our self-hosting folder)
+10. Click on items in the outliner on the left and verify that the line is made is visible in the
+	editor.
+11. Modify the URL with line number info #file=<filename>&line=<lineNum> and verify that the expected
+	line is made visible in the editor.
+12. Back to navigator, use breadcrumbs.  Click on folders (in table view) to navigate deep into the 
+	folder structure and ensure that breadcrumbs can be used to move back up.  In tree-view, you can
+	navigate the tree deeply using a previously stored favorite or by typing a path in the URL for
+	the page, such as
+		http://localhost:8080/navigate-tree.html#/file/UGEcINDiAB8bJO_Yskwmnw/static/js?depth=1
+13. Use favorites:
+	- Select a folder and click "Make Favorite" in context menu
+	- Rename the favorite
+	- Click on the favorite to focus the window on that folder
+	- Click on "root" to navigate back to the root
+	- Delete the favorite
+14. Search
+	- Enter a word that appears in a file and click "Search"
+	- Click a search result to open in editor
+	- Click "Save Search"
+	- Click on "root" in the favorites list
+	- Click on the saved search to repeat the search
+15. Delete a file
+16. Delete a folder
+17. Delete a project
+18. Try a git repo.  From the root of the navigator (in table view), or anywhere in tree view,
+	push the add link button.  Use server path type of "gitfs" and type in a URL for a git repo
+	such as git://github.com/bokowski/experiments.git
+19. Navigate the project structure, open files, etc.
+20. Logout
+21. Login again and see the same workspace contents from previous session
+22. Click on the "tree view" button and repeat steps 3-19 using the tree navigator

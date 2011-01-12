@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
-      id="org.eclipse.e4.webide.authentication.feature"
+      id="org.eclipse.orion.server.authentication.feature"
       label="Feature"
       version="0.1.0.qualifier">
 
@@ -17,39 +17,39 @@
    </license>
 
    <requires>
-      <import feature="org.eclipse.e4.webide.server.feature" version="0.1.0.qualifier"/>
+      <import feature="org.eclipse.orion.server.feature" version="0.1.0.qualifier"/>
    </requires>
 
    <plugin
-         id="org.eclipse.e4.webide.server.authentication.form"
+         id="org.eclipse.orion.server.authentication.form"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.e4.webide.server.authentication.form.core"
+         id="org.eclipse.orion.server.authentication.form.core"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.e4.webide.server.authentication.formopenid"
+         id="org.eclipse.orion.server.authentication.formopenid"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.e4.webide.server.authentication.openid"
+         id="org.eclipse.orion.server.authentication.openid"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.e4.webide.server.authentication.openid.core"
+         id="org.eclipse.orion.server.authentication.openid.core"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -68,7 +68,7 @@
          version="0.0.0"/>
 
    <plugin
-         id="org.eclipse.e4.webide.server.authentication.basic"
+         id="org.eclipse.orion.server.authentication.basic"
          download-size="0"
          install-size="0"
          version="0.0.0"

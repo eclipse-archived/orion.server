@@ -1,0 +1,43 @@
+1.0 M3 Demo script
+------------------
+
+
+1. Login: http://<host>:<port>/navigate.html (e.g., http://localhost:8080/navigate.html),
+	or via the secured connection 
+		https://<host>:<port>/navigate.html (e.g., https://localhost:443/navigate.html)
+  a1) OpenID authentication
+	- enter existing openID, or
+  a2) Form authentication
+	- create username/password
+	- login using username/password
+	
+2. Create a project
+3. Create a folder
+4. Create a file
+5. Open editor on new file
+	- Enter content in editor (paste .js file contents) and save
+	- Use Ctrl+F to find text
+	- Use Ctrl+L to go to a particular line
+	- Use Ctrl+A to select all
+	- Copy a selection (Ctrl+C) and paste it into an external editor (eg, Notepad)
+	- Close and reopen file to see that the content changes took effect
+	-
+6. Use favorites:
+	- Select a folder and click "Make Favorite" in context menu
+	- Rename the favorite
+	- Click on the favorite to focus the window on that folder
+	- Click on "root" to navigate back to the root
+	- Delete the favorite
+7. Search
+	- Enter a filename and click "Search Names"
+	- Click a search result to open in editor
+	- Enter a word that appears in a file and click "Search"
+	- Click a search result to open in editor
+	- Click "Save Search"
+	- Click on "root" in the favorites list
+	- Click on the saved search to repeat the search
+
+8. Delete a file
+9. Logout
+10. Login again and see the same workspace contents from previous session
+11. Repeat entire script against newnavigate.html

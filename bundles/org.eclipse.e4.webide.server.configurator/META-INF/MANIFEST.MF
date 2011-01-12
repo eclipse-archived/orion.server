@@ -1,21 +1,21 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Web IDE (Incubation) Server Configurator
-Bundle-SymbolicName: org.eclipse.e4.webide.server.configurator;singleton:=true
+Bundle-SymbolicName: org.eclipse.orion.server.configurator;singleton:=true
 Bundle-Version: 0.1.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Export-Package: org.eclipse.e4.webide.server.configurator,
- org.eclipse.e4.webide.server.configurator.servlet
-Bundle-Activator: org.eclipse.e4.webide.server.configurator.ConfiguratorActivator
-Require-Bundle: org.eclipse.e4.webide.server.servlets;bundle-version="0.1.0",
+Export-Package: org.eclipse.orion.server.configurator,
+ org.eclipse.orion.server.configurator.servlet
+Bundle-Activator: org.eclipse.orion.server.configurator.ConfiguratorActivator
+Require-Bundle: org.eclipse.orion.server.servlets;bundle-version="0.1.0",
  javax.servlet;bundle-version="2.5.0",
  org.eclipse.core.filesystem;bundle-version="1.3.100",
- org.eclipse.e4.webide.server;bundle-version="0.1.0",
+ org.eclipse.orion.server.core;bundle-version="0.1.0",
  org.eclipse.equinox.common;bundle-version="3.6.0",
  org.eclipse.equinox.http.jetty;bundle-version="2.0.0",
  org.eclipse.core.runtime;bundle-version="3.6.100",
  org.eclipse.equinox.http.registry;bundle-version="1.1.100",
- org.eclipse.e4.webide.server.useradmin;bundle-version="0.1.0"
+ org.eclipse.orion.server.useradmin;bundle-version="0.1.0"
 Import-Package: org.apache.solr.servlet;version="1.4.0",
  org.osgi.framework;version="1.6.0",
  org.osgi.service.http;version="1.2.1",

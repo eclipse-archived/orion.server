@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>org.eclipse.e4.webide.server.search</name>
+	<name>org.eclipse.orion.internal.server.search</name>
 	<comment></comment>
 	<projects>
 	</projects>

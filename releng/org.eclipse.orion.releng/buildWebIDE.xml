@@ -1,0 +1,126 @@
+<project default="main" basedir=".">
+	
+	<target name="main">
+		<tstamp/>
+		<property name="timestamp" value="${DSTAMP}${TSTAMP}" />
+		<property name="cvsuser" value=":ext:aniefer" />		
+		<property name="builder" value="${basedir}/builder" />
+		
+		<ant antfile="${eclipse.pdebuild.scripts}/productBuild/productBuild.xml" />
+	</target>
+	
+	<target name="closure" >
+		<property name="closureHome" value="/eclipse/build/web/base/closure" />
+		<property name="webide" value="${basedir}/../org.eclipse.e4.webide"/>
+		<property name="dojo" value="${basedir}/../org.dojotoolkit"/>
+		<java jar="${closureHome}/compiler.jar" fork="true">
+			<!--
+			<arg value="-js=${webide}/static/js/config.js"/>
+			<arg value="-js=${dojo}/dojo/dojo.js.uncompressed.js" />
+			<arg value="-js=${webide}/static/js/require.js"/>
+			-->
+			<arg value="--js=${webide}/static/js/auth.js"/>
+			<arg value="--js=${webide}/static/js/commands.js"/>
+			<arg value="--js=${webide}/static/js/treetable.js"/>
+			<arg value="--js=${webide}/static/js/message.js"/>
+		 	<arg value="--js=${webide}/static/js/e4.js"/>
+		 	<arg value="--js=${webide}/static/js/preferences.js"/>
+		  	<arg value="--js=${webide}/static/js/fileClient.js"/>
+		  	<arg value="--js=${webide}/static/js/breadcrumbs.js"/>
+			<arg value="--js=${webide}/static/js/explorer-table.js"/>
+			<arg value="--js=${webide}/static/js/favorites.js"/>
+			<arg value="--js=${webide}/static/js/searchClient.js"/>
+			<arg value="--js_output_file=${webide}/static/compiled.webide.js" />
+		</java>
+		<concat destfile="${webide}/static/concat.webide.js" >
+			<!--
+			<fileset file="${webide}/static/js/config.js"/>
+			<fileset file="${dojo}/dojo/dojo.js.uncompressed.js" />
+			<fileset file="${webide}/static/js/require.js"/>
+			-->
+			<fileset file="${webide}/static/js/auth.js"/>
+			<fileset file="${webide}/static/js/commands.js"/>
+			<fileset file="${webide}/static/js/treetable.js"/>
+			<fileset file="${webide}/static/js/message.js"/>
+		 	<fileset file="${webide}/static/js/e4.js"/>
+		 	<fileset file="${webide}/static/js/preferences.js"/>
+		  	<fileset file="${webide}/static/js/fileClient.js"/>
+		  	<fileset file="${webide}/static/js/breadcrumbs.js"/>
+			<fileset file="${webide}/static/js/explorer-table.js"/>
+			<fileset file="${webide}/static/js/favorites.js"/>
+			<fileset file="${webide}/static/js/searchClient.js"/>
+		</concat>
+	</target>
+	<target name="buildTarget">
+		<p2.mirror>
+			<source location="http://download.eclipse.org/tools/orbit/downloads/drops/I20101104194033/repository" />
+			<destination location="file:${localTarget}" />
+			<slicingOptions includeOptional="false" includeNonGreedy="false" latestVersionOnly="true"/>
+			<iu id="com.ibm.icu" version="4.2.1.v20100412" />
+			<iu id="com.ibm.icu.source" version="4.2.1.v20100412" />
+			<iu id="com.jcraft.jsch" version="0.1.41.v200903070017" />
+			<iu id="com.jcraft.jsch.source" version="0.1.41.v200903070017" />
+			<iu id="javax.servlet" version="2.5.0.v200910301333" />
+			<iu id="javax.servlet.source" version="2.5.0.v200910301333" />
+			<iu id="org.json" version="1.0.0.v201003050614" />
+			<iu id="org.mortbay.jetty.server" version="6.1.23.v201004211559" />
+			<iu id="org.mortbay.jetty.server.source" version="6.1.23.v201004211559" />
+			<iu id="org.mortbay.jetty.util" version="6.1.23.v201004211559" />
+			<iu id="org.mortbay.jetty.util.source" version="6.1.23.v201004211559" />
+			<iu id="org.mozilla.javascript" version="1.7.2.v201005080400" />
+			<iu id="org.mozilla.javascript.source" version="1.7.2.v201005080400" />
+			<iu id="org.slf4j.api" version="1.6.1.v20100831-0715" />
+			<iu id="org.slf4j.api.source" version="1.6.1.v20100831-0715" />
+			<iu id="org.slf4j.jcl" version="1.6.1.v20100831-0715"/>
+			<iu id="org.slf4j.jcl.source" version="1.6.1.v20100831-0715"/>
+			<iu id="org.junit" version="4.8.1.v4_8_1_v20100427-1100" />
+			<iu id="org.junit.source" version="4.8.1.v4_8_1_v20100427-1100" />
+			<iu id="org.hamcrest.core" version="1.1.0.v20090501071000" />
+			<iu id="org.hamcrest.core.source" version="1.1.0.v20090501071000" />
+			<iu id="org.apache.commons.codec" version="1.3.0.v20100518-1140" />
+			<iu id="org.apache.commons.codec.source" version="1.3.0.v20100518-1140" />
+			<iu id="org.apache.commons.httpclient" version="3.1.0.v201005080502" />
+			<iu id="org.apache.commons.httpclient.source" version="3.1.0.v201005080502" />
+			<iu id="org.apache.commons.logging" version="1.1.1.v201005080502" />
+			<iu id="org.apache.commons.logging.source" version="1.1.1.v201005080502" />
+			<iu id="org.apache.commons.fileupload" version="1.2.0.v20080604-1500" />
+			<iu id="org.apache.commons.fileupload.source" version="1.2.0.v20080604-1500" />
+			<iu id="org.apache.commons.io" version="1.4.0.v20081110-1000" />
+			<iu id="org.apache.commons.io.source" version="1.4.0.v20081110-1000" />
+			<iu id="org.apache.lucene" version="2.9.1.v20100421-0704" />
+			<iu id="org.apache.lucene.source" version="2.9.1.v20100421-0704" />
+			<iu id="org.apache.lucene.analysis" version="2.9.1.v20100421-0704" />
+			<iu id="org.apache.lucene.analysis.source" version="2.9.1.v20100421-0704" />
+			<iu id="org.apache.lucene.core" version="2.9.1.v20100421-0704" />
+			<iu id="org.apache.lucene.core.source" version="2.9.1.v20100421-0704" />
+			<iu id="org.apache.lucene.highlighter" version="2.9.1.v20100421-0704" />
+			<iu id="org.apache.lucene.highlighter.source" version="2.9.1.v20100421-0704" />
+			<iu id="org.apache.lucene.memory" version="2.9.1.v20100421-0704" />
+			<iu id="org.apache.lucene.memory.source" version="2.9.1.v20100421-0704" />
+			<iu id="org.apache.lucene.misc" version="2.9.1.v20100421-0704" />
+			<iu id="org.apache.lucene.misc.source" version="2.9.1.v20100421-0704" />
+			<iu id="org.apache.lucene.queries" version="2.9.1.v20100421-0704" />
+			<iu id="org.apache.lucene.queries.source" version="2.9.1.v20100421-0704" />
+			<iu id="org.apache.lucene.snowball" version="2.9.1.v20100421-0704" />
+			<iu id="org.apache.lucene.snowball.source" version="2.9.1.v20100421-0704" />
+			<iu id="org.apache.lucene.spellchecker" version="2.9.1.v20100421-0704" />
+			<iu id="org.apache.lucene.spellchecker.source" version="2.9.1.v20100421-0704" />
+			<iu id="org.apache.solr.client.solrj" version="1.4.0.v20100421-0704" />
+			<iu id="org.apache.solr.client.solrj.source" version="1.4.0.v20100421-0704" />
+			<iu id="org.apache.solr.client.solrj.embedded" version="1.4.0.v20100421-0704" />
+			<iu id="org.apache.solr.client.solrj.embedded.source" version="1.4.0.v20100421-0704" />
+			<iu id="org.apache.solr.common" version="1.4.0.v20100421-0704" />
+			<iu id="org.apache.solr.common.source" version="1.4.0.v20100421-0704" />
+			<iu id="org.apache.solr.core" version="1.4.0.v20100421-0704" />
+			<iu id="org.apache.solr.core.source" version="1.4.0.v20100421-0704" />
+			<iu id="org.apache.solr.servlet" version="1.4.0.v20100421-0704" />
+			<iu id="org.apache.solr.servlet.source" version="1.4.0.v20100421-0704" />
+			<iu id="ch.qos.logback.classic" version="0.9.24.v20100831-0715" />
+			<iu id="ch.qos.logback.classic.source" version="0.9.24.v20100831-0715" />
+			<iu id="ch.qos.logback.core" version="0.9.24.v20100831-0715" />
+			<iu id="ch.qos.logback.core.source" version="0.9.24.v20100831-0715" />
+			<iu id="ch.qos.logback.slf4j" version="0.9.24.v20100831-0715" />
+			<iu id="ch.qos.logback.slf4j.source" version="0.9.24.v20100831-0715" />
+		</p2.mirror>
+	</target>
+</project>

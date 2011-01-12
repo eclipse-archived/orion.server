@@ -49,7 +49,7 @@ function handleOpenIDResponse(openid_args, error) {
 	/*
 	 * TODO: receive the message in the main window with
 	 * window.onEclipseMessage(...), see
-	 * /org.eclipse.e4.webide/static/js/message.js
+	 * /org.eclipse.orion.client.core/static/js/message.js
 	 */
 	if (error) {
 		login(error);
