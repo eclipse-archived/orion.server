@@ -11,6 +11,6 @@
 <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.ant.ui.AntClasspathProvider"/>
 <stringAttribute key="org.eclipse.ui.externaltools.ATTR_ANT_TARGETS" value="testStyle,"/>
 <stringAttribute key="org.eclipse.ui.externaltools.ATTR_LOCATION" value="${workspace_loc:/org.eclipse.orion.releng2/builder/customTargets.xml}"/>
-<stringAttribute key="org.eclipse.ui.externaltools.ATTR_TOOL_ARGUMENTS" value="-DlocalTarget=/eclipse/target/web&#10;-DbuildLabel=I20101206&#10;-Dbuilder=${resource_loc:/org.eclipse.e4.webide.releng/builder}"/>
+<stringAttribute key="org.eclipse.ui.externaltools.ATTR_TOOL_ARGUMENTS" value="-DlocalTarget=/eclipse/target/web&#10;-DbuildLabel=I20101206&#10;-Dbuilder=${resource_loc:/org.eclipse.orion.releng/builder}"/>
 <stringAttribute key="process_factory_id" value="org.eclipse.ant.ui.remoteAntProcessFactory"/>
 </launchConfiguration>

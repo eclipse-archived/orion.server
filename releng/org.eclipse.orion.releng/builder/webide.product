@@ -24,10 +24,10 @@
    </vm>
 
    <features>
-      <feature id="org.eclipse.e4.webide.server.feature" version="0.1.0.qualifier"/>
-      <feature id="org.eclipse.e4.webide.search.feature" version="0.1.0.qualifier"/>
-      <feature id="org.eclipse.e4.webide.authentication.feature" version="0.1.0.qualifier"/>
-      <feature id="org.eclipse.e4.webide.client.feature" version="0.1.0.qualifier"/>
+      <feature id="org.eclipse.orion.server.feature" version="0.1.0.qualifier"/>
+      <feature id="org.eclipse.orion.server.search.feature" version="0.1.0.qualifier"/>
+      <feature id="org.eclipse.orion.server.authentication.feature" version="0.1.0.qualifier"/>
+      <feature id="org.eclipse.orion.client.feature" version="0.1.0.qualifier"/>
    </features>
 
    <configurations>
