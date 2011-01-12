@@ -53,7 +53,7 @@ lastMapTag=${mapsTagTag}
 			<arg value="-t=${jsdocHome}/templates/jsdoc" />
 			<arg value="-d=${buildDirectory}/plugins/org.eclipse.e4.webide.doc/jsdoc" />
 			<arg value="${buildDirectory}/plugins/org.eclipse.e4.webide/static/js/" />
-			<arg value="${buildDirectory}/plugins/org.eclipse.e4.webeditor/web/js/" />
+			<arg value="${buildDirectory}/plugins/org.eclipse.orion.client.editor/web/js/" />
 		</java>
 	</target>
 	

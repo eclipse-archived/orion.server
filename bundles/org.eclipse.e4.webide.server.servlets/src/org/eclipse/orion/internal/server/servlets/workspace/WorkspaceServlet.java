@@ -10,15 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.workspace;
 
-import org.eclipse.orion.server.core.LogHelper;
-
-import org.eclipse.orion.server.servlets.EclipseWebSecureServlet;
-
-import org.eclipse.orion.internal.server.servlets.*;
-import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
-
-import org.eclipse.orion.internal.server.core.IAliasRegistry;
-
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -27,6 +18,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.runtime.*;
+import org.eclipse.orion.internal.server.core.IAliasRegistry;
+import org.eclipse.orion.internal.server.servlets.*;
+import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.servlets.EclipseWebSecureServlet;
 import org.json.JSONObject;
 
 /**
@@ -36,7 +32,7 @@ public class WorkspaceServlet extends EclipseWebSecureServlet {
 
 	//sample project names - should eventually be removed
 	private static final String WEBIDE_PROJECT_NAME = "org.eclipse.e4.webide";
-	private static final String EDITOR_PROJECT_NAME = "org.eclipse.e4.webeditor";
+	private static final String EDITOR_PROJECT_NAME = "org.eclipse.orion.client.editor";
 
 	/**
 	 * Version number of java serialization.

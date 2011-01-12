@@ -1,6 +1,6 @@
 #client
 plugin@org.eclipse.orion.webide=GIT,tag=v20101210-1720,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.client.git,path=bundles/org.eclipse.e4.webide
-plugin@org.eclipse.orion.webeditor=GIT,tag=v20101210-1050,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.client.git,path=bundles/org.eclipse.e4.webeditor
+plugin@org.eclipse.orion.client.editor=GIT,tag=v20101210-1050,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.editor
 
 #server
 plugin@org.eclipse.e4.webide.launching=GIT,tag=v20101029-1410,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.e4.webide.launching
