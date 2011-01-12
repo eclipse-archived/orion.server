@@ -7,7 +7,7 @@
 		<copy todir="${eclipse.base}/serverworkspace">
 			<fileset dir="${eclipse.base}/plugins">
 				<include name="org.eclipse.e4.webide_*/static/**" />
-				<include name="org.eclipse.e4.webeditor_*/web/**" />
+				<include name="org.eclipse.orion.client.editor_*/web/**" />
 			</fileset>
 		</copy>
 	</target>
