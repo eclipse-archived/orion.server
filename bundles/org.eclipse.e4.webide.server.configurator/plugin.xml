@@ -91,7 +91,7 @@
       <httpcontext
             id="org.eclipse.e4.webide.server.configurator.httpcontext.webeditor">
          <resource-mapping
-               bundle="org.eclipse.e4.webeditor"
+               bundle="org.eclipse.orion.editor"
                path="/web">
          </resource-mapping>
       </httpcontext>
