@@ -43,10 +43,10 @@ do
 done
 
 supportDir=$writableBuildRoot/base
-builderDir=$supportDir/org.eclipse.e4.webide.releng
+builderDir=$supportDir/org.eclipse.orion.releng
 
 setJavaProperties () {
-	javaHome=$writableBuildRoot/java/sun-150
+	javaHome=$writableBuildRoot/java/sun-160
 	
 	#Properties for compilation boot classpaths
 	cdc10="$writableBuildRoot/java/foundation10/jclFoundation10/classes.zip"
