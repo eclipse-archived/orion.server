@@ -134,7 +134,7 @@
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.filesystem.git"
+         id="org.eclipse.orion.server.filesystem.git"
          download-size="0"
          install-size="0"
          version="0.0.0"
