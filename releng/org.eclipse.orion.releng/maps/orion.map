@@ -39,8 +39,8 @@ plugin@nekohtml=CVS,tag=v20101129,cvsRoot=:ext:ottawa@ottcvs1.ottawa.ibm.com:/ho
 
 
 #git
-plugin@org.eclipse.jgit=p2IU,id=org.eclipse.jgit,repository=http://eclipse.org/external/egit/updates-nightly
-plugin@org.eclipse.egit.core=p2IU,id=org.eclipse.egit.core,repository=http://eclipse.org/external/egit/updates-nightly
+plugin@org.eclipse.jgit=p2IU,id=org.eclipse.jgit,repository=http://eclipse.org/external/egit/updates
+plugin@org.eclipse.egit.core=p2IU,id=org.eclipse.egit.core,repository=http://eclipse.org/external/egit/updates
 
 #features
 feature@org.eclipse.orion.base.feature=GIT,tag=v20110113-1200,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=features/org.eclipse.orion.base-feature
