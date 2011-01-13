@@ -58,16 +58,18 @@ setJavaProperties () {
 
 updateRelengProject () {
 	pushd $supportDir
-	if [[ ! -d org.eclipse.e4.webide.releng ]]; then
-	    cmd="cvs -d :ext:@ottcvs1.ottawa.ibm.com:/home/cvs/desktop co -d org.eclipse.e4.webide.releng org.eclipse.e4.webide.releng"
-	else
-	    cmd="cvs -d :ext:@ottcvs1.ottawa.ibm.com:/home/cvs/desktop update -d org.eclipse.e4.webide.releng "
+	
+	if [[ -d org.eclipse.orion.releng ]]; then
+		rm -rf org.eclipse.orion.releng
 	fi
+	
+	echo "[start - `date +%H\:%M\:%S`] Get org.eclipse.orion.releng"	
 
-	echo "[start - `date +%H\:%M\:%S`] Get org.eclipse.e4.webide.releng"	
-	echo $cmd
-	$cmd
-	echo "[finish - `date +%H\:%M\:%S`] Done getting org.eclipse.e4.webide.releng"
+	git archive --format=tar --remote=ssh://dev.eclipse.org/gitroot/e4/org.eclipse.orion.server.git master releng/org.eclipse.orion.releng | tar -xf -
+	mv releng/org.eclipse.orion.releng org.eclipse.orion.releng;
+	rm -rf releng
+
+	echo "[finish - `date +%H\:%M\:%S`] Done getting org.eclipse.orion.releng"
 	popd
 }
 

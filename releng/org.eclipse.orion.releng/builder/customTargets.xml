@@ -5,13 +5,20 @@
 	
 	<!-- Map files are here in the releng project -->
 	<target name="getMapFiles"  unless="skipMaps">
-		<!--<property name="mapsCheckoutTag" value="HEAD" />
+		<!--<property name="mapsCheckoutTag" value="HEAD" /> -->
+		<mkdir dir="${buildDirectory}/maps" />
+		
+		<!--
+		<exec executable="git" dir="${buildDirectory}/maps">
+			<arg line="archive -format=tar -remote=ssh://dev.eclipse.org/gitroot/e4/org.eclipse.orion.server.git master releng/org.eclipse.orion.releng/maps | tar -xf -" />
+		</exec>
+		
 		<cvs cvsRoot="${mapsRepo}" package="${mapsRoot}" dest="${buildDirectory}/maps" tag="${mapsCheckoutTag}" />
-		-->
 		<antcall target="${super}.getMapFiles" />
 			
 		<antcall target="compareMapFiles"/>
 		<antcall target="tagMapFiles" />
+		-->
 		<copy todir="${buildDirectory}/maps">
 			<fileset dir="${builder}/../maps" />
 		</copy>

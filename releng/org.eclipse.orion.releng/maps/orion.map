@@ -39,6 +39,6 @@ plugin@org.eclipse.egit.core=p2IU,id=org.eclipse.egit.core,repository=http://ecl
 #features
 feature@org.eclipse.orion.base.feature=GIT,tag=v20101206-1745,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=features/org.eclipse.orion.base-feature
 feature@org.eclipse.orion.server.feature=GIT,tag=v20101206-1745,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=features/org.eclipse.orion.server-feature
-feature@org.eclipse.orion.search.feature=GIT,tag=v20101206-1745,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=features/org.eclipse.orion.search-feature
-feature@org.eclipse.orion.authentication.feature=GIT,tag=v20101210-1142,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=features/org.eclipse.orion.authentication-feature
+feature@org.eclipse.orion.server.search.feature=GIT,tag=v20101206-1745,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=features/org.eclipse.orion.server.search-feature
+feature@org.eclipse.orion.server.authentication.feature=GIT,tag=v20101210-1142,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=features/org.eclipse.orion.server.authentication-feature
 feature@org.eclipse.orion.client.feature=GIT,tag=v20101206-1745,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=features/org.eclipse.orion.client-feature
