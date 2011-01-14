@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?pde version="3.5"?>
 
-<product name="Eclipse Web IDE" uid="org.eclipse.webide" application="org.eclipse.e4.webide.application" version="0.0.2.qualifier" useFeatures="true" includeLaunchers="true">
+<product name="Eclipse Orion" uid="org.eclipse.orion" application="org.eclipse.orion.application" version="0.0.2.qualifier" useFeatures="true" includeLaunchers="true">
 
    <configIni use="default">
    </configIni>
@@ -23,6 +23,9 @@
    <vm>
    </vm>
 
+   <plugins>
+   </plugins>
+
    <features>
       <feature id="org.eclipse.orion.server.feature" version="0.1.0.qualifier"/>
       <feature id="org.eclipse.orion.server.search.feature" version="0.1.0.qualifier"/>
@@ -32,10 +35,10 @@
 
    <configurations>
       <plugin id="org.eclipse.core.runtime" autoStart="true" startLevel="0" />
-      <plugin id="org.eclipse.e4.webide.server.configurator" autoStart="true" startLevel="0" />
-      <plugin id="org.eclipse.e4.webide.server.search" autoStart="true" startLevel="0" />
-      <plugin id="org.eclipse.e4.webide.server.servlets" autoStart="true" startLevel="0" />
-      <plugin id="org.eclipse.e4.webide.server.useradmin.xml" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.orion.server.configurator" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.orion.server.search" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.orion.server.servlets" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.orion.server.useradmin.xml" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.equinox.common" autoStart="true" startLevel="2" />
       <plugin id="org.eclipse.equinox.ds" autoStart="true" startLevel="2" />
       <plugin id="org.eclipse.equinox.simpleconfigurator" autoStart="true" startLevel="1" />
