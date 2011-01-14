@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2010, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -57,6 +57,8 @@ import org.eclipse.jgit.api.PullCommand;
 import org.eclipse.jgit.api.PullResult;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectIdRef.PeeledNonTag;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.RefSpec;
@@ -418,8 +420,10 @@ public class GitFileStore extends FileStore {
 			File workdir = getWorkingDir();
 			if (!isCloned()) {
 				workdir.mkdirs();
+				// TODO: ListRemoteOperation.getRemoteRef
+				Ref ref = new PeeledNonTag(Ref.Storage.NETWORK,	"refs/heads/master", null);
 				final CloneOperation op = new CloneOperation(uri, true, null,
-						workdir, "refs/heads/master", "origin", 0);
+						workdir, ref, "origin", 0);
 				op.run(monitor);
 				LogHelper.log(new Status(IStatus.INFO, Activator.PI_GIT, 1,
 						"Cloned " + this + " to " + workdir, null));
