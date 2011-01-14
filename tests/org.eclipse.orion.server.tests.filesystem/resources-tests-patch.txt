@@ -1,0 +1,41 @@
+### Eclipse Workspace Patch 1.0
+#P org.eclipse.core.tests.resources
+Index: src/org/eclipse/core/tests/filesystem/FileSystemTest.java
+===================================================================
+RCS file: /cvsroot/eclipse/org.eclipse.core.tests.resources/src/org/eclipse/core/tests/filesystem/FileSystemTest.java,v
+retrieving revision 1.6
+diff -u -r1.6 FileSystemTest.java
+--- src/org/eclipse/core/tests/filesystem/FileSystemTest.java	20 May 2009 23:50:55 -0000	1.6
++++ src/org/eclipse/core/tests/filesystem/FileSystemTest.java	9 Nov 2010 08:57:48 -0000
+@@ -95,8 +95,8 @@
+ 		//the base file system to be tested is setup here.
+ 		//to test a different file system implementation, set up
+ 		//its base directory here.
+-		MemoryTree.TREE.deleteAll();
+-		baseStore = EFS.getStore(URI.create("mem:/baseStore"));
++		fileSystemSetUp();
++		baseStore = EFS.getStore(getFileStoreUri());
+ 		baseStore.mkdir(EFS.NONE, null);
+ 		localFileBaseStore = EFS.getLocalFileSystem().getStore(FileSystemHelper.getRandomLocation(getTempDir()));
+ 	}
+@@ -104,7 +104,19 @@
+ 	protected void tearDown() throws Exception {
+ 		super.tearDown();
+ 		baseStore.delete(EFS.NONE, null);
+-		MemoryTree.TREE.deleteAll();
++		fileSystemTearDown();
+ 		localFileBaseStore.delete(EFS.NONE, null);
+ 	}
++
++	protected URI getFileStoreUri() {
++		return URI.create("mem:/baseStore");
++	}
++
++	protected void fileSystemSetUp() {
++		MemoryTree.TREE.deleteAll();
++	}
++
++	protected void fileSystemTearDown() {
++		MemoryTree.TREE.deleteAll();
++	}
+ }

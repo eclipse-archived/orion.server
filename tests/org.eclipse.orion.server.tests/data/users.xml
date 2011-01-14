@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<WebIdeUsers>
+<roles>
+<role name="admin"/>
+<role name="user"/>
+<role name="guest"/>
+</roles>
+<users>
+<user login="admin" name="WebIde Admin" password="admin">
+	<roles>
+		<role name="admin"/>
+	</roles>
+</user>
+<user login="test" name="WebIde User" password="test">
+	<roles>
+		<role name="user"/>
+	</roles>
+</user>
+</users>
+</WebIdeUsers>
