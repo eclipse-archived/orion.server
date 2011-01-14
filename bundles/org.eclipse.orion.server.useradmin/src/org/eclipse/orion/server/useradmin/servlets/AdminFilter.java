@@ -46,7 +46,8 @@ public class AdminFilter implements Filter {
 			return;
 		}
 
-		if ("GET".equals(httpRequest.getMethod()) && httpRequest.getPathInfo().startsWith("/create")) {
+		String path = httpRequest.getPathInfo();
+		if ("GET".equals(httpRequest.getMethod()) && path != null && path.startsWith("/create")) {
 			// display add user form to everyone
 			chain.doFilter(request, response);
 			return;
