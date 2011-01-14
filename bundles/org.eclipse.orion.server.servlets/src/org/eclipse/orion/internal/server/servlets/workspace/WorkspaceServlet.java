@@ -31,7 +31,7 @@ import org.json.JSONObject;
 public class WorkspaceServlet extends EclipseWebSecureServlet {
 
 	//sample project names - should eventually be removed
-	private static final String WEBIDE_PROJECT_NAME = "org.eclipse.e4.webide";
+	private static final String CLIENT_CORE_PROJECT_NAME = "org.eclipse.orion.client.core";
 	private static final String EDITOR_PROJECT_NAME = "org.eclipse.orion.client.editor";
 
 	/**
@@ -149,7 +149,7 @@ public class WorkspaceServlet extends EclipseWebSecureServlet {
 	 * This code is only temporary for demo purposes.
 	 */
 	private void createSampleContent(WebWorkspace workspace, String userName) {
-		createSampleProject(workspace, WEBIDE_PROJECT_NAME, userName);
+		createSampleProject(workspace, CLIENT_CORE_PROJECT_NAME, userName);
 		createSampleProject(workspace, EDITOR_PROJECT_NAME, userName);
 	}
 
