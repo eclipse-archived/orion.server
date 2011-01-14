@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.server.useradmin;
 
+import java.util.Iterator;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -56,7 +58,9 @@ public class EclipseWebUserAdminRegistry implements IEclipseWebUserAdminRegistry
 			EclipseWebUserAdmin eclipseWebUserAdmin = (EclipseWebUserAdmin) userAdmin;
 			userStores.remove(eclipseWebUserAdmin.getStoreName());
 			if (userAdmin.equals(defaultUserAdmin)) {
-				defaultUserAdmin = userStores.values().iterator().next();
+				Iterator<EclipseWebUserAdmin> iterator = userStores.values().iterator();
+				if (iterator.hasNext())
+					defaultUserAdmin = iterator.next();
 			}
 		}
 
