@@ -38,7 +38,7 @@
       <servlet
             alias="/solrsearch"
             class="org.apache.solr.servlet.SolrServlet"
-            httpcontextId="org.eclipse.orion.server.core.configurator.httpcontext.search">
+            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.search">
       </servlet>
       <servlet
             alias="/users"
