@@ -15,7 +15,7 @@ import static org.junit.Assert.assertNotNull;
 
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 
-import org.eclipse.orion.server.core.users.EclipseWebScope;
+import org.eclipse.orion.server.core.users.OrionScope;
 
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
@@ -61,7 +61,7 @@ public class ProjectServiceTest extends FileSystemTest {
 	@Before
 	public void setUp() throws CoreException, BackingStoreException {
 		clearWorkspace();
-		EclipseWebScope prefs = new EclipseWebScope();
+		OrionScope prefs = new OrionScope();
 		prefs.getNode("Users").removeNode();
 		prefs.getNode("Workspaces").removeNode();
 		prefs.getNode("Projects").removeNode();

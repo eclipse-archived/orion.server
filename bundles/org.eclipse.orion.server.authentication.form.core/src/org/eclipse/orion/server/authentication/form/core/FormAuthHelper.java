@@ -36,7 +36,7 @@ import org.osgi.service.useradmin.UserAdmin;
  */
 public class FormAuthHelper {
 
-	private static IEclipseWebUserAdminRegistry userAdminRegistry;
+	private static IOrionUserAdminRegistry userAdminRegistry;
 
 	/**
 	 * Returns the name of the user stored in session.
@@ -145,15 +145,15 @@ public class FormAuthHelper {
 		return userAdminRegistry.getUserStore().canCreateUsers();
 	}
 
-	public static EclipseWebUserAdmin getDefaultUserAdmin() {
+	public static OrionUserAdmin getDefaultUserAdmin() {
 		return userAdminRegistry.getUserStore();
 	}
 
-	public void setUserAdminRegistry(IEclipseWebUserAdminRegistry userAdminStore) {
+	public void setUserAdminRegistry(IOrionUserAdminRegistry userAdminStore) {
 		FormAuthHelper.userAdminRegistry = userAdminStore;
 	}
 
-	public void unsetUserAdminRegistry(IEclipseWebUserAdminRegistry userAdminStore) {
+	public void unsetUserAdminRegistry(IOrionUserAdminRegistry userAdminStore) {
 		FormAuthHelper.userAdminRegistry = null;
 	}
 

@@ -11,7 +11,7 @@
 package org.eclipse.orion.internal.server.servlets.project;
 
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
-import org.eclipse.orion.server.core.users.EclipseWebScope;
+import org.eclipse.orion.server.core.users.OrionScope;
 
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 
@@ -32,7 +32,7 @@ public class WebUser extends WebElement {
 	 * Creates a web user instance for the given name.
 	 */
 	public static WebUser fromUserName(String userName) {
-		IEclipsePreferences users = new EclipseWebScope().getNode("Users"); //$NON-NLS-1$
+		IEclipsePreferences users = new OrionScope().getNode("Users"); //$NON-NLS-1$
 		IEclipsePreferences result = (IEclipsePreferences) users.node(userName);
 		if (result.get(ProtocolConstants.KEY_NAME, null) == null)
 			result.put(ProtocolConstants.KEY_NAME, userName);

@@ -12,7 +12,7 @@ package org.eclipse.orion.internal.server.servlets.file;
 
 import org.eclipse.orion.server.core.LogHelper;
 
-import org.eclipse.orion.server.servlets.EclipseWebServlet;
+import org.eclipse.orion.server.servlets.OrionServlet;
 
 import org.eclipse.orion.internal.server.servlets.Activator;
 
@@ -31,7 +31,7 @@ import org.json.*;
  * <ul><li><b>file</b> - local disc file system</li>
  * <li><b>gitfs</b> - git repository</li></ul>
  */
-public class FileSystemsServlet extends EclipseWebServlet {
+public class FileSystemsServlet extends OrionServlet {
 
 	private static final long serialVersionUID = -9128107386674956051L;
 

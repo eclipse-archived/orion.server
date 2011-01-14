@@ -12,7 +12,7 @@ package org.eclipse.orion.internal.server.servlets.file;
 
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 
-import org.eclipse.orion.server.servlets.EclipseWebServlet;
+import org.eclipse.orion.server.servlets.OrionServlet;
 
 import org.eclipse.orion.internal.server.servlets.*;
 
@@ -50,7 +50,7 @@ class FileHandlerV1 extends GenericFileHandler {
 
 	protected void handleGetMetadata(HttpServletRequest request, Writer response, IFileStore file) throws IOException {
 		JSONObject result = ServletFileStoreHandler.toJSON(file.fetchInfo(), getURI(request));
-		EclipseWebServlet.decorateResponse(request, result);
+		OrionServlet.decorateResponse(request, result);
 		response.append(result.toString());
 	}
 

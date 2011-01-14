@@ -12,7 +12,7 @@ package org.eclipse.orion.internal.server.servlets.project;
 
 import org.eclipse.orion.server.core.LogHelper;
 
-import org.eclipse.orion.server.servlets.EclipseWebServlet;
+import org.eclipse.orion.server.servlets.OrionServlet;
 
 import org.eclipse.orion.internal.server.servlets.*;
 
@@ -69,7 +69,7 @@ public class WebProjectResourceHandler extends WebElementResourceHandler<WebProj
 		//on a single project we need to strip off the project id from the request URI
 		URI baseLocation = getURI(request);
 		baseLocation = baseLocation.resolve("");
-		EclipseWebServlet.writeJSONResponse(request, response, toJSON(project, baseLocation));
+		OrionServlet.writeJSONResponse(request, response, toJSON(project, baseLocation));
 		return true;
 	}
 

@@ -15,7 +15,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 
 /**
- * Exception thrown when requested {@link EclipseWebUserAdmin} is not registered.
+ * Exception thrown when requested {@link OrionUserAdmin} is not registered.
  *
  */
 public class UnsupportedUserStoreException extends CoreException {

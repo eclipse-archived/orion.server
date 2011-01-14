@@ -30,7 +30,7 @@ import org.osgi.service.useradmin.User;
  * an XML file.
  * 
  */
-public class XmlUserAdmin extends EclipseWebUserAdmin {
+public class XmlUserAdmin extends OrionUserAdmin {
 
 	private Map<String, org.eclipse.orion.server.useradmin.User> usersMap;
 	private Map<String, org.eclipse.orion.server.useradmin.Role> rolesMap;

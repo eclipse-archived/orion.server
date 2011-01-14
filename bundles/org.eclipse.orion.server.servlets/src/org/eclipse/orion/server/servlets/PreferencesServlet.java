@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.server.servlets;
 
-import org.eclipse.orion.server.core.users.EclipseWebScope;
+import org.eclipse.orion.server.core.users.OrionScope;
 
 import org.eclipse.orion.internal.server.servlets.Activator;
 
@@ -35,7 +35,7 @@ import org.osgi.service.prefs.BackingStoreException;
  * DELETE /prefs/[path] to delete an entire preference node
  * DELETE /prefs/[path]?key=[key] to delete a single preference at the given path with the given key
  */
-public class PreferencesServlet extends EclipseWebServlet {
+public class PreferencesServlet extends OrionServlet {
 	private static final long serialVersionUID = 1L;
 	private IEclipsePreferences prefRoot;
 
@@ -46,7 +46,7 @@ public class PreferencesServlet extends EclipseWebServlet {
 	@Override
 	public void init() throws ServletException {
 		super.init();
-		prefRoot = new EclipseWebScope().getNode("");
+		prefRoot = new OrionScope().getNode("");
 	}
 
 	@Override

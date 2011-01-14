@@ -17,7 +17,7 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 /**
  * 
  */
-public class EclipseWebScope extends AbstractScope {
+public class OrionScope extends AbstractScope {
 	/**
 	 * String constant (value of <code>"configuration"</code>) used for the 
 	 * scope name for the configuration preference scope.
@@ -27,7 +27,7 @@ public class EclipseWebScope extends AbstractScope {
 	/**
 	 * Create and return a new configuration scope instance.
 	 */
-	public EclipseWebScope() {
+	public OrionScope() {
 		super();
 	}
 

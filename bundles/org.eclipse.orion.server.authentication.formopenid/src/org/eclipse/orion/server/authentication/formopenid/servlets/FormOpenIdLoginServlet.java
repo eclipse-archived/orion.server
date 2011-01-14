@@ -19,7 +19,7 @@ import org.eclipse.orion.server.authentication.formopenid.FormOpenIdAuthenticati
 
 import org.eclipse.orion.server.authentication.form.core.FormAuthHelper;
 
-import org.eclipse.orion.server.servlets.EclipseWebServlet;
+import org.eclipse.orion.server.servlets.OrionServlet;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -33,7 +33,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.framework.Version;
 
-public class FormOpenIdLoginServlet extends EclipseWebServlet {
+public class FormOpenIdLoginServlet extends OrionServlet {
 
 	private FormOpenIdAuthenticationService authenticationService;
 	private OpenidConsumer consumer;

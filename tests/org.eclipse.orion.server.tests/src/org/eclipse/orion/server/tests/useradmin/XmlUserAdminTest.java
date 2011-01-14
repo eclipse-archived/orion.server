@@ -30,7 +30,7 @@ import org.osgi.service.useradmin.Role;
 public class XmlUserAdminTest extends TestCase {
 
 	private final URL entry = ServerTestsActivator.bundleContext.getBundle().getEntry("data/users.xml");
-	private EclipseWebUserAdmin xua;
+	private OrionUserAdmin xua;
 
 	@Override
 	protected void setUp() throws Exception {

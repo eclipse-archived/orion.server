@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.server.useradmin.servlets;
 
-import org.eclipse.orion.server.useradmin.EclipseWebUserAdminRegistry;
+import org.eclipse.orion.server.useradmin.OrionUserAdminRegistry;
 import org.eclipse.orion.server.useradmin.UserAdminActivator;
 
 import java.io.IOException;
@@ -55,7 +55,7 @@ public class AdminFilter implements Filter {
 		// TODO: We need a better way to get the authentication service that is configured
 		String user = UserAdminActivator.getDefault().getAuthenticationService().authenticateUser(httpRequest, httpResponse, null);
 		UserAdmin userAdmin;
-		userAdmin = EclipseWebUserAdminRegistry.getDefault().getUserStore();
+		userAdmin = OrionUserAdminRegistry.getDefault().getUserStore();
 		Authorization authorization = userAdmin.getAuthorization(userAdmin.getUser("login", user));
 
 		if (authorization.hasRole(ADMIN_ROLE)) {

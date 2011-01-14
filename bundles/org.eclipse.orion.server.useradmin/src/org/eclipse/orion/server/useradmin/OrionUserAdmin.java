@@ -14,7 +14,7 @@ import java.util.Collection;
 
 import org.osgi.service.useradmin.UserAdmin;
 
-public abstract class EclipseWebUserAdmin implements UserAdmin {
+public abstract class OrionUserAdmin implements UserAdmin {
 
 	public boolean deleteUser(org.osgi.service.useradmin.User user) {
 		throw new UnsupportedOperationException();

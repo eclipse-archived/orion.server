@@ -12,7 +12,7 @@ package org.eclipse.orion.internal.server.servlets.file;
 
 import org.eclipse.orion.server.core.LogHelper;
 
-import org.eclipse.orion.server.servlets.EclipseWebSecureServlet;
+import org.eclipse.orion.server.servlets.SecureOrionServlet;
 
 import org.eclipse.orion.internal.server.servlets.*;
 
@@ -31,7 +31,7 @@ import org.eclipse.osgi.util.NLS;
 /**
  * Servlet to handle file system access.
  */
-public class NewFileServlet extends EclipseWebSecureServlet {
+public class NewFileServlet extends SecureOrionServlet {
 	/**
 	 * 
 	 */

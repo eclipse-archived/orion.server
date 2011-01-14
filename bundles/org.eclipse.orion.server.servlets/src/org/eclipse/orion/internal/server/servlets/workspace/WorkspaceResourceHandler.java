@@ -12,7 +12,7 @@ package org.eclipse.orion.internal.server.servlets.workspace;
 
 import org.eclipse.orion.server.core.LogHelper;
 
-import org.eclipse.orion.server.servlets.EclipseWebServlet;
+import org.eclipse.orion.server.servlets.OrionServlet;
 
 import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
@@ -148,7 +148,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 
 	private boolean handleAddOrRemoveProject(HttpServletRequest request, HttpServletResponse response, WebWorkspace workspace) throws IOException, JSONException, ServletException {
 		//make sure required fields are set
-		JSONObject data = EclipseWebServlet.readJSONRequest(request);
+		JSONObject data = OrionServlet.readJSONRequest(request);
 		if (!data.isNull("Remove")) //$NON-NLS-1$
 			return handleRemoveProject(request, response, workspace, data);
 		else
@@ -246,7 +246,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		URI baseLocation = getURI(request);
 		baseLocation = baseLocation.resolve("");
 		JSONObject result = WebProjectResourceHandler.toJSON(project, baseLocation);
-		EclipseWebServlet.writeJSONResponse(request, response, result);
+		OrionServlet.writeJSONResponse(request, response, result);
 
 		// add user rights for the project
 		try {
@@ -300,7 +300,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		//on a single workspace we need to strip off the workspace id from the request URI
 		URI baseLocation = getURI(request);
 		baseLocation = baseLocation.resolve("");
-		EclipseWebServlet.writeJSONResponse(request, response, toJSON(workspace, baseLocation));
+		OrionServlet.writeJSONResponse(request, response, toJSON(workspace, baseLocation));
 		return true;
 
 	}

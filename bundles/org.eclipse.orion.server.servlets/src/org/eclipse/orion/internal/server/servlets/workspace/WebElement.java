@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.workspace;
 
-import org.eclipse.orion.server.core.users.EclipseWebScope;
+import org.eclipse.orion.server.core.users.OrionScope;
 
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 
@@ -25,7 +25,7 @@ import org.osgi.service.prefs.BackingStoreException;
  * Base class for Eclipse web users, workspaces, and projects.
  */
 public class WebElement {
-	protected static final IScopeContext scope = new EclipseWebScope();
+	protected static final IScopeContext scope = new OrionScope();
 
 	IEclipsePreferences store;
 

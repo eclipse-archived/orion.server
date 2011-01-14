@@ -22,13 +22,13 @@ import org.eclipse.orion.internal.server.core.IAliasRegistry;
 import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.servlets.EclipseWebSecureServlet;
+import org.eclipse.orion.server.servlets.SecureOrionServlet;
 import org.json.JSONObject;
 
 /**
  * Servlet for accessing workspace metadata.
  */
-public class WorkspaceServlet extends EclipseWebSecureServlet {
+public class WorkspaceServlet extends SecureOrionServlet {
 
 	//sample project names - should eventually be removed
 	private static final String CLIENT_CORE_PROJECT_NAME = "org.eclipse.orion.client.core";

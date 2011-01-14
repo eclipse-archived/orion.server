@@ -18,13 +18,13 @@ import java.util.Set;
 
 import org.osgi.service.useradmin.UserAdmin;
 
-public class EclipseWebUserAdminRegistry implements IEclipseWebUserAdminRegistry {
+public class OrionUserAdminRegistry implements IOrionUserAdminRegistry {
 
-	private Map<String, EclipseWebUserAdmin> userStores = new HashMap<String, EclipseWebUserAdmin>();
-	private EclipseWebUserAdmin defaultUserAdmin;
-	private static IEclipseWebUserAdminRegistry singleton;
+	private Map<String, OrionUserAdmin> userStores = new HashMap<String, OrionUserAdmin>();
+	private OrionUserAdmin defaultUserAdmin;
+	private static IOrionUserAdminRegistry singleton;
 
-	public static IEclipseWebUserAdminRegistry getDefault() {
+	public static IOrionUserAdminRegistry getDefault() {
 		return singleton;
 	}
 
@@ -44,8 +44,8 @@ public class EclipseWebUserAdminRegistry implements IEclipseWebUserAdminRegistry
 	}
 
 	public void setUserAdmin(UserAdmin userAdmin) {
-		if (userAdmin instanceof EclipseWebUserAdmin) {
-			EclipseWebUserAdmin eclipseWebUserAdmin = (EclipseWebUserAdmin) userAdmin;
+		if (userAdmin instanceof OrionUserAdmin) {
+			OrionUserAdmin eclipseWebUserAdmin = (OrionUserAdmin) userAdmin;
 			userStores.put(eclipseWebUserAdmin.getStoreName(), eclipseWebUserAdmin);
 			if (defaultUserAdmin == null || eclipseWebUsrAdminName.equals(eclipseWebUserAdmin.getStoreName())) {
 				defaultUserAdmin = eclipseWebUserAdmin;
@@ -54,11 +54,11 @@ public class EclipseWebUserAdminRegistry implements IEclipseWebUserAdminRegistry
 	}
 
 	public void unsetUserAdmin(UserAdmin userAdmin) {
-		if (userAdmin instanceof EclipseWebUserAdmin) {
-			EclipseWebUserAdmin eclipseWebUserAdmin = (EclipseWebUserAdmin) userAdmin;
+		if (userAdmin instanceof OrionUserAdmin) {
+			OrionUserAdmin eclipseWebUserAdmin = (OrionUserAdmin) userAdmin;
 			userStores.remove(eclipseWebUserAdmin.getStoreName());
 			if (userAdmin.equals(defaultUserAdmin)) {
-				Iterator<EclipseWebUserAdmin> iterator = userStores.values().iterator();
+				Iterator<OrionUserAdmin> iterator = userStores.values().iterator();
 				if (iterator.hasNext())
 					defaultUserAdmin = iterator.next();
 			}
@@ -67,12 +67,12 @@ public class EclipseWebUserAdminRegistry implements IEclipseWebUserAdminRegistry
 	}
 
 	@Override
-	public EclipseWebUserAdmin getUserStore(String storeName) {
+	public OrionUserAdmin getUserStore(String storeName) {
 		return userStores.get(storeName);
 	}
 
 	@Override
-	public EclipseWebUserAdmin getUserStore() {
+	public OrionUserAdmin getUserStore() {
 		return defaultUserAdmin;
 	}
 

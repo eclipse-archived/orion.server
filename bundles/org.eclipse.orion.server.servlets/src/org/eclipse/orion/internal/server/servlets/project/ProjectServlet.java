@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.project;
 
-import org.eclipse.orion.server.servlets.EclipseWebServlet;
+import org.eclipse.orion.server.servlets.OrionServlet;
 
 import org.eclipse.orion.internal.server.servlets.*;
 
@@ -32,7 +32,7 @@ import org.json.JSONObject;
 /**
  * Servlet for creating, deleting, and accessing projects.
  */
-public class ProjectServlet extends EclipseWebServlet {
+public class ProjectServlet extends OrionServlet {
 
 	/**
 	 * Version number of java serialization.
@@ -152,7 +152,7 @@ public class ProjectServlet extends EclipseWebServlet {
 		}
 		//serialize the new project in the response
 		JSONObject result = WebProjectResourceHandler.toJSON(project, ServletResourceHandler.getURI(request));
-		EclipseWebServlet.writeJSONResponse(request, response, result);
+		OrionServlet.writeJSONResponse(request, response, result);
 		response.setStatus(projectExists ? HttpServletResponse.SC_OK : HttpServletResponse.SC_CREATED);
 		response.setHeader(ProtocolConstants.HEADER_LOCATION, result.getString(ProtocolConstants.KEY_LOCATION));
 		return true;

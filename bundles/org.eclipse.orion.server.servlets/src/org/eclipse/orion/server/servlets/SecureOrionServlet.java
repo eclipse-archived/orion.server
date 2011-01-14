@@ -22,7 +22,7 @@ import org.json.JSONException;
  * Common base class for servlets that defines convenience API for (de)serialization
  * of requests and responses.
  */
-public abstract class EclipseWebSecureServlet extends EclipseWebServlet {
+public abstract class SecureOrionServlet extends OrionServlet {
 
 	@Override
 	protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {

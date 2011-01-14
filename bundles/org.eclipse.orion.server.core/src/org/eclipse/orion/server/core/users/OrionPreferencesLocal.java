@@ -26,7 +26,7 @@ import org.osgi.framework.*;
  * A local file system implementation of storage for the eclipse web preference
  * scope.
  */
-public class EclipseWebPreferencesLocal extends EclipsePreferences {
+public class OrionPreferencesLocal extends EclipsePreferences {
 
 	// cached values
 	private int segmentCount;
@@ -45,7 +45,7 @@ public class EclipseWebPreferencesLocal extends EclipsePreferences {
 	/**
 	 * Default constructor. Should only be called by #createExecutableExtension.
 	 */
-	public EclipseWebPreferencesLocal() {
+	public OrionPreferencesLocal() {
 		this(null, null);
 	}
 
@@ -80,7 +80,7 @@ public class EclipseWebPreferencesLocal extends EclipsePreferences {
 		}
 	}
 
-	private EclipseWebPreferencesLocal(EclipsePreferences parent, String name) {
+	private OrionPreferencesLocal(EclipsePreferences parent, String name) {
 		super(parent, name);
 
 		initializeChildren();
@@ -148,7 +148,7 @@ public class EclipseWebPreferencesLocal extends EclipsePreferences {
 	}
 
 	protected EclipsePreferences internalCreate(EclipsePreferences nodeParent, String nodeName, Object context) {
-		return new EclipseWebPreferencesLocal(nodeParent, nodeName);
+		return new OrionPreferencesLocal(nodeParent, nodeName);
 	}
 
 }

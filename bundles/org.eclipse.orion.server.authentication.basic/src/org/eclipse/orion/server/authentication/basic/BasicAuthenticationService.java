@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.server.authentication.basic;
 
-import org.eclipse.orion.server.useradmin.IEclipseWebUserAdminRegistry;
+import org.eclipse.orion.server.useradmin.IOrionUserAdminRegistry;
 
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.authentication.IAuthenticationService;
@@ -31,7 +31,7 @@ import org.osgi.service.useradmin.UserAdmin;
 
 public class BasicAuthenticationService implements IAuthenticationService {
 
-	private IEclipseWebUserAdminRegistry userAdminRegistry;
+	private IOrionUserAdminRegistry userAdminRegistry;
 
 	public BasicAuthenticationService() {
 		super();
@@ -98,11 +98,11 @@ public class BasicAuthenticationService implements IAuthenticationService {
 
 	}
 
-	public void setUserAdminRegistry(IEclipseWebUserAdminRegistry userAdminStore) {
+	public void setUserAdminRegistry(IOrionUserAdminRegistry userAdminStore) {
 		this.userAdminRegistry = userAdminStore;
 	}
 
-	public void unsetUserAdminRegistry(IEclipseWebUserAdminRegistry userAdminStore) {
+	public void unsetUserAdminRegistry(IOrionUserAdminRegistry userAdminStore) {
 		this.userAdminRegistry = null;
 	}
 }

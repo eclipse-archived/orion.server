@@ -12,7 +12,7 @@ package org.eclipse.orion.server.useradmin.servlets;
 
 import org.eclipse.orion.server.useradmin.*;
 
-import org.eclipse.orion.server.servlets.EclipseWebServlet;
+import org.eclipse.orion.server.servlets.OrionServlet;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -46,7 +46,7 @@ import org.osgi.service.useradmin.Role;
 //DELETE /users/roles/[usersId] removes roles for given a user
 //PUT /users/[userId] updates user details
 //PUT /users/roles/[userId] adds roles for given user
-public class UsersAdminServlet extends EclipseWebServlet {
+public class UsersAdminServlet extends OrionServlet {
 
 	private static final long serialVersionUID = -6809742538472682623L;
 
@@ -132,7 +132,7 @@ public class UsersAdminServlet extends EclipseWebServlet {
 		if (login == null || login.length() == 0) {
 			return "User login is required";
 		}
-		EclipseWebUserAdmin userAdmin;
+		OrionUserAdmin userAdmin;
 		try {
 			userAdmin = (userStore == null || "".equals(userStore)) ? getUserAdmin() : getUserAdmin(userStore);
 		} catch (UnsupportedUserStoreException e) {
@@ -179,7 +179,7 @@ public class UsersAdminServlet extends EclipseWebServlet {
 
 		} else if (pathString.startsWith("/")) {
 			String login = pathString.substring(1);
-			EclipseWebUserAdmin userAdmin;
+			OrionUserAdmin userAdmin;
 			try {
 				userAdmin = req.getParameter("store") == null ? getUserAdmin() : getUserAdmin(req.getParameter("store"));
 			} catch (UnsupportedUserStoreException e) {
@@ -236,7 +236,7 @@ public class UsersAdminServlet extends EclipseWebServlet {
 			}
 		} else if (pathString.startsWith("/")) {
 			String login = pathString.substring(1);
-			EclipseWebUserAdmin userAdmin;
+			OrionUserAdmin userAdmin;
 			try {
 				userAdmin = req.getParameter("store") == null ? getUserAdmin() : getUserAdmin(req.getParameter("store"));
 			} catch (UnsupportedUserStoreException e) {
@@ -250,12 +250,12 @@ public class UsersAdminServlet extends EclipseWebServlet {
 
 	}
 
-	private EclipseWebUserAdmin getUserAdmin(String userStoreId) throws UnsupportedUserStoreException {
-		return EclipseWebUserAdminRegistry.getDefault().getUserStore(userStoreId);
+	private OrionUserAdmin getUserAdmin(String userStoreId) throws UnsupportedUserStoreException {
+		return OrionUserAdminRegistry.getDefault().getUserStore(userStoreId);
 	}
 
-	private EclipseWebUserAdmin getUserAdmin() {
-		return EclipseWebUserAdminRegistry.getDefault().getUserStore();
+	private OrionUserAdmin getUserAdmin() {
+		return OrionUserAdminRegistry.getDefault().getUserStore();
 	}
 
 	private JSONObject formJson(User user) throws JSONException {

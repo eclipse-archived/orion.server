@@ -16,7 +16,7 @@ import static org.junit.Assert.assertFalse;
 import org.eclipse.orion.server.tests.AbstractServerTest;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 
-import org.eclipse.orion.server.core.users.EclipseWebScope;
+import org.eclipse.orion.server.core.users.OrionScope;
 
 import com.meterware.httpunit.*;
 import java.io.ByteArrayInputStream;
@@ -38,7 +38,7 @@ public class PreferenceTest extends AbstractServerTest {
 
 	@Before
 	public void setUp() throws BackingStoreException {
-		EclipseWebScope prefs = new EclipseWebScope();
+		OrionScope prefs = new OrionScope();
 		prefs.getNode("Users").removeNode();
 		prefs.getNode("Workspaces").removeNode();
 		prefs.getNode("Projects").removeNode();

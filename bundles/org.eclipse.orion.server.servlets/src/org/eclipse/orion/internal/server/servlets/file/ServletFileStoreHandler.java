@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.file;
 
-import org.eclipse.orion.server.servlets.EclipseWebServlet;
+import org.eclipse.orion.server.servlets.OrionServlet;
 
 import org.eclipse.orion.internal.server.servlets.*;
 
@@ -60,7 +60,7 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 	}
 
 	public static IFileInfo fromJSON(HttpServletRequest request) throws IOException, JSONException {
-		return fromJSON(EclipseWebServlet.readJSONRequest(request));
+		return fromJSON(OrionServlet.readJSONRequest(request));
 	}
 
 	public static JSONObject toJSON(IFileInfo info, URI location) {

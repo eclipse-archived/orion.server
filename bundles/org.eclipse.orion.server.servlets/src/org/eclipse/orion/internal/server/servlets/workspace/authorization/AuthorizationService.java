@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.workspace.authorization;
 
-import org.eclipse.orion.server.core.users.EclipseWebScope;
+import org.eclipse.orion.server.core.users.OrionScope;
 
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServerStatus;
@@ -27,7 +27,7 @@ public class AuthorizationService {
 
 	public static void addUserRight(String name, String uri) throws CoreException {
 		try {
-			IEclipsePreferences users = new EclipseWebScope().getNode("Users"); //$NON-NLS-1$
+			IEclipsePreferences users = new OrionScope().getNode("Users"); //$NON-NLS-1$
 			IEclipsePreferences result = (IEclipsePreferences) users.node(name);
 			String userRights = result.get(ProtocolConstants.KEY_USER_RIGHTS, null);
 
@@ -43,7 +43,7 @@ public class AuthorizationService {
 	}
 
 	public static void removeUserRight(String name, String uri) throws JSONException, BackingStoreException {
-		IEclipsePreferences users = new EclipseWebScope().getNode("Users"); //$NON-NLS-1$
+		IEclipsePreferences users = new OrionScope().getNode("Users"); //$NON-NLS-1$
 		IEclipsePreferences result = (IEclipsePreferences) users.node(name);
 		String userRights = result.get(ProtocolConstants.KEY_USER_RIGHTS, null);
 
@@ -64,7 +64,7 @@ public class AuthorizationService {
 		if (uri.equals("/workspace"))
 			return true;
 
-		IEclipsePreferences users = new EclipseWebScope().getNode("Users"); //$NON-NLS-1$
+		IEclipsePreferences users = new OrionScope().getNode("Users"); //$NON-NLS-1$
 		IEclipsePreferences result = (IEclipsePreferences) users.node(name);
 		String userRights = result.get(ProtocolConstants.KEY_USER_RIGHTS, null);
 

@@ -12,7 +12,7 @@ package org.eclipse.orion.internal.server.servlets.project;
 
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.resources.Base64Counter;
-import org.eclipse.orion.server.core.users.EclipseWebScope;
+import org.eclipse.orion.server.core.users.OrionScope;
 
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -42,7 +42,7 @@ public class WebProject extends WebElement {
 	 * @return A workspace instance with the given id
 	 */
 	public static WebProject fromId(String id) {
-		IEclipsePreferences projects = new EclipseWebScope().getNode(PROJECT_NODE_NAME);
+		IEclipsePreferences projects = new OrionScope().getNode(PROJECT_NODE_NAME);
 		WebProject result = new WebProject((IEclipsePreferences) projects.node(id));
 		result.setId(id);
 		return result;
@@ -55,7 +55,7 @@ public class WebProject extends WebElement {
 	 */
 	public static boolean exists(String id) {
 		try {
-			return new EclipseWebScope().getNode(PROJECT_NODE_NAME).nodeExists(id);
+			return new OrionScope().getNode(PROJECT_NODE_NAME).nodeExists(id);
 		} catch (BackingStoreException e) {
 			return false;
 		}
@@ -87,7 +87,7 @@ public class WebProject extends WebElement {
 	 * Returns a list of all known web projects.
 	 */
 	public static List<WebProject> allProjects() {
-		IEclipsePreferences projects = new EclipseWebScope().getNode(WebProject.PROJECT_NODE_NAME);
+		IEclipsePreferences projects = new OrionScope().getNode(WebProject.PROJECT_NODE_NAME);
 		List<WebProject> result = new ArrayList<WebProject>();
 		try {
 			String[] ids = projects.childrenNames();

@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.file;
 
-import org.eclipse.orion.server.servlets.EclipseWebServlet;
+import org.eclipse.orion.server.servlets.OrionServlet;
 
 import org.eclipse.orion.internal.server.servlets.*;
 
@@ -57,7 +57,7 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 			}
 		}
 		encodeChildren(dir, location, result, depth);
-		EclipseWebServlet.writeJSONResponse(request, response, result);
+		OrionServlet.writeJSONResponse(request, response, result);
 		return true;
 	}
 
@@ -85,7 +85,7 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 
 	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, IFileStore dir) throws JSONException, CoreException, ServletException, IOException {
 		//setup and precondition checks
-		JSONObject requestObject = EclipseWebServlet.readJSONRequest(request);
+		JSONObject requestObject = OrionServlet.readJSONRequest(request);
 		String name = computeName(request, requestObject);
 		if (name.length() == 0)
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "File name not specified.", null));
@@ -99,7 +99,7 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 			//write the response
 			URI location = URIUtil.append(getURI(request), name);
 			JSONObject result = ServletFileStoreHandler.toJSON(toCreate.fetchInfo(), location);
-			EclipseWebServlet.writeJSONResponse(request, response, result);
+			OrionServlet.writeJSONResponse(request, response, result);
 			response.setHeader(ProtocolConstants.HEADER_LOCATION, location.toString());
 			//response code should indicate if a new resource was actually created or not
 			response.setStatus(sourceExists ? HttpServletResponse.SC_OK : HttpServletResponse.SC_CREATED);

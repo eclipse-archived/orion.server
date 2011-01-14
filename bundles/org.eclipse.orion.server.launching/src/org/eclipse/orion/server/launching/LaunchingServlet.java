@@ -13,7 +13,7 @@ package org.eclipse.orion.server.launching;
 import org.eclipse.orion.internal.server.launching.WebLaunchConfiguration;
 import org.eclipse.orion.internal.server.launching.WebProcess;
 
-import org.eclipse.orion.server.servlets.EclipseWebServlet;
+import org.eclipse.orion.server.servlets.OrionServlet;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -26,7 +26,7 @@ import org.eclipse.debug.core.*;
 import org.eclipse.debug.core.model.IProcess;
 import org.json.*;
 
-public class LaunchingServlet extends EclipseWebServlet {
+public class LaunchingServlet extends OrionServlet {
 	private static final long serialVersionUID = -6570910445863789260L;
 
 	/* (non-Javadoc)

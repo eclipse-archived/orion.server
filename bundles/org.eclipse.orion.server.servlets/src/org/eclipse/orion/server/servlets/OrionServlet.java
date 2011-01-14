@@ -28,7 +28,7 @@ import org.json.*;
  * Common base class for servlets that defines convenience API for (de)serialization
  * of requests and responses.
  */
-public abstract class EclipseWebServlet extends HttpServlet {
+public abstract class OrionServlet extends HttpServlet {
 	/**
 	 * Global flag for enabling debug tracing
 	 */
@@ -61,7 +61,7 @@ public abstract class EclipseWebServlet extends HttpServlet {
 		resp.setContentType(ProtocolConstants.CONTENT_TYPE_JSON);
 		String response = prettyPrint(result);
 		resp.getWriter().print(response);
-		if (EclipseWebServlet.DEBUG)
+		if (OrionServlet.DEBUG)
 			System.out.println(response);
 	}
 
