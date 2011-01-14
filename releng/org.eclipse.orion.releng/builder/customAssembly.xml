@@ -6,7 +6,7 @@
 		<mkdir dir="${eclipse.base}/serverworkspace" />
 		<copy todir="${eclipse.base}/serverworkspace">
 			<fileset dir="${eclipse.base}/plugins">
-				<include name="org.eclipse.e4.webide_*/static/**" />
+				<include name="org.eclipse.orion.client.core_*/static/**" />
 				<include name="org.eclipse.orion.client.editor_*/web/**" />
 			</fileset>
 		</copy>
