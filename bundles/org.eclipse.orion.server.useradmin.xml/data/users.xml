@@ -1,19 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?><WebIdeUsers>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><WebIdeUsers>
 <roles>
 <role name="admin"/>
 <role name="user"/>
 <role name="guest"/>
 </roles>
 <users>
-<user email="admin@admin.com" login="admin" name="WebIde Admin" password="admin">
-	<roles>
-		<role name="admin"/>
-	</roles>
-</user>
-<user email="test@test.com" login="test" name="WebIde User" password="test">
-	<roles>
-		<role name="user"/>
-	</roles>
-</user>
-<user login="test1" name="" password="test"/></users>
+</users>
 </WebIdeUsers>
