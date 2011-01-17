@@ -53,8 +53,10 @@ lastMapTag=${mapsTagTag}
 	</target>
 		
 	<target name="postFetch">
-		<replace file="${buildDirectory}/pluginVersions.properties" token="HEAD" value="${buildType}${timestamp}" />
-		<replace file="${buildDirectory}/pluginVersions.properties" token="origin/master" value="${buildType}${timestamp}" />
+		<replace dir="${buildDirectory}" includes="pluginVersions.properties,featureVersions.properties"  >
+			<replacefilter token="HEAD" value="${buildType}${timestamp}" />
+			<replacefilter token="origin/master" value="${buildType}${timestamp}" />
+		</replace>
 		
 		<property name="jsdocHome" value="${base}/base/jsdoc-toolkit" />
 		<java jar="${jsdocHome}/jsrun.jar" fork="true"> 
