@@ -121,8 +121,23 @@ lastMapTag=${mapsTagTag}
 		<copy file="${builder}/html/createIndex.php" tofile="${webLocation}/../../createIndex.php" />
 		<delete file="${webLocation}/../../index.html" />
 		<get src="http://eclbld1/web/createIndex.php" dest="${webLocation}/../../index.html" />
+		
+		<antcall target="publishToEclipse" />
 	</target>
 	
+	<target name="publishToEclipse" if="publishToEclipse" >
+		<exec command="scp" >
+			<arg value="-r" />
+			<arg value="${webLocation}" />
+			<arg value="dev.eclipse.org:/home/data/httpd/download.eclipse.org/e4/orion/drops" />
+		</exec>
+		<get src="http://download.eclipse.org/e4/orion/createIndex.php" dest="${buildDirectory}/eclipse.index.html" />
+		<exec command="scp" >
+			<arg value="${buildDirectory}/eclipse.index.html" />
+			<arg value="dev.eclipse.org:/home/data/httpd/download.eclipse.org/e4/orion/index.html" />
+		</exec>
+	</target>
+			
 	<target name="runTests" if="runTests" >
 		<echo message="Launching Xvfb" />
 		<exec executable="bash" failonerror="false" outputproperty="xvfbPID" >

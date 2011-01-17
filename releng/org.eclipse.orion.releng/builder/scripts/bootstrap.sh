@@ -14,6 +14,7 @@
 #default values, overridden by command line
 writableBuildRoot=/web/builds
 basebuilderBranch=v20101019
+publish=""
 
 while [ $# -gt 0 ]
 do
@@ -33,6 +34,9 @@ do
 			
 		"-root")
 			writableBuildRoot="$2"; shift;;
+			
+		"-publish")
+			publish="-DpublishToEclipse=true"; shift;;
 			
 		-*)
 			echo >&2 usage: $0 [-I | -N]
@@ -99,7 +103,7 @@ runBuild () {
 			-buildfile $builderDir/buildWebIDE.xml \
 			-Dbuilder=$builderDir/builder \
 			-Dbase=$writableBuildRoot \
-			$buildType $tagMaps $compareMaps $fetchTag \
+			$buildType $tagMaps $compareMaps $fetchTag $publish \
 			-DCDC-1.0/Foundation-1.0=$cdc10 \
 			-DCDC-1.1/Foundation-1.1=$cdc11 \
 			-DJ2SE-1.4=$j2se142 \
