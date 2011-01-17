@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2010, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -22,13 +22,13 @@ import org.eclipse.orion.internal.server.core.IAliasRegistry;
 import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.servlets.SecureOrionServlet;
+import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.JSONObject;
 
 /**
  * Servlet for accessing workspace metadata.
  */
-public class WorkspaceServlet extends SecureOrionServlet {
+public class WorkspaceServlet extends OrionServlet {
 
 	//sample project names - should eventually be removed
 	private static final String CLIENT_CORE_PROJECT_NAME = "org.eclipse.orion.client.core";

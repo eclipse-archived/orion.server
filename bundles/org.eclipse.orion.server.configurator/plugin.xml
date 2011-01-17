@@ -71,6 +71,14 @@
             alias="/users"
             class="org.eclipse.orion.server.useradmin.servlets.AdminFilter">
       </filter>
+      <filter
+            alias="/file"
+            class="org.eclipse.orion.server.configurator.servlet.AuthorizationFilter">
+      </filter>
+      <filter
+            alias="/workspace"
+            class="org.eclipse.orion.server.configurator.servlet.AuthorizationFilter">
+      </filter>
    </extension>
    <extension
          point="org.eclipse.equinox.http.registry.httpcontexts">

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2010, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,14 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.file;
 
-import org.eclipse.orion.server.core.LogHelper;
-
-import org.eclipse.orion.server.servlets.SecureOrionServlet;
-
-import org.eclipse.orion.internal.server.servlets.*;
-
-import org.eclipse.orion.internal.server.core.IAliasRegistry;
-
 import java.io.IOException;
 import java.net.URI;
 import javax.servlet.ServletException;
@@ -26,12 +18,17 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
+import org.eclipse.orion.internal.server.core.IAliasRegistry;
+import org.eclipse.orion.internal.server.servlets.*;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 
 /**
  * Servlet to handle file system access.
  */
-public class NewFileServlet extends SecureOrionServlet {
+public class NewFileServlet extends OrionServlet {
+
 	/**
 	 * 
 	 */
