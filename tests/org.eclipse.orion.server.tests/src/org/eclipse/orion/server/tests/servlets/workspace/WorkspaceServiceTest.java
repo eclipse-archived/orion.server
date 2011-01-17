@@ -14,19 +14,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
-
-import org.eclipse.orion.server.core.users.OrionScope;
-
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
-import org.eclipse.orion.internal.server.servlets.workspace.WorkspaceServlet;
-
 import com.meterware.httpunit.*;
 import java.io.*;
 import java.net.HttpURLConnection;
 import org.apache.xerces.util.URI;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
+import org.eclipse.orion.internal.server.servlets.workspace.WorkspaceServlet;
+import org.eclipse.orion.server.core.users.OrionScope;
+import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.json.*;
 import org.junit.*;
 import org.junit.Test;
@@ -216,7 +213,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 
 	@Test
 	public void testGetWorkspaces() throws IOException, SAXException, JSONException {
-		WebRequest request = new GetMethodWebRequest(SERVER_LOCATION + "/workspace/");
+		WebRequest request = new GetMethodWebRequest(SERVER_LOCATION + "/workspace");
 		setAuthentication(request);
 		WebResponse response = webConversation.getResponse(request);
 
@@ -240,7 +237,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		assertNotNull(workspaceId);
 
 		//get the workspace list again
-		request = new GetMethodWebRequest(SERVER_LOCATION + "/workspace/");
+		request = new GetMethodWebRequest(SERVER_LOCATION + "/workspace");
 		setAuthentication(request);
 		response = webConversation.getResponse(request);
 

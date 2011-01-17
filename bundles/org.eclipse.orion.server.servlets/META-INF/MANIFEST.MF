@@ -15,5 +15,6 @@ Export-Package: org.eclipse.orion.internal.server.servlets;x-friends:="org.eclip
  org.eclipse.orion.internal.server.servlets.file;x-internal:=true,
  org.eclipse.orion.internal.server.servlets.workspace;x-friends:="org.eclipse.orion.server.search",
  org.eclipse.orion.internal.server.servlets.workspace.authorization,
+ org.eclipse.orion.internal.server.servlets.xfer;x-internal:=true,
  org.eclipse.orion.server.servlets
 

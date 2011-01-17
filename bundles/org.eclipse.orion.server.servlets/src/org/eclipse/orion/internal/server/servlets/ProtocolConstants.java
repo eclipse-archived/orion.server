@@ -149,4 +149,9 @@ public class ProtocolConstants {
 	 */
 	public static final String PARM_DEPTH = "depth"; //$NON-NLS-1$
 
+	/**
+	 * HTTP request header, indicating the length of a file to be transferred.
+	 */
+	public static final String HEADER_XFER_LENGTH = "X-Xfer-Content-Length"; //$NON-NLS-1$
+
 }

@@ -10,13 +10,11 @@
  *******************************************************************************/
 package org.eclipse.orion.server.tests;
 
-import org.eclipse.orion.server.configurator.ConfiguratorActivator;
-
-import org.eclipse.orion.internal.server.servlets.Activator;
-
 import java.util.Dictionary;
 import java.util.Hashtable;
 import org.eclipse.equinox.http.jetty.JettyConfigurator;
+import org.eclipse.orion.internal.server.servlets.Activator;
+import org.eclipse.orion.server.configurator.ConfiguratorActivator;
 import org.osgi.framework.*;
 import org.osgi.service.http.HttpService;
 import org.osgi.util.tracker.ServiceTracker;
@@ -25,22 +23,12 @@ public class ServerTestsActivator implements BundleActivator {
 
 	public static BundleContext bundleContext;
 	private static ServiceTracker httpServiceTracker;
+	private static boolean initialized = false;
 	private static String serverHost = null;
 	private static int serverPort = 0;
-	private static boolean initialized = false;
 
-	public void start(BundleContext context) throws Exception {
-		bundleContext = context;
-		httpServiceTracker = new ServiceTracker(context, HttpService.class.getName(), null);
-		httpServiceTracker.open();
-	}
-
-	public void stop(BundleContext context) throws Exception {
-		if (httpServiceTracker != null)
-			httpServiceTracker.close();
-
-		httpServiceTracker = null;
-		bundleContext = null;
+	public static BundleContext getContext() {
+		return bundleContext;
 	}
 
 	public static String getServerLocation() {
@@ -73,5 +61,19 @@ public class ServerTestsActivator implements BundleActivator {
 		serverHost = "localhost"; //$NON-NLS-1$
 		serverPort = Integer.parseInt(port);
 		initialized = true;
+	}
+
+	public void start(BundleContext context) throws Exception {
+		bundleContext = context;
+		httpServiceTracker = new ServiceTracker(context, HttpService.class.getName(), null);
+		httpServiceTracker.open();
+	}
+
+	public void stop(BundleContext context) throws Exception {
+		if (httpServiceTracker != null)
+			httpServiceTracker.close();
+
+		httpServiceTracker = null;
+		bundleContext = null;
 	}
 }

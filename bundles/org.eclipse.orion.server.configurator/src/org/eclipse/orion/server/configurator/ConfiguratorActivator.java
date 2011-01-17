@@ -19,29 +19,18 @@ import static org.eclipse.orion.server.configurator.configuration.ConfigurationF
 import static org.eclipse.orion.server.configurator.configuration.ConfigurationFormat.SSL_PASSWORD;
 import static org.eclipse.orion.server.configurator.configuration.ConfigurationFormat.SSL_PROTOCOL;
 
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.authentication.IAuthenticationService;
-import org.eclipse.orion.server.core.authentication.NoneAuthenticationService;
-
-import org.eclipse.orion.server.configurator.configuration.ConfigurationFormat;
-
-import java.util.Dictionary;
-import java.util.Hashtable;
-import java.util.Properties;
-
+import java.util.*;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.equinox.http.jetty.JettyConfigurator;
 import org.eclipse.equinox.http.jetty.JettyConstants;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleActivator;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.Filter;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.framework.InvalidSyntaxException;
-import org.osgi.framework.ServiceReference;
+import org.eclipse.orion.server.configurator.configuration.ConfigurationFormat;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.authentication.IAuthenticationService;
+import org.eclipse.orion.server.core.authentication.NoneAuthenticationService;
+import org.osgi.framework.*;
 import org.osgi.service.packageadmin.PackageAdmin;
 import org.osgi.util.tracker.ServiceTracker;
 
