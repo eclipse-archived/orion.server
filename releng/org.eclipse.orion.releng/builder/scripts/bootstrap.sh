@@ -26,7 +26,7 @@ do
 			buildType="-DbuildType=N";
 			tagMaps="";
 			compareMaps="";
-			fetchTag="-DfetchTag=HEAD";;
+			fetchTag="-DfetchTag=CVS=HEAD,GIT=origin/master";;
 
 		"-baseBuilder")
 			baseBuilderBranch="$2"; shift;;
