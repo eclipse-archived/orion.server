@@ -40,6 +40,10 @@
             alias="/users"
             class="org.eclipse.orion.server.useradmin.servlets.UsersAdminServlet">
       </servlet>
+      <servlet
+            alias="/xfer"
+            class="org.eclipse.orion.internal.server.servlets.xfer.TransferServlet">
+      </servlet>
    </extension>
    <extension
          point="org.eclipse.equinox.http.registry.filters">
@@ -65,6 +69,10 @@
       </filter>
       <filter
             alias="/solrsearch"
+            class="org.eclipse.orion.server.configurator.servlet.AuthenticationFilter">
+      </filter>
+      <filter
+            alias="/xfer"
             class="org.eclipse.orion.server.configurator.servlet.AuthenticationFilter">
       </filter>
       <filter
