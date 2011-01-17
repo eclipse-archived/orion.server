@@ -36,7 +36,7 @@ do
 			writableBuildRoot="$2"; shift;;
 			
 		"-publish")
-			publish="-DpublishToEclipse=true"; shift;;
+			publish="-DpublishToEclipse=true";;
 			
 		-*)
 			echo >&2 usage: $0 [-I | -N]
