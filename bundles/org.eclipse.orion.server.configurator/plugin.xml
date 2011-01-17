@@ -32,10 +32,6 @@
             class="org.eclipse.orion.server.servlets.PreferencesServlet">
       </servlet>
       <servlet
-            alias="/project"
-            class="org.eclipse.orion.internal.server.servlets.project.ProjectServlet">
-      </servlet>
-      <servlet
             alias="/solrsearch"
             class="org.apache.solr.servlet.SolrServlet"
             httpcontextId="org.eclipse.orion.server.configurator.httpcontext.search">
@@ -65,10 +61,6 @@
       </filter>
       <filter
             alias="/prefs"
-            class="org.eclipse.orion.server.configurator.servlet.AuthenticationFilter">
-      </filter>
-      <filter
-            alias="/project"
             class="org.eclipse.orion.server.configurator.servlet.AuthenticationFilter">
       </filter>
       <filter
