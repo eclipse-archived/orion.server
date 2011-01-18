@@ -15,7 +15,9 @@ import static org.junit.Assert.assertNotNull;
 
 import com.meterware.httpunit.*;
 import java.io.*;
+import java.net.URL;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.junit.*;
@@ -51,7 +53,8 @@ public class ImportTest extends FileSystemTest {
 		createDirectory(directoryPath);
 
 		//start the import
-		File source = new File(ServerTestsActivator.getContext().getBundle().getEntry("testData/importTest/client.zip").getPath());
+		URL entry = ServerTestsActivator.getContext().getBundle().getEntry("testData/importTest/client.zip");
+		File source = new File(FileLocator.toFileURL(entry).getPath());
 		long length = source.length();
 		PostMethodWebRequest request = new PostMethodWebRequest(ServerTestsActivator.getServerLocation() + "/xfer/" + directoryPath);
 		request.setHeaderField("X-Xfer-Content-Length", Long.toString(length));
@@ -62,13 +65,15 @@ public class ImportTest extends FileSystemTest {
 		assertNotNull(location);
 
 		//repeat putting chunks until done
-		byte[] chunk = new byte[1024];
+		byte[] chunk = new byte[16 * 1024];
 		InputStream in = new BufferedInputStream(new FileInputStream(source));
 		int chunkSize = 0;
 		int totalTransferred = 0;
 		while ((chunkSize = in.read(chunk, 0, chunk.length)) > 0) {
 			PutMethodWebRequest put = new PutMethodWebRequest(location, new ByteArrayInputStream(chunk, 0, chunkSize), "application/zip");
-			put.setHeaderField("Content-Range", "bytes " + totalTransferred + "-" + totalTransferred + chunkSize + "/" + length);
+			put.setHeaderField("Content-Range", "bytes " + totalTransferred + "-" + (totalTransferred + chunkSize - 1) + "/" + length);
+			put.setHeaderField("Content-Length", "" + length);
+			put.setHeaderField("Content-Type", "application/zip");
 			setAuthentication(put);
 			totalTransferred += chunkSize;
 			WebResponse putResponse = webConversation.getResponse(put);
@@ -77,7 +82,7 @@ public class ImportTest extends FileSystemTest {
 			} else {
 				assertEquals(308, putResponse.getResponseCode());
 				String range = putResponse.getHeaderField("Range");
-				assertEquals("0-" + totalTransferred, range);
+				assertEquals("bytes 0-" + (totalTransferred - 1), range);
 			}
 
 		}

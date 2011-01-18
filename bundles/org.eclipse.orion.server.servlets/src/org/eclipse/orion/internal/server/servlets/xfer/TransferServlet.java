@@ -11,15 +11,12 @@
 package org.eclipse.orion.internal.server.servlets.xfer;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.servlets.OrionServlet;
 
@@ -47,20 +44,25 @@ public class TransferServlet extends OrionServlet {
 		String pathInfo = req.getPathInfo();
 		IPath path = pathInfo == null ? Path.ROOT : new Path(pathInfo);
 		String uuid = new UniversalUniqueIdentifier().toBase64String();
-		Import newImport = new Import(uuid);
+		Import newImport = new Import(uuid, getStatusHandler());
 		newImport.setPath(path);
 		newImport.setLength(length);
-		newImport.save();
-		resp.setStatus(HttpServletResponse.SC_OK);
-		URI requestURI = ServletResourceHandler.getURI(req);
-		String responsePath = "/" + new Path(requestURI.getPath()).segment(0) + "/import/" + uuid;
-		URI responseURI;
-		try {
-			responseURI = new URI(requestURI.getScheme(), requestURI.getAuthority(), responsePath, null, null);
-		} catch (URISyntaxException e) {
-			//should not be possible
-			throw new ServletException(e);
+		newImport.doPost(req, resp);
+	}
+
+	@Override
+	protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		traceRequest(req);
+		String pathInfo = req.getPathInfo();
+		IPath path = pathInfo == null ? Path.ROOT : new Path(pathInfo);
+		String id;
+		//format is /xfer/import/<uuid>
+		if (path.segmentCount() != 2) {
+			handleException(resp, "Malformed request", null, HttpServletResponse.SC_BAD_REQUEST);
+			return;
 		}
-		resp.setHeader("Location", responseURI.toString());
+		id = path.segment(1);
+		Import importOp = new Import(id, getStatusHandler());
+		importOp.doPut(req, resp);
 	}
 }

@@ -22,6 +22,18 @@ public class ProtocolConstants {
 	public static final String CONTENT_TYPE_JSON = "application/json; charset=UTF-8";//$NON-NLS-1$
 
 	/**
+	 * Standard HTTP request or response header indicating the content length of the request
+	 * or response body.
+	 */
+	public static final String HEADER_CONTENT_LENGTH = "Content-Length"; //$NON-NLS-1$
+
+	/**
+	 * Standard HTTP request or response header indicating the content range of the request
+	 * or response body.
+	 */
+	public static final String HEADER_CONTENT_RANGE = "Content-Range"; //$NON-NLS-1$
+
+	/**
 	 * Standard HTTP request or response header indicating the content type of the request
 	 * or response body.
 	 */
