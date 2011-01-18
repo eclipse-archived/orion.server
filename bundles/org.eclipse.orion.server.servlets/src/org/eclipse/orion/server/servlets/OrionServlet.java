@@ -70,7 +70,7 @@ public abstract class OrionServlet extends HttpServlet {
 	 * service location to the result object.
 	 */
 	public static void decorateResponse(HttpServletRequest req, JSONObject result) {
-		Collection<IWebResourceDecorator> decorators = Activator.getDefault().getSearchProviders();
+		Collection<IWebResourceDecorator> decorators = Activator.getDefault().getWebResourceDecorators();
 		for (IWebResourceDecorator decorator : decorators)
 			decorator.addAtributesFor(ServletResourceHandler.getURI(req), result);
 	}

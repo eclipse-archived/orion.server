@@ -10,15 +10,14 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets;
 
-import org.eclipse.orion.internal.server.core.IAliasRegistry;
-import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
-
 import java.net.URI;
 import java.net.URL;
 import java.util.*;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
+import org.eclipse.orion.internal.server.core.IAliasRegistry;
+import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
 import org.eclipse.osgi.service.datalocation.Location;
 import org.osgi.framework.*;
 import org.osgi.util.tracker.ServiceTracker;
@@ -45,7 +44,7 @@ public class Activator implements BundleActivator, IAliasRegistry {
 	private URI rootStoreURI;
 	private Map<String, URI> aliases = Collections.synchronizedMap(new HashMap<String, URI>());
 
-	private ServiceTracker<IWebResourceDecorator, IWebResourceDecorator> searchTracker;
+	private ServiceTracker<IWebResourceDecorator, IWebResourceDecorator> decoratorTracker;
 
 	public static Activator getDefault() {
 		return singleton;
@@ -91,17 +90,17 @@ public class Activator implements BundleActivator, IAliasRegistry {
 		return rootStoreURI;
 	}
 
-	public Collection<IWebResourceDecorator> getSearchProviders() {
-		ServiceTracker<IWebResourceDecorator, IWebResourceDecorator> tracker = getSearchProviderTracker();
+	public Collection<IWebResourceDecorator> getWebResourceDecorators() {
+		ServiceTracker<IWebResourceDecorator, IWebResourceDecorator> tracker = getDecoratorTracker();
 		return tracker.getTracked().values();
 	}
 
-	private synchronized ServiceTracker<IWebResourceDecorator, IWebResourceDecorator> getSearchProviderTracker() {
-		if (searchTracker == null) {
-			searchTracker = new ServiceTracker<IWebResourceDecorator, IWebResourceDecorator>(bundleContext, IWebResourceDecorator.class, null);
-			searchTracker.open();
+	private synchronized ServiceTracker<IWebResourceDecorator, IWebResourceDecorator> getDecoratorTracker() {
+		if (decoratorTracker == null) {
+			decoratorTracker = new ServiceTracker<IWebResourceDecorator, IWebResourceDecorator>(bundleContext, IWebResourceDecorator.class, null);
+			decoratorTracker.open();
 		}
-		return searchTracker;
+		return decoratorTracker;
 	}
 
 	private void initializeFileSystem() {
@@ -152,9 +151,9 @@ public class Activator implements BundleActivator, IAliasRegistry {
 	}
 
 	public void stop(BundleContext context) throws Exception {
-		if (searchTracker != null) {
-			searchTracker.close();
-			searchTracker = null;
+		if (decoratorTracker != null) {
+			decoratorTracker.close();
+			decoratorTracker = null;
 		}
 		bundleContext = null;
 	}
