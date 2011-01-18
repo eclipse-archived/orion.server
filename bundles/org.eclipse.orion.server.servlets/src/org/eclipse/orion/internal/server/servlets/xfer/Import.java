@@ -19,9 +19,13 @@ import java.util.Properties;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.*;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.osgi.util.NLS;
 import org.osgi.framework.FrameworkUtil;
 
 /**
@@ -130,7 +134,54 @@ class Import {
 	 * Complete the transfer by moving the uploaded content into the
 	 * workspace.
 	 */
-	private void completeTransfer(HttpServletRequest req, HttpServletResponse resp) {
+	private void completeTransfer(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
+		IPath destPath = new Path(getPath()).append(getFileName());
+		try {
+			IFileStore source = EFS.getStore(new File(getStorageDirectory(), FILE_DATA).toURI());
+			IFileStore destination = getFileStore(destPath, req.getRemoteUser());
+			source.move(destination, EFS.OVERWRITE, null);
+		} catch (CoreException e) {
+			String msg = NLS.bind("Failed to complete file transfer on {0}", destPath.toString());
+			statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+			return;
+		}
+		resp.setStatus(HttpServletResponse.SC_CREATED);
+	}
+
+	private String getFileName() {
+		return props.getProperty(KEY_FILE_NAME, "");
+	}
+
+	private String getPath() {
+		return props.getProperty(KEY_PATH, "");
+	}
+
+	/**
+	 * Returns the store representing the file to be retrieved for the given
+	 * request or <code>null</code> if an error occurred.
+	 */
+	protected IFileStore getFileStore(IPath path, String authority) {
+		//first check if we have an alias registered
+		if (path.segmentCount() > 0) {
+			URI alias = Activator.getDefault().lookupAlias(path.segment(0));
+			if (alias != null)
+				try {
+					return EFS.getStore(Util.getURIWithAuthority(alias, authority)).getFileStore(path.removeFirstSegments(1));
+				} catch (CoreException e) {
+					LogHelper.log(new Status(IStatus.WARNING, Activator.PI_SERVER_SERVLETS, 1, "An error occured when getting file store for path '" + path + "' and alias '" + alias + "'", e));
+					// fallback is to try the same path relatively to the root
+				}
+		}
+		//assume it is relative to the root
+		URI rootStoreURI = Activator.getDefault().getRootLocationURI();
+		try {
+			return EFS.getStore(Util.getURIWithAuthority(rootStoreURI, authority)).getFileStore(path);
+		} catch (CoreException e) {
+			LogHelper.log(new Status(IStatus.WARNING, Activator.PI_SERVER_SERVLETS, 1, "An error occured when getting file store for path '" + path + "' and root '" + rootStoreURI + "'", e));
+			// fallback and return null
+		}
+
+		return null;
 	}
 
 	private void fail(HttpServletRequest req, HttpServletResponse resp, String msg) throws ServletException {

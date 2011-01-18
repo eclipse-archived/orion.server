@@ -41,12 +41,18 @@ public class TransferServlet extends OrionServlet {
 			handleException(resp, "Transfer request must indicate transfer size", e, HttpServletResponse.SC_BAD_REQUEST);
 			return;
 		}
+		String fileName = req.getHeader(ProtocolConstants.HEADER_SLUG);
+		if (fileName == null) {
+			handleException(resp, "Transfer request must indicate target filename", null, HttpServletResponse.SC_BAD_REQUEST);
+			return;
+		}
 		String pathInfo = req.getPathInfo();
 		IPath path = pathInfo == null ? Path.ROOT : new Path(pathInfo);
 		String uuid = new UniversalUniqueIdentifier().toBase64String();
 		Import newImport = new Import(uuid, getStatusHandler());
 		newImport.setPath(path);
 		newImport.setLength(length);
+		newImport.setFileName(fileName);
 		newImport.doPost(req, resp);
 	}
 

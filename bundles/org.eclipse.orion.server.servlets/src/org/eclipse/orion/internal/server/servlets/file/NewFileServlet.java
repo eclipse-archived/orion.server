@@ -63,17 +63,7 @@ public class NewFileServlet extends OrionServlet {
 
 	@Override
 	protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		traceRequest(req);
-		IPath path = new Path(req.getPathInfo());
-		IFileStore file = getFileStore(path, req.getRemoteUser());
-		if (file == null) {
-			handleException(resp, new ServerStatus(IStatus.ERROR, 404, NLS.bind("File not found: {0}", path), null));
-			return;
-		}
-		if (fileSerializer.handleRequest(req, resp, file))
-			return;
-		// finally invoke super to return an error for requests we don't know how to handle
-		super.doDelete(req, resp);
+		doGet(req, resp);
 	}
 
 	@Override

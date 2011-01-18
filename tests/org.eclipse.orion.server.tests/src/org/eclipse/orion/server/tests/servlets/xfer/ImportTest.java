@@ -12,6 +12,7 @@ package org.eclipse.orion.server.tests.servlets.xfer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import com.meterware.httpunit.*;
 import java.io.*;
@@ -58,6 +59,7 @@ public class ImportTest extends FileSystemTest {
 		long length = source.length();
 		PostMethodWebRequest request = new PostMethodWebRequest(ServerTestsActivator.getServerLocation() + "/xfer/" + directoryPath);
 		request.setHeaderField("X-Xfer-Content-Length", Long.toString(length));
+		request.setHeaderField("Slug", "client.zip");
 		setAuthentication(request);
 		WebResponse postResponse = webConversation.getResponse(request);
 		assertEquals(200, postResponse.getResponseCode());
@@ -87,7 +89,7 @@ public class ImportTest extends FileSystemTest {
 
 		}
 
-		//assert the file is present in the workspaces
-		checkFileExists(directoryPath + "/client.zip");
+		//assert the file is present in the workspace
+		assertTrue(checkFileExists(directoryPath + "/client.zip"));
 	}
 }
