@@ -11,6 +11,9 @@
 #!/bin/bash
 #
 
+PATH=$PATH:/usr/local/bin
+export PATH
+
 #default values, overridden by command line
 writableBuildRoot=/web/builds
 basebuilderBranch=v20101019
