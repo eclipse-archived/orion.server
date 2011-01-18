@@ -48,7 +48,32 @@ public class ImportTest extends FileSystemTest {
 	}
 
 	@Test
-	public void testImportZip() throws CoreException, IOException, SAXException {
+	public void testImportAndUnzip() throws CoreException, IOException, SAXException {
+		//create a directory to upload to
+		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+		createDirectory(directoryPath);
+
+		//start the import
+		URL entry = ServerTestsActivator.getContext().getBundle().getEntry("testData/importTest/client.zip");
+		File source = new File(FileLocator.toFileURL(entry).getPath());
+		long length = source.length();
+		PostMethodWebRequest request = new PostMethodWebRequest(ServerTestsActivator.getServerLocation() + "/xfer/" + directoryPath);
+		request.setHeaderField("X-Xfer-Content-Length", Long.toString(length));
+		request.setHeaderField("X-Xfer-Options", "unzip");
+		setAuthentication(request);
+		WebResponse postResponse = webConversation.getResponse(request);
+		assertEquals(200, postResponse.getResponseCode());
+		String location = postResponse.getHeaderField("Location");
+		assertNotNull(location);
+
+		doImport(source, length, location);
+
+		//assert the file has been unzipped in the workspace
+		assertTrue(checkFileExists(directoryPath + "/org.eclipse.e4.webide/static/js/navigate-tree/navigate-tree.js"));
+	}
+
+	@Test
+	public void testImportFile() throws CoreException, IOException, SAXException {
 		//create a directory to upload to
 		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
 		createDirectory(directoryPath);
@@ -66,8 +91,15 @@ public class ImportTest extends FileSystemTest {
 		String location = postResponse.getHeaderField("Location");
 		assertNotNull(location);
 
+		doImport(source, length, location);
+
+		//assert the file is present in the workspace
+		assertTrue(checkFileExists(directoryPath + "/client.zip"));
+	}
+
+	private void doImport(File source, long length, String location) throws FileNotFoundException, IOException, SAXException {
 		//repeat putting chunks until done
-		byte[] chunk = new byte[16 * 1024];
+		byte[] chunk = new byte[64 * 1024];
 		InputStream in = new BufferedInputStream(new FileInputStream(source));
 		int chunkSize = 0;
 		int totalTransferred = 0;
@@ -88,8 +120,5 @@ public class ImportTest extends FileSystemTest {
 			}
 
 		}
-
-		//assert the file is present in the workspace
-		assertTrue(checkFileExists(directoryPath + "/client.zip"));
 	}
 }

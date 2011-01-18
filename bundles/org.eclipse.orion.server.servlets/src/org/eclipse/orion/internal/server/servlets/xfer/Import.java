@@ -15,7 +15,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.Enumeration;
 import java.util.Properties;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -37,6 +40,7 @@ class Import {
 	private static final String FILE_INDEX = "xfer.properties"; //$NON-NLS-1$
 	private static final String KEY_FILE_NAME = "FileName"; //$NON-NLS-1$
 	private static final String KEY_LENGTH = "Length"; //$NON-NLS-1$
+	private static final String KEY_OPTIONS = "Options"; //$NON-NLS-1$
 	private static final String KEY_PATH = "Path"; //$NON-NLS-1$
 	private static final String KEY_TRANSFERRED = "Transferred"; //$NON-NLS-1$
 
@@ -48,10 +52,66 @@ class Import {
 	private Properties props = new Properties();
 	private final ServletResourceHandler<IStatus> statusHandler;
 
+	/**
+	 * Creates a new import. This may represent an import that has not yet started,
+	 * or one that is already underway.
+	 */
 	Import(String id, ServletResourceHandler<IStatus> servletResourceHandler) throws IOException {
 		this.id = id;
 		this.statusHandler = servletResourceHandler;
 		restore();
+	}
+
+	private void completeMove(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
+		IPath destPath = new Path(getPath()).append(getFileName());
+		try {
+			IFileStore source = EFS.getStore(new File(getStorageDirectory(), FILE_DATA).toURI());
+			IFileStore destination = getFileStore(destPath, req.getRemoteUser());
+			source.move(destination, EFS.OVERWRITE, null);
+		} catch (CoreException e) {
+			String msg = NLS.bind("Failed to complete file transfer on {0}", destPath.toString());
+			statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+			return;
+		}
+	}
+
+	/**
+	 * We have just received the final chunk of data for a file upload.
+	 * Complete the transfer by moving the uploaded content into the
+	 * workspace.
+	 */
+	private void completeTransfer(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
+		String options = getOptions();
+		if (options.contains("unzip")) {
+			completeUnzip(req, resp);
+		} else {
+			completeMove(req, resp);
+		}
+		resp.setStatus(HttpServletResponse.SC_CREATED);
+	}
+
+	private void completeUnzip(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
+		IPath destPath = new Path(getPath());
+		try {
+			ZipFile source = new ZipFile(new File(getStorageDirectory(), FILE_DATA));
+			IFileStore destinationRoot = getFileStore(destPath, req.getRemoteUser());
+			Enumeration<? extends ZipEntry> entries = source.entries();
+			while (entries.hasMoreElements()) {
+				ZipEntry entry = entries.nextElement();
+				IFileStore destination = destinationRoot.getChild(entry.getName());
+				if (entry.isDirectory())
+					destination.mkdir(EFS.NONE, null);
+				else {
+					destination.getParent().mkdir(EFS.NONE, null);
+					IOUtilities.pipe(source.getInputStream(entry), destination.openOutputStream(EFS.NONE, null), false, true);
+				}
+			}
+			source.close();
+		} catch (Exception e) {
+			String msg = NLS.bind("Failed to complete file transfer on {0}", destPath.toString());
+			statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+			return;
+		}
 	}
 
 	/**
@@ -62,7 +122,7 @@ class Import {
 		save();
 		resp.setStatus(HttpServletResponse.SC_OK);
 		URI requestURI = ServletResourceHandler.getURI(req);
-		String responsePath = "/" + new Path(requestURI.getPath()).segment(0) + "/import/" + id;
+		String responsePath = "/" + new Path(requestURI.getPath()).segment(0) + "/import/" + id; //$NON-NLS-1$ //$NON-NLS-2$
 		URI responseURI;
 		try {
 			responseURI = new URI(requestURI.getScheme(), requestURI.getAuthority(), responsePath, null, null);
@@ -70,7 +130,7 @@ class Import {
 			//should not be possible
 			throw new ServletException(e);
 		}
-		resp.setHeader("Location", responseURI.toString());
+		resp.setHeader(ProtocolConstants.HEADER_LOCATION, responseURI.toString());
 	}
 
 	/**
@@ -129,31 +189,12 @@ class Import {
 
 	}
 
-	/**
-	 * We have just received the final chunk of data for a file upload.
-	 * Complete the transfer by moving the uploaded content into the
-	 * workspace.
-	 */
-	private void completeTransfer(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
-		IPath destPath = new Path(getPath()).append(getFileName());
-		try {
-			IFileStore source = EFS.getStore(new File(getStorageDirectory(), FILE_DATA).toURI());
-			IFileStore destination = getFileStore(destPath, req.getRemoteUser());
-			source.move(destination, EFS.OVERWRITE, null);
-		} catch (CoreException e) {
-			String msg = NLS.bind("Failed to complete file transfer on {0}", destPath.toString());
-			statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
-			return;
-		}
-		resp.setStatus(HttpServletResponse.SC_CREATED);
+	private void fail(HttpServletRequest req, HttpServletResponse resp, String msg) throws ServletException {
+		statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 	}
 
 	private String getFileName() {
-		return props.getProperty(KEY_FILE_NAME, "");
-	}
-
-	private String getPath() {
-		return props.getProperty(KEY_PATH, "");
+		return props.getProperty(KEY_FILE_NAME, ""); //$NON-NLS-1$
 	}
 
 	/**
@@ -184,16 +225,20 @@ class Import {
 		return null;
 	}
 
-	private void fail(HttpServletRequest req, HttpServletResponse resp, String msg) throws ServletException {
-		statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
-	}
-
 	private int getLength() {
 		return Integer.valueOf(props.getProperty(KEY_LENGTH, "0")); //$NON-NLS-1$
 	}
 
+	private String getOptions() {
+		return props.getProperty(KEY_OPTIONS, ""); //$NON-NLS-1$
+	}
+
+	private String getPath() {
+		return props.getProperty(KEY_PATH, ""); //$NON-NLS-1$
+	}
+
 	private File getStorageDirectory() {
-		return FrameworkUtil.getBundle(Import.class).getDataFile("xfer/" + id);
+		return FrameworkUtil.getBundle(Import.class).getDataFile("xfer/" + id); //$NON-NLS-1$
 	}
 
 	/**
@@ -203,13 +248,9 @@ class Import {
 		return Integer.valueOf(props.getProperty(KEY_TRANSFERRED, "0")); //$NON-NLS-1$
 	}
 
-	void save() throws IOException {
-		File dir = getStorageDirectory();
-		dir.mkdirs();
-		File index = new File(dir, FILE_INDEX);
-		props.store(new FileWriter(index), null);
-	}
-
+	/**
+	 * Load any progress information for the import so far.
+	 */
 	void restore() throws IOException {
 		try {
 			File dir = getStorageDirectory();
@@ -220,8 +261,15 @@ class Import {
 		}
 	}
 
+	void save() throws IOException {
+		File dir = getStorageDirectory();
+		dir.mkdirs();
+		File index = new File(dir, FILE_INDEX);
+		props.store(new FileWriter(index), null);
+	}
+
 	public void setFileName(String name) {
-		props.put(KEY_FILE_NAME, name);
+		props.put(KEY_FILE_NAME, name == null ? "" : name); //$NON-NLS-1$
 	}
 
 	/**
@@ -229,6 +277,10 @@ class Import {
 	 */
 	public void setLength(long length) {
 		props.put(KEY_LENGTH, Long.toString(length));
+	}
+
+	public void setOptions(String options) {
+		props.put(KEY_OPTIONS, options);
 	}
 
 	/**

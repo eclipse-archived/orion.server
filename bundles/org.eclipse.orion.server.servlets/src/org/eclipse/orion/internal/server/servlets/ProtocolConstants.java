@@ -166,4 +166,9 @@ public class ProtocolConstants {
 	 */
 	public static final String HEADER_XFER_LENGTH = "X-Xfer-Content-Length"; //$NON-NLS-1$
 
+	/**
+	 * HTTP request header, indicating options for an import operation.
+	 */
+	public static final String HEADER_XFER_OPTIONS = "X-Xfer-Options"; //$NON-NLS-1$
+
 }
