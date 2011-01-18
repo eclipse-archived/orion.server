@@ -151,6 +151,17 @@ h3.loginWindow {
 	max-width: 30em;
 }
 
+h3.loginWindowCreate {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	color: #888;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-left: 0px;
+	margin-bottom: 8px;
+	font-size: 0.9em;
+	max-width: 30em;
+}
+
 
 button.loginWindow {
 	border: none;
@@ -174,6 +185,13 @@ p.loginWindow {
 	line-height: 1.2em;
 }
 
+a.loginWindowCreate {
+	font-style: italic;
+	text-decoration: none;
+	font-weight: normal;
+	color: #444444;
+}
+
 a.loginWindow {
 	font-style: italic;
 	text-decoration: none;
@@ -181,7 +199,7 @@ a.loginWindow {
 	color: #316ac5;
 }
 
-a.loginWindow:hover {
+a.loginWindow:hover a.loginWindow:ACTIVE {
 	font-style: italic;
 	text-decoration: underline;
 	font-weight: normal;

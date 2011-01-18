@@ -39,3 +39,11 @@ function setUserStore(userStoreToSet){
 function confirmLogin() {
 	/* handled by submit form */
 }
+
+function showCreateUser(){
+	document.getElementById('newUserTable').style.display = '';
+	document.getElementById('newUserHeader').style.display = 'none';
+	setTimeout(function() {
+		document.getElementById('create_login').focus();
+	}, 0);
+}

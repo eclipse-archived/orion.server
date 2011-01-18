@@ -26,12 +26,12 @@ function login(error) {
 	}
 };
 
-function setUserStore(userStoreToSet){
-	if(userStore){
-		document.getElementById('Login_'+userStore).style.color = '';
+function setUserStore(userStoreToSet) {
+	if (userStore) {
+		document.getElementById('Login_' + userStore).style.color = '';
 	}
 	userStore = userStoreToSet;
-	document.getElementById('Login_'+userStore).style.color = '#444';
+	document.getElementById('Login_' + userStore).style.color = '#444';
 }
 
 function confirmOpenId(openid) {
@@ -101,7 +101,7 @@ function confirmLogin() {
 				content : {
 					login : dojo.byId("login").value,
 					password : dojo.byId("password").value,
-					store: userStore
+					store : userStore
 				},
 				handleAs : "json",
 				timeout : 15000,
@@ -155,7 +155,7 @@ function addUser(redirectVal, userStore) {
 		content : {
 			redirect : redirectVal,
 			onUserCreated : "userCreated",
-			store: userStore
+			store : userStore
 		},
 		timeout : 15000,
 		load : function(javascript, ioArgs) {
@@ -179,7 +179,7 @@ function userCreated(username, password, store) {
 		content : {
 			login : username,
 			password : password,
-			store: store
+			store : store
 		},
 		handleAs : "json",
 		timeout : 15000,
@@ -246,3 +246,61 @@ function logout() {
 		}
 	});
 };
+
+function showCreateUser() {
+	document.getElementById('newUserTable').style.display = '';
+	document.getElementById('newUserHeader').style.display = 'none';
+	setTimeout(function() {
+		dojo.byId('create_login').focus();
+	}, 0);
+}
+
+function confirmCreateUser() {
+	var userLogin = dojo.byId("create_login").value;
+	var userPassword = dojo.byId("create_password").value;
+	var userPasswordRetype = dojo.byId("create_passwordRetype").value;
+	var userStore = dojo.byId("create_store").value;
+	if (userPassword !== userPasswordRetype) {
+		login("Passwords do not match.");
+		showCreateUser();
+		return;
+	}
+	dojo.xhrPost({
+		url : "/users",
+		headers : {
+			"EclipseWeb-Version" : "1"
+		},
+		content : {
+			login : userLogin,
+			password : userPassword,
+			store : userStore,
+			passwordConf : userPasswordRetype
+		},
+		handleAs : "text",
+		timeout : 15000,
+		load : function(response, ioArgs) {
+			userCreated(userLogin, userPassword, userStore);
+			closeLoginWindow();
+			return response;
+		},
+		error : function(response, ioArgs) {
+			if (ioArgs.xhr.responseText) {
+
+				var tempDiv = document.createElement('div');
+				tempDiv.innerHTML = ioArgs.xhr.responseText;
+				tempDiv.childNodes;
+				var error = tempDiv.getElementsByTagName("title")[0];
+				if(error)
+					login(error.text);
+				else
+					login("User could not be created.");
+				showCreateUser();
+			} else {
+				login("User could not be created.");
+				showCreateUser();
+			}
+			return response;
+		}
+	});
+
+}

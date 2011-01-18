@@ -12,15 +12,6 @@ package org.eclipse.orion.server.authentication.formopenid.servlets;
 
 import static org.eclipse.orion.server.authentication.formopenid.FormOpenIdAuthenticationService.OPENIDS_PROPERTY;
 
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.resources.Base64;
-
-import org.eclipse.orion.server.authentication.formopenid.Activator;
-import org.eclipse.orion.server.authentication.formopenid.FormOpenIdAuthenticationService;
-import org.eclipse.orion.server.authentication.formopenid.internal.OpendIdProviderDescription;
-
-import org.eclipse.orion.server.authentication.form.core.FormAuthHelper;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,6 +27,12 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.orion.server.authentication.form.core.FormAuthHelper;
+import org.eclipse.orion.server.authentication.formopenid.Activator;
+import org.eclipse.orion.server.authentication.formopenid.FormOpenIdAuthenticationService;
+import org.eclipse.orion.server.authentication.formopenid.internal.OpendIdProviderDescription;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.resources.Base64;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -51,8 +48,6 @@ import org.osgi.framework.Version;
 public class LoginFormServlet extends HttpServlet {
 
 	private static final long serialVersionUID = -1941415021420599704L;
-	private String newAccountLink = "/users/create"; //$NON-NLS-1$
-	private String newAccountJsFunction = "javascript:addUser"; //$NON-NLS-1$
 	private List<OpendIdProviderDescription> defaultOpenids;
 	private FormOpenIdAuthenticationService authenticationService;
 
@@ -231,6 +226,12 @@ public class LoginFormServlet extends HttpServlet {
 		}
 		return sb.toString();
 	}
+	
+	private String getFileContentAsJsString(String filename) throws IOException {
+		StringBuilder sb = new StringBuilder();
+		appendFileContentAsJsString(sb, filename);
+		return sb.toString();
+	}
 
 	private void appendFileContentAsJsString(StringBuilder sb, String filename) throws IOException {
 		InputStream is = Activator.getBundleContext().getBundle().getEntry(filename).openStream();
@@ -318,26 +319,28 @@ public class LoginFormServlet extends HttpServlet {
 		return authSite.replace("<!--form-->", formBegin.toString()).replace( //$NON-NLS-1$
 				"<!--/form-->", "</form>"); //$NON-NLS-1$ //$NON-NLS-2$
 	}
-
-	private String getNewAccountJsLink(String redirect, String userStore) {
-		return newAccountJsFunction + "(\\'" + redirect + "\\'" + (userStore == null ? ")" : ", \\'" + userStore + "\\')");
+	
+	private String replaceCreateUserForm(String authSite, String redirect) {
+		StringBuilder formBegin = new StringBuilder();
+		formBegin.append("<form name=\"CreateUserForm\" method=post action=\"/users"); //$NON-NLS-1$
+		if (redirect != null && !redirect.equals("")) { //$NON-NLS-1$
+			formBegin.append("?redirect="); //$NON-NLS-1$
+			formBegin.append(redirect);
+		}
+		formBegin.append("\">"); //$NON-NLS-1$
+		return authSite.replace("<!--form-->", formBegin.toString()).replace( //$NON-NLS-1$
+				"<!--/form-->", "</form>"); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
-	private String getNewAccountHtmlLink(String redirect, String userStore) {
-		return this.newAccountLink + "?redirect=" //$NON-NLS-1$ //$NON-NLS-2$
-				+ redirect + (userStore == null ? "" : ("&store=" + userStore));//$NON-NLS-1$ //$NON-NLS-2$
-	}
-
-	private String replaceNewAccount(String authSite, String redirect, boolean javascriptResp) {
+	private String replaceNewAccount(String authSite, String redirect, boolean javascriptResp) throws IOException {
 		if (!FormAuthHelper.canAddUsers()) {
 			return authSite;
 		}
-		String newAccountA = ""; //$NON-NLS-1$
+		String newAccountA = javascriptResp ? getFileContentAsJsString("static/createUser.html") : getFileContents("static/createUser.html"); //$NON-NLS-1$
 		String userStore = FormAuthHelper.getDefaultUserAdmin().getStoreName();
-		String newAccountLink = javascriptResp ? getNewAccountJsLink(redirect, userStore) : getNewAccountHtmlLink(redirect, userStore);
-		if (newAccountLink != null && !"".equals(newAccountLink)) { //$NON-NLS-1$
-			newAccountA = "<div class=\"hrloginWindow\"></div><h3 class=\"loginWindow\">New to EclipseWeb? <a class=\"loginWindow\" href=\"" + newAccountLink //$NON-NLS-1$
-					+ "\">Create " + userStore + " account</a></h3>"; //$NON-NLS-1$
+		newAccountA = newAccountA.replaceAll("<!--userStore-->", userStore);
+		if(!javascriptResp){
+			newAccountA = replaceCreateUserForm(newAccountA, redirect);
 		}
 		return authSite.replace("<!--NEW_ACCOUNT_LINK-->", newAccountA); //$NON-NLS-1$
 	}
