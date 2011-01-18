@@ -38,7 +38,7 @@
       </servlet>
       <servlet
             alias="/users"
-            class="org.eclipse.orion.server.useradmin.servlets.UsersAdminServlet">
+            class="org.eclipse.orion.server.useradmin.servlets.UserServlet">
       </servlet>
       <servlet
             alias="/xfer"
@@ -77,7 +77,7 @@
       </filter>
       <filter
             alias="/users"
-            class="org.eclipse.orion.server.useradmin.servlets.AdminFilter">
+            class="org.eclipse.orion.server.useradmin.servlets.UserAuthFilter">
       </filter>
       <filter
             alias="/file"

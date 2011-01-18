@@ -10,52 +10,40 @@
  *******************************************************************************/
 package org.eclipse.orion.server.useradmin.servlets;
 
-import org.eclipse.orion.server.useradmin.*;
-
-import org.eclipse.orion.server.servlets.OrionServlet;
-
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
 
-import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.eclipse.orion.server.servlets.OrionServlet;
+import org.eclipse.orion.server.useradmin.OrionUserAdmin;
+import org.eclipse.orion.server.useradmin.OrionUserAdminRegistry;
+import org.eclipse.orion.server.useradmin.UnsupportedUserStoreException;
+import org.eclipse.orion.server.useradmin.User;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.osgi.framework.Version;
 import org.osgi.service.useradmin.Role;
 
 //POST /users/ creates a new user
-//POST /users/create creates a new user via form
-//GET /users/create displays a form to create user
-
 //GET /users/ gets list of users
 //GET /users/[userId] gets user details
 //DELETE /users/[usersId] deletes a user
 //DELETE /users/roles/[usersId] removes roles for given a user
 //PUT /users/[userId] updates user details
 //PUT /users/roles/[userId] adds roles for given user
-public class UsersAdminServlet extends OrionServlet {
+public class UserServlet extends OrionServlet {
 
 	private static final long serialVersionUID = -6809742538472682623L;
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		String pathString = req.getPathInfo();
-		if (pathString != null && pathString.startsWith("/create")) {
-			displayCreateUserForm(req, resp, new ArrayList<String>());
-		} else if (pathString == null || pathString.equals("/")) {
+		if (pathString == null || pathString.equals("/")) {
 			Collection<User> users = getUserAdmin().getUsers();
 			try {
 				Set<JSONObject> userjsons = new HashSet<JSONObject>();
@@ -91,39 +79,6 @@ public class UsersAdminServlet extends OrionServlet {
 
 			if (createError != null) {
 				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, createError);
-			}
-		} else if (pathInfo.startsWith("/create")) {
-			String versionString = req.getHeader("EclipseWeb-Version");
-			Version version = versionString == null ? null : new Version(versionString);
-
-			String password1 = req.getParameter("password");
-			String password2 = req.getParameter("passwordConf");
-			if (password1 == null || !password1.equals(password2)) {
-				List<String> errors = new ArrayList<String>();
-				errors.add("Passwords do not match");
-				displayCreateUserForm(req, resp, errors);
-				return;
-			}
-			String createError = createUser(req.getParameter("store"), req.getParameter("login"), req.getParameter("name"), req.getParameter("email"), req.getParameter("workspace"), req.getParameter("password"), req.getParameter("roles"));
-			if (createError != null) {
-				List<String> errors = new ArrayList<String>();
-				errors.add(createError);
-				displayCreateUserForm(req, resp, errors);
-				return;
-			}
-			if (req.getParameter("redirect") == null) {
-
-				if (version == null) {
-					RequestDispatcher rd = getServletContext().getRequestDispatcher("/login");
-					rd.forward(req, resp);
-					return;
-				} else {
-					// Redirecting to login page only for plain calls
-				}
-			} else {
-				RequestDispatcher rd = getServletContext().getRequestDispatcher("/login/form?redirect=" + req.getParameter("redirect"));
-				rd.forward(req, resp);
-				return;
 			}
 		}
 	}
@@ -269,160 +224,4 @@ public class UsersAdminServlet extends OrionServlet {
 		json.put("roles", roles);
 		return json;
 	}
-
-	private void displayCreateUserForm(HttpServletRequest req, HttpServletResponse resp, List<String> errors) throws IOException {
-
-		String versionString = req.getHeader("EclipseWeb-Version");
-		Version version = versionString == null ? null : new Version(versionString);
-
-		if (version == null) {
-			writeHtmlResponse(req, resp, errors);
-		} else {
-			if (errors == null || errors.isEmpty()) {
-				writeJavaScriptResponse(req, resp);
-			} else {
-				setErrorList(req, resp, errors);
-			}
-		}
-	}
-
-	private void setErrorList(HttpServletRequest req, HttpServletResponse response, List<String> errors) throws IOException {
-		response.setContentType("text/javascript");
-		PrintWriter writer = response.getWriter();
-		response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-		writer.println("dojo.byId('createUserError').innerHTML='" + getErrorsList(errors) + "';");
-		writer.flush();
-	}
-
-	private void writeHtmlResponse(HttpServletRequest req, HttpServletResponse response, List<String> errors) throws IOException {
-		response.setContentType("html");
-		PrintWriter writer = response.getWriter();
-		writer.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2 Final//EN\">");
-		writer.println("<html>");
-		writer.println("<head>");
-		writer.println("<title>Create account</title>");
-		if (req.getParameter("styles") == null || "".equals(req.getParameter("styles"))) {
-			writer.println("<style type=\"text/css\">");
-			writer.print("@import \"");
-			writer.print("/usersstatic/css/defaultCreateUserForm.css");
-			writer.print("\";");
-			writer.println("</style>");
-		} else {
-			writer.print("<link rel=\"stylesheet\" type=\"text/css\" href=\"");
-			writer.print(req.getParameter("styles"));
-			writer.print("\">");
-		}
-		writer.println("<script type=\"text/javascript\"><!--");
-		writer.println("function confirm() {}");
-		writer.println("//--></script>");
-		writer.println("</head>");
-		writer.println("<body>");
-		writer.print("<form name=\"AuthForm\" method=post action=\"/users/create");
-		if (req.getParameter("redirect") != null && !req.getParameter("redirect").equals("")) {
-			writer.print("?redirect=");
-			writer.print(req.getParameter("redirect"));
-		}
-		if (req.getParameter("store") != null && !req.getParameter("store").equals("")) {
-			writer.print("&store=");
-			writer.print(req.getParameter("store"));
-		}
-		writer.println("\">");
-
-		writer.println(addErrors(getFileContents("static/createUser.html"), errors));
-
-		writer.println("</form>");
-		writer.println("</body>");
-		writer.println("</html>");
-		writer.flush();
-
-	}
-
-	private void writeJavaScriptResponse(HttpServletRequest req, HttpServletResponse response) throws IOException {
-		response.setContentType("text/javascript");
-		PrintWriter writer = response.getWriter();
-		writer.print("if(!stylf)\n");
-		writer.print("var stylf=document.createElement(\"link\");");
-		writer.print("stylf.setAttribute(\"rel\", \"stylesheet\");");
-		writer.print("stylf.setAttribute(\"type\", \"text/css\");");
-		writer.print("stylf.setAttribute(\"href\", \"");
-		writer.print(getStyles(req.getParameter("styles")));
-		writer.print("\");");
-		writer.println("if(!divf)");
-		writer.println("var divf = document.createElement('span');");
-		writer.print("divf.innerHTML='");
-		writer.print(loadJSResponse(req));
-		if (req.getParameter("onUserCreated") != null && req.getParameter("onUserCreated").length() > 0) {
-			writer.println("userCreatedNotifier=" + req.getParameter("onUserCreated") + ";");
-		}
-		if (req.getParameter("store") != null && req.getParameter("store").length() > 0) {
-			writer.println("userStore='" + req.getParameter("store") + "';");
-		}
-		writer.flush();
-	}
-
-	private String getStyles(String stylesParam) {
-		if (stylesParam == null || stylesParam.length() == 0) {
-			return "/usersstatic/css/defaultCreateUserForm.css";
-		} else {
-
-			return stylesParam.replaceAll("'", "\\\\'").replaceAll("\\t+", " ").replaceAll("\n", "");
-		}
-	}
-
-	private String loadJSResponse(HttpServletRequest req) throws IOException {
-
-		StringBuilder sb = new StringBuilder();
-		appendFileContentAsJsString(sb, "static/createUser.html");
-		sb.append("';\n");
-		sb.append("var scrf = '");
-		appendFileContentAsJsString(sb, "static/js/xhrCreateUser.js");
-		sb.append("';\n");
-		sb.append(getFileContents("static/js/loadXhrCreateUser.js"));
-
-		return sb.toString();
-
-	}
-
-	private void appendFileContentAsJsString(StringBuilder sb, String filename) throws IOException {
-		InputStream is = UserAdminActivator.getDefault().getBundleContext().getBundle().getEntry(filename).openStream();
-		BufferedReader br = new BufferedReader(new InputStreamReader(is));
-		String line = "";
-		while ((line = br.readLine()) != null) {
-			// escaping ' characters
-			line = line.replaceAll("'", "\\\\'");
-			// remove tabs
-			line = line.replaceAll("\\t+", " ");
-			sb.append(line);
-		}
-	}
-
-	private String getErrorsList(List<String> errors) {
-		if (errors == null || errors.size() < 1) {
-			return "";
-		}
-		StringBuilder errorsList = new StringBuilder("<div id=\"createUserErrorWin\">");
-		errorsList.append("<ul class=\"createUserForm loginError\" id=\"createUserErrorsList\">");
-		for (String error : errors) {
-			errorsList.append("<li>").append(error).append("</li>");
-		}
-		errorsList.append("</ul>");
-		errorsList.append("</div>");
-		return errorsList.toString();
-	}
-
-	private String addErrors(String divSrc, List<String> errors) {
-		return divSrc.replace("<!--ERROR-->", getErrorsList(errors));
-	}
-
-	private String getFileContents(String filename) throws IOException {
-		StringBuilder sb = new StringBuilder();
-		InputStream is = UserAdminActivator.getDefault().getBundleContext().getBundle().getEntry(filename).openStream();
-		BufferedReader br = new BufferedReader(new InputStreamReader(is));
-		String line = "";
-		while ((line = br.readLine()) != null) {
-			sb.append(line).append('\n');
-		}
-		return sb.toString();
-	}
-
 }
