@@ -21,6 +21,7 @@ builderDir=$supportDir/org.eclipse.orion.releng
 basebuilderBranch=v20101019
 publish=""
 user=aniefer
+resultsEmail=orion-dev@eclipse.org
 
 buildType=I
 timestamp=$( date +%Y%m%d%H%M )
@@ -49,6 +50,9 @@ do
 				
 		"-publish")
 			publish="-DpublishToEclipse=true";;
+			
+		"-timestamp")
+			timestamp="$2"; shift;;
 			
 		-*)
 			echo >&2 usage: $0 [-I | -N]
@@ -162,7 +166,9 @@ sendMail () {
 		prereqMsg=`cat $buildDirectory/prereqErrors.log` 
 	fi
 	
-mailx -s "[orion-build] Orion Build : $buildType$timestamp $failed" orion-dev@eclipse.org <<EOF
+	echo "[`date +%H\:%M\:%S`] Sending mail to $resultsEmail
+	
+mailx -s "[orion-build] Orion Build : $buildType$timestamp $failed" $resultsEmail <<EOF
 
 Check here for the build results: 
 http://download.eclipse.org/e4/orion/drops/$buildType$timestamp
