@@ -74,100 +74,29 @@ lastMapTag=${mapsTagTag}
 	
 	<target name="postBuild" >
 		<antcall target="gatherLogs" />
-		<available property="webServer" file="/web/.server" />
-		<antcall target="runTests" />
 		<antcall target="launchWebIDE" />
 		<antcall target="copyResults" />
 	</target>
 	
-	<target name="copyResults" if="webServer" >
+	<target name="copyResults"  >
 		<property name="buildResultLocation" value="${buildDirectory}/${buildLabel}" />
-		<property name="webLocation" value="/web/http/drops/${buildLabel}" />
-		<mkdir dir="${webLocation}" />
-		<zip destFile="${webLocation}/compileLogs-${buildLabel}.zip" basedir="${buildResultLocation}/compilelogs/plugins" includes="**" />
-		<copy todir="${webLocation}" >
+		<property name="dropLocation" value="${buildResultLocation}/drop" />
+		<mkdir dir="${dropLocation}" />
+		<zip destFile="${dropLocation}/compileLogs-${buildLabel}.zip" basedir="${buildResultLocation}/compilelogs/plugins" includes="**" />
+		<copy todir="${dropLocation}" >
 			<fileset dir="${buildResultLocation}" includes="${archiveNamePrefix}*" />
 		</copy>	
 
-		<mkdir dir="${webLocation}/tests" />
-		<copy todir="${webLocation}/tests">
-			<fileset dir="/web/builds/tests/${buildLabel}" includes="**/*.xml" />
-		</copy>
-		<replace dir="${webLocation}/tests" token="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;" value="" >
-			<include name="*.xml" />
-		</replace>
-		
-		<!-- merge test results into a single xml -->
-		<echo file="${webLocation}/testResults.xml" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;${line.separator}&lt;testsuites&gt;" />
-		<concat destfile="${webLocation}/testResults.xml" append="true">
-			<fileset dir="${webLocation}/tests" includes="*.xml" />
-		</concat>
-		<echo file="${webLocation}/testResults.xml" message="&lt;/testsuites&gt;" append="true" />
-		
-		<!-- transform into html -->
-		<xslt style="${builder}/html/JUNIT.XSL" in="${webLocation}/testResults.xml" out="${webLocation}/testResults.html" />
-		<delete dir="${webLocation}/tests" />
-		<delete file="${webLocation}/testResults.xml" />
-		
 		<!-- generate the build index, guess the component version numbers -->
 		<filter token="repbuildid" value="${buildLabel}" />
 		<filter token="repmaindate" value="${TODAY}" />
 		<filter token="repbuilddate" value="${buildId}" />
-		<copy filtering="true" file="${builder}/html/build.index.html" tofile="${webLocation}/index.html" />
+		<copy filtering="true" file="${builder}/html/build.index.html" tofile="${dropLocation}/index.html" />
 
-		<copy file="${buildResultLocation}/../directory.txt" tofile="${webLocation}/directory.txt" />
-		<copy file="/web/builds/current.log" tofile="${webLocation}/buildLog-${buildLabel}.txt" />
-		
-		<copy file="${builder}/html/createIndex.php" tofile="${webLocation}/../../createIndex.php" />
-		<delete file="${webLocation}/../../index.html" />
-		<get src="http://eclbld1/web/createIndex.php" dest="${webLocation}/../../index.html" />
-		
-		<antcall target="publishToEclipse" />
+		<copy file="${buildResultLocation}/../directory.txt" tofile="${dropLocation}/directory.txt" />
+		<copy file="/web/builds/current.log" tofile="${dropLocation}/buildLog-${buildLabel}.txt" />
 	</target>
-	
-	<target name="publishToEclipse" if="publishToEclipse" >
-		<exec command="scp" >
-			<arg value="-r" />
-			<arg value="${webLocation}" />
-			<arg value="dev.eclipse.org:/home/data/httpd/download.eclipse.org/e4/orion/drops" />
-		</exec>
-		<get src="http://download.eclipse.org/e4/orion/createIndex.php" dest="${buildDirectory}/eclipse.index.html" />
-		<exec command="scp" >
-			<arg value="${buildDirectory}/eclipse.index.html" />
-			<arg value="dev.eclipse.org:/home/data/httpd/download.eclipse.org/e4/orion/index.html" />
-		</exec>
-	</target>
-			
-	<target name="runTests" if="runTests" >
-		<echo message="Launching Xvfb" />
-		<exec executable="bash" failonerror="false" outputproperty="xvfbPID" >
-			<arg value="${builder}/scripts/runTests.sh" />
-			<arg line="-xvfb" />
-		</exec>
-		<apply executable="bash" parallel="false">
-			<arg value="${builder}/scripts/runTests.sh" />
-			<arg line="-id ${buildLabel}" />
-			<arg value="-javaHome"/>
-			<arg value="${java.home}"/>
-			<arg value="-testConf" />
-			<fileset dir="${buildDirectory}/plugins" includes="**/jsTestDriver.conf" />
-		</apply>
-	
-		<condition property="killXvfb" >
-			<not><or>
-				<length string="${xvfbPID}" length="1" />
-				<length string="${xvfbPID}" length="2" />
-			</or></not>
-		</condition>
-		<antcall target="killXvfb" />
-	</target>
-	
-	<target name="killXvfb" if="killXvfb">
-		<exec executable="kill">
-			<arg value="${xvfbPID}" />
-		</exec>
-	</target>
-	
+				
 	<target name="launchWebIDE" if="launchWebIDE" >
 		<exec executable="bash" >
 			<arg value="${builder}/scripts/launchWebIDE.sh" />

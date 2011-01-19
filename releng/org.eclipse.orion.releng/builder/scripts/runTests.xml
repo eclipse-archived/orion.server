@@ -1,0 +1,77 @@
+<!--
+ Copyright (c) 2011 IBM Corporation and others.
+ All rights reserved. This program and the accompanying materials
+ are made available under the terms of the Eclipse Public License v1.0
+ which accompanies this distribution, and is available at
+ http://www.eclipse.org/legal/epl-v10.html
+
+ Contributors:
+     IBM Corporation - initial API and implementation
+-->
+
+<project name="Orion-Tests" default="runTests">
+
+	<target name="runTests" >
+		<echo message="Launching Xvfb" />
+		<exec executable="bash" failonerror="false" outputproperty="xvfbPID" >
+			<arg value="${builder}/scripts/runTests.sh" />
+			<arg line="-xvfb" />
+		</exec>
+		
+		<apply executable="bash" parallel="false">
+			<arg value="${builder}/scripts/runTests.sh" />
+			<arg line="-id ${buildLabel}" />
+			<arg value="-root" />
+			<arg value="${base}" />
+			<arg value="-javaHome"/>
+			<arg value="${java.home}"/>
+			<arg value="-testConf" />
+			<fileset dir="${buildDirectory}/plugins" includes="**/jsTestDriver.conf" />
+		</apply>
+	
+		<condition property="killXvfb" >
+			<not><or>
+				<length string="${xvfbPID}" length="1" />
+				<length string="${xvfbPID}" length="2" />
+			</or></not>
+		</condition>
+		
+		<antcall target="killXvfb" />
+		<antcall target="processResults" />
+	</target>
+		
+	<target name="killXvfb" if="killXvfb">
+		<exec executable="kill">
+			<arg value="${xvfbPID}" />
+		</exec>
+	</target>
+	
+	<target name="processResults" >
+		<property name="dropLocation" value="${buildDirectory}/${buildLabel}/drop" />
+		<property name="testDir" value="${base}/tests/${buildLabel}" />
+		
+		<mkdir dir="${dropLocation}/tests" />
+		
+		<copy todir="${dropLocation}/tests">
+			<fileset dir="${testDir}" includes="**/*.xml" />
+		</copy>
+		
+		<!-- merge test results into a single xml -->
+		<replace dir="${dropLocation}/tests" token="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;" value="" >
+			<include name="*.xml" />
+		</replace>
+		
+		<echo file="${dropLocation}/testResults.xml" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;${line.separator}&lt;testsuites&gt;" />
+		<concat destfile="${dropLocation}/testResults.xml" append="true">
+			<fileset dir="${dropLocation}/tests" includes="*.xml" />
+		</concat>
+		<echo file="${dropLocation}/testResults.xml" message="&lt;/testsuites&gt;" append="true" />
+		
+		<!-- transform into html -->
+		<xslt style="${builder}/html/JUNIT.XSL" in="${dropLocation}/testResults.xml" out="${dropLocation}/testResults.html" />
+		
+		<!-- cleanup xml -->
+		<delete dir="${dropLocation}/tests" />
+		<delete file="${dropLocation}/testResults.xml" />
+	</target>
+</project>
