@@ -27,7 +27,6 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.*;
-import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.osgi.util.NLS;
 import org.osgi.framework.FrameworkUtil;
 
@@ -66,7 +65,7 @@ class Import {
 		IPath destPath = new Path(getPath()).append(getFileName());
 		try {
 			IFileStore source = EFS.getStore(new File(getStorageDirectory(), FILE_DATA).toURI());
-			IFileStore destination = getFileStore(destPath, req.getRemoteUser());
+			IFileStore destination = TransferUtil.getFileStore(destPath, req.getRemoteUser());
 			source.move(destination, EFS.OVERWRITE, null);
 		} catch (CoreException e) {
 			String msg = NLS.bind("Failed to complete file transfer on {0}", destPath.toString());
@@ -94,7 +93,7 @@ class Import {
 		IPath destPath = new Path(getPath());
 		try {
 			ZipFile source = new ZipFile(new File(getStorageDirectory(), FILE_DATA));
-			IFileStore destinationRoot = getFileStore(destPath, req.getRemoteUser());
+			IFileStore destinationRoot = TransferUtil.getFileStore(destPath, req.getRemoteUser());
 			Enumeration<? extends ZipEntry> entries = source.entries();
 			while (entries.hasMoreElements()) {
 				ZipEntry entry = entries.nextElement();
@@ -195,34 +194,6 @@ class Import {
 
 	private String getFileName() {
 		return props.getProperty(KEY_FILE_NAME, ""); //$NON-NLS-1$
-	}
-
-	/**
-	 * Returns the store representing the file to be retrieved for the given
-	 * request or <code>null</code> if an error occurred.
-	 */
-	protected IFileStore getFileStore(IPath path, String authority) {
-		//first check if we have an alias registered
-		if (path.segmentCount() > 0) {
-			URI alias = Activator.getDefault().lookupAlias(path.segment(0));
-			if (alias != null)
-				try {
-					return EFS.getStore(Util.getURIWithAuthority(alias, authority)).getFileStore(path.removeFirstSegments(1));
-				} catch (CoreException e) {
-					LogHelper.log(new Status(IStatus.WARNING, Activator.PI_SERVER_SERVLETS, 1, "An error occured when getting file store for path '" + path + "' and alias '" + alias + "'", e));
-					// fallback is to try the same path relatively to the root
-				}
-		}
-		//assume it is relative to the root
-		URI rootStoreURI = Activator.getDefault().getRootLocationURI();
-		try {
-			return EFS.getStore(Util.getURIWithAuthority(rootStoreURI, authority)).getFileStore(path);
-		} catch (CoreException e) {
-			LogHelper.log(new Status(IStatus.WARNING, Activator.PI_SERVER_SERVLETS, 1, "An error occured when getting file store for path '" + path + "' and root '" + rootStoreURI + "'", e));
-			// fallback and return null
-		}
-
-		return null;
 	}
 
 	private int getLength() {

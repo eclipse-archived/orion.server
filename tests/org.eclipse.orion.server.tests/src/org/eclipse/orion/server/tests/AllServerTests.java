@@ -15,7 +15,7 @@ import org.eclipse.orion.server.tests.servlets.files.AdvancedFilesTest;
 import org.eclipse.orion.server.tests.servlets.files.CoreFilesTest;
 import org.eclipse.orion.server.tests.servlets.users.BasicUsersTest;
 import org.eclipse.orion.server.tests.servlets.workspace.WorkspaceServiceTest;
-import org.eclipse.orion.server.tests.servlets.xfer.ImportTest;
+import org.eclipse.orion.server.tests.servlets.xfer.TransferTest;
 import org.eclipse.orion.server.tests.useradmin.XmlUserAdminTest;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
@@ -25,7 +25,7 @@ import org.junit.runners.Suite.SuiteClasses;
  * Runs all automated server tests.
  */
 @RunWith(Suite.class)
-@SuiteClasses({ImportTest.class, CoreFilesTest.class, AdvancedFilesTest.class, PreferenceTest.class, BasicUsersTest.class, WorkspaceServiceTest.class, XmlUserAdminTest.class, PreferenceTest.class})
+@SuiteClasses({TransferTest.class, CoreFilesTest.class, AdvancedFilesTest.class, PreferenceTest.class, BasicUsersTest.class, WorkspaceServiceTest.class, XmlUserAdminTest.class, PreferenceTest.class})
 public class AllServerTests {
 	//goofy junit4, no class body needed
 }

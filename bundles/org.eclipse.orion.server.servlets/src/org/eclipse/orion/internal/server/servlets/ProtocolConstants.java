@@ -124,7 +124,7 @@ public class ProtocolConstants {
 	 * JSON representation key for an object's parents. The value's data
 	 * type is a JSON array of objects with name and location values.
 	 */
-	public static final String KEY_PARENTS = "Parents";
+	public static final String KEY_PARENTS = "Parents"; //$NON-NLS-1$
 
 	/**
 	 * JSON representation key for a workspace's list of projects. The value's data
@@ -137,6 +137,18 @@ public class ProtocolConstants {
 	 * The value's data type is String.
 	 */
 	public static final String KEY_SEARCH_LOCATION = "SearchLocation"; //$NON-NLS-1$
+
+	/**
+	 * JSON representation key for the location of an object's import service.
+	 * The value's data type is String.
+	 */
+	public static final String KEY_IMPORT_LOCATION = "ImportLocation"; //$NON-NLS-1$
+
+	/**
+	 * JSON representation key for the location of an object's export service.
+	 * The value's data type is String.
+	 */
+	public static final String KEY_EXPORT_LOCATION = "ExportLocation"; //$NON-NLS-1$
 
 	/**
 	 * JSON representation key for an object's name. The value's data type is a String
