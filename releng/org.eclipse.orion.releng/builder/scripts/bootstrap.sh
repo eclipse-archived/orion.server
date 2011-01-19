@@ -16,8 +16,8 @@ supportDir=/shared/eclipse/e4/build/e4
 
 cd $writableBuildRoot
 
-/usr/local/bin/git archive --format=tar --remote=/gitroot/e4/org.eclipse.orion.server.git master releng/org.eclipse.orion.releng/builders/scripts/masterBuild.sh | tar -xf -
-mv releng/org.eclipse.orion.releng/builders/scripts/masterBuild.sh .
+/usr/local/bin/git archive --format=tar --remote=/gitroot/e4/org.eclipse.orion.server.git master releng/org.eclipse.orion.releng/builder/scripts/masterBuild.sh | tar -xf -
+mv releng/org.eclipse.orion.releng/builder/scripts/masterBuild.sh .
 rm -rf releng
 
 /bin/bash -l $writableBuildRoot/masterBuild.sh -root $writableBuildRoot -support $support "$@" >$writableBuildRoot/logs/current.log 2>&1

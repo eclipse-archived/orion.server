@@ -20,6 +20,7 @@ supportDir=/shared/eclipse/e4/build/e4
 builderDir=$supportDir/org.eclipse.orion.releng
 basebuilderBranch=v20101019
 publish=""
+user=aniefer
 
 buildType=I
 timestamp=$( date +%Y%m%d%H%M )
@@ -61,10 +62,10 @@ done
 setProperties () {
 	buildDirectory=$writableBuildRoot/$buildType$timestamp
 	
-	javaHome=/shared/common/jdk-1.5.0-22.x86_64
+	javaHome=/shared/common/jdk-1.6.x86_64
 	
 	pushd $supportDir
-	launcherJar=$( find org.eclipse.releng.basebuilder/ -name "org.eclipse.equinox.launcher_*.jar" | sort | head -1 )
+	launcherJar=$supportDir/$( find org.eclipse.releng.basebuilder/ -name "org.eclipse.equinox.launcher_*.jar" | sort | head -1 )
 	popd
 		
 	#Properties for compilation boot classpaths
@@ -86,7 +87,7 @@ updateRelengProject () {
 	
 	echo "[`date +%H\:%M\:%S`] Get org.eclipse.orion.releng"	
 
-	git archive --format=tar --remote=ssh://dev.eclipse.org/gitroot/e4/org.eclipse.orion.server.git master releng/org.eclipse.orion.releng | tar -xf -
+	git archive --format=tar --remote=/gitroot/e4/org.eclipse.orion.server.git master releng/org.eclipse.orion.releng | tar -xf -
 	mv releng/org.eclipse.orion.releng org.eclipse.orion.releng;
 	rm -rf releng
 
@@ -118,6 +119,7 @@ runBuild () {
 			-Dbuilder=$builderDir/builder \
 			-Dbase=$writableBuildRoot \
 			-DbuildType=$buildType -Dtimestamp=$timestamp \
+			-DgitUser=$user \
 			$tagMaps $compareMaps $fetchTag $publish \
 			-DJ2SE-1.4=$j2se142 \
 			-DJ2SE-1.5=$j2se150 \
@@ -135,7 +137,7 @@ runTests () {
 			-DbuildDirectory=$buildDirectory \
 			-Dbuilder=$builderDir/builder \
 			-Dbase=$writableBuildRoot \
-			-DbuildLabel=$buildType$timestamp
+			-DbuildLabel=$buildType$timestamp"
 	
 	echo "[`date +%H\:%M\:%S`] Starting Tests"
 	$cmd
@@ -177,12 +179,12 @@ publish () {
 	echo "[`date +%H\:%M\:%S`] Publishing to eclipse.org"
 	pushd $buildDirectory/$buildLabel
 	mv drop $buildLabel
-	scp -r $buildLabel aniefer@dev.eclipse.org:/home/data/httpd/download.eclipse.org/e4/orion/drops
+	scp -r $buildLabel $user@dev.eclipse.org:/home/data/httpd/download.eclipse.org/e4/orion/drops
 	wget -O index.html http://download.eclipse.org/e4/orion/createIndex.php
-	scp index.html aniefer@dev.eclipse.org:/home/data/httpd/download.eclipse.org/e4/orion
+	scp index.html $user@dev.eclipse.org:/home/data/httpd/download.eclipse.org/e4/orion
 	
 	if [ $buildType = I ]; then
-		scp -r $buildDirectory/plugins/org.eclipse.orion.doc.isc/jsdoc aniefer@dev.eclipse.org:/home/data/httpd/download.eclipse.org/e4/orion
+		scp -r $buildDirectory/plugins/org.eclipse.orion.doc.isc/jsdoc $user@dev.eclipse.org:/home/data/httpd/download.eclipse.org/e4/orion
 	fi
 	
 	sendMail

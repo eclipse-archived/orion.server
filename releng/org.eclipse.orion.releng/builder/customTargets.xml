@@ -23,8 +23,12 @@
 			<fileset dir="${builder}/../maps" />
 		</copy>
 		
-		<replace dir="${buildDirectory}/maps/" value="${cvsuser}" token=":ext:ottawa" />
 		<replace dir="${buildDirectory}/maps/" value="${eclipsePlatformRepo}" token="ECLIPSE_PLATFORM_REPO" />
+		<antcall target="replaceUser" />
+	</target>
+	
+	<target name="replaceUser" if="gitUser" >
+		<replace dir="${buildDirectory}/maps/" value="${gitUser}@dev.eclipse.org:/gitroot" token="dev.eclipse.org:/gitroot" />
 	</target>
 	
 	<target name="tagMapFiles" if="tagMaps" >
