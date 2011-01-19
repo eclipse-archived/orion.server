@@ -44,7 +44,7 @@ public class TransferServlet extends OrionServlet {
 		String options = req.getHeader(ProtocolConstants.HEADER_XFER_OPTIONS);
 		if (options == null)
 			options = ""; //$NON-NLS-1$
-		boolean unzip = options.contains("unzip");
+		boolean unzip = options.contains("unzip"); //$NON-NLS-1$
 		String fileName = req.getHeader(ProtocolConstants.HEADER_SLUG);
 		if (fileName == null && !unzip) {
 			handleException(resp, "Transfer request must indicate target filename", null, HttpServletResponse.SC_BAD_REQUEST);
@@ -62,18 +62,34 @@ public class TransferServlet extends OrionServlet {
 	}
 
 	@Override
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		traceRequest(req);
+		String pathInfo = req.getPathInfo();
+		IPath path = pathInfo == null ? Path.ROOT : new Path(pathInfo);
+		if (path.segmentCount() >= 2) {
+			if ("export".equals(path.segment(0)) && "zip".equals(path.getFileExtension())) { //$NON-NLS-1$ //$NON-NLS-2$
+				Export export = new Export(path.removeFirstSegments(1).removeFileExtension(), getStatusHandler());
+				export.doExport(req, resp);
+				return;
+			}
+		}
+		super.doGet(req, resp);
+	}
+
+	@Override
 	protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
 		String pathInfo = req.getPathInfo();
 		IPath path = pathInfo == null ? Path.ROOT : new Path(pathInfo);
 		String id;
 		//format is /xfer/import/<uuid>
-		if (path.segmentCount() != 2) {
-			handleException(resp, "Malformed request", null, HttpServletResponse.SC_BAD_REQUEST);
+		if (path.segmentCount() == 2) {
+			id = path.segment(1);
+			Import importOp = new Import(id, getStatusHandler());
+			importOp.doPut(req, resp);
 			return;
 		}
-		id = path.segment(1);
-		Import importOp = new Import(id, getStatusHandler());
-		importOp.doPut(req, resp);
+		super.doPut(req, resp);
 	}
+
 }

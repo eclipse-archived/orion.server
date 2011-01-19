@@ -18,6 +18,7 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.core.IAliasRegistry;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
+import org.eclipse.orion.internal.server.servlets.xfer.TransferResourceDecorator;
 import org.eclipse.osgi.service.datalocation.Location;
 import org.osgi.framework.*;
 import org.osgi.util.tracker.ServiceTracker;
@@ -28,12 +29,12 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public class Activator implements BundleActivator, IAliasRegistry {
 
+	public static volatile BundleContext bundleContext;
+
 	/**
 	 * Global flag for enabling debug tracing
 	 */
 	public static final boolean DEBUG = true;
-
-	public static volatile BundleContext bundleContext;
 
 	public static final String LOCATION_FILE_SERVLET = "/file"; //$NON-NLS-1$
 	public static final String LOCATION_PROJECT_SERVLET = "/project"; //$NON-NLS-1$
@@ -41,10 +42,11 @@ public class Activator implements BundleActivator, IAliasRegistry {
 	public static final String PI_SERVER_SERVLETS = "org.eclipse.orion.server.servlets"; //$NON-NLS-1$
 	static Activator singleton;
 
-	private URI rootStoreURI;
 	private Map<String, URI> aliases = Collections.synchronizedMap(new HashMap<String, URI>());
-
 	private ServiceTracker<IWebResourceDecorator, IWebResourceDecorator> decoratorTracker;
+
+	private URI rootStoreURI;
+	private ServiceRegistration<IWebResourceDecorator> transferDecoratorRegistration;
 
 	public static Activator getDefault() {
 		return singleton;
@@ -52,6 +54,14 @@ public class Activator implements BundleActivator, IAliasRegistry {
 
 	public BundleContext getContext() {
 		return bundleContext;
+	}
+
+	private synchronized ServiceTracker<IWebResourceDecorator, IWebResourceDecorator> getDecoratorTracker() {
+		if (decoratorTracker == null) {
+			decoratorTracker = new ServiceTracker<IWebResourceDecorator, IWebResourceDecorator>(bundleContext, IWebResourceDecorator.class, null);
+			decoratorTracker.open();
+		}
+		return decoratorTracker;
 	}
 
 	/**
@@ -95,14 +105,6 @@ public class Activator implements BundleActivator, IAliasRegistry {
 		return tracker.getTracked().values();
 	}
 
-	private synchronized ServiceTracker<IWebResourceDecorator, IWebResourceDecorator> getDecoratorTracker() {
-		if (decoratorTracker == null) {
-			decoratorTracker = new ServiceTracker<IWebResourceDecorator, IWebResourceDecorator>(bundleContext, IWebResourceDecorator.class, null);
-			decoratorTracker.open();
-		}
-		return decoratorTracker;
-	}
-
 	private void initializeFileSystem() {
 		IPath location = getPlatformLocation();
 		if (location == null)
@@ -144,20 +146,6 @@ public class Activator implements BundleActivator, IAliasRegistry {
 		}
 	}
 
-	public void start(BundleContext context) throws Exception {
-		singleton = this;
-		bundleContext = context;
-		initializeFileSystem();
-	}
-
-	public void stop(BundleContext context) throws Exception {
-		if (decoratorTracker != null) {
-			decoratorTracker.close();
-			decoratorTracker = null;
-		}
-		bundleContext = null;
-	}
-
 	public URI lookupAlias(String alias) {
 		return aliases.get(alias);
 	}
@@ -166,8 +154,35 @@ public class Activator implements BundleActivator, IAliasRegistry {
 		aliases.put(alias, location);
 	}
 
+	private void registerTransferDecorator() {
+		transferDecoratorRegistration = bundleContext.registerService(IWebResourceDecorator.class, new TransferResourceDecorator(), null);
+	}
+
+	public void start(BundleContext context) throws Exception {
+		singleton = this;
+		bundleContext = context;
+		initializeFileSystem();
+		registerTransferDecorator();
+	}
+
+	public void stop(BundleContext context) throws Exception {
+		if (decoratorTracker != null) {
+			decoratorTracker.close();
+			decoratorTracker = null;
+		}
+		unregisterTransferDecorator();
+		bundleContext = null;
+	}
+
 	public void unregisterAlias(String alias) {
 		aliases.remove(alias);
+	}
+
+	private void unregisterTransferDecorator() {
+		if (transferDecoratorRegistration != null) {
+			transferDecoratorRegistration.unregister();
+			transferDecoratorRegistration = null;
+		}
 	}
 
 }

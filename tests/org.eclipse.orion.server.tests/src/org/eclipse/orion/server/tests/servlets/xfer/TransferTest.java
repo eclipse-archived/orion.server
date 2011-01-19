@@ -17,8 +17,11 @@ import static org.junit.Assert.assertTrue;
 import com.meterware.httpunit.*;
 import java.io.*;
 import java.net.URL;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.junit.*;
@@ -27,7 +30,7 @@ import org.xml.sax.SAXException;
 /**
  * 
  */
-public class ImportTest extends FileSystemTest {
+public class TransferTest extends FileSystemTest {
 	WebConversation webConversation;
 
 	@BeforeClass
@@ -95,6 +98,32 @@ public class ImportTest extends FileSystemTest {
 
 		//assert the file is present in the workspace
 		assertTrue(checkFileExists(directoryPath + "/client.zip"));
+	}
+
+	@Test
+	public void testExportProject() throws CoreException, IOException, SAXException {
+		//create content to export
+		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+		createDirectory(directoryPath);
+		String fileContents = "This is the file contents";
+		createFile(directoryPath + "/file.txt", fileContents);
+
+		GetMethodWebRequest export = new GetMethodWebRequest(ServerTestsActivator.getServerLocation() + "/xfer/export/" + directoryPath + ".zip");
+		setAuthentication(export);
+		WebResponse response = webConversation.getResponse(export);
+		assertEquals(200, response.getResponseCode());
+		boolean found = false;
+		ZipInputStream in = new ZipInputStream(response.getInputStream());
+		ZipEntry entry;
+		while ((entry = in.getNextEntry()) != null) {
+			if (entry.getName().equals("file.txt")) {
+				found = true;
+				ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+				IOUtilities.pipe(in, bytes, false, false);
+				assertEquals(fileContents, new String(bytes.toByteArray()));
+			}
+		}
+		assertTrue(found);
 	}
 
 	private void doImport(File source, long length, String location) throws FileNotFoundException, IOException, SAXException {
