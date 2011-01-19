@@ -98,7 +98,7 @@ lastMapTag=${mapsTagTag}
 		<copy filtering="true" file="${builder}/html/build.index.html" tofile="${dropLocation}/index.html" />
 
 		<copy file="${buildResultLocation}/../directory.txt" tofile="${dropLocation}/directory.txt" />
-		<copy file="/web/builds/current.log" tofile="${dropLocation}/buildLog-${buildLabel}.txt" />
+		<copy file="${base}/logs/current.log" tofile="${dropLocation}/buildLog-${buildLabel}.txt" />
 	</target>
 				
 	<target name="launchWebIDE" if="launchWebIDE" >
