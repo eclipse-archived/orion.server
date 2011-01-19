@@ -150,7 +150,7 @@ sendMail () {
 	failed=""
 	
 	pushd $buildDirectory/plugins
-	compileProblems=$( ls --format=single-column */compilation.problem | cut -d/ -f1 )
+	compileProblems=$( find . -name compilation.problem | cut -d/ -f2 )
 	popd
 
 	if [[ ! -z $compileProblems ]]; then
@@ -177,9 +177,9 @@ EOF
 
 publish () {
 	echo "[`date +%H\:%M\:%S`] Publishing to eclipse.org"
-	pushd $buildDirectory/$buildLabel
-	mv drop $buildLabel
-	scp -r $buildLabel $user@dev.eclipse.org:/home/data/httpd/download.eclipse.org/e4/orion/drops
+	pushd $buildDirectory/$buildType$timestamp
+	mv drop $buildType$timestamp
+	scp -r $buildType$timestamp $user@dev.eclipse.org:/home/data/httpd/download.eclipse.org/e4/orion/drops
 	wget -O index.html http://download.eclipse.org/e4/orion/createIndex.php
 	scp index.html $user@dev.eclipse.org:/home/data/httpd/download.eclipse.org/e4/orion
 	
