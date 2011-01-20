@@ -166,7 +166,7 @@ sendMail () {
 		prereqMsg=`cat $buildDirectory/prereqErrors.log` 
 	fi
 	
-	echo "[`date +%H\:%M\:%S`] Sending mail to $resultsEmail
+	echo "[`date +%H\:%M\:%S`] Sending mail to $resultsEmail"
 	
 mailx -s "[orion-build] Orion Build : $buildType$timestamp $failed" $resultsEmail <<EOF
 
