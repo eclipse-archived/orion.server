@@ -5,5 +5,5 @@
 <role name="guest"/>
 </roles>
 <users>
-<user login="johna" name="" password="johna"/></users>
+</users>
 </WebIdeUsers>
