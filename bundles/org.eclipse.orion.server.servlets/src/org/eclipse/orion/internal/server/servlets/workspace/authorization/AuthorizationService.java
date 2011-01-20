@@ -10,15 +10,13 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.workspace.authorization;
 
-import org.eclipse.orion.server.core.users.OrionScope;
-
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.ServerStatus;
-
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.servlets.ServerStatus;
+import org.eclipse.orion.server.core.users.OrionScope;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.osgi.service.prefs.BackingStoreException;
@@ -61,8 +59,15 @@ public class AuthorizationService {
 	}
 
 	public static boolean checkRights(String name, String uri) throws JSONException {
-		if (uri.equals("/workspace"))
+		if (uri.equals("/workspace")) //$NON-NLS-1$
 			return true;
+
+		//import/export rights depend on access to the file content
+		if (uri.startsWith("/xfer/export/") && uri.endsWith(".zip")) {
+			uri = "/file/" + uri.substring(13, uri.length() - 4);
+		} else if (uri.startsWith("/xfer/")) {
+			uri = "/file/" + uri.substring(6);
+		}
 
 		IEclipsePreferences users = new OrionScope().getNode("Users"); //$NON-NLS-1$
 		IEclipsePreferences result = (IEclipsePreferences) users.node(name);

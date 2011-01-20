@@ -84,6 +84,10 @@
             class="org.eclipse.orion.server.configurator.servlet.AuthorizationFilter">
       </filter>
       <filter
+            alias="/xfer"
+            class="org.eclipse.orion.server.configurator.servlet.AuthorizationFilter">
+      </filter>
+      <filter
             alias="/workspace"
             class="org.eclipse.orion.server.configurator.servlet.AuthorizationFilter">
       </filter>
