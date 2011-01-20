@@ -18,6 +18,7 @@ import org.apache.solr.client.solrj.*;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrInputDocument;
+import org.apache.solr.common.params.CommonParams;
 import org.eclipse.core.filesystem.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.Job;
@@ -169,6 +170,7 @@ public class Indexer extends Job {
 			qString.append(':');
 			qString.append(Long.toString(fileInfo.getLastModified()));
 			SolrQuery query = new SolrQuery(qString.toString());
+			query.setParam(CommonParams.FL, ProtocolConstants.KEY_ID);
 			QueryResponse response = server.query(query);
 			return response.getResults().getNumFound() == 0;
 		} catch (SolrServerException e) {
