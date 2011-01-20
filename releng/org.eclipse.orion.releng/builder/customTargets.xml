@@ -62,7 +62,7 @@ lastMapTag=${mapsTagTag}
 			<replacefilter token="origin/master" value="${buildType}${timestamp}" />
 		</replace>
 		
-		<property name="jsdocHome" value="${base}/base/jsdoc-toolkit" />
+		<property name="jsdocHome" value="${base}/jsdoc-toolkit" />
 		<java jar="${jsdocHome}/jsrun.jar" fork="true"> 
 			<arg line="${jsdocHome}/app/run.js -s -v -a " />
 			<arg value="-t=${jsdocHome}/templates/jsdoc" />
