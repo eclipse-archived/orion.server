@@ -35,14 +35,20 @@ public class Export {
 
 	public void doExport(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
 		IFileStore source = TransferUtil.getFileStore(sourcePath, req.getRemoteUser());
-		ZipOutputStream zout = new ZipOutputStream(resp.getOutputStream());
+
 		try {
+			if (source.fetchInfo().isDirectory() && source.childNames(EFS.NONE, null).length == 0) {
+				resp.sendError(HttpServletResponse.SC_NOT_FOUND, "The folder is empty");
+				return;
+			}
+
+			ZipOutputStream zout = new ZipOutputStream(resp.getOutputStream());
 			write(source, Path.EMPTY, zout);
+			zout.finish();
 		} catch (CoreException e) {
 			//we can't return an error response at this point because the output stream has been used
 			throw new ServletException(e);
 		}
-		zout.finish();
 	}
 
 	private void write(IFileStore source, IPath path, ZipOutputStream zout) throws IOException, CoreException {
