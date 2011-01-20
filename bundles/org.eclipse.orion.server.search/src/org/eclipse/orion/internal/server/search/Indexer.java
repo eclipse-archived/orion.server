@@ -10,23 +10,22 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.search;
 
-import org.eclipse.orion.server.core.LogHelper;
-
-import org.eclipse.orion.internal.server.servlets.Activator;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
-
-import org.eclipse.orion.internal.server.core.IOUtilities;
-
 import java.io.*;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.*;
+import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrInputDocument;
 import org.eclipse.core.filesystem.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.orion.internal.server.core.IOUtilities;
+import org.eclipse.orion.internal.server.servlets.Activator;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
+import org.eclipse.orion.server.core.LogHelper;
 
 /**
  * The indexer is responsible for keeping the solr/lucene index up to date.
@@ -37,7 +36,6 @@ public class Indexer extends Job {
 	private static final long DEFAULT_DELAY = 60000;//one minute
 	private static final long MAX_SEARCH_SIZE = 100000;//don't index files larger than 100,000 bytes
 	private final SolrServer server;
-	private long indexStartTime = 0;
 
 	public Indexer(SolrServer server) {
 		super("Indexing");
@@ -130,7 +128,7 @@ public class Indexer extends Job {
 			IFileInfo fileInfo = file.fetchInfo();
 			if (fileInfo.getLength() > MAX_SEARCH_SIZE)
 				continue;
-			if (fileInfo.getLastModified() < indexStartTime) {
+			if (!isModified(file, fileInfo)) {
 				unmodifiedCount++;
 				continue;
 			}
@@ -160,6 +158,26 @@ public class Indexer extends Job {
 			System.out.println("\tIndexed: " + indexedCount + " Unchanged:  " + unmodifiedCount); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
+	private boolean isModified(IFileStore file, IFileInfo fileInfo) {
+		try {
+			//if there is no match, then the file last modified doesn't match last index so assume it was modified
+			StringBuffer qString = new StringBuffer(ProtocolConstants.KEY_ID);
+			qString.append(':');
+			qString.append(ClientUtils.escapeQueryChars(file.toURI().toString()));
+			qString.append(" AND "); //$NON-NLS-1$
+			qString.append(ProtocolConstants.KEY_LAST_MODIFIED);
+			qString.append(':');
+			qString.append(Long.toString(fileInfo.getLastModified()));
+			SolrQuery query = new SolrQuery(qString.toString());
+			QueryResponse response = server.query(query);
+			return response.getResults().getNumFound() == 0;
+		} catch (SolrServerException e) {
+			handleIndexingFailure(e);
+			//attempt to reindex
+			return true;
+		}
+	}
+
 	private void checkCanceled(IProgressMonitor monitor) {
 		if (monitor.isCanceled())
 			throw new OperationCanceledException();
@@ -182,8 +200,6 @@ public class Indexer extends Job {
 		if (SearchActivator.DEBUG)
 			System.out.println("Rescheduling indexing in " + delay + "ms"); //$NON-NLS-1$//$NON-NLS-2$
 		schedule(delay);
-		//remember start time of last successful index pass
-		indexStartTime = start;
 		return Status.OK_STATUS;
 	}
 

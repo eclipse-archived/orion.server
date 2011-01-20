@@ -10,14 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.search;
 
-import org.eclipse.orion.server.core.LogHelper;
-
-import org.eclipse.orion.internal.server.servlets.Activator;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-
-import org.eclipse.orion.internal.server.core.IOUtilities;
-import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
-
 import java.io.*;
 import java.net.*;
 import org.apache.solr.client.solrj.SolrServer;
@@ -25,6 +17,11 @@ import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
 import org.apache.solr.core.*;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.runtime.*;
+import org.eclipse.orion.internal.server.core.IOUtilities;
+import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
+import org.eclipse.orion.internal.server.servlets.Activator;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.LogHelper;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.framework.*;
