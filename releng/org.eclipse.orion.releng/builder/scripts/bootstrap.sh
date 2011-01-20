@@ -20,4 +20,4 @@ cd $writableBuildRoot
 mv releng/org.eclipse.orion.releng/builder/scripts/masterBuild.sh .
 rm -rf releng
 
-/bin/bash -l $writableBuildRoot/masterBuild.sh -root $writableBuildRoot -support $support "$@" >$writableBuildRoot/logs/current.log 2>&1
+/bin/bash -l $writableBuildRoot/masterBuild.sh -root $writableBuildRoot -support $supportDir "$@" >$writableBuildRoot/logs/current.log 2>&1

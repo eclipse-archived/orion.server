@@ -46,7 +46,7 @@ if [ ! -z "$xvfbCommand" ]; then
 	    exit 1
 	fi
 	
-	$xvfb :99 -ac > /dev/null 2>&1 &	# launch virtual frame buffer into the background
+	$xvfb :63 -ac > /dev/null 2>&1 &	# launch virtual frame buffer into the background
 	pid_xvfb="$!"			# take the process ID
 	echo $pid_xvfb
 	exit
@@ -58,17 +58,17 @@ then
 mkdir $testDir
 fi
 
-firefox=/usr/lib/firefox-3.6.12/firefox
+firefox=/shared/common/firefox-3.6.13/firefox
 if [[ ! -e "$firefox" ]]; then
 firefox=`which firefox`
 fi
 
-chrome=/usr/local/chromium/chrome-wrapper
+chrome=/shared/common/chrome-8.0.552.237/google-chrome
 if [[ ! -e "$chrome" ]]; then
-	chrome=/opt/google/chrome/chrome
+	chrome=`which chrome`
 fi
 
-export DISPLAY=:99		# set display to use that of the xvfb
+export DISPLAY=:63		# set display to use that of the xvfb
 
 #read the port number from the testConf file
 port=`head -1 $testConf | sed 's_.*:\([0-9]*\)$_\1_'`
