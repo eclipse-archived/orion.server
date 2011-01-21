@@ -96,6 +96,7 @@ lastMapTag=${mapsTagTag}
 		<filter token="repmaindate" value="${TODAY}" />
 		<filter token="repbuilddate" value="${buildId}" />
 		<copy filtering="true" file="${builder}/html/build.index.html" tofile="${dropLocation}/index.html" />
+		<copy file="${builder}/html/build.download.php" tofile="${dropLocation}/download.php" />
 
 		<copy file="${buildResultLocation}/../directory.txt" tofile="${dropLocation}/directory.txt" />
 		<copy file="${base}/logs/current.log" tofile="${dropLocation}/buildLog-${buildLabel}.txt" />
