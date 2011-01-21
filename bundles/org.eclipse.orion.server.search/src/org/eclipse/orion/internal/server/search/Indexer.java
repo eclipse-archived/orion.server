@@ -35,7 +35,7 @@ import org.eclipse.orion.server.core.LogHelper;
 public class Indexer extends Job {
 
 	private static final long DEFAULT_DELAY = 60000;//one minute
-	private static final long MAX_SEARCH_SIZE = 100000;//don't index files larger than 100,000 bytes
+	private static final long MAX_SEARCH_SIZE = 300000;//don't index files larger than 300,000 bytes
 	private static final List<String> IGNORED_FILE_TYPES = Arrays.asList("png", "jpg", "gif", "bmp", "pdf", "tiff");
 	private final SolrServer server;
 
