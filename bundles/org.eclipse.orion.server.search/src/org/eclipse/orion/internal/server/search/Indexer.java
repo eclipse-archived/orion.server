@@ -126,7 +126,7 @@ public class Indexer extends Job {
 		collectFiles(projectStore, toIndex);
 		int unmodifiedCount = 0, indexedCount = 0;
 		//add each file to the index
-		String user = findUser(projectLocation);
+		List<String> users = findUsers(projectLocation);
 		for (IFileStore file : toIndex) {
 			checkCanceled(monitor);
 			IFileInfo fileInfo = file.fetchInfo();
@@ -145,8 +145,9 @@ public class Indexer extends Job {
 			IPath fileLocation = projectLocation.append(file.toURI().toString().substring(projectLocationLength));
 			doc.addField(ProtocolConstants.KEY_LOCATION, fileLocation.toString());
 			doc.addField("Text", getContentsAsString(file)); //$NON-NLS-1$
-			if (user != null)
-				doc.addField(ProtocolConstants.KEY_USER_NAME, user);
+			if (users != null)
+				for (String user : users)
+					doc.addField(ProtocolConstants.KEY_USER_NAME, user);
 			try {
 				server.add(doc);
 			} catch (Exception e) {
@@ -162,7 +163,7 @@ public class Indexer extends Job {
 			System.out.println("\tIndexed: " + indexedCount + " Unchanged:  " + unmodifiedCount); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
-	private String findUser(IPath projectLocation) {
+	private List<String> findUsers(IPath projectLocation) {
 		return AuthorizationService.findUserWithRights(projectLocation.toString());
 	}
 

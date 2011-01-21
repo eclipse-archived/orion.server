@@ -80,21 +80,12 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 	private void computeProjectLocation(WebProject project, String location, String authority, boolean init) throws URISyntaxException, CoreException {
 		URI contentURI;
 		if (location == null) {
-			//if there is already a project with this name, use it
+			//auto-generate a project name from the id
 			URI platformLocationURI = Activator.getDefault().getRootLocationURI();
-
-			IFileStore child = EFS.getStore(Util.getURIWithAuthority(platformLocationURI, authority)).getChild(project.getName());
-
-			if (child.fetchInfo().exists()) {
-				contentURI = child.toURI();
-			} else {
-				//otherwise auto-generate a project name from the id
-
-				child = EFS.getStore(Util.getURIWithAuthority(platformLocationURI, authority)).getChild(project.getId());
-				child.mkdir(EFS.NONE, null);
-				//store a relative URI
-				contentURI = new URI(null, child.getName(), null);
-			}
+			IFileStore child = EFS.getStore(Util.getURIWithAuthority(platformLocationURI, authority)).getChild(project.getId());
+			child.mkdir(EFS.NONE, null);
+			//store a relative URI
+			contentURI = new URI(null, child.getName(), null);
 		} else {
 			//use the content location specified by the user
 			try {

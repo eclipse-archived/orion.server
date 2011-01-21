@@ -82,23 +82,24 @@ public class AuthorizationService {
 	}
 
 	/**
-	 * Returns the first user that has the given rights granted to them.
+	 * Returns all users that have the given rights granted to them.
 	 */
-	public static String findUserWithRights(String rightToFind) {
+	public static List<String> findUserWithRights(String rightToFind) {
 		IEclipsePreferences users = new OrionScope().getNode("Users"); //$NON-NLS-1$
+		List<String> matches = new ArrayList<String>();
 		String[] usernames;
 		try {
 			usernames = users.childrenNames();
 			for (String user : usernames) {
 				for (String right : getRights(user)) {
 					if (rightToFind.startsWith(right))
-						return user;
+						matches.add(user);
 				}
 			}
 		} catch (BackingStoreException e) {
-			//return null
+			return null;
 		}
-		return null;
+		return matches;
 	}
 
 	public static boolean checkRights(String name, String uri) throws JSONException {
