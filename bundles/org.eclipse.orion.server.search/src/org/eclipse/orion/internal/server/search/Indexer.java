@@ -12,8 +12,7 @@ package org.eclipse.orion.internal.server.search;
 
 import java.io.*;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import org.apache.solr.client.solrj.*;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.util.ClientUtils;
@@ -26,6 +25,7 @@ import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
+import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.LogHelper;
 
 /**
@@ -36,6 +36,7 @@ public class Indexer extends Job {
 
 	private static final long DEFAULT_DELAY = 60000;//one minute
 	private static final long MAX_SEARCH_SIZE = 100000;//don't index files larger than 100,000 bytes
+	private static final List<String> IGNORED_FILE_TYPES = Arrays.asList("png", "jpg", "gif", "bmp", "pdf", "tiff");
 	private final SolrServer server;
 
 	public Indexer(SolrServer server) {
@@ -51,11 +52,11 @@ public class Indexer extends Job {
 		try {
 			IFileStore[] children = dir.childStores(EFS.NONE, null);
 			for (IFileStore child : children) {
-				if (!child.getName().startsWith(".")) {
+				if (!child.getName().startsWith(".")) { //$NON-NLS-1$
 					IFileInfo info = child.fetchInfo();
 					if (info.isDirectory())
 						collectFiles(child, files);
-					else
+					else if (!skip(info))
 						files.add(child);
 				}
 			}
@@ -124,11 +125,11 @@ public class Indexer extends Job {
 		final List<IFileStore> toIndex = new ArrayList<IFileStore>();
 		collectFiles(projectStore, toIndex);
 		int unmodifiedCount = 0, indexedCount = 0;
+		//add each file to the index
+		String user = findUser(projectLocation);
 		for (IFileStore file : toIndex) {
 			checkCanceled(monitor);
 			IFileInfo fileInfo = file.fetchInfo();
-			if (fileInfo.getLength() > MAX_SEARCH_SIZE)
-				continue;
 			if (!isModified(file, fileInfo)) {
 				unmodifiedCount++;
 				continue;
@@ -144,6 +145,8 @@ public class Indexer extends Job {
 			IPath fileLocation = projectLocation.append(file.toURI().toString().substring(projectLocationLength));
 			doc.addField(ProtocolConstants.KEY_LOCATION, fileLocation.toString());
 			doc.addField("Text", getContentsAsString(file)); //$NON-NLS-1$
+			if (user != null)
+				doc.addField(ProtocolConstants.KEY_USER_NAME, user);
 			try {
 				server.add(doc);
 			} catch (Exception e) {
@@ -157,6 +160,19 @@ public class Indexer extends Job {
 		}
 		if (SearchActivator.DEBUG)
 			System.out.println("\tIndexed: " + indexedCount + " Unchanged:  " + unmodifiedCount); //$NON-NLS-1$ //$NON-NLS-2$
+	}
+
+	private String findUser(IPath projectLocation) {
+		return AuthorizationService.findUserWithRights(projectLocation.toString());
+	}
+
+	private boolean skip(IFileInfo fileInfo) {
+		if (fileInfo.getLength() > MAX_SEARCH_SIZE)
+			return true;
+		String extension = new Path(fileInfo.getName()).getFileExtension();
+		if (extension != null && IGNORED_FILE_TYPES.contains(extension))
+			return true;
+		return false;
 	}
 
 	private boolean isModified(IFileStore file, IFileInfo fileInfo) {
@@ -175,7 +191,7 @@ public class Indexer extends Job {
 			return response.getResults().getNumFound() == 0;
 		} catch (SolrServerException e) {
 			handleIndexingFailure(e);
-			//attempt to reindex
+			//attempt to re-index
 			return true;
 		}
 	}

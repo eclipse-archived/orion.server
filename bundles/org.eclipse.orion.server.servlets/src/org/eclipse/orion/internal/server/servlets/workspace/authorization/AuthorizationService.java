@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.workspace.authorization;
 
+import java.util.*;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
@@ -56,6 +57,48 @@ public class AuthorizationService {
 
 		result.put(ProtocolConstants.KEY_USER_RIGHTS, userRightArray.toString());
 		result.flush();
+	}
+
+	/**
+	 * Returns a list of all rights granted to the given user.
+	 */
+	public static List<String> getRights(String name) {
+		IEclipsePreferences users = new OrionScope().getNode("Users"); //$NON-NLS-1$
+		IEclipsePreferences result = (IEclipsePreferences) users.node(name);
+		String userRights = result.get(ProtocolConstants.KEY_USER_RIGHTS, null);
+
+		if (userRights == null)
+			return Collections.emptyList();
+		try {
+			JSONArray userRightArray = new JSONArray(userRights);
+			List<String> list = new ArrayList<String>();
+			for (int i = 0; i < userRightArray.length(); i++) {
+				list.add(userRightArray.getString(i));
+			}
+			return list;
+		} catch (JSONException e) {
+			return Collections.emptyList();
+		}
+	}
+
+	/**
+	 * Returns the first user that has the given rights granted to them.
+	 */
+	public static String findUserWithRights(String rightToFind) {
+		IEclipsePreferences users = new OrionScope().getNode("Users"); //$NON-NLS-1$
+		String[] usernames;
+		try {
+			usernames = users.childrenNames();
+			for (String user : usernames) {
+				for (String right : getRights(user)) {
+					if (rightToFind.startsWith(right))
+						return user;
+				}
+			}
+		} catch (BackingStoreException e) {
+			//return null
+		}
+		return null;
 	}
 
 	public static boolean checkRights(String name, String uri) throws JSONException {

@@ -10,15 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.workspace;
 
-import org.eclipse.orion.server.core.LogHelper;
-
-import org.eclipse.orion.server.servlets.OrionServlet;
-
-import org.eclipse.orion.internal.server.servlets.*;
-import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
-
-import org.eclipse.orion.internal.server.core.IAliasRegistry;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -30,6 +21,11 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
+import org.eclipse.orion.internal.server.core.IAliasRegistry;
+import org.eclipse.orion.internal.server.servlets.*;
+import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
 import org.osgi.service.prefs.BackingStoreException;
@@ -335,10 +331,6 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 			result.put(ProtocolConstants.KEY_CHILDREN_LOCATION, workspaceLocation.toString());
 			result.put(ProtocolConstants.KEY_PROJECTS, projects);
 			result.put(ProtocolConstants.KEY_DIRECTORY, "true"); //$NON-NLS-1$
-			//search field
-			//			result.put(ProtocolConstants.KEY_SEARCH_LOCATION, "/search?q=");
-			//solr search would be something like this:
-			//"/solrsearch?wt=json&q={!lucene q.op=AND df=text}workspace:"+workspace.getId()+"+";
 		} catch (JSONException e) {
 			//can't happen because key and value are well-formed
 		}
