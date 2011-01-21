@@ -111,7 +111,7 @@ function checkUser() {
 	dojo.xhrPost({
 		url : "/openid",
 		headers : {
-			"EclipseWeb-Version" : "1"
+			"Orion-Version" : "1"
 		},
 		handleAs : "json",
 		timeout : 15000,
@@ -135,7 +135,7 @@ function logout() {
 	dojo.xhrPost({
 		url : "/logout",
 		headers : {
-			"EclipseWeb-Version" : "1"
+			"Orion-Version" : "1"
 		},
 		handleAs : "json",
 		timeout : 15000,

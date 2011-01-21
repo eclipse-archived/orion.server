@@ -48,7 +48,7 @@ public abstract class UsersTest extends AbstractServerTest {
 
 	protected static WebRequest getPostUsersRequest(String uri, Map<String, String> params, boolean admin) {
 		WebRequest request = new PostMethodWebRequest(SERVER_LOCATION + "/useradmin/" + uri);
-		request.setHeaderField("EclipseWeb-Version", "1");
+		request.setHeaderField("Orion-Version", "1");
 		for (String key : params.keySet()) {
 			request.setParameter(key, params.get(key));
 		}
@@ -62,7 +62,7 @@ public abstract class UsersTest extends AbstractServerTest {
 
 	protected static WebRequest getDeleteUsersRequest(String uri, boolean admin) {
 		WebRequest request = new DeleteMethodWebRequest(SERVER_LOCATION + "/useradmin/" + uri);
-		request.setHeaderField("EclipseWeb-Version", "1");
+		request.setHeaderField("Orion-Version", "1");
 		if (admin) {
 			setAuthenticationAdmin(request);
 		} else {
@@ -73,7 +73,7 @@ public abstract class UsersTest extends AbstractServerTest {
 
 	protected static WebRequest getDeleteUsersRequest(String uri, Map<String, String> params, boolean admin) {
 		WebRequest request = new DeleteMethodWebRequest(SERVER_LOCATION + "/useradmin/" + uri);
-		request.setHeaderField("EclipseWeb-Version", "1");
+		request.setHeaderField("Orion-Version", "1");
 		for (String key : params.keySet()) {
 			request.setParameter(key, params.get(key));
 		}
@@ -87,7 +87,7 @@ public abstract class UsersTest extends AbstractServerTest {
 
 	protected static WebRequest getGetUsersRequest(String uri, boolean admin) {
 		WebRequest request = new GetMethodWebRequest(SERVER_LOCATION + "/useradmin/" + uri);
-		request.setHeaderField("EclipseWeb-Version", "1");
+		request.setHeaderField("Orion-Version", "1");
 		if (admin) {
 			setAuthenticationAdmin(request);
 		} else {
@@ -111,7 +111,7 @@ public abstract class UsersTest extends AbstractServerTest {
 
 	protected static WebRequest getPutUsersRequest(String uri, Map<String, String> params, boolean admin) throws UnsupportedEncodingException {
 		WebRequest request = new PutMethodWebRequest(addPutParamethers(SERVER_LOCATION + "/useradmin/" + uri, params), getJsonAsStream(""), "text/plain");
-		request.setHeaderField("EclipseWeb-Version", "1");
+		request.setHeaderField("Orion-Version", "1");
 		if (admin) {
 			setAuthenticationAdmin(request);
 		} else {

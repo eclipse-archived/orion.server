@@ -174,7 +174,7 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	protected WebRequest getDeleteFilesRequest(String uri) {
 		try {
 			WebRequest request = new DeleteMethodWebRequest(makeAbsolute(uri));
-			request.setHeaderField("EclipseWeb-Version", "1");
+			request.setHeaderField("Orion-Version", "1");
 			setAuthentication(request);
 			return request;
 		} catch (URISyntaxException e) {
@@ -209,7 +209,7 @@ public abstract class FileSystemTest extends AbstractServerTest {
 		else
 			requestURI = SERVER_LOCATION + FILE_SERVLET_LOCATION + RUNTIME_WORKSPACE + location;
 		WebRequest request = new GetMethodWebRequest(requestURI);
-		request.setHeaderField("EclipseWeb-Version", "1");
+		request.setHeaderField("Orion-Version", "1");
 		setAuthentication(request);
 		return request;
 	}
@@ -234,7 +234,7 @@ public abstract class FileSystemTest extends AbstractServerTest {
 		try {
 			WebRequest request = new PostMethodWebRequest(makeAbsolute(uri), getJsonAsStream(json), "plain/text");
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, slug);
-			request.setHeaderField("EclipseWeb-Version", "1");
+			request.setHeaderField("Orion-Version", "1");
 			setAuthentication(request);
 			return request;
 		} catch (UnsupportedEncodingException e) {
@@ -249,7 +249,7 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	protected WebRequest getPutFilesRequest(String uri, String json) {
 		try {
 			WebRequest request = new PutMethodWebRequest(makeAbsolute(uri), getJsonAsStream(json), "application/json");
-			request.setHeaderField("EclipseWeb-Version", "1");
+			request.setHeaderField("Orion-Version", "1");
 			setAuthentication(request);
 			return request;
 		} catch (UnsupportedEncodingException e) {

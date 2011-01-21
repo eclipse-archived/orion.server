@@ -40,7 +40,7 @@ import org.osgi.framework.Version;
 
 /**
  * Displays login page on every request regardless the method. If
- * <code>EclipseWeb-Version</code> header is set it returns a code that displays
+ * <code>Orion-Version</code> header is set it returns a code that displays
  * the modal window containing login form. The modal window code should be
  * evaluated by the client.
  * 
@@ -144,7 +144,7 @@ public class LoginFormServlet extends HttpServlet {
 			}
 
 			// redirection from FormAuthenticationService.setNotAuthenticated
-			String versionString = req.getHeader("EclipseWeb-Version"); //$NON-NLS-1$
+			String versionString = req.getHeader("Orion-Version"); //$NON-NLS-1$
 			Version version = versionString == null ? null : new Version(versionString);
 
 			// TODO: This is a workaround for calls

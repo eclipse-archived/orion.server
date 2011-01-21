@@ -32,7 +32,7 @@ function confirmCreateUser() {
 	dojo.xhrPost({
 		url : "/users/create",
 		headers : {
-			"EclipseWeb-Version" : "1"
+			"Orion-Version" : "1"
 		},
 		content : {
 			login : userLogin,

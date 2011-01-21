@@ -40,7 +40,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		WebRequest request = new PostMethodWebRequest(SERVER_LOCATION + "/workspace");
 		if (workspaceName != null)
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, workspaceName);
-		request.setHeaderField("EclipseWeb-Version", "1");
+		request.setHeaderField("Orion-Version", "1");
 		setAuthentication(request);
 		return request;
 	}
@@ -49,7 +49,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString());
 		if (projectName != null)
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
-		request.setHeaderField("EclipseWeb-Version", "1");
+		request.setHeaderField("Orion-Version", "1");
 		setAuthentication(request);
 		return request;
 	}
@@ -144,7 +144,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
 		if (projectName != null)
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
-		request.setHeaderField("EclipseWeb-Version", "1");
+		request.setHeaderField("Orion-Version", "1");
 		setAuthentication(request);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_FORBIDDEN, response.getResponseCode());

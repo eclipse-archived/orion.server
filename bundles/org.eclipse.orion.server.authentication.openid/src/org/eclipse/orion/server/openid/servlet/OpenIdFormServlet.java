@@ -58,7 +58,7 @@ public class OpenIdFormServlet extends HttpServlet {
 		super.service(req, resp);
 		if (!resp.isCommitted()) {
 			// redirection from FormAuthenticationService.setNotAuthenticated
-			String versionString = req.getHeader("EclipseWeb-Version");
+			String versionString = req.getHeader("Orion-Version");
 			Version version = versionString == null ? null : new Version(versionString);
 
 			// TODO: This is a workaround for calls

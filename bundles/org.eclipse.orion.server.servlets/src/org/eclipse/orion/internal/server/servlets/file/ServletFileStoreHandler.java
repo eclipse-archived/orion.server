@@ -92,7 +92,7 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 	}
 
 	private boolean handleDirectory(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws ServletException {
-		String versionString = request.getHeader("EclipseWeb-Version");
+		String versionString = request.getHeader("Orion-Version");
 		Version version = versionString == null ? null : new Version(versionString);
 		ServletResourceHandler<IFileStore> handler;
 		if (version != null && VERSION1.isIncluded(version))
@@ -104,7 +104,7 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 
 	private boolean handleFile(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws ServletException {
 		//could plug in more complex mapping here
-		String versionString = request.getHeader("EclipseWeb-Version");
+		String versionString = request.getHeader("Orion-Version");
 		Version version = versionString == null ? null : new Version(versionString);
 		ServletResourceHandler<IFileStore> handler;
 		if (version != null && VERSION1.isIncluded(version))

@@ -96,7 +96,7 @@ function confirmLogin() {
 			.xhrPost({
 				url : "/login/form",
 				headers : {
-					"EclipseWeb-Version" : "1"
+					"Orion-Version" : "1"
 				},
 				content : {
 					login : dojo.byId("login").value,
@@ -149,7 +149,7 @@ function addUser(redirectVal, userStore) {
 	dojo.xhrGet({
 		url : "/users/create",
 		headers : {
-			"EclipseWeb-Version" : "1"
+			"Orion-Version" : "1"
 		},
 		handleAs : "text",
 		content : {
@@ -174,7 +174,7 @@ function userCreated(username, password, store) {
 	dojo.xhrPost({
 		url : "/login/form",
 		headers : {
-			"EclipseWeb-Version" : "1"
+			"Orion-Version" : "1"
 		},
 		content : {
 			login : username,
@@ -204,7 +204,7 @@ function checkUser() {
 	dojo.xhrPost({
 		url : "/login",
 		headers : {
-			"EclipseWeb-Version" : "1"
+			"Orion-Version" : "1"
 		},
 		handleAs : "json",
 		timeout : 15000,
@@ -228,7 +228,7 @@ function logout() {
 	dojo.xhrPost({
 		url : "/logout",
 		headers : {
-			"EclipseWeb-Version" : "1"
+			"Orion-Version" : "1"
 		},
 		handleAs : "json",
 		timeout : 15000,
@@ -268,7 +268,7 @@ function confirmCreateUser() {
 	dojo.xhrPost({
 		url : "/users",
 		headers : {
-			"EclipseWeb-Version" : "1"
+			"Orion-Version" : "1"
 		},
 		content : {
 			login : userLogin,

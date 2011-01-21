@@ -50,7 +50,7 @@ public class LoginServlet extends HttpServlet {
 		} else {
 			// redirection from
 			// FormAuthenticationService.setNotAuthenticated
-			String versionString = req.getHeader("EclipseWeb-Version"); //$NON-NLS-1$
+			String versionString = req.getHeader("Orion-Version"); //$NON-NLS-1$
 			Version version = versionString == null ? null : new Version(versionString);
 
 			// TODO: This is a workaround for calls
