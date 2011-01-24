@@ -24,10 +24,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.core.filesystem.EFS;
@@ -42,14 +39,12 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.egit.core.op.CloneOperation;
-import org.eclipse.egit.core.op.PushOperation;
-import org.eclipse.egit.core.op.PushOperationResult;
-import org.eclipse.egit.core.op.PushOperationSpecification;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.CommitCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PullCommand;
 import org.eclipse.jgit.api.PullResult;
+import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectIdRef.PeeledNonTag;
@@ -57,8 +52,8 @@ import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.RepositoryCache;
 import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.transport.RefSpec;
-import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.eclipse.jgit.transport.Transport;
 import org.eclipse.jgit.transport.URIish;
@@ -478,58 +473,33 @@ public class GitFileStore extends FileStore {
 	
 	private void push() throws CoreException {
 		if (!canPush()) {
-			LogHelper.log(new Status(IStatus.WARNING, Activator.PI_GIT, 1,
-					"Ignored push request for " + this, null));
+			LogHelper.log(new Status(IStatus.WARNING, Activator.PI_GIT, 1, "Ignored push request for " + this, null));
 			return;
 		}
 		try {
 			Repository local = getLocalRepo();
-			
-			final List<RefSpec> fetchSpecs = Collections.emptyList();
-			List<RefSpec> refSpecs = new ArrayList<RefSpec>();
-			refSpecs.add(new RefSpec("refs/heads/*:refs/heads/*"));
-			final Collection<RemoteRefUpdate> updates = Transport
-					.findRemoteRefUpdatesFor(local, refSpecs, fetchSpecs);
+			Git git = new Git(local);
 
-			final PushOperationSpecification spec = new PushOperationSpecification();
-			spec.addURIRefUpdates(Utils.toURIish(getUrl()),
-					copyUpdates(updates));
+			PushCommand push = git.push();
+			push.setRefSpecs(new RefSpec("refs/heads/*:refs/heads/*"));
 
-			List<RemoteConfig> remoteConfigs = RemoteConfig
-					.getAllRemoteConfigs(local.getConfig());
+			Iterable<PushResult> pushResults = push.call();
 
-			PushOperation operation = new PushOperation(local, spec, false,
-					remoteConfigs.get(0), 0);
-			operation.run(null);
-
-			PushOperationResult operationResult = operation.getOperationResult();
-			URIish uri = operationResult.getURIs().iterator().next();
-			org.eclipse.jgit.transport.RemoteRefUpdate.Status status = operationResult.getPushResult(uri).getRemoteUpdates().iterator()
-					.next().getStatus();
-			if (status
-					.equals(org.eclipse.jgit.transport.RemoteRefUpdate.Status.OK)
-					|| status
-							.equals(org.eclipse.jgit.transport.RemoteRefUpdate.Status.UP_TO_DATE)) {
-				LogHelper.log(new Status(IStatus.INFO, Activator.PI_GIT, 1,
-						"Push succeed: " + this, null));
-				return;
+			for (PushResult pushResult : pushResults) {
+				Collection<RemoteRefUpdate> updates = pushResult.getRemoteUpdates();
+				for (RemoteRefUpdate update : updates) {
+					org.eclipse.jgit.transport.RemoteRefUpdate.Status status = update.getStatus();
+					if (status.equals(org.eclipse.jgit.transport.RemoteRefUpdate.Status.OK)
+							|| status.equals(org.eclipse.jgit.transport.RemoteRefUpdate.Status.UP_TO_DATE)) {
+						LogHelper.log(new Status(IStatus.INFO, Activator.PI_GIT, 1,	"Push succeed: " + this, null));
+					} else {
+						throw new CoreException(new Status(IStatus.ERROR, Activator.PI_GIT, IStatus.ERROR, status.toString(), null));
+					}
+				}
 			}
-			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_GIT,
-					IStatus.ERROR, status.toString(), null));
 		} catch (Exception e) {
-			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_GIT,
-					IStatus.ERROR, e.getMessage(), e));
+			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_GIT,	IStatus.ERROR, e.getMessage(), e));
 		}
-	}
-	
-	// org.eclipse.egit.ui.internal.push.ConfirmationPage.copyUpdates(Collection<RemoteRefUpdate>)
-	private Collection<RemoteRefUpdate> copyUpdates(
-			final Collection<RemoteRefUpdate> refUpdates) throws IOException {
-		final Collection<RemoteRefUpdate> copy = new ArrayList<RemoteRefUpdate>(
-				refUpdates.size());
-		for (final RemoteRefUpdate rru : refUpdates)
-			copy.add(new RemoteRefUpdate(rru, null));
-		return copy;
 	}
 	
 	/** 

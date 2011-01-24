@@ -14,7 +14,7 @@ import org.eclipse.equinox.http.jetty.JettyConstants;
 
 public class ConfigurationFormat {
 	public static final String AUTHENTICATION_NAME = "Auth-name";
-	public static final String DEFAULT_AUTHENTICATION_NAME = "FORM+OpenID";
+	public static final String DEFAULT_AUTHENTICATION_NAME = "Basic";
 
 	private static final String JETTY = "jetty";
 
