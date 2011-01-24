@@ -3,7 +3,7 @@
 <plugin>
    <extension
          id="org.eclipse.filesystem.git"
-         name="Git file system"
+         name="%extension.name"
          point="org.eclipse.core.filesystem.filesystems">
       <filesystem
             scheme="gitfs">

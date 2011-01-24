@@ -5,7 +5,7 @@
          point="org.eclipse.ui.ide.filesystemSupport">
       <filesystemContributor
             class="org.eclipse.ilesystem.jackrabbit.ui.GitFileSystemContributor"
-            label="Git"
+            label="%filesystemContributor.label"
             scheme="org.eclipse.orion.server.filesystem.git">
       </filesystemContributor>
    </extension>   

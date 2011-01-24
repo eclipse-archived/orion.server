@@ -1,8 +1,10 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Form Auth Core
+Bundle-Name: %Bundle-Name
+Bundle-Vendor: %Bundle-Vendor
+Bundle-Localization: bundle
 Bundle-SymbolicName: org.eclipse.orion.server.authentication.form.core;singleton:=true
-Bundle-Version: 0.1.0.qualifier
+Bundle-Version: 0.2.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: org.eclipse.orion.server.authentication.form.core
 Bundle-Activator: org.eclipse.orion.server.authentication.form.core.Activator

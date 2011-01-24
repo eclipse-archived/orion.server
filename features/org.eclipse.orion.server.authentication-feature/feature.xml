@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
       id="org.eclipse.orion.server.authentication.feature"
-      label="Feature"
-      version="0.1.0.qualifier">
+      label="%featureName"
+      version="0.2.0.qualifier"
+      provider-name="%providerName">
 
    <description url="http://www.example.com/description">
       [Enter Feature Description here.]
