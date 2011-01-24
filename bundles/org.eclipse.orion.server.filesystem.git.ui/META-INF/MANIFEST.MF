@@ -1,9 +1,10 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Git Filesystem UI
 Bundle-SymbolicName: org.eclipse.orion.server.filesystem.git.ui;singleton:=true
 Bundle-Version: 0.1.0.qualifier
-Bundle-Vendor: Eclipse.org
+Bundle-Name: %Bundle-Name
+Bundle-Vendor: %Bundle-Vendor
+Bundle-Localization: bundle
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Require-Bundle: org.eclipse.orion.server.filesystem.git;bundle-version="0.1.0",
  org.eclipse.ui;bundle-version="3.7.0",

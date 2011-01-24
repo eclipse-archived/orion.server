@@ -3,7 +3,7 @@
 <plugin>
    <extension
          id="preferences"
-         name="Eclipse Web Local Preferences"
+         name="%extension.name"
          point="org.eclipse.equinox.preferences.preferences">
       <scope
             class="org.eclipse.orion.server.core.users.OrionPreferencesLocal"

@@ -216,7 +216,7 @@ public class GitFileStoreTest {
 	 * @param url
 	 * @see org.eclipse.orion.server.filesystem.git.GitFileStore#initBare()
 	 */
-	private void initBare(URL url) throws IOException {
+	void initBare(URL url) throws IOException {
 		String path = decodeLocalPath(url.toString());
 		File sharedRepo = new File(path);
 		if (!sharedRepo.exists()) {

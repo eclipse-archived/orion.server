@@ -1,8 +1,10 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Web IDE (Incubation) Server Configurator
 Bundle-SymbolicName: org.eclipse.orion.server.configurator;singleton:=true
-Bundle-Version: 0.1.0.qualifier
+Bundle-Version: 0.2.0.qualifier
+Bundle-Name: %Bundle-Name
+Bundle-Vendor: %Bundle-Vendor
+Bundle-Localization: bundle
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: org.eclipse.orion.server.configurator,
  org.eclipse.orion.server.configurator.configuration,
@@ -18,7 +20,7 @@ Require-Bundle: org.eclipse.orion.server.servlets;bundle-version="0.1.0",
  org.eclipse.equinox.http.registry;bundle-version="1.1.100",
  org.eclipse.orion.server.useradmin;bundle-version="0.1.0",
  org.json;bundle-version="1.0.0",
- org.eclipse.orion.server.search;bundle-version="1.0.0"
+ org.eclipse.orion.server.search;bundle-version="0.2.0"
 Import-Package: org.apache.solr.servlet;version="1.4.0",
  org.osgi.framework;version="1.6.0",
  org.osgi.service.http;version="1.2.1",

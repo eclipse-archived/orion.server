@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others 
+ * Copyright (c) 2010, 2011 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,7 +14,7 @@ import org.eclipse.equinox.http.jetty.JettyConstants;
 
 public class ConfigurationFormat {
 	public static final String AUTHENTICATION_NAME = "Auth-name";
-	public static final String DEFAULT_AUTHENTICATION_NAME = "Basic";
+	public static final String DEFAULT_AUTHENTICATION_NAME = "FORM+OpenID";
 
 	private static final String JETTY = "jetty";
 
