@@ -28,7 +28,6 @@ import org.osgi.service.useradmin.User;
 /**
  * This class is responsible for read/write access to user and roles stored in
  * an XML file.
- * 
  */
 public class XmlUserAdmin extends OrionUserAdmin {
 
