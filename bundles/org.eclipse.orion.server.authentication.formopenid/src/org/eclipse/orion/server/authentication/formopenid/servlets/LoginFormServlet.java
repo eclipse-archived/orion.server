@@ -295,10 +295,14 @@ public class LoginFormServlet extends HttpServlet {
 
 	private String replaceError(String authSite, String error) {
 		if (error == null) {
-			return authSite;
+			error = "";
 		}
 		StringBuilder sb = new StringBuilder();
-		sb.append("<div id=\"errorWin\">");
+		sb.append("<div id=\"errorWin\"");
+		if (error.trim().length() == 0) {
+			sb.append(" style=\"display: none\"");
+		}
+		sb.append(">");
 		sb.append("<ul id=\"loginError\">"); //$NON-NLS-1$
 		sb.append("<li id=\"errorMessage\">"); //$NON-NLS-1$
 		sb.append(new String(Base64.decode(error.getBytes())));
@@ -322,7 +326,7 @@ public class LoginFormServlet extends HttpServlet {
 	
 	private String replaceCreateUserForm(String authSite, String redirect) {
 		StringBuilder formBegin = new StringBuilder();
-		formBegin.append("<form name=\"CreateUserForm\" method=post action=\"/users"); //$NON-NLS-1$
+		formBegin.append("<form name=\"CreateUserForm\" onsubmit=\"return validatePasswords()\" method=post action=\"/users"); //$NON-NLS-1$
 		if (redirect != null && !redirect.equals("")) { //$NON-NLS-1$
 			formBegin.append("?redirect="); //$NON-NLS-1$
 			formBegin.append(redirect);

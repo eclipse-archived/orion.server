@@ -16,20 +16,33 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.*;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import org.eclipse.core.filesystem.*;
+
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileInfo;
+import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.tests.AbstractServerTest;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.PutMethodWebRequest;
+import com.meterware.httpunit.WebRequest;
 
 public abstract class FileSystemTest extends AbstractServerTest {
 
@@ -70,10 +83,6 @@ public abstract class FileSystemTest extends AbstractServerTest {
 		transferData(input, outputFile.openOutputStream(EFS.NONE, null));
 		IFileInfo info = outputFile.fetchInfo();
 		assertTrue("Coudn't create file " + path, info.exists() && !info.isDirectory());
-	}
-
-	public static InputStream getJsonAsStream(String json) throws UnsupportedEncodingException {
-		return new ByteArrayInputStream(json.getBytes("UTF-8")); //$NON-NLS-1$
 	}
 
 	protected static void initializeWorkspaceLocation() {
@@ -261,6 +270,21 @@ public abstract class FileSystemTest extends AbstractServerTest {
 		return null;
 	}
 
+	protected WebRequest getPutFileRequest(String uri, String body) {
+		try {
+			WebRequest request = new PutMethodWebRequest(makeAbsolute(uri), getJsonAsStream(body), "text/plain");
+			request.setHeaderField("OrionWeb-Version", "1");
+			setAuthentication(request);
+			return request;
+		} catch (UnsupportedEncodingException e) {
+			fail(e.getMessage());
+		} catch (URISyntaxException e) {
+			fail(e.getMessage());
+		}
+		//can never get here
+		return null;
+	}
+
 	/**
 	 * Makes a URI absolute. If the provided URI is relative, it is assumed to be relative to the workspace location (file servlet location).
 	 * If the provided URI is already absolute it is returned as-is
@@ -270,6 +294,15 @@ public abstract class FileSystemTest extends AbstractServerTest {
 		if (new URI(uri).isAbsolute())
 			return uri;
 		return new URI(SERVER_LOCATION + FILE_SERVLET_LOCATION + RUNTIME_WORKSPACE + uri).toString();
+	}
+
+	protected WebRequest getCreateWorkspaceRequest(String workspaceName) {
+		WebRequest request = new PostMethodWebRequest(SERVER_LOCATION + "/workspace/");
+		if (workspaceName != null)
+			request.setHeaderField(ProtocolConstants.HEADER_SLUG, workspaceName);
+		request.setHeaderField("Orion-Version", "1");
+		setAuthentication(request);
+		return request;
 	}
 
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others 
+ * Copyright (c) 2010, 2011 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,14 +10,13 @@
  *******************************************************************************/
 package org.eclipse.orion.server.authentication.form.core;
 
-import org.eclipse.orion.server.useradmin.*;
-
-import org.eclipse.orion.server.core.LogHelper;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -25,6 +24,10 @@ import javax.servlet.http.HttpSession;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.useradmin.OrionUserAdmin;
+import org.eclipse.orion.server.useradmin.UnsupportedUserStoreException;
+import org.eclipse.orion.server.useradmin.UserAdminActivator;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.service.useradmin.User;
@@ -32,11 +35,11 @@ import org.osgi.service.useradmin.UserAdmin;
 
 /**
  * Groups methods to handle session fields for form-based authentication.
- * 
  */
 public class FormAuthHelper {
 
-	private static IOrionUserAdminRegistry userAdminRegistry;
+	private static Map<String, OrionUserAdmin> userStores = new HashMap<String, OrionUserAdmin>();
+	private static OrionUserAdmin defaultUserAdmin;
 
 	/**
 	 * Returns the name of the user stored in session.
@@ -91,7 +94,7 @@ public class FormAuthHelper {
 		} catch (UnsupportedUserStoreException e) {
 			LogHelper.log(e);
 			return false;
-		} //$NON-NLS-1$
+		}
 		if (user != null) {
 			req.getSession().setAttribute("user", req.getParameter("login")); //$NON-NLS-1$//$NON-NLS-2$
 			return true;
@@ -101,7 +104,7 @@ public class FormAuthHelper {
 	}
 
 	private static User getUserForCredentials(String login, String password, String userStoreId) throws UnsupportedUserStoreException {
-		UserAdmin userAdmin = (userStoreId == null) ? userAdminRegistry.getUserStore() : userAdminRegistry.getUserStore(userStoreId);
+		UserAdmin userAdmin = (userStoreId == null) ? defaultUserAdmin : userStores.get(userStoreId);
 		User user = userAdmin.getUser("login", login); //$NON-NLS-1$
 		if (user != null && user.hasCredential("password", password)) { //$NON-NLS-1$
 			return user;
@@ -127,13 +130,13 @@ public class FormAuthHelper {
 	 * @throws UnsupportedUserStoreException
 	 */
 	public static boolean canAddUsers(String userStoreId) throws UnsupportedUserStoreException {
-		return userStoreId == null ? userAdminRegistry.getUserStore().canCreateUsers() : userAdminRegistry.getUserStore(userStoreId).canCreateUsers();
+		return userStoreId == null ? defaultUserAdmin.canCreateUsers() : userStores.get(userStoreId).canCreateUsers();
 	}
 
 	public static Collection<String> getSupportedUserStores() {
-		List<String> list = new ArrayList<String>(userAdminRegistry.getSupportedUserStores());
-		list.remove(userAdminRegistry.getUserStore().getStoreName());
-		list.add(0, userAdminRegistry.getUserStore().getStoreName());
+		List<String> list = new ArrayList<String>(userStores.keySet());
+		list.remove(defaultUserAdmin.getStoreName());
+		list.add(0, defaultUserAdmin.getStoreName());
 		return list;
 	}
 
@@ -142,19 +145,32 @@ public class FormAuthHelper {
 	 * @return
 	 */
 	public static boolean canAddUsers() {
-		return userAdminRegistry.getUserStore().canCreateUsers();
+		return defaultUserAdmin.canCreateUsers();
 	}
 
 	public static OrionUserAdmin getDefaultUserAdmin() {
-		return userAdminRegistry.getUserStore();
+		return defaultUserAdmin;
 	}
 
-	public void setUserAdminRegistry(IOrionUserAdminRegistry userAdminStore) {
-		FormAuthHelper.userAdminRegistry = userAdminStore;
+	public void setUserAdmin(UserAdmin userAdmin) {
+		if (userAdmin instanceof OrionUserAdmin) {
+			OrionUserAdmin eclipseWebUserAdmin = (OrionUserAdmin) userAdmin;
+			userStores.put(eclipseWebUserAdmin.getStoreName(), eclipseWebUserAdmin);
+			if (defaultUserAdmin == null || UserAdminActivator.eclipseWebUsrAdminName.equals(eclipseWebUserAdmin.getStoreName())) {
+				defaultUserAdmin = eclipseWebUserAdmin;
+			}
+	}
 	}
 
-	public void unsetUserAdminRegistry(IOrionUserAdminRegistry userAdminStore) {
-		FormAuthHelper.userAdminRegistry = null;
+	public void unsetUserAdmin(UserAdmin userAdmin) {
+		if (userAdmin instanceof OrionUserAdmin) {
+			OrionUserAdmin eclipseWebUserAdmin = (OrionUserAdmin) userAdmin;
+			userStores.remove(eclipseWebUserAdmin.getStoreName());
+			if (userAdmin.equals(defaultUserAdmin)) {
+				Iterator<OrionUserAdmin> iterator = userStores.values().iterator();
+				if (iterator.hasNext())
+					defaultUserAdmin = iterator.next();
+			}
+		}
 	}
-
 }

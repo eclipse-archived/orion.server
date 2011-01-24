@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
+import org.eclipse.orion.server.useradmin.servlets.UserServlet;
 import org.osgi.service.useradmin.Role;
 
 public class User implements org.osgi.service.useradmin.User {
@@ -82,5 +83,9 @@ public class User implements org.osgi.service.useradmin.User {
 
 	public boolean hasCredential(String key, Object value) {
 		return userCredentials.containsKey(key) ? userCredentials.get(key).equals(value) : false;
+	}
+
+	public String getLocation() {
+		return UserServlet.USERS_URI + "/" + getLogin();
 	}
 }

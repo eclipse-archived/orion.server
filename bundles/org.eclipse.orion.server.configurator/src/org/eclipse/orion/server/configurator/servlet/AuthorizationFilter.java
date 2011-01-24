@@ -26,15 +26,13 @@ public class AuthorizationFilter implements Filter {
 
 	@Override
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-		HttpServletRequest httpRequest = (HttpServletRequest) request;
-		HttpServletResponse httpResponse = (HttpServletResponse) response;
 		try {
-			if (!AuthorizationService.checkRights(httpRequest.getRemoteUser(), httpRequest.getRequestURI().toString())) {
-				httpResponse.sendError(HttpServletResponse.SC_FORBIDDEN);
+			if (!AuthorizationService.checkRights(((HttpServletRequest) request).getRemoteUser(), ((HttpServletRequest) request).getRequestURI().toString())) {
+				((HttpServletResponse) response).sendError(HttpServletResponse.SC_FORBIDDEN);
 				return;
 			}
 		} catch (JSONException e) {
-			httpResponse.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			((HttpServletResponse) response).sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			return;
 		}
 		chain.doFilter(request, response);

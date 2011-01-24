@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others 
+ * Copyright (c) 2010, 2011 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -20,11 +20,14 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
+import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.orion.server.useradmin.OrionUserAdmin;
-import org.eclipse.orion.server.useradmin.OrionUserAdminRegistry;
 import org.eclipse.orion.server.useradmin.UnsupportedUserStoreException;
 import org.eclipse.orion.server.useradmin.User;
+import org.eclipse.orion.server.useradmin.UserServiceHelper;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.service.useradmin.Role;
@@ -39,6 +42,8 @@ import org.osgi.service.useradmin.Role;
 public class UserServlet extends OrionServlet {
 
 	private static final long serialVersionUID = -6809742538472682623L;
+
+	public static final String USERS_URI = "/users";
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -106,6 +111,15 @@ public class UserServlet extends OrionServlet {
 		}
 		if (userAdmin.createUser(newUser) == null) {
 			return "User could not be created";
+		}
+		try {
+			AuthorizationService.addUserRight(newUser.getLogin(), newUser.getLocation());
+			AuthorizationService.addUserRight(newUser.getLogin(), newUser.getLocation()+"/*");
+		} catch (CoreException e) {
+			String error = "User rights could not be added";
+			LogHelper.log(e.getStatus());
+			error += e.getMessage() == null ? "." : (": " + e.getMessage() + ".");
+			return error;
 		}
 		return null;
 	}
@@ -206,11 +220,11 @@ public class UserServlet extends OrionServlet {
 	}
 
 	private OrionUserAdmin getUserAdmin(String userStoreId) throws UnsupportedUserStoreException {
-		return OrionUserAdminRegistry.getDefault().getUserStore(userStoreId);
+		return UserServiceHelper.getDefault().getUserStore(userStoreId);
 	}
 
 	private OrionUserAdmin getUserAdmin() {
-		return OrionUserAdminRegistry.getDefault().getUserStore();
+		return UserServiceHelper.getDefault().getUserStore();
 	}
 
 	private JSONObject formJson(User user) throws JSONException {

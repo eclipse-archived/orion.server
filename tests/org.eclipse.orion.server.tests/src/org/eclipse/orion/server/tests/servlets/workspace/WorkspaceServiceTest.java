@@ -14,9 +14,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.*;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringBufferInputStream;
 import java.net.HttpURLConnection;
+
 import org.apache.xerces.util.URI;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -24,26 +27,26 @@ import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSuppor
 import org.eclipse.orion.internal.server.servlets.workspace.WorkspaceServlet;
 import org.eclipse.orion.server.core.users.OrionScope;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
-import org.json.*;
-import org.junit.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.osgi.service.prefs.BackingStoreException;
 import org.xml.sax.SAXException;
+
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 /**
  * Tests for {@link WorkspaceServlet}.
  */
 public class WorkspaceServiceTest extends FileSystemTest {
 	WebConversation webConversation;
-
-	protected WebRequest getCreateWorkspaceRequest(String workspaceName) {
-		WebRequest request = new PostMethodWebRequest(SERVER_LOCATION + "/workspace");
-		if (workspaceName != null)
-			request.setHeaderField(ProtocolConstants.HEADER_SLUG, workspaceName);
-		request.setHeaderField("Orion-Version", "1");
-		setAuthentication(request);
-		return request;
-	}
 
 	protected WebRequest getCreateProjectRequest(URI workspaceLocation, String projectName) {
 		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString());
@@ -130,7 +133,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		URI workspaceLocation = new URI(response.getHeaderField("Location"));
 
 		String tmp = System.getProperty("java.io.tmpdir");
-		File projectLocation = new File(new File(tmp), "EclipseWeb-testCreateProjectNonDefaultLocation");
+		File projectLocation = new File(new File(tmp), "Orion-testCreateProjectNonDefaultLocation");
 		projectLocation.mkdir();
 
 		//at first forbid all project locations

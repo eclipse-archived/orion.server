@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others 
+ * Copyright (c) 2010, 2011 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,21 +10,20 @@
  *******************************************************************************/
 package org.eclipse.orion.server.useradmin;
 
-import java.util.Iterator;
-
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
 import org.osgi.service.useradmin.UserAdmin;
 
-public class OrionUserAdminRegistry implements IOrionUserAdminRegistry {
+public class UserServiceHelper {
 
 	private Map<String, OrionUserAdmin> userStores = new HashMap<String, OrionUserAdmin>();
 	private OrionUserAdmin defaultUserAdmin;
-	private static IOrionUserAdminRegistry singleton;
+	private static UserServiceHelper singleton;
 
-	public static IOrionUserAdminRegistry getDefault() {
+	public static UserServiceHelper getDefault() {
 		return singleton;
 	}
 
@@ -47,7 +46,7 @@ public class OrionUserAdminRegistry implements IOrionUserAdminRegistry {
 		if (userAdmin instanceof OrionUserAdmin) {
 			OrionUserAdmin eclipseWebUserAdmin = (OrionUserAdmin) userAdmin;
 			userStores.put(eclipseWebUserAdmin.getStoreName(), eclipseWebUserAdmin);
-			if (defaultUserAdmin == null || eclipseWebUsrAdminName.equals(eclipseWebUserAdmin.getStoreName())) {
+			if (defaultUserAdmin == null || UserAdminActivator.eclipseWebUsrAdminName.equals(eclipseWebUserAdmin.getStoreName())) {
 				defaultUserAdmin = eclipseWebUserAdmin;
 			}
 		}
@@ -66,12 +65,10 @@ public class OrionUserAdminRegistry implements IOrionUserAdminRegistry {
 
 	}
 
-	@Override
 	public OrionUserAdmin getUserStore(String storeName) {
 		return userStores.get(storeName);
 	}
 
-	@Override
 	public OrionUserAdmin getUserStore() {
 		return defaultUserAdmin;
 	}

@@ -238,6 +238,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		// add user rights for the project
 		try {
 			AuthorizationService.addUserRight(request.getRemoteUser(), URI.create(result.getString(ProtocolConstants.KEY_LOCATION)).getPath());
+			AuthorizationService.addUserRight(request.getRemoteUser(), URI.create(result.getString(ProtocolConstants.KEY_LOCATION)).getPath() + "/*");
 		} catch (CoreException e) {
 			statusHandler.handleRequest(request, response, e.getStatus());
 		}
@@ -246,7 +247,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 	}
 
 	private boolean getInit(JSONObject toAdd) {
-		return Boolean.valueOf(toAdd.optBoolean(ProtocolConstants.KEY_CREATE_IF_DOEASNT_EXIST));
+		return Boolean.valueOf(toAdd.optBoolean(ProtocolConstants.KEY_CREATE_IF_DOESNT_EXIST));
 	}
 
 	private boolean isAllowedLinkDestination(String content) {

@@ -109,8 +109,8 @@ function confirmLogin() {
 					if (dojo.byId("authStatusPane") !== null) {
 						dojo.byId("authStatusPane").innerHTML = dojo
 								.byId("login").value;
-						dijit.byId("signOutUser").attr("label", "Sign Out");
-						dijit.byId("signOutUser").attr("onClick", logout);
+						dijit.byId("signOutUser").set("label", "Sign Out");
+						dijit.byId("signOutUser").set("onClick", logout);
 					}
 					authDone();
 					return jsonData;
@@ -145,30 +145,6 @@ function handleLoginError(error, ioArgs) {
 	return error;
 }
 
-function addUser(redirectVal, userStore) {
-	dojo.xhrGet({
-		url : "/users/create",
-		headers : {
-			"Orion-Version" : "1"
-		},
-		handleAs : "text",
-		content : {
-			redirect : redirectVal,
-			onUserCreated : "userCreated",
-			store : userStore
-		},
-		timeout : 15000,
-		load : function(javascript, ioArgs) {
-			dojo.byId('loginWindow').style.visibility = 'hidden';
-			dojo.byId('loginWindowMask').style.visibility = 'hidden';
-			eval(ioArgs.xhr.responseText);
-		},
-		error : function(response, ioArgs) {
-			return response;
-		}
-	});
-};
-
 function userCreated(username, password, store) {
 	notify = true;
 	dojo.xhrPost({
@@ -186,10 +162,11 @@ function userCreated(username, password, store) {
 		load : function(jsonData, ioArgs) {
 			if (dojo.byId("authStatusPane") !== null) {
 				dojo.byId("authStatusPane").innerHTML = username;
-				dijit.byId("signOutUser").attr("label", "Sign Out");
-				dijit.byId("signOutUser").attr("onClick", logout);
+				dijit.byId("signOutUser").set("label", "Sign Out");
+				dijit.byId("signOutUser").set("onClick", logout);
 			}
 			authDone();
+			closeLoginWindow();
 			return jsonData;
 		},
 		error : handleLoginError
@@ -211,8 +188,8 @@ function checkUser() {
 		load : function(jsonData, ioArgs) {
 			if (dojo.byId("authStatusPane") !== null) {
 				dojo.byId("authStatusPane").innerHTML = jsonData.login;
-				dijit.byId("signOutUser").attr("label", "Sign Out");
-				dijit.byId("signOutUser").attr("onClick", logout);
+				dijit.byId("signOutUser").set("label", "Sign Out");
+				dijit.byId("signOutUser").set("onClick", logout);
 			}
 			return jsonData;
 		},
@@ -235,8 +212,8 @@ function logout() {
 		load : function(jsonData, ioArgs) {
 			if (dojo.byId("authStatusPane") !== null) {
 				dojo.byId("authStatusPane").innerHTML = "--";
-				dijit.byId("signOutUser").attr("label", "Sign In");
-				dijit.byId("signOutUser").attr("onClick", login);
+				dijit.byId("signOutUser").set("label", "Sign In");
+				dijit.byId("signOutUser").set("onClick", login);
 			}
 			window.location.replace("/index.html");
 			return jsonData;
@@ -280,7 +257,6 @@ function confirmCreateUser() {
 		timeout : 15000,
 		load : function(response, ioArgs) {
 			userCreated(userLogin, userPassword, userStore);
-			closeLoginWindow();
 			return response;
 		},
 		error : function(response, ioArgs) {

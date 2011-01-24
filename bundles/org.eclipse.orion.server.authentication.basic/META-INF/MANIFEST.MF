@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Basic Auth
+Bundle-Name: Basic Authentication
 Bundle-SymbolicName: org.eclipse.orion.server.authentication.basic;singleton:=true
 Bundle-Version: 0.1.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
