@@ -51,6 +51,34 @@ public class TransferTest extends FileSystemTest {
 	}
 
 	@Test
+	public void testImportWithPost() throws CoreException, IOException, SAXException {
+		//create a directory to upload to
+		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+		createDirectory(directoryPath);
+
+		//start the import
+		URL entry = ServerTestsActivator.getContext().getBundle().getEntry("testData/importTest/client.zip");
+		File source = new File(FileLocator.toFileURL(entry).getPath());
+		long length = source.length();
+		InputStream in = new BufferedInputStream(new FileInputStream(source));
+		PostMethodWebRequest request = new PostMethodWebRequest(ServerTestsActivator.getServerLocation() + "/xfer/" + directoryPath, in, "application/zip");
+		request.setHeaderField("X-Xfer-Content-Length", "" + length);
+		request.setHeaderField("X-Xfer-Options", "unzip");
+		request.setHeaderField("Content-Range", "bytes 0-" + (length - 1) + "/" + length);
+		request.setHeaderField("Content-Length", "" + length);
+		request.setHeaderField("Content-Type", "application/zip");
+		setAuthentication(request);
+		WebResponse postResponse = webConversation.getResponse(request);
+		assertEquals(201, postResponse.getResponseCode());
+		String location = postResponse.getHeaderField("Location");
+		assertNotNull(location);
+
+		//assert the file has been unzipped in the workspace
+		assertTrue(checkFileExists(directoryPath + "/org.eclipse.e4.webide/static/js/navigate-tree/navigate-tree.js"));
+
+	}
+
+	@Test
 	public void testImportAndUnzip() throws CoreException, IOException, SAXException {
 		//create a directory to upload to
 		String directoryPath = "sample/directory/path" + System.currentTimeMillis();

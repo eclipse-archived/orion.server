@@ -86,6 +86,7 @@ class Import {
 		} else {
 			completeMove(req, resp);
 		}
+		resp.setHeader(ProtocolConstants.HEADER_LOCATION, "/file" + getPath());
 		resp.setStatus(HttpServletResponse.SC_CREATED);
 	}
 
@@ -119,7 +120,17 @@ class Import {
 	 */
 	void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		save();
+		//if a range  is specified, then the file is being uploaded during the post
+		if (req.getHeader(ProtocolConstants.HEADER_CONTENT_RANGE) != null) {
+			doPut(req, resp);
+			return;
+		}
+		//otherwise the POST is just starting a transfer to be completed later
 		resp.setStatus(HttpServletResponse.SC_OK);
+		setResponseLocationHeader(req, resp);
+	}
+
+	private void setResponseLocationHeader(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
 		URI requestURI = ServletResourceHandler.getURI(req);
 		String responsePath = "/" + new Path(requestURI.getPath()).segment(0) + "/import/" + id; //$NON-NLS-1$ //$NON-NLS-2$
 		URI responseURI;
@@ -185,7 +196,7 @@ class Import {
 		}
 		resp.setStatus(308);//Resume Incomplete
 		resp.setHeader("Range", "bytes 0-" + range.getEndByte());
-
+		setResponseLocationHeader(req, resp);
 	}
 
 	private void fail(HttpServletRequest req, HttpServletResponse resp, String msg) throws ServletException {
