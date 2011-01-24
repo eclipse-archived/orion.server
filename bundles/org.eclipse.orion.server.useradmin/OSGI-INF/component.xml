@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" activate="activate" deactivate="deactivate" name="org.eclipse.orion.server.core.useradmin">
-   <implementation class="org.eclipse.orion.server.useradmin.OrionUserAdminRegistry"/>
-   <reference bind="setUserAdmin" cardinality="1..n" interface="org.osgi.service.useradmin.UserAdmin" name="EclipseWebUserAdmin" policy="dynamic" unbind="unsetUserAdmin"/>
-   <service>
-      <provide interface="org.eclipse.orion.server.useradmin.IOrionUserAdminRegistry"/>
-   </service>
+   <implementation class="org.eclipse.orion.server.useradmin.UserServiceHelper"/>
+   <reference bind="setUserAdmin" cardinality="1..n" interface="org.osgi.service.useradmin.UserAdmin" name="UserAdmin" policy="dynamic" unbind="unsetUserAdmin"/>
 </scr:component>

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2010, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -27,8 +27,8 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.authentication.IAuthenticationService;
-import org.eclipse.orion.server.useradmin.OrionUserAdminRegistry;
 import org.eclipse.orion.server.useradmin.UserAdminActivator;
+import org.eclipse.orion.server.useradmin.UserServiceHelper;
 import org.json.JSONException;
 import org.osgi.service.http.HttpContext;
 import org.osgi.service.useradmin.Authorization;
@@ -76,7 +76,7 @@ public class UserAuthFilter implements Filter {
 		request.setAttribute(HttpContext.REMOTE_USER, login);
 		request.setAttribute(HttpContext.AUTHENTICATION_TYPE, authenticationService.getAuthType());
 
-		UserAdmin userAdmin = OrionUserAdminRegistry.getDefault().getUserStore();
+		UserAdmin userAdmin = UserServiceHelper.getDefault().getUserStore();
 		Authorization authorization = userAdmin.getAuthorization(userAdmin.getUser("login", login));
 
 		if (authorization.hasRole(ADMIN_ROLE)) {

@@ -122,10 +122,32 @@ public class AuthorizationService {
 
 		JSONArray userRightArray = new JSONArray(userRights);
 		for (int i = 0; i < userRightArray.length(); i++) {
-			if (uri.startsWith((String) userRightArray.get(i)))
+			String uriToMatch = uri.toLowerCase(Locale.ENGLISH);
+			String patternToMatch = ((String) userRightArray.get(i)).toLowerCase(Locale.ENGLISH);
+			if (wildCardMatch(uriToMatch, patternToMatch))
 				return true;
 		}
 
 		return false;
+	}
+
+	private static boolean wildCardMatch(String text, String pattern) {
+		String[] cards = pattern.split("\\*");
+		if (!pattern.startsWith("*") && !text.startsWith(cards[0])) {
+			return false;
+		}
+		if (!pattern.endsWith("*") && !text.endsWith(cards[cards.length - 1])) {
+			return false;
+		}
+
+		for (String card : cards) {
+			int idex = text.indexOf(card);
+			if (idex == -1) {
+				return false;
+			}
+			text = text.substring(idex + card.length());
+		}
+
+		return true;
 	}
 }

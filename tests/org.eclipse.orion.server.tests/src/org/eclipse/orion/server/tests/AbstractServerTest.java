@@ -10,13 +10,15 @@
  *******************************************************************************/
 package org.eclipse.orion.server.tests;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.resources.Base64;
 
-import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
-
 import com.meterware.httpunit.WebRequest;
-import java.io.*;
-import org.eclipse.core.runtime.CoreException;
 
 /**
  * Base class for all Eclipse Web server tests. Providers helper methods common

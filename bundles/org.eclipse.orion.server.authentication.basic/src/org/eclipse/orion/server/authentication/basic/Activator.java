@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others 
+ * Copyright (c) 2010, 2011 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,14 +10,15 @@
  *******************************************************************************/
 package org.eclipse.orion.server.authentication.basic;
 
-import org.osgi.framework.*;
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
 
 public class Activator implements BundleActivator {
 
 	/**
 	 * Bundle symbolic name.
 	 */
-	public static final String PI_SERVER_BASICAUTH = FrameworkUtil.getBundle(Activator.class).getSymbolicName();
+	public static final String PI_SERVER_AUTHENTICATION_BASIC = "org.eclipse.orion.server.authentication.basic";
 
 	private static Activator singleton;
 	public static volatile BundleContext bundleContext;
@@ -36,5 +37,4 @@ public class Activator implements BundleActivator {
 	public void stop(BundleContext context) throws Exception {
 		bundleContext = null;
 	}
-
 }

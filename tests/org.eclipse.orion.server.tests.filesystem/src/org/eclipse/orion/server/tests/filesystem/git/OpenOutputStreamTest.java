@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright (c) 2010 IBM Corporation and others.
+ *  Copyright (c) 2010, 2011 IBM Corporation and others.
  *  All rights reserved. This program and the accompanying materials
  *  are made available under the terms of the Eclipse Public License v1.0
  *  which accompanies this distribution, and is available at
@@ -11,8 +11,9 @@
 package org.eclipse.orion.server.tests.filesystem.git;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
+
+import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.tests.harness.FileSystemHelper;
 import org.eclipse.orion.internal.server.filesystem.git.Utils;
@@ -23,16 +24,14 @@ public class OpenOutputStreamTest extends
 
 	private IPath repositoryPath;
 
-	protected URI getFileStoreUri() throws UnsupportedEncodingException {
+	protected void doFSSetUp() throws Exception {
 		repositoryPath = getRandomLocation();
 		String s = Utils.encodeLocalPath(repositoryPath.toString());
-		return URI.create(GitFileSystem.SCHEME_GIT + "://test/" + s + "?/");
+		baseStore = EFS.getStore(URI.create(GitFileSystem.SCHEME_GIT + "://test/" + s + "?/"));
+		baseStore.mkdir(EFS.NONE, null);
 	}
 
-	protected void fileSystemSetUp() throws IOException {
-	}
-
-	protected void fileSystemTearDown() throws IOException {
+	protected void doFSTearDown() throws IOException {
 		// delete <temp>/<repo>
 		FileSystemHelper.clear(repositoryPath.toFile());
 	}

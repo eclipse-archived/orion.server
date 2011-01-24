@@ -5,6 +5,7 @@ Bundle-SymbolicName: org.eclipse.orion.server.configurator;singleton:=true
 Bundle-Version: 0.1.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: org.eclipse.orion.server.configurator,
+ org.eclipse.orion.server.configurator.configuration,
  org.eclipse.orion.server.configurator.servlet
 Bundle-Activator: org.eclipse.orion.server.configurator.ConfiguratorActivator
 Require-Bundle: org.eclipse.orion.server.servlets;bundle-version="0.1.0",

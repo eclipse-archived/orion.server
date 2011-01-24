@@ -139,6 +139,7 @@ public class WorkspaceServlet extends OrionServlet {
 
 			// add user rights for the workspace
 			AuthorizationService.addUserRight(req.getRemoteUser(), URI.create(resultLocation).getPath());
+			AuthorizationService.addUserRight(req.getRemoteUser(), URI.create(resultLocation).getPath() + "/*");
 		} catch (CoreException e) {
 			handleException(resp, e.getStatus());
 			return;
@@ -172,6 +173,7 @@ public class WorkspaceServlet extends OrionServlet {
 			workspace.addProject(project);
 			workspace.save();
 			AuthorizationService.addUserRight(userName, "/file/" + projectName);
+			AuthorizationService.addUserRight(userName, "/file/" + projectName + "/*");
 		} catch (CoreException e) {
 			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "Error creating sample project", e)); //$NON-NLS-1$
 		}

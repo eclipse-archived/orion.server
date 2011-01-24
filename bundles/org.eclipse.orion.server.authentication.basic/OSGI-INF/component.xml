@@ -5,5 +5,5 @@
       <provide interface="org.eclipse.orion.server.core.authentication.IAuthenticationService"/>
    </service>
    <property name="Auth-name" type="String" value="Basic"/>
-     <reference bind="setUserAdminRegistry" cardinality="1..1" interface="org.eclipse.orion.server.useradmin.IOrionUserAdminRegistry" name="IEclipseWebUserAdminRegistry" policy="dynamic" unbind="unsetUserAdminRegistry"/>
+     <reference bind="bindUserAdmin" cardinality="1..n" interface="org.osgi.service.useradmin.UserAdmin" name="UserAdmin" policy="dynamic" unbind="unbindUserAdmin"/>
 </scr:component>

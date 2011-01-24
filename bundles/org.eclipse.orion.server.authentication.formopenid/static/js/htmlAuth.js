@@ -47,3 +47,12 @@ function showCreateUser(){
 		document.getElementById('create_login').focus();
 	}, 0);
 }
+function validatePasswords(){
+	if(document.forms["CreateUserForm"].password.value!==document.forms["CreateUserForm"].passwordRetype.value){
+		alert("Passwords don't match!");
+		document.getElementById("errorWin").style.display = '';
+		document.getElementById("errorMessage").innerHTML = "Passwords don't match!";
+		return false;
+	}
+	return true;
+}

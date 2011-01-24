@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others 
+ * Copyright (c) 2010, 2011 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,14 +10,11 @@
  *******************************************************************************/
 package org.eclipse.orion.server.authentication.basic;
 
-import org.eclipse.orion.server.useradmin.IOrionUserAdminRegistry;
-
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.authentication.IAuthenticationService;
-import org.eclipse.orion.server.core.resources.Base64;
-
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
@@ -25,13 +22,19 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.authentication.IAuthenticationService;
+import org.eclipse.orion.server.core.resources.Base64;
+import org.eclipse.orion.server.useradmin.OrionUserAdmin;
+import org.eclipse.orion.server.useradmin.UserAdminActivator;
 import org.osgi.service.useradmin.Authorization;
 import org.osgi.service.useradmin.User;
 import org.osgi.service.useradmin.UserAdmin;
 
 public class BasicAuthenticationService implements IAuthenticationService {
 
-	private IOrionUserAdminRegistry userAdminRegistry;
+	private static Map<String, OrionUserAdmin> userStores = new HashMap<String, OrionUserAdmin>();
+	private static OrionUserAdmin defaultUserAdmin;
 
 	public BasicAuthenticationService() {
 		super();
@@ -61,12 +64,11 @@ public class BasicAuthenticationService implements IAuthenticationService {
 			String password = authString.substring(authString.indexOf(':') + 1);
 			User user = getUserForCredentials(login, password);
 			if (user != null) {
-				Authorization authorization = userAdminRegistry.getUserStore().getAuthorization(user);
+				Authorization authorization = defaultUserAdmin.getAuthorization(user);
 				// TODO handle authorization
 				return login;
 			}
 		}
-
 		return null;
 	}
 
@@ -80,9 +82,9 @@ public class BasicAuthenticationService implements IAuthenticationService {
 	}
 
 	private User getUserForCredentials(String login, String password) {
-		UserAdmin userAdmin = userAdminRegistry.getUserStore();
+		UserAdmin userAdmin = defaultUserAdmin;
 		if (userAdmin == null) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_SERVER_BASICAUTH, "User admin server is not available"));
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_SERVER_AUTHENTICATION_BASIC, "User admin server is not available"));
 			return null;
 		}
 		User user = userAdmin.getUser("login", login); //$NON-NLS-1$
@@ -95,14 +97,27 @@ public class BasicAuthenticationService implements IAuthenticationService {
 	@Override
 	public void configure(Properties properties) {
 		// nothing to do
-
 	}
 
-	public void setUserAdminRegistry(IOrionUserAdminRegistry userAdminStore) {
-		this.userAdminRegistry = userAdminStore;
+	public void bindUserAdmin(UserAdmin userAdmin) {
+		if (userAdmin instanceof OrionUserAdmin) {
+			OrionUserAdmin eclipseWebUserAdmin = (OrionUserAdmin) userAdmin;
+			userStores.put(eclipseWebUserAdmin.getStoreName(), eclipseWebUserAdmin);
+			if (defaultUserAdmin == null || UserAdminActivator.eclipseWebUsrAdminName.equals(eclipseWebUserAdmin.getStoreName())) {
+				defaultUserAdmin = eclipseWebUserAdmin;
+			}
+		}
 	}
 
-	public void unsetUserAdminRegistry(IOrionUserAdminRegistry userAdminStore) {
-		this.userAdminRegistry = null;
+	public void unbindUserAdmin(UserAdmin userAdmin) {
+		if (userAdmin instanceof OrionUserAdmin) {
+			OrionUserAdmin eclipseWebUserAdmin = (OrionUserAdmin) userAdmin;
+			userStores.remove(eclipseWebUserAdmin.getStoreName());
+			if (userAdmin.equals(defaultUserAdmin)) {
+				Iterator<OrionUserAdmin> iterator = userStores.values().iterator();
+				if (iterator.hasNext())
+					defaultUserAdmin = iterator.next();
+			}
+		}
 	}
 }

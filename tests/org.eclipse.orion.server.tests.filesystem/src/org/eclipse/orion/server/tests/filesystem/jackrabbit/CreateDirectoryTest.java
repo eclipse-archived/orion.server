@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright (c) 2010 IBM Corporation and others.
+ *  Copyright (c) 2010, 2011 IBM Corporation and others.
  *  All rights reserved. This program and the accompanying materials
  *  are made available under the terms of the Eclipse Public License v1.0
  *  which accompanies this distribution, and is available at
@@ -12,16 +12,13 @@ package org.eclipse.orion.server.tests.filesystem.jackrabbit;
 
 import java.net.URI;
 
-public class CreateDirectoryTest extends org.eclipse.core.tests.filesystem.CreateDirectoryTest {
-	protected URI getFileStoreUri() {
-		return URI.create("jackrabbit://test");
-	}
+import org.eclipse.core.filesystem.EFS;
 
-	protected void fileSystemSetUp() {
-		// nothing to do
-	}
+public class CreateDirectoryTest extends
+		org.eclipse.core.tests.filesystem.CreateDirectoryTest {
 
-	protected void fileSystemTearDown() {
-		// nothing to do
+	protected void doFSSetUp() throws Exception {
+		baseStore = EFS.getStore(URI.create("jackrabbit://test"));
+		baseStore.mkdir(EFS.NONE, null);
 	}
 }

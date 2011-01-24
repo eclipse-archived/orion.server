@@ -10,11 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.filesystem.git;
 
-import org.eclipse.orion.internal.server.filesystem.git.Activator;
-import org.eclipse.orion.internal.server.filesystem.git.Utils;
-
-import org.eclipse.orion.server.core.LogHelper;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -60,6 +55,7 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectIdRef.PeeledNonTag;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.RepositoryCache;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RemoteConfig;
@@ -67,6 +63,9 @@ import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.eclipse.jgit.transport.Transport;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
+import org.eclipse.orion.internal.server.filesystem.git.Activator;
+import org.eclipse.orion.internal.server.filesystem.git.Utils;
+import org.eclipse.orion.server.core.LogHelper;
 
 public class GitFileStore extends FileStore {
 
@@ -133,6 +132,17 @@ public class GitFileStore extends FileStore {
 		return localRepo;
 	}
 
+	public IFileInfo[] childInfos(int options, IProgressMonitor monitor)
+	throws CoreException {
+		IFileStore[] childStores = childStores(options, monitor);
+		IFileInfo[] childInfos = new IFileInfo[childStores.length];
+		for (int i = 0; i < childStores.length; i++) {
+			childInfos[i] = childStores[i].fetchInfo(
+					EFS.CACHE /* don't pull */, monitor);
+		}
+		return childInfos;
+	}
+
 	@Override
 	public String[] childNames(int options, IProgressMonitor monitor)
 			throws CoreException {
@@ -152,8 +162,9 @@ public class GitFileStore extends FileStore {
 	}
 
 	public boolean isCloned() {
-		// TODO: naive check
-		return getWorkingDir().exists();
+		return getWorkingDir().exists()
+				&& RepositoryCache.FileKey.isGitRepository(new File(
+						getWorkingDir(), Constants.DOT_GIT), FS.DETECTED);
 	}
 
 	@Override
@@ -163,7 +174,9 @@ public class GitFileStore extends FileStore {
 			if (!isCloned()) {
 				initCloneCommitPush(monitor);
 			}
+			if ((options & EFS.CACHE) == 0) // don't use cache
 			pull();
+
 		}
 		FileInfo fi = new FileInfo();
 		fi.setName(getName());
@@ -276,6 +289,9 @@ public class GitFileStore extends FileStore {
 	void setContents(byte[] bytes, boolean append) throws IOException {
 		File f = getLocalFile();
 		try {
+			byte[] contents = bytes;
+
+			if (append) {
 			byte[] oldContents;
 			if (f.exists()) {
 				FileInputStream fis = new FileInputStream(f);
@@ -285,8 +301,6 @@ public class GitFileStore extends FileStore {
 				oldContents = new byte[0];
 			}
 
-			byte[] contents = bytes;
-			if (append) {
 				byte[] newContents = new byte[oldContents.length + bytes.length];
 				System.arraycopy(oldContents, 0, newContents, 0,
 						oldContents.length);
@@ -440,18 +454,20 @@ public class GitFileStore extends FileStore {
 		//	File sharedRepo = new File(gfs.getUrl().toURI());
 		String path = decodeLocalPath(getUrl().toString());
 		File sharedRepo = new File(path);
-		// TODO: can init only local repositories
-		// checking if the folder exists may not be enough though
-		if (!sharedRepo.exists()) {
+		// remember, we know how to init only local repositories
+		if (sharedRepo.exists()
+				&& RepositoryCache.FileKey.isGitRepository(new File(sharedRepo,
+						Constants.DOT_GIT), FS.DETECTED)) {
+			// nothing to init, a repository already exists at the given location
+			return false;
+		}
+
 			sharedRepo.mkdir();
-			LogHelper.log(new Status(IStatus.INFO, Activator.PI_GIT, 1,
-					"Initializing bare repository for " + this, null));
+		LogHelper.log(new Status(IStatus.INFO, Activator.PI_GIT, 1,	"Initializing bare repository for " + this, null));
 			FileRepository repository = new FileRepository(new File(sharedRepo,	Constants.DOT_GIT));
 			repository.create(true);	
 			return true;
 		}
-		return false;
-	}
 
 	private static String decodeLocalPath(final String s) {
 		String r = new String(s);
@@ -596,16 +612,12 @@ public class GitFileStore extends FileStore {
 			}
 
 			// TODO: folder may already exist, no need to add it again
+			AddCommand add = git.add();
 			if (folderPattern != null) {
-				AddCommand addFolder = git.add();
-				// add (parent) folder first
-				addFolder.addFilepattern(folderPattern);
-				addFolder.call();
+				add.addFilepattern(folderPattern);
 			}
-
-			AddCommand addFile = git.add();
-			addFile.addFilepattern(filePattern);
-			addFile.call();
+			add.addFilepattern(filePattern);
+			add.call();
 
 			CommitCommand commit = git.commit();
 			commit.setMessage("auto-commit of " + this);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright (c) 2010 IBM Corporation and others.
+ *  Copyright (c) 2010, 2011 IBM Corporation and others.
  *  All rights reserved. This program and the accompanying materials
  *  are made available under the terms of the Eclipse Public License v1.0
  *  which accompanies this distribution, and is available at
@@ -33,6 +33,9 @@ import org.junit.*;
 
 public class GitFileStoreTest {
 
+	/**
+	 * Path to the "shared" repository.
+	 */
 	private IPath repositoryPath;
 	GitFileSystem fs = new GitFileSystem();
 
@@ -142,7 +145,10 @@ public class GitFileStoreTest {
 		String s = Utils.encodeLocalPath(repositoryPath.toString());
 		URI uri = URI.create(GitFileSystem.SCHEME_GIT + "://test/" + s + "?/");
 		IFileStore store = fs.getStore(uri);
+		assertFalse(repositoryPath.toFile().exists());
+		// create an empty dir, where the "shared" repository should be
 		repositoryPath.toFile().mkdir();
+		assertTrue(repositoryPath.toFile().isDirectory());
 		store.mkdir(EFS.NONE, null);
 
 		IFileInfo info = store.fetchInfo();
@@ -156,7 +162,9 @@ public class GitFileStoreTest {
 		URI uri = URI.create(GitFileSystem.SCHEME_GIT + "://test/" + s + "?/");
 		GitFileStore store = (GitFileStore) fs.getStore(uri);
 		File privateRepo = store.getLocalFile();
+		assertFalse(repositoryPath.toFile().exists());
 		assertFalse(privateRepo.exists());
+		// create an empty dir, where the "private" repository should be
 		privateRepo.mkdir();
 		assertTrue(privateRepo.isDirectory());
 		store.mkdir(EFS.NONE, null);
@@ -208,7 +216,7 @@ public class GitFileStoreTest {
 	 * @param url
 	 * @see org.eclipse.orion.server.filesystem.git.GitFileStore#initBare()
 	 */
-	void initBare(URL url) throws IOException {
+	private void initBare(URL url) throws IOException {
 		String path = decodeLocalPath(url.toString());
 		File sharedRepo = new File(path);
 		if (!sharedRepo.exists()) {
