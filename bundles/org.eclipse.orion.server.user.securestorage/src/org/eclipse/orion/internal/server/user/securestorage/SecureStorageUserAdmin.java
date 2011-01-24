@@ -11,6 +11,7 @@
 package org.eclipse.orion.internal.server.user.securestorage;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -62,53 +63,25 @@ public class SecureStorageUserAdmin extends OrionUserAdmin {
 	}
 
 	public Collection<User> getUsers() {
-		throw new UnsupportedOperationException();
-	}
-
-	public User createUser(User user) {
 		ISecurePreferences prefs = SecurePreferencesFactory.getDefault().node(ORION_SERVER_NODE);
-		if (prefs.nodeExists(USERS + "/" + user.getLogin())) {
+		if (!prefs.nodeExists(USERS)) {
 			return null;
 		}
-		ISecurePreferences userPrefs = prefs.node(USERS + "/" + user.getLogin());
+		ISecurePreferences usersPrefs = prefs.node(USERS);
+		Collection<User> users = null;
 		try {
-			userPrefs.put(USER_NAME, user.getName(), false);
-			userPrefs.put(USER_PASSWORD, user.getPassword(), true);
-			if (user.getRoles().size() > 0) {
-				ISecurePreferences rolesPrefs = userPrefs.node(USER_ROLES);
-				for (Iterator i = user.getRoles().iterator(); i.hasNext();) {
-					Role role = (Role) i.next();
-					rolesPrefs.node(role.getName());
-				}
+			for (String childName : usersPrefs.childrenNames()) {
+				if (users == null)
+					users = new ArrayList<User>();
+				ISecurePreferences userPrefs = usersPrefs.node(childName);
+				users.add(new User(childName, userPrefs.get(USER_NAME, ""), "" /* don't expose the password */));
+
 			}
-			userPrefs.flush();
-			return user;
+			return users;
 		} catch (StorageException e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Can not create the user", e));
-		} catch (IOException e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Can not create the user", e));
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Can not get the user", e));
 		}
 		return null;
-	}
-
-	public boolean deleteUser(User user) {
-		ISecurePreferences prefs = SecurePreferencesFactory.getDefault().node(ORION_SERVER_NODE);
-		if (!prefs.nodeExists(USERS + "/" + user.getLogin())) {
-			return false;
-		}
-		ISecurePreferences userPrefs = prefs.node(USERS + "/" + user.getLogin());
-		userPrefs.removeNode();
-		try {
-			userPrefs.flush();
-			return true;
-		} catch (IOException e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Can not delete the user", e));
-		}
-		return false;
-	}
-
-	public boolean updateUser(String oldLogin, User user) {
-		throw new UnsupportedOperationException();
 	}
 
 	public User getUser(String key, String value) {
@@ -126,6 +99,68 @@ public class SecureStorageUserAdmin extends OrionUserAdmin {
 			}
 		}
 		return null;
+	}
+
+	public User createUser(User user) {
+		ISecurePreferences prefs = SecurePreferencesFactory.getDefault().node(ORION_SERVER_NODE);
+		if (prefs.nodeExists(USERS + "/" + user.getLogin())) {
+			return null;
+		}
+		try {
+			internalCreateOrUpdateUser(prefs.node(USERS + "/" + user.getLogin()), user);
+			return user;
+		} catch (StorageException e) {
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Can not create the user", e));
+		} catch (IOException e) {
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Can not create the user", e));
+		}
+		return null;
+	}
+
+	public boolean updateUser(String oldLogin, User user) {
+		ISecurePreferences prefs = SecurePreferencesFactory.getDefault().node(ORION_SERVER_NODE);
+		if (!prefs.nodeExists(USERS + "/" + user.getLogin())) {
+			return false;
+		}
+		try {
+			internalCreateOrUpdateUser(prefs.node(USERS + "/" + user.getLogin()), user);
+			return true;
+		} catch (StorageException e) {
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Can not update the user", e));
+		} catch (IOException e) {
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Can not update the user", e));
+		}
+		return false;
+	}
+
+	private User internalCreateOrUpdateUser(ISecurePreferences userPrefs, User user) throws StorageException, IOException {
+		userPrefs.put(USER_NAME, user.getName(), false);
+		userPrefs.put(USER_PASSWORD, user.getPassword(), true);
+		if (user.getRoles().size() > 0) {
+			ISecurePreferences rolesPrefs = userPrefs.node(USER_ROLES);
+			for (Iterator i = user.getRoles().iterator(); i.hasNext();) {
+				Role role = (Role) i.next();
+				rolesPrefs.node(role.getName());
+			}
+		}
+		userPrefs.flush();
+		return user;
+	}
+
+	public boolean deleteUser(User user) {
+		ISecurePreferences prefs = SecurePreferencesFactory.getDefault().node(ORION_SERVER_NODE);
+		if (!prefs.nodeExists(USERS + "/" + user.getLogin())) {
+			return false;
+		}
+		ISecurePreferences userPrefs = prefs.node(USERS + "/" + user.getLogin());
+		userPrefs.removeNode();
+		try {
+			userPrefs.flush();
+			return true;
+		} catch (IOException e) {
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Can not delete the user", e));
+		}
+		return false;
 	}
 
 	public Authorization getAuthorization(org.osgi.service.useradmin.User user) {
