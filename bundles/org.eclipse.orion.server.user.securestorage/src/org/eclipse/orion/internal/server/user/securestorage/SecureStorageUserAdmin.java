@@ -13,7 +13,9 @@ package org.eclipse.orion.internal.server.user.securestorage;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -42,8 +44,13 @@ public class SecureStorageUserAdmin extends OrionUserAdmin {
 	static final String USER_PASSWORD = "password";
 	static final String USER_ROLES = "roles";
 	static final String USER_ROLE_NAME = "name";
+	
+	private Map<String, Role> roles = new HashMap<String, Role>();
 
 	public SecureStorageUserAdmin() {
+		roles.put("admin", new Role("admin", Role.ROLE));
+		roles.put("user", new Role("user", Role.ROLE));
+		roles.put("quest", new Role("quest", Role.ROLE));
 	}
 
 	public Role createRole(String name, int type) {
@@ -51,15 +58,15 @@ public class SecureStorageUserAdmin extends OrionUserAdmin {
 	}
 
 	public boolean removeRole(String name) {
-		throw new UnsupportedOperationException();
+		return false;
 	}
 
 	public Role getRole(String name) {
-		throw new UnsupportedOperationException();
+		return roles.get(name);
 	}
 
 	public Role[] getRoles(String filter) throws InvalidSyntaxException {
-		throw new UnsupportedOperationException();
+		return (Role[]) roles.values().toArray();
 	}
 
 	public Collection<User> getUsers() {
@@ -74,8 +81,12 @@ public class SecureStorageUserAdmin extends OrionUserAdmin {
 				if (users == null)
 					users = new ArrayList<User>();
 				ISecurePreferences userPrefs = usersPrefs.node(childName);
-				users.add(new User(childName, userPrefs.get(USER_NAME, ""), "" /* don't expose the password */));
-
+				User user = new User(childName, userPrefs.get(USER_NAME, ""), "" /* don't expose the password */);
+				ISecurePreferences roles = userPrefs.node(USER_ROLES);
+				for (String roleName : roles.childrenNames()){
+					user.addRole(getRole(roleName));
+				}	
+				users.add(user);
 			}
 			return users;
 		} catch (StorageException e) {
@@ -93,7 +104,12 @@ public class SecureStorageUserAdmin extends OrionUserAdmin {
 			}
 			ISecurePreferences userPrefs = prefs.node(USERS + "/" + value);
 			try {
-				return new User(value, userPrefs.get(USER_NAME, ""), userPrefs.get(USER_PASSWORD, ""));
+				User user = new User(value, userPrefs.get(USER_NAME, ""), userPrefs.get(USER_PASSWORD, ""));
+				ISecurePreferences roles = userPrefs.node(USER_ROLES);
+				for (String roleName : roles.childrenNames()){
+					user.addRole(getRole(roleName));
+				}	
+				return user;
 			} catch (StorageException e) {
 				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Can not get the user", e));
 			}
@@ -136,8 +152,11 @@ public class SecureStorageUserAdmin extends OrionUserAdmin {
 	private User internalCreateOrUpdateUser(ISecurePreferences userPrefs, User user) throws StorageException, IOException {
 		userPrefs.put(USER_NAME, user.getName(), false);
 		userPrefs.put(USER_PASSWORD, user.getPassword(), true);
-		if (user.getRoles().size() > 0) {
-			ISecurePreferences rolesPrefs = userPrefs.node(USER_ROLES);
+		ISecurePreferences rolesPrefs = userPrefs.node(USER_ROLES);
+		for (String roleName : rolesPrefs.childrenNames()){
+			rolesPrefs.node(roleName).removeNode();
+		}
+		if (user.getRoles().size() > 0) {	
 			for (Iterator i = user.getRoles().iterator(); i.hasNext();) {
 				Role role = (Role) i.next();
 				rolesPrefs.node(role.getName());

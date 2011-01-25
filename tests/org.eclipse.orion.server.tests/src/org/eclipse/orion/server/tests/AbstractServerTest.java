@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2010, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,9 +14,14 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 
+import junit.framework.Assert;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.resources.Base64;
+import org.eclipse.orion.server.useradmin.OrionUserAdmin;
+import org.eclipse.orion.server.useradmin.User;
+import org.eclipse.orion.server.useradmin.UserServiceHelper;
 
 import com.meterware.httpunit.WebRequest;
 
@@ -34,8 +39,18 @@ public class AbstractServerTest {
 	}
 
 	public void setUpAuthorization() throws CoreException {
+		createUser("test", "test");
 		//by default allow tests to modify anything
 		AuthorizationService.addUserRight("test", "/");
+		AuthorizationService.addUserRight("test", "/*");
+	}
+
+	protected void createUser(String login, String password) {
+		OrionUserAdmin userAdmin = UserServiceHelper.getDefault().getUserStore();
+		if (userAdmin.getUser("login", login) != null)
+			return;
+		User newUser = new User(login, "", password);
+		Assert.assertNotNull(userAdmin.createUser(newUser));
 	}
 
 	protected void setAuthentication(WebRequest request, String user, String pass) {

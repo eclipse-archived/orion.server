@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others 
+ * Copyright (c) 2010, 2011 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,10 +12,13 @@ package org.eclipse.orion.server.tests;
 
 import java.util.Dictionary;
 import java.util.Hashtable;
+
 import org.eclipse.equinox.http.jetty.JettyConfigurator;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.server.configurator.ConfiguratorActivator;
-import org.osgi.framework.*;
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
 import org.osgi.service.http.HttpService;
 import org.osgi.util.tracker.ServiceTracker;
 
@@ -38,7 +41,6 @@ public class ServerTestsActivator implements BundleActivator {
 				//get the webide bundle started via lazy activation.
 				org.eclipse.orion.server.authentication.basic.Activator.getDefault();
 				Activator.getDefault();
-				org.eclipse.orion.internal.server.useradmin.xml.Activator.getContext();
 				ConfiguratorActivator.getDefault();
 			} catch (Exception e) {
 				e.printStackTrace();

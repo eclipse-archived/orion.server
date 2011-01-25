@@ -128,34 +128,40 @@ public class UserServlet extends OrionServlet {
 	protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		String pathString = req.getPathInfo();
 
+		OrionUserAdmin userAdmin;
+		try {
+			userAdmin = req.getParameter("store") == null ? getUserAdmin() : getUserAdmin(req.getParameter("store"));
+		} catch (UnsupportedUserStoreException e) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User store not be found: " + req.getParameter("store"));
+			return;
+		}
+		
+		String login = null;
+		User user = null;
+		
 		if (pathString.startsWith("/roles/")) {
-			String login = pathString.substring("/roles/".length());
-			User user = (User) getUserAdmin().getUser("login", login);
+			login = pathString.substring("/roles/".length());
+			user = (User) userAdmin.getUser("login", login);
+			
 			if (user == null) {
 				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User could not be found");
 				return;
 			}
 			if (req.getParameter("roles") != null) {
+				user.getRoles().clear();
 				String roles = req.getParameter("roles");
 				if (roles != null) {
 					StringTokenizer tokenizer = new StringTokenizer(roles, ",");
 					while (tokenizer.hasMoreTokens()) {
 						String role = tokenizer.nextToken();
-						user.addRole(getUserAdmin().getRole(role));
+						user.addRole(userAdmin.getRole(role));
 					}
 				}
 			}
-
 		} else if (pathString.startsWith("/")) {
-			String login = pathString.substring(1);
-			OrionUserAdmin userAdmin;
-			try {
-				userAdmin = req.getParameter("store") == null ? getUserAdmin() : getUserAdmin(req.getParameter("store"));
-			} catch (UnsupportedUserStoreException e) {
-				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User store not be found: " + req.getParameter("store"));
-				return;
-			}
-			User user = (User) userAdmin.getUser("login", login);
+			login = pathString.substring(1);
+			user = (User) userAdmin.getUser("login", login);
+			
 			if (user == null) {
 				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User could not be found");
 				return;
@@ -179,17 +185,26 @@ public class UserServlet extends OrionServlet {
 						user.addRole(userAdmin.getRole(role));
 					}
 				}
-			}
-			userAdmin.updateUser(login, user);
+			}	
 		}
+		userAdmin.updateUser(login, user);
 	}
 
 	@Override
 	protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		String pathString = req.getPathInfo();
+		
+		OrionUserAdmin userAdmin;
+		try {
+			userAdmin = req.getParameter("store") == null ? getUserAdmin() : getUserAdmin(req.getParameter("store"));
+		} catch (UnsupportedUserStoreException e) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User store not be found: " + req.getParameter("store"));
+			return;
+		}
+		
 		if (pathString.startsWith("/roles/")) {
 			String login = pathString.substring("/roles/".length());
-			User user = (User) getUserAdmin().getUser("login", login);
+			User user = (User) userAdmin.getUser("login", login);
 			if (user == null) {
 				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User could not be found");
 			}
@@ -199,19 +214,13 @@ public class UserServlet extends OrionServlet {
 					StringTokenizer tokenizer = new StringTokenizer(roles, ",");
 					while (tokenizer.hasMoreTokens()) {
 						String role = tokenizer.nextToken();
-						user.removeRole(getUserAdmin().getRole(role));
+						user.removeRole(userAdmin.getRole(role));
 					}
 				}
 			}
+			userAdmin.updateUser(login, user);
 		} else if (pathString.startsWith("/")) {
 			String login = pathString.substring(1);
-			OrionUserAdmin userAdmin;
-			try {
-				userAdmin = req.getParameter("store") == null ? getUserAdmin() : getUserAdmin(req.getParameter("store"));
-			} catch (UnsupportedUserStoreException e) {
-				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User store could not be found: " + req.getParameter("store"));
-				return;
-			}
 			if (userAdmin.deleteUser((User) userAdmin.getUser("login", login)) == false) {
 				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User could not be found");
 			}
