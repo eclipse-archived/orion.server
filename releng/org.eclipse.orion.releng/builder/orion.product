@@ -27,21 +27,22 @@
    </plugins>
 
    <features>
-      <feature id="org.eclipse.orion.server.feature" />
-      <feature id="org.eclipse.orion.server.search.feature" />
-      <feature id="org.eclipse.orion.server.authentication.feature" />
-      <feature id="org.eclipse.orion.client.feature" />
+      <feature id="org.eclipse.orion.server.feature"/>
+      <feature id="org.eclipse.orion.server.search.feature"/>
+      <feature id="org.eclipse.orion.server.authentication.feature"/>
+      <feature id="org.eclipse.orion.client.feature"/>
    </features>
 
    <configurations>
       <plugin id="org.eclipse.core.runtime" autoStart="true" startLevel="0" />
-      <plugin id="org.eclipse.orion.server.configurator" autoStart="true" startLevel="0" />
-      <plugin id="org.eclipse.orion.server.search" autoStart="true" startLevel="0" />
-      <plugin id="org.eclipse.orion.server.servlets" autoStart="true" startLevel="0" />
-      <plugin id="org.eclipse.orion.server.useradmin.xml" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.equinox.common" autoStart="true" startLevel="2" />
       <plugin id="org.eclipse.equinox.ds" autoStart="true" startLevel="2" />
       <plugin id="org.eclipse.equinox.simpleconfigurator" autoStart="true" startLevel="1" />
+      <plugin id="org.eclipse.orion.server.configurator" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.orion.server.search" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.orion.server.servlets" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.orion.server.user.securestorage" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.orion.server.useradmin.xml" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.osgi" autoStart="true" startLevel="-1" />
       <property name="org.eclipse.update.reconcile" value="false" />
    </configurations>
