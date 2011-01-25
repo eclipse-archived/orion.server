@@ -22,7 +22,7 @@ public class SystemPropertyPasswordProvider extends PasswordProvider {
 
 	@Override
 	public PBEKeySpec getPassword(IPreferencesContainer container, int passwordType) {
-		String prop = System.getProperty("orion.storage.password", ""); //$NON-NLS-1$ //$NON-NLS-2$
+		String prop = System.getProperty(Activator.ORION_STORAGE_PASSWORD, ""); //$NON-NLS-1$
 		return new PBEKeySpec(prop.toCharArray());
 	}
 

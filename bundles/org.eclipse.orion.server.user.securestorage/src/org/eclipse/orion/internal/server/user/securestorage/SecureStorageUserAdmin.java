@@ -11,24 +11,17 @@
 package org.eclipse.orion.internal.server.user.securestorage;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-
+import java.net.URL;
+import java.util.*;
+import javax.crypto.spec.PBEKeySpec;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.equinox.security.storage.ISecurePreferences;
-import org.eclipse.equinox.security.storage.SecurePreferencesFactory;
-import org.eclipse.equinox.security.storage.StorageException;
+import org.eclipse.equinox.security.storage.*;
+import org.eclipse.equinox.security.storage.provider.IProviderHints;
 import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.useradmin.EmptyAuthorization;
-import org.eclipse.orion.server.useradmin.OrionUserAdmin;
-import org.eclipse.orion.server.useradmin.Role;
-import org.eclipse.orion.server.useradmin.User;
-import org.eclipse.orion.server.useradmin.WebIdeAuthorization;
-import org.osgi.framework.InvalidSyntaxException;
+import org.eclipse.orion.server.useradmin.*;
+import org.eclipse.osgi.service.datalocation.Location;
+import org.osgi.framework.*;
 import org.osgi.service.useradmin.Authorization;
 
 /**
@@ -36,21 +29,74 @@ import org.osgi.service.useradmin.Authorization;
  */
 public class SecureStorageUserAdmin extends OrionUserAdmin {
 
-	static final String ORION_SERVER_NODE = "org.eclipse.orion.server";
+	static final String ORION_SERVER_NODE = "org.eclipse.orion.server"; //$NON-NLS-1$
 
-	static final String USERS = "users";
-	static final String USER_LOGIN = "login";
-	static final String USER_NAME = "name";
-	static final String USER_PASSWORD = "password";
-	static final String USER_ROLES = "roles";
-	static final String USER_ROLE_NAME = "name";
-	
+	static final String USERS = "users"; //$NON-NLS-1$
+	static final String USER_LOGIN = "login"; //$NON-NLS-1$
+	static final String USER_NAME = "name"; //$NON-NLS-1$
+	static final String USER_PASSWORD = "password"; //$NON-NLS-1$
+	static final String USER_ROLES = "roles"; //$NON-NLS-1$
+	static final String USER_ROLE_NAME = "name"; //$NON-NLS-1$
+
+	private ISecurePreferences storage;
 	private Map<String, Role> roles = new HashMap<String, Role>();
 
 	public SecureStorageUserAdmin() {
-		roles.put("admin", new Role("admin", Role.ROLE));
-		roles.put("user", new Role("user", Role.ROLE));
-		roles.put("quest", new Role("quest", Role.ROLE));
+		initSecurePreferences();
+		//add default roles
+		for (String role : new String[] {"admin", "user", "quest"}) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+			roles.put(role, new Role(role, org.osgi.service.useradmin.Role.ROLE));
+	}
+
+	private void initSecurePreferences() {
+		//try to create our own secure storage under the platform instance location
+		URL location = getStorageLocation();
+		if (location != null) {
+			Map<String, Object> options = new HashMap<String, Object>();
+			options.put(IProviderHints.PROMPT_USER, Boolean.FALSE);
+			String password = System.getProperty(Activator.ORION_STORAGE_PASSWORD, ""); //$NON-NLS-1$
+			options.put(IProviderHints.DEFAULT_PASSWORD, new PBEKeySpec(password.toCharArray()));
+			try {
+				storage = SecurePreferencesFactory.open(location, options);
+			} catch (IOException e) {
+				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, "Error initializing user storage location", e)); //$NON-NLS-1$
+			}
+		} else {
+			LogHelper.log(new Status(IStatus.WARNING, Activator.PI_USER_SECURESTORAGE, "No instance location set. Storing user data in user home directory")); //$NON-NLS-1$
+		}
+		//fall back to default secure storage location if we failed to create our own
+		if (storage == null)
+			storage = SecurePreferencesFactory.getDefault().node(ORION_SERVER_NODE);
+	}
+
+	/**
+	 * Returns the location for user data to be stored.
+	 */
+	private URL getStorageLocation() {
+		BundleContext context = Activator.getContext();
+		Collection<ServiceReference<Location>> refs;
+		try {
+			refs = context.getServiceReferences(Location.class, Location.INSTANCE_FILTER);
+		} catch (InvalidSyntaxException e) {
+			// we know the instance location filter syntax is valid
+			throw new RuntimeException(e);
+		}
+		if (refs.isEmpty())
+			return null;
+		ServiceReference<Location> ref = refs.iterator().next();
+		Location location = context.getService(ref);
+		try {
+			try {
+				if (location != null)
+					return location.getDataArea(Activator.PI_USER_SECURESTORAGE + "/secure_storage"); //$NON-NLS-1$
+			} catch (IOException e) {
+				LogHelper.log(e);
+			}
+		} finally {
+			context.ungetService(ref);
+		}
+		//return null if we are unable to determine instance location.
+		return null;
 	}
 
 	public Role createRole(String name, int type) {
@@ -70,81 +116,73 @@ public class SecureStorageUserAdmin extends OrionUserAdmin {
 	}
 
 	public Collection<User> getUsers() {
-		ISecurePreferences prefs = SecurePreferencesFactory.getDefault().node(ORION_SERVER_NODE);
-		if (!prefs.nodeExists(USERS)) {
+		if (!storage.nodeExists(USERS)) {
 			return null;
 		}
-		ISecurePreferences usersPrefs = prefs.node(USERS);
+		ISecurePreferences usersPrefs = storage.node(USERS);
 		Collection<User> users = null;
-		try {
-			for (String childName : usersPrefs.childrenNames()) {
-				if (users == null)
-					users = new ArrayList<User>();
-				ISecurePreferences userPrefs = usersPrefs.node(childName);
-				User user = new User(childName, userPrefs.get(USER_NAME, ""), "" /* don't expose the password */);
-				ISecurePreferences roles = userPrefs.node(USER_ROLES);
-				for (String roleName : roles.childrenNames()){
+		for (String childName : usersPrefs.childrenNames()) {
+			if (users == null)
+				users = new ArrayList<User>();
+			ISecurePreferences userPrefs = usersPrefs.node(childName);
+			try {
+				User user = new User(childName, userPrefs.get(USER_NAME, ""), "" /* don't expose the password */); //$NON-NLS-1$ //$NON-NLS-2$
+				for (String roleName : userPrefs.node(USER_ROLES).childrenNames()) {
 					user.addRole(getRole(roleName));
-				}	
+				}
 				users.add(user);
+			} catch (StorageException e) {
+				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Error loading user: " + childName, e)); //$NON-NLS-1$
 			}
-			return users;
-		} catch (StorageException e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Can not get the user", e));
 		}
-		return null;
+		return users;
 	}
 
 	public User getUser(String key, String value) {
 		// TODO currently searching only by login, all other searches return nothing
 		if (key.equals(USER_LOGIN)) {
-			ISecurePreferences prefs = SecurePreferencesFactory.getDefault().node(ORION_SERVER_NODE);
-			if (!prefs.nodeExists(USERS + "/" + value)) {
+			String nodeName = USERS + '/' + value;
+			if (!storage.nodeExists(nodeName)) {
 				return null;
 			}
-			ISecurePreferences userPrefs = prefs.node(USERS + "/" + value);
+			ISecurePreferences userPrefs = storage.node(nodeName);
 			try {
-				User user = new User(value, userPrefs.get(USER_NAME, ""), userPrefs.get(USER_PASSWORD, ""));
-				ISecurePreferences roles = userPrefs.node(USER_ROLES);
-				for (String roleName : roles.childrenNames()){
+				User user = new User(value, userPrefs.get(USER_NAME, ""), userPrefs.get(USER_PASSWORD, "")); //$NON-NLS-1$ //$NON-NLS-2$
+				for (String roleName : userPrefs.node(USER_ROLES).childrenNames()) {
 					user.addRole(getRole(roleName));
-				}	
+				}
 				return user;
 			} catch (StorageException e) {
-				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Can not get the user", e));
+				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Can not get user: " + value, e)); //$NON-NLS-1$
 			}
 		}
 		return null;
 	}
 
 	public User createUser(User user) {
-		ISecurePreferences prefs = SecurePreferencesFactory.getDefault().node(ORION_SERVER_NODE);
-		if (prefs.nodeExists(USERS + "/" + user.getLogin())) {
+		String nodeName = USERS + '/' + user.getLogin();
+		if (storage.nodeExists(nodeName)) {
 			return null;
 		}
 		try {
-			internalCreateOrUpdateUser(prefs.node(USERS + "/" + user.getLogin()), user);
+			internalCreateOrUpdateUser(storage.node(nodeName), user);
 			return user;
-		} catch (StorageException e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Can not create the user", e));
-		} catch (IOException e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Can not create the user", e));
+		} catch (Exception e) {
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Can not create user: " + user.getLogin(), e)); //$NON-NLS-1$
 		}
 		return null;
 	}
 
 	public boolean updateUser(String oldLogin, User user) {
-		ISecurePreferences prefs = SecurePreferencesFactory.getDefault().node(ORION_SERVER_NODE);
-		if (!prefs.nodeExists(USERS + "/" + user.getLogin())) {
+		String nodeName = USERS + '/' + user.getLogin();
+		if (!storage.nodeExists(nodeName)) {
 			return false;
 		}
 		try {
-			internalCreateOrUpdateUser(prefs.node(USERS + "/" + user.getLogin()), user);
+			internalCreateOrUpdateUser(storage.node(nodeName), user);
 			return true;
-		} catch (StorageException e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Can not update the user", e));
-		} catch (IOException e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Can not update the user", e));
+		} catch (Exception e) {
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Can not update user: " + user.getLogin(), e)); //$NON-NLS-1$
 		}
 		return false;
 	}
@@ -153,31 +191,26 @@ public class SecureStorageUserAdmin extends OrionUserAdmin {
 		userPrefs.put(USER_NAME, user.getName(), false);
 		userPrefs.put(USER_PASSWORD, user.getPassword(), true);
 		ISecurePreferences rolesPrefs = userPrefs.node(USER_ROLES);
-		for (String roleName : rolesPrefs.childrenNames()){
+		for (String roleName : rolesPrefs.childrenNames())
 			rolesPrefs.node(roleName).removeNode();
-		}
-		if (user.getRoles().size() > 0) {	
-			for (Iterator i = user.getRoles().iterator(); i.hasNext();) {
-				Role role = (Role) i.next();
-				rolesPrefs.node(role.getName());
-			}
-		}
+		for (org.osgi.service.useradmin.Role role : user.getRoles())
+			rolesPrefs.node(((Role) role).getName());
 		userPrefs.flush();
 		return user;
 	}
 
 	public boolean deleteUser(User user) {
-		ISecurePreferences prefs = SecurePreferencesFactory.getDefault().node(ORION_SERVER_NODE);
-		if (!prefs.nodeExists(USERS + "/" + user.getLogin())) {
+		String nodeName = USERS + '/' + user.getLogin();
+		if (!storage.nodeExists(nodeName)) {
 			return false;
 		}
-		ISecurePreferences userPrefs = prefs.node(USERS + "/" + user.getLogin());
+		ISecurePreferences userPrefs = storage.node(nodeName);
 		userPrefs.removeNode();
 		try {
 			userPrefs.flush();
 			return true;
 		} catch (IOException e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Can not delete the user", e));
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Cannot delete user: " + user.getLogin(), e)); //$NON-NLS-1$
 		}
 		return false;
 	}

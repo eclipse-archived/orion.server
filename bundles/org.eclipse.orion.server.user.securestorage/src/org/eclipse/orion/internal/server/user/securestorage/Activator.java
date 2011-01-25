@@ -18,6 +18,10 @@ import org.osgi.service.useradmin.UserAdmin;
 public class Activator implements BundleActivator {
 
 	public static final String PI_USER_SECURESTORAGE = "org.eclipse.orion.server.user.securestorage"; //$NON-NLS-1$
+	/**
+	 * The system property name for the secure storage master password.
+	 */
+	public static final String ORION_STORAGE_PASSWORD = "orion.storage.password"; //$NON-NLS-1$
 
 	static BundleContext bundleContext;
 	private ServiceRegistration<UserAdmin> registerService;
