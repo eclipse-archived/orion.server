@@ -52,6 +52,10 @@
             class="org.eclipse.orion.server.configurator.servlet.WelcomeFileFilter">
       </filter>
       <filter
+            alias="/"
+            class="org.eclipse.orion.internal.server.servlets.file.EditSupportFilter">
+      </filter>
+      <filter
             alias="/file"
             class="org.eclipse.orion.server.configurator.servlet.AuthenticationFilter">
       </filter>
