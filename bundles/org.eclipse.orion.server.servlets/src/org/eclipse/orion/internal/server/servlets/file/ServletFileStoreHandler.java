@@ -10,10 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.file;
 
-import org.eclipse.orion.server.servlets.OrionServlet;
-
-import org.eclipse.orion.internal.server.servlets.*;
-
 import java.io.IOException;
 import java.net.URI;
 import javax.servlet.ServletException;
@@ -22,6 +18,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.filesystem.*;
 import org.eclipse.core.filesystem.provider.FileInfo;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.orion.internal.server.servlets.*;
+import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.service.resolver.VersionRange;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONException;
@@ -92,7 +90,7 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 	}
 
 	private boolean handleDirectory(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws ServletException {
-		String versionString = request.getHeader("Orion-Version");
+		String versionString = request.getHeader(ProtocolConstants.HEADER_ORION_VERSION);
 		Version version = versionString == null ? null : new Version(versionString);
 		ServletResourceHandler<IFileStore> handler;
 		if (version != null && VERSION1.isIncluded(version))
@@ -104,7 +102,7 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 
 	private boolean handleFile(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws ServletException {
 		//could plug in more complex mapping here
-		String versionString = request.getHeader("Orion-Version");
+		String versionString = request.getHeader(ProtocolConstants.HEADER_ORION_VERSION);
 		Version version = versionString == null ? null : new Version(versionString);
 		ServletResourceHandler<IFileStore> handler;
 		if (version != null && VERSION1.isIncluded(version))

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2010, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,12 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.file;
 
-import org.eclipse.orion.server.core.LogHelper;
-
-import org.eclipse.orion.server.servlets.OrionServlet;
-
-import org.eclipse.orion.internal.server.servlets.Activator;
-
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -23,6 +17,9 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.orion.internal.server.servlets.Activator;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.*;
 
 /**
@@ -41,7 +38,7 @@ public class FileSystemsServlet extends OrionServlet {
 			EFS.getFileSystem("gitfs"); //$NON-NLS-1$
 			return true;
 		} catch (Exception e) {
-			LogHelper.log(new Status(IStatus.INFO, Activator.PI_SERVER_SERVLETS, 1, "Git file system is not accessible", e));
+			LogHelper.log(new Status(IStatus.INFO, Activator.PI_SERVER_SERVLETS, 1, "Git file system is not accessible", e)); //$NON-NLS-1$
 			return false;
 		}
 	}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2010, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,10 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.file;
 
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-
-import org.eclipse.orion.internal.server.core.IOUtilities;
-
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -21,6 +17,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.orion.internal.server.core.IOUtilities;
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.osgi.util.NLS;
 
 /**

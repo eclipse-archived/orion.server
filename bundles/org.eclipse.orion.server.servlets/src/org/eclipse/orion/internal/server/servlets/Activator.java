@@ -142,7 +142,7 @@ public class Activator implements BundleActivator, IAliasRegistry {
 			rootStore.mkdir(EFS.NONE, null);
 			rootStoreURI = rootStore.toURI();
 		} catch (CoreException e) {
-			throw new RuntimeException("Instance location is read only: " + rootStore, e);
+			throw new RuntimeException("Instance location is read only: " + rootStore, e); //$NON-NLS-1$
 		}
 	}
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2010, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,10 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.file;
 
-import org.eclipse.orion.server.servlets.OrionServlet;
-
-import org.eclipse.orion.internal.server.servlets.*;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -23,6 +19,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.filesystem.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.orion.internal.server.servlets.*;
+import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
 
@@ -78,7 +76,7 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 			children.put(childResult);
 		}
 		try {
-			result.put("Children", children);
+			result.put(ProtocolConstants.KEY_CHILDREN, children);
 		} catch (JSONException e) {
 			// cannot happen
 			throw new RuntimeException(e);

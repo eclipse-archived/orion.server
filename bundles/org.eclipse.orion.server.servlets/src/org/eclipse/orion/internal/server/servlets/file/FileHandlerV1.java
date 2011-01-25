@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2010, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,14 +9,6 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.file;
-
-import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
-
-import org.eclipse.orion.server.servlets.OrionServlet;
-
-import org.eclipse.orion.internal.server.servlets.*;
-
-import org.eclipse.orion.internal.server.core.IOUtilities;
 
 import java.io.*;
 import java.util.HashMap;
@@ -29,6 +21,10 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.filesystem.provider.FileInfo;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.orion.internal.server.core.IOUtilities;
+import org.eclipse.orion.internal.server.servlets.*;
+import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
+import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -77,7 +73,7 @@ class FileHandlerV1 extends GenericFileHandler {
 
 	private void handleMultiPartPut(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws IOException, CoreException, JSONException {
 		String typeHeader = request.getHeader(ProtocolConstants.HEADER_CONTENT_TYPE);
-		String boundary = typeHeader.substring(typeHeader.indexOf("boundary=\"") + 10, typeHeader.length() - 1);
+		String boundary = typeHeader.substring(typeHeader.indexOf("boundary=\"") + 10, typeHeader.length() - 1); //$NON-NLS-1$
 		BufferedReader requestReader = request.getReader();
 		handlePutMetadata(requestReader, boundary, file);
 		// next come the headers for the content

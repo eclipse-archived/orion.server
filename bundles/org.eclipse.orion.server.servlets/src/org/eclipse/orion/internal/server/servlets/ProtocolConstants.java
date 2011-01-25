@@ -183,4 +183,9 @@ public class ProtocolConstants {
 	 */
 	public static final String HEADER_XFER_OPTIONS = "X-Xfer-Options"; //$NON-NLS-1$
 
+	/**
+	 * HTTP request header, indicating the orion server API version in use.
+	 */
+	public static final String HEADER_ORION_VERSION = "Orion-Version"; //$NON-NLS-1$
+
 }

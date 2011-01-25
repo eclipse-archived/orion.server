@@ -13,16 +13,16 @@ package org.eclipse.orion.server.configurator.configuration;
 import org.eclipse.equinox.http.jetty.JettyConstants;
 
 public class ConfigurationFormat {
-	public static final String AUTHENTICATION_NAME = "Auth-name";
-	public static final String DEFAULT_AUTHENTICATION_NAME = "FORM+OpenID";
+	public static final String AUTHENTICATION_NAME = "Auth-name"; //$NON-NLS-1$
+	public static final String DEFAULT_AUTHENTICATION_NAME = "FORM+OpenID"; //$NON-NLS-1$
 
-	private static final String JETTY = "jetty";
+	private static final String JETTY = "jetty"; //$NON-NLS-1$
 
-	public static final String HTTPS_ENABLED = JETTY + "." + JettyConstants.HTTPS_ENABLED;
-	public static final String HTTPS_PORT = JETTY + "." + JettyConstants.HTTPS_PORT;
-	public static final String HTTP_PORT = JETTY + "." + JettyConstants.HTTP_PORT;
-	public static final String SSL_KEYSTORE = JETTY + "." + JettyConstants.SSL_KEYSTORE;
-	public static final String SSL_PASSWORD = JETTY + "." + JettyConstants.SSL_PASSWORD;
-	public static final String SSL_KEYPASSWORD = JETTY + "." + JettyConstants.SSL_KEYPASSWORD;
-	public static final String SSL_PROTOCOL = JETTY + "." + JettyConstants.SSL_PROTOCOL;
+	public static final String HTTPS_ENABLED = JETTY + '.' + JettyConstants.HTTPS_ENABLED;
+	public static final String HTTPS_PORT = JETTY + '.' + JettyConstants.HTTPS_PORT;
+	public static final String HTTP_PORT = JETTY + '.' + JettyConstants.HTTP_PORT;
+	public static final String SSL_KEYSTORE = JETTY + '.' + JettyConstants.SSL_KEYSTORE;
+	public static final String SSL_PASSWORD = JETTY + '.' + JettyConstants.SSL_PASSWORD;
+	public static final String SSL_KEYPASSWORD = JETTY + '.' + JettyConstants.SSL_KEYPASSWORD;
+	public static final String SSL_PROTOCOL = JETTY + '.' + JettyConstants.SSL_PROTOCOL;
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others 
+ * Copyright (c) 2010, 2011 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -40,17 +40,21 @@ public class ConfiguratorActivator implements BundleActivator {
 	 * The symbolic id of this bundle.
 	 */
 	public static final String PI_CONFIGURATOR = "org.eclipse.orion.server.configurator"; //$NON-NLS-1$
+	/**
+	 * Service reference property indicating if the authentication service has been configured.
+	 */
+	static final String PROP_CONFIGURED = "configured"; //$NON-NLS-1$
 	static ConfiguratorActivator singleton;
 
 	private ServiceTracker<IAuthenticationService, IAuthenticationService> authServiceTracker;
 	private ServiceTracker<PackageAdmin, PackageAdmin> packageAdminTracker;
 
-	private Filter getAuthFilter() throws InvalidSyntaxException {
-		StringBuilder sb = new StringBuilder("(");
+	Filter getAuthFilter() throws InvalidSyntaxException {
+		StringBuilder sb = new StringBuilder("("); //$NON-NLS-1$
 		sb.append(ConfigurationFormat.AUTHENTICATION_NAME);
-		sb.append("=");
+		sb.append('=');
 		sb.append(getAuthName());
-		sb.append(")");
+		sb.append(')');
 		return FrameworkUtil.createFilter(sb.toString());
 	}
 
@@ -67,10 +71,10 @@ public class ConfiguratorActivator implements BundleActivator {
 			}
 		}
 
+		@SuppressWarnings({"rawtypes", "unchecked"})
 		@Override
 		public IAuthenticationService addingService(ServiceReference<IAuthenticationService> reference) {
-
-			if ("true".equals(reference.getProperty("configured")))
+			if ("true".equals(reference.getProperty(PROP_CONFIGURED))) //$NON-NLS-1$
 				return null;
 
 			IAuthenticationService authService = super.addingService(reference);
@@ -78,7 +82,7 @@ public class ConfiguratorActivator implements BundleActivator {
 			authService.configure(new Properties());
 
 			Dictionary dictionary = new Properties();
-			dictionary.put("configured", "true");
+			dictionary.put(PROP_CONFIGURED, "true"); //$NON-NLS-1$
 			context.registerService(IAuthenticationService.class.getName(), authService, dictionary);
 			return authService;
 		}
@@ -97,35 +101,35 @@ public class ConfiguratorActivator implements BundleActivator {
 		authServiceTracker = new AuthServiceTracker(context);
 		authServiceTracker.open();
 
-		IEclipsePreferences preferences = (new InstanceScope()).getNode(PI_CONFIGURATOR);
-		Boolean httpsEnabled = new Boolean(preferences.get(ConfigurationFormat.HTTPS_ENABLED, "false"));
+		IEclipsePreferences preferences = InstanceScope.INSTANCE.getNode(PI_CONFIGURATOR);
+		Boolean httpsEnabled = new Boolean(preferences.get(ConfigurationFormat.HTTPS_ENABLED, "false")); //$NON-NLS-1$
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		if (httpsEnabled) {
-			LogHelper.log(new Status(IStatus.INFO, PI_CONFIGURATOR, "Https is enabled", null));
+			LogHelper.log(new Status(IStatus.INFO, PI_CONFIGURATOR, "Https is enabled", null)); //$NON-NLS-1$
 
 			properties.put(JettyConstants.HTTPS_ENABLED, true);
-			properties.put(JettyConstants.HTTPS_PORT, new Integer(preferences.get(HTTPS_PORT, System.getProperty("org.eclipse.equinox.http.jetty.https.port", "8443"))));
-			properties.put(JettyConstants.SSL_KEYSTORE, preferences.get(SSL_KEYSTORE, "keystore"));
+			properties.put(JettyConstants.HTTPS_PORT, new Integer(preferences.get(HTTPS_PORT, System.getProperty("org.eclipse.equinox.http.jetty.https.port", "8443")))); //$NON-NLS-1$//$NON-NLS-2$
+			properties.put(JettyConstants.SSL_KEYSTORE, preferences.get(SSL_KEYSTORE, "keystore")); //$NON-NLS-1$
 
-			LogHelper.log(new Status(IStatus.INFO, PI_CONFIGURATOR, "Keystore absolute path is " + preferences.get(SSL_KEYSTORE, "keystore")));
+			LogHelper.log(new Status(IStatus.INFO, PI_CONFIGURATOR, "Keystore absolute path is " + preferences.get(SSL_KEYSTORE, "keystore"))); //$NON-NLS-1$ //$NON-NLS-2$
 
-			properties.put(JettyConstants.SSL_PASSWORD, preferences.get(SSL_PASSWORD, "password"));
-			properties.put(JettyConstants.SSL_KEYPASSWORD, preferences.get(SSL_KEYPASSWORD, "password"));
-			properties.put(JettyConstants.SSL_PROTOCOL, preferences.get(SSL_PROTOCOL, "SSLv3"));
+			properties.put(JettyConstants.SSL_PASSWORD, preferences.get(SSL_PASSWORD, "password")); //$NON-NLS-1$
+			properties.put(JettyConstants.SSL_KEYPASSWORD, preferences.get(SSL_KEYPASSWORD, "password")); //$NON-NLS-1$
+			properties.put(JettyConstants.SSL_PROTOCOL, preferences.get(SSL_PROTOCOL, "SSLv3")); //$NON-NLS-1$
 		}
 
 		if (!httpsEnabled) {
 			properties.put(JettyConstants.HTTP_ENABLED, true);
-			properties.put(JettyConstants.HTTP_PORT, new Integer(preferences.get(HTTP_PORT, System.getProperty("org.eclipse.equinox.http.jetty.http.port", "8080"))));
+			properties.put(JettyConstants.HTTP_PORT, new Integer(preferences.get(HTTP_PORT, System.getProperty("org.eclipse.equinox.http.jetty.http.port", "8080")))); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 
-		JettyConfigurator.startServer("MasterJetty", properties);
+		JettyConfigurator.startServer("MasterJetty", properties); //$NON-NLS-1$
 	}
 
 	public void stop(BundleContext context) throws Exception {
 
-		JettyConfigurator.stopServer("MasterJetty");
+		JettyConfigurator.stopServer("MasterJetty"); //$NON-NLS-1$
 
 		if (authServiceTracker != null) {
 			authServiceTracker.close();
@@ -158,8 +162,8 @@ public class ConfiguratorActivator implements BundleActivator {
 		return authServiceTracker.getService();
 	}
 
-	private String getAuthName() {
-		IEclipsePreferences preferences = (new InstanceScope()).getNode(PI_CONFIGURATOR);
+	String getAuthName() {
+		IEclipsePreferences preferences = InstanceScope.INSTANCE.getNode(PI_CONFIGURATOR);
 		return preferences.get(AUTHENTICATION_NAME, DEFAULT_AUTHENTICATION_NAME);
 	}
 }
