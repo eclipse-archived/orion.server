@@ -6,8 +6,8 @@ plugin@org.eclipse.orion.client.users.ui=GIT,tag=v20110125-1445,repo=dev.eclipse
 #server
 plugin@org.eclipse.orion.launching=GIT,tag=v20110113-1200,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.launching
 plugin@org.eclipse.orion.server.core=GIT,tag=v20110124-1700,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.core
-plugin@org.eclipse.orion.server.servlets=GIT,tag=v20110125-1800,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.servlets
-plugin@org.eclipse.orion.server.configurator=GIT,tag=v20110125-1800,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.configurator
+plugin@org.eclipse.orion.server.servlets=GIT,tag=v20110125-1805,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.servlets
+plugin@org.eclipse.orion.server.configurator=GIT,tag=v20110125-1805,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.configurator
 plugin@org.eclipse.orion.server.basicauth=GIT,tag=v20110113-1200,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.basicauth
 plugin@org.eclipse.orion.server.authentication.form=GIT,tag=v20110124-1700,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.authentication.form
 plugin@org.eclipse.orion.server.authentication.form.core=GIT,tag=v20110124-1700,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.authentication.form.core
