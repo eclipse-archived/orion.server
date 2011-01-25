@@ -27,10 +27,10 @@
    </plugins>
 
    <features>
-      <feature id="org.eclipse.orion.server.feature" version="0.1.0.qualifier"/>
-      <feature id="org.eclipse.orion.server.search.feature" version="0.1.0.qualifier"/>
-      <feature id="org.eclipse.orion.server.authentication.feature" version="0.1.0.qualifier"/>
-      <feature id="org.eclipse.orion.client.feature" version="0.1.0.qualifier"/>
+      <feature id="org.eclipse.orion.server.feature" />
+      <feature id="org.eclipse.orion.server.search.feature" />
+      <feature id="org.eclipse.orion.server.authentication.feature" />
+      <feature id="org.eclipse.orion.client.feature" />
    </features>
 
    <configurations>
