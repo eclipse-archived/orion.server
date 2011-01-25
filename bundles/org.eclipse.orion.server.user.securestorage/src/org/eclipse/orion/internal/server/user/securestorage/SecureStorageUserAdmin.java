@@ -88,7 +88,7 @@ public class SecureStorageUserAdmin extends OrionUserAdmin {
 		try {
 			try {
 				if (location != null)
-					return location.getDataArea(Activator.PI_USER_SECURESTORAGE + "/secure_storage"); //$NON-NLS-1$
+					return location.getDataArea(Activator.PI_USER_SECURESTORAGE + "/user_store"); //$NON-NLS-1$
 			} catch (IOException e) {
 				LogHelper.log(e);
 			}
