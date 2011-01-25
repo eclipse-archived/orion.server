@@ -214,7 +214,7 @@ public class XmlUserAdminTest extends TestCase {
 		assertTrue(xua.deleteUser(user));
 		assertEquals(2, xua.getUsers().size());
 
-		org.osgi.service.useradmin.User testUser = xua.getUser("login", "test");
+		User testUser = (User) xua.getUser("login", "test");
 		assertTrue(xua.deleteUser(testUser));
 		assertEquals(1, xua.getUsers().size());
 

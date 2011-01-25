@@ -16,7 +16,7 @@ import org.osgi.service.useradmin.UserAdmin;
 
 public abstract class OrionUserAdmin implements UserAdmin {
 
-	public boolean deleteUser(org.osgi.service.useradmin.User user) {
+	public boolean deleteUser(User user) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -30,10 +30,10 @@ public abstract class OrionUserAdmin implements UserAdmin {
 		throw new UnsupportedOperationException();
 	}
 
-	public org.eclipse.orion.server.useradmin.User createUser(User newUser) {
+	public User createUser(User newUser) {
 		throw new UnsupportedOperationException();
 	}
-	
+
 	public abstract String getStoreName();
 
 	/**
