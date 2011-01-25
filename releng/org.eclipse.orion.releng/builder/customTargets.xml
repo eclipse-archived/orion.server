@@ -70,12 +70,6 @@ lastMapTag=${mapsTagTag}
 			<arg value="${buildDirectory}/plugins/org.eclipse.orion.client.core/static/js/" />
 			<arg value="${buildDirectory}/plugins/org.eclipse.orion.client.editor/web/js/" />
 		</java>
-		
-		<ant dir="${basedir}" antfile="scripts/closure.xml" target="runClosure" >
-			<property name="closureJar" value="/shared/common/closure/compiler.jar" />
-			<property name="orion.client.core" value="${buildDirectory}/plugins/org.eclipse.orion.client.core/static"/>
-			<property name="orion.client.editor" value="${buildDirectory}/plugins/org.eclipse.orion.client.editor/web"/>			
-		</ant>
 	</target>
 	
 	<target name="preGenerate">
