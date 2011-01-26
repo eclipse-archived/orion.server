@@ -138,8 +138,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		JSONObject data = OrionServlet.readJSONRequest(request);
 		if (!data.isNull("Remove")) //$NON-NLS-1$
 			return handleRemoveProject(request, response, workspace, data);
-		else
-			return handleAddProject(request, response, workspace, data);
+		return handleAddProject(request, response, workspace, data);
 	}
 
 	private boolean handleRemoveProject(HttpServletRequest request, HttpServletResponse response, WebWorkspace workspace, JSONObject data) throws IOException, JSONException, ServletException {
@@ -199,8 +198,9 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		String name = toAdd.optString(ProtocolConstants.KEY_NAME, null);
 		if (name == null)
 			name = request.getHeader(ProtocolConstants.HEADER_SLUG);
-		if (name != null)
-			project.setName(name);
+		if (!validateProjectName(name, request, response))
+			return true;
+		project.setName(name);
 		String content = toAdd.optString(ProtocolConstants.KEY_CONTENT_LOCATION, null);
 		if (!isAllowedLinkDestination(content)) {
 			String msg = "Cannot link to server path";
@@ -244,6 +244,23 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 			statusHandler.handleRequest(request, response, e.getStatus());
 		}
 
+		return true;
+	}
+
+	/**
+	 * Validates that the provided project name is valid. Returns <code>true</code> if the
+	 * project name is valid, and <code>false</code> otherwise. This method takes care of
+	 * setting the error response when the project name is not valid.
+	 */
+	private boolean validateProjectName(String name, HttpServletRequest request, HttpServletResponse response) throws ServletException {
+		if (name == null || name.trim().length() == 0) {
+			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Project name cannot be empty", null));
+			return false;
+		}
+		if (name.contains("/")) { //$NON-NLS-1$
+			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Invalid project name: {0}", name), null));
+			return false;
+		}
 		return true;
 	}
 
