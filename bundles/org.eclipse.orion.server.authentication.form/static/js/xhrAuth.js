@@ -79,7 +79,8 @@ function confirmLogin() {
 				handleAs : "json",
 				timeout : 15000,
 				load : function(jsonData, ioArgs) {
-					if (dojo.byId("authStatusPane") !== null) {
+					var statusPane = dojo.byId("authStatusPane")||null;
+					if (statusPane!=null) {
 						dojo.byId("authStatusPane").innerHTML = dojo
 								.byId("login").value;
 						dijit.byId("signOutUser").set("label", "Sign Out");
@@ -133,7 +134,8 @@ function userCreated(username, password, store) {
 		handleAs : "json",
 		timeout : 15000,
 		load : function(jsonData, ioArgs) {
-			if (dojo.byId("authStatusPane") !== null) {
+			var statusPane = dojo.byId("authStatusPane")||null;
+			if (statusPane!=null) {
 				dojo.byId("authStatusPane").innerHTML = username;
 				dijit.byId("signOutUser").set("label", "Sign Out");
 				dijit.byId("signOutUser").set("onClick", logout);
@@ -159,7 +161,8 @@ function checkUser() {
 		handleAs : "json",
 		timeout : 15000,
 		load : function(jsonData, ioArgs) {
-			if (dojo.byId("authStatusPane") !== null) {
+			var statusPane = dojo.byId("authStatusPane")||null;
+			if (statusPane!=null) {
 				dojo.byId("authStatusPane").innerHTML = jsonData.login;
 				dijit.byId("signOutUser").set("label", "Sign Out");
 				dijit.byId("signOutUser").set("onClick", logout);
@@ -183,7 +186,8 @@ function logout() {
 		handleAs : "json",
 		timeout : 15000,
 		load : function(jsonData, ioArgs) {
-			if (dojo.byId("authStatusPane") !== null) {
+			var statusPane = dojo.byId("authStatusPane")||null;
+			if (statusPane!=null) {
 				dojo.byId("authStatusPane").innerHTML = "--";
 				dijit.byId("signOutUser").set("label", "Sign In");
 				dijit.byId("signOutUser").set("onClick", login);
