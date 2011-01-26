@@ -42,6 +42,8 @@ public class UserAuthFilter implements Filter {
 
 	private IAuthenticationService authenticationService;
 	private Properties authProperties;
+	
+	private boolean everyoneCanCreateUsers = true;
 
 	@Override
 	public void init(FilterConfig filterConfig) throws ServletException {
@@ -54,6 +56,9 @@ public class UserAuthFilter implements Filter {
 			throw new ServletException(msg);
 		}
 		
+		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode("org.eclipse.orion.server.configuration");
+		everyoneCanCreateUsers = prefs.getBoolean("everyoneCanCreateUsers", true);
+		
 		// TODO need to read auth properties from InstanceScope preferences
 		// authProperties =
 		// ConfiguratorActivator.getDefault().getAuthProperties();
@@ -65,7 +70,7 @@ public class UserAuthFilter implements Filter {
 		HttpServletResponse httpResponse = (HttpServletResponse) response;
 
 		// everyone can create a new user
-		if ("POST".equals(httpRequest.getMethod())) {
+		if (everyoneCanCreateUsers && "POST".equals(httpRequest.getMethod())) {
 			chain.doFilter(request, response);
 			return;
 		}
