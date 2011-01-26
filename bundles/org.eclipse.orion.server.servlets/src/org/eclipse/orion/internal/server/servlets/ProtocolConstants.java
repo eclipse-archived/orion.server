@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2010, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -51,10 +51,25 @@ public class ProtocolConstants {
 	public static final String HEADER_LOCATION = "Location"; //$NON-NLS-1$
 
 	/**
+	 * HTTP request header, indicating the orion server API version in use.
+	 */
+	public static final String HEADER_ORION_VERSION = "Orion-Version"; //$NON-NLS-1$
+
+	/**
 	 * Common HTTP request header indicating the suggested name of the new resource
 	 * to be created by a POST operation.
 	 */
 	public static final String HEADER_SLUG = "Slug"; //$NON-NLS-1$
+
+	/**
+	 * HTTP request header, indicating the length of a file to be transferred.
+	 */
+	public static final String HEADER_XFER_LENGTH = "X-Xfer-Content-Length"; //$NON-NLS-1$
+
+	/**
+	 * HTTP request header, indicating options for an import operation.
+	 */
+	public static final String HEADER_XFER_OPTIONS = "X-Xfer-Options"; //$NON-NLS-1$
 
 	/**
 	 * JSON representation key for an object's children. The value's data
@@ -68,7 +83,6 @@ public class ProtocolConstants {
 	 * The value's data type is a String.
 	 */
 	public static final String KEY_CHILDREN_LOCATION = "ChildrenLocation"; //$NON-NLS-1$
-
 	/**
 	 * JSON representation key for the location of an object's contents. This key
 	 * typically only exists when an object has both metadata and non-metadata content.
@@ -78,6 +92,8 @@ public class ProtocolConstants {
 	 */
 	public static final String KEY_CONTENT_LOCATION = "ContentLocation"; //$NON-NLS-1$
 
+	public static final String KEY_CREATE_IF_DOESNT_EXIST = "CreateIfDoesntExist"; //$NON-NLS-1$
+
 	/**
 	 * JSON representation key for whether a file is a directory or not. The value's data
 	 * type is a boolean.
@@ -85,9 +101,22 @@ public class ProtocolConstants {
 	public static final String KEY_DIRECTORY = "Directory"; //$NON-NLS-1$
 
 	/**
+	 * JSON representation key for the location of an object's export service.
+	 * The value's data type is String.
+	 */
+	public static final String KEY_EXPORT_LOCATION = "ExportLocation"; //$NON-NLS-1$
+
+	/**
 	 * JSON representation key for an object's id. The value's data type is a String.
 	 */
 	public static final String KEY_ID = "Id"; //$NON-NLS-1$
+
+	/**
+	 * JSON representation key for the location of an object's import service.
+	 * The value's data type is String.
+	 */
+	public static final String KEY_IMPORT_LOCATION = "ImportLocation"; //$NON-NLS-1$
+
 	/**
 	 * JSON representation key for an object's last modified time. The value's
 	 * data type is 'long' and represents the number of milliseconds since
@@ -118,8 +147,6 @@ public class ProtocolConstants {
 	 */
 	public static final String KEY_NAME = "Name"; //$NON-NLS-1$
 
-	public static final String KEY_CREATE_IF_DOESNT_EXIST = "CreateIfDoesntExist"; //$NON-NLS-1$
-
 	/**
 	 * JSON representation key for an object's parents. The value's data
 	 * type is a JSON array of objects with name and location values.
@@ -137,19 +164,6 @@ public class ProtocolConstants {
 	 * The value's data type is String.
 	 */
 	public static final String KEY_SEARCH_LOCATION = "SearchLocation"; //$NON-NLS-1$
-
-	/**
-	 * JSON representation key for the location of an object's import service.
-	 * The value's data type is String.
-	 */
-	public static final String KEY_IMPORT_LOCATION = "ImportLocation"; //$NON-NLS-1$
-
-	/**
-	 * JSON representation key for the location of an object's export service.
-	 * The value's data type is String.
-	 */
-	public static final String KEY_EXPORT_LOCATION = "ExportLocation"; //$NON-NLS-1$
-
 	/**
 	 * JSON representation key for an object's name. The value's data type is a String
 	 */
@@ -157,9 +171,27 @@ public class ProtocolConstants {
 
 	/**
 	 * JSON representation key for user's rights. The value's data
-	 * type is a JSON array of Strings.
+	 * type is a integer indicating the supported HTTP methods.
+	 */
+	public static final String KEY_USER_RIGHT_METHOD = "Method"; //$NON-NLS-1$
+
+	/**
+	 * JSON representation key for user's rights. The value's data
+	 * type is a String indicating the URI prefix the user has access to.
+	 */
+	public static final String KEY_USER_RIGHT_URI = "Uri"; //$NON-NLS-1$
+
+	/**
+	 * JSON representation key for user's rights. The value's data
+	 * type is a JSON array of JSON objects.
 	 */
 	public static final String KEY_USER_RIGHTS = "UserRights"; //$NON-NLS-1$
+
+	/**
+	 * JSON representation key for the version of user rights data. The value's
+	 * data type is an Integer.
+	 */
+	public static final String KEY_USER_RIGHTS_VERSION = "UserRightsVersion"; //$NON-NLS-1$
 
 	/**
 	 * JSON representation key for a user's list of workspaces. The value's data
@@ -172,20 +204,5 @@ public class ProtocolConstants {
 	 * of children to be encoded in the response.
 	 */
 	public static final String PARM_DEPTH = "depth"; //$NON-NLS-1$
-
-	/**
-	 * HTTP request header, indicating the length of a file to be transferred.
-	 */
-	public static final String HEADER_XFER_LENGTH = "X-Xfer-Content-Length"; //$NON-NLS-1$
-
-	/**
-	 * HTTP request header, indicating options for an import operation.
-	 */
-	public static final String HEADER_XFER_OPTIONS = "X-Xfer-Options"; //$NON-NLS-1$
-
-	/**
-	 * HTTP request header, indicating the orion server API version in use.
-	 */
-	public static final String HEADER_ORION_VERSION = "Orion-Version"; //$NON-NLS-1$
 
 }
