@@ -10,14 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.authentication.form;
 
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.authentication.IAuthenticationService;
-
-import org.eclipse.orion.server.authentication.form.core.FormAuthHelper;
-
-import org.eclipse.orion.server.authentication.form.httpcontext.BundleEntryHttpContext;
-import org.eclipse.orion.server.authentication.form.servlets.*;
-
 import java.io.IOException;
 import java.util.Properties;
 
@@ -28,6 +20,14 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.orion.server.authentication.form.core.FormAuthHelper;
+import org.eclipse.orion.server.authentication.form.httpcontext.BundleEntryHttpContext;
+import org.eclipse.orion.server.authentication.form.servlets.AuthInitServlet;
+import org.eclipse.orion.server.authentication.form.servlets.LoginFormServlet;
+import org.eclipse.orion.server.authentication.form.servlets.LoginServlet;
+import org.eclipse.orion.server.authentication.form.servlets.LogoutServlet;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.authentication.IAuthenticationService;
 import org.osgi.service.http.HttpContext;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.http.NamespaceException;
@@ -35,6 +35,11 @@ import org.osgi.service.http.NamespaceException;
 public class FormAuthenticationService implements IAuthenticationService {
 
 	public static final String CSS_LINK_PROPERTY = "STYLES"; //$NON-NLS-1$
+	private Properties defaultAuthenticationProperties;
+
+	public Properties getDefaultAuthenticationProperties() {
+		return defaultAuthenticationProperties;
+	}
 
 	public FormAuthenticationService() {
 		super();
@@ -55,15 +60,15 @@ public class FormAuthenticationService implements IAuthenticationService {
 		if (username != null) {
 			return username;
 		}
-
-		// let through any calls to Login Servlet
-		if (req.getServletPath().startsWith("/login")) { //$NON-NLS-1$
-			return ""; //$NON-NLS-1$
-		}
-		if (req.getServletPath().startsWith("/loginform")) { //$NON-NLS-1$
-			return ""; //$NON-NLS-1$
-		}
-
+		/*
+				// let through any calls to Login Servlet
+				if (req.getServletPath().startsWith("/login")) { //$NON-NLS-1$
+					return ""; //$NON-NLS-1$
+				}
+				if (req.getServletPath().startsWith("/loginform")) { //$NON-NLS-1$
+					return ""; //$NON-NLS-1$
+				}
+		*/
 		return null;
 	}
 
@@ -71,27 +76,9 @@ public class FormAuthenticationService implements IAuthenticationService {
 		return HttpServletRequest.FORM_AUTH;
 	}
 
-	private void setNotAuthenticated(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException {
-		if (properties == null) {
-			properties = new Properties();
-		}
-		resp.setHeader("WWW-Authenticate", getAuthType()); //$NON-NLS-1$
-		resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-		String putStyle = properties.getProperty(CSS_LINK_PROPERTY) == null ? "" //$NON-NLS-1$
-				: "&styles=" + properties.getProperty(CSS_LINK_PROPERTY); //$NON-NLS-1$
-		RequestDispatcher rd = req.getRequestDispatcher("/loginform/login?redirect=" //$NON-NLS-1$
-				+ req.getRequestURI() + putStyle);
-		try {
-			rd.forward(req, resp);
-		} catch (ServletException e) {
-			throw new IOException(e);
-		} finally {
-			resp.flushBuffer();
-		}
-	}
-
 	@Override
 	public void configure(Properties properties) {
+		this.defaultAuthenticationProperties = properties;
 		try {
 
 			httpService.registerServlet("/auth2", new AuthInitServlet( //$NON-NLS-1$
@@ -114,6 +101,25 @@ public class FormAuthenticationService implements IAuthenticationService {
 	}
 
 	private HttpService httpService;
+
+	private void setNotAuthenticated(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException {
+		if (properties == null) {
+			properties = new Properties();
+		}
+		resp.setHeader("WWW-Authenticate", getAuthType()); //$NON-NLS-1$
+		resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+		String putStyle = properties.getProperty(CSS_LINK_PROPERTY) == null ? "" //$NON-NLS-1$
+				: "&styles=" + properties.getProperty(CSS_LINK_PROPERTY); //$NON-NLS-1$
+		RequestDispatcher rd = req.getRequestDispatcher("/loginform/login?redirect=" //$NON-NLS-1$
+				+ req.getRequestURI() + putStyle);
+		try {
+			rd.forward(req, resp);
+		} catch (ServletException e) {
+			throw new IOException(e);
+		} finally {
+			resp.flushBuffer();
+		}
+	}
 
 	public/* synchronized? */void setHttpService(HttpService hs) {
 		httpService = hs;

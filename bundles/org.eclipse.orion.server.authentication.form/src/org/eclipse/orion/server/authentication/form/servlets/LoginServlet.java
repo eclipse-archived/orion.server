@@ -10,10 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.authentication.form.servlets;
 
-import org.eclipse.orion.server.core.resources.Base64;
-
-import org.eclipse.orion.server.authentication.form.core.FormAuthHelper;
-
 import java.io.IOException;
 import java.io.PrintWriter;
 
@@ -23,6 +19,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.eclipse.orion.server.authentication.form.core.FormAuthHelper;
+import org.eclipse.orion.server.core.resources.Base64;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.framework.Version;
@@ -36,15 +34,16 @@ public class LoginServlet extends HttpServlet {
 
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		if (FormAuthHelper.getAuthenticatedUser(req) != null) {
+
+		if (req.getParameter("login") == null && FormAuthHelper.getAuthenticatedUser(req) != null) {
 			FormAuthHelper.writeLoginResponse(FormAuthHelper.getAuthenticatedUser(req), resp);
 			return;
 		}
 
 		if (FormAuthHelper.performAuthentication(req, resp)) {
-			if (req.getParameter("redirect") != null && !req.getParameter("redirect").equals(""))
+			if (req.getParameter("redirect") != null && !req.getParameter("redirect").equals("")) { //$NON-NLS-1$
 				resp.sendRedirect(req.getParameter("redirect"));
-			else {
+			} else {
 				resp.flushBuffer();
 			}
 		} else {

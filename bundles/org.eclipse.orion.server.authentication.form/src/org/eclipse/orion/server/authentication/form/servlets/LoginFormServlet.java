@@ -10,12 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.authentication.form.servlets;
 
-import org.eclipse.orion.server.core.resources.Base64;
-
-import org.eclipse.orion.server.authentication.form.core.FormAuthHelper;
-
-import org.eclipse.orion.server.authentication.form.Activator;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,6 +21,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.eclipse.orion.server.authentication.form.Activator;
+import org.eclipse.orion.server.authentication.form.core.FormAuthHelper;
+import org.eclipse.orion.server.core.resources.Base64;
 import org.osgi.framework.Version;
 
 /**
@@ -39,8 +36,6 @@ import org.osgi.framework.Version;
 public class LoginFormServlet extends HttpServlet {
 
 	private static final long serialVersionUID = -7686742575461695377L;
-	private String newAccountLink = "/users/create";
-	private String newAccountJsFunction = "javascript:addUser";
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -67,14 +62,14 @@ public class LoginFormServlet extends HttpServlet {
 		super.service(req, resp);
 		if (!resp.isCommitted()) {
 			// redirection from FormAuthenticationService.setNotAuthenticated
-			String versionString = req.getHeader("Orion-Version");
+			String versionString = req.getHeader("Orion-Version"); //$NON-NLS-1$
 			Version version = versionString == null ? null : new Version(versionString);
 
 			// TODO: This is a workaround for calls
 			// that does not include the WebEclipse version header
-			String xRequestedWith = req.getHeader("X-Requested-With");
+			String xRequestedWith = req.getHeader("X-Requested-With"); //$NON-NLS-1$
 
-			if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) {
+			if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) { //$NON-NLS-1$
 				writeHtmlResponse(req, resp);
 			} else {
 				writeJavaScriptResponse(req, resp);
@@ -83,24 +78,27 @@ public class LoginFormServlet extends HttpServlet {
 	}
 
 	private void writeJavaScriptResponse(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		resp.setContentType("text/javascript");
+		resp.setContentType("text/javascript"); //$NON-NLS-1$
 		PrintWriter writer = resp.getWriter();
-		writer.print("if(!stylg)\n");
-		writer.print("var stylg=document.createElement(\"link\");");
-		writer.print("stylg.setAttribute(\"rel\", \"stylesheet\");");
-		writer.print("stylg.setAttribute(\"type\", \"text/css\");");
-		writer.print("stylg.setAttribute(\"href\", \"");
-		writer.print(getStyles(req.getParameter("styles")));
-		writer.print("\");");
-		writer.print("if(!divg)\n");
-		writer.print("var divg = document.createElement(\"span\");\n");
-		writer.print("divg.innerHTML='");
+		writer.print("if(!stylg)\n"); //$NON-NLS-1$
+		writer.print("var stylg=document.createElement(\"link\");"); //$NON-NLS-1$
+		writer.print("stylg.setAttribute(\"rel\", \"stylesheet\");"); //$NON-NLS-1$
+		writer.print("stylg.setAttribute(\"type\", \"text/css\");"); //$NON-NLS-1$
+		writer.print("stylg.setAttribute(\"href\", \""); //$NON-NLS-1$
+		writer.print(getStyles(req.getParameter("styles"))); //$NON-NLS-1$
+		writer.print("\");"); //$NON-NLS-1$
+		writer.print("if(!divg)\n"); //$NON-NLS-1$
+		writer.print("var divg = document.createElement(\"span\");\n"); //$NON-NLS-1$
+		writer.print("divg.innerHTML='"); //$NON-NLS-1$
 		writer.print(loadJSResponse(req));
+		writer.print("setUserStore('");
+		writer.print(FormAuthHelper.getDefaultUserAdmin().getStoreName());
+		writer.print("');");
 		String path = req.getPathInfo();
-		if (path.startsWith("/login")) {
-			writer.print("login();");
-		} else if (path.startsWith("/checkuser")) {
-			writer.print("checkUser();");
+		if (path.startsWith("/login")) { //$NON-NLS-1$
+			writer.print("login();"); //$NON-NLS-1$
+		} else if (path.startsWith("/checkuser")) { //$NON-NLS-1$
+			writer.print("checkUser();"); //$NON-NLS-1$
 		}
 
 		writer.flush();
@@ -108,10 +106,11 @@ public class LoginFormServlet extends HttpServlet {
 
 	private String getStyles(String stylesParam) {
 		if (stylesParam == null || stylesParam.length() == 0) {
-			return "/loginstatic/css/defaultLoginWindow.css";
+			return "/loginstatic/css/defaultLoginWindow.css"; //$NON-NLS-1$
 		} else {
 
-			return stylesParam.replaceAll("'", "\\\\'").replaceAll("\\t+", " ").replaceAll("\n", "");
+			return stylesParam.replaceAll("'", "\\\\'").replaceAll("\\t+", " ") //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$//$NON-NLS-4$
+					.replaceAll("\n", ""); //$NON-NLS-1$//$NON-NLS-2$
 		}
 	}
 
@@ -119,13 +118,16 @@ public class LoginFormServlet extends HttpServlet {
 
 		StringBuilder sb = new StringBuilder();
 		StringBuilder authString = new StringBuilder();
-		appendFileContentAsJsString(authString, "static/auth.html");
-		sb.append(replaceError(replaceNewAccount(authString.toString(), req.getHeader("Referer"), true), ""));
-		sb.append("';\n");
-		sb.append("var scr = '");
-		appendFileContentAsJsString(sb, "static/js/xhrAuth.js");
-		sb.append("';\n");
-		sb.append(getFileContents("static/js/loadXhrAuth.js"));
+		appendFileContentAsJsString(authString, "static/auth.html"); //$NON-NLS-1$
+		String authSite = replaceNewAccount(authString.toString(), req.getHeader("Referer"), true); //$NON-NLS-1$
+		authSite = replaceError(authSite, ""); //$NON-NLS-1$
+		authSite = replaceUserStores(authSite, true);
+		sb.append(authSite);
+		sb.append("';\n"); //$NON-NLS-1$
+		sb.append("var scr = '"); //$NON-NLS-1$
+		appendFileContentAsJsString(sb, "static/js/xhrAuth.js"); //$NON-NLS-1$
+		sb.append("';\n"); //$NON-NLS-1$
+		sb.append(getFileContents("static/js/loadXhrAuth.js")); //$NON-NLS-1$
 
 		return sb.toString();
 
@@ -135,86 +137,160 @@ public class LoginFormServlet extends HttpServlet {
 		StringBuilder sb = new StringBuilder();
 		InputStream is = Activator.getBundleContext().getBundle().getEntry(filename).openStream();
 		BufferedReader br = new BufferedReader(new InputStreamReader(is));
-		String line = "";
+		String line = ""; //$NON-NLS-1$
 		while ((line = br.readLine()) != null) {
 			sb.append(line).append('\n');
 		}
 		return sb.toString();
 	}
 
+	private String getFileContentAsJsString(String filename) throws IOException {
+		StringBuilder sb = new StringBuilder();
+		appendFileContentAsJsString(sb, filename);
+		return sb.toString();
+	}
+
 	private void appendFileContentAsJsString(StringBuilder sb, String filename) throws IOException {
 		InputStream is = Activator.getBundleContext().getBundle().getEntry(filename).openStream();
 		BufferedReader br = new BufferedReader(new InputStreamReader(is));
-		String line = "";
+		String line = ""; //$NON-NLS-1$
 		while ((line = br.readLine()) != null) {
 			// escaping ' characters
-			line = line.replaceAll("'", "\\\\'");
+			line = line.replaceAll("'", "\\\\'"); //$NON-NLS-1$ //$NON-NLS-2$
 			// remove tabs
-			line = line.replaceAll("\\t+", " ");
+			line = line.replaceAll("\\t+", " "); //$NON-NLS-1$ //$NON-NLS-2$
 			sb.append(line);
 		}
 	}
 
 	private void writeHtmlResponse(HttpServletRequest req, HttpServletResponse response) throws IOException {
-
+		response.setContentType("text/html"); //$NON-NLS-1$
 		PrintWriter writer = response.getWriter();
-		writer.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2 Final//EN\">");
-		writer.println("<html>");
-		writer.println("<head>");
+		writer.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2 Final//EN\">"); //$NON-NLS-1$
+		writer.println("<html>"); //$NON-NLS-1$
+		writer.println("<head>"); //$NON-NLS-1$
+		writer.println("<meta name=\"copyright\" content=\"Copyright (c) IBM Corporation and others 2010.\" >");
+		writer.println("<meta http-equiv=\"Content-Language\" content=\"en-us\">");
+		writer.println("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=ISO-8859-1\">");
+		writer.println("<meta http-equiv=\"X-UA-Compatible\" content=\"IE=8\">");
+
 		writer.println("<title>Login Page</title>");
-		if (req.getParameter("styles") == null || "".equals(req.getParameter("styles"))) {
-			writer.println("<style type=\"text/css\">");
-			writer.print("@import \"");
-			writer.print("/loginstatic/css/defaultLoginWindow.css");
-			writer.print("\";");
-			writer.println("</style>");
+		if (req.getParameter("styles") == null //$NON-NLS-1$
+				|| "".equals(req.getParameter("styles"))) { //$NON-NLS-1$ //$NON-NLS-2$
+			writer.println("<style type=\"text/css\">"); //$NON-NLS-1$
+			writer.print("@import \""); //$NON-NLS-1$
+			writer.print("/loginstatic/css/defaultLoginWindow.css"); //$NON-NLS-1$
+			writer.print("\";"); //$NON-NLS-1$
+			writer.println("</style>"); //$NON-NLS-1$
 		} else {
-			writer.print("<link rel=\"stylesheet\" type=\"text/css\" href=\"");
-			writer.print(req.getParameter("styles"));
-			writer.print("\">");
+			writer.print("<link rel=\"stylesheet\" type=\"text/css\" href=\""); //$NON-NLS-1$
+			writer.print(req.getParameter("styles")); //$NON-NLS-1$
+			writer.print("\">"); //$NON-NLS-1$
 		}
-		writer.println("<script type=\"text/javascript\"><!--");
-		writer.println("function confirm() {}");
-		writer.println("//--></script>");
-		writer.println("</head>");
-		writer.println("<body>");
-		writer.print("<form name=\"AuthForm\" method=post action=\"/login");
-		if (req.getParameter("redirect") != null && !req.getParameter("redirect").equals("")) {
-			writer.print("?redirect=");
-			writer.print(req.getParameter("redirect"));
-		}
-		writer.println("\">");
+		writer.println("<script type=\"text/javascript\"><!--"); //$NON-NLS-1$
+		writer.println("function confirm() {}"); //$NON-NLS-1$
+		writer.println(getFileContents("static/js/htmlAuth.js")); //$NON-NLS-1$
+		writer.println("//--></script>"); //$NON-NLS-1$
+		writer.println("</head>"); //$NON-NLS-1$
+		writer.print("<body onLoad=\"javascript:setUserStore('"); //$NON-NLS-1$
+		writer.print(FormAuthHelper.getDefaultUserAdmin().getStoreName());
+		writer.println("');\">"); //$NON-NLS-1$
 
-		writer.println(replaceError(replaceNewAccount(getFileContents("static/auth.html"), ((req.getParameter("redirect") == null) ? req.getRequestURI() : req.getParameter("redirect")), false), req.getParameter("error")));
+		String authSite = getFileContents("static/auth.html"); //$NON-NLS-1$
+		authSite = replaceForm(authSite, req.getParameter("redirect")); //$NON-NLS-1$
+		authSite = replaceNewAccount(authSite, ((req.getParameter("redirect") == null) ? req.getRequestURI() //$NON-NLS-1$
+				: req.getParameter("redirect")), false); //$NON-NLS-1$
+		authSite = replaceError(authSite, req.getParameter("error")); //$NON-NLS-1$
+		authSite = replaceUserStores(authSite, false);
+		writer.println(authSite);
 
-		writer.println("</form>");
-		writer.println("</body>");
-		writer.println("</html>");
+		writer.println("</body>"); //$NON-NLS-1$
+		writer.println("</html>"); //$NON-NLS-1$
 		writer.flush();
 	}
 
 	private String replaceError(String authSite, String error) {
 		if (error == null) {
-			return authSite;
+			error = "";
 		}
 		StringBuilder sb = new StringBuilder();
-		sb.append("<div id=\"errorWin\">"); //$NON-NLS-1$
+		sb.append("<div id=\"errorWin\"");
+		if (error.trim().length() == 0) {
+			sb.append(" style=\"display: none\"");
+		}
+		sb.append(">");
 		sb.append("<ul id=\"loginError\">"); //$NON-NLS-1$
 		sb.append("<li id=\"errorMessage\">"); //$NON-NLS-1$
 		sb.append(new String(Base64.decode(error.getBytes())));
-		sb.append("</li></ul></div>"); //$NON-NLS-1$
+		sb.append("</li></ul>"); //$NON-NLS-1$
+		sb.append("</div>");
 		return authSite.replaceAll("<!--ERROR-->", sb.toString()); //$NON-NLS-1$
 	}
 
-	private String replaceNewAccount(String authSite, String redirect, boolean javascriptResp) {
+	private String replaceForm(String authSite, String redirect) {
+		StringBuilder formBegin = new StringBuilder();
+		formBegin.append("<form name=\"AuthForm\" method=post action=\"/login"); //$NON-NLS-1$
+		if (redirect != null && !redirect.equals("")) { //$NON-NLS-1$
+			formBegin.append("?redirect="); //$NON-NLS-1$
+			formBegin.append(redirect);
+		}
+		formBegin.append("\">"); //$NON-NLS-1$
+		formBegin.append("<input id=\"store\" name=\"store\" type=\"hidden\" value=\"" + FormAuthHelper.getDefaultUserAdmin().getStoreName() + "\">");
+		return authSite.replace("<!--form-->", formBegin.toString()).replace( //$NON-NLS-1$
+				"<!--/form-->", "</form>"); //$NON-NLS-1$ //$NON-NLS-2$
+	}
+
+	private String replaceCreateUserForm(String authSite, String redirect) {
+		StringBuilder formBegin = new StringBuilder();
+		formBegin.append("<form name=\"CreateUserForm\" onsubmit=\"return validatePasswords()\" method=post action=\"/users"); //$NON-NLS-1$
+		if (redirect != null && !redirect.equals("")) { //$NON-NLS-1$
+			formBegin.append("?redirect="); //$NON-NLS-1$
+			formBegin.append(redirect);
+		}
+		formBegin.append("\">"); //$NON-NLS-1$
+		return authSite.replace("<!--form-->", formBegin.toString()).replace( //$NON-NLS-1$
+				"<!--/form-->", "</form>"); //$NON-NLS-1$ //$NON-NLS-2$
+	}
+
+	private String replaceNewAccount(String authSite, String redirect, boolean javascriptResp) throws IOException {
 		if (!FormAuthHelper.canAddUsers()) {
 			return authSite;
 		}
-		String newAccountA = "";
-		String newAccountLink = javascriptResp ? newAccountJsFunction + "(\\'" + redirect + "\\')" : this.newAccountLink + "?redirect=" + redirect;
-		if (newAccountLink != null && !"".equals(newAccountLink)) {
-			newAccountA = "<a class=\"loginWindow\" href=\"" + newAccountLink + "\">Create new account</a>";
+		String newAccountA = javascriptResp ? getFileContentAsJsString("static/createUser.html") : getFileContents("static/createUser.html"); //$NON-NLS-1$
+		String userStore = FormAuthHelper.getDefaultUserAdmin().getStoreName();
+		newAccountA = newAccountA.replaceAll("<!--userStore-->", userStore);
+		if (!javascriptResp) {
+			newAccountA = replaceCreateUserForm(newAccountA, redirect);
 		}
-		return authSite.replace("<!--NEW_ACCOUNT_LINK-->", newAccountA);
+		return authSite.replace("<!--NEW_ACCOUNT_LINK-->", newAccountA); //$NON-NLS-1$
+	}
+
+	private String replaceUserStores(String authSite, boolean isJsResponce) {
+		StringBuilder sb = new StringBuilder();
+		boolean isFirst = true;
+		for (String store : FormAuthHelper.getSupportedUserStores()) {
+			if (isFirst) {
+				isFirst = false;
+			} else {
+				sb.append(" | ");
+			}
+			if (isJsResponce) {
+				sb.append("<a href=\"javascript:setUserStore(\\\\'");
+			} else {
+				sb.append("<a href=\"javascript:setUserStore('");
+			}
+			sb.append(store);
+			if (isJsResponce) {
+				sb.append("\\\\')\" id=\"Login_");
+			} else {
+				sb.append("')\" id=\"Login_");
+			}
+			sb.append(store);
+			sb.append("\">");
+			sb.append(store);
+			sb.append("</a>");
+		}
+
+		return authSite.replaceAll("<!--LOGIN STORES-->", sb.toString());
 	}
 }

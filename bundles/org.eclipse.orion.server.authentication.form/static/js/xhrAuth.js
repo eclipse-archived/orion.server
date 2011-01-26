@@ -8,6 +8,7 @@
  ******************************************************************************/
 
 var notify = false;
+var userStore;
 
 function login(error) {
 	notify = false;
@@ -17,12 +18,80 @@ function login(error) {
 	setTimeout(function() {
 		dojo.byId('login').focus();
 	}, 0);
-	if(error){
-		document.getElementById("errorWin").style.display='';
-		document.getElementById("errorMessage").innerHTML=error;
-	}else{
-		document.getElementById("errorWin").style.display='none';
+	if (error) {
+		document.getElementById("errorWin").style.display = '';
+		document.getElementById("errorMessage").innerHTML = error;
+	} else {
+		document.getElementById("errorWin").style.display = 'none';
 	}
+};
+
+function setUserStore(userStoreToSet) {
+	if (userStore) {
+		document.getElementById('Login_' + userStore).style.color = '';
+	}
+	userStore = userStoreToSet;
+	document.getElementById('Login_' + userStore).style.color = '#444';
+}
+
+function authDone() {
+	authenticationInProgress = false;
+	if (notify)
+		dojo.publish("/auth", [ "auth done" ]);
+};
+
+function checkPopup(win) {
+	if (!win.closed) {
+		/*
+		 * FIXME: if a request is made after the popup has been closed but the
+		 * authenticationInProgress hasn't been cleared (no check made yet) the
+		 * 401 response for the call will be ignored, when it should result in
+		 * another auth prompt
+		 */
+		setTimeout("checkPopup(win)", 1000);
+		/* periodically check if the popup window is still open */
+	} else {
+		authDone();
+	}
+}
+
+function closeLoginWindow() {
+	notify = false;
+	authDone();
+	dojo.byId('loginWindow').style.visibility = 'hidden';
+	dojo.byId('loginWindowMask').style.visibility = 'hidden';
+}
+
+function confirmLogin() {
+	/* don't wait for the login response, notify anyway */
+	notify = true;
+	dojo
+			.xhrPost({
+				url : "/login",
+				headers : {
+					"Orion-Version" : "1"
+				},
+				content : {
+					login : dojo.byId("login").value,
+					password : dojo.byId("password").value,
+					store : userStore
+				},
+				handleAs : "json",
+				timeout : 15000,
+				load : function(jsonData, ioArgs) {
+					if (dojo.byId("authStatusPane") !== null) {
+						dojo.byId("authStatusPane").innerHTML = dojo
+								.byId("login").value;
+						dijit.byId("signOutUser").set("label", "Sign Out");
+						dijit.byId("signOutUser").set("onClick", logout);
+					}
+					authDone();
+					return jsonData;
+				},
+				error : handleLoginError
+			});
+	dojo.byId('loginWindow').style.visibility = 'hidden';
+	dojo.byId('loginWindowMask').style.visibility = 'hidden';
 };
 
 function handleLoginError(error, ioArgs) {
@@ -49,73 +118,7 @@ function handleLoginError(error, ioArgs) {
 	return error;
 }
 
-function authDone() {
-	authenticationInProgress = false;
-	if (notify)
-		dojo.publish("/auth", [ "auth done" ]);
-};
-
-function closeLoginWindow() {
-	notify=false;
-	authDone();
-	dojo.byId('loginWindow').style.visibility = 'hidden';
-	dojo.byId('loginWindowMask').style.visibility = 'hidden';
-}
-
-function confirmLogin() {
-	/* don't wait for the login response, notify anyway */
-	notify = true;
-	dojo.xhrPost({
-		url : "/login",
-		headers : {
-			"Orion-Version" : "1"
-		},
-		content : {
-			login : dojo.byId("login").value,
-			password : dojo.byId("password").value
-		},
-		handleAs : "json",
-		timeout : 15000,
-		load : function(jsonData, ioArgs) {
-					if (dojo.byId("authStatusPane") !== null) {
-						dojo.byId("authStatusPane").innerHTML = dojo
-								.byId("login").value;
-						dijit.byId("signOutUser").attr("label", "Sign Out");
-						dijit.byId("signOutUser").attr("onClick", logout);
-					}
-			authDone();
-			return jsonData;
-		},
-		error : handleLoginError
-	});
-	dojo.byId('loginWindow').style.visibility = 'hidden';
-	dojo.byId('loginWindowMask').style.visibility = 'hidden';
-};
-
-function addUser(redirectVal){
-	dojo.xhrGet({
-		url : "/users/create",
-		headers : {
-			"Orion-Version" : "1"
-		},
-		handleAs : "text",
-		content: {
-			redirect: redirectVal,
-			onUserCreated: "userCreated"
-		},
-		timeout : 15000,
-		load : function(javascript, ioArgs) {
-			dojo.byId('loginWindow').style.visibility = 'hidden';
-			dojo.byId('loginWindowMask').style.visibility = 'hidden';
-			eval(ioArgs.xhr.responseText);
-		},
-		error : function(response, ioArgs) {
-			return response;
-		}
-	});
-};
-
-function userCreated(username, password){
+function userCreated(username, password, store) {
 	notify = true;
 	dojo.xhrPost({
 		url : "/login",
@@ -124,17 +127,19 @@ function userCreated(username, password){
 		},
 		content : {
 			login : username,
-			password : password
+			password : password,
+			store : store
 		},
 		handleAs : "json",
 		timeout : 15000,
 		load : function(jsonData, ioArgs) {
 			if (dojo.byId("authStatusPane") !== null) {
 				dojo.byId("authStatusPane").innerHTML = username;
-				dijit.byId("signOutUser").attr("label", "Sign Out");
-				dijit.byId("signOutUser").attr("onClick", logout);
+				dijit.byId("signOutUser").set("label", "Sign Out");
+				dijit.byId("signOutUser").set("onClick", logout);
 			}
 			authDone();
+			closeLoginWindow();
 			return jsonData;
 		},
 		error : handleLoginError
@@ -156,8 +161,8 @@ function checkUser() {
 		load : function(jsonData, ioArgs) {
 			if (dojo.byId("authStatusPane") !== null) {
 				dojo.byId("authStatusPane").innerHTML = jsonData.login;
-				dijit.byId("signOutUser").attr("label", "Sign Out");
-				dijit.byId("signOutUser").attr("onClick", logout);
+				dijit.byId("signOutUser").set("label", "Sign Out");
+				dijit.byId("signOutUser").set("onClick", logout);
 			}
 			return jsonData;
 		},
@@ -180,8 +185,8 @@ function logout() {
 		load : function(jsonData, ioArgs) {
 			if (dojo.byId("authStatusPane") !== null) {
 				dojo.byId("authStatusPane").innerHTML = "--";
-				dijit.byId("signOutUser").attr("label", "Sign In");
-				dijit.byId("signOutUser").attr("onClick", login);
+				dijit.byId("signOutUser").set("label", "Sign In");
+				dijit.byId("signOutUser").set("onClick", login);
 			}
 			window.location.replace("/index.html");
 			return jsonData;
@@ -191,3 +196,60 @@ function logout() {
 		}
 	});
 };
+
+function showCreateUser() {
+	document.getElementById('newUserTable').style.display = '';
+	document.getElementById('newUserHeader').style.display = 'none';
+	setTimeout(function() {
+		dojo.byId('create_login').focus();
+	}, 0);
+}
+
+function confirmCreateUser() {
+	var userLogin = dojo.byId("create_login").value;
+	var userPassword = dojo.byId("create_password").value;
+	var userPasswordRetype = dojo.byId("create_passwordRetype").value;
+	var userStore = dojo.byId("create_store").value;
+	if (userPassword !== userPasswordRetype) {
+		login("Passwords do not match.");
+		showCreateUser();
+		return;
+	}
+	dojo.xhrPost({
+		url : "/users",
+		headers : {
+			"Orion-Version" : "1"
+		},
+		content : {
+			login : userLogin,
+			password : userPassword,
+			store : userStore,
+			passwordConf : userPasswordRetype
+		},
+		handleAs : "text",
+		timeout : 15000,
+		load : function(response, ioArgs) {
+			userCreated(userLogin, userPassword, userStore);
+			return response;
+		},
+		error : function(response, ioArgs) {
+			if (ioArgs.xhr.responseText) {
+
+				var tempDiv = document.createElement('div');
+				tempDiv.innerHTML = ioArgs.xhr.responseText;
+				tempDiv.childNodes;
+				var error = tempDiv.getElementsByTagName("title")[0];
+				if(error)
+					login(error.text);
+				else
+					login("User could not be created.");
+				showCreateUser();
+			} else {
+				login("User could not be created.");
+				showCreateUser();
+			}
+			return response;
+		}
+	});
+
+}
