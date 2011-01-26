@@ -94,7 +94,7 @@ function handleLoginError(error, ioArgs) {
 		login("Cannot obtain login page");
 		break;
 	case 500:
-		login("Internal error while authentication");
+		login("Internal during while authentication");
 		break;
 	case 401:
 		login("Invalid user login");
