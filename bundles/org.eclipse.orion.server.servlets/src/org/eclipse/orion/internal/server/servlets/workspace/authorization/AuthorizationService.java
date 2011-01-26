@@ -24,12 +24,14 @@ import org.osgi.service.prefs.BackingStoreException;
 public class AuthorizationService {
 
 	public static final int POST = 1;
-
 	public static final int PUT = 2;
-
 	public static final int GET = 4;
-
 	public static final int DELETE = 8;
+
+	/**
+	 * The current version of the authorization data storage format.
+	 */
+	private static final int CURRENT_VERSION = 2;
 
 	private static int getMethod(String methodName) {
 		if (methodName.equals("POST"))
@@ -47,18 +49,15 @@ public class AuthorizationService {
 		try {
 			IEclipsePreferences users = new OrionScope().getNode("Users"); //$NON-NLS-1$
 			IEclipsePreferences result = (IEclipsePreferences) users.node(name);
-			String userRights = result.get(ProtocolConstants.KEY_USER_RIGHTS, null);
-
-			JSONArray userRightArray = (userRights != null ? new JSONArray(userRights) : new JSONArray());
+			JSONArray userRightArray = AuthorizationReader.getAuthorizationData(result);
 
 			// adds all rights for the uri
 			JSONObject userRight = new JSONObject();
-			userRight.put("Uri", uri);
-			userRight.put("Method", POST | PUT | GET | DELETE);
+			userRight.put(ProtocolConstants.KEY_USER_RIGHT_URI, uri);
+			userRight.put(ProtocolConstants.KEY_USER_RIGHT_METHOD, POST | PUT | GET | DELETE);
 			userRightArray.put(userRight);
 
-			result.put(ProtocolConstants.KEY_USER_RIGHTS, userRightArray.toString());
-			result.flush();
+			saveRights(result, userRightArray);
 		} catch (Exception e) {
 			String msg = "Error persisting user rights";
 			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
@@ -68,18 +67,17 @@ public class AuthorizationService {
 	public static void removeUserRight(String name, String uri) throws JSONException, BackingStoreException {
 		IEclipsePreferences users = new OrionScope().getNode("Users"); //$NON-NLS-1$
 		IEclipsePreferences result = (IEclipsePreferences) users.node(name);
-		String userRights = result.get(ProtocolConstants.KEY_USER_RIGHTS, null);
-
-		if (userRights == null)
-			return;
-
-		JSONArray userRightArray = new JSONArray(userRights);
+		JSONArray userRightArray = AuthorizationReader.getAuthorizationData(result);
 		for (int i = 0; i < userRightArray.length(); i++) {
-			if (uri.equals(((JSONObject) userRightArray.get(i)).get("Uri")))
+			if (uri.equals(((JSONObject) userRightArray.get(i)).get(ProtocolConstants.KEY_USER_RIGHT_URI)))
 				userRightArray.remove(i);
 		}
+		saveRights(result, userRightArray);
+	}
 
+	private static void saveRights(IEclipsePreferences result, JSONArray userRightArray) throws BackingStoreException {
 		result.put(ProtocolConstants.KEY_USER_RIGHTS, userRightArray.toString());
+		result.putInt(ProtocolConstants.KEY_USER_RIGHTS_VERSION, CURRENT_VERSION);
 		result.flush();
 	}
 
@@ -89,15 +87,11 @@ public class AuthorizationService {
 	private static List<String> getRights(String name) {
 		IEclipsePreferences users = new OrionScope().getNode("Users"); //$NON-NLS-1$
 		IEclipsePreferences result = (IEclipsePreferences) users.node(name);
-		String userRights = result.get(ProtocolConstants.KEY_USER_RIGHTS, null);
-
-		if (userRights == null)
-			return Collections.emptyList();
 		try {
-			JSONArray userRightArray = new JSONArray(userRights);
+			JSONArray userRightArray = AuthorizationReader.getAuthorizationData(result);
 			List<String> list = new ArrayList<String>();
 			for (int i = 0; i < userRightArray.length(); i++) {
-				list.add(((JSONObject) userRightArray.get(i)).getString("Uri"));
+				list.add(((JSONObject) userRightArray.get(i)).getString(ProtocolConstants.KEY_USER_RIGHT_URI));
 			}
 			return list;
 		} catch (JSONException e) {
@@ -138,19 +132,13 @@ public class AuthorizationService {
 		}
 
 		IEclipsePreferences users = new OrionScope().getNode("Users"); //$NON-NLS-1$
-		IEclipsePreferences result = (IEclipsePreferences) users.node(name);
-		String userRights = result.get(ProtocolConstants.KEY_USER_RIGHTS, null);
-
-		if (userRights == null)
-			return false;
-
-		JSONArray userRightArray = new JSONArray(userRights);
+		JSONArray userRightArray = AuthorizationReader.getAuthorizationData((IEclipsePreferences) users.node(name));
 		for (int i = 0; i < userRightArray.length(); i++) {
 			JSONObject userRight = (JSONObject) userRightArray.get(i);
 
 			String uriToMatch = uri.toLowerCase(Locale.ENGLISH);
-			String patternToMatch = ((String) userRight.getString("Uri")).toLowerCase(Locale.ENGLISH);
-			int methodToMatch = (int) userRight.getInt("Method");
+			String patternToMatch = userRight.getString(ProtocolConstants.KEY_USER_RIGHT_URI).toLowerCase(Locale.ENGLISH);
+			int methodToMatch = userRight.getInt(ProtocolConstants.KEY_USER_RIGHT_METHOD);
 			if (wildCardMatch(uriToMatch, patternToMatch) && ((getMethod(method) & methodToMatch) == getMethod(method)))
 				return true;
 		}
