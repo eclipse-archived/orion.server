@@ -1,0 +1,104 @@
+<!--
+ Copyright (c) 2011 IBM Corporation and others.
+ All rights reserved. This program and the accompanying materials
+ are made available under the terms of the Eclipse Public License v1.0
+ which accompanies this distribution, and is available at
+ http://www.eclipse.org/legal/epl-v10.html
+
+ Contributors:
+     IBM Corporation - initial API and implementation
+-->
+
+<project name="Orion-closure" default="runClosure" basedir=".">
+
+	<property name="closureJar" value="/eclipse/test/closure/compiler.jar" />
+	<property name="output" value="${orion.client.core}/js/compiled" />
+	
+	<macrodef name="closure" >
+		<attribute name="dir" />
+		<attribute name="compiled" />
+		<element name="closure-args" />
+		<element name="replace-in" />
+		<sequential>
+			<java jar="${closureJar}" fork="true" >
+				<closure-args/>
+				<arg value="--js_output_file=${output}/@{compiled}" />
+			</java>
+			
+			<echo message="Replace @{compiled} "/>
+			<replace dir="@{dir}" >
+				<replace-in/>
+				<replacefilter token="&lt;!-- START:@{compiled} --&gt;" value="&lt;!-- @{compiled}"/>
+				<replacefilter token="&lt;!-- END:@{compiled} --&gt;" value="@{compiled} --&gt;"/>
+				<replacefilter token="!-- INSERT:@{compiled} --" value="script src=&quot;js/compiled/@{compiled}&quot;&gt;&lt;/script"/>
+			</replace>
+		</sequential>
+	</macrodef>
+	
+	<target name="runClosure" >
+		<mkdir dir="${output}"/>
+		<closure dir="${orion.client.core}" compiled="navigate-table.js" >
+			<replace-in>
+				<include name="navigate-table.html" />
+			</replace-in>
+			<closure-args>
+				<arg value="--js=${orion.client.core}/js/breadcrumbs.js" />
+				<arg value="--js=${orion.client.core}/js/explorer-table.js" />
+				<arg value="--js=${orion.client.core}/js/navigate-table/navigate-table.js" />
+			</closure-args>
+		</closure>
+		
+		<closure dir="${orion.client.core}" compiled="navigate-tree.js" >
+			<replace-in>
+				<include name="navigate-tree.html" />
+			</replace-in>
+			<closure-args>
+				<arg value="--js=${orion.client.core}/js/breadcrumbs.js" />
+				<arg value="--js=${orion.client.core}/js/explorer-tree.js" />
+				<arg value="--js=${orion.client.core}/js/navigate-tree/navigate-tree.js" />
+			</closure-args>
+		</closure>
+
+		<closure dir="${orion.client.core}" compiled="coding-editor.js" >
+			<replace-in>
+				<include name="coding.html" />
+			</replace-in>
+			<closure-args>
+				<arg value="--js=${orion.client.editor}/samples/styler.js" />
+				<arg value="--js=${orion.client.editor}/samples/rulers.js" />
+				<arg value="--js=${orion.client.editor}/samples/undoStack.js" />
+				<arg value="--js=${orion.client.editor}/js/model.js" />
+				<arg value="--js=${orion.client.editor}/js/editor.js" />
+				<arg value="--js=${orion.client.core}/js/outliner.js" />
+				<arg value="--js=${orion.client.core}/js/problems.js" />
+				<arg value="--js=${orion.client.core}/js/editorContainer.js" />
+				<arg value="--js=${orion.client.core}/js/syntaxchecker.js" />
+			</closure-args>
+		</closure>
+		
+		<closure dir="${orion.client.core}" compiled="eas.js" >
+			<replace-in>
+				<include name="coding.html" />
+				<include name="navigate-table.html" />
+				<include name="navigate-tree.html" />
+			</replace-in>
+			<closure-args>
+				<arg value="--js=${orion.client.core}/js/util.js" />
+				<arg value="--js=${orion.client.core}/js/commands.js" />
+				<arg value="--js=${orion.client.core}/js/dialogs.js" />
+				<arg value="--js=${orion.client.core}/js/input.js" />
+			 	<arg value="--js=${orion.client.core}/js/log.js" />
+			 	<arg value="--js=${orion.client.core}/js/preferences.js" />
+			 	<arg value="--js=${orion.client.core}/js/saveable.js" />
+			 	<arg value="--js=${orion.client.core}/js/selection.js" />
+			 	<arg value="--js=${orion.client.core}/js/status.js" />
+			 	<arg value="--js=${orion.client.core}/js/users.js" />		
+				<arg value="--js=${orion.client.core}/js/fileClient.js" />
+				<arg value="--js=${orion.client.core}/js/favorites.js" />
+				<arg value="--js=${orion.client.core}/js/searchClient.js" />
+			</closure-args>
+		</closure>	
+		
+	</target>
+	
+</project>
