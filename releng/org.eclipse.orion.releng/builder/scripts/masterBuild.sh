@@ -190,7 +190,7 @@ publish () {
 	scp index.html $user@dev.eclipse.org:/home/data/httpd/download.eclipse.org/e4/orion
 	
 	if [ $buildType = I ]; then
-		scp -r $buildDirectory/plugins/org.eclipse.orion.doc.isc/jsdoc $user@dev.eclipse.org:/home/data/httpd/download.eclipse.org/e4/orion
+		scp -r $buildDirectory/plugins/org.eclipse.orion.doc.isv/jsdoc $user@dev.eclipse.org:/home/data/httpd/download.eclipse.org/e4/orion
 	fi
 	
 	sendMail
