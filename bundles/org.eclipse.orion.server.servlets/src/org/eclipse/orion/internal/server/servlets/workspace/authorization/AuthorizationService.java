@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2010, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -18,11 +18,30 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServerStatus;
 import org.eclipse.orion.server.core.users.OrionScope;
-import org.json.JSONArray;
-import org.json.JSONException;
+import org.json.*;
 import org.osgi.service.prefs.BackingStoreException;
 
 public class AuthorizationService {
+
+	public static final int POST = 1;
+
+	public static final int PUT = 2;
+
+	public static final int GET = 4;
+
+	public static final int DELETE = 8;
+
+	private static int getMethod(String methodName) {
+		if (methodName.equals("POST"))
+			return 1;
+		if (methodName.equals("PUT"))
+			return 2;
+		if (methodName.equals("GET"))
+			return 4;
+		if (methodName.equals("DELETE"))
+			return 8;
+		return 0;
+	}
 
 	public static void addUserRight(String name, String uri) throws CoreException {
 		try {
@@ -32,7 +51,12 @@ public class AuthorizationService {
 
 			JSONArray userRightArray = (userRights != null ? new JSONArray(userRights) : new JSONArray());
 
-			userRightArray.put(uri);
+			// adds all rights for the uri
+			JSONObject userRight = new JSONObject();
+			userRight.put("Uri", uri);
+			userRight.put("Method", POST | PUT | GET | DELETE);
+			userRightArray.put(userRight);
+
 			result.put(ProtocolConstants.KEY_USER_RIGHTS, userRightArray.toString());
 			result.flush();
 		} catch (Exception e) {
@@ -51,7 +75,7 @@ public class AuthorizationService {
 
 		JSONArray userRightArray = new JSONArray(userRights);
 		for (int i = 0; i < userRightArray.length(); i++) {
-			if (uri.equals(userRightArray.get(i)))
+			if (uri.equals(((JSONObject) userRightArray.get(i)).get("Uri")))
 				userRightArray.remove(i);
 		}
 
@@ -62,7 +86,7 @@ public class AuthorizationService {
 	/**
 	 * Returns a list of all rights granted to the given user.
 	 */
-	public static List<String> getRights(String name) {
+	private static List<String> getRights(String name) {
 		IEclipsePreferences users = new OrionScope().getNode("Users"); //$NON-NLS-1$
 		IEclipsePreferences result = (IEclipsePreferences) users.node(name);
 		String userRights = result.get(ProtocolConstants.KEY_USER_RIGHTS, null);
@@ -73,7 +97,7 @@ public class AuthorizationService {
 			JSONArray userRightArray = new JSONArray(userRights);
 			List<String> list = new ArrayList<String>();
 			for (int i = 0; i < userRightArray.length(); i++) {
-				list.add(userRightArray.getString(i));
+				list.add(((JSONObject) userRightArray.get(i)).getString("Uri"));
 			}
 			return list;
 		} catch (JSONException e) {
@@ -102,7 +126,7 @@ public class AuthorizationService {
 		return matches;
 	}
 
-	public static boolean checkRights(String name, String uri) throws JSONException {
+	public static boolean checkRights(String name, String uri, String method) throws JSONException {
 		if (uri.equals("/workspace")) //$NON-NLS-1$
 			return true;
 
@@ -122,9 +146,12 @@ public class AuthorizationService {
 
 		JSONArray userRightArray = new JSONArray(userRights);
 		for (int i = 0; i < userRightArray.length(); i++) {
+			JSONObject userRight = (JSONObject) userRightArray.get(i);
+
 			String uriToMatch = uri.toLowerCase(Locale.ENGLISH);
-			String patternToMatch = ((String) userRightArray.get(i)).toLowerCase(Locale.ENGLISH);
-			if (wildCardMatch(uriToMatch, patternToMatch))
+			String patternToMatch = ((String) userRight.getString("Uri")).toLowerCase(Locale.ENGLISH);
+			int methodToMatch = (int) userRight.getInt("Method");
+			if (wildCardMatch(uriToMatch, patternToMatch) && ((getMethod(method) & methodToMatch) == getMethod(method)))
 				return true;
 		}
 

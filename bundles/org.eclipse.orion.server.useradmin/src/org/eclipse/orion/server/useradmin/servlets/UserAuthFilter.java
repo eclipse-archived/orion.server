@@ -24,6 +24,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.authentication.IAuthenticationService;
@@ -51,7 +53,7 @@ public class UserAuthFilter implements Filter {
 			LogHelper.log(new Status(IStatus.ERROR, UserAdminActivator.PI_USERADMIN, msg, null));
 			throw new ServletException(msg);
 		}
-
+		
 		// TODO need to read auth properties from InstanceScope preferences
 		// authProperties =
 		// ConfiguratorActivator.getDefault().getAuthProperties();
@@ -85,7 +87,7 @@ public class UserAuthFilter implements Filter {
 		}
 
 		try {
-			if (!AuthorizationService.checkRights(login, httpRequest.getRequestURI().toString())) {
+			if (!AuthorizationService.checkRights(login, httpRequest.getRequestURI().toString(), httpRequest.getMethod())) {
 				httpResponse.sendError(HttpServletResponse.SC_FORBIDDEN);
 				return;
 			}

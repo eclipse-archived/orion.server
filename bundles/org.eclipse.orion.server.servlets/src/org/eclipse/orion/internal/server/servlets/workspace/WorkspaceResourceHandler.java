@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2010, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -159,6 +159,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		// remove user rights for the project
 		try {
 			AuthorizationService.removeUserRight(request.getRemoteUser(), URI.create(result.getString(ProtocolConstants.KEY_LOCATION)).getPath());
+			AuthorizationService.removeUserRight(request.getRemoteUser(), URI.create(result.getString(ProtocolConstants.KEY_LOCATION)).getPath() + "/*");
 		} catch (BackingStoreException e) {
 			String msg = "Error persisting user rights";
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
