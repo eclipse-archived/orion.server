@@ -56,7 +56,7 @@ public class UserAuthFilter implements Filter {
 			throw new ServletException(msg);
 		}
 		
-		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode("org.eclipse.orion.server.configuration");
+		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode("org.eclipse.orion.server.configurator");
 		everyoneCanCreateUsers = prefs.getBoolean("everyoneCanCreateUsers", true);
 		
 		// TODO need to read auth properties from InstanceScope preferences

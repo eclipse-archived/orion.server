@@ -24,6 +24,8 @@ import javax.servlet.http.HttpSession;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.useradmin.OrionUserAdmin;
 import org.eclipse.orion.server.useradmin.UnsupportedUserStoreException;
@@ -40,6 +42,13 @@ public class FormAuthHelper {
 
 	private static Map<String, OrionUserAdmin> userStores = new HashMap<String, OrionUserAdmin>();
 	private static OrionUserAdmin defaultUserAdmin;
+	private static boolean everyoneCanCreateUsers;
+
+	static {
+		//FIXME preferences are temporary storage, change to proper configuration storage when it's established
+		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode("org.eclipse.orion.server.configurator");
+		everyoneCanCreateUsers = prefs.getBoolean("everyoneCanCreateUsers", true);
+	}
 
 	/**
 	 * Returns the name of the user stored in session.
@@ -130,6 +139,9 @@ public class FormAuthHelper {
 	 * @throws UnsupportedUserStoreException
 	 */
 	public static boolean canAddUsers(String userStoreId) throws UnsupportedUserStoreException {
+		if (!everyoneCanCreateUsers) {
+			return false;
+		}
 		return userStoreId == null ? defaultUserAdmin.canCreateUsers() : userStores.get(userStoreId).canCreateUsers();
 	}
 
@@ -145,7 +157,7 @@ public class FormAuthHelper {
 	 * @return
 	 */
 	public static boolean canAddUsers() {
-		return defaultUserAdmin.canCreateUsers();
+		return everyoneCanCreateUsers ? defaultUserAdmin.canCreateUsers() : false;
 	}
 
 	public static OrionUserAdmin getDefaultUserAdmin() {
@@ -159,7 +171,7 @@ public class FormAuthHelper {
 			if (defaultUserAdmin == null || UserAdminActivator.eclipseWebUsrAdminName.equals(eclipseWebUserAdmin.getStoreName())) {
 				defaultUserAdmin = eclipseWebUserAdmin;
 			}
-	}
+		}
 	}
 
 	public void unsetUserAdmin(UserAdmin userAdmin) {
