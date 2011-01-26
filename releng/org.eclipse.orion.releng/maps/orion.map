@@ -31,7 +31,8 @@ plugin@org.eclipse.e4.languages.javascript.junit=CVS,tag=v20101028-1345,cvsRoot=
 
 plugin@org.dojotoolkit=GET,http://git.eclipse.org/c/e4/org.eclipse.orion.server.git/plain/dependencies/org.dojotoolkit_1.5.0.v150-20100902-IBM.jar,unpack=true
 #plugin@org.dojotoolkit,1.5.0=p2IU,id=org.dojotoolkit,version=1.5.0.v20110120926,repository=http://download.eclipse.org/tools/orbit/downloads/drops/S20110124210048/repository
-plugin@org.openajax=GET,http://git.eclipse.org/c/e4/org.eclipse.orion.server.git/plain/dependencies/org.openajax_2.0.3.v20101208-1555.jar,unpack=true
+#plugin@org.openajax=GET,http://git.eclipse.org/c/e4/org.eclipse.orion.server.git/plain/dependencies/org.openajax_2.0.3.v20101208-1555.jar,unpack=true
+plugin@openid4java=GET,http://git.eclipse.org/c/e4/org.eclipse.orion.server.git/plain/dependencies/openid4java_0.9.5.jar,unpack=true
 plugin@org.openid4java,0.9.5=p2IU,id=org.openid4java,version=0.9.5.v20110120926,repository=http://download.eclipse.org/tools/orbit/downloads/drops/S20110124210048/repository
 plugin@nekohtml=GET,http://git.eclipse.org/c/e4/org.eclipse.orion.server.git/plain/dependencies/nekohtml_0.9.5.jar,unpack=true
 
