@@ -359,9 +359,9 @@ public class LoginFormServlet extends HttpServlet {
 				sb.append(" | ");
 			}
 			if (isJsResponce) {
-				sb.append("<a href=\"javascript:setUserStore(\\\\'");
+				sb.append("<a class=\"loginWindowStores\" href=\"javascript:setUserStore(\\\\'");
 			} else {
-				sb.append("<a href=\"javascript:setUserStore('");
+				sb.append("<a class=\"loginWindowStores\" href=\"javascript:setUserStore('");
 			}
 			sb.append(store);
 			if (isJsResponce) {

@@ -123,9 +123,10 @@ h2.loginWindowStores {
 	margin-top: 10px;
 	margin-bottom: 10px;
 	font-size: 0.9em;
+	text-decoration: none;
 }
 
-.loginWindowStores a:link, a:VISITED {
+a.loginWindowStores:link, a.loginWindowStores:VISITED {
 	font-family: Verdana, Arial, Helvetica, sans-serif;
 	color: #888;
 	margin-top: 10px;
@@ -134,7 +135,7 @@ h2.loginWindowStores {
 	text-decoration: none;
 }
 
-.loginWindowStores a:hover, a:active {
+a.loginWindowStores:hover, a.loginWindowStores:active {
 	font-family: Verdana, Arial, Helvetica, sans-serif;
 	color: #444;
 	margin-top: 10px;
@@ -199,7 +200,7 @@ a.loginWindow {
 	color: #316ac5;
 }
 
-a.loginWindow:hover a.loginWindow:ACTIVE {
+a.loginWindow:hover, a.loginWindow:ACTIVE {
 	font-style: italic;
 	text-decoration: underline;
 	font-weight: normal;
