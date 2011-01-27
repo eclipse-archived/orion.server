@@ -28,10 +28,14 @@ function login(error) {
 
 function setUserStore(userStoreToSet) {
 	if (userStore) {
-		document.getElementById('Login_' + userStore).style.color = '';
+		if(document.getElementById('Login_' + userStore)){
+			document.getElementById('Login_' + userStore).style.color = '';
+		}
 	}
 	userStore = userStoreToSet;
-	document.getElementById('Login_' + userStore).style.color = '#444';
+	if(document.getElementById('Login_' + userStore)){
+		document.getElementById('Login_' + userStore).style.color = '#444';
+	}
 }
 
 function authDone() {

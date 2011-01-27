@@ -229,6 +229,6 @@ public class SecureStorageUserAdmin extends OrionUserAdmin {
 
 	@Override
 	public String getStoreName() {
-		return "Orion Secure Storage";
+		return "Orion";
 	}
 }

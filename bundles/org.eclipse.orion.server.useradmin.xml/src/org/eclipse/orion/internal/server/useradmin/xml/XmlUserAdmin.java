@@ -125,7 +125,7 @@ public class XmlUserAdmin extends OrionUserAdmin {
 
 	@Override
 	public String getStoreName() {
-		return "EclipseWeb";
+		return "Orion";
 	}
 
 }

@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.util.Collection;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -257,8 +258,10 @@ public class LoginFormServlet extends HttpServlet {
 			return authSite;
 		}
 		String newAccountA = javascriptResp ? getFileContentAsJsString("static/createUser.html") : getFileContents("static/createUser.html"); //$NON-NLS-1$
+		Collection<String> stores = FormAuthHelper.getSupportedUserStores();
 		String userStore = FormAuthHelper.getDefaultUserAdmin().getStoreName();
-		newAccountA = newAccountA.replaceAll("<!--userStore-->", userStore);
+		newAccountA = newAccountA.replaceAll("<!--userStore-->", stores.size()<2 ? "" : userStore);
+		newAccountA = newAccountA.replaceAll("<!--userStoreValue-->", userStore);
 		if (!javascriptResp) {
 			newAccountA = replaceCreateUserForm(newAccountA, redirect);
 		}
@@ -268,7 +271,12 @@ public class LoginFormServlet extends HttpServlet {
 	private String replaceUserStores(String authSite, boolean isJsResponce) {
 		StringBuilder sb = new StringBuilder();
 		boolean isFirst = true;
-		for (String store : FormAuthHelper.getSupportedUserStores()) {
+		Collection<String> stores = FormAuthHelper.getSupportedUserStores();
+		if(stores==null || stores.size()<2){
+			return authSite;
+		}
+		for (String store : stores) {
+
 			if (isFirst) {
 				isFirst = false;
 			} else {

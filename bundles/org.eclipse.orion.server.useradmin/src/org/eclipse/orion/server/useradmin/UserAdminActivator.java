@@ -42,7 +42,7 @@ public class UserAdminActivator implements BundleActivator {
 	/**
 	 * If an {@link OrionUserAdmin} of this name exists it will be returned as default by {@link #getUserStore()}
 	 */
-	public static final String eclipseWebUsrAdminName = "EclipseWeb";
+	public static final String eclipseWebUsrAdminName = "Orion";
 
 	/*
 	 * (non-Javadoc)
