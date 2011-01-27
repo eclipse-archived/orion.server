@@ -34,9 +34,14 @@ public class TransferServlet extends OrionServlet {
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		//initiating a new file transfer
 		traceRequest(req);
-		long length;
+		long length = -1;
 		try {
-			length = Long.parseLong(req.getHeader(ProtocolConstants.HEADER_XFER_LENGTH));
+			//a chunked upload indicates the length to be uploaded in future calls
+			String lengthHeader = req.getHeader(ProtocolConstants.HEADER_XFER_LENGTH);
+			//a regular content length indicates the file to be uploaded is included in the post
+			if (lengthHeader == null)
+				lengthHeader = req.getHeader(ProtocolConstants.HEADER_CONTENT_LENGTH);
+			length = Long.parseLong(lengthHeader);
 		} catch (NumberFormatException e) {
 			handleException(resp, "Transfer request must indicate transfer size", e, HttpServletResponse.SC_BAD_REQUEST);
 			return;
@@ -44,7 +49,7 @@ public class TransferServlet extends OrionServlet {
 		String options = req.getHeader(ProtocolConstants.HEADER_XFER_OPTIONS);
 		if (options == null)
 			options = ""; //$NON-NLS-1$
-		boolean unzip = options.contains("unzip"); //$NON-NLS-1$
+		boolean unzip = !options.contains("raw"); //$NON-NLS-1$
 		String fileName = req.getHeader(ProtocolConstants.HEADER_SLUG);
 		if (fileName == null && !unzip) {
 			handleException(resp, "Transfer request must indicate target filename", null, HttpServletResponse.SC_BAD_REQUEST);

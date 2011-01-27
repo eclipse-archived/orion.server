@@ -20,6 +20,7 @@ import java.util.Properties;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import javax.servlet.ServletException;
+import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.filesystem.EFS;
@@ -81,12 +82,12 @@ class Import {
 	 */
 	private void completeTransfer(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
 		String options = getOptions();
-		if (options.contains("unzip")) {
+		if (!options.contains("raw")) { //$NON-NLS-1$
 			completeUnzip(req, resp);
 		} else {
 			completeMove(req, resp);
 		}
-		resp.setHeader(ProtocolConstants.HEADER_LOCATION, "/file" + getPath());
+		resp.setHeader(ProtocolConstants.HEADER_LOCATION, "/file" + getPath()); //$NON-NLS-1$
 		resp.setStatus(HttpServletResponse.SC_CREATED);
 	}
 
@@ -120,8 +121,8 @@ class Import {
 	 */
 	void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		save();
-		//if a range  is specified, then the file is being uploaded during the post
-		if (req.getHeader(ProtocolConstants.HEADER_CONTENT_RANGE) != null) {
+		//if the transfer length header is not specified, then the file is being uploaded during the POST
+		if (req.getHeader(ProtocolConstants.HEADER_XFER_LENGTH) == null) {
 			doPut(req, resp);
 			return;
 		}
@@ -151,6 +152,8 @@ class Import {
 		int length = getLength();
 		int headerLength = Integer.valueOf(req.getHeader(ProtocolConstants.HEADER_CONTENT_LENGTH));
 		String rangeString = req.getHeader(ProtocolConstants.HEADER_CONTENT_RANGE);
+		if (rangeString == null)
+			rangeString = "bytes 0-" + (length - 1) + '/' + length;
 		ContentRange range = ContentRange.parse(rangeString);
 		if (length != range.getLength()) {
 			fail(req, resp, "Chunk specifies an incorrect document length");
@@ -169,9 +172,7 @@ class Import {
 			fail(req, resp, "Content-Range doesn't agree with Content-Length");
 			return;
 		}
-		ByteArrayOutputStream outputStream = new ByteArrayOutputStream(chunkSize);
-		IOUtilities.pipe(req.getInputStream(), outputStream, false, true);
-		byte[] chunk = outputStream.toByteArray();
+		byte[] chunk = readChunk(req, chunkSize);
 		FileOutputStream fout = null;
 		try {
 			fout = new FileOutputStream(new File(getStorageDirectory(), FILE_DATA), true);
@@ -197,6 +198,41 @@ class Import {
 		resp.setStatus(308);//Resume Incomplete
 		resp.setHeader("Range", "bytes 0-" + range.getEndByte());
 		setResponseLocationHeader(req, resp);
+	}
+
+	/**
+	 * Reads the chunk of data to be imported from the request's input stream.
+	 */
+	private byte[] readChunk(HttpServletRequest req, int chunkSize) throws IOException {
+		ServletInputStream requestStream = req.getInputStream();
+		String contentType = req.getHeader(ProtocolConstants.HEADER_CONTENT_TYPE);
+		if (contentType.startsWith("multipart"))
+			return readMultiPartChunk(requestStream, contentType);
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream(chunkSize);
+		IOUtilities.pipe(requestStream, outputStream, false, false);
+		return outputStream.toByteArray();
+	}
+
+	private byte[] readMultiPartChunk(ServletInputStream requestStream, String contentType) throws IOException {
+		//fast forward stream past multipart header
+		int boundaryOff = contentType.indexOf("boundary=");
+		String boundary = contentType.substring(boundaryOff + 9);
+		BufferedReader reader = new BufferedReader(new InputStreamReader(requestStream, "ISO-8859-1"));
+		StringBuffer out = new StringBuffer();
+		//skip headers up to the first blank line
+		String line = reader.readLine();
+		while (line != null && line.length() > 0)
+			line = reader.readLine();
+		//now process the file
+
+		char[] buf = new char[1000];
+		int read;
+		while ((read = reader.read(buf)) > 0) {
+			out.append(buf, 0, read);
+		}
+		//remove the boundary from the output (end of input is \r\n--<boundary>--\r\n)
+		out.setLength(out.length() - (boundary.length() + 8));
+		return out.toString().getBytes("ISO-8859-1");
 	}
 
 	private void fail(HttpServletRequest req, HttpServletResponse resp, String msg) throws ServletException {
