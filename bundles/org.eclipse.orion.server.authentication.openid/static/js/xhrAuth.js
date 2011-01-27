@@ -118,8 +118,8 @@ function checkUser() {
 		load : function(jsonData, ioArgs) {
 			if (dojo.byId("authStatusPane") !== null) {
 				dojo.byId("authStatusPane").innerHTML = jsonData.login;
-				dijit.byId("signOutUser").attr("label", "Sign Out");
-				dijit.byId("signOutUser").attr("onClick", logout);
+				dojo.byId("signOutUser").innerHTML = "Sign out";
+				dojo.byId("signOutUser").onclick = logout;
 			}
 			return jsonData;
 		},
@@ -142,8 +142,8 @@ function logout() {
 		load : function(jsonData, ioArgs) {
 			if (dojo.byId("authStatusPane") !== null) {
 				dojo.byId("authStatusPane").innerHTML = "--";
-				dijit.byId("signOutUser").attr("label", "Sign In");
-				dijit.byId("signOutUser").attr("onClick", login);
+				dojo.byId("signOutUser").innerHTML = "Sign in";
+				dojo.byId("signOutUser").onclick = login;
 			}
 			window.location.replace("/index.html");
 			return jsonData;

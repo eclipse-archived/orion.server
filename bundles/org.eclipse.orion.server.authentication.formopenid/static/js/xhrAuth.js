@@ -110,8 +110,8 @@ function confirmLogin() {
 					if (statusPane!=null) {
 						dojo.byId("authStatusPane").innerHTML = dojo
 								.byId("login").value;
-						dijit.byId("signOutUser").set("label", "Sign Out");
-						dijit.byId("signOutUser").set("onClick", logout);
+						dojo.byId("signOutUser").innerHTML = "Sign out";
+						dojo.byId("signOutUser").onclick = logout;
 					}
 					authDone();
 					return jsonData;
@@ -164,8 +164,8 @@ function userCreated(username, password, store) {
 			var statusPane = dojo.byId("authStatusPane")||null;
 			if (statusPane!=null) {
 				dojo.byId("authStatusPane").innerHTML = username;
-				dijit.byId("signOutUser").set("label", "Sign Out");
-				dijit.byId("signOutUser").set("onClick", logout);
+				dojo.byId("signOutUser").innerHTML = "Sign out";
+				dojo.byId("signOutUser").onclick = logout;
 			}
 			authDone();
 			closeLoginWindow();
@@ -191,8 +191,8 @@ function checkUser() {
 			var statusPane = dojo.byId("authStatusPane")||null;
 			if (statusPane!=null) {
 				dojo.byId("authStatusPane").innerHTML = jsonData.login;
-				dijit.byId("signOutUser").set("label", "Sign Out");
-				dijit.byId("signOutUser").set("onClick", logout);
+				dojo.byId("signOutUser").innerHTML = "Sign out";
+				dojo.byId("signOutUser").onclick = logout;
 			}
 			return jsonData;
 		},
@@ -216,8 +216,8 @@ function logout() {
 			var statusPane = dojo.byId("authStatusPane")||null;
 			if (statusPane!=null) {
 				dojo.byId("authStatusPane").innerHTML = "--";
-				dijit.byId("signOutUser").set("label", "Sign In");
-				dijit.byId("signOutUser").set("onClick", login);
+				dojo.byId("signOutUser").innerHTML = "Sign in";
+				dojo.byId("signOutUser").onclick = login;
 			}
 			window.location.replace("/index.html");
 			return jsonData;

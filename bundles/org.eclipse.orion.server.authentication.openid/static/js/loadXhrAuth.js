@@ -25,15 +25,14 @@ if (document.getElementById("openIdAuth") == null) {
 	// add the logout button to the toolbar if available
 	var toolBar = dojo.byId('eclipseWebToolbar');
 	if (toolBar) {
-		var button = new dijit.form.Button({
-			id : "signOutUser",
-			label : "Sign In",
-			onClick : function() {
-				login();
-			}
-		});
-
-		button.placeAt(toolBar);
+		var signout = document.createElement('span');
+		signout.appendChild(document.createTextNode("Sign in"));
+		signout.onclick = function() {
+			login();
+		};
+		signout.id = "signOutUser";
+		dojo.addClass(signout, "commandLink");
+		toolBar.appendChild(signout);
 		var bElement = document.createElement('b');
 		bElement.setAttribute('id', 'authStatusPane');
 		bElement.innerHTML = '--';
