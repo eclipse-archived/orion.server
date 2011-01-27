@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2010, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -105,7 +105,7 @@ public class LoginFormServlet extends HttpServlet {
 			try {
 				opendIdProviders.add(getOpenidProviderFromJson(jsonProvider));
 			} catch (JSONException e) {
-				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, "Cannot load OpenId provider, invalid entry " + jsonProvider + " Attribute \"ulr\" is mandatory"));
+				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, "Cannot load OpenId provider, invalid entry " + jsonProvider + " Attribute \"ulr\" is mandatory", e));
 			}
 		}
 		return opendIdProviders;
@@ -114,10 +114,10 @@ public class LoginFormServlet extends HttpServlet {
 	private List<OpendIdProviderDescription> getDefaultOpenIdProviders() {
 		try {
 			if (defaultOpenids == null) {
-				defaultOpenids = getSupportedOpenIdProviders(getFileContents("/openids/DefaultOpenIdProviders.json"));
+				defaultOpenids = getSupportedOpenIdProviders(getFileContents("/openids/DefaultOpenIdProviders.json")); //$NON-NLS-1$
 			}
 		} catch (Exception e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, "Cannot load default openid list, JSON format expected"));
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, "Cannot load default openid list, JSON format expected", e)); //$NON-NLS-1$
 			return new ArrayList<OpendIdProviderDescription>();
 		}
 		return defaultOpenids;
@@ -139,7 +139,7 @@ public class LoginFormServlet extends HttpServlet {
 				try {
 					openidProviders = getSupportedOpenIdProviders(customOpenids);
 				} catch (JSONException e) {
-					LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, "Cannot load openid list, JSON format expected"));
+					LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, "Cannot load openid list, JSON format expected", e)); //$NON-NLS-1$
 					openidProviders = getDefaultOpenIdProviders();
 				}
 			}
