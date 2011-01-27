@@ -30,15 +30,10 @@ import org.eclipse.orion.internal.server.servlets.workspace.authorization.Author
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.authentication.IAuthenticationService;
 import org.eclipse.orion.server.useradmin.UserAdminActivator;
-import org.eclipse.orion.server.useradmin.UserServiceHelper;
 import org.json.JSONException;
 import org.osgi.service.http.HttpContext;
-import org.osgi.service.useradmin.Authorization;
-import org.osgi.service.useradmin.UserAdmin;
 
 public class UserAuthFilter implements Filter {
-
-	private static final String ADMIN_ROLE = "admin";
 
 	private IAuthenticationService authenticationService;
 	private Properties authProperties;
@@ -82,14 +77,6 @@ public class UserAuthFilter implements Filter {
 
 		request.setAttribute(HttpContext.REMOTE_USER, login);
 		request.setAttribute(HttpContext.AUTHENTICATION_TYPE, authenticationService.getAuthType());
-
-		UserAdmin userAdmin = UserServiceHelper.getDefault().getUserStore();
-		Authorization authorization = userAdmin.getAuthorization(userAdmin.getUser("login", login));
-
-		if (authorization.hasRole(ADMIN_ROLE)) {
-			chain.doFilter(request, response);
-			return;
-		}
 
 		try {
 			if (!AuthorizationService.checkRights(login, httpRequest.getRequestURI().toString(), httpRequest.getMethod())) {

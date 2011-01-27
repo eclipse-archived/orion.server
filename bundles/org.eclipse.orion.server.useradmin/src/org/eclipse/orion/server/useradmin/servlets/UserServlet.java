@@ -35,10 +35,11 @@ import org.osgi.service.useradmin.Role;
 //POST /users/ creates a new user
 //GET /users/ gets list of users
 //GET /users/[userId] gets user details
+//GET /users/[usersId]/roles returns a list of roles for given user
 //DELETE /users/[usersId] deletes a user
-//DELETE /users/roles/[usersId] removes roles for given a user
+//DELETE /users/[usersId]/roles removes roles for given a user
 //PUT /users/[userId] updates user details
-//PUT /users/roles/[userId] adds roles for given user
+//PUT /users/[usersId]/roles adds roles for given user
 public class UserServlet extends OrionServlet {
 
 	private static final long serialVersionUID = -6809742538472682623L;
@@ -48,7 +49,8 @@ public class UserServlet extends OrionServlet {
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		String pathString = req.getPathInfo();
-		if (pathString == null || pathString.equals("/")) {
+		String pathSegments[] = (pathString == null) ? new String[0] : pathString.split("\\/");
+		if (pathSegments.length == 0) {
 			Collection<User> users = getUserAdmin().getUsers();
 			try {
 				Set<JSONObject> userjsons = new HashSet<JSONObject>();
@@ -61,12 +63,24 @@ public class UserServlet extends OrionServlet {
 			} catch (JSONException e) {
 				handleException(resp, "Cannot get users list", e);
 			}
-		} else if (pathString.startsWith("/")) {
-			String login = pathString.substring(1);
+		} else if (pathSegments.length > 2 && "roles".equals(pathSegments[2])) {
+			String login = pathSegments[1];
 			try {
 				User user = (User) getUserAdmin().getUser("login", login);
 				if (user == null) {
-					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User login is required");
+					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User not found " + login);
+					return;
+				}
+				writeJSONResponse(req, resp, formJson(user).getJSONArray("roles"));
+			} catch (JSONException e) {
+				handleException(resp, "Cannot get users details", e);
+			}
+		} else {
+			String login = pathSegments[1];
+			try {
+				User user = (User) getUserAdmin().getUser("login", login);
+				if (user == null) {
+					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User not found " + login);
 					return;
 				}
 				writeJSONResponse(req, resp, formJson(user));
@@ -80,7 +94,7 @@ public class UserServlet extends OrionServlet {
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		String pathInfo = req.getPathInfo();
 		if (pathInfo == null || "/".equals(pathInfo)) {
-			String createError = createUser(req.getParameter("store"), req.getParameter("login"), req.getParameter("name"), req.getParameter("email"), req.getParameter("workspace"), req.getParameter("password"), req.getParameter("roles"));
+			String createError = createUser(req.getParameter("store"), req.getParameter("login"), req.getParameter("name"), req.getParameter("email"), req.getParameter("workspace"), req.getParameter("password"));
 
 			if (createError != null) {
 				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, createError);
@@ -88,7 +102,7 @@ public class UserServlet extends OrionServlet {
 		}
 	}
 
-	private String createUser(String userStore, String login, String name, String email, String workspace, String password, String roles) {
+	private String createUser(String userStore, String login, String name, String email, String workspace, String password) {
 		if (login == null || login.length() == 0) {
 			return "User login is required";
 		}
@@ -102,19 +116,12 @@ public class UserServlet extends OrionServlet {
 			return "User " + login + " already exists";
 		}
 		User newUser = new User(login, name == null ? "" : name, password == null ? "" : password);
-		if (roles != null) {
-			StringTokenizer tokenizer = new StringTokenizer(roles, ",");
-			while (tokenizer.hasMoreTokens()) {
-				String role = tokenizer.nextToken();
-				newUser.addRole(userAdmin.getRole(role));
-			}
-		}
+
 		if (userAdmin.createUser(newUser) == null) {
 			return "User could not be created";
 		}
 		try {
 			AuthorizationService.addUserRight(newUser.getLogin(), newUser.getLocation());
-			AuthorizationService.addUserRight(newUser.getLogin(), newUser.getLocation()+"/*");
 		} catch (CoreException e) {
 			String error = "User rights could not be added";
 			LogHelper.log(e.getStatus());
@@ -135,16 +142,16 @@ public class UserServlet extends OrionServlet {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User store not be found: " + req.getParameter("store"));
 			return;
 		}
-		
+
 		String login = null;
 		User user = null;
-		
-		if (pathString.startsWith("/roles/")) {
-			login = pathString.substring("/roles/".length());
+		String pathSegments[] = pathString.split("\\/");
+		if (pathSegments.length > 2 && "roles".equals(pathSegments[2])) {
+			login = pathSegments[1];
 			user = (User) userAdmin.getUser("login", login);
-			
+
 			if (user == null) {
-				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User could not be found");
+				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User could not be found: " + login);
 				return;
 			}
 			if (req.getParameter("roles") != null) {
@@ -161,7 +168,7 @@ public class UserServlet extends OrionServlet {
 		} else if (pathString.startsWith("/")) {
 			login = pathString.substring(1);
 			user = (User) userAdmin.getUser("login", login);
-			
+
 			if (user == null) {
 				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User could not be found");
 				return;
@@ -175,17 +182,6 @@ public class UserServlet extends OrionServlet {
 			if (req.getParameter("password") != null) {
 				user.setPassword(req.getParameter("password"));
 			}
-			if (req.getParameter("roles") != null) {
-				user.getRoles().clear();
-				String roles = req.getParameter("roles");
-				if (roles != null) {
-					StringTokenizer tokenizer = new StringTokenizer(roles, ",");
-					while (tokenizer.hasMoreTokens()) {
-						String role = tokenizer.nextToken();
-						user.addRole(userAdmin.getRole(role));
-					}
-				}
-			}	
 		}
 		userAdmin.updateUser(login, user);
 	}
@@ -193,7 +189,7 @@ public class UserServlet extends OrionServlet {
 	@Override
 	protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		String pathString = req.getPathInfo();
-		
+
 		OrionUserAdmin userAdmin;
 		try {
 			userAdmin = req.getParameter("store") == null ? getUserAdmin() : getUserAdmin(req.getParameter("store"));
@@ -201,12 +197,13 @@ public class UserServlet extends OrionServlet {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User store not be found: " + req.getParameter("store"));
 			return;
 		}
-		
-		if (pathString.startsWith("/roles/")) {
-			String login = pathString.substring("/roles/".length());
+
+		String pathSegments[] = pathString.split("\\/");
+		if (pathSegments.length > 2 && "roles".equals(pathSegments[2])) {
+			String login = pathSegments[1];
 			User user = (User) userAdmin.getUser("login", login);
 			if (user == null) {
-				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User could not be found");
+				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User could not be found: " + login);
 			}
 			if (req.getParameter("roles") != null) {
 				String roles = req.getParameter("roles");
