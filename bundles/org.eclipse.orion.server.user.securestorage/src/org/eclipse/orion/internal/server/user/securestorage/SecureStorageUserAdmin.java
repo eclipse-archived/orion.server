@@ -10,6 +10,12 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.user.securestorage;
 
+import org.eclipse.orion.server.useradmin.servlets.UserServlet;
+
+import org.eclipse.core.runtime.CoreException;
+
+import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
+
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -67,6 +73,12 @@ public class SecureStorageUserAdmin extends OrionUserAdmin {
 		String adminDefaultPassword = System.getProperty(Activator.ORION_STORAGE_ADMIN_DEFAULT_PASSWORD, null);
 		if (adminDefaultPassword != null && getUser(USER_LOGIN, ADMIN_LOGIN_VALUE) == null) {
 			createUser(new User(ADMIN_LOGIN_VALUE, ADMIN_NAME_VALUE, adminDefaultPassword));
+			try {
+				AuthorizationService.addUserRight(ADMIN_LOGIN_VALUE, UserServlet.USERS_URI);
+				AuthorizationService.addUserRight(ADMIN_LOGIN_VALUE, UserServlet.USERS_URI +"/*"); //$NON-NLS-1$
+			} catch (CoreException e) {
+				LogHelper.log(e);
+			}
 		}
 		//add default roles
 		for (String role : new String[] {"admin", "user", "quest"}) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
