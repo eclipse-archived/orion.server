@@ -6,6 +6,7 @@
 		<property name="cvsuser" value=":ext:aniefer" />		
 		<property name="builder" value="${basedir}/builder" />
 		
+		<property name="allElementsFile" value="${basedir}/builder/allElements.xml" />
 		<ant antfile="${eclipse.pdebuild.scripts}/productBuild/productBuild.xml" />
 	</target>
 	
