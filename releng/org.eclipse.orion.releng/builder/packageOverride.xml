@@ -1,0 +1,12 @@
+<project name="package.override">
+
+	<property name="super" value="Assemble org.eclipse.pde.build.container.feature" />
+	<import file="${buildDirectory}/${assembleScriptName}" />
+	
+	<!-- bug 335723 -->
+    <target name="cleanup.assembly">
+		<exec executable="rm" dir="${buildDirectory}" >
+			<arg line="-rf ${assemblyTempDir}" />
+		</exec>
+    </target>	
+</project>
