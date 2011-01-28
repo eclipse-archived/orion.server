@@ -9,7 +9,7 @@
     		<arg value="${buildDirectory}/tmp.${os}.${ws}.${arch}" />
 		</exec>
 		<exec executable="rm" dir="${buildDirectory}" >
-			<arg line="-rf ${buildDirectory}/tmp.${os}.${ws}.${arch}}" />
+			<arg line="-rf ${buildDirectory}/tmp.${os}.${ws}.${arch}" />
 		</exec>
     </target>	
 </project>
