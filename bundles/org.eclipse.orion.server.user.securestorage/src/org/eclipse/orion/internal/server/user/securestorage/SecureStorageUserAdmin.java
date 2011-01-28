@@ -12,16 +12,29 @@ package org.eclipse.orion.internal.server.user.securestorage;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.crypto.spec.PBEKeySpec;
+
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.equinox.security.storage.*;
+import org.eclipse.equinox.security.storage.ISecurePreferences;
+import org.eclipse.equinox.security.storage.SecurePreferencesFactory;
+import org.eclipse.equinox.security.storage.StorageException;
 import org.eclipse.equinox.security.storage.provider.IProviderHints;
 import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.useradmin.*;
+import org.eclipse.orion.server.useradmin.EmptyAuthorization;
+import org.eclipse.orion.server.useradmin.OrionUserAdmin;
+import org.eclipse.orion.server.useradmin.Role;
+import org.eclipse.orion.server.useradmin.User;
+import org.eclipse.orion.server.useradmin.WebIdeAuthorization;
 import org.eclipse.osgi.service.datalocation.Location;
-import org.osgi.framework.*;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.InvalidSyntaxException;
+import org.osgi.framework.ServiceReference;
 import org.osgi.service.useradmin.Authorization;
 
 /**
@@ -38,11 +51,23 @@ public class SecureStorageUserAdmin extends OrionUserAdmin {
 	static final String USER_ROLES = "roles"; //$NON-NLS-1$
 	static final String USER_ROLE_NAME = "name"; //$NON-NLS-1$
 
+	static final String ADMIN_LOGIN_VALUE = "admin"; //$NON-NLS-1$
+	static final String ADMIN_PASSWORD_VALUE = "admin"; //$NON-NLS-1$
+	static final String ADMIN_NAME_VALUE = "Administrator"; //$NON-NLS-1$
+
 	private ISecurePreferences storage;
 	private Map<String, Role> roles = new HashMap<String, Role>();
 
 	public SecureStorageUserAdmin() {
 		initSecurePreferences();
+		initStorage();
+	}
+
+	private void initStorage() {
+		// initialize the default super user
+		if (getUser(USER_LOGIN, ADMIN_LOGIN_VALUE) == null) {
+			createUser(new User(ADMIN_LOGIN_VALUE, ADMIN_NAME_VALUE, System.getProperty(Activator.ORION_STORAGE_ADMIN_DEFAULT_PASSWORD, ADMIN_PASSWORD_VALUE)));
+		}
 		//add default roles
 		for (String role : new String[] {"admin", "user", "quest"}) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 			roles.put(role, new Role(role, org.osgi.service.useradmin.Role.ROLE));
