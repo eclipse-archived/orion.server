@@ -52,7 +52,6 @@ public class SecureStorageUserAdmin extends OrionUserAdmin {
 	static final String USER_ROLE_NAME = "name"; //$NON-NLS-1$
 
 	static final String ADMIN_LOGIN_VALUE = "admin"; //$NON-NLS-1$
-	static final String ADMIN_PASSWORD_VALUE = "admin"; //$NON-NLS-1$
 	static final String ADMIN_NAME_VALUE = "Administrator"; //$NON-NLS-1$
 
 	private ISecurePreferences storage;
@@ -64,9 +63,10 @@ public class SecureStorageUserAdmin extends OrionUserAdmin {
 	}
 
 	private void initStorage() {
-		// initialize the default super user
-		if (getUser(USER_LOGIN, ADMIN_LOGIN_VALUE) == null) {
-			createUser(new User(ADMIN_LOGIN_VALUE, ADMIN_NAME_VALUE, System.getProperty(Activator.ORION_STORAGE_ADMIN_DEFAULT_PASSWORD, ADMIN_PASSWORD_VALUE)));
+		// initialize the admin account
+		String adminDefaultPassword = System.getProperty(Activator.ORION_STORAGE_ADMIN_DEFAULT_PASSWORD, null);
+		if (adminDefaultPassword != null && getUser(USER_LOGIN, ADMIN_LOGIN_VALUE) == null) {
+			createUser(new User(ADMIN_LOGIN_VALUE, ADMIN_NAME_VALUE, adminDefaultPassword));
 		}
 		//add default roles
 		for (String role : new String[] {"admin", "user", "quest"}) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
