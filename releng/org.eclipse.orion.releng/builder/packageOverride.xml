@@ -5,7 +5,6 @@
 	<!-- bug 335723 -->
     <target name="cleanup.assembly">
     	<exec executable="mv" dir="${buildDirectory}" >
-			<arg value="-rf" />
 			<arg value="${assemblyTempDir}" />
     		<arg value="${buildDirectory}/tmp.${os}.${ws}.${arch}" />
 		</exec>
