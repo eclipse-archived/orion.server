@@ -1,10 +1,10 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others 
+ * Copyright (c) 2010, 2011 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  * IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -15,6 +15,7 @@ import java.util.Collection;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.jgit.transport.SshSessionFactory;
 import org.eclipse.osgi.service.datalocation.Location;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
@@ -35,16 +36,17 @@ public class Activator implements BundleActivator {
 	public BundleContext getContext() {
 		return bundleContext;
 	}
-	
+
 	public void start(BundleContext context) throws Exception {
 		singleton = this;
 		bundleContext = context;
+		setupSSH();
 	}
 
 	public void stop(BundleContext context) throws Exception {
 		bundleContext = null;
 	}
-	
+
 	public IPath getPlatformLocation() {
 		BundleContext context = Activator.getDefault().getContext();
 		Collection<ServiceReference<Location>> refs;
@@ -70,5 +72,9 @@ public class Activator implements BundleActivator {
 		} finally {
 			context.ungetService(ref);
 		}
+	}
+
+	private void setupSSH() {
+		SshSessionFactory.setInstance(new OrionSshSessionFactory());
 	}
 }

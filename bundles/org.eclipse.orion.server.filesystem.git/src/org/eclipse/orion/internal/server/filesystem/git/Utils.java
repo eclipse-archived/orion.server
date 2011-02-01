@@ -48,10 +48,11 @@ public class Utils {
 			if (!Transport.canHandleProtocol(remote, FS.DETECTED))
 				return false;
 			transport = Transport.open(local, remote);
+			transport.setCredentialsProvider(gfs.getCredentialsProvider());
 			transport.openFetch().close();
 			return true;
 		} catch (Exception e) {
-			// ignore
+			// ignore and return false
 		} finally {
 			if (transport != null)
 				transport.close();

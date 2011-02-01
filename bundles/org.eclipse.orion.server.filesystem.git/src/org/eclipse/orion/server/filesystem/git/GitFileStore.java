@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -52,6 +52,7 @@ import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.RepositoryCache;
 import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RemoteRefUpdate;
@@ -59,13 +60,14 @@ import org.eclipse.jgit.transport.Transport;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.filesystem.git.Activator;
+import org.eclipse.orion.internal.server.filesystem.git.OrionUserCredentialsProvider;
 import org.eclipse.orion.internal.server.filesystem.git.Utils;
 import org.eclipse.orion.server.core.LogHelper;
 
 public class GitFileStore extends FileStore {
 
 	private Repository localRepo;
-	
+
 	private URL gitUrl;
 	private String authority;
 
@@ -83,7 +85,7 @@ public class GitFileStore extends FileStore {
 		} catch (MalformedURLException e) {
 			throw new IllegalArgumentException(e);
 		}
-		
+
 		if (authority == null)
 			throw new IllegalArgumentException("authority cannot be null");
 		this.authority = authority;
@@ -94,7 +96,7 @@ public class GitFileStore extends FileStore {
 	public URL getUrl() {
 		return gitUrl;
 	}
-	
+
 	// TODO: to field
 	private File getWorkingDir() {
 		IPath location = Activator.getDefault().getPlatformLocation();
@@ -171,7 +173,6 @@ public class GitFileStore extends FileStore {
 			}
 			if ((options & EFS.CACHE) == 0) // don't use cache
 			pull();
-
 		}
 		FileInfo fi = new FileInfo();
 		fi.setName(getName());
@@ -317,11 +318,11 @@ public class GitFileStore extends FileStore {
 			throw new IOException(e);
 		}
 	}
-	
+
 	public boolean isRoot() {
 		return getUrl().getQuery().equals("/");
 	}
-	
+
 	@Override
 	public void delete(int options, IProgressMonitor monitor)
 			throws CoreException {
@@ -335,7 +336,7 @@ public class GitFileStore extends FileStore {
 								+ this, e));
 			}
 		}
-			
+
 		File f = getLocalFile();
 		try {
 			FileUtils.forceDelete(f);
@@ -358,9 +359,6 @@ public class GitFileStore extends FileStore {
 		buffer.flush();
 		return buffer.toByteArray();
 	}
-	
-	// TODO use me
-	private boolean shouldInit = true;
 
 	/**
 	 * Clones from shared repo over local transport, creates the repo when
@@ -369,7 +367,7 @@ public class GitFileStore extends FileStore {
 	 */
 	void initCloneCommitPush(IProgressMonitor monitor) throws CoreException {
 		boolean inited = false;
-		if (canInit() && shouldInit) {
+		if (canInit()) {
 			try {
 				inited = initBare();
 			} catch (Exception e) {
@@ -422,7 +420,15 @@ public class GitFileStore extends FileStore {
 		}
 		return false;
 	}
-	
+
+	/*private*/public CredentialsProvider getCredentialsProvider() {
+		try {
+			return new OrionUserCredentialsProvider(authority, Utils.toURIish(getUrl()));
+		} catch (URISyntaxException e) {
+			throw new IllegalArgumentException(e);
+		}
+	}
+
 	private void clone(IProgressMonitor monitor) throws CoreException {
 		try {
 			URIish uri = Utils.toURIish(getUrl());
@@ -433,6 +439,7 @@ public class GitFileStore extends FileStore {
 				Ref ref = new PeeledNonTag(Ref.Storage.NETWORK,	"refs/heads/master", null);
 				final CloneOperation op = new CloneOperation(uri, true, null,
 						workdir, ref, "origin", 0);
+				op.setCredentialsProvider(getCredentialsProvider());
 				op.run(monitor);
 				LogHelper.log(new Status(IStatus.INFO, Activator.PI_GIT, 1,
 						"Cloned " + this + " to " + workdir, null));
@@ -470,7 +477,7 @@ public class GitFileStore extends FileStore {
 		r = r.replace('+', ' ');
 		return r;
 	}
-	
+
 	private void push() throws CoreException {
 		if (!canPush()) {
 			LogHelper.log(new Status(IStatus.WARNING, Activator.PI_GIT, 1, "Ignored push request for " + this, null));
@@ -482,6 +489,7 @@ public class GitFileStore extends FileStore {
 
 			PushCommand push = git.push();
 			push.setRefSpecs(new RefSpec("refs/heads/*:refs/heads/*"));
+			push.setCredentialsProvider(getCredentialsProvider());
 
 			Iterable<PushResult> pushResults = push.call();
 
@@ -501,10 +509,10 @@ public class GitFileStore extends FileStore {
 			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_GIT,	IStatus.ERROR, e.getMessage(), e));
 		}
 	}
-	
-	/** 
+
+	/**
 	 * pulls from the remote
-	 * @throws CoreException  
+	 * @throws CoreException
 	 */
 	private void pull() throws CoreException {
 		Transport transport = null;
@@ -512,16 +520,14 @@ public class GitFileStore extends FileStore {
 			Repository repo = getLocalRepo();
 			Git git = new Git(repo);
 			PullCommand pull = git.pull();
+			pull.setCredentialsProvider(getCredentialsProvider());
 			PullResult pullResult = pull.call();
 			LogHelper.log(new Status(IStatus.INFO, Activator.PI_GIT, 1,
 					"Pull (fetch/merge) result "
 							+ pullResult.getFetchResult().getMessages() + "/"
 							+ pullResult.getMergeResult().getMergeStatus()
 							+ " for " + this, null));
-		} catch (IOException e) {
-			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_GIT,
-					IStatus.ERROR, e.getMessage(), e));
-		} catch (GitAPIException e) {
+		} catch (Exception e) {
 			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_GIT,
 					IStatus.ERROR, e.getMessage(), e));
 		} finally {
@@ -529,7 +535,7 @@ public class GitFileStore extends FileStore {
 				transport.close();
 		}
 	}
-	
+
 	private void rm() throws CoreException {
 		// TODO: use org.eclipse.jgit.api.RmCommand, see Enhancement 379
 		try {
@@ -596,7 +602,7 @@ public class GitFileStore extends FileStore {
 					"Auto-commit of " + this + " done.", null));
 		} catch (Exception e) {
 			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_GIT,
-					IStatus.ERROR, e.getMessage(), e));		
+					IStatus.ERROR, e.getMessage(), e));
 		}
 	}
 }

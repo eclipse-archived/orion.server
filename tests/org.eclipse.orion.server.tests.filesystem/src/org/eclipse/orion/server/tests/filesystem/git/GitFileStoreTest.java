@@ -17,19 +17,23 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
-import org.eclipse.core.filesystem.*;
+
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileInfo;
+import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.tests.harness.CoreTest;
 import org.eclipse.core.tests.harness.FileSystemHelper;
-import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.RepositoryState;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.filesystem.git.Utils;
 import org.eclipse.orion.server.filesystem.git.GitFileStore;
 import org.eclipse.orion.server.filesystem.git.GitFileSystem;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 public class GitFileStoreTest {
 
@@ -80,7 +84,7 @@ public class GitFileStoreTest {
 		assertTrue("1.2", info.isDirectory());
 	}
 
-	@Test(expected = JGitInternalException.class)
+	@Test
 	public void fetchInfoForAnEmptySharedRepository() throws IOException {
 		String s = Utils.encodeLocalPath(repositoryPath.toString());
 		URI uri = URI.create(GitFileSystem.SCHEME_GIT + "://test/" + s + "?/");
@@ -89,8 +93,8 @@ public class GitFileStoreTest {
 		ensureSharedExists(gfs, true);
 
 		IFileInfo info = gfs.fetchInfo();
-		assertTrue("1.1", info.exists());
-		assertTrue("1.2", info.isDirectory());
+		assertFalse("1.1", info.exists());
+		assertFalse("1.2", info.isDirectory());
 	}
 
 	@Test
@@ -116,7 +120,7 @@ public class GitFileStoreTest {
 		String[] childNames = gfs.childNames(EFS.NONE, null);
 	}
 
-	@Test(expected = JGitInternalException.class)
+	@Test(expected = CoreException.class)
 	public void getChildNamesForAnEmptySharedRepository() throws CoreException {
 		String s = Utils.encodeLocalPath(repositoryPath.toString());
 		URI uri = URI.create(GitFileSystem.SCHEME_GIT + "://test/" + s + "?/");
