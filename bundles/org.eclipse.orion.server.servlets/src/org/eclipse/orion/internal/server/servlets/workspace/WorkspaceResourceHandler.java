@@ -377,13 +377,17 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		URI contentLocation = project.getContentLocation();
 		//relative URIs (any URI with no scheme) are resolved against the location of the workspace servlet.
 		//note when relative URIs are used we must hard-code knowledge of the file servlet
-		if (!contentLocation.isAbsolute() || "file".equals(contentLocation.getScheme()) || "gitfs".equals(contentLocation.getScheme())) { //$NON-NLS-2$
+		if (!contentLocation.isAbsolute() || "file".equals(contentLocation.getScheme()) || "gitfs".equals(contentLocation.getScheme())) { //$NON-NLS-1$//$NON-NLS-2$
 			IPath contentPath = new Path(contentLocation.getPath());
 			//absolute file system paths are mapped via the alias registry so we just provide the project id as the alias
 			if (contentPath.isAbsolute())
 				contentPath = new Path(project.getId());
 			contentLocation = URIUtil.append(parentLocation, ".." + Activator.LOCATION_FILE_SERVLET + contentPath.makeAbsolute().toString()); //$NON-NLS-1$
 		}
-		return contentLocation.toString();
+		String locationString = contentLocation.toString();
+		//projects are directories
+		if (!locationString.endsWith("/")) //$NON-NLS-1$
+			locationString += "/"; //$NON-NLS-1$
+		return locationString;
 	}
 }

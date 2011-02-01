@@ -70,7 +70,10 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 		for (int i = 0; i < childStores.length; i++) {
 			// is it safe to assume that corresponding stores and infos are under the same index?
 			IFileInfo childInfo = childInfos[i];
-			URI childLocation = URIUtil.append(location, childInfo.getName());
+			String name = childInfo.getName();
+			if (childInfo.isDirectory())
+				name += "/"; //$NON-NLS-1$
+			URI childLocation = URIUtil.append(location, name);
 			JSONObject childResult = ServletFileStoreHandler.toJSON(childInfo, childLocation);
 			encodeChildren(childStores[i], childLocation, childResult, depth - 1);
 			children.put(childResult);
