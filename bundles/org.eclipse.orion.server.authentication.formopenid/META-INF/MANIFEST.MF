@@ -9,7 +9,7 @@ Bundle-Activator: org.eclipse.orion.server.authentication.formopenid.Activator
 Import-Package: org.osgi.framework;version="1.3.0",
  org.osgi.util.tracker;version="1.5.0"
 Service-Component: OSGI-INF/*.xml
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Require-Bundle: org.eclipse.equinox.util;bundle-version="1.0.200",
  org.eclipse.equinox.ds;bundle-version="1.2.100",
  org.eclipse.osgi.services;bundle-version="3.2.100",

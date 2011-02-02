@@ -27,13 +27,11 @@ public class Activator implements BundleActivator {
 		return singleton;
 	}
 
-	@Override
 	public void start(BundleContext context) throws Exception {
 		singleton = this;
 		bundleContext = context;
 	}
 
-	@Override
 	public void stop(BundleContext context) throws Exception {
 		bundleContext = null;
 	}

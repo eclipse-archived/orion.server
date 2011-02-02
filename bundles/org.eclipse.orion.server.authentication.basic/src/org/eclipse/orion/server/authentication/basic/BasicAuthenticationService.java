@@ -40,7 +40,6 @@ public class BasicAuthenticationService implements IAuthenticationService {
 		super();
 	}
 
-	@Override
 	public String authenticateUser(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException {
 		String user = getAuthenticatedUser(req, resp, properties);
 		if (user == null) {
@@ -49,7 +48,6 @@ public class BasicAuthenticationService implements IAuthenticationService {
 		return user;
 	}
 
-	@Override
 	public String getAuthenticatedUser(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException {
 		String authHead = req.getHeader("Authorization"); //$NON-NLS-1$
 
@@ -94,7 +92,6 @@ public class BasicAuthenticationService implements IAuthenticationService {
 		return null;
 	}
 
-	@Override
 	public void configure(Properties properties) {
 		// nothing to do
 	}

@@ -40,7 +40,6 @@ public class UserAuthFilter implements Filter {
 	
 	private boolean everyoneCanCreateUsers = true;
 
-	@Override
 	public void init(FilterConfig filterConfig) throws ServletException {
 		authenticationService = UserAdminActivator.getDefault().getAuthenticationService();
 		// treat lack of authentication as an error. Administrator should use
@@ -59,7 +58,6 @@ public class UserAuthFilter implements Filter {
 		// ConfiguratorActivator.getDefault().getAuthProperties();
 	}
 
-	@Override
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
 		HttpServletRequest httpRequest = (HttpServletRequest) request;
 		HttpServletResponse httpResponse = (HttpServletResponse) response;
@@ -90,7 +88,6 @@ public class UserAuthFilter implements Filter {
 		chain.doFilter(request, response);
 	}
 
-	@Override
 	public void destroy() {
 		// TODO Auto-generated method stub
 	}

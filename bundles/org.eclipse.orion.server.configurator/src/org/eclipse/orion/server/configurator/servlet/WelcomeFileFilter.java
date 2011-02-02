@@ -24,12 +24,10 @@ public class WelcomeFileFilter implements Filter {
 	private static final String WELCOME_FILE_NAME = "index.html";//$NON-NLS-1$
 	private static final List<String> SERVLET_PATHS = Arrays.asList("/file", "/workspace/", "/filesystems", "/prefs", "/search"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
 
-	@Override
 	public void init(FilterConfig filterConfig) throws ServletException {
 		//nothing to do
 	}
 
-	@Override
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
 		HttpServletRequest httpRequest = (HttpServletRequest) request;
 		String requestURI = httpRequest.getRequestURI();
@@ -51,7 +49,6 @@ public class WelcomeFileFilter implements Filter {
 		return false;
 	}
 
-	@Override
 	public void destroy() {
 		//nothing to do
 	}

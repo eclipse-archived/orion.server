@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others 
+ * Copyright (c) 2010, 2011 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -36,7 +36,6 @@ public class AuthenticationFilter implements Filter {
 	private IAuthenticationService authenticationService;
 	private Properties authProperties;
 
-	@Override
 	public void init(FilterConfig filterConfig) throws ServletException {
 		authenticationService = ConfiguratorActivator.getDefault().getAuthService();
 		// treat lack of authentication as an error. Administrator should use
@@ -52,7 +51,6 @@ public class AuthenticationFilter implements Filter {
 		// ConfiguratorActivator.getDefault().getAuthProperties();
 	}
 
-	@Override
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
 
 		String login = authenticationService.authenticateUser((HttpServletRequest) request, (HttpServletResponse) response, authProperties);
@@ -65,7 +63,6 @@ public class AuthenticationFilter implements Filter {
 		chain.doFilter(request, response);
 	}
 
-	@Override
 	public void destroy() {
 		// TODO Auto-generated method stub
 	}

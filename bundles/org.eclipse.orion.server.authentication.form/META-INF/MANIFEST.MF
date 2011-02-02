@@ -4,7 +4,7 @@ Bundle-Name: %Bundle-Name
 Bundle-Vendor: %Bundle-Vendor
 Bundle-SymbolicName: org.eclipse.orion.server.authentication.form;singleton:=true
 Bundle-Version: 0.2.0.qualifier
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-Localization: bundle
 Service-Component: OSGI-INF/*.xml
 Import-Package: javax.servlet.http;version="2.5.0",

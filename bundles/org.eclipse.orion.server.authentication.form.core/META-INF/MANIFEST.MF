@@ -5,7 +5,7 @@ Bundle-Vendor: %Bundle-Vendor
 Bundle-Localization: bundle
 Bundle-SymbolicName: org.eclipse.orion.server.authentication.form.core;singleton:=true
 Bundle-Version: 0.2.0.qualifier
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Export-Package: org.eclipse.orion.server.authentication.form.core
 Bundle-Activator: org.eclipse.orion.server.authentication.form.core.Activator
 Require-Bundle: javax.servlet;bundle-version="2.5.0",

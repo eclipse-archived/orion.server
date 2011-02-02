@@ -5,7 +5,7 @@ Bundle-Vendor: %Bundle-Vendor
 Bundle-Localization: bundle
 Bundle-SymbolicName: org.eclipse.orion.server.authentication.basic;singleton:=true
 Bundle-Version: 0.2.0.qualifier
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Service-Component: OSGI-INF/*.xml
 Import-Package: org.osgi.framework;version="1.6.0",
  org.osgi.service.useradmin;version="1.1.0",

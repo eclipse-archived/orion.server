@@ -312,10 +312,8 @@ public class GitFileStore extends FileStore {
 			commit(false);
 			pull();
 			push();
-		} catch (FileNotFoundException e) {
-			throw new IOException(e);
 		} catch (CoreException e) {
-			throw new IOException(e);
+			throw new IOException(e.getMessage());
 		}
 	}
 
