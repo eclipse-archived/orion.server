@@ -273,7 +273,7 @@ class Import {
 		try {
 			File dir = getStorageDirectory();
 			File index = new File(dir, FILE_INDEX);
-			props.load(new FileReader(index));
+			props.load(new FileInputStream(index));
 		} catch (FileNotFoundException e) {
 			//ok if file doesn't exist yet
 		}
@@ -283,7 +283,7 @@ class Import {
 		File dir = getStorageDirectory();
 		dir.mkdirs();
 		File index = new File(dir, FILE_INDEX);
-		props.store(new FileWriter(index), null);
+		props.store(new FileOutputStream(index), null);
 	}
 
 	public void setFileName(String name) {

@@ -7,7 +7,7 @@ Bundle-Vendor: %Bundle-Vendor
 Bundle-Localization: bundle
 Bundle-Activator: org.eclipse.orion.internal.server.servlets.Activator
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Require-Bundle: org.eclipse.orion.server.core;bundle-version="0.1.0",
  javax.servlet;bundle-version="2.5.0",
  org.json;bundle-version="1.0.0",
