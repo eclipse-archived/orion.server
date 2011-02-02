@@ -32,7 +32,7 @@
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-os ${target.os} -ws ${target.ws} -arch ${target.arch} -nl ${target.nl} -consoleLog -console"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="org.eclipse.orion.server.tests"/>
 <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.pde.ui.workbenchClasspathProvider"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xms256m -Xmx768m -Declipse.cvs.properties=${workspace_loc:org.eclipse.orion.server.tests}\repository.properties -Dorg.eclipse.equinox.http.jetty.http.port=8080 -Dlogback.configurationFile=${workspace_loc:org.eclipse.orion.server.logback.config}/logback.xml"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xms256m -Xmx768m &#13;&#10;-Dorg.eclipse.equinox.http.jetty.http.port=8080 &#13;&#10;-Dlogback.configurationFile=${workspace_loc:org.eclipse.orion.server.logback.config}/logback.xml&#13;&#10;-Declipse.log.level=WARNING"/>
 <stringAttribute key="pde.version" value="3.3"/>
 <stringAttribute key="product" value="org.eclipse.sdk.ide"/>
 <booleanAttribute key="run_in_ui_thread" value="true"/>
