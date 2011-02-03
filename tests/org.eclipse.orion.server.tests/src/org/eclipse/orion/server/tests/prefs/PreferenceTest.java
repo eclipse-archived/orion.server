@@ -13,17 +13,16 @@ package org.eclipse.orion.server.tests.prefs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-import org.eclipse.orion.server.tests.AbstractServerTest;
-import org.eclipse.orion.server.tests.ServerTestsActivator;
-
-import org.eclipse.orion.server.core.users.OrionScope;
-
 import com.meterware.httpunit.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.List;
+import org.eclipse.orion.server.core.users.OrionScope;
+import org.eclipse.orion.server.tests.AbstractServerTest;
+import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Before;
@@ -107,6 +106,19 @@ public class PreferenceTest extends AbstractServerTest {
 			assertEquals("5." + location, HttpURLConnection.HTTP_OK, response.getResponseCode());
 			result = new JSONObject(response.getText());
 			assertEquals("6." + location, "", result.optString("Name"));
+
+			//putting with forbidden URL characters in key and value
+			request = createSetPreferenceRequest(location, "Na=me", "Fr&do");
+			setAuthentication(request);
+			response = webConversation.getResource(request);
+			assertEquals("1." + location, HttpURLConnection.HTTP_NO_CONTENT, response.getResponseCode());
+
+			//doing a get should succeed
+			request = new GetMethodWebRequest(location + "?key=Na%3Dme");
+			setAuthentication(request);
+			response = webConversation.getResource(request);
+			result = new JSONObject(response.getText());
+			assertEquals("3." + location, "Fr&do", result.optString("Na=me"));
 		}
 	}
 
@@ -205,14 +217,8 @@ public class PreferenceTest extends AbstractServerTest {
 	}
 
 	private WebRequest createSetPreferenceRequest(String location, String key, String value) {
-		StringBuffer requestBuf = new StringBuffer(location);
-		requestBuf.append("?key=");
-		if (key != null)
-			requestBuf.append(key);
-		requestBuf.append("&value=");
-		if (value != null)
-			requestBuf.append(value);
-		return new PutMethodWebRequest(requestBuf.toString(), new ByteArrayInputStream(new byte[0]), "application/json");
+		String body = "key=" + URLEncoder.encode(key) + "&value=" + URLEncoder.encode(value);
+		return new PutMethodWebRequest(location, new ByteArrayInputStream(body.getBytes()), "application/x-www-form-urlencoded");
 	}
 
 	private List<String> getTestPreferenceNodes() {
