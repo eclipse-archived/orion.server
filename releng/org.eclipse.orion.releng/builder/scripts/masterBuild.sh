@@ -127,8 +127,7 @@ runBuild () {
 			$tagMaps $compareMaps $fetchTag $publish \
 			-DJ2SE-1.4=$j2se142 \
 			-DJ2SE-1.5=$j2se150 \
-			-DJavaSE-1.6=$javase160 \
-			-verbose "
+			-DJavaSE-1.6=$javase160"
 			
 	echo "[`date +%H\:%M\:%S`] Launching Build"
 	$cmd
