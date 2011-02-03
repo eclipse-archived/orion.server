@@ -132,6 +132,33 @@ runBuild () {
 	echo "[`date +%H\:%M\:%S`] Launching Build"
 	$cmd
 	echo "[`date +%H\:%M\:%S`] Build Complete"
+	
+	#stop now if the build failed
+	failure=$(sed -n '/BUILD FAILED/,/Total time/p' $writableBuildRoot/logs/current.log)
+	if [[ ! -z $failure ]]; then
+		compileMsg=""
+		prereqMsg=""
+		pushd $buildDirectory/plugins
+		compileProblems=$( find . -name compilation.problem | cut -d/ -f2 )
+		popd
+		
+		if [[ ! -z $compileProblems ]]; then
+			compileMsg="Compile errors occurred in the following bundles:"
+		fi
+		if [[ -e $buildDirectory/prereqErrors.log ]]; then
+			prereqMsg=`cat $buildDirectory/prereqErrors.log` 
+		fi
+		
+		mailx -s "[orion-build] Orion Build : $buildType$timestamp failed" $resultsEmail <<EOF
+$compileMsg
+$compileProblems
+
+$prereqMsg
+
+$failure
+EOF
+		exit
+	fi
 }
 
 runTests () {
