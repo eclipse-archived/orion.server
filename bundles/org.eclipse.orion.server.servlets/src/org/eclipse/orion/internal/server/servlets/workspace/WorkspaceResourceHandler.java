@@ -238,8 +238,15 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 
 		// add user rights for the project
 		try {
-			AuthorizationService.addUserRight(request.getRemoteUser(), URI.create(result.getString(ProtocolConstants.KEY_LOCATION)).getPath());
-			AuthorizationService.addUserRight(request.getRemoteUser(), URI.create(result.getString(ProtocolConstants.KEY_LOCATION)).getPath() + "/*");
+			String locationPath = URI.create(result.getString(ProtocolConstants.KEY_LOCATION)).getPath();
+			//right to access the location
+			AuthorizationService.addUserRight(request.getRemoteUser(), locationPath);
+			//right to access all children of the location
+			if (locationPath.endsWith("/")) //$NON-NLS-1$
+				locationPath += "*"; //$NON-NLS-1$
+			else
+				locationPath += "/*"; //$NON-NLS-1$
+			AuthorizationService.addUserRight(request.getRemoteUser(), locationPath);
 		} catch (CoreException e) {
 			statusHandler.handleRequest(request, response, e.getStatus());
 		}
