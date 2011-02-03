@@ -131,60 +131,6 @@ public class SshTest {
 	GitFileStore store;
 
 	@Test
-	@Ignore
-	public void validRepositoryUsernameAndPassword() throws MalformedURLException,
-			URISyntaxException {
-		ensureKeysAreNotUsed();
-		// TODO: need to set up and run local git repo before running the test
-		StringBuffer sb = new StringBuffer();
-		sb.append(GitFileSystem.SCHEME_GIT);
-		sb.append("://test/");
-		sb.append("ssh://");
-		sb.append(LOGIN);
-		sb.append(":");
-		sb.append(PASSWORD);
-		sb.append("@");
-		sb.append("localhost/git/test.git");
-		URI uri = new URI(sb.toString());
-		store = (GitFileStore) fs.getStore(uri);
-		assertTrue(Utils.isValidRemote(store));
-	}
-
-	@Test
-	@Ignore
-	public void validRepositoryNoPassword() throws MalformedURLException,
-			URISyntaxException {
-		ensureKeysAreNotUsed();
-		// TODO: need to set up and run local git repo before running the test
-		StringBuffer sb = new StringBuffer();
-		sb.append(GitFileSystem.SCHEME_GIT);
-		sb.append("://test/");
-		sb.append("ssh://");
-		sb.append(LOGIN);
-		sb.append("@");
-		sb.append("localhost/git/test.git");
-		URI uri = new URI(sb.toString());
-		store = (GitFileStore) fs.getStore(uri);
-		assertFalse(Utils.isValidRemote(store));
-	}
-
-	@Test
-	@Ignore
-	public void validRepositoryNoUsername() throws MalformedURLException,
-			URISyntaxException {
-		ensureKeysAreNotUsed();
-		// TODO: need to set up and run local git repo before running the test
-		StringBuffer sb = new StringBuffer();
-		sb.append(GitFileSystem.SCHEME_GIT);
-		sb.append("://test/");
-		sb.append("ssh://");
-		sb.append("localhost/git/test.git");
-		URI uri = new URI(sb.toString());
-		store = (GitFileStore) fs.getStore(uri);
-		assertFalse(Utils.isValidRemote(store));
-	}
-
-	@Test
 	public void cloneUsernameAndPasswordProvided() throws URISyntaxException {
 		ensureKeysAreNotUsed();
 		StringBuffer sb = new StringBuffer();

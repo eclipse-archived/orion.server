@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.tests.filesystem.git;
 
-import java.io.IOException;
 import java.net.URI;
 
 import org.eclipse.core.filesystem.EFS;
@@ -25,6 +24,7 @@ public class CreateDirectoryTest extends
 
 	private IPath repositoryPath;
 
+	@Override
 	protected void doFSSetUp() throws Exception {
 		repositoryPath = getRandomLocation();
 		URI uri = URIUtil.toURI(repositoryPath); //encoded
@@ -37,11 +37,20 @@ public class CreateDirectoryTest extends
 		baseStore.mkdir(EFS.NONE, null);
 	}
 
-	protected void doFSTearDown() throws IOException {
-		// delete <temp>/<repo>
-		FileSystemHelper.clear(repositoryPath.toFile());
+	@Override
+	protected void doFSTearDown() throws Exception {
+		// nothing to do
 	}
-	
+
+	@Override
+	protected void tearDown() throws Exception {
+		super.tearDown();
+		// remove the repository
+		FileSystemHelper.clear(repositoryPath.toFile());
+		// remove the clone
+		FileSystemHelper.clear(((GitFileStore)baseStore).getLocalFile());
+	}
+
 	public void testGetParentForRoot() {
 		GitFileStore parent = (GitFileStore) baseStore.getParent();
 		assertTrue("1.1", ((GitFileStore)baseStore).isRoot());

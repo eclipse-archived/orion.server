@@ -144,11 +144,6 @@ public class GitFileStore extends FileStore {
 	@Override
 	public String[] childNames(int options, IProgressMonitor monitor)
 			throws CoreException {
-		if (!Utils.isValidRemote(this)) {
-			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_GIT,
-					1, this + " doesn't point to a valid repository."
-							+ getLocalFile(), null));
-		}
 		if (!isCloned()) {
 			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_GIT,
 					1, "A private clone for " + this + " doesn't exist."
@@ -168,13 +163,12 @@ public class GitFileStore extends FileStore {
 	@Override
 	public IFileInfo fetchInfo(int options, IProgressMonitor monitor)
 			throws CoreException {
-		if (Utils.isValidRemote(this)) {
-			if (!isCloned()) {
-				initCloneCommitPush(monitor);
-			}
-			if ((options & EFS.CACHE) == 0) // don't use cache
-			pull();
+		if (!isCloned()) {
+			initCloneCommitPush(monitor);
 		}
+		if ((options & EFS.CACHE) == 0) // don't use cache
+			pull();
+
 		FileInfo fi = new FileInfo();
 		fi.setName(getName());
 		File f = getLocalFile();
@@ -374,8 +368,9 @@ public class GitFileStore extends FileStore {
 	 * necessary and inits it by pushing a dummy change (.gitignore) file to
 	 * remote
 	 */
-	void initCloneCommitPush(IProgressMonitor monitor) throws CoreException {
+	private void initCloneCommitPush(IProgressMonitor monitor) throws CoreException {
 		boolean inited = false;
+		// if it's a local repository try to init it first
 		if (canInit()) {
 			try {
 				inited = initBare();
@@ -410,26 +405,7 @@ public class GitFileStore extends FileStore {
 		return false;
 	}
 
-	private boolean canPush() {
-		Transport transport = null;
-		try {
-			URIish remote = Utils.toURIish(getUrl());
-			Repository local = getLocalRepo();
-			if (!Transport.canHandleProtocol(remote, FS.DETECTED))
-				return false;
-			transport = Transport.open(local, remote);
-			transport.openPush().close();
-			return true;
-		} catch (Exception e) {
-			// ignore
-		} finally {
-			if (transport != null)
-				transport.close();
-		}
-		return false;
-	}
-
-	/*private*/public CredentialsProvider getCredentialsProvider() {
+	private CredentialsProvider getCredentialsProvider() {
 		try {
 			return new OrionUserCredentialsProvider(authority, Utils.toURIish(getUrl()));
 		} catch (URISyntaxException e) {
@@ -483,10 +459,6 @@ public class GitFileStore extends FileStore {
 	}
 
 	private void push() throws CoreException {
-		if (!canPush()) {
-			LogHelper.log(new Status(IStatus.WARNING, Activator.PI_GIT, 1, "Ignored push request for " + this, null));
-			return;
-		}
 		try {
 			Repository local = getLocalRepo();
 			Git git = new Git(local);
@@ -542,20 +514,20 @@ public class GitFileStore extends FileStore {
 
 	private void rm() throws CoreException {
 		// TODO: use org.eclipse.jgit.api.RmCommand, see Enhancement 379
-		try {
-			if (!isRoot()) {
+		if (!isRoot()) {
+			try {
 				Repository local = getLocalRepo();
 				Git git = new Git(local);
 				CommitCommand commit = git.commit();
 				commit.setAll(true);
 				commit.setMessage("auto-commit of " + toString());
 				commit.call();
-				push();
-			} // else {cannot commit/push root removal}
-		} catch (Exception e) {
-			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_GIT,
-					IStatus.ERROR, e.getMessage(), e));
-		}
+			} catch (Exception e) {
+				throw new CoreException(new Status(IStatus.ERROR, Activator.PI_GIT,
+						IStatus.ERROR, e.getMessage(), e));
+			}
+			push();
+		} // else {cannot commit/push root removal}
 	}
 
 	private void commit(boolean dir) throws CoreException {
