@@ -7,7 +7,7 @@
    </configIni>
 
    <launcherArgs>
-      <programArgs>-consoleLog -console -data serverworkspace</programArgs>
+      <programArgs>-consoleLog -console -data serverworkspace -nosplash</programArgs>
       <vmArgs>-Dorg.eclipse.equinox.http.jetty.http.port=8080
 -Dorg.eclipse.equinox.http.jetty.autostart=false</vmArgs>
       <vmArgsMac>-XstartOnFirstThread -Dorg.eclipse.swt.internal.carbon.smallFonts</vmArgsMac>
