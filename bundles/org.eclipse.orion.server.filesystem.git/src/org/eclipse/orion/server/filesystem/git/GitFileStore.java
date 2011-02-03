@@ -410,25 +410,6 @@ public class GitFileStore extends FileStore {
 		return false;
 	}
 
-	private boolean canPush() {
-		Transport transport = null;
-		try {
-			URIish remote = Utils.toURIish(getUrl());
-			Repository local = getLocalRepo();
-			if (!Transport.canHandleProtocol(remote, FS.DETECTED))
-				return false;
-			transport = Transport.open(local, remote);
-			transport.openPush().close();
-			return true;
-		} catch (Exception e) {
-			// ignore
-		} finally {
-			if (transport != null)
-				transport.close();
-		}
-		return false;
-	}
-
 	/*private*/public CredentialsProvider getCredentialsProvider() {
 		try {
 			return new OrionUserCredentialsProvider(authority, Utils.toURIish(getUrl()));
@@ -483,10 +464,6 @@ public class GitFileStore extends FileStore {
 	}
 
 	private void push() throws CoreException {
-		if (!canPush()) {
-			LogHelper.log(new Status(IStatus.WARNING, Activator.PI_GIT, 1, "Ignored push request for " + this, null));
-			return;
-		}
 		try {
 			Repository local = getLocalRepo();
 			Git git = new Git(local);
@@ -542,20 +519,20 @@ public class GitFileStore extends FileStore {
 
 	private void rm() throws CoreException {
 		// TODO: use org.eclipse.jgit.api.RmCommand, see Enhancement 379
-		try {
-			if (!isRoot()) {
+		if (!isRoot()) {
+			try {
 				Repository local = getLocalRepo();
 				Git git = new Git(local);
 				CommitCommand commit = git.commit();
 				commit.setAll(true);
 				commit.setMessage("auto-commit of " + toString());
 				commit.call();
-				push();
-			} // else {cannot commit/push root removal}
-		} catch (Exception e) {
-			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_GIT,
-					IStatus.ERROR, e.getMessage(), e));
-		}
+			} catch (Exception e) {
+				throw new CoreException(new Status(IStatus.ERROR, Activator.PI_GIT,
+						IStatus.ERROR, e.getMessage(), e));
+			}
+			push();
+		} // else {cannot commit/push root removal}
 	}
 
 	private void commit(boolean dir) throws CoreException {

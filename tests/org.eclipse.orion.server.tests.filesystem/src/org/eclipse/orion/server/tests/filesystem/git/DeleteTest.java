@@ -10,13 +10,13 @@
  *******************************************************************************/
 package org.eclipse.orion.server.tests.filesystem.git;
 
-import java.io.IOException;
 import java.net.URI;
 
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.URIUtil;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.tests.harness.FileSystemHelper;
+import org.eclipse.orion.server.filesystem.git.GitFileStore;
 import org.eclipse.orion.server.filesystem.git.GitFileSystem;
 
 public class DeleteTest extends org.eclipse.core.tests.filesystem.DeleteTest {
@@ -35,8 +35,17 @@ public class DeleteTest extends org.eclipse.core.tests.filesystem.DeleteTest {
 		baseStore.mkdir(EFS.NONE, null);
 	}
 
-	protected void doFSTearDown() throws IOException {
-		// delete <temp>/<repo>
+	@Override
+	protected void doFSTearDown() throws Exception {
+		// nothing to do
+	}
+
+	@Override
+	protected void tearDown() throws Exception {
+		super.tearDown();
+		// remove the repository
 		FileSystemHelper.clear(repositoryPath.toFile());
+		// remove the clone
+		FileSystemHelper.clear(((GitFileStore)baseStore).getLocalFile());
 	}
 }
