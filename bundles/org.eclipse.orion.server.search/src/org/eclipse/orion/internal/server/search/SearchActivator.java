@@ -33,7 +33,7 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 	 * version should be incremented whenever there are breaking changes to the
 	 * indexing schema or format.
 	 */
-	private static final int CURRENT_INDEX_GENERATION = 5;
+	private static final int CURRENT_INDEX_GENERATION = 6;
 
 	public static final boolean DEBUG = true;
 	private static final String INDEX_GENERATION_FILE = "index.generation";//$NON-NLS-1$
