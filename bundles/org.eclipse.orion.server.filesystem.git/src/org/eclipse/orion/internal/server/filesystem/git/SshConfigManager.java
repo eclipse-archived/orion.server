@@ -28,6 +28,8 @@ public class SshConfigManager {
 	private static SshConfigManager singleton;
 
 	public static SshConfigManager getDefault() {
+		if (singleton == null)
+			throw new IllegalStateException("SshConfigManager hasn't been activated. Possible cause: org.eclipse.equinox.ds not included in the launch configuration");
 		return singleton;
 	}
 

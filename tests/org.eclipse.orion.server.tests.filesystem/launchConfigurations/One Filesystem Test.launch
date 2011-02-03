@@ -27,7 +27,7 @@
 <stringAttribute key="org.eclipse.jdt.junit.TEST_KIND" value="org.eclipse.jdt.junit.loader.junit4"/>
 <stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/Java60"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="org.eclipse.orion.server.tests.filesystem.git.SshTest"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-os ${target.os} -ws ${target.ws} -arch ${target.arch} -nl ${target.nl} -consoleLog"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-os ${target.os} -ws ${target.ws} -arch ${target.arch} -nl ${target.nl} -consoleLog -console"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="org.eclipse.orion.server.tests.filesystem"/>
 <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.pde.ui.workbenchClasspathProvider"/>
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xms256m -Xmx768m -Dorion.sshtest.properties=c:/eclipse/sshtest.properties -Declipse.log.level=WARNING"/>
