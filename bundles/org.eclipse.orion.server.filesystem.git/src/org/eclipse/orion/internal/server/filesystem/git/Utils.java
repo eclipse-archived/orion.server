@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2010, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.filesystem.git;
 
-import org.eclipse.orion.server.filesystem.git.GitFileStore;
-
 import java.net.URISyntaxException;
 import java.net.URL;
 
@@ -20,24 +18,14 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.Transport;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
+import org.eclipse.orion.server.filesystem.git.GitFileStore;
 
 public class Utils {
-	
+
 	public static URIish toURIish(final URL u) throws URISyntaxException {
 		String s = u.toString();
-		// ignore query
-		s = s.replace("?" + u.getQuery(), "");
-		s = s.replace('+', ' ');
+		s = s.replace("?" + u.getQuery(), ""); // ignore query
 		return new URIish(s);
-	}
-	
-	public static String encodeLocalPath(final String s) {
-		String r = new String(s);
-		r = r.replace(' ', '+');
-		r = r.replace("/", "%5C"); // slash to backslash then encode
-		r = r.replace("\\", "%5C"); // just encode
-		// String s = URLEncoder.encode(repositoryPath.toString(), "UTF-8");
-		return r;
 	}
 	
 	public static boolean isValidRemote(GitFileStore gfs) {

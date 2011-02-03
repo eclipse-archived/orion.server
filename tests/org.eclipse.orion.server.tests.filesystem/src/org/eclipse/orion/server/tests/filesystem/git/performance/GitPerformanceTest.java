@@ -13,10 +13,10 @@ package org.eclipse.orion.server.tests.filesystem.git.performance;
 import java.io.IOException;
 import java.net.URI;
 
+import org.eclipse.core.filesystem.URIUtil;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.tests.harness.FileSystemHelper;
-import org.eclipse.orion.internal.server.filesystem.git.Utils;
 import org.eclipse.orion.server.filesystem.git.GitFileStore;
 import org.eclipse.orion.server.filesystem.git.GitFileSystem;
 import org.eclipse.orion.server.tests.filesystem.performance.PerformanceTest;
@@ -27,8 +27,12 @@ public class GitPerformanceTest extends PerformanceTest {
 
 	protected void initRoot() {
 		repositoryPath = getRandomLocation();
-		String s = Utils.encodeLocalPath(repositoryPath.toString());
-		URI uri = URI.create(GitFileSystem.SCHEME_GIT + "://test/" + s + "?/");
+		StringBuffer sb = new StringBuffer();
+		sb.append(GitFileSystem.SCHEME_GIT);
+		sb.append("://test/");
+		sb.append(URIUtil.toURI(repositoryPath).toString());
+		sb.append("?/");
+		URI uri = URI.create(sb.toString());
 		root = (GitFileStore) fs.getStore(uri);
 	}
 	

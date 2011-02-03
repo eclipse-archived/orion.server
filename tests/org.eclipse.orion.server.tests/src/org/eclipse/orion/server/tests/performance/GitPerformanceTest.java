@@ -24,10 +24,10 @@ import java.util.List;
 
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.filesystem.URIUtil;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.tests.harness.FileSystemHelper;
-import org.eclipse.orion.internal.server.filesystem.git.Utils;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.filesystem.git.GitFileStore;
 import org.eclipse.orion.server.filesystem.git.GitFileSystem;
@@ -216,8 +216,12 @@ public class GitPerformanceTest extends FileSystemTest {
 
 	private GitFileStore initRemoteGitRepository() throws CoreException, IOException {
 		repositoryPath = getRandomLocation();
-		String s = Utils.encodeLocalPath(repositoryPath.toString());
-		URI uri = URI.create(GitFileSystem.SCHEME_GIT + "://test/" + s + "?/");
+		StringBuffer sb = new StringBuffer();
+		sb.append(GitFileSystem.SCHEME_GIT);
+		sb.append("://test/");
+		sb.append(URIUtil.toURI(repositoryPath).toString());
+		sb.append("?/");
+		URI uri = URI.create(sb.toString());
 		root = (GitFileStore) fs.getStore(uri);
 
 		root.mkdir(EFS.NONE, null);

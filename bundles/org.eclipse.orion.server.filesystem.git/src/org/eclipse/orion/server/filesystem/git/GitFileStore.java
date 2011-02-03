@@ -18,11 +18,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.net.URLStreamHandler;
 import java.util.Collection;
 
@@ -45,7 +47,6 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PullCommand;
 import org.eclipse.jgit.api.PullResult;
 import org.eclipse.jgit.api.PushCommand;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectIdRef.PeeledNonTag;
 import org.eclipse.jgit.lib.Ref;
@@ -229,8 +230,18 @@ public class GitFileStore extends FileStore {
 
 	@Override
 	public URI toURI() {
-		return URI.create(GitFileSystem.SCHEME_GIT + ":/"
-				+ Utils.encodeLocalPath(gitUrl.toString()));
+		StringBuffer sb = new StringBuffer();
+		sb.append(GitFileSystem.SCHEME_GIT);
+		sb.append(":/");
+		// TODO: include authority?
+		try {
+			sb.append(URLEncoder.encode(gitUrl.toString(), "UTF-8"));
+		} catch (UnsupportedEncodingException e) {
+			sb.append(URLEncoder.encode(gitUrl.toString()));
+		}
+		// return
+		// org.eclipse.core.runtime.URIUtil.fromString(String)(sb.toString());
+		return URI.create(sb.toString());
 	}
 
 	@Override
@@ -381,15 +392,14 @@ public class GitFileStore extends FileStore {
 	}
 
 	private boolean canInit() {
-		// org.eclipse.jgit.transport.TransportLocal.canHandle(URIish, FS)
 		try {
+			// org.eclipse.jgit.transport.TransportLocal.canHandle(URIish, FS)
 			URIish uri = Utils.toURIish(getUrl());
 			if (uri.getHost() != null || uri.getPort() > 0 || uri.getUser() != null
 					|| uri.getPass() != null || uri.getPath() == null)
 				return false;
 
 			if ("file".equals(uri.getScheme()) || uri.getScheme() == null)
-				// return fs.resolve(new File("."), uri.getPath()).isDirectory();
 				return true;
 		} catch (URISyntaxException e) {
 			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_GIT, 1,
@@ -451,8 +461,11 @@ public class GitFileStore extends FileStore {
 	}
 
 	private boolean initBare() throws URISyntaxException, IOException {
-		//	File sharedRepo = new File(gfs.getUrl().toURI());
-		String path = decodeLocalPath(getUrl().toString());
+		String scheme = getUrl().getProtocol();
+		String path = getUrl().getPath();
+		if (scheme != null && !scheme.equals("file")) {
+			throw new IllegalArgumentException("#canInit() has mistaken, this is not a local file system URL");
+		}
 		File sharedRepo = new File(path);
 		// remember, we know how to init only local repositories
 		if (sharedRepo.exists()
@@ -462,18 +475,11 @@ public class GitFileStore extends FileStore {
 			return false;
 		}
 
-			sharedRepo.mkdir();
+		sharedRepo.mkdir();
 		LogHelper.log(new Status(IStatus.INFO, Activator.PI_GIT, 1,	"Initializing bare repository for " + this, null));
-			FileRepository repository = new FileRepository(new File(sharedRepo,	Constants.DOT_GIT));
-			repository.create(true);	
-			return true;
-		}
-
-	private static String decodeLocalPath(final String s) {
-		String r = new String(s);
-		r = r.substring(0, r.lastIndexOf('?'));
-		r = r.replace('+', ' ');
-		return r;
+		FileRepository repository = new FileRepository(new File(sharedRepo, Constants.DOT_GIT));
+		repository.create(true);
+		return true;
 	}
 
 	private void push() throws CoreException {

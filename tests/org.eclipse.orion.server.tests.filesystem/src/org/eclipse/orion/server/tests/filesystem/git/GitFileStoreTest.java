@@ -21,6 +21,7 @@ import java.net.URL;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileInfo;
 import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.filesystem.URIUtil;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.tests.harness.CoreTest;
@@ -28,7 +29,6 @@ import org.eclipse.core.tests.harness.FileSystemHelper;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.RepositoryState;
 import org.eclipse.jgit.storage.file.FileRepository;
-import org.eclipse.orion.internal.server.filesystem.git.Utils;
 import org.eclipse.orion.server.filesystem.git.GitFileStore;
 import org.eclipse.orion.server.filesystem.git.GitFileSystem;
 import org.junit.After;
@@ -56,9 +56,12 @@ public class GitFileStoreTest {
 	@Test
 	public void cloneRepoOnDeepFolderCreation() throws IOException,
 			CoreException {
-		String s = Utils.encodeLocalPath(repositoryPath.toString());
-		URI uri = URI.create(GitFileSystem.SCHEME_GIT + "://test/" + s
-				+ "?/folder/subfolder");
+		StringBuffer sb = new StringBuffer();
+		sb.append(GitFileSystem.SCHEME_GIT);
+		sb.append("://test/");
+		sb.append(URIUtil.toURI(repositoryPath).toString());
+		sb.append("?/folder/subfolder");
+		URI uri = URI.create(sb.toString());
 		IFileStore store = fs.getStore(uri);
 		store.mkdir(EFS.NONE, null);
 
@@ -73,8 +76,12 @@ public class GitFileStoreTest {
 
 	@Test
 	public void fetchInfoForInitedSharedRepository() throws IOException {
-		String s = Utils.encodeLocalPath(repositoryPath.toString());
-		URI uri = URI.create(GitFileSystem.SCHEME_GIT + "://test/" + s + "?/");
+		StringBuffer sb = new StringBuffer();
+		sb.append(GitFileSystem.SCHEME_GIT);
+		sb.append("://test/");
+		sb.append(URIUtil.toURI(repositoryPath).toString());
+		sb.append("?/");
+		URI uri = URI.create(sb.toString());
 		GitFileStore gfs = (GitFileStore) fs.getStore(uri);
 
 		ensureSharedExists(gfs, false);
@@ -86,8 +93,12 @@ public class GitFileStoreTest {
 
 	@Test
 	public void fetchInfoForAnEmptySharedRepository() throws IOException {
-		String s = Utils.encodeLocalPath(repositoryPath.toString());
-		URI uri = URI.create(GitFileSystem.SCHEME_GIT + "://test/" + s + "?/");
+		StringBuffer sb = new StringBuffer();
+		sb.append(GitFileSystem.SCHEME_GIT);
+		sb.append("://test/");
+		sb.append(URIUtil.toURI(repositoryPath).toString());
+		sb.append("?/");
+		URI uri = URI.create(sb.toString());
 		GitFileStore gfs = (GitFileStore) fs.getStore(uri);
 
 		ensureSharedExists(gfs, true);
@@ -99,8 +110,12 @@ public class GitFileStoreTest {
 
 	@Test
 	public void fetchInfoWhenSharedRepositoryDoesntExist() {
-		String s = Utils.encodeLocalPath(repositoryPath.toString());
-		URI uri = URI.create(GitFileSystem.SCHEME_GIT + "://test/" + s + "?/");
+		StringBuffer sb = new StringBuffer();
+		sb.append(GitFileSystem.SCHEME_GIT);
+		sb.append("://test/");
+		sb.append(URIUtil.toURI(repositoryPath).toString());
+		sb.append("?/");
+		URI uri = URI.create(sb.toString());
 		GitFileStore gfs = (GitFileStore) fs.getStore(uri);
 
 		ensureSharedDoesNotExist(gfs);
@@ -111,43 +126,59 @@ public class GitFileStoreTest {
 
 	@Test(expected = CoreException.class)
 	public void getChildNamesForInitedSharedRepository() throws CoreException {
-		String s = Utils.encodeLocalPath(repositoryPath.toString());
-		URI uri = URI.create(GitFileSystem.SCHEME_GIT + "://test/" + s + "?/");
+		StringBuffer sb = new StringBuffer();
+		sb.append(GitFileSystem.SCHEME_GIT);
+		sb.append("://test/");
+		sb.append(URIUtil.toURI(repositoryPath).toString());
+		sb.append("?/");
+		URI uri = URI.create(sb.toString());
 		GitFileStore gfs = (GitFileStore) fs.getStore(uri);
 
 		ensureSharedExists(gfs, false);
 
-		String[] childNames = gfs.childNames(EFS.NONE, null);
+		gfs.childNames(EFS.NONE, null);
 	}
 
 	@Test(expected = CoreException.class)
 	public void getChildNamesForAnEmptySharedRepository() throws CoreException {
-		String s = Utils.encodeLocalPath(repositoryPath.toString());
-		URI uri = URI.create(GitFileSystem.SCHEME_GIT + "://test/" + s + "?/");
+		StringBuffer sb = new StringBuffer();
+		sb.append(GitFileSystem.SCHEME_GIT);
+		sb.append("://test/");
+		sb.append(URIUtil.toURI(repositoryPath).toString());
+		sb.append("?/");
+		URI uri = URI.create(sb.toString());
 		GitFileStore gfs = (GitFileStore) fs.getStore(uri);
 
 		ensureSharedExists(gfs, true);
 		gfs.mkdir(EFS.NONE, null);
 
-		String[] childNames = gfs.childNames(EFS.NONE, null);
+		gfs.childNames(EFS.NONE, null);
 	}
 
 	@Test(expected = CoreException.class)
 	public void getChildNamesWhenSharedRepositoryDoesntExist()
 			throws CoreException {
-		String s = Utils.encodeLocalPath(repositoryPath.toString());
-		URI uri = URI.create(GitFileSystem.SCHEME_GIT + "://test/" + s + "?/");
+		StringBuffer sb = new StringBuffer();
+		sb.append(GitFileSystem.SCHEME_GIT);
+		sb.append("://test/");
+		sb.append(URIUtil.toURI(repositoryPath).toString());
+		sb.append("?/");
+		URI uri = URI.create(sb.toString());
 		GitFileStore gfs = (GitFileStore) fs.getStore(uri);
 
 		ensureSharedDoesNotExist(gfs);
 
-		String[] childNames = gfs.childNames(EFS.NONE, null);
+		gfs.childNames(EFS.NONE, null);
 	}
 
 	@Test
 	public void folderForSharedRepoAlreadyExist() throws CoreException {
-		String s = Utils.encodeLocalPath(repositoryPath.toString());
-		URI uri = URI.create(GitFileSystem.SCHEME_GIT + "://test/" + s + "?/");
+		StringBuffer sb = new StringBuffer();
+		sb.append(GitFileSystem.SCHEME_GIT);
+		sb.append("://test/");
+		sb.append(URIUtil.toURI(repositoryPath).toString());
+		sb.append("?/");
+		URI uri = URI.create(sb.toString());
 		IFileStore store = fs.getStore(uri);
 		assertFalse(repositoryPath.toFile().exists());
 		// create an empty dir, where the "shared" repository should be
@@ -162,8 +193,12 @@ public class GitFileStoreTest {
 
 	@Test
 	public void folderForPrivateRepoAlreadyExist() throws CoreException {
-		String s = Utils.encodeLocalPath(repositoryPath.toString());
-		URI uri = URI.create(GitFileSystem.SCHEME_GIT + "://test/" + s + "?/");
+		StringBuffer sb = new StringBuffer();
+		sb.append(GitFileSystem.SCHEME_GIT);
+		sb.append("://test/");
+		sb.append(URIUtil.toURI(repositoryPath).toString());
+		sb.append("?/");
+		URI uri = URI.create(sb.toString());
 		GitFileStore store = (GitFileStore) fs.getStore(uri);
 		File privateRepo = store.getLocalFile();
 		assertFalse(repositoryPath.toFile().exists());

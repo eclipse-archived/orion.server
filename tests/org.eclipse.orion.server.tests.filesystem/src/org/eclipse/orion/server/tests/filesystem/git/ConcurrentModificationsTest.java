@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright (c) 2010 IBM Corporation and others.
+ *  Copyright (c) 2010, 2011 IBM Corporation and others.
  *  All rights reserved. This program and the accompanying materials
  *  are made available under the terms of the Eclipse Public License v1.0
  *  which accompanies this distribution, and is available at
@@ -13,17 +13,26 @@ package org.eclipse.orion.server.tests.filesystem.git;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
-import org.eclipse.core.filesystem.*;
+
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileInfo;
+import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.filesystem.URIUtil;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.tests.harness.FileSystemHelper;
 import org.eclipse.jgit.lib.RepositoryState;
-import org.eclipse.orion.internal.server.filesystem.git.Utils;
 import org.eclipse.orion.server.filesystem.git.GitFileStore;
 import org.eclipse.orion.server.filesystem.git.GitFileSystem;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 public class ConcurrentModificationsTest {
 
@@ -42,17 +51,24 @@ public class ConcurrentModificationsTest {
 	@Ignore
 	public void cloningSameRepo() throws CoreException, IOException {
 		// init shared repo
-		String s = Utils.encodeLocalPath(repositoryPath.toString());
-
+		StringBuffer sb = new StringBuffer();
+		sb.append(GitFileSystem.SCHEME_GIT);
+		sb.append("://test1/");
+		sb.append(URIUtil.toURI(repositoryPath).toString());
+		sb.append("?/");
 		// make private clone 1
-		URI uri1 = URI
-				.create(GitFileSystem.SCHEME_GIT + "://test1/" + s + "?/");
+		URI uri1 = URI.create(sb.toString());
+
 		IFileStore store1 = EFS.getStore(uri1);
 		store1.mkdir(EFS.NONE, null);
 
+		sb.setLength(0);
+		sb.append(GitFileSystem.SCHEME_GIT);
+		sb.append("://test2/");
+		sb.append(URIUtil.toURI(repositoryPath).toString());
+		sb.append("?/");
 		// make private clone 2
-		URI uri2 = URI
-				.create(GitFileSystem.SCHEME_GIT + "://test2/" + s + "?/");
+		URI uri2 = URI.create(sb.toString());
 		GitFileStore store2 = (GitFileStore) EFS.getStore(uri2);
 		store2.mkdir(EFS.NONE, null);
 		RepositoryState repoState2 = store2.getLocalRepo().getRepositoryState();
@@ -61,18 +77,23 @@ public class ConcurrentModificationsTest {
 
 	@Test
 	public void pullingFileChanges() throws CoreException, IOException {
-		// init shared repo
-		String s = Utils.encodeLocalPath(repositoryPath.toString());
-
+		StringBuffer sb = new StringBuffer();
+		sb.append(GitFileSystem.SCHEME_GIT);
+		sb.append("://test1/");
+		sb.append(URIUtil.toURI(repositoryPath).toString());
+		sb.append("?/");
 		// make private clone 1
-		URI uri1 = URI
-				.create(GitFileSystem.SCHEME_GIT + "://test1/" + s + "?/");
+		URI uri1 = URI.create(sb.toString());
 		IFileStore store1 = EFS.getStore(uri1);
 		store1.mkdir(EFS.NONE, null);
 
-		// make private clone 2
-		URI uri2 = URI
-				.create(GitFileSystem.SCHEME_GIT + "://test2/" + s + "?/");
+		sb.setLength(0);
+		sb.append(GitFileSystem.SCHEME_GIT);
+		sb.append("://test2/");
+		sb.append(URIUtil.toURI(repositoryPath).toString());
+		sb.append("?/");
+		// make private clone 1
+		URI uri2 = URI.create(sb.toString());
 		IFileStore store2 = EFS.getStore(uri2);
 		store2.mkdir(EFS.NONE, null);
 
@@ -91,18 +112,23 @@ public class ConcurrentModificationsTest {
 
 	@Test
 	public void pullingFolderChanges() throws CoreException, IOException {
-		// init shared repo
-		String s = Utils.encodeLocalPath(repositoryPath.toString());
-
+		StringBuffer sb = new StringBuffer();
+		sb.append(GitFileSystem.SCHEME_GIT);
+		sb.append("://test1/");
+		sb.append(URIUtil.toURI(repositoryPath).toString());
+		sb.append("?/");
 		// make private clone 1
-		URI uri1 = URI
-				.create(GitFileSystem.SCHEME_GIT + "://test1/" + s + "?/");
+		URI uri1 = URI.create(sb.toString());
 		IFileStore store1 = EFS.getStore(uri1);
 		store1.mkdir(EFS.NONE, null);
 
-		// make private clone 2
-		URI uri2 = URI
-				.create(GitFileSystem.SCHEME_GIT + "://test2/" + s + "?/");
+		sb.setLength(0);
+		sb.append(GitFileSystem.SCHEME_GIT);
+		sb.append("://test2/");
+		sb.append(URIUtil.toURI(repositoryPath).toString());
+		sb.append("?/");
+		// make private clone 1
+		URI uri2 = URI.create(sb.toString());
 		IFileStore store2 = EFS.getStore(uri2);
 		store2.mkdir(EFS.NONE, null);
 
@@ -156,18 +182,23 @@ public class ConcurrentModificationsTest {
 
 	private void concurrentChanges(byte[] base, byte[] left, byte[] right,
 			byte[] merge) throws CoreException, IOException {
-		// init shared repo
-		String s = Utils.encodeLocalPath(repositoryPath.toString());
-
+		StringBuffer sb = new StringBuffer();
+		sb.append(GitFileSystem.SCHEME_GIT);
+		sb.append("://test1/");
+		sb.append(URIUtil.toURI(repositoryPath).toString());
+		sb.append("?/");
 		// make private clone 1
-		URI uri1 = URI
-				.create(GitFileSystem.SCHEME_GIT + "://test1/" + s + "?/");
+		URI uri1 = URI.create(sb.toString());
 		IFileStore store1 = EFS.getStore(uri1);
 		store1.mkdir(EFS.NONE, null);
 
-		// make private clone 2
-		URI uri2 = URI
-				.create(GitFileSystem.SCHEME_GIT + "://test2/" + s + "?/");
+		sb.setLength(0);
+		sb.append(GitFileSystem.SCHEME_GIT);
+		sb.append("://test2/");
+		sb.append(URIUtil.toURI(repositoryPath).toString());
+		sb.append("?/");
+		// make private clone 1
+		URI uri2 = URI.create(sb.toString());
 		IFileStore store2 = EFS.getStore(uri2);
 		store2.mkdir(EFS.NONE, null);
 

@@ -1,10 +1,10 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2010, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -43,15 +43,19 @@ public class GitFileSystem extends FileSystem {
 	@Override
 	public IFileStore getStore(URI uri) {
 		// gitfs:/...
-		if (SCHEME_GIT.equals(uri.getScheme())) {
-			StringBuffer sb = new StringBuffer(uri.getPath());
+		if (SCHEME_GIT.equalsIgnoreCase(uri.getScheme())) {
+			StringBuffer sb = new StringBuffer();
+			sb.append(uri.getPath());
 			// /..., strip off leading '/'
 			sb.deleteCharAt(0);
-			// add query
-			sb.append("?");
-			sb.append(uri.getQuery());
+			String query = uri.getQuery();
+			if (query != null && !query.equals(""))
+				sb.append('?').append(query);
+			String fragment = uri.getFragment();
+			if (fragment != null)
+				sb.append('#').append(fragment);
 			return new GitFileStore(sb.toString(), uri.getAuthority());
-		} 
+		}
 		return EFS.getNullFileSystem().getStore(uri);
 	}
 

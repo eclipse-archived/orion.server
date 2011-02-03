@@ -14,9 +14,9 @@ import java.io.IOException;
 import java.net.URI;
 
 import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.URIUtil;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.tests.harness.FileSystemHelper;
-import org.eclipse.orion.internal.server.filesystem.git.Utils;
 import org.eclipse.orion.server.filesystem.git.GitFileSystem;
 
 public class PutInfoTest extends org.eclipse.core.tests.filesystem.PutInfoTest {
@@ -25,8 +25,13 @@ public class PutInfoTest extends org.eclipse.core.tests.filesystem.PutInfoTest {
 
 	protected void doFSSetUp() throws Exception {
 		repositoryPath = getRandomLocation();
-		String s = Utils.encodeLocalPath(repositoryPath.toString());
-		baseStore = EFS.getStore(URI.create(GitFileSystem.SCHEME_GIT + "://test/" + s + "?/"));
+		URI uri = URIUtil.toURI(repositoryPath); //encoded
+		StringBuffer sb = new StringBuffer();
+		sb.append(GitFileSystem.SCHEME_GIT);
+		sb.append("://test/");
+		sb.append(uri.toString());
+		sb.append("?/");
+		baseStore = EFS.getStore(URI.create(sb.toString()));
 		baseStore.mkdir(EFS.NONE, null);
 	}
 

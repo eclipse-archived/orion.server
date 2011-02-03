@@ -20,10 +20,10 @@ import java.net.URI;
 
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.filesystem.URIUtil;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.tests.harness.FileSystemHelper;
-import org.eclipse.orion.internal.server.filesystem.git.Utils;
 import org.eclipse.orion.server.filesystem.git.GitFileStore;
 import org.eclipse.orion.server.filesystem.git.GitFileSystem;
 import org.eclipse.test.performance.Performance;
@@ -41,8 +41,12 @@ public class GitFileStorePerformanceTest {
 				.getClass().getName() + '#' + getMethodName() + "()"); //$NON-NLS-1$
 
 		IPath repositoryPath = getRandomLocation();
-		String s = Utils.encodeLocalPath(repositoryPath.toString());
-		URI uri = URI.create(GitFileSystem.SCHEME_GIT + "://test/" + s + "?/");
+		StringBuffer sb = new StringBuffer();
+		sb.append(GitFileSystem.SCHEME_GIT);
+		sb.append("://test/");
+		sb.append(URIUtil.toURI(repositoryPath).toString());
+		sb.append("?/");
+		URI uri = URI.create(sb.toString());
 		GitFileStore root = (GitFileStore) fs.getStore(uri);
 
 		root.mkdir(EFS.NONE, null);
