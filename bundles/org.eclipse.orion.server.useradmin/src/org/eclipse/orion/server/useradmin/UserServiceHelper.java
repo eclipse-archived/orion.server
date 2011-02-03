@@ -65,8 +65,12 @@ public class UserServiceHelper {
 
 	}
 
-	public OrionUserAdmin getUserStore(String storeName) {
-		return userStores.get(storeName);
+	public OrionUserAdmin getUserStore(String storeName) throws UnsupportedUserStoreException {
+		OrionUserAdmin userAdmin = userStores.get(storeName);
+		if(userAdmin==null){
+			throw new UnsupportedUserStoreException(storeName);
+		}
+		return userAdmin;
 	}
 
 	public OrionUserAdmin getUserStore() {

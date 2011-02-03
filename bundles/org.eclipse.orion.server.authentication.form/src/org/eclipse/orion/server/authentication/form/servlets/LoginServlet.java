@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2010, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -20,7 +20,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.orion.server.authentication.form.core.FormAuthHelper;
+import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.resources.Base64;
+import org.eclipse.orion.server.useradmin.UnsupportedUserStoreException;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.framework.Version;
@@ -40,39 +42,44 @@ public class LoginServlet extends HttpServlet {
 			return;
 		}
 
-		if (FormAuthHelper.performAuthentication(req, resp)) {
-			if (req.getParameter("redirect") != null && !req.getParameter("redirect").equals("")) { //$NON-NLS-1$
-				resp.sendRedirect(req.getParameter("redirect"));
+		try {
+			if (FormAuthHelper.performAuthentication(req, resp)) {
+				if (req.getParameter("redirect") != null && !req.getParameter("redirect").equals("")) { //$NON-NLS-1$
+					resp.sendRedirect(req.getParameter("redirect"));
+				} else {
+					resp.flushBuffer();
+				}
 			} else {
+				// redirection from
+				// FormAuthenticationService.setNotAuthenticated
+				String versionString = req.getHeader("Orion-Version"); //$NON-NLS-1$
+				Version version = versionString == null ? null : new Version(versionString);
+
+				// TODO: This is a workaround for calls
+				// that does not include the WebEclipse version header
+				String xRequestedWith = req.getHeader("X-Requested-With"); //$NON-NLS-1$
+
+				String invalidLoginError = "Invalid user or password";
+
+				if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) { //$NON-NLS-1$
+					RequestDispatcher rd = req.getRequestDispatcher("/loginform?error=" + new String(Base64.encode(invalidLoginError.getBytes()))); //$NON-NLS-1$
+					rd.include(req, resp);
+				} else {
+					PrintWriter writer = resp.getWriter();
+					JSONObject jsonError = new JSONObject();
+					try {
+						jsonError.put("error", invalidLoginError); //$NON-NLS-1$
+						writer.print(jsonError);
+						resp.setContentType("application/json"); //$NON-NLS-1$
+					} catch (JSONException e) {/* ignore */
+					}
+					resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+				}
 				resp.flushBuffer();
 			}
-		} else {
-			// redirection from
-			// FormAuthenticationService.setNotAuthenticated
-			String versionString = req.getHeader("Orion-Version"); //$NON-NLS-1$
-			Version version = versionString == null ? null : new Version(versionString);
-
-			// TODO: This is a workaround for calls
-			// that does not include the WebEclipse version header
-			String xRequestedWith = req.getHeader("X-Requested-With"); //$NON-NLS-1$
-
-			String invalidLoginError = "Invalid user or password";
-
-			if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) { //$NON-NLS-1$
-				RequestDispatcher rd = req.getRequestDispatcher("/loginform?error=" + new String(Base64.encode(invalidLoginError.getBytes()))); //$NON-NLS-1$
-				rd.include(req, resp);
-			} else {
-				PrintWriter writer = resp.getWriter();
-				JSONObject jsonError = new JSONObject();
-				try {
-					jsonError.put("error", invalidLoginError); //$NON-NLS-1$
-					writer.print(jsonError);
-					resp.setContentType("application/json"); //$NON-NLS-1$
-				} catch (JSONException e) {/* ignore */
-				}
-				resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-			}
-			resp.flushBuffer();
+		} catch (UnsupportedUserStoreException e) {
+			LogHelper.log(e);
+			resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
 		}
 
 	}

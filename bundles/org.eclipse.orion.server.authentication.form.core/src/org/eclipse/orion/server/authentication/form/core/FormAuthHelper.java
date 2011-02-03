@@ -94,16 +94,12 @@ public class FormAuthHelper {
 	 * @param resp
 	 * @return
 	 * @throws IOException
+	 * @throws UnsupportedUserStoreException 
 	 */
-	public static boolean performAuthentication(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+	public static boolean performAuthentication(HttpServletRequest req, HttpServletResponse resp) throws IOException, UnsupportedUserStoreException {
 		User user;
-		try {
-			user = getUserForCredentials((String) req.getParameter("login"), //$NON-NLS-1$
-					req.getParameter("password"), req.getParameter("store"));
-		} catch (UnsupportedUserStoreException e) {
-			LogHelper.log(e);
-			return false;
-		}
+		user = getUserForCredentials((String) req.getParameter("login"), //$NON-NLS-1$
+				req.getParameter("password"), req.getParameter("store"));
 		if (user != null) {
 			req.getSession().setAttribute("user", req.getParameter("login")); //$NON-NLS-1$//$NON-NLS-2$
 			return true;
@@ -114,6 +110,9 @@ public class FormAuthHelper {
 
 	private static User getUserForCredentials(String login, String password, String userStoreId) throws UnsupportedUserStoreException {
 		UserAdmin userAdmin = (userStoreId == null) ? defaultUserAdmin : userStores.get(userStoreId);
+		if(userAdmin==null){
+			throw new UnsupportedUserStoreException(userStoreId);
+		}
 		User user = userAdmin.getUser("login", login); //$NON-NLS-1$
 		if (user != null && user.hasCredential("password", password)) { //$NON-NLS-1$
 			return user;

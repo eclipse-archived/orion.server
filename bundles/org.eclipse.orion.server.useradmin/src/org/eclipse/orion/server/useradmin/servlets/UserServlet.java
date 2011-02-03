@@ -94,7 +94,13 @@ public class UserServlet extends OrionServlet {
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		String pathInfo = req.getPathInfo();
 		if (pathInfo == null || "/".equals(pathInfo)) {
-			String createError = createUser(req.getParameter("store"), req.getParameter("login"), req.getParameter("name"), req.getParameter("email"), req.getParameter("workspace"), req.getParameter("password"));
+			String createError;
+			try {
+				createError = createUser(req.getParameter("store"), req.getParameter("login"), req.getParameter("name"), req.getParameter("email"), req.getParameter("workspace"), req.getParameter("password"));
+			} catch (UnsupportedUserStoreException e) {
+				resp.sendError(HttpServletResponse.SC_NOT_FOUND, "User store is not available: " + req.getParameter("store"));
+				return;
+			}
 
 			if (createError != null) {
 				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, createError);
@@ -102,16 +108,14 @@ public class UserServlet extends OrionServlet {
 		}
 	}
 
-	private String createUser(String userStore, String login, String name, String email, String workspace, String password) {
+	private String createUser(String userStore, String login, String name, String email, String workspace, String password) throws UnsupportedUserStoreException {
 		if (login == null || login.length() == 0) {
 			return "User login is required";
 		}
 		OrionUserAdmin userAdmin;
-		try {
-			userAdmin = (userStore == null || "".equals(userStore)) ? getUserAdmin() : getUserAdmin(userStore);
-		} catch (UnsupportedUserStoreException e) {
-			return "User store is not available: " + userStore;
-		}
+		
+		userAdmin = (userStore == null || "".equals(userStore)) ? getUserAdmin() : getUserAdmin(userStore);
+		
 		if (userAdmin.getUser("login", login) != null) {
 			return "User " + login + " already exists";
 		}
@@ -139,7 +143,7 @@ public class UserServlet extends OrionServlet {
 		try {
 			userAdmin = req.getParameter("store") == null ? getUserAdmin() : getUserAdmin(req.getParameter("store"));
 		} catch (UnsupportedUserStoreException e) {
-			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User store not be found: " + req.getParameter("store"));
+			resp.sendError(HttpServletResponse.SC_NOT_FOUND, "User store not be found: " + req.getParameter("store"));
 			return;
 		}
 
@@ -194,7 +198,7 @@ public class UserServlet extends OrionServlet {
 		try {
 			userAdmin = req.getParameter("store") == null ? getUserAdmin() : getUserAdmin(req.getParameter("store"));
 		} catch (UnsupportedUserStoreException e) {
-			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User store not be found: " + req.getParameter("store"));
+			resp.sendError(HttpServletResponse.SC_NOT_FOUND, "User store not be found: " + req.getParameter("store"));
 			return;
 		}
 
