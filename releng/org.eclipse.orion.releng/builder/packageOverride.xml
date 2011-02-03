@@ -1,6 +1,10 @@
 <project name="package.override" default="main" >
 
-	<import file="${buildDirectory}/${assembleScriptName}" />
+	<import file="${buildDirectory}/${assembleScriptName}" as="super" />
+	
+	<target name="main" >
+		<antcall target="${super.main}" />
+	</target>
 	
 	<!-- bug 335723 -->
     <target name="cleanup.assembly">
