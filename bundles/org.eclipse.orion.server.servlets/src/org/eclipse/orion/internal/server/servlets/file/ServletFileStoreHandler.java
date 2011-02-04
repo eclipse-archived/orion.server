@@ -80,7 +80,7 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 		return result;
 	}
 
-	ServletFileStoreHandler(URI rootStoreURI, ServletResourceHandler<IStatus> statusHandler) {
+	public ServletFileStoreHandler(URI rootStoreURI, ServletResourceHandler<IStatus> statusHandler) {
 		this.statusHandler = statusHandler;
 		fileSerializerV1 = new FileHandlerV1(statusHandler);
 		genericFileSerializer = new GenericFileHandler();

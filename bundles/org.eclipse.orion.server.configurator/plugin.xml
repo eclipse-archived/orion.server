@@ -44,6 +44,10 @@
             alias="/xfer"
             class="org.eclipse.orion.internal.server.servlets.xfer.TransferServlet">
       </servlet>
+      <servlet
+            alias="/sitebuild"
+            class="org.eclipse.orion.internal.server.sitebuild.SiteBuildProxyServlet">
+      </servlet>
    </extension>
    <extension
          point="org.eclipse.equinox.http.registry.filters">
@@ -54,6 +58,10 @@
       <filter
             alias="/"
             class="org.eclipse.orion.internal.server.servlets.file.EditSupportFilter">
+      </filter>
+      <filter
+            alias="/"
+            class="org.eclipse.orion.internal.server.sitebuild.SiteBuildProxyFilter">
       </filter>
       <filter
             alias="/file"
