@@ -29,7 +29,7 @@
 		<!-- combine the build repo with the target -->
 		<p2.composite.repository destination="file:${buildDirectory}/test/composite">
 			<add location="file:${buildDirectory}/buildRepo" />
-			<add location="file:${transformedRepoLocation}"/>
+			<add location="file:${base}/target/transformedRepos"/>
 		</p2.composite.repository>
 
 		<!-- install server + tests feature -->
