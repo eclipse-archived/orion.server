@@ -10,18 +10,17 @@
  *******************************************************************************/
 package org.eclipse.orion.server.servlets;
 
-import org.eclipse.orion.internal.server.servlets.*;
-
-import org.eclipse.orion.internal.server.core.IOUtilities;
-import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
-
 import java.io.IOException;
 import java.io.StringWriter;
+import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
 import org.eclipse.core.runtime.*;
+import org.eclipse.orion.internal.server.core.IOUtilities;
+import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
+import org.eclipse.orion.internal.server.servlets.*;
 import org.json.*;
 
 /**
@@ -71,8 +70,9 @@ public abstract class OrionServlet extends HttpServlet {
 	 */
 	public static void decorateResponse(HttpServletRequest req, JSONObject result) {
 		Collection<IWebResourceDecorator> decorators = Activator.getDefault().getWebResourceDecorators();
+		URI requestURI = ServletResourceHandler.getURI(req);
 		for (IWebResourceDecorator decorator : decorators)
-			decorator.addAtributesFor(ServletResourceHandler.getURI(req), result);
+			decorator.addAtributesFor(requestURI, result);
 	}
 
 	/**

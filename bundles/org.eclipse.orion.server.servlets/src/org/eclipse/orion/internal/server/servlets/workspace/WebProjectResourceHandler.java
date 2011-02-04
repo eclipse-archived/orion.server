@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2010, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,18 +10,13 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.workspace;
 
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-
-import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
-
 import java.net.URI;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
 
 /**
  * Handles serialization of {@link WebElement} objects.
@@ -29,17 +24,6 @@ import org.osgi.framework.FrameworkUtil;
 public class WebProjectResourceHandler extends WebElementResourceHandler<WebProject> {
 	public WebProjectResourceHandler() {
 		super();
-		//not the ideal location because we have no lifecycle for removal
-		registerParentDecorator();
-	}
-
-	/**
-	 * Registers a decorator that augments file data with parent path information up
-	 * to the level of the project.
-	 */
-	private void registerParentDecorator() {
-		BundleContext bc = FrameworkUtil.getBundle(WebProjectResourceHandler.class).getBundleContext();
-		bc.registerService(IWebResourceDecorator.class, new ProjectParentDecorator(), null);
 	}
 
 	public static JSONObject toJSON(WebProject project, URI parentLocation) {
