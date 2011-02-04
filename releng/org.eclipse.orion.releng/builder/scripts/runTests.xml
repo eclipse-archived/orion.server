@@ -21,6 +21,7 @@
 			<property name="topLevelElementId" value="org.eclipse.orion.server.tests.feature" />
 			<property name="customTargets" value="${builder}/customTargets-Tests.xml"/>
 			<property name="skipMirroring" value="true" />
+			<property name="skipDirector" value="true" />
 		</ant>
 	</target>
 	
