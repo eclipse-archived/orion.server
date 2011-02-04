@@ -83,10 +83,10 @@ lastMapTag=${mapsTagTag}
 	</target>
 
 	<target name="postAssemble">
-		<fileset dir="${p2.build.repo}/binary" includes="org.eclipse.orion_root.cocoa.macosx*" id="root.cocoa.macosx" />
+		<fileset dir="${buildDirectory}/buildRepo/binary" includes="org.eclipse.orion_root.cocoa.macosx*" id="root.cocoa.macosx" />
 		<property name="macRootArchive" refid="root.cocoa.macosx" />
 		<mkdir dir="${buildDirectory}/rootMacosx"/>
-		<unzip src="${p2.build.repo}/binary/${macRootArchive}" dest="${buildDirectory}/rootMacosx" overwrite="true">
+		<unzip src="${buildDirectory}/buildRepo/binary/${macRootArchive}" dest="${buildDirectory}/rootMacosx" overwrite="true">
 			<patternset includes="**/Info.plist" />
 		</unzip>
 		<replace file="${buildDirectory}/rootMacosx/eclipse.app/Contents/Info.plist">
@@ -95,8 +95,8 @@ lastMapTag=${mapsTagTag}
 		&lt;string&gt;1&lt;/string&gt;
 	&lt;key&gt;CFBundleExecutable</replacevalue>
 		</replace>
-		<zip destfile="${p2.build.repo}/binary/${macRootArchive}" basedir="${buildDirectory}/rootMacosx" includes="**"/>
-		<p2.process.artifacts repositoryPath="file:${p2.build.repo}" />
+		<zip destfile="${buildDirectory}/buildRepo/binary/${macRootArchive}" basedir="${buildDirectory}/rootMacosx" includes="**"/>
+		<p2.process.artifacts repositoryPath="file:${buildDirectory}/buildRepo" />
 	</target>
 		
 	<target name="postBuild" >
