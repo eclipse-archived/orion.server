@@ -18,6 +18,7 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.core.IAliasRegistry;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
+import org.eclipse.orion.internal.server.servlets.workspace.ProjectParentDecorator;
 import org.eclipse.orion.internal.server.servlets.xfer.TransferResourceDecorator;
 import org.eclipse.osgi.service.datalocation.Location;
 import org.osgi.framework.*;
@@ -47,6 +48,7 @@ public class Activator implements BundleActivator, IAliasRegistry {
 
 	private URI rootStoreURI;
 	private ServiceRegistration<IWebResourceDecorator> transferDecoratorRegistration;
+	private ServiceRegistration<IWebResourceDecorator> parentDecoratorRegistration;
 
 	public static Activator getDefault() {
 		return singleton;
@@ -154,15 +156,21 @@ public class Activator implements BundleActivator, IAliasRegistry {
 		aliases.put(alias, location);
 	}
 
-	private void registerTransferDecorator() {
+	/**
+	 * Registers decorators supplied by servlets in this bundle
+	 */
+	private void registerDecorators() {
+		//adds the import/export locations to representations
 		transferDecoratorRegistration = bundleContext.registerService(IWebResourceDecorator.class, new TransferResourceDecorator(), null);
+		//adds parent links to representations
+		parentDecoratorRegistration = bundleContext.registerService(IWebResourceDecorator.class, new ProjectParentDecorator(), null);
 	}
 
 	public void start(BundleContext context) throws Exception {
 		singleton = this;
 		bundleContext = context;
 		initializeFileSystem();
-		registerTransferDecorator();
+		registerDecorators();
 	}
 
 	public void stop(BundleContext context) throws Exception {
@@ -170,7 +178,7 @@ public class Activator implements BundleActivator, IAliasRegistry {
 			decoratorTracker.close();
 			decoratorTracker = null;
 		}
-		unregisterTransferDecorator();
+		unregisterDecorators();
 		bundleContext = null;
 	}
 
@@ -178,10 +186,14 @@ public class Activator implements BundleActivator, IAliasRegistry {
 		aliases.remove(alias);
 	}
 
-	private void unregisterTransferDecorator() {
+	private void unregisterDecorators() {
 		if (transferDecoratorRegistration != null) {
 			transferDecoratorRegistration.unregister();
 			transferDecoratorRegistration = null;
+		}
+		if (parentDecoratorRegistration != null) {
+			parentDecoratorRegistration.unregister();
+			parentDecoratorRegistration = null;
 		}
 	}
 

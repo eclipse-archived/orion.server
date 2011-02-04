@@ -10,15 +10,12 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.workspace;
 
-import org.eclipse.orion.server.core.LogHelper;
-
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-
-import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
-
 import java.net.URI;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.LogHelper;
 import org.json.*;
 
 /**
@@ -26,6 +23,10 @@ import org.json.*;
  * of the project. 
  */
 public class ProjectParentDecorator implements IWebResourceDecorator {
+
+	public ProjectParentDecorator() {
+		super();
+	}
 
 	/*(non-Javadoc)
 	 * @see org.eclipse.orion.internal.server.core.IWebResourceDecorator#addAtributesFor(java.net.URI, org.json.JSONObject)
@@ -43,7 +44,9 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 			//set the name of the project file to be the project name
 			if (resourcePath.segmentCount() == 2) {
 				WebProject project = WebProject.fromId(resourcePath.segment(1));
-				representation.put(ProtocolConstants.KEY_NAME, project.getName());
+				String projectName = project.getName();
+				if (projectName != null)
+					representation.put(ProtocolConstants.KEY_NAME, projectName);
 			}
 		} catch (JSONException e) {
 			//Shouldn't happen because names and locations should be valid JSON.
@@ -54,7 +57,7 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 
 	private void addParents(URI resource, JSONObject representation, IPath resourcePath) throws JSONException {
 		//start at parent of current resource
-		resourcePath = resourcePath.removeLastSegments(1);
+		resourcePath = resourcePath.removeLastSegments(1).addTrailingSeparator();
 		JSONArray parents = new JSONArray();
 		//for all but the project we can just manipulate the path to get the name and location
 		while (resourcePath.segmentCount() > 2) {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others 
+ * Copyright (c) 2010, 2011 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -18,13 +18,19 @@ import static org.junit.Assert.assertTrue;
 import com.meterware.httpunit.*;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.util.List;
-import org.eclipse.core.runtime.CoreException;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.eclipse.core.runtime.*;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
+import org.json.*;
 import org.junit.*;
+import org.junit.Test;
 import org.xml.sax.SAXException;
 
+/**
+ * Basic tests for {@link NewFileServlet}.
+ */
 public class CoreFilesTest extends FileSystemTest {
 	WebConversation webConversation;
 
@@ -412,6 +418,43 @@ public class CoreFilesTest extends FileSystemTest {
 			}
 		}
 
+	}
+
+	@Test
+	public void testReadFileMetadata() throws Exception {
+		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+		createDirectory(directoryPath);
+		String fileName = "sampleFile" + System.currentTimeMillis() + ".txt";
+		String fileContent = "Sample File Cotnent " + System.currentTimeMillis();
+		createFile(directoryPath + "/" + fileName, fileContent);
+
+		WebRequest request = getGetFilesRequest(directoryPath + "/" + fileName + "?parts=meta");
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject result = new JSONObject(response.getText());
+
+		assertEquals(fileName, result.optString(ProtocolConstants.KEY_NAME));
+
+		JSONArray parents = result.optJSONArray(ProtocolConstants.KEY_PARENTS);
+		assertNotNull(parents);
+		assertEquals(3, parents.length());
+		IPath parentPath = new Path(directoryPath);
+		//immediate parent
+		JSONObject parent = parents.getJSONObject(0);
+		assertEquals(parentPath.segment(2), parent.getString(ProtocolConstants.KEY_NAME));
+		//grandparent
+		parent = parents.getJSONObject(1);
+		assertEquals(parentPath.segment(1), parent.getString(ProtocolConstants.KEY_NAME));
+
+		//ensure all parent locations end with trailing slash
+		for (int i = 0; i < parents.length(); i++) {
+			parent = parents.getJSONObject(i);
+			String location = parent.getString(ProtocolConstants.KEY_LOCATION);
+			assertTrue(location.endsWith("/"));
+			location = parent.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
+			URI childrenLocation = new URI(location);
+			assertTrue(childrenLocation.getPath().endsWith("/"));
+		}
 	}
 
 	@Test
