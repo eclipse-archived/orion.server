@@ -83,7 +83,6 @@ public class SecureStorageSshConfig implements ISshConfig {
 		initSecurePreferences();
 	}
 
-	@Override
 	public String[] getKnownHosts(String orionUser) {
 		if (!storage.node(SSH_CONFIG).nodeExists(orionUser)) {
 			return new String[0];
@@ -97,7 +96,6 @@ public class SecureStorageSshConfig implements ISshConfig {
 		return new String[0];
 	}
 
-	@Override
 	public CredentialsProvider getCredentialsProvider(String orionUser, URIish uri) {
 		String encodedUri;
 		try {
@@ -119,7 +117,6 @@ public class SecureStorageSshConfig implements ISshConfig {
 		return null;
 	}
 
-	@Override
 	public KeysCredentials[] getKeysCredentials(String orionUser, URIish uri) {
 		String encodedUri;
 		try {

@@ -10,25 +10,18 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.sshconfig.home;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.URIish;
-import org.eclipse.orion.server.filesystem.git.KeysCredentials;
 import org.eclipse.orion.server.filesystem.git.ISshConfig;
+import org.eclipse.orion.server.filesystem.git.KeysCredentials;
 
 public class HomeSshConfig implements ISshConfig {
 
-	@Override
 	public String[] getKnownHosts(String orionUser) {
 		String userHome = userHome();
 		final File home = new File(userHome);
@@ -56,12 +49,10 @@ public class HomeSshConfig implements ISshConfig {
 		return knownHosts.toArray(new String[0]);
 	}
 
-	@Override
 	public CredentialsProvider getCredentialsProvider(String orionUser, URIish uri) {
 		return new UsernameCredentialsProvider(userName());
 	}
 
-	@Override
 	public KeysCredentials[] getKeysCredentials(String orionUser, URIish uri) {
 		String userHome = userHome();
 		final File home = new File(userHome);
