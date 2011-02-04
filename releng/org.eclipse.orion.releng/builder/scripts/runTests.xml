@@ -12,6 +12,33 @@
 <project name="Orion-Tests" default="runTests">
 
 	<target name="runTests" >
+		<antcall target="junitTests" />
+		<antcall target="jsTests" />
+	</target>
+
+	<target name="buildTests" >
+		<ant antfile="${eclipse.pdebuild.scripts}/build.xml" >
+			<property name="topLevelElementId" value="org.eclipse.orion.server.tests.feature" />
+			<property name="customTargets" value="${eclipse.pdebuild.templates}/headless-build/customTargets.xml"/>
+			<property name="skipMirroring" value="true" />
+		</ant>
+	</target>
+	
+	<target name="junitTests" depends="buildTests">
+		<!-- install server + tests feature -->
+		<p2.director flavor="tooling" roaming="true" profile="OrionTests"  
+					 extraArguments="-profileProperties org.eclipse.update.install.features=true"
+					 metadataRepository="file:${buildDirectory}/buildRepo"
+					 artifactRepository="file:${buildDirectory}/buildRepo" 
+					 destination="${buildDirectory}/test/eclipse"
+					 logFile="${p2.director.log}">
+			<iu id="org.eclipse.orion" />
+			<iu id="org.eclipse.orion.server.tests.feature.feature.group" />
+		</p2.director>
+
+	</target>
+	
+	<target name="jsTests" >
 		<echo message="Launching Xvfb" />
 		<exec executable="bash" failonerror="false" outputproperty="xvfbPID" >
 			<arg value="${builder}/scripts/runTests.sh" />
