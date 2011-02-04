@@ -10,8 +10,8 @@
 		</replace>
 	</target>
 	
-	<target name="postSetup" >
-		<p2.mirror destination="file:${transformedRepoLocation}" ignoreerrors="true">
+	<target name="preProcessRepos" >
+		<p2.mirror destination="file:${repoBaseLocation}/tests" ignoreerrors="true">
 			<source location="${eclipsePlatformRepo}" />
 			<source location="${orbitRepo}" />
 			<slicingOptions includeOptional="false" includeNonGreedy="false" />
