@@ -1,11 +1,7 @@
 <project name="package.override" default="main" >
 
-	<import file="${buildDirectory}/${assembleScriptName}" as="super" />
-	
-	<target name="main" >
-		<antcall target="${super.main}" />
-	</target>
-	
+	<import file="${buildDirectory}/${assembleScriptName}" />
+		
 	<!-- bug 335723 -->
     <target name="cleanup.assembly">
     	<exec executable="mv" dir="${buildDirectory}" >
