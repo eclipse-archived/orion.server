@@ -26,11 +26,17 @@
 	</target>
 	
 	<target name="junitTests" depends="buildTests">
+		<!-- combine the build repo with the target -->
+		<p2.composite.repository destination="file:${buildDirectory}/test/composite">
+			<add location="file:${buildDirectory}/buildRepo" />
+			<add location="file:${transformedRepoLocation}"/>
+		</p2.composite.repository>
+
 		<!-- install server + tests feature -->
 		<p2.director flavor="tooling" roaming="true" profile="OrionTests"  
 					 extraArguments="-profileProperties org.eclipse.update.install.features=true"
-					 metadataRepository="file:${buildDirectory}/buildRepo"
-					 artifactRepository="file:${buildDirectory}/buildRepo" 
+					 metadataRepository="file:${buildDirectory}/test/composite"
+					 artifactRepository="file:${buildDirectory}/test/composite" 
 					 destination="${buildDirectory}/test/eclipse"
 					 logFile="${p2.director.log}">
 			<iu id="org.eclipse.orion" />
