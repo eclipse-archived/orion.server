@@ -36,6 +36,23 @@
 	</macrodef>
 	
 	<target name="runClosure" >
+		<!-- compile the editor as a separate piece to use on blogs and such things -->
+		<mkdir dir="${buildDirectory}/compiled" />
+		<java jar="${closureJar}" fork="true" >
+			<arg value="--js=${orion.client.editor}/js/editor.js" />
+			<arg value="--js=${orion.client.editor}/js/model.js" />
+			<arg value="--js=${orion.client.editor}/samples/rulers.js" />
+			<arg value="--js=${orion.client.editor}/samples/styler.js" />
+			<arg value="--js=/eclipse/workspaces/e4-git/temp/embed.js" />
+			<arg value="--js_output_file=${buildDirectory}/compiled/orion-editor.js" />
+		</java>
+		
+		<java jar="${closureJar}" fork="true" >
+			<arg value="--js=${orion.client.editor}/js/temp.js" />
+			<arg value="--js_output_file=${buildDirectory}/compiled/orion-gadget.js" />
+		</java>
+		
+		<!-- compile scripts and replace html entries -->
 		<mkdir dir="${output}"/>
 		<closure dir="${orion.client.core}" compiled="navigate-table.js" >
 			<replace-in>
