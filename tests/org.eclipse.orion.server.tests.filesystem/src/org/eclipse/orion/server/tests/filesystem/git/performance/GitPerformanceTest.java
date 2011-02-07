@@ -12,7 +12,6 @@ package org.eclipse.orion.server.tests.filesystem.git.performance;
 
 import java.io.IOException;
 import java.net.URI;
-
 import org.eclipse.core.filesystem.URIUtil;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -33,7 +32,7 @@ public class GitPerformanceTest extends PerformanceTest {
 		sb.append(URIUtil.toURI(repositoryPath).toString());
 		sb.append("?/");
 		URI uri = URI.create(sb.toString());
-		root = (GitFileStore) fs.getStore(uri);
+		root = fs.getStore(uri);
 	}
 	
 	protected void init() throws CoreException, IOException {
