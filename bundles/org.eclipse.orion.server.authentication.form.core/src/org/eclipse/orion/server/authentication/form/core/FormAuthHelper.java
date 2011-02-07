@@ -11,25 +11,11 @@
 package org.eclipse.orion.server.authentication.form.core;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
+import java.util.*;
+import javax.servlet.http.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.useradmin.OrionUserAdmin;
-import org.eclipse.orion.server.useradmin.UnsupportedUserStoreException;
-import org.eclipse.orion.server.useradmin.UserAdminActivator;
+import org.eclipse.orion.server.useradmin.*;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.service.useradmin.User;
@@ -46,8 +32,8 @@ public class FormAuthHelper {
 
 	static {
 		//FIXME preferences are temporary storage, change to proper configuration storage when it's established
-		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode("org.eclipse.orion.server.configurator");
-		everyoneCanCreateUsers = prefs.getBoolean("everyoneCanCreateUsers", true);
+		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode("org.eclipse.orion.server.configurator"); //$NON-NLS-1$
+		everyoneCanCreateUsers = prefs.getBoolean("everyoneCanCreateUsers", true); //$NON-NLS-1$
 	}
 
 	/**
@@ -80,7 +66,7 @@ public class FormAuthHelper {
 			array.put("login", user); //$NON-NLS-1$
 			resp.getWriter().print(array.toString());
 		} catch (JSONException e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORM_CORE, "An error occured when creating JSON object for logged in user", e));
+			//can't fail
 		}
 	}
 
@@ -88,24 +74,22 @@ public class FormAuthHelper {
 	 * Authenticates user by credentials send in <code>login</code> and
 	 * <code>password</password> request parameters. If user credentials are correct session attribute <code>user</code>
 	 * is set. If user cannot be logged in
-	 * {@link HttpServletResponse.SC_UNAUTHORIZED} error is send.
+	 * {@link HttpServletResponse#SC_UNAUTHORIZED} error is send.
 	 * 
 	 * @param req
 	 * @param resp
-	 * @return
 	 * @throws IOException
 	 * @throws UnsupportedUserStoreException 
 	 */
 	public static boolean performAuthentication(HttpServletRequest req, HttpServletResponse resp) throws IOException, UnsupportedUserStoreException {
 		User user;
 		user = getUserForCredentials(req.getParameter("login"), //$NON-NLS-1$
-				req.getParameter("password"), req.getParameter("store"));
+				req.getParameter("password"), req.getParameter("store")); //$NON-NLS-1$ //$NON-NLS-2$
 		if (user != null) {
 			req.getSession().setAttribute("user", req.getParameter("login")); //$NON-NLS-1$//$NON-NLS-2$
 			return true;
-		} else {
-			return false;
 		}
+		return false;
 	}
 
 	private static User getUserForCredentials(String login, String password, String userStoreId) throws UnsupportedUserStoreException {
@@ -132,9 +116,8 @@ public class FormAuthHelper {
 	}
 
 	/**
-	 * 
+	 * Returns whether new users can be created in the given store.
 	 * @param userStoreId if <code>null</code> checks for default user store
-	 * @return
 	 * @throws UnsupportedUserStoreException
 	 */
 	public static boolean canAddUsers(String userStoreId) throws UnsupportedUserStoreException {
@@ -153,7 +136,6 @@ public class FormAuthHelper {
 
 	/**
 	 * Uses default user store
-	 * @return
 	 */
 	public static boolean canAddUsers() {
 		return everyoneCanCreateUsers ? defaultUserAdmin.canCreateUsers() : false;
