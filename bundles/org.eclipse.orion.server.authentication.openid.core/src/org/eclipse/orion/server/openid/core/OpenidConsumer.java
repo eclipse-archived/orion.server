@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
  */
 public class OpenidConsumer {
 
-	final Logger log = LoggerFactory.getLogger(OpenidConsumer.class);
+	final Logger log = LoggerFactory.getLogger("org.eclipse.orion.server.login"); //$NON-NLS-1$
 
 	private ConsumerManager manager;
 	private String returnToUrl;
@@ -77,7 +77,7 @@ public class OpenidConsumer {
 		try {
 			discoveries = manager.discover(userSuppliedString);
 		} catch (DiscoveryException e) {
-			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_OPENID_CORE, 1, "Cound not discover: " + userSuppliedString, e));
+			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_OPENID_CORE, 1, "Could not discover: " + userSuppliedString, e));
 		}
 
 		// attempt to associate with the OpenID provider
@@ -107,14 +107,13 @@ public class OpenidConsumer {
 
 	// --- processing the authentication response ---
 	public Identifier verifyResponse(HttpServletRequest httpReq) {
+		// extract the parameters from the authentication response
+		// (which comes in as a HTTP request from the OpenID provider)
+		ParameterList response = new ParameterList(httpReq.getParameterMap());
+
+		// retrieve the previously stored discovery information
+		DiscoveryInformation discovered = (DiscoveryInformation) httpReq.getSession().getAttribute(OpenIdHelper.OPENID_DISC);
 		try {
-			// extract the parameters from the authentication response
-			// (which comes in as a HTTP request from the OpenID provider)
-			ParameterList response = new ParameterList(httpReq.getParameterMap());
-
-			// retrieve the previously stored discovery information
-			DiscoveryInformation discovered = (DiscoveryInformation) httpReq.getSession().getAttribute(OpenIdHelper.OPENID_DISC);
-
 			// extract the receiving URL from the HTTP request
 			StringBuffer receivingURL = httpReq.getRequestURL();
 			String queryString = httpReq.getQueryString();
@@ -125,21 +124,25 @@ public class OpenidConsumer {
 			// (static) instance used to place the authentication request
 			VerificationResult verification = manager.verify(receivingURL.toString(), response, discovered);
 
-			// examine the verification result and extract the verified
-			// identifier
+			// examine the verification result and extract the verified identifier
 			Identifier verified = verification.getVerifiedId();
 			if (verified != null) {
 				AuthSuccess authSuccess = (AuthSuccess) verification.getAuthResponse();
 
 				HttpSession session = httpReq.getSession(true);
 				session.setAttribute(OpenIdHelper.OPENID_IDENTIFIER, authSuccess.getIdentity());
-
+				if (log.isInfoEnabled())
+					log.info("Login success: " + verified.getIdentifier()); //$NON-NLS-1$ 
 				return verified; // success
 			}
 		} catch (OpenIDException e) {
-			log.error("An error occured when veryfing response.", e);
+			log.error("An error occured when verifyng response.", e); //$NON-NLS-1$
 		}
-
+		if (log.isInfoEnabled()) {
+			Identifier claimedId = discovered.getClaimedIdentifier();
+			if (claimedId != null)
+				log.info("Login failed: " + claimedId.getIdentifier());//$NON-NLS-1$ 
+		}
 		return null;
 	}
 }
