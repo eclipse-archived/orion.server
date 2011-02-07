@@ -53,7 +53,7 @@ public class TransferTest extends FileSystemTest {
 	@Test
 	public void testImportWithPost() throws CoreException, IOException, SAXException {
 		//create a directory to upload to
-		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+		String directoryPath = "sample/testImportWithPost/path" + System.currentTimeMillis();
 		createDirectory(directoryPath);
 
 		//start the import
@@ -62,9 +62,6 @@ public class TransferTest extends FileSystemTest {
 		long length = source.length();
 		InputStream in = new BufferedInputStream(new FileInputStream(source));
 		PostMethodWebRequest request = new PostMethodWebRequest(ServerTestsActivator.getServerLocation() + "/xfer/" + directoryPath, in, "application/zip");
-		request.setHeaderField("X-Xfer-Content-Length", "" + length);
-		request.setHeaderField("X-Xfer-Options", "unzip");
-		request.setHeaderField("Content-Range", "bytes 0-" + (length - 1) + "/" + length);
 		request.setHeaderField("Content-Length", "" + length);
 		request.setHeaderField("Content-Type", "application/zip");
 		setAuthentication(request);
@@ -90,7 +87,6 @@ public class TransferTest extends FileSystemTest {
 		long length = source.length();
 		PostMethodWebRequest request = new PostMethodWebRequest(ServerTestsActivator.getServerLocation() + "/xfer/" + directoryPath);
 		request.setHeaderField("X-Xfer-Content-Length", Long.toString(length));
-		request.setHeaderField("X-Xfer-Options", "unzip");
 		setAuthentication(request);
 		WebResponse postResponse = webConversation.getResponse(request);
 		assertEquals(200, postResponse.getResponseCode());
@@ -115,6 +111,8 @@ public class TransferTest extends FileSystemTest {
 		long length = source.length();
 		PostMethodWebRequest request = new PostMethodWebRequest(ServerTestsActivator.getServerLocation() + "/xfer/" + directoryPath);
 		request.setHeaderField("X-Xfer-Content-Length", Long.toString(length));
+		request.setHeaderField("X-Xfer-Options", "raw");
+
 		request.setHeaderField("Slug", "client.zip");
 		setAuthentication(request);
 		WebResponse postResponse = webConversation.getResponse(request);

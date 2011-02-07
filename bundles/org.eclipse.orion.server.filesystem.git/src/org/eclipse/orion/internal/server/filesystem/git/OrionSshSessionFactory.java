@@ -10,22 +10,13 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.filesystem.git;
 
+import com.jcraft.jsch.*;
 import java.io.IOException;
 import java.io.InputStream;
-
-import org.eclipse.jgit.transport.CredentialItem;
-import org.eclipse.jgit.transport.CredentialsProvider;
-import org.eclipse.jgit.transport.CredentialsProviderUserInfo;
-import org.eclipse.jgit.transport.OpenSshConfig;
-import org.eclipse.jgit.transport.URIish;
+import org.eclipse.jgit.transport.*;
 import org.eclipse.jgit.transport.OpenSshConfig.Host;
-import org.eclipse.jgit.transport.SshConfigSessionFactory;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.server.filesystem.git.KeysCredentials;
-
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
 
 /**
  * Loads known hosts and keys for a Orion user.

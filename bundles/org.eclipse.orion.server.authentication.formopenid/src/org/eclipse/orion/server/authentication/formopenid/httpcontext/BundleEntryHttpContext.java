@@ -88,7 +88,7 @@ public class BundleEntryHttpContext implements HttpContext {
 
 		Set<String> result = new HashSet<String>();
 		while (entryPaths.hasMoreElements()) {
-			URL entryURL = (URL) entryPaths.nextElement();
+			URL entryURL = entryPaths.nextElement();
 			String entryPath = entryURL.getFile();
 
 			if (bundlePath == null)

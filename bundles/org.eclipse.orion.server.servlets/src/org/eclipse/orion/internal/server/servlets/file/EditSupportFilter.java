@@ -30,7 +30,7 @@ public class EditSupportFilter implements Filter {
 		HttpServletResponse httpResponse = (HttpServletResponse) response;
 		String requestURI = httpRequest.getRequestURI();
 
-		if (requestURI.startsWith(FILE_SERVLET_ALIAS)) { //$NON-NLS-1$
+		if (requestURI.startsWith(FILE_SERVLET_ALIAS)) { 
 			String host = getHost(httpRequest);
 			httpResponse.addHeader("X-Edit-Server", host + "/coding.html#"); //$NON-NLS-1$ //$NON-NLS-2$
 			httpResponse.addHeader("X-Edit-Token", requestURI); //$NON-NLS-1$
