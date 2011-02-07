@@ -168,7 +168,7 @@ runTests () {
 			-DbuildDirectory=$buildDirectory \
 			-Dbuilder=$builderDir/builder \
 			-Dbase=$writableBuildRoot \
-			-DbuildLabel=$buildType$timestamp"
+			-DbuildLabel=$buildType$timestamp
 			$fetchTag
 			-DJ2SE-1.4=$j2se142 \
 			-DJ2SE-1.5=$j2se150 \
