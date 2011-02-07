@@ -15,49 +15,22 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
+import java.io.*;
+import java.net.*;
+import java.util.*;
 import javax.crypto.spec.PBEKeySpec;
-
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileInfo;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.tests.harness.FileSystemHelper;
-import org.eclipse.equinox.security.storage.ISecurePreferences;
-import org.eclipse.equinox.security.storage.SecurePreferencesFactory;
-import org.eclipse.equinox.security.storage.StorageException;
+import org.eclipse.equinox.security.storage.*;
 import org.eclipse.equinox.security.storage.provider.IProviderHints;
-import org.eclipse.orion.internal.server.filesystem.git.Utils;
 import org.eclipse.orion.server.filesystem.git.GitFileStore;
 import org.eclipse.orion.server.filesystem.git.GitFileSystem;
 import org.eclipse.orion.server.tests.filesystem.Activator;
 import org.eclipse.osgi.service.datalocation.Location;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.InvalidSyntaxException;
-import org.osgi.framework.ServiceReference;
+import org.junit.*;
+import org.osgi.framework.*;
 
 public class SshTest {
 
