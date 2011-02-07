@@ -53,3 +53,6 @@ plugin@org.eclipse.wst.jsdt.debug.rhino.debugger=p2IU,id=org.eclipse.wst.jsdt.de
 
 plugin@org.eclipse.test.performance=p2IU,id=org.eclipse.test.performance,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.core.tests.harness=p2IU,id=org.eclipse.core.tests.harness,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.pde.junit.runtime=p2IU,id=org.eclipse.pde.junit.runtime,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.jdt.junit.runtime=p2IU,id=org.eclipse.jdt.junit.runtime,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.core.runtime.compatibility=p2IU,id=org.eclipse.core.runtime.compatibility,repository=ECLIPSE_PLATFORM_REPO
