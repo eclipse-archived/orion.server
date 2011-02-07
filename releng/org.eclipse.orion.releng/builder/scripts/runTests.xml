@@ -58,6 +58,9 @@
 			<property name="library-file" value="${buildDirectory}/test/eclipse/plugins/${testLibrary}" />
 			<property name="eclipse-home" value="${buildDirectory}/test/eclipse" />
 			<fileset dir="${buildDirectory}/test/eclipse/plugins" includes="*/test.xml" />
+			<property name="os" value="${osgi.os}" />
+			<property name="ws" value="${osgi.ws}" />
+			<property name="arch" value="${osgi.arch}" />
 		</subant>
 		
 	</target>
