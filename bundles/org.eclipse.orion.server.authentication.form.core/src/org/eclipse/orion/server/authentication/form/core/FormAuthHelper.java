@@ -20,6 +20,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.service.useradmin.User;
 import org.osgi.service.useradmin.UserAdmin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Groups methods to handle session fields for form-based authentication.
@@ -53,12 +55,12 @@ public class FormAuthHelper {
 	}
 
 	/**
-	 * Writes a response in JSON that contains user login.
-	 * 
-	 * @param user
-	 * @param resp
-	 * @throws IOException
-	 */
+		 * Writes a response in JSON that contains user login.
+		 * 
+		 * @param user
+		 * @param resp
+		 * @throws IOException
+		 */
 	public static void writeLoginResponse(String user, HttpServletResponse resp) throws IOException {
 		resp.setStatus(HttpServletResponse.SC_OK);
 		try {
@@ -82,19 +84,24 @@ public class FormAuthHelper {
 	 * @throws UnsupportedUserStoreException 
 	 */
 	public static boolean performAuthentication(HttpServletRequest req, HttpServletResponse resp) throws IOException, UnsupportedUserStoreException {
-		User user;
-		user = getUserForCredentials(req.getParameter("login"), //$NON-NLS-1$
-				req.getParameter("password"), req.getParameter("store")); //$NON-NLS-1$ //$NON-NLS-2$
+		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.login"); //$NON-NLS-1$
+		String login = req.getParameter("login");//$NON-NLS-1$
+		User user = getUserForCredentials(login, req.getParameter("password"), req.getParameter("store")); //$NON-NLS-1$ //$NON-NLS-2$
 		if (user != null) {
-			req.getSession().setAttribute("user", req.getParameter("login")); //$NON-NLS-1$//$NON-NLS-2$
+			if (logger.isInfoEnabled())
+				logger.info("Login success: " + login); //$NON-NLS-1$ 
+			req.getSession().setAttribute("user", login); //$NON-NLS-1$
 			return true;
 		}
+		//don't bother tracing malformed login attempts
+		if (login != null)
+			logger.info("Login failed: " + login); //$NON-NLS-1$
 		return false;
 	}
 
 	private static User getUserForCredentials(String login, String password, String userStoreId) throws UnsupportedUserStoreException {
 		UserAdmin userAdmin = (userStoreId == null) ? defaultUserAdmin : userStores.get(userStoreId);
-		if(userAdmin==null){
+		if (userAdmin == null) {
 			throw new UnsupportedUserStoreException(userStoreId);
 		}
 		User user = userAdmin.getUser("login", login); //$NON-NLS-1$
