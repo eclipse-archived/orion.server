@@ -98,7 +98,7 @@ public class FormAuthHelper {
 	 */
 	public static boolean performAuthentication(HttpServletRequest req, HttpServletResponse resp) throws IOException, UnsupportedUserStoreException {
 		User user;
-		user = getUserForCredentials((String) req.getParameter("login"), //$NON-NLS-1$
+		user = getUserForCredentials(req.getParameter("login"), //$NON-NLS-1$
 				req.getParameter("password"), req.getParameter("store"));
 		if (user != null) {
 			req.getSession().setAttribute("user", req.getParameter("login")); //$NON-NLS-1$//$NON-NLS-2$

@@ -82,7 +82,7 @@ public class OpenIdHelper {
 				sb.append(redirect);
 			}
 			consumer = new OpenidConsumer(sb.toString());
-			consumer.authRequest(req.getParameter(OPENID), req, resp); //$NON-NLS-1$
+			consumer.authRequest(req.getParameter(OPENID), req, resp); 
 			// redirection takes place in the authRequest method
 		} catch (ConsumerException e) {
 			writeOpenIdError(e.getMessage(), req, resp);
