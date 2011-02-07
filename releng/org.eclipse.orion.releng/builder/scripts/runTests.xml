@@ -20,6 +20,7 @@
 		<ant antfile="${eclipse.pdebuild.scripts}/build.xml" >
 			<property name="topLevelElementId" value="org.eclipse.orion.releng.test.master" />
 			<property name="customTargets" value="${builder}/customTargets-Tests.xml"/>
+			<property name="product" value="" />
 			<property name="skipMirroring" value="true" />
 			<property name="skipDirector" value="true" />
 		</ant>
