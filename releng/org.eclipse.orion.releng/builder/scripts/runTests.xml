@@ -55,7 +55,7 @@
 		<property name="testLibrary" refid="testLib.ref" />
 		
 		<subant target="run">
-			<property name="library-file" value="${testLibrary}" />
+			<property name="library-file" value="${buildDirectory}/test/eclipse/plugins/${testLibrary}" />
 			<property name="eclipse-home" value="${buildDirectory}/test/eclipse" />
 			<fileset dir="${buildDirectory}/test/eclipse/plugins" includes="*/test.xml" />
 		</subant>
