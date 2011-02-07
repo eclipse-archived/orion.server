@@ -56,3 +56,4 @@ plugin@org.eclipse.core.tests.harness=p2IU,id=org.eclipse.core.tests.harness,rep
 plugin@org.eclipse.pde.junit.runtime=p2IU,id=org.eclipse.pde.junit.runtime,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.jdt.junit.runtime=p2IU,id=org.eclipse.jdt.junit.runtime,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.core.runtime.compatibility=p2IU,id=org.eclipse.core.runtime.compatibility,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.update.configurator=p2IU,id=org.eclipse.update.configurator,repository=ECLIPSE_PLATFORM_REPO
