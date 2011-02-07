@@ -15,6 +15,9 @@
   <!-- Print information on search indexing -->  
   <!-- <logger name="org.eclipse.orion.internal.server.search.Indexer" level="DEBUG"/> -->
 
+  <!-- Prints activity of the Orion git file system implementation -->
+  <!-- <logger name="org.eclipse.orion.server.filesystem.git.GitFileStore" level="INFO"/> -->
+ 
   <root level="WARN">
     <appender-ref ref="STDOUT" />
   </root>

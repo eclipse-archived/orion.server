@@ -27,7 +27,11 @@ import org.eclipse.jgit.transport.*;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.filesystem.git.*;
 import org.eclipse.orion.server.core.LogHelper;
+import org.slf4j.LoggerFactory;
 
+/**
+ * File system implementation that writes to a git repository.
+ */
 public class GitFileStore extends FileStore {
 
 	private String authority;
@@ -112,7 +116,7 @@ public class GitFileStore extends FileStore {
 				final CloneOperation op = new CloneOperation(uri, true, null, workdir, ref, "origin", 0);
 				op.setCredentialsProvider(getCredentialsProvider());
 				op.run(monitor);
-				LogHelper.log(new Status(IStatus.INFO, Activator.PI_GIT, 1, "Cloned " + this + " to " + workdir, null));
+				logInfo("Cloned " + this + " to " + workdir);
 			}
 		} catch (InterruptedException e) {
 			// ignore
@@ -165,7 +169,7 @@ public class GitFileStore extends FileStore {
 			CommitCommand commit = git.commit();
 			commit.setMessage("auto-commit of " + this);
 			commit.call();
-			LogHelper.log(new Status(IStatus.INFO, Activator.PI_GIT, 1, "Auto-commit of " + this + " done.", null));
+			logInfo("Auto-commit of " + this + " done.");
 		} catch (Exception e) {
 			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_GIT, IStatus.ERROR, e.getMessage(), e));
 		}
@@ -295,7 +299,7 @@ public class GitFileStore extends FileStore {
 		}
 
 		sharedRepo.mkdir();
-		LogHelper.log(new Status(IStatus.INFO, Activator.PI_GIT, 1, "Initializing bare repository for " + this, null));
+		logInfo("Initializing bare repository for " + this);
 		FileRepository repository = new FileRepository(new File(sharedRepo, Constants.DOT_GIT));
 		repository.create(true);
 		return true;
@@ -325,6 +329,10 @@ public class GitFileStore extends FileStore {
 
 	public boolean isCloned() {
 		return getWorkingDir().exists() && RepositoryCache.FileKey.isGitRepository(new File(getWorkingDir(), Constants.DOT_GIT), FS.DETECTED);
+	}
+
+	private void logInfo(String message) {
+		LoggerFactory.getLogger(GitFileStore.class).info(message);
 	}
 
 	public boolean isRoot() {
@@ -395,7 +403,7 @@ public class GitFileStore extends FileStore {
 			PullCommand pull = git.pull();
 			pull.setCredentialsProvider(getCredentialsProvider());
 			PullResult pullResult = pull.call();
-			LogHelper.log(new Status(IStatus.INFO, Activator.PI_GIT, 1, "Pull (fetch/merge) result " + pullResult.getFetchResult().getMessages() + "/" + pullResult.getMergeResult().getMergeStatus() + " for " + this, null));
+			logInfo("Pull (fetch/merge) result " + pullResult.getFetchResult().getMessages() + "/" + pullResult.getMergeResult().getMergeStatus() + " for " + this);
 		} catch (Exception e) {
 			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_GIT, IStatus.ERROR, e.getMessage(), e));
 		} finally {
@@ -420,7 +428,7 @@ public class GitFileStore extends FileStore {
 				for (RemoteRefUpdate update : updates) {
 					org.eclipse.jgit.transport.RemoteRefUpdate.Status status = update.getStatus();
 					if (status.equals(org.eclipse.jgit.transport.RemoteRefUpdate.Status.OK) || status.equals(org.eclipse.jgit.transport.RemoteRefUpdate.Status.UP_TO_DATE)) {
-						LogHelper.log(new Status(IStatus.INFO, Activator.PI_GIT, 1, "Push succeed: " + this, null));
+						logInfo("Push succeed: " + this);
 					} else {
 						throw new CoreException(new Status(IStatus.ERROR, Activator.PI_GIT, IStatus.ERROR, status.toString(), null));
 					}
