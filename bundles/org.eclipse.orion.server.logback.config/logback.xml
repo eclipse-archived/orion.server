@@ -17,6 +17,10 @@
 
   <!-- Prints activity of the Orion git file system implementation -->
   <!-- <logger name="org.eclipse.orion.server.filesystem.git.GitFileStore" level="INFO"/> -->
+
+  <!-- Prints successful and failed logins -->
+  <logger name="org.eclipse.orion.server.login" level="INFO"/>
+ 
  
   <root level="WARN">
     <appender-ref ref="STDOUT" />
