@@ -30,7 +30,7 @@
 		<property file="${builder}/build.properties" />
 	</target>
 	
-	<target name="junitTests" depends="buildTests,initProperties">
+	<target name="installTests" depends="buildTests,initProperties">
 		<!-- combine the build repo with the platform repo -->
 		<p2.composite.repository destination="file:${buildDirectory}/test/composite">
 			<add location="file:${buildDirectory}/buildRepo" />
@@ -48,7 +48,18 @@
 			<iu id="org.eclipse.orion.server.tests.feature.feature.group" />
 			<iu id="org.eclipse.test" />
 		</p2.director>
-
+	</target>
+	
+	<target name="junitTests" depends="installTests">
+		<fileset id="testLib.ref" dir="${buildDirectory}/test/eclipse/plugins" includes="org.eclipse.test*/library.xml" />
+		<property name="testLibrary" refid="testLib.ref" />
+		
+		<subant target="run">
+			<property name="library-file" value="${testLibrary}" />
+			<property name="eclipse-home" value="${buildDirectory}/test/eclipse" />
+			<fileset dir="${buildDirectory}/test/eclipse/plugins/*/test.xml" />
+		</subant>
+		
 	</target>
 	
 	<target name="jsTests" >
