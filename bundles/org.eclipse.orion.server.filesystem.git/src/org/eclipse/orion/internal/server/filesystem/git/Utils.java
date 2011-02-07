@@ -12,7 +12,6 @@ package org.eclipse.orion.internal.server.filesystem.git;
 
 import java.net.URISyntaxException;
 import java.net.URL;
-
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.jgit.transport.URIish;
 
@@ -20,7 +19,8 @@ public class Utils {
 
 	public static URIish toURIish(final URL u) throws URISyntaxException {
 		String s = u.toString();
-		s = s.replace("?" + u.getQuery(), ""); // ignore query
+		// ignore query
+		s = s.replace("?" + u.getQuery(), ""); //$NON-NLS-1$ //$NON-NLS-2$
 		return new URIish(s);
 	}
 
@@ -29,6 +29,6 @@ public class Utils {
 		while ((parent = gfs.getParent()) != null) {
 			gfs = parent;
 		}
-		return (IFileStore) gfs;
+		return gfs;
 	}
 }
