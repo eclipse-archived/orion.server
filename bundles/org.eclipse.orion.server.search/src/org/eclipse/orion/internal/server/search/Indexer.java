@@ -27,6 +27,8 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.LogHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The indexer is responsible for keeping the solr/lucene index up to date.
@@ -89,8 +91,9 @@ public class Indexer extends Job {
 	}
 
 	private void indexProject(WebProject project, SubMonitor monitor, List<SolrInputDocument> documents) {
-		if (SearchActivator.DEBUG)
-			System.out.println("Indexing project id: " + project.getId() + " name: " + project.getName()); //$NON-NLS-1$ //$NON-NLS-2$
+		Logger logger = LoggerFactory.getLogger(Indexer.class);
+		if (logger.isDebugEnabled())
+			logger.debug("Indexing project id: " + project.getId() + " name: " + project.getName()); //$NON-NLS-1$ //$NON-NLS-2$
 		checkCanceled(monitor);
 		URI location = project.getContentLocation();
 		IFileStore projectStore;
@@ -161,8 +164,8 @@ public class Indexer extends Job {
 		} catch (Exception e) {
 			handleIndexingFailure(e);
 		}
-		if (SearchActivator.DEBUG)
-			System.out.println("\tIndexed: " + indexedCount + " Unchanged:  " + unmodifiedCount); //$NON-NLS-1$ //$NON-NLS-2$
+		if (logger.isDebugEnabled())
+			logger.debug("\tIndexed: " + indexedCount + " Unchanged:  " + unmodifiedCount); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
 	private List<String> findUsers(IPath projectLocation) {
@@ -214,14 +217,14 @@ public class Indexer extends Job {
 			indexProject(project, progress.newChild(1), documents);
 		}
 		long duration = System.currentTimeMillis() - start;
-		if (SearchActivator.DEBUG)
-			System.out.println("Indexed " + projects.size() + " projects in " + duration + "ms"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		Logger logger = LoggerFactory.getLogger(Indexer.class);
+		if (logger.isDebugEnabled())
+			logger.debug("Indexed " + projects.size() + " projects in " + duration + "ms"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		//reschedule the indexing - throttle if it takes too long
 		long delay = Math.max(DEFAULT_DELAY, duration);
-		if (SearchActivator.DEBUG)
-			System.out.println("Rescheduling indexing in " + delay + "ms"); //$NON-NLS-1$//$NON-NLS-2$
+		if (logger.isDebugEnabled())
+			logger.debug("Rescheduling indexing in " + delay + "ms"); //$NON-NLS-1$//$NON-NLS-2$
 		schedule(delay);
 		return Status.OK_STATUS;
 	}
-
 }

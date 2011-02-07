@@ -22,16 +22,13 @@ import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
 import org.eclipse.orion.internal.server.servlets.*;
 import org.json.*;
+import org.slf4j.LoggerFactory;
 
 /**
  * Common base class for servlets that defines convenience API for (de)serialization
  * of requests and responses.
  */
 public abstract class OrionServlet extends HttpServlet {
-	/**
-	 * Global flag for enabling debug tracing
-	 */
-	public static final boolean DEBUG = true;
 	/**
 	 * Global flag for enabling detailed tracing of the protocol.
 	 */
@@ -60,8 +57,7 @@ public abstract class OrionServlet extends HttpServlet {
 		resp.setContentType(ProtocolConstants.CONTENT_TYPE_JSON);
 		String response = prettyPrint(result);
 		resp.getWriter().print(response);
-		if (OrionServlet.DEBUG)
-			System.out.println(response);
+		LoggerFactory.getLogger(OrionServlet.class).debug(response);
 	}
 
 	/**
@@ -131,26 +127,24 @@ public abstract class OrionServlet extends HttpServlet {
 	}
 
 	@SuppressWarnings("unchecked")
-	protected void printHeaders(HttpServletRequest req) {
+	protected void printHeaders(HttpServletRequest req, StringBuffer out) {
 		for (String header : Collections.<String> list(req.getHeaderNames()))
-			System.out.println(header + ": " + req.getHeader(header)); //$NON-NLS-1$
+			out.append(header + ": " + req.getHeader(header)); //$NON-NLS-1$
 	}
 
 	/**
 	 * Helper method to print the request when debugging.
 	 */
 	protected void traceRequest(HttpServletRequest req) {
-		if (!DEBUG)
-			return;
 		StringBuffer result = new StringBuffer(req.getMethod());
 		result.append(' ');
 		result.append(req.getRequestURI());
 		String query = req.getQueryString();
 		if (query != null)
 			result.append('?').append(query);
-		System.out.println(result);
 		if (DEBUG_VEBOSE)
-			printHeaders(req);
+			printHeaders(req, result);
+		LoggerFactory.getLogger(OrionServlet.class).debug(result.toString());
 	}
 
 }

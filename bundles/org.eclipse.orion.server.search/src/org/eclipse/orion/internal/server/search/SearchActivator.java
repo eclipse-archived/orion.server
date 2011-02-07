@@ -35,7 +35,6 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 	 */
 	private static final int CURRENT_INDEX_GENERATION = 6;
 
-	public static final boolean DEBUG = true;
 	private static final String INDEX_GENERATION_FILE = "index.generation";//$NON-NLS-1$
 	private static SearchActivator instance;
 	public static final String PI_SEARCH = "org.eclipse.orion.server.core.search"; //$NON-NLS-1$
