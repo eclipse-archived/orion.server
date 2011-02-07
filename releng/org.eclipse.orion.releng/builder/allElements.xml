@@ -15,7 +15,7 @@
  	<target name="allElementsDelegator">
  		<ant antfile="${genericTargets}" target="${target}">
 	 		<property name="type" value="feature" />
-	 		<property name="id" value="org.eclipse.pde.build.container.feature" />
+	 		<property name="id" value="${topLevelElementId}" />
  		</ant>
  	</target>
  

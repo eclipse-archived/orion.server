@@ -7,7 +7,9 @@
 		<property name="builder" value="${basedir}/builder" />
 		
 		<property name="allElementsFile" value="${basedir}/builder/allElements.xml" />
-		<ant antfile="${eclipse.pdebuild.scripts}/productBuild/productBuild.xml" />
+		<ant antfile="${eclipse.pdebuild.scripts}/productBuild/productBuild.xml" >
+			<property name="topLevelElementId" value="org.eclipse.pde.build.container.feature" />
+		</ant>
 	</target>
 	
 	<target name="closure" >

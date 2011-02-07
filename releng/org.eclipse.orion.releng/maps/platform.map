@@ -50,3 +50,6 @@ plugin@org.eclipse.team.core=p2IU,id=org.eclipse.team.core,repository=ECLIPSE_PL
 plugin@org.eclipse.core.resources=p2IU,id=org.eclipse.core.resources,repository=ECLIPSE_PLATFORM_REPO
 
 plugin@org.eclipse.wst.jsdt.debug.rhino.debugger=p2IU,id=org.eclipse.wst.jsdt.debug.rhino.debugger,repository=http://download.eclipse.org/releases/helios
+
+plugin@org.eclipse.test.performance=p2IU,id=org.eclipse.test.performance,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.core.tests.harness=p2IU,id=org.eclipse.core.tests.harness,repository=ECLIPSE_PLATFORM_REPO

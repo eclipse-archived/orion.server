@@ -1,0 +1,24 @@
+<project name="test.overrides" >
+
+	<property name="testSuper" value="Build specific targets and properties" />
+	<import file="${eclipse.pdebuild.templates}/headless-build/customTargets.xml"/>
+	
+	<target name="postFetch">
+		<replace dir="${buildDirectory}" includes="pluginVersions.properties,featureVersions.properties"  >
+			<replacefilter token="HEAD" value="${buildLabel}" />
+			<replacefilter token="origin/master" value="${buildLabel}" />
+		</replace>
+	</target>
+	
+	<target name="preProcessRepos" >
+		<p2.mirror destination="file:${repoBaseLocation}/tests" ignoreerrors="true">
+			<source location="${eclipsePlatformRepo}" />
+			<source location="${orbitRepo}" />
+			<slicingOptions includeOptional="false" includeNonGreedy="false" />
+			<iu id="org.eclipse.pde.junit.runtime" />
+			<iu id="org.eclipse.core.tests.resources" />
+			<iu id="org.eclipse.core.runtime.compatibility" />
+			<iu id="org.mozilla.javascript" />
+		</p2.mirror>
+	</target>
+</project>
