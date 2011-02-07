@@ -53,3 +53,4 @@ feature@org.eclipse.orion.server.search.feature=GIT,tag=v20110124-1700,repo=dev.
 feature@org.eclipse.orion.server.authentication.feature=GIT,tag=v20110127-1820,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=features/org.eclipse.orion.server.authentication-feature
 feature@org.eclipse.orion.client.feature=GIT,tag=v20110125-1800,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=features/org.eclipse.orion.client-feature
 feature@org.eclipse.orion.server.tests.feature=GIT,tag=v20110125-1800,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=features/org.eclipse.orion.server.tests-feature
+feature@org.eclipse.orion.releng.test.master=GIT,tag=v20110207-1200,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=features/org.eclipse.orion.releng.test.master-feature
