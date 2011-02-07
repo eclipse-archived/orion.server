@@ -20,23 +20,46 @@
 		<ant antfile="${eclipse.pdebuild.scripts}/build.xml" >
 			<property name="topLevelElementId" value="org.eclipse.orion.releng.test.master" />
 			<property name="customTargets" value="${builder}/customTargets-Tests.xml"/>
+			<property name="product" value="" />
 			<property name="skipMirroring" value="true" />
 			<property name="skipDirector" value="true" />
 		</ant>
 	</target>
 	
-	<target name="junitTests" depends="buildTests">
+	<target name="initProperties" >
+		<property file="${builder}/build.properties" />
+	</target>
+	
+	<target name="installTests" depends="buildTests,initProperties">
+		<!-- combine the build repo with the platform repo -->
+		<p2.composite.repository destination="file:${buildDirectory}/test/composite">
+			<add location="file:${buildDirectory}/buildRepo" />
+			<add location="${eclipsePlatformRepo}"/>
+		</p2.composite.repository>
+		
 		<!-- install server + tests feature -->
 		<p2.director flavor="tooling" roaming="true" profile="OrionTests"  
 					 extraArguments="-profileProperties org.eclipse.update.install.features=true"
-					 metadataRepository="file:${buildDirectory}/buildRepo"
-					 artifactRepository="file:${buildDirectory}/buildRepo" 
+					 metadataRepository="file:${buildDirectory}/test/composite"
+					 artifactRepository="file:${buildDirectory}/test/composite" 
 					 destination="${buildDirectory}/test/eclipse"
 					 logFile="${p2.director.log}">
 			<iu id="org.eclipse.orion" />
 			<iu id="org.eclipse.orion.server.tests.feature.feature.group" />
+			<iu id="org.eclipse.test" />
 		</p2.director>
-
+	</target>
+	
+	<target name="junitTests" depends="installTests">
+		<fileset id="testLib.ref" dir="${buildDirectory}/test/eclipse/plugins" includes="org.eclipse.test*/library.xml" />
+		<property name="testLibrary" refid="testLib.ref" />
+		
+		<subant target="run">
+			<property name="library-file" value="${buildDirectory}/test/eclipse/plugins/${testLibrary}" />
+			<property name="eclipse-home" value="${buildDirectory}/test/eclipse" />
+			<fileset dir="${buildDirectory}/test/eclipse/plugins" includes="*/test.xml" />
+		</subant>
+		
 	</target>
 	
 	<target name="jsTests" >
