@@ -57,7 +57,7 @@
 		<subant target="run">
 			<property name="library-file" value="${testLibrary}" />
 			<property name="eclipse-home" value="${buildDirectory}/test/eclipse" />
-			<fileset dir="${buildDirectory}/test/eclipse/plugins/*/test.xml" />
+			<fileset dir="${buildDirectory}/test/eclipse/plugins" includes="*/test.xml" />
 		</subant>
 		
 	</target>
