@@ -14,6 +14,7 @@
 	<target name="runTests" >
 		<antcall target="junitTests" />
 		<antcall target="jsTests" />
+		<antcall target="processResults" />
 	</target>
 
 	<target name="buildTests" >
@@ -58,7 +59,7 @@
 		<subant target="run">
 			<property name="library-file" value="${buildDirectory}/test/eclipse/plugins/${testLibrary}" />
 			<property name="eclipse-home" value="${buildDirectory}/test/eclipse" />
-			<fileset dir="${buildDirectory}/test/eclipse/plugins" includes="*/test.xml" />
+			<fileset dir="${buildDirectory}/test/eclipse/plugins" includes="*/test.xml" excludes="org.eclipse.core.tests.resources*" />
 			<property name="os" value="${osgi.os}" />
 			<property name="ws" value="${osgi.ws}" />
 			<property name="arch" value="${osgi.arch}" />
@@ -92,7 +93,6 @@
 		</condition>
 		
 		<antcall target="killXvfb" />
-		<antcall target="processResults" />
 	</target>
 		
 	<target name="killXvfb" if="killXvfb">
@@ -103,30 +103,16 @@
 	
 	<target name="processResults" >
 		<property name="dropLocation" value="${buildDirectory}/${buildLabel}/drop" />
-		<property name="testDir" value="${base}/tests/${buildLabel}" />
+		<property name="jsTestDir" value="${base}/tests/${buildLabel}" />
 		
-		<mkdir dir="${dropLocation}/tests" />
-		
-		<copy todir="${dropLocation}/tests">
-			<fileset dir="${testDir}" includes="**/*.xml" />
-		</copy>
-		
-		<!-- merge test results into a single xml -->
-		<replace dir="${dropLocation}/tests" token="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;" value="" >
-			<include name="*.xml" />
-		</replace>
-		
-		<echo file="${dropLocation}/testResults.xml" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;${line.separator}&lt;testsuites&gt;" />
-		<concat destfile="${dropLocation}/testResults.xml" append="true">
-			<fileset dir="${dropLocation}/tests" includes="*.xml" />
-		</concat>
-		<echo file="${dropLocation}/testResults.xml" message="&lt;/testsuites&gt;" append="true" />
-		
-		<!-- transform into html -->
+		<!-- js unit results -->
+		<junitreport todir="${dropLocation}" tofile="${dropLocation}/testResults.xml">
+			<fileset dir="${jsTestDir}" includes="**/*.xml" />
+		</junitreport>
 		<xslt style="${builder}/html/JUNIT.XSL" in="${dropLocation}/testResults.xml" out="${dropLocation}/testResults.html" />
-		
-		<!-- cleanup xml -->
-		<delete dir="${dropLocation}/tests" />
 		<delete file="${dropLocation}/testResults.xml" />
+		
+		<!-- junit results -->
+		<xslt style="${builder}/html/JUNIT.XSL" basedir="${buildDirectory}/test/eclipse/results" destdir="${dropLocation}" includes="*.xml" />
 	</target>
 </project>
