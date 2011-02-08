@@ -47,6 +47,7 @@
 			<iu id="org.eclipse.orion" />
 			<iu id="org.eclipse.orion.server.tests.feature.feature.group" />
 			<iu id="org.eclipse.test" />
+			<iu id="org.eclipse.ant.optional.junit" />
 		</p2.director>
 	</target>
 	
