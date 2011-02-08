@@ -142,7 +142,7 @@ public class ConfiguratorActivator implements BundleActivator {
 		}
 	}
 
-	Bundle getBundle(String symbolicName) {
+	protected Bundle getBundle(String symbolicName) {
 		PackageAdmin packageAdmin = packageAdminTracker.getService();
 		if (packageAdmin == null)
 			return null;

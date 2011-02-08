@@ -34,6 +34,14 @@ public class ServerTestsActivator implements BundleActivator {
 	private static String serverHost = null;
 	private static int serverPort = 0;
 
+	private static class TestConfigurator extends ConfiguratorActivator {
+		public TestConfigurator() throws BundleException {
+			super();
+			ensureBundleStarted(getBundle(EQUINOX_HTTP_JETTY));
+			ensureBundleStarted(getBundle(EQUINOX_HTTP_REGISTRY));
+		}
+	}
+
 	public static BundleContext getContext() {
 		return bundleContext;
 	}
@@ -42,12 +50,9 @@ public class ServerTestsActivator implements BundleActivator {
 		if (!initialized) {
 			try {
 				initialize();
-				ensureBundleStarted(EQUINOX_HTTP_JETTY);
-				ensureBundleStarted(EQUINOX_HTTP_REGISTRY);
-				//get the webide bundle started via lazy activation.
 				org.eclipse.orion.server.authentication.basic.Activator.getDefault();
 				Activator.getDefault();
-				ConfiguratorActivator.getDefault();
+				new TestConfigurator();
 			} catch (Exception e) {
 				e.printStackTrace();
 				return null;
@@ -85,8 +90,7 @@ public class ServerTestsActivator implements BundleActivator {
 		bundleContext = null;
 	}
 
-	static private void ensureBundleStarted(String symbolicName) throws BundleException {
-		Bundle bundle = getContext().getBundle(symbolicName);
+	static protected void ensureBundleStarted(Bundle bundle) throws BundleException {
 		if (bundle != null) {
 			if (bundle.getState() == Bundle.RESOLVED || bundle.getState() == Bundle.STARTING) {
 				bundle.start(Bundle.START_TRANSIENT);
