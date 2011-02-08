@@ -20,6 +20,7 @@ import org.eclipse.core.filesystem.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 
 /**
  * This class performs exports of files from the workspace.
@@ -34,7 +35,7 @@ public class Export {
 	}
 
 	public void doExport(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
-		IFileStore source = TransferUtil.getFileStore(sourcePath, req.getRemoteUser());
+		IFileStore source = NewFileServlet.getFileStore(sourcePath, req.getRemoteUser());
 
 		try {
 			if (source.fetchInfo().isDirectory() && source.childNames(EFS.NONE, null).length == 0) {

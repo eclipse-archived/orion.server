@@ -28,6 +28,7 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.*;
+import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.osgi.util.NLS;
 import org.osgi.framework.FrameworkUtil;
 
@@ -66,7 +67,7 @@ class Import {
 		IPath destPath = new Path(getPath()).append(getFileName());
 		try {
 			IFileStore source = EFS.getStore(new File(getStorageDirectory(), FILE_DATA).toURI());
-			IFileStore destination = TransferUtil.getFileStore(destPath, req.getRemoteUser());
+			IFileStore destination = NewFileServlet.getFileStore(destPath, req.getRemoteUser());
 			source.move(destination, EFS.OVERWRITE, null);
 		} catch (CoreException e) {
 			String msg = NLS.bind("Failed to complete file transfer on {0}", destPath.toString());
@@ -95,7 +96,7 @@ class Import {
 		IPath destPath = new Path(getPath());
 		try {
 			ZipFile source = new ZipFile(new File(getStorageDirectory(), FILE_DATA));
-			IFileStore destinationRoot = TransferUtil.getFileStore(destPath, req.getRemoteUser());
+			IFileStore destinationRoot = NewFileServlet.getFileStore(destPath, req.getRemoteUser());
 			Enumeration<? extends ZipEntry> entries = source.entries();
 			while (entries.hasMoreElements()) {
 				ZipEntry entry = entries.nextElement();

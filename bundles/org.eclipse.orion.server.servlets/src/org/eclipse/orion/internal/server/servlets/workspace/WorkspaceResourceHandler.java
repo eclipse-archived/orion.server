@@ -26,7 +26,6 @@ import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.orion.internal.server.core.IAliasRegistry;
 import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
-import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
@@ -163,15 +162,18 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		String layout = preferences.get("orion.file.layout", "flat").toLowerCase(); //$NON-NLS-1$ //$NON-NLS-2$
 
 		IFileStore projectStore;
+		URI location;
 		if ("usertree".equals(layout) && user != null) { //$NON-NLS-1$
 			//the user-tree layout organises projects by the user who created it
 			projectStore = root.getChild(user.substring(0, 2)).getChild(user).getChild(project.getId());
+			location = projectStore.toURI();
 		} else {
 			//default layout is a flat list of projects at the root
 			projectStore = root.getChild(project.getId());
+			location = new URI(null, projectStore.getName(), null);
 		}
 		projectStore.mkdir(EFS.NONE, null);
-		return new URI(null, projectStore.getName(), null);
+		return location;
 	}
 
 	private boolean getInit(JSONObject toAdd) {
@@ -230,13 +232,22 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		//we need the base location for the workspace servlet. Since this is a POST 
 		//on a single workspace we need to strip off the workspace id from the request URI
 		URI baseLocation = getURI(request);
-		baseLocation = baseLocation.resolve("");
 		JSONObject result = WebProjectResourceHandler.toJSON(project, baseLocation);
 		OrionServlet.writeJSONResponse(request, response, result);
 
-		// add user rights for the project
+		//add project location to response header
+		response.setHeader(ProtocolConstants.HEADER_LOCATION, result.optString(ProtocolConstants.KEY_LOCATION));
+		response.setStatus(HttpServletResponse.SC_CREATED);
+
+		// give the project creator access rights to the project
+		addProjectRights(request, response, result.getString(ProtocolConstants.KEY_LOCATION));
+		addProjectRights(request, response, result.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		return true;
+	}
+
+	private void addProjectRights(HttpServletRequest request, HttpServletResponse response, String location) throws ServletException {
 		try {
-			String locationPath = URI.create(result.getString(ProtocolConstants.KEY_LOCATION)).getPath();
+			String locationPath = URI.create(location).getPath();
 			//right to access the location
 			AuthorizationService.addUserRight(request.getRemoteUser(), locationPath);
 			//right to access all children of the location
@@ -248,8 +259,6 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		} catch (CoreException e) {
 			statusHandler.handleRequest(request, response, e.getStatus());
 		}
-
-		return true;
 	}
 
 	private boolean handleGetWorkspaceMetadata(HttpServletRequest request, HttpServletResponse response, WebWorkspace workspace) throws IOException {
@@ -272,7 +281,12 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 
 		// project Id should be the last URL segment
 		String[] s = toRemove.getString("ProjectURL").split("/"); //$NON-NLS-1$ //$NON-NLS-2$
-		WebProject project = WebProject.fromId(s[s.length - 1]);
+		String projectId = s[s.length - 1];
+		if (!WebProject.exists(projectId)) {
+			//nothing to do
+			return true;
+		}
+		WebProject project = WebProject.fromId(projectId);
 
 		//we need the base location for the workspace servlet. Since this is a POST 
 		//on a single workspace we need to strip off the workspace id from the request URI
@@ -337,13 +351,8 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 	}
 
 	private void initialize() {
-		for (WebProject project : WebProject.allProjects()) {
-			try {
-				registerProjectLocation(project);
-			} catch (CoreException e) {
-				LogHelper.log(e);
-			}
-		}
+		for (WebProject project : WebProject.allProjects())
+			registerProjectLocation(project);
 	}
 
 	private boolean isAllowedLinkDestination(String content) {
@@ -375,7 +384,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		return false;
 	}
 
-	private void registerProjectLocation(WebProject project) throws CoreException {
+	private void registerProjectLocation(WebProject project) {
 		URI contentURI = project.getContentLocation();
 		//if the location is relative to this server, we need to register an alias so the file service can find it
 		if (!contentURI.isAbsolute() || "file".equals(contentURI.getScheme()) || "gitfs".equals(contentURI.getScheme())) { //$NON-NLS-1$ //$NON-NLS-2$
