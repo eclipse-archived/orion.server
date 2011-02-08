@@ -59,7 +59,7 @@
 		<subant target="run">
 			<property name="library-file" value="${buildDirectory}/test/eclipse/plugins/${testLibrary}" />
 			<property name="eclipse-home" value="${buildDirectory}/test/eclipse" />
-			<fileset dir="${buildDirectory}/test/eclipse/plugins" includes="*/test.xml" excludes="org.eclipse.core.tests.resources*" />
+			<fileset dir="${buildDirectory}/test/eclipse/plugins" includes="*/test.xml" excludes="org.eclipse.core.tests.resources_*/*" />
 			<property name="os" value="${osgi.os}" />
 			<property name="ws" value="${osgi.ws}" />
 			<property name="arch" value="${osgi.arch}" />
@@ -106,7 +106,7 @@
 		<property name="jsTestDir" value="${base}/tests/${buildLabel}" />
 		
 		<!-- js unit results -->
-		<junitreport todir="${dropLocation}" tofile="${dropLocation}/testResults.xml">
+		<junitreport todir="${dropLocation}" tofile="testResults.xml">
 			<fileset dir="${jsTestDir}" includes="**/*.xml" />
 		</junitreport>
 		<xslt style="${builder}/html/JUNIT.XSL" in="${dropLocation}/testResults.xml" out="${dropLocation}/testResults.html" />
