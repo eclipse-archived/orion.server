@@ -62,47 +62,51 @@
 <tr><td><div class="homeitem3col">
 <h3><a name="EclipseOrion"> Eclipse Orion&nbsp;</a></h3>
 <table BORDER="0" CELLSPACING="2" CELLPADDING="0" WIDTH="99%" bordercolor="#999999" > 
-<tr> <td align="RIGHT" valign="TOP" width="5%"> <div align="left"><b>Status</b></div></td><td width="25%"><b>Platform</b></td><td width="7%"><b>Download</b></td><td width="7%"><b>Size</b></td><td width="37%"><b>File</b></td> 
-</tr> 
+<tr><td width="25%"><b>Platform</b></td><td width="7%"><b>Download</b></td><td width="7%"><b>Size</b></td><td width="37%"><b>File</b></td></tr> 
 
-<tr><td><div align="left"><img src = "OK.gif" width="19" height="23" /></div></td>
+<tr>
 <td>Linux x86</td>
 <td><div align="left" id="repdownloadlink"><a href="download.php?dropFile=eclipse-orion-@repbuilddate@-linux.gtk.x86.zip">(http)</a>&nbsp;&nbsp;</div></td>
 <td id="repdownloadsize">18M</td>
 <td id="repdownloadlabel">eclipse-orion-@repbuilddate@-linux.gtk.x86.zip</td>
 </tr>
-<tr><td><div align="left"><img src = "OK.gif" width="19" height="23" /></div></td>
+<tr>
 <td>Linux x86_64</td>
 <td><div align="left" id="repdownloadlink"><a href="download.php?dropFile=eclipse-orion-@repbuilddate@-linux.gtk.x86_64.zip">(http)</a>&nbsp;&nbsp;</div></td>
 <td id="repdownloadsize">18M</td>
 <td id="repdownloadlabel">eclipse-orion-@repbuilddate@-linux.gtk.x86_64.zip</td>
 </tr>
-<tr><td><div align="left"><img src = "OK.gif" width="19" height="23" /></div></td>
+<tr>
 <td>Mac OSX x86</td>
 <td><div align="left" id="repdownloadlink"><a href="download.php?dropFile=eclipse-orion-@repbuilddate@-macosx.cocoa.x86.zip">(http)</a>&nbsp;&nbsp;</div></td>
 <td id="repdownloadsize">18M</td>
 <td id="repdownloadlabel">eclipse-orion-@repbuilddate@-macosx.cocoa.x86.zip</td>
 </tr>
-<tr><td><div align="left"><img src = "OK.gif" width="19" height="23" /></div></td>
+<tr>
 <td>Windows x86</td>
 <td><div align="left" id="repdownloadlink"><a href="download.php?dropFile=eclipse-orion-@repbuilddate@-win32.win32.x86.zip">(http)</a>&nbsp;&nbsp;</div></td>
 <td id="repdownloadsize">18M</td>
 <td id="repdownloadlabel">eclipse-orion-@repbuilddate@-win32.win32.x86.zip</td>
 </tr>
-<tr><td><div align="left"><img src = "OK.gif" width="19" height="23" /></div></td>
+<tr>
 <td>Windows x86_64</td>
 <td><div align="left" id="repdownloadlink"><a href="download.php?dropFile=eclipse-orion-@repbuilddate@-win32.win32.x86_64.zip">(http)</a>&nbsp;&nbsp;</div></td>
 <td id="repdownloadsize">18M</td>
 <td id="repdownloadlabel">eclipse-orion-@repbuilddate@-win32.win32.x86_64.zip</td>
 </tr>
-
-</table>
 </div>
-
 </td>
 </tr>
 </table>
-<iframe src="testResults.html" width="100%" height="350" marginwidth="20" marginheight="" frameborder="0"></iframe>
+<h3><a name="TestResults"> Test Results&nbsp;</a></h3>
+<table BORDER="0" CELLSPACING="2" CELLPADDING="0" WIDTH="99%" bordercolor="#999999" >
+<tr><td width="5%"> <div align="center"><b>Status</b></div></td><td width="80%"><b>Test</b></td></tr>
+<tr><td><div align="center"><img src="@JSUNIT@"></div></td><td><a href="testResults.html">Javascript Unit Tests</a></td></tr>
+<tr><td><div align="center"><img src="@SERVER-TESTS@"></div></td><td><a href="org.eclipse.orion.server.tests.AllServerTests.html">JUnit Tests: Server Tests</a></td></tr>
+<tr><td><div align="center"><img src="@SERVER-FILESYSTEM@"></div></td><td><a href="org.eclipse.orion.server.tests.filesystem.git.AllTests.html">JUnit Tests: Server Filesystem Tests</a></td></tr>
+</tr>
+</table>
+
 <div id="footer">
 	<ul id="footernav">
 

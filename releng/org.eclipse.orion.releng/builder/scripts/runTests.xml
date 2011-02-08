@@ -114,5 +114,27 @@
 		
 		<!-- junit results -->
 		<xslt style="${builder}/html/JUNIT.XSL" basedir="${buildDirectory}/test/eclipse/results" destdir="${dropLocation}" includes="*.xml" />
+		
+		<!-- update the test status images -->
+		<condition property="jsunitStatus" value="smiley.gif" else="frown.gif" >
+			<isfileselected file="${dropLocation}/testResults.html">
+				<contains text="&lt;td&gt;0&lt;/td&gt;&lt;td&gt;0&lt;/td&gt;&lt;td&gt;100.00%&lt;/td&gt;" />
+			</isfileselected>
+		</condition>
+		<condition property="serverStatus" value="smiley.gif" else="frown.gif" >
+			<isfileselected file="${dropLocation}/org.eclipse.orion.server.tests.AllServerTests.html">
+				<contains text="&lt;td&gt;0&lt;/td&gt;&lt;td&gt;0&lt;/td&gt;&lt;td&gt;100.00%&lt;/td&gt;" />
+			</isfileselected>
+		</condition>
+		<condition property="filesystemStatus" value="smiley.gif" else="frown.gif" >
+			<isfileselected file="${dropLocation}/org.eclipse.orion.server.tests.filesystem.git.AllTests.html">
+				<contains text="&lt;td&gt;0&lt;/td&gt;&lt;td&gt;0&lt;/td&gt;&lt;td&gt;100.00%&lt;/td&gt;" />
+			</isfileselected>
+		</condition>
+		<replace file="${dropLocation}/index.html" >
+			<replacefilter token="@JSUNIT@" value="${jsunitStatus}" />
+			<replacefilter token="@SERVER-TESTS@" value="${serverStatus}" />
+			<replacefilter token="@SERVER-FILESYSTEM@" value="${filesystemStatus}" />
+		</replace>
 	</target>
 </project>
