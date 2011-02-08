@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2010, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -15,6 +15,11 @@ import org.eclipse.equinox.app.IApplicationContext;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
 
+/**
+ * The main application for the Orion server. This application just starts the required
+ * server bundles and allows the application to complete asynchronously when
+ * closed from the OSGi console.
+ */
 public class WebApplication implements IApplication {
 	private static final String EQUINOX_HTTP_JETTY = "org.eclipse.equinox.http.jetty"; //$NON-NLS-1$
 	private static final String EQUINOX_HTTP_REGISTRY = "org.eclipse.equinox.http.registry"; //$NON-NLS-1$
@@ -36,7 +41,7 @@ public class WebApplication implements IApplication {
 		Bundle bundle = ConfiguratorActivator.getDefault().getBundle(symbolicName);
 		if (bundle != null) {
 			if (bundle.getState() == Bundle.RESOLVED || bundle.getState() == Bundle.STARTING) {
-				bundle.start();
+				bundle.start(Bundle.START_TRANSIENT);
 			}
 		}
 	}
