@@ -40,7 +40,7 @@ public class UserAdminActivator implements BundleActivator {
 	private ServiceTracker<IAuthenticationService, IAuthenticationService> authServiceTracker;
 
 	/**
-	 * If an {@link OrionUserAdmin} of this name exists it will be returned as default by {@link #getUserStore()}
+	 * If an {@link IOrionCredentialsService} of this name exists it will be returned as default by {@link #getUserStore()}
 	 */
 	public static final String eclipseWebUsrAdminName = "Orion";
 

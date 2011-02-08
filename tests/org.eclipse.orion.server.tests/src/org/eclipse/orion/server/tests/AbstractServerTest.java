@@ -19,7 +19,7 @@ import junit.framework.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.resources.Base64;
-import org.eclipse.orion.server.useradmin.OrionUserAdmin;
+import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.User;
 import org.eclipse.orion.server.useradmin.UserServiceHelper;
 
@@ -46,7 +46,7 @@ public class AbstractServerTest {
 	}
 
 	protected void createUser(String login, String password) {
-		OrionUserAdmin userAdmin = UserServiceHelper.getDefault().getUserStore();
+		IOrionCredentialsService userAdmin = UserServiceHelper.getDefault().getUserStore();
 		if (userAdmin.getUser("login", login) != null)
 			return;
 		User newUser = new User(login, "", password);
