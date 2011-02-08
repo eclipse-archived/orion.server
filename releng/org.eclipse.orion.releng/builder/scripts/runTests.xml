@@ -47,6 +47,7 @@
 			<iu id="org.eclipse.orion" />
 			<iu id="org.eclipse.orion.server.tests.feature.feature.group" />
 			<iu id="org.eclipse.test" />
+			<iu id="org.eclipse.ant.optional.junit" />
 		</p2.director>
 	</target>
 	
@@ -58,6 +59,9 @@
 			<property name="library-file" value="${buildDirectory}/test/eclipse/plugins/${testLibrary}" />
 			<property name="eclipse-home" value="${buildDirectory}/test/eclipse" />
 			<fileset dir="${buildDirectory}/test/eclipse/plugins" includes="*/test.xml" />
+			<property name="os" value="${osgi.os}" />
+			<property name="ws" value="${osgi.ws}" />
+			<property name="arch" value="${osgi.arch}" />
 		</subant>
 		
 	</target>
