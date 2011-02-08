@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.eclipse.core.filesystem.*;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.tests.AbstractServerTest;
@@ -57,9 +58,14 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	}
 
 	protected static void createDirectory(String path) throws CoreException {
-		IFileStore dir = EFS.getStore(URI.create(FILESTORE_PREFIX + path));
-		dir.mkdir(EFS.NONE, null);
-		IFileInfo info = dir.fetchInfo();
+		IFileInfo info = null;
+		try {
+			IFileStore dir = EFS.getStore(URIUtil.fromString(FILESTORE_PREFIX + path));
+			dir.mkdir(EFS.NONE, null);
+			info = dir.fetchInfo();
+		} catch (URISyntaxException e) {
+			assertTrue(e.getMessage(), false);
+		}
 		assertTrue("Coudn't create directory " + path, info.exists() && info.isDirectory());
 	}
 

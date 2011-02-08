@@ -324,6 +324,16 @@ public class CoreFilesTest extends FileSystemTest {
 		checkDirectoryMetadata(depthChildren.get(0), "dir3", null, null, null, null, null);
 
 		assertEquals("Directory information with depth = 3 returned too deep", 0, getDirectoryChildren(depthChildren.get(0)).size());
+	}
+
+	@Test
+	public void testDirectoryWithSpaces() throws CoreException, IOException, SAXException {
+		String basePath = "sampe/dir with spaces/long" + System.currentTimeMillis();
+		createDirectory(basePath);
+
+		WebRequest request = getGetFilesRequest(basePath);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 	}
 

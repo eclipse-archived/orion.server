@@ -11,6 +11,7 @@
 package org.eclipse.orion.internal.server.servlets.workspace;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
@@ -61,7 +62,12 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 		JSONArray parents = new JSONArray();
 		//for all but the project we can just manipulate the path to get the name and location
 		while (resourcePath.segmentCount() > 2) {
-			addParent(parents, resourcePath.lastSegment(), resource.resolve(resourcePath.toString()));
+			try {
+				addParent(parents, resourcePath.lastSegment(), resource.resolve(new URI(null, resourcePath.toString(), null)));
+			} catch (URISyntaxException e) {
+				//ignore this parent
+				LogHelper.log(e);
+			}
 			resourcePath = resourcePath.removeLastSegments(1);
 		}
 		//add the project
