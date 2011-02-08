@@ -44,7 +44,7 @@ public class Activator implements BundleActivator {
 	 */
 	public void start(BundleContext bundleContext) throws Exception {
 		Activator.bundleContext = bundleContext;
-		registerService = bundleContext.registerService(UserAdmin.class, new SecureStorageUserAdmin(), null);
+		registerService = bundleContext.registerService(UserAdmin.class, new SecureStorageCredentialsService(), null);
 	}
 
 	/*

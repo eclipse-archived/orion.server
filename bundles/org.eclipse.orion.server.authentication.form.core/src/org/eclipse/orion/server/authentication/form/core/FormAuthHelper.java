@@ -28,8 +28,8 @@ import org.slf4j.LoggerFactory;
  */
 public class FormAuthHelper {
 
-	private static Map<String, OrionUserAdmin> userStores = new HashMap<String, OrionUserAdmin>();
-	private static OrionUserAdmin defaultUserAdmin;
+	private static Map<String, IOrionCredentialsService> userStores = new HashMap<String, IOrionCredentialsService>();
+	private static IOrionCredentialsService defaultUserAdmin;
 	private static boolean everyoneCanCreateUsers;
 
 	static {
@@ -148,13 +148,13 @@ public class FormAuthHelper {
 		return everyoneCanCreateUsers ? defaultUserAdmin.canCreateUsers() : false;
 	}
 
-	public static OrionUserAdmin getDefaultUserAdmin() {
+	public static IOrionCredentialsService getDefaultUserAdmin() {
 		return defaultUserAdmin;
 	}
 
 	public void setUserAdmin(UserAdmin userAdmin) {
-		if (userAdmin instanceof OrionUserAdmin) {
-			OrionUserAdmin eclipseWebUserAdmin = (OrionUserAdmin) userAdmin;
+		if (userAdmin instanceof IOrionCredentialsService) {
+			IOrionCredentialsService eclipseWebUserAdmin = (IOrionCredentialsService) userAdmin;
 			userStores.put(eclipseWebUserAdmin.getStoreName(), eclipseWebUserAdmin);
 			if (defaultUserAdmin == null || UserAdminActivator.eclipseWebUsrAdminName.equals(eclipseWebUserAdmin.getStoreName())) {
 				defaultUserAdmin = eclipseWebUserAdmin;
@@ -163,11 +163,11 @@ public class FormAuthHelper {
 	}
 
 	public void unsetUserAdmin(UserAdmin userAdmin) {
-		if (userAdmin instanceof OrionUserAdmin) {
-			OrionUserAdmin eclipseWebUserAdmin = (OrionUserAdmin) userAdmin;
+		if (userAdmin instanceof IOrionCredentialsService) {
+			IOrionCredentialsService eclipseWebUserAdmin = (IOrionCredentialsService) userAdmin;
 			userStores.remove(eclipseWebUserAdmin.getStoreName());
 			if (userAdmin.equals(defaultUserAdmin)) {
-				Iterator<OrionUserAdmin> iterator = userStores.values().iterator();
+				Iterator<IOrionCredentialsService> iterator = userStores.values().iterator();
 				if (iterator.hasNext())
 					defaultUserAdmin = iterator.next();
 			}

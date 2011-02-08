@@ -36,7 +36,10 @@
 			<property name="data-dir" value="${server-folder}" />
 			<property name="plugin-name" value="${plugin-name}" />
 			<property name="classname" value="org.eclipse.orion.server.tests.AllServerTests" />
-			<property name="extraVMargs" value="-Declipse.log.level=WARNING" />
+			<property name="extraVMargs" value="-Declipse.log.level=WARNING
+												-Dorg.eclipse.equinox.http.jetty.http.port=8080
+												-Dorg.eclipse.equinox.http.jetty.autostart=false
+												-Dorion.tests.authtype=Basic" />
 		</ant>
 	</target>
 
@@ -64,7 +67,7 @@
 			<property name="plugin-name" value="${plugin-name}" />
 			<property name="classname" value="org.eclipse.orion.server.tests.performance.AllPerformanceTests" />
 			<property name="timeout" value="12000000" />
-			<property name="extraVMargs" value="-Declipse.log.level=WARNING" />
+			<property name="extraVMargs" value="-Declipse.log.level=WARNING -Dorg.eclipse.equinox.http.jetty.http.port=8080 " />
 		</ant>
 	</target>
 

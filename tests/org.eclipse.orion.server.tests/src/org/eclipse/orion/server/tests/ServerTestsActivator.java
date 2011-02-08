@@ -16,13 +16,17 @@ import java.util.Hashtable;
 import org.eclipse.equinox.http.jetty.JettyConfigurator;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.server.configurator.ConfiguratorActivator;
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.BundleException;
 import org.osgi.framework.ServiceReference;
 import org.osgi.service.http.HttpService;
 import org.osgi.util.tracker.ServiceTracker;
 
 public class ServerTestsActivator implements BundleActivator {
+	private static final String EQUINOX_HTTP_JETTY = "org.eclipse.equinox.http.jetty"; //$NON-NLS-1$
+	private static final String EQUINOX_HTTP_REGISTRY = "org.eclipse.equinox.http.registry"; //$NON-NLS-1$
 
 	public static BundleContext bundleContext;
 	private static ServiceTracker httpServiceTracker;
@@ -38,6 +42,8 @@ public class ServerTestsActivator implements BundleActivator {
 		if (!initialized) {
 			try {
 				initialize();
+				ensureBundleStarted(EQUINOX_HTTP_JETTY);
+				ensureBundleStarted(EQUINOX_HTTP_REGISTRY);
 				//get the webide bundle started via lazy activation.
 				org.eclipse.orion.server.authentication.basic.Activator.getDefault();
 				Activator.getDefault();
@@ -77,5 +83,14 @@ public class ServerTestsActivator implements BundleActivator {
 
 		httpServiceTracker = null;
 		bundleContext = null;
+	}
+
+	static private void ensureBundleStarted(String symbolicName) throws BundleException {
+		Bundle bundle = getContext().getBundle(symbolicName);
+		if (bundle != null) {
+			if (bundle.getState() == Bundle.RESOLVED || bundle.getState() == Bundle.STARTING) {
+				bundle.start(Bundle.START_TRANSIENT);
+			}
+		}
 	}
 }

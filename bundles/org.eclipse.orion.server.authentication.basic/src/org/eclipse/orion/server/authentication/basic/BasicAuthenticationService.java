@@ -25,7 +25,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.authentication.IAuthenticationService;
 import org.eclipse.orion.server.core.resources.Base64;
-import org.eclipse.orion.server.useradmin.OrionUserAdmin;
+import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.UserAdminActivator;
 import org.osgi.service.useradmin.Authorization;
 import org.osgi.service.useradmin.User;
@@ -33,8 +33,8 @@ import org.osgi.service.useradmin.UserAdmin;
 
 public class BasicAuthenticationService implements IAuthenticationService {
 
-	private static Map<String, OrionUserAdmin> userStores = new HashMap<String, OrionUserAdmin>();
-	private static OrionUserAdmin defaultUserAdmin;
+	private static Map<String, IOrionCredentialsService> userStores = new HashMap<String, IOrionCredentialsService>();
+	private static IOrionCredentialsService defaultUserAdmin;
 
 	public BasicAuthenticationService() {
 		super();
@@ -97,8 +97,8 @@ public class BasicAuthenticationService implements IAuthenticationService {
 	}
 
 	public void bindUserAdmin(UserAdmin userAdmin) {
-		if (userAdmin instanceof OrionUserAdmin) {
-			OrionUserAdmin eclipseWebUserAdmin = (OrionUserAdmin) userAdmin;
+		if (userAdmin instanceof IOrionCredentialsService) {
+			IOrionCredentialsService eclipseWebUserAdmin = (IOrionCredentialsService) userAdmin;
 			userStores.put(eclipseWebUserAdmin.getStoreName(), eclipseWebUserAdmin);
 			if (defaultUserAdmin == null || UserAdminActivator.eclipseWebUsrAdminName.equals(eclipseWebUserAdmin.getStoreName())) {
 				defaultUserAdmin = eclipseWebUserAdmin;
@@ -107,11 +107,11 @@ public class BasicAuthenticationService implements IAuthenticationService {
 	}
 
 	public void unbindUserAdmin(UserAdmin userAdmin) {
-		if (userAdmin instanceof OrionUserAdmin) {
-			OrionUserAdmin eclipseWebUserAdmin = (OrionUserAdmin) userAdmin;
+		if (userAdmin instanceof IOrionCredentialsService) {
+			IOrionCredentialsService eclipseWebUserAdmin = (IOrionCredentialsService) userAdmin;
 			userStores.remove(eclipseWebUserAdmin.getStoreName());
 			if (userAdmin.equals(defaultUserAdmin)) {
-				Iterator<OrionUserAdmin> iterator = userStores.values().iterator();
+				Iterator<IOrionCredentialsService> iterator = userStores.values().iterator();
 				if (iterator.hasNext())
 					defaultUserAdmin = iterator.next();
 			}
