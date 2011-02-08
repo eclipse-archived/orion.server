@@ -19,8 +19,8 @@ import org.osgi.service.useradmin.UserAdmin;
 
 public class UserServiceHelper {
 
-	private Map<String, OrionUserAdmin> userStores = new HashMap<String, OrionUserAdmin>();
-	private OrionUserAdmin defaultUserAdmin;
+	private Map<String, IOrionCredentialsService> userStores = new HashMap<String, IOrionCredentialsService>();
+	private IOrionCredentialsService defaultUserAdmin;
 	private static UserServiceHelper singleton;
 
 	public static UserServiceHelper getDefault() {
@@ -43,8 +43,8 @@ public class UserServiceHelper {
 	}
 
 	public void setUserAdmin(UserAdmin userAdmin) {
-		if (userAdmin instanceof OrionUserAdmin) {
-			OrionUserAdmin eclipseWebUserAdmin = (OrionUserAdmin) userAdmin;
+		if (userAdmin instanceof IOrionCredentialsService) {
+			IOrionCredentialsService eclipseWebUserAdmin = (IOrionCredentialsService) userAdmin;
 			userStores.put(eclipseWebUserAdmin.getStoreName(), eclipseWebUserAdmin);
 			if (defaultUserAdmin == null || UserAdminActivator.eclipseWebUsrAdminName.equals(eclipseWebUserAdmin.getStoreName())) {
 				defaultUserAdmin = eclipseWebUserAdmin;
@@ -53,11 +53,11 @@ public class UserServiceHelper {
 	}
 
 	public void unsetUserAdmin(UserAdmin userAdmin) {
-		if (userAdmin instanceof OrionUserAdmin) {
-			OrionUserAdmin eclipseWebUserAdmin = (OrionUserAdmin) userAdmin;
+		if (userAdmin instanceof IOrionCredentialsService) {
+			IOrionCredentialsService eclipseWebUserAdmin = (IOrionCredentialsService) userAdmin;
 			userStores.remove(eclipseWebUserAdmin.getStoreName());
 			if (userAdmin.equals(defaultUserAdmin)) {
-				Iterator<OrionUserAdmin> iterator = userStores.values().iterator();
+				Iterator<IOrionCredentialsService> iterator = userStores.values().iterator();
 				if (iterator.hasNext())
 					defaultUserAdmin = iterator.next();
 			}
@@ -65,15 +65,15 @@ public class UserServiceHelper {
 
 	}
 
-	public OrionUserAdmin getUserStore(String storeName) throws UnsupportedUserStoreException {
-		OrionUserAdmin userAdmin = userStores.get(storeName);
+	public IOrionCredentialsService getUserStore(String storeName) throws UnsupportedUserStoreException {
+		IOrionCredentialsService userAdmin = userStores.get(storeName);
 		if(userAdmin==null){
 			throw new UnsupportedUserStoreException(storeName);
 		}
 		return userAdmin;
 	}
 
-	public OrionUserAdmin getUserStore() {
+	public IOrionCredentialsService getUserStore() {
 		return defaultUserAdmin;
 	}
 

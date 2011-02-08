@@ -24,7 +24,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.servlets.OrionServlet;
-import org.eclipse.orion.server.useradmin.OrionUserAdmin;
+import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.UnsupportedUserStoreException;
 import org.eclipse.orion.server.useradmin.User;
 import org.eclipse.orion.server.useradmin.UserServiceHelper;
@@ -112,7 +112,7 @@ public class UserServlet extends OrionServlet {
 		if (login == null || login.length() == 0) {
 			return "User login is required";
 		}
-		OrionUserAdmin userAdmin;
+		IOrionCredentialsService userAdmin;
 		
 		userAdmin = (userStore == null || "".equals(userStore)) ? getUserAdmin() : getUserAdmin(userStore);
 		
@@ -139,7 +139,7 @@ public class UserServlet extends OrionServlet {
 	protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		String pathString = req.getPathInfo();
 
-		OrionUserAdmin userAdmin;
+		IOrionCredentialsService userAdmin;
 		try {
 			userAdmin = req.getParameter("store") == null ? getUserAdmin() : getUserAdmin(req.getParameter("store"));
 		} catch (UnsupportedUserStoreException e) {
@@ -194,7 +194,7 @@ public class UserServlet extends OrionServlet {
 	protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		String pathString = req.getPathInfo();
 
-		OrionUserAdmin userAdmin;
+		IOrionCredentialsService userAdmin;
 		try {
 			userAdmin = req.getParameter("store") == null ? getUserAdmin() : getUserAdmin(req.getParameter("store"));
 		} catch (UnsupportedUserStoreException e) {
@@ -229,11 +229,11 @@ public class UserServlet extends OrionServlet {
 
 	}
 
-	private OrionUserAdmin getUserAdmin(String userStoreId) throws UnsupportedUserStoreException {
+	private IOrionCredentialsService getUserAdmin(String userStoreId) throws UnsupportedUserStoreException {
 		return UserServiceHelper.getDefault().getUserStore(userStoreId);
 	}
 
-	private OrionUserAdmin getUserAdmin() {
+	private IOrionCredentialsService getUserAdmin() {
 		return UserServiceHelper.getDefault().getUserStore();
 	}
 
