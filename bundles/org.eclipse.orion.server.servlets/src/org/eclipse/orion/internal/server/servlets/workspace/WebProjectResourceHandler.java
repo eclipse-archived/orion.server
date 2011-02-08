@@ -14,6 +14,7 @@ import java.net.URI;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -29,7 +30,9 @@ public class WebProjectResourceHandler extends WebElementResourceHandler<WebProj
 	public static JSONObject toJSON(WebProject project, URI parentLocation) {
 		JSONObject result = WebElementResourceHandler.toJSON(project);
 		try {
-			result.put(ProtocolConstants.KEY_LOCATION, WorkspaceResourceHandler.computeProjectContentLocation(parentLocation, project));
+			result.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(parentLocation, project.getId()));
+			URI base = parentLocation.resolve("");
+			result.put(ProtocolConstants.KEY_CONTENT_LOCATION, WorkspaceResourceHandler.computeProjectContentLocation(base, project));
 		} catch (JSONException e) {
 			//can't happen because key and value are well-formed
 		}

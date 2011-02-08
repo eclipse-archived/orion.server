@@ -10,15 +10,12 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.workspace;
 
-import org.eclipse.orion.server.core.users.OrionScope;
-
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-
-import org.eclipse.orion.internal.server.core.Activator;
-
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.IScopeContext;
+import org.eclipse.orion.internal.server.core.Activator;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.users.OrionScope;
 import org.osgi.service.prefs.BackingStoreException;
 
 /**
@@ -84,4 +81,8 @@ public class WebElement {
 		store.put(ProtocolConstants.KEY_NAME, name);
 	}
 
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + "(Id=" + getId() + ", Name=" + getName() + ")";
+	}
 }

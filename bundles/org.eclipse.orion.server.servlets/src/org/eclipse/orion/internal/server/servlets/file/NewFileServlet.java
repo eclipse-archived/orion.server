@@ -18,7 +18,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
-import org.eclipse.orion.internal.server.core.IAliasRegistry;
 import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.servlets.OrionServlet;
@@ -37,10 +36,7 @@ public class NewFileServlet extends OrionServlet {
 	private ServletResourceHandler<IFileStore> fileSerializer;
 	private final URI rootStoreURI;
 
-	private IAliasRegistry aliasRegistry;
-
 	public NewFileServlet() {
-		aliasRegistry = Activator.getDefault();
 		rootStoreURI = Activator.getDefault().getRootLocationURI();
 		fileSerializer = new ServletFileStoreHandler(rootStoreURI, getStatusHandler());
 	}
@@ -80,10 +76,10 @@ public class NewFileServlet extends OrionServlet {
 	 * Returns the store representing the file to be retrieved for the given
 	 * request or <code>null</code> if an error occurred.
 	 */
-	protected IFileStore getFileStore(IPath path, String authority) {
+	public static IFileStore getFileStore(IPath path, String authority) {
 		//first check if we have an alias registered
 		if (path.segmentCount() > 0) {
-			URI alias = aliasRegistry.lookupAlias(path.segment(0));
+			URI alias = Activator.getDefault().lookupAlias(path.segment(0));
 			if (alias != null)
 				try {
 					return EFS.getStore(Util.getURIWithAuthority(alias, authority)).getFileStore(path.removeFirstSegments(1));
@@ -93,6 +89,7 @@ public class NewFileServlet extends OrionServlet {
 				}
 		}
 		//assume it is relative to the root
+		URI rootStoreURI = Activator.getDefault().getRootLocationURI();
 		try {
 			return EFS.getStore(Util.getURIWithAuthority(rootStoreURI, authority)).getFileStore(path);
 		} catch (CoreException e) {

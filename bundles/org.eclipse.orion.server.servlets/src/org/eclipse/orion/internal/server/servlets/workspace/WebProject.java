@@ -10,16 +10,14 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.workspace;
 
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.resources.Base64Counter;
-
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.resources.Base64Counter;
 import org.osgi.service.prefs.BackingStoreException;
 
 /**
