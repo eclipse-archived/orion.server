@@ -454,7 +454,7 @@ public class GitFileStore extends FileStore {
 	}
 
 	private void rm() throws CoreException {
-		// TODO: use org.eclipse.jgit.api.RmCommand, see Enhancement 379
+		// TODO: use org.eclipse.jgit.api.RmCommand, see bug 336609
 		if (!isRoot()) {
 			try {
 				Repository local = getLocalRepo();
