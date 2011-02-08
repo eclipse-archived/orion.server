@@ -5,11 +5,9 @@ Bundle-SymbolicName: org.eclipse.orion.server.tests
 Bundle-Version: 0.2.0.qualifier
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Require-Bundle: org.junit;bundle-version="4.3.1",
- org.eclipse.core.resources;bundle-version="3.6.0",
  org.json;bundle-version="1.0.0",
  org.eclipse.equinox.common;bundle-version="3.6.0",
  org.eclipse.core.jobs;bundle-version="3.5.0",
- org.eclipse.core.runtime;bundle-version="3.6.0",
  org.mozilla.javascript;bundle-version="1.7.2",
  org.eclipse.orion.server.configurator;bundle-version="0.1.0",
  org.eclipse.orion.server.core;bundle-version="0.1.0",
@@ -19,7 +17,9 @@ Require-Bundle: org.junit;bundle-version="4.3.1",
  org.eclipse.orion.server.authentication.basic;bundle-version="0.1.0",
  org.eclipse.test.performance;bundle-version="3.7.0",
  org.eclipse.core.tests.harness;bundle-version="3.7.0",
- org.eclipse.orion.server.filesystem.git;bundle-version="0.1.0"
+ org.eclipse.orion.server.filesystem.git;bundle-version="0.1.0",
+ org.eclipse.equinox.preferences;bundle-version="3.4.0",
+ org.eclipse.osgi;bundle-version="3.7.0"
 Bundle-ActivationPolicy: lazy
 Bundle-Activator: org.eclipse.orion.server.tests.ServerTestsActivator
 Import-Package: org.eclipse.equinox.http.jetty;version="1.1.0",
