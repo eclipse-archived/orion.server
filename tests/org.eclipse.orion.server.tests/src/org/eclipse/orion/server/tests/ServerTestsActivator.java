@@ -22,6 +22,7 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.ServiceReference;
 import org.osgi.service.http.HttpService;
+import org.osgi.service.packageadmin.PackageAdmin;
 import org.osgi.util.tracker.ServiceTracker;
 
 public class ServerTestsActivator implements BundleActivator {
@@ -30,17 +31,11 @@ public class ServerTestsActivator implements BundleActivator {
 
 	public static BundleContext bundleContext;
 	private static ServiceTracker httpServiceTracker;
+	private static ServiceTracker<PackageAdmin, PackageAdmin> packageAdminTracker;
+
 	private static boolean initialized = false;
 	private static String serverHost = null;
 	private static int serverPort = 0;
-
-	private static class TestConfigurator extends ConfiguratorActivator {
-		public TestConfigurator() throws BundleException {
-			super();
-			ensureBundleStarted(getBundle(EQUINOX_HTTP_JETTY));
-			ensureBundleStarted(getBundle(EQUINOX_HTTP_REGISTRY));
-		}
-	}
 
 	public static BundleContext getContext() {
 		return bundleContext;
@@ -50,9 +45,13 @@ public class ServerTestsActivator implements BundleActivator {
 		if (!initialized) {
 			try {
 				initialize();
+				//make sure the http registry is started
+				ensureBundleStarted(EQUINOX_HTTP_JETTY);
+				ensureBundleStarted(EQUINOX_HTTP_REGISTRY);
+				//get the webide bundle started via lazy activation.
 				org.eclipse.orion.server.authentication.basic.Activator.getDefault();
 				Activator.getDefault();
-				new TestConfigurator();
+				ConfiguratorActivator.getDefault();
 			} catch (Exception e) {
 				e.printStackTrace();
 				return null;
@@ -80,17 +79,40 @@ public class ServerTestsActivator implements BundleActivator {
 		bundleContext = context;
 		httpServiceTracker = new ServiceTracker(context, HttpService.class.getName(), null);
 		httpServiceTracker.open();
+
+		packageAdminTracker = new ServiceTracker<PackageAdmin, PackageAdmin>(context, PackageAdmin.class.getName(), null);
+		packageAdminTracker.open();
 	}
 
 	public void stop(BundleContext context) throws Exception {
 		if (httpServiceTracker != null)
 			httpServiceTracker.close();
+		if (packageAdminTracker != null)
+			packageAdminTracker.close();
 
 		httpServiceTracker = null;
+		packageAdminTracker = null;
 		bundleContext = null;
 	}
 
-	static protected void ensureBundleStarted(Bundle bundle) throws BundleException {
+	static private Bundle getBundle(String symbolicName) {
+		PackageAdmin packageAdmin = packageAdminTracker.getService();
+		if (packageAdmin == null)
+			return null;
+		Bundle[] bundles = packageAdmin.getBundles(symbolicName, null);
+		if (bundles == null)
+			return null;
+		// Return the first bundle that is not installed or uninstalled
+		for (int i = 0; i < bundles.length; i++) {
+			if ((bundles[i].getState() & (Bundle.INSTALLED | Bundle.UNINSTALLED)) == 0) {
+				return bundles[i];
+			}
+		}
+		return null;
+	}
+
+	static private void ensureBundleStarted(String name) throws BundleException {
+		Bundle bundle = getBundle(name);
 		if (bundle != null) {
 			if (bundle.getState() == Bundle.RESOLVED || bundle.getState() == Bundle.STARTING) {
 				bundle.start(Bundle.START_TRANSIENT);
