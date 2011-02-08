@@ -18,10 +18,8 @@ import org.eclipse.core.filesystem.*;
 import org.eclipse.core.filesystem.provider.FileInfo;
 import org.eclipse.core.filesystem.provider.FileStore;
 import org.eclipse.core.runtime.*;
-import org.eclipse.egit.core.op.CloneOperation;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.lib.*;
-import org.eclipse.jgit.lib.ObjectIdRef.PeeledNonTag;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.*;
 import org.eclipse.jgit.util.FS;
@@ -110,15 +108,28 @@ public class GitFileStore extends FileStore {
 			File workdir = getWorkingDir();
 			if (!isCloned()) {
 				workdir.mkdirs();
-				// TODO: ListRemoteOperation.getRemoteRef
-				Ref ref = new PeeledNonTag(Ref.Storage.NETWORK, "refs/heads/master", null);
-				final CloneOperation op = new CloneOperation(uri, true, null, workdir, ref, "origin", 0);
-				op.setCredentialsProvider(getCredentialsProvider());
-				op.run(monitor);
+
+				CloneCommand cc = Git.cloneRepository();
+				cc.setBare(false);
+				cc.setBranch(Constants.R_HEADS + Constants.MASTER);
+				cc.setCredentialsProvider(getCredentialsProvider());
+				cc.setDirectory(workdir);
+				// cc.setProgressMonitor(monitor);
+				// cc.setRemote(Constants.DEFAULT_REMOTE_NAME);
+				cc.setURI(uri.toPrivateString());
+				cc.call();
+
+				StoredConfig config = getLocalRepo().getConfig();
+				config.setString(ConfigConstants.CONFIG_BRANCH_SECTION,
+						Constants.MASTER, ConfigConstants.CONFIG_KEY_REMOTE,
+						Constants.DEFAULT_REMOTE_NAME);
+				config.setString(ConfigConstants.CONFIG_BRANCH_SECTION,
+						Constants.MASTER, ConfigConstants.CONFIG_KEY_MERGE,
+						Constants.MASTER);
+				config.save();
+
 				logInfo("Cloned " + this + " to " + workdir);
 			}
-		} catch (InterruptedException e) {
-			// ignore
 		} catch (Exception e) {
 			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_GIT, IStatus.ERROR, e.getMessage(), e));
 		}
