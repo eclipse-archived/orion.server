@@ -164,6 +164,6 @@ public class ConfiguratorActivator implements BundleActivator {
 
 	String getAuthName() {
 		IEclipsePreferences preferences = InstanceScope.INSTANCE.getNode(PI_CONFIGURATOR);
-		return preferences.get(AUTHENTICATION_NAME, DEFAULT_AUTHENTICATION_NAME);
+		return preferences.get(AUTHENTICATION_NAME, System.getProperty("orion.tests.authtype", DEFAULT_AUTHENTICATION_NAME)); //$NON-NLS-1$
 	}
 }
