@@ -26,7 +26,6 @@ import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.*;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.filesystem.git.*;
-import org.eclipse.orion.server.core.LogHelper;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -81,7 +80,7 @@ public class GitFileStore extends FileStore {
 			if ("file".equals(uri.getScheme()) || uri.getScheme() == null)
 				return true;
 		} catch (URISyntaxException e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_GIT, 1, "Cannot init" + this + ". The URL cannot be parsed as a URI reference", e));
+			logError("Cannot init" + this + ". The URL cannot be parsed as a URI reference", e);
 		}
 		return false;
 	}
@@ -333,6 +332,10 @@ public class GitFileStore extends FileStore {
 
 	private void logInfo(String message) {
 		LoggerFactory.getLogger(GitFileStore.class).info(message);
+	}
+
+	private void logError(String message, Throwable e) {
+		LoggerFactory.getLogger(GitFileStore.class).error(message, e);
 	}
 
 	public boolean isRoot() {
