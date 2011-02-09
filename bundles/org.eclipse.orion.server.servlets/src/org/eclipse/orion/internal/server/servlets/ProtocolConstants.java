@@ -205,4 +205,44 @@ public class ProtocolConstants {
 	 */
 	public static final String PARM_DEPTH = "depth"; //$NON-NLS-1$
 
+	/**
+	 * JSON representation key for a file's attributes. The value's data
+	 * type is a JSON object of String/Boolean pairs.
+	 */
+	public static final String KEY_ATTRIBUTES = "Attributes"; //$NON-NLS-1$
+	/**
+	 * JSON representation key for a file's read only attribute. The value's data
+	 * type is a Boolean.
+	 */
+	public static final String KEY_ATTRIBUTE_READ_ONLY = "ReadOnly"; //$NON-NLS-1$
+	/**
+	 * JSON representation key for a file's execute attribute. The value's data
+	 * type is a Boolean.
+	 */
+	public static final String KEY_ATTRIBUTE_EXECUTABLE = "Executable"; //$NON-NLS-1$
+
+	/**
+	 * JSON representation key for a file's immutable attribute. The value's data
+	 * type is a Boolean.
+	 */
+	public static final String KEY_ATTRIBUTE_IMMUTABLE = "Immutable"; //$NON-NLS-1$
+
+	/**
+	 * JSON representation key for a file's archive attribute. The value's data
+	 * type is a Boolean.
+	 */
+	public static final String KEY_ATTRIBUTE_ARCHIVE = "Archive"; //$NON-NLS-1$
+
+	/**
+	 * JSON representation key for a file's hidden attribute. The value's data
+	 * type is a Boolean.
+	 */
+	public static final String KEY_ATTRIBUTE_HIDDEN = "Hidden"; //$NON-NLS-1$
+
+	/**
+	 * JSON representation key for a file's symbolic link attribute. The value's data
+	 * type is a Boolean.
+	 */
+	public static final String KEY_ATTRIBUTE_SYMLINK = "SymLink"; //$NON-NLS-1$
+
 }

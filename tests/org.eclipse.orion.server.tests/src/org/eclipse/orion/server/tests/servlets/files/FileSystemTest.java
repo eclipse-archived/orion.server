@@ -161,14 +161,15 @@ public abstract class FileSystemTest extends AbstractServerTest {
 		if (length != null) {
 			assertEquals("Invalid file length", length, new Long(fileObject.getLong("Length")));
 		}
-		if (isReadonly != null && isExecutable != null) {
+		if (isReadonly != null || isExecutable != null) {
+			int attrs = EFS.getLocalFileSystem().attributes();
 			JSONObject attributes = fileObject.optJSONObject("Attributes");
 			assertNotNull("Expected Attributes section in file metadata", attributes);
-			if (isReadonly != null) {
-				assertEquals("Ibvalid file readonly attribute", isReadonly, attributes.getBoolean("ReadOnly"));
+			if (isReadonly != null && ((attrs & EFS.ATTRIBUTE_READ_ONLY) != 0)) {
+				assertEquals("Invalid file readonly attribute", isReadonly.booleanValue(), attributes.getBoolean("ReadOnly"));
 			}
-			if (isExecutable != null) {
-				assertEquals("Ibvalid file executable attribute", isExecutable, attributes.getBoolean("Executable"));
+			if (isExecutable != null && ((attrs & EFS.ATTRIBUTE_EXECUTABLE) != 0)) {
+				assertEquals("Invalid file executable attribute", isExecutable.booleanValue(), attributes.getBoolean("Executable"));
 			}
 		}
 	}

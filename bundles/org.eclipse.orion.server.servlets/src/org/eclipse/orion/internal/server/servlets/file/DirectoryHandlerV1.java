@@ -44,7 +44,7 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 
 	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, IFileStore dir) throws IOException, CoreException {
 		URI location = getURI(request);
-		JSONObject result = ServletFileStoreHandler.toJSON(dir.fetchInfo(), location);
+		JSONObject result = ServletFileStoreHandler.toJSON(dir, dir.fetchInfo(), location);
 		String depthString = request.getParameter(ProtocolConstants.PARM_DEPTH);
 		int depth = 0;
 		if (depthString != null) {
@@ -66,16 +66,14 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 		IFileStore[] childStores = dir.childStores(EFS.NONE, null);
 		if (childStores.length == 0)
 			return;
-		IFileInfo[] childInfos = dir.childInfos(EFS.NONE, null);
-		for (int i = 0; i < childStores.length; i++) {
-			// is it safe to assume that corresponding stores and infos are under the same index?
-			IFileInfo childInfo = childInfos[i];
+		for (IFileStore childStore : childStores) {
+			IFileInfo childInfo = childStore.fetchInfo();
 			String name = childInfo.getName();
 			if (childInfo.isDirectory())
 				name += "/"; //$NON-NLS-1$
 			URI childLocation = URIUtil.append(location, name);
-			JSONObject childResult = ServletFileStoreHandler.toJSON(childInfo, childLocation);
-			encodeChildren(childStores[i], childLocation, childResult, depth - 1);
+			JSONObject childResult = ServletFileStoreHandler.toJSON(childStore, childInfo, childLocation);
+			encodeChildren(childStore, childLocation, childResult, depth - 1);
 			children.put(childResult);
 		}
 		try {
@@ -101,7 +99,7 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 		if (performPost(request, response, requestObject, toCreate, options)) {
 			//write the response
 			URI location = URIUtil.append(getURI(request), name);
-			JSONObject result = ServletFileStoreHandler.toJSON(toCreate.fetchInfo(), location);
+			JSONObject result = ServletFileStoreHandler.toJSON(toCreate, toCreate.fetchInfo(), location);
 			OrionServlet.writeJSONResponse(request, response, result);
 			response.setHeader(ProtocolConstants.HEADER_LOCATION, location.toString());
 			//response code should indicate if a new resource was actually created or not

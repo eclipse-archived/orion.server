@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.HashMap;
 import java.util.Map;
+import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.runtime.CoreException;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -47,10 +48,12 @@ public class AdvancedFilesTest extends FileSystemTest {
 
 	private JSONObject getFileMetadataObject(Boolean readonly, Boolean executable) throws JSONException {
 		Map<String, Object> attributes = new HashMap<String, Object>();
-		if (readonly != null) {
+		//only test attributes supported by the local file system of the test machine
+		int attrs = EFS.getLocalFileSystem().attributes();
+		if (readonly != null && ((attrs & EFS.ATTRIBUTE_READ_ONLY) != 0)) {
 			attributes.put("ReadOnly", String.valueOf(readonly));
 		}
-		if (executable != null) {
+		if (executable != null && ((attrs & EFS.ATTRIBUTE_EXECUTABLE) != 0)) {
 			attributes.put("Executable", String.valueOf(executable));
 		}
 		JSONObject json = new JSONObject();
@@ -78,10 +81,16 @@ public class AdvancedFilesTest extends FileSystemTest {
 		assertNotNull("No file information in response", responseObject);
 		checkFileMetadata(responseObject, fileName, new Long(-1), null, null, request.getURL().getRef(), new Long(0), null, null);
 
-		//modify the metadata and ensure operation succeeded
+		//modify the metadata
 		request = getPutFilesRequest(fileName + "?parts=meta", getFileMetadataObject(true, true).toString());
 		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_NO_CONTENT, response.getResponseCode());
+
+		//fetch the metadata again and ensure it is changed
+		request = getGetFilesRequest(fileName + "?parts=meta");
+		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		responseObject = new JSONObject(response.getText());
 		checkFileMetadata(responseObject, fileName, new Long(-1), null, null, request.getURL().getRef(), new Long(0), new Boolean(true), new Boolean(true));
 
 	}

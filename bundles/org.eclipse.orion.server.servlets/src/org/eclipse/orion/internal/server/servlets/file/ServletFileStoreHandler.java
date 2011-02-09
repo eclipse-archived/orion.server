@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2010, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -27,11 +27,16 @@ import org.json.JSONObject;
 import org.osgi.framework.Version;
 
 /**
- * General responder for IFileStore. This class redirects the serialization to an appropriate
- * serializer for the particular request and response.
+ * General responder for IFileStore. This class provides general support for serializing
+ * and deserializing file and directory representations in server requests and responses.
+ * Specific behavior for a particular request is performed by a separate handler
+ * depending on file type and protocol version.
  */
 public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> {
 	public static VersionRange VERSION1 = new VersionRange("[1,2)"); //$NON-NLS-1$
+	//The following two arrays must define their attributes in the same order
+	private static int[] ATTRIBUTE_BITS = new int[] {EFS.ATTRIBUTE_ARCHIVE, EFS.ATTRIBUTE_EXECUTABLE, EFS.ATTRIBUTE_HIDDEN, EFS.ATTRIBUTE_IMMUTABLE, EFS.ATTRIBUTE_READ_ONLY, EFS.ATTRIBUTE_SYMLINK};
+	private static String[] ATTRIBUTE_KEYS = new String[] {ProtocolConstants.KEY_ATTRIBUTE_ARCHIVE, ProtocolConstants.KEY_ATTRIBUTE_EXECUTABLE, ProtocolConstants.KEY_ATTRIBUTE_HIDDEN, ProtocolConstants.KEY_ATTRIBUTE_IMMUTABLE, ProtocolConstants.KEY_ATTRIBUTE_READ_ONLY, ProtocolConstants.KEY_ATTRIBUTE_SYMLINK};
 
 	private final ServletResourceHandler<IFileStore> directorySerializerV1;
 	private final ServletResourceHandler<IFileStore> fileSerializerV1;
@@ -55,13 +60,22 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 		destination.setName(source.optString(ProtocolConstants.KEY_NAME, destination.getName()));
 		destination.setLastModified(source.optLong(ProtocolConstants.KEY_LAST_MODIFIED, destination.getLastModified()));
 		destination.setDirectory(source.optBoolean(ProtocolConstants.KEY_DIRECTORY, destination.isDirectory()));
+
+		JSONObject attributes = source.optJSONObject(ProtocolConstants.KEY_ATTRIBUTES);
+		if (attributes != null) {
+			for (int i = 0; i < ATTRIBUTE_KEYS.length; i++) {
+				//undefined means the client does not want to change the value, so can't interpret as false
+				if (!attributes.isNull(ATTRIBUTE_KEYS[i]))
+					destination.setAttribute(ATTRIBUTE_BITS[i], attributes.optBoolean(ATTRIBUTE_KEYS[i]));
+			}
+		}
 	}
 
 	public static IFileInfo fromJSON(HttpServletRequest request) throws IOException, JSONException {
 		return fromJSON(OrionServlet.readJSONRequest(request));
 	}
 
-	public static JSONObject toJSON(IFileInfo info, URI location) {
+	public static JSONObject toJSON(IFileStore store, IFileInfo info, URI location) {
 		JSONObject result = new JSONObject();
 		try {
 			result.put(ProtocolConstants.KEY_NAME, info.getName());
@@ -73,11 +87,24 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 				if (info.isDirectory())
 					result.put(ProtocolConstants.KEY_CHILDREN_LOCATION, location + "?depth=1"); //$NON-NLS-1$
 			}
+			result.put(ProtocolConstants.KEY_ATTRIBUTES, getAttributes(store, info));
 		} catch (JSONException e) {
 			//cannot happen because the key is non-null and the values are strings
 			throw new RuntimeException(e);
 		}
 		return result;
+	}
+
+	/**
+	 * Returns a JSON Object containing the attributes supported and defined by the given file.
+	 */
+	private static JSONObject getAttributes(IFileStore store, IFileInfo info) throws JSONException {
+		int supported = store.getFileSystem().attributes();
+		JSONObject attributes = new JSONObject();
+		for (int i = 0; i < ATTRIBUTE_KEYS.length; i++)
+			if ((supported & ATTRIBUTE_BITS[i]) != 0)
+				attributes.put(ATTRIBUTE_KEYS[i], info.getAttribute(ATTRIBUTE_BITS[i]));
+		return attributes;
 	}
 
 	ServletFileStoreHandler(URI rootStoreURI, ServletResourceHandler<IStatus> statusHandler) {
@@ -86,7 +113,6 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 		genericFileSerializer = new GenericFileHandler();
 		directorySerializerV1 = new DirectoryHandlerV1(rootStoreURI, statusHandler);
 		genericDirectorySerializer = new GenericDirectoryHandler();
-
 	}
 
 	private boolean handleDirectory(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws ServletException {

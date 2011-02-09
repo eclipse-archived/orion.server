@@ -26,7 +26,6 @@ public class Base64Test {
 		List<String> strings = Arrays.asList("hello", "sSDFSDF", "1234SDf", "with spaces", "!@#$%^&*()_+", "a", "john", "John", "jones");
 		for (String s : strings) {
 			byte[] encoded = Base64.encode(s.getBytes());
-			System.out.println(new String(encoded));
 			byte[] decoded = Base64.decode(encoded);
 			String result = new String(decoded);
 			assertEquals(s, result);

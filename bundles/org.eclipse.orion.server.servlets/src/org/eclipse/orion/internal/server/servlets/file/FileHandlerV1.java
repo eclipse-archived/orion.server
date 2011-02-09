@@ -45,7 +45,7 @@ class FileHandlerV1 extends GenericFileHandler {
 	private static final String EOL = "\r\n"; //$NON-NLS-1$
 
 	protected void handleGetMetadata(HttpServletRequest request, Writer response, IFileStore file) throws IOException {
-		JSONObject result = ServletFileStoreHandler.toJSON(file.fetchInfo(), getURI(request));
+		JSONObject result = ServletFileStoreHandler.toJSON(file, file.fetchInfo(), getURI(request));
 		OrionServlet.decorateResponse(request, result);
 		response.append(result.toString());
 	}
@@ -97,7 +97,7 @@ class FileHandlerV1 extends GenericFileHandler {
 		//merge with existing metadata
 		FileInfo info = (FileInfo) file.fetchInfo();
 		ServletFileStoreHandler.copyJSONToFileInfo(new JSONObject(buf.toString()), info);
-		file.putInfo(info, EFS.NONE, null);
+		file.putInfo(info, EFS.SET_ATTRIBUTES, null);
 	}
 
 	@Override
@@ -121,6 +121,7 @@ class FileHandlerV1 extends GenericFileHandler {
 						return true;
 					case PUT :
 						handlePutMetadata(request.getReader(), null, file);
+						response.setStatus(HttpServletResponse.SC_NO_CONTENT);
 						return true;
 				}
 				return false;
@@ -132,6 +133,7 @@ class FileHandlerV1 extends GenericFileHandler {
 						return true;
 					case PUT :
 						handleMultiPartPut(request, response, file);
+						response.setStatus(HttpServletResponse.SC_NO_CONTENT);
 						return true;
 				}
 				return false;
