@@ -45,12 +45,12 @@ public class SecureStorageUserProfileNode implements IOrionUserProfileNode {
 		}
 	}
 
-	public String[] keys() {
-		return node.keys();
-	}
-
 	public void remove(String key) {
 		node.remove(key);
+	}
+	
+	public String[] keys() {
+		return node.keys();
 	}
 
 	public IOrionUserProfileNode getUserProfileNode(String pathName) {
@@ -63,6 +63,10 @@ public class SecureStorageUserProfileNode implements IOrionUserProfileNode {
 
 	public void removeUserProfileNode() {
 		node.removeNode();
+	}
+	
+	public String[] childrenNames(){
+		return node.childrenNames();
 	}
 
 	public void flush() throws CoreException {

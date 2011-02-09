@@ -19,12 +19,16 @@ public interface IOrionUserProfileNode {
 	public String get(String key, String def) throws CoreException;
 
 	public void remove(String key);
+	
+	public String[] keys();
 
 	public IOrionUserProfileNode getUserProfileNode(String pathName);
 
 	public boolean userProfileNodeExists(String pathName);
 
 	public void removeUserProfileNode();
+	
+	public String[] childrenNames();
 
 	public void flush() throws CoreException;
 }
