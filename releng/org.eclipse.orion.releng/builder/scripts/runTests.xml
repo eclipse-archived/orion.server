@@ -99,9 +99,6 @@
 		<exec executable="kill">
 			<arg value="${xvfbPID}" />
 		</exec>
-	</target>
-	
-	<target name="processResults" >
 		<property name="dropLocation" value="${buildDirectory}/${buildLabel}/drop" />
 		<property name="jsTestDir" value="${base}/tests/${buildLabel}" />
 		
@@ -114,27 +111,38 @@
 		
 		<!-- junit results -->
 		<xslt style="${builder}/html/JUNIT.XSL" basedir="${buildDirectory}/test/eclipse/results" destdir="${dropLocation}" includes="*.xml" />
+	</target>
+	
+	<macrodef name="updateTestResult">
+		<attribute name="testFile" />
+		<attribute name="token" />
+		<sequential>
+			<loadfile srcfile="${dropLocation}/@{testFile}" property="@{testFile}_status" failonerror="false" >
+				<filterchain>
+					<linecontainsregexp>
+						<regexp pattern=".*&lt;td&gt;[0-9]*&lt;/td&gt;&lt;td&gt;[0-9]*&lt;/td&gt;&lt;td&gt;(NaN|([.0-9]*%))&lt;/td&gt;.*" />
+					</linecontainsregexp>
+					<replaceregex pattern=".*&lt;td&gt;(NaN|([0-9]+[.][0-9]+%))&lt;/td&gt;.*" replace="\1" />
+					<striplinebreaks/>
+				</filterchain>
+			</loadfile>
+			<condition property="@{testFile}_value" value="${@{testFile}_status}" else="DNF" >
+				<isset property="@{testFile}_status" />
+			</condition>
+			<condition property="@{testFile}_result" value="${@{testFile}_value}" else="&lt;font color=&quot;#ff0000&quot;&gt;${@{testFile}_value}&lt;/font&gt;">
+				<equals arg1="${@{testFile}_value}" arg2="100.00%" />
+			</condition>
+			<replace file="${dropLocation}/index.html">
+				<replacefilter token="@{token}" value="${@{testFile}_result}" />
+			</replace>
+		</sequential>
+	</macrodef>
+	
+	<target name="processResults" >
 		
-		<!-- update the test status images -->
-		<condition property="jsunitStatus" value="smiley.gif" else="frown.gif" >
-			<isfileselected file="${dropLocation}/testResults.html">
-				<contains text="&lt;td&gt;0&lt;/td&gt;&lt;td&gt;0&lt;/td&gt;&lt;td&gt;100.00%&lt;/td&gt;" />
-			</isfileselected>
-		</condition>
-		<condition property="serverStatus" value="smiley.gif" else="frown.gif" >
-			<isfileselected file="${dropLocation}/org.eclipse.orion.server.tests.AllServerTests.html">
-				<contains text="&lt;td&gt;0&lt;/td&gt;&lt;td&gt;0&lt;/td&gt;&lt;td&gt;100.00%&lt;/td&gt;" />
-			</isfileselected>
-		</condition>
-		<condition property="filesystemStatus" value="smiley.gif" else="frown.gif" >
-			<isfileselected file="${dropLocation}/org.eclipse.orion.server.tests.filesystem.git.AllTests.html">
-				<contains text="&lt;td&gt;0&lt;/td&gt;&lt;td&gt;0&lt;/td&gt;&lt;td&gt;100.00%&lt;/td&gt;" />
-			</isfileselected>
-		</condition>
-		<replace file="${dropLocation}/index.html" >
-			<replacefilter token="@JSUNIT@" value="${jsunitStatus}" />
-			<replacefilter token="@SERVER-TESTS@" value="${serverStatus}" />
-			<replacefilter token="@SERVER-FILESYSTEM@" value="${filesystemStatus}" />
-		</replace>
+		<!-- update the test status -->
+		<updateTestResult testFile="testResults.html" token="@JSUNIT@"/>
+		<updateTestResult testFile="org.eclipse.orion.server.tests.AllServerTests.html" token="@SERVER-TESTS@"/>
+		<updateTestResult testFile="org.eclipse.orion.server.tests.filesystem.git.AllTests.html" token="@SERVER-FILESYSTEM@"/>
 	</target>
 </project>
