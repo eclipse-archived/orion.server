@@ -25,10 +25,6 @@ import org.eclipse.jgit.transport.*;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.filesystem.git.*;
 import org.slf4j.LoggerFactory;
-import org.eclipse.orion.internal.server.filesystem.git.Activator;
-import org.eclipse.orion.internal.server.filesystem.git.LogHelper;
-import org.eclipse.orion.internal.server.filesystem.git.OrionUserCredentialsProvider;
-import org.eclipse.orion.internal.server.filesystem.git.Utils;
 
 /**
  * File system implementation that writes to a git repository.
@@ -37,7 +33,8 @@ public class GitFileStore extends FileStore {
 
 	private String authority;
 
-	private URL gitUrl;
+	private URIish uri;
+	private IPath path;
 	private Repository localRepo;
 
 	private static byte[] readBytes(InputStream is) throws IOException {
@@ -51,42 +48,27 @@ public class GitFileStore extends FileStore {
 		return buffer.toByteArray();
 	}
 
-	public GitFileStore(String s, String authority) {
-		try {
-			gitUrl = new URL(null, s, new URLStreamHandler() {
-
-				@Override
-				protected URLConnection openConnection(URL u) throws IOException {
-					// never called, see #openInputStream(int, IProgressMonitor)
-					return null;
-				}
-			});
-		} catch (MalformedURLException e) {
-			throw new IllegalArgumentException(e);
-		}
-
+	public GitFileStore(URIish u, IPath p, String authority) {
+		if (u == null)
+			throw new IllegalArgumentException("uriish cannot be null");
 		if (authority == null)
 			throw new IllegalArgumentException("authority cannot be null");
+		if (p == null)
+			throw new IllegalArgumentException("path cannot be null");
+
+		this.uri = u;
 		this.authority = authority;
-		if (gitUrl.getQuery() == null)
-			throw new IllegalArgumentException("missing query");
+		this.path = p;
 	}
 
 	private boolean canInit() {
-		try {
-			// org.eclipse.jgit.transport.TransportLocal.canHandle(URIish, FS)
-			URIish uri = Utils.toURIish(getUrl());
-			if (uri.getHost() != null || uri.getPort() > 0 || uri.getUser() != null || uri.getPass() != null || uri.getPath() == null)
-				return false;
+		// org.eclipse.jgit.transport.TransportLocal.canHandle(URIish, FS)
+		if (uri.getHost() != null || uri.getPort() > 0 || uri.getUser() != null
+				|| uri.getPass() != null || uri.getPath() == null)
+			return false;
 
-			if ("file".equals(uri.getScheme()) || uri.getScheme() == null)
-				return true;
-		} catch (URISyntaxException e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_GIT, 1,
-					"Cannot init" + this
-							+ ". The URL cannot be parsed as a URI reference",
-					e));
-		}
+		if ("file".equals(uri.getScheme()) || uri.getScheme() == null)
+			return true;
 		return false;
 	}
 
@@ -100,7 +82,8 @@ public class GitFileStore extends FileStore {
 	}
 
 	@Override
-	public String[] childNames(int options, IProgressMonitor monitor) throws CoreException {
+	public String[] childNames(int options, IProgressMonitor monitor)
+			throws CoreException {
 		if (!isCloned()) {
 			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_GIT, 1, "A private clone for " + this + " doesn't exist." + getLocalFile(), null));
 		}
@@ -111,7 +94,6 @@ public class GitFileStore extends FileStore {
 
 	private void clone(IProgressMonitor monitor) throws CoreException {
 		try {
-			URIish uri = Utils.toURIish(getUrl());
 			File workdir = getWorkingDir();
 			if (!isCloned()) {
 				workdir.mkdirs();
@@ -154,24 +136,23 @@ public class GitFileStore extends FileStore {
 				File gitignoreFile = new File(folder.getPath() + "/" + Constants.DOT_GIT_IGNORE);
 				// /<folder>/.gitignore
 				gitignoreFile.createNewFile();
-				String query = getUrl().getQuery();
-				if (query.equals("/")) { // root
+				if (isRoot()) { // root
 					filePattern = Constants.DOT_GIT_IGNORE;
 				} else {
-					folderPattern = new Path(query).toString().substring(1);
+					folderPattern = path.toString().substring(1);
 					// <folder>/
 					filePattern = folderPattern + "/" + Constants.DOT_GIT_IGNORE;
 					// <folder>/.gitignore
 				}
 			} else {
 				// /<folder>/<file>
-				IPath f = new Path(getUrl().getQuery()).removeLastSegments(1);
+				IPath f = path.removeLastSegments(1);
 				// /<folder>/
 				String s = f.toString().substring(1);
 				// <folder>/
 				folderPattern = s.equals("") ? null : s;
 				// /<folder>/<file>
-				s = getUrl().getQuery().substring(1);
+				s = path.toString().substring(1);
 				filePattern = s;
 			}
 
@@ -216,7 +197,7 @@ public class GitFileStore extends FileStore {
 	@Override
 	public IFileInfo fetchInfo(int options, IProgressMonitor monitor) throws CoreException {
 		if (!isCloned()) {
-			initCloneCommitPush(monitor);
+			initCloneCommitPush(false, monitor);
 		}
 		if ((options & EFS.CACHE) == 0) // don't use cache
 			pull();
@@ -233,27 +214,18 @@ public class GitFileStore extends FileStore {
 
 	@Override
 	public IFileStore getChild(String name) {
-		String s = gitUrl.toString();
-		if (s.endsWith("/"))
-			s = s + name;
-		else
-			s = s + "/" + name;
-		return new GitFileStore(s, authority);
+		return new GitFileStore(uri, path.append(name), authority);
 	}
 
 	private CredentialsProvider getCredentialsProvider() {
-		try {
-			return new OrionUserCredentialsProvider(authority, Utils.toURIish(getUrl()));
-		} catch (URISyntaxException e) {
-			throw new IllegalArgumentException(e);
-		}
+		return new OrionUserCredentialsProvider(authority, uri);
 	}
 
 	// TODO: to field
 	public File getLocalFile() {
-		String q = gitUrl.getQuery();
-		String p = getWorkingDir().getAbsolutePath() + "/" + q;
-		return new File(p);
+		IPath p = new Path(getWorkingDir().getPath());
+		p = p.append(path);
+		return p.toFile();
 	}
 
 	public Repository getLocalRepo() throws IOException {
@@ -267,26 +239,14 @@ public class GitFileStore extends FileStore {
 
 	@Override
 	public String getName() {
-		String q = gitUrl.getQuery();
-		Path p = new Path(q);
-		return p.lastSegment() != null ? p.lastSegment() : "" /* root */;
+		return path.lastSegment() != null ? path.lastSegment() : "" /* root */;
 	}
 
 	@Override
 	public IFileStore getParent() {
-		String q = gitUrl.getQuery();
-		Path p = new Path(q);
-		// return null for the root store
-		if (p.isRoot())
+		if (isRoot())
 			return null;
-		IPath ip = p.removeLastSegments(1);
-		String s = gitUrl.toString();
-		s = s.substring(0, s.indexOf(q));
-		return new GitFileStore(s + ip.toString(), authority);
-	}
-
-	public URL getUrl() {
-		return gitUrl;
+		return new GitFileStore(uri, path.removeLastSegments(1), authority);
 	}
 
 	// TODO: to field
@@ -297,14 +257,19 @@ public class GitFileStore extends FileStore {
 			throw new RuntimeException("Unable to compute local file system location"); //$NON-NLS-1$;
 
 		// TODO: just for now
-		location = location.append("PRIVATE_REPO").append(authority).append(gitUrl.getProtocol()).append(gitUrl.getHost()).append(gitUrl.getPath());
+		location = location.append("PRIVATE_REPO").append(authority);
+		if (uri.getScheme() != null)
+			location = location.append(uri.getScheme()); // TODO: assume file:/?
+		if (uri.getHost() != null)
+			location = location.append(uri.getHost());
+		location = location.append(uri.getPath());
 		// <workspace path>/PRIVATE_REPO/<username>/<protocol>/<host>/<path>/<repo>
 		return location.toFile();
 	}
 
 	private boolean initBare() throws URISyntaxException, IOException {
-		String scheme = getUrl().getProtocol();
-		String path = getUrl().getPath();
+		String scheme = uri.getScheme();
+		String path = uri.getPath();
 		if (scheme != null && !scheme.equals("file")) {
 			throw new IllegalArgumentException("#canInit() has mistaken, this is not a local file system URL");
 		}
@@ -327,10 +292,10 @@ public class GitFileStore extends FileStore {
 	 * necessary and inits it by pushing a dummy change (.gitignore) file to
 	 * remote
 	 */
-	private void initCloneCommitPush(IProgressMonitor monitor) throws CoreException {
+	private void initCloneCommitPush(boolean init, IProgressMonitor monitor) throws CoreException {
 		boolean inited = false;
 		// if it's a local repository try to init it first
-		if (canInit()) {
+		if (init && canInit()) {
 			try {
 				inited = initBare();
 			} catch (Exception e) {
@@ -353,14 +318,14 @@ public class GitFileStore extends FileStore {
 	}
 
 	public boolean isRoot() {
-		return getUrl().getQuery().equals("/");
+		return path.isRoot();
 	}
 
 	@Override
 	public IFileStore mkdir(int options, IProgressMonitor monitor) throws CoreException {
 		boolean deep = (options & EFS.SHALLOW) == 0;
 		if (isRoot()) {
-			initCloneCommitPush(monitor);
+			initCloneCommitPush(true, monitor);
 		} else {
 			File f = getLocalFile();
 			if (f.getParentFile().exists() && !f.getParentFile().isDirectory()) {
@@ -368,7 +333,7 @@ public class GitFileStore extends FileStore {
 			}
 			if (deep) {
 				GitFileStore root = (GitFileStore) Utils.getRoot(this);
-				root.initCloneCommitPush(monitor);
+				root.initCloneCommitPush(true, monitor);
 				f.mkdirs();
 			} else {
 				// TODO: sync with remote first
@@ -410,6 +375,7 @@ public class GitFileStore extends FileStore {
 
 	/**
 	 * pulls from the remote
+	 * 
 	 * @throws CoreException
 	 */
 	private void pull() throws CoreException {
@@ -510,15 +476,15 @@ public class GitFileStore extends FileStore {
 	public URI toURI() {
 		StringBuffer sb = new StringBuffer();
 		sb.append(GitFileSystem.SCHEME_GIT);
-		sb.append(":/");
-		// TODO: include authority?
+		sb.append("://");
+		sb.append(authority);
+		sb.append("/");
+		String s = uri.toString();
 		try {
-			sb.append(URLEncoder.encode(gitUrl.toString(), "UTF-8"));
+			sb.append(URLEncoder.encode(s, "UTF-8"));
 		} catch (UnsupportedEncodingException e) {
-			sb.append(URLEncoder.encode(gitUrl.toString()));
+			sb.append(URLEncoder.encode(s));
 		}
-		// return
-		// org.eclipse.core.runtime.URIUtil.fromString(String)(sb.toString());
 		return URI.create(sb.toString());
 	}
 }

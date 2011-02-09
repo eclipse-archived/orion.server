@@ -10,12 +10,15 @@
  *******************************************************************************/
 package org.eclipse.orion.server.filesystem.git;
 
-import java.net.URI;
+import org.eclipse.orion.internal.server.filesystem.git.LogHelper;
 
-import org.eclipse.core.filesystem.EFS;
-import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.filesystem.IFileSystem;
+import java.net.URI;
+import java.net.URISyntaxException;
+import org.eclipse.core.filesystem.*;
 import org.eclipse.core.filesystem.provider.FileSystem;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.jgit.transport.URIish;
 
 public class GitFileSystem extends FileSystem {
 
@@ -26,7 +29,8 @@ public class GitFileSystem extends FileSystem {
 	 * file system scheme and the "git" URL protocol.
 	 * <p>
 	 * An example of a git URL with git transport protocol in the git file
-	 * system: <code>gitfs:/git://host.xz[:port]/path/to/repo.git?/&lt;project&gt;/path/in/workspace</code>.
+	 * system:
+	 * <code>gitfs:/git://host.xz[:port]/path/to/repo.git?/&lt;project&gt;/path/in/workspace</code>.
 	 */
 	public static final String SCHEME_GIT = "gitfs"; //$NON-NLS-1$
 	private static IFileSystem instance;
@@ -48,13 +52,20 @@ public class GitFileSystem extends FileSystem {
 			sb.append(uri.getPath());
 			// /..., strip off leading '/'
 			sb.deleteCharAt(0);
-			String query = uri.getQuery();
-			if (query != null && !query.equals(""))
-				sb.append('?').append(query);
-			String fragment = uri.getFragment();
-			if (fragment != null)
-				sb.append('#').append(fragment);
-			return new GitFileStore(sb.toString(), uri.getAuthority());
+			try {
+				URIish u = new URIish(sb.toString());
+				IPath p = null;
+				sb.setLength(0);
+				String query = uri.getQuery();
+				if (query != null && !query.equals("")) {
+					sb.append(query);
+					p = new Path(sb.toString());
+				}
+				// TODO: fragment?
+				return new GitFileStore(u, p, uri.getAuthority());
+			} catch (URISyntaxException e) {
+				LogHelper.log(e);
+			}
 		}
 		return EFS.getNullFileSystem().getStore(uri);
 	}
