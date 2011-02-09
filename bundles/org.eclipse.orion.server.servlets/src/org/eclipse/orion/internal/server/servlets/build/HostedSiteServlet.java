@@ -1,4 +1,4 @@
-package org.eclipse.orion.internal.server.sitebuild;
+package org.eclipse.orion.internal.server.servlets.build;
 
 import java.io.IOException;
 import java.net.*;
@@ -18,17 +18,21 @@ import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 
-public class SiteBuildProxyServlet extends OrionServlet {
+/**
+ * Handles requests for URIs that are part of a running hosted site.
+ */
+public class HostedSiteServlet extends OrionServlet {
 	private static final long serialVersionUID = 1L;
 
 	private static final String USER = "mark";
 	private static final String FILE = "/file";
 
+	// TODO remove these copied variables
 	private ServletResourceHandler<IFileStore> fileSerializer;
 	private final URI rootStoreURI;
 	private IAliasRegistry aliasRegistry;
 
-	public SiteBuildProxyServlet() {
+	public HostedSiteServlet() {
 		aliasRegistry = Activator.getDefault();
 		rootStoreURI = Activator.getDefault().getRootLocationURI();
 		fileSerializer = new ServletFileStoreHandler(rootStoreURI, getStatusHandler());
@@ -38,7 +42,7 @@ public class SiteBuildProxyServlet extends OrionServlet {
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
 		String host = req.getHeader("Host");
-		if (isMapping(host)) {
+		if (isForHostedSite(host)) {
 			String pathInfo = req.getPathInfo();
 			URL url = this.rewrite(pathInfo);
 
@@ -46,7 +50,7 @@ public class SiteBuildProxyServlet extends OrionServlet {
 			if ("localhost".equals(url.getHost())) {
 				// Somehow I need to pull this from my workspace
 
-				// FIXME: This fails if you're not logged in
+				// FIXME: This fails if you haven't logged in because the alias will not be present
 				pathInfo = url.getPath().substring(url.getPath().indexOf(FILE) + FILE.length());
 				IPath path = pathInfo == null ? Path.ROOT : new Path(pathInfo);
 				IFileStore file = tempGetFileStore(path, USER/*req.getRemoteUser()*/);
@@ -59,7 +63,7 @@ public class SiteBuildProxyServlet extends OrionServlet {
 			} else {
 				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
-				// TODO: copy headers from req to proxy-request
+				// TODO: forward headers to proxy request here
 				//				Enumeration<?> headerNames = req.getHeaderNames();
 				//				while (headerNames.hasMoreElements()) {
 				//					String name = (String) headerNames.nextElement();
@@ -83,11 +87,12 @@ public class SiteBuildProxyServlet extends OrionServlet {
 		}
 	}
 
-	private boolean isMapping(String host) {
+	// FIXME: should consult Hosted Sites Table
+	private boolean isForHostedSite(String host) {
 		return host.startsWith("127.0.0.") && !host.endsWith(".1");
 	}
 
-	// FIXME temp
+	// FIXME temp junk for grabbing files from filesystem
 	protected IFileStore tempGetFileStore(IPath path, String authority) {
 		//first check if we have an alias registered
 		if (path.segmentCount() > 0) {
@@ -111,6 +116,7 @@ public class SiteBuildProxyServlet extends OrionServlet {
 		return null;
 	}
 
+	// FIXME use SiteConfig mapping
 	private URL rewrite(String pathInfo) throws MalformedURLException {
 		Map<String, String> map = getMap();
 

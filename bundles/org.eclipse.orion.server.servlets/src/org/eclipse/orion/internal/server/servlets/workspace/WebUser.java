@@ -10,14 +10,16 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.workspace;
 
+import org.eclipse.orion.internal.server.servlets.build.SiteConfiguration;
+
+import java.net.URI;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.servlets.build.*;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.core.users.OrionScope;
-
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.json.*;
 import org.osgi.service.prefs.BackingStoreException;
 
@@ -90,6 +92,27 @@ public class WebUser extends WebElement {
 				return new JSONArray(workspaces);
 		} catch (JSONException e) {
 			//someone has bashed the underlying storage - just fall through below
+		}
+		return new JSONArray();
+	}
+
+	/**
+	 * Returns the site configurations defined by this user as a JSON array.
+	 */
+	public JSONArray getSiteConfigurationsJSON(URI baseLocation) {
+		try {
+			IEclipsePreferences siteConfigsNode = (IEclipsePreferences) store.node(SiteConfigurationConstants.KEY_SITE_CONFIGURATIONS);
+			String[] siteConfigIds = siteConfigsNode.keys();
+			JSONArray jsonArray = new JSONArray();
+			for (String siteConfigId : siteConfigIds) {
+				IEclipsePreferences result = (IEclipsePreferences) siteConfigsNode.node(siteConfigId);
+				SiteConfiguration siteConfig = new SiteConfiguration(result);
+				JSONObject siteConfigJson = SiteConfigurationResourceHandler.toJSON(siteConfig, baseLocation);
+				jsonArray.put(siteConfigJson);
+			}
+			return jsonArray;
+		} catch (BackingStoreException e) {
+			LogHelper.log(e);
 		}
 		return new JSONArray();
 	}

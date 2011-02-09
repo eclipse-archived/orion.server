@@ -10,15 +10,12 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.workspace;
 
-import org.eclipse.orion.server.core.users.OrionScope;
-
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-
-import org.eclipse.orion.internal.server.core.Activator;
-
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.IScopeContext;
+import org.eclipse.orion.internal.server.core.Activator;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.users.OrionScope;
 import org.osgi.service.prefs.BackingStoreException;
 
 /**
@@ -27,7 +24,7 @@ import org.osgi.service.prefs.BackingStoreException;
 public class WebElement {
 	protected static final IScopeContext scope = new OrionScope();
 
-	IEclipsePreferences store;
+	protected IEclipsePreferences store;
 
 	/**
 	 * Creates a new user, workspace, or project backed by the given preference store.

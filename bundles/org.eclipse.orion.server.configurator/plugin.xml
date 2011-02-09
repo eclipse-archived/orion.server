@@ -45,8 +45,12 @@
             class="org.eclipse.orion.internal.server.servlets.xfer.TransferServlet">
       </servlet>
       <servlet
-            alias="/sitebuild"
-            class="org.eclipse.orion.internal.server.sitebuild.SiteBuildProxyServlet">
+            alias="/site"
+            class="org.eclipse.orion.internal.server.servlets.build.SiteConfigurationServlet">
+      </servlet>
+      <servlet
+            alias="/hosted"
+            class="org.eclipse.orion.internal.server.servlets.build.HostedSiteServlet">
       </servlet>
    </extension>
    <extension
@@ -61,7 +65,7 @@
       </filter>
       <filter
             alias="/"
-            class="org.eclipse.orion.internal.server.sitebuild.SiteBuildProxyFilter">
+            class="org.eclipse.orion.internal.server.servlets.build.HostedSiteFilter">
       </filter>
       <filter
             alias="/file"
