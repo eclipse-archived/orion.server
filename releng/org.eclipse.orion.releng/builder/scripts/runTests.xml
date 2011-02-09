@@ -99,18 +99,6 @@
 		<exec executable="kill">
 			<arg value="${xvfbPID}" />
 		</exec>
-		<property name="dropLocation" value="${buildDirectory}/${buildLabel}/drop" />
-		<property name="jsTestDir" value="${base}/tests/${buildLabel}" />
-		
-		<!-- js unit results -->
-		<junitreport todir="${dropLocation}" tofile="testResults.xml">
-			<fileset dir="${jsTestDir}" includes="**/*.xml" />
-		</junitreport>
-		<xslt style="${builder}/html/JUNIT.XSL" in="${dropLocation}/testResults.xml" out="${dropLocation}/testResults.html" />
-		<delete file="${dropLocation}/testResults.xml" />
-		
-		<!-- junit results -->
-		<xslt style="${builder}/html/JUNIT.XSL" basedir="${buildDirectory}/test/eclipse/results" destdir="${dropLocation}" includes="*.xml" />
 	</target>
 	
 	<macrodef name="updateTestResult">
@@ -139,6 +127,18 @@
 	</macrodef>
 	
 	<target name="processResults" >
+		<property name="dropLocation" value="${buildDirectory}/${buildLabel}/drop" />
+		<property name="jsTestDir" value="${base}/tests/${buildLabel}" />
+		
+		<!-- js unit results -->
+		<junitreport todir="${dropLocation}" tofile="testResults.xml">
+			<fileset dir="${jsTestDir}" includes="**/*.xml" />
+		</junitreport>
+		<xslt style="${builder}/html/JUNIT.XSL" in="${dropLocation}/testResults.xml" out="${dropLocation}/testResults.html" />
+		<delete file="${dropLocation}/testResults.xml" />
+		
+		<!-- junit results -->
+		<xslt style="${builder}/html/JUNIT.XSL" basedir="${buildDirectory}/test/eclipse/results" destdir="${dropLocation}" includes="*.xml" />
 		
 		<!-- update the test status -->
 		<updateTestResult testFile="testResults.html" token="@JSUNIT@"/>
