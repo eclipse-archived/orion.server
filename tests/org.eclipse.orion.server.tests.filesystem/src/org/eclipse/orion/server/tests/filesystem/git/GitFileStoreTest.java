@@ -10,13 +10,14 @@
  *******************************************************************************/
 package org.eclipse.orion.server.tests.filesystem.git;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URL;
+import java.net.URISyntaxException;
 
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileInfo;
@@ -139,7 +140,7 @@ public class GitFileStoreTest {
 		gfs.childNames(EFS.NONE, null);
 	}
 
-	@Test(expected = CoreException.class)
+	@Test
 	public void getChildNamesForAnEmptySharedRepository() throws CoreException {
 		StringBuffer sb = new StringBuffer();
 		sb.append(GitFileSystem.SCHEME_GIT);
@@ -152,7 +153,11 @@ public class GitFileStoreTest {
 		ensureSharedExists(gfs, true);
 		gfs.mkdir(EFS.NONE, null);
 
-		gfs.childNames(EFS.NONE, null);
+		String[] childNames = gfs.childNames(EFS.NONE, null);
+		String[] expectedNames = new String[] {Constants.DOT_GIT, Constants.DOT_GIT_IGNORE};
+		assertEquals(expectedNames.length, childNames.length);
+		assertEquals(expectedNames[0], childNames[0]);
+		assertEquals(expectedNames[1], childNames[1]);
 	}
 
 	@Test(expected = CoreException.class)
@@ -213,6 +218,27 @@ public class GitFileStoreTest {
 		assertTrue("1.2", info.isDirectory());
 	}
 
+	@Test
+	public void toStringRevealsPassword() throws URISyntaxException {
+		final String PASSWORD = "passw0rd";
+
+		StringBuffer sb = new StringBuffer();
+		sb.append(GitFileSystem.SCHEME_GIT);
+		sb.append("://test/");
+		sb.append("ssh://");
+		sb.append("user");
+		sb.append(":");
+		sb.append(PASSWORD);
+		sb.append("@");
+		sb.append("localhost/git/test.git");
+		sb.append("?/");
+		URI uri = new URI(sb.toString());
+		IFileStore store = fs.getStore(uri);
+		String toString = store.toString();
+
+		assertFalse(toString.contains(PASSWORD));
+	}
+
 	private IPath getRandomLocation() {
 		return FileSystemHelper
 				.getRandomLocation(FileSystemHelper.getTempDir());
@@ -221,8 +247,10 @@ public class GitFileStoreTest {
 	private void ensureSharedExists(GitFileStore root, boolean empty) {
 		try {
 			if (empty) {
-				String path = decodeLocalPath(root.getUrl().toString());
-				File sharedRepo = new File(path);
+				String path = root.toURI().getPath();
+				path = path.substring(1);
+				URI uri = URI.create(path);
+				File sharedRepo = org.eclipse.core.runtime.URIUtil.toFile(uri);
 				// TODO: can init only local repositories
 				// checking if the folder exists may not be enough though
 				if (!sharedRepo.exists()) {
@@ -249,29 +277,6 @@ public class GitFileStoreTest {
 
 	private void ensureSharedDoesNotExist(GitFileStore gfs) {
 		removeSharedRepo();
-	}
-
-	/**
-	 * @param url
-	 * @see org.eclipse.orion.server.filesystem.git.GitFileStore#initBare()
-	 */
-	void initBare(URL url) throws IOException {
-		String path = decodeLocalPath(url.toString());
-		File sharedRepo = new File(path);
-		if (!sharedRepo.exists()) {
-			sharedRepo.mkdir();
-			FileRepository repository = new FileRepository(new File(sharedRepo,
-					Constants.DOT_GIT));
-			repository.create(true);
-		}
-	}
-
-	// org.eclipse.orion.server.filesystem.git.GitFileStore.decodeLocalPath(String)
-	private static String decodeLocalPath(final String s) {
-		String r = new String(s);
-		r = r.substring(0, r.lastIndexOf('?'));
-		r = r.replace('+', ' ');
-		return r;
 	}
 
 }
