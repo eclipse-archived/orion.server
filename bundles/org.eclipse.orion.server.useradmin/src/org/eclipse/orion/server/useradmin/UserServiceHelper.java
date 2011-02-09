@@ -15,12 +15,16 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
 import org.osgi.service.useradmin.UserAdmin;
 
 public class UserServiceHelper {
 
 	private Map<String, IOrionCredentialsService> userStores = new HashMap<String, IOrionCredentialsService>();
 	private IOrionCredentialsService defaultUserAdmin;
+	
+	private IOrionUserProfileService userProfileService;
+	
 	private static UserServiceHelper singleton;
 
 	public static UserServiceHelper getDefault() {
@@ -76,5 +80,16 @@ public class UserServiceHelper {
 	public IOrionCredentialsService getUserStore() {
 		return defaultUserAdmin;
 	}
-
+	
+	public IOrionUserProfileService getUserProfileService() {
+		return userProfileService;
+	}
+	
+	public void bindUserProfileService(IOrionUserProfileService userProfileService) {
+		this.userProfileService = userProfileService;
+	}
+	
+	public void unbindUserProfileService(IOrionUserProfileService userProfileService) {
+		this.userProfileService = null;
+	}
 }
