@@ -41,13 +41,13 @@ public class HostedSiteServlet extends OrionServlet {
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
-		String host = req.getHeader("Host");
+		String host = req.getHeader("Host"); //$NON-NLS-1$
 		if (isForHostedSite(host)) {
 			String pathInfo = req.getPathInfo();
 			URL url = this.rewrite(pathInfo);
 
-			// FIXME Temporary hack for localhost
-			if ("localhost".equals(url.getHost())) {
+			// FIXME Need a better way of getting files from this server
+			if ("localhost".equals(url.getHost())) { //$NON-NLS-1$
 				// Somehow I need to pull this from my workspace
 
 				// FIXME: This fails if you haven't logged in because the alias will not be present

@@ -6,6 +6,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.*;
+import org.eclipse.orion.internal.server.servlets.host.IHostedSiteService;
 import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.*;
@@ -73,7 +74,7 @@ public class SiteConfigurationServlet extends OrionServlet {
 
 	/**
 	 * @param siteConfig
-	 * @param actionRequired <code>true</code> if missing action header should cause a failure response.
+	 * @param actionRequired <code>true</code> if null action header should cause a failure response.
 	 */
 	private void doStartStop(HttpServletRequest req, HttpServletResponse resp, SiteConfiguration siteConfig, boolean actionRequired) throws CoreException {
 		if (siteConfig == null)
@@ -81,8 +82,12 @@ public class SiteConfigurationServlet extends OrionServlet {
 		String action = req.getHeader(SiteConfigurationConstants.HEADER_ACTION);
 		if ("start".equalsIgnoreCase(action)) { //$NON-NLS-1$
 			// FIXME implement
+			// Get the hosted site service
+			IHostedSiteService hostedSiteService = null;
+			//			hostedSiteService.start(siteConfig);
 		} else if ("stop".equalsIgnoreCase(action)) { //$NON-NLS-1$
-			// FIXME implement
+			IHostedSiteService hostedSiteService = null;
+			//			hostedSiteService.stop(siteConfig);
 		} else if (action == null) {
 			if (actionRequired)
 				throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Action missing", null));

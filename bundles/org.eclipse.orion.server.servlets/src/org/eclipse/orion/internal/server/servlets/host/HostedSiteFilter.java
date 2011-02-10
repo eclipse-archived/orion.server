@@ -10,7 +10,7 @@ import javax.servlet.http.HttpServletRequest;
  */
 public class HostedSiteFilter implements Filter {
 
-	private static final String HOSTED_SITE_ALIAS = "/hosted";
+	private static final String HOSTED_SITE_ALIAS = "/hosted"; //$NON-NLS-1$
 
 	@Override
 	public void init(FilterConfig filterConfig) throws ServletException {
@@ -29,9 +29,9 @@ public class HostedSiteFilter implements Filter {
 	}
 
 	private boolean isForHostedSite(HttpServletRequest req) {
-		String host = req.getHeader("Host");
 		// TODO consult HostedSiteTable
-		return host.startsWith("127.0.0.") && !host.endsWith(".1");
+		String host = req.getHeader("Host"); //$NON-NLS-1$
+		return host.startsWith("127.0.0.") && !host.endsWith(".1"); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
 	@Override

@@ -39,7 +39,10 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 	}
 
 	/**
-	 * @param copyName If <code>true</code>, the Name property from source will overwrite target's name
+	 * Copies properties from a JSONObject representation of a site configuration to a SiteConfiguration
+	 * instance.
+	 * @param copyName If <code>true</code>, the name property from <code>source</code> will overwrite
+	 * <code>target</code>'s name.
 	 */
 	private static void copyProperties(JSONObject source, SiteConfiguration target, boolean copyName) {
 		if (copyName) {
@@ -48,26 +51,25 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 				target.setName(name);
 		}
 
-		String authName = source.optString(SiteConfigurationConstants.KEY_AUTH_NAME, null);
-		if (authName != null)
-			target.setAuthName(authName);
-
-		String authPassword = source.optString(SiteConfigurationConstants.KEY_AUTH_PASSWORD, null);
-		if (authPassword != null)
-			target.setAuthPassword(authPassword);
-
-		String hostDomain = source.optString(SiteConfigurationConstants.KEY_HOST_DOMAIN, null);
+		String hostDomain = source.optString(SiteConfigurationConstants.KEY_HOST, null);
 		if (hostDomain != null)
 			target.setHostDomain(hostDomain);
 
 		JSONArray mappings = source.optJSONArray(SiteConfigurationConstants.KEY_MAPPINGS);
 		if (mappings != null)
 			target.setMappings(mappings);
+
+		//		String authName = source.optString(SiteConfigurationConstants.KEY_AUTH_NAME, null);
+		//		if (authName != null)
+		//			target.setAuthName(authName);
+
+		String authPassword = source.optString(SiteConfigurationConstants.KEY_AUTH_PASSWORD, null);
+		if (authPassword != null)
+			target.setAuthPassword(authPassword);
 	}
 
 	/**
-	 * @param baseLocation The URI of the SiteConfigurationServlet. If null, Location will not 
-	 * be included in the JSON object. 
+	 * @param baseLocation The URI of the SiteConfigurationServlet.
 	 * @return Representation of <code>siteConfig</code> as a JSONObject.
 	 */
 	public static JSONObject toJSON(SiteConfiguration siteConfig, URI baseLocation) {
@@ -75,9 +77,9 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 		try {
 			result.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(baseLocation, siteConfig.getId()).toString());
 			result.put(SiteConfigurationConstants.KEY_MAPPINGS, siteConfig.getMappingsJSON());
-			result.putOpt(SiteConfigurationConstants.KEY_AUTH_NAME, siteConfig.getAuthName());
+			//			result.putOpt(SiteConfigurationConstants.KEY_AUTH_NAME, siteConfig.getAuthName());
 			result.putOpt(SiteConfigurationConstants.KEY_AUTH_PASSWORD, siteConfig.getAuthPassword());
-			result.putOpt(SiteConfigurationConstants.KEY_HOST_DOMAIN, siteConfig.getHostDomain());
+			result.putOpt(SiteConfigurationConstants.KEY_HOST, siteConfig.getHostDomain());
 
 			// FIXME: include the status of the request
 		} catch (JSONException e) {

@@ -18,16 +18,16 @@ public class SiteConfiguration extends WebElement {
 		super(store);
 	}
 
-	public String getAuthName() {
-		return store.get(SiteConfigurationConstants.KEY_AUTH_NAME, null);
-	}
+	//	public String getAuthName() {
+	//		return store.get(SiteConfigurationConstants.KEY_AUTH_NAME, null);
+	//	}
 
 	public String getAuthPassword() {
 		return store.get(SiteConfigurationConstants.KEY_AUTH_PASSWORD, null);
 	}
 
 	public String getHostDomain() {
-		return store.get(SiteConfigurationConstants.KEY_HOST_DOMAIN, null);
+		return store.get(SiteConfigurationConstants.KEY_HOST, null);
 	}
 
 	public JSONArray getMappingsJSON() {
@@ -38,16 +38,16 @@ public class SiteConfiguration extends WebElement {
 		}
 	}
 
-	public void setAuthName(String authName) {
-		store.put(SiteConfigurationConstants.KEY_AUTH_NAME, authName);
-	}
+	//	public void setAuthName(String authName) {
+	//		store.put(SiteConfigurationConstants.KEY_AUTH_NAME, authName);
+	//	}
 
 	public void setAuthPassword(String authPassword) {
 		store.put(SiteConfigurationConstants.KEY_AUTH_PASSWORD, authPassword);
 	}
 
 	public void setHostDomain(String hostDomain) {
-		store.put(SiteConfigurationConstants.KEY_HOST_DOMAIN, hostDomain);
+		store.put(SiteConfigurationConstants.KEY_HOST, hostDomain);
 	}
 
 	public void setMappings(JSONArray mappings) {
