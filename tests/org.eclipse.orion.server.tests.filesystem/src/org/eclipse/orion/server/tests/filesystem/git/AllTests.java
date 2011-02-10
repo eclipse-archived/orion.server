@@ -20,4 +20,5 @@ import org.junit.runners.Suite.SuiteClasses;
 		OpenOutputStreamTest.class, PutInfoTest.class, GitFileSystemTest.class,
 		ConcurrentModificationsTest.class, GitFileStoreTest.class })
 public class AllTests extends TestCase {
+	//goofy junit4, no class body needed
 }

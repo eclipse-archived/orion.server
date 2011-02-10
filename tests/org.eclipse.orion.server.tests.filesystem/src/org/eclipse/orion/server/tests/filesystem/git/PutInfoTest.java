@@ -23,9 +23,17 @@ public class PutInfoTest extends org.eclipse.core.tests.filesystem.PutInfoTest {
 
 	private IPath repositoryPath;
 
+	public void testSetFileLastModified() {
+		// TODO: ignored for now
+	}
+
+	public void testSetReadOnly() {
+		// TODO: ignored for now
+	}
+
 	protected void doFSSetUp() throws Exception {
 		repositoryPath = getRandomLocation();
-		URI uri = URIUtil.toURI(repositoryPath); //encoded
+		URI uri = URIUtil.toURI(repositoryPath); // encoded
 		StringBuffer sb = new StringBuffer();
 		sb.append(GitFileSystem.SCHEME_GIT);
 		sb.append("://test/");
@@ -46,6 +54,6 @@ public class PutInfoTest extends org.eclipse.core.tests.filesystem.PutInfoTest {
 		// remove the repository
 		FileSystemHelper.clear(repositoryPath.toFile());
 		// remove the clone
-		FileSystemHelper.clear(((GitFileStore)baseStore).getLocalFile());
+		FileSystemHelper.clear(((GitFileStore) baseStore).getLocalFile());
 	}
 }

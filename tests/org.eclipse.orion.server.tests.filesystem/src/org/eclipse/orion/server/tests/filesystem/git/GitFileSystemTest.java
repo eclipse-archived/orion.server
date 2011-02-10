@@ -15,7 +15,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -31,8 +30,7 @@ public class GitFileSystemTest {
 	GitFileSystem fs = new GitFileSystem();
 
 	@Test(expected = IllegalArgumentException.class)
-	public void noQueryInString() throws MalformedURLException,
-			URISyntaxException {
+	public void noQueryInString() throws URISyntaxException {
 		StringBuffer sb = new StringBuffer();
 		sb.append(GitFileSystem.SCHEME_GIT);
 		sb.append("://test/");
@@ -42,8 +40,7 @@ public class GitFileSystemTest {
 	}
 
 	@Test(expected = IllegalArgumentException.class)
-	public void emptyQueryInString() throws MalformedURLException,
-			URISyntaxException {
+	public void emptyQueryInString() throws URISyntaxException {
 		StringBuffer sb = new StringBuffer();
 		sb.append(GitFileSystem.SCHEME_GIT);
 		sb.append("://test/");
@@ -54,8 +51,7 @@ public class GitFileSystemTest {
 	}
 
 	@Test
-	public void rootFromString() throws MalformedURLException,
-			URISyntaxException {
+	public void rootFromString() throws URISyntaxException {
 		StringBuffer sb = new StringBuffer();
 		sb.append(GitFileSystem.SCHEME_GIT);
 		sb.append("://test/");
@@ -70,8 +66,7 @@ public class GitFileSystemTest {
 	}
 
 	@Test
-	public void topLevelFolderFromString() throws MalformedURLException,
-			URISyntaxException {
+	public void topLevelFolderFromString() throws URISyntaxException {
 		StringBuffer sb = new StringBuffer();
 		sb.append(GitFileSystem.SCHEME_GIT);
 		sb.append("://test/");
@@ -86,8 +81,7 @@ public class GitFileSystemTest {
 	}
 
 	@Test
-	public void subfolderFromString() throws MalformedURLException,
-			URISyntaxException {
+	public void subfolderFromString() throws URISyntaxException {
 		StringBuffer sb = new StringBuffer();
 		sb.append(GitFileSystem.SCHEME_GIT);
 		sb.append("://test/");
@@ -102,8 +96,7 @@ public class GitFileSystemTest {
 	}
 
 	@Test
-	public void fileFromString() throws MalformedURLException,
-			URISyntaxException {
+	public void fileFromString() throws URISyntaxException {
 		StringBuffer sb = new StringBuffer();
 		sb.append(GitFileSystem.SCHEME_GIT);
 		sb.append("://test/");

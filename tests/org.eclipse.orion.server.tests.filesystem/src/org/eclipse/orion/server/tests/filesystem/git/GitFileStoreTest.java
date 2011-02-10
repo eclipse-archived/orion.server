@@ -76,7 +76,7 @@ public class GitFileStoreTest {
 	}
 
 	@Test
-	public void fetchInfoForInitedSharedRepository() throws IOException {
+	public void fetchInfoForInitedSharedRepository() {
 		StringBuffer sb = new StringBuffer();
 		sb.append(GitFileSystem.SCHEME_GIT);
 		sb.append("://test/");
@@ -93,7 +93,7 @@ public class GitFileStoreTest {
 	}
 
 	@Test
-	public void fetchInfoForAnEmptySharedRepository() throws IOException {
+	public void fetchInfoForAnEmptySharedRepository() {
 		StringBuffer sb = new StringBuffer();
 		sb.append(GitFileSystem.SCHEME_GIT);
 		sb.append("://test/");
