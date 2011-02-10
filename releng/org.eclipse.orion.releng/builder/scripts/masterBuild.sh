@@ -54,6 +54,9 @@ do
 		"-timestamp")
 			timestamp="$2"; shift;;
 			
+		"-email")
+			resultsEmail="$2"; shift;;
+			
 		-*)
 			echo >&2 usage: $0 [-I | -N]
 			exit 1;;
@@ -183,7 +186,8 @@ sendMail () {
 	compileMsg=""
 	prereqMsg=""
 	failed=""
-	
+	testsMsg=$(sed -n '/<!--START-TESTS-->/,/<!--END-TESTS-->/p' $buildDirectory/$buildType$timestamp/$buildType$timestamp/index.html | head -n 9 | tail -n 8)
+	testsMsg=$(cat $testsMsg | sed 's_href=\"_href=\"http://download.eclipse.org/e4/orion/drops/$buildType$timestamp/_')
 	pushd $buildDirectory/plugins
 	compileProblems=$( find . -name compilation.problem | cut -d/ -f2 )
 	popd
@@ -198,17 +202,17 @@ sendMail () {
 	fi
 	
 	echo "[`date +%H\:%M\:%S`] Sending mail to $resultsEmail"
-	
-mailx -s "[orion-build] Orion Build : $buildType$timestamp $failed" $resultsEmail <<EOF
-
-Check here for the build results: 
-http://download.eclipse.org/e4/orion/drops/$buildType$timestamp
-
-$compileMsg
-$compileProblems
-$prereqMsg
-
-EOF
+(
+echo "From: e4Build@build.eclipse.org "
+echo "To: orion-dev@eclipse.org "
+echo "MIME-Version: 1.0 "
+echo "Content-Type: text/html; charset=us-ascii"
+echo "Subject: [orion-build] Orion Build : $buildType$timestamp $failed"
+echo ""
+echo "<html><head><title>Orion Build $buildType$timestamp</title></head>" 
+echo "<body>Check here for the build results: <a href="http://download.eclipse.org/e4/orion/drops/$buildType$timestamp">$buildType$timestamp</a><br>" 
+echo "$testsMsg<br>$compileMsg<br>$compileProblems<br>$prereqMsg</body></html>" 
+) | /usr/lib/sendmail -t
 
 }
 
@@ -223,8 +227,6 @@ publish () {
 	if [ $buildType = I ]; then
 		scp -r $buildDirectory/plugins/org.eclipse.orion.doc.isv/jsdoc $user@dev.eclipse.org:/home/data/httpd/download.eclipse.org/e4/orion
 	fi
-	
-	sendMail
 }
 
 cd $writableBuildRoot
@@ -235,4 +237,5 @@ setProperties
 runBuild
 runTests
 publish
+sendMail
 
