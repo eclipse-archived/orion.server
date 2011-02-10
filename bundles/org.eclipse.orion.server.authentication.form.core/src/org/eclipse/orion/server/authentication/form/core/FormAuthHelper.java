@@ -11,11 +11,27 @@
 package org.eclipse.orion.server.authentication.form.core;
 
 import java.io.IOException;
-import java.util.*;
-import javax.servlet.http.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
-import org.eclipse.orion.server.useradmin.*;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
+import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
+import org.eclipse.orion.server.useradmin.UnsupportedUserStoreException;
+import org.eclipse.orion.server.useradmin.UserAdminActivator;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.service.useradmin.User;
@@ -30,6 +46,9 @@ public class FormAuthHelper {
 
 	private static Map<String, IOrionCredentialsService> userStores = new HashMap<String, IOrionCredentialsService>();
 	private static IOrionCredentialsService defaultUserAdmin;
+	
+	private static IOrionUserProfileService userProfileService;
+	
 	private static boolean everyoneCanCreateUsers;
 
 	static {
@@ -55,17 +74,26 @@ public class FormAuthHelper {
 	}
 
 	/**
-		 * Writes a response in JSON that contains user login.
-		 * 
-		 * @param user
-		 * @param resp
-		 * @throws IOException
-		 */
+	 * @param user
+	 * @param resp
+	 * @throws IOException
+	 * @throws CoreException
+	 */
 	public static void writeLoginResponse(String user, HttpServletResponse resp) throws IOException {
 		resp.setStatus(HttpServletResponse.SC_OK);
 		try {
 			JSONObject array = new JSONObject();
 			array.put("login", user); //$NON-NLS-1$
+			try {
+				// try to add the login timestamp to the user info
+				IOrionUserProfileNode generalUserProfile = FormAuthHelper.getUserProfileService().getUserProfileNode(user, IOrionUserProfileConstants.GENERAL_PROFILE_PART);
+				Long lastLogin = Long.parseLong(generalUserProfile.get(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, ""));
+				array.put(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, lastLogin);
+			} catch (IllegalArgumentException e) {
+				LogHelper.log(e);
+			} catch (CoreException e) {
+				LogHelper.log(e);
+			}
 			resp.getWriter().print(array.toString());
 		} catch (JSONException e) {
 			//can't fail
@@ -91,6 +119,16 @@ public class FormAuthHelper {
 			if (logger.isInfoEnabled())
 				logger.info("Login success: " + login); //$NON-NLS-1$ 
 			req.getSession().setAttribute("user", login); //$NON-NLS-1$
+			
+			IOrionUserProfileNode userProfileNode =getUserProfileService().getUserProfileNode(login, IOrionUserProfileConstants.GENERAL_PROFILE_PART);
+			try {
+				// try to store the login timestamp in the user profile
+				userProfileNode.put(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, new Long(System.currentTimeMillis()).toString(), false);
+				userProfileNode.flush();
+			} catch (CoreException e) {
+				// just log that the login timestamp was not stored
+				LogHelper.log(e);
+			}
 			return true;
 		}
 		//don't bother tracing malformed login attempts
@@ -172,5 +210,17 @@ public class FormAuthHelper {
 					defaultUserAdmin = iterator.next();
 			}
 		}
+	}
+	
+	public static IOrionUserProfileService getUserProfileService() {
+		return userProfileService;
+	}
+	
+	public static void bindUserProfileService(IOrionUserProfileService _userProfileService){
+		userProfileService = _userProfileService;
+	}
+	
+	public static void unbindUserProfileService(IOrionUserProfileService userProfileService){
+		userProfileService = null;
 	}
 }

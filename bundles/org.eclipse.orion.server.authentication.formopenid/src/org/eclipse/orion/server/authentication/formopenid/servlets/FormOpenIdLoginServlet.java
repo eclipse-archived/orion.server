@@ -18,6 +18,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.server.authentication.form.core.FormAuthHelper;
 import org.eclipse.orion.server.authentication.formopenid.FormOpenIdAuthenticationService;
 import org.eclipse.orion.server.core.LogHelper;
@@ -25,6 +26,8 @@ import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.openid.core.OpenIdHelper;
 import org.eclipse.orion.server.openid.core.OpenidConsumer;
 import org.eclipse.orion.server.servlets.OrionServlet;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
 import org.eclipse.orion.server.useradmin.UnsupportedUserStoreException;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -113,6 +116,18 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 			try {
 				JSONObject array = new JSONObject();
 				array.put("login", user); //$NON-NLS-1$
+
+				try {
+					// try to add the login timestamp to the user info
+					IOrionUserProfileNode generalUserProfile = FormAuthHelper.getUserProfileService().getUserProfileNode(user, IOrionUserProfileConstants.GENERAL_PROFILE_PART);
+					Long lastLogin = Long.parseLong(generalUserProfile.get(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, ""));
+					array.put(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, lastLogin);
+				} catch (IllegalArgumentException e) {
+					LogHelper.log(e);
+				} catch (CoreException e) {
+					LogHelper.log(e);
+				}
+
 				resp.getWriter().print(array.toString());
 			} catch (JSONException e) {
 				handleException(resp, "An error occured when creating JSON object for logged in user", e);

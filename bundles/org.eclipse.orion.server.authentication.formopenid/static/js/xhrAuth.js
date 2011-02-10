@@ -1,12 +1,11 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others All rights reserved. This
+ * Copyright (c) 2010, 2011 IBM Corporation and others All rights reserved. This
  * program and the accompanying materials are made available under the terms of
  * the Eclipse Public License v1.0 which accompanies this distribution, and is
  * available at http://www.eclipse.org/legal/epl-v10.html
  * 
  * Contributors: IBM Corporation - initial API and implementation
  ******************************************************************************/
-
 var notify = false;
 var userStore;
 
@@ -110,13 +109,14 @@ function confirmLogin() {
 				handleAs : "json",
 				timeout : 15000,
 				load : function(jsonData, ioArgs) {
-					var statusPane = dojo.byId("authStatusPane")||null;
+					/*var statusPane = dojo.byId("authStatusPane")||null;
 					if (statusPane!=null) {
 						dojo.byId("authStatusPane").innerHTML = dojo
 								.byId("login").value;
 						document.getElementById("signOutUser").innerHTML = "Sign out";
 						document.getElementById("signOutUser").onclick = logout;
-					}
+					}*/
+					checkUser();
 					authDone();
 					return jsonData;
 				},
@@ -165,12 +165,13 @@ function userCreated(username, password, store) {
 		handleAs : "json",
 		timeout : 15000,
 		load : function(jsonData, ioArgs) {
-			var statusPane = dojo.byId("authStatusPane")||null;
+			/*var statusPane = dojo.byId("authStatusPane")||null;
 			if (statusPane!=null) {
 				dojo.byId("authStatusPane").innerHTML = username;
 				document.getElementById("signOutUser").innerHTML = "Sign out";
 				document.getElementById("signOutUser").onclick = logout;
-			}
+			}*/
+			checkUser();
 			authDone();
 			closeLoginWindow();
 			return jsonData;
@@ -194,7 +195,10 @@ function checkUser() {
 		load : function(jsonData, ioArgs) {
 			var statusPane = dojo.byId("authStatusPane")||null;
 			if (statusPane!=null) {
-				dojo.byId("authStatusPane").innerHTML = jsonData.login;
+				var lastLogin = "N/A";
+				if (jsonData.lastlogintimestamp != null)
+					lastLogin = dojo.date.locale.format(new Date(jsonData.lastlogintimestamp), {formatLength: "short"});
+				dojo.byId("authStatusPane").innerHTML = jsonData.login + " signed in at: " + lastLogin;
 				document.getElementById("signOutUser").innerHTML = "Sign out";
 				document.getElementById("signOutUser").onclick = logout;
 			}
