@@ -10,14 +10,14 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.workspace;
 
-import org.eclipse.orion.internal.server.servlets.build.SiteConfiguration;
-
 import java.net.URI;
-import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.orion.internal.server.core.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.build.*;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.resources.Base64Counter;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.core.users.OrionScope;
 import org.json.*;
@@ -27,6 +27,9 @@ import org.osgi.service.prefs.BackingStoreException;
  * An Eclipse web user.
  */
 public class WebUser extends WebElement {
+
+	private static final Base64Counter siteConfigCounter = new Base64Counter();
+
 	public WebUser(IEclipsePreferences store) {
 		super(store);
 	}
@@ -102,7 +105,7 @@ public class WebUser extends WebElement {
 	public JSONArray getSiteConfigurationsJSON(URI baseLocation) {
 		try {
 			IEclipsePreferences siteConfigsNode = (IEclipsePreferences) store.node(SiteConfigurationConstants.KEY_SITE_CONFIGURATIONS);
-			String[] siteConfigIds = siteConfigsNode.keys();
+			String[] siteConfigIds = siteConfigsNode.childrenNames();
 			JSONArray jsonArray = new JSONArray();
 			for (String siteConfigId : siteConfigIds) {
 				IEclipsePreferences result = (IEclipsePreferences) siteConfigsNode.node(siteConfigId);
@@ -116,4 +119,78 @@ public class WebUser extends WebElement {
 		}
 		return new JSONArray();
 	}
+
+	/**
+	 * Creates a SiteConfiguration instance with the given name for the given user.
+	 * @param user
+	 * @param name
+	 * @return The created SiteConfiguration.
+	 */
+	public SiteConfiguration createSiteConfiguration(String name) throws CoreException {
+		String id = this.nextSiteConfigurationId();
+		IEclipsePreferences result = (IEclipsePreferences) this.getSiteConfigurationsNode().node(id);
+		SiteConfiguration siteConfig = new SiteConfiguration(result);
+		siteConfig.setId(id);
+		siteConfig.setName(name);
+		siteConfig.save();
+		return siteConfig;
+	}
+
+	public void deleteSiteConfiguration(SiteConfiguration siteConfig) throws CoreException {
+		try {
+			getSiteConfigurationsNode().node(siteConfig.getId()).removeNode();
+		} catch (BackingStoreException e) {
+			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_SERVER_CORE, "Error removing site configuration", e));
+		}
+		save();
+	}
+
+	/**
+	 * @return The next available site configuration id. The id is only unique within this user.
+	 */
+	public String nextSiteConfigurationId() {
+		synchronized (siteConfigCounter) {
+			String candidate;
+			do {
+				candidate = siteConfigCounter.toString();
+				siteConfigCounter.increment();
+			} while (this.siteConfigExists(candidate));
+			return candidate;
+		}
+	}
+
+	/**
+	 * @return True if this user has a SiteConfiguration with the given <code>id</code>.
+	 */
+	private boolean siteConfigExists(String id) {
+		try {
+			return this.getSiteConfigurationsNode().nodeExists(id);
+		} catch (Exception e) {
+			return false;
+		}
+	}
+
+	/**
+	 * @return The site configuration with the given <code>id</code>, or null if this user has
+	 * no such site configuration.
+	 */
+	public SiteConfiguration getSiteConfiguration(String id) {
+		try {
+			IEclipsePreferences siteConfigsNode = this.getSiteConfigurationsNode();
+			if (siteConfigsNode.nodeExists(id)) {
+				return new SiteConfiguration((IEclipsePreferences) siteConfigsNode.node(id));
+			}
+		} catch (BackingStoreException e) {
+			LogHelper.log(e);
+		}
+		return null;
+	}
+
+	/**
+	 * @return This user's site configurations preference node
+	 */
+	private IEclipsePreferences getSiteConfigurationsNode() {
+		return (IEclipsePreferences) scope.getNode("Users").node(this.getName()).node(SiteConfigurationConstants.KEY_SITE_CONFIGURATIONS); //$NON-NLS-1$
+	}
+
 }

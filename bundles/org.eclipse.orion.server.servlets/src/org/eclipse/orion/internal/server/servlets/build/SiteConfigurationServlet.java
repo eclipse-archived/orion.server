@@ -1,6 +1,5 @@
 package org.eclipse.orion.internal.server.servlets.build;
 
-
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -9,8 +8,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
 import org.eclipse.orion.server.servlets.OrionServlet;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.*;
 
 /**
  * Servlet for managing site configurations.
@@ -30,7 +28,8 @@ public class SiteConfigurationServlet extends OrionServlet {
 		IPath pathInfo = getPathInfo(req);
 		if (pathInfo.segmentCount() == 0) {
 			// Get all site configurations
-			doGetSiteConfigurations(req, resp);
+			// FIXME: implement filtering
+			doGetAllSiteConfigurations(req, resp);
 			return;
 		} else if (pathInfo.segmentCount() == 1) {
 			// Get a site configuration
@@ -38,6 +37,9 @@ public class SiteConfigurationServlet extends OrionServlet {
 			if (siteConfigurationResourceHandler.handleRequest(req, resp, siteConfig)) {
 				return;
 			}
+		} else {
+			getStatusHandler().handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Bad request", null));
+			return;
 		}
 		super.doGet(req, resp);
 	}
@@ -46,15 +48,50 @@ public class SiteConfigurationServlet extends OrionServlet {
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
 		IPath pathInfo = getPathInfo(req);
-		if (pathInfo.segmentCount() == 0) {
-			// Create a new site configuration, and possibly start it
-			doCreateSiteConfiguration(req, resp);
-		} else if (pathInfo.segmentCount() == 1) {
-			// Start/stop site configuration
-			SiteConfiguration siteConfig = getExistingSiteConfig(req, resp);
-			siteConfigurationResourceHandler.handleRequest(req, resp, siteConfig);
+		try {
+			if (pathInfo.segmentCount() == 0) {
+				// Create a new site configuration, and possibly start it
+				SiteConfiguration siteConfig = doCreateSiteConfiguration(req, resp);
+				doStartStop(req, resp, siteConfig, false);
+				if (siteConfigurationResourceHandler.handleRequest(req, resp, siteConfig)) {
+					return;
+				}
+			} else if (pathInfo.segmentCount() == 1) {
+				// Start/stop site configuration
+				SiteConfiguration siteConfig = getExistingSiteConfig(req, resp);
+				doStartStop(req, resp, siteConfig, true);
+				if (siteConfigurationResourceHandler.handleRequest(req, resp, siteConfig)) {
+					return;
+				}
+			}
+		} catch (CoreException e) {
+			handleException(resp, e.getStatus());
+			return;
 		}
 		super.doPost(req, resp);
+	}
+
+	/**
+	 * @param siteConfig
+	 * @param actionRequired <code>true</code> if missing action header should cause a failure response.
+	 */
+	private void doStartStop(HttpServletRequest req, HttpServletResponse resp, SiteConfiguration siteConfig, boolean actionRequired) throws CoreException {
+		if (siteConfig == null)
+			return;
+		String action = req.getHeader(SiteConfigurationConstants.HEADER_ACTION);
+		if ("start".equalsIgnoreCase(action)) { //$NON-NLS-1$
+			// FIXME implement
+		} else if ("stop".equalsIgnoreCase(action)) { //$NON-NLS-1$
+			// FIXME implement
+		} else if (action == null) {
+			if (actionRequired) {
+				throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Action missing", null));
+			} else {
+				// OK
+			}
+		} else {
+			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Action not understood", null));
+		}
 	}
 
 	@Override
@@ -64,7 +101,9 @@ public class SiteConfigurationServlet extends OrionServlet {
 		if (pathInfo.segmentCount() == 1) {
 			// Update site configuration
 			SiteConfiguration siteConfig = getExistingSiteConfig(req, resp);
-			siteConfigurationResourceHandler.handleRequest(req, resp, siteConfig);
+			if (siteConfigurationResourceHandler.handleRequest(req, resp, siteConfig)) {
+				return;
+			}
 		}
 		super.doPut(req, resp);
 	}
@@ -75,64 +114,66 @@ public class SiteConfigurationServlet extends OrionServlet {
 		if (getPathInfo(req).segmentCount() == 1) {
 			// Delete site configuration
 			SiteConfiguration siteConfig = getExistingSiteConfig(req, resp);
-			siteConfigurationResourceHandler.handleRequest(req, resp, siteConfig);
-			return;
+			if (siteConfigurationResourceHandler.handleRequest(req, resp, siteConfig)) {
+				return;
+			}
+		} else {
+			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Bad request", null));
 		}
 		super.doDelete(req, resp);
 	}
 
 	/**
-	 * @return The SiteConfiguration whose id matches the 0th segment of the Request pathInfo, or null if
-	 * no SiteConfiguration exists with that id.
+	 * @return The SiteConfiguration whose id matches the 0th segment of the request pathInfo, or null.
 	 */
 	private SiteConfiguration getExistingSiteConfig(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
 		String userName = getUserName(req);
 		WebUser user = WebUser.fromUserName(userName);
 		IPath pathInfo = getPathInfo(req);
 		if (pathInfo.segmentCount() == 1) {
-			return SiteConfiguration.fromId(user, pathInfo.segment(0));
+			return user.getSiteConfiguration(pathInfo.segment(0));
 		}
 		return null;
 	}
 
-	private boolean doGetSiteConfigurations(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
+	private boolean doGetAllSiteConfigurations(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
 		String userName = getUserName(req);
 		try {
 			WebUser user = WebUser.fromUserName(userName);
-			writeJSONResponse(req, resp, user.getSiteConfigurationsJSON(ServletResourceHandler.getURI(req)));
+			JSONArray siteConfigurations = user.getSiteConfigurationsJSON(ServletResourceHandler.getURI(req));
+			JSONObject jsonResponse = new JSONObject();
+			jsonResponse.put(SiteConfigurationConstants.KEY_SITE_CONFIGURATIONS, siteConfigurations);
+			writeJSONResponse(req, resp, jsonResponse);
 		} catch (Exception e) {
-			handleException(resp, "An error occurred while obtaining site configurations", e); //$NON-NLS-1$
+			handleException(resp, "An error occurred while obtaining site configurations", e);
 		}
 		return true;
 	}
 
 	/**
-	 * Create, and possibly start, a site configuration
+	 * Creates a new site configuration from the request
 	 */
-	private void doCreateSiteConfiguration(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
+	private SiteConfiguration doCreateSiteConfiguration(HttpServletRequest req, HttpServletResponse resp) throws CoreException {
 		try {
 			WebUser user = WebUser.fromUserName(getUserName(req));
 			JSONObject requestJson = readJSONRequest(req);
 			String name = computeName(req, requestJson);
-			if (name == null || name.equals("")) { //$NON-NLS-1$
-				getStatusHandler().handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Site configuration name not specified", null)); //$NON-NLS-1$
-			} else {
-				SiteConfiguration siteConfig = SiteConfigurationResourceHandler.createFromJSON(user, name, requestJson);
-				siteConfigurationResourceHandler.handleRequest(req, resp, siteConfig);
+			if (name == null || name.isEmpty()) {
+				throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Site configuration name not specified", null));
 			}
-		} catch (CoreException e) {
-			handleException(resp, e.getStatus());
+			SiteConfiguration siteConfig = SiteConfigurationResourceHandler.createFromJSON(user, name, requestJson);
+			return siteConfig;
 		} catch (IOException e) {
-			handleException(resp, "An error occurred while reading the request", e); //$NON-NLS-1$
+			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "An error occurred while reading the request", null));
 		} catch (JSONException e) {
-			getStatusHandler().handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Syntax error in request body", e)); //$NON-NLS-1$
+			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Syntax error in request body", null));
 		}
 	}
 
 	private static String computeName(HttpServletRequest req, JSONObject requestBody) {
 		// Try Slug first
 		String name = req.getHeader(ProtocolConstants.HEADER_SLUG);
-		if (name == null || name.equals("")) { //$NON-NLS-1$
+		if (name == null || name.isEmpty()) {
 			// Then try request body
 			name = requestBody.optString(ProtocolConstants.KEY_NAME);
 		}
