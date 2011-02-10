@@ -186,8 +186,11 @@ sendMail () {
 	compileMsg=""
 	prereqMsg=""
 	failed=""
-	testsMsg=$(sed -n '/<!--START-TESTS-->/,/<!--END-TESTS-->/p' $buildDirectory/$buildType$timestamp/drop/index.html | head -n 9 | tail -n 8)
-	testsMsg=$(cat $testsMsg | sed 's_href=\"_href=\"http://download.eclipse.org/e4/orion/drops/$buildType$timestamp/_')
+	
+	testsMsg=$(sed -n '/<!--START-TESTS-->/,/<!--END-TESTS-->/p' $buildDirectory/$buildType$timestamp/drop/index.html | head -n 9 | tail -n 8 > mail.txt)
+	testsMsg=$(cat mail.txt | sed s_href=\"_href=\"http://download.eclipse.org/e4/orion/drops/$buildType$timestamp/_)
+	rm mail.txt
+	
 	pushd $buildDirectory/plugins
 	compileProblems=$( find . -name compilation.problem | cut -d/ -f2 )
 	popd
@@ -204,7 +207,7 @@ sendMail () {
 	echo "[`date +%H\:%M\:%S`] Sending mail to $resultsEmail"
 (
 echo "From: e4Build@build.eclipse.org "
-echo "To: orion-dev@eclipse.org "
+echo "To: $resultsEmail "
 echo "MIME-Version: 1.0 "
 echo "Content-Type: text/html; charset=us-ascii"
 echo "Subject: [orion-build] Orion Build : $buildType$timestamp $failed"
