@@ -46,11 +46,11 @@
       </servlet>
       <servlet
             alias="/site"
-            class="org.eclipse.orion.internal.server.servlets.build.SiteConfigurationServlet">
+            class="org.eclipse.orion.internal.server.servlets.site.SiteConfigurationServlet">
       </servlet>
       <servlet
             alias="/hosted"
-            class="org.eclipse.orion.internal.server.servlets.build.HostedSiteServlet">
+            class="org.eclipse.orion.internal.server.servlets.host.HostedSiteServlet">
       </servlet>
    </extension>
    <extension
@@ -65,7 +65,7 @@
       </filter>
       <filter
             alias="/"
-            class="org.eclipse.orion.internal.server.servlets.build.HostedSiteFilter">
+            class="org.eclipse.orion.internal.server.servlets.host.HostedSiteFilter">
       </filter>
       <filter
             alias="/file"

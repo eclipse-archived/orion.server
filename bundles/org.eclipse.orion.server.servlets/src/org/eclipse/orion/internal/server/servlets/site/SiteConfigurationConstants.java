@@ -1,4 +1,4 @@
-package org.eclipse.orion.internal.server.servlets.build;
+package org.eclipse.orion.internal.server.servlets.site;
 
 public class SiteConfigurationConstants {
 

@@ -1,4 +1,4 @@
-package org.eclipse.orion.internal.server.servlets.build;
+package org.eclipse.orion.internal.server.servlets.site;
 
 import java.io.IOException;
 import java.net.URI;
@@ -38,6 +38,9 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 		return siteConfig;
 	}
 
+	/**
+	 * @param copyName If <code>true</code>, the Name property from source will overwrite target's name
+	 */
 	private static void copyProperties(JSONObject source, SiteConfiguration target, boolean copyName) {
 		if (copyName) {
 			String name = source.optString(ProtocolConstants.KEY_NAME, null);
@@ -75,6 +78,8 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 			result.putOpt(SiteConfigurationConstants.KEY_AUTH_NAME, siteConfig.getAuthName());
 			result.putOpt(SiteConfigurationConstants.KEY_AUTH_PASSWORD, siteConfig.getAuthPassword());
 			result.putOpt(SiteConfigurationConstants.KEY_HOST_DOMAIN, siteConfig.getHostDomain());
+
+			// FIXME: include the status of the request
 		} catch (JSONException e) {
 			// Can't happen
 		}

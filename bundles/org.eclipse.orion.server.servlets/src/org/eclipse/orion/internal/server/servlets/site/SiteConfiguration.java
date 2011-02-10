@@ -1,4 +1,4 @@
-package org.eclipse.orion.internal.server.servlets.build;
+package org.eclipse.orion.internal.server.servlets.site;
 
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.servlets.workspace.WebElement;

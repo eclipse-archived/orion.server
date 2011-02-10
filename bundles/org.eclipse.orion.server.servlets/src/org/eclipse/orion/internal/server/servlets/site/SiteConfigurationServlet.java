@@ -1,4 +1,4 @@
-package org.eclipse.orion.internal.server.servlets.build;
+package org.eclipse.orion.internal.server.servlets.site;
 
 import java.io.IOException;
 import javax.servlet.ServletException;

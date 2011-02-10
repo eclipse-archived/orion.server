@@ -10,12 +10,13 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.workspace;
 
+import org.eclipse.orion.internal.server.servlets.site.*;
+
 import java.net.URI;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.core.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.build.*;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.resources.Base64Counter;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
