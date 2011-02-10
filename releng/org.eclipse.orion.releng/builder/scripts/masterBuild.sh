@@ -186,7 +186,7 @@ sendMail () {
 	compileMsg=""
 	prereqMsg=""
 	failed=""
-	testsMsg=$(sed -n '/<!--START-TESTS-->/,/<!--END-TESTS-->/p' $buildDirectory/$buildType$timestamp/$buildType$timestamp/index.html | head -n 9 | tail -n 8)
+	testsMsg=$(sed -n '/<!--START-TESTS-->/,/<!--END-TESTS-->/p' $buildDirectory/$buildType$timestamp/drop/index.html | head -n 9 | tail -n 8)
 	testsMsg=$(cat $testsMsg | sed 's_href=\"_href=\"http://download.eclipse.org/e4/orion/drops/$buildType$timestamp/_')
 	pushd $buildDirectory/plugins
 	compileProblems=$( find . -name compilation.problem | cut -d/ -f2 )
@@ -219,8 +219,8 @@ echo "$testsMsg<br>$compileMsg<br>$compileProblems<br>$prereqMsg</body></html>"
 publish () {
 	echo "[`date +%H\:%M\:%S`] Publishing to eclipse.org"
 	pushd $buildDirectory/$buildType$timestamp
-	mv drop $buildType$timestamp
-	scp -r $buildType$timestamp $user@dev.eclipse.org:/home/data/httpd/download.eclipse.org/e4/orion/drops
+
+	scp -r drop $user@dev.eclipse.org:/home/data/httpd/download.eclipse.org/e4/orion/drops/$buildType$timestamp
 	wget -O index.html http://download.eclipse.org/e4/orion/createIndex.php
 	scp index.html $user@dev.eclipse.org:/home/data/httpd/download.eclipse.org/e4/orion
 	
