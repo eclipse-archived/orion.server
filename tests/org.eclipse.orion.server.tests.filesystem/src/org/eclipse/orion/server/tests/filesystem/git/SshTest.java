@@ -15,26 +15,44 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.io.*;
-import java.net.*;
-import java.util.*;
-import javax.crypto.spec.PBEKeySpec;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileInfo;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.tests.harness.FileSystemHelper;
-import org.eclipse.equinox.security.storage.*;
-import org.eclipse.equinox.security.storage.provider.IProviderHints;
+import org.eclipse.orion.internal.server.user.securestorage.SecureStorageUserProfileService;
 import org.eclipse.orion.server.filesystem.git.GitFileStore;
 import org.eclipse.orion.server.filesystem.git.GitFileSystem;
-import org.eclipse.orion.server.tests.filesystem.Activator;
-import org.eclipse.osgi.service.datalocation.Location;
-import org.junit.*;
-import org.osgi.framework.*;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 public class SshTest {
 
+	private static IOrionUserProfileService ups;
+
 	// TODO: required setup:
+	// * install Cygwin + sshd
+	// * setup bare repository in Cygwin
 	// * public key >> authorized_keys in Cygwin
 	// * ensure one of the sshconfig bundles is started
 
@@ -176,30 +194,27 @@ public class SshTest {
 	}
 
 	@BeforeClass
-	public static void addTestUserSecrets() throws StorageException, IOException {
-		ISecurePreferences prefs = initSecurePreferences();
-		ISecurePreferences sshConfig = prefs.node("org.eclipse.orion.server.sshconfig.securestorage");
-		ISecurePreferences test = sshConfig.node("test");
-		test.put("knownHosts", KNOWN_HOSTS, false);
+	public static void addTestUserSecrets() throws CoreException, IOException {
+		ups = new SecureStorageUserProfileService();
+		IOrionUserProfileNode sshConfigNode = ups.getUserProfileNode("test", org.eclipse.orion.internal.server.sshconfig.userprofile.Activator.PI_SSHCONFIG_USERPROFILE);
+		sshConfigNode.put("knownHosts", KNOWN_HOSTS, false);
 		String encodedUri = URLEncoder.encode("ssh://localhost/git/test.git", "UTF-8");
-		ISecurePreferences uri1 = test.node(encodedUri);
+		IOrionUserProfileNode uri1 = sshConfigNode.getUserProfileNode(encodedUri);
 		uri1.put("username", LOGIN, false);
 		uri1.put("password", PASSWORD, true);
 		// TODO: name for the key set
-		ISecurePreferences keys = uri1.node("keys");
-		ISecurePreferences id_rsa = keys.node("id_rsa");
+		IOrionUserProfileNode keys = uri1.getUserProfileNode("keys");
+		IOrionUserProfileNode id_rsa = keys.getUserProfileNode("id_rsa");
 		id_rsa.put("privateKey", PRIVATE_KEY, true);
 		id_rsa.put("passphrase", PASSPHRASE, true);
 		id_rsa.put("publicKey", PUBLIC_KEY, false);
-		prefs.flush();
+		sshConfigNode.flush();
 	}
 
 	@AfterClass
-	public static void clearTestUserSecrets() throws IOException {
-		ISecurePreferences prefs = initSecurePreferences();
-		if (prefs.node("org.eclipse.orion.server.sshconfig.securestorage").nodeExists("test")) {
-			prefs.node("org.eclipse.orion.server.sshconfig.securestorage").node("test").removeNode();
-		}
+	public static void clearTestUserSecrets() {
+		IOrionUserProfileNode sshConfigNode = ups.getUserProfileNode("test", org.eclipse.orion.internal.server.sshconfig.userprofile.Activator.PI_SSHCONFIG_USERPROFILE);
+		sshConfigNode.removeUserProfileNode();
 	}
 
 	@BeforeClass
@@ -237,9 +252,8 @@ public class SshTest {
 				is.close();
 			}
 			return writer.toString();
-		} else {
-			return "";
 		}
+		return "";
 	}
 
 	private void ensureKeysAreUsed() {
@@ -301,47 +315,5 @@ public class SshTest {
 			}
 		}
 	}
-
-	private static ISecurePreferences initSecurePreferences() throws IOException {
-		//try to create our own secure storage under the platform instance location
-		URL location = getStorageLocation();
-		if (location != null) {
-			Map<String, Object> options = new HashMap<String, Object>();
-			options.put(IProviderHints.PROMPT_USER, Boolean.FALSE);
-			String password = System.getProperty("orion.storage.password", "");
-			options.put(IProviderHints.DEFAULT_PASSWORD, new PBEKeySpec(password.toCharArray()));
-				return SecurePreferencesFactory.open(location, options);
-		}
-		//fall back to default secure storage location if we failed to create our own
-		return SecurePreferencesFactory.getDefault().node("org.eclipse.orion.server");
-	}
-
-	/**
-	 * Returns the location for user data to be stored.
-	 * @throws IOException
-	 */
-	private static URL getStorageLocation() throws IOException {
-		BundleContext context = Activator.getContext();
-		Collection<ServiceReference<Location>> refs;
-		try {
-			refs = context.getServiceReferences(Location.class, Location.INSTANCE_FILTER);
-		} catch (InvalidSyntaxException e) {
-			// we know the instance location filter syntax is valid
-			throw new RuntimeException(e);
-		}
-		if (refs.isEmpty())
-			return null;
-		ServiceReference<Location> ref = refs.iterator().next();
-		Location location = context.getService(ref);
-		try {
-			if (location != null)
-				return location.getDataArea("org.eclipse.orion.server.sshconfig.securestorage" + "/user_store"); //$NON-NLS-1$
-		} finally {
-			context.ungetService(ref);
-		}
-		//return null if we are unable to determine instance location.
-		return null;
-	}
-
 
 }
