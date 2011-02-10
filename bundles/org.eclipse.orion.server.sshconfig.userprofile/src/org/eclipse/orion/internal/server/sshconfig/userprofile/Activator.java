@@ -8,14 +8,14 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.internal.server.sshconfig.securestorage;
+package org.eclipse.orion.internal.server.sshconfig.userprofile;
 
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
 public class Activator implements BundleActivator {
 
-	public static final String PI_SSHCONFIG_SECURESTORAGE = "org.eclipse.orion.server.sshconfig.securestorage"; //$NON-NLS-1$
+	public static final String PI_SSHCONFIG_USERPROFILE = "org.eclipse.orion.server.sshconfig.userprofile"; //$NON-NLS-1$
 
 	public static volatile BundleContext bundleContext;
 	static Activator singleton;
