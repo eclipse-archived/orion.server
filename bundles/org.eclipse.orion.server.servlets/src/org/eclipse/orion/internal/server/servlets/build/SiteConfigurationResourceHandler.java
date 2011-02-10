@@ -33,30 +33,38 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 	 */
 	public static SiteConfiguration createFromJSON(WebUser user, String name, JSONObject object) throws CoreException {
 		SiteConfiguration siteConfig = user.createSiteConfiguration(name);
-		copyProperties(object, siteConfig);
+		copyProperties(object, siteConfig, false);
+		siteConfig.save();
 		return siteConfig;
 	}
 
-	private static void copyProperties(JSONObject object, SiteConfiguration siteConfig) {
-		String authName = object.optString(SiteConfigurationConstants.KEY_AUTH_NAME, null);
+	private static void copyProperties(JSONObject source, SiteConfiguration target, boolean copyName) {
+		if (copyName) {
+			String name = source.optString(ProtocolConstants.KEY_NAME, null);
+			if (name != null)
+				target.setName(name);
+		}
+
+		String authName = source.optString(SiteConfigurationConstants.KEY_AUTH_NAME, null);
 		if (authName != null)
-			siteConfig.setAuthName(authName);
+			target.setAuthName(authName);
 
-		String authPassword = object.optString(SiteConfigurationConstants.KEY_AUTH_PASSWORD, null);
+		String authPassword = source.optString(SiteConfigurationConstants.KEY_AUTH_PASSWORD, null);
 		if (authPassword != null)
-			siteConfig.setAuthPassword(authPassword);
+			target.setAuthPassword(authPassword);
 
-		String hostDomain = object.optString(SiteConfigurationConstants.KEY_HOST_DOMAIN, null);
+		String hostDomain = source.optString(SiteConfigurationConstants.KEY_HOST_DOMAIN, null);
 		if (hostDomain != null)
-			siteConfig.setHostDomain(hostDomain);
+			target.setHostDomain(hostDomain);
 
-		JSONArray mappings = object.optJSONArray(SiteConfigurationConstants.KEY_MAPPINGS);
+		JSONArray mappings = source.optJSONArray(SiteConfigurationConstants.KEY_MAPPINGS);
 		if (mappings != null)
-			siteConfig.setMappings(mappings);
+			target.setMappings(mappings);
 	}
 
 	/**
-	 * @param baseLocation The URI of the SiteConfigurationServlet
+	 * @param baseLocation The URI of the SiteConfigurationServlet. If null, Location will not 
+	 * be included in the JSON object. 
 	 * @return Representation of <code>siteConfig</code> as a JSONObject.
 	 */
 	public static JSONObject toJSON(SiteConfiguration siteConfig, URI baseLocation) {
@@ -74,41 +82,53 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 	}
 
 	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, SiteConfiguration siteConfig) throws IOException {
-		JSONObject result = toJSON(siteConfig, getURI(request));
+		// Strip off the SiteConfig id from the request URI
+		URI location = getURI(request);
+		URI baseLocation = location.resolve(""); //$NON-NLS-1$
+
+		JSONObject result = toJSON(siteConfig, baseLocation);
 		OrionServlet.writeJSONResponse(request, response, result);
 		return true;
 	}
 
 	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, SiteConfiguration siteConfig) throws IOException {
-		// if we're creating
-		//    Write siteConfig into the body
-		//    Start it, if the request has that action in it
-		//    Respond 201
-		// else we're just starting/stopping
-		//    Just do it
-		//    Respond 200
 		String pathInfo = request.getPathInfo();
 		IPath path = new Path(pathInfo == null ? "" : pathInfo); //$NON-NLS-1$
-		boolean created = false;
-		if (path.segmentCount() == 0) {
-			created = true;
-		}
+		boolean created = (path.segmentCount() == 0);
 
-		JSONObject result = toJSON(siteConfig, getURI(request));
+		URI location = getURI(request);
+		if (!created) {
+			// Strip off the last segment (site config id)
+			location = location.resolve(""); //$NON-NLS-1$
+		}
+		JSONObject result = toJSON(siteConfig, location);
 		OrionServlet.writeJSONResponse(request, response, result);
 
 		if (created) {
 			response.setStatus(HttpServletResponse.SC_CREATED);
-			URI location = URIUtil.append(getURI(request), siteConfig.getId());
 			response.addHeader(ProtocolConstants.HEADER_LOCATION, location.toString());
 		}
 		return true;
 	}
 
-	private boolean handlePut(HttpServletRequest request, HttpServletResponse response, SiteConfiguration siteConfig) {
-		WebUser user = WebUser.fromUserName(request.getRemoteUser());
-		// FIXME implement
-		return false;
+	private boolean handlePut(HttpServletRequest request, HttpServletResponse response, SiteConfiguration siteConfig) throws CoreException {
+		try {
+			JSONObject requestJson = OrionServlet.readJSONRequest(request);
+			copyProperties(requestJson, siteConfig, true);
+			siteConfig.save();
+
+			// Strip off the SiteConfig id from the request URI
+			URI location = getURI(request);
+			URI baseLocation = location.resolve(""); //$NON-NLS-1$
+
+			JSONObject result = toJSON(siteConfig, baseLocation);
+			OrionServlet.writeJSONResponse(request, response, result);
+			return true;
+		} catch (IOException e) {
+			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occurred while reading the request", e));
+		} catch (JSONException e) {
+			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Syntax error in request body", e));
+		}
 	}
 
 	private boolean handleDelete(HttpServletRequest request, HttpServletResponse response, SiteConfiguration siteConfig) throws CoreException {

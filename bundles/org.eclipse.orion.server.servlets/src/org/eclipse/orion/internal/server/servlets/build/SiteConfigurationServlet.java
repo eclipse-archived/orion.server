@@ -84,11 +84,10 @@ public class SiteConfigurationServlet extends OrionServlet {
 		} else if ("stop".equalsIgnoreCase(action)) { //$NON-NLS-1$
 			// FIXME implement
 		} else if (action == null) {
-			if (actionRequired) {
+			if (actionRequired)
 				throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Action missing", null));
-			} else {
-				// OK
-			}
+			else
+				return;
 		} else {
 			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Action not understood", null));
 		}
@@ -158,23 +157,26 @@ public class SiteConfigurationServlet extends OrionServlet {
 			WebUser user = WebUser.fromUserName(getUserName(req));
 			JSONObject requestJson = readJSONRequest(req);
 			String name = computeName(req, requestJson);
-			if (name == null || name.isEmpty()) {
+			if (name.isEmpty()) {
 				throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Site configuration name not specified", null));
 			}
 			SiteConfiguration siteConfig = SiteConfigurationResourceHandler.createFromJSON(user, name, requestJson);
 			return siteConfig;
 		} catch (IOException e) {
-			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "An error occurred while reading the request", null));
+			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occurred while reading the request", null));
 		} catch (JSONException e) {
 			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Syntax error in request body", null));
 		}
 	}
 
+	/**
+	 * Computes the name for the resource to be created by a POST operation.
+	 * @return The name, or the empty string if no name was given.
+	 */
 	private static String computeName(HttpServletRequest req, JSONObject requestBody) {
 		// Try Slug first
 		String name = req.getHeader(ProtocolConstants.HEADER_SLUG);
 		if (name == null || name.isEmpty()) {
-			// Then try request body
 			name = requestBody.optString(ProtocolConstants.KEY_NAME);
 		}
 		return name;
@@ -198,11 +200,11 @@ public class SiteConfigurationServlet extends OrionServlet {
 		return req.getRemoteUser();
 	}
 
-	/**
-	 * Verify that the user name is valid. Returns <code>true</code> if the
-	 * name is valid and false otherwise. If invalid, this method will handle
-	 * filling in the servlet response.
-	 */
+	//	/**
+	//	 * Verify that the user name is valid. Returns <code>true</code> if the
+	//	 * name is valid and false otherwise. If invalid, this method will handle
+	//	 * filling in the servlet response.
+	//	 */
 	//	private boolean checkUser(HttpServletRequest request, HttpServletResponse response) throws ServletException {
 	//		if (getUserName(request) == null) {
 	//			handleException(response, new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "User name not specified"), HttpServletResponse.SC_FORBIDDEN); //$NON-NLS-1$
