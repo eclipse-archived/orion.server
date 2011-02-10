@@ -156,7 +156,7 @@
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.orion.server.sshconfig.securestorage"
+         id="org.eclipse.orion.server.sshconfig.userprofile"
          download-size="0"
          install-size="0"
          version="0.0.0"
