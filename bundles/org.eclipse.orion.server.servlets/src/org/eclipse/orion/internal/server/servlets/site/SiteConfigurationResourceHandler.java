@@ -59,10 +59,6 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 		if (mappings != null)
 			target.setMappings(mappings);
 
-		//		String authName = source.optString(SiteConfigurationConstants.KEY_AUTH_NAME, null);
-		//		if (authName != null)
-		//			target.setAuthName(authName);
-
 		String authPassword = source.optString(SiteConfigurationConstants.KEY_AUTH_PASSWORD, null);
 		if (authPassword != null)
 			target.setAuthPassword(authPassword);
@@ -77,11 +73,11 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 		try {
 			result.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(baseLocation, siteConfig.getId()).toString());
 			result.put(SiteConfigurationConstants.KEY_MAPPINGS, siteConfig.getMappingsJSON());
-			//			result.putOpt(SiteConfigurationConstants.KEY_AUTH_NAME, siteConfig.getAuthName());
 			result.putOpt(SiteConfigurationConstants.KEY_AUTH_PASSWORD, siteConfig.getAuthPassword());
 			result.putOpt(SiteConfigurationConstants.KEY_HOST_HINT, siteConfig.getHostHint());
 
-			// FIXME: include the status of the request
+			// Note: The SiteConfigurationConstants.KEY_STATE field will be contributed to the result
+			// by the hosting service (if present) via an IWebResourceDecorator
 		} catch (JSONException e) {
 			// Can't happen
 		}

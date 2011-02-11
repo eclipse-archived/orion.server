@@ -1,5 +1,6 @@
 package org.eclipse.orion.internal.server.hosting;
 
+import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfiguration;
 
 public class SiteHostingService implements ISiteHostingService {

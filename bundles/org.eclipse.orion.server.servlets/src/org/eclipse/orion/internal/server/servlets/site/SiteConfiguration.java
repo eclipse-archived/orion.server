@@ -18,10 +18,6 @@ public class SiteConfiguration extends WebElement {
 		super(store);
 	}
 
-	//	public String getAuthName() {
-	//		return store.get(SiteConfigurationConstants.KEY_AUTH_NAME, null);
-	//	}
-
 	public String getAuthPassword() {
 		return store.get(SiteConfigurationConstants.KEY_AUTH_PASSWORD, null);
 	}
@@ -37,10 +33,6 @@ public class SiteConfiguration extends WebElement {
 			return new JSONArray();
 		}
 	}
-
-	//	public void setAuthName(String authName) {
-	//		store.put(SiteConfigurationConstants.KEY_AUTH_NAME, authName);
-	//	}
 
 	public void setAuthPassword(String authPassword) {
 		store.put(SiteConfigurationConstants.KEY_AUTH_PASSWORD, authPassword);

@@ -38,13 +38,13 @@ public class SiteConfigurationConstants {
 	public static final String KEY_HOST_HINT = "HostHint"; //$NON-NLS-1$
 
 	/**
-	 * TODO javadoc
-	 */
-	//	public static final String KEY_AUTH_NAME = "AuthName"; //$NON-NLS-1$
-
-	/**
-	 * TODO javadoc 
+	 * FIXME mamacdon javadoc 
 	 */
 	public static final String KEY_AUTH_PASSWORD = "AuthPassword"; //$NON-NLS-1$
+
+	/**
+	 * JSON representation key for a site configuration's state. The value's data type is a String.
+	 */
+	public static final String KEY_STATE = "State"; //$NON-NLS-1$
 
 }

@@ -18,6 +18,7 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.core.IAliasRegistry;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
+import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
 import org.eclipse.orion.internal.server.servlets.workspace.ProjectParentDecorator;
 import org.eclipse.orion.internal.server.servlets.xfer.TransferResourceDecorator;
 import org.eclipse.osgi.service.datalocation.Location;
@@ -45,6 +46,7 @@ public class Activator implements BundleActivator, IAliasRegistry {
 
 	private Map<String, URI> aliases = Collections.synchronizedMap(new HashMap<String, URI>());
 	private ServiceTracker<IWebResourceDecorator, IWebResourceDecorator> decoratorTracker;
+	private ServiceTracker<ISiteHostingService, ISiteHostingService> siteHostingTracker;
 
 	private URI rootStoreURI;
 	private ServiceRegistration<IWebResourceDecorator> transferDecoratorRegistration;
@@ -66,13 +68,13 @@ public class Activator implements BundleActivator, IAliasRegistry {
 		return decoratorTracker;
 	}
 
-	//	private synchronized ServiceTracker<ISiteHostingService, ISiteHostingService> getSiteHostingTracker() {
-	//		if (siteHostingTracker == null) {
-	//			siteHostingTracker = new ServiceTracker<ISiteHostingService, ISiteHostingService>(bundleContext, ISiteHostingService.class, null);
-	//			siteHostingTracker.open();
-	//		}
-	//		return siteHostingTracker;
-	//	}
+	private synchronized ServiceTracker<ISiteHostingService, ISiteHostingService> getSiteHostingTracker() {
+		if (siteHostingTracker == null) {
+			siteHostingTracker = new ServiceTracker<ISiteHostingService, ISiteHostingService>(bundleContext, ISiteHostingService.class, null);
+			siteHostingTracker.open();
+		}
+		return siteHostingTracker;
+	}
 
 	/**
 	 * Returns the root file system location for the workspace.
@@ -113,6 +115,12 @@ public class Activator implements BundleActivator, IAliasRegistry {
 	public Collection<IWebResourceDecorator> getWebResourceDecorators() {
 		ServiceTracker<IWebResourceDecorator, IWebResourceDecorator> tracker = getDecoratorTracker();
 		return tracker.getTracked().values();
+	}
+
+	public ISiteHostingService getSiteHostingService() {
+		ServiceTracker<ISiteHostingService, ISiteHostingService> tracker = getSiteHostingTracker();
+		Collection<ISiteHostingService> hostingServices = tracker.getTracked().values();
+		return hostingServices.size() == 0 ? null : hostingServices.iterator().next();
 	}
 
 	private void initializeFileSystem() {
@@ -185,6 +193,10 @@ public class Activator implements BundleActivator, IAliasRegistry {
 		if (decoratorTracker != null) {
 			decoratorTracker.close();
 			decoratorTracker = null;
+		}
+		if (siteHostingTracker != null) {
+			siteHostingTracker.close();
+			siteHostingTracker = null;
 		}
 		unregisterDecorators();
 		bundleContext = null;
