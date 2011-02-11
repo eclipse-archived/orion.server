@@ -1,4 +1,4 @@
-package org.eclipse.orion.internal.server.servlets.hosting;
+package org.eclipse.orion.internal.server.hosting;
 
 import java.util.Map;
 

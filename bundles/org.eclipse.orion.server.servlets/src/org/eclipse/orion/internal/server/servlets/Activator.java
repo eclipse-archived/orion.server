@@ -18,7 +18,6 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.core.IAliasRegistry;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
-import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
 import org.eclipse.orion.internal.server.servlets.workspace.ProjectParentDecorator;
 import org.eclipse.orion.internal.server.servlets.xfer.TransferResourceDecorator;
 import org.eclipse.osgi.service.datalocation.Location;
@@ -67,13 +66,13 @@ public class Activator implements BundleActivator, IAliasRegistry {
 		return decoratorTracker;
 	}
 
-	private synchronized ServiceTracker<ISiteHostingService, ISiteHostingService> getSiteHostingTracker() {
-		if (siteHostingTracker == null) {
-			siteHostingTracker = new ServiceTracker<ISiteHostingService, ISiteHostingService>(bundleContext, ISiteHostingService.class, null);
-			siteHostingTracker.open();
-		}
-		return siteHostingTracker;
-	}
+	//	private synchronized ServiceTracker<ISiteHostingService, ISiteHostingService> getSiteHostingTracker() {
+	//		if (siteHostingTracker == null) {
+	//			siteHostingTracker = new ServiceTracker<ISiteHostingService, ISiteHostingService>(bundleContext, ISiteHostingService.class, null);
+	//			siteHostingTracker.open();
+	//		}
+	//		return siteHostingTracker;
+	//	}
 
 	/**
 	 * Returns the root file system location for the workspace.
