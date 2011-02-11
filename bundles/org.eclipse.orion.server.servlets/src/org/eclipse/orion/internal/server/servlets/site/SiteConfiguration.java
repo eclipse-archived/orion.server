@@ -26,8 +26,8 @@ public class SiteConfiguration extends WebElement {
 		return store.get(SiteConfigurationConstants.KEY_AUTH_PASSWORD, null);
 	}
 
-	public String getHostDomain() {
-		return store.get(SiteConfigurationConstants.KEY_HOST, null);
+	public String getHostHint() {
+		return store.get(SiteConfigurationConstants.KEY_HOST_HINT, null);
 	}
 
 	public JSONArray getMappingsJSON() {
@@ -46,8 +46,8 @@ public class SiteConfiguration extends WebElement {
 		store.put(SiteConfigurationConstants.KEY_AUTH_PASSWORD, authPassword);
 	}
 
-	public void setHostDomain(String hostDomain) {
-		store.put(SiteConfigurationConstants.KEY_HOST, hostDomain);
+	public void setHostHint(String hostDomain) {
+		store.put(SiteConfigurationConstants.KEY_HOST_HINT, hostDomain);
 	}
 
 	public void setMappings(JSONArray mappings) {

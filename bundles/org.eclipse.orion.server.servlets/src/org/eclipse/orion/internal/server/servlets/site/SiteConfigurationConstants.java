@@ -33,9 +33,9 @@ public class SiteConfigurationConstants {
 	public static final String KEY_TARGET = "Target"; //$NON-NLS-1$
 
 	/**
-	 * JSON representation key for a site configuration's ___
+	 * JSON representation key for a site configuration's host hint. The value's data type is a String.
 	 */
-	public static final String KEY_HOST = "Host"; //$NON-NLS-1$
+	public static final String KEY_HOST_HINT = "HostHint"; //$NON-NLS-1$
 
 	/**
 	 * TODO javadoc

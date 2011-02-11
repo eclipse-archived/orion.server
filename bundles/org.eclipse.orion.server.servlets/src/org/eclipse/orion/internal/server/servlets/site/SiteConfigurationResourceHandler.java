@@ -51,9 +51,9 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 				target.setName(name);
 		}
 
-		String hostDomain = source.optString(SiteConfigurationConstants.KEY_HOST, null);
+		String hostDomain = source.optString(SiteConfigurationConstants.KEY_HOST_HINT, null);
 		if (hostDomain != null)
-			target.setHostDomain(hostDomain);
+			target.setHostHint(hostDomain);
 
 		JSONArray mappings = source.optJSONArray(SiteConfigurationConstants.KEY_MAPPINGS);
 		if (mappings != null)
@@ -79,7 +79,7 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 			result.put(SiteConfigurationConstants.KEY_MAPPINGS, siteConfig.getMappingsJSON());
 			//			result.putOpt(SiteConfigurationConstants.KEY_AUTH_NAME, siteConfig.getAuthName());
 			result.putOpt(SiteConfigurationConstants.KEY_AUTH_PASSWORD, siteConfig.getAuthPassword());
-			result.putOpt(SiteConfigurationConstants.KEY_HOST, siteConfig.getHostDomain());
+			result.putOpt(SiteConfigurationConstants.KEY_HOST_HINT, siteConfig.getHostHint());
 
 			// FIXME: include the status of the request
 		} catch (JSONException e) {

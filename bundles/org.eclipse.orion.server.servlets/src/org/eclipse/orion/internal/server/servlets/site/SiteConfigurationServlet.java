@@ -6,7 +6,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.*;
-import org.eclipse.orion.internal.server.servlets.host.IHostedSiteService;
 import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.*;
@@ -28,8 +27,7 @@ public class SiteConfigurationServlet extends OrionServlet {
 		traceRequest(req);
 		IPath pathInfo = getPathInfo(req);
 		if (pathInfo.segmentCount() == 0) {
-			// Get all site configurations
-			// FIXME: implement filtering
+			// Get site configurations
 			doGetAllSiteConfigurations(req, resp);
 			return;
 		} else if (pathInfo.segmentCount() == 1) {
@@ -39,7 +37,7 @@ public class SiteConfigurationServlet extends OrionServlet {
 				return;
 			}
 		} else {
-			getStatusHandler().handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Bad request", null));
+			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Bad request", null));
 			return;
 		}
 		super.doGet(req, resp);
@@ -64,6 +62,9 @@ public class SiteConfigurationServlet extends OrionServlet {
 				if (siteConfigurationResourceHandler.handleRequest(req, resp, siteConfig)) {
 					return;
 				}
+			} else {
+				handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Bad request", null));
+				return;
 			}
 		} catch (CoreException e) {
 			handleException(resp, e.getStatus());
@@ -81,13 +82,11 @@ public class SiteConfigurationServlet extends OrionServlet {
 			return;
 		String action = req.getHeader(SiteConfigurationConstants.HEADER_ACTION);
 		if ("start".equalsIgnoreCase(action)) { //$NON-NLS-1$
-			// FIXME implement
-			// Get the hosted site service
-			IHostedSiteService hostedSiteService = null;
-			//			hostedSiteService.start(siteConfig);
+			//			ISiteHostService service = serviceTracker.get(ISiteHostService.class);
+			//			service.start(siteConfig);
 		} else if ("stop".equalsIgnoreCase(action)) { //$NON-NLS-1$
-			IHostedSiteService hostedSiteService = null;
-			//			hostedSiteService.stop(siteConfig);
+			//			ISiteHostService service = serviceTracker.get(ISiteHostService.class);
+			//			service.stop(siteConfig);
 		} else if (action == null) {
 			if (actionRequired)
 				throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Action missing", null));
@@ -108,6 +107,9 @@ public class SiteConfigurationServlet extends OrionServlet {
 			if (siteConfigurationResourceHandler.handleRequest(req, resp, siteConfig)) {
 				return;
 			}
+		} else {
+			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Bad request", null));
+			return;
 		}
 		super.doPut(req, resp);
 	}
@@ -140,6 +142,7 @@ public class SiteConfigurationServlet extends OrionServlet {
 		return null;
 	}
 
+	// FIXME: implement filtering by state
 	private boolean doGetAllSiteConfigurations(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
 		String userName = getUserName(req);
 		try {
@@ -163,7 +166,7 @@ public class SiteConfigurationServlet extends OrionServlet {
 			JSONObject requestJson = readJSONRequest(req);
 			String name = computeName(req, requestJson);
 			if (name.isEmpty()) {
-				throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Site configuration name not specified", null));
+				throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Site configuration name was not specified", null));
 			}
 			SiteConfiguration siteConfig = SiteConfigurationResourceHandler.createFromJSON(user, name, requestJson);
 			return siteConfig;
@@ -205,16 +208,4 @@ public class SiteConfigurationServlet extends OrionServlet {
 		return req.getRemoteUser();
 	}
 
-	//	/**
-	//	 * Verify that the user name is valid. Returns <code>true</code> if the
-	//	 * name is valid and false otherwise. If invalid, this method will handle
-	//	 * filling in the servlet response.
-	//	 */
-	//	private boolean checkUser(HttpServletRequest request, HttpServletResponse response) throws ServletException {
-	//		if (getUserName(request) == null) {
-	//			handleException(response, new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "User name not specified"), HttpServletResponse.SC_FORBIDDEN); //$NON-NLS-1$
-	//			return false;
-	//		}
-	//		return true;
-	//	}
 }

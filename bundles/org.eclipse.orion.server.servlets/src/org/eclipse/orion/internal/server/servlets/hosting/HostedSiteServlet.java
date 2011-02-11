@@ -1,4 +1,4 @@
-package org.eclipse.orion.internal.server.servlets.host;
+package org.eclipse.orion.internal.server.servlets.hosting;
 
 import java.io.IOException;
 import java.net.*;

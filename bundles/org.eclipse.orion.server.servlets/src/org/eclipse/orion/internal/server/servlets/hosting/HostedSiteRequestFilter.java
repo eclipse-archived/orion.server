@@ -1,4 +1,4 @@
-package org.eclipse.orion.internal.server.servlets.host;
+package org.eclipse.orion.internal.server.servlets.hosting;
 
 import java.io.IOException;
 import javax.servlet.*;
@@ -8,7 +8,7 @@ import javax.servlet.http.HttpServletRequest;
  * If a request is for a file on a running hosted site, this filter forwards the request to 
  * the HostedSiteServlet to be handled.
  */
-public class HostedSiteFilter implements Filter {
+public class HostedSiteRequestFilter implements Filter {
 
 	private static final String HOSTED_SITE_ALIAS = "/hosted"; //$NON-NLS-1$
 
@@ -29,7 +29,7 @@ public class HostedSiteFilter implements Filter {
 	}
 
 	private boolean isForHostedSite(HttpServletRequest req) {
-		// TODO consult HostedSiteTable
+		// TODO consult HostedSitesTable
 		String host = req.getHeader("Host"); //$NON-NLS-1$
 		return host.startsWith("127.0.0.") && !host.endsWith(".1"); //$NON-NLS-1$ //$NON-NLS-2$
 	}
