@@ -24,7 +24,9 @@ user=aniefer
 resultsEmail=orion-dev@eclipse.org
 
 buildType=I
-timestamp=$( date +%Y%m%d%H%M )
+date=$(date +%Y%m%d)
+time=$(date +%H%M)
+timestamp=$date$time
     
 while [ $# -gt 0 ]
 do
@@ -52,7 +54,10 @@ do
 			publish="-DpublishToEclipse=true";;
 			
 		"-timestamp")
-			timestamp="$2"; shift;;
+			timestamp="$2"; 
+			date=${timestamp:0:8}
+			time=${timestamp:8};
+			shift;;
 			
 		"-email")
 			resultsEmail="$2"; shift;;
@@ -68,7 +73,7 @@ done
 
 setProperties () {
 	buildDirectory=$writableBuildRoot/$buildType$timestamp
-	
+	buildLabel=$buildType$date-$time
 	javaHome=/shared/common/jdk-1.6.x86_64
 	
 	pushd $supportDir
@@ -125,7 +130,7 @@ runBuild () {
 			-buildfile $builderDir/buildWebIDE.xml \
 			-Dbuilder=$builderDir/builder \
 			-Dbase=$writableBuildRoot \
-			-DbuildType=$buildType -Dtimestamp=$timestamp \
+			-DbuildType=$buildType -Dtimestamp=$timestamp -DbuildLabel=$buildLabel \
 			-DgitUser=$user \
 			$tagMaps $compareMaps $fetchTag $publish \
 			-DJ2SE-1.4=$j2se142 \
@@ -152,7 +157,7 @@ runBuild () {
 			prereqMsg=`cat $buildDirectory/prereqErrors.log` 
 		fi
 		
-		mailx -s "[orion-build] Orion Build : $buildType$timestamp failed" $resultsEmail <<EOF
+		mailx -s "[orion-build] Orion Build : $buildLabel failed" $resultsEmail <<EOF
 $compileMsg
 $compileProblems
 
@@ -171,8 +176,8 @@ runTests () {
 			-DbuildDirectory=$buildDirectory \
 			-Dbuilder=$builderDir/builder \
 			-Dbase=$writableBuildRoot \
-			-DbuildLabel=$buildType$timestamp
-			$fetchTag
+			-Dtimestamp=$timestamp -DbuildLabel=$buildLabel \
+			$fetchTag \
 			-DJ2SE-1.4=$j2se142 \
 			-DJ2SE-1.5=$j2se150 \
 			-DJavaSE-1.6=$javase160"
@@ -187,7 +192,7 @@ sendMail () {
 	prereqMsg=""
 	failed=""
 	
-	testsMsg=$(sed -n '/<!--START-TESTS-->/,/<!--END-TESTS-->/p' $buildDirectory/$buildType$timestamp/drop/index.html | head -n 9 | tail -n 8 > mail.txt)
+	testsMsg=$(sed -n '/<!--START-TESTS-->/,/<!--END-TESTS-->/p' $buildDirectory/$buildLabel/drop/index.html | head -n 9 | tail -n 8 > mail.txt)
 	testsMsg=$(cat mail.txt | sed s_href=\"_href=\"http://download.eclipse.org/e4/orion/drops/$buildType$timestamp/_)
 	rm mail.txt
 	
@@ -210,10 +215,10 @@ echo "From: e4Build@build.eclipse.org "
 echo "To: $resultsEmail "
 echo "MIME-Version: 1.0 "
 echo "Content-Type: text/html; charset=us-ascii"
-echo "Subject: [orion-build] Orion Build : $buildType$timestamp $failed"
+echo "Subject: [orion-build] Orion Build : $buildLabel $failed"
 echo ""
-echo "<html><head><title>Orion Build $buildType$timestamp</title></head>" 
-echo "<body>Check here for the build results: <a href="http://download.eclipse.org/e4/orion/drops/$buildType$timestamp">$buildType$timestamp</a><br>" 
+echo "<html><head><title>Orion Build $buildLabel</title></head>" 
+echo "<body>Check here for the build results: <a href="http://download.eclipse.org/e4/orion/drops/$buildType$timestamp">$buildLabel</a><br>" 
 echo "$testsMsg<br>$compileMsg<br>$compileProblems<br>$prereqMsg</body></html>" 
 ) | /usr/lib/sendmail -t
 
@@ -221,7 +226,7 @@ echo "$testsMsg<br>$compileMsg<br>$compileProblems<br>$prereqMsg</body></html>"
 
 publish () {
 	echo "[`date +%H\:%M\:%S`] Publishing to eclipse.org"
-	pushd $buildDirectory/$buildType$timestamp
+	pushd $buildDirectory/$buildLabel
 
 	scp -r drop $user@dev.eclipse.org:/home/data/httpd/download.eclipse.org/e4/orion/drops/$buildType$timestamp
 	wget -O index.html http://download.eclipse.org/e4/orion/createIndex.php

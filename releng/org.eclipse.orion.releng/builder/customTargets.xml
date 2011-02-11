@@ -58,8 +58,8 @@ lastMapTag=${mapsTagTag}
 		
 	<target name="postFetch">
 		<replace dir="${buildDirectory}" includes="pluginVersions.properties,featureVersions.properties"  >
-			<replacefilter token="HEAD" value="${buildType}${timestamp}" />
-			<replacefilter token="origin/master" value="${buildType}${timestamp}" />
+			<replacefilter token="HEAD" value="${buildLabel}" />
+			<replacefilter token="origin/master" value="${buildLabel}" />
 		</replace>
 		
 		<property name="jsdocHome" value="${base}/jsdoc-toolkit" />
@@ -113,9 +113,8 @@ lastMapTag=${mapsTagTag}
 		</copy>	
 
 		<!-- generate the build index, guess the component version numbers -->
-		<filter token="repbuildid" value="${buildLabel}" />
 		<filter token="repmaindate" value="${TODAY}" />
-		<filter token="repbuilddate" value="${buildId}" />
+		<filter token="repbuildlabel" value="${buildLabel}" />
 		<copy filtering="true" file="${builder}/html/build.index.html" tofile="${dropLocation}/index.html" />
 		<copy file="${builder}/html/build.download.php" tofile="${dropLocation}/download.php" />
 
