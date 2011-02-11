@@ -50,7 +50,7 @@
       </servlet>
       <servlet
             alias="/hosted"
-            class="org.eclipse.orion.internal.server.servlets.hosting.HostedSiteServlet">
+            class="org.eclipse.orion.internal.server.hosting.HostedSiteServlet">
       </servlet>
    </extension>
    <extension
@@ -65,7 +65,7 @@
       </filter>
       <filter
             alias="/"
-            class="org.eclipse.orion.internal.server.servlets.hosting.HostedSiteRequestFilter">
+            class="org.eclipse.orion.internal.server.hosting.HostedSiteRequestFilter">
       </filter>
       <filter
             alias="/file"

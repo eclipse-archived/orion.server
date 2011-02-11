@@ -6,7 +6,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.*;
-import org.eclipse.orion.internal.server.servlets.hosting.HostingServiceUnavailableException;
 import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
 import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
 import org.eclipse.orion.server.servlets.OrionServlet;
@@ -55,16 +54,16 @@ public class SiteConfigurationServlet extends OrionServlet {
 				SiteConfiguration siteConfig = doCreateSiteConfiguration(req, resp);
 				try {
 					doStartStop(req, resp, siteConfig, false);
-					if (siteConfigurationResourceHandler.handleRequest(req, resp, siteConfig)) {
-						return;
-					}
-				} catch (HostingServiceUnavailableException e) {
-					// No hosting service; rollback created site configuration and fail
+				} catch (CoreException e) {
+					// Start/stop failed; undo creation of site configuration
 					if (siteConfig != null) {
 						WebUser user = WebUser.fromUserName(getUserName(req));
 						user.deleteSiteConfiguration(siteConfig);
 					}
 					throw e;
+				}
+				if (siteConfigurationResourceHandler.handleRequest(req, resp, siteConfig)) {
+					return;
 				}
 			} else if (pathInfo.segmentCount() == 1) {
 				// Start/stop site configuration
@@ -74,15 +73,13 @@ public class SiteConfigurationServlet extends OrionServlet {
 					return;
 				}
 			} else {
-				// Request has too many segments
+				// Too many segments in request URI
 				handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Bad request", null));
 				return;
 			}
 		} catch (CoreException e) {
 			handleException(resp, e.getStatus());
 			return;
-		} catch (HostingServiceUnavailableException e) {
-			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), e));
 		}
 		super.doPost(req, resp);
 	}
@@ -91,7 +88,7 @@ public class SiteConfigurationServlet extends OrionServlet {
 	 * @param siteConfig
 	 * @param actionRequired <code>true</code> if null action header should cause a failure response.
 	 */
-	private void doStartStop(HttpServletRequest req, HttpServletResponse resp, SiteConfiguration siteConfig, boolean actionRequired) throws CoreException, HostingServiceUnavailableException {
+	private void doStartStop(HttpServletRequest req, HttpServletResponse resp, SiteConfiguration siteConfig, boolean actionRequired) throws CoreException {
 		if (siteConfig == null)
 			return;
 		String action = req.getHeader(SiteConfigurationConstants.HEADER_ACTION);
@@ -111,10 +108,13 @@ public class SiteConfigurationServlet extends OrionServlet {
 		}
 	}
 
-	private static ISiteHostingService getHostingService() throws HostingServiceUnavailableException {
+	/**
+	 * @throws CoreException If the site hosting service is not present.
+	 */
+	private static ISiteHostingService getHostingService() throws CoreException {
 		ISiteHostingService service = Activator.getDefault().getSiteHostingService();
 		if (service == null) {
-			throw new HostingServiceUnavailableException("Site hosting service unavailable");
+			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "Site hosting service unavailable"));
 		}
 		return service;
 	}
