@@ -6,6 +6,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.*;
+import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
 import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.*;
@@ -82,11 +83,11 @@ public class SiteConfigurationServlet extends OrionServlet {
 			return;
 		String action = req.getHeader(SiteConfigurationConstants.HEADER_ACTION);
 		if ("start".equalsIgnoreCase(action)) { //$NON-NLS-1$
-			//			ISiteHostService service = serviceTracker.get(ISiteHostService.class);
-			//			service.start(siteConfig);
+			ISiteHostingService service = Activator.getDefault().getSiteHostingService();
+			service.start(siteConfig);
 		} else if ("stop".equalsIgnoreCase(action)) { //$NON-NLS-1$
-			//			ISiteHostService service = serviceTracker.get(ISiteHostService.class);
-			//			service.stop(siteConfig);
+			ISiteHostingService service = Activator.getDefault().getSiteHostingService();
+			service.stop(siteConfig);
 		} else if (action == null) {
 			if (actionRequired)
 				throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Action missing", null));
