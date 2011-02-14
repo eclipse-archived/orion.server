@@ -28,11 +28,9 @@ public class SiteConfigurationServlet extends OrionServlet {
 		traceRequest(req);
 		IPath pathInfo = getPathInfo(req);
 		if (pathInfo.segmentCount() == 0) {
-			// Get site configurations
 			doGetAllSiteConfigurations(req, resp);
 			return;
 		} else if (pathInfo.segmentCount() == 1) {
-			// Get a site configuration
 			SiteConfiguration siteConfig = getExistingSiteConfig(req, resp);
 			if (siteConfigurationResourceHandler.handleRequest(req, resp, siteConfig)) {
 				return;
@@ -58,7 +56,7 @@ public class SiteConfigurationServlet extends OrionServlet {
 					// Start/stop failed; undo creation of site configuration
 					if (siteConfig != null) {
 						WebUser user = WebUser.fromUserName(getUserName(req));
-						user.deleteSiteConfiguration(siteConfig);
+						user.removeSiteConfiguration(siteConfig);
 					}
 					throw e;
 				}

@@ -51,9 +51,9 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 				target.setName(name);
 		}
 
-		String hostDomain = source.optString(SiteConfigurationConstants.KEY_HOST_HINT, null);
-		if (hostDomain != null)
-			target.setHostHint(hostDomain);
+		String hostHint = source.optString(SiteConfigurationConstants.KEY_HOST_HINT, null);
+		if (hostHint != null)
+			target.setHostHint(hostHint);
 
 		JSONArray mappings = source.optJSONArray(SiteConfigurationConstants.KEY_MAPPINGS);
 		if (mappings != null)
@@ -136,7 +136,7 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 
 	private boolean handleDelete(HttpServletRequest request, HttpServletResponse response, SiteConfiguration siteConfig) throws CoreException {
 		WebUser user = WebUser.fromUserName(request.getRemoteUser());
-		user.deleteSiteConfiguration(siteConfig);
+		user.removeSiteConfiguration(siteConfig);
 		return true;
 	}
 
