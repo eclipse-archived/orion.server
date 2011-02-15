@@ -2,10 +2,12 @@ package org.eclipse.orion.internal.server.hosting;
 
 import java.util.BitSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
-import org.eclipse.orion.internal.server.servlets.hosting.SiteHostException;
+import org.eclipse.orion.internal.server.servlets.hosting.SiteHostingException;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfiguration;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
@@ -20,62 +22,98 @@ public class SiteHostingService implements ISiteHostingService {
 	
 	private Map<Key, HostedSite> table;
 	
-	private BitSet ipsAllocated;
-
+	private Set<String> hosts;	// All hosts we've used
+	private BitSet allocated;	// Bit #i is set if the ip address 192.168.0.i has been allocated
+	
+	// Exclusive access to hosts, allocated
+	private Object hostLock = new Object();
+	
 	public SiteHostingService() {
 		this.table = new HashMap<Key, HostedSite>();
-		this.ipsAllocated = new BitSet();
+		this.hosts = new HashSet<String>();
+		this.allocated = new BitSet(256);
+		allocated.set(0);
+		allocated.set(1);
+		allocated.set(255);
 	}
 	
 	@Override
 	public void start(SiteConfiguration siteConfig, WebUser user) {
-		synchronized (this) {
-			// Acquire the next host
-			Host host = acquireHost();
-			
-			Key key = createKey(siteConfig);
+		Key key = createKey(siteConfig);
+		synchronized (table) {
 			if (table.containsKey(key)) {
-				throw new SiteHostException("Site is already running; can't start");
+				throw new SiteHostingException("Site is already started; can't start");
 			}
 			
-			// FIXME
-			String workspaceId = "";
-			table.put(key, createValue(siteConfig, user, workspaceId, host));
+			String host = acquireHost();
+			
+			// Register mappings
+			
+			table.put(key, createValue(siteConfig, user, host));
 		}
 	}
 	
 	public void stop(SiteConfiguration siteConfig, WebUser user) {
-		synchronized (this) {
-			// Release the host
-			// Unregister the mappings, etc
-			table.remove(createKey(siteConfig));
+		Key key = createKey(siteConfig);
+		synchronized (table) {
+			HostedSite site = table.get(key);
+			if (site == null) {
+				throw new SiteHostingException("Site is not started; can't stop");
+			}
+			
+			table.remove(key);
+			
+			releaseHost(site.host);
+			
+			// Unregister the mappings
 		}
 	}
 
 	@Override
 	public boolean isRunning(SiteConfiguration siteConfig) {
-		return table.containsKey(createKey(siteConfig));
+		synchronized (table) {
+			return table.containsKey(createKey(siteConfig));
+		}
 	}
 	
-	private Host acquireHost() throws SiteHostException {
-		return null;
+	@Override
+	public boolean isHosted(String host) {
+		// TODO: this is the most common case, we should really avoid blocking
+		synchronized (hostLock) {
+			return hosts.contains(host);
+		}
 	}
 	
-	private void releaseHost(Host host) {
-		
+	private String acquireHost() throws SiteHostingException {
+		synchronized (hostLock) {
+			// FIXME: allow configurable IPs
+			// FIXME: if domain wildcards available, try those first
+			int bit = allocated.nextClearBit(0);
+			if (bit == -1) {
+				throw new SiteHostingException("No more hosts available");
+			}
+			allocated.set(bit);
+			String host = "192.168.0." + bit;
+			hosts.add(host);
+			return host;
+		}
+	}
+	
+	private void releaseHost(String host) {
+		String lastByteStr = host.substring(host.lastIndexOf(".")); //$NON-NLS-1$
+		int lastByte = Integer.parseInt(lastByteStr);
+		synchronized (hostLock) {
+			allocated.clear(lastByte);
+			hosts.remove(host);
+		}
 	}
 	
 	private Key createKey(SiteConfiguration siteConfig) {
 		return new Key(siteConfig.getId());
 	}
 	
-	private HostedSite createValue(SiteConfiguration siteConfig, WebUser user, String workspaceId, Host host) {
-		return new HostedSite(siteConfig, user, workspaceId, host);
-	}
-}
-
-class Host {
-	public Host() {
+	private HostedSite createValue(SiteConfiguration siteConfig, WebUser user, String host) {
+		return new HostedSite(siteConfig, user, host);
 	}
 }
 
@@ -83,8 +121,8 @@ class Host {
  * Key for an entry in the table. For now this is based on site configuration id,
  * so only 1 instance of a given site configuration may be running at a given time.
  * 
- * We don't store actual SiteConfiguration instances here because their getters aren't
- * aren't idempotent (they rely on the backing store, which may change).
+ * Don't store actual SiteConfiguration instances here because their getters rely 
+ * on the backing store, which may change.
  */
 class Key {
 	// Globally unique id of the site configuration
@@ -130,16 +168,16 @@ class HostedSite {
 	// The user who launched this site
 	String userName;
 
-	// Workspace id that this launch will use (userName must have appropriate access rights)
+	// Workspace id that this launch will use (userName must have appropriate access rights to it)
 	String workspaceId;
 	
 	// The host where the site is accessible
-	Host host;
+	String host;
 	
-	public HostedSite(SiteConfiguration siteConfig, WebUser user, String workspaceId, Host host) {
+	public HostedSite(SiteConfiguration siteConfig, WebUser user, String host) {
 		this.mappings = createMap(siteConfig);
 		this.userName = user.getName();
-		this.workspaceId = workspaceId;
+		this.workspaceId = siteConfig.getWorkspace();
 		this.host = host;
 	}
 

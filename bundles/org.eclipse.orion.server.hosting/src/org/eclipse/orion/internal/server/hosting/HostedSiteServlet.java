@@ -20,14 +20,17 @@ import org.eclipse.osgi.util.NLS;
 
 /**
  * Handles requests for URIs that are part of a running hosted site.
+ * Requests should have the Host as the first segement in the request uri
+ * <code>/192.168.0.2/foo/bar.html</code>
  */
 public class HostedSiteServlet extends OrionServlet {
 	private static final long serialVersionUID = 1L;
 
+	// FIXME
+	private static final String FILE_SERVLET_ALIAS = "/file";
 	private static final String USER = "mark";
-	private static final String FILE = "/file";
 
-	// TODO remove these copied variables
+	// FIXME remove these copied variables
 	private ServletResourceHandler<IFileStore> fileSerializer;
 	private final URI rootStoreURI;
 	private IAliasRegistry aliasRegistry;
@@ -41,55 +44,89 @@ public class HostedSiteServlet extends OrionServlet {
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
-		String host = req.getHeader("Host"); //$NON-NLS-1$
-		if (isForHostedSite(host)) {
-			String pathInfo = req.getPathInfo();
-			URL url = this.rewrite(pathInfo);
-
-			// FIXME Need a better way of getting files from this server
-			if ("localhost".equals(url.getHost())) { //$NON-NLS-1$
-				// Somehow I need to pull this from my workspace
-
-				// FIXME: This fails if you haven't logged in because the alias will not be present
-				pathInfo = url.getPath().substring(url.getPath().indexOf(FILE) + FILE.length());
-				IPath path = pathInfo == null ? Path.ROOT : new Path(pathInfo);
-				IFileStore file = tempGetFileStore(path, USER/*req.getRemoteUser()*/);
-				if (file == null) {
-					handleException(resp, new ServerStatus(IStatus.ERROR, 404, NLS.bind("File not found: {0}", path), null));
-					return;
-				}
-				if (fileSerializer.handleRequest(req, resp, file))
-					return;
-			} else {
-				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
-				// TODO: forward headers to proxy request here
-				//				Enumeration<?> headerNames = req.getHeaderNames();
-				//				while (headerNames.hasMoreElements()) {
-				//					String name = (String) headerNames.nextElement();
-				//					String value = req.getHeader(name);
-				//					if ("Host".equals(name)) {
-				//						continue;
-				//					}
-				//					connection.addRequestProperty(name, value);
-				//				}
-				//				for (int i = 0; true; i++) {
-				//					String name = connection.getHeaderFieldKey(i);
-				//					if (name == null) {
-				//						break;
-				//					}
-				//					resp.setHeader(name, connection.getHeaderField(i));
-				//				}
-				IOUtilities.pipe(connection.getInputStream(), resp.getOutputStream(), true, true);
-			}
+		String pathInfo = req.getPathInfo();
+		IPath path = new Path(pathInfo == null ? "" : pathInfo); //$NON-NLS-1$
+		if (path.segmentCount() > 0) {
+			String hostedHost = path.segment(0);
+			
+			// sanity check on hostedHost
+			
+			URL url = this.getMappedURL(path.removeFirstSegments(1));
+			serve(req, resp, url);
 		} else {
 			super.doGet(req, resp);
 		}
 	}
+	
+	/**
+	 * @param pathInfo
+	 * @return The pathInfo
+	 * @throws MalformedURLException
+	 */
+	private URL getMappedURL(IPath pathInfo) throws MalformedURLException {
+		Map<String, String> map = getMap();
 
-	// FIXME: should consult Hosted Sites Table
-	private boolean isForHostedSite(String host) {
-		return host.startsWith("127.0.0.") && !host.endsWith(".1");
+		IPath originalPath = pathInfo;
+		IPath path = originalPath;
+		String base = null;
+		String rest = null;
+		int count = path.segmentCount();
+		for (int i = 0; i <= count; i++) {
+			base = map.get(path.toString());
+			if (base != null) {
+				rest = originalPath.removeFirstSegments(count - i).toString();
+				break;
+			}
+			path = path.removeLastSegments(1);
+		}
+
+		if (base != null) {
+			String result = base + (rest.length() == 0 || rest.startsWith("/") ? "" : "/") + rest; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+			return new URL(result);
+		}
+		return null;
+	}
+
+	private void serve(HttpServletRequest req, HttpServletResponse resp, URL url)
+			throws ServletException, IOException {
+		String pathInfo;
+		// FIXME Need a better way of getting files from this server
+		if ("localhost".equals(url.getHost())) { //$NON-NLS-1$
+			// Somehow I need to pull this from my workspace
+
+			// FIXME: This fails if you haven't logged in because the alias will not be present
+			pathInfo = url.getPath().substring(url.getPath().indexOf(FILE_SERVLET_ALIAS) + FILE_SERVLET_ALIAS.length());
+			IPath filePath = pathInfo == null ? Path.ROOT : new Path(pathInfo);
+			IFileStore file = tempGetFileStore(filePath, USER/*req.getRemoteUser()*/);
+			if (file == null) {
+				handleException(resp, new ServerStatus(IStatus.ERROR, 404, NLS.bind("File not found: {0}", filePath), null));
+				//return;
+			}
+			if (fileSerializer.handleRequest(req, resp, file)) {
+				//return;
+			}
+		} else {
+			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+			// TODO: forward headers to proxy request here
+			//				Enumeration<?> headerNames = req.getHeaderNames();
+			//				while (headerNames.hasMoreElements()) {
+			//					String name = (String) headerNames.nextElement();
+			//					String value = req.getHeader(name);
+			//					if ("Host".equals(name)) {
+			//						continue;
+			//					}
+			//					connection.addRequestProperty(name, value);
+			//				}
+			//				for (int i = 0; true; i++) {
+			//					String name = connection.getHeaderFieldKey(i);
+			//					if (name == null) {
+			//						break;
+			//					}
+			//					resp.setHeader(name, connection.getHeaderField(i));
+			//				}
+			IOUtilities.pipe(connection.getInputStream(), resp.getOutputStream(), true, true);
+		}
 	}
 
 	// FIXME temp junk for grabbing files from filesystem
@@ -116,32 +153,7 @@ public class HostedSiteServlet extends OrionServlet {
 		return null;
 	}
 
-	// FIXME use SiteConfig mapping
-	private URL rewrite(String pathInfo) throws MalformedURLException {
-		Map<String, String> map = getMap();
-
-		IPath originalPath = new Path(pathInfo);
-		IPath path = originalPath;
-		String base = null;
-		String rest = null;
-		int count = path.segmentCount();
-		for (int i = 0; i <= count; i++) {
-			base = map.get(path.toString());
-			if (base != null) {
-				rest = originalPath.removeFirstSegments(count - i).toString();
-				break;
-			}
-			path = path.removeLastSegments(1);
-		}
-
-		if (base != null) {
-			String result = base + (rest.length() == 0 || rest.startsWith("/") ? "" : "/") + rest;
-			return new URL(result);
-		}
-		return null;
-	}
-
-	// TODO read from elsewhere
+	// FIXME: read from the site config
 	// Note: we don't tolerate trailing slashes
 	private Map<String, String> getMap() {
 		Map<String, String> map = new HashMap<String, String>();

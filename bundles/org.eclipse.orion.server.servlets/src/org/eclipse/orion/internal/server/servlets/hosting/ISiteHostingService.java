@@ -11,10 +11,11 @@ import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
  */
 public interface ISiteHostingService {
 
-	public void start(SiteConfiguration siteConfig, WebUser user) throws SiteHostException;
+	public void start(SiteConfiguration siteConfig, WebUser user) throws SiteHostingException;
 
 	public void stop(SiteConfiguration siteConfig, WebUser user);
 
 	public boolean isRunning(SiteConfiguration siteConfig/*, WebUser user*/);
 
+	public boolean isHosted(String host);
 }

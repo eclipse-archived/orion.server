@@ -55,6 +55,10 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 		if (hostHint != null)
 			target.setHostHint(hostHint);
 
+		String workspace = source.optString(SiteConfigurationConstants.KEY_WORKSPACE, null);
+		if (workspace != null)
+			target.setWorkspace(workspace);
+
 		JSONArray mappings = source.optJSONArray(SiteConfigurationConstants.KEY_MAPPINGS);
 		if (mappings != null)
 			target.setMappings(mappings);

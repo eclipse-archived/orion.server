@@ -66,6 +66,10 @@ public class SiteConfiguration extends WebElement {
 		return store.get(SiteConfigurationConstants.KEY_HOST_HINT, null);
 	}
 
+	public String getWorkspace() {
+		return store.get(SiteConfigurationConstants.KEY_WORKSPACE, null);
+	}
+
 	public JSONArray getMappingsJSON() {
 		try {
 			return new JSONArray(store.get(SiteConfigurationConstants.KEY_MAPPINGS, "[]")); //$NON-NLS-1$
@@ -80,6 +84,10 @@ public class SiteConfiguration extends WebElement {
 
 	public void setHostHint(String hostHint) {
 		store.put(SiteConfigurationConstants.KEY_HOST_HINT, hostHint);
+	}
+
+	public void setWorkspace(String workspace) {
+		store.put(SiteConfigurationConstants.KEY_WORKSPACE, workspace);
 	}
 
 	public void setMappings(JSONArray mappings) {

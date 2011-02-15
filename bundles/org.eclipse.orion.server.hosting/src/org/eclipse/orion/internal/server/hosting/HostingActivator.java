@@ -6,7 +6,9 @@ import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
 import org.eclipse.orion.internal.server.servlets.xfer.TransferResourceDecorator;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
+import org.osgi.service.http.HttpService;
 
 public class HostingActivator implements BundleActivator {
 
@@ -47,9 +49,17 @@ public class HostingActivator implements BundleActivator {
 		hostedStatusDecoratorRegistration = bundleContext.registerService(IWebResourceDecorator.class, new HostedStatusDecorator(), null);
 	}
 	
-	public ISiteHostingService getHostingService() {
+	SiteHostingService getHostingService() {
 		return siteHostingService;
 	}
+	
+//	HttpService getHttpService() {
+//		ServiceReference<HttpService> serviceRef = getContext().getServiceReference(HttpService.class);
+//		if (serviceRef != null) {
+//			return getContext().getService(serviceRef);
+//		}
+//		return null;
+//	}
 	
 	/*
 	 * (non-Javadoc)
@@ -57,9 +67,9 @@ public class HostingActivator implements BundleActivator {
 	 */
 	public void stop(BundleContext bundleContext) throws Exception {
 		HostingActivator.bundleContext = null;
-		siteHostingService = null;
 		unregisterHostingService();
 		unregisterDecorators();
+		siteHostingService = null;
 	}
 
 	private void unregisterHostingService() {

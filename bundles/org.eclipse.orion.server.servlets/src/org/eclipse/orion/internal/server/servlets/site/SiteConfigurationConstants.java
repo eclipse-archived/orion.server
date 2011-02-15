@@ -47,4 +47,9 @@ public class SiteConfigurationConstants {
 	 */
 	public static final String KEY_STATE = "Status"; //$NON-NLS-1$
 
+	/**
+	 * JSON representation key for a site configuration's workspace id. The value's data type is a String.
+	 */
+	public static final String KEY_WORKSPACE = "Workspace"; //$NON-NLS-1$
+
 }
