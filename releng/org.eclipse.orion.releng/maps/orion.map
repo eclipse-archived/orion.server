@@ -38,8 +38,8 @@ plugin@openid4java=GET,http://git.eclipse.org/c/e4/org.eclipse.orion.server.git/
 plugin@nekohtml=GET,http://git.eclipse.org/c/e4/org.eclipse.orion.server.git/plain/dependencies/nekohtml_0.9.5.jar,unpack=true
 
 #tests
-plugin@org.eclipse.orion.server.tests=GIT,tag=v20110207-1740,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=tests/org.eclipse.orion.server.tests
-plugin@org.eclipse.orion.server.tests.filesystem=GIT,tag=v20110207-1740,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=tests/org.eclipse.orion.server.tests.filesystem
+plugin@org.eclipse.orion.server.tests=GIT,tag=v20110215-1030,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=tests/org.eclipse.orion.server.tests
+plugin@org.eclipse.orion.server.tests.filesystem=GIT,tag=v20110215-1030,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=tests/org.eclipse.orion.server.tests.filesystem
 plugin@org.eclipse.orion.server.sshconfig.home=GIT,tag=v20110207-1740,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.sshconfig.home
 
 #git
