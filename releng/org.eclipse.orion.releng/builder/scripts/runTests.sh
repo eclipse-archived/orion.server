@@ -64,7 +64,6 @@ firefox=`which firefox`
 fi
 
 firefox4=/shared/common/firefox-4.0b11/firefox
-opera=/shared/common/opera-11.01-1190/bin/opera
 
 chrome=/shared/common/chrome-8.0.552.237/google-chrome
 if [[ ! -e "$chrome" ]]; then
@@ -80,9 +79,9 @@ echo Running $testConf on port $port
 # run the tests
 if [ ! -z "$javaHome" ]; then
 	$javaHome/bin/java -Dbrowser.timeout=120 -jar $testDir/../JsTestDriver.jar --config $testConf --port $port --browser $firefox,$chrome --tests all --testOutput $testDir
-	$javaHome/bin/java -Dbrowser.timeout=120 -jar $testDir/../JsTestDriver.jar --config $testConf --port $port --browser $firefox4,$opera --tests all --testOutput $testDir
+	$javaHome/bin/java -Dbrowser.timeout=120 -jar $testDir/../JsTestDriver.jar --config $testConf --port $port --browser $opera --tests all --testOutput $testDir
 else
 	java -Dbrowser.timeout=120 -jar $testDir/../JsTestDriver.jar --config $testConf --port $port --browser $firefox,$chrome --tests all --testOutput $testDir
-	java -Dbrowser.timeout=120 -jar $testDir/../JsTestDriver.jar --config $testConf --port $port --browser $opera,$firefox4 --tests all --testOutput $testDir
+	java -Dbrowser.timeout=120 -jar $testDir/../JsTestDriver.jar --config $testConf --port $port --browser $firefox4 --tests all --testOutput $testDir
 fi
 
