@@ -48,23 +48,28 @@ public class HostedSiteServlet extends OrionServlet {
 		IPath path = new Path(pathInfo == null ? "" : pathInfo); //$NON-NLS-1$
 		if (path.segmentCount() > 0) {
 			String hostedHost = path.segment(0);
-			
-			// sanity check on hostedHost
-			
-			URL url = this.getMappedURL(path.removeFirstSegments(1));
-			serve(req, resp, url);
+			HostedSite site = HostingActivator.getDefault().getHostingService().get(hostedHost);
+			if (site != null) {
+				URL url = getMappedURL(site, path.removeFirstSegments(1).makeAbsolute());
+				serve(req, resp, url);
+			} else {
+				
+			}
 		} else {
 			super.doGet(req, resp);
 		}
 	}
 	
 	/**
+	 * Returns a URL 
+	 * rewriting pathInfo using the most-specific
+	 * @param site
 	 * @param pathInfo
-	 * @return The pathInfo
-	 * @throws MalformedURLException
+	 * @return
+	 * @throws MalformedURLException If the target mapping is not valid URL
 	 */
-	private URL getMappedURL(IPath pathInfo) throws MalformedURLException {
-		Map<String, String> map = getMap();
+	private URL getMappedURL(HostedSite site, IPath pathInfo) throws MalformedURLException {
+		Map<String, String> map = site.getMappings();
 
 		IPath originalPath = pathInfo;
 		IPath path = originalPath;
@@ -82,13 +87,15 @@ public class HostedSiteServlet extends OrionServlet {
 
 		if (base != null) {
 			String result = base + (rest.length() == 0 || rest.startsWith("/") ? "" : "/") + rest; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+			
+			// FIXME this doesn't handle absolute URIs with no protocl eg (/foo/bar.txt)
+			// maybe another data structure would be better
 			return new URL(result);
 		}
 		return null;
 	}
-
-	private void serve(HttpServletRequest req, HttpServletResponse resp, URL url)
-			throws ServletException, IOException {
+	
+	private void serve(HttpServletRequest req, HttpServletResponse resp, URL url) throws ServletException, IOException {
 		String pathInfo;
 		// FIXME Need a better way of getting files from this server
 		if ("localhost".equals(url.getHost())) { //$NON-NLS-1$
@@ -151,18 +158,6 @@ public class HostedSiteServlet extends OrionServlet {
 		}
 
 		return null;
-	}
-
-	// FIXME: read from the site config
-	// Note: we don't tolerate trailing slashes
-	private Map<String, String> getMap() {
-		Map<String, String> map = new HashMap<String, String>();
-		map.put("/", "http://localhost:8080/file/C/static");
-		map.put("/editor", "http://localhost:8080/file/D/web");
-		map.put("/org.dojotoolkit", "http://localhost:8080/file/G");
-		map.put("/openajax", "http://localhost:8080/file/H");
-		map.put("/foo", "http://mamacdon.github.com");
-		return map;
 	}
 
 }

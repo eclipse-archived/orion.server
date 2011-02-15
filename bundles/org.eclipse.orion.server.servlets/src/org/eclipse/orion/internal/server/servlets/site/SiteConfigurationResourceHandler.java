@@ -80,7 +80,7 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 			result.putOpt(SiteConfigurationConstants.KEY_AUTH_PASSWORD, siteConfig.getAuthPassword());
 			result.putOpt(SiteConfigurationConstants.KEY_HOST_HINT, siteConfig.getHostHint());
 
-			// Note: The SiteConfigurationConstants.KEY_STATE field will be contributed to the result
+			// Note: The SiteConfigurationConstants.KEY_STATUS field will be contributed to the result
 			// by the hosting service (if present) via an IWebResourceDecorator
 		} catch (JSONException e) {
 			// Can't happen

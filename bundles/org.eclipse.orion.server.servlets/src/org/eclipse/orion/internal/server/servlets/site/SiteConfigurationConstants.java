@@ -43,9 +43,9 @@ public class SiteConfigurationConstants {
 	public static final String KEY_AUTH_PASSWORD = "AuthPassword"; //$NON-NLS-1$
 
 	/**
-	 * JSON representation key for a site configuration's state. The value's data type is a String.
+	 * JSON representation key for a site configuration's status. The value's data type is a JSON object.
 	 */
-	public static final String KEY_STATE = "Status"; //$NON-NLS-1$
+	public static final String KEY_STATUS = "Status"; //$NON-NLS-1$
 
 	/**
 	 * JSON representation key for a site configuration's workspace id. The value's data type is a String.

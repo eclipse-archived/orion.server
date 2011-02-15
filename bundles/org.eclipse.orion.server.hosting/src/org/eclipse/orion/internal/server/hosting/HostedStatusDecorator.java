@@ -1,5 +1,6 @@
 package org.eclipse.orion.internal.server.hosting;
 
+import java.net.InetAddress;
 import java.net.URI;
 
 import org.eclipse.core.runtime.IPath;
@@ -55,12 +56,17 @@ public class HostedStatusDecorator implements IWebResourceDecorator {
 	private void addStatus(JSONObject siteConfigJson) throws JSONException {
 		String id = siteConfigJson.getString(ProtocolConstants.KEY_ID);
 		SiteConfiguration siteConfiguration = SiteConfiguration.fromId(id);
-		boolean isHosted = HostingActivator.getDefault().getHostingService().isRunning(siteConfiguration);
-		if (isHosted) {
-			siteConfigJson.put(SiteConfigurationConstants.KEY_STATE, "started");
+		SiteHostingService hostingService = HostingActivator.getDefault().getHostingService();
+		HostedSite site = hostingService.get(siteConfiguration);
+		JSONObject status = new JSONObject();
+		if (site != null) {
+			status.put(SiteConfigurationConstants.KEY_STATUS, "started");
+			// FIXME: port#
+			status.put("URL", site.getHost());
 		} else {
-			siteConfigJson.put(SiteConfigurationConstants.KEY_STATE, "stopped");
+			status.put(SiteConfigurationConstants.KEY_STATUS, "stopped");
 		}
+		siteConfigJson.put(SiteConfigurationConstants.KEY_STATUS, status);
 	}
 	
 }
