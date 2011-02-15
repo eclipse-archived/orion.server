@@ -100,22 +100,12 @@ public class GitFileStore extends FileStore {
 
 				CloneCommand cc = Git.cloneRepository();
 				cc.setBare(false);
-				cc.setBranch(Constants.R_HEADS + Constants.MASTER);
+				cc.setBranch(Constants.MASTER);
 				cc.setCredentialsProvider(getCredentialsProvider());
 				cc.setDirectory(workdir);
-				// cc.setProgressMonitor(monitor);
-				// cc.setRemote(Constants.DEFAULT_REMOTE_NAME);
+				cc.setRemote(Constants.DEFAULT_REMOTE_NAME);
 				cc.setURI(uri.toPrivateString());
 				cc.call();
-
-				StoredConfig config = getLocalRepo().getConfig();
-				config.setString(ConfigConstants.CONFIG_BRANCH_SECTION,
-						Constants.MASTER, ConfigConstants.CONFIG_KEY_REMOTE,
-						Constants.DEFAULT_REMOTE_NAME);
-				config.setString(ConfigConstants.CONFIG_BRANCH_SECTION,
-						Constants.MASTER, ConfigConstants.CONFIG_KEY_MERGE,
-						Constants.MASTER);
-				config.save();
 
 				logInfo("Cloned " + this + " to " + workdir);
 			}
