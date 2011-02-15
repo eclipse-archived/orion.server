@@ -79,10 +79,10 @@ port=`head -1 $testConf | sed 's_.*:\([0-9]*\)$_\1_'`
 echo Running $testConf on port $port
 # run the tests
 if [ ! -z "$javaHome" ]; then
-	$javaHome/bin/java -jar $testDir/../JsTestDriver.jar --config $testConf --port $port --browser $firefox,$chrome --tests all --testOutput $testDir
-	$javaHome/bin/java -jar $testDir/../JsTestDriver.jar --config $testConf --port $port --browser $firefox4,$opera --tests all --testOutput $testDir
+	$javaHome/bin/java -Dbrowser.timeout=120 -jar $testDir/../JsTestDriver.jar --config $testConf --port $port --browser $firefox,$chrome --tests all --testOutput $testDir
+	$javaHome/bin/java -Dbrowser.timeout=120 -jar $testDir/../JsTestDriver.jar --config $testConf --port $port --browser $firefox4,$opera --tests all --testOutput $testDir
 else
-	java -jar $testDir/../JsTestDriver.jar --config $testConf --port $port --browser $firefox,$chrome --tests all --testOutput $testDir
-	java -jar $testDir/../JsTestDriver.jar --config $testConf --port $port --browser $opera,$firefox4 --tests all --testOutput $testDir
+	java -Dbrowser.timeout=120 -jar $testDir/../JsTestDriver.jar --config $testConf --port $port --browser $firefox,$chrome --tests all --testOutput $testDir
+	java -Dbrowser.timeout=120 -jar $testDir/../JsTestDriver.jar --config $testConf --port $port --browser $opera,$firefox4 --tests all --testOutput $testDir
 fi
 
