@@ -1,6 +1,7 @@
 package org.eclipse.orion.internal.server.servlets.hosting;
 
 import org.eclipse.orion.internal.server.servlets.site.SiteConfiguration;
+import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
 
 /**
  * Service for managing hosted sites.
@@ -10,10 +11,10 @@ import org.eclipse.orion.internal.server.servlets.site.SiteConfiguration;
  */
 public interface ISiteHostingService {
 
-	public void start(SiteConfiguration siteConfig);
+	public void start(SiteConfiguration siteConfig, WebUser user) throws SiteHostException;
 
-	public void stop(SiteConfiguration siteConfig);
+	public void stop(SiteConfiguration siteConfig, WebUser user);
 
-	public boolean isRunning(SiteConfiguration siteConfig);
+	public boolean isRunning(SiteConfiguration siteConfig/*, WebUser user*/);
 
 }

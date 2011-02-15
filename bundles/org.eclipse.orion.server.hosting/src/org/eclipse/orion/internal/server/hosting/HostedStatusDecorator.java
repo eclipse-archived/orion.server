@@ -8,8 +8,6 @@ import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfiguration;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
-import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
-import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
 import org.eclipse.orion.server.core.LogHelper;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -56,10 +54,8 @@ public class HostedStatusDecorator implements IWebResourceDecorator {
 	 */
 	private void addStatus(JSONObject siteConfigJson) throws JSONException {
 		String id = siteConfigJson.getString(ProtocolConstants.KEY_ID);
-		//SiteConfiguration siteConfiguration = fromId(id);
-		// FIXME get the table, check if the site config is in it
-		
-		boolean isHosted = false;
+		SiteConfiguration siteConfiguration = SiteConfiguration.fromId(id);
+		boolean isHosted = HostingActivator.getDefault().getHostingService().isRunning(siteConfiguration);
 		if (isHosted) {
 			siteConfigJson.put(SiteConfigurationConstants.KEY_STATE, "started");
 		} else {

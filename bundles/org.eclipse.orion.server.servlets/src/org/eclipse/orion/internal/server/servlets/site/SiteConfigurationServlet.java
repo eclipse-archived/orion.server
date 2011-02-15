@@ -53,7 +53,7 @@ public class SiteConfigurationServlet extends OrionServlet {
 				try {
 					doStartStop(req, resp, siteConfig, false);
 				} catch (CoreException e) {
-					// Start/stop failed; undo creation of site configuration
+					// Start/stop failed; remove the created site config from user's list
 					if (siteConfig != null) {
 						WebUser user = WebUser.fromUserName(getUserName(req));
 						user.removeSiteConfiguration(siteConfig);
@@ -89,13 +89,14 @@ public class SiteConfigurationServlet extends OrionServlet {
 	private void doStartStop(HttpServletRequest req, HttpServletResponse resp, SiteConfiguration siteConfig, boolean actionRequired) throws CoreException {
 		if (siteConfig == null)
 			return;
+		WebUser user = WebUser.fromUserName(getUserName(req));
 		String action = req.getHeader(SiteConfigurationConstants.HEADER_ACTION);
 		if ("start".equalsIgnoreCase(action)) { //$NON-NLS-1$
 			ISiteHostingService service = getHostingService();
-			service.start(siteConfig);
+			service.start(siteConfig, user);
 		} else if ("stop".equalsIgnoreCase(action)) { //$NON-NLS-1$
 			ISiteHostingService service = getHostingService();
-			service.stop(siteConfig);
+			service.stop(siteConfig, user);
 		} else if (action == null) {
 			if (actionRequired)
 				throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Action missing", null));

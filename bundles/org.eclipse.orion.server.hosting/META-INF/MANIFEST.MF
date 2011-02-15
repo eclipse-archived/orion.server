@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %Bundle-Name
-Bundle-SymbolicName: org.eclipse.orion.server.hosting
+Bundle-SymbolicName: org.eclipse.orion.server.hosting;singleton:=true
 Bundle-Version: 0.2.0.qualifier
 Bundle-Activator: org.eclipse.orion.internal.server.hosting.HostingActivator
 Bundle-Vendor: %Bundle-Vendor
