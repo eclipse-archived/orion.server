@@ -18,6 +18,7 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -34,7 +35,7 @@ public class GitWebResourceDecorator implements IWebResourceDecorator {
 			return;
 		try {
 			//TODO: we need to check if the resource is a Git resource
-			if ("file".equals(servlet))
+			if (GitUtils.getGitDir(targetPath, ""/* TODO: authority */) != null)
 				addGitLinks(resource, representation);
 			JSONArray children = representation.optJSONArray(ProtocolConstants.KEY_CHILDREN);
 			if (children != null) {
@@ -50,19 +51,19 @@ public class GitWebResourceDecorator implements IWebResourceDecorator {
 			LogHelper.log(e);
 		}
 	}
-	
+
 	private void addGitLinks(URI resource, JSONObject representation) throws URISyntaxException, JSONException {
 		URI location = new URI(representation.getString(ProtocolConstants.KEY_LOCATION));
 		IPath targetPath = new Path(location.getPath());
-		
+
 		// add Git Diff URI
 		IPath path = new Path("/git/diff").append(targetPath);
 		URI link = new URI(resource.getScheme(), resource.getAuthority(), path.toString(), null, null);
-		representation.put("GitDiff", link.toString());
-		
+		representation.put(GitConstants.KEY_DIFF, link.toString());
+
 		// add Git Status URI
 		path = new Path("/git/status").append(targetPath);
 		link = new URI(resource.getScheme(), resource.getAuthority(), path.toString(), null, null);
-		representation.put("GitResult", link.toString());
+		representation.put(GitConstants.KEY_STATUS, link.toString());
 	}
 }
