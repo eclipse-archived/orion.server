@@ -27,7 +27,7 @@ public class HostedSiteRequestFilter implements Filter {
 	public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain) throws IOException, ServletException {
 		if (siteHostingService != null) {
 			HttpServletRequest httpReq = (HttpServletRequest) req;
-			String host = getHostWithoutPort(httpReq);
+			String host = getHost(httpReq);
 			if (host != null) {
 				String requestUri = httpReq.getRequestURI();
 				if (siteHostingService.isHosted(host) && !requestUri.startsWith(HOSTED_SITE_ALIAS)) {
@@ -41,16 +41,8 @@ public class HostedSiteRequestFilter implements Filter {
 		chain.doFilter(req, resp);
 	}
 
-	private static String getHostWithoutPort(HttpServletRequest req) {
-		String host = req.getHeader("Host"); //$NON-NLS-1$
-		if (host != null) {
-			int i = host.lastIndexOf(":"); //$NON-NLS-1$
-			if (i != -1) {
-				return host.substring(0, i);
-			}
-			return host;
-		}
-		return null;
+	private static String getHost(HttpServletRequest req) {
+		return req.getHeader("Host"); //$NON-NLS-1$
 	}
 
 	@Override

@@ -13,7 +13,7 @@ public interface ISiteHostingService {
 
 	public void start(SiteConfiguration siteConfig, WebUser user) throws SiteHostingException;
 
-	public void stop(SiteConfiguration siteConfig, WebUser user);
+	public void stop(SiteConfiguration siteConfig, WebUser user) throws SiteHostingException;
 
 	public IHostedSite get(SiteConfiguration siteConfig/*, WebUser user*/);
 

@@ -18,14 +18,16 @@ import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
  */
 public class SiteHostingService implements ISiteHostingService {
 	
+	private final int port;
 	private Map<Key, HostedSite> table;
 	
-	private Set<String> hosts;	// All hosts we've used
+	private Set<String> hosts;	// All hosts we've used, each is has the form "hostname:port"
 	private BitSet allocated;	// Bit #i is set if the ip address 192.168.0.i has been allocated
 	
 	private Object hostLock = new Object();
-	
-	public SiteHostingService() {
+
+	public SiteHostingService(int port /*, SiteHostingConfig config*/) {
+		this.port = port;
 		this.table = new HashMap<Key, HostedSite>();
 		this.hosts = new HashSet<String>();
 		this.allocated = new BitSet(256);
@@ -35,11 +37,11 @@ public class SiteHostingService implements ISiteHostingService {
 	}
 	
 	@Override
-	public void start(SiteConfiguration siteConfig, WebUser user) {
+	public void start(SiteConfiguration siteConfig, WebUser user) throws SiteHostingException {
 		Key key = createKey(siteConfig);
 		synchronized (table) {
 			if (table.containsKey(key)) {
-				throw new SiteHostingException("Site is already started; can't start");
+				throw new SiteHostingException("Site is already started");
 			}
 			
 			String host = acquireHost();
@@ -48,12 +50,12 @@ public class SiteHostingService implements ISiteHostingService {
 	}
 	
 	@Override
-	public void stop(SiteConfiguration siteConfig, WebUser user) {
+	public void stop(SiteConfiguration siteConfig, WebUser user) throws SiteHostingException {
 		Key key = createKey(siteConfig);
 		synchronized (table) {
 			HostedSite site = table.get(key);
 			if (site == null) {
-				throw new SiteHostingException("Site is already stopped; can't stop");
+				throw new SiteHostingException("Site is already stopped");
 			}
 			
 			releaseHost(site.getHost());
@@ -68,6 +70,10 @@ public class SiteHostingService implements ISiteHostingService {
 		}
 	}
 	
+	/**
+	 * @param host A host in the form <code>hostname:port</code>
+	 * @return
+	 */
 	@Override
 	public boolean isHosted(String host) {
 		// FIXME: this gets called a lot, can we avoid locking here?
@@ -78,7 +84,7 @@ public class SiteHostingService implements ISiteHostingService {
 	}
 	
 	/**
-	 * @param host
+	 * @param host A host in the form <code>hostname:port</code>
 	 * @return
 	 */
 	HostedSite get(String host) {
@@ -94,13 +100,13 @@ public class SiteHostingService implements ISiteHostingService {
 	private String acquireHost() throws SiteHostingException {
 		synchronized (hostLock) {
 			// FIXME: allow configurable IPs
-			// FIXME: if domain wildcards available, try those firstx
+			// FIXME: if domain wildcards available, try those first
 			int bit = allocated.nextClearBit(0);
 			if (bit == -1) {
 				throw new SiteHostingException("No more hosts available");
 			}
 			allocated.set(bit);
-			String host = "127.0.0." + bit;
+			String host = "127.0.0." + bit + ":" + this.port;
 			hosts.add(host);
 			return host;
 		}

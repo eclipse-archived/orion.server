@@ -21,7 +21,7 @@ import org.eclipse.osgi.util.NLS;
 /**
  * Handles requests for URIs that are part of a running hosted site.
  * Requests must have the hosted site's Host name as the first segment in the path, eg:
- * <code>/192.168.0.2/foo/bar.html</code>
+ * <code>/192.168.0.2:8080/foo/bar.html</code>
  */
 public class HostedSiteServlet extends OrionServlet {
 	private static final long serialVersionUID = 1L;
@@ -45,7 +45,7 @@ public class HostedSiteServlet extends OrionServlet {
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
 		String pathInfo = req.getPathInfo();
-		IPath path = new Path(pathInfo == null ? "" : pathInfo); //$NON-NLS-1$
+		IPath path = new Path(null /*don't parse host:port as device*/, pathInfo == null ? "" : pathInfo); //$NON-NLS-1$
 		if (path.segmentCount() > 0) {
 			String hostedHost = path.segment(0);
 			HostedSite site = HostingActivator.getDefault().getHostingService().get(hostedHost);

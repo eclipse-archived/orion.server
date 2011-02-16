@@ -62,13 +62,13 @@ public class HostedStatusDecorator implements IWebResourceDecorator {
 		HostedSite site = (HostedSite) hostingService.get(siteConfiguration);
 		JSONObject hostingStatus = new JSONObject();
 		if (site != null) {
-			hostingStatus.put("Status", "started");
-			// FIXME fold the full hostedURL into HostedSite
-			String hostedUrl = resource.getScheme() + "://" + site.getHost() + ":" + resource.getPort();
-			hostingStatus.put("URL", hostedUrl);
+			hostingStatus.put("Status", "started");  //$NON-NLS-1$//$NON-NLS-2$
+			// Whatever scheme was used to access the resource, use that for the sites too 
+			String hostedUrl = resource.getScheme() + "://" + site.getHost(); //$NON-NLS-1$
+			hostingStatus.put("URL", hostedUrl); //$NON-NLS-1$
 			
 		} else {
-			hostingStatus.put("Status", "stopped");
+			hostingStatus.put("Status", "stopped"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		siteConfigJson.put(SiteConfigurationConstants.KEY_HOSTING_STATUS, hostingStatus);
 	}
