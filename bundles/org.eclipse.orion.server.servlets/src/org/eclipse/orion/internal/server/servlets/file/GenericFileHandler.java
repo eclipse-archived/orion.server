@@ -41,8 +41,9 @@ class GenericFileHandler extends ServletResourceHandler<IFileStore> {
 	@Override
 	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws ServletException {
 		// generic variant doesn't handle queries
-		if (request.getQueryString() != null)
-			return false;
+		// acceptable to just ignore query parameters we do not understand
+		//	if (request.getQueryString() != null)
+		//		return false;
 		try {
 			handleFileContents(request, response, file);
 		} catch (Exception e) {
