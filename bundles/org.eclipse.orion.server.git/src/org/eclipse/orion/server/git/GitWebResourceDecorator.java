@@ -13,6 +13,8 @@ package org.eclipse.orion.server.git;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
@@ -26,44 +28,68 @@ import org.json.JSONObject;
 public class GitWebResourceDecorator implements IWebResourceDecorator {
 
 	@Override
-	public void addAtributesFor(URI resource, JSONObject representation) {
+	public void addAtributesFor(HttpServletRequest request, URI resource,
+			JSONObject representation) {
 		IPath targetPath = new Path(resource.getPath());
 		if (targetPath.segmentCount() <= 1)
 			return;
 		String servlet = targetPath.segment(0);
-		if (!"file".equals(servlet))
+		if (!"file".equals(servlet) && !"workspace".equals(servlet))
 			return;
+
+		boolean isWorkspace = ("workspace".equals(servlet));
+
 		try {
-			//TODO: we need to check if the resource is a Git resource
-			if (GitUtils.getGitDir(targetPath, ""/* TODO: authority */) != null)
-				addGitLinks(resource, representation);
-			JSONArray children = representation.optJSONArray(ProtocolConstants.KEY_CHILDREN);
-			if (children != null) {
-				for (int i = 0; i < children.length(); i++) {
-					JSONObject child = children.getJSONObject(i);
-					if (child.getBoolean(ProtocolConstants.KEY_DIRECTORY)) {
-						addGitLinks(resource, child);
+			// assumption that Git resources may live only under another Git
+			// resource
+			if (GitUtils.getGitDir(targetPath, request.getRemoteUser()) != null) {
+				addGitLinks(resource, representation, isWorkspace);
+
+				JSONArray children = representation
+						.optJSONArray(ProtocolConstants.KEY_CHILDREN);
+				if (children != null) {
+					for (int i = 0; i < children.length(); i++) {
+						JSONObject child = children.getJSONObject(i);
+						if (child.getBoolean(ProtocolConstants.KEY_DIRECTORY)) {
+							addGitLinks(resource, child, false);
+						}
 					}
 				}
 			}
 		} catch (Exception e) {
-			//log and continue
+			// log and continue
 			LogHelper.log(e);
 		}
 	}
 
-	private void addGitLinks(URI resource, JSONObject representation) throws URISyntaxException, JSONException {
-		URI location = new URI(representation.getString(ProtocolConstants.KEY_LOCATION));
+	private void addGitLinks(URI resource, JSONObject representation,
+			boolean isWorkspace) throws URISyntaxException, JSONException {
+
+		URI location = null;
+
+		if (isWorkspace
+				&& representation.has(ProtocolConstants.KEY_CONTENT_LOCATION))
+			location = new URI(
+					representation
+							.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		if (!isWorkspace)
+			location = new URI(
+					representation.getString(ProtocolConstants.KEY_LOCATION));
+		if (location == null)
+			return;
+
 		IPath targetPath = new Path(location.getPath());
 
 		// add Git Diff URI
 		IPath path = new Path("/git/diff").append(targetPath);
-		URI link = new URI(resource.getScheme(), resource.getAuthority(), path.toString(), null, null);
+		URI link = new URI(resource.getScheme(), resource.getAuthority(),
+				path.toString(), null, null);
 		representation.put(GitConstants.KEY_DIFF, link.toString());
 
 		// add Git Status URI
 		path = new Path("/git/status").append(targetPath);
-		link = new URI(resource.getScheme(), resource.getAuthority(), path.toString(), null, null);
+		link = new URI(resource.getScheme(), resource.getAuthority(),
+				path.toString(), null, null);
 		representation.put(GitConstants.KEY_STATUS, link.toString());
 	}
 }

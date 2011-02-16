@@ -12,6 +12,7 @@ package org.eclipse.orion.internal.server.servlets.xfer;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import javax.servlet.http.HttpServletRequest;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
@@ -27,7 +28,7 @@ public class TransferResourceDecorator implements IWebResourceDecorator {
 	/*(non-Javadoc)
 	 * @see org.eclipse.orion.internal.server.core.IWebResourceDecorator#addAtributesFor(java.net.URI, org.json.JSONObject)
 	 */
-	public void addAtributesFor(URI resource, JSONObject representation) {
+	public void addAtributesFor(HttpServletRequest request, URI resource, JSONObject representation) {
 		IPath targetPath = new Path(resource.getPath());
 		if (targetPath.segmentCount() <= 1)
 			return;

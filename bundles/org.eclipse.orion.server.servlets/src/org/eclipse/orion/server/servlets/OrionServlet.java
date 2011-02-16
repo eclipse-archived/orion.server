@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2010, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -68,7 +68,7 @@ public abstract class OrionServlet extends HttpServlet {
 		Collection<IWebResourceDecorator> decorators = Activator.getDefault().getWebResourceDecorators();
 		URI requestURI = ServletResourceHandler.getURI(req);
 		for (IWebResourceDecorator decorator : decorators)
-			decorator.addAtributesFor(requestURI, result);
+			decorator.addAtributesFor(req, requestURI, result);
 	}
 
 	/**

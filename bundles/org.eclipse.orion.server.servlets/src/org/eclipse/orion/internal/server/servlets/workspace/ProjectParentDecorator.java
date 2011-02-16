@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2010, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,6 +12,7 @@ package org.eclipse.orion.internal.server.servlets.workspace;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import javax.servlet.http.HttpServletRequest;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
@@ -32,7 +33,7 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 	/*(non-Javadoc)
 	 * @see org.eclipse.orion.internal.server.core.IWebResourceDecorator#addAtributesFor(java.net.URI, org.json.JSONObject)
 	 */
-	public void addAtributesFor(URI resource, JSONObject representation) {
+	public void addAtributesFor(HttpServletRequest request, URI resource, JSONObject representation) {
 		IPath resourcePath = new Path(resource.getPath());
 		//we only care about the file service
 		if (resourcePath.segmentCount() < 2)
