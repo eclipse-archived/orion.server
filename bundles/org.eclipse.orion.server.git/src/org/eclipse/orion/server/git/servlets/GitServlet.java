@@ -22,7 +22,7 @@ import org.eclipse.orion.server.servlets.OrionServlet;
 // Describe Git Servlet API here
 public class GitServlet extends OrionServlet {
 
-	private static final long serialVersionUID = -6809742538472682623L;
+	private static final long serialVersionUID = 1L;
 
 	public static final String GIT_URI = "/git";
 

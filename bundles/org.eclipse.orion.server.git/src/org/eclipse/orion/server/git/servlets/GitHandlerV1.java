@@ -38,7 +38,7 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 			HttpServletResponse response, String gitPathInfo)
 			throws ServletException {
 
-		String[] infoParts = gitPathInfo.split("\\/", 2);
+		String[] infoParts = gitPathInfo.split("\\/", 3);
 
 		if (infoParts[1].equals(GitConstants.DIFF_COMMAND)) {
 			diffHandlerV1.handleRequest(request, response, infoParts[2]);
