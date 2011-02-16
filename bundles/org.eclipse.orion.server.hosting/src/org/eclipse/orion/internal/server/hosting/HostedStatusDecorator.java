@@ -58,7 +58,7 @@ public class HostedStatusDecorator implements IWebResourceDecorator {
 	private void addStatus(JSONObject siteConfigJson, URI resource) throws JSONException {
 		String id = siteConfigJson.getString(ProtocolConstants.KEY_ID);
 		SiteConfiguration siteConfiguration = SiteConfiguration.fromId(id);
-		SiteHostingService hostingService = HostingActivator.getDefault().getHostingService();
+		SiteLaunchService hostingService = HostingActivator.getDefault().getHostingService();
 		HostedSite site = (HostedSite) hostingService.get(siteConfiguration);
 		JSONObject hostingStatus = new JSONObject();
 		if (site != null) {

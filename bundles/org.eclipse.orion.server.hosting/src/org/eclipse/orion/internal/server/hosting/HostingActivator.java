@@ -2,7 +2,7 @@ package org.eclipse.orion.internal.server.hosting;
 
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
 import org.eclipse.orion.internal.server.servlets.Activator;
-import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
+import org.eclipse.orion.internal.server.servlets.hosting.ISiteLaunchService;
 import org.eclipse.orion.internal.server.servlets.xfer.TransferResourceDecorator;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
@@ -17,8 +17,8 @@ public class HostingActivator implements BundleActivator {
 	private static BundleContext bundleContext;
 	private static HostingActivator singleton;
 
-	private SiteHostingService siteHostingService;
-	private ServiceRegistration<ISiteHostingService> siteHostingRegistration;
+	private SiteLaunchService siteHostingService;
+	private ServiceRegistration<ISiteLaunchService> siteHostingRegistration;
 	private ServiceRegistration<IWebResourceDecorator> hostedStatusDecoratorRegistration;
 
 	static BundleContext getContext() {
@@ -42,15 +42,15 @@ public class HostingActivator implements BundleActivator {
 
 	private void registerHostingService() {
 		int port = Integer.parseInt(System.getProperty("org.eclipse.equinox.http.jetty.http.port"));
-		siteHostingService = new SiteHostingService(port);
-		siteHostingRegistration = bundleContext.registerService(ISiteHostingService.class, siteHostingService, null);
+		siteHostingService = new SiteLaunchService(port);
+		siteHostingRegistration = bundleContext.registerService(ISiteLaunchService.class, siteHostingService, null);
 	}
 	
 	private void registerDecorators() {
 		hostedStatusDecoratorRegistration = bundleContext.registerService(IWebResourceDecorator.class, new HostedStatusDecorator(), null);
 	}
 	
-	SiteHostingService getHostingService() {
+	SiteLaunchService getHostingService() {
 		return siteHostingService;
 	}
 	

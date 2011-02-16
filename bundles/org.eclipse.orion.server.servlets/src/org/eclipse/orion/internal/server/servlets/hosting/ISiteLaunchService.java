@@ -4,12 +4,12 @@ import org.eclipse.orion.internal.server.servlets.site.SiteConfiguration;
 import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
 
 /**
- * Service for managing hosted sites.
+ * Service for launching hosted sites from a site configuration.
  * 
- * TODO: This should be replaced with a real protocol for managing hosted sites, in order to support 
+ * TODO: This should be replaced with a real protocol for managing hosted sites and support
  * remote hosting.
  */
-public interface ISiteHostingService {
+public interface ISiteLaunchService {
 
 	public void start(SiteConfiguration siteConfig, WebUser user) throws SiteHostingException;
 

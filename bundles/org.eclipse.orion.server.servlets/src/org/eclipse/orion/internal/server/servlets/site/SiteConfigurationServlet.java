@@ -6,7 +6,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.*;
-import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
+import org.eclipse.orion.internal.server.servlets.hosting.ISiteLaunchService;
 import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.*;
@@ -100,10 +100,10 @@ public class SiteConfigurationServlet extends OrionServlet {
 		WebUser user = WebUser.fromUserName(getUserName(req));
 		String action = req.getHeader(SiteConfigurationConstants.HEADER_ACTION);
 		if ("start".equalsIgnoreCase(action)) { //$NON-NLS-1$
-			ISiteHostingService service = getHostingService();
+			ISiteLaunchService service = getHostingService();
 			service.start(siteConfig, user);
 		} else if ("stop".equalsIgnoreCase(action)) { //$NON-NLS-1$
-			ISiteHostingService service = getHostingService();
+			ISiteLaunchService service = getHostingService();
 			service.stop(siteConfig, user);
 		} else if (action == null) {
 			if (actionRequired)
@@ -118,8 +118,8 @@ public class SiteConfigurationServlet extends OrionServlet {
 	/**
 	 * @throws CoreException If the site hosting service is not present.
 	 */
-	private static ISiteHostingService getHostingService() throws CoreException {
-		ISiteHostingService service = Activator.getDefault().getSiteHostingService();
+	private static ISiteLaunchService getHostingService() throws CoreException {
+		ISiteLaunchService service = Activator.getDefault().getSiteHostingService();
 		if (service == null) {
 			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "Site hosting service unavailable"));
 		}

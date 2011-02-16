@@ -7,16 +7,16 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.orion.internal.server.servlets.hosting.IHostedSite;
-import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
+import org.eclipse.orion.internal.server.servlets.hosting.ISiteLaunchService;
 import org.eclipse.orion.internal.server.servlets.hosting.SiteHostingException;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfiguration;
 import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
 
 /**
- * Provides a same-server implementation of ISiteHostingService.
+ * Provides a same-server implementation of ISiteLaunchService.
  * Maintains a table of hosted sites. This table is kept in memory only and not persisted.
  */
-public class SiteHostingService implements ISiteHostingService {
+public class SiteLaunchService implements ISiteLaunchService {
 	
 	private final int port;
 	private Map<Key, HostedSite> table;
@@ -26,7 +26,7 @@ public class SiteHostingService implements ISiteHostingService {
 	
 	private Object hostLock = new Object();
 
-	public SiteHostingService(int port /*, SiteHostingConfig config*/) {
+	public SiteLaunchService(int port /*, SiteHostingConfig config*/) {
 		this.port = port;
 		this.table = new HashMap<Key, HostedSite>();
 		this.hosts = new HashSet<String>();
