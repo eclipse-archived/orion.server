@@ -15,11 +15,12 @@ package org.eclipse.orion.server.git;
  */
 public class GitConstants {
 
-	public static final String DIFF_COMMAND = "diff";
+	public static final String DIFF_COMMAND = "diff"; //$NON-NLS-1$
 
-	public static final String STATUS_COMMAND = "status";
+	public static final String STATUS_COMMAND = "status"; //$NON-NLS-1$
 
 	public static final String KEY_DIFF = "GitDiff"; //$NON-NLS-1$
+
 	public static final String KEY_STATUS = "GitStatus"; //$NON-NLS-1$
 
 }

@@ -23,7 +23,8 @@ import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 
 public class GitUtils {
-	public static File getGitDir(IPath path, String authority) throws CoreException {
+	public static File getGitDir(IPath path, String authority)
+			throws CoreException {
 		IPath p = path.removeFirstSegments(1);
 		IFileStore fileStore = NewFileServlet.getFileStore(p, authority);
 		File file = fileStore.toLocalFile(EFS.NONE, null);

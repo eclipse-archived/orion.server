@@ -48,17 +48,14 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 			throws ServletException {
 
 		try {
-			// 1. check if the store is a git clone
-			File gitDir = GitUtils.getGitDir(new Path(gitPathInfo), request.getRemoteUser());
+			File gitDir = GitUtils.getGitDir(new Path(gitPathInfo),
+					request.getRemoteUser());
 			if (gitDir == null)
-				return false; // or a error response code
-			// 2. get a repo for the store
+				return false; // TODO: or a error response code
 			Repository repository = new FileRepository(gitDir);
-			// 3. call diff on the repo
 			Diff diff = new Diff(response.getOutputStream());
 			diff.setRepository(repository);
 			diff.run();
-			// 4. return response
 			return true;
 
 		} catch (Exception e) {
