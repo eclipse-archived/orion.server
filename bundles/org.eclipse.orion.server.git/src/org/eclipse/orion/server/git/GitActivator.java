@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git;
 
+import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
@@ -42,6 +43,8 @@ public class GitActivator implements BundleActivator {
 	public void start(BundleContext context) throws Exception {
 		plugin = this;
 		this.bundleContext = context;
+		context.registerService(IWebResourceDecorator.class,
+				new GitWebResourceDecorator(), null);
 	}
 
 	/*
