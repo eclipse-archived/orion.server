@@ -19,7 +19,10 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.servlets.OrionServlet;
 
-// Describe Git Servlet API here
+/*
+ * GET /git/diff/file/[path] gets diff for the given resource
+ * 
+ */
 public class GitServlet extends OrionServlet {
 
 	private static final long serialVersionUID = 1L;

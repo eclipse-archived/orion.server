@@ -44,6 +44,10 @@
             alias="/xfer"
             class="org.eclipse.orion.internal.server.servlets.xfer.TransferServlet">
       </servlet>
+      <servlet
+            alias="/git"
+            class="org.eclipse.orion.server.git.servlets.GitServlet">
+      </servlet>
    </extension>
    <extension
          point="org.eclipse.equinox.http.registry.filters">
@@ -77,6 +81,10 @@
       </filter>
       <filter
             alias="/xfer"
+            class="org.eclipse.orion.server.configurator.servlet.AuthenticationFilter">
+      </filter>
+      <filter
+            alias="/git"
             class="org.eclipse.orion.server.configurator.servlet.AuthenticationFilter">
       </filter>
       <filter

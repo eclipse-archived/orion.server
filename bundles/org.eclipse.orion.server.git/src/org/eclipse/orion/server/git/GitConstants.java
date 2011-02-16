@@ -16,5 +16,7 @@ package org.eclipse.orion.server.git;
 public class GitConstants {
 
 	public static final String DIFF_COMMAND = "diff";
+	
+	public static final String STATUS_COMMAND = "status";
 
 }

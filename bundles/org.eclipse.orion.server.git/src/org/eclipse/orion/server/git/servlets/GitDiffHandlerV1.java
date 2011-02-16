@@ -18,8 +18,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 
 /**
- * A user handler suitable for use by a generic HTTP client, such as a web
- * browser.
+ * A handler for Git Diff operation.
  */
 public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 
