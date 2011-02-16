@@ -20,7 +20,7 @@ import org.eclipse.osgi.util.NLS;
 
 /**
  * Handles requests for URIs that are part of a running hosted site.
- * Requests should have the Host as the first segement in the request uri
+ * Requests must have the hosted site's Host name as the first segment in the path, eg:
  * <code>/192.168.0.2/foo/bar.html</code>
  */
 public class HostedSiteServlet extends OrionServlet {
@@ -50,10 +50,11 @@ public class HostedSiteServlet extends OrionServlet {
 			String hostedHost = path.segment(0);
 			HostedSite site = HostingActivator.getDefault().getHostingService().get(hostedHost);
 			if (site != null) {
-				URL url = getMappedURL(site, path.removeFirstSegments(1).makeAbsolute());
-				serve(req, resp, url);
+				IPath mappedPath = getMapped(site, path.removeFirstSegments(1).makeAbsolute());
+				serve(req, resp, mappedPath);
 			} else {
-				
+				String msg = NLS.bind("Hosted site {0} not found", hostedHost);
+				handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
 			}
 		} else {
 			super.doGet(req, resp);
@@ -61,14 +62,15 @@ public class HostedSiteServlet extends OrionServlet {
 	}
 	
 	/**
-	 * Returns a URL 
-	 * rewriting pathInfo using the most-specific
-	 * @param site
-	 * @param pathInfo
-	 * @return
-	 * @throws MalformedURLException If the target mapping is not valid URL
+	 * Returns a path constructed by rewriting pathInfo using the most specific rule from a hosted
+	 * site's mappings.
+	 * @param site The hosted site.
+	 * @param pathInfo Path to be rewritten.
+	 * @return The rewritten path. May be an absolute path to a file in the Orion workspace (eg. 
+	 * <code>/ProjectA/foo/bar.txt</code>), or point to another site, in which case it will have a 
+	 * device part (eg. <code>http://foo.com/bar.txt</code>)
 	 */
-	private URL getMappedURL(HostedSite site, IPath pathInfo) throws MalformedURLException {
+	private IPath getMapped(HostedSite site, IPath pathInfo) {
 		Map<String, String> map = site.getMappings();
 
 		IPath originalPath = pathInfo;
@@ -86,23 +88,20 @@ public class HostedSiteServlet extends OrionServlet {
 		}
 
 		if (base != null) {
-			String result = base + (rest.length() == 0 || rest.startsWith("/") ? "" : "/") + rest; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-			
-			// FIXME this doesn't handle absolute URIs with no protocl eg (/foo/bar.txt)
-			// maybe another data structure would be better
-			return new URL(result);
+			return new Path(base).append(rest);
 		}
+		// No mappings were defined. What to do?
 		return null;
 	}
 	
-	private void serve(HttpServletRequest req, HttpServletResponse resp, URL url) throws ServletException, IOException {
-		String pathInfo;
-		// FIXME Need a better way of getting files from this server
-		if ("localhost".equals(url.getHost())) { //$NON-NLS-1$
-			// Somehow I need to pull this from my workspace
-
+	private void serve(HttpServletRequest req, HttpServletResponse resp, IPath path) throws ServletException, IOException {
+		if (path.getDevice() == null) { //$NON-NLS-1$
+			// FIXME: 
+			// Check access to workspace for the user who launched this build
+			// Pull the file at the given path from the workspace 
+			
 			// FIXME: This fails if you haven't logged in because the alias will not be present
-			pathInfo = url.getPath().substring(url.getPath().indexOf(FILE_SERVLET_ALIAS) + FILE_SERVLET_ALIAS.length());
+			String pathInfo = path.toString();
 			IPath filePath = pathInfo == null ? Path.ROOT : new Path(pathInfo);
 			IFileStore file = tempGetFileStore(filePath, USER/*req.getRemoteUser()*/);
 			if (file == null) {
@@ -113,6 +112,14 @@ public class HostedSiteServlet extends OrionServlet {
 				//return;
 			}
 		} else {
+			URL url = null;
+			try {
+				url = new URL(path.toString());
+			} catch (MalformedURLException e) {
+				// FIXME: nicer http status code
+				throw e;
+			}
+			
 			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
 			// TODO: forward headers to proxy request here

@@ -32,7 +32,7 @@ public class HostedStatusDecorator implements IWebResourceDecorator {
 		
 		try {
 			if (resourcePath.segmentCount() == 1) {
-				// Request for all site configs
+				// Decorating a request for all site configuration
 				JSONArray siteConfigurations = representation.optJSONArray(SiteConfigurationConstants.KEY_SITE_CONFIGURATIONS);
 				if (siteConfigurations != null) {
 					for (int i=0; i < siteConfigurations.length(); i++) {
@@ -40,7 +40,7 @@ public class HostedStatusDecorator implements IWebResourceDecorator {
 					}
 				}
 			} else if (resourcePath.segmentCount() == 2) {
-				// Request for individual site config by id
+				// Decorating a request for individual site configuration
 				addStatus(representation);
 			}
 		} catch (JSONException e) {
@@ -58,15 +58,15 @@ public class HostedStatusDecorator implements IWebResourceDecorator {
 		SiteConfiguration siteConfiguration = SiteConfiguration.fromId(id);
 		SiteHostingService hostingService = HostingActivator.getDefault().getHostingService();
 		HostedSite site = hostingService.get(siteConfiguration);
-		JSONObject status = new JSONObject();
+		JSONObject hostingStatus = new JSONObject();
 		if (site != null) {
-			status.put(SiteConfigurationConstants.KEY_STATUS, "started");
-			// FIXME: port#
-			status.put("URL", site.getHost());
+			hostingStatus.put("Status", "started");
+			// FIXME: scheme, port#? 
+			hostingStatus.put("URL", site.getHost());
 		} else {
-			status.put(SiteConfigurationConstants.KEY_STATUS, "stopped");
+			hostingStatus.put("Status", "stopped");
 		}
-		siteConfigJson.put(SiteConfigurationConstants.KEY_STATUS, status);
+		siteConfigJson.put(SiteConfigurationConstants.KEY_HOSTING_STATUS, hostingStatus);
 	}
 	
 }

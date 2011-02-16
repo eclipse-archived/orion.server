@@ -15,7 +15,7 @@ public interface ISiteHostingService {
 
 	public void stop(SiteConfiguration siteConfig, WebUser user);
 
-	// FIUXME should return an IHostedSite
+	// FIXME change to public IHostedSite get(SitConfiguration siteConfig/*, Webuser user*/)
 	public boolean isRunning(SiteConfiguration siteConfig/*, WebUser user*/);
 
 	public boolean isHosted(String host);
