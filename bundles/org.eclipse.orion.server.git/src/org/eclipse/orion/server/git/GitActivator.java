@@ -10,48 +10,49 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git;
 
-import org.eclipse.ui.plugin.AbstractUIPlugin;
+import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
 /**
  * The activator class controls the plug-in life cycle
  */
-public class Activator extends AbstractUIPlugin {
+public class GitActivator implements BundleActivator {
 
 	// The plug-in ID
-	public static final String PLUGIN_ID = "org.eclipse.orion.server.git"; //$NON-NLS-1$
+	public static final String PI_GIT = "org.eclipse.orion.server.git"; //$NON-NLS-1$
 
 	// The shared instance
-	private static Activator plugin;
+	private static GitActivator plugin;
+
+	private BundleContext bundleContext;
 
 	/**
 	 * The constructor
 	 */
-	public Activator() {
+	public GitActivator() {
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * 
 	 * @see
-	 * org.eclipse.ui.plugin.AbstractUIPlugin#start(org.osgi.framework.BundleContext
+	 * org.osgi.framework.BundleActivator#start(org.osgi.framework.BundleContext
 	 * )
 	 */
 	public void start(BundleContext context) throws Exception {
-		super.start(context);
 		plugin = this;
+		this.bundleContext = context;
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * 
 	 * @see
-	 * org.eclipse.ui.plugin.AbstractUIPlugin#stop(org.osgi.framework.BundleContext
-	 * )
+	 * org.osgi.framework.BundleActivator#stop(org.osgi.framework.BundleContext)
 	 */
 	public void stop(BundleContext context) throws Exception {
+		this.bundleContext = null;
 		plugin = null;
-		super.stop(context);
 	}
 
 	/**
@@ -59,8 +60,11 @@ public class Activator extends AbstractUIPlugin {
 	 * 
 	 * @return the shared instance
 	 */
-	public static Activator getDefault() {
+	public static GitActivator getDefault() {
 		return plugin;
 	}
 
+	public BundleContext getBundleContext() {
+		return bundleContext;
+	}
 }
