@@ -95,7 +95,7 @@ public class HostedSiteServlet extends OrionServlet {
 	}
 	
 	private void serve(HttpServletRequest req, HttpServletResponse resp, IPath path) throws ServletException, IOException {
-		if (path.getDevice() == null) { //$NON-NLS-1$
+		if (path.getDevice() == null) {
 			// FIXME: 
 			// Check access to workspace for the user who launched this build
 			// Pull the file at the given path from the workspace 

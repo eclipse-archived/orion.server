@@ -36,12 +36,12 @@ public class HostedStatusDecorator implements IWebResourceDecorator {
 				JSONArray siteConfigurations = representation.optJSONArray(SiteConfigurationConstants.KEY_SITE_CONFIGURATIONS);
 				if (siteConfigurations != null) {
 					for (int i=0; i < siteConfigurations.length(); i++) {
-						addStatus(siteConfigurations.getJSONObject(i));
+						addStatus(siteConfigurations.getJSONObject(i), resource);
 					}
 				}
 			} else if (resourcePath.segmentCount() == 2) {
 				// Decorating a request for individual site configuration
-				addStatus(representation);
+				addStatus(representation, resource);
 			}
 		} catch (JSONException e) {
 			// Shouldn't happen
@@ -52,17 +52,21 @@ public class HostedStatusDecorator implements IWebResourceDecorator {
 	
 	/**
 	 * Adds status field to a representation of a site configuration.
+	 * @param siteConfigJson The JSONObject representing a single site configuration.
+	 * @param resource The original request passed to the decorator.
 	 */
-	private void addStatus(JSONObject siteConfigJson) throws JSONException {
+	private void addStatus(JSONObject siteConfigJson, URI resource) throws JSONException {
 		String id = siteConfigJson.getString(ProtocolConstants.KEY_ID);
 		SiteConfiguration siteConfiguration = SiteConfiguration.fromId(id);
 		SiteHostingService hostingService = HostingActivator.getDefault().getHostingService();
-		HostedSite site = hostingService.get(siteConfiguration);
+		HostedSite site = (HostedSite) hostingService.get(siteConfiguration);
 		JSONObject hostingStatus = new JSONObject();
 		if (site != null) {
 			hostingStatus.put("Status", "started");
-			// FIXME: scheme, port#? 
-			hostingStatus.put("URL", site.getHost());
+			// FIXME fold the full hostedURL into HostedSite
+			String hostedUrl = resource.getScheme() + "://" + site.getHost() + ":" + resource.getPort();
+			hostingStatus.put("URL", hostedUrl);
+			
 		} else {
 			hostingStatus.put("Status", "stopped");
 		}

@@ -1,10 +1,13 @@
 package org.eclipse.orion.internal.server.servlets.site;
 
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.orion.internal.server.core.Activator;
 import org.eclipse.orion.internal.server.servlets.workspace.WebElement;
 import org.eclipse.orion.server.core.resources.Base64Counter;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.osgi.service.prefs.BackingStoreException;
 
 /**
  * Configuration details for a site that can be hosted on an Orion server.
@@ -55,6 +58,19 @@ public class SiteConfiguration extends WebElement {
 			return scope.getNode(SITE_CONFIGURATIONS_NODE_NAME).nodeExists(id);
 		} catch (Exception e) {
 			return false;
+		}
+	}
+
+	/**
+	 * Removes this site configuration from the backing store. Should only be used when this 
+	 * site configuration will never be used (for example, in response to errors during creation).
+	 */
+	void delete() throws CoreException {
+		try {
+			store.removeNode();
+			save();
+		} catch (BackingStoreException e) {
+			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_SERVER_CORE, "Error saving state"));
 		}
 	}
 

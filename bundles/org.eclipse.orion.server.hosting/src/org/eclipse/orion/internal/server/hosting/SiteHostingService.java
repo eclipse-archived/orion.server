@@ -6,12 +6,14 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.eclipse.orion.internal.server.servlets.hosting.IHostedSite;
 import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
 import org.eclipse.orion.internal.server.servlets.hosting.SiteHostingException;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfiguration;
 import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
 
 /**
+ * Provides a same-server implementation of ISiteHostingService.
  * Maintains a table of hosted sites. This table is kept in memory only and not persisted.
  */
 public class SiteHostingService implements ISiteHostingService {
@@ -45,12 +47,13 @@ public class SiteHostingService implements ISiteHostingService {
 		}
 	}
 	
+	@Override
 	public void stop(SiteConfiguration siteConfig, WebUser user) {
 		Key key = createKey(siteConfig);
 		synchronized (table) {
 			HostedSite site = table.get(key);
 			if (site == null) {
-				throw new SiteHostingException("Site is not started; can't stop");
+				throw new SiteHostingException("Site is already stopped; can't stop");
 			}
 			
 			releaseHost(site.getHost());
@@ -59,11 +62,7 @@ public class SiteHostingService implements ISiteHostingService {
 	}
 	
 	@Override
-	public boolean isRunning(SiteConfiguration siteConfig) {
-		return get(siteConfig) != null;
-	}
-
-	public HostedSite get(SiteConfiguration siteConfig) {
+	public IHostedSite get(SiteConfiguration siteConfig) {
 		synchronized (table) {
 			return table.get(createKey(siteConfig));
 		}
@@ -71,8 +70,8 @@ public class SiteHostingService implements ISiteHostingService {
 	
 	@Override
 	public boolean isHosted(String host) {
-		// FIXME: this gets called a lot, should really avoid blocking here :(
-		// perhaps use ConcurrentHashMap and key == host
+		// FIXME: this gets called a lot, can we avoid locking here?
+		// perhaps use ConcurrentHashMap and key == host string for the table
 		synchronized (hostLock) {
 			return hosts.contains(host);
 		}
@@ -82,7 +81,7 @@ public class SiteHostingService implements ISiteHostingService {
 	 * @param host
 	 * @return
 	 */
-	public HostedSite get(String host) {
+	HostedSite get(String host) {
 		synchronized (table) {
 			for (HostedSite site : table.values()) {
 				if (site.getHost().equals(host))

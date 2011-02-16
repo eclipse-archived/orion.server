@@ -1,0 +1,5 @@
+package org.eclipse.orion.internal.server.servlets.hosting;
+
+public interface IHostedSite {
+	/* FIXME pull down */
+}

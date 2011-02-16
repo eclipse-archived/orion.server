@@ -53,10 +53,18 @@ public class SiteConfigurationServlet extends OrionServlet {
 				try {
 					doStartStop(req, resp, siteConfig, false);
 				} catch (CoreException e) {
-					// Start/stop failed; remove the created site config from user's list
+					// Start/stop failed; try to clean up
 					if (siteConfig != null) {
+						// Remove site config from user's list
 						WebUser user = WebUser.fromUserName(getUserName(req));
 						user.removeSiteConfiguration(siteConfig);
+
+						// Also delete the site configuration itself since it can never be used
+						try {
+							siteConfig.delete();
+						} catch (CoreException deleteException) {
+							// Ignore
+						}
 					}
 					throw e;
 				}
