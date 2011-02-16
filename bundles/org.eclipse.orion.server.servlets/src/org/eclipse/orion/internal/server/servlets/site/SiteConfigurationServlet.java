@@ -171,7 +171,7 @@ public class SiteConfigurationServlet extends OrionServlet {
 		return null;
 	}
 
-	// FIXME: implement filtering by state
+	// TODO: allow filtering by hosting state via query parameter?
 	private boolean doGetAllSiteConfigurations(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
 		String userName = getUserName(req);
 		try {

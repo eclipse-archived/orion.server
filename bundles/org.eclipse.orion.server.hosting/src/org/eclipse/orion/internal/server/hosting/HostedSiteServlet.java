@@ -1,36 +1,51 @@
 package org.eclipse.orion.internal.server.hosting;
 
 import java.io.IOException;
-import java.net.*;
-import java.util.HashMap;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
 import java.util.Map;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.internal.server.core.IAliasRegistry;
 import org.eclipse.orion.internal.server.core.IOUtilities;
-import org.eclipse.orion.internal.server.servlets.*;
+import org.eclipse.orion.internal.server.servlets.Activator;
+import org.eclipse.orion.internal.server.servlets.ServerStatus;
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.internal.server.servlets.Util;
 import org.eclipse.orion.internal.server.servlets.file.ServletFileStoreHandler;
+import org.eclipse.orion.internal.server.servlets.workspace.WebWorkspace;
+import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.authentication.IAuthenticationService;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
+import org.json.JSONException;
 
 /**
- * Handles requests for URIs that are part of a running hosted site.
- * Requests must have the hosted site's Host name as the first segment in the path, eg:
- * <code>/192.168.0.2:8080/foo/bar.html</code>
+ * Handles requests for URIs that are part of a running hosted site. Requests must 
+ * have the desired hosted site's Host as the first segment in the pathInfo, for example: 
+ * <code>/<u>127.0.0.2:8080</u>/foo/bar.html</code>
  */
 public class HostedSiteServlet extends OrionServlet {
 	private static final long serialVersionUID = 1L;
 
-	// FIXME
+	// FIXME mamacdon remove these if possible
 	private static final String FILE_SERVLET_ALIAS = "/file";
 	private static final String USER = "mark";
 
-	// FIXME remove these copied variables
+	// FIXME mamacdon remove these copied variables
 	private ServletResourceHandler<IFileStore> fileSerializer;
 	private final URI rootStoreURI;
 	private IAliasRegistry aliasRegistry;
@@ -51,7 +66,7 @@ public class HostedSiteServlet extends OrionServlet {
 			HostedSite site = HostingActivator.getDefault().getHostingService().get(hostedHost);
 			if (site != null) {
 				IPath mappedPath = getMapped(site, path.removeFirstSegments(1).makeAbsolute());
-				serve(req, resp, mappedPath);
+				serve(req, resp, site, mappedPath);
 			} else {
 				String msg = NLS.bind("Hosted site {0} not found", hostedHost);
 				handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
@@ -66,18 +81,18 @@ public class HostedSiteServlet extends OrionServlet {
 	 * site's mappings.
 	 * @param site The hosted site.
 	 * @param pathInfo Path to be rewritten.
-	 * @return The rewritten path. May be an absolute path to a file in the Orion workspace (eg. 
-	 * <code>/ProjectA/foo/bar.txt</code>), or point to another site, in which case it will have a 
-	 * device part (eg. <code>http://foo.com/bar.txt</code>)
+	 * @return The rewritten path. May be either:<ul>
+	 * <li>A path to a file in the Orion workspace, eg. <code>/ProjectA/foo/bar.txt</code></li>
+	 * <li>An absolute URL pointing to another site, eg. <code>http://foo.com/bar.txt</code></li>
+	 * </ul>
 	 */
 	private IPath getMapped(HostedSite site, IPath pathInfo) {
-		Map<String, String> map = site.getMappings();
-
-		IPath originalPath = pathInfo;
+		final Map<String, String> map = site.getMappings();
+		final IPath originalPath = pathInfo;
 		IPath path = originalPath;
 		String base = null;
 		String rest = null;
-		int count = path.segmentCount();
+		final int count = path.segmentCount();
 		for (int i = 0; i <= count; i++) {
 			base = map.get(path.toString());
 			if (base != null) {
@@ -90,20 +105,40 @@ public class HostedSiteServlet extends OrionServlet {
 		if (base != null) {
 			return new Path(base).append(rest);
 		}
-		// No mappings were defined. What to do?
+		// No mapping were defined. What to do?
 		return null;
 	}
 	
-	private void serve(HttpServletRequest req, HttpServletResponse resp, IPath path) throws ServletException, IOException {
+	private void serve(HttpServletRequest req, HttpServletResponse resp, HostedSite site, IPath path) throws ServletException, IOException {
 		if (path.getDevice() == null) {
-			// FIXME: 
-			// Check access to workspace for the user who launched this build
-			// Pull the file at the given path from the workspace 
-			
-			// FIXME: This fails if you haven't logged in because the alias will not be present
+			serveOrionFile(req, resp, site, path);
+		} else {
+			proxyRemoteUrl(resp, path);
+		}
+	}
+
+	private void serveOrionFile(HttpServletRequest req, HttpServletResponse resp, HostedSite site, IPath path) throws ServletException {
+		String userName = site.getUserName();
+		String workspaceUri = "/workspace/" + site.getWorkspaceId(); //$NON-NLS-1$
+		boolean allow = false;
+		// Check that user who launched the hosted site has access to the workspace
+		try {
+			if (AuthorizationService.checkRights(userName, workspaceUri, "GET")) { //$NON-NLS-1$
+				allow = true;
+			}
+		} catch (JSONException e) {
+			throw new ServletException(e);
+		}
+		
+		// FIXME mamacdon: refactor elsewhere, remember the dev-server-url in the HostedSite 
+		resp.addHeader("X-Edit-Server", "http://localhost:8080/");
+		resp.addHeader("X-Edit-Token", "coding.html#/file" + path.toString());
+		
+		// FIXME mamacdon: this code is copied from NewFileServlet, fix it
+		if (allow) {
 			String pathInfo = path.toString();
 			IPath filePath = pathInfo == null ? Path.ROOT : new Path(pathInfo);
-			IFileStore file = tempGetFileStore(filePath, USER/*req.getRemoteUser()*/);
+			IFileStore file = tempGetFileStore(filePath, userName);
 			if (file == null) {
 				handleException(resp, new ServerStatus(IStatus.ERROR, 404, NLS.bind("File not found: {0}", filePath), null));
 				//return;
@@ -111,38 +146,9 @@ public class HostedSiteServlet extends OrionServlet {
 			if (fileSerializer.handleRequest(req, resp, file)) {
 				//return;
 			}
-		} else {
-			URL url = null;
-			try {
-				url = new URL(path.toString());
-			} catch (MalformedURLException e) {
-				// FIXME: nicer http status code
-				throw e;
-			}
-			
-			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
-			// TODO: forward headers to proxy request here
-			//				Enumeration<?> headerNames = req.getHeaderNames();
-			//				while (headerNames.hasMoreElements()) {
-			//					String name = (String) headerNames.nextElement();
-			//					String value = req.getHeader(name);
-			//					if ("Host".equals(name)) {
-			//						continue;
-			//					}
-			//					connection.addRequestProperty(name, value);
-			//				}
-			//				for (int i = 0; true; i++) {
-			//					String name = connection.getHeaderFieldKey(i);
-			//					if (name == null) {
-			//						break;
-			//					}
-			//					resp.setHeader(name, connection.getHeaderField(i));
-			//				}
-			IOUtilities.pipe(connection.getInputStream(), resp.getOutputStream(), true, true);
 		}
 	}
-
+	
 	// FIXME temp junk for grabbing files from filesystem
 	protected IFileStore tempGetFileStore(IPath path, String authority) {
 		//first check if we have an alias registered
@@ -165,6 +171,37 @@ public class HostedSiteServlet extends OrionServlet {
 		}
 
 		return null;
+	}
+	
+	private void proxyRemoteUrl(HttpServletResponse resp, IPath path) throws MalformedURLException, IOException {
+		URL url = null;
+		try {
+			url = new URL(path.toString());
+		} catch (MalformedURLException e) {
+			// FIXME mamacdon: nicer error
+			throw e;
+		}
+		
+		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+		// FIXME mamacdon: forward headers, catch remote errors and send 502 (?)
+		//				Enumeration<?> headerNames = req.getHeaderNames();
+		//				while (headerNames.hasMoreElements()) {
+		//					String name = (String) headerNames.nextElement();
+		//					String value = req.getHeader(name);
+		//					if ("Host".equals(name)) {
+		//						continue;
+		//					}
+		//					connection.addRequestProperty(name, value);
+		//				}
+		//				for (int i = 0; true; i++) {
+		//					String name = connection.getHeaderFieldKey(i);
+		//					if (name == null) {
+		//						break;
+		//					}
+		//					resp.setHeader(name, connection.getHeaderField(i));
+		//				}
+		IOUtilities.pipe(connection.getInputStream(), resp.getOutputStream(), true, true);
 	}
 
 }

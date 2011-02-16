@@ -13,8 +13,9 @@ import org.eclipse.orion.internal.server.servlets.site.SiteConfiguration;
 import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
 
 /**
- * Provides a same-server implementation of ISiteLaunchService.
- * Maintains a table of hosted sites. This table is kept in memory only and not persisted.
+ * Provides a same-server implementation of ISiteLaunchService. Maintains a table of 
+ * hosted sites for this purpose. This table is not persisted, so site launches will be
+ * reset after a server restart.
  */
 public class SiteLaunchService implements ISiteLaunchService {
 	
@@ -29,6 +30,7 @@ public class SiteLaunchService implements ISiteLaunchService {
 	public SiteLaunchService(int port /*, SiteHostingConfig config*/) {
 		this.port = port;
 		this.table = new HashMap<Key, HostedSite>();
+		
 		this.hosts = new HashSet<String>();
 		this.allocated = new BitSet(256);
 		allocated.set(0);
@@ -76,7 +78,7 @@ public class SiteLaunchService implements ISiteLaunchService {
 	 */
 	@Override
 	public boolean isHosted(String host) {
-		// FIXME: this gets called a lot, can we avoid locking here?
+		// FIXME: this gets called a lot, can we avoid the locking?
 		// perhaps use ConcurrentHashMap and key == host string for the table
 		synchronized (hostLock) {
 			return hosts.contains(host);
@@ -99,14 +101,15 @@ public class SiteLaunchService implements ISiteLaunchService {
 	
 	private String acquireHost() throws SiteHostingException {
 		synchronized (hostLock) {
-			// FIXME: allow configurable IPs
-			// FIXME: if domain wildcards available, try those first
+			// FIXME mamacdon: allow configurable IPs.. 127.0.0.x only works on Win/Linux 
+			// allow configurable IPs
+			// if domain wildcards available, try those first
 			int bit = allocated.nextClearBit(0);
 			if (bit == -1) {
 				throw new SiteHostingException("No more hosts available");
 			}
 			allocated.set(bit);
-			String host = "127.0.0." + bit + ":" + this.port;
+			String host = "127.0.0." + bit + ":" + this.port; //$NON-NLS-2$
 			hosts.add(host);
 			return host;
 		}
@@ -134,8 +137,8 @@ public class SiteLaunchService implements ISiteLaunchService {
  * Key for an entry in the table. For now this is based on site configuration id,
  * so for any site configuration, only 1 instance of it may be hosted at a time.
  * 
- * Don't store actual SiteConfiguration instances here because their getters rely 
- * on the backing store, which may change.
+ * We don't store actual SiteConfiguration instances here because their getters rely 
+ * on the backing store, which can change.
  */
 class Key {
 	// Globally unique id of the site configuration

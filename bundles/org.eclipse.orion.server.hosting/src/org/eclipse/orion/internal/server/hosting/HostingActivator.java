@@ -1,14 +1,10 @@
 package org.eclipse.orion.internal.server.hosting;
 
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
-import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.hosting.ISiteLaunchService;
-import org.eclipse.orion.internal.server.servlets.xfer.TransferResourceDecorator;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
-import org.osgi.service.http.HttpService;
 
 public class HostingActivator implements BundleActivator {
 
@@ -53,14 +49,6 @@ public class HostingActivator implements BundleActivator {
 	SiteLaunchService getHostingService() {
 		return siteHostingService;
 	}
-	
-//	HttpService getHttpService() {
-//		ServiceReference<HttpService> serviceRef = getContext().getServiceReference(HttpService.class);
-//		if (serviceRef != null) {
-//			return getContext().getService(serviceRef);
-//		}
-//		return null;
-//	}
 	
 	/*
 	 * (non-Javadoc)

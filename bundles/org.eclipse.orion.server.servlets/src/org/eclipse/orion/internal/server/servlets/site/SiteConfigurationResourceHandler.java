@@ -76,9 +76,10 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 		JSONObject result = WebElementResourceHandler.toJSON(siteConfig);
 		try {
 			result.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(baseLocation, siteConfig.getId()).toString());
-			result.put(SiteConfigurationConstants.KEY_MAPPINGS, siteConfig.getMappingsJSON());
 			result.putOpt(SiteConfigurationConstants.KEY_AUTH_PASSWORD, siteConfig.getAuthPassword());
 			result.putOpt(SiteConfigurationConstants.KEY_HOST_HINT, siteConfig.getHostHint());
+			result.putOpt(SiteConfigurationConstants.KEY_WORKSPACE, siteConfig.getWorkspace());
+			result.put(SiteConfigurationConstants.KEY_MAPPINGS, siteConfig.getMappingsJSON());
 
 			// Note: The SiteConfigurationConstants.KEY_HOSTING_STATUS field will be contributed to the result
 			// by the hosting service (if present) via an IWebResourceDecorator

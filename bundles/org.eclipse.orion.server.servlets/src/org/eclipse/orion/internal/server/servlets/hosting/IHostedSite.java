@@ -1,5 +1,5 @@
 package org.eclipse.orion.internal.server.servlets.hosting;
 
 public interface IHostedSite {
-	/* FIXME pull down */
+	/* FIXME mamacdon pull down methods from HostedSite */
 }
