@@ -12,6 +12,7 @@ import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
 import org.eclipse.orion.internal.server.servlets.workspace.WebElementResourceHandler;
 import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
 import org.eclipse.orion.server.servlets.OrionServlet;
+import org.eclipse.osgi.util.NLS;
 import org.json.*;
 
 /**
@@ -146,7 +147,7 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 		ISiteHostingService hostingService = Activator.getDefault().getSiteHostingService();
 		IHostedSite runningSite = (IHostedSite) hostingService.get(siteConfig);
 		if (runningSite != null) {
-			String msg = runningSite.getHost();
+			String msg = NLS.bind("Site configuration is running at {0}. Must be stopped before it can be deleted", runningSite.getHost());
 			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_CONFLICT, msg, null));
 		} else {
 			user.removeSiteConfiguration(siteConfig);
