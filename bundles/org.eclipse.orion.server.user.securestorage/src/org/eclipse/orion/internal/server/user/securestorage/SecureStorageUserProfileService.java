@@ -49,6 +49,12 @@ public class SecureStorageUserProfileService implements IOrionUserProfileService
 		return new SecureStorageUserProfileNode(storage.node(USERS + "/" + userName + "/" + USER_PROFILE + "/" + partId));
 	}
 
+	public IOrionUserProfileNode getUserProfileNode(String userName, boolean create) {
+		if (create || storage.nodeExists(USERS + "/" + userName))
+			return new SecureStorageUserProfileNode(storage.node(USERS + "/" + userName + "/" + USER_PROFILE));
+		return null;
+	}
+
 	public String[] getUserNames() {
 		if (!storage.nodeExists(USERS))
 			return null;

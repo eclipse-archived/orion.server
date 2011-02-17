@@ -13,6 +13,8 @@ package org.eclipse.orion.server.user.profile;
 public interface IOrionUserProfileService {
 
 	public IOrionUserProfileNode getUserProfileNode(String userName, String partId);
+	
+	public IOrionUserProfileNode getUserProfileNode(String userName, boolean create);
 
 	public String[] getUserNames();
 }
