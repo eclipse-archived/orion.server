@@ -7,6 +7,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.*;
+import org.eclipse.orion.internal.server.servlets.hosting.IHostedSite;
+import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
 import org.eclipse.orion.internal.server.servlets.workspace.WebElementResourceHandler;
 import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
 import org.eclipse.orion.server.servlets.OrionServlet;
@@ -141,7 +143,14 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 
 	private boolean handleDelete(HttpServletRequest request, HttpServletResponse response, SiteConfiguration siteConfig) throws CoreException {
 		WebUser user = WebUser.fromUserName(request.getRemoteUser());
-		user.removeSiteConfiguration(siteConfig);
+		ISiteHostingService hostingService = Activator.getDefault().getSiteHostingService();
+		IHostedSite runningSite = (IHostedSite) hostingService.get(siteConfig);
+		if (runningSite != null) {
+			String msg = runningSite.getHost();
+			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_CONFLICT, msg, null));
+		} else {
+			user.removeSiteConfiguration(siteConfig);
+		}
 		return true;
 	}
 

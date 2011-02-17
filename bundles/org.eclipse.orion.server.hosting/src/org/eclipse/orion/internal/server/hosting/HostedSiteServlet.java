@@ -25,6 +25,7 @@ import org.eclipse.orion.internal.server.servlets.ServerStatus;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.Util;
 import org.eclipse.orion.internal.server.servlets.file.ServletFileStoreHandler;
+import org.eclipse.orion.internal.server.servlets.hosting.IHostedSite;
 import org.eclipse.orion.internal.server.servlets.workspace.WebWorkspace;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.LogHelper;
@@ -61,7 +62,7 @@ public class HostedSiteServlet extends OrionServlet {
 		IPath path = new Path(null /*don't parse host:port as device*/, pathInfo == null ? "" : pathInfo); //$NON-NLS-1$
 		if (path.segmentCount() > 0) {
 			String hostedHost = path.segment(0);
-			HostedSite site = HostingActivator.getDefault().getHostingService().get(hostedHost);
+			IHostedSite site = HostingActivator.getDefault().getHostingService().get(hostedHost);
 			if (site != null) {
 				IPath mappedPath = getMapped(site, path.removeFirstSegments(1).makeAbsolute());
 				serve(req, resp, site, mappedPath);
@@ -84,7 +85,7 @@ public class HostedSiteServlet extends OrionServlet {
 	 * <li>An absolute URL pointing to another site, eg. <code>http://foo.com/bar.txt</code></li>
 	 * </ul>
 	 */
-	private IPath getMapped(HostedSite site, IPath pathInfo) {
+	private IPath getMapped(IHostedSite site, IPath pathInfo) {
 		final Map<String, String> map = site.getMappings();
 		final IPath originalPath = pathInfo;
 		IPath path = originalPath;
@@ -107,7 +108,7 @@ public class HostedSiteServlet extends OrionServlet {
 		return null;
 	}
 	
-	private void serve(HttpServletRequest req, HttpServletResponse resp, HostedSite site, IPath path) throws ServletException, IOException {
+	private void serve(HttpServletRequest req, HttpServletResponse resp, IHostedSite site, IPath path) throws ServletException, IOException {
 		if (path.getDevice() == null) {
 			serveOrionFile(req, resp, site, path);
 		} else {
@@ -115,7 +116,7 @@ public class HostedSiteServlet extends OrionServlet {
 		}
 	}
 
-	private void serveOrionFile(HttpServletRequest req, HttpServletResponse resp, HostedSite site, IPath path) throws ServletException {
+	private void serveOrionFile(HttpServletRequest req, HttpServletResponse resp, IHostedSite site, IPath path) throws ServletException {
 		String userName = site.getUserName();
 		String workspaceUri = WORKSPACE_SERVLET_ALIAS + site.getWorkspaceId();
 		boolean allow = false;
@@ -147,7 +148,7 @@ public class HostedSiteServlet extends OrionServlet {
 		}
 	}
 	
-	private void addEditHeaders(HttpServletResponse resp, HostedSite site, IPath path) {
+	private void addEditHeaders(HttpServletResponse resp, IHostedSite site, IPath path) {
 		resp.addHeader("X-Edit-Server", site.getEditServerUrl() + "/coding.html#");
 		resp.addHeader("X-Edit-Token", path.toString());
 	}

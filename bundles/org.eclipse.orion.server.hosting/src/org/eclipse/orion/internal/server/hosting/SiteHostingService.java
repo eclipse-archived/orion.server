@@ -21,7 +21,7 @@ import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
 public class SiteHostingService implements ISiteHostingService {
 	
 	private final int hostingPort;
-	private Map<Key, HostedSite> sites;
+	private Map<Key, IHostedSite> sites;
 	private String editServer;
 	
 	private Set<String> hosts;   // All hosts we've used, each has the form "hostname:port"
@@ -34,7 +34,7 @@ public class SiteHostingService implements ISiteHostingService {
 	 */
 	public SiteHostingService(int hostingPort /*, SiteHostingConfig config*/) {
 		this.hostingPort = hostingPort;
-		this.sites = new HashMap<Key, HostedSite>();
+		this.sites = new HashMap<Key, IHostedSite>();
 		this.editServer = "http://localhost:" +  System.getProperty("org.eclipse.equinox.http.jetty.http.port"); //$NON-NLS-1$ //$NON-NLS-2$
 		
 		this.hosts = new HashSet<String>();
@@ -61,7 +61,7 @@ public class SiteHostingService implements ISiteHostingService {
 	public void stop(SiteConfiguration siteConfig, WebUser user) throws SiteHostingException {
 		Key key = createKey(siteConfig);
 		synchronized (sites) {
-			HostedSite site = sites.get(key);
+			IHostedSite site = sites.get(key);
 			if (site == null) {
 				throw new WrongHostingStatusException("Site is already stopped");
 			}
@@ -94,9 +94,9 @@ public class SiteHostingService implements ISiteHostingService {
 	 * @param host A host in the form <code>hostname:port</code>
 	 * @return
 	 */
-	HostedSite get(String host) {
+	IHostedSite get(String host) {
 		synchronized (sites) {
-			for (HostedSite site : sites.values()) {
+			for (IHostedSite site : sites.values()) {
 				if (site.getHost().equals(host))
 					return site;
 			}
@@ -133,7 +133,7 @@ public class SiteHostingService implements ISiteHostingService {
 		return new Key(siteConfig.getId());
 	}
 	
-	private HostedSite createValue(SiteConfiguration siteConfig, WebUser user, String host, String devServer) {
+	private IHostedSite createValue(SiteConfiguration siteConfig, WebUser user, String host, String devServer) {
 		return new HostedSite(siteConfig, user, host, devServer);
 	}
 }

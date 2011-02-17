@@ -7,6 +7,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.servlets.hosting.IHostedSite;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfiguration;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
 import org.eclipse.orion.server.core.LogHelper;
@@ -58,7 +59,7 @@ public class HostedStatusDecorator implements IWebResourceDecorator {
 		String id = siteConfigJson.getString(ProtocolConstants.KEY_ID);
 		SiteConfiguration siteConfiguration = SiteConfiguration.fromId(id);
 		SiteHostingService hostingService = HostingActivator.getDefault().getHostingService();
-		HostedSite site = (HostedSite) hostingService.get(siteConfiguration);
+		IHostedSite site = (IHostedSite) hostingService.get(siteConfiguration);
 		JSONObject hostingStatus = new JSONObject();
 		if (site != null) {
 			hostingStatus.put("Status", "started");  //$NON-NLS-1$//$NON-NLS-2$

@@ -46,37 +46,28 @@ class HostedSite implements IHostedSite {
 		return map; 
 	}
 
-	/**
-	 * @return Mappings defined by the site configuration
-	 */
+	
+	@Override
 	public Map<String, String> getMappings() {
 		return mappings;
 	}
 
-	/**
-	 * @return The user who launched this site
-	 */
+	@Override
 	public String getUserName() {
 		return userName;
 	}
 
-	/**
-	 * @return Workspace id that this site will use
-	 */
+	@Override
 	public String getWorkspaceId() {
 		return workspaceId;
 	}
 
-	/**
-	 * @return The host where this site is accessible
-	 */
+	@Override
 	public String getHost() {
 		return host;
 	}
 	
-	/**
-	 * @return The URL of the Orion server where the hosted files can be edited
-	 */
+	@Override
 	public String getEditServerUrl() {
 		return editServer;
 	}
