@@ -22,7 +22,7 @@ import javax.servlet.http.HttpServletRequest;
 public class WelcomeFileFilter implements Filter {
 
 	private static final String WELCOME_FILE_NAME = "index.html";//$NON-NLS-1$
-	private static final List<String> SERVLET_PATHS = Arrays.asList("/file", "/workspace/", "/filesystems", "/prefs", "/search"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+	private static final List<String> SERVLET_PATHS = Arrays.asList("/file", "/workspace/", "/filesystems", "/prefs", "/search", "/git", "/users"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
 
 	public void init(FilterConfig filterConfig) throws ServletException {
 		//nothing to do
