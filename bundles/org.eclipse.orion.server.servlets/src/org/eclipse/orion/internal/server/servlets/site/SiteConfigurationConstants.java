@@ -38,7 +38,7 @@ public class SiteConfigurationConstants {
 	public static final String KEY_HOST_HINT = "HostHint"; //$NON-NLS-1$
 
 	/**
-	 * FIXME mamacdon is this necessary?
+	 * FIXME is this necessary?
 	 */
 	public static final String KEY_AUTH_PASSWORD = "AuthPassword"; //$NON-NLS-1$
 

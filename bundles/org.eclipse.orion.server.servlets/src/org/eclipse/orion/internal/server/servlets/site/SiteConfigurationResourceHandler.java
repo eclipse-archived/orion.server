@@ -82,7 +82,7 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 			result.put(SiteConfigurationConstants.KEY_MAPPINGS, siteConfig.getMappingsJSON());
 
 			// Note: The SiteConfigurationConstants.KEY_HOSTING_STATUS field will be contributed to the result
-			// by the hosting service (if present) via an IWebResourceDecorator
+			// by the site-hosting bundle (if present) via an IWebResourceDecorator
 		} catch (JSONException e) {
 			// Can't happen
 		}

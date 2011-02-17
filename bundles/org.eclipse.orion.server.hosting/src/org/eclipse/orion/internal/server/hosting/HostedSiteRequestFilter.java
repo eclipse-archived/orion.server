@@ -6,17 +6,17 @@ import java.net.InetAddress;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 
-import org.eclipse.orion.internal.server.servlets.hosting.ISiteLaunchService;
+import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
 
 /**
- * If a request is for a resource on a running hosted site (based on Host header), this filter 
- * forwards the request to the HostedSiteServlet to be handled.
+ * If an incoming request is for a path on a running hosted site (based on Host header), 
+ * this filter forwards the request to the {@link HostedSiteServlet} to be handled.
  */
 public class HostedSiteRequestFilter implements Filter {
 
 	private static final String HOSTED_SITE_ALIAS = "/hosted"; //$NON-NLS-1$
 
-	private ISiteLaunchService siteHostingService;
+	private ISiteHostingService siteHostingService;
 	
 	@Override
 	public void init(FilterConfig filterConfig) throws ServletException {

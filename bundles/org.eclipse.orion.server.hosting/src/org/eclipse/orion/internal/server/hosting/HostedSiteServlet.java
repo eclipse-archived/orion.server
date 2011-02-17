@@ -41,11 +41,9 @@ import org.json.JSONException;
 public class HostedSiteServlet extends OrionServlet {
 	private static final long serialVersionUID = 1L;
 
-	// FIXME mamacdon remove these if possible
-	private static final String FILE_SERVLET_ALIAS = "/file";
-	private static final String USER = "mark";
+	private static final String WORKSPACE_SERVLET_ALIAS = "/workspace/"; //$NON-NLS-1$
 
-	// FIXME mamacdon remove these copied variables
+	// FIXME these variables are copied from fileservlet
 	private ServletResourceHandler<IFileStore> fileSerializer;
 	private final URI rootStoreURI;
 	private IAliasRegistry aliasRegistry;
@@ -77,7 +75,7 @@ public class HostedSiteServlet extends OrionServlet {
 	}
 	
 	/**
-	 * Returns a path constructed by rewriting pathInfo using the most specific rule from a hosted
+	 * Returns a path constructed by rewriting pathInfo using the most specific rule from the hosted
 	 * site's mappings.
 	 * @param site The hosted site.
 	 * @param pathInfo Path to be rewritten.
@@ -105,7 +103,7 @@ public class HostedSiteServlet extends OrionServlet {
 		if (base != null) {
 			return new Path(base).append(rest);
 		}
-		// No mapping were defined. What to do?
+		// No mapping for /
 		return null;
 	}
 	
@@ -119,9 +117,9 @@ public class HostedSiteServlet extends OrionServlet {
 
 	private void serveOrionFile(HttpServletRequest req, HttpServletResponse resp, HostedSite site, IPath path) throws ServletException {
 		String userName = site.getUserName();
-		String workspaceUri = "/workspace/" + site.getWorkspaceId(); //$NON-NLS-1$
+		String workspaceUri = WORKSPACE_SERVLET_ALIAS + site.getWorkspaceId();
 		boolean allow = false;
-		// Check that user who launched the hosted site has access to the workspace
+		// Check that user who launched the hosted site really has access to the workspace
 		try {
 			if (AuthorizationService.checkRights(userName, workspaceUri, "GET")) { //$NON-NLS-1$
 				allow = true;
@@ -130,11 +128,7 @@ public class HostedSiteServlet extends OrionServlet {
 			throw new ServletException(e);
 		}
 		
-		// FIXME mamacdon: refactor elsewhere, remember the dev-server-url in the HostedSite 
-		resp.addHeader("X-Edit-Server", "http://localhost:8080/");
-		resp.addHeader("X-Edit-Token", "coding.html#/file" + path.toString());
-		
-		// FIXME mamacdon: this code is copied from NewFileServlet, fix it
+		// FIXME: this code is copied from NewFileServlet, fix it
 		if (allow) {
 			String pathInfo = path.toString();
 			IPath filePath = pathInfo == null ? Path.ROOT : new Path(pathInfo);
@@ -146,10 +140,19 @@ public class HostedSiteServlet extends OrionServlet {
 			if (fileSerializer.handleRequest(req, resp, file)) {
 				//return;
 			}
+			
+			if (file != null) {
+				addEditHeaders(resp, site, path);
+			}
 		}
 	}
 	
-	// FIXME temp junk for grabbing files from filesystem
+	private void addEditHeaders(HttpServletResponse resp, HostedSite site, IPath path) {
+		resp.addHeader("X-Edit-Server", site.getEditServerUrl() + "/coding.html#");
+		resp.addHeader("X-Edit-Token", path.toString());
+	}
+
+	// FIXME temp code for grabbing files from filesystem
 	protected IFileStore tempGetFileStore(IPath path, String authority) {
 		//first check if we have an alias registered
 		if (path.segmentCount() > 0) {
@@ -178,13 +181,13 @@ public class HostedSiteServlet extends OrionServlet {
 		try {
 			url = new URL(path.toString());
 		} catch (MalformedURLException e) {
-			// FIXME mamacdon: nicer error
+			// FIXME: nicer error
 			throw e;
 		}
 		
 		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
-		// FIXME mamacdon: forward headers, catch remote errors and send 502 (?)
+		// FIXME: forward headers, catch remote errors and send 502 (?)
 		//				Enumeration<?> headerNames = req.getHeaderNames();
 		//				while (headerNames.hasMoreElements()) {
 		//					String name = (String) headerNames.nextElement();

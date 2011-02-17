@@ -6,7 +6,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.*;
-import org.eclipse.orion.internal.server.servlets.hosting.ISiteLaunchService;
+import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
+import org.eclipse.orion.internal.server.servlets.hosting.WrongHostingStatusException;
 import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.*;
@@ -51,7 +52,7 @@ public class SiteConfigurationServlet extends OrionServlet {
 				// Create a new site configuration, and possibly start it
 				SiteConfiguration siteConfig = doCreateSiteConfiguration(req, resp);
 				try {
-					doStartStop(req, resp, siteConfig, false);
+					doAction(req, resp, siteConfig, false);
 				} catch (CoreException e) {
 					// Start/stop failed; try to clean up
 					if (siteConfig != null) {
@@ -74,7 +75,7 @@ public class SiteConfigurationServlet extends OrionServlet {
 			} else if (pathInfo.segmentCount() == 1) {
 				// Start/stop site configuration
 				SiteConfiguration siteConfig = getExistingSiteConfig(req, resp);
-				doStartStop(req, resp, siteConfig, true);
+				doAction(req, resp, siteConfig, true);
 				if (siteConfigurationResourceHandler.handleRequest(req, resp, siteConfig)) {
 					return;
 				}
@@ -91,35 +92,42 @@ public class SiteConfigurationServlet extends OrionServlet {
 	}
 
 	/**
+	 * Performs an action, given by the Action header, on a site configuration.
 	 * @param siteConfig
-	 * @param actionRequired <code>true</code> if null action header should cause a failure response.
+	 * @param actionRequired <code>true</code> if a missing Action header should cause a failure response.
+	 * @throws CoreException If a bogus action was found, or if <code>actionRequired == true</code> but no action
+	 * was found, or if the hosting service threw an exception while performing the action.
 	 */
-	private void doStartStop(HttpServletRequest req, HttpServletResponse resp, SiteConfiguration siteConfig, boolean actionRequired) throws CoreException {
+	private void doAction(HttpServletRequest req, HttpServletResponse resp, SiteConfiguration siteConfig, boolean actionRequired) throws CoreException {
 		if (siteConfig == null)
 			return;
 		WebUser user = WebUser.fromUserName(getUserName(req));
 		String action = req.getHeader(SiteConfigurationConstants.HEADER_ACTION);
-		if ("start".equalsIgnoreCase(action)) { //$NON-NLS-1$
-			ISiteLaunchService service = getHostingService();
-			service.start(siteConfig, user);
-		} else if ("stop".equalsIgnoreCase(action)) { //$NON-NLS-1$
-			ISiteLaunchService service = getHostingService();
-			service.stop(siteConfig, user);
-		} else if (action == null) {
-			if (actionRequired)
+		try {
+			if ("start".equalsIgnoreCase(action)) { //$NON-NLS-1$
+				ISiteHostingService service = getHostingService();
+				service.start(siteConfig, user);
+			} else if ("stop".equalsIgnoreCase(action)) { //$NON-NLS-1$
+				ISiteHostingService service = getHostingService();
+				service.stop(siteConfig, user);
+			} else if (action == null && actionRequired) {
 				throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Action missing", null));
-			else
-				return;
-		} else {
-			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Action not understood", null));
+			} else if (action == null && !actionRequired) {
+				// No action, but we can ignore it
+			} else {
+				throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Action not understood", null));
+			}
+		} catch (WrongHostingStatusException e) {
+			// Give a descriptive status code for this case
+			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_CONFLICT, e.getMessage(), null));
 		}
 	}
 
 	/**
 	 * @throws CoreException If the site hosting service is not present.
 	 */
-	private static ISiteLaunchService getHostingService() throws CoreException {
-		ISiteLaunchService service = Activator.getDefault().getSiteHostingService();
+	private static ISiteHostingService getHostingService() throws CoreException {
+		ISiteHostingService service = Activator.getDefault().getSiteHostingService();
 		if (service == null) {
 			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "Site hosting service unavailable"));
 		}

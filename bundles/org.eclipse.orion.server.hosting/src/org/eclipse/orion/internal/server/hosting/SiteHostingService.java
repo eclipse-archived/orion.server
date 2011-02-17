@@ -7,29 +7,35 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.orion.internal.server.servlets.hosting.IHostedSite;
-import org.eclipse.orion.internal.server.servlets.hosting.ISiteLaunchService;
+import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
 import org.eclipse.orion.internal.server.servlets.hosting.SiteHostingException;
+import org.eclipse.orion.internal.server.servlets.hosting.WrongHostingStatusException;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfiguration;
 import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
 
 /**
- * Provides a same-server implementation of ISiteLaunchService. Maintains a table of 
- * hosted sites for this purpose. This table is not persisted, so site launches will be
- * reset after a server restart.
+ * Provides a same-server implementation of ISiteHostingService. Maintains a table of 
+ * hosted sites for this purpose. This table is not persisted, so site launches are only
+ * active until the server stops.
  */
-public class SiteLaunchService implements ISiteLaunchService {
+public class SiteHostingService implements ISiteHostingService {
 	
-	private final int port;
-	private Map<Key, HostedSite> table;
+	private final int hostingPort;
+	private Map<Key, HostedSite> sites;
+	private String editServer;
 	
-	private Set<String> hosts;	// All hosts we've used, each is has the form "hostname:port"
-	private BitSet allocated;	// Bit #i is set if the ip address 192.168.0.i has been allocated
+	private Set<String> hosts;   // All hosts we've used, each has the form "hostname:port"
+	private BitSet allocated;    // Bit i is set if the IP address 127.0.0.i has been allocated
 	
 	private Object hostLock = new Object();
 
-	public SiteLaunchService(int port /*, SiteHostingConfig config*/) {
-		this.port = port;
-		this.table = new HashMap<Key, HostedSite>();
+	/**
+	 * @param hostingPort The port that hosted sites are accessed on
+	 */
+	public SiteHostingService(int hostingPort /*, SiteHostingConfig config*/) {
+		this.hostingPort = hostingPort;
+		this.sites = new HashMap<Key, HostedSite>();
+		this.editServer = "http://localhost:" +  System.getProperty("org.eclipse.equinox.http.jetty.http.port"); //$NON-NLS-1$ //$NON-NLS-2$
 		
 		this.hosts = new HashSet<String>();
 		this.allocated = new BitSet(256);
@@ -41,34 +47,34 @@ public class SiteLaunchService implements ISiteLaunchService {
 	@Override
 	public void start(SiteConfiguration siteConfig, WebUser user) throws SiteHostingException {
 		Key key = createKey(siteConfig);
-		synchronized (table) {
-			if (table.containsKey(key)) {
-				throw new SiteHostingException("Site is already started");
+		synchronized (sites) {
+			if (sites.containsKey(key)) {
+				throw new WrongHostingStatusException("Site is already started");
 			}
 			
 			String host = acquireHost();
-			table.put(key, createValue(siteConfig, user, host));
+			sites.put(key, createValue(siteConfig, user, host, editServer));
 		}
 	}
 	
 	@Override
 	public void stop(SiteConfiguration siteConfig, WebUser user) throws SiteHostingException {
 		Key key = createKey(siteConfig);
-		synchronized (table) {
-			HostedSite site = table.get(key);
+		synchronized (sites) {
+			HostedSite site = sites.get(key);
 			if (site == null) {
-				throw new SiteHostingException("Site is already stopped");
+				throw new WrongHostingStatusException("Site is already stopped");
 			}
 			
 			releaseHost(site.getHost());
-			table.remove(key);
+			sites.remove(key);
 		}
 	}
 	
 	@Override
 	public IHostedSite get(SiteConfiguration siteConfig) {
-		synchronized (table) {
-			return table.get(createKey(siteConfig));
+		synchronized (sites) {
+			return sites.get(createKey(siteConfig));
 		}
 	}
 	
@@ -78,8 +84,7 @@ public class SiteLaunchService implements ISiteLaunchService {
 	 */
 	@Override
 	public boolean isHosted(String host) {
-		// FIXME: this gets called a lot, can we avoid the locking?
-		// perhaps use ConcurrentHashMap and key == host string for the table
+		// FIXME: This gets called a lot, can we avoid the locking?
 		synchronized (hostLock) {
 			return hosts.contains(host);
 		}
@@ -90,8 +95,8 @@ public class SiteLaunchService implements ISiteLaunchService {
 	 * @return
 	 */
 	HostedSite get(String host) {
-		synchronized (table) {
-			for (HostedSite site : table.values()) {
+		synchronized (sites) {
+			for (HostedSite site : sites.values()) {
 				if (site.getHost().equals(host))
 					return site;
 			}
@@ -101,22 +106,22 @@ public class SiteLaunchService implements ISiteLaunchService {
 	
 	private String acquireHost() throws SiteHostingException {
 		synchronized (hostLock) {
-			// FIXME mamacdon: allow configurable IPs.. 127.0.0.x only works on Win/Linux 
-			// allow configurable IPs
-			// if domain wildcards available, try those first
+			// FIXME: 127.0.0.x only works by default on Win/Linux 
+			// - Allow configurable IPs
+			// - If domain wildcards available, try those first
 			int bit = allocated.nextClearBit(0);
 			if (bit == -1) {
 				throw new SiteHostingException("No more hosts available");
 			}
 			allocated.set(bit);
-			String host = "127.0.0." + bit + ":" + this.port; //$NON-NLS-2$
+			String host = "127.0.0." + bit + ":" + this.hostingPort; //$NON-NLS-2$
 			hosts.add(host);
 			return host;
 		}
 	}
 	
 	private void releaseHost(String host) {
-		String lastByteStr = host.substring(host.lastIndexOf(".") + 1); //$NON-NLS-1$
+		String lastByteStr = host.substring(host.lastIndexOf(".") + 1, host.lastIndexOf(":")); //$NON-NLS-1$ //$NON-NLS-2$
 		int lastByte = Integer.parseInt(lastByteStr);
 		synchronized (hostLock) {
 			allocated.clear(lastByte);
@@ -128,8 +133,8 @@ public class SiteLaunchService implements ISiteLaunchService {
 		return new Key(siteConfig.getId());
 	}
 	
-	private HostedSite createValue(SiteConfiguration siteConfig, WebUser user, String host) {
-		return new HostedSite(siteConfig, user, host);
+	private HostedSite createValue(SiteConfiguration siteConfig, WebUser user, String host, String devServer) {
+		return new HostedSite(siteConfig, user, host, devServer);
 	}
 }
 

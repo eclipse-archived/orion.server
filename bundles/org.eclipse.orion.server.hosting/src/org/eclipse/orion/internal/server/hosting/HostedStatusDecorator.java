@@ -44,8 +44,7 @@ public class HostedStatusDecorator implements IWebResourceDecorator {
 				addStatus(representation, resource);
 			}
 		} catch (JSONException e) {
-			// Shouldn't happen
-			// Since we are just decorating someone else's response we shouldn't cause a failure
+			// Shouldn't happen, but since we are just decorating someone else's response we shouldn't cause a failure
 			LogHelper.log(e);
 		}
 	}
@@ -58,12 +57,12 @@ public class HostedStatusDecorator implements IWebResourceDecorator {
 	private void addStatus(JSONObject siteConfigJson, URI resource) throws JSONException {
 		String id = siteConfigJson.getString(ProtocolConstants.KEY_ID);
 		SiteConfiguration siteConfiguration = SiteConfiguration.fromId(id);
-		SiteLaunchService hostingService = HostingActivator.getDefault().getHostingService();
+		SiteHostingService hostingService = HostingActivator.getDefault().getHostingService();
 		HostedSite site = (HostedSite) hostingService.get(siteConfiguration);
 		JSONObject hostingStatus = new JSONObject();
 		if (site != null) {
 			hostingStatus.put("Status", "started");  //$NON-NLS-1$//$NON-NLS-2$
-			// Whatever scheme was used to access the resource, use that for the sites too 
+			// Whatever scheme was used to access the resource, assume it's used for the sites too
 			String hostedUrl = resource.getScheme() + "://" + site.getHost(); //$NON-NLS-1$
 			hostingStatus.put("URL", hostedUrl); //$NON-NLS-1$
 			

@@ -18,7 +18,7 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.core.IAliasRegistry;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
-import org.eclipse.orion.internal.server.servlets.hosting.ISiteLaunchService;
+import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
 import org.eclipse.orion.internal.server.servlets.workspace.ProjectParentDecorator;
 import org.eclipse.orion.internal.server.servlets.xfer.TransferResourceDecorator;
 import org.eclipse.osgi.service.datalocation.Location;
@@ -46,7 +46,7 @@ public class Activator implements BundleActivator, IAliasRegistry {
 
 	private Map<String, URI> aliases = Collections.synchronizedMap(new HashMap<String, URI>());
 	private ServiceTracker<IWebResourceDecorator, IWebResourceDecorator> decoratorTracker;
-	private ServiceTracker<ISiteLaunchService, ISiteLaunchService> siteHostingTracker;
+	private ServiceTracker<ISiteHostingService, ISiteHostingService> siteHostingTracker;
 
 	private URI rootStoreURI;
 	private ServiceRegistration<IWebResourceDecorator> transferDecoratorRegistration;
@@ -68,9 +68,9 @@ public class Activator implements BundleActivator, IAliasRegistry {
 		return decoratorTracker;
 	}
 
-	private synchronized ServiceTracker<ISiteLaunchService, ISiteLaunchService> getSiteHostingTracker() {
+	private synchronized ServiceTracker<ISiteHostingService, ISiteHostingService> getSiteHostingTracker() {
 		if (siteHostingTracker == null) {
-			siteHostingTracker = new ServiceTracker<ISiteLaunchService, ISiteLaunchService>(bundleContext, ISiteLaunchService.class, null);
+			siteHostingTracker = new ServiceTracker<ISiteHostingService, ISiteHostingService>(bundleContext, ISiteHostingService.class, null);
 			siteHostingTracker.open();
 		}
 		return siteHostingTracker;
@@ -117,9 +117,9 @@ public class Activator implements BundleActivator, IAliasRegistry {
 		return tracker.getTracked().values();
 	}
 
-	public ISiteLaunchService getSiteHostingService() {
-		ServiceTracker<ISiteLaunchService, ISiteLaunchService> tracker = getSiteHostingTracker();
-		Collection<ISiteLaunchService> hostingServices = tracker.getTracked().values();
+	public ISiteHostingService getSiteHostingService() {
+		ServiceTracker<ISiteHostingService, ISiteHostingService> tracker = getSiteHostingTracker();
+		Collection<ISiteHostingService> hostingServices = tracker.getTracked().values();
 		return hostingServices.size() == 0 ? null : hostingServices.iterator().next();
 	}
 

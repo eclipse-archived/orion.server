@@ -18,12 +18,14 @@ class HostedSite implements IHostedSite {
 	private String userName;
 	private String workspaceId;
 	private String host;
+	private String editServer;
 	
-	public HostedSite(SiteConfiguration siteConfig, WebUser user, String host) {
+	public HostedSite(SiteConfiguration siteConfig, WebUser user, String host, String devServer) {
 		this.mappings = Collections.unmodifiableMap(createMap(siteConfig));
 		this.userName = user.getName();
 		this.workspaceId = siteConfig.getWorkspace();
 		this.host = host;
+		this.editServer = devServer;
 	}
 
 	private static Map<String,String> createMap(SiteConfiguration siteConfig) {
@@ -70,6 +72,13 @@ class HostedSite implements IHostedSite {
 	 */
 	public String getHost() {
 		return host;
+	}
+	
+	/**
+	 * @return The URL of the Orion server where the hosted files can be edited
+	 */
+	public String getEditServerUrl() {
+		return editServer;
 	}
 
 }

@@ -118,7 +118,7 @@ public class WebUser extends WebElement {
 		// Add the new site configuration to this user's list of known site configurations
 		IEclipsePreferences siteConfigNode = (IEclipsePreferences) getSiteConfigurationsNode().node(id);
 		siteConfigNode.put(ProtocolConstants.KEY_ID, id);
-		// FIXME mamacdon: put workspace it's associated with in here
+		// FIXME: put workspace it's associated with in here
 		save();
 
 		return siteConfig;
