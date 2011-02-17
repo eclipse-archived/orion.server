@@ -118,7 +118,8 @@ public class HostedSiteServlet extends OrionServlet {
 
 	private void serveOrionFile(HttpServletRequest req, HttpServletResponse resp, IHostedSite site, IPath path) throws ServletException {
 		String userName = site.getUserName();
-		String workspaceUri = WORKSPACE_SERVLET_ALIAS + site.getWorkspaceId();
+		String workspaceId = site.getWorkspaceId();
+		String workspaceUri = WORKSPACE_SERVLET_ALIAS + workspaceId;
 		boolean allow = false;
 		// Check that user who launched the hosted site really has access to the workspace
 		try {
@@ -129,8 +130,9 @@ public class HostedSiteServlet extends OrionServlet {
 			throw new ServletException(e);
 		}
 		
-		// FIXME: this code is copied from NewFileServlet, fix it
 		if (allow) {
+			// FIXME: this code is copied from NewFileServlet, fix it
+			// start copied
 			String pathInfo = path.toString();
 			IPath filePath = pathInfo == null ? Path.ROOT : new Path(pathInfo);
 			IFileStore file = tempGetFileStore(filePath, userName);
@@ -141,10 +143,14 @@ public class HostedSiteServlet extends OrionServlet {
 			if (fileSerializer.handleRequest(req, resp, file)) {
 				//return;
 			}
+			// end copied
 			
 			if (file != null) {
 				addEditHeaders(resp, site, path);
 			}
+		} else {
+			String msg = NLS.bind("No rights to access {0}", workspaceUri);
+			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, msg, null));
 		}
 	}
 	
@@ -153,7 +159,7 @@ public class HostedSiteServlet extends OrionServlet {
 		resp.addHeader("X-Edit-Token", path.toString());
 	}
 
-	// FIXME temp code for grabbing files from filesystem
+	// temp code for grabbing files from filesystem
 	protected IFileStore tempGetFileStore(IPath path, String authority) {
 		//first check if we have an alias registered
 		if (path.segmentCount() > 0) {

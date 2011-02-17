@@ -99,12 +99,14 @@ public class WebUser extends WebElement {
 	/**
 	 * Creates a SiteConfiguration for this user.
 	 * @param name
+	 * @param workspace
 	 * @return The created SiteConfiguration.
 	 */
-	public SiteConfiguration createSiteConfiguration(String name) throws CoreException {
+	public SiteConfiguration createSiteConfiguration(String name, String workspace) throws CoreException {
 		String id = SiteConfiguration.nextSiteConfigurationId();
 		SiteConfiguration siteConfig = SiteConfiguration.fromId(id);
 		siteConfig.setName(name);
+		siteConfig.setWorkspace(workspace);
 		siteConfig.save();
 
 		// Create a JSON object to represent the user-to-siteconfig association
@@ -118,7 +120,6 @@ public class WebUser extends WebElement {
 		// Add the new site configuration to this user's list of known site configurations
 		IEclipsePreferences siteConfigNode = (IEclipsePreferences) getSiteConfigurationsNode().node(id);
 		siteConfigNode.put(ProtocolConstants.KEY_ID, id);
-		// FIXME: put workspace it's associated with in here
 		save();
 
 		return siteConfig;

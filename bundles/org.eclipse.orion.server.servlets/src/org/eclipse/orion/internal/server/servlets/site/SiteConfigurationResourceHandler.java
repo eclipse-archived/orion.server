@@ -31,11 +31,17 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 	 * properties given by <code>object</code>.
 	 * @param user User creating the SiteConfiguration
 	 * @param name Name for the SiteConfiguration
+	 * @param workspace Workspace the SiteConfiguration is associated to
 	 * @param object Object from which other properties will be drawn
 	 * @return The created SiteConfiguration.
 	 */
-	public static SiteConfiguration createFromJSON(WebUser user, String name, JSONObject object) throws CoreException {
-		SiteConfiguration siteConfig = user.createSiteConfiguration(name);
+	public static SiteConfiguration createFromJSON(WebUser user, String name, String workspace, JSONObject object) throws CoreException {
+		if (name == null || name.isEmpty())
+			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Name is missing", null));
+		else if (workspace == null || name.isEmpty())
+			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Workspace is missing", null));
+
+		SiteConfiguration siteConfig = user.createSiteConfiguration(name, workspace);
 		copyProperties(object, siteConfig, false);
 		siteConfig.save();
 		return siteConfig;
@@ -44,10 +50,13 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 	/**
 	 * Copies properties from a JSONObject representation of a site configuration to a SiteConfiguration
 	 * instance.
+	 * @param source JSON object to copy from.
+	 * @param target Site configuration instance to copy to.
 	 * @param copyName If <code>true</code>, the name property from <code>source</code> will overwrite
 	 * <code>target</code>'s name.
+	 * @throws CoreException if, after copying, <code>target</code> is missing a required property.
 	 */
-	private static void copyProperties(JSONObject source, SiteConfiguration target, boolean copyName) {
+	private static void copyProperties(JSONObject source, SiteConfiguration target, boolean copyName) throws CoreException {
 		if (copyName) {
 			String name = source.optString(ProtocolConstants.KEY_NAME, null);
 			if (name != null)
@@ -69,6 +78,12 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 		String authPassword = source.optString(SiteConfigurationConstants.KEY_AUTH_PASSWORD, null);
 		if (authPassword != null)
 			target.setAuthPassword(authPassword);
+
+		// Sanity check
+		if (target.getName() == null || target.getName().isEmpty())
+			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Name was not specified", null));
+		if (target.getWorkspace() == null || target.getWorkspace().isEmpty())
+			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Workspace was not specified", null));
 	}
 
 	/**

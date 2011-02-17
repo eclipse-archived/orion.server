@@ -67,8 +67,9 @@ public class SiteConfiguration extends WebElement {
 	 */
 	void delete() throws CoreException {
 		try {
+			IEclipsePreferences parent = (IEclipsePreferences) store.parent();
 			store.removeNode();
-			save();
+			parent.flush();
 		} catch (BackingStoreException e) {
 			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_SERVER_CORE, "Error saving state"));
 		}

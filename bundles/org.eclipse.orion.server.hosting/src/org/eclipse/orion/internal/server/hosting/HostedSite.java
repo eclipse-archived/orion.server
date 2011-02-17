@@ -20,12 +20,16 @@ class HostedSite implements IHostedSite {
 	private String host;
 	private String editServer;
 	
-	public HostedSite(SiteConfiguration siteConfig, WebUser user, String host, String devServer) {
+	public HostedSite(SiteConfiguration siteConfig, WebUser user, String host, String editServer) {
 		this.mappings = Collections.unmodifiableMap(createMap(siteConfig));
 		this.userName = user.getName();
 		this.workspaceId = siteConfig.getWorkspace();
 		this.host = host;
-		this.editServer = devServer;
+		this.editServer = editServer;
+		
+		if (this.userName == null || this.workspaceId == null || this.host == null || this.editServer == null) {
+			throw new IllegalArgumentException("Parameters must be nonnull");
+		}
 	}
 
 	private static Map<String,String> createMap(SiteConfiguration siteConfig) {

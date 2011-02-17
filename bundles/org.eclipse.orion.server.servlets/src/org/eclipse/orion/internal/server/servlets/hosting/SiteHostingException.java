@@ -9,4 +9,8 @@ public class SiteHostingException extends RuntimeException {
 	public SiteHostingException(String msg) {
 		super(msg);
 	}
+
+	public SiteHostingException(String msg, Throwable cause) {
+		super(msg, cause);
+	}
 }

@@ -51,7 +51,12 @@ public class SiteHostingService implements ISiteHostingService {
 			}
 			
 			String host = acquireHost();
-			sites.put(key, createValue(siteConfig, user, host, editServer));
+			try {
+				sites.put(key, createValue(siteConfig, user, host, editServer));
+			} catch (Exception e) {
+				releaseHost(host);
+				throw new SiteHostingException(e.getMessage(), e);
+			}
 		}
 	}
 	
@@ -130,8 +135,8 @@ public class SiteHostingService implements ISiteHostingService {
 		return new Key(siteConfig.getId());
 	}
 	
-	private IHostedSite createValue(SiteConfiguration siteConfig, WebUser user, String host, String devServer) {
-		return new HostedSite(siteConfig, user, host, devServer);
+	private IHostedSite createValue(SiteConfiguration siteConfig, WebUser user, String host, String editServer) throws SiteHostingException {
+		return new HostedSite(siteConfig, user, host, editServer);
 	}
 }
 

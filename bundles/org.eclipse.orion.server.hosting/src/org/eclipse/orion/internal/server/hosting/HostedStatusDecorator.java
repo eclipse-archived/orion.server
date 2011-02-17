@@ -33,12 +33,15 @@ public class HostedStatusDecorator implements IWebResourceDecorator {
 		
 		try {
 			if (resourcePath.segmentCount() == 1) {
-				// Decorating a request for all site configuration
+				// GET /site/ (get all site configs) or POST /site/ (create a site config) 
 				JSONArray siteConfigurations = representation.optJSONArray(SiteConfigurationConstants.KEY_SITE_CONFIGURATIONS);
 				if (siteConfigurations != null) {
+					// It's the "get all" case
 					for (int i=0; i < siteConfigurations.length(); i++) {
 						addStatus(siteConfigurations.getJSONObject(i), resource);
 					}
+				} else {
+					addStatus(representation, resource);
 				}
 			} else if (resourcePath.segmentCount() == 2) {
 				// Decorating a request for individual site configuration

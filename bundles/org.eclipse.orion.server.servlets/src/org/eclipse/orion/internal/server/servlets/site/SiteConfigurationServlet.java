@@ -10,6 +10,7 @@ import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
 import org.eclipse.orion.internal.server.servlets.hosting.WrongHostingStatusException;
 import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
 import org.eclipse.orion.server.servlets.OrionServlet;
+import org.eclipse.osgi.util.NLS;
 import org.json.*;
 
 /**
@@ -50,11 +51,12 @@ public class SiteConfigurationServlet extends OrionServlet {
 		try {
 			if (pathInfo.segmentCount() == 0) {
 				// Create a new site configuration, and possibly start it
-				SiteConfiguration siteConfig = doCreateSiteConfiguration(req, resp);
+				SiteConfiguration siteConfig = null;
 				try {
+					siteConfig = doCreateSiteConfiguration(req, resp);
 					doAction(req, resp, siteConfig, false);
 				} catch (CoreException e) {
-					// Start/stop failed; try to clean up
+					// If start/stop failed, try to clean up
 					if (siteConfig != null) {
 						// Remove site config from user's list
 						WebUser user = WebUser.fromUserName(getUserName(req));
@@ -112,11 +114,11 @@ public class SiteConfigurationServlet extends OrionServlet {
 				ISiteHostingService service = getHostingService();
 				service.stop(siteConfig, user);
 			} else if (action == null && actionRequired) {
-				throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Action missing", null));
+				throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Action is missing", null));
 			} else if (action == null && !actionRequired) {
 				// No action, but we can ignore it
 			} else {
-				throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Action not understood", null));
+				throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Action {0} is not understood", action), null));
 			}
 		} catch (WrongHostingStatusException e) {
 			// Give a descriptive status code for this case
@@ -203,10 +205,8 @@ public class SiteConfigurationServlet extends OrionServlet {
 			WebUser user = WebUser.fromUserName(getUserName(req));
 			JSONObject requestJson = readJSONRequest(req);
 			String name = computeName(req, requestJson);
-			if (name.isEmpty()) {
-				throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Site configuration name was not specified", null));
-			}
-			SiteConfiguration siteConfig = SiteConfigurationResourceHandler.createFromJSON(user, name, requestJson);
+			String workspace = requestJson.optString(SiteConfigurationConstants.KEY_WORKSPACE, null);
+			SiteConfiguration siteConfig = SiteConfigurationResourceHandler.createFromJSON(user, name, workspace, requestJson);
 			return siteConfig;
 		} catch (IOException e) {
 			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occurred while reading the request", null));
