@@ -22,7 +22,6 @@ public class SiteHostingService implements ISiteHostingService {
 	
 	private final int hostingPort;
 	private Map<Key, IHostedSite> sites;
-	private String editServer;
 	
 	private Set<String> hosts;   // All hosts we've used, each has the form "hostname:port"
 	private BitSet allocated;    // Bit i is set if the IP address 127.0.0.i has been allocated
@@ -35,7 +34,6 @@ public class SiteHostingService implements ISiteHostingService {
 	public SiteHostingService(int hostingPort /*, SiteHostingConfig config*/) {
 		this.hostingPort = hostingPort;
 		this.sites = new HashMap<Key, IHostedSite>();
-		this.editServer = "http://localhost:" +  System.getProperty("org.eclipse.equinox.http.jetty.http.port"); //$NON-NLS-1$ //$NON-NLS-2$
 		
 		this.hosts = new HashSet<String>();
 		this.allocated = new BitSet(256);
@@ -45,7 +43,7 @@ public class SiteHostingService implements ISiteHostingService {
 	}
 	
 	@Override
-	public void start(SiteConfiguration siteConfig, WebUser user) throws SiteHostingException {
+	public void start(SiteConfiguration siteConfig, WebUser user, String editServer) throws SiteHostingException {
 		Key key = createKey(siteConfig);
 		synchronized (sites) {
 			if (sites.containsKey(key)) {
@@ -84,7 +82,6 @@ public class SiteHostingService implements ISiteHostingService {
 	 */
 	@Override
 	public boolean isHosted(String host) {
-		// FIXME: This gets called a lot, can we avoid the locking?
 		synchronized (hostLock) {
 			return hosts.contains(host);
 		}

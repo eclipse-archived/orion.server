@@ -106,7 +106,8 @@ public class SiteConfigurationServlet extends OrionServlet {
 		try {
 			if ("start".equalsIgnoreCase(action)) { //$NON-NLS-1$
 				ISiteHostingService service = getHostingService();
-				service.start(siteConfig, user);
+				String editServer = "http://" + req.getHeader("Host"); //$NON-NLS-1$ //$NON-NLS-2$
+				service.start(siteConfig, user, editServer);
 			} else if ("stop".equalsIgnoreCase(action)) { //$NON-NLS-1$
 				ISiteHostingService service = getHostingService();
 				service.stop(siteConfig, user);
