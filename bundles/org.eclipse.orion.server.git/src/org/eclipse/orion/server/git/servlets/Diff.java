@@ -63,6 +63,10 @@ public class Diff {
 		this.cached = cached;
 	}
 
+	void setPathFilter(TreeFilter pf) {
+		pathFilter = pf;
+	}
+
 	protected void run() throws Exception {
 		diffFmt.setRepository(db);
 		try {

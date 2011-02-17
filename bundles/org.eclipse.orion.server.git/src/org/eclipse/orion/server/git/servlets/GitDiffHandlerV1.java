@@ -27,6 +27,7 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.RepositoryCache;
 import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.treewalk.filter.PathFilter;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
@@ -48,13 +49,17 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 			throws ServletException {
 
 		try {
-			File gitDir = GitUtils.getGitDir(new Path(gitPathInfo),
+			Path path = new Path(gitPathInfo);
+			File gitDir = GitUtils.getGitDir(path.uptoSegment(2),
 					request.getRemoteUser());
 			if (gitDir == null)
 				return false; // TODO: or a error response code
 			Repository repository = new FileRepository(gitDir);
 			Diff diff = new Diff(response.getOutputStream());
 			diff.setRepository(repository);
+			if (path.segmentCount() > 2)
+				diff.setPathFilter(PathFilter.create(path.removeFirstSegments(2)
+						.toString()));
 			diff.run();
 			return true;
 

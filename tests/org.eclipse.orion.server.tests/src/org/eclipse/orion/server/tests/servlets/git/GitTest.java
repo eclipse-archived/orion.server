@@ -12,15 +12,11 @@ package org.eclipse.orion.server.tests.servlets.git;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
 import java.io.StringBufferInputStream;
-import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -43,7 +39,6 @@ import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Test;
 import org.xml.sax.SAXException;
 
 import com.meterware.httpunit.GetMethodWebRequest;
@@ -52,13 +47,13 @@ import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
 
-public class GitTest extends FileSystemTest {
+public abstract class GitTest extends FileSystemTest {
 
 	private static final String GIT_SERVLET_LOCATION = GitServlet.GIT_URI + '/';
 
 	WebConversation webConversation;
-	private File gitDir;
-	private File testFile;
+	protected File gitDir;
+	protected File testFile;
 
 	@BeforeClass
 	public static void setupWorkspace() {
@@ -80,121 +75,6 @@ public class GitTest extends FileSystemTest {
 		//		FileSystemHelper.clear(gitDir);
 	}
 
-	@Test
-	public void testLinkToExistingClone() throws Exception {
-		URI workspaceLocation = createWorkspace("testLinkToExistingClone");
-
-		String projectName = "testLinkToExistingClone";
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
-		assertEquals(projectName, project.getString("Name"));
-		String projectId = project.optString("Id", null);
-		assertNotNull(projectId);
-
-		String gitStatusUri = project.optString(GitConstants.KEY_STATUS, null);
-		assertNotNull(gitStatusUri);
-		String gitDiffUri = project.optString(GitConstants.KEY_DIFF, null);
-		assertNotNull(gitDiffUri);
-	}
-
-	@Test
-	public void testNoDiff() throws IOException, SAXException, URISyntaxException, JSONException {
-		URI workspaceLocation = createWorkspace("testDiff");
-
-		String projectName = "testDiff";
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
-		assertEquals(projectName, project.getString("Name"));
-		String projectId = project.optString("Id", null);
-		assertNotNull(projectId);
-
-		String gitDiffUri = project.optString(GitConstants.KEY_DIFF, null);
-		assertNotNull(gitDiffUri);
-
-		WebRequest request = getGetGitDiffRequest(gitDiffUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		assertEquals("", response.getText());
-	}
-
-	@Test
-	public void testDiffAlreadyModified() throws IOException, SAXException, URISyntaxException, JSONException {
-		Writer w = new OutputStreamWriter(new FileOutputStream(testFile), "UTF-8");
-		try {
-			w.write("hello");
-		} finally {
-			w.close();
-		}
-
-		URI workspaceLocation = createWorkspace("testDiff");
-
-		String projectName = "testDiff";
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
-		assertEquals(projectName, project.getString("Name"));
-		String projectId = project.optString("Id", null);
-		assertNotNull(projectId);
-
-		String gitDiffUri = project.optString(GitConstants.KEY_DIFF, null);
-		assertNotNull(gitDiffUri);
-
-		WebRequest request = getGetGitDiffRequest(gitDiffUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		assertEquals("+hello"/*TODO*/, response.getText());
-	}
-
-	@Test
-	public void testDiffModifiedByOrion() throws IOException, SAXException, URISyntaxException, JSONException {
-		URI workspaceLocation = createWorkspace("testDiff");
-
-		String projectName = "testDiff";
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
-		assertEquals(projectName, project.getString("Name"));
-		String projectId = project.optString("Id", null);
-		assertNotNull(projectId);
-
-		// TODO: modify the file
-
-		String gitDiffUri = project.optString(GitConstants.KEY_DIFF, null);
-		assertNotNull(gitDiffUri);
-
-		WebRequest request = getGetGitDiffRequest(gitDiffUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		assertEquals("+hello"/*TODO*/, response.getText());
-	}
-
-	@Test
-	public void testStatus() throws IOException, SAXException, URISyntaxException, JSONException {
-		URI workspaceLocation = createWorkspace("testStatus");
-
-		String projectName = "testStatus";
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
-		assertEquals(projectName, project.getString("Name"));
-		String projectId = project.optString("Id", null);
-		assertNotNull(projectId);
-
-		String gitStatusUri = project.optString(GitConstants.KEY_STATUS, null);
-		assertNotNull(gitStatusUri);
-
-		// TODO: GET gitStatusUri, verify response - should be empty, nothing to commit
-	}
-
-	// TODO: make a change and then call status
-
 	/**
 	 * Creates a request to get the diff result for the given location.
 	 * @param location Either an absolute URI, or a workspace-relative URI
@@ -211,7 +91,23 @@ public class GitTest extends FileSystemTest {
 		return request;
 	}
 
-	private WebResponse createProjectWithContentLocation(URI workspaceLocation, String projectName, String location) throws JSONException, IOException, SAXException {
+	/**
+	 * Creates a request to get the status result for the given location.
+	 * @param location Either an absolute URI, or a workspace-relative URI
+	 */
+	protected WebRequest getGetGitStatusRequest(String location) {
+		String requestURI;
+		if (location.startsWith("http://"))
+			requestURI = location;
+		else
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.STATUS_COMMAND + location;
+		WebRequest request = new GetMethodWebRequest(requestURI);
+		request.setHeaderField("Orion-Version", "1");
+		setAuthentication(request);
+		return request;
+	}
+
+	protected WebResponse createProjectWithContentLocation(URI workspaceLocation, String projectName, String location) throws JSONException, IOException, SAXException {
 		JSONObject body = new JSONObject();
 		body.put("ContentLocation", location);
 		InputStream in = new StringBufferInputStream(body.toString());
@@ -223,7 +119,7 @@ public class GitTest extends FileSystemTest {
 		return webConversation.getResponse(request);
 	}
 
-	private URI createWorkspace(String suffix) throws IOException, SAXException, URISyntaxException {
+	protected URI createWorkspace(String suffix) throws IOException, SAXException, URISyntaxException {
 		String workspaceName = WorkspaceServiceTest.class.getName() + "#" + suffix;
 		WebRequest request = getCreateWorkspaceRequest(workspaceName);
 		WebResponse response = webConversation.getResponse(request);
@@ -231,7 +127,7 @@ public class GitTest extends FileSystemTest {
 		return new URI(response.getHeaderField("Location"));
 	}
 
-	private void createRepository() throws IOException, GitAPIException {
+	protected void createRepository() throws IOException, GitAPIException {
 		IPath randomLocation = getRandomLocation();
 		gitDir = randomLocation.toFile();
 		randomLocation = randomLocation.addTrailingSeparator().append(Constants.DOT_GIT);
@@ -243,12 +139,22 @@ public class GitTest extends FileSystemTest {
 		testFile = new File(gitDir, "test.txt");
 		testFile.createNewFile();
 		//		setContent("test.txt", "Hello world");
+		File folder = new File(gitDir, "folder");
+		folder.mkdir();
+		File folderFile = new File(folder, "folder.txt");
+		folderFile.createNewFile();
+
 		Git git = new Git(db);
-		git.add().addFilepattern("test.txt").call();
+		git.add().addFilepattern(".").call();
 		git.commit().setMessage("Initial commit").call();
 	}
 
-	private IPath getRandomLocation() {
+	protected IPath getRandomLocation() {
 		return FileSystemHelper.getRandomLocation(FileSystemHelper.getTempDir());
+	}
+
+	protected static String getMethodName() {
+		final StackTraceElement[] ste = Thread.currentThread().getStackTrace();
+		return ste[3].getMethodName();
 	}
 }
