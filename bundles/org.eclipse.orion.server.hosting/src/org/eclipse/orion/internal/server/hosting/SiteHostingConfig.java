@@ -1,6 +1,5 @@
 package org.eclipse.orion.internal.server.hosting;
 
-
 public class SiteHostingConfig {
 	// Accept a list of
 	//  IP: x.x.x.x

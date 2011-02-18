@@ -1,15 +1,7 @@
 package org.eclipse.orion.internal.server.hosting;
 
-import java.util.BitSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import org.eclipse.orion.internal.server.servlets.hosting.IHostedSite;
-import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
-import org.eclipse.orion.internal.server.servlets.hosting.SiteHostingException;
-import org.eclipse.orion.internal.server.servlets.hosting.WrongHostingStatusException;
+import java.util.*;
+import org.eclipse.orion.internal.server.servlets.hosting.*;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfiguration;
 import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
 
@@ -19,13 +11,13 @@ import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
  * active until the server stops.
  */
 public class SiteHostingService implements ISiteHostingService {
-	
+
 	private final int hostingPort;
 	private Map<Key, IHostedSite> sites;
-	
-	private Set<String> hosts;   // All hosts we've used, each has the form "hostname:port"
-	private BitSet allocated;    // Bit i is set if the IP address 127.0.0.i has been allocated
-	
+
+	private Set<String> hosts; // All hosts we've used, each has the form "hostname:port"
+	private BitSet allocated; // Bit i is set if the IP address 127.0.0.i has been allocated
+
 	private Object hostLock = new Object();
 
 	/**
@@ -34,14 +26,14 @@ public class SiteHostingService implements ISiteHostingService {
 	public SiteHostingService(int hostingPort /*, SiteHostingConfig config*/) {
 		this.hostingPort = hostingPort;
 		this.sites = new HashMap<Key, IHostedSite>();
-		
+
 		this.hosts = new HashSet<String>();
 		this.allocated = new BitSet(256);
 		allocated.set(0);
 		allocated.set(1);
 		allocated.set(255);
 	}
-	
+
 	@Override
 	public void start(SiteConfiguration siteConfig, WebUser user, String editServer) throws SiteHostingException {
 		Key key = createKey(siteConfig);
@@ -49,7 +41,7 @@ public class SiteHostingService implements ISiteHostingService {
 			if (sites.containsKey(key)) {
 				throw new WrongHostingStatusException("Site is already started");
 			}
-			
+
 			String host = acquireHost();
 			try {
 				sites.put(key, createValue(siteConfig, user, host, editServer));
@@ -59,7 +51,7 @@ public class SiteHostingService implements ISiteHostingService {
 			}
 		}
 	}
-	
+
 	@Override
 	public void stop(SiteConfiguration siteConfig, WebUser user) throws SiteHostingException {
 		Key key = createKey(siteConfig);
@@ -68,19 +60,19 @@ public class SiteHostingService implements ISiteHostingService {
 			if (site == null) {
 				throw new WrongHostingStatusException("Site is already stopped");
 			}
-			
+
 			releaseHost(site.getHost());
 			sites.remove(key);
 		}
 	}
-	
+
 	@Override
 	public IHostedSite get(SiteConfiguration siteConfig) {
 		synchronized (sites) {
 			return sites.get(createKey(siteConfig));
 		}
 	}
-	
+
 	/**
 	 * @param host A host in the form <code>hostname:port</code>
 	 * @return
@@ -91,7 +83,7 @@ public class SiteHostingService implements ISiteHostingService {
 			return hosts.contains(host);
 		}
 	}
-	
+
 	/**
 	 * @param host A host in the form <code>hostname:port</code>
 	 * @return
@@ -105,7 +97,7 @@ public class SiteHostingService implements ISiteHostingService {
 		}
 		return null;
 	}
-	
+
 	private String acquireHost() throws SiteHostingException {
 		synchronized (hostLock) {
 			// FIXME: 127.0.0.x only works by default on Win/Linux 
@@ -121,7 +113,7 @@ public class SiteHostingService implements ISiteHostingService {
 			return host;
 		}
 	}
-	
+
 	private void releaseHost(String host) {
 		String lastByteStr = host.substring(host.lastIndexOf(".") + 1, host.lastIndexOf(":")); //$NON-NLS-1$ //$NON-NLS-2$
 		int lastByte = Integer.parseInt(lastByteStr);
@@ -130,11 +122,11 @@ public class SiteHostingService implements ISiteHostingService {
 			hosts.remove(host);
 		}
 	}
-	
+
 	private Key createKey(SiteConfiguration siteConfig) {
 		return new Key(siteConfig.getId());
 	}
-	
+
 	private IHostedSite createValue(SiteConfiguration siteConfig, WebUser user, String host, String editServer) throws SiteHostingException {
 		return new HostedSite(siteConfig, user, host, editServer);
 	}
@@ -150,7 +142,7 @@ public class SiteHostingService implements ISiteHostingService {
 class Key {
 	// Globally unique id of the site configuration
 	private String siteConfigurationId;
-	
+
 	public Key(String siteConfigurationId) {
 		this.siteConfigurationId = siteConfigurationId;
 	}
@@ -159,10 +151,7 @@ class Key {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime
-				* result
-				+ ((siteConfigurationId == null) ? 0 : siteConfigurationId
-						.hashCode());
+		result = prime * result + ((siteConfigurationId == null) ? 0 : siteConfigurationId.hashCode());
 		return result;
 	}
 

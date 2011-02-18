@@ -1,35 +1,21 @@
 package org.eclipse.orion.internal.server.hosting;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
+import java.net.*;
 import java.util.Map;
-
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.core.IAliasRegistry;
 import org.eclipse.orion.internal.server.core.IOUtilities;
-import org.eclipse.orion.internal.server.servlets.Activator;
-import org.eclipse.orion.internal.server.servlets.ServerStatus;
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-import org.eclipse.orion.internal.server.servlets.Util;
+import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.internal.server.servlets.file.ServletFileStoreHandler;
 import org.eclipse.orion.internal.server.servlets.hosting.IHostedSite;
-import org.eclipse.orion.internal.server.servlets.workspace.WebWorkspace;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.authentication.IAuthenticationService;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONException;
@@ -74,7 +60,7 @@ public class HostedSiteServlet extends OrionServlet {
 			super.doGet(req, resp);
 		}
 	}
-	
+
 	/**
 	 * Returns a path constructed by rewriting pathInfo using the most specific rule from the hosted
 	 * site's mappings.
@@ -107,7 +93,7 @@ public class HostedSiteServlet extends OrionServlet {
 		// No mapping for /
 		return null;
 	}
-	
+
 	private void serve(HttpServletRequest req, HttpServletResponse resp, IHostedSite site, IPath path) throws ServletException, IOException {
 		if (path.getDevice() == null) {
 			serveOrionFile(req, resp, site, path);
@@ -129,7 +115,7 @@ public class HostedSiteServlet extends OrionServlet {
 		} catch (JSONException e) {
 			throw new ServletException(e);
 		}
-		
+
 		if (allow) {
 			// FIXME: this code is copied from NewFileServlet, fix it
 			// start copied
@@ -144,7 +130,7 @@ public class HostedSiteServlet extends OrionServlet {
 				//return;
 			}
 			// end copied
-			
+
 			if (file != null) {
 				addEditHeaders(resp, site, path);
 			}
@@ -153,7 +139,7 @@ public class HostedSiteServlet extends OrionServlet {
 			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, msg, null));
 		}
 	}
-	
+
 	private void addEditHeaders(HttpServletResponse resp, IHostedSite site, IPath path) {
 		resp.addHeader("X-Edit-Server", site.getEditServerUrl() + "/coding.html#");
 		resp.addHeader("X-Edit-Token", path.toString());
@@ -182,7 +168,7 @@ public class HostedSiteServlet extends OrionServlet {
 
 		return null;
 	}
-	
+
 	private void proxyRemoteUrl(HttpServletResponse resp, IPath path) throws MalformedURLException, IOException {
 		URL url = null;
 		try {
@@ -191,7 +177,7 @@ public class HostedSiteServlet extends OrionServlet {
 			// FIXME: nicer error
 			throw e;
 		}
-		
+
 		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
 		// FIXME: forward headers, catch remote errors and send 502 (?)

@@ -1,11 +1,8 @@
 package org.eclipse.orion.internal.server.hosting;
 
 import java.io.IOException;
-import java.net.InetAddress;
-
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
-
 import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
 
 /**
@@ -17,7 +14,7 @@ public class HostedSiteRequestFilter implements Filter {
 	private static final String HOSTED_SITE_ALIAS = "/hosted"; //$NON-NLS-1$
 
 	private ISiteHostingService siteHostingService;
-	
+
 	@Override
 	public void init(FilterConfig filterConfig) throws ServletException {
 		this.siteHostingService = HostingActivator.getDefault().getHostingService();
