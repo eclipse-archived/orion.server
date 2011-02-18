@@ -22,7 +22,6 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
@@ -30,37 +29,9 @@ import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
 
-public class GitStatusTest extends GitTest {
+public class GitIndexTest extends GitTest {
 	@Test
-	@Ignore("not yet implemented")
-	public void testStatus() throws IOException, SAXException, URISyntaxException, JSONException {
-		URI workspaceLocation = createWorkspace(getMethodName());
-
-		String projectName = getMethodName();
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
-		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
-		assertNotNull(projectId);
-
-		String gitStatusUri = project.optString(GitConstants.KEY_STATUS, null);
-		assertNotNull(gitStatusUri);
-
-		WebRequest request = getGetGitStatusRequest(gitStatusUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		//		assertEquals(HttpURLConnection.HTTP_NO_CONTENT, response.getResponseCode());
-		StringBuffer sb = new StringBuffer();
-		sb.append("# On branch master").append("\n");
-		sb.append("nothing to commit (working directory clean)").append("\n");
-		assertEquals(sb.toString(), response.getText());
-	}
-
-	@Test
-	@Ignore("not yet implemented")
-	public void testStatusModifiedByOrion() throws IOException, SAXException, URISyntaxException, JSONException {
+	public void testIndexModifiedByOrion() throws IOException, SAXException, URISyntaxException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -76,34 +47,26 @@ public class GitStatusTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		String gitStatusUri = project.optString(GitConstants.KEY_STATUS, null);
-		assertNotNull(gitStatusUri);
+		String gitIndexUri = project.optString(GitConstants.KEY_INDEX, null);
+		assertNotNull(gitIndexUri);
 
-		request = getGetGitStatusRequest(gitStatusUri);
+		// TODO: don't create uris out of thin air
+		request = getGetGitIndexRequest(gitIndexUri + "test.txt");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		StringBuffer sb = new StringBuffer();
-		sb.append("# On branch master").append("\n");
-		sb.append("# Changed but not updated:").append("\n");
-		sb.append("#   (use \"git add <file>...\" to update what will be committed)").append("\n");
-		sb.append("#   (use \"git checkout -- <file>...\" to discard changes in working directory)").append("\n");
-		sb.append("#").append("\n");
-		sb.append("#       modified:   test.txt").append("\n");
-		sb.append("#").append("\n");
-		sb.append("no changes added to commit (use \"git add\" and/or \"git commit -a\")").append("\n");
-		assertEquals(sb.toString(), response.getText());
+		assertEquals("test", response.getText());
 	}
 
 	/**
 	 * Creates a request to get the status result for the given location.
 	 * @param location Either an absolute URI, or a workspace-relative URI
 	 */
-	private WebRequest getGetGitStatusRequest(String location) {
+	private WebRequest getGetGitIndexRequest(String location) {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;
 		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.STATUS_RESOURCE + location;
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.INDEX_RESOURCE + location;
 		WebRequest request = new GetMethodWebRequest(requestURI);
 		request.setHeaderField("Orion-Version", "1");
 		setAuthentication(request);

@@ -41,10 +41,12 @@ public class GitUriTest extends GitTest {
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
 
-		String gitStatusUri = project.optString(GitConstants.KEY_STATUS, null);
-		assertNotNull(gitStatusUri);
-		String gitDiffUri = project.optString(GitConstants.KEY_DIFF, null);
-		assertNotNull(gitDiffUri);
+		String key = project.optString(GitConstants.KEY_STATUS, null);
+		assertNotNull(key);
+		key = project.optString(GitConstants.KEY_DIFF, null);
+		assertNotNull(key);
+		key = project.optString(GitConstants.KEY_INDEX, null);
+		assertNotNull(key);
 	}
 
 	@Test
@@ -67,10 +69,12 @@ public class GitUriTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject files = new JSONObject(response.getText());
 
-		String gitStatusUri = files.optString(GitConstants.KEY_STATUS, null);
-		assertNotNull(gitStatusUri);
-		String gitDiffUri = files.optString(GitConstants.KEY_DIFF, null);
-		assertNotNull(gitDiffUri);
+		String key = files.optString(GitConstants.KEY_STATUS, null);
+		assertNotNull(key);
+		key = project.optString(GitConstants.KEY_DIFF, null);
+		assertNotNull(key);
+		key = project.optString(GitConstants.KEY_INDEX, null);
+		assertNotNull(key);
 	}
 
 	@Test
@@ -97,10 +101,12 @@ public class GitUriTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject files = new JSONObject(response.getText());
 
-		String gitStatusUri = files.optString(GitConstants.KEY_STATUS, null);
-		assertNull(gitStatusUri);
-		String gitDiffUri = files.optString(GitConstants.KEY_DIFF, null);
-		assertNull(gitDiffUri);
+		String key = files.optString(GitConstants.KEY_STATUS, null);
+		assertNull(key);
+		key = project.optString(GitConstants.KEY_DIFF, null);
+		assertNull(key);
+		key = project.optString(GitConstants.KEY_INDEX, null);
+		assertNull(key);
 	}
 
 	@Test
@@ -130,10 +136,12 @@ public class GitUriTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject files = new JSONObject(response.getText());
 
-		String gitStatusUri = files.optString(GitConstants.KEY_STATUS, null);
-		assertNull(gitStatusUri);
-		String gitDiffUri = files.optString(GitConstants.KEY_DIFF, null);
-		assertNull(gitDiffUri);
+		String key = files.optString(GitConstants.KEY_STATUS, null);
+		assertNull(key);
+		key = project.optString(GitConstants.KEY_DIFF, null);
+		assertNull(key);
+		key = project.optString(GitConstants.KEY_INDEX, null);
+		assertNull(key);
 
 		// TODO get children
 	}

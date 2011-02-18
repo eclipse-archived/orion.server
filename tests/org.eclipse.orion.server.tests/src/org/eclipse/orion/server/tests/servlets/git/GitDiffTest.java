@@ -28,6 +28,7 @@ import org.json.JSONObject;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
+import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
 
@@ -83,10 +84,12 @@ public class GitDiffTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		StringBuffer sb = new StringBuffer();
 		sb.append("diff --git a/test.txt b/test.txt").append("\n");
-		sb.append("index e69de29..b6fc4c6 100644").append("\n");
+		sb.append("index 30d74d2..b6fc4c6 100644").append("\n");
 		sb.append("--- a/test.txt").append("\n");
 		sb.append("+++ b/test.txt").append("\n");
-		sb.append("@@ -0,0 +1 @@").append("\n");
+		sb.append("@@ -1 +1 @@").append("\n");
+		sb.append("-test").append("\n");
+		sb.append("\\ No newline at end of file").append("\n");
 		sb.append("+hello").append("\n");
 		sb.append("\\ No newline at end of file").append("\n");
 		assertEquals(sb.toString(), response.getText());
@@ -117,10 +120,12 @@ public class GitDiffTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		StringBuffer sb = new StringBuffer();
 		sb.append("diff --git a/test.txt b/test.txt").append("\n");
-		sb.append("index e69de29..b6fc4c6 100644").append("\n");
+		sb.append("index 30d74d2..b6fc4c6 100644").append("\n");
 		sb.append("--- a/test.txt").append("\n");
 		sb.append("+++ b/test.txt").append("\n");
-		sb.append("@@ -0,0 +1 @@").append("\n");
+		sb.append("@@ -1 +1 @@").append("\n");
+		sb.append("-test").append("\n");
+		sb.append("\\ No newline at end of file").append("\n");
 		sb.append("+hello").append("\n");
 		sb.append("\\ No newline at end of file").append("\n");
 		assertEquals(sb.toString(), response.getText());
@@ -150,30 +155,52 @@ public class GitDiffTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
+		// TODO: don't create uris out of thin air
 		request = getGetGitDiffRequest(gitDiffUri + "folder/");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		StringBuffer sb = new StringBuffer();
 		sb.append("diff --git a/folder/folder.txt b/folder/folder.txt").append("\n");
-		sb.append("index e69de29..b6fc4c6 100644").append("\n");
+		sb.append("index 0119635..b6fc4c6 100644").append("\n");
 		sb.append("--- a/folder/folder.txt").append("\n");
 		sb.append("+++ b/folder/folder.txt").append("\n");
-		sb.append("@@ -0,0 +1 @@").append("\n");
+		sb.append("@@ -1 +1 @@").append("\n");
+		sb.append("-folder").append("\n");
+		sb.append("\\ No newline at end of file").append("\n");
 		sb.append("+hello").append("\n");
 		sb.append("\\ No newline at end of file").append("\n");
 		assertEquals(sb.toString(), response.getText());
 
+		// TODO: don't create uris out of thin air
 		request = getGetGitDiffRequest(gitDiffUri + "test.txt");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		sb.setLength(0);
 		sb.append("diff --git a/test.txt b/test.txt").append("\n");
-		sb.append("index e69de29..32f95c0 100644").append("\n");
+		sb.append("index 30d74d2..32f95c0 100644").append("\n");
 		sb.append("--- a/test.txt").append("\n");
 		sb.append("+++ b/test.txt").append("\n");
-		sb.append("@@ -0,0 +1 @@").append("\n");
+		sb.append("@@ -1 +1 @@").append("\n");
+		sb.append("-test").append("\n");
+		sb.append("\\ No newline at end of file").append("\n");
 		sb.append("+hi").append("\n");
 		sb.append("\\ No newline at end of file").append("\n");
 		assertEquals(sb.toString(), response.getText());
+	}
+
+	/**
+	 * Creates a request to get the diff result for the given location.
+	 * @param location Either an absolute URI, or a workspace-relative URI
+	 */
+	private WebRequest getGetGitDiffRequest(String location) {
+		String requestURI;
+		if (location.startsWith("http://"))
+			requestURI = location;
+		else
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.DIFF_RESOURCE + location;
+		WebRequest request = new GetMethodWebRequest(requestURI);
+		request.setHeaderField("Orion-Version", "1");
+		setAuthentication(request);
+		return request;
 	}
 }

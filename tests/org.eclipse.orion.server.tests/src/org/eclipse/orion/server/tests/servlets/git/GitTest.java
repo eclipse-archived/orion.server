@@ -30,7 +30,6 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
-import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitServlet;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.eclipse.orion.server.tests.servlets.workspace.WorkspaceServiceTest;
@@ -41,7 +40,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.xml.sax.SAXException;
 
-import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.PostMethodWebRequest;
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebRequest;
@@ -49,7 +47,7 @@ import com.meterware.httpunit.WebResponse;
 
 public abstract class GitTest extends FileSystemTest {
 
-	private static final String GIT_SERVLET_LOCATION = GitServlet.GIT_URI + '/';
+	protected static final String GIT_SERVLET_LOCATION = GitServlet.GIT_URI + '/';
 
 	WebConversation webConversation;
 	protected File gitDir;
@@ -75,38 +73,6 @@ public abstract class GitTest extends FileSystemTest {
 		//		FileSystemHelper.clear(gitDir);
 	}
 
-	/**
-	 * Creates a request to get the diff result for the given location.
-	 * @param location Either an absolute URI, or a workspace-relative URI
-	 */
-	protected WebRequest getGetGitDiffRequest(String location) {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.DIFF_COMMAND + location;
-		WebRequest request = new GetMethodWebRequest(requestURI);
-		request.setHeaderField("Orion-Version", "1");
-		setAuthentication(request);
-		return request;
-	}
-
-	/**
-	 * Creates a request to get the status result for the given location.
-	 * @param location Either an absolute URI, or a workspace-relative URI
-	 */
-	protected WebRequest getGetGitStatusRequest(String location) {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.STATUS_COMMAND + location;
-		WebRequest request = new GetMethodWebRequest(requestURI);
-		request.setHeaderField("Orion-Version", "1");
-		setAuthentication(request);
-		return request;
-	}
-
 	protected WebResponse createProjectWithContentLocation(URI workspaceLocation, String projectName, String location) throws JSONException, IOException, SAXException {
 		JSONObject body = new JSONObject();
 		body.put("ContentLocation", location);
@@ -127,7 +93,7 @@ public abstract class GitTest extends FileSystemTest {
 		return new URI(response.getHeaderField("Location"));
 	}
 
-	protected void createRepository() throws IOException, GitAPIException {
+	protected void createRepository() throws IOException, GitAPIException, CoreException {
 		IPath randomLocation = getRandomLocation();
 		gitDir = randomLocation.toFile();
 		randomLocation = randomLocation.addTrailingSeparator().append(Constants.DOT_GIT);
@@ -138,11 +104,12 @@ public abstract class GitTest extends FileSystemTest {
 
 		testFile = new File(gitDir, "test.txt");
 		testFile.createNewFile();
-		//		setContent("test.txt", "Hello world");
+		createFile(testFile.toURI(), "test");
 		File folder = new File(gitDir, "folder");
 		folder.mkdir();
 		File folderFile = new File(folder, "folder.txt");
 		folderFile.createNewFile();
+		createFile(folderFile.toURI(), "folder");
 
 		Git git = new Git(db);
 		git.add().addFilepattern(".").call();

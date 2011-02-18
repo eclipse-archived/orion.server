@@ -83,16 +83,23 @@ public class GitWebResourceDecorator implements IWebResourceDecorator {
 
 		// add Git Diff URI
 		IPath path = new Path(GitServlet.GIT_URI + '/'
-				+ GitConstants.DIFF_COMMAND).append(targetPath);
+				+ GitConstants.DIFF_RESOURCE).append(targetPath);
 		URI link = new URI(resource.getScheme(), resource.getAuthority(),
 				path.toString(), null, null);
 		representation.put(GitConstants.KEY_DIFF, link.toString());
 
 		// add Git Status URI
-		path = new Path(GitServlet.GIT_URI + '/'
-				+ GitConstants.STATUS_COMMAND).append(targetPath);
+		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.STATUS_RESOURCE)
+				.append(targetPath);
 		link = new URI(resource.getScheme(), resource.getAuthority(),
 				path.toString(), null, null);
 		representation.put(GitConstants.KEY_STATUS, link.toString());
+
+		// add Git Index URI
+		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.INDEX_RESOURCE)
+				.append(targetPath);
+		link = new URI(resource.getScheme(), resource.getAuthority(),
+				path.toString(), null, null);
+		representation.put(GitConstants.KEY_INDEX, link.toString());
 	}
 }

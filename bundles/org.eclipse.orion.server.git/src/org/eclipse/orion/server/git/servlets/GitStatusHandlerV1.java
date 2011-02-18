@@ -32,6 +32,7 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 	public boolean handleRequest(HttpServletRequest request,
 			HttpServletResponse response, String gitPathInfo)
 			throws ServletException {
+		// TODO: implement
 		return false;
 	}
 }
