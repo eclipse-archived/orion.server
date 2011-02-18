@@ -10,14 +10,15 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.workspace;
 
+import java.net.URI;
+import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.orion.internal.server.core.Activator;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.servlets.site.*;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.core.users.OrionScope;
-
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.json.*;
 import org.osgi.service.prefs.BackingStoreException;
 
@@ -25,6 +26,7 @@ import org.osgi.service.prefs.BackingStoreException;
  * An Eclipse web user.
  */
 public class WebUser extends WebElement {
+
 	public WebUser(IEclipsePreferences store) {
 		super(store);
 	}
@@ -93,4 +95,105 @@ public class WebUser extends WebElement {
 		}
 		return new JSONArray();
 	}
+
+	/**
+	 * Creates a SiteConfiguration for this user.
+	 * @param name
+	 * @param workspace
+	 * @return The created SiteConfiguration.
+	 */
+	public SiteConfiguration createSiteConfiguration(String name, String workspace) throws CoreException {
+		String id = SiteConfiguration.nextSiteConfigurationId();
+		SiteConfiguration siteConfig = SiteConfiguration.fromId(id);
+		siteConfig.setName(name);
+		siteConfig.setWorkspace(workspace);
+		siteConfig.save();
+
+		// Create a JSON object to represent the user-to-siteconfig association
+		JSONObject newSiteConfiguration = new JSONObject();
+		try {
+			newSiteConfiguration.put(ProtocolConstants.KEY_ID, id);
+		} catch (JSONException e) {
+			// Can't happen
+		}
+
+		// Add the new site configuration to this user's list of known site configurations
+		IEclipsePreferences siteConfigNode = (IEclipsePreferences) getSiteConfigurationsNode().node(id);
+		siteConfigNode.put(ProtocolConstants.KEY_ID, id);
+		save();
+
+		return siteConfig;
+	}
+
+	public void removeSiteConfiguration(SiteConfiguration siteConfig) throws CoreException {
+		try {
+			// Remove this user's record of the site configuration.
+			getSiteConfigurationsNode().node(siteConfig.getId()).removeNode();
+		} catch (BackingStoreException e) {
+			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_SERVER_CORE, "Error removing site configuration", e));
+		}
+		save();
+	}
+
+	/**
+	 * @return JSONArray of all site configurations known to this user.
+	 */
+	public JSONArray getSiteConfigurationsJSON(URI baseLocation) {
+		try {
+			IEclipsePreferences siteConfigsNode = (IEclipsePreferences) store.node(SiteConfigurationConstants.KEY_SITE_CONFIGURATIONS);
+			String[] siteConfigIds = siteConfigsNode.childrenNames();
+			JSONArray jsonArray = new JSONArray();
+			for (String id : siteConfigIds) {
+				// Get the actual site configuration this points to
+				SiteConfiguration siteConfig = getExistingSiteConfiguration(id);
+				JSONObject siteConfigJson = SiteConfigurationResourceHandler.toJSON(siteConfig, baseLocation);
+				jsonArray.put(siteConfigJson);
+			}
+			return jsonArray;
+		} catch (BackingStoreException e) {
+			LogHelper.log(e);
+		}
+		return new JSONArray();
+	}
+
+	/**
+	 * @return The site configuration with the given <code>id</code>, or null if this user has
+	 * no record of such a site configuration.
+	 */
+	public SiteConfiguration getSiteConfiguration(String id) {
+		try {
+			IEclipsePreferences siteConfigsNode = this.getSiteConfigurationsNode();
+			if (siteConfigsNode.nodeExists(id)) {
+				// Get the actual site configuration
+				if (SiteConfiguration.siteConfigExists(id)) {
+					SiteConfiguration siteConfig = SiteConfiguration.fromId(id);
+					return siteConfig;
+				} else {
+					// Shouldn't happen
+					LogHelper.log(new Status(IStatus.ERROR, Activator.PI_SERVER_CORE, "Site configuration does not exist in backing store"));
+				}
+			}
+		} catch (BackingStoreException e) {
+			LogHelper.log(e);
+		}
+		return null;
+	}
+
+	private static SiteConfiguration getExistingSiteConfiguration(String id) {
+		if (SiteConfiguration.siteConfigExists(id)) {
+			SiteConfiguration siteConfig = SiteConfiguration.fromId(id);
+			return siteConfig;
+		} else {
+			// Shouldn't happen. Maybe someone deleted the site configuration underlying storage
+			return null;
+		}
+	}
+
+	/**
+	 * @return This user's site configurations preference node
+	 */
+	private IEclipsePreferences getSiteConfigurationsNode() {
+		return (IEclipsePreferences) this.store.node(SiteConfigurationConstants.KEY_SITE_CONFIGURATIONS);
+	}
+
 }

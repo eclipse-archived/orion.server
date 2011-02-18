@@ -124,6 +124,10 @@ public class AuthorizationService {
 		if (uri.equals("/workspace")) //$NON-NLS-1$
 			return true;
 
+		// Any user can access their site configurations
+		if (uri.startsWith("/site")) //$NON-NLS-1$
+			return true;
+
 		//import/export rights depend on access to the file content
 		if (uri.startsWith("/xfer/export/") && uri.endsWith(".zip")) {
 			uri = "/file/" + uri.substring(13, uri.length() - 4);

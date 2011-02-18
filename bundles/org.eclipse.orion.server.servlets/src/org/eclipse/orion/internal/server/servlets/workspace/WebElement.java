@@ -24,7 +24,7 @@ import org.osgi.service.prefs.BackingStoreException;
 public class WebElement {
 	protected static final IScopeContext scope = new OrionScope();
 
-	IEclipsePreferences store;
+	protected IEclipsePreferences store;
 
 	/**
 	 * Creates a new user, workspace, or project backed by the given preference store.
