@@ -117,6 +117,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	private boolean handleUserCreate(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
 		String store = req.getParameter("store");
 		String login = req.getParameter("login");
+		String name = req.getParameter("name");
 		String password = req.getParameter("password");
 
 		if (login == null || login.length() == 0)
@@ -132,7 +133,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (userAdmin.getUser("login", login) != null)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + login + " already exists.", null));
 
-		User newUser = new User(login, "", password == null ? "" : password);
+		User newUser = new User(login, name != null ? name : "", password == null ? "" : password);
 
 		if (userAdmin.createUser(newUser) == null) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Error creating user: {0}", login), null));
