@@ -11,6 +11,8 @@
 package org.eclipse.orion.server.useradmin.servlets;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -21,15 +23,19 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServerStatus;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
+import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.UnsupportedUserStoreException;
 import org.eclipse.orion.server.useradmin.User;
 import org.eclipse.orion.server.useradmin.UserServiceHelper;
 import org.eclipse.osgi.util.NLS;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -97,8 +103,10 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	private boolean handleUsersGet(HttpServletRequest req, HttpServletResponse resp) throws IOException, JSONException {
 		Collection<User> users = getUserAdmin().getUsers();
 		Set<JSONObject> userjsons = new HashSet<JSONObject>();
+		URI location = OrionServlet.getURI(req);
 		for (User user : users) {
-			userjsons.add(formJson(user));
+			URI userLocation = URIUtil.append(location, user.getLogin());
+			userjsons.add(formJson(user, userLocation));
 		}
 		JSONObject json = new JSONObject();
 		json.put("users", userjsons);
@@ -110,13 +118,16 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		User user = (User) getUserAdmin().getUser("login", userId);
 		if (user == null)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User not found " + userId, null));
-		OrionServlet.writeJSONResponse(req, resp, formJson(user));
+
+		URI location = OrionServlet.getURI(req);
+		OrionServlet.writeJSONResponse(req, resp, formJson(user, location));
 		return true;
 	}
 
 	private boolean handleUserCreate(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
 		String store = req.getParameter("store");
 		String login = req.getParameter("login");
+		String name = req.getParameter("name");
 		String password = req.getParameter("password");
 
 		if (login == null || login.length() == 0)
@@ -132,7 +143,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (userAdmin.getUser("login", login) != null)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + login + " already exists.", null));
 
-		User newUser = new User(login, "", password == null ? "" : password);
+		User newUser = new User(login, name != null ? name : "", password == null ? "" : password);
 
 		if (userAdmin.createUser(newUser) == null) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Error creating user: {0}", login), null));
@@ -143,7 +154,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		} catch (CoreException e) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User rights could not be added.", e));
 		}
-		
+
 		return true;
 	}
 
@@ -192,8 +203,9 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private JSONObject formJson(User user) throws JSONException {
+	private JSONObject formJson(User user, URI location) throws JSONException {
 		JSONObject json = new JSONObject();
+		json.put(ProtocolConstants.KEY_LOCATION, location);
 		json.put("login", user.getLogin());
 		json.put("name", user.getName());
 		Set<String> roles = new HashSet<String>();
@@ -201,6 +213,17 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		//				roles.add(role.getName());
 		//			}
 		//			json.put("roles", roles);
+
+		JSONArray plugins = new JSONArray();
+		try {
+			JSONObject plugin = new JSONObject();
+			URI result = new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), "/plugins/user/userProfilePlugin.html", null, null);
+			plugin.put("Url", result);
+			plugins.put(plugin);
+		} catch (URISyntaxException e) {
+			LogHelper.log(e);
+		}
+		json.put("Plugins", plugins);
 		return json;
 	}
 

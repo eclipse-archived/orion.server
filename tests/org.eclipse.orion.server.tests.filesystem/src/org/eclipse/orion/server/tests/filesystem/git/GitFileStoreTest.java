@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
 
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileInfo;
@@ -25,6 +26,7 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.filesystem.URIUtil;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.tests.harness.CoreTest;
 import org.eclipse.core.tests.harness.FileSystemHelper;
 import org.eclipse.jgit.lib.Constants;
@@ -140,7 +142,7 @@ public class GitFileStoreTest {
 		gfs.childNames(EFS.NONE, null);
 	}
 
-	@Test
+	@Test(expected = CoreException.class)
 	public void getChildNamesForAnEmptySharedRepository() throws CoreException {
 		StringBuffer sb = new StringBuffer();
 		sb.append(GitFileSystem.SCHEME_GIT);
@@ -248,9 +250,10 @@ public class GitFileStoreTest {
 		try {
 			if (empty) {
 				String path = root.toURI().getPath();
-				path = path.substring(1);
-				URI uri = URI.create(path);
-				File sharedRepo = org.eclipse.core.runtime.URIUtil.toFile(uri);
+				path = URLDecoder.decode(path, "UTF-8");
+				path = path.substring("/file://".length());
+				IPath p = new Path(path);
+				File sharedRepo = p.toFile();
 				// TODO: can init only local repositories
 				// checking if the folder exists may not be enough though
 				if (!sharedRepo.exists()) {

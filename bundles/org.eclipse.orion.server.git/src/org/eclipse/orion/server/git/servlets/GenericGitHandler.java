@@ -42,13 +42,13 @@ public class GenericGitHandler extends ServletResourceHandler<String> {
 			writer.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2 Final//EN\">"); //$NON-NLS-1$
 			writer.println("<html>"); //$NON-NLS-1$
 			writer.println(" <head>"); //$NON-NLS-1$
-			writer.println("<title>Git</title>"); //$NON-NLS-1$ //$NON-NLS-2$
+			writer.println("<title>Git</title>"); //$NON-NLS-1$
 			writer.println("</head>"); //$NON-NLS-1$
 			writer.println("<body>"); //$NON-NLS-1$
-			writer.println("<h1>Git</h1>"); //$NON-NLS-1$ //$NON-NLS-2$
+			writer.println("<h1>Git</h1>"); //$NON-NLS-1$
 			writer.println("</body></html>"); //$NON-NLS-1$
 		} catch (Exception e) {
-			throw new ServletException(NLS.bind("Error retrieving git result: {0}", gitPathInfo), e);
+			throw new ServletException(NLS.bind("Error retrieving git result: {0}", gitPathInfo), e); //$NON-NLS-1$
 		}
 		return true;
 	}

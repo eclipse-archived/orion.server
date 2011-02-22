@@ -26,7 +26,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class GitWebResourceDecorator implements IWebResourceDecorator {
+public class GitFileDecorator implements IWebResourceDecorator {
 
 	@Override
 	public void addAtributesFor(HttpServletRequest request, URI resource,
@@ -35,10 +35,10 @@ public class GitWebResourceDecorator implements IWebResourceDecorator {
 		if (targetPath.segmentCount() <= 1)
 			return;
 		String servlet = targetPath.segment(0);
-		if (!"file".equals(servlet) && !"workspace".equals(servlet))
+		if (!"file".equals(servlet) && !"workspace".equals(servlet)) //$NON-NLS-1$ //$NON-NLS-2$
 			return;
 
-		boolean isWorkspace = ("workspace".equals(servlet));
+		boolean isWorkspace = ("workspace".equals(servlet)); //$NON-NLS-1$
 
 		try {
 			// assumption that Git resources may live only under another Git

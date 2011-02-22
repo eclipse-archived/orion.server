@@ -13,6 +13,7 @@ package org.eclipse.orion.server.servlets;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Collections;
 import javax.servlet.ServletException;
@@ -147,4 +148,16 @@ public abstract class OrionServlet extends HttpServlet {
 		LoggerFactory.getLogger(OrionServlet.class).debug(result.toString());
 	}
 
+	/**
+	 * Convenience method to obtain the URI of the request
+	 */
+	public static URI getURI(HttpServletRequest request) {
+		StringBuffer result = request.getRequestURL();
+		try {
+			return new URI(result.toString());
+		} catch (URISyntaxException e) {
+			//location not properly encoded
+			return null;
+		}
+	}
 }
