@@ -44,7 +44,9 @@ public class GitActivator implements BundleActivator {
 		plugin = this;
 		this.bundleContext = context;
 		context.registerService(IWebResourceDecorator.class,
-				new GitWebResourceDecorator(), null);
+				new GitFileDecorator(), null);
+		context.registerService(IWebResourceDecorator.class,
+				new GitUserDecorator(), null);
 	}
 
 	/*
