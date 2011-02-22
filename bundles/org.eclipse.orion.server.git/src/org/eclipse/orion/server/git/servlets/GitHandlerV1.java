@@ -41,7 +41,7 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 			HttpServletResponse response, String gitPathInfo)
 			throws ServletException {
 
-		String[] infoParts = gitPathInfo.split("\\/", 3);
+		String[] infoParts = gitPathInfo.split("\\/", 3); //$NON-NLS-1$
 
 		if (infoParts[1].equals(GitConstants.DIFF_RESOURCE)) {
 			diffHandlerV1.handleRequest(request, response, infoParts[2]);

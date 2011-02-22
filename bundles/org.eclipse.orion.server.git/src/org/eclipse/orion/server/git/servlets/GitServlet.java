@@ -27,7 +27,7 @@ public class GitServlet extends OrionServlet {
 
 	private static final long serialVersionUID = 1L;
 
-	public static final String GIT_URI = "/git";
+	public static final String GIT_URI = "/git"; //$NON-NLS-1$
 
 	private ServletResourceHandler<String> gitSerializer;
 

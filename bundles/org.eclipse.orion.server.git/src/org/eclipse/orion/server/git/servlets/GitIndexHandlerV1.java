@@ -18,20 +18,20 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.dircache.DirCache;
 import org.eclipse.jgit.dircache.DirCacheEntry;
 import org.eclipse.jgit.errors.IncorrectObjectTypeException;
-import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.core.IOUtilities;
+import org.eclipse.orion.internal.server.servlets.ServerStatus;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.osgi.util.NLS;
 
 /**
  * A handler for Git Index operation.
@@ -65,21 +65,17 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 			return true;
 
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			String msg = NLS.bind("Failed to get index for {0}", gitPathInfo); //$NON-NLS-1$
+			statusHandler.handleRequest(request, response, new ServerStatus(
+					IStatus.ERROR,
+					HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
 		}
 		return false;
 	}
 
 	private InputStream open() throws IOException, CoreException,
 			IncorrectObjectTypeException {
-		try {
-			return db.open(blobId, Constants.OBJ_BLOB).openStream();
-		} catch (MissingObjectException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return null;
+		return db.open(blobId, Constants.OBJ_BLOB).openStream();
 	}
 
 }

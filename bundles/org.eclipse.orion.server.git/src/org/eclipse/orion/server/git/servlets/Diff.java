@@ -72,10 +72,10 @@ public class Diff {
 		try {
 			if (cached) {
 				if (oldTree == null) {
-					ObjectId head = db.resolve(HEAD + "^{tree}");
+					ObjectId head = db.resolve(HEAD + "^{tree}"); //$NON-NLS-1$
 					if (head == null)
 						throw new IllegalArgumentException(HEAD
-								+ "is not a tree");
+								+ " is not a tree"); //$NON-NLS-1$
 					CanonicalTreeParser p = new CanonicalTreeParser();
 					ObjectReader reader = db.newObjectReader();
 					try {
@@ -117,21 +117,21 @@ public class Diff {
 		for (DiffEntry ent : files) {
 			switch (ent.getChangeType()) {
 			case ADD:
-				out.println("A\t" + ent.getNewPath());
+				out.println("A\t" + ent.getNewPath()); //$NON-NLS-1$
 				break;
 			case DELETE:
-				out.println("D\t" + ent.getOldPath());
+				out.println("D\t" + ent.getOldPath()); //$NON-NLS-1$
 				break;
 			case MODIFY:
-				out.println("M\t" + ent.getNewPath());
+				out.println("M\t" + ent.getNewPath()); //$NON-NLS-1$
 				break;
 			case COPY:
-				out.format("C%1$03d\t%2$s\t%3$s", ent.getScore(),
+				out.format("C%1$03d\t%2$s\t%3$s", ent.getScore(), //$NON-NLS-1$
 						ent.getOldPath(), ent.getNewPath());
 				out.println();
 				break;
 			case RENAME:
-				out.format("R%1$03d\t%2$s\t%3$s", ent.getScore(),
+				out.format("R%1$03d\t%2$s\t%3$s", ent.getScore(), //$NON-NLS-1$
 						ent.getOldPath(), ent.getNewPath());
 				out.println();
 				break;

@@ -42,7 +42,7 @@ public class GenericUserHandler extends ServletResourceHandler<String> {
 		if (getMethod(request) != Method.GET || userPathInfo == null || userPathInfo.equals("/"))
 			return false;
 
-		String userId = userPathInfo.split("\\/")[1];
+		String userId = userPathInfo.split("\\/")[1]; //$NON-NLS-1$
 		if (UserServiceHelper.getDefault().getUserProfileService().getUserProfileNode(userId, false) == null)
 			return false;
 
@@ -69,7 +69,7 @@ public class GenericUserHandler extends ServletResourceHandler<String> {
 			writer.println("</pre>"); //$NON-NLS-1$
 			writer.println("</body></html>"); //$NON-NLS-1$
 		} catch (Exception e) {
-			throw new ServletException(NLS.bind("Error retrieving user: {0}", userId), e);
+			throw new ServletException(NLS.bind("Error retrieving user: {0}", userId), e); //$NON-NLS-1$
 		}
 		return true;
 	}
