@@ -23,6 +23,7 @@ plugin@org.eclipse.orion.server.useradmin=GIT,tag=v20110222-1020,repo=dev.eclips
 plugin@org.eclipse.orion.server.useradmin.xml=GIT,tag=v20110214-1700,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.useradmin.xml
 plugin@org.eclipse.orion.server.search=GIT,tag=v20110222-1020,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.search
 fragment@org.eclipse.orion.server.logback.config=GIT,tag=v20110207-1740,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.logback.config
+plugin@org.eclipse.orion.server.hosting=GIT,tag=v20110222-1050,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.hosting
 
 #doc
 plugin@org.eclipse.orion.doc.isv=GIT,tag=v20110124-1700,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=doc/org.eclipse.orion.doc.isv
