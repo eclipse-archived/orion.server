@@ -36,9 +36,9 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 	 * @return The created SiteConfiguration.
 	 */
 	public static SiteConfiguration createFromJSON(WebUser user, String name, String workspace, JSONObject object) throws CoreException {
-		if (name == null || name.isEmpty())
+		if (name == null || name.length() == 0)
 			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Name is missing", null));
-		else if (workspace == null || name.isEmpty())
+		else if (workspace == null || name.length() == 0)
 			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Workspace is missing", null));
 
 		SiteConfiguration siteConfig = user.createSiteConfiguration(name, workspace);
@@ -80,9 +80,9 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 			target.setAuthPassword(authPassword);
 
 		// Sanity check
-		if (target.getName() == null || target.getName().isEmpty())
+		if (target.getName() == null || target.getName().length() == 0)
 			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Name was not specified", null));
-		if (target.getWorkspace() == null || target.getWorkspace().isEmpty())
+		if (target.getWorkspace() == null || target.getWorkspace().length() == 0)
 			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Workspace was not specified", null));
 	}
 
