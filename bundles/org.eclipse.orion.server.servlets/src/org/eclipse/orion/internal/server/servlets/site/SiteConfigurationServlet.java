@@ -222,7 +222,7 @@ public class SiteConfigurationServlet extends OrionServlet {
 	private static String computeName(HttpServletRequest req, JSONObject requestBody) {
 		// Try Slug first
 		String name = req.getHeader(ProtocolConstants.HEADER_SLUG);
-		if (name == null || name.isEmpty()) {
+		if (name == null || name.length() == 0) {
 			name = requestBody.optString(ProtocolConstants.KEY_NAME);
 		}
 		return name;
