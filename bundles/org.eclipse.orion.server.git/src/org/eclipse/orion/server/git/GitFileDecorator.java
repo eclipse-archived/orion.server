@@ -51,9 +51,7 @@ public class GitFileDecorator implements IWebResourceDecorator {
 				if (children != null) {
 					for (int i = 0; i < children.length(); i++) {
 						JSONObject child = children.getJSONObject(i);
-						if (child.getBoolean(ProtocolConstants.KEY_DIRECTORY)) {
-							addGitLinks(resource, child, false);
-						}
+						addGitLinks(resource, child, false);
 					}
 				}
 			}

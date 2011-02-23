@@ -29,11 +29,14 @@ public class GitUtils {
 		IFileStore fileStore = NewFileServlet.getFileStore(p, authority);
 		File file = fileStore.toLocalFile(EFS.NONE, null);
 		if (file.exists()) {
-			if (RepositoryCache.FileKey.isGitRepository(file, FS.DETECTED)) {
-				return file;
-			} else if (RepositoryCache.FileKey.isGitRepository(new File(file,
-					Constants.DOT_GIT), FS.DETECTED)) {
-				return new File(file, Constants.DOT_GIT);
+			while (file != null) {
+				if (RepositoryCache.FileKey.isGitRepository(file, FS.DETECTED)) {
+					return file;
+				} else if (RepositoryCache.FileKey.isGitRepository(new File(
+						file, Constants.DOT_GIT), FS.DETECTED)) {
+					return new File(file, Constants.DOT_GIT);
+				}
+				file = file.getParentFile();
 			}
 		}
 		return null;

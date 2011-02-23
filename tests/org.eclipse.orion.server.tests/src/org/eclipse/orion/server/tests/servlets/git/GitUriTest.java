@@ -17,7 +17,9 @@ import static org.junit.Assert.assertNull;
 import java.io.File;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.util.List;
 
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
 import org.eclipse.orion.server.git.GitConstants;
@@ -41,12 +43,9 @@ public class GitUriTest extends GitTest {
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
 
-		String key = project.optString(GitConstants.KEY_STATUS, null);
-		assertNotNull(key);
-		key = project.optString(GitConstants.KEY_DIFF, null);
-		assertNotNull(key);
-		key = project.optString(GitConstants.KEY_INDEX, null);
-		assertNotNull(key);
+		assertNotNull(project.optString(GitConstants.KEY_STATUS, null));
+		assertNotNull(project.optString(GitConstants.KEY_DIFF, null));
+		assertNotNull(project.optString(GitConstants.KEY_DIFF, null));
 	}
 
 	@Test
@@ -54,27 +53,55 @@ public class GitUriTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
+		// http://<host>/workspace/<workspaceId>/
 		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
 
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
-		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
+		JSONObject newProject = new JSONObject(response.getText());
+		assertEquals(projectName, newProject.getString(ProtocolConstants.KEY_NAME));
+		String projectId = newProject.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
-		String location = project.optString(ProtocolConstants.KEY_CONTENT_LOCATION, null);
-		assertNotNull(location);
+		String contentLocation = newProject.optString(ProtocolConstants.KEY_CONTENT_LOCATION, null);
+		assertNotNull(contentLocation);
 
-		WebRequest request = getGetFilesRequest(location);
+		// http://<host>/file/<projectId>/
+		WebRequest request = getGetFilesRequest(contentLocation);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject files = new JSONObject(response.getText());
+		JSONObject project = new JSONObject(response.getText());
 
-		String key = files.optString(GitConstants.KEY_STATUS, null);
-		assertNotNull(key);
-		key = project.optString(GitConstants.KEY_DIFF, null);
-		assertNotNull(key);
-		key = project.optString(GitConstants.KEY_INDEX, null);
-		assertNotNull(key);
+		assertNotNull(project.optString(GitConstants.KEY_STATUS, null));
+		assertNotNull(project.optString(GitConstants.KEY_DIFF, null));
+		assertNotNull(project.optString(GitConstants.KEY_DIFF, null));
+		String childrenLocation = project.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
+		assertNotNull(childrenLocation);
+
+		// http://<host>/file/<projectId>/?depth=1
+		request = getGetFilesRequest(childrenLocation);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));
+		String[] expectedChildren = new String[] {Constants.DOT_GIT, "folder", "test.txt"};
+		assertEquals("Wrong number of directory children", expectedChildren.length, children.size());
+		for (JSONObject child : children) {
+			assertNotNull(child.optString(GitConstants.KEY_STATUS, null));
+			assertNotNull(child.optString(GitConstants.KEY_DIFF, null));
+			assertNotNull(child.optString(GitConstants.KEY_INDEX, null));
+		}
+		childrenLocation = children.get(1).getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
+
+		// http://<host>/file/<projectId>/folder/?depth=1
+		request = getGetFilesRequest(childrenLocation);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		children = getDirectoryChildren(new JSONObject(response.getText()));
+		expectedChildren = new String[] {"folder.txt"};
+		assertEquals("Wrong number of directory children", expectedChildren.length, children.size());
+		for (JSONObject child : children) {
+			assertNotNull(child.optString(GitConstants.KEY_STATUS, null));
+			assertNotNull(child.optString(GitConstants.KEY_DIFF, null));
+			assertNotNull(child.optString(GitConstants.KEY_INDEX, null));
+		}
 	}
 
 	@Test
@@ -101,12 +128,9 @@ public class GitUriTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject files = new JSONObject(response.getText());
 
-		String key = files.optString(GitConstants.KEY_STATUS, null);
-		assertNull(key);
-		key = project.optString(GitConstants.KEY_DIFF, null);
-		assertNull(key);
-		key = project.optString(GitConstants.KEY_INDEX, null);
-		assertNull(key);
+		assertNull(files.optString(GitConstants.KEY_STATUS, null));
+		assertNull(files.optString(GitConstants.KEY_DIFF, null));
+		assertNull(files.optString(GitConstants.KEY_DIFF, null));
 	}
 
 	@Test
@@ -136,14 +160,9 @@ public class GitUriTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject files = new JSONObject(response.getText());
 
-		String key = files.optString(GitConstants.KEY_STATUS, null);
-		assertNull(key);
-		key = project.optString(GitConstants.KEY_DIFF, null);
-		assertNull(key);
-		key = project.optString(GitConstants.KEY_INDEX, null);
-		assertNull(key);
-
-		// TODO get children
+		assertNull(files.optString(GitConstants.KEY_STATUS, null));
+		assertNull(files.optString(GitConstants.KEY_DIFF, null));
+		assertNull(files.optString(GitConstants.KEY_DIFF, null));
 	}
 
 }
