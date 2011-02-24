@@ -28,6 +28,7 @@ import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +41,7 @@ import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
 import org.eclipse.orion.server.git.GitConstants;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Assume;
@@ -47,11 +49,57 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
+import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.PostMethodWebRequest;
 import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
 
 public class GitCloneTest extends GitTest {
+
+	@Test
+	public void testGetCloneEmpty() throws IOException, SAXException, JSONException {
+		WebRequest request = getGetGitCloneRequest();
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject clones = new JSONObject(response.getText());
+		JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		assertEquals(0, clonesArray.length());
+	}
+
+	@Test
+	public void testGetClone() throws IOException, SAXException, JSONException {
+		List<String> locations = new ArrayList<String>();
+
+		URIish uri = new URIish(gitDir.toURL());
+		String name = null;
+		WebRequest request = getPostGitCloneRequest(uri, name);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		String location = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		assertNotNull(location);
+		locations.add(location);
+
+		request = getPostGitCloneRequest(uri, name);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		location = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		assertNotNull(location);
+		locations.add(location);
+
+		request = getPostGitCloneRequest(uri, name);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		location = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		assertNotNull(location);
+		locations.add(location);
+
+		request = getGetGitCloneRequest();
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject clones = new JSONObject(response.getText());
+		JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		assertEquals(locations.size(), clonesArray.length());
+	}
 
 	@Test
 	public void testCloneEmptyUrl() throws IOException, SAXException, JSONException {
@@ -353,6 +401,14 @@ public class GitCloneTest extends GitTest {
 			body.put(GitConstants.KEY_PASSPHRASE, new String(p));
 		InputStream in = new StringBufferInputStream(body.toString());
 		WebRequest request = new PostMethodWebRequest(requestURI, in, "UTF-8");
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		return request;
+	}
+
+	private WebRequest getGetGitCloneRequest() {
+		String requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.CLONE_RESOURCE + '/';
+		WebRequest request = new GetMethodWebRequest(requestURI);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
