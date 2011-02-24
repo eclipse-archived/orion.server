@@ -147,7 +147,7 @@ public abstract class FileSystemTest extends AbstractServerTest {
 				assertEquals("Ibvalid directory readonly attribute", isReadonly, attributes.getBoolean("ReadOnly"));
 			}
 			if (isExecutable != null) {
-				assertEquals("Ibvalid directory executable attribute", isExecutable, attributes.getBoolean("Executable"));
+				assertEquals("Invalid directory executable attribute", isExecutable, attributes.getBoolean("Executable"));
 			}
 		}
 	}
@@ -194,7 +194,7 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	protected WebRequest getDeleteFilesRequest(String uri) {
 		try {
 			WebRequest request = new DeleteMethodWebRequest(makeAbsolute(uri));
-			request.setHeaderField("Orion-Version", "1");
+			request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 			setAuthentication(request);
 			return request;
 		} catch (URISyntaxException e) {
@@ -205,10 +205,10 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	}
 
 	protected List<JSONObject> getDirectoryChildren(JSONObject dirObject) throws JSONException {
-		assertTrue("Expected directory but found file", dirObject.getBoolean("Directory"));
+		assertTrue("Expected directory but found file", dirObject.getBoolean(ProtocolConstants.KEY_DIRECTORY));
 		List<JSONObject> children = new ArrayList<JSONObject>();
 		try {
-			JSONArray chidrenArray = dirObject.getJSONArray("Children");
+			JSONArray chidrenArray = dirObject.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 			for (int i = 0; i < chidrenArray.length(); i++) {
 				children.add(chidrenArray.getJSONObject(i));
 			}
@@ -229,7 +229,7 @@ public abstract class FileSystemTest extends AbstractServerTest {
 		else
 			requestURI = SERVER_LOCATION + FILE_SERVLET_LOCATION + RUNTIME_WORKSPACE + location;
 		WebRequest request = new GetMethodWebRequest(requestURI);
-		request.setHeaderField("Orion-Version", "1");
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
 	}
@@ -254,7 +254,7 @@ public abstract class FileSystemTest extends AbstractServerTest {
 		try {
 			WebRequest request = new PostMethodWebRequest(makeAbsolute(uri), getJsonAsStream(json), "plain/text");
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, slug);
-			request.setHeaderField("Orion-Version", "1");
+			request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 			setAuthentication(request);
 			return request;
 		} catch (UnsupportedEncodingException e) {
@@ -269,7 +269,7 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	protected WebRequest getPutFilesRequest(String uri, String json) {
 		try {
 			WebRequest request = new PutMethodWebRequest(makeAbsolute(uri), getJsonAsStream(json), "application/json");
-			request.setHeaderField("Orion-Version", "1");
+			request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 			setAuthentication(request);
 			return request;
 		} catch (UnsupportedEncodingException e) {
@@ -284,7 +284,7 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	protected WebRequest getPutFileRequest(String uri, String body) {
 		try {
 			WebRequest request = new PutMethodWebRequest(makeAbsolute(uri), getJsonAsStream(body), "text/plain");
-			request.setHeaderField("OrionWeb-Version", "1");
+			request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 			setAuthentication(request);
 			return request;
 		} catch (UnsupportedEncodingException e) {
@@ -311,7 +311,7 @@ public abstract class FileSystemTest extends AbstractServerTest {
 		WebRequest request = new PostMethodWebRequest(SERVER_LOCATION + "/workspace");
 		if (workspaceName != null)
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, workspaceName);
-		request.setHeaderField("Orion-Version", "1");
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
 	}

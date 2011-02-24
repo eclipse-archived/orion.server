@@ -12,15 +12,10 @@ package org.eclipse.orion.internal.server.filesystem.git;
 
 import java.net.URL;
 import java.util.Collection;
-
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.jgit.transport.SshSessionFactory;
 import org.eclipse.osgi.service.datalocation.Location;
-import org.osgi.framework.BundleActivator;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.InvalidSyntaxException;
-import org.osgi.framework.ServiceReference;
+import org.osgi.framework.*;
 
 public class Activator implements BundleActivator {
 
@@ -75,6 +70,6 @@ public class Activator implements BundleActivator {
 	}
 
 	private void setupSSH() {
-		SshSessionFactory.setInstance(new OrionSshSessionFactory());
+		// SshSessionFactory.setInstance(new OrionSshSessionFactory());
 	}
 }

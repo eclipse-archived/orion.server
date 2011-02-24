@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2010, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,21 +14,36 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.*;
-import java.io.*;
-import java.net.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringBufferInputStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
 import org.eclipse.orion.internal.server.servlets.workspace.WorkspaceServlet;
 import org.eclipse.orion.server.core.users.OrionScope;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
-import org.json.*;
-import org.junit.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.osgi.service.prefs.BackingStoreException;
 import org.xml.sax.SAXException;
+
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 /**
  * Tests for {@link WorkspaceServlet}.
@@ -40,7 +55,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString());
 		if (projectName != null)
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
-		request.setHeaderField("Orion-Version", "1");
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
 	}
@@ -82,12 +97,12 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		WebRequest request = getCreateProjectRequest(workspaceLocation, projectName);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		String locationHeader = response.getHeaderField("Location");
+		String locationHeader = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(locationHeader);
 
 		JSONObject project = new JSONObject(response.getText());
-		assertEquals(projectName, project.getString("Name"));
-		String projectId = project.optString("Id", null);
+		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
+		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
 
 		//ensure project location  workspace location + project id
@@ -104,17 +119,17 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		JSONArray projects = workspace.getJSONArray("Projects");
 		assertEquals(1, projects.length());
 		JSONObject createdProject = projects.getJSONObject(0);
-		assertEquals(projectId, createdProject.get("Id"));
-		assertNotNull(createdProject.optString("Location", null));
+		assertEquals(projectId, createdProject.get(ProtocolConstants.KEY_ID));
+		assertNotNull(createdProject.optString(ProtocolConstants.KEY_LOCATION, null));
 
 		//check for children element to conform to structure of file API
 		JSONArray children = workspace.optJSONArray("Children");
 		assertNotNull(children);
 		assertEquals(1, children.length());
 		JSONObject child = children.getJSONObject(0);
-		assertEquals(projectName, child.optString("Name"));
+		assertEquals(projectName, child.optString(ProtocolConstants.KEY_NAME));
 		assertEquals("true", child.optString("Directory"));
-		String contentLocation = child.optString("Location");
+		String contentLocation = child.optString(ProtocolConstants.KEY_LOCATION);
 		assertNotNull(contentLocation);
 	}
 
@@ -123,7 +138,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		//create workspace
 		String workspaceName = WorkspaceServiceTest.class.getName() + "#testCreateProject";
 		WebResponse response = createWorkspace(workspaceName);
-		URI workspaceLocation = new URI(response.getHeaderField("Location"));
+		URI workspaceLocation = new URI(response.getHeaderField(ProtocolConstants.HEADER_LOCATION));
 
 		//check a variety of bad project names
 		for (String badName : Arrays.asList("", " ", "/")) {
@@ -142,7 +157,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		//create workspace
 		String workspaceName = WorkspaceServiceTest.class.getName() + "#testCreateProject";
 		WebResponse response = createWorkspace(workspaceName);
-		URI workspaceLocation = new URI(response.getHeaderField("Location"));
+		URI workspaceLocation = new URI(response.getHeaderField(ProtocolConstants.HEADER_LOCATION));
 
 		String tmp = System.getProperty("java.io.tmpdir");
 		File projectLocation = new File(new File(tmp), "Orion-testCreateProjectNonDefaultLocation");
@@ -154,12 +169,12 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		//create a project
 		String projectName = "My Project";
 		JSONObject body = new JSONObject();
-		body.put("ContentLocation", projectLocation.toString());
+		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, projectLocation.toString());
 		InputStream in = new StringBufferInputStream(body.toString());
 		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
 		if (projectName != null)
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
-		request.setHeaderField("Orion-Version", "1");
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_FORBIDDEN, response.getResponseCode());
@@ -169,8 +184,8 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		JSONObject project = new JSONObject(response.getText());
-		assertEquals(projectName, project.getString("Name"));
-		String projectId = project.optString("Id", null);
+		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
+		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
 	}
 
@@ -180,14 +195,14 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		WebResponse response = createWorkspace(workspaceName);
 
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		String location = response.getHeaderField("Location");
+		String location = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(location);
 		assertTrue(location.startsWith(SERVER_LOCATION));
 		assertEquals("application/json", response.getContentType());
 		JSONObject responseObject = new JSONObject(response.getText());
 		assertNotNull("No workspace information in response", responseObject);
-		assertNotNull(responseObject.optString("Id"));
-		assertEquals(workspaceName, responseObject.optString("Name"));
+		assertNotNull(responseObject.optString(ProtocolConstants.KEY_ID));
+		assertEquals(workspaceName, responseObject.optString(ProtocolConstants.KEY_NAME));
 	}
 
 	@Test
@@ -195,10 +210,10 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		//create workspace
 		String workspaceName = WorkspaceServiceTest.class.getName() + "#testCreateProject";
 		WebResponse response = createWorkspace(workspaceName);
-		String locationString = response.getHeaderField("Location");
+		String locationString = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		URI workspaceLocation = new URI(locationString);
 		JSONObject workspace = new JSONObject(response.getText());
-		String workspaceId = workspace.getString("Id");
+		String workspaceId = workspace.getString(ProtocolConstants.KEY_ID);
 
 		//get workspace metadata and ensure it is correct
 		WebRequest request = new GetMethodWebRequest(workspaceLocation.toString());
@@ -206,9 +221,9 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		response = webConversation.getResponse(request);
 		workspace = new JSONObject(response.getText());
 		assertNotNull(workspace);
-		assertEquals(locationString, workspace.optString("Location"));
-		assertEquals(workspaceName, workspace.optString("Name"));
-		assertEquals(workspaceId, workspace.optString("Id"));
+		assertEquals(locationString, workspace.optString(ProtocolConstants.KEY_LOCATION));
+		assertEquals(workspaceName, workspace.optString(ProtocolConstants.KEY_NAME));
+		assertEquals(workspaceId, workspace.optString(ProtocolConstants.KEY_ID));
 	}
 
 	@Test
@@ -231,28 +246,28 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		//create workspace
 		String workspaceName = WorkspaceServiceTest.class.getName() + "#testCreateProject";
 		WebResponse response = createWorkspace(workspaceName);
-		URI workspaceLocation = new URI(response.getHeaderField("Location"));
+		URI workspaceLocation = new URI(response.getHeaderField(ProtocolConstants.HEADER_LOCATION));
 
 		//create a project
 		String projectName = "My Project";
 		WebRequest request = getCreateProjectRequest(workspaceLocation, projectName);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		String projectLocation = response.getHeaderField("Location");
+		String projectLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 
 		//delete project
 		JSONObject data = new JSONObject();
 		data.put("Remove", "true");
 		data.put("ProjectURL", projectLocation);
 		request = new PostMethodWebRequest(workspaceLocation.toString(), new ByteArrayInputStream(data.toString().getBytes()), "UTF8");
-		request.setHeaderField("Orion-Version", "1");
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		//deleting again should be safe (DELETE is idempotent)
 		request = new PostMethodWebRequest(workspaceLocation.toString(), new ByteArrayInputStream(data.toString().getBytes()), "UTF8");
-		request.setHeaderField("Orion-Version", "1");
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
@@ -270,7 +285,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		assertEquals("application/json", response.getContentType());
 		JSONObject responseObject = new JSONObject(response.getText());
 		assertNotNull("No workspace information in response", responseObject);
-		String userId = responseObject.optString("Id", null);
+		String userId = responseObject.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(userId);
 		assertEquals("test", responseObject.optString("UserName"));
 		JSONArray workspaces = responseObject.optJSONArray("Workspaces");
@@ -294,13 +309,13 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		assertEquals("application/json", response.getContentType());
 		responseObject = new JSONObject(response.getText());
 		assertNotNull("No workspace information in response", responseObject);
-		assertEquals(userId, responseObject.optString("Id"));
+		assertEquals(userId, responseObject.optString(ProtocolConstants.KEY_ID));
 		assertEquals("test", responseObject.optString("UserName"));
 		workspaces = responseObject.optJSONArray("Workspaces");
 		assertNotNull(workspaces);
 		assertEquals(1, workspaces.length());
 		JSONObject workspace = (JSONObject) workspaces.get(0);
-		assertEquals(workspaceId, workspace.optString("Id"));
-		assertNotNull(workspace.optString("Location", null));
+		assertEquals(workspaceId, workspace.optString(ProtocolConstants.KEY_ID));
+		assertNotNull(workspace.optString(ProtocolConstants.KEY_LOCATION, null));
 	}
 }

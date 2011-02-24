@@ -75,12 +75,12 @@ public abstract class GitTest extends FileSystemTest {
 
 	protected WebResponse createProjectWithContentLocation(URI workspaceLocation, String projectName, String location) throws JSONException, IOException, SAXException {
 		JSONObject body = new JSONObject();
-		body.put("ContentLocation", location);
+		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, location);
 		InputStream in = new StringBufferInputStream(body.toString());
 		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
 		if (projectName != null)
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
-		request.setHeaderField("Orion-Version", "1");
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return webConversation.getResponse(request);
 	}
@@ -90,7 +90,7 @@ public abstract class GitTest extends FileSystemTest {
 		WebRequest request = getCreateWorkspaceRequest(workspaceName);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		return new URI(response.getHeaderField("Location"));
+		return new URI(response.getHeaderField(ProtocolConstants.HEADER_LOCATION));
 	}
 
 	protected void createRepository() throws IOException, GitAPIException, CoreException {

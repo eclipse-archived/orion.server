@@ -67,7 +67,7 @@ public class SshTest {
 
 	static {
 		// parse file with properties for the test
-		String propertiesFile = System.getProperty("orion.sshtest.properties");
+		String propertiesFile = System.getProperty("orion.tests.ssh");
 		// if (propertiesFile == null) return;
 		File file = new File(propertiesFile);
 		if (file.isDirectory()) file = new File(file, "sshtest.properties");

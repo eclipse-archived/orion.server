@@ -28,12 +28,14 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 	private ServletResourceHandler<String> diffHandlerV1;
 	private ServletResourceHandler<String> statusHandlerV1;
 	private ServletResourceHandler<String> indexHandlerV1;
+	private ServletResourceHandler<String> cloneHandlerV1;
 
 	GitHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
 		this.statusHandler = statusHandler;
 		diffHandlerV1 = new GitDiffHandlerV1(statusHandler);
 		statusHandlerV1 = new GitStatusHandlerV1(statusHandler);
 		indexHandlerV1 = new GitIndexHandlerV1(statusHandler);
+		cloneHandlerV1 = new GitCloneHandlerV1(statusHandler);
 	}
 
 	@Override
@@ -51,6 +53,9 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 			return true;
 		} else if (infoParts[1].equals(GitConstants.INDEX_RESOURCE)) {
 			indexHandlerV1.handleRequest(request, response, infoParts[2]);
+			return true;
+		} else if (infoParts[1].equals(GitConstants.CLONE_RESOURCE)) {
+			cloneHandlerV1.handleRequest(request, response, infoParts[2]);
 			return true;
 		}
 		return false;

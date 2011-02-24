@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git;
 
+import org.eclipse.jgit.transport.SshSessionFactory;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
@@ -47,6 +48,7 @@ public class GitActivator implements BundleActivator {
 				new GitFileDecorator(), null);
 		context.registerService(IWebResourceDecorator.class,
 				new GitUserDecorator(), null);
+		SshSessionFactory.setInstance(new GitSshSessionFactory());
 	}
 
 	/*

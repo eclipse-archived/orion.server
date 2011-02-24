@@ -105,7 +105,7 @@ public class GitStatusTest extends GitTest {
 		else
 			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.STATUS_RESOURCE + location;
 		WebRequest request = new GetMethodWebRequest(requestURI);
-		request.setHeaderField("Orion-Version", "1");
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
 	}

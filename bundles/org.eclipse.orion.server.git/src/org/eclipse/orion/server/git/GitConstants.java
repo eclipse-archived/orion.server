@@ -20,8 +20,10 @@ public class GitConstants {
 	public static final String STATUS_RESOURCE = "status"; //$NON-NLS-1$
 
 	public static final String INDEX_RESOURCE = "index"; //$NON-NLS-1$
-	
-	public static final String KEY_GIT = "Git";
+
+	public static final String KEY_GIT = "Git"; //$NON-NLS-1$
+
+	public static final String CLONE_RESOURCE = "clone"; //$NON-NLS-1$
 
 	public static final String KEY_DIFF = "DiffLocation"; //$NON-NLS-1$
 
@@ -29,4 +31,19 @@ public class GitConstants {
 
 	public static final String KEY_INDEX = "IndexLocation"; //$NON-NLS-1$
 
+	public static final String KEY_URL = "GitUrl"; //$NON-NLS-1$
+
+	public static final String CLONE_FOLDER = ".gitclone"; //$NON-NLS-1$
+
+	public static final String KEY_USERNAME = "GitSshUsername"; //$NON-NLS-1$
+
+	public static final String KEY_PASSWORD = "GitSshPassword"; //$NON-NLS-1$
+
+	public static final String KEY_KNOWN_HOSTS = "GitSshKnownHost"; //$NON-NLS-1$
+
+	public static final String KEY_PRIVATE_KEY = "GitSshPrivateKey"; //$NON-NLS-1$
+
+	public static final String KEY_PASSPHRASE = "GitSshPassphrase"; //$NON-NLS-1$
+
+	public static final String KEY_PUBLIC_KEY = "GitSshPublicKey"; //$NON-NLS-1$
 }
