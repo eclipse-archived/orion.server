@@ -193,15 +193,10 @@ function checkUser() {
 		handleAs : "json",
 		timeout : 15000,
 		load : function(jsonData, ioArgs) {
-			var statusPane = dojo.byId("authStatusPane")||null;
-			if (statusPane!=null) {
-				var lastLogin = "N/A";
-				if (jsonData.lastlogintimestamp != null)
-					lastLogin = dojo.date.locale.format(new Date(jsonData.lastlogintimestamp), {formatLength: "short"});
-				dojo.byId("authStatusPane").innerHTML = jsonData.login + " signed in at: " + lastLogin;
-				document.getElementById("signOutUser").innerHTML = "Sign out";
-				document.getElementById("signOutUser").onclick = logout;
-			}
+			var lastLogin = "N/A";
+			if (jsonData.lastlogintimestamp != null)
+				lastLogin = dojo.date.locale.format(new Date(jsonData.lastlogintimestamp), {formatLength: "short"});
+			eclipse.globalCommandUtils.generateUserInfo(jsonData.login, "logged in since " + lastLogin);
 			return jsonData;
 		},
 		error : function(response, ioArgs) {
@@ -221,12 +216,7 @@ function logout() {
 		handleAs : "json",
 		timeout : 15000,
 		load : function(jsonData, ioArgs) {
-			var statusPane = dojo.byId("authStatusPane")||null;
-			if (statusPane!=null) {
-				dojo.byId("authStatusPane").innerHTML = "--";
-				document.getElementById("signOutUser").innerHTML = "Sign in";
-				document.getElementById("signOutUser").onclick = login;
-			}
+			eclipse.globalCommandUtils.generateUserInfo();
 			window.location.replace("/index.html");
 			return jsonData;
 		},

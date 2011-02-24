@@ -23,26 +23,5 @@ if (document.getElementById("formAuth") == null) {
 	dojo.byId('loginWindow').style.visibility = 'hidden';
 	dojo.byId('loginWindowMask').style.visibility = 'hidden';
 
-	// add the logout button to the toolbar if available
-	var toolBar = dojo.byId('eclipseWebToolbar');
-	if (toolBar) {
-		var signout = document.createElement('span');
-		signout.appendChild(document.createTextNode("Sign in"));
-		signout.onclick = function() {
-			login();
-		};
-		signout.id = "signOutUser";
-		toolBar.appendChild(signout);
-		dojo.addClass(signout, "commandLink");
-		var bElement = document.createElement('b');
-		bElement.setAttribute('id', 'authStatusPane');
-		bElement.innerHTML = '--';
-		if (dojo.isIE) {
-			bElement.setAttribute('className', 'statuspane');
-		} else {
-			bElement.setAttribute('class', 'statuspane');
-		}
-
-		toolBar.appendChild(bElement);
-	}
+	eclipse.globalCommandUtils.generateUserInfo();
 }
