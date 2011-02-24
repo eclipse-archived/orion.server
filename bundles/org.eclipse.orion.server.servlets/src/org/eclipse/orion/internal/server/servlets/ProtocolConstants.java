@@ -11,7 +11,7 @@
 package org.eclipse.orion.internal.server.servlets;
 
 /**
- * Constants used by the eclipse web HTTP protocol.
+ * Constants used by the Orion HTTP protocol.
  */
 public class ProtocolConstants {
 

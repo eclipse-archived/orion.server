@@ -20,11 +20,13 @@ public class GitConstants {
 	public static final String STATUS_RESOURCE = "status"; //$NON-NLS-1$
 
 	public static final String INDEX_RESOURCE = "index"; //$NON-NLS-1$
+	
+	public static final String KEY_GIT = "Git";
 
-	public static final String KEY_DIFF = "GitDiff"; //$NON-NLS-1$
+	public static final String KEY_DIFF = "DiffLocation"; //$NON-NLS-1$
 
-	public static final String KEY_STATUS = "GitStatus"; //$NON-NLS-1$
+	public static final String KEY_STATUS = "StatusLocation"; //$NON-NLS-1$
 
-	public static final String KEY_INDEX = "GitIndex"; //$NON-NLS-1$
+	public static final String KEY_INDEX = "IndexLocation"; //$NON-NLS-1$
 
 }

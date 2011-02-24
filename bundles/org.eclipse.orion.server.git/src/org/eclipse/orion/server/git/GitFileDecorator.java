@@ -76,6 +76,8 @@ public class GitFileDecorator implements IWebResourceDecorator {
 					representation.getString(ProtocolConstants.KEY_LOCATION));
 		if (location == null)
 			return;
+		
+		JSONObject gitSection = new JSONObject();
 
 		IPath targetPath = new Path(location.getPath());
 
@@ -84,20 +86,22 @@ public class GitFileDecorator implements IWebResourceDecorator {
 				+ GitConstants.DIFF_RESOURCE).append(targetPath);
 		URI link = new URI(resource.getScheme(), resource.getAuthority(),
 				path.toString(), null, null);
-		representation.put(GitConstants.KEY_DIFF, link.toString());
+		gitSection.put(GitConstants.KEY_DIFF, link.toString());
 
 		// add Git Status URI
 		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.STATUS_RESOURCE)
 				.append(targetPath);
 		link = new URI(resource.getScheme(), resource.getAuthority(),
 				path.toString(), null, null);
-		representation.put(GitConstants.KEY_STATUS, link.toString());
+		gitSection.put(GitConstants.KEY_STATUS, link.toString());
 
 		// add Git Index URI
 		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.INDEX_RESOURCE)
 				.append(targetPath);
 		link = new URI(resource.getScheme(), resource.getAuthority(),
 				path.toString(), null, null);
-		representation.put(GitConstants.KEY_INDEX, link.toString());
+		gitSection.put(GitConstants.KEY_INDEX, link.toString());
+		
+		representation.put(GitConstants.KEY_GIT, gitSection);
 	}
 }

@@ -43,9 +43,11 @@ public class GitUriTest extends GitTest {
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
 
-		assertNotNull(project.optString(GitConstants.KEY_STATUS, null));
-		assertNotNull(project.optString(GitConstants.KEY_DIFF, null));
-		assertNotNull(project.optString(GitConstants.KEY_DIFF, null));
+		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+		assertNotNull(gitSection.optString(GitConstants.KEY_STATUS, null));
+		assertNotNull(gitSection.optString(GitConstants.KEY_DIFF, null));
+		assertNotNull(gitSection.optString(GitConstants.KEY_INDEX, null));
 	}
 
 	@Test
@@ -70,9 +72,12 @@ public class GitUriTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject project = new JSONObject(response.getText());
 
-		assertNotNull(project.optString(GitConstants.KEY_STATUS, null));
-		assertNotNull(project.optString(GitConstants.KEY_DIFF, null));
-		assertNotNull(project.optString(GitConstants.KEY_DIFF, null));
+		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+		assertNotNull(gitSection.optString(GitConstants.KEY_STATUS, null));
+		assertNotNull(gitSection.optString(GitConstants.KEY_DIFF, null));
+		assertNotNull(gitSection.optString(GitConstants.KEY_INDEX, null));
+
 		String childrenLocation = project.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
 		assertNotNull(childrenLocation);
 
@@ -84,9 +89,11 @@ public class GitUriTest extends GitTest {
 		String[] expectedChildren = new String[] {Constants.DOT_GIT, "folder", "test.txt"};
 		assertEquals("Wrong number of directory children", expectedChildren.length, children.size());
 		for (JSONObject child : children) {
-			assertNotNull(child.optString(GitConstants.KEY_STATUS, null));
-			assertNotNull(child.optString(GitConstants.KEY_DIFF, null));
-			assertNotNull(child.optString(GitConstants.KEY_INDEX, null));
+			gitSection = child.optJSONObject(GitConstants.KEY_GIT);
+			assertNotNull(gitSection);
+			assertNotNull(gitSection.optString(GitConstants.KEY_STATUS, null));
+			assertNotNull(gitSection.optString(GitConstants.KEY_DIFF, null));
+			assertNotNull(gitSection.optString(GitConstants.KEY_INDEX, null));
 		}
 		childrenLocation = children.get(1).getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
 
@@ -98,9 +105,11 @@ public class GitUriTest extends GitTest {
 		expectedChildren = new String[] {"folder.txt"};
 		assertEquals("Wrong number of directory children", expectedChildren.length, children.size());
 		for (JSONObject child : children) {
-			assertNotNull(child.optString(GitConstants.KEY_STATUS, null));
-			assertNotNull(child.optString(GitConstants.KEY_DIFF, null));
-			assertNotNull(child.optString(GitConstants.KEY_INDEX, null));
+			gitSection = child.optJSONObject(GitConstants.KEY_GIT);
+			assertNotNull(gitSection);
+			assertNotNull(gitSection.optString(GitConstants.KEY_STATUS, null));
+			assertNotNull(gitSection.optString(GitConstants.KEY_DIFF, null));
+			assertNotNull(gitSection.optString(GitConstants.KEY_INDEX, null));
 		}
 	}
 

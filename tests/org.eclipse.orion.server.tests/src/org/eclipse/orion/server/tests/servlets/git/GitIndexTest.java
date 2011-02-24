@@ -47,7 +47,10 @@ public class GitIndexTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		String gitIndexUri = project.optString(GitConstants.KEY_INDEX, null);
+		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+
+		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
 		assertNotNull(gitIndexUri);
 
 		// TODO: don't create uris out of thin air

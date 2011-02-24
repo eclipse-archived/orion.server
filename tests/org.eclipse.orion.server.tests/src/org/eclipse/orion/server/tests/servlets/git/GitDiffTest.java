@@ -46,7 +46,10 @@ public class GitDiffTest extends GitTest {
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
 
-		String gitDiffUri = project.optString(GitConstants.KEY_DIFF, null);
+		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+
+		String gitDiffUri = gitSection.optString(GitConstants.KEY_DIFF, null);
 		assertNotNull(gitDiffUri);
 
 		WebRequest request = getGetGitDiffRequest(gitDiffUri);
@@ -76,7 +79,10 @@ public class GitDiffTest extends GitTest {
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
 
-		String gitDiffUri = project.optString(GitConstants.KEY_DIFF, null);
+		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+
+		String gitDiffUri = gitSection.optString(GitConstants.KEY_DIFF, null);
 		assertNotNull(gitDiffUri);
 
 		WebRequest request = getGetGitDiffRequest(gitDiffUri);
@@ -112,7 +118,10 @@ public class GitDiffTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		String gitDiffUri = project.optString(GitConstants.KEY_DIFF, null);
+		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+
+		String gitDiffUri = gitSection.optString(GitConstants.KEY_DIFF, null);
 		assertNotNull(gitDiffUri);
 
 		request = getGetGitDiffRequest(gitDiffUri);
@@ -144,7 +153,10 @@ public class GitDiffTest extends GitTest {
 		String projectId = project.optString("Id", null);
 		assertNotNull(projectId);
 
-		String gitDiffUri = project.optString(GitConstants.KEY_DIFF, null);
+		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+
+		String gitDiffUri = gitSection.optString(GitConstants.KEY_DIFF, null);
 		assertNotNull(gitDiffUri);
 
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "hi");
