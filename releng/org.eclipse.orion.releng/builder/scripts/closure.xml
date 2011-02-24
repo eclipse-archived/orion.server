@@ -99,6 +99,7 @@
 				<arg value="--js=${orion.client.core}/js/fileClient.js" />
 				<arg value="--js=${orion.client.core}/js/favorites.js" />
 				<arg value="--js=${orion.client.core}/js/searchClient.js" />
+				<arg value="--js=${orion.client.core}/js/globalCommands.js" />
 			</closure-args>
 		</closure>	
 		
