@@ -113,7 +113,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 
 	private void doClone(WebClone clone, CredentialsProvider cp) throws URISyntaxException {
 		IPath platformLocation = Activator.getDefault().getPlatformLocation();
-		File cloneFolder = platformLocation.append(GitConstants.CLONE_RESOURCE).toFile();
+		File cloneFolder = platformLocation.append(GitConstants.CLONE_FOLDER).toFile();
 		if (!cloneFolder.exists())
 			cloneFolder.mkdir();
 		File workdir = new File(cloneFolder, clone.getId());

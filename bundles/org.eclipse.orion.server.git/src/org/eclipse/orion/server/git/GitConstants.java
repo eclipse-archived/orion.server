@@ -21,9 +21,9 @@ public class GitConstants {
 
 	public static final String INDEX_RESOURCE = "index"; //$NON-NLS-1$
 
-	public static final String KEY_GIT = "Git"; //$NON-NLS-1$
-
 	public static final String CLONE_RESOURCE = "clone"; //$NON-NLS-1$
+
+	public static final String KEY_GIT = "Git"; //$NON-NLS-1$
 
 	public static final String KEY_DIFF = "DiffLocation"; //$NON-NLS-1$
 
