@@ -203,11 +203,11 @@ public class GitCloneTest extends GitTest {
 	public static void readSshProperties() {
 		String propertiesFile = System.getProperty("orion.tests.ssh");
 		// if (propertiesFile == null) return;
-		File file = new File(propertiesFile);
-		if (file.isDirectory())
-			file = new File(file, "sshtest.properties");
 		Map<String, String> properties = new HashMap<String, String>();
 		try {
+			File file = new File(propertiesFile);
+			if (file.isDirectory())
+				file = new File(file, "sshtest.properties");
 			BufferedReader reader = new BufferedReader(new FileReader(file));
 			try {
 				for (String line; (line = reader.readLine()) != null;) {
@@ -230,7 +230,7 @@ public class GitCloneTest extends GitTest {
 			publicKey = loadFileContents(properties.get("publicKeyPath")).getBytes();
 			passphrase = properties.get("passphrase").getBytes();
 		} catch (Exception e) {
-			System.err.println("Could not read repository properties file: " + file.getAbsolutePath());
+			System.err.println("Could not read ssh properties file: " + propertiesFile);
 		}
 	}
 
