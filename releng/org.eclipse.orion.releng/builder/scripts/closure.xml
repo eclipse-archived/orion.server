@@ -42,6 +42,7 @@
 				<include name="navigate-table.html" />
 			</replace-in>
 			<closure-args>
+				<arg value="--js=${orion.client.core}/js/globalCommands.js" />
 				<arg value="--js=${orion.client.core}/js/breadcrumbs.js" />
 				<arg value="--js=${orion.client.core}/js/explorer-table.js" />
 				<arg value="--js=${orion.client.core}/js/fileCommands.js" />
@@ -54,6 +55,7 @@
 				<include name="navigate-tree.html" />
 			</replace-in>
 			<closure-args>
+				<arg value="--js=${orion.client.core}/js/globalCommands.js" />
 				<arg value="--js=${orion.client.core}/js/breadcrumbs.js" />
 				<arg value="--js=${orion.client.core}/js/explorer-tree.js" />
 				<arg value="--js=${orion.client.core}/js/fileCommands.js" />
@@ -71,7 +73,15 @@
 				<arg value="--js=${orion.client.editor}/samples/undoStack.js" />
 				<arg value="--js=${orion.client.editor}/js/model.js" />
 				<arg value="--js=${orion.client.editor}/js/editor.js" />
-				<arg value="--js=${orion.client.editor}/js/editorFeatures.js" />
+			</closure-args>
+		</closure>
+		
+		<closure dir="${orion.client.core}" compiled="coding-editor-container.js" >
+			<replace-in>
+				<include name="coding.html" />
+			</replace-in>
+			<closure-args>
+				<arg value="--js=${orion.client.core}/js/editorFeatures.js" />
 				<arg value="--js=${orion.client.core}/js/outliner.js" />
 				<arg value="--js=${orion.client.core}/js/problems.js" />
 				<arg value="--js=${orion.client.core}/js/editorContainer.js" />
@@ -98,7 +108,7 @@
 			 	<arg value="--js=${orion.client.core}/js/users.js" />		
 				<arg value="--js=${orion.client.core}/js/fileClient.js" />
 				<arg value="--js=${orion.client.core}/js/favorites.js" />
-				<arg value="--js=${orion.client.core}/js/searchClient.js" />
+				<arg value="--js=${orion.client.core}/js/searchClient.js" />		
 			</closure-args>
 		</closure>	
 		
