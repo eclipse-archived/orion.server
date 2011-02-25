@@ -131,6 +131,10 @@
          <resource-mapping
                bundle="org.eclipse.orion.client.core"
                path="/static"></resource-mapping>
+         <resource-mapping
+               bundle="org.eclipse.orion.client.git"
+               path="/static">
+         </resource-mapping>
       </httpcontext>
       <httpcontext
             id="org.eclipse.orion.server.configurator.httpcontext.editor">
