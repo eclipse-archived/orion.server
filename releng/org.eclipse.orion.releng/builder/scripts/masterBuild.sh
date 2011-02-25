@@ -196,6 +196,11 @@ sendMail () {
 	testsMsg=$(cat mail.txt | sed s_href=\"_href=\"http://download.eclipse.org/e4/orion/drops/$buildType$timestamp/_)
 	rm mail.txt
 	
+	red=$(echo $testsMsg | grep "ff0000")
+    if [[ ! -z $red ]]; then
+		failed="tests failed"
+    fi
+	
 	pushd $buildDirectory/plugins
 	compileProblems=$( find . -name compilation.problem | cut -d/ -f2 )
 	popd
