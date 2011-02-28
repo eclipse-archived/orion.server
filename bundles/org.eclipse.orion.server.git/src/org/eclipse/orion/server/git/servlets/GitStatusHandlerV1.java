@@ -10,15 +10,24 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
+import java.io.File;
+import java.util.Set;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.IndexDiff;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.treewalk.FileTreeIterator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServerStatus;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -40,48 +49,54 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 			HttpServletResponse response, String gitPathInfo)
 			throws ServletException {
 		try {
+			Path path = new Path(gitPathInfo);
+			File gitDir = GitUtils.getGitDir(path.uptoSegment(2),
+					request.getRemoteUser());
+			if (gitDir == null)
+				return false; // TODO: or a error response code, 405?
+			Repository db = new FileRepository(gitDir);
+			FileTreeIterator iterator = new FileTreeIterator(db);
+			IndexDiff diff = new IndexDiff(db, Constants.HEAD, iterator);
+			diff.diff();
+
 			JSONObject result = new JSONObject();
-			createStatusRepresentation(request, result, null);
+
+			JSONArray children = toJSONArray(diff.getAdded());
+			result.put(GitConstants.KEY_STATUS_ADDED, children);
+//			children = toJSONArray(diff.getAssumeUnchanged());
+//			result.put(ProtocolConstants.KEY_CHILDREN, children);
+//			children = toJSONArray(diff.getChanged());
+//			result.put(ProtocolConstants.KEY_CHILDREN, children);
+			children = toJSONArray(diff.getMissing());
+			result.put(GitConstants.KEY_STATUS_MISSING, children);
+			children = toJSONArray(diff.getModified());
+			result.put(GitConstants.KEY_STATUS_MODIFIED, children);
+			children = toJSONArray(diff.getAdded());
+//			children = toJSONArray(diff.getRemoved());
+//			result.put(GitConstants.KEY_STATUS_REMOVED, children);
+			children = toJSONArray(diff.getUntracked());
+			result.put(GitConstants.KEY_STATUS_UNTRACKED, children);
+
 			OrionServlet.writeJSONResponse(request, response, result);
 			return true;
+
 		} catch (JSONException e) {
 			return statusHandler.handleRequest(request, response,
 					new ServerStatus(IStatus.ERROR,
-							HttpServletResponse.SC_BAD_REQUEST,
-							"Syntax error in request", e));
+							HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+							"Error generating status response", e));
 		} catch (Exception e) {
 			throw new ServletException("Error creating Git status", e);
 		}
 	}
 
-	private void createStatusRepresentation(HttpServletRequest request,
-			JSONObject representation, String path) throws JSONException {
-		representation.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(
-				OrionServlet.getURI(request), path == null ? "" : path));
-
-		JSONObject file = new JSONObject();
-		createFakeFileRepresentation(request, file);
-		representation.put("File", file);
-
-		if (path == null) {
-			JSONArray children = new JSONArray();
-			generateFakeChildren(request, children);
-			representation.put(ProtocolConstants.KEY_CHILDREN, children);
+	private JSONArray toJSONArray(Set<String> set) throws JSONException {
+		JSONArray result = new JSONArray();
+		for (String s : set) {
+			JSONObject object = new JSONObject();
+			object.put(ProtocolConstants.KEY_NAME, s);
+			result.put(object);
 		}
-	}
-
-	private void createFakeFileRepresentation(HttpServletRequest request,
-			JSONObject representation) throws JSONException {
-		representation.put(ProtocolConstants.KEY_NAME, "SomeName");
-		representation.put(ProtocolConstants.KEY_LOCATION, "SomeLocation");
-	}
-
-	private void generateFakeChildren(HttpServletRequest request,
-			JSONArray representation) throws JSONException {
-		for (int i = 0; i < 3; i++) {
-			JSONObject child = new JSONObject();
-			createStatusRepresentation(request, child, "path" + i);
-			representation.put(child);
-		}
+		return result;
 	}
 }
