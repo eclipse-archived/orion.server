@@ -23,7 +23,7 @@ import org.json.JSONException;
 /**
  * Handles requests for URIs that are part of a running hosted site. Requests must 
  * have the desired hosted site's Host as the first segment in the pathInfo, for example: 
- * <code>/<u>127.0.0.2:8080</u>/foo/bar.html</code>
+ * <code>/<u>127.0.0.2:8080</u>/foo/bar.html</code> or <code>/<u>mysite.foo.net:8080</u>/bar/baz.html</code>.
  */
 public class HostedSiteServlet extends OrionServlet {
 	private static final long serialVersionUID = 1L;
@@ -44,14 +44,19 @@ public class HostedSiteServlet extends OrionServlet {
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
-		String pathInfo = req.getPathInfo();
-		IPath path = new Path(null /*don't parse host:port as device*/, pathInfo == null ? "" : pathInfo); //$NON-NLS-1$
-		if (path.segmentCount() > 0) {
-			String hostedHost = path.segment(0);
+		String pathInfoString = req.getPathInfo();
+		IPath pathInfo = new Path(null /*don't parse host:port as device*/, pathInfoString == null ? "" : pathInfoString); //$NON-NLS-1$
+		if (pathInfo.segmentCount() > 0) {
+			String hostedHost = pathInfo.segment(0);
 			IHostedSite site = HostingActivator.getDefault().getHostingService().get(hostedHost);
 			if (site != null) {
-				IPath mappedPath = getMapped(site, path.removeFirstSegments(1).makeAbsolute());
-				serve(req, resp, site, mappedPath);
+				IPath path = pathInfo.removeFirstSegments(1).makeAbsolute();
+				IPath mappedPath = getMapped(site, path);
+				if (mappedPath != null) {
+					serve(req, resp, site, mappedPath);
+				} else {
+					handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("No mappings matched {0}", path), null));
+				}
 			} else {
 				String msg = NLS.bind("Hosted site {0} not found", hostedHost);
 				handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
