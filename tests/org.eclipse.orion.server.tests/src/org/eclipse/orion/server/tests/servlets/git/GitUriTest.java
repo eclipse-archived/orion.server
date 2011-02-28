@@ -95,7 +95,7 @@ public class GitUriTest extends GitTest {
 			assertNotNull(gitSection.optString(GitConstants.KEY_DIFF, null));
 			assertNotNull(gitSection.optString(GitConstants.KEY_INDEX, null));
 		}
-		childrenLocation = children.get(1).getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
+		childrenLocation = getChildByName(children, "folder").getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
 
 		// http://<host>/file/<projectId>/folder/?depth=1
 		request = getGetFilesRequest(childrenLocation);

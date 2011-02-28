@@ -181,9 +181,9 @@ public class GitCloneTest extends GitTest {
 		List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));
 		String[] expectedChildren = new String[] {Constants.DOT_GIT, "folder", "test.txt"};
 		assertEquals("Wrong number of directory children", expectedChildren.length, children.size());
-		assertEquals(expectedChildren[0], children.get(0).getString(ProtocolConstants.KEY_NAME));
-		assertEquals(expectedChildren[1], children.get(1).getString(ProtocolConstants.KEY_NAME));
-		assertEquals(expectedChildren[2], children.get(2).getString(ProtocolConstants.KEY_NAME));
+		assertNotNull(getChildByName(children, expectedChildren[0]));
+		assertNotNull(getChildByName(children, expectedChildren[1]));
+		assertNotNull(getChildByName(children, expectedChildren[2]));
 	}
 
 	@Test

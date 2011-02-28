@@ -20,6 +20,7 @@ import java.io.StringBufferInputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -70,7 +71,7 @@ public abstract class GitTest extends FileSystemTest {
 	@After
 	public void tearDown() {
 		// see bug 336800
-		//		FileSystemHelper.clear(gitDir);
+		// FileSystemHelper.clear(gitDir);
 	}
 
 	protected WebResponse createProjectWithContentLocation(URI workspaceLocation, String projectName, String location) throws JSONException, IOException, SAXException {
@@ -123,5 +124,13 @@ public abstract class GitTest extends FileSystemTest {
 	protected static String getMethodName() {
 		final StackTraceElement[] ste = Thread.currentThread().getStackTrace();
 		return ste[3].getMethodName();
+	}
+
+	protected static JSONObject getChildByName(List<JSONObject> children, String name) throws JSONException {
+		for (JSONObject child : children) {
+			if (name.equals(child.getString(ProtocolConstants.KEY_NAME)))
+				return child;
+		}
+		return null;
 	}
 }
