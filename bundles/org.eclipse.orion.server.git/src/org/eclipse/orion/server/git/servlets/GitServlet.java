@@ -20,7 +20,6 @@ import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.servlets.OrionServlet;
 
 /*
- * GET /git/diff/file/[path] gets diff for the given resource
  * 
  */
 public class GitServlet extends OrionServlet {

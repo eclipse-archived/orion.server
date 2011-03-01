@@ -46,4 +46,16 @@ public class GitConstants {
 	public static final String KEY_PASSPHRASE = "GitSshPassphrase"; //$NON-NLS-1$
 
 	public static final String KEY_PUBLIC_KEY = "GitSshPublicKey"; //$NON-NLS-1$
+
+	public static final String KEY_STATUS_ADDED = "Added"; //$NON-NLS-1$
+	
+	public static final String KEY_STATUS_CHANGED = "Changed"; //$NON-NLS-1$
+
+	public static final String KEY_STATUS_MISSING = "Missing"; //$NON-NLS-1$
+
+	public static final String KEY_STATUS_MODIFIED = "Modified"; //$NON-NLS-1$
+
+	public static final String KEY_STATUS_REMOVED = "Removed"; //$NON-NLS-1$
+
+	public static final String KEY_STATUS_UNTRACKED = "Untracked"; //$NON-NLS-1$
 }

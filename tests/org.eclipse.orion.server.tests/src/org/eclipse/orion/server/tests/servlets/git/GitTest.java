@@ -29,6 +29,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
 import org.eclipse.orion.server.git.servlets.GitServlet;
@@ -51,8 +52,9 @@ public abstract class GitTest extends FileSystemTest {
 	protected static final String GIT_SERVLET_LOCATION = GitServlet.GIT_URI + '/';
 
 	WebConversation webConversation;
-	protected File gitDir;
-	protected File testFile;
+	File gitDir;
+	File testFile;
+	private FileRepository db;
 
 	@BeforeClass
 	public static void setupWorkspace() {
@@ -69,9 +71,9 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	@After
-	public void tearDown() {
-		// see bug 336800
-		// FileSystemHelper.clear(gitDir);
+	public void tearDown() throws IOException {
+		db.close();
+		FileUtils.delete(gitDir, FileUtils.RECURSIVE);
 	}
 
 	protected WebResponse createProjectWithContentLocation(URI workspaceLocation, String projectName, String location) throws JSONException, IOException, SAXException {
@@ -99,7 +101,7 @@ public abstract class GitTest extends FileSystemTest {
 		gitDir = randomLocation.toFile();
 		randomLocation = randomLocation.addTrailingSeparator().append(Constants.DOT_GIT);
 		File dotGitDir = randomLocation.toFile().getCanonicalFile();
-		FileRepository db = new FileRepository(dotGitDir);
+		db = new FileRepository(dotGitDir);
 		assertFalse(dotGitDir.exists());
 		db.create(false /* non bare */);
 

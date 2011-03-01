@@ -35,7 +35,7 @@ import java.util.Map;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileInfo;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.tests.harness.FileSystemHelper;
+import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.user.securestorage.SecureStorageUserProfileService;
 import org.eclipse.orion.server.filesystem.git.GitFileStore;
 import org.eclipse.orion.server.filesystem.git.GitFileSystem;
@@ -189,8 +189,7 @@ public class SshTest {
 	@After
 	public void removeClone() throws IOException {
 		store.getLocalRepo().close();
-		FileSystemHelper.clear(store.getLocalFile());
-		assertFalse(store.getLocalFile().exists());
+		FileUtils.delete(store.getLocalFile(), FileUtils.RECURSIVE);
 	}
 
 	@BeforeClass
@@ -315,5 +314,4 @@ public class SshTest {
 			}
 		}
 	}
-
 }
