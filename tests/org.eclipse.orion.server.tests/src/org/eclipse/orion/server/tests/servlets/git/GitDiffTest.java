@@ -167,7 +167,7 @@ public class GitDiffTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		// TODO: don't create uris out of thin air
+		// TODO: don't create URIs out of thin air
 		request = getGetGitDiffRequest(gitDiffUri + "folder/");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
@@ -183,7 +183,7 @@ public class GitDiffTest extends GitTest {
 		sb.append("\\ No newline at end of file").append("\n");
 		assertEquals(sb.toString(), response.getText());
 
-		// TODO: don't create uris out of thin air
+		// TODO: don't create URIs out of thin air
 		request = getGetGitDiffRequest(gitDiffUri + "test.txt");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
