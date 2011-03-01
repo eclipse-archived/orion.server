@@ -64,8 +64,6 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 			return;
 		JSONArray children = new JSONArray();
 		IFileStore[] childStores = dir.childStores(EFS.NONE, null);
-		if (childStores.length == 0)
-			return;
 		for (IFileStore childStore : childStores) {
 			IFileInfo childInfo = childStore.fetchInfo();
 			String name = childInfo.getName();
@@ -73,7 +71,8 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 				name += "/"; //$NON-NLS-1$
 			URI childLocation = URIUtil.append(location, name);
 			JSONObject childResult = ServletFileStoreHandler.toJSON(childStore, childInfo, childLocation);
-			encodeChildren(childStore, childLocation, childResult, depth - 1);
+			if (childInfo.isDirectory())
+				encodeChildren(childStore, childLocation, childResult, depth - 1);
 			children.put(childResult);
 		}
 		try {
