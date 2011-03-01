@@ -15,7 +15,7 @@ import java.net.URI;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.URIUtil;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.tests.harness.FileSystemHelper;
+import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.server.filesystem.git.GitFileStore;
 import org.eclipse.orion.server.filesystem.git.GitFileSystem;
 
@@ -46,9 +46,9 @@ public class CreateDirectoryTest extends
 	protected void tearDown() throws Exception {
 		super.tearDown();
 		// remove the repository
-		FileSystemHelper.clear(repositoryPath.toFile());
+		FileUtils.delete(repositoryPath.toFile(), FileUtils.RECURSIVE);
 		// remove the clone
-		FileSystemHelper.clear(((GitFileStore)baseStore).getLocalFile());
+		FileUtils.delete(((GitFileStore)baseStore).getLocalFile(), FileUtils.RECURSIVE);
 	}
 
 	public void testGetParentForRoot() {

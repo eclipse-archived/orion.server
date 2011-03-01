@@ -13,6 +13,7 @@ package org.eclipse.orion.server.tests.servlets.git;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.net.HttpURLConnection;
@@ -20,6 +21,7 @@ import java.net.URI;
 import java.util.List;
 
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
 import org.eclipse.orion.server.git.GitConstants;
@@ -140,6 +142,8 @@ public class GitUriTest extends GitTest {
 		assertNull(files.optString(GitConstants.KEY_STATUS, null));
 		assertNull(files.optString(GitConstants.KEY_DIFF, null));
 		assertNull(files.optString(GitConstants.KEY_DIFF, null));
+
+		assertTrue(emptyDir.delete());
 	}
 
 	@Test
@@ -172,6 +176,8 @@ public class GitUriTest extends GitTest {
 		assertNull(files.optString(GitConstants.KEY_STATUS, null));
 		assertNull(files.optString(GitConstants.KEY_DIFF, null));
 		assertNull(files.optString(GitConstants.KEY_DIFF, null));
+
+		FileUtils.delete(dir, FileUtils.RECURSIVE);
 	}
 
 }

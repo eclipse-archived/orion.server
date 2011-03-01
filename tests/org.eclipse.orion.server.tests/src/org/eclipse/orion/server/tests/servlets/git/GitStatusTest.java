@@ -70,7 +70,6 @@ public class GitStatusTest extends GitTest {
 		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
 		assertEquals(0, statusArray.length());
-
 	}
 
 	@Test
@@ -206,7 +205,6 @@ public class GitStatusTest extends GitTest {
 		assertEquals("test.txt", statusArray.getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
 		assertEquals(0, statusArray.length());
-
 	}
 
 	@Test
