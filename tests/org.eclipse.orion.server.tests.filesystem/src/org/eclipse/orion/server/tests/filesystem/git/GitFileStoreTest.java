@@ -32,9 +32,11 @@ import org.eclipse.core.tests.harness.FileSystemHelper;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.RepositoryState;
 import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.server.filesystem.git.GitFileStore;
 import org.eclipse.orion.server.filesystem.git.GitFileSystem;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -45,6 +47,7 @@ public class GitFileStoreTest {
 	 */
 	private IPath repositoryPath;
 	GitFileSystem fs = new GitFileSystem();
+	private GitFileStore gfs;
 
 	@Before
 	public void before() {
@@ -52,8 +55,10 @@ public class GitFileStoreTest {
 	}
 
 	@After
-	public void removeSharedRepo() {
-		FileSystemHelper.clear(repositoryPath.toFile());
+	public void removeSharedRepo() throws IOException {
+		gfs.getLocalRepo().close();
+		if (repositoryPath.toFile().exists())
+			FileUtils.delete(repositoryPath.toFile(), FileUtils.RECURSIVE);
 	}
 
 	@Test
@@ -72,8 +77,8 @@ public class GitFileStoreTest {
 		assertTrue("1.1", info.exists());
 		assertTrue("1.2", info.isDirectory());
 
-		GitFileStore gitStore = (GitFileStore) store;
-		RepositoryState state = gitStore.getLocalRepo().getRepositoryState();
+		gfs = (GitFileStore) store;
+		RepositoryState state = gfs.getLocalRepo().getRepositoryState();
 		assertTrue("1.3", RepositoryState.SAFE.equals(state));
 	}
 
@@ -85,7 +90,7 @@ public class GitFileStoreTest {
 		sb.append(URIUtil.toURI(repositoryPath).toString());
 		sb.append("?/");
 		URI uri = URI.create(sb.toString());
-		GitFileStore gfs = (GitFileStore) fs.getStore(uri);
+		gfs = (GitFileStore) fs.getStore(uri);
 
 		ensureSharedExists(gfs, false);
 
@@ -102,7 +107,7 @@ public class GitFileStoreTest {
 		sb.append(URIUtil.toURI(repositoryPath).toString());
 		sb.append("?/");
 		URI uri = URI.create(sb.toString());
-		GitFileStore gfs = (GitFileStore) fs.getStore(uri);
+		gfs = (GitFileStore) fs.getStore(uri);
 
 		ensureSharedExists(gfs, true);
 
@@ -119,9 +124,9 @@ public class GitFileStoreTest {
 		sb.append(URIUtil.toURI(repositoryPath).toString());
 		sb.append("?/");
 		URI uri = URI.create(sb.toString());
-		GitFileStore gfs = (GitFileStore) fs.getStore(uri);
+		gfs = (GitFileStore) fs.getStore(uri);
 
-		ensureSharedDoesNotExist(gfs);
+		ensureSharedDoesNotExist();
 
 		IFileInfo info = gfs.fetchInfo();
 		assertFalse("1.1", info.exists());
@@ -135,7 +140,7 @@ public class GitFileStoreTest {
 		sb.append(URIUtil.toURI(repositoryPath).toString());
 		sb.append("?/");
 		URI uri = URI.create(sb.toString());
-		GitFileStore gfs = (GitFileStore) fs.getStore(uri);
+		gfs = (GitFileStore) fs.getStore(uri);
 
 		ensureSharedExists(gfs, false);
 
@@ -150,7 +155,7 @@ public class GitFileStoreTest {
 		sb.append(URIUtil.toURI(repositoryPath).toString());
 		sb.append("?/");
 		URI uri = URI.create(sb.toString());
-		GitFileStore gfs = (GitFileStore) fs.getStore(uri);
+		gfs = (GitFileStore) fs.getStore(uri);
 
 		ensureSharedExists(gfs, true);
 		gfs.mkdir(EFS.NONE, null);
@@ -171,9 +176,9 @@ public class GitFileStoreTest {
 		sb.append(URIUtil.toURI(repositoryPath).toString());
 		sb.append("?/");
 		URI uri = URI.create(sb.toString());
-		GitFileStore gfs = (GitFileStore) fs.getStore(uri);
+		gfs = (GitFileStore) fs.getStore(uri);
 
-		ensureSharedDoesNotExist(gfs);
+		ensureSharedDoesNotExist();
 
 		gfs.childNames(EFS.NONE, null);
 	}
@@ -187,6 +192,7 @@ public class GitFileStoreTest {
 		sb.append("?/");
 		URI uri = URI.create(sb.toString());
 		IFileStore store = fs.getStore(uri);
+		gfs = (GitFileStore) store;
 		assertFalse(repositoryPath.toFile().exists());
 		// create an empty dir, where the "shared" repository should be
 		repositoryPath.toFile().mkdir();
@@ -206,16 +212,16 @@ public class GitFileStoreTest {
 		sb.append(URIUtil.toURI(repositoryPath).toString());
 		sb.append("?/");
 		URI uri = URI.create(sb.toString());
-		GitFileStore store = (GitFileStore) fs.getStore(uri);
-		File privateRepo = store.getLocalFile();
+		gfs = (GitFileStore) fs.getStore(uri);
+		File privateRepo = gfs.getLocalFile();
 		assertFalse(repositoryPath.toFile().exists());
 		assertFalse(privateRepo.exists());
 		// create an empty dir, where the "private" repository should be
 		privateRepo.mkdir();
 		assertTrue(privateRepo.isDirectory());
-		store.mkdir(EFS.NONE, null);
+		gfs.mkdir(EFS.NONE, null);
 
-		IFileInfo info = store.fetchInfo();
+		IFileInfo info = gfs.fetchInfo();
 		assertTrue("1.1", info.exists());
 		assertTrue("1.2", info.isDirectory());
 	}
@@ -236,6 +242,7 @@ public class GitFileStoreTest {
 		sb.append("?/");
 		URI uri = new URI(sb.toString());
 		IFileStore store = fs.getStore(uri);
+		gfs = (GitFileStore) store;
 		String toString = store.toString();
 
 		assertFalse(toString.contains(PASSWORD));
@@ -278,8 +285,13 @@ public class GitFileStoreTest {
 		}
 	}
 
-	private void ensureSharedDoesNotExist(GitFileStore gfs) {
-		removeSharedRepo();
+	private void ensureSharedDoesNotExist() {
+		try {
+			removeSharedRepo();
+		} catch (IOException e) {
+			Assert.fail();
+		}
+		assertFalse(repositoryPath.toFile().exists());
 	}
 
 }

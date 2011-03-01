@@ -1,8 +1,8 @@
 
 plugin@com.ibm.icu,4.2.1=p2IU,id=com.ibm.icu,version=4.2.1.v20100412,repository=http://download.eclipse.org/tools/orbit/downloads/drops/S20110124210048/repository
 plugin@com.ibm.icu.source,4.2.1=p2IU,id=com.ibm.icu.source,version=4.2.1.v20100412,repository=http://download.eclipse.org/tools/orbit/downloads/drops/S20110124210048/repository
-plugin@com.jcraft.jsch,0.1.41=p2IU,id=com.jcraft.jsch,version=0.1.41.v201101211617,repository=http://download.eclipse.org/tools/orbit/downloads/drops/S20110124210048/repository
-plugin@com.jcraft.jsch.source,0.1.41=p2IU,id=com.jcraft.jsch.source,version=0.1.41.v201101211617,repository=http://download.eclipse.org/tools/orbit/downloads/drops/S20110124210048/repository
+plugin@com.jcraft.jsch,0.1.44=p2IU,id=com.jcraft.jsch,version=0.1.44.v201101211721,repository=http://download.eclipse.org/tools/orbit/downloads/drops/S20110124210048/repository
+plugin@com.jcraft.jsch.source,0.1.44=p2IU,id=com.jcraft.jsch.source,version=0.1.44.v201101211721,repository=http://download.eclipse.org/tools/orbit/downloads/drops/S20110124210048/repository
 plugin@javax.servlet,2.5.0=p2IU,id=javax.servlet,version=2.5.0.v201012071420,repository=http://download.eclipse.org/tools/orbit/downloads/drops/S20110124210048/repository
 plugin@javax.servlet.source,2.5.0=p2IU,id=javax.servlet.source,version=2.5.0.v201012071420,repository=http://download.eclipse.org/tools/orbit/downloads/drops/S20110124210048/repository
 plugin@org.json,1.0.0=p2IU,id=org.json,version=1.0.0.v201011060100,repository=http://download.eclipse.org/tools/orbit/downloads/drops/S20110124210048/repository
