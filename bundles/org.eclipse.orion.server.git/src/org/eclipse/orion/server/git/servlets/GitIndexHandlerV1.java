@@ -23,6 +23,8 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.ResetCommand;
+import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.api.errors.NoFilepatternException;
 import org.eclipse.jgit.dircache.DirCache;
 import org.eclipse.jgit.dircache.DirCacheEntry;
@@ -32,9 +34,14 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.core.IOUtilities;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServerStatus;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * A handler for Git operations on index:
@@ -71,8 +78,8 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 				return handleGet(request, response, p);
 			case PUT:
 				return handlePut(request, response, p);
-				// case POST:
-				// return handlePost(request, response);
+			case POST:
+				return handlePost(request, response, p);
 				// case DELETE :
 				// return handleDelete(request, response, path);
 			}
@@ -127,5 +134,46 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 		git.add().setUpdate(true).addFilepattern(pattern).call();
 
 		return true;
+	}
+
+	private boolean handlePost(HttpServletRequest request,
+			HttpServletResponse response, Path path) throws ServletException,
+			NoFilepatternException, IOException, JSONException {
+		JSONObject toReset = OrionServlet.readJSONRequest(request);
+		String resetType = toReset.optString(GitConstants.KEY_RESET_TYPE, null);
+		if (resetType == null) {
+			return statusHandler.handleRequest(request, response,
+					new ServerStatus(IStatus.ERROR,
+							HttpServletResponse.SC_BAD_REQUEST,
+							"Reset type must be specified.", null));
+		}
+
+		try {
+			ResetType rt = ResetType.valueOf(resetType);
+			switch (rt) {
+			case MIXED:
+				Git git = new Git(db);
+				// "git reset --{type} HEAD ."
+				git.reset().setMode(rt).setRef(Constants.HEAD).call();
+				return true;
+			case HARD:
+			case KEEP:
+			case MERGE:
+			case SOFT:
+				String msg = NLS.bind(
+						"The reset type is not yet supported: {0}.", resetType);
+				return statusHandler.handleRequest(request, response,
+						new ServerStatus(IStatus.ERROR,
+								HttpServletResponse.SC_NOT_IMPLEMENTED, msg,
+								null));
+			}
+		} catch (IllegalArgumentException e) {
+			String msg = NLS.bind("Unknown or malformed reset type: {0}.",
+					resetType);
+			return statusHandler.handleRequest(request, response,
+					new ServerStatus(IStatus.ERROR,
+							HttpServletResponse.SC_BAD_REQUEST, msg, null));
+		}
+		return false;
 	}
 }

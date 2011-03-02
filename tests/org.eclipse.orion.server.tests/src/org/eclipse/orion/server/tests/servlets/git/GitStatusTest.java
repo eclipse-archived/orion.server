@@ -587,7 +587,7 @@ public class GitStatusTest extends GitTest {
 	 * Creates a request to get the status result for the given location.
 	 * @param location Either an absolute URI, or a workspace-relative URI
 	 */
-	private WebRequest getGetGitStatusRequest(String location) {
+	static WebRequest getGetGitStatusRequest(String location) {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;

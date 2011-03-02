@@ -27,7 +27,6 @@ import org.json.JSONObject;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
-import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.PutMethodWebRequest;
 import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
@@ -65,7 +64,7 @@ public class GitAddTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		request = getGetGitStatusRequest(gitStatusUri);
+		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject statusResponse = new JSONObject(response.getText());
@@ -83,6 +82,7 @@ public class GitAddTest extends GitTest {
 		assertEquals(0, statusArray.length());
 	}
 
+	// missing + add = removed
 	@Test
 	public void testAddMissing() throws IOException, SAXException, URISyntaxException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
@@ -108,7 +108,7 @@ public class GitAddTest extends GitTest {
 		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
 		assertNotNull(gitStatusUri);
 
-		request = getGetGitStatusRequest(gitStatusUri);
+		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject statusResponse = new JSONObject(response.getText());
@@ -135,7 +135,7 @@ public class GitAddTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// "git status"
-		request = getGetGitStatusRequest(gitStatusUri);
+		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		statusResponse = new JSONObject(response.getText());
@@ -189,7 +189,7 @@ public class GitAddTest extends GitTest {
 		assertNotNull(gitIndexUri);
 
 		// "git status"
-		request = getGetGitStatusRequest(gitStatusUri);
+		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject statusResponse = new JSONObject(response.getText());
@@ -212,7 +212,7 @@ public class GitAddTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// "git status"
-		request = getGetGitStatusRequest(gitStatusUri);
+		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		statusResponse = new JSONObject(response.getText());
@@ -230,7 +230,7 @@ public class GitAddTest extends GitTest {
 		assertEquals(0, statusArray.length());
 	}
 
-	private WebRequest getPutGitIndexRequest(String location) throws UnsupportedEncodingException {
+	static WebRequest getPutGitIndexRequest(String location) throws UnsupportedEncodingException {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;
@@ -242,18 +242,4 @@ public class GitAddTest extends GitTest {
 		setAuthentication(request);
 		return request;
 	}
-
-	// TODO: same as in GitStatusTest
-	private WebRequest getGetGitStatusRequest(String location) {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.STATUS_RESOURCE + location;
-		WebRequest request = new GetMethodWebRequest(requestURI);
-		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		setAuthentication(request);
-		return request;
-	}
-
 }

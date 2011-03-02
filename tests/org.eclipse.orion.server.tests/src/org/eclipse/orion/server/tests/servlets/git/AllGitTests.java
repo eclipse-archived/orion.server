@@ -15,10 +15,10 @@ import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
 /**
- * Runs all automated server tests.
+ * Runs all automated server tests for git support.
  */
 @RunWith(Suite.class)
-@SuiteClasses({GitUriTest.class, GitDiffTest.class, GitStatusTest.class, GitIndexTest.class, GitCloneTest.class})
+@SuiteClasses({GitUriTest.class, GitDiffTest.class, GitStatusTest.class, GitIndexTest.class, GitCloneTest.class, GitAddTest.class, GitResetTest.class})
 public class AllGitTests {
 	//goofy junit4, no class body needed
 }
