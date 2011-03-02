@@ -181,7 +181,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 	 * Validates that the provided clone name is valid. Returns
 	 * <code>true</code> if the project name is valid, and <code>false</code>
 	 * otherwise. This method takes care of setting the error response when the
-	 * project name is not valid.
+	 * clone name is not valid.
 	 */
 	private boolean validateCloneName(String name, HttpServletRequest request,
 			HttpServletResponse response) throws ServletException {
