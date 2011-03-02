@@ -20,18 +20,24 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.URIish;
+import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServerStatus;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.internal.server.servlets.Util;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.servlets.OrionServlet;
@@ -110,6 +116,16 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		cp.setPrivateKey(privateKey);
 		cp.setPublicKey(publicKey);
 		cp.setPassphrase(passphrase);
+		
+		String userArea = System.getProperty("org.eclipse.orion.server.core.userArea");
+		if (userArea == null) {
+			String msg = "Error persisting clone state"; //$NON-NLS-1$
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, null));
+		}
+		
+		IPath path = new Path(userArea).append(request.getRemoteUser()).append(GitConstants.CLONE_FOLDER).append(clone.getId());		
+		clone.setContentLocation(path.toFile().toURI());
+		
 		doClone(clone, cp);
 
 		// save the clone metadata
@@ -149,21 +165,16 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	private void doClone(WebClone clone, CredentialsProvider cp) throws URISyntaxException {
-		IPath platformLocation = Activator.getDefault().getPlatformLocation();
-		File cloneFolder = platformLocation.append(GitConstants.CLONE_FOLDER).toFile();
+		File cloneFolder = new File(clone.getContentLocation().getPath());
 		if (!cloneFolder.exists())
 			cloneFolder.mkdir();
-		File workdir = new File(cloneFolder, clone.getId());
-		
 		CloneCommand cc = Git.cloneRepository();
 		cc.setBare(false);
 		cc.setCredentialsProvider(cp);
-		cc.setDirectory(workdir);
+		cc.setDirectory(cloneFolder);
 		cc.setRemote(Constants.DEFAULT_REMOTE_NAME);
 		cc.setURI(clone.getUrl());
 		cc.call();
-
-		clone.setContentLocation(workdir.toURI());
 	}
 
 	/**
