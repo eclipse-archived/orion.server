@@ -46,17 +46,13 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 		String[] infoParts = gitPathInfo.split("\\/", 3); //$NON-NLS-1$
 
 		if (infoParts[1].equals(GitConstants.DIFF_RESOURCE)) {
-			diffHandlerV1.handleRequest(request, response, infoParts[2]);
-			return true;
+			return diffHandlerV1.handleRequest(request, response, infoParts[2]);
 		} else if (infoParts[1].equals(GitConstants.STATUS_RESOURCE)) {
-			statusHandlerV1.handleRequest(request, response, infoParts[2]);
-			return true;
+			return statusHandlerV1.handleRequest(request, response, infoParts[2]);
 		} else if (infoParts[1].equals(GitConstants.INDEX_RESOURCE)) {
-			indexHandlerV1.handleRequest(request, response, infoParts[2]);
-			return true;
+			return indexHandlerV1.handleRequest(request, response, infoParts[2]);
 		} else if (infoParts[1].equals(GitConstants.CLONE_RESOURCE)) {
-			cloneHandlerV1.handleRequest(request, response, infoParts[2]);
-			return true;
+			return cloneHandlerV1.handleRequest(request, response, infoParts[2]);
 		}
 		return false;
 	}
