@@ -75,10 +75,6 @@ public class SiteConfiguration extends WebElement {
 		}
 	}
 
-	public String getAuthPassword() {
-		return store.get(SiteConfigurationConstants.KEY_AUTH_PASSWORD, null);
-	}
-
 	public String getHostHint() {
 		return store.get(SiteConfigurationConstants.KEY_HOST_HINT, null);
 	}
@@ -93,10 +89,6 @@ public class SiteConfiguration extends WebElement {
 		} catch (JSONException e) {
 			return new JSONArray();
 		}
-	}
-
-	public void setAuthPassword(String authPassword) {
-		store.put(SiteConfigurationConstants.KEY_AUTH_PASSWORD, authPassword);
 	}
 
 	public void setHostHint(String hostHint) {

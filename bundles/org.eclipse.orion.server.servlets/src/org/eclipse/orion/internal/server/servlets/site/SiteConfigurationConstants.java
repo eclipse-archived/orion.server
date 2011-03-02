@@ -38,11 +38,6 @@ public class SiteConfigurationConstants {
 	public static final String KEY_HOST_HINT = "HostHint"; //$NON-NLS-1$
 
 	/**
-	 * FIXME is this necessary?
-	 */
-	public static final String KEY_AUTH_PASSWORD = "AuthPassword"; //$NON-NLS-1$
-
-	/**
 	 * JSON representation key for a site configuration's hosting status. The value's data type is a JSON object.
 	 */
 	public static final String KEY_HOSTING_STATUS = "HostingStatus"; //$NON-NLS-1$
