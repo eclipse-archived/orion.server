@@ -11,9 +11,7 @@
 package org.eclipse.orion.internal.server.core;
 
 import java.net.URI;
-
 import javax.servlet.http.HttpServletRequest;
-
 import org.json.JSONObject;
 
 /**

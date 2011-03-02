@@ -288,10 +288,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		}
 		WebProject project = WebProject.fromId(projectId);
 
-		//we need the base location for the workspace servlet. Since this is a POST 
-		//on a single workspace we need to strip off the workspace id from the request URI
 		URI baseLocation = getURI(request);
-		baseLocation = baseLocation.resolve("");
 		JSONObject result = WebProjectResourceHandler.toJSON(project, baseLocation);
 
 		// remove user rights for the project

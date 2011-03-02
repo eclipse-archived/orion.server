@@ -39,8 +39,7 @@ public class WebClone extends WebElement {
 	 * @return A clone instance with the given id
 	 */
 	public static WebClone fromId(String id) {
-		WebClone clone = new WebClone((IEclipsePreferences) scope.getNode(
-				CLONE_NODE_NAME).node(id));
+		WebClone clone = new WebClone((IEclipsePreferences) scope.getNode(CLONE_NODE_NAME).node(id));
 		clone.setId(id);
 		return clone;
 	}
