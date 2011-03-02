@@ -61,7 +61,7 @@ public class GitIndexTest extends GitTest {
 	}
 
 	/**
-	 * Creates a request to get the status result for the given location.
+	 * Creates a request to get the content of the file stored in index.
 	 * @param location Either an absolute URI, or a workspace-relative URI
 	 */
 	private WebRequest getGetGitIndexRequest(String location) {

@@ -57,7 +57,7 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 			File gitDir = GitUtils.getGitDir(path.uptoSegment(2),
 					request.getRemoteUser());
 			if (gitDir == null)
-				return false; // TODO: or a error response code, 405?
+				return false; // TODO: or an error response code, 405?
 			Repository db = new FileRepository(gitDir);
 			FileTreeIterator iterator = new FileTreeIterator(db);
 			IndexDiff diff = new IndexDiff(db, Constants.HEAD, iterator);

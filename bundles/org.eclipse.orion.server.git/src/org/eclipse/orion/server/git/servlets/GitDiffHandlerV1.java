@@ -46,7 +46,7 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 			File gitDir = GitUtils.getGitDir(path.uptoSegment(2),
 					request.getRemoteUser());
 			if (gitDir == null)
-				return false; // TODO: or a error response code, 405?
+				return false; // TODO: or an error response code, 405?
 			Repository repository = new FileRepository(gitDir);
 			Diff diff = new Diff(response.getOutputStream());
 			diff.setRepository(repository);

@@ -21,6 +21,9 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.jgit.api.AddCommand;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.NoFilepatternException;
 import org.eclipse.jgit.dircache.DirCache;
 import org.eclipse.jgit.dircache.DirCacheEntry;
 import org.eclipse.jgit.errors.IncorrectObjectTypeException;
@@ -34,10 +37,15 @@ import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.osgi.util.NLS;
 
 /**
- * A handler for Git Index operation.
+ * A handler for Git operations on index:
+ * <ul>
+ * <li>get file content stored in index
+ * <li>add file(s) to index
+ * </ul>
  */
 public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 
+	private static final String ADD_ALL_PATTERN = "."; //$NON-NLS-1$
 	private ServletResourceHandler<IStatus> statusHandler;
 	private Repository db;
 	private ObjectId blobId;
@@ -48,29 +56,49 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 
 	@Override
 	public boolean handleRequest(HttpServletRequest request,
-			HttpServletResponse response, String gitPathInfo)
-			throws ServletException {
+			HttpServletResponse response, String path) throws ServletException {
+
 		try {
-			Path path = new Path(gitPathInfo);
-			File gitDir = GitUtils.getGitDir(path.uptoSegment(2),
+			Path p = new Path(path);
+			File gitDir = GitUtils.getGitDir(p.uptoSegment(2),
 					request.getRemoteUser());
 			if (gitDir == null)
-				return false; // TODO: or a error response code, 405?
+				return false; // TODO: or an error response code, 405?
 			db = new FileRepository(gitDir);
-			DirCache cache = db.readDirCache();
-			DirCacheEntry entry = cache.getEntry(path.removeFirstSegments(2)
-					.toString());
-			blobId = entry.getObjectId();
-			IOUtilities.pipe(open(), response.getOutputStream(), true, false);
-			return true;
+
+			switch (getMethod(request)) {
+			case GET:
+				return handleGet(request, response, p);
+			case PUT:
+				return handlePut(request, response, p);
+				// case POST:
+				// return handlePost(request, response);
+				// case DELETE :
+				// return handleDelete(request, response, path);
+			}
 
 		} catch (Exception e) {
-			String msg = NLS.bind("Failed to get index for {0}", gitPathInfo); //$NON-NLS-1$
+			String msg = NLS.bind(
+					"Failed to process an operation on index for {0}", path); //$NON-NLS-1$
 			statusHandler.handleRequest(request, response, new ServerStatus(
 					IStatus.ERROR,
 					HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+		} finally {
+			if (db != null)
+				db.close();
 		}
 		return false;
+	}
+
+	private boolean handleGet(HttpServletRequest request,
+			HttpServletResponse response, Path path) throws CoreException,
+			IOException {
+		DirCache cache = db.readDirCache();
+		DirCacheEntry entry = cache.getEntry(path.removeFirstSegments(2)
+				.toString());
+		blobId = entry.getObjectId();
+		IOUtilities.pipe(open(), response.getOutputStream(), true, false);
+		return true;
 	}
 
 	private InputStream open() throws IOException, CoreException,
@@ -78,4 +106,26 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 		return db.open(blobId, Constants.OBJ_BLOB).openStream();
 	}
 
+	private boolean handlePut(HttpServletRequest request,
+			HttpServletResponse response, Path path) throws ServletException,
+			NoFilepatternException {
+		String pattern;
+		if (path.segmentCount() > 2) {
+			// PUT file/{project}/{path}
+			pattern = path.removeFirstSegments(2).toString();
+		} else {
+			// PUT file/{project}/
+			pattern = ADD_ALL_PATTERN;
+		}
+		Git git = new Git(db);
+		AddCommand add = git.add().addFilepattern(pattern);
+		// "git add {pattern}"
+		add.call();
+
+		// TODO: we're calling "add" twice, this is inefficient
+		// "git add -u {pattern}"
+		git.add().setUpdate(true).addFilepattern(pattern).call();
+
+		return true;
+	}
 }

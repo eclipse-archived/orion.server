@@ -108,7 +108,7 @@ public class SiteHostingService implements ISiteHostingService {
 				throw new SiteHostingException("No more hosts available");
 			}
 			allocated.set(bit);
-			String host = "127.0.0." + bit + ":" + this.hostingPort; //$NON-NLS-2$
+			String host = "127.0.0." + bit + ":" + this.hostingPort;
 			hosts.add(host);
 			return host;
 		}
