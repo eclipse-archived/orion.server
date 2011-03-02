@@ -38,31 +38,24 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	@Override
-	public boolean handleRequest(HttpServletRequest request,
-			HttpServletResponse response, String gitPathInfo)
-			throws ServletException {
+	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String gitPathInfo) throws ServletException {
 		try {
 			Path path = new Path(gitPathInfo);
-			File gitDir = GitUtils.getGitDir(path.uptoSegment(2),
-					request.getRemoteUser());
+			File gitDir = GitUtils.getGitDir(path.uptoSegment(2), request.getRemoteUser());
 			if (gitDir == null)
 				return false; // TODO: or an error response code, 405?
 			Repository db = new FileRepository(gitDir);
 			FileTreeIterator iterator = new FileTreeIterator(db);
 			IndexDiff diff = new IndexDiff(db, Constants.HEAD, iterator);
 			if (path.segmentCount() > 2)
-				diff.setFilter(PathFilter.create(path.removeFirstSegments(2)
-						.toString()));
+				diff.setFilter(PathFilter.create(path.removeFirstSegments(2).toString()));
 			diff.diff();
 
 			URI u = getURI(request);
 			String uriPath = u.getPath();
-			uriPath = uriPath
-					.substring((GitServlet.GIT_URI + "/" + GitConstants.STATUS_RESOURCE) //$NON-NLS-1$
-							.length());
-			URI fileLocation = new URI(u.getScheme(), u.getUserInfo(),
-					u.getHost(), u.getPort(), uriPath, u.getQuery(),
-					u.getFragment());
+			uriPath = uriPath.substring((GitServlet.GIT_URI + "/" + GitConstants.STATUS_RESOURCE) //$NON-NLS-1$
+					.length());
+			URI fileLocation = new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), uriPath, u.getQuery(), u.getFragment());
 			JSONObject result = new JSONObject();
 
 			JSONArray children = toJSONArray(diff.getAdded(), fileLocation);
@@ -85,22 +78,17 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 			return true;
 
 		} catch (Exception e) {
-			return statusHandler.handleRequest(request, response,
-					new ServerStatus(IStatus.ERROR,
-							HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-							"Error generating status response", e));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error generating status response", e));
 		}
 	}
 
-	private JSONArray toJSONArray(Set<String> set, URI fileLocation)
-			throws JSONException {
+	private JSONArray toJSONArray(Set<String> set, URI fileLocation) throws JSONException {
 		JSONArray result = new JSONArray();
 		for (String s : set) {
 			JSONObject object = new JSONObject();
 			object.put(ProtocolConstants.KEY_NAME, s);
 			if (fileLocation.getPath().endsWith("/")) { //$NON-NLS-1$
-				object.put(ProtocolConstants.KEY_LOCATION,
-						URIUtil.append(fileLocation, s));
+				object.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(fileLocation, s));
 			} else {
 				object.put(ProtocolConstants.KEY_LOCATION, fileLocation);
 			}

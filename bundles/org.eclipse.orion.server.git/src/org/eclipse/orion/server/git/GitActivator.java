@@ -44,10 +44,8 @@ public class GitActivator implements BundleActivator {
 	public void start(BundleContext context) throws Exception {
 		plugin = this;
 		this.bundleContext = context;
-		context.registerService(IWebResourceDecorator.class,
-				new GitFileDecorator(), null);
-		context.registerService(IWebResourceDecorator.class,
-				new GitUserDecorator(), null);
+		context.registerService(IWebResourceDecorator.class, new GitFileDecorator(), null);
+		context.registerService(IWebResourceDecorator.class, new GitUserDecorator(), null);
 		SshSessionFactory.setInstance(new GitSshSessionFactory());
 	}
 

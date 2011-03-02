@@ -35,9 +35,7 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	@Override
-	public boolean handleRequest(HttpServletRequest request,
-			HttpServletResponse response, String gitPathInfo)
-			throws ServletException {
+	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String gitPathInfo) throws ServletException {
 
 		String[] infoParts = gitPathInfo.split("\\/", 3); //$NON-NLS-1$
 

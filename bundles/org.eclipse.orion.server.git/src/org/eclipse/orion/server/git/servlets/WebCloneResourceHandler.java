@@ -11,11 +11,9 @@
 package org.eclipse.orion.server.git.servlets;
 
 import java.net.URI;
-
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.WebElementResourceHandler;
@@ -25,8 +23,7 @@ import org.json.JSONObject;
 /**
  * Handles serialization of {@link WebClone} objects.
  */
-public class WebCloneResourceHandler extends
-		WebElementResourceHandler<WebClone> {
+public class WebCloneResourceHandler extends WebElementResourceHandler<WebClone> {
 
 	public WebCloneResourceHandler() {
 		super();
@@ -35,10 +32,8 @@ public class WebCloneResourceHandler extends
 	public static JSONObject toJSON(WebClone clone, URI parentLocation) {
 		JSONObject result = WebElementResourceHandler.toJSON(clone);
 		try {
-			result.put(ProtocolConstants.KEY_LOCATION,
-					URIUtil.append(parentLocation, clone.getId()));
-			result.put(ProtocolConstants.KEY_CONTENT_LOCATION, clone
-					.getContentLocation().toString());
+			result.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(parentLocation, clone.getId()));
+			result.put(ProtocolConstants.KEY_CONTENT_LOCATION, clone.getContentLocation().toString());
 		} catch (JSONException e) {
 			// can't happen because key and value are well-formed
 		}
@@ -46,9 +41,7 @@ public class WebCloneResourceHandler extends
 	}
 
 	@Override
-	public boolean handleRequest(HttpServletRequest request,
-			HttpServletResponse response, WebClone object)
-			throws ServletException {
+	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, WebClone object) throws ServletException {
 		return false;
 	}
 

@@ -32,7 +32,7 @@ public class GenericGitHandler extends ServletResourceHandler<String> {
 		//can only generically handle get
 		if (getMethod(request) != Method.GET)
 			return false;
-		
+
 		try {
 			PrintWriter writer = response.getWriter();
 			writer.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2 Final//EN\">"); //$NON-NLS-1$

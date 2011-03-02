@@ -10,28 +10,17 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringBufferInputStream;
-
-import org.eclipse.jgit.transport.CredentialItem;
-import org.eclipse.jgit.transport.CredentialsProvider;
-import org.eclipse.jgit.transport.CredentialsProviderUserInfo;
-import org.eclipse.jgit.transport.SshSessionFactory;
+import com.jcraft.jsch.*;
+import java.io.*;
+import org.eclipse.jgit.transport.*;
 import org.eclipse.jgit.util.FS;
-
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
 
 public class GitSshSessionFactory extends SshSessionFactory {
 
 	private static final int SSH_PORT = 22;
 
 	@Override
-	public Session getSession(String user, String pass, String host, int port,
-			CredentialsProvider credentialsProvider, FS fs)
-			throws JSchException {
+	public Session getSession(String user, String pass, String host, int port, CredentialsProvider credentialsProvider, FS fs) throws JSchException {
 		if (credentialsProvider instanceof GitCredentialsProvider) {
 			if (port <= 0)
 				port = SSH_PORT;
@@ -53,26 +42,22 @@ public class GitSshSessionFactory extends SshSessionFactory {
 			final Session session = createSession(user, host, port, cp);
 			if (pass != null)
 				session.setPassword(pass);
-			if (credentialsProvider != null
-					&& !credentialsProvider.isInteractive()) {
-				session.setUserInfo(new CredentialsProviderUserInfo(session,
-						credentialsProvider));
+			if (credentialsProvider != null && !credentialsProvider.isInteractive()) {
+				session.setUserInfo(new CredentialsProviderUserInfo(session, credentialsProvider));
 			}
 			return session;
 		}
 		return null;
 	}
 
-	private Session createSession(String user, String host, int port,
-			GitCredentialsProvider cp) throws JSchException {
+	private Session createSession(String user, String host, int port, GitCredentialsProvider cp) throws JSchException {
 		JSch jsch = new JSch();
 		knownHosts(jsch, cp.getKnownHosts());
 		identity(jsch, cp.getPrivateKey(), cp.getPublicKey(), cp.getPassphrase());
 		return jsch.getSession(user, host);
 	}
 
-	private static void knownHosts(final JSch sch, String knownHosts)
-			throws JSchException {
+	private static void knownHosts(final JSch sch, String knownHosts) throws JSchException {
 		try {
 			final InputStream in = new StringBufferInputStream(knownHosts);
 			try {
@@ -85,9 +70,8 @@ public class GitSshSessionFactory extends SshSessionFactory {
 		}
 	}
 
-	private static void identity(final JSch sch, byte[] prvkey, byte[] pubkey,
-			byte[] passphrase) throws JSchException {
-		if (prvkey != null && prvkey.length>0) {
+	private static void identity(final JSch sch, byte[] prvkey, byte[] pubkey, byte[] passphrase) throws JSchException {
+		if (prvkey != null && prvkey.length > 0) {
 			sch.addIdentity("identity", prvkey, pubkey, passphrase);
 		}
 	}
