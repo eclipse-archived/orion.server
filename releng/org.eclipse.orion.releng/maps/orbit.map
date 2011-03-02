@@ -77,6 +77,3 @@ plugin@ch.qos.logback.core,0.9.24=p2IU,id=ch.qos.logback.core,version=0.9.24.v20
 plugin@ch.qos.logback.core.source,0.9.24=p2IU,id=ch.qos.logback.core.source,version=0.9.24.v20100831-0715,repository=http://download.eclipse.org/tools/orbit/downloads/drops/S20110124210048/repository
 fragment@ch.qos.logback.slf4j,0.9.24=p2IU,id=ch.qos.logback.slf4j,version=0.9.24.v20100831-0715,repository=http://download.eclipse.org/tools/orbit/downloads/drops/S20110124210048/repository
 fragment@ch.qos.logback.slf4j.source,0.9.24=p2IU,id=ch.qos.logback.slf4j.source,version=0.9.24.v20100831-0715,repository=http://download.eclipse.org/tools/orbit/downloads/drops/S20110124210048/repository
-
-plugin@com.jcraft.jsch,0.1.41=p2IU,id=com.jcraft.jsch,version=0.1.41.v201101211617,repository=http://download.eclipse.org/tools/orbit/downloads/drops/S20110124210048/repository
-plugin@com.jcraft.jsch.source,0.1.41=p2IU,id=com.jcraft.jsch.source,version=0.1.41.v201101211617,repository=http://download.eclipse.org/tools/orbit/downloads/drops/S20110124210048/repository
