@@ -21,8 +21,7 @@ public class GitCredentialsProvider extends UsernamePasswordCredentialsProvider 
 	private byte[] publicKey;
 	private byte[] passphrase;
 
-	public GitCredentialsProvider(URIish uri, String username, char[] password,
-			String knownHosts) {
+	public GitCredentialsProvider(URIish uri, String username, char[] password, String knownHosts) {
 		super(username, password);
 		this.uri = uri;
 		this.knownHosts = knownHosts;

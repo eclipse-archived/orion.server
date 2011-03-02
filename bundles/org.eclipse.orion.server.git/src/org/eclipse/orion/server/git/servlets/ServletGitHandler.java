@@ -13,7 +13,6 @@ package org.eclipse.orion.server.git.servlets;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
@@ -38,13 +37,9 @@ public class ServletGitHandler extends ServletResourceHandler<String> {
 		gitHandlerV1 = new GitHandlerV1(statusHandler);
 	}
 
-	public boolean handleRequest(HttpServletRequest request,
-			HttpServletResponse response, String gitPathInfo)
-			throws ServletException {
-		String versionString = request
-				.getHeader(ProtocolConstants.HEADER_ORION_VERSION);
-		Version version = versionString == null ? null : new Version(
-				versionString);
+	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String gitPathInfo) throws ServletException {
+		String versionString = request.getHeader(ProtocolConstants.HEADER_ORION_VERSION);
+		Version version = versionString == null ? null : new Version(versionString);
 
 		ServletResourceHandler<String> handler;
 		if (version != null && VERSION1.isIncluded(version))

@@ -12,24 +12,12 @@ package org.eclipse.orion.server.git.servlets;
 
 import static org.eclipse.jgit.lib.Constants.HEAD;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedWriter;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.List;
-
-import org.eclipse.jgit.diff.DiffEntry;
-import org.eclipse.jgit.diff.DiffFormatter;
-import org.eclipse.jgit.diff.RenameDetector;
+import org.eclipse.jgit.diff.*;
 import org.eclipse.jgit.dircache.DirCacheIterator;
-import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.ObjectReader;
-import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.lib.TextProgressMonitor;
-import org.eclipse.jgit.treewalk.AbstractTreeIterator;
-import org.eclipse.jgit.treewalk.CanonicalTreeParser;
-import org.eclipse.jgit.treewalk.FileTreeIterator;
+import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.treewalk.*;
 import org.eclipse.jgit.treewalk.filter.TreeFilter;
 
 /**
@@ -51,8 +39,7 @@ public class Diff {
 
 	public Diff(OutputStream outputStream) {
 		diffFmt = new DiffFormatter(new BufferedOutputStream(outputStream));
-		out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(
-				outputStream)));
+		out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(outputStream)));
 	}
 
 	void setRepository(Repository r) {
@@ -74,8 +61,7 @@ public class Diff {
 				if (oldTree == null) {
 					ObjectId head = db.resolve(HEAD + "^{tree}"); //$NON-NLS-1$
 					if (head == null)
-						throw new IllegalArgumentException(HEAD
-								+ " is not a tree"); //$NON-NLS-1$
+						throw new IllegalArgumentException(HEAD + " is not a tree"); //$NON-NLS-1$
 					CanonicalTreeParser p = new CanonicalTreeParser();
 					ObjectReader reader = db.newObjectReader();
 					try {
@@ -116,25 +102,25 @@ public class Diff {
 	static void nameStatus(PrintWriter out, List<DiffEntry> files) {
 		for (DiffEntry ent : files) {
 			switch (ent.getChangeType()) {
-			case ADD:
-				out.println("A\t" + ent.getNewPath()); //$NON-NLS-1$
-				break;
-			case DELETE:
-				out.println("D\t" + ent.getOldPath()); //$NON-NLS-1$
-				break;
-			case MODIFY:
-				out.println("M\t" + ent.getNewPath()); //$NON-NLS-1$
-				break;
-			case COPY:
-				out.format("C%1$03d\t%2$s\t%3$s", ent.getScore(), //$NON-NLS-1$
-						ent.getOldPath(), ent.getNewPath());
-				out.println();
-				break;
-			case RENAME:
-				out.format("R%1$03d\t%2$s\t%3$s", ent.getScore(), //$NON-NLS-1$
-						ent.getOldPath(), ent.getNewPath());
-				out.println();
-				break;
+				case ADD :
+					out.println("A\t" + ent.getNewPath()); //$NON-NLS-1$
+					break;
+				case DELETE :
+					out.println("D\t" + ent.getOldPath()); //$NON-NLS-1$
+					break;
+				case MODIFY :
+					out.println("M\t" + ent.getNewPath()); //$NON-NLS-1$
+					break;
+				case COPY :
+					out.format("C%1$03d\t%2$s\t%3$s", ent.getScore(), //$NON-NLS-1$
+							ent.getOldPath(), ent.getNewPath());
+					out.println();
+					break;
+				case RENAME :
+					out.format("R%1$03d\t%2$s\t%3$s", ent.getScore(), //$NON-NLS-1$
+							ent.getOldPath(), ent.getNewPath());
+					out.println();
+					break;
 			}
 		}
 	}

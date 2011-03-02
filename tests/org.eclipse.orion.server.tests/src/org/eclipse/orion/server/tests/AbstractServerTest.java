@@ -30,7 +30,7 @@ import com.meterware.httpunit.WebRequest;
  * to all server tests.
  */
 public class AbstractServerTest {
-	protected void setAuthentication(WebRequest request) {
+	protected static void setAuthentication(WebRequest request) {
 		setAuthentication(request, "test", "test");
 	}
 
@@ -53,15 +53,12 @@ public class AbstractServerTest {
 		Assert.assertNotNull(userAdmin.createUser(newUser));
 	}
 
-	protected void setAuthentication(WebRequest request, String user, String pass) {
-
+	protected static void setAuthentication(WebRequest request, String user, String pass) {
 		try {
 			request.setHeaderField("Authorization", "Basic " + new String(Base64.encode((user + ':' + pass).getBytes()), "UTF8"));
 		} catch (UnsupportedEncodingException e) {
 			// this should never happen
 			e.printStackTrace();
 		}
-
 	}
-
 }

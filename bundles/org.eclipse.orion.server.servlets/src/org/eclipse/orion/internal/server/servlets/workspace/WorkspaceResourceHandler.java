@@ -202,7 +202,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 			return true;
 		project.setName(name);
 		String content = toAdd.optString(ProtocolConstants.KEY_CONTENT_LOCATION, null);
-		if (!isAllowedLinkDestination(content)) {
+		if (!isAllowedLinkDestination(content, request.getRemoteUser())) {
 			String msg = "Cannot link to server path";
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, msg, null));
 		}
@@ -288,10 +288,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		}
 		WebProject project = WebProject.fromId(projectId);
 
-		//we need the base location for the workspace servlet. Since this is a POST 
-		//on a single workspace we need to strip off the workspace id from the request URI
 		URI baseLocation = getURI(request);
-		baseLocation = baseLocation.resolve("");
 		JSONObject result = WebProjectResourceHandler.toJSON(project, baseLocation);
 
 		// remove user rights for the project
@@ -355,7 +352,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 			registerProjectLocation(project);
 	}
 
-	private boolean isAllowedLinkDestination(String content) {
+	private boolean isAllowedLinkDestination(String content, String user) {
 		if (content == null) {
 			return true;
 		}
@@ -381,6 +378,15 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 				return true;
 			}
 		}
+
+		String userArea = System.getProperty("org.eclipse.orion.server.core.userArea"); //$NON-NLS-1$
+		if (userArea == null)
+			return false;
+
+		IPath path = new Path(userArea).append(user);
+		if (content.startsWith(path.toFile().toURI().toString()))
+			return true;
+
 		return false;
 	}
 
@@ -388,7 +394,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		URI contentURI = project.getContentLocation();
 		//if the location is relative to this server, we need to register an alias so the file service can find it
 		if (!contentURI.isAbsolute() || "file".equals(contentURI.getScheme()) || "gitfs".equals(contentURI.getScheme())) { //$NON-NLS-1$ //$NON-NLS-2$
-			IPath contentPath = new Path(contentURI.getPath());
+			IPath contentPath = new Path(contentURI.getSchemeSpecificPart());
 			if (contentPath.isAbsolute())
 				aliasRegistry.registerAlias(project.getId(), contentURI);
 		}

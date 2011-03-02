@@ -11,11 +11,9 @@
 package org.eclipse.orion.server.git.servlets;
 
 import java.io.PrintWriter;
-
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.osgi.util.NLS;
@@ -25,10 +23,8 @@ import org.eclipse.osgi.util.NLS;
  */
 public class GenericGitHandler extends ServletResourceHandler<String> {
 
-	private ServletResourceHandler<IStatus> statusHandler;
-
 	GenericGitHandler(ServletResourceHandler<IStatus> statusHandler) {
-		this.statusHandler = statusHandler;
+		super();
 	}
 
 	@Override
@@ -36,7 +32,7 @@ public class GenericGitHandler extends ServletResourceHandler<String> {
 		//can only generically handle get
 		if (getMethod(request) != Method.GET)
 			return false;
-		
+
 		try {
 			PrintWriter writer = response.getWriter();
 			writer.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2 Final//EN\">"); //$NON-NLS-1$

@@ -13,7 +13,6 @@ package org.eclipse.orion.server.git.servlets;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.git.GitConstants;
@@ -23,15 +22,12 @@ import org.eclipse.orion.server.git.GitConstants;
  */
 public class GitHandlerV1 extends ServletResourceHandler<String> {
 
-	private ServletResourceHandler<IStatus> statusHandler;
-
 	private ServletResourceHandler<String> diffHandlerV1;
 	private ServletResourceHandler<String> statusHandlerV1;
 	private ServletResourceHandler<String> indexHandlerV1;
 	private ServletResourceHandler<String> cloneHandlerV1;
 
 	GitHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
-		this.statusHandler = statusHandler;
 		diffHandlerV1 = new GitDiffHandlerV1(statusHandler);
 		statusHandlerV1 = new GitStatusHandlerV1(statusHandler);
 		indexHandlerV1 = new GitIndexHandlerV1(statusHandler);
@@ -39,24 +35,18 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	@Override
-	public boolean handleRequest(HttpServletRequest request,
-			HttpServletResponse response, String gitPathInfo)
-			throws ServletException {
+	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String gitPathInfo) throws ServletException {
 
 		String[] infoParts = gitPathInfo.split("\\/", 3); //$NON-NLS-1$
 
 		if (infoParts[1].equals(GitConstants.DIFF_RESOURCE)) {
-			diffHandlerV1.handleRequest(request, response, infoParts[2]);
-			return true;
+			return diffHandlerV1.handleRequest(request, response, infoParts[2]);
 		} else if (infoParts[1].equals(GitConstants.STATUS_RESOURCE)) {
-			statusHandlerV1.handleRequest(request, response, infoParts[2]);
-			return true;
+			return statusHandlerV1.handleRequest(request, response, infoParts[2]);
 		} else if (infoParts[1].equals(GitConstants.INDEX_RESOURCE)) {
-			indexHandlerV1.handleRequest(request, response, infoParts[2]);
-			return true;
+			return indexHandlerV1.handleRequest(request, response, infoParts[2]);
 		} else if (infoParts[1].equals(GitConstants.CLONE_RESOURCE)) {
-			cloneHandlerV1.handleRequest(request, response, infoParts[2]);
-			return true;
+			return cloneHandlerV1.handleRequest(request, response, infoParts[2]);
 		}
 		return false;
 	}

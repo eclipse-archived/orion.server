@@ -11,11 +11,9 @@
 package org.eclipse.orion.server.git.servlets;
 
 import java.io.File;
-
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.lib.Repository;
@@ -37,31 +35,24 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	@Override
-	public boolean handleRequest(HttpServletRequest request,
-			HttpServletResponse response, String gitPathInfo)
-			throws ServletException {
+	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String gitPathInfo) throws ServletException {
 
 		try {
 			Path path = new Path(gitPathInfo);
-			File gitDir = GitUtils.getGitDir(path.uptoSegment(2),
-					request.getRemoteUser());
+			File gitDir = GitUtils.getGitDir(path.uptoSegment(2), request.getRemoteUser());
 			if (gitDir == null)
-				return false; // TODO: or a error response code, 405?
+				return false; // TODO: or an error response code, 405?
 			Repository repository = new FileRepository(gitDir);
 			Diff diff = new Diff(response.getOutputStream());
 			diff.setRepository(repository);
 			if (path.segmentCount() > 2)
-				diff.setPathFilter(PathFilter.create(path
-						.removeFirstSegments(2).toString()));
+				diff.setPathFilter(PathFilter.create(path.removeFirstSegments(2).toString()));
 			diff.run();
 			return true;
 
 		} catch (Exception e) {
-			String msg = NLS.bind(
-					"Failed to generate diff for {0}", gitPathInfo); //$NON-NLS-1$
-			statusHandler.handleRequest(request, response, new ServerStatus(
-					IStatus.ERROR,
-					HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+			String msg = NLS.bind("Failed to generate diff for {0}", gitPathInfo); //$NON-NLS-1$
+			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
 		}
 		return false;
 	}
