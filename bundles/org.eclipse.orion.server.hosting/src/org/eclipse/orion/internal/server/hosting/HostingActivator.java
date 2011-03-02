@@ -36,7 +36,8 @@ public class HostingActivator implements BundleActivator {
 
 	private void registerHostingService() {
 		int port = Integer.parseInt(System.getProperty("org.eclipse.equinox.http.jetty.http.port")); //$NON-NLS-1$
-		siteHostingService = new SiteHostingService(port);
+		SiteHostingConfig config = SiteHostingConfig.getSiteHostingConfig(port, System.getProperty("org.eclipse.orion.server.hosting.virtualHosts")); //$NON-NLS-1$
+		siteHostingService = new SiteHostingService(config);
 		siteHostingRegistration = bundleContext.registerService(ISiteHostingService.class, siteHostingService, null);
 	}
 

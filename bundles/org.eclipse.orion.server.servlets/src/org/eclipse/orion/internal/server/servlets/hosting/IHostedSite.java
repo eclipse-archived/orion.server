@@ -5,6 +5,11 @@ import java.util.Map;
 public interface IHostedSite {
 
 	/**
+	 * @return The id of the SiteConfiguration this hosted site was launched from.
+	 */
+	public String getSiteConfigurationId();
+
+	/**
 	 * @return Mappings defined by the site configuration that this hosted site was launched from.
 	 */
 	public Map<String, String> getMappings();

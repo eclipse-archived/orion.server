@@ -9,6 +9,7 @@ import org.json.*;
 
 class HostedSite implements IHostedSite {
 
+	private String siteConfigurationId;
 	private Map<String, String> mappings;
 	private String userName;
 	private String workspaceId;
@@ -16,6 +17,7 @@ class HostedSite implements IHostedSite {
 	private String editServer;
 
 	public HostedSite(SiteConfiguration siteConfig, WebUser user, String host, String editServer) {
+		this.siteConfigurationId = siteConfig.getId();
 		this.mappings = Collections.unmodifiableMap(createMap(siteConfig));
 		this.userName = user.getName();
 		this.workspaceId = siteConfig.getWorkspace();
@@ -43,6 +45,11 @@ class HostedSite implements IHostedSite {
 			}
 		}
 		return map;
+	}
+
+	@Override
+	public String getSiteConfigurationId() {
+		return siteConfigurationId;
 	}
 
 	@Override

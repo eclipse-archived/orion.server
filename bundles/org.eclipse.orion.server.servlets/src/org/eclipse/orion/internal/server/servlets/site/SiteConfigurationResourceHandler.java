@@ -155,7 +155,7 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 	private boolean handleDelete(HttpServletRequest request, HttpServletResponse response, SiteConfiguration siteConfig) throws CoreException {
 		WebUser user = WebUser.fromUserName(request.getRemoteUser());
 		ISiteHostingService hostingService = Activator.getDefault().getSiteHostingService();
-		IHostedSite runningSite = (IHostedSite) hostingService.get(siteConfig);
+		IHostedSite runningSite = (IHostedSite) hostingService.get(siteConfig, user);
 		if (runningSite != null) {
 			String msg = NLS.bind("Site configuration is running at {0}. Must be stopped before it can be deleted", runningSite.getHost());
 			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_CONFLICT, msg, null));
