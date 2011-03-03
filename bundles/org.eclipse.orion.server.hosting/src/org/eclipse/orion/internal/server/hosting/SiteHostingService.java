@@ -162,7 +162,7 @@ public class SiteHostingService implements ISiteHostingService {
 			// Next try IPs
 			if (host == null) {
 				for (InetAddress address : config.getIpAddresses()) {
-					String candidate = address.toString() + portSuffix;
+					String candidate = address.getHostAddress() + portSuffix;
 					if (isHosted(candidate)) {
 						continue;
 					} else {
