@@ -204,7 +204,7 @@ public class GitDiffTest extends GitTest {
 	 * Creates a request to get the diff result for the given location.
 	 * @param location Either an absolute URI, or a workspace-relative URI
 	 */
-	private WebRequest getGetGitDiffRequest(String location) {
+	static WebRequest getGetGitDiffRequest(String location) {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;

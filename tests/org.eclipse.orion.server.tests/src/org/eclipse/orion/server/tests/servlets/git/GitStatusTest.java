@@ -565,14 +565,105 @@ public class GitStatusTest extends GitTest {
 		assertEquals(0, statusArray.length());
 	}
 
-	private void assertChildLocation(JSONObject child, String fileContent) throws JSONException, IOException, SAXException {
+	@Test
+	public void testStatusDiff() throws IOException, SAXException, URISyntaxException, JSONException {
+		URI workspaceLocation = createWorkspace(getMethodName());
+
+		String projectName = getMethodName();
+		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
+
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		JSONObject project = new JSONObject(response.getText());
+		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
+		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
+		assertNotNull(projectId);
+
+		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+
+		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
+		assertNotNull(gitIndexUri);
+		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
+		assertNotNull(gitStatusUri);
+
+		WebRequest request = getPutFileRequest(projectId + "/test.txt", "in index");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// "git add {path}"
+		// TODO: don't create URIs out of thin air
+		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		request = getPutFileRequest(projectId + "/test.txt", "in working tree");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// GET /git/status/file/{proj}/
+		request = getGetGitStatusRequest(gitStatusUri);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject statusResponse = new JSONObject(response.getText());
+		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
+		assertEquals(1, statusArray.length());
+		JSONObject child = getChildByName(statusArray, "test.txt");
+		child = getChildByName(statusArray, "test.txt");
+		StringBuffer sb = new StringBuffer();
+		sb.append("diff --git a/test.txt b/test.txt").append("\n");
+		sb.append("index 0119635..b6fc4c6 100644").append("\n");
+		sb.append("--- a/test.txt").append("\n");
+		sb.append("+++ b/test.txt").append("\n");
+		sb.append("@@ -1 +1 @@").append("\n");
+		sb.append("-test").append("\n");
+		sb.append("\\ No newline at end of file").append("\n");
+		sb.append("+in index").append("\n");
+		sb.append("\\ No newline at end of file").append("\n");
+		// TODO: "git status --cached", bug 338760
+		//		assertChildDiff(child, sb.toString());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
+		assertEquals(1, statusArray.length());
+		sb.setLength(0);
+		sb.append("diff --git a/test.txt b/test.txt").append("\n");
+		sb.append("index 0123892..791a2b7 100644").append("\n");
+		sb.append("--- a/test.txt").append("\n");
+		sb.append("+++ b/test.txt").append("\n");
+		sb.append("@@ -1 +1 @@").append("\n");
+		sb.append("-in index").append("\n");
+		sb.append("\\ No newline at end of file").append("\n");
+		sb.append("+in working tree").append("\n");
+		sb.append("\\ No newline at end of file").append("\n");
+		assertChildDiff(child, sb.toString());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
+		assertEquals(0, statusArray.length());
+	}
+
+	private void assertChildLocation(JSONObject child, String expectedFileContent) throws JSONException, IOException, SAXException {
 		assertNotNull(child);
 		String location = child.getString(ProtocolConstants.KEY_LOCATION);
 		assertNotNull(location);
 		WebRequest request = getGetFilesRequest(location);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		assertEquals("Invalid file content", fileContent, response.getText());
+		assertEquals("Invalid file content", expectedFileContent, response.getText());
+	}
+
+	private void assertChildDiff(JSONObject child, String expectedDiff) throws IOException, SAXException {
+		assertNotNull(child);
+		JSONObject gitSection = child.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+		String gitDiffUri = gitSection.optString(GitConstants.KEY_DIFF, null);
+		assertNotNull(gitDiffUri);
+		WebRequest request = GitDiffTest.getGetGitDiffRequest(gitDiffUri);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals("Invalid file content", expectedDiff, response.getText());
 	}
 
 	private static JSONObject getChildByName(JSONArray array, String name) throws JSONException {
