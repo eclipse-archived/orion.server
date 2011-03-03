@@ -53,11 +53,12 @@
 	</target>
 	
 	<target name="junitTests" depends="installTests">
-		<fileset id="testLib.ref" dir="${buildDirectory}/test/eclipse/plugins" includes="org.eclipse.test*/library.xml" />
+		<dirset id="testLib.ref" dir="${buildDirectory}/test/eclipse/plugins" includes="org.eclipse.test_*" />
 		<property name="testLibrary" refid="testLib.ref" />
 		
 		<subant target="run">
-			<property name="library-file" value="${buildDirectory}/test/eclipse/plugins/${testLibrary}" />
+			<property name="junit-stylesheet" value="${buildDirectory}/test/eclipse/plugins/${testLibrary}/JUNIT.XSL" />
+            <property name="library-file" value="${buildDirectory}/test/eclipse/plugins/${testLibrary}/library.xml" />
 			<property name="eclipse-home" value="${buildDirectory}/test/eclipse" />
 			<fileset dir="${buildDirectory}/test/eclipse/plugins" includes="*/test.xml" excludes="org.eclipse.core.tests.resources_*/*" />
 			<property name="os" value="${osgi.os}" />
