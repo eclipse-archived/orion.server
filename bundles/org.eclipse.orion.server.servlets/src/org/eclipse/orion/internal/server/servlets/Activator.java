@@ -52,6 +52,8 @@ public class Activator implements BundleActivator, IAliasRegistry {
 	private ServiceRegistration<IWebResourceDecorator> transferDecoratorRegistration;
 	private ServiceRegistration<IWebResourceDecorator> parentDecoratorRegistration;
 
+	public static final String PROP_USER_AREA = "org.eclipse.orion.server.core.userArea"; //$NON-NLS-1$
+
 	public static Activator getDefault() {
 		return singleton;
 	}
@@ -128,39 +130,17 @@ public class Activator implements BundleActivator, IAliasRegistry {
 		if (location == null)
 			throw new RuntimeException("Unable to compute base file system location"); //$NON-NLS-1$
 
-		// try Git repo first
-		//		try {
-		//			String path = getPlatformLocation().append("SHARED_REPO").toString();
-		//			rootStoreURI = new URI("gitfs:/" + path + "?/");
-		//
-		//			// check that Git FS exists
-		//			EFS.getFileSystem("gitfs");
-		//
-		//			return;
-		//		} catch (URISyntaxException e) {
-		//			if (DEBUG)
-		//				System.out.println("Git repo is not accessible ");
-		//		} catch (CoreException e) {
-		//			if (DEBUG)
-		//				System.out.println("Git repo is not accessible ");
-		//		}
-
-		//		if (result == null)
-		//			// try Jackrabbit JCR repo
-		//			try {
-		//				result = EFS.getFileSystem("jackrabbit").getStore(new Path("//" + location.lastSegment()));
-		//			} catch (CoreException e) {
-		//				if (DEBUG)
-		//					System.out.println("Jackrabbit JCR repo is not accessible ");
-		//			}
-
-		// fall back to using local file system
 		IFileStore rootStore = EFS.getLocalFileSystem().getStore(location);
 		try {
 			rootStore.mkdir(EFS.NONE, null);
 			rootStoreURI = rootStore.toURI();
 		} catch (CoreException e) {
 			throw new RuntimeException("Instance location is read only: " + rootStore, e); //$NON-NLS-1$
+		}
+
+		//initialize user area if not specified
+		if (System.getProperty(PROP_USER_AREA) == null) {
+			System.setProperty(PROP_USER_AREA, rootStore.getFileStore(new Path(".metadata/.plugins/org.eclipse.orion.server.core/userArea")).toString()); //$NON-NLS-1$
 		}
 	}
 

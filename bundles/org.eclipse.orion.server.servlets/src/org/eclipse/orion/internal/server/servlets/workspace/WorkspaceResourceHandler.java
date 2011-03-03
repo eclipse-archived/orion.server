@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.workspace;
 
+import org.eclipse.orion.internal.server.servlets.Activator;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -379,7 +381,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 			}
 		}
 
-		String userArea = System.getProperty("org.eclipse.orion.server.core.userArea"); //$NON-NLS-1$
+		String userArea = System.getProperty(Activator.PROP_USER_AREA);
 		if (userArea == null)
 			return false;
 
