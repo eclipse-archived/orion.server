@@ -185,7 +185,7 @@ public class HostedSiteServlet extends OrionServlet {
 
 		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
-		// FIXME: forward headers, catch remote errors and send 502 (?)
+		// FIXME: forward headers, send X-Forwarded-For (?), catch remote errors and send 502 (?)
 		//				Enumeration<?> headerNames = req.getHeaderNames();
 		//				while (headerNames.hasMoreElements()) {
 		//					String name = (String) headerNames.nextElement();

@@ -9,6 +9,7 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.hosting.IHostedSite;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfiguration;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
+import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
 import org.eclipse.orion.server.core.LogHelper;
 import org.json.*;
 
@@ -29,22 +30,23 @@ public class HostedStatusDecorator implements IWebResourceDecorator {
 			return;
 
 		try {
+			WebUser webUser = getWebUser(req);
 			if (resourcePath.segmentCount() == 1) {
 				if ("GET".equals(req.getMethod())) { //$NON-NLS-1$
 					// GET /site/ (get all site configs) 
 					JSONArray siteConfigurations = representation.optJSONArray(SiteConfigurationConstants.KEY_SITE_CONFIGURATIONS);
 					if (siteConfigurations != null) {
 						for (int i = 0; i < siteConfigurations.length(); i++) {
-							addStatus(siteConfigurations.getJSONObject(i), resource);
+							addStatus(siteConfigurations.getJSONObject(i), webUser, resource);
 						}
 					}
 				} else if ("POST".equals(req.getMethod())) { //$NON-NLS-1$
 					// POST /site/ (create a site config)
-					addStatus(representation, resource);
+					addStatus(representation, webUser, resource);
 				}
 			} else if (resourcePath.segmentCount() == 2) {
-				// Decorating a request for individual site configuration
-				addStatus(representation, resource);
+				// GET /site/siteConfigId (get a single site config)
+				addStatus(representation, webUser, resource);
 			}
 		} catch (JSONException e) {
 			// Shouldn't happen, but since we are just decorating someone else's response we shouldn't cause a failure
@@ -52,16 +54,25 @@ public class HostedStatusDecorator implements IWebResourceDecorator {
 		}
 	}
 
+	private static WebUser getWebUser(HttpServletRequest req) {
+		String remoteUser = req.getRemoteUser();
+		if (remoteUser != null) {
+			return WebUser.fromUserName(remoteUser);
+		}
+		return null;
+	}
+
 	/**
 	 * Adds status field to a representation of a site configuration.
 	 * @param siteConfigJson The JSONObject representing a single site configuration.
+	 * @param user The user making the request.
 	 * @param resource The original request passed to the decorator.
 	 */
-	private void addStatus(JSONObject siteConfigJson, URI resource) throws JSONException {
+	private void addStatus(JSONObject siteConfigJson, WebUser user, URI resource) throws JSONException {
 		String id = siteConfigJson.getString(ProtocolConstants.KEY_ID);
 		SiteConfiguration siteConfiguration = SiteConfiguration.fromId(id);
 		SiteHostingService hostingService = HostingActivator.getDefault().getHostingService();
-		IHostedSite site = (IHostedSite) hostingService.get(siteConfiguration);
+		IHostedSite site = (IHostedSite) hostingService.get(siteConfiguration, user);
 		JSONObject hostingStatus = new JSONObject();
 		if (site != null) {
 			hostingStatus.put("Status", "started"); //$NON-NLS-1$//$NON-NLS-2$

@@ -6,8 +6,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.*;
-import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
-import org.eclipse.orion.internal.server.servlets.hosting.WrongHostingStatusException;
+import org.eclipse.orion.internal.server.servlets.hosting.*;
 import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
@@ -122,7 +121,10 @@ public class SiteConfigurationServlet extends OrionServlet {
 			}
 		} catch (WrongHostingStatusException e) {
 			// Give a descriptive status code for this case
-			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_CONFLICT, e.getMessage(), null));
+			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_CONFLICT, e.getMessage(), e));
+		} catch (NoMoreHostsException e) {
+			// Give a JSON response object instead of stack trace
+			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), e));
 		}
 	}
 

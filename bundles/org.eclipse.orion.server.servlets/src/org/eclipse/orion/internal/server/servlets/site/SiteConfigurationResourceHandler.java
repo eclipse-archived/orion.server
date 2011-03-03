@@ -75,10 +75,6 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 		if (mappings != null)
 			target.setMappings(mappings);
 
-		String authPassword = source.optString(SiteConfigurationConstants.KEY_AUTH_PASSWORD, null);
-		if (authPassword != null)
-			target.setAuthPassword(authPassword);
-
 		// Sanity check
 		if (target.getName() == null || target.getName().length() == 0)
 			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Name was not specified", null));
@@ -94,7 +90,6 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 		JSONObject result = WebElementResourceHandler.toJSON(siteConfig);
 		try {
 			result.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(baseLocation, siteConfig.getId()).toString());
-			result.putOpt(SiteConfigurationConstants.KEY_AUTH_PASSWORD, siteConfig.getAuthPassword());
 			result.putOpt(SiteConfigurationConstants.KEY_HOST_HINT, siteConfig.getHostHint());
 			result.putOpt(SiteConfigurationConstants.KEY_WORKSPACE, siteConfig.getWorkspace());
 			result.put(SiteConfigurationConstants.KEY_MAPPINGS, siteConfig.getMappingsJSON());
@@ -160,7 +155,7 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 	private boolean handleDelete(HttpServletRequest request, HttpServletResponse response, SiteConfiguration siteConfig) throws CoreException {
 		WebUser user = WebUser.fromUserName(request.getRemoteUser());
 		ISiteHostingService hostingService = Activator.getDefault().getSiteHostingService();
-		IHostedSite runningSite = (IHostedSite) hostingService.get(siteConfig);
+		IHostedSite runningSite = (IHostedSite) hostingService.get(siteConfig, user);
 		if (runningSite != null) {
 			String msg = NLS.bind("Site configuration is running at {0}. Must be stopped before it can be deleted", runningSite.getHost());
 			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_CONFLICT, msg, null));
