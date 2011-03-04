@@ -264,7 +264,7 @@ public class GitCommitTest extends GitTest {
 		// TODO: implement
 	}
 
-	private WebRequest getPostGitCommitRequest(String location, String message, boolean amend) throws JSONException {
+	static WebRequest getPostGitCommitRequest(String location, String message, boolean amend) throws JSONException {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;
@@ -281,7 +281,7 @@ public class GitCommitTest extends GitTest {
 		return request;
 	}
 
-	private WebRequest getGetGitCommitRequest(String location, String ref) {
+	static WebRequest getGetGitCommitRequest(String location, String ref) {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;
