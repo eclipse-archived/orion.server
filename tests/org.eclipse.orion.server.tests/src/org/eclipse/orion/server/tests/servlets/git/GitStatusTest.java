@@ -21,7 +21,6 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.RmCommand;
 import org.eclipse.jgit.api.errors.NoFilepatternException;
@@ -59,7 +58,6 @@ public class GitStatusTest extends GitTest {
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-
 		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
 		assertNotNull(gitStatusUri);
 
@@ -83,7 +81,7 @@ public class GitStatusTest extends GitTest {
 
 	// "status -s" > "A  new.txt", staged
 	@Test
-	public void testStatusAdded() throws IOException, SAXException, URISyntaxException, JSONException, NoFilepatternException {
+	public void testStatusAdded() throws IOException, SAXException, URISyntaxException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -100,18 +98,17 @@ public class GitStatusTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
-		// TODO: replace with REST API for adding to index when bug 338200 is fixed
-		Repository db = new FileRepository(new File(gitDir, Constants.DOT_GIT));
-		Git git = new Git(db);
-		AddCommand add = git.add();
-		add.addFilepattern(fileName);
-		add.call();
-
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-
+		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
+		assertNotNull(gitIndexUri);
 		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
 		assertNotNull(gitStatusUri);
+
+		// TODO: don't create URIs out of thin air
+		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "new.txt");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		request = getGetGitStatusRequest(gitStatusUri);
 		response = webConversation.getResponse(request);
@@ -140,7 +137,7 @@ public class GitStatusTest extends GitTest {
 
 	// "status -s" > "M  test.txt", staged
 	@Test
-	public void testStatusChanged() throws JSONException, IOException, SAXException, URISyntaxException, NoFilepatternException {
+	public void testStatusChanged() throws JSONException, IOException, SAXException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -156,18 +153,17 @@ public class GitStatusTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		// TODO: replace with REST API for adding to index when bug 338200 is fixed
-		Repository db = new FileRepository(new File(gitDir, Constants.DOT_GIT));
-		Git git = new Git(db);
-		AddCommand add = git.add();
-		add.addFilepattern("test.txt");
-		add.call();
-
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-
+		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
+		assertNotNull(gitIndexUri);
 		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
 		assertNotNull(gitStatusUri);
+
+		// TODO: don't create URIs out of thin air
+		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		request = getGetGitStatusRequest(gitStatusUri);
 		response = webConversation.getResponse(request);
@@ -190,7 +186,7 @@ public class GitStatusTest extends GitTest {
 
 	// "status -s" > "MM test.txt", portions staged for commit
 	@Test
-	public void testStatusChangedAndModified() throws JSONException, IOException, SAXException, URISyntaxException, NoFilepatternException {
+	public void testStatusChangedAndModified() throws JSONException, IOException, SAXException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -206,22 +202,21 @@ public class GitStatusTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		// TODO: replace with REST API for adding to index when bug 338200 is fixed
-		Repository db = new FileRepository(new File(gitDir, Constants.DOT_GIT));
-		Git git = new Git(db);
-		AddCommand add = git.add();
-		add.addFilepattern("test.txt");
-		add.call();
+		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
+		assertNotNull(gitIndexUri);
+		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
+		assertNotNull(gitStatusUri);
+
+		// TODO: don't create URIs out of thin air
+		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		request = getPutFileRequest(projectId + "/test.txt", "second change, in working tree");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
-
-		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
-		assertNotNull(gitStatusUri);
 
 		request = getGetGitStatusRequest(gitStatusUri);
 		response = webConversation.getResponse(request);
@@ -263,7 +258,6 @@ public class GitStatusTest extends GitTest {
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-
 		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
 		assertNotNull(gitStatusUri);
 
@@ -307,7 +301,6 @@ public class GitStatusTest extends GitTest {
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-
 		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
 		assertNotNull(gitStatusUri);
 
@@ -357,7 +350,6 @@ public class GitStatusTest extends GitTest {
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-
 		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
 		assertNotNull(gitStatusUri);
 
@@ -401,7 +393,6 @@ public class GitStatusTest extends GitTest {
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-
 		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
 		assertNotNull(gitStatusUri);
 
@@ -448,7 +439,6 @@ public class GitStatusTest extends GitTest {
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-
 		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
 		assertNotNull(gitStatusUri);
 
@@ -507,6 +497,7 @@ public class GitStatusTest extends GitTest {
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
 		assertEquals(1, statusArray.length());
 		assertEquals("folder/folder.txt", statusArray.getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
+		assertChildLocation(statusArray.getJSONObject(0), "folder change");
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
 		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
@@ -537,7 +528,6 @@ public class GitStatusTest extends GitTest {
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-
 		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
 		assertNotNull(gitStatusUri);
 
@@ -580,7 +570,6 @@ public class GitStatusTest extends GitTest {
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-
 		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
 		assertNotNull(gitIndexUri);
 		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
@@ -613,7 +602,7 @@ public class GitStatusTest extends GitTest {
 		child = getChildByName(statusArray, "test.txt");
 		StringBuffer sb = new StringBuffer();
 		sb.append("diff --git a/test.txt b/test.txt").append("\n");
-		sb.append("index 0119635..b6fc4c6 100644").append("\n");
+		sb.append("index 30d74d2..0123892 100644").append("\n");
 		sb.append("--- a/test.txt").append("\n");
 		sb.append("+++ b/test.txt").append("\n");
 		sb.append("@@ -1 +1 @@").append("\n");
@@ -621,12 +610,12 @@ public class GitStatusTest extends GitTest {
 		sb.append("\\ No newline at end of file").append("\n");
 		sb.append("+in index").append("\n");
 		sb.append("\\ No newline at end of file").append("\n");
-		// TODO: "git status --cached", bug 338760
-		//		assertChildDiff(child, sb.toString());
+		assertChildDiff(child, sb.toString());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
 		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
 		assertEquals(1, statusArray.length());
+		child = getChildByName(statusArray, "test.txt");
 		sb.setLength(0);
 		sb.append("diff --git a/test.txt b/test.txt").append("\n");
 		sb.append("index 0123892..791a2b7 100644").append("\n");
@@ -638,6 +627,59 @@ public class GitStatusTest extends GitTest {
 		sb.append("+in working tree").append("\n");
 		sb.append("\\ No newline at end of file").append("\n");
 		assertChildDiff(child, sb.toString());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
+		assertEquals(0, statusArray.length());
+	}
+
+	@Test
+	public void testStatusCommit() throws IOException, SAXException, URISyntaxException, JSONException {
+		URI workspaceLocation = createWorkspace(getMethodName());
+
+		String projectName = getMethodName();
+		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
+
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		JSONObject project = new JSONObject(response.getText());
+		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
+		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
+		assertNotNull(projectId);
+
+		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
+		assertNotNull(gitIndexUri);
+		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
+		assertNotNull(gitStatusUri);
+		String gitCommitUri = gitSection.optString(GitConstants.KEY_COMMIT, null);
+		assertNotNull(gitCommitUri);
+
+		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// "git add {path}"
+		// TODO: don't create URIs out of thin air
+		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// GET /git/status/file/{proj}/
+		request = getGetGitStatusRequest(gitStatusUri);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject statusResponse = new JSONObject(response.getText());
+		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
+		assertEquals(1, statusArray.length());
+		JSONObject child = getChildByName(statusArray, "test.txt");
+		assertChildHead(child, "test");
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
+		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
 		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
@@ -664,6 +706,18 @@ public class GitStatusTest extends GitTest {
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("Invalid file content", expectedDiff, response.getText());
+	}
+
+	private void assertChildHead(JSONObject child, String expectedFileContent) throws JSONException, IOException, SAXException {
+		assertNotNull(child);
+		JSONObject gitSection = child.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+		String commit = gitSection.getString(GitConstants.KEY_COMMIT);
+		assertNotNull(commit);
+		WebRequest request = GitCommitTest.getGetGitCommitRequest(commit, Constants.HEAD);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals("Invalid file content", expectedFileContent, response.getText());
 	}
 
 	private static JSONObject getChildByName(JSONArray array, String name) throws JSONException {

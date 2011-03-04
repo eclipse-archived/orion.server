@@ -50,6 +50,7 @@ public class GitUriTest extends GitTest {
 		assertNotNull(gitSection.optString(GitConstants.KEY_STATUS, null));
 		assertNotNull(gitSection.optString(GitConstants.KEY_DIFF, null));
 		assertNotNull(gitSection.optString(GitConstants.KEY_INDEX, null));
+		assertNotNull(gitSection.optString(GitConstants.KEY_COMMIT, null));
 	}
 
 	@Test
@@ -79,6 +80,7 @@ public class GitUriTest extends GitTest {
 		assertNotNull(gitSection.optString(GitConstants.KEY_STATUS, null));
 		assertNotNull(gitSection.optString(GitConstants.KEY_DIFF, null));
 		assertNotNull(gitSection.optString(GitConstants.KEY_INDEX, null));
+		assertNotNull(gitSection.optString(GitConstants.KEY_COMMIT, null));
 
 		String childrenLocation = project.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
 		assertNotNull(childrenLocation);
@@ -96,6 +98,7 @@ public class GitUriTest extends GitTest {
 			assertNotNull(gitSection.optString(GitConstants.KEY_STATUS, null));
 			assertNotNull(gitSection.optString(GitConstants.KEY_DIFF, null));
 			assertNotNull(gitSection.optString(GitConstants.KEY_INDEX, null));
+			assertNotNull(gitSection.optString(GitConstants.KEY_COMMIT, null));
 		}
 		childrenLocation = getChildByName(children, "folder").getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
 
@@ -112,6 +115,7 @@ public class GitUriTest extends GitTest {
 			assertNotNull(gitSection.optString(GitConstants.KEY_STATUS, null));
 			assertNotNull(gitSection.optString(GitConstants.KEY_DIFF, null));
 			assertNotNull(gitSection.optString(GitConstants.KEY_INDEX, null));
+			assertNotNull(gitSection.optString(GitConstants.KEY_COMMIT, null));
 		}
 	}
 
@@ -142,6 +146,7 @@ public class GitUriTest extends GitTest {
 		assertNull(files.optString(GitConstants.KEY_STATUS, null));
 		assertNull(files.optString(GitConstants.KEY_DIFF, null));
 		assertNull(files.optString(GitConstants.KEY_DIFF, null));
+		assertNull(files.optString(GitConstants.KEY_COMMIT, null));
 
 		assertTrue(emptyDir.delete());
 	}
@@ -176,6 +181,7 @@ public class GitUriTest extends GitTest {
 		assertNull(files.optString(GitConstants.KEY_STATUS, null));
 		assertNull(files.optString(GitConstants.KEY_DIFF, null));
 		assertNull(files.optString(GitConstants.KEY_DIFF, null));
+		assertNull(files.optString(GitConstants.KEY_COMMIT, null));
 
 		FileUtils.delete(dir, FileUtils.RECURSIVE);
 	}

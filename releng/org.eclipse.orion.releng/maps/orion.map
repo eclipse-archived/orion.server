@@ -3,6 +3,7 @@ plugin@org.eclipse.orion.client.core=GIT,tag=v20110228-1820,repo=dev.eclipse.org
 plugin@org.eclipse.orion.client.editor=GIT,tag=v20110228-1820,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.editor
 plugin@org.eclipse.orion.client.users.ui=GIT,tag=v20110222-1020,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.users.ui
 plugin@org.eclipse.orion.client.git=GIT,tag=v20110228-1820,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.git
+plugin@org.eclipse.orion.dojo=GIT,tag=v20110304-1000,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.dojo
 
 #server
 plugin@org.eclipse.orion.launching=GIT,tag=v20110113-1200,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.launching
@@ -33,8 +34,9 @@ plugin@org.eclipse.orion.doc.isv=GIT,tag=v20110124-1700,repo=dev.eclipse.org:/gi
 plugin@org.eclipse.e4.languages.javascript.framework=CVS,tag=v20101028-1345,cvsRoot=:pserver:anonymous@dev.eclipse.org:/cvsroot/eclipse,path=e4/org.eclipse.e4.languages/bundles/org.eclipse.e4.languages.javascript.framework
 plugin@org.eclipse.e4.languages.javascript.junit=CVS,tag=v20101028-1345,cvsRoot=:pserver:anonymous@dev.eclipse.org:/cvsroot/eclipse,path=e4/org.eclipse.e4.languages/bundles/org.eclipse.e4.languages.javascript.junit
 
-plugin@org.dojotoolkit=GET,http://git.eclipse.org/c/e4/org.eclipse.orion.server.git/plain/dependencies/org.dojotoolkit_1.5.0.v150-20100902-IBM.jar,unpack=true
-#plugin@org.dojotoolkit,1.5.0=p2IU,id=org.dojotoolkit,version=1.5.0.v20110120926,repository=http://download.eclipse.org/tools/orbit/downloads/drops/S20110124210048/repository
+#plugin@org.dojotoolkit=GET,http://git.eclipse.org/c/e4/org.eclipse.orion.server.git/plain/dependencies/org.dojotoolkit_1.5.0.v150-20100902-IBM.jar,unpack=true
+plugin@org.dojotoolkit,1.5.0=p2IU,id=org.dojotoolkit,version=1.5.0.v201101262320,repository=http://download.eclipse.org/tools/orbit/downloads/drops/I20110302135238/repository
+
 plugin@org.openajax=GET,http://git.eclipse.org/c/e4/org.eclipse.orion.server.git/plain/dependencies/org.openajax_2.0.3.v20101208-1555.jar,unpack=true
 plugin@openid4java=GET,http://git.eclipse.org/c/e4/org.eclipse.orion.server.git/plain/dependencies/openid4java_0.9.5.jar,unpack=true
 #plugin@org.openid4java,0.9.5=p2IU,id=org.openid4java,version=0.9.5.v20110120926,repository=http://download.eclipse.org/tools/orbit/downloads/drops/S20110124210048/repository

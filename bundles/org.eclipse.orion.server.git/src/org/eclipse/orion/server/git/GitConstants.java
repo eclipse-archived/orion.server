@@ -23,6 +23,8 @@ public class GitConstants {
 
 	public static final String CLONE_RESOURCE = "clone"; //$NON-NLS-1$
 
+	public static final String COMMIT_RESOURCE = "commit"; //$NON-NLS-1$
+
 	public static final String KEY_GIT = "Git"; //$NON-NLS-1$
 
 	public static final String KEY_DIFF = "DiffLocation"; //$NON-NLS-1$
@@ -30,6 +32,8 @@ public class GitConstants {
 	public static final String KEY_STATUS = "StatusLocation"; //$NON-NLS-1$
 
 	public static final String KEY_INDEX = "IndexLocation"; //$NON-NLS-1$
+
+	public static final String KEY_COMMIT = "CommitLocation"; //$NON-NLS-1$
 
 	public static final String KEY_URL = "GitUrl"; //$NON-NLS-1$
 
@@ -60,4 +64,12 @@ public class GitConstants {
 	public static final String KEY_STATUS_UNTRACKED = "Untracked"; //$NON-NLS-1$
 
 	public static final String KEY_RESET_TYPE = "Reset"; //$NON-NLS-1$
+
+	public static final String KEY_DIFF_DEFAULT = "Default"; //$NON-NLS-1$
+
+	public static final String KEY_DIFF_CACHED = "Cached"; //$NON-NLS-1$
+
+	public static final String KEY_COMMIT_MESSAGE = "Message"; //$NON-NLS-1$
+
+	public static final String KEY_COMMIT_AMEND = "Amend"; //$NON-NLS-1$
 }

@@ -57,21 +57,28 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 			diff.diff();
 
 			URI baseLocation = getURI(request);
+			baseLocation = stripOffPath(baseLocation);
 			JSONObject result = new JSONObject();
-			JSONArray children = toJSONArray(diff.getAdded(), baseLocation);
+			JSONArray children = toJSONArray(diff.getAdded(), baseLocation,
+					GitConstants.KEY_DIFF_DEFAULT);
 			result.put(GitConstants.KEY_STATUS_ADDED, children);
 			// TODO:
 			// children = toJSONArray(diff.getAssumeUnchanged());
 			// result.put(ProtocolConstants.KEY_CHILDREN, children);
-			children = toJSONArray(diff.getChanged(), baseLocation);
+			children = toJSONArray(diff.getChanged(), baseLocation,
+					GitConstants.KEY_DIFF_CACHED);
 			result.put(GitConstants.KEY_STATUS_CHANGED, children);
-			children = toJSONArray(diff.getMissing(), baseLocation);
+			children = toJSONArray(diff.getMissing(), baseLocation,
+					GitConstants.KEY_DIFF_DEFAULT);
 			result.put(GitConstants.KEY_STATUS_MISSING, children);
-			children = toJSONArray(diff.getModified(), baseLocation);
+			children = toJSONArray(diff.getModified(), baseLocation,
+					GitConstants.KEY_DIFF_DEFAULT);
 			result.put(GitConstants.KEY_STATUS_MODIFIED, children);
-			children = toJSONArray(diff.getRemoved(), baseLocation);
+			children = toJSONArray(diff.getRemoved(), baseLocation,
+					GitConstants.KEY_DIFF_CACHED);
 			result.put(GitConstants.KEY_STATUS_REMOVED, children);
-			children = toJSONArray(diff.getUntracked(), baseLocation);
+			children = toJSONArray(diff.getUntracked(), baseLocation,
+					GitConstants.KEY_DIFF_DEFAULT);
 			result.put(GitConstants.KEY_STATUS_UNTRACKED, children);
 
 			OrionServlet.writeJSONResponse(request, response, result);
@@ -85,29 +92,37 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 		}
 	}
 
-	private JSONArray toJSONArray(Set<String> set, URI baseLocation)
-			throws JSONException, URISyntaxException {
+	private URI stripOffPath(URI u) throws URISyntaxException {
+		Path uriPath = new Path(u.getPath());
+		return new URI(u.getScheme(), u.getUserInfo(), u.getHost(),
+				u.getPort(), uriPath.uptoSegment(4).toString(), u.getQuery(),
+				u.getFragment());
+
+	}
+
+	private JSONArray toJSONArray(Set<String> set, URI baseLocation,
+			String diffType) throws JSONException, URISyntaxException {
 		JSONArray result = new JSONArray();
 		for (String s : set) {
 			JSONObject object = new JSONObject();
+
 			object.put(ProtocolConstants.KEY_NAME, s);
 			URI fileLocation = statusToFileLocation(baseLocation);
-			if (fileLocation.getPath().endsWith("/")) { //$NON-NLS-1$
-				object.put(ProtocolConstants.KEY_LOCATION,
-						URIUtil.append(fileLocation, s));
-			} else {
-				object.put(ProtocolConstants.KEY_LOCATION, fileLocation);
-			}
+			object.put(ProtocolConstants.KEY_LOCATION,
+					URIUtil.append(fileLocation, s));
 
 			JSONObject gitSection = new JSONObject();
-			URI diffLocation = statusToDiffLocation(baseLocation);
-			if (diffLocation.getPath().endsWith("/")) { //$NON-NLS-1$
-				gitSection.put(GitConstants.KEY_DIFF,
-						URIUtil.append(diffLocation, s));
-			} else {
-				gitSection.put(GitConstants.KEY_DIFF, diffLocation);
-			}
+			URI diffLocation = statusToDiffLocation(baseLocation, diffType);
+			gitSection.put(GitConstants.KEY_DIFF,
+					URIUtil.append(diffLocation, s));
 			object.put(GitConstants.KEY_GIT, gitSection);
+
+			URI commitLocation = statusToCommitLocation(baseLocation,
+					Constants.HEAD);
+			gitSection.put(GitConstants.KEY_COMMIT,
+					URIUtil.append(commitLocation, s));
+			object.put(GitConstants.KEY_GIT, gitSection);
+
 			result.put(object);
 		}
 		return result;
@@ -122,13 +137,26 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 				u.getPort(), uriPath, u.getQuery(), u.getFragment());
 	}
 
-	private URI statusToDiffLocation(URI u) throws URISyntaxException {
+	private URI statusToDiffLocation(URI u, String diffType)
+			throws URISyntaxException {
 		String uriPath = u.getPath();
 		uriPath = uriPath
 				.substring((GitServlet.GIT_URI + "/" + GitConstants.STATUS_RESOURCE) //$NON-NLS-1$
 						.length());
 		uriPath = GitServlet.GIT_URI
-				+ "/" + GitConstants.DIFF_RESOURCE + uriPath; //$NON-NLS-1$
+				+ "/" + GitConstants.DIFF_RESOURCE + "/" + diffType + uriPath; //$NON-NLS-1$ //$NON-NLS-2$
+		return new URI(u.getScheme(), u.getUserInfo(), u.getHost(),
+				u.getPort(), uriPath, u.getQuery(), u.getFragment());
+	}
+
+	private URI statusToCommitLocation(URI u, String ref)
+			throws URISyntaxException {
+		String uriPath = u.getPath();
+		uriPath = uriPath
+				.substring((GitServlet.GIT_URI + "/" + GitConstants.STATUS_RESOURCE) //$NON-NLS-1$
+						.length());
+		uriPath = GitServlet.GIT_URI
+				+ "/" + GitConstants.COMMIT_RESOURCE + "/" + ref + uriPath; //$NON-NLS-1$ //$NON-NLS-2$
 		return new URI(u.getScheme(), u.getUserInfo(), u.getHost(),
 				u.getPort(), uriPath, u.getQuery(), u.getFragment());
 	}
