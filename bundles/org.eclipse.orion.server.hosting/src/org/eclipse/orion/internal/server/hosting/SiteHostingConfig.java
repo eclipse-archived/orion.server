@@ -27,7 +27,7 @@ import org.eclipse.orion.server.core.LogHelper;
  * for example <code>site1.myorion.net</code>, <code>site2.myorion.net</code>, etc.</dd>
  * 
  * <dt><code>IPs=127.0.0.2,domains=*.myorion.net</code></dt>
- * <dd>Equivalent to the previous example; when both domains and IPs are provided, domains are used first.</dd>
+ * <dd>Equivalent to the previous example; when both domains and IPs are provided, domains are given priority.</dd>
  * </dl>
  */
 public class SiteHostingConfig {
@@ -136,6 +136,8 @@ public class SiteHostingConfig {
 	 */
 	private static SiteHostingConfig getDefault(int port) {
 		Set<InetAddress> aliases = new HashSet<InetAddress>();
+
+		// TODO: this guessing is fragile and only useful for self-hosting. Remove it
 		if (System.getProperty("os.name").startsWith("Mac OS X")) { //$NON-NLS-1$ //$NON-NLS-2$
 			// In OS X, although all 127.x.x.x addresses report isLoopback() == true, only 127.0.0.1
 			// actually routes to localhost. So we can't do much here.
