@@ -99,6 +99,13 @@ public class GitFileDecorator implements IWebResourceDecorator {
 				path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_INDEX, link.toString());
 
+		// add Git Commit URI
+		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.COMMIT_RESOURCE)
+				.append(targetPath);
+		link = new URI(resource.getScheme(), resource.getAuthority(),
+				path.toString(), null, null);
+		gitSection.put(GitConstants.KEY_COMMIT, link.toString());
+
 		representation.put(GitConstants.KEY_GIT, gitSection);
 	}
 }

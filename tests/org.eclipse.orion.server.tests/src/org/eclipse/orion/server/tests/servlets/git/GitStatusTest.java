@@ -81,7 +81,7 @@ public class GitStatusTest extends GitTest {
 
 	// "status -s" > "A  new.txt", staged
 	@Test
-	public void testStatusAdded() throws IOException, SAXException, URISyntaxException, JSONException, NoFilepatternException {
+	public void testStatusAdded() throws IOException, SAXException, URISyntaxException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -137,7 +137,7 @@ public class GitStatusTest extends GitTest {
 
 	// "status -s" > "M  test.txt", staged
 	@Test
-	public void testStatusChanged() throws JSONException, IOException, SAXException, URISyntaxException, NoFilepatternException {
+	public void testStatusChanged() throws JSONException, IOException, SAXException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -186,7 +186,7 @@ public class GitStatusTest extends GitTest {
 
 	// "status -s" > "MM test.txt", portions staged for commit
 	@Test
-	public void testStatusChangedAndModified() throws JSONException, IOException, SAXException, URISyntaxException, NoFilepatternException {
+	public void testStatusChangedAndModified() throws JSONException, IOException, SAXException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
