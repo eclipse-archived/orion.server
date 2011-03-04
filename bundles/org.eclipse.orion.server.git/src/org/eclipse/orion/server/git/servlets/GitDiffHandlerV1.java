@@ -21,6 +21,7 @@ import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
 import org.eclipse.orion.internal.server.servlets.ServerStatus;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.osgi.util.NLS;
 
 /**
@@ -35,24 +36,32 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	@Override
-	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String gitPathInfo) throws ServletException {
+	public boolean handleRequest(HttpServletRequest request,
+			HttpServletResponse response, String gitPathInfo)
+			throws ServletException {
 
 		try {
 			Path path = new Path(gitPathInfo);
-			File gitDir = GitUtils.getGitDir(path.uptoSegment(2), request.getRemoteUser());
+			File gitDir = GitUtils.getGitDir(path.removeFirstSegments(1)
+					.uptoSegment(2), request.getRemoteUser());
 			if (gitDir == null)
 				return false; // TODO: or an error response code, 405?
 			Repository repository = new FileRepository(gitDir);
 			Diff diff = new Diff(response.getOutputStream());
 			diff.setRepository(repository);
-			if (path.segmentCount() > 2)
-				diff.setPathFilter(PathFilter.create(path.removeFirstSegments(2).toString()));
+			diff.setCached(path.segment(0).equals(GitConstants.KEY_DIFF_CACHED));
+			if (path.segmentCount() > 3)
+				diff.setPathFilter(PathFilter.create(path
+						.removeFirstSegments(3).toString()));
 			diff.run();
 			return true;
 
 		} catch (Exception e) {
-			String msg = NLS.bind("Failed to generate diff for {0}", gitPathInfo); //$NON-NLS-1$
-			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+			String msg = NLS.bind(
+					"Failed to generate diff for {0}", gitPathInfo); //$NON-NLS-1$
+			statusHandler.handleRequest(request, response, new ServerStatus(
+					IStatus.ERROR,
+					HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
 		}
 		return false;
 	}

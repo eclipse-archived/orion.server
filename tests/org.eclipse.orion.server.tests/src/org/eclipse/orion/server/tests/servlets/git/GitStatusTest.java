@@ -613,7 +613,7 @@ public class GitStatusTest extends GitTest {
 		child = getChildByName(statusArray, "test.txt");
 		StringBuffer sb = new StringBuffer();
 		sb.append("diff --git a/test.txt b/test.txt").append("\n");
-		sb.append("index 0119635..b6fc4c6 100644").append("\n");
+		sb.append("index 30d74d2..0123892 100644").append("\n");
 		sb.append("--- a/test.txt").append("\n");
 		sb.append("+++ b/test.txt").append("\n");
 		sb.append("@@ -1 +1 @@").append("\n");
@@ -621,12 +621,12 @@ public class GitStatusTest extends GitTest {
 		sb.append("\\ No newline at end of file").append("\n");
 		sb.append("+in index").append("\n");
 		sb.append("\\ No newline at end of file").append("\n");
-		// TODO: "git status --cached", bug 338760
-		//		assertChildDiff(child, sb.toString());
+		assertChildDiff(child, sb.toString());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
 		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
 		assertEquals(1, statusArray.length());
+		child = getChildByName(statusArray, "test.txt");
 		sb.setLength(0);
 		sb.append("diff --git a/test.txt b/test.txt").append("\n");
 		sb.append("index 0123892..791a2b7 100644").append("\n");
