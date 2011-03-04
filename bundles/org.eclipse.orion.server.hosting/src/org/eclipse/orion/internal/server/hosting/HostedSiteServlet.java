@@ -28,7 +28,8 @@ import org.json.JSONException;
 public class HostedSiteServlet extends OrionServlet {
 	private static final long serialVersionUID = 1L;
 
-	private static final String WORKSPACE_SERVLET_ALIAS = "/workspace/"; //$NON-NLS-1$
+	private static final String WORKSPACE_SERVLET_ALIAS = "/workspace"; //$NON-NLS-1$
+	private static final String FILE_SERVLET_ALIAS = "/file"; //$NON-NLS-1$
 
 	// FIXME these variables are copied from fileservlet
 	private ServletResourceHandler<IFileStore> fileSerializer;
@@ -110,7 +111,7 @@ public class HostedSiteServlet extends OrionServlet {
 	private void serveOrionFile(HttpServletRequest req, HttpServletResponse resp, IHostedSite site, IPath path) throws ServletException {
 		String userName = site.getUserName();
 		String workspaceId = site.getWorkspaceId();
-		String workspaceUri = WORKSPACE_SERVLET_ALIAS + workspaceId;
+		String workspaceUri = WORKSPACE_SERVLET_ALIAS + "/" + workspaceId; //$NON-NLS-1$
 		boolean allow = false;
 		// Check that user who launched the hosted site really has access to the workspace
 		try {
@@ -146,8 +147,8 @@ public class HostedSiteServlet extends OrionServlet {
 	}
 
 	private void addEditHeaders(HttpServletResponse resp, IHostedSite site, IPath path) {
-		resp.addHeader("X-Edit-Server", site.getEditServerUrl() + "/coding.html#");
-		resp.addHeader("X-Edit-Token", path.toString());
+		resp.addHeader("X-Edit-Server", site.getEditServerUrl() + "/coding.html#"); //$NON-NLS-1$ //$NON-NLS-2$
+		resp.addHeader("X-Edit-Token", FILE_SERVLET_ALIAS + path.toString()); //$NON-NLS-1$
 	}
 
 	// temp code for grabbing files from filesystem
