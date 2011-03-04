@@ -21,7 +21,6 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.RmCommand;
 import org.eclipse.jgit.api.errors.NoFilepatternException;
@@ -59,7 +58,6 @@ public class GitStatusTest extends GitTest {
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-
 		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
 		assertNotNull(gitStatusUri);
 
@@ -100,18 +98,17 @@ public class GitStatusTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
-		// TODO: replace with REST API for adding to index when bug 338200 is fixed
-		Repository db = new FileRepository(new File(gitDir, Constants.DOT_GIT));
-		Git git = new Git(db);
-		AddCommand add = git.add();
-		add.addFilepattern(fileName);
-		add.call();
-
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-
+		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
+		assertNotNull(gitIndexUri);
 		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
 		assertNotNull(gitStatusUri);
+
+		// TODO: don't create URIs out of thin air
+		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "new.txt");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		request = getGetGitStatusRequest(gitStatusUri);
 		response = webConversation.getResponse(request);
@@ -156,18 +153,17 @@ public class GitStatusTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		// TODO: replace with REST API for adding to index when bug 338200 is fixed
-		Repository db = new FileRepository(new File(gitDir, Constants.DOT_GIT));
-		Git git = new Git(db);
-		AddCommand add = git.add();
-		add.addFilepattern("test.txt");
-		add.call();
-
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-
+		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
+		assertNotNull(gitIndexUri);
 		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
 		assertNotNull(gitStatusUri);
+
+		// TODO: don't create URIs out of thin air
+		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		request = getGetGitStatusRequest(gitStatusUri);
 		response = webConversation.getResponse(request);
@@ -206,22 +202,21 @@ public class GitStatusTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		// TODO: replace with REST API for adding to index when bug 338200 is fixed
-		Repository db = new FileRepository(new File(gitDir, Constants.DOT_GIT));
-		Git git = new Git(db);
-		AddCommand add = git.add();
-		add.addFilepattern("test.txt");
-		add.call();
+		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
+		assertNotNull(gitIndexUri);
+		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
+		assertNotNull(gitStatusUri);
+
+		// TODO: don't create URIs out of thin air
+		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		request = getPutFileRequest(projectId + "/test.txt", "second change, in working tree");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
-
-		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
-		assertNotNull(gitStatusUri);
 
 		request = getGetGitStatusRequest(gitStatusUri);
 		response = webConversation.getResponse(request);
@@ -263,7 +258,6 @@ public class GitStatusTest extends GitTest {
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-
 		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
 		assertNotNull(gitStatusUri);
 
@@ -307,7 +301,6 @@ public class GitStatusTest extends GitTest {
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-
 		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
 		assertNotNull(gitStatusUri);
 
@@ -357,7 +350,6 @@ public class GitStatusTest extends GitTest {
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-
 		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
 		assertNotNull(gitStatusUri);
 
@@ -401,7 +393,6 @@ public class GitStatusTest extends GitTest {
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-
 		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
 		assertNotNull(gitStatusUri);
 
@@ -448,7 +439,6 @@ public class GitStatusTest extends GitTest {
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-
 		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
 		assertNotNull(gitStatusUri);
 
@@ -537,7 +527,6 @@ public class GitStatusTest extends GitTest {
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-
 		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
 		assertNotNull(gitStatusUri);
 
@@ -580,7 +569,6 @@ public class GitStatusTest extends GitTest {
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-
 		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
 		assertNotNull(gitIndexUri);
 		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
