@@ -11,11 +11,12 @@ import org.eclipse.orion.server.core.LogHelper;
  * that sites will be accessed on. The server administrator can control the IP/domain configuration
  * by passing a parameter to the Orion server at launch.<p>
  * 
- * The parameter is a string with the form <code>domains=domain-list</code> or <code>IPs=ipList</code>,
+ * The parameter is a string with the form <code>[domains=domainList][,][IPs=ipList]</code>,
  * where <code>domainList</code> is a comma-separated list of domains (which may include wildcards), and
  * <code>ipList</code> is a comma-separated list of IP addresses.<p>
  * 
- * Examples:<dl>
+ * Examples:
+ * <dl>
  * <dt><code>IPs=127.0.0.2,127.0.0.3</code></dt>
  * <dd>Makes 2 IPs available for allocation.</dd>
  * 
