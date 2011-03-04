@@ -57,6 +57,7 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 			diff.diff();
 
 			URI baseLocation = getURI(request);
+			baseLocation = stripOffPath(baseLocation);
 			JSONObject result = new JSONObject();
 			JSONArray children = toJSONArray(diff.getAdded(), baseLocation,
 					GitConstants.KEY_DIFF_DEFAULT);
@@ -91,6 +92,14 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 		}
 	}
 
+	private URI stripOffPath(URI u) throws URISyntaxException {
+		Path uriPath = new Path(u.getPath());
+		return new URI(u.getScheme(), u.getUserInfo(), u.getHost(),
+				u.getPort(), uriPath.uptoSegment(4).toString(), u.getQuery(),
+				u.getFragment());
+
+	}
+
 	private JSONArray toJSONArray(Set<String> set, URI baseLocation,
 			String diffType) throws JSONException, URISyntaxException {
 		JSONArray result = new JSONArray();
@@ -98,21 +107,13 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 			JSONObject object = new JSONObject();
 			object.put(ProtocolConstants.KEY_NAME, s);
 			URI fileLocation = statusToFileLocation(baseLocation);
-			if (isFolderLocation(fileLocation)) {
-				object.put(ProtocolConstants.KEY_LOCATION,
-						URIUtil.append(fileLocation, s));
-			} else {
-				object.put(ProtocolConstants.KEY_LOCATION, fileLocation);
-			}
+			object.put(ProtocolConstants.KEY_LOCATION,
+					URIUtil.append(fileLocation, s));
 
 			JSONObject gitSection = new JSONObject();
 			URI diffLocation = statusToDiffLocation(baseLocation, diffType);
-			if (isFolderLocation(diffLocation)) {
-				gitSection.put(GitConstants.KEY_DIFF,
-						URIUtil.append(diffLocation, s));
-			} else {
-				gitSection.put(GitConstants.KEY_DIFF, diffLocation);
-			}
+			gitSection.put(GitConstants.KEY_DIFF,
+					URIUtil.append(diffLocation, s));
 			object.put(GitConstants.KEY_GIT, gitSection);
 			result.put(object);
 		}
@@ -138,9 +139,5 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 				+ "/" + GitConstants.DIFF_RESOURCE + "/" + diffType + uriPath; //$NON-NLS-1$ //$NON-NLS-2$
 		return new URI(u.getScheme(), u.getUserInfo(), u.getHost(),
 				u.getPort(), uriPath, u.getQuery(), u.getFragment());
-	}
-
-	private boolean isFolderLocation(URI location) {
-		return location.getPath().endsWith("/"); //$NON-NLS-1$
 	}
 }

@@ -497,6 +497,7 @@ public class GitStatusTest extends GitTest {
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
 		assertEquals(1, statusArray.length());
 		assertEquals("folder/folder.txt", statusArray.getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
+		assertChildLocation(statusArray.getJSONObject(0), "folder change");
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
 		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
