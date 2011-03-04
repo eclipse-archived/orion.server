@@ -633,6 +633,59 @@ public class GitStatusTest extends GitTest {
 		assertEquals(0, statusArray.length());
 	}
 
+	@Test
+	public void testStatusCommit() throws IOException, SAXException, URISyntaxException, JSONException {
+		URI workspaceLocation = createWorkspace(getMethodName());
+
+		String projectName = getMethodName();
+		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
+
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		JSONObject project = new JSONObject(response.getText());
+		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
+		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
+		assertNotNull(projectId);
+
+		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
+		assertNotNull(gitIndexUri);
+		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
+		assertNotNull(gitStatusUri);
+		String gitCommitUri = gitSection.optString(GitConstants.KEY_COMMIT, null);
+		assertNotNull(gitCommitUri);
+
+		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// "git add {path}"
+		// TODO: don't create URIs out of thin air
+		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// GET /git/status/file/{proj}/
+		request = getGetGitStatusRequest(gitStatusUri);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject statusResponse = new JSONObject(response.getText());
+		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
+		assertEquals(1, statusArray.length());
+		JSONObject child = getChildByName(statusArray, "test.txt");
+		assertChildHead(child, "test");
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
+		assertEquals(0, statusArray.length());
+	}
+
 	private void assertChildLocation(JSONObject child, String expectedFileContent) throws JSONException, IOException, SAXException {
 		assertNotNull(child);
 		String location = child.getString(ProtocolConstants.KEY_LOCATION);
@@ -653,6 +706,18 @@ public class GitStatusTest extends GitTest {
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("Invalid file content", expectedDiff, response.getText());
+	}
+
+	private void assertChildHead(JSONObject child, String expectedFileContent) throws JSONException, IOException, SAXException {
+		assertNotNull(child);
+		JSONObject gitSection = child.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+		String commit = gitSection.getString(GitConstants.KEY_COMMIT);
+		assertNotNull(commit);
+		WebRequest request = GitCommitTest.getGetGitCommitRequest(commit, Constants.HEAD);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals("Invalid file content", expectedFileContent, response.getText());
 	}
 
 	private static JSONObject getChildByName(JSONArray array, String name) throws JSONException {
