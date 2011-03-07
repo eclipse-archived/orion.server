@@ -255,13 +255,13 @@ public class GitCommitTest extends GitTest {
 	@Test
 	@Ignore("not yet implemented")
 	public void testCommitLog() {
-		// TODO: implement
+		// TODO: implement, see bug 339104
 	}
 
 	@Test
 	@Ignore("not yet implemented")
 	public void testCommitLogWithPath() {
-		// TODO: implement
+		// TODO: implement, see bug 339104
 	}
 
 	@Test
