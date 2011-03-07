@@ -10,14 +10,14 @@
 			provider.registerServiceProvider("profilePlugin", {
 				info : function() {
 					return {
-						name : "Git Information",
+						name : "Git (Defaults used to configure clones)",
 					};
 				},
 				getDivContent: function() {
 				  	var content = {"sections" : [
-				  	                             {"id": "gitInformation", "name" : "Git Information", "data" : [
-				  	                                                                                            {"type": "TextBox", "props": {"id": "git_mail", "readOnly" : false,  "type" : "password", "name" : "gitMail"}, "label" : "Git Mail"},
-				  	                                                                                            {"type": "TextBox", "props": {"id": "git_name", "readOnly" : false,  "type" : "password", "name" : "gitName"}, "label" : "Git Name"}
+				  	                             {"id": "gitInformation", "name" : "Git (Defaults used to configure clones)", "data" : [
+				  	                                                                                            {"type": "TextBox", "props": {"id": "git_mail", "readOnly" : false, "name" : "GitMail"}, "label" : "Git Mail"},
+				  	                                                                                            {"type": "TextBox", "props": {"id": "git_name", "readOnly" : false, "name" : "GitName"}, "label" : "Git Name"}
 				  	                                                                                            ]
 				  	                             }
 				  	                             ]
