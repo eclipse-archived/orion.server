@@ -75,7 +75,7 @@ public class CoreFilesTest extends FileSystemTest {
 		createDirectory(directoryPath);
 		createFile(sourcePath, "This is the contents");
 		JSONObject requestObject = new JSONObject();
-		requestObject.put("Location", sourcePath);
+		addSourceLocation(requestObject, sourcePath);
 		WebRequest request = getPostFilesRequest(directoryPath, requestObject.toString(), "destination.txt");
 		request.setHeaderField("X-Create-Options", "copy");
 		WebResponse response = webConversation.getResponse(request);
@@ -98,7 +98,7 @@ public class CoreFilesTest extends FileSystemTest {
 
 		//with no-overwrite, copy should fail
 		JSONObject requestObject = new JSONObject();
-		requestObject.put("Location", sourcePath);
+		addSourceLocation(requestObject, sourcePath);
 		WebRequest request = getPostFilesRequest(directoryPath, requestObject.toString(), "destination.txt");
 		request.setHeaderField("X-Create-Options", "copy,no-overwrite");
 		WebResponse response = webConversation.getResponse(request);
@@ -346,7 +346,7 @@ public class CoreFilesTest extends FileSystemTest {
 		createDirectory(directoryPath);
 		createFile(sourcePath, "This is the contents");
 		JSONObject requestObject = new JSONObject();
-		requestObject.put("Location", sourcePath);
+		addSourceLocation(requestObject, sourcePath);
 		WebRequest request = getPostFilesRequest(directoryPath, requestObject.toString(), "destination.txt");
 		request.setHeaderField("X-Create-Options", "move");
 		WebResponse response = webConversation.getResponse(request);
@@ -355,6 +355,10 @@ public class CoreFilesTest extends FileSystemTest {
 		checkFileMetadata(responseObject, destName, null, null, null, null, null, null, null);
 		assertFalse(checkFileExists(sourcePath));
 		assertTrue(checkFileExists(destPath));
+	}
+
+	private void addSourceLocation(JSONObject requestObject, String sourcePath) throws JSONException {
+		requestObject.put("Location", new Path(FileSystemTest.FILE_SERVLET_LOCATION).append(sourcePath));
 	}
 
 	@Test
@@ -369,7 +373,7 @@ public class CoreFilesTest extends FileSystemTest {
 
 		//with no-overwrite, move should fail
 		JSONObject requestObject = new JSONObject();
-		requestObject.put("Location", sourcePath);
+		addSourceLocation(requestObject, sourcePath);
 		WebRequest request = getPostFilesRequest(directoryPath, requestObject.toString(), "destination.txt");
 		request.setHeaderField("X-Create-Options", "copy,no-overwrite");
 		WebResponse response = webConversation.getResponse(request);

@@ -35,10 +35,7 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 
 	private final ServletResourceHandler<IStatus> statusHandler;
 
-	private final URI rootStoreURI;
-
 	public DirectoryHandlerV1(URI rootStoreURI, ServletResourceHandler<IStatus> statusHandler) {
-		this.rootStoreURI = rootStoreURI;
 		this.statusHandler = statusHandler;
 	}
 
@@ -135,10 +132,7 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 			return false;
 		}
 		try {
-			URI sourceLocation = new URI(locationString);
-			//resolve relative URI against request URI
-			String sourcePath = getURI(request).resolve(sourceLocation).getPath();
-			IFileStore source = EFS.getStore(Util.getURIWithAuthority(rootStoreURI, request.getRemoteUser())).getFileStore(new Path(sourcePath));
+			IFileStore source = resolveSourceLocation(request, locationString);
 			//note we checked in preconditions that overwrite is ok here
 			try {
 				if (isCopy)
@@ -158,6 +152,20 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 			return false;
 		}
 		return true;
+	}
+
+	/**
+	 * Maps the client-facing location URL of a file or directory back to the local
+	 * file system path on the server.
+	 */
+	private IFileStore resolveSourceLocation(HttpServletRequest request, String locationString) throws URISyntaxException, CoreException {
+		URI sourceLocation = new URI(locationString);
+		//resolve relative URI against request URI
+		String sourcePath = getURI(request).resolve(sourceLocation).getPath();
+		//first segment is the servlet path
+		IPath path = new Path(sourcePath).removeFirstSegments(1);
+		IFileStore source = NewFileServlet.getFileStore(path, request.getRemoteUser());
+		return source;
 	}
 
 	/**
