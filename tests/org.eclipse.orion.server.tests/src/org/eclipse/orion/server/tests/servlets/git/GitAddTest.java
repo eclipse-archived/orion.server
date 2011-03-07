@@ -53,7 +53,6 @@ public class GitAddTest extends GitTest {
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-
 		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
 		assertNotNull(gitIndexUri);
 		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
