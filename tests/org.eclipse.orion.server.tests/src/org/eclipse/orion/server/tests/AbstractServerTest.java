@@ -26,7 +26,7 @@ import org.eclipse.orion.server.useradmin.UserServiceHelper;
 import com.meterware.httpunit.WebRequest;
 
 /**
- * Base class for all Eclipse Web server tests. Providers helper methods common
+ * Base class for all Orion server tests. Providers helper methods common
  * to all server tests.
  */
 public class AbstractServerTest {
