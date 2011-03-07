@@ -20,7 +20,11 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONArray;
@@ -197,21 +201,67 @@ public class GitCommitTest extends GitTest {
 	}
 
 	@Test
-	@Ignore("not yet implemented")
-	public void testCommitAmend() {
-		// TODO: implement
+	public void testCommitAmend() throws IOException, SAXException, URISyntaxException, JSONException, NoHeadException, JGitInternalException {
+		URI workspaceLocation = createWorkspace(getMethodName());
+
+		String projectName = getMethodName();
+		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
+
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		JSONObject project = new JSONObject(response.getText());
+		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
+		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
+		assertNotNull(projectId);
+
+		// TODO: don't create URIs out of thin air
+		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change to commit");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
+		assertNotNull(gitIndexUri);
+		String gitCommitUri = gitSection.optString(GitConstants.KEY_COMMIT, null);
+		assertNotNull(gitCommitUri);
+
+		// "git add ."
+		request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// commit all
+		request = getPostGitCommitRequest(gitCommitUri, "Comit massage", false); // typos
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// amend last commit
+		request = getPostGitCommitRequest(gitCommitUri, "Commit message", true);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// TODO: replace with RESTful API for git log when available
+		Git git = new Git(db);
+		Iterable<RevCommit> commits = git.log().call();
+		String expectedMessages[] = new String[] {"Initial commit", "Commit message"};
+		int c = 0;
+		for (RevCommit commit : commits) {
+			assertEquals(expectedMessages[expectedMessages.length - 1 - c], commit.getFullMessage());
+			c++;
+		}
+		assertEquals(expectedMessages.length, c);
 	}
 
 	@Test
 	@Ignore("not yet implemented")
 	public void testCommitLog() {
-		// TODO: implement
+		// TODO: implement, see bug 339104
 	}
 
 	@Test
 	@Ignore("not yet implemented")
 	public void testCommitLogWithPath() {
-		// TODO: implement
+		// TODO: implement, see bug 339104
 	}
 
 	@Test

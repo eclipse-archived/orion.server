@@ -108,11 +108,11 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		Collection<User> users = getUserAdmin().getUsers();
 		Set<JSONObject> userJSONs = new HashSet<JSONObject>();
 		URI location = OrionServlet.getURI(req);
-		IOrionUserProfileNode userProfile = null;
+		IOrionUserProfileNode userNode = null;
 		for (User user : users) {
 			URI userLocation = URIUtil.append(location, user.getLogin());
-			userProfile = getUserProfileService().getUserProfileNode(user.getLogin(), true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
-			userJSONs.add(formJson(user, userProfile, userLocation));
+			userNode = getUserProfileService().getUserProfileNode(user.getLogin(), true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
+			userJSONs.add(formJson(user, userNode, userLocation));
 		}
 		JSONObject json = new JSONObject();
 		json.put(UserConstants.KEY_USERS, userJSONs);
@@ -125,10 +125,10 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (user == null)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User not found " + userId, null));
 
-		IOrionUserProfileNode userProfile = getUserProfileService().getUserProfileNode(userId, true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
+		IOrionUserProfileNode userNode = getUserProfileService().getUserProfileNode(userId, true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
 
 		URI location = OrionServlet.getURI(req);
-		OrionServlet.writeJSONResponse(req, resp, formJson(user, userProfile, location));
+		OrionServlet.writeJSONResponse(req, resp, formJson(user, userNode, location));
 		return true;
 	}
 
@@ -166,8 +166,10 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private boolean handleUserPut(HttpServletRequest req, HttpServletResponse resp, String userId) throws ServletException, IOException {
-		String store = req.getParameter(UserConstants.KEY_STORE);
+	private boolean handleUserPut(HttpServletRequest req, HttpServletResponse resp, String userId) throws ServletException, IOException, CoreException, JSONException {
+		JSONObject data = OrionServlet.readJSONRequest(req);
+
+		String store = data.has(UserConstants.KEY_STORE) ? data.getString(UserConstants.KEY_STORE) : null;
 
 		IOrionCredentialsService userAdmin;
 		try {
@@ -181,19 +183,22 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (user == null)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + userId + " could not be found.", null));
 
-		if (req.getParameter(UserConstants.KEY_LOGIN) != null) {
-			user.setLogin(req.getParameter(UserConstants.KEY_LOGIN));
-		}
-		if (req.getParameter(ProtocolConstants.KEY_NAME) != null) {
-			user.setName(req.getParameter(ProtocolConstants.KEY_NAME));
-		}
-		if (req.getParameter(UserConstants.KEY_PASSWORD) != null) {
-			user.setPassword(req.getParameter(UserConstants.KEY_PASSWORD));
-		}
-
+		if (data.has(UserConstants.KEY_LOGIN))
+			user.setLogin(data.getString(UserConstants.KEY_LOGIN));
+		if (data.has(ProtocolConstants.KEY_NAME))
+			user.setName(data.getString(ProtocolConstants.KEY_NAME));
+		if (data.has(UserConstants.KEY_PASSWORD))
+			user.setPassword(data.getString(UserConstants.KEY_PASSWORD));
 		userAdmin.updateUser(userId, user);
-		
-		//OrionServlet.writeJSONResponse(req, resp, new JSONObject());		
+
+		IOrionUserProfileNode userNode = getUserProfileService().getUserProfileNode(userId, true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
+
+		if (data.has("GitMail"))
+			userNode.put("GitMail", data.getString("GitMail"), false);
+		if (data.has("GitName"))
+			userNode.put("GitName", data.getString("GitName"), false);
+		userNode.flush();
+
 		return true;
 	}
 
@@ -220,6 +225,9 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		json.put(UserConstants.KEY_LOGIN, user.getLogin());
 
 		json.put(UserConstants.KEY_LAST_LOGIN_TIMESTAMP, userProfile.get(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, ""));
+
+		json.put("GitMail", userProfile.get("GitMail", null));
+		json.put("GitName", userProfile.get("GitName", null));
 
 		Set<String> roles = new HashSet<String>();
 		//			for (Role role : user.getRoles()) {

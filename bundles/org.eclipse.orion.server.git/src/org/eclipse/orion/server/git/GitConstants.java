@@ -27,6 +27,10 @@ public class GitConstants {
 
 	public static final String KEY_GIT = "Git"; //$NON-NLS-1$
 
+	public static final String KEY_NAME = "GitName"; //$NON-NLS-1$
+
+	public static final String KEY_MAIL = "GitMail"; //$NON-NLS-1$
+
 	public static final String KEY_DIFF = "DiffLocation"; //$NON-NLS-1$
 
 	public static final String KEY_STATUS = "StatusLocation"; //$NON-NLS-1$

@@ -54,7 +54,7 @@ public abstract class GitTest extends FileSystemTest {
 	WebConversation webConversation;
 	File gitDir;
 	File testFile;
-	private FileRepository db;
+	protected FileRepository db;
 
 	@BeforeClass
 	public static void setupWorkspace() {

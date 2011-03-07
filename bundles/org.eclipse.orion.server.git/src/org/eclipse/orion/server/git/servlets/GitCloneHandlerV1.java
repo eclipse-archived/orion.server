@@ -21,13 +21,16 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.servlets.OrionServlet;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
+import org.eclipse.orion.server.useradmin.UserServiceHelper;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
 
@@ -63,7 +66,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		return false;
 	}
 
-	private boolean handlePost(HttpServletRequest request, HttpServletResponse response) throws IOException, JSONException, ServletException, URISyntaxException {
+	private boolean handlePost(HttpServletRequest request, HttpServletResponse response) throws IOException, JSONException, ServletException, URISyntaxException, CoreException {
 		// make sure required fields are set
 		JSONObject toAdd = OrionServlet.readJSONRequest(request);
 		String id = toAdd.optString(ProtocolConstants.KEY_ID, null);
@@ -104,7 +107,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		IPath path = new Path(userArea).append(request.getRemoteUser()).append(GitConstants.CLONE_FOLDER).append(clone.getId());
 		clone.setContentLocation(path.toFile().toURI());
 
-		doClone(clone, cp);
+		doClone(clone, cp, request.getRemoteUser());
 
 		// save the clone metadata
 		try {
@@ -118,7 +121,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		JSONObject result = WebCloneResourceHandler.toJSON(clone, baseLocation);
 		OrionServlet.writeJSONResponse(request, response, result);
 
-		//add project location to response header
+		// add project location to response header
 		response.setHeader(ProtocolConstants.HEADER_LOCATION, result.optString(ProtocolConstants.KEY_LOCATION));
 		response.setStatus(HttpServletResponse.SC_CREATED);
 
@@ -139,7 +142,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private void doClone(WebClone clone, CredentialsProvider cp) throws URISyntaxException {
+	private void doClone(WebClone clone, CredentialsProvider cp, String userId) throws URISyntaxException, IOException, CoreException {
 		File cloneFolder = new File(clone.getContentLocation().getPath());
 		if (!cloneFolder.exists())
 			cloneFolder.mkdir();
@@ -149,7 +152,20 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		cc.setDirectory(cloneFolder);
 		cc.setRemote(Constants.DEFAULT_REMOTE_NAME);
 		cc.setURI(clone.getUrl());
-		cc.call();
+		Git git = cc.call();
+
+		// Configure the clone, see Bug 337820
+		doConfigureClone(git, userId);
+	}
+
+	private void doConfigureClone(Git git, String userId) throws IOException, CoreException {
+		StoredConfig config = git.getRepository().getConfig();
+		IOrionUserProfileNode userNode = UserServiceHelper.getDefault().getUserProfileService().getUserProfileNode(userId, true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
+		if (userNode.get(GitConstants.KEY_NAME, null) != null)
+			config.setString(ConfigConstants.CONFIG_USER_SECTION, null, ConfigConstants.CONFIG_KEY_NAME, userNode.get(GitConstants.KEY_NAME, null));
+		if (userNode.get(GitConstants.KEY_MAIL, null) != null)
+			config.setString(ConfigConstants.CONFIG_USER_SECTION, null, ConfigConstants.CONFIG_KEY_EMAIL, userNode.get(GitConstants.KEY_MAIL, null));
+		config.save();
 	}
 
 	/**

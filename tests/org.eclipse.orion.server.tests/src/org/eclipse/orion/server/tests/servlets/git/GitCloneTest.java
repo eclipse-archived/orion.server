@@ -370,7 +370,7 @@ public class GitCloneTest extends GitTest {
 	 * @param name  
 	 * @throws JSONException 
 	 */
-	private WebRequest getPostGitCloneRequest(String uri, String name, String kh, char[] p) throws JSONException {
+	private static WebRequest getPostGitCloneRequest(String uri, String name, String kh, char[] p) throws JSONException {
 		String requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.CLONE_RESOURCE + '/';
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_URL, uri);
@@ -416,7 +416,7 @@ public class GitCloneTest extends GitTest {
 
 	// Convince methods for creating requests
 
-	private WebRequest getPostGitCloneRequest(URIish uri, String name) throws JSONException {
+	static WebRequest getPostGitCloneRequest(URIish uri, String name) throws JSONException {
 		return getPostGitCloneRequest(uri.toString(), name, null, null);
 	}
 
