@@ -30,9 +30,13 @@ import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.servlets.OrionServlet;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.UnsupportedUserStoreException;
 import org.eclipse.orion.server.useradmin.User;
+import org.eclipse.orion.server.useradmin.UserConstants;
 import org.eclipse.orion.server.useradmin.UserServiceHelper;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONArray;
@@ -75,7 +79,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 		// handle calls to /users/[userId]/roles
 		String[] userPathInfoParts = userPathInfo.split("\\/", 2);
-		if (userPathInfoParts.length > 2 && userPathInfoParts[2].equals("roles")) {
+		if (userPathInfoParts.length > 2 && userPathInfoParts[2].equals(UserConstants.KEY_ROLES)) {
 			//use UserRoleHandlerV1
 			return false;
 		}
@@ -100,35 +104,39 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		}
 	}
 
-	private boolean handleUsersGet(HttpServletRequest req, HttpServletResponse resp) throws IOException, JSONException {
+	private boolean handleUsersGet(HttpServletRequest req, HttpServletResponse resp) throws IOException, JSONException, CoreException {
 		Collection<User> users = getUserAdmin().getUsers();
-		Set<JSONObject> userjsons = new HashSet<JSONObject>();
+		Set<JSONObject> userJSONs = new HashSet<JSONObject>();
 		URI location = OrionServlet.getURI(req);
+		IOrionUserProfileNode userProfile = null;
 		for (User user : users) {
 			URI userLocation = URIUtil.append(location, user.getLogin());
-			userjsons.add(formJson(user, userLocation));
+			userProfile = getUserProfileService().getUserProfileNode(user.getLogin(), true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
+			userJSONs.add(formJson(user, userProfile, userLocation));
 		}
 		JSONObject json = new JSONObject();
-		json.put("users", userjsons);
+		json.put(UserConstants.KEY_USERS, userJSONs);
 		OrionServlet.writeJSONResponse(req, resp, json);
 		return true;
 	}
 
-	private boolean handleUserGet(HttpServletRequest req, HttpServletResponse resp, String userId) throws IOException, JSONException, ServletException {
-		User user = (User) getUserAdmin().getUser("login", userId);
+	private boolean handleUserGet(HttpServletRequest req, HttpServletResponse resp, String userId) throws IOException, JSONException, ServletException, CoreException {
+		User user = (User) getUserAdmin().getUser(UserConstants.KEY_LOGIN, userId);
 		if (user == null)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User not found " + userId, null));
 
+		IOrionUserProfileNode userProfile = getUserProfileService().getUserProfileNode(userId, true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
+
 		URI location = OrionServlet.getURI(req);
-		OrionServlet.writeJSONResponse(req, resp, formJson(user, location));
+		OrionServlet.writeJSONResponse(req, resp, formJson(user, userProfile, location));
 		return true;
 	}
 
 	private boolean handleUserCreate(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
-		String store = req.getParameter("store");
-		String login = req.getParameter("login");
-		String name = req.getParameter("name");
-		String password = req.getParameter("password");
+		String store = req.getParameter(UserConstants.KEY_STORE);
+		String login = req.getParameter(UserConstants.KEY_LOGIN);
+		String name = req.getParameter(ProtocolConstants.KEY_NAME);
+		String password = req.getParameter(UserConstants.KEY_PASSWORD);
 
 		if (login == null || login.length() == 0)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User login not specified.", null));
@@ -140,7 +148,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User store is not available: " + store, e));
 		}
 
-		if (userAdmin.getUser("login", login) != null)
+		if (userAdmin.getUser(UserConstants.KEY_LOGIN, login) != null)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + login + " already exists.", null));
 
 		User newUser = new User(login, name != null ? name : "", password == null ? "" : password);
@@ -158,8 +166,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private boolean handleUserPut(HttpServletRequest req, HttpServletResponse resp, String userId) throws ServletException {
-		String store = req.getParameter("store");
+	private boolean handleUserPut(HttpServletRequest req, HttpServletResponse resp, String userId) throws ServletException, IOException {
+		String store = req.getParameter(UserConstants.KEY_STORE);
 
 		IOrionCredentialsService userAdmin;
 		try {
@@ -168,27 +176,29 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User store is not available: " + store, e));
 		}
 
-		User user = (User) userAdmin.getUser("login", userId);
+		User user = (User) userAdmin.getUser(UserConstants.KEY_LOGIN, userId);
 
 		if (user == null)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + userId + " could not be found.", null));
 
-		if (req.getParameter("login") != null) {
-			user.setLogin(req.getParameter("login"));
+		if (req.getParameter(UserConstants.KEY_LOGIN) != null) {
+			user.setLogin(req.getParameter(UserConstants.KEY_LOGIN));
 		}
-		if (req.getParameter("name") != null) {
-			user.setName(req.getParameter("name"));
+		if (req.getParameter(ProtocolConstants.KEY_NAME) != null) {
+			user.setName(req.getParameter(ProtocolConstants.KEY_NAME));
 		}
-		if (req.getParameter("password") != null) {
-			user.setPassword(req.getParameter("password"));
+		if (req.getParameter(UserConstants.KEY_PASSWORD) != null) {
+			user.setPassword(req.getParameter(UserConstants.KEY_PASSWORD));
 		}
 
 		userAdmin.updateUser(userId, user);
+		
+		//OrionServlet.writeJSONResponse(req, resp, new JSONObject());		
 		return true;
 	}
 
 	private boolean handleUserDelete(HttpServletRequest req, HttpServletResponse resp, String userId) throws ServletException {
-		String store = req.getParameter("store");
+		String store = req.getParameter(UserConstants.KEY_STORE);
 
 		IOrionCredentialsService userAdmin;
 		try {
@@ -203,11 +213,14 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private JSONObject formJson(User user, URI location) throws JSONException {
+	private JSONObject formJson(User user, IOrionUserProfileNode userProfile, URI location) throws JSONException, CoreException {
 		JSONObject json = new JSONObject();
 		json.put(ProtocolConstants.KEY_LOCATION, location);
-		json.put("login", user.getLogin());
-		json.put("name", user.getName());
+		json.put(ProtocolConstants.KEY_NAME, user.getName());
+		json.put(UserConstants.KEY_LOGIN, user.getLogin());
+
+		json.put(UserConstants.KEY_LAST_LOGIN_TIMESTAMP, userProfile.get(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, ""));
+
 		Set<String> roles = new HashSet<String>();
 		//			for (Role role : user.getRoles()) {
 		//				roles.add(role.getName());
@@ -218,12 +231,12 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		try {
 			JSONObject plugin = new JSONObject();
 			URI result = new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), "/plugins/user/userProfilePlugin.html", null, null);
-			plugin.put("Url", result);
+			plugin.put(UserConstants.KEY_PLUGIN_LOCATION, result);
 			plugins.put(plugin);
 		} catch (URISyntaxException e) {
 			LogHelper.log(e);
 		}
-		json.put("Plugins", plugins);
+		json.put(UserConstants.KEY_PLUGINS, plugins);
 		return json;
 	}
 
@@ -233,5 +246,9 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 	private IOrionCredentialsService getUserAdmin() {
 		return UserServiceHelper.getDefault().getUserStore();
+	}
+
+	private IOrionUserProfileService getUserProfileService() {
+		return UserServiceHelper.getDefault().getUserProfileService();
 	}
 }
