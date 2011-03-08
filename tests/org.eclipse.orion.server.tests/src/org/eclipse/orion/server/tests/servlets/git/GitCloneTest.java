@@ -11,10 +11,12 @@
 package org.eclipse.orion.server.tests.servlets.git;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
@@ -46,6 +48,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Assume;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
@@ -362,6 +365,59 @@ public class GitCloneTest extends GitTest {
 		assertTrue(file.exists());
 		assertTrue(file.isDirectory());
 		assertTrue(RepositoryCache.FileKey.isGitRepository(new File(file, Constants.DOT_GIT), FS.DETECTED));
+	}
+
+	@Test
+	@Ignore("see bug 336216")
+	public void testCloneAndDelete() throws IOException, SAXException, JSONException, URISyntaxException {
+		// clone
+		URIish uri = new URIish(gitDir.toURL());
+		String name = null;
+		WebRequest request = getPostGitCloneRequest(uri, name);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		String location = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		assertNotNull(location);
+		JSONObject clone = new JSONObject(response.getText());
+		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		assertNotNull(contentLocation);
+
+		File file = URIUtil.toFile(new URI(contentLocation));
+		assertTrue(file.exists());
+		assertTrue(file.isDirectory());
+		assertTrue(RepositoryCache.FileKey.isGitRepository(new File(file, Constants.DOT_GIT), FS.DETECTED));
+
+		URI workspaceLocation = createWorkspace(getMethodName());
+
+		// link
+		ServletTestingSupport.allowedPrefixes = contentLocation;
+		String projectName = getMethodName();
+		JSONObject body = new JSONObject();
+		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, contentLocation);
+		InputStream in = new StringBufferInputStream(body.toString());
+		// http://localhost:8080/workspace/{workspaceId}
+		request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
+		if (projectName != null)
+			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		JSONObject newProject = new JSONObject(response.getText());
+		String projectContentLocation = newProject.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		assertNotNull(projectContentLocation);
+
+		// delete
+		JSONObject data = new JSONObject();
+		data.put("Remove", "true");
+		data.put("ProjectURL", projectContentLocation);
+		request = new PostMethodWebRequest(workspaceLocation.toString(), new ByteArrayInputStream(data.toString().getBytes()), "UTF8");
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		assertFalse(file.exists());
 	}
 
 	/**
