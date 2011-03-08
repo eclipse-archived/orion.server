@@ -117,16 +117,20 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 
 		JSONObject toReset = OrionServlet.readJSONRequest(request);
 		String message = toReset.optString(GitConstants.KEY_COMMIT_MESSAGE, null);
-		if (message == null) {
+		if (message == null || message.isEmpty()) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Missing commit message.", null));
 		}
 
-		//		boolean amend = Boolean.parseBoolean(toReset.optString(GitConstants.KEY_COMMIT_AMEND, null));
+		boolean amend = Boolean.parseBoolean(toReset.optString(GitConstants.KEY_COMMIT_AMEND, null));
+		if (amend) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_IMPLEMENTED, "Amending is not yet supported.", null));
+		}
 
 		Git git = new Git(db);
 		// "git commit [--amend] -m '{message}' [-a|{path}]"
 		try {
-			git.commit().setMessage(message).call();
+			// see bug 339242
+			git.commit()/*.setAmend(amend).*/.setMessage(message).call();
 			return true;
 		} catch (GitAPIException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "An error occured when commiting.", e));

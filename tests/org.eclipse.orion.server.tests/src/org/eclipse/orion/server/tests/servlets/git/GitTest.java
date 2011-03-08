@@ -34,7 +34,6 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
 import org.eclipse.orion.server.git.servlets.GitServlet;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
-import org.eclipse.orion.server.tests.servlets.workspace.WorkspaceServiceTest;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.After;
@@ -89,7 +88,7 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	protected URI createWorkspace(String suffix) throws IOException, SAXException, URISyntaxException {
-		String workspaceName = WorkspaceServiceTest.class.getName() + "#" + suffix;
+		String workspaceName = getClass().getName() + "#" + suffix;
 		WebRequest request = getCreateWorkspaceRequest(workspaceName);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
