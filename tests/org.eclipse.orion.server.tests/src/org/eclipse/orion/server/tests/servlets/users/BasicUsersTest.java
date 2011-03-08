@@ -92,7 +92,7 @@ public class BasicUsersTest extends UsersTest {
 		// create user
 		Map<String, String> params = new HashMap<String, String>();
 		params.put("login", "user_" + System.currentTimeMillis());
-		params.put("name", "username_" + System.currentTimeMillis());
+		params.put("Name", "username_" + System.currentTimeMillis());
 		//		params.put("email", "test@test_" + System.currentTimeMillis());
 		//		params.put("workspace", "workspace_" + System.currentTimeMillis());
 
@@ -107,7 +107,7 @@ public class BasicUsersTest extends UsersTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject responseObject = new JSONObject(response.getText());
 		assertEquals("Invalid user login", params.get("login"), responseObject.getString("login"));
-		assertEquals("Invalid user name", params.get("name"), responseObject.getString("name"));
+		assertEquals("Invalid user name", params.get("Name"), responseObject.getString("Name"));
 		//		assertEquals("Invalid user email", params.get("email"), responseObject.getString("email"));
 		//		assertEquals("Invalid user workspace", params.get("workspace"), responseObject.getString("workspace"));
 		assertFalse("Response shouldn't contain password", responseObject.has("password"));
@@ -181,7 +181,7 @@ public class BasicUsersTest extends UsersTest {
 		// create user
 		Map<String, String> params = new HashMap<String, String>();
 		params.put("login", "user_" + System.currentTimeMillis());
-		params.put("name", "username_" + System.currentTimeMillis());
+		params.put("Name", "username_" + System.currentTimeMillis());
 		//		params.put("email", "test@test_" + System.currentTimeMillis());
 		//		params.put("workspace", "workspace_" + System.currentTimeMillis());
 		params.put("roles", "admin");
@@ -191,14 +191,12 @@ public class BasicUsersTest extends UsersTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// update user
-		Map<String, String> updatedParams = new HashMap<String, String>();
-		//		updatedParams.put("login", "userUpdate_" + System.currentTimeMillis());
-		updatedParams.put("name", "usernameUpdate_" + System.currentTimeMillis());
-		//		updatedParams.put("email", "testUpdate@test_" + System.currentTimeMillis());
-		//		updatedParams.put("workspace", "workspaceUpdate_" + System.currentTimeMillis());
-		updatedParams.put("password", "passUpdate_" + System.currentTimeMillis());
-		updatedParams.put("roles", "");
-		request = getPutUsersRequest(params.get("login"), updatedParams, true);
+		JSONObject updateBody = new JSONObject();
+		updateBody.put("Name", "usernameUpdate_" + System.currentTimeMillis());
+		updateBody.put("password", "passUpdate_" + System.currentTimeMillis());
+		updateBody.put("roles", "");
+
+		request = getPutUsersRequest(params.get("login"), updateBody, true);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -208,7 +206,7 @@ public class BasicUsersTest extends UsersTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject responseObject = new JSONObject(response.getText());
 		assertEquals("Invalid user login", params.get("login"), responseObject.getString("login"));
-		assertEquals("Invalid user name", updatedParams.get("name"), responseObject.getString("name"));
+		assertEquals("Invalid user name", updateBody.getString("Name"), responseObject.getString("Name"));
 		//		assertEquals("Invalid user email", updatedParams.get("email"), responseObject.getString("email"));
 		//		assertEquals("Invalid user workspace", updatedParams.get("workspace"), responseObject.getString("workspace"));
 		//		JSONArray roles = responseObject.getJSONArray("roles");
@@ -217,7 +215,7 @@ public class BasicUsersTest extends UsersTest {
 
 		// check if user can authenticate and does not have admin role
 		request = getGetUsersRequest("", true);
-		setAuthentication(request, params.get("login"), updatedParams.get("password"));
+		setAuthentication(request, params.get("login"), updateBody.getString("password"));
 		response = webConversation.getResponse(request);
 		assertEquals("User with no roles has admin privilegges", HttpURLConnection.HTTP_FORBIDDEN, response.getResponseCode());
 

@@ -17,6 +17,7 @@ import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.tests.AbstractServerTest;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
+import org.json.JSONObject;
 
 import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.PostMethodWebRequest;
@@ -95,21 +96,8 @@ public abstract class UsersTest extends AbstractServerTest {
 		return request;
 	}
 
-	private static String addPutParamethers(String requestStr, Map<String, String> params) {
-		StringBuilder request = new StringBuilder(requestStr);
-		String delim = requestStr.contains("?") ? "&" : "?";
-		for (String key : params.keySet()) {
-			request.append(delim);
-			request.append(key);
-			request.append("=");
-			request.append(params.get(key));
-			delim = "&";
-		}
-		return request.toString();
-	}
-
-	protected static WebRequest getPutUsersRequest(String uri, Map<String, String> params, boolean admin) throws UnsupportedEncodingException {
-		WebRequest request = new PutMethodWebRequest(addPutParamethers(SERVER_LOCATION + "/users" + (uri.equals("") ? "" : ("/" + uri)), params), getJsonAsStream(""), "text/plain");
+	protected static WebRequest getPutUsersRequest(String uri, JSONObject body, boolean admin) throws UnsupportedEncodingException {
+		WebRequest request = new PutMethodWebRequest(SERVER_LOCATION + "/users/" + uri, getJsonAsStream(body.toString()), "text/plain");
 		request.setHeaderField("Orion-Version", "1");
 		if (admin) {
 			setAuthenticationAdmin(request);
