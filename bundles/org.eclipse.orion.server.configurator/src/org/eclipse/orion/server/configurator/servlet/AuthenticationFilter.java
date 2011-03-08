@@ -52,8 +52,16 @@ public class AuthenticationFilter implements Filter {
 	}
 
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+		HttpServletRequest httpRequest = (HttpServletRequest) request;
+		HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-		String login = authenticationService.authenticateUser((HttpServletRequest) request, (HttpServletResponse) response, authProperties);
+		String projectWorldReadable = System.getProperty("org.eclipse.orion.server.core.projectsWorldReadable");
+		if (httpRequest.getMethod().equals("GET") && httpRequest.getRequestURI().toString().startsWith("/file/") && "true".equals(projectWorldReadable)) {
+			chain.doFilter(request, response);
+			return;
+		}
+
+		String login = authenticationService.authenticateUser(httpRequest, httpResponse, authProperties);
 		if (login == null) {
 			return;
 		}
