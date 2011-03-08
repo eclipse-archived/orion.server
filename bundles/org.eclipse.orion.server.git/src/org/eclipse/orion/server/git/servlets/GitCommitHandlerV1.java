@@ -48,29 +48,25 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	@Override
-	public boolean handleRequest(HttpServletRequest request,
-			HttpServletResponse response, String path) throws ServletException {
+	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String path) throws ServletException {
 
 		try {
 			Path p = new Path(path);
 
 			switch (getMethod(request)) {
-			case GET:
-				return handleGet(request, response, p);
-				// case PUT:
-				// return handlePut(request, response, p);
-			case POST:
-				return handlePost(request, response, p);
-				// case DELETE :
-				// return handleDelete(request, response, p);
+				case GET :
+					return handleGet(request, response, p);
+					// case PUT:
+					// return handlePut(request, response, p);
+				case POST :
+					return handlePost(request, response, p);
+					// case DELETE :
+					// return handleDelete(request, response, p);
 			}
 
 		} catch (Exception e) {
-			String msg = NLS.bind(
-					"Failed to process an operation on commits for {0}", path); //$NON-NLS-1$
-			statusHandler.handleRequest(request, response, new ServerStatus(
-					IStatus.ERROR,
-					HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+			String msg = NLS.bind("Failed to process an operation on commits for {0}", path); //$NON-NLS-1$
+			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
 		} finally {
 			if (db != null)
 				db.close();
@@ -78,12 +74,9 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		return false;
 	}
 
-	private boolean handleGet(HttpServletRequest request,
-			HttpServletResponse response, Path path) throws CoreException,
-			IOException, ServletException {
+	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, Path path) throws CoreException, IOException, ServletException {
 
-		File gitDir = GitUtils.getGitDir(path.removeFirstSegments(1)
-				.uptoSegment(2), request.getRemoteUser());
+		File gitDir = GitUtils.getGitDir(path.removeFirstSegments(1).uptoSegment(2), request.getRemoteUser());
 		if (gitDir == null)
 			return false; // TODO: or an error response code, 405?
 		db = new FileRepository(gitDir);
@@ -94,9 +87,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			ObjectId refId = db.resolve(path.segment(0));
 			RevWalk walk = new RevWalk(db);
 			String p = path.removeFirstSegments(3).toString();
-			walk.setTreeFilter(AndTreeFilter.create(
-					PathFilterGroup.createFromStrings(Collections.singleton(p)),
-					TreeFilter.ANY_DIFF));
+			walk.setTreeFilter(AndTreeFilter.create(PathFilterGroup.createFromStrings(Collections.singleton(p)), TreeFilter.ANY_DIFF));
 			RevCommit commit = walk.parseCommit(refId);
 			final TreeWalk w = TreeWalk.forPath(db, p, commit.getTree());
 			if (w == null) {
@@ -106,61 +97,41 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			IOUtilities.pipe(open(), response.getOutputStream(), true, false);
 			return true;
 		}
-		return statusHandler.handleRequest(request, response, new ServerStatus(
-				IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST,
-				"The commit log is not yet supported.", null));
+		return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "The commit log is not yet supported.", null));
 	}
 
-	private InputStream open() throws IOException, CoreException,
-			IncorrectObjectTypeException {
+	private InputStream open() throws IOException, CoreException, IncorrectObjectTypeException {
 		return db.open(blobId, Constants.OBJ_BLOB).openStream();
 	}
 
-	private boolean handlePost(HttpServletRequest request,
-			HttpServletResponse response, Path path) throws ServletException,
-			NoFilepatternException, IOException, JSONException, CoreException {
+	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, Path path) throws ServletException, NoFilepatternException, IOException, JSONException, CoreException {
 
-		File gitDir = GitUtils.getGitDir(path.uptoSegment(2),
-				request.getRemoteUser());
+		File gitDir = GitUtils.getGitDir(path.uptoSegment(2), request.getRemoteUser());
 		if (gitDir == null)
 			return false; // TODO: or an error response code, 405?
 		db = new FileRepository(gitDir);
 
 		if (path.segmentCount() > 2) {
-			return statusHandler.handleRequest(request, response,
-					new ServerStatus(IStatus.ERROR,
-							HttpServletResponse.SC_NOT_IMPLEMENTED,
-							"Committing by path is not yet supported.", null));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_IMPLEMENTED, "Committing by path is not yet supported.", null));
 		}
 
 		JSONObject toReset = OrionServlet.readJSONRequest(request);
-		String message = toReset.optString(GitConstants.KEY_COMMIT_MESSAGE,
-				null);
+		String message = toReset.optString(GitConstants.KEY_COMMIT_MESSAGE, null);
 		if (message == null) {
-			return statusHandler.handleRequest(request, response,
-					new ServerStatus(IStatus.ERROR,
-							HttpServletResponse.SC_BAD_REQUEST,
-							"Missing commit message.", null));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Missing commit message.", null));
 		}
 
-		boolean amend = Boolean.parseBoolean(toReset.optString(
-				GitConstants.KEY_COMMIT_AMEND, null));
+		//		boolean amend = Boolean.parseBoolean(toReset.optString(GitConstants.KEY_COMMIT_AMEND, null));
 
 		Git git = new Git(db);
 		// "git commit [--amend] -m '{message}' [-a|{path}]"
 		try {
-			git.commit().setAmend(amend).setMessage(message).call();
+			git.commit().setMessage(message).call();
 			return true;
 		} catch (GitAPIException e) {
-			return statusHandler.handleRequest(request, response,
-					new ServerStatus(IStatus.ERROR,
-							HttpServletResponse.SC_BAD_REQUEST,
-							"An error occured when commiting.", e));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "An error occured when commiting.", e));
 		} catch (JGitInternalException e) {
-			return statusHandler.handleRequest(request, response,
-					new ServerStatus(IStatus.ERROR,
-							HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-							"An internal error occured when commiting.", e));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An internal error occured when commiting.", e));
 		}
 	}
 }
