@@ -117,7 +117,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 
 		JSONObject toReset = OrionServlet.readJSONRequest(request);
 		String message = toReset.optString(GitConstants.KEY_COMMIT_MESSAGE, null);
-		if (message == null) {
+		if (message == null || message.isEmpty()) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Missing commit message.", null));
 		}
 
