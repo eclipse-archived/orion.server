@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.workspace;
 
-import org.eclipse.orion.internal.server.servlets.Activator;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -161,13 +159,14 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 
 		//consult layout preference
 		IEclipsePreferences preferences = InstanceScope.INSTANCE.getNode("org.eclipse.orion.server.configurator"); //$NON-NLS-1$
-		String layout = preferences.get("orion.file.layout", "flat").toLowerCase(); //$NON-NLS-1$ //$NON-NLS-2$
+		String layout = preferences.get(Activator.PROP_FILE_LAYOUT, "flat").toLowerCase(); //$NON-NLS-1$
 
 		IFileStore projectStore;
 		URI location;
 		if ("usertree".equals(layout) && user != null) { //$NON-NLS-1$
 			//the user-tree layout organises projects by the user who created it
-			projectStore = root.getChild(user.substring(0, 2)).getChild(user).getChild(project.getId());
+			String userPrefix = user.substring(0, Math.min(2, user.length()));
+			projectStore = root.getChild(userPrefix).getChild(user).getChild(project.getId());
 			location = projectStore.toURI();
 		} else {
 			//default layout is a flat list of projects at the root

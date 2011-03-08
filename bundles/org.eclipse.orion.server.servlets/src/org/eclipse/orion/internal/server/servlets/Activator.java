@@ -42,6 +42,9 @@ public class Activator implements BundleActivator, IAliasRegistry {
 	public static final String LOCATION_PROJECT_SERVLET = "/project"; //$NON-NLS-1$
 
 	public static final String PI_SERVER_SERVLETS = "org.eclipse.orion.server.servlets"; //$NON-NLS-1$
+	public static final String PROP_USER_AREA = "org.eclipse.orion.server.core.userArea"; //$NON-NLS-1$
+	public static final String PROP_FILE_LAYOUT = "orion.file.layout"; //$NON-NLS-1$
+
 	static Activator singleton;
 
 	private Map<String, URI> aliases = Collections.synchronizedMap(new HashMap<String, URI>());
@@ -51,8 +54,6 @@ public class Activator implements BundleActivator, IAliasRegistry {
 	private URI rootStoreURI;
 	private ServiceRegistration<IWebResourceDecorator> transferDecoratorRegistration;
 	private ServiceRegistration<IWebResourceDecorator> parentDecoratorRegistration;
-
-	public static final String PROP_USER_AREA = "org.eclipse.orion.server.core.userArea"; //$NON-NLS-1$
 
 	public static Activator getDefault() {
 		return singleton;
