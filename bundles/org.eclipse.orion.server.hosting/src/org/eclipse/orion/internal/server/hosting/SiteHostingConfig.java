@@ -7,58 +7,61 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.core.LogHelper;
 
 /**
- * Stores the IP addresses and domains that may be allocated to hosted sites, and the port number
- * that sites will be accessed on. The server administrator can control the IP/domain configuration
- * by passing a parameter to the Orion server at launch.<p>
+ * Stores the list of host names that may be allocated to hosted sites, and the port number that 
+ * sites will be accessed on. The server administrator can control the host name configuration by
+ * passing a parameter to the Orion server at launch.<p>
  * 
- * The parameter is a string with the form <code>[domains=domainList][,][IPs=ipList]</code>,
- * where <code>domainList</code> is a comma-separated list of domains (which may include wildcards), and
- * <code>ipList</code> is a comma-separated list of IP addresses.<p>
+ * The parameter's value is a comma-separated list where each entry is either a valid domain name
+ * (which may include wildcards), or a valid IP address. Each entry in the list becomes the name of
+ * a virtual host that a site can be served on. Wildcard domains can be used to server many different
+ * virtual hosts.
  * 
  * Examples:
  * <dl>
- * <dt><code>IPs=127.0.0.2,127.0.0.3</code></dt>
- * <dd>Makes 2 IPs available for allocation.</dd>
+ * <dt><code>site.myorion.net</code></dt>
+ * <dd>Makes 1 host name, <code>site.myorion.net</code>, available for allocation as a virtual host name.</dd>
  * 
- * <dt><code>domains=site.myorion.net</code></dt>
- * <dd>Makes 1 domain available for allocation.</dd>
+ * <dt><code>127.0.0.2,127.0.0.3</code></dt>
+ * <dd>Makes the 2 IP addresses available as virtual host names. Since they happen to be loopback addresses,
+ * any hosted site assigned to them will not be accessible by remote users.</dd>
  * 
- * <dt><code>domains=*.myorion.net</code></dt>
+ * <dt><code>*.myorion.net</code></dt>
  * <dd>Makes all of <code>*.myorion.net</code> available for allocation. Sites will be given subdomains,
  * for example <code>site1.myorion.net</code>, <code>site2.myorion.net</code>, etc.</dd>
  * 
- * <dt><code>IPs=127.0.0.2,domains=*.myorion.net</code></dt>
- * <dd>Equivalent to the previous example; when both domains and IPs are provided, domains are given priority.</dd>
+ * <dt><code>foo.myorion.net,*.myorion.net</code></dt>
+ * <dd>The domains will be allocated in the order provided: first <code>foo.myorion.net</code>, then 
+ * subdomains of <code>myorion.net</code>.</dd>
  * </dl>
  */
 public class SiteHostingConfig {
 
-	private int hostingPort;
-	private Set<String> domains;
-	private Set<InetAddress> ipAddresses;
+	private static final int DEFAULT_HOST_COUNT = 16;
 
-	private SiteHostingConfig(int port, Set<String> domains, Set<InetAddress> ips) {
+	private int hostingPort;
+	private List<String> hosts;
+
+	private SiteHostingConfig(int port, List<String> hosts) {
 		this.hostingPort = port;
-		this.domains = domains;
-		this.ipAddresses = ips;
+		this.hosts = hosts;
 	}
 
 	public int getHostingPort() {
 		return this.hostingPort;
 	}
 
-	public Set<String> getDomains() {
-		return Collections.unmodifiableSet(domains);
-	}
-
-	public Set<InetAddress> getIpAddresses() {
-		return Collections.unmodifiableSet(ipAddresses);
+	/**
+	 * @return An unmodifiable view of all hosts in the configuration, in the same order as the 
+	 * user provided them, and not checked for duplicate entries. 
+	 */
+	public List<String> getHosts() {
+		return Collections.unmodifiableList(hosts);
 	}
 
 	/**
 	 * @param hostInfo String containing the user-supplied site configuration info.
-	 * @return A hosting configuration parsed from <code>s</code>. If <code>s</code> is <code>null</code>,
-	 * returns a default configuration.
+	 * @return A hosting configuration parsed from <code>hostInfo</code>. If <code>vhostInfo</code>
+	 * is <code>null</code>, returns a default configuration.
 	 */
 	static SiteHostingConfig getSiteHostingConfig(int port, String hostInfo) {
 		return hostInfo == null ? getDefault(port) : fromString(port, hostInfo);
@@ -68,66 +71,16 @@ public class SiteHostingConfig {
 	 * Parses a SiteHostingConfig from the <code>hostInfo</code> string.
 	 */
 	private static SiteHostingConfig fromString(int port, String hostInfo) {
-		Set<String> domains = new HashSet<String>();
-		Set<InetAddress> ips = new HashSet<InetAddress>();
-		StringTokenizer st = new StringTokenizer(hostInfo, "=,", true); //$NON-NLS-1$
-		try {
+		List<String> hosts = new ArrayList<String>();
+		StringTokenizer st = new StringTokenizer(hostInfo, ", "); //$NON-NLS-1$
+		if (!st.hasMoreTokens()) {
+			LogHelper.log(new Status(IStatus.ERROR, HostingActivator.PI_SERVER_HOSTING, "Empty hosting configuration", null));
+		}
+		for (; st.hasMoreTokens();) {
 			String token = st.nextToken();
-			if (token.equalsIgnoreCase("ips")) { //$NON-NLS-1$
-				parseIps(st, domains, ips, false);
-			} else if (token.equalsIgnoreCase("domains")) { //$NON-NLS-1$
-				parseDomains(st, domains, ips, false);
-			}
-		} catch (NoSuchElementException e) {
-			LogHelper.log(new Status(IStatus.ERROR, HostingActivator.PI_SERVER_HOSTING, "Error parsing hosting configuration", e));
-		} catch (UnknownHostException e) {
-			LogHelper.log(new Status(IStatus.ERROR, HostingActivator.PI_SERVER_HOSTING, "Error parsing hosting configuration", e));
+			hosts.add(token);
 		}
-		return new SiteHostingConfig(port, domains, ips);
-	}
-
-	/**
-	 * @param st Tokenizer whose first token (if any) is the = after "IPs"
-	 * @param domains
-	 * @param ips
-	 * @param domainsDone True if the domains= section was already parsed.
-	 * @throws UnknownHostException
-	 */
-	private static void parseIps(StringTokenizer st, Set<String> domains, Set<InetAddress> ips, boolean domainsDone) throws UnknownHostException {
-		if (!st.nextToken().equals("=")) //$NON-NLS-1$
-			throw new NoSuchElementException("Expected =");
-
-		for (; st.hasMoreTokens();) {
-			String value = st.nextToken();
-			if (value.equals(",")) //$NON-NLS-1$
-				continue;
-			else if (!domainsDone && value.equalsIgnoreCase("domains")) //$NON-NLS-1$
-				parseDomains(st, domains, ips, true);
-			else
-				ips.add(InetAddress.getByName(value));
-		}
-	}
-
-	/**
-	 * @param st Tokenizer whose first token (if any) is the = after "domains"
-	 * @param domains
-	 * @param ips
-	 * @param ipsDone True if the IPs= section was already parsed.
-	 * @throws UnknownHostException
-	 */
-	private static void parseDomains(StringTokenizer st, Set<String> domains, Set<InetAddress> ips, boolean ipsDone) throws UnknownHostException {
-		if (!st.nextToken().equals("=")) //$NON-NLS-1$
-			throw new NoSuchElementException("Expected =");
-
-		for (; st.hasMoreTokens();) {
-			String tok = st.nextToken();
-			if (tok.equals(",")) //$NON-NLS-1$
-				continue;
-			else if (!ipsDone && tok.equalsIgnoreCase("ips")) //$NON-NLS-1$
-				parseIps(st, domains, ips, true);
-			else
-				domains.add(tok);
-		}
+		return new SiteHostingConfig(port, hosts);
 	}
 
 	/**
@@ -136,30 +89,29 @@ public class SiteHostingConfig {
 	 * the config will include some IP addresses that point to the loopback device.
 	 */
 	private static SiteHostingConfig getDefault(int port) {
-		Set<InetAddress> aliases = new HashSet<InetAddress>();
+		List<String> aliases = new ArrayList<String>();
 
-		// TODO: this guessing is fragile and only useful for self-hosting. Remove it
+		// TODO: this guessing is fragile and only useful for self-hosting. Is it really useful?
 		if (System.getProperty("os.name").startsWith("Mac OS X")) { //$NON-NLS-1$ //$NON-NLS-2$
 			// In OS X, although all 127.x.x.x addresses report isLoopback() == true, only 127.0.0.1
 			// actually routes to localhost. So we can't do much here.
 		} else {
 			InetAddress loopbackIp = getLoopbackAddress();
 			try {
-				// Try to allocate IPs from the last byte of the loopback address.
-				// TODO: It'd be more correct to use range 127.0.0.0 - 127.255.255.255
+				// Allocate some more loopback IPs
 				byte[] address = loopbackIp.getAddress();
 				byte lastByte = address[address.length - 1];
-				for (int i = lastByte + 1; i <= 0xff; i++) {
+				for (int i = 0, b = lastByte + 1; i < DEFAULT_HOST_COUNT && b <= 0xff; i++, b++) {
 					byte[] derivedAddress = address.clone();
-					derivedAddress[address.length - 1] = (byte) i;
-					aliases.add(InetAddress.getByAddress(derivedAddress));
+					derivedAddress[address.length - 1] = (byte) b;
+					aliases.add(InetAddress.getByAddress(derivedAddress).getHostAddress());
 				}
 			} catch (UnknownHostException e) {
 				// Should not happen
 				LogHelper.log(new Status(IStatus.ERROR, HostingActivator.PI_SERVER_HOSTING, e.getMessage(), e));
 			}
 		}
-		return new SiteHostingConfig(port, Collections.<String> emptySet(), aliases);
+		return new SiteHostingConfig(port, aliases);
 	}
 
 	/**

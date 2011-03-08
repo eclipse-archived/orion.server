@@ -1,7 +1,6 @@
 package org.eclipse.orion.internal.server.hosting;
 
-import java.net.InetAddress;
-import java.util.*;
+import java.util.ConcurrentModificationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import org.eclipse.orion.internal.server.servlets.hosting.*;
@@ -130,17 +129,17 @@ public class SiteHostingService implements ISiteHostingService {
 	 * from the hosting configuration have been allocated).
 	 */
 	private String getNextHost(String hint) throws NoMoreHostsException {
-		hint = hint == null ? "site" : hint; //$NON-NLS-1$
+		hint = hint == null || hint.equals("") ? "site" : hint; //$NON-NLS-1$ //$NON-NLS-2$
 		final String portSuffix = ":" + this.config.getHostingPort(); //$NON-NLS-1$
 
 		synchronized (sites) {
 			String host = null;
 
-			// Try domain wildcards first
-			for (String domain : wildcardsFirst(config.getDomains())) {
-				int pos = domain.lastIndexOf("*"); //$NON-NLS-1$
-				if (pos != -1 && pos < domain.length() - 1) {
-					final String rest = domain.substring(pos + 1);
+			for (String value : config.getHosts()) {
+				int pos = value.lastIndexOf("*"); //$NON-NLS-1$
+				if (pos != -1) {
+					// It's a domain wildcard
+					final String rest = value.substring(pos + 1);
 
 					// Append digits if necessary to get a unique hostname
 					String candidate = hint + rest + portSuffix;
@@ -150,22 +149,8 @@ public class SiteHostingService implements ISiteHostingService {
 					host = candidate;
 					break;
 				} else {
-					// Not a wildcard, but try it anyway
-					String candidate = domain + portSuffix;
+					String candidate = value + portSuffix;
 					if (!isHosted(candidate)) {
-						host = candidate;
-						break;
-					}
-				}
-			}
-
-			// Next try IPs
-			if (host == null) {
-				for (InetAddress address : config.getIpAddresses()) {
-					String candidate = address.getHostAddress() + portSuffix;
-					if (isHosted(candidate)) {
-						continue;
-					} else {
 						host = candidate;
 						break;
 					}
@@ -179,24 +164,4 @@ public class SiteHostingService implements ISiteHostingService {
 		}
 	}
 
-	/**
-	 * @return A List of the domains from <code>domains</code>, sorted so that domain wildcards come first.
-	 */
-	private static List<String> wildcardsFirst(Set<String> domains) {
-		List<String> list = new ArrayList<String>(domains);
-		Collections.sort(list, new Comparator<String>() {
-			@Override
-			public int compare(String s1, String s2) {
-				int i1 = s1.indexOf("*"); //$NON-NLS-1$
-				int i2 = s2.indexOf("*"); //$NON-NLS-1$
-				if (i1 != -1 && i2 == -1)
-					return -1;
-				else if (i1 == -1 && i2 != -1)
-					return 1;
-				else
-					return 0;
-			}
-		});
-		return list;
-	}
 }
