@@ -135,6 +135,10 @@ public class AuthorizationService {
 			uri = "/file/" + uri.substring(6);
 		}
 
+		String projectWorldReadable = System.getProperty("org.eclipse.orion.server.core.projectsWorldReadable");
+		if (getMethod(method) == GET && uri.startsWith("/file/") && "true".equals(projectWorldReadable))
+			return true;
+
 		IEclipsePreferences users = new OrionScope().getNode("Users"); //$NON-NLS-1$
 		JSONArray userRightArray = AuthorizationReader.getAuthorizationData((IEclipsePreferences) users.node(name));
 		for (int i = 0; i < userRightArray.length(); i++) {
