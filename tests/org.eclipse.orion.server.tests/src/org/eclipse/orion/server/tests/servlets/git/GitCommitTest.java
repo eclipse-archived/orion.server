@@ -271,6 +271,7 @@ public class GitCommitTest extends GitTest {
 	}
 
 	@Test
+	@Ignore("not yet, see bug 339242")
 	public void testCommitAmend() throws IOException, SAXException, URISyntaxException, JSONException, NoHeadException, JGitInternalException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
