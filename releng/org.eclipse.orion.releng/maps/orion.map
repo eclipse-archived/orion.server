@@ -18,7 +18,7 @@ plugin@org.eclipse.orion.server.authentication.openid=GIT,tag=v20110228-1820,rep
 plugin@org.eclipse.orion.server.authentication.openid.core=GIT,tag=v20110207-1740,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.authentication.openid.core
 plugin@org.eclipse.orion.server.authentication.basic=GIT,tag=v20110214-1700,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.authentication.basic
 plugin@org.eclipse.orion.server.filesystem.git=GIT,tag=v20110228-1820,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.filesystem.git
-plugin@org.eclipse.orion.server.git=GIT,tag=v20110308-1655,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.git
+plugin@org.eclipse.orion.server.git=GIT,tag=v20110308-2245,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.git
 plugin@org.eclipse.orion.server.sshconfig.userprofile=GIT,tag=v20110214-1700,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.sshconfig.userprofile
 plugin@org.eclipse.orion.server.user.securestorage=GIT,tag=v20110222-1020,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.user.securestorage
 plugin@org.eclipse.orion.server.useradmin=GIT,tag=v20110307-1745,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=/bundles/org.eclipse.orion.server.useradmin
