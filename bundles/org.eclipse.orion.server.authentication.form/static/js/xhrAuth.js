@@ -167,10 +167,13 @@ function checkUser() {
 		handleAs : "json",
 		timeout : 15000,
 		load : function(jsonData, ioArgs) {
+			if (jsonData) {
 				var lastLogin = "N/A";
-				if (jsonData.lastlogintimestamp != null)
+				if (jsonData.lastlogintimestamp) {
 					lastLogin = dojo.date.locale.format(new Date(jsonData.lastlogintimestamp), {formatLength: "short"});
+				}
 				eclipse.globalCommandUtils.generateUserInfo(jsonData.login, "logged in since " + lastLogin);
+			}
 			return jsonData;
 		},
 		error : function(response, ioArgs) {
