@@ -385,7 +385,19 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 			return false;
 
 		IPath path = new Path(userArea).append(user);
-		if (content.startsWith(path.toFile().toURI().toString()))
+
+		URI contentURI = null;
+		//use the content location specified by the user
+		try {
+			contentURI = Util.getURIWithAuthority(new URI(content), user);
+			EFS.getFileSystem(contentURI.getScheme());//check if we support this scheme
+		} catch (URISyntaxException e) {
+			contentURI = new File(content).toURI(); //if this is not a valid URI try to parse it as file path
+		} catch (CoreException e) {
+			contentURI = new File(content).toURI();//if we don't support given scheme try to parse as location as a file path
+		}
+
+		if (contentURI.toString().startsWith(path.toFile().toURI().toString()))
 			return true;
 
 		return false;
