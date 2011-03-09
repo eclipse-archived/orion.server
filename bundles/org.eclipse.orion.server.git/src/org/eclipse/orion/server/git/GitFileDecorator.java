@@ -47,51 +47,49 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		boolean isWorkspace = ("workspace".equals(servlet)); //$NON-NLS-1$
 
 		try {
-			// assumption that Git resources may live only under another Git resource
-			if (GitUtils.getGitDir(targetPath, request.getRemoteUser()) != null) {
-				addGitLinks(resource, representation, isWorkspace);
+			if (isWorkspace && "POST".equals(request.getMethod())) {
+				String contentLocation = representation.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+				IPath path = new Path(new URI(contentLocation).getPath());
 
+				// initialize a new git repository on project creation if specified by configuration
+				initGitRepository(request, targetPath, representation);
+
+				if (GitUtils.getGitDir(path, request.getRemoteUser()) != null)
+					addGitLinks(resource, representation, isWorkspace);
+				return;
+			}
+
+			if (isWorkspace && "GET".equals(request.getMethod())) {
 				JSONArray children = representation.optJSONArray(ProtocolConstants.KEY_CHILDREN);
 				if (children != null) {
 					for (int i = 0; i < children.length(); i++) {
 						JSONObject child = children.getJSONObject(i);
-						addGitLinks(resource, child, false);
+						String location = child.getString(ProtocolConstants.KEY_LOCATION);
+						IPath path = new Path(new URI(location).getPath());
+						if (GitUtils.getGitDir(path, request.getRemoteUser()) != null)
+							addGitLinks(resource, child, false);
 					}
 				}
-			} else {
-				//initialize a new git repository on project creation if specified by configuration
-				initGitRepository(request, targetPath, representation);
+				return;
+			}
+
+			if (!isWorkspace && "GET".equals(request.getMethod())) {
+				if (GitUtils.getGitDir(targetPath, request.getRemoteUser()) != null) {
+					addGitLinks(resource, representation, isWorkspace);
+
+					// assumption that Git resources may live only under another Git resource
+					JSONArray children = representation.optJSONArray(ProtocolConstants.KEY_CHILDREN);
+					if (children != null) {
+						for (int i = 0; i < children.length(); i++) {
+							JSONObject child = children.getJSONObject(i);
+							addGitLinks(resource, child, false);
+						}
+					}
+				}
 			}
 		} catch (Exception e) {
 			// log and continue
 			LogHelper.log(e);
-		}
-	}
-
-	/**
-	 * If this  server is configured to use git by default, then each project creation that is not
-	 * already in a repository needs to have a git -init performed to initialize the repository.
-	 */
-	private void initGitRepository(HttpServletRequest request, IPath targetPath, JSONObject representation) throws IOException {
-		//project creation URL is of the form POST /workspace/<id>
-		if (!(targetPath.segmentCount() == 2 && "workspace".equals(targetPath.segment(0)) && "POST".equals(request.getMethod()))) //$NON-NLS-1$ //$NON-NLS-2$
-			return;
-		IEclipsePreferences preferences = InstanceScope.INSTANCE.getNode("org.eclipse.orion.server.configurator"); //$NON-NLS-1$
-		String scm = preferences.get("orion.project.defaultSCM", "").toLowerCase(); //$NON-NLS-1$ //$NON-NLS-2$
-		if (!"git".equals(scm)) //$NON-NLS-1$
-			return;
-		URI location = WebProject.fromId(representation.optString("Id")).getContentLocation();
-		//TODO support relative locations
-		if (!location.isAbsolute())
-			return;
-		String layout = preferences.get(Activator.PROP_FILE_LAYOUT, "flat").toLowerCase(); //$NON-NLS-1$
-		if ("usertree".equals(layout)) { //$NON-NLS-1$
-			//create repository in .git folder as sibling of the project, so each user gets one repository
-			File root = new File(new File(location).getParentFile(), ".git"); //$NON-NLS-1$
-			if (!root.exists()) {
-				FileRepository repo = new FileRepositoryBuilder().setGitDir(root).build();
-				repo.create();
-			}
 		}
 	}
 
@@ -131,5 +129,32 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		gitSection.put(GitConstants.KEY_COMMIT, link.toString());
 
 		representation.put(GitConstants.KEY_GIT, gitSection);
+	}
+
+	/**
+	 * If this  server is configured to use git by default, then each project creation that is not
+	 * already in a repository needs to have a git -init performed to initialize the repository.
+	 */
+	private void initGitRepository(HttpServletRequest request, IPath targetPath, JSONObject representation) throws IOException {
+		//project creation URL is of the form POST /workspace/<id>
+		if (!(targetPath.segmentCount() == 2 && "workspace".equals(targetPath.segment(0)) && "POST".equals(request.getMethod()))) //$NON-NLS-1$ //$NON-NLS-2$
+			return;
+		IEclipsePreferences preferences = InstanceScope.INSTANCE.getNode("org.eclipse.orion.server.configurator"); //$NON-NLS-1$
+		String scm = preferences.get("orion.project.defaultSCM", "").toLowerCase(); //$NON-NLS-1$ //$NON-NLS-2$
+		if (!"git".equals(scm)) //$NON-NLS-1$
+			return;
+		URI location = WebProject.fromId(representation.optString("Id")).getContentLocation();
+		//TODO support relative locations
+		if (!location.isAbsolute())
+			return;
+		String layout = preferences.get(Activator.PROP_FILE_LAYOUT, "flat").toLowerCase(); //$NON-NLS-1$
+		if ("usertree".equals(layout)) { //$NON-NLS-1$
+			//create repository in .git folder as sibling of the project, so each user gets one repository
+			File root = new File(new File(location).getParentFile(), ".git"); //$NON-NLS-1$
+			if (!root.exists()) {
+				FileRepository repo = new FileRepositoryBuilder().setGitDir(root).build();
+				repo.create();
+			}
+		}
 	}
 }
