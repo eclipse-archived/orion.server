@@ -22,7 +22,6 @@ import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
-import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.server.core.LogHelper;
@@ -137,14 +136,11 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		//TODO support relative locations
 		if (!location.isAbsolute())
 			return;
-		String layout = preferences.get(Activator.PROP_FILE_LAYOUT, "flat").toLowerCase(); //$NON-NLS-1$
-		if ("usertree".equals(layout)) { //$NON-NLS-1$
-			//create repository in .git folder as sibling of the project, so each user gets one repository
-			File root = new File(new File(location).getParentFile(), ".git"); //$NON-NLS-1$
-			if (!root.exists()) {
-				FileRepository repo = new FileRepositoryBuilder().setGitDir(root).build();
-				repo.create();
-			}
+		//create repository in each project if it doesn't already exist
+		File root = new File(new File(location), ".git"); //$NON-NLS-1$
+		if (!root.exists()) {
+			FileRepository repo = new FileRepositoryBuilder().setGitDir(root).build();
+			repo.create();
 		}
 	}
 }
