@@ -452,7 +452,9 @@ public class GitStatusTest extends GitTest {
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
 		assertEquals(2, statusArray.length());
 		assertNotNull(getChildByName(statusArray, "test.txt"));
+		assertNotNull(getChildByKey(statusArray, GitConstants.KEY_PATH, "test.txt"));
 		assertNotNull(getChildByName(statusArray, "folder/folder.txt"));
+		assertNotNull(getChildByKey(statusArray, GitConstants.KEY_PATH, "folder/folder.txt"));
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
 		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
@@ -462,21 +464,7 @@ public class GitStatusTest extends GitTest {
 		// TODO: don't create URIs out of thin air
 		request = getGetGitStatusRequest(gitStatusUri + "test.txt");
 		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		statusResponse = new JSONObject(response.getText());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-		assertEquals(1, statusArray.length());
-		assertEquals("test.txt", statusArray.getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
-		assertEquals(0, statusArray.length());
+		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
 
 		// GET /git/status/file/{proj}/folder/
 		// TODO: don't create URIs out of thin air
@@ -491,9 +479,11 @@ public class GitStatusTest extends GitTest {
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
 		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-		assertEquals(1, statusArray.length());
-		assertEquals("folder/folder.txt", statusArray.getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
-		assertChildLocation(statusArray.getJSONObject(0), "folder change");
+		assertEquals(2, statusArray.length());
+		assertNotNull(getChildByName(statusArray, "test.txt"));
+		assertNotNull(getChildByKey(statusArray, GitConstants.KEY_PATH, "../test.txt"));
+		assertNotNull(getChildByName(statusArray, "folder/folder.txt"));
+		assertNotNull(getChildByKey(statusArray, GitConstants.KEY_PATH, "folder.txt"));
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
 		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
@@ -716,12 +706,16 @@ public class GitStatusTest extends GitTest {
 		assertEquals("Invalid file content", expectedFileContent, response.getText());
 	}
 
-	private static JSONObject getChildByName(JSONArray array, String name) throws JSONException {
+	private static JSONObject getChildByName(JSONArray array, String value) throws JSONException {
+		return getChildByKey(array, ProtocolConstants.KEY_NAME, value);
+	}
+
+	private static JSONObject getChildByKey(JSONArray array, String key, String value) throws JSONException {
 		List<JSONObject> children = new ArrayList<JSONObject>();
 		for (int i = 0; i < array.length(); i++) {
 			children.add(array.getJSONObject(i));
 		}
-		return getChildByName(children, name);
+		return getChildByKey(children, key, value);
 	}
 
 	/**

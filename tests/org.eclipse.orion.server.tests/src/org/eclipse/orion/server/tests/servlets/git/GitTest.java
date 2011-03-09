@@ -127,11 +127,15 @@ public abstract class GitTest extends FileSystemTest {
 		return ste[3].getMethodName();
 	}
 
-	protected static JSONObject getChildByName(List<JSONObject> children, String name) throws JSONException {
+	protected static JSONObject getChildByKey(List<JSONObject> children, String key, String value) throws JSONException {
 		for (JSONObject child : children) {
-			if (name.equals(child.getString(ProtocolConstants.KEY_NAME)))
+			if (value.equals(child.getString(key)))
 				return child;
 		}
 		return null;
+	}
+
+	protected static JSONObject getChildByName(List<JSONObject> children, String name) throws JSONException {
+		return getChildByKey(children, ProtocolConstants.KEY_NAME, name);
 	}
 }
