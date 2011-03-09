@@ -55,7 +55,7 @@ public class GitFileDecorator implements IWebResourceDecorator {
 				initGitRepository(request, targetPath, representation);
 
 				if (GitUtils.getGitDir(path, request.getRemoteUser()) != null)
-					addGitLinks(resource, representation, isWorkspace);
+					addGitLinks(new URI(contentLocation), representation);
 				return;
 			}
 
@@ -67,7 +67,7 @@ public class GitFileDecorator implements IWebResourceDecorator {
 						String location = child.getString(ProtocolConstants.KEY_LOCATION);
 						IPath path = new Path(new URI(location).getPath());
 						if (GitUtils.getGitDir(path, request.getRemoteUser()) != null)
-							addGitLinks(resource, child, false);
+							addGitLinks(new URI(location), child);
 					}
 				}
 				return;
@@ -75,14 +75,15 @@ public class GitFileDecorator implements IWebResourceDecorator {
 
 			if (!isWorkspace && "GET".equals(request.getMethod())) {
 				if (GitUtils.getGitDir(targetPath, request.getRemoteUser()) != null) {
-					addGitLinks(resource, representation, isWorkspace);
+					addGitLinks(resource, representation);
 
 					// assumption that Git resources may live only under another Git resource
 					JSONArray children = representation.optJSONArray(ProtocolConstants.KEY_CHILDREN);
 					if (children != null) {
 						for (int i = 0; i < children.length(); i++) {
 							JSONObject child = children.getJSONObject(i);
-							addGitLinks(resource, child, false);
+							String location = child.getString(ProtocolConstants.KEY_LOCATION);
+							addGitLinks(new URI(location), child);
 						}
 					}
 				}
@@ -93,39 +94,28 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		}
 	}
 
-	private void addGitLinks(URI resource, JSONObject representation, boolean isWorkspace) throws URISyntaxException, JSONException {
-
-		URI location = null;
-
-		if (isWorkspace && representation.has(ProtocolConstants.KEY_CONTENT_LOCATION))
-			location = new URI(representation.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
-		if (!isWorkspace)
-			location = new URI(representation.getString(ProtocolConstants.KEY_LOCATION));
-		if (location == null)
-			return;
-
+	private void addGitLinks(URI location, JSONObject representation) throws URISyntaxException, JSONException {
 		JSONObject gitSection = new JSONObject();
-
 		IPath targetPath = new Path(location.getPath());
 
 		// add Git Diff URI
 		IPath path = new Path(GitServlet.GIT_URI + '/' + GitConstants.DIFF_RESOURCE + '/' + GitConstants.KEY_DIFF_DEFAULT).append(targetPath);
-		URI link = new URI(resource.getScheme(), resource.getAuthority(), path.toString(), null, null);
+		URI link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_DIFF, link.toString());
 
 		// add Git Status URI
 		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.STATUS_RESOURCE).append(targetPath);
-		link = new URI(resource.getScheme(), resource.getAuthority(), path.toString(), null, null);
+		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_STATUS, link.toString());
 
 		// add Git Index URI
 		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.INDEX_RESOURCE).append(targetPath);
-		link = new URI(resource.getScheme(), resource.getAuthority(), path.toString(), null, null);
+		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_INDEX, link.toString());
 
 		// add Git Commit URI
 		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.COMMIT_RESOURCE).append(targetPath);
-		link = new URI(resource.getScheme(), resource.getAuthority(), path.toString(), null, null);
+		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_COMMIT, link.toString());
 
 		representation.put(GitConstants.KEY_GIT, gitSection);
