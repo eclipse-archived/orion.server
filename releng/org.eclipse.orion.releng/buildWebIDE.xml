@@ -6,6 +6,8 @@
 		<property name="cvsuser" value=":ext:aniefer" />		
 		<property name="builder" value="${basedir}/builder" />
 		
+		<mkdir dir="${base}"/>
+		
 		<property name="allElementsFile" value="${basedir}/builder/allElements.xml" />
 		<ant antfile="${eclipse.pdebuild.scripts}/productBuild/productBuild.xml" >
 			<property name="topLevelElementId" value="org.eclipse.pde.build.container.feature" />
