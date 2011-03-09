@@ -128,15 +128,19 @@ public class AuthorizationService {
 		if (uri.startsWith("/site")) //$NON-NLS-1$
 			return true;
 
+		// Any user can access their own profile
+		if (uri.equals("/users/" + name)) //$NON-NLS-1$
+			return true;
+
 		//import/export rights depend on access to the file content
-		if (uri.startsWith("/xfer/export/") && uri.endsWith(".zip")) {
-			uri = "/file/" + uri.substring(13, uri.length() - 4);
-		} else if (uri.startsWith("/xfer/")) {
-			uri = "/file/" + uri.substring(6);
+		if (uri.startsWith("/xfer/export/") && uri.endsWith(".zip")) { //$NON-NLS-1$ //$NON-NLS-2$
+			uri = "/file/" + uri.substring(13, uri.length() - 4); //$NON-NLS-1$
+		} else if (uri.startsWith("/xfer/")) { //$NON-NLS-1$
+			uri = "/file/" + uri.substring(6); //$NON-NLS-1$
 		}
 
-		String projectWorldReadable = System.getProperty("org.eclipse.orion.server.core.projectsWorldReadable");
-		if (getMethod(method) == GET && uri.startsWith("/file/") && "true".equals(projectWorldReadable))
+		String projectWorldReadable = System.getProperty("org.eclipse.orion.server.core.projectsWorldReadable"); //$NON-NLS-1$
+		if (getMethod(method) == GET && uri.startsWith("/file/") && "true".equalsIgnoreCase(projectWorldReadable)) //$NON-NLS-1$ //$NON-NLS-2$
 			return true;
 
 		IEclipsePreferences users = new OrionScope().getNode("Users"); //$NON-NLS-1$
