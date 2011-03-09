@@ -423,8 +423,25 @@ public class GitStatusTest extends GitTest {
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
+		String contentLocation = project.optString(ProtocolConstants.KEY_CONTENT_LOCATION, null);
+		assertNotNull(contentLocation);
 
-		WebRequest request = getPutFileRequest(projectId + "/test.txt", "file change");
+		WebRequest request = getGetFilesRequest(contentLocation);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		project = new JSONObject(response.getText());
+		String childrenLocation = project.optString(ProtocolConstants.KEY_CHILDREN_LOCATION, null);
+		assertNotNull(childrenLocation);
+
+		request = getGetFilesRequest(childrenLocation);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		project = new JSONObject(response.getText());
+		List<JSONObject> children = getDirectoryChildren(project);
+		JSONObject folder = getChildByName(children, "folder");
+
+		// TODO: don't create URIs out of thin air
+		request = getPutFileRequest(projectId + "/test.txt", "file change");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -466,9 +483,13 @@ public class GitStatusTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
 
+		gitSection = folder.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+		gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
+		assertNotNull(gitStatusUri);
+
 		// GET /git/status/file/{proj}/folder/
-		// TODO: don't create URIs out of thin air
-		request = getGetGitStatusRequest(gitStatusUri + "folder/");
+		request = getGetGitStatusRequest(gitStatusUri);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		statusResponse = new JSONObject(response.getText());
