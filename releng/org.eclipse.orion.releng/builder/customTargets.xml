@@ -65,14 +65,12 @@ lastMapTag=${mapsTagTag}
 		<available property="jsdocHome" value="${base}/jsdoc-toolkit" file="${base}/jsdoc-toolkit" />
 		<antcall target="jsdocs" />
 		
-		<!-- 
 		<ant dir="${basedir}" antfile="${builder}/scripts/closure.xml" target="runClosure" >
 			<property name="closureJar" value="/shared/common/closure/compiler.jar" />
 			<property name="orion.client.core" value="${buildDirectory}/plugins/org.eclipse.orion.client.core/static"/>
 			<property name="orion.client.editor" value="${buildDirectory}/plugins/org.eclipse.orion.client.editor/web"/>
 			<property name="orion.client.git" value="${buildDirectory}/plugins/org.eclipse.orion.client.git/static"/>
 		</ant>
-		-->
 	</target>
 	
 	<target name="jsdocs" if="jsdocHome" >
