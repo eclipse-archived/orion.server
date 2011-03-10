@@ -20,8 +20,11 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
+import org.eclipse.jgit.lib.ConfigConstants;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONArray;
@@ -309,6 +312,101 @@ public class GitResetTest extends GitTest {
 		assertEquals(1, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
 		assertEquals(1, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
+		assertEquals(1, statusArray.length());
+	}
+
+	@Test
+	public void testResetAutocrlfTrue() throws IOException, SAXException, URISyntaxException, JSONException {
+
+		// "git config core.autocrlf true"
+		Git git = new Git(db);
+		StoredConfig config = git.getRepository().getConfig();
+		config.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOCRLF, Boolean.TRUE);
+		config.save();
+
+		URI workspaceLocation = createWorkspace(getMethodName());
+
+		String projectName = getMethodName();
+		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
+
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		JSONObject project = new JSONObject(response.getText());
+		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
+		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
+		assertNotNull(projectId);
+
+		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
+		assertNotNull(gitIndexUri);
+		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
+		assertNotNull(gitStatusUri);
+		String gitCommitUri = gitSection.optString(GitConstants.KEY_COMMIT, null);
+		assertNotNull(gitCommitUri);
+
+		// CRLF
+		// TODO: don't create URIs out of thin air
+		WebRequest request = getPutFileRequest(projectId + "/test.txt", "f" + "\r\n" + "older");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// "git add {path}"
+		// TODO: don't create URIs out of thin air
+		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// commit
+		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "added new line - crlf", false);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// assert there is nothing to commit
+		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject statusResponse = new JSONObject(response.getText());
+		GitStatusTest.assertStatusClean(statusResponse);
+
+		// create new file
+		String fileName = "new.txt";
+		request = getPostFilesRequest(projectId + "/", getNewFileJSON(fileName).toString(), fileName);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		JSONObject file = new JSONObject(response.getText());
+		String location = file.optString(ProtocolConstants.KEY_LOCATION, null);
+		assertNotNull(location);
+
+		// LF
+		request = getPutFileRequest(location, "i'm" + "\n" + "new");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// "git add ."
+		request = GitAddTest.getPutGitIndexRequest(gitIndexUri /* stage all */);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// reset
+		request = getPostGitIndexRequest(gitIndexUri /* reset all */, ResetType.MIXED);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		statusResponse = new JSONObject(response.getText());
+		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
+		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
 		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);

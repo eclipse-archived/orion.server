@@ -62,18 +62,7 @@ public class GitStatusTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject statusResponse = new JSONObject(response.getText());
-		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
-		assertEquals(0, statusArray.length());
+		assertStatusClean(statusResponse);
 	}
 
 	// "status -s" > "A  new.txt", staged
@@ -691,6 +680,8 @@ public class GitStatusTest extends GitTest {
 		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
 		assertEquals(0, statusArray.length());
+
+		// TODO: commit
 	}
 
 	private void assertChildLocation(JSONObject child, String expectedFileContent) throws JSONException, IOException, SAXException {
@@ -737,6 +728,21 @@ public class GitStatusTest extends GitTest {
 			children.add(array.getJSONObject(i));
 		}
 		return getChildByKey(children, key, value);
+	}
+
+	static void assertStatusClean(JSONObject statusResponse) throws JSONException {
+		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
+		assertEquals(0, statusArray.length());
 	}
 
 	/**
