@@ -56,7 +56,7 @@ public class TransferResourceDecorator implements IWebResourceDecorator {
 
 	private void addTransferLinks(URI resource, JSONObject representation) throws URISyntaxException, JSONException {
 		URI location = new URI(representation.getString(ProtocolConstants.KEY_LOCATION));
-		IPath targetPath = new Path(location.getPath()).removeFirstSegments(1);
+		IPath targetPath = new Path(location.getPath()).removeFirstSegments(1).removeTrailingSeparator();
 		IPath path = new Path("/xfer").append(targetPath); //$NON-NLS-1$
 		URI link = new URI(resource.getScheme(), resource.getAuthority(), path.toString(), null, null);
 		representation.put(ProtocolConstants.KEY_IMPORT_LOCATION, link.toString());
