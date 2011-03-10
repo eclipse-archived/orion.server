@@ -39,8 +39,6 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 
 	@Override
 	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String gitPathInfo) throws ServletException {
-		Config config = null;
-		String autocrlf = null;
 		try {
 			Path path = new Path(gitPathInfo);
 			if (!path.hasTrailingSeparator())
@@ -49,13 +47,6 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 			if (gitDir == null)
 				return false; // TODO: or an error response code, 405?
 			Repository db = new FileRepository(gitDir);
-
-			// workaround for bug 301775
-			config = db.getConfig();
-			autocrlf = config.getString(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOCRLF);
-			config.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOCRLF, Boolean.FALSE);
-			// no need to save
-
 			FileTreeIterator iterator = new FileTreeIterator(db);
 			IndexDiff diff = new IndexDiff(db, Constants.HEAD, iterator);
 			// see bug 339351
@@ -88,17 +79,6 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 
 		} catch (Exception e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error generating status response", e));
-		} finally {
-			// workaround for bug 301775
-			if (config != null) {
-				if (autocrlf != null) {
-					boolean p = Boolean.parseBoolean(autocrlf);
-					config.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOCRLF, p);
-				} else {
-					config.unset(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOCRLF);
-				}
-				// no need to save
-			}
 		}
 	}
 
