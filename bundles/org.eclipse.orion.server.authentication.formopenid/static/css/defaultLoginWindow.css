@@ -2,7 +2,7 @@
 	border: none;
 }
 div.closeLoginWindow {
-	float: rigth;
+	float: right;
 }
 p.closeLoginWindow {
 	text-align: right;
@@ -229,7 +229,7 @@ td.loginWindow {
 .hrloginWindow {
 	border-top: 1px solid #DDD;
 	background-color: #FFF;
-	heigh: 1px;
+	height: 1px;
 	border-bottom: none;
 	border-left: none;
 	border-right: none;
