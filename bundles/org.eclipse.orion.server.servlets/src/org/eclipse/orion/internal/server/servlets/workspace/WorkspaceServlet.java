@@ -64,7 +64,7 @@ public class WorkspaceServlet extends OrionServlet {
 	}
 
 	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+	protected synchronized void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
 		String pathString = req.getPathInfo();
 		if (pathString == null || pathString.equals("/")) { //$NON-NLS-1$
@@ -103,7 +103,7 @@ public class WorkspaceServlet extends OrionServlet {
 	}
 
 	@Override
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+	protected synchronized void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
 		String pathString = req.getPathInfo();
 		if (pathString == null || pathString.equals("/")) {//$NON-NLS-1$
@@ -206,7 +206,7 @@ public class WorkspaceServlet extends OrionServlet {
 	}
 
 	@Override
-	protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+	protected synchronized void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
 		String pathString = req.getPathInfo();
 		if (pathString != null) {
