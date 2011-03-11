@@ -319,6 +319,7 @@ public class GitResetTest extends GitTest {
 	}
 
 	@Test
+	@Ignore("see bug 339397")
 	public void testResetAutocrlfTrue() throws IOException, SAXException, URISyntaxException, JSONException {
 
 		// "git config core.autocrlf true"
