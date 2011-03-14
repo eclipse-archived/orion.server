@@ -17,7 +17,6 @@ plugin@org.eclipse.orion.server.authentication.formopenid=GIT,tag=v20110309-2156
 plugin@org.eclipse.orion.server.authentication.openid=GIT,tag=v20110309-2156,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.authentication.openid
 plugin@org.eclipse.orion.server.authentication.openid.core=GIT,tag=v20110309-2156,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.authentication.openid.core
 plugin@org.eclipse.orion.server.authentication.basic=GIT,tag=v20110309-2156,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.authentication.basic
-plugin@org.eclipse.orion.server.filesystem.git=GIT,tag=v20110309-2156,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.filesystem.git
 plugin@org.eclipse.orion.server.git=GIT,tag=v20110310-1738,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.git
 plugin@org.eclipse.orion.server.sshconfig.userprofile=GIT,tag=v20110310-1108,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.sshconfig.userprofile
 plugin@org.eclipse.orion.server.user.securestorage=GIT,tag=v20110309-2156,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.user.securestorage
@@ -44,7 +43,6 @@ plugin@nekohtml=GET,http://git.eclipse.org/c/e4/org.eclipse.orion.server.git/pla
 
 #tests
 plugin@org.eclipse.orion.server.tests=GIT,tag=v20110311-1121,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=tests/org.eclipse.orion.server.tests
-plugin@org.eclipse.orion.server.tests.filesystem=GIT,tag=v20110307-1745,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=tests/org.eclipse.orion.server.tests.filesystem
 plugin@org.eclipse.orion.server.sshconfig.home=GIT,tag=v20110207-1740,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.sshconfig.home
 
 #git

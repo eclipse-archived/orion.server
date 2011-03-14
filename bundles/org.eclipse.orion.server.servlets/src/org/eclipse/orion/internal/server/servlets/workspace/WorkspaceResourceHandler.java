@@ -46,7 +46,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		URI contentLocation = project.getContentLocation();
 		//relative URIs (any URI with no scheme) are resolved against the location of the workspace servlet.
 		//note when relative URIs are used we must hard-code knowledge of the file servlet
-		if (!contentLocation.isAbsolute() || "file".equals(contentLocation.getScheme()) || "gitfs".equals(contentLocation.getScheme())) { //$NON-NLS-1$//$NON-NLS-2$
+		if (!contentLocation.isAbsolute() || "file".equals(contentLocation.getScheme())) { //$NON-NLS-1$//$NON-NLS-2$
 			IPath contentPath = new Path(contentLocation.getPath());
 			//absolute file system paths are mapped via the alias registry so we just provide the project id as the alias
 			if (contentPath.isAbsolute())
@@ -358,14 +358,6 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 			return true;
 		}
 
-		try {
-			// TODO gitfs links are allowed
-			if ("gitfs".equals(new URI(content).getScheme())) //$NON-NLS-1$
-				return true;
-		} catch (URISyntaxException e) {
-			// ignore
-		}
-
 		String prefixes = System.getProperty("org.eclipse.orion.server.core.allowedPathPrefixes"); //$NON-NLS-1$
 		if (prefixes == null) {
 			prefixes = ServletTestingSupport.allowedPrefixes;
@@ -405,8 +397,8 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 
 	private void registerProjectLocation(WebProject project) {
 		URI contentURI = project.getContentLocation();
-		//if the location is relative to this server, we need to register an alias so the file service can find it
-		if (!contentURI.isAbsolute() || "file".equals(contentURI.getScheme()) || "gitfs".equals(contentURI.getScheme())) { //$NON-NLS-1$ //$NON-NLS-2$
+		// if the location is relative to this server, we need to register an alias so the file service can find it
+		if (!contentURI.isAbsolute() || "file".equals(contentURI.getScheme())) { //$NON-NLS-1$
 			IPath contentPath = new Path(contentURI.getSchemeSpecificPart());
 			if (contentPath.isAbsolute())
 				aliasRegistry.registerAlias(project.getId(), contentURI);
