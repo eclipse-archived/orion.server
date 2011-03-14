@@ -19,6 +19,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
@@ -141,6 +142,15 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		if (!root.exists()) {
 			FileRepository repo = new FileRepositoryBuilder().setGitDir(root).build();
 			repo.create();
+			//we need to perform an initial commit to workaround JGit bug 339610.
+			Git git = new Git(repo);
+			try {
+				git.add().addFilepattern(".").call();
+				git.commit().setMessage("Initial commit").call();
+			} catch (Exception e) {
+				//just log it - this is not the purpose of the file decorator
+				LogHelper.log(e);
+			}
 		}
 	}
 }

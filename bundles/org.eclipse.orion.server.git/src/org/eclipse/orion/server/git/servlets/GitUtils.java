@@ -21,9 +21,17 @@ import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 
 public class GitUtils {
+	/**
+	 * Returns the file representing the Git repository directory for the given 
+	 * file path or <code>null</code> if the file doesn't exits, is not a Git 
+	 * repository or an error occurred while transforming the given path into 
+	 * a store.  
+	 */
 	public static File getGitDir(IPath path, String authority) throws CoreException {
 		IPath p = path.removeFirstSegments(1);
 		IFileStore fileStore = NewFileServlet.getFileStore(p, authority);
+		if (fileStore == null)
+			return null;
 		File file = fileStore.toLocalFile(EFS.NONE, null);
 		if (file.exists()) {
 			while (file != null) {

@@ -41,7 +41,26 @@
 			<replace-in>
 				<include name="navigate-table.html" />
 			</replace-in>
-			<closure-args>
+			<closure-args>			
+				<arg value="--js=${orion.client.core}/js/auth.js" />
+				<arg value="--js=${orion.client.core}/js/treetable.js" />
+				<arg value="--js=${orion.client.core}/js/serviceregistry.js" />
+				<arg value="--js=${orion.client.core}/js/pluginregistry.js" />
+				<arg value="--js=${orion.client.core}/js/util.js" />
+				<arg value="--js=${orion.client.core}/js/commands.js" />
+				<arg value="--js=${orion.client.core}/js/dialogs.js" />
+				<arg value="--js=${orion.client.core}/js/input.js" />
+			 	<arg value="--js=${orion.client.core}/js/log.js" />
+			 	<arg value="--js=${orion.client.core}/js/preferences.js" />
+			 	<arg value="--js=${orion.client.core}/js/selection.js" />
+			 	<arg value="--js=${orion.client.core}/js/status.js" />
+			 	<arg value="--js=${orion.client.core}/js/users.js" />		
+				<arg value="--js=${orion.client.core}/js/favorites.js" />
+				<arg value="--js=${orion.client.core}/js/fileClient.js" />
+				<arg value="--js=${orion.client.core}/js/searchClient.js" />
+				<arg value="--js=${orion.client.git}/js/gitClient.js" />
+				<arg value="--js=${orion.client.git}/js/gitCommands.js" />
+					
 				<arg value="--js=${orion.client.core}/js/globalCommands.js" />
 				<arg value="--js=${orion.client.core}/js/breadcrumbs.js" />
 				<arg value="--js=${orion.client.core}/js/explorer-table.js" />
@@ -50,6 +69,46 @@
 			</closure-args>
 		</closure>
 		
+		<closure dir="${orion.client.core}" compiled="coding-editor.js" >
+			<replace-in>
+				<include name="coding.html" />
+			</replace-in>
+			<closure-args>
+				<arg value="--js=${orion.client.editor}/samples/styler.js" />
+				<arg value="--js=${orion.client.editor}/samples/rulers.js" />
+				<arg value="--js=${orion.client.editor}/samples/undoStack.js" />
+				<arg value="--js=${orion.client.editor}/js/model.js" />
+				<arg value="--js=${orion.client.editor}/js/editor.js" />
+				
+				<arg value="--js=${orion.client.core}/js/serviceregistry.js" />
+				<arg value="--js=${orion.client.core}/js/pluginregistry.js" />
+				<arg value="--js=${orion.client.core}/js/auth.js" />
+				
+				<arg value="--js=${orion.client.core}/js/util.js" />
+				<arg value="--js=${orion.client.core}/js/commands.js" />
+				<arg value="--js=${orion.client.core}/js/dialogs.js" />
+				<arg value="--js=${orion.client.core}/js/input.js" />
+			 	<arg value="--js=${orion.client.core}/js/log.js" />
+			 	<arg value="--js=${orion.client.core}/js/preferences.js" />
+			 	<arg value="--js=${orion.client.core}/js/selection.js" />
+			 	<arg value="--js=${orion.client.core}/js/status.js" />
+			 	<arg value="--js=${orion.client.core}/js/users.js" />		
+				<arg value="--js=${orion.client.core}/js/fileClient.js" />
+				<arg value="--js=${orion.client.core}/js/favorites.js" />
+				<arg value="--js=${orion.client.core}/js/searchClient.js" />
+				<arg value="--js=${orion.client.core}/js/globalCommands.js" />
+				<arg value="--js=${orion.client.core}/js/breadcrumbs.js" />
+				<arg value="--js=${orion.client.core}/js/editorFeatures.js" />
+				<arg value="--js=${orion.client.core}/js/outliner.js" />
+				<arg value="--js=${orion.client.core}/js/problems.js" />
+				<arg value="--js=${orion.client.core}/js/editorContainer.js" />
+				<arg value="--js=${orion.client.core}/js/syntaxchecker.js" />
+				<arg value="--js=${orion.client.core}/js/coding/coding.js" />
+			</closure-args>
+		</closure>
+	</target>
+	
+	<target name="oldClosure">
 		<closure dir="${orion.client.core}" compiled="navigate-tree.js" >
 			<replace-in>
 				<include name="navigate-tree.html" />
@@ -102,14 +161,12 @@
 				<arg value="--js=${orion.client.core}/js/input.js" />
 			 	<arg value="--js=${orion.client.core}/js/log.js" />
 			 	<arg value="--js=${orion.client.core}/js/preferences.js" />
-			 	<arg value="--js=${orion.client.core}/js/saveable.js" />
 			 	<arg value="--js=${orion.client.core}/js/selection.js" />
 			 	<arg value="--js=${orion.client.core}/js/status.js" />
 			 	<arg value="--js=${orion.client.core}/js/users.js" />		
-				<arg value="--js=${orion.client.core}/js/fileClient.js" />
 				<arg value="--js=${orion.client.core}/js/favorites.js" />
+				<arg value="--js=${orion.client.core}/js/fileClient.js" />
 				<arg value="--js=${orion.client.core}/js/searchClient.js" />
-				<arg value="--js=${orion.client.git}/js/gitClient.js" />
 			</closure-args>
 		</closure>	
 		

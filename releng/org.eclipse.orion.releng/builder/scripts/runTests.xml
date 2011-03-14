@@ -144,6 +144,5 @@
 		<!-- update the test status -->
 		<updateTestResult testFile="testResults.html" token="@JSUNIT@"/>
 		<updateTestResult testFile="org.eclipse.orion.server.tests.AllServerTests.html" token="@SERVER-TESTS@"/>
-		<updateTestResult testFile="org.eclipse.orion.server.tests.filesystem.git.AllTests.html" token="@SERVER-FILESYSTEM@"/>
 	</target>
 </project>

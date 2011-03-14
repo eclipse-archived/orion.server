@@ -24,10 +24,6 @@
             class="org.eclipse.orion.internal.server.servlets.workspace.WorkspaceServlet">
       </servlet>
       <servlet
-            alias="/filesystems"
-            class="org.eclipse.orion.internal.server.servlets.file.FileSystemsServlet">
-      </servlet>
-      <servlet
             alias="/prefs"
             class="org.eclipse.orion.server.servlets.PreferencesServlet">
       </servlet>
@@ -77,10 +73,6 @@
       </filter>
       <filter
             alias="/workspace"
-            class="org.eclipse.orion.server.configurator.servlet.AuthenticationFilter">
-      </filter>
-      <filter
-            alias="/filesystems"
             class="org.eclipse.orion.server.configurator.servlet.AuthenticationFilter">
       </filter>
       <filter

@@ -134,9 +134,11 @@ public class AuthorizationService {
 
 		//import/export rights depend on access to the file content
 		if (uri.startsWith("/xfer/export/") && uri.endsWith(".zip")) { //$NON-NLS-1$ //$NON-NLS-2$
-			uri = "/file/" + uri.substring(13, uri.length() - 4); //$NON-NLS-1$
+			uri = "/file/" + uri.substring(13, uri.length() - 4) + '/'; //$NON-NLS-1$
 		} else if (uri.startsWith("/xfer/")) { //$NON-NLS-1$
 			uri = "/file/" + uri.substring(6); //$NON-NLS-1$
+			if (!uri.endsWith("/")) //$NON-NLS-1$
+				uri += '/';
 		}
 
 		String projectWorldReadable = System.getProperty("org.eclipse.orion.server.core.projectsWorldReadable"); //$NON-NLS-1$
