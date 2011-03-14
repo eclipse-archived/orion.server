@@ -20,21 +20,6 @@
          id="org.eclipse.orion.server.tests"
          download-size="0"
          install-size="0"
-         version="0.0.0"
-         unpack="true"/>
-
-   <plugin
-         id="org.eclipse.orion.server.tests.filesystem"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="true"/>
-
-   <plugin
-         id="org.eclipse.orion.server.sshconfig.home"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
+         version="0.0.0"/>
 
 </feature>

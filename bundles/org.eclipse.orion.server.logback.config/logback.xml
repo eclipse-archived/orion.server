@@ -15,9 +15,6 @@
   <!-- Print information on search indexing -->  
   <!-- <logger name="org.eclipse.orion.internal.server.search.Indexer" level="DEBUG"/> -->
 
-  <!-- Prints activity of the Orion git file system implementation -->
-  <!-- <logger name="org.eclipse.orion.server.filesystem.git.GitFileStore" level="INFO"/> -->
-
   <!-- Prints successful and failed logins -->
   <!-- <logger name="org.eclipse.orion.server.login" level="INFO"/> -->
  

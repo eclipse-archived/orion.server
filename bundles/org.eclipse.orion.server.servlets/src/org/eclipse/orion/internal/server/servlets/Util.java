@@ -27,8 +27,6 @@ public class Util {
 		try {
 			if (uri.getScheme() == null)
 				return new URI("file", uri.getPath(), null); //$NON-NLS-1$
-			if ("gitfs".equals(uri.getScheme())) //$NON-NLS-1$
-				return new URI(uri.getScheme(), authority, uri.getPath(), uri.getQuery(), uri.getFragment());
 			return uri;
 		} catch (URISyntaxException e) {
 			// TODO:

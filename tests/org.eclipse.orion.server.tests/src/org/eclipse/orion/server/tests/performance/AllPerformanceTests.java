@@ -18,7 +18,7 @@ import org.junit.runners.Suite.SuiteClasses;
  * Runs all automated server tests.
  */
 @RunWith(Suite.class)
-@SuiteClasses({GitPerformanceTest.class})
+@SuiteClasses({})
 public class AllPerformanceTests {
 	//goofy junit4, no class body needed
 }
