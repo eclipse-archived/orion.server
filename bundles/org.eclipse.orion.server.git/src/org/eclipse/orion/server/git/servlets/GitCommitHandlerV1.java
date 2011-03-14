@@ -10,7 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -18,7 +19,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.*;
-import org.eclipse.jgit.errors.IncorrectObjectTypeException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
@@ -40,8 +40,6 @@ import org.json.JSONObject;
 public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 
 	private ServletResourceHandler<IStatus> statusHandler;
-	private Repository db;
-	private ObjectId blobId;
 
 	GitCommitHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
 		this.statusHandler = statusHandler;
@@ -50,16 +48,17 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 	@Override
 	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String path) throws ServletException {
 
+		Repository db = null;
 		try {
 			Path p = new Path(path);
 
 			switch (getMethod(request)) {
 				case GET :
-					return handleGet(request, response, p);
+					return handleGet(request, response, db, p);
 					// case PUT:
 					// return handlePut(request, response, p);
 				case POST :
-					return handlePost(request, response, p);
+					return handlePost(request, response, db, p);
 					// case DELETE :
 					// return handleDelete(request, response, p);
 			}
@@ -74,7 +73,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		return false;
 	}
 
-	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, Path path) throws CoreException, IOException, ServletException {
+	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws CoreException, IOException, ServletException {
 
 		File gitDir = GitUtils.getGitDir(path.removeFirstSegments(1).uptoSegment(2), request.getRemoteUser());
 		if (gitDir == null)
@@ -93,18 +92,15 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			if (w == null) {
 				// TODO:
 			}
-			blobId = w.getObjectId(0);
-			IOUtilities.pipe(open(), response.getOutputStream(), true, false);
+			ObjectId blobId = w.getObjectId(0);
+			ObjectStream stream = db.open(blobId, Constants.OBJ_BLOB).openStream();
+			IOUtilities.pipe(stream, response.getOutputStream(), true, false);
 			return true;
 		}
 		return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "The commit log is not yet supported.", null));
 	}
 
-	private InputStream open() throws IOException, CoreException, IncorrectObjectTypeException {
-		return db.open(blobId, Constants.OBJ_BLOB).openStream();
-	}
-
-	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, Path path) throws ServletException, NoFilepatternException, IOException, JSONException, CoreException {
+	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws ServletException, NoFilepatternException, IOException, JSONException, CoreException {
 
 		File gitDir = GitUtils.getGitDir(path.uptoSegment(2), request.getRemoteUser());
 		if (gitDir == null)
