@@ -70,8 +70,8 @@
 	
 	<target name="jsTests" >
 		<!-- js tests need dojo extracted -->
-		<mkdir dir="${buildDirectory}/org.dojotoolkit" />
-		<unzip dest="${buildDirectory}/org.dojotoolkit">
+		<mkdir dir="${buildDirectory}/plugins/org.dojotoolkit" />
+		<unzip dest="${buildDirectory}/plugins/org.dojotoolkit">
 			<fileset dir="${buildDirectory}/buildRepo/plugins" includes="org.dojotoolkit_1.5.0.*.jar" />
 		</unzip>
 		
