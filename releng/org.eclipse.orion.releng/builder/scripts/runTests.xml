@@ -163,17 +163,32 @@
 		<property name="jsTestDir" value="${base}/tests/${buildLabel}" />
 		
 		<!-- js unit results -->
-		<junitreport todir="${dropLocation}" tofile="testResults.xml">
-			<fileset dir="${jsTestDir}" includes="**/*.xml" />
+		<junitreport todir="${dropLocation}" tofile="Chrome-10.0-testResults.xml">
+			<fileset dir="${jsTestDir}" includes="**/TEST-Chrome_100*.xml" />
 		</junitreport>
-		<xslt style="${builder}/html/JUNIT.XSL" in="${dropLocation}/testResults.xml" out="${dropLocation}/testResults.html" />
-		<delete file="${dropLocation}/testResults.xml" />
+		<junitreport todir="${dropLocation}" tofile="Chrome-8.0-testResults.xml">
+			<fileset dir="${jsTestDir}" includes="**/TEST-Chrome_80*.xml" />
+		</junitreport>
+		<junitreport todir="${dropLocation}" tofile="Firefox-3.6-testResults.xml">
+			<fileset dir="${jsTestDir}" includes="**/TEST-Firefox_36*.xml" />
+		</junitreport>
+		<junitreport todir="${dropLocation}" tofile="Firefox-4.0-testResults.xml">
+			<fileset dir="${jsTestDir}" includes="**/TEST-Firefox_40*.xml" />
+		</junitreport>
+		
+		<xslt style="${builder}/html/JUNIT.XSL" basedir="${dropLocation}" destdir="${dropLocation}" includes="*.xml" />
+		<delete>
+			<fileset dir="${dropLocation}" includes="*-testResults.xml" />
+		</delete>
 		
 		<!-- junit results -->
 		<xslt style="${builder}/html/JUNIT.XSL" basedir="${buildDirectory}/test/eclipse/results" destdir="${dropLocation}" includes="*.xml" />
 		
 		<!-- update the test status -->
-		<updateTestResult testFile="testResults.html" token="@JSUNIT@"/>
+		<updateTestResult testFile="Chrome-10.0-testResults.html" token="@JS-CHROME10@"/>
+		<updateTestResult testFile="Chrome-8.0-testResults.html" token="@JS-CHROME8@"/>
+		<updateTestResult testFile="Firefox-3.6-testResults.html" token="@JS-FIREFOX36@"/>
+		<updateTestResult testFile="Firefox-4.0-testResults.html" token="@JS-FIREFOX40@"/>
 		<updateTestResult testFile="org.eclipse.orion.server.tests.AllServerTests.html" token="@SERVER-TESTS@"/>
 	</target>
 </project>
