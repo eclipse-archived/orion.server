@@ -11,27 +11,14 @@
 package org.eclipse.orion.server.authentication.form.core;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
+import java.util.*;
+import javax.servlet.http.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
-import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
-import org.eclipse.orion.server.useradmin.UnsupportedUserStoreException;
-import org.eclipse.orion.server.useradmin.UserAdminActivator;
+import org.eclipse.orion.server.user.profile.*;
+import org.eclipse.orion.server.useradmin.*;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.service.useradmin.User;
