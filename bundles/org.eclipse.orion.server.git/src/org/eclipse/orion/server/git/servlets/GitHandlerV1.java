@@ -27,6 +27,7 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 	private ServletResourceHandler<String> diffHandlerV1;
 	private ServletResourceHandler<String> indexHandlerV1;
 	private ServletResourceHandler<String> statusHandlerV1;
+	private ServletResourceHandler<String> configHandlerV1;
 
 	GitHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
 		cloneHandlerV1 = new GitCloneHandlerV1(statusHandler);
@@ -34,29 +35,26 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 		diffHandlerV1 = new GitDiffHandlerV1(statusHandler);
 		indexHandlerV1 = new GitIndexHandlerV1(statusHandler);
 		statusHandlerV1 = new GitStatusHandlerV1(statusHandler);
+		configHandlerV1 = new GitConfigHandlerV1(statusHandler);
 	}
 
 	@Override
-	public boolean handleRequest(HttpServletRequest request,
-			HttpServletResponse response, String gitPathInfo)
-			throws ServletException {
+	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String gitPathInfo) throws ServletException {
 
 		String[] infoParts = gitPathInfo.split("\\/", 3); //$NON-NLS-1$
 
 		if (infoParts[1].equals(GitConstants.CLONE_RESOURCE)) {
-			return cloneHandlerV1
-					.handleRequest(request, response, infoParts[2]);
+			return cloneHandlerV1.handleRequest(request, response, infoParts[2]);
 		} else if (infoParts[1].equals(GitConstants.COMMIT_RESOURCE)) {
-			return commitHandlerV1.handleRequest(request, response,
-					infoParts[2]);
+			return commitHandlerV1.handleRequest(request, response, infoParts[2]);
 		} else if (infoParts[1].equals(GitConstants.DIFF_RESOURCE)) {
 			return diffHandlerV1.handleRequest(request, response, infoParts[2]);
 		} else if (infoParts[1].equals(GitConstants.INDEX_RESOURCE)) {
-			return indexHandlerV1
-					.handleRequest(request, response, infoParts[2]);
+			return indexHandlerV1.handleRequest(request, response, infoParts[2]);
 		} else if (infoParts[1].equals(GitConstants.STATUS_RESOURCE)) {
-			return statusHandlerV1.handleRequest(request, response,
-					infoParts[2]);
+			return statusHandlerV1.handleRequest(request, response, infoParts[2]);
+		} else if (infoParts[1].equals(GitConstants.CONFIG_RESOURCE)) {
+			return configHandlerV1.handleRequest(request, response, infoParts[2]);
 		}
 		return false;
 	}
