@@ -35,8 +35,9 @@ do
 			serverPath="$2"; shift;;
 			
 		"-javaHome")
-			javaHome="$2"; shift;;
+			javaHome="$2"; shift
 			java=$javaHome/bin/java
+			;;
 			
 		 *) break;;	 # terminate while loop
 	esac
