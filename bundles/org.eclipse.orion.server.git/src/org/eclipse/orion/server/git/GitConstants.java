@@ -79,5 +79,9 @@ public class GitConstants {
 
 	public static final String KEY_COMMIT_AMEND = "Amend"; //$NON-NLS-1$
 
+	public static final String KEY_COMMIT_TIME = "Time"; //$NON-NLS-1$
+
 	public static final String KEY_PATH = "Path"; //$NON-NLS-1$
+
+	public static final String KEY_AUTHOR_NAME = "AuthorName"; //$NON-NLS-1$
 }
