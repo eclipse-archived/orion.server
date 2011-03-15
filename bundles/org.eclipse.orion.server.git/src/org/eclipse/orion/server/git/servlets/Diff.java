@@ -54,6 +54,14 @@ public class Diff {
 		pathFilter = pf;
 	}
 
+	void setOldTree(AbstractTreeIterator oldTree) {
+		this.oldTree = oldTree;
+	}
+
+	void setNewTree(AbstractTreeIterator newTree) {
+		this.newTree = newTree;
+	}
+
 	protected void run() throws Exception {
 		diffFmt.setRepository(db);
 		try {
