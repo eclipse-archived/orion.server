@@ -10,6 +10,7 @@
 #*******************************************************************************
 #!/bin/bash
 
+java=java
 writableBuildRoot=/web/builds
 
 while [ $# -gt 0 ]
@@ -30,8 +31,13 @@ do
 		"-xvfb")
 			xvfbCommand=-xvfb; shift;;
 			
+		"-server")
+			serverPath="$2"; shift;;
+			
 		"-javaHome")
-			javaHome="$2"; shift;;
+			javaHome="$2"; shift
+			java=$javaHome/bin/java
+			;;
 			
 		 *) break;;	 # terminate while loop
 	esac
@@ -52,6 +58,24 @@ if [ ! -z "$xvfbCommand" ]; then
 	exit
 fi
  
+if [ ! -z "$serverPath" ]; then
+	#remove -console from the .ini
+	sed -i '/^-console$/ d' $serverPath/eclipse.ini
+	$serverPath/eclipse > $serverPath/server.log 2>&1 &	
+	pid_server="$!"			# take the process ID
+	echo $pid_server
+	exit
+fi
+
+killFirefox() {
+	string=$1 ; shift
+	
+	firefoxPID=$( ps -ef | grep e4Build | grep $string | grep -v grep | awk '{print $2}' )
+	for p in $firefoxPID; do
+		kill $p
+	done
+}
+
 testDir=$writableBuildRoot/tests/$buildId
 if [[ ! -d $testDir ]]; 
 then
@@ -64,6 +88,7 @@ firefox=`which firefox`
 fi
 
 firefox4=/shared/common/firefox-4.0b11/firefox
+chrome10=/shared/common/chrome-10.0.648.133/google-chrome
 
 chrome=/shared/common/chrome-8.0.552.237/google-chrome
 if [[ ! -e "$chrome" ]]; then
@@ -75,13 +100,13 @@ export DISPLAY=:63		# set display to use that of the xvfb
 #read the port number from the testConf file
 port=`head -1 $testConf | sed 's_.*:\([0-9]*\)$_\1_'`
 
-echo Running $testConf on port $port
 # run the tests
-if [ ! -z "$javaHome" ]; then
-	$javaHome/bin/java -Dbrowser.timeout=120 -jar $testDir/../JsTestDriver.jar --config $testConf --port $port --browser $firefox,$chrome --tests all --testOutput $testDir
-	$javaHome/bin/java -Dbrowser.timeout=120 -jar $testDir/../JsTestDriver.jar --config $testConf --port $port --browser $opera --tests all --testOutput $testDir
-else
-	java -Dbrowser.timeout=120 -jar $testDir/../JsTestDriver.jar --config $testConf --port $port --browser $firefox,$chrome --tests all --testOutput $testDir
-	java -Dbrowser.timeout=120 -jar $testDir/../JsTestDriver.jar --config $testConf --port $port --browser $firefox4 --tests all --testOutput $testDir
-fi
+echo Running $testConf on port $port
+$java -Dbrowser.timeout=120 -jar $testDir/../JsTestDriver.jar --config $testConf --port $port --browser $firefox,$chrome --tests all --testOutput $testDir
+
+killFirefox "firefox-3.6.13/firefox-bin"
+
+$java -Dbrowser.timeout=120 -jar $testDir/../JsTestDriver.jar --config $testConf --port $port --browser $firefox4,$chrome10 --tests all --testOutput $testDir
+
+killFirefox "firefox-4.0b11/firefox-bin"
 

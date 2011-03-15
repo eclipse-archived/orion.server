@@ -75,6 +75,8 @@ public class GitConstants {
 
 	public static final String KEY_DIFF_CACHED = "Cached"; //$NON-NLS-1$
 
+	public static final String KEY_DIFF_NEW = "New"; //$NON-NLS-1$
+
 	public static final String KEY_COMMIT_MESSAGE = "Message"; //$NON-NLS-1$
 
 	public static final String KEY_COMMIT_AMEND = "Amend"; //$NON-NLS-1$

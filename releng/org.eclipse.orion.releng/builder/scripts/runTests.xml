@@ -69,10 +69,22 @@
 	</target>
 	
 	<target name="jsTests" >
+		<!-- js tests need dojo extracted -->
+		<mkdir dir="${buildDirectory}/org.dojotoolkit" />
+		<unzip dest="${buildDirectory}/org.dojotoolkit">
+			<fileset dir="${buildDirectory}/buildRepo/plugins" includes="org.dojotoolkit_1.5.0.*.jar" />
+		</unzip>
+		
 		<echo message="Launching Xvfb" />
 		<exec executable="bash" failonerror="false" outputproperty="xvfbPID" >
 			<arg value="${builder}/scripts/runTests.sh" />
 			<arg line="-xvfb" />
+		</exec>
+		
+		<exec executable="bash" failonerror="false" outputproperty="serverPID" >
+			<arg value="${builder}/scripts/runTests.sh" />
+			<arg value="-server" />
+			<arg value="${buildDirectory}/test/eclipse" />
 		</exec>
 		
 		<apply executable="bash" parallel="false">
@@ -93,12 +105,26 @@
 			</or></not>
 		</condition>
 		
+		<condition property="killServer" >
+			<not><or>
+				<length string="${serverPID}" length="1" />
+				<length string="${serverPID}" length="2" />
+			</or></not>
+		</condition>
+		
 		<antcall target="killXvfb" />
+		<antcall target="killServer" />
 	</target>
 		
 	<target name="killXvfb" if="killXvfb">
 		<exec executable="kill">
 			<arg value="${xvfbPID}" />
+		</exec>
+	</target>
+	
+	<target name="killServer" if="killServer">
+		<exec executable="kill">
+			<arg value="${serverPID}" />
 		</exec>
 	</target>
 	
