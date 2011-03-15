@@ -75,6 +75,12 @@
 			<arg line="-xvfb" />
 		</exec>
 		
+		<exec executable="bash" failonerror="false" outputproperty="serverPID" >
+			<arg value="${builder}/scripts/runTests.sh" />
+			<arg value="-server" />
+			<arg value="${buildDirectory}/test/eclipse" />
+		</exec>
+		
 		<apply executable="bash" parallel="false">
 			<arg value="${builder}/scripts/runTests.sh" />
 			<arg line="-id ${buildLabel}" />
@@ -93,12 +99,26 @@
 			</or></not>
 		</condition>
 		
+		<condition property="killServer" >
+			<not><or>
+				<length string="${serverPID}" length="1" />
+				<length string="${serverPID}" length="2" />
+			</or></not>
+		</condition>
+		
 		<antcall target="killXvfb" />
+		<antcall target="killServer" />
 	</target>
 		
 	<target name="killXvfb" if="killXvfb">
 		<exec executable="kill">
 			<arg value="${xvfbPID}" />
+		</exec>
+	</target>
+	
+	<target name="killServer" if="killServer">
+		<exec executable="kill">
+			<arg value="${serverPID}" />
 		</exec>
 	</target>
 	
