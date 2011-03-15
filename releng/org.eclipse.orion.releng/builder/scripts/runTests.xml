@@ -69,6 +69,12 @@
 	</target>
 	
 	<target name="jsTests" >
+		<!-- js tests need dojo extracted -->
+		<mkdir dir="${buildDirectory}/org.dojotoolkit" />
+		<unzip dest="${buildDirectory}/org.dojotoolkit">
+			<fileset dir="${buildDirectory}/buildRepo/plugins" includes="org.dojotoolkit_1.5.0.*.jar" />
+		</unzip>
+		
 		<echo message="Launching Xvfb" />
 		<exec executable="bash" failonerror="false" outputproperty="xvfbPID" >
 			<arg value="${builder}/scripts/runTests.sh" />
