@@ -12,6 +12,8 @@ package org.eclipse.orion.server.git.servlets;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collections;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -19,6 +21,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.*;
+import org.eclipse.jgit.errors.AmbiguousObjectException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
@@ -26,13 +29,11 @@ import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.*;
 import org.eclipse.orion.internal.server.core.IOUtilities;
-import org.eclipse.orion.internal.server.servlets.ServerStatus;
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.*;
 
 /**
  * 
@@ -73,35 +74,80 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		return false;
 	}
 
-	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws CoreException, IOException, ServletException {
-
+	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws CoreException, IOException, ServletException, JSONException, URISyntaxException {
 		File gitDir = GitUtils.getGitDir(path.removeFirstSegments(1).uptoSegment(2), request.getRemoteUser());
 		if (gitDir == null)
 			return false; // TODO: or an error response code, 405?
+
 		db = new FileRepository(gitDir);
 
-		// /{ref}/file/{projectId}/{path/...}
-		if (path.segmentCount() > 3) {
-			// TODO: try {} catch () { BAD_REQUEST, NOT_FOUND }
-			ObjectId refId = db.resolve(path.segment(0));
-			RevWalk walk = new RevWalk(db);
-			String p = path.removeFirstSegments(3).toString();
-			walk.setTreeFilter(AndTreeFilter.create(PathFilterGroup.createFromStrings(Collections.singleton(p)), TreeFilter.ANY_DIFF));
-			RevCommit commit = walk.parseCommit(refId);
-			final TreeWalk w = TreeWalk.forPath(db, p, commit.getTree());
-			if (w == null) {
-				// TODO:
-			}
-			ObjectId blobId = w.getObjectId(0);
-			ObjectStream stream = db.open(blobId, Constants.OBJ_BLOB).openStream();
-			IOUtilities.pipe(stream, response.getOutputStream(), true, false);
+		// /{ref}/file/{projectId}...}
+		String parts = request.getParameter("parts"); //$NON-NLS-1$
+		if (path.segmentCount() > 3 && "body".equals(parts)) { //$NON-NLS-1$
+			handleGetCommitBody(request, response, db, path);
 			return true;
 		}
-		return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "The commit log is not yet supported.", null));
+		if (path.segmentCount() > 2 && (parts == null || "log".equals(parts))) { //$NON-NLS-1$
+			handleGetCommitLog(request, response, db, path);
+			return true;
+		}
+
+		return false;
+	}
+
+	private void handleGetCommitBody(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws AmbiguousObjectException, IOException, ServletException {
+		ObjectId refId = db.resolve(path.segment(0));
+		if (refId == null)
+			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Wrong ref.", null));
+
+		RevWalk walk = new RevWalk(db);
+		String p = path.removeFirstSegments(3).toString();
+		walk.setTreeFilter(AndTreeFilter.create(PathFilterGroup.createFromStrings(Collections.singleton(p)), TreeFilter.ANY_DIFF));
+		RevCommit commit = walk.parseCommit(refId);
+		final TreeWalk w = TreeWalk.forPath(db, p, commit.getTree());
+		if (w == null) {
+			// TODO:
+		}
+
+		ObjectId blobId = w.getObjectId(0);
+		ObjectStream stream = db.open(blobId, Constants.OBJ_BLOB).openStream();
+		IOUtilities.pipe(stream, response.getOutputStream(), true, false);
+	}
+
+	private void handleGetCommitLog(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws AmbiguousObjectException, IOException, ServletException, JSONException, URISyntaxException {
+		ObjectId refId = db.resolve(path.segment(0));
+		if (refId == null)
+			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Wrong ref.", null));
+
+		RevWalk walk = new RevWalk(db);
+		String p = path.removeFirstSegments(3).toString();
+		if (p != null && !"".equals(p))
+			walk.setTreeFilter(AndTreeFilter.create(PathFilterGroup.createFromStrings(Collections.singleton(p)), TreeFilter.ANY_DIFF));
+		walk.markStart(walk.lookupCommit(refId));
+
+		OrionServlet.writeJSONResponse(request, response, toJSON(OrionServlet.getURI(request), walk));
+	}
+
+	private JSONArray toJSON(URI baseLocation, Iterable<RevCommit> commits) throws JSONException, URISyntaxException {
+		JSONArray result = new JSONArray();
+		for (RevCommit revCommit : commits) {
+			JSONObject commit = new JSONObject();
+			commit.put(ProtocolConstants.KEY_LOCATION, createCommitLocation(baseLocation, revCommit.getName(), null));
+			commit.put(ProtocolConstants.KEY_CONTENT_LOCATION, createCommitLocation(baseLocation, revCommit.getName(), "parts=body"));
+			commit.put(ProtocolConstants.KEY_NAME, revCommit.getName());
+			commit.put(GitConstants.KEY_AUTHOR_NAME, revCommit.getAuthorIdent().getName());
+			commit.put(GitConstants.KEY_COMMIT_TIME, revCommit.getCommitTime());
+			commit.put(GitConstants.KEY_COMMIT_MESSAGE, revCommit.getFullMessage());
+			result.put(commit);
+		}
+		return result;
+	}
+
+	private URI createCommitLocation(URI baseLocation, String commitName, String parameters) throws URISyntaxException {
+		return new URI(baseLocation.getScheme(), baseLocation.getAuthority(), GitConstants.KEY_GIT + "/" + GitConstants.COMMIT_RESOURCE + "/" + commitName + "/" + new Path(baseLocation.getPath()).removeFirstSegments(3), parameters, null);
 	}
 
 	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws ServletException, NoFilepatternException, IOException, JSONException, CoreException {
-
 		File gitDir = GitUtils.getGitDir(path.uptoSegment(2), request.getRemoteUser());
 		if (gitDir == null)
 			return false; // TODO: or an error response code, 405?

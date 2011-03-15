@@ -394,14 +394,13 @@ public class GitCommitTest extends GitTest {
 	static WebRequest getGetGitCommitRequest(String location, String ref) {
 		String requestURI;
 		if (location.startsWith("http://"))
-			requestURI = location;
+			requestURI = location + "?parts=body";
 		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.COMMIT_RESOURCE + '/' + ref + location;
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.COMMIT_RESOURCE + '/' + ref + location + "?parts=body";
 		WebRequest request = new GetMethodWebRequest(requestURI);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
 
 	}
-
 }

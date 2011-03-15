@@ -25,6 +25,8 @@ public class GitConstants {
 
 	public static final String COMMIT_RESOURCE = "commit"; //$NON-NLS-1$
 
+	public static final String CONFIG_RESOURCE = "config"; //$NON-NLS-1$
+
 	public static final String KEY_GIT = "Git"; //$NON-NLS-1$
 
 	public static final String KEY_NAME = "GitName"; //$NON-NLS-1$
@@ -79,6 +81,9 @@ public class GitConstants {
 
 	public static final String KEY_COMMIT_AMEND = "Amend"; //$NON-NLS-1$
 
+	public static final String KEY_COMMIT_TIME = "Time"; //$NON-NLS-1$
+
 	public static final String KEY_PATH = "Path"; //$NON-NLS-1$
 
+	public static final String KEY_AUTHOR_NAME = "AuthorName"; //$NON-NLS-1$
 }
