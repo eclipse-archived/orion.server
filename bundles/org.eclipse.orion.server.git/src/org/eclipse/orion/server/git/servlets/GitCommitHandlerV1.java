@@ -84,21 +84,21 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		// /{ref}/file/{projectId}...}
 		String parts = request.getParameter("parts"); //$NON-NLS-1$
 		if (path.segmentCount() > 3 && "body".equals(parts)) { //$NON-NLS-1$
-			handleGetCommitBody(request, response, db, path);
-			return true;
+			return handleGetCommitBody(request, response, db, path);
 		}
 		if (path.segmentCount() > 2 && (parts == null || "log".equals(parts))) { //$NON-NLS-1$
-			handleGetCommitLog(request, response, db, path);
-			return true;
+			return handleGetCommitLog(request, response, db, path);
 		}
 
 		return false;
 	}
 
-	private void handleGetCommitBody(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws AmbiguousObjectException, IOException, ServletException {
+	private boolean handleGetCommitBody(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws AmbiguousObjectException, IOException, ServletException {
 		ObjectId refId = db.resolve(path.segment(0));
-		if (refId == null)
-			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Wrong ref.", null));
+		if (refId == null) {
+			String msg = NLS.bind("Failed to generate commit log for ref {0}", path.segment(0)); //$NON-NLS-1$
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+		}
 
 		RevWalk walk = new RevWalk(db);
 		String p = path.removeFirstSegments(3).toString();
@@ -112,20 +112,57 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		ObjectId blobId = w.getObjectId(0);
 		ObjectStream stream = db.open(blobId, Constants.OBJ_BLOB).openStream();
 		IOUtilities.pipe(stream, response.getOutputStream(), true, false);
+
+		return true;
 	}
 
-	private void handleGetCommitLog(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws AmbiguousObjectException, IOException, ServletException, JSONException, URISyntaxException {
-		ObjectId refId = db.resolve(path.segment(0));
-		if (refId == null)
-			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Wrong ref.", null));
+	private boolean handleGetCommitLog(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws AmbiguousObjectException, IOException, ServletException, JSONException, URISyntaxException {
+		String refIdsRange = path.segment(0);
+
+		ObjectId toRefId = null;
+		ObjectId fromRefId = null;
+
+		if (refIdsRange.contains("..")) { //$NON-NLS-1$
+			String[] commits = refIdsRange.split("\\.\\."); //$NON-NLS-1$
+			if (commits.length != 2) {
+				String msg = NLS.bind("Failed to generate commit log for ref {0}", refIdsRange); //$NON-NLS-1$
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+			}
+
+			fromRefId = db.resolve(commits[0]);
+			if (fromRefId == null) {
+				String msg = NLS.bind("Failed to generate commit log for ref {0}", commits[0]); //$NON-NLS-1$
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+			}
+
+			toRefId = db.resolve(commits[1]);
+			if (toRefId == null) {
+				String msg = NLS.bind("Failed to generate commit log for ref {0}", commits[1]); //$NON-NLS-1$
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+			}
+		} else {
+			toRefId = db.resolve(refIdsRange);
+			if (toRefId == null) {
+				String msg = NLS.bind("Failed to generate commit log for ref {0}", refIdsRange); //$NON-NLS-1$
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+			}
+		}
 
 		RevWalk walk = new RevWalk(db);
+
+		// set the commit range
+		walk.markStart(walk.lookupCommit(toRefId));
+		if (fromRefId != null)
+			walk.markUninteresting(walk.parseCommit(fromRefId));
+
+		// set the path filter
 		String p = path.removeFirstSegments(3).toString();
 		if (p != null && !"".equals(p))
 			walk.setTreeFilter(AndTreeFilter.create(PathFilterGroup.createFromStrings(Collections.singleton(p)), TreeFilter.ANY_DIFF));
-		walk.markStart(walk.lookupCommit(refId));
 
 		OrionServlet.writeJSONResponse(request, response, toJSON(OrionServlet.getURI(request), walk));
+
+		return true;
 	}
 
 	private JSONArray toJSON(URI baseLocation, Iterable<RevCommit> commits) throws JSONException, URISyntaxException {
