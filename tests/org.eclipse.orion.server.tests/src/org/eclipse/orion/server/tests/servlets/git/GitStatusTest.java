@@ -651,13 +651,17 @@ public class GitStatusTest extends GitTest {
 		String gitCommitUri = gitSection.optString(GitConstants.KEY_COMMIT, null);
 		assertNotNull(gitCommitUri);
 
-		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change");
+		WebRequest request = getPutFileRequest(projectId + "/test.txt", "index");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// "git add {path}"
 		// TODO: don't create URIs out of thin air
 		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		request = getPutFileRequest(projectId + "/test.txt", "working tree");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -671,17 +675,19 @@ public class GitStatusTest extends GitTest {
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
 		assertEquals(1, statusArray.length());
 		JSONObject child = getChildByName(statusArray, "test.txt");
+		assertChildIndex(child, "index");
 		assertChildHead(child, "test");
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
 		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-		assertEquals(0, statusArray.length());
+		assertEquals(1, statusArray.length());
+		// TODO: check content
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
 		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
 		assertEquals(0, statusArray.length());
 
-		// TODO: commit
+		// TODO: commit and check status
 	}
 
 	private void assertChildLocation(JSONObject child, String expectedFileContent) throws JSONException, IOException, SAXException {
@@ -713,6 +719,18 @@ public class GitStatusTest extends GitTest {
 		String commit = gitSection.getString(GitConstants.KEY_COMMIT);
 		assertNotNull(commit);
 		WebRequest request = GitCommitTest.getGetGitCommitRequest(commit, Constants.HEAD);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals("Invalid file content", expectedFileContent, response.getText());
+	}
+
+	private void assertChildIndex(JSONObject child, String expectedFileContent) throws JSONException, IOException, SAXException {
+		assertNotNull(child);
+		JSONObject gitSection = child.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+		String index = gitSection.getString(GitConstants.KEY_INDEX);
+		assertNotNull(index);
+		WebRequest request = GitIndexTest.getGetGitIndexRequest(index);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("Invalid file content", expectedFileContent, response.getText());

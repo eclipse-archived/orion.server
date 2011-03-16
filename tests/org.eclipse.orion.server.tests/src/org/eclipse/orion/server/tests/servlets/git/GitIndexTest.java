@@ -64,7 +64,7 @@ public class GitIndexTest extends GitTest {
 	 * Creates a request to get the content of the file stored in index.
 	 * @param location Either an absolute URI, or a workspace-relative URI
 	 */
-	private WebRequest getGetGitIndexRequest(String location) {
+	static WebRequest getGetGitIndexRequest(String location) {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;

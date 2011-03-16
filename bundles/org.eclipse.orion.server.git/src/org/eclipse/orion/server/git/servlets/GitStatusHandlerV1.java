@@ -108,6 +108,10 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 			gitSection.put(GitConstants.KEY_COMMIT, URIUtil.append(commitLocation, s));
 			object.put(GitConstants.KEY_GIT, gitSection);
 
+			URI indexLocation = statusToIndexLocation(baseLocation);
+			gitSection.put(GitConstants.KEY_INDEX, URIUtil.append(indexLocation, s));
+			object.put(GitConstants.KEY_GIT, gitSection);
+
 			result.put(object);
 		}
 		return result;
@@ -133,6 +137,14 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 		uriPath = uriPath.substring((GitServlet.GIT_URI + "/" + GitConstants.STATUS_RESOURCE) //$NON-NLS-1$
 				.length());
 		uriPath = GitServlet.GIT_URI + "/" + GitConstants.COMMIT_RESOURCE + "/" + ref + uriPath; //$NON-NLS-1$ //$NON-NLS-2$
+		return new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), uriPath, u.getQuery(), u.getFragment());
+	}
+
+	private URI statusToIndexLocation(URI u) throws URISyntaxException {
+		String uriPath = u.getPath();
+		uriPath = uriPath.substring((GitServlet.GIT_URI + "/" + GitConstants.STATUS_RESOURCE) //$NON-NLS-1$
+				.length());
+		uriPath = GitServlet.GIT_URI + "/" + GitConstants.INDEX_RESOURCE + uriPath; //$NON-NLS-1$
 		return new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), uriPath, u.getQuery(), u.getFragment());
 	}
 }
