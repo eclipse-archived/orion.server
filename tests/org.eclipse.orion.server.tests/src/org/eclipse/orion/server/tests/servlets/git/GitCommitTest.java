@@ -23,7 +23,6 @@ import java.net.URISyntaxException;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.NoHeadException;
-import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
@@ -361,8 +360,7 @@ public class GitCommitTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// TODO: don't create URIs out of thin air
-		gitCommitUri = gitCommitUri.replaceAll(GIT_SERVLET_LOCATION + GitConstants.COMMIT_RESOURCE, GIT_SERVLET_LOCATION + GitConstants.COMMIT_RESOURCE + '/' + Constants.HEAD);
-		request = getGetGitCommitRequest(gitCommitUri + "test.txt", Constants.HEAD);
+		request = getGetGitCommitRequest(gitCommitUri + "test.txt");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("in HEAD", response.getText());
@@ -391,12 +389,12 @@ public class GitCommitTest extends GitTest {
 		return request;
 	}
 
-	static WebRequest getGetGitCommitRequest(String location, String ref) {
+	static WebRequest getGetGitCommitRequest(String location) {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location + "?parts=body";
 		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.COMMIT_RESOURCE + '/' + ref + location + "?parts=body";
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.COMMIT_RESOURCE + '/' + location + "?parts=body";
 		WebRequest request = new GetMethodWebRequest(requestURI);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);

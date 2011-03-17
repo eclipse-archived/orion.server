@@ -185,13 +185,19 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws ServletException, NoFilepatternException, IOException, JSONException, CoreException {
-		File gitDir = GitUtils.getGitDir(path.uptoSegment(2), request.getRemoteUser());
+		File gitDir = GitUtils.getGitDir(path.removeFirstSegments(1).uptoSegment(2), request.getRemoteUser());
 		if (gitDir == null)
 			return false; // TODO: or an error response code, 405?
 		db = new FileRepository(gitDir);
 
-		if (path.segmentCount() > 2) {
+		if (path.segmentCount() > 3) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_IMPLEMENTED, "Committing by path is not yet supported.", null));
+		}
+
+		ObjectId refId = db.resolve(path.segment(0));
+		if (refId == null || !Constants.HEAD.equals(path.segment(0))) {
+			String msg = NLS.bind("Commit failed. Ref must be HEAD and is {0}", path.segment(0)); //$NON-NLS-1$
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 		}
 
 		JSONObject toReset = OrionServlet.readJSONRequest(request);
