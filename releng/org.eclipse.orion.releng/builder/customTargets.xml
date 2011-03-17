@@ -65,8 +65,8 @@ lastMapTag=${mapsTagTag}
 		<available property="jsdocHome" value="${base}/jsdoc-toolkit" file="${base}/jsdoc-toolkit" />
 		<antcall target="jsdocs" />
 		
+		<property name="closureJar" value="/shared/common/closure/compiler.jar" />
 		<ant dir="${basedir}" antfile="${builder}/scripts/closure.xml" target="runClosure" >
-			<property name="closureJar" value="/shared/common/closure/compiler.jar" />
 			<property name="orion.client.core" value="${buildDirectory}/plugins/org.eclipse.orion.client.core/static"/>
 			<property name="orion.client.editor" value="${buildDirectory}/plugins/org.eclipse.orion.client.editor/web"/>
 			<property name="orion.client.git" value="${buildDirectory}/plugins/org.eclipse.orion.client.git/static"/>
@@ -103,15 +103,30 @@ lastMapTag=${mapsTagTag}
 	</target>
 		
 	<target name="postBuild" >
-		<antcall target="gatherLogs" />
-		<antcall target="launchWebIDE" />
-		<antcall target="copyResults" />
-	</target>
-	
-	<target name="copyResults"  >
 		<property name="buildResultLocation" value="${buildDirectory}/${buildLabel}" />
 		<property name="dropLocation" value="${buildResultLocation}/drop" />
 		<mkdir dir="${dropLocation}" />
+
+		<antcall target="gatherLogs" />
+		<antcall target="launchWebIDE" />
+		<antcall target="copyResults" />
+		
+		<mkdir dir="${buildDirectory}/formatRepo" />
+		<copy file="${builder}/html/artifacts.xml" todir="${buildDirectory}/formatRepo" />
+		<replace file="${buildDirectory}/formatRepo/artifacts.xml" token="@REPO@" value="0.2-${buildType}-builds/${buildLabel}" />
+		
+		<p2.mirror source="file:${p2.metadata.repo}" log="${buildDirectory}/${buildLabel}/mirrorLog.txt" ignoreErrors="true" >
+			<destination compressed="true" name="Orion ${buildLabel} metadata" location="file:${updateSite}/${buildLabel}" append="true" format="file:${p2.repo}" kind="metadata" />
+			<destination compressed="true" name="Orion ${buildLabel} artifacts" location="file:${updateSite}/${buildLabel}" append="true" format="file:${buildDirectory}/formatRepo" kind="artifact"/>
+			<comparator comparator="org.eclipse.equinox.p2.repository.tools.jar.comparator" comparatorLog="${dropLocation}/comparatorlog.txt">
+				<repository location="file:${updateSite}" />
+			</comparator>
+		</p2.mirror>
+        <p2.composite.artifact.repository.add location="file:${updateSite}" child="${buildLabel}" />
+        <p2.composite.metadata.repository.add location="file:${updateSite}" child="${buildLabel}" />
+	</target>
+	
+	<target name="copyResults"  >
 		<zip destFile="${dropLocation}/compileLogs-${buildLabel}.zip" basedir="${buildResultLocation}/compilelogs/plugins" includes="**" />
 		<copy todir="${dropLocation}" >
 			<fileset dir="${buildResultLocation}" includes="${archiveNamePrefix}*" />
@@ -124,9 +139,14 @@ lastMapTag=${mapsTagTag}
 		<copy file="${builder}/html/build.download.php" tofile="${dropLocation}/download.php" />
 
 		<copy file="${buildResultLocation}/../directory.txt" tofile="${dropLocation}/directory.txt" />
+		<available file="${base}/logs/current.log" property="logExists" />
+		<antcall target="copyLog" />
+	</target>
+	
+	<target name="copyLog" if="logExists" >
 		<copy file="${base}/logs/current.log" tofile="${dropLocation}/buildLog-${buildLabel}.txt" />
 	</target>
-				
+	
 	<target name="launchWebIDE" if="launchWebIDE" >
 		<exec executable="bash" >
 			<arg value="${builder}/scripts/launchWebIDE.sh" />

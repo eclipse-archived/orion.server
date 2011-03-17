@@ -240,6 +240,8 @@ publish () {
 	if [ $buildType = I ]; then
 		scp -r $buildDirectory/plugins/org.eclipse.orion.doc.isv/jsdoc $user@dev.eclipse.org:/home/data/httpd/download.eclipse.org/e4/orion
 	fi
+	
+	rsync --recursive --delete $writableBuildRoot/target/0.2-$buildType-builds $user@dev.eclipse.org:/home/data/httpd/download.eclipse.org/e4/updates/orion
 }
 
 cd $writableBuildRoot

@@ -36,6 +36,11 @@
 	</macrodef>
 	
 	<target name="runClosure" >
+		<available file="${closureJar}" property="haveClosureJar" />
+		<antcall target="_closure" />
+	</target>
+		
+	<target name="_closure" if="haveClosureJar" >
 		<mkdir dir="${output}"/>
 		<closure dir="${orion.client.core}" compiled="navigate-table.js" >
 			<replace-in>
