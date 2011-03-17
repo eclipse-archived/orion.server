@@ -23,7 +23,6 @@ import java.util.List;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.RmCommand;
 import org.eclipse.jgit.api.errors.NoFilepatternException;
-import org.eclipse.jgit.lib.Constants;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONArray;
@@ -718,7 +717,7 @@ public class GitStatusTest extends GitTest {
 		assertNotNull(gitSection);
 		String commit = gitSection.getString(GitConstants.KEY_COMMIT);
 		assertNotNull(commit);
-		WebRequest request = GitCommitTest.getGetGitCommitRequest(commit, Constants.HEAD);
+		WebRequest request = GitCommitTest.getGetGitCommitRequest(commit);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("Invalid file content", expectedFileContent, response.getText());
