@@ -139,9 +139,10 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		if (!location.isAbsolute())
 			return;
 		//create repository in each project if it doesn't already exist
-		File root = new File(new File(location), ".git"); //$NON-NLS-1$
-		if (!root.exists()) {
-			FileRepository repo = new FileRepositoryBuilder().setGitDir(root).build();
+		File gitDir = GitUtils.getGitDirForFile(new File(location));
+		if (gitDir == null) {
+			gitDir = new File(new File(location), Constants.DOT_GIT);
+			FileRepository repo = new FileRepositoryBuilder().setGitDir(gitDir).build();
 			repo.create();
 			//we need to perform an initial commit to workaround JGit bug 339610.
 			Git git = new Git(repo);

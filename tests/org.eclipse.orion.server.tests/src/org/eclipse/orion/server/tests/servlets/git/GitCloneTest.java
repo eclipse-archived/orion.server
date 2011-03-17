@@ -36,10 +36,13 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.RepositoryCache;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
+import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
 import org.eclipse.orion.server.git.GitConstants;
@@ -190,7 +193,7 @@ public class GitCloneTest extends GitTest {
 	}
 
 	@Test
-	public void testCloneAndLinkToSubfolder() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testCloneAndLinkToFolder() throws IOException, SAXException, JSONException, URISyntaxException {
 		URIish uri = new URIish(gitDir.toURL());
 		String name = null;
 		WebRequest request = getPostGitCloneRequest(uri, name);
@@ -240,6 +243,56 @@ public class GitCloneTest extends GitTest {
 		String[] expectedChildren = new String[] {"folder.txt"};
 		assertEquals("Wrong number of directory children", expectedChildren.length, children.size());
 		assertEquals(expectedChildren[0], children.get(0).getString(ProtocolConstants.KEY_NAME));
+	}
+
+	@Test
+	public void testLinkToFolderWithDefaultSCM() throws IOException, SAXException, JSONException, URISyntaxException {
+		IEclipsePreferences preferences = InstanceScope.INSTANCE.getNode("org.eclipse.orion.server.configurator");
+		preferences.put("orion.project.defaultSCM", "git");
+		// XXX: see org.eclipse.orion.internal.server.servlets.workspace.WorkspaceResourceHandler.generateProjectLocation(WebProject, String)
+		preferences.put(Activator.PROP_FILE_LAYOUT, "usertree");
+
+		String contentLocation = new File(gitDir, "folder").getAbsolutePath();
+
+		URI workspaceLocation = createWorkspace(getMethodName());
+
+		ServletTestingSupport.allowedPrefixes = contentLocation.toString();
+		String projectName = getMethodName();
+		JSONObject body = new JSONObject();
+		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, contentLocation);
+		InputStream in = new StringBufferInputStream(body.toString());
+		// http://<host>/workspace/<workspaceId>/
+		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
+		if (projectName != null)
+			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		JSONObject newProject = new JSONObject(response.getText());
+		String projectContentLocation = newProject.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		assertNotNull(projectContentLocation);
+
+		// http://<host>/file/<projectId>/
+		request = getGetFilesRequest(projectContentLocation);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject project = new JSONObject(response.getText());
+		String childrenLocation = project.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
+		assertNotNull(childrenLocation);
+
+		// http://<host>/file/<projectId>/?depth=1
+		request = getGetFilesRequest(childrenLocation);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));
+		String[] expectedChildren = new String[] {"folder.txt"};
+		assertEquals("Wrong number of directory children", expectedChildren.length, children.size());
+		assertEquals(expectedChildren[0], children.get(0).getString(ProtocolConstants.KEY_NAME));
+
+		// TODO: clean up, should be done in finally block
+		preferences.remove("orion.project.defaultSCM");
+		preferences.remove(Activator.PROP_FILE_LAYOUT);
 	}
 
 	private static String sshRepo;

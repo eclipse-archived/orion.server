@@ -33,6 +33,10 @@ public class GitUtils {
 		if (fileStore == null)
 			return null;
 		File file = fileStore.toLocalFile(EFS.NONE, null);
+		return getGitDirForFile(file);
+	}
+
+	public static File getGitDirForFile(File file) {
 		if (file.exists()) {
 			while (file != null) {
 				if (RepositoryCache.FileKey.isGitRepository(file, FS.DETECTED)) {
