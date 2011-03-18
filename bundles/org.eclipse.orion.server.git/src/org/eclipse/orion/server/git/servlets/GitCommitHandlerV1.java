@@ -173,7 +173,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			commit.put(ProtocolConstants.KEY_CONTENT_LOCATION, createCommitLocation(baseLocation, revCommit.getName(), "parts=body"));
 			commit.put(ProtocolConstants.KEY_NAME, revCommit.getName());
 			commit.put(GitConstants.KEY_AUTHOR_NAME, revCommit.getAuthorIdent().getName());
-			commit.put(GitConstants.KEY_COMMIT_TIME, revCommit.getCommitTime());
+			commit.put(GitConstants.KEY_COMMIT_TIME, revCommit.getCommitTime() * 1000 /* time in milliseconds */);
 			commit.put(GitConstants.KEY_COMMIT_MESSAGE, revCommit.getFullMessage());
 			result.put(commit);
 		}
