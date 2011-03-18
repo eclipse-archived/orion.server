@@ -58,7 +58,7 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 			}
 		} catch (Exception e) {
 			String msg = NLS.bind("Failed to process an operation on commits for {0}", path); //$NON-NLS-1$
-			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
 		} finally {
 			if (db != null)
 				db.close();
