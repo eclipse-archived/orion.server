@@ -105,6 +105,13 @@ public class GitCloneTest extends GitTest {
 		JSONObject clones = new JSONObject(response.getText());
 		JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 		assertEquals(locations.size(), clonesArray.length());
+		for (int i = 0; i < clonesArray.length(); i++) {
+			JSONObject clone = clonesArray.getJSONObject(i);
+			assertNotNull(clone.get(ProtocolConstants.KEY_LOCATION));
+			assertNotNull(clone.get(ProtocolConstants.KEY_CONTENT_LOCATION));
+			assertNotNull(clone.get(ProtocolConstants.KEY_ID));
+			assertNotNull(clone.get(ProtocolConstants.KEY_NAME));
+		}
 	}
 
 	@Test
