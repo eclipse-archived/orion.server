@@ -87,7 +87,7 @@ if [[ ! -e "$firefox" ]]; then
 firefox=`which firefox`
 fi
 
-firefox4=/shared/common/firefox-4.0b11/firefox
+firefox4=/shared/common/firefox-4.0/firefox
 chrome10=/shared/common/chrome-10.0.648.133/google-chrome
 
 chrome=/shared/common/chrome-8.0.552.237/google-chrome
@@ -108,5 +108,5 @@ killFirefox "firefox-3.6.13/firefox-bin"
 
 $java -Dbrowser.timeout=120 -jar $testDir/../JsTestDriver.jar --config $testConf --port $port --browser $firefox4,$chrome10 --tests all --testOutput $testDir
 
-killFirefox "firefox-4.0b11/firefox-bin"
+killFirefox "firefox-4.0/firefox-bin"
 
