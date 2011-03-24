@@ -3,12 +3,6 @@ package org.eclipse.orion.internal.server.servlets.site;
 public class SiteConfigurationConstants {
 
 	/**
-	 * Non-standard HTTP header for POST requests indicating the action (start/stop) that should be 
-	 * taken on a site configuration.
-	 */
-	public static final String HEADER_ACTION = "X-Action"; //$NON-NLS-1$
-
-	/**
 	 * JSON representation key for a user's list of site configurations. The value's data type is a
 	 * JSON array of JSON objects.
 	 */
@@ -46,5 +40,18 @@ public class SiteConfigurationConstants {
 	 * JSON representation key for a site configuration's workspace id. The value's data type is a String.
 	 */
 	public static final String KEY_WORKSPACE = "Workspace"; //$NON-NLS-1$
+
+	/*
+	 * Constants below are specific to the HostingStatus object.
+	 */
+	/**
+	 * JSON representation key for a hosting status's status. The value's data type is a String.
+	 */
+	public static final String KEY_HOSTING_STATUS_STATUS = "Status"; //$NON-NLS-1$
+
+	/**
+	 * JSON representation key for a hosting status's URL. The value's data type is a String.
+	 */
+	public static final String KEY_HOSTING_STATUS_URL = "URL"; //$NON-NLS-1$
 
 }

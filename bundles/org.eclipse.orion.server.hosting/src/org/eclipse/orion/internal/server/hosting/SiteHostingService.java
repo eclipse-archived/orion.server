@@ -46,7 +46,7 @@ public class SiteHostingService implements ISiteHostingService {
 	public void start(SiteConfiguration siteConfig, WebUser user, String editServer) throws SiteHostingException {
 		synchronized (sites) {
 			if (get(siteConfig, user) != null) {
-				throw new WrongHostingStatusException("Site is already started");
+				return; // Already started; nothing to do
 			}
 
 			String host = getNextHost(siteConfig.getHostHint());
@@ -73,7 +73,7 @@ public class SiteHostingService implements ISiteHostingService {
 		synchronized (sites) {
 			IHostedSite site = get(siteConfig, user);
 			if (site == null) {
-				throw new WrongHostingStatusException("Site is already stopped");
+				return; // Already stopped; nothing to do
 			}
 
 			if (!sites.remove(site.getHost(), site)) {
