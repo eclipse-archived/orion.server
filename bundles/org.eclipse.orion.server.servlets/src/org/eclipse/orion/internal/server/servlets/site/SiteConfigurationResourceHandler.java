@@ -142,12 +142,12 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 			throw e;
 		}
 
-		URI location = getURI(req);
-		JSONObject result = toJSON(site, location);
+		URI baseLocation = getURI(req);
+		JSONObject result = toJSON(site, baseLocation);
 		OrionServlet.writeJSONResponse(req, resp, result);
 
 		resp.setStatus(HttpServletResponse.SC_CREATED);
-		resp.addHeader(ProtocolConstants.HEADER_LOCATION, location.toString());
+		resp.addHeader(ProtocolConstants.HEADER_LOCATION, result.getString(ProtocolConstants.KEY_LOCATION));
 		return true;
 	}
 
