@@ -1,0 +1,13 @@
+bin/
+*~
+*.rej
+*.bak
+core
+*.so
+*.patch
+javacore.*
+heapdump.*
+core.*
+Snap.*
+target/
+bundles/org.eclipse.orion.server.configurator/configurator.jar

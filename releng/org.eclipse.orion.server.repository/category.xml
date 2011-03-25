@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+   <feature url="features/org.eclipse.orion.server.feature_0.2.0.qualifier.jar" id="org.eclipse.orion.server.feature" version="0.2.0.qualifier">
+      <category name="org.eclipse.orion.server.category"/>
+   </feature>
+   <feature url="features/org.eclipse.orion.base.feature_0.2.0.qualifier.jar" id="org.eclipse.orion.base.feature" version="0.2.0.qualifier">
+      <category name="org.eclipse.orion.server.category"/>
+   </feature>
+   <category-def name="org.eclipse.orion.server.category" label="Orion Server Category">
+      <description>
+         Orion Server Category
+      </description>
+   </category-def>
+
+</site>

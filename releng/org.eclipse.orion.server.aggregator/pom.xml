@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>org.eclipse.orion</groupId>
+	<artifactId>org.eclipse.orion.server.aggregator</artifactId>
+	<version>1.0.0-SNAPSHOT</version>
+	<packaging>pom</packaging>
+	<modules>
+		<module>../org.eclipse.orion.server.parent</module>
+		<module>../../bundles/org.eclipse.orion.server.core</module>
+                <module>../../bundles/org.eclipse.orion.server.configurator</module>
+                <module>../../bundles/org.eclipse.orion.server.servlets</module>
+                <module>../../bundles/org.eclipse.orion.server.search</module>
+                <module>../../bundles/org.eclipse.orion.server.useradmin</module>
+                <module>../../bundles/org.eclipse.orion.server.logback.config</module>
+                <module>../../bundles/org.eclipse.orion.server.user.securestorage</module>
+                <module>../../bundles/org.eclipse.orion.server.git</module>
+                <module>../../bundles/org.eclipse.orion.server.hosting</module>
+                <module>../../features/org.eclipse.orion.base-feature</module>
+                <module>../../features/org.eclipse.orion.server-feature</module>
+		<module>../org.eclipse.orion.server.repository</module>
+	</modules>
+
+
+</project>
