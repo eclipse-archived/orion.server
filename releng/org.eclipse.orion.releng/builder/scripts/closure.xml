@@ -104,6 +104,8 @@
 				<arg value="--js=${orion.client.core}/js/globalCommands.js" />
 				<arg value="--js=${orion.client.core}/js/breadcrumbs.js" />
 				<arg value="--js=${orion.client.core}/js/editorFeatures.js" />
+				<arg value="--js=${orion.client.core}/js/editorCommands.js" />
+				<arg value="--js=${orion.client.core}/js/contentAssist.js" />
 				<arg value="--js=${orion.client.core}/js/outliner.js" />
 				<arg value="--js=${orion.client.core}/js/problems.js" />
 				<arg value="--js=${orion.client.core}/js/editorContainer.js" />
