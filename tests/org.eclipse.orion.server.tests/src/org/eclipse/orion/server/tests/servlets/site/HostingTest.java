@@ -43,6 +43,7 @@ public class HostingTest extends CoreSiteTest {
 
 	private WebResponse workspaceResponse;
 	private JSONObject workspaceObject;
+	private String workspaceId;
 
 	@BeforeClass
 	public static void setUpWorkspace() {
@@ -60,31 +61,58 @@ public class HostingTest extends CoreSiteTest {
 		setUpAuthorization();
 		workspaceResponse = createWorkspace(this.getClass().getName());
 		workspaceObject = new JSONObject(workspaceResponse.getText());
+		workspaceId = workspaceObject.getString(ProtocolConstants.KEY_ID);
+	}
+
+	@Test
+	public void testStart() throws SAXException, IOException, JSONException {
+		JSONArray mappings = makeMappings(new String[][] {{"/", "/A/bogusWorkspacePath"}});
+		WebResponse siteResp = createSite("Fizz site", workspaceId, mappings, "fizzsite", null);
+		JSONObject siteObject = new JSONObject(siteResp.getText());
+		startSite(siteObject.getString(ProtocolConstants.KEY_LOCATION));
+	}
+
+	@Test
+	public void testStartNoMappings() throws SAXException, IOException, JSONException {
+		// Empty array
+		JSONArray mappings = makeMappings(new String[0][0]);
+		WebResponse siteResp = createSite("Empty mappings site", workspaceId, mappings, "empty", null);
+		JSONObject siteObject = new JSONObject(siteResp.getText());
+		startSite(siteObject.getString(ProtocolConstants.KEY_LOCATION));
+
+		// No mappings at all
+		WebResponse siteResp2 = createSite("Null mappings site", workspaceId, null, "null", null);
+		JSONObject siteObject2 = new JSONObject(siteResp2.getText());
+		startSite(siteObject2.getString(ProtocolConstants.KEY_LOCATION));
+	}
+
+	@Test
+	public void testStop() throws SAXException, IOException, JSONException {
+		JSONArray mappings = makeMappings(new String[][] {{"/", "/A/bogusWorkspacePath"}});
+		WebResponse siteResp = createSite("Buzz site", workspaceId, mappings, "buzzsite", null);
+		JSONObject siteObject = new JSONObject(siteResp.getText());
+		String location = siteObject.getString(ProtocolConstants.KEY_LOCATION);
+		startSite(location);
+		stopSite(location);
 	}
 
 	@Test
 	/**
-	 * Test starting, accessing a workspace file and remote URL, and stopping.
+	 * Tests accessing a workspace file <del>and remote URL</del> that are part of a running site.
 	 */
-	public void testStartStop() throws SAXException, IOException, JSONException {
+	public void testSiteAccess() throws SAXException, IOException, JSONException {
 		// Create file in workspace
-		final String fileName = "foo.html";
+		final String filename = "foo.html";
 		final String fileContent = "<html><body>This is a test file</body></html>";
-		webConversation.setExceptionsThrownOnErrorStatus(false);
-		WebRequest createFileReq = getPostFilesRequest("/", getNewFileJSON(fileName).toString(), fileName);
-		WebResponse createFileResp = webConversation.getResponse(createFileReq);
-		assertEquals(HttpURLConnection.HTTP_CREATED, createFileResp.getResponseCode());
-		createFileReq = getPutFileRequest(createFileResp.getHeaderField("Location"), fileContent);
-		createFileResp = webConversation.getResponse(createFileReq);
-		assertEquals(HttpURLConnection.HTTP_OK, createFileResp.getResponseCode());
+		createFileOnServer(filename, fileContent);
 
-		// Create a site that exposes the file
+		// Create a site that exposes the workspace file, and also a remote URL
 		final String siteName = "My hosted site";
-		final String workspaceId = workspaceObject.getString(ProtocolConstants.KEY_ID);
-		final String filePath = "/" + fileName;
+		final String filePath = "/" + filename;
 		final String mountAt1 = "/file.html";
 		final String mountAt2 = "/web";
-		final JSONArray mappings = makeMappings(new String[][] { {mountAt1, filePath}, {mountAt2, "http://www.google.com"}});
+		final String remoteURL = SERVER_LOCATION + "/navigate-table.html";
+		final JSONArray mappings = makeMappings(new String[][] { {mountAt1, filePath}, {mountAt2, remoteURL}});
 		WebRequest createSiteReq = getCreateSiteRequest(siteName, workspaceId, mappings, null);
 		WebResponse createSiteResp = webConversation.getResponse(createSiteReq);
 		assertEquals(HttpURLConnection.HTTP_CREATED, createSiteResp.getResponseCode());
@@ -92,37 +120,26 @@ public class HostingTest extends CoreSiteTest {
 
 		// Start the site
 		final String siteLocation = siteObject.getString(ProtocolConstants.KEY_LOCATION);//createSiteResp.getHeaderField("Location");
-		JSONObject hostingStatus = new JSONObject();
-		hostingStatus.put(SiteConfigurationConstants.KEY_HOSTING_STATUS_STATUS, "started");
-		WebRequest launchSiteReq = getUpdateSiteRequest(siteLocation, null, null, null, null, hostingStatus);
-		WebResponse launchSiteResp = webConversation.getResponse(launchSiteReq);
-		assertEquals(HttpURLConnection.HTTP_OK, launchSiteResp.getResponseCode());
-		siteObject = new JSONObject(launchSiteResp.getText());
+		siteObject = startSite(siteLocation);
 
-		// Check that it's started
-		hostingStatus = siteObject.getJSONObject(SiteConfigurationConstants.KEY_HOSTING_STATUS);
-		assertEquals("started", hostingStatus.getString(SiteConfigurationConstants.KEY_HOSTING_STATUS_STATUS));
-
-		// Access the site paths
+		// Access the workspace file through the site
+		final JSONObject hostingStatus = siteObject.getJSONObject(SiteConfigurationConstants.KEY_HOSTING_STATUS);
 		final String hostedURL = hostingStatus.getString(SiteConfigurationConstants.KEY_HOSTING_STATUS_URL);
 		WebRequest getFileReq = new GetMethodWebRequest(hostedURL + mountAt1);
 		WebResponse getFileResp = webConversation.getResponse(getFileReq);
 		assertEquals(fileContent, getFileResp.getText());
 
-		// Access the remote URL
+		// Access the remote URL through the site
+		// TODO: Find a URL that we can safely fetch from the test environment, then uncomment this
 		//		WebRequest getRemoteUrlReq = new GetMethodWebRequest(hostedURL + mountAt2);
-		//		WebResponse getRemoteUrlResp = webConversation.getResponse(getRemoteUrlReq);
-		//		final String remoteUrl = getRemoteUrlResp.getText();
-		//		assertTrue("URL looks like google.com", remoteUrl.contains("Google") && remoteUrl.contains("<input"));
+		//		// just fetch content, don't try to parse
+		//		WebResponse getRemoteUrlResp = webConversation.getResource(getRemoteUrlReq);
+		//		assertEquals("GET " + getRemoteUrlReq.getURL() + " succeeds", HttpURLConnection.HTTP_OK, getRemoteUrlResp.getResponseCode());
+		//		final String content = getRemoteUrlResp.getText();
+		//		assertTrue("Looks like Orion nav page", content.contains("Orion") && content.contains(".js") && content.contains("<script") && content.toLowerCase().contains("navigator"));
 
 		// Stop the site
-		hostingStatus = new JSONObject();
-		hostingStatus.put(SiteConfigurationConstants.KEY_HOSTING_STATUS_STATUS, "stopped");
-		WebRequest stopReq = getUpdateSiteRequest(siteLocation, null, null, null, null, hostingStatus);
-		WebResponse stopResp = webConversation.getResponse(stopReq);
-		assertEquals(HttpURLConnection.HTTP_OK, stopResp.getResponseCode());
-		siteObject = new JSONObject(stopResp.getText());
-		assertEquals("stopped", hostingStatus.getString(SiteConfigurationConstants.KEY_HOSTING_STATUS_STATUS));
+		stopSite(siteLocation);
 
 		// Check that the workspace file can't be accessed anymore
 		WebRequest getFile404Req = new GetMethodWebRequest(hostedURL + mountAt1);
@@ -135,4 +152,53 @@ public class HostingTest extends CoreSiteTest {
 		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, getRemoteUrl404Resp.getResponseCode());
 	}
 
+	/**
+	 * Starts the site at <code>siteLocation</code>, and asserts that it was started.
+	 * @returns The JSON representation of the started site.
+	 */
+	private JSONObject startSite(String siteLocation) throws JSONException, IOException, SAXException {
+		JSONObject hostingStatus = new JSONObject();
+		hostingStatus.put(SiteConfigurationConstants.KEY_HOSTING_STATUS_STATUS, "started");
+		WebRequest launchSiteReq = getUpdateSiteRequest(siteLocation, null, null, null, null, hostingStatus);
+		WebResponse launchSiteResp = webConversation.getResponse(launchSiteReq);
+		assertEquals(HttpURLConnection.HTTP_OK, launchSiteResp.getResponseCode());
+
+		// Check that it's started
+		JSONObject siteObject = new JSONObject(launchSiteResp.getText());
+		hostingStatus = siteObject.getJSONObject(SiteConfigurationConstants.KEY_HOSTING_STATUS);
+		assertEquals("started", hostingStatus.getString(SiteConfigurationConstants.KEY_HOSTING_STATUS_STATUS));
+		return siteObject;
+	}
+
+	/**
+	 * Stops the site at <code>siteLocation</code>, and asserts that it was stopped.
+	 */
+	private void stopSite(final String siteLocation) throws JSONException, IOException, SAXException {
+		JSONObject hostingStatus = new JSONObject();
+		hostingStatus.put(SiteConfigurationConstants.KEY_HOSTING_STATUS_STATUS, "stopped");
+		WebRequest stopReq = getUpdateSiteRequest(siteLocation, null, null, null, null, hostingStatus);
+		WebResponse stopResp = webConversation.getResponse(stopReq);
+		assertEquals(HttpURLConnection.HTTP_OK, stopResp.getResponseCode());
+
+		// Check that it's stopped
+		JSONObject siteObject = new JSONObject(stopResp.getText());
+		hostingStatus = siteObject.getJSONObject(SiteConfigurationConstants.KEY_HOSTING_STATUS);
+		assertEquals("stopped", hostingStatus.getString(SiteConfigurationConstants.KEY_HOSTING_STATUS_STATUS));
+	}
+
+	/**
+	 * Creates a file using the file POST API, then sets its contents with PUT.
+	 * @param path
+	 * @param filename
+	 * @param fileContent
+	 */
+	private void createFileOnServer(String filename, String fileContent) throws SAXException, IOException, JSONException {
+		webConversation.setExceptionsThrownOnErrorStatus(false);
+		WebRequest createFileReq = getPostFilesRequest("/", getNewFileJSON(filename).toString(), filename);
+		WebResponse createFileResp = webConversation.getResponse(createFileReq);
+		assertEquals(HttpURLConnection.HTTP_CREATED, createFileResp.getResponseCode());
+		createFileReq = getPutFileRequest(createFileResp.getHeaderField("Location"), fileContent);
+		createFileResp = webConversation.getResponse(createFileReq);
+		assertEquals(HttpURLConnection.HTTP_OK, createFileResp.getResponseCode());
+	}
 }
