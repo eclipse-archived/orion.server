@@ -1,6 +1,7 @@
 package org.eclipse.orion.server.tests.servlets.site;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -78,13 +79,15 @@ public class HostingTest extends CoreSiteTest {
 		createFileResp = webConversation.getResponse(createFileReq);
 		assertEquals(HttpURLConnection.HTTP_OK, createFileResp.getResponseCode());
 
-		// Create a site that exposes the file
+		// Create a site that exposes the workspace file, and also a remote URL
 		final String siteName = "My hosted site";
 		final String workspaceId = workspaceObject.getString(ProtocolConstants.KEY_ID);
 		final String filePath = "/" + fileName;
 		final String mountAt1 = "/file.html";
 		final String mountAt2 = "/web";
-		final JSONArray mappings = makeMappings(new String[][] { {mountAt1, filePath}, {mountAt2, "http://www.google.com"}});
+		// Not really "remote", but will suffice
+		final String remoteURL = SERVER_LOCATION + "/navigate-table.html";
+		final JSONArray mappings = makeMappings(new String[][] { {mountAt1, filePath}, {mountAt2, remoteURL}});
 		WebRequest createSiteReq = getCreateSiteRequest(siteName, workspaceId, mappings, null);
 		WebResponse createSiteResp = webConversation.getResponse(createSiteReq);
 		assertEquals(HttpURLConnection.HTTP_CREATED, createSiteResp.getResponseCode());
@@ -103,17 +106,19 @@ public class HostingTest extends CoreSiteTest {
 		hostingStatus = siteObject.getJSONObject(SiteConfigurationConstants.KEY_HOSTING_STATUS);
 		assertEquals("started", hostingStatus.getString(SiteConfigurationConstants.KEY_HOSTING_STATUS_STATUS));
 
-		// Access the site paths
+		// Access the workspace file through the site
 		final String hostedURL = hostingStatus.getString(SiteConfigurationConstants.KEY_HOSTING_STATUS_URL);
 		WebRequest getFileReq = new GetMethodWebRequest(hostedURL + mountAt1);
 		WebResponse getFileResp = webConversation.getResponse(getFileReq);
 		assertEquals(fileContent, getFileResp.getText());
 
-		// Access the remote URL
-		//		WebRequest getRemoteUrlReq = new GetMethodWebRequest(hostedURL + mountAt2);
-		//		WebResponse getRemoteUrlResp = webConversation.getResponse(getRemoteUrlReq);
-		//		final String remoteUrl = getRemoteUrlResp.getText();
-		//		assertTrue("URL looks like google.com", remoteUrl.contains("Google") && remoteUrl.contains("<input"));
+		// Access the remote URL through the site
+		WebRequest getRemoteUrlReq = new GetMethodWebRequest(hostedURL + mountAt2);
+		// just fetch content, don't try to parse
+		WebResponse getRemoteUrlResp = webConversation.getResource(getRemoteUrlReq);
+		assertEquals(HttpURLConnection.HTTP_OK, getRemoteUrlResp.getResponseCode());
+		final String content = getRemoteUrlResp.getText();
+		assertTrue("Looks like Orion nav page", content.contains("Orion") && content.contains(".js") && content.contains("<script") && content.toLowerCase().contains("navigator"));
 
 		// Stop the site
 		hostingStatus = new JSONObject();
