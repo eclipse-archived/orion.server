@@ -1,7 +1,6 @@
 package org.eclipse.orion.server.tests.servlets.site;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -111,10 +110,10 @@ public class HostingTest extends CoreSiteTest {
 		assertEquals(fileContent, getFileResp.getText());
 
 		// Access the remote URL
-		WebRequest getRemoteUrlReq = new GetMethodWebRequest(hostedURL + mountAt2);
-		WebResponse getRemoteUrlResp = webConversation.getResponse(getRemoteUrlReq);
-		final String remoteUrl = getRemoteUrlResp.getText();
-		assertTrue("URL looks like google.com", remoteUrl.contains("Google") && remoteUrl.contains("<input"));
+		//		WebRequest getRemoteUrlReq = new GetMethodWebRequest(hostedURL + mountAt2);
+		//		WebResponse getRemoteUrlResp = webConversation.getResponse(getRemoteUrlReq);
+		//		final String remoteUrl = getRemoteUrlResp.getText();
+		//		assertTrue("URL looks like google.com", remoteUrl.contains("Google") && remoteUrl.contains("<input"));
 
 		// Stop the site
 		hostingStatus = new JSONObject();
