@@ -12,6 +12,7 @@ package org.eclipse.orion.server.git;
 
 import com.jcraft.jsch.*;
 import java.io.*;
+import org.eclipse.jgit.errors.TransportException;
 import org.eclipse.jgit.transport.*;
 import org.eclipse.jgit.util.FS;
 
@@ -20,7 +21,10 @@ public class GitSshSessionFactory extends SshSessionFactory {
 	private static final int SSH_PORT = 22;
 
 	@Override
-	public Session getSession(String user, String pass, String host, int port, CredentialsProvider credentialsProvider, FS fs) throws JSchException {
+	public RemoteSession getSession(URIish uri, CredentialsProvider credentialsProvider, FS fs, int tms) throws TransportException {
+		int port = uri.getPort();
+		String user = uri.getUser();
+		String pass = uri.getPass();
 		if (credentialsProvider instanceof GitCredentialsProvider) {
 			if (port <= 0)
 				port = SSH_PORT;
@@ -39,13 +43,17 @@ public class GitSshSessionFactory extends SshSessionFactory {
 				}
 			}
 
-			final Session session = createSession(user, host, port, cp);
-			if (pass != null)
-				session.setPassword(pass);
-			if (credentialsProvider != null && !credentialsProvider.isInteractive()) {
-				session.setUserInfo(new CredentialsProviderUserInfo(session, credentialsProvider));
+			try {
+				final Session session = createSession(user, uri.getHost(), port, cp);
+				if (pass != null)
+					session.setPassword(pass);
+				if (credentialsProvider != null && !credentialsProvider.isInteractive()) {
+					session.setUserInfo(new CredentialsProviderUserInfo(session, credentialsProvider));
+				}
+				return new JschSession(session, uri);
+			} catch (JSchException e) {
+				throw new TransportException(uri, e.getMessage(), e);
 			}
-			return session;
 		}
 		return null;
 	}
