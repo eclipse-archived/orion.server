@@ -13,8 +13,8 @@ package org.eclipse.orion.internal.server.filesystem.git;
 import com.jcraft.jsch.*;
 import java.io.IOException;
 import java.io.InputStream;
+import org.eclipse.jgit.errors.TransportException;
 import org.eclipse.jgit.transport.*;
-import org.eclipse.jgit.transport.OpenSshConfig.Host;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.server.filesystem.git.KeysCredentials;
 
@@ -27,17 +27,22 @@ import org.eclipse.orion.server.filesystem.git.KeysCredentials;
  * The implementation assumes to work in a batch mode. If user interactivity is
  * required by SSH (e.g. to obtain a password), the connection will fail.
  */
-public class OrionSshSessionFactory extends SshConfigSessionFactory {
+public class OrionSshSessionFactory extends SshSessionFactory {
 
 	private static final int SSH_PORT = 22;
 
 	@Override
-	public synchronized Session getSession(String user, String pass,
-			String host, int port, CredentialsProvider credentialsProvider,
-			FS fs) throws JSchException {
-		if (user == null && credentialsProvider instanceof OrionUserCredentialsProvider) {
+	public synchronized RemoteSession getSession(URIish uri,
+			CredentialsProvider credentialsProvider, FS fs, int tms)
+			throws TransportException {
+		int port = uri.getPort();
+		String user = uri.getUser();
+		String pass = uri.getPass();
+		if (user == null
+				&& credentialsProvider instanceof OrionUserCredentialsProvider) {
 			OrionUserCredentialsProvider oucp = (OrionUserCredentialsProvider) credentialsProvider;
-			CredentialsProvider cp = SshConfigManager.getDefault().getCredentialsProvider(oucp.getOrionUser(), oucp.getUri());
+			CredentialsProvider cp = SshConfigManager.getDefault()
+					.getCredentialsProvider(oucp.getOrionUser(), oucp.getUri());
 			if (cp != null) {
 				CredentialItem.Username u = new CredentialItem.Username();
 				if (cp.supports(u) && cp.get(oucp.getUri(), u)) {
@@ -48,19 +53,24 @@ public class OrionSshSessionFactory extends SshConfigSessionFactory {
 		if (port <= 0)
 			port = SSH_PORT;
 
-		final Session session = createSession(user, host, port, credentialsProvider);
-		if (pass != null)
-			session.setPassword(pass);
-		if (credentialsProvider != null
-				&& !credentialsProvider.isInteractive()) {
-			session.setUserInfo(new CredentialsProviderUserInfo(session,
-					credentialsProvider));
+		try {
+			final Session session = createSession(user, uri.getHost(), port,
+					credentialsProvider);
+			if (pass != null)
+				session.setPassword(pass);
+			if (credentialsProvider != null
+					&& !credentialsProvider.isInteractive()) {
+				session.setUserInfo(new CredentialsProviderUserInfo(session,
+						credentialsProvider));
+			}
+			return new JschSession(session, uri);
+		} catch (JSchException e) {
+			throw new TransportException(uri, e.getMessage(), e);
 		}
-		return session;
 	}
 
-	protected Session createSession(final String user, final String host, final int port, CredentialsProvider cp)
-			throws JSchException {
+	protected Session createSession(final String user, final String host,
+			final int port, CredentialsProvider cp) throws JSchException {
 		return getJSch(cp).getSession(user, host, port);
 	}
 
@@ -68,7 +78,8 @@ public class OrionSshSessionFactory extends SshConfigSessionFactory {
 		return createDefaultJSch(cp);
 	}
 
-	protected JSch createDefaultJSch(CredentialsProvider cp) throws JSchException {
+	protected JSch createDefaultJSch(CredentialsProvider cp)
+			throws JSchException {
 		final JSch jsch = new JSch();
 		if (cp instanceof OrionUserCredentialsProvider) {
 			OrionUserCredentialsProvider oucp = (OrionUserCredentialsProvider) cp;
@@ -78,7 +89,8 @@ public class OrionSshSessionFactory extends SshConfigSessionFactory {
 		return jsch;
 	}
 
-	private static void knownHosts(final JSch sch, String orionUser) throws JSchException {
+	private static void knownHosts(final JSch sch, String orionUser)
+			throws JSchException {
 		try {
 			InputStream in = null;
 			try {
@@ -93,7 +105,8 @@ public class OrionSshSessionFactory extends SshConfigSessionFactory {
 	}
 
 	private static void identities(final JSch sch, String orionUser, URIish uri) {
-		KeysCredentials[] keysCredentials = SshConfigManager.getDefault().getKeysCredentials(orionUser, uri);
+		KeysCredentials[] keysCredentials = SshConfigManager.getDefault()
+				.getKeysCredentials(orionUser, uri);
 		for (KeysCredentials kc : keysCredentials) {
 			String name = kc.getName();
 			byte[] privateBytes = kc.getPrivateKey().getBytes();
@@ -105,11 +118,6 @@ public class OrionSshSessionFactory extends SshConfigSessionFactory {
 				// pretend the key doesn't exist
 			}
 		}
-	}
-
-	@Override
-	protected void configure(Host hc, Session session) {
-		// nothing to do
 	}
 
 }

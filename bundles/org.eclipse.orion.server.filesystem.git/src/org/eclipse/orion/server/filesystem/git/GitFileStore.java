@@ -18,6 +18,7 @@ import org.eclipse.core.filesystem.*;
 import org.eclipse.core.filesystem.provider.FileInfo;
 import org.eclipse.core.filesystem.provider.FileStore;
 import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileRepository;
