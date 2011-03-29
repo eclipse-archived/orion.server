@@ -17,16 +17,11 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
-import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.lib.Config.SectionParser;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.servlets.ServerStatus;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
-import org.eclipse.orion.server.useradmin.UserServiceHelper;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONException;
 
@@ -93,15 +88,15 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private void doConfigureClone(Git git, String userId) throws IOException, CoreException {
-		StoredConfig config = git.getRepository().getConfig();
-		IOrionUserProfileNode userNode = UserServiceHelper.getDefault().getUserProfileService().getUserProfileNode(userId, true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
-		if (userNode.get(GitConstants.KEY_NAME, null) != null)
-			config.setString(ConfigConstants.CONFIG_USER_SECTION, null, ConfigConstants.CONFIG_KEY_NAME, userNode.get(GitConstants.KEY_NAME, null));
-		if (userNode.get(GitConstants.KEY_MAIL, null) != null)
-			config.setString(ConfigConstants.CONFIG_USER_SECTION, null, ConfigConstants.CONFIG_KEY_EMAIL, userNode.get(GitConstants.KEY_MAIL, null));
-		config.save();
-	}
+	//	private void doConfigureClone(Git git, String userId) throws IOException, CoreException {
+	//		StoredConfig config = git.getRepository().getConfig();
+	//		IOrionUserProfileNode userNode = UserServiceHelper.getDefault().getUserProfileService().getUserProfileNode(userId, true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
+	//		if (userNode.get(GitConstants.KEY_NAME, null) != null)
+	//			config.setString(ConfigConstants.CONFIG_USER_SECTION, null, ConfigConstants.CONFIG_KEY_NAME, userNode.get(GitConstants.KEY_NAME, null));
+	//		if (userNode.get(GitConstants.KEY_MAIL, null) != null)
+	//			config.setString(ConfigConstants.CONFIG_USER_SECTION, null, ConfigConstants.CONFIG_KEY_EMAIL, userNode.get(GitConstants.KEY_MAIL, null));
+	//		config.save();
+	//	}
 
 	/**
 	 * Validates that the provided clone name is valid. Returns
