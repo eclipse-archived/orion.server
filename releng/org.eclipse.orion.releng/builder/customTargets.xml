@@ -117,6 +117,7 @@ lastMapTag=${mapsTagTag}
 		<replace file="${buildDirectory}/formatRepo/artifacts.xml" token="@REPO@" value="0.2-${buildType}-builds/${buildLabel}" />
 		
 		<p2.mirror source="file:${p2.metadata.repo}" log="${buildDirectory}/${buildLabel}/mirrorLog.txt" ignoreErrors="true" >
+			<slicingOptions latestVersionOnly="true"/>
 			<destination compressed="true" name="Orion ${buildLabel} metadata" location="file:${updateSite}/${buildLabel}" append="true" format="file:${p2.repo}" kind="metadata" />
 			<destination compressed="true" name="Orion ${buildLabel} artifacts" location="file:${updateSite}/${buildLabel}" append="true" format="file:${buildDirectory}/formatRepo" kind="artifact"/>
 			<comparator comparator="org.eclipse.equinox.p2.repository.tools.jar.comparator" comparatorLog="${dropLocation}/comparatorlog.txt">
