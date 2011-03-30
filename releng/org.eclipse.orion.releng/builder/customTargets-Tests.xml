@@ -11,7 +11,7 @@
 	</target>
 	
 	<target name="postBuild" >
-		<p2.mirror source="${p2.metadata.repo}" destination="file:${updateSite}/${buildLabel}" ignoreerrors="true" >
+		<p2.mirror source="file:${buildDirectory}/buildRepo" destination="file:${updateSite}/${buildLabel}" ignoreerrors="true" >
 			<slicingOptions includeOptional="false" includeNonGreedy="false" latestVersionOnly="true"/>
 			<iu id="org.eclipse.orion.releng.test.master.feature.group" />
 		</p2.mirror>
