@@ -10,7 +10,6 @@ import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.core.IAliasRegistry;
-import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.internal.server.servlets.file.ServletFileStoreHandler;
 import org.eclipse.orion.internal.server.servlets.hosting.IHostedSite;
@@ -19,6 +18,7 @@ import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONException;
+import org.mortbay.servlet.ProxyServlet;
 
 /**
  * Handles requests for URIs that are part of a running hosted site. Requests must 
@@ -44,6 +44,26 @@ public class HostedSiteServlet extends OrionServlet {
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		// Handled by service()
+	}
+
+	@Override
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		// Handled by service()
+	}
+
+	@Override
+	protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		// Handled by service()
+	}
+
+	@Override
+	protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		// Handled by service()
+	}
+
+	@Override
+	protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
 		String pathInfoString = req.getPathInfo();
 		IPath pathInfo = new Path(null /*don't parse host:port as device*/, pathInfoString == null ? "" : pathInfoString); //$NON-NLS-1$
@@ -102,9 +122,14 @@ public class HostedSiteServlet extends OrionServlet {
 
 	private void serve(HttpServletRequest req, HttpServletResponse resp, IHostedSite site, IPath path) throws ServletException, IOException {
 		if (path.getDevice() == null) {
-			serveOrionFile(req, resp, site, path);
+			if ("GET".equals(req.getMethod())) { //$NON-NLS-1$
+				serveOrionFile(req, resp, site, path);
+			} else {
+				String message = "Only GET method is supported for workspace paths";
+				handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_METHOD_NOT_ALLOWED, NLS.bind(message, path), null));
+			}
 		} else {
-			proxyRemoteUrl(resp, path);
+			proxyRemotePath(req, resp, path);
 		}
 	}
 
@@ -175,35 +200,32 @@ public class HostedSiteServlet extends OrionServlet {
 		return null;
 	}
 
-	private void proxyRemoteUrl(HttpServletResponse resp, IPath path) throws MalformedURLException, IOException {
-		URL url = null;
+	private void proxyRemotePath(HttpServletRequest req, HttpServletResponse resp, IPath path) throws IOException, ServletException, UnknownHostException {
 		try {
-			url = new URL(path.toString());
+			URL url = new URL(path.toString());
+			proxyRemoteUrl(req, resp, url);
 		} catch (MalformedURLException e) {
-			// FIXME: nicer error
-			throw e;
+			String message = NLS.bind("Malformed remote URL: {0}", path.toString());
+			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, message, e));
+			return;
+		} catch (UnknownHostException e) {
+			String message = NLS.bind("Unknown host {0}", e.getMessage());
+			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, message, e));
+		} catch (Exception e) {
+			String message = NLS.bind("An error occurred while retrieving {0}", path.toString());
+			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, e));
 		}
-
-		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
-		// FIXME: forward headers, send X-Forwarded-For (?), catch remote errors and send 502 (?)
-		//				Enumeration<?> headerNames = req.getHeaderNames();
-		//				while (headerNames.hasMoreElements()) {
-		//					String name = (String) headerNames.nextElement();
-		//					String value = req.getHeader(name);
-		//					if ("Host".equals(name)) {
-		//						continue;
-		//					}
-		//					connection.addRequestProperty(name, value);
-		//				}
-		//				for (int i = 0; true; i++) {
-		//					String name = connection.getHeaderFieldKey(i);
-		//					if (name == null) {
-		//						break;
-		//					}
-		//					resp.setHeader(name, connection.getHeaderField(i));
-		//				}
-		IOUtilities.pipe(connection.getInputStream(), resp.getOutputStream(), true, true);
 	}
 
+	private void proxyRemoteUrl(HttpServletRequest req, HttpServletResponse resp, final URL url) throws IOException, ServletException, UnknownHostException {
+		ProxyServlet proxy = new RemoteURLProxyServlet(url);
+		proxy.init(getServletConfig());
+		try {
+			// TODO: May want to avoid console noise from 4xx response codes?
+			traceRequest(req);
+			proxy.service(req, resp);
+		} finally {
+			proxy.destroy();
+		}
+	}
 }
