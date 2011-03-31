@@ -10,8 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import javax.servlet.ServletException;
@@ -25,6 +24,7 @@ import org.eclipse.jgit.treewalk.AbstractTreeIterator;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
 import org.eclipse.orion.internal.server.servlets.*;
+import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
@@ -35,6 +35,11 @@ import org.json.JSONObject;
  * A handler for Git Diff operation.
  */
 public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
+
+	/**
+	 * The end of line sequence expected by HTTP.
+	 */
+	private static final String EOL = "\r\n"; //$NON-NLS-1$
 
 	private ServletResourceHandler<IStatus> statusHandler;
 
@@ -54,7 +59,7 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 
 			switch (getMethod(request)) {
 				case GET :
-					return handleGet(request, response, db, path);
+					return handleMultiPartGet(request, response, db, path);
 				case POST :
 					return handlePost(request, response, db, path);
 			}
@@ -69,8 +74,8 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 		return false;
 	}
 
-	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws Exception {
-		Diff diff = new Diff(response.getOutputStream());
+	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, Repository db, Path path, OutputStream out) throws Exception {
+		Diff diff = new Diff(out);
 		diff.setRepository(db);
 		String scope = path.segment(0);
 		if (scope.contains("..")) { //$NON-NLS-1$
@@ -89,6 +94,36 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 			diff.setPathFilter(PathFilter.create(path.removeFirstSegments(3).toString()));
 		diff.run();
 		return true;
+	}
+
+	private boolean handleMultiPartGet(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws Exception {
+		String boundary = createBoundaryString();
+		response.setHeader(ProtocolConstants.HEADER_CONTENT_TYPE, "multipart/related; boundary=\"" + boundary + '"'); //$NON-NLS-1$
+		OutputStream outputStream = response.getOutputStream();
+		Writer out = new OutputStreamWriter(outputStream);
+
+		out.write("--" + boundary + EOL); //$NON-NLS-1$
+		out.write(ProtocolConstants.HEADER_CONTENT_TYPE + ": " + ProtocolConstants.CONTENT_TYPE_JSON + EOL + EOL); //$NON-NLS-1$
+		JSONObject o = new JSONObject();
+		JSONObject gitSection = new JSONObject();
+		URI link = getURI(request);
+		gitSection.put(GitConstants.KEY_DIFF, link.toString());
+		gitSection.put(GitConstants.KEY_DIFF_OLD, getOldLocation(link, path).toString());
+		gitSection.put(GitConstants.KEY_DIFF_NEW, getNewLocation(link, path).toString());
+		o.put(GitConstants.KEY_GIT, gitSection);
+		out.write(o.toString());
+
+		out.write(EOL + "--" + boundary + EOL); //$NON-NLS-1$
+		out.write(ProtocolConstants.HEADER_CONTENT_TYPE + ": plain/text" + EOL + EOL); //$NON-NLS-1$
+		out.flush();
+		handleGet(request, response, db, path, outputStream);
+		out.write(EOL);
+		out.flush();
+		return true;
+	}
+
+	String createBoundaryString() {
+		return new UniversalUniqueIdentifier().toBase64String();
 	}
 
 	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws IOException, JSONException, URISyntaxException {
@@ -122,4 +157,48 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 			or.release();
 		}
 	}
+
+	private URI getOldLocation(URI location, Path path) throws URISyntaxException {
+		String scope = path.segment(0);
+		if (scope.contains("..")) { //$NON-NLS-1$
+			String[] commits = scope.split("\\.\\."); //$NON-NLS-1$
+			if (commits.length != 2) {
+				// TODO:
+				throw new IllegalArgumentException();
+			}
+			// TODO: decode commits[0]
+			IPath p = new Path(GitServlet.GIT_URI + '/' + GitConstants.COMMIT_RESOURCE).append(commits[0]).append(path.removeFirstSegments(1));
+			return new URI(location.getScheme(), location.getAuthority(), p.toString(), "parts=body", null); //$NON-NLS-1$
+		} else if (scope.equals(GitConstants.KEY_DIFF_CACHED)) {
+			IPath p = new Path(GitServlet.GIT_URI + '/' + GitConstants.COMMIT_RESOURCE).append(Constants.HEAD).append(path.removeFirstSegments(1));
+			return new URI(location.getScheme(), location.getAuthority(), p.toString(), "parts=body", null); //$NON-NLS-1$
+		} else if (scope.equals(GitConstants.KEY_DIFF_DEFAULT)) {
+			IPath p = new Path(GitServlet.GIT_URI + '/' + GitConstants.INDEX_RESOURCE).append(path.removeFirstSegments(1));
+			return new URI(location.getScheme(), location.getAuthority(), p.toString(), null, null);
+		}
+		// TODO: shouldn't get here
+		throw new IllegalArgumentException();
+	}
+
+	private URI getNewLocation(URI location, Path path) throws URISyntaxException {
+		String scope = path.segment(0);
+		if (scope.contains("..")) { //$NON-NLS-1$
+			String[] commits = scope.split("\\.\\."); //$NON-NLS-1$
+			if (commits.length != 2) {
+				// TODO:
+				throw new IllegalArgumentException();
+			}
+			// TODO: decode commits[1]
+			IPath p = new Path(GitServlet.GIT_URI + '/' + GitConstants.COMMIT_RESOURCE).append(commits[1]).append(path.removeFirstSegments(1));
+			return new URI(location.getScheme(), location.getAuthority(), p.toString(), "parts=body", null); //$NON-NLS-1$
+		} else if (scope.equals(GitConstants.KEY_DIFF_CACHED)) {
+			IPath p = new Path(GitServlet.GIT_URI + '/' + GitConstants.INDEX_RESOURCE).append(path.removeFirstSegments(1));
+			return new URI(location.getScheme(), location.getAuthority(), p.toString(), null, null);
+		} else if (scope.equals(GitConstants.KEY_DIFF_DEFAULT)) {
+			return new URI(location.getScheme(), location.getAuthority(), path.removeFirstSegments(1).makeAbsolute().toString(), null, null);
+		}
+		// TODO: shouldn't get here
+		throw new IllegalArgumentException();
+	}
+
 }

@@ -708,7 +708,7 @@ public class GitStatusTest extends GitTest {
 		WebRequest request = GitDiffTest.getGetGitDiffRequest(gitDiffUri);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		assertEquals("Invalid file content", expectedDiff, response.getText());
+		assertEquals("Invalid file content", expectedDiff, GitDiffTest.parseMultiPartResponse(response)[1]);
 	}
 
 	private void assertChildHead(JSONObject child, String expectedFileContent) throws JSONException, IOException, SAXException {
