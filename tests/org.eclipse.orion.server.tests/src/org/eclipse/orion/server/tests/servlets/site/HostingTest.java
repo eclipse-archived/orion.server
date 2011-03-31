@@ -65,7 +65,7 @@ public class HostingTest extends CoreSiteTest {
 	}
 
 	@Test
-	public void testStart() throws SAXException, IOException, JSONException {
+	public void testStartSite() throws SAXException, IOException, JSONException {
 		JSONArray mappings = makeMappings(new String[][] {{"/", "/A/bogusWorkspacePath"}});
 		WebResponse siteResp = createSite("Fizz site", workspaceId, mappings, "fizzsite", null);
 		JSONObject siteObject = new JSONObject(siteResp.getText());
@@ -73,7 +73,7 @@ public class HostingTest extends CoreSiteTest {
 	}
 
 	@Test
-	public void testStartNoMappings() throws SAXException, IOException, JSONException {
+	public void testStartSiteNoMappings() throws SAXException, IOException, JSONException {
 		// Empty array
 		JSONArray mappings = makeMappings(new String[0][0]);
 		WebResponse siteResp = createSite("Empty mappings site", workspaceId, mappings, "empty", null);
@@ -87,7 +87,7 @@ public class HostingTest extends CoreSiteTest {
 	}
 
 	@Test
-	public void testStop() throws SAXException, IOException, JSONException {
+	public void testStopSite() throws SAXException, IOException, JSONException {
 		JSONArray mappings = makeMappings(new String[][] {{"/", "/A/bogusWorkspacePath"}});
 		WebResponse siteResp = createSite("Buzz site", workspaceId, mappings, "buzzsite", null);
 		JSONObject siteObject = new JSONObject(siteResp.getText());
