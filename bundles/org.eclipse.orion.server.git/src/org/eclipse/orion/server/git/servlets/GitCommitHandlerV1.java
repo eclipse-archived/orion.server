@@ -171,6 +171,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			JSONObject commit = new JSONObject();
 			commit.put(ProtocolConstants.KEY_LOCATION, createCommitLocation(baseLocation, revCommit.getName(), null));
 			commit.put(ProtocolConstants.KEY_CONTENT_LOCATION, createCommitLocation(baseLocation, revCommit.getName(), "parts=body"));
+			commit.put(GitConstants.KEY_DIFF, createDiffLocation(baseLocation, revCommit.getName()));
 			commit.put(ProtocolConstants.KEY_NAME, revCommit.getName());
 			commit.put(GitConstants.KEY_AUTHOR_NAME, revCommit.getAuthorIdent().getName());
 			commit.put(GitConstants.KEY_COMMIT_TIME, ((long) revCommit.getCommitTime()) * 1000 /* time in milliseconds */);
@@ -182,6 +183,10 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 
 	private URI createCommitLocation(URI baseLocation, String commitName, String parameters) throws URISyntaxException {
 		return new URI(baseLocation.getScheme(), baseLocation.getAuthority(), GitServlet.GIT_URI + "/" + GitConstants.COMMIT_RESOURCE + "/" + commitName + "/" + new Path(baseLocation.getPath()).removeFirstSegments(3), parameters, null);
+	}
+
+	private URI createDiffLocation(URI baseLocation, String commitName) throws URISyntaxException {
+		return new URI(baseLocation.getScheme(), baseLocation.getAuthority(), GitServlet.GIT_URI + "/" + GitConstants.DIFF_RESOURCE + "/" + commitName + "/" + new Path(baseLocation.getPath()).removeFirstSegments(3), null, null);
 	}
 
 	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws ServletException, NoFilepatternException, IOException, JSONException, CoreException {
