@@ -28,7 +28,7 @@
 	</target>
 	
 	<target name="replaceUser" if="gitUser" >
-		<replace dir="${buildDirectory}/maps/" value="${gitUser}@dev.eclipse.org:/gitroot" token="dev.eclipse.org:/gitroot" />
+		<replace dir="${buildDirectory}/maps/" value="repo=${gitUser}@dev.eclipse.org:/gitroot" token="repo=dev.eclipse.org:/gitroot" />
 	</target>
 	
 	<target name="tagMapFiles" if="tagMaps" >
