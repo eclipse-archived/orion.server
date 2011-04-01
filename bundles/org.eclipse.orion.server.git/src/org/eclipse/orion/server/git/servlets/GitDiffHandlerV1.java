@@ -59,7 +59,13 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 
 			switch (getMethod(request)) {
 				case GET :
-					return handleMultiPartGet(request, response, db, path);
+					String parts = request.getParameter("parts"); //$NON-NLS-1$
+					if (parts == null || "uris,diff".equals(parts) || "diff,uris".equals(parts))
+						return handleMultiPartGet(request, response, db, path);
+					if ("uris".equals(parts))
+						return handleGetUris(request, response, db, path, response.getOutputStream());
+					if ("diff".equals(parts))
+						return handleGetDiff(request, response, db, path, response.getOutputStream());
 				case POST :
 					return handlePost(request, response, db, path);
 			}
@@ -74,7 +80,7 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 		return false;
 	}
 
-	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, Repository db, Path path, OutputStream out) throws Exception {
+	private boolean handleGetDiff(HttpServletRequest request, HttpServletResponse response, Repository db, Path path, OutputStream out) throws Exception {
 		Diff diff = new Diff(out);
 		diff.setRepository(db);
 		String scope = path.segment(0);
@@ -96,6 +102,18 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
+	private boolean handleGetUris(HttpServletRequest request, HttpServletResponse response, Repository db, Path path, OutputStream out) throws Exception {
+		JSONObject o = new JSONObject();
+		JSONObject gitSection = new JSONObject();
+		URI link = getURI(request);
+		gitSection.put(GitConstants.KEY_DIFF, link.toString());
+		gitSection.put(GitConstants.KEY_DIFF_OLD, getOldLocation(link, path).toString());
+		gitSection.put(GitConstants.KEY_DIFF_NEW, getNewLocation(link, path).toString());
+		o.put(GitConstants.KEY_GIT, gitSection);
+		out.write(o.toString().getBytes());
+		return true;
+	}
+
 	private boolean handleMultiPartGet(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws Exception {
 		String boundary = createBoundaryString();
 		response.setHeader(ProtocolConstants.HEADER_CONTENT_TYPE, "multipart/related; boundary=\"" + boundary + '"'); //$NON-NLS-1$
@@ -104,19 +122,12 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 
 		out.write("--" + boundary + EOL); //$NON-NLS-1$
 		out.write(ProtocolConstants.HEADER_CONTENT_TYPE + ": " + ProtocolConstants.CONTENT_TYPE_JSON + EOL + EOL); //$NON-NLS-1$
-		JSONObject o = new JSONObject();
-		JSONObject gitSection = new JSONObject();
-		URI link = getURI(request);
-		gitSection.put(GitConstants.KEY_DIFF, link.toString());
-		gitSection.put(GitConstants.KEY_DIFF_OLD, getOldLocation(link, path).toString());
-		gitSection.put(GitConstants.KEY_DIFF_NEW, getNewLocation(link, path).toString());
-		o.put(GitConstants.KEY_GIT, gitSection);
-		out.write(o.toString());
-
+		out.flush();
+		handleGetUris(request, response, db, path, outputStream);
 		out.write(EOL + "--" + boundary + EOL); //$NON-NLS-1$
 		out.write(ProtocolConstants.HEADER_CONTENT_TYPE + ": plain/text" + EOL + EOL); //$NON-NLS-1$
 		out.flush();
-		handleGet(request, response, db, path, outputStream);
+		handleGetDiff(request, response, db, path, outputStream);
 		out.write(EOL);
 		out.flush();
 		return true;

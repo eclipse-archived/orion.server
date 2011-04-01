@@ -443,6 +443,90 @@ public class GitDiffTest extends GitTest {
 		assertEquals(sb.toString(), parts[1]);
 	}
 
+	@Test
+	public void testDiffParts() throws JSONException, IOException, SAXException, URISyntaxException {
+		URI workspaceLocation = createWorkspace(getMethodName());
+
+		String projectName = getMethodName();
+		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
+
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		JSONObject project = new JSONObject(response.getText());
+		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
+		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
+		assertNotNull(projectId);
+
+		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+		String gitDiffUri = gitSection.optString(GitConstants.KEY_DIFF, null);
+		assertNotNull(gitDiffUri);
+		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
+		assertNotNull(gitIndexUri);
+		String gitCommitUri = gitSection.optString(GitConstants.KEY_COMMIT, null);
+		assertNotNull(gitCommitUri);
+
+		// modify
+		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// add
+		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// commit
+		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "commit1", false);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// TODO: don't create URIs out of thin air
+		// replace with REST API for git log when ready, see bug 339104
+		String initialCommit = Constants.HEAD + "^";
+		String commit = Constants.HEAD;
+		// TODO: don't create URIs out of thin air
+		String enc = URLEncoder.encode(initialCommit + ".." + commit, "UTF-8");
+		String location = gitDiffUri.replaceAll(GitConstants.KEY_DIFF_DEFAULT, enc);
+		location += "test.txt";
+
+		request = getGetFilesRequest(location + "?parts=uris,diff");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		String[] parts = parseMultiPartResponse(response);
+
+		assertDiffUris(location, "test", "change", new JSONObject(parts[0]));
+
+		StringBuffer sb = new StringBuffer();
+		sb.append("diff --git a/test.txt b/test.txt").append("\n");
+		sb.append("index 30d74d2..8013df8 100644").append("\n");
+		sb.append("--- a/test.txt").append("\n");
+		sb.append("+++ b/test.txt").append("\n");
+		sb.append("@@ -1 +1 @@").append("\n");
+		sb.append("-test").append("\n");
+		sb.append("\\ No newline at end of file").append("\n");
+		sb.append("+change").append("\n");
+		sb.append("\\ No newline at end of file").append("\n");
+		assertEquals(sb.toString(), parts[1]);
+
+		request = getGetFilesRequest(location + "?parts=diff,uris");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		parseMultiPartResponse(response);
+
+		assertDiffUris(location, "test", "change", new JSONObject(parts[0]));
+		assertEquals(sb.toString(), parts[1]);
+
+		request = getGetFilesRequest(location + "?parts=diff");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals(sb.toString(), response.getText());
+
+		request = getGetFilesRequest(location + "?parts=uris");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertDiffUris(location, "test", "change", new JSONObject(response.getText()));
+	}
+
 	private void assertDiffUris(String expectedLocation, String expectedOld, String expectedNew, JSONObject jsonPart) throws JSONException, IOException, SAXException {
 		JSONObject gitSection = jsonPart.getJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
