@@ -23,7 +23,6 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
-import org.eclipse.orion.internal.server.core.IAliasRegistry;
 import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.servlets.OrionServlet;
@@ -36,7 +35,6 @@ import org.osgi.service.prefs.BackingStoreException;
  */
 public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorkspace> {
 
-	private final IAliasRegistry aliasRegistry;
 	private final ServletResourceHandler<IStatus> statusHandler;
 
 	/**
@@ -46,7 +44,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		URI contentLocation = project.getContentLocation();
 		//relative URIs (any URI with no scheme) are resolved against the location of the workspace servlet.
 		//note when relative URIs are used we must hard-code knowledge of the file servlet
-		if (!contentLocation.isAbsolute() || "file".equals(contentLocation.getScheme())) { //$NON-NLS-1$//$NON-NLS-2$
+		if (!contentLocation.isAbsolute() || "file".equals(contentLocation.getScheme())) { //$NON-NLS-1$
 			IPath contentPath = new Path(contentLocation.getPath());
 			//absolute file system paths are mapped via the alias registry so we just provide the project id as the alias
 			if (contentPath.isAbsolute())
@@ -119,10 +117,8 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		return result;
 	}
 
-	public WorkspaceResourceHandler(ServletResourceHandler<IStatus> statusHandler, IAliasRegistry aliasRegistry) {
+	public WorkspaceResourceHandler(ServletResourceHandler<IStatus> statusHandler) {
 		this.statusHandler = statusHandler;
-		this.aliasRegistry = aliasRegistry;
-		initialize();
 	}
 
 	private void computeProjectLocation(WebProject project, String location, String user, boolean init) throws URISyntaxException, CoreException {
@@ -147,7 +143,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 			//TODO ensure the location is somewhere reasonable
 		}
 		project.setContentLocation(contentURI);
-		registerProjectLocation(project);
+		Activator.getDefault().registerProjectLocation(project);
 	}
 
 	/**
@@ -348,11 +344,6 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		return false;
 	}
 
-	private void initialize() {
-		for (WebProject project : WebProject.allProjects())
-			registerProjectLocation(project);
-	}
-
 	private boolean isAllowedLinkDestination(String content, String user) {
 		if (content == null) {
 			return true;
@@ -393,16 +384,6 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 			return true;
 
 		return false;
-	}
-
-	private void registerProjectLocation(WebProject project) {
-		URI contentURI = project.getContentLocation();
-		// if the location is relative to this server, we need to register an alias so the file service can find it
-		if (!contentURI.isAbsolute() || "file".equals(contentURI.getScheme())) { //$NON-NLS-1$
-			IPath contentPath = new Path(contentURI.getSchemeSpecificPart());
-			if (contentPath.isAbsolute())
-				aliasRegistry.registerAlias(project.getId(), contentURI);
-		}
 	}
 
 	private void removeProject(WebProject project, String authority) throws CoreException {

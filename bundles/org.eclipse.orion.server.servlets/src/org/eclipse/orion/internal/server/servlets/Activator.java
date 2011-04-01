@@ -20,6 +20,7 @@ import org.eclipse.orion.internal.server.core.IAliasRegistry;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
 import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
 import org.eclipse.orion.internal.server.servlets.workspace.ProjectParentDecorator;
+import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.internal.server.servlets.xfer.TransferResourceDecorator;
 import org.eclipse.osgi.service.datalocation.Location;
 import org.osgi.framework.*;
@@ -154,6 +155,20 @@ public class Activator implements BundleActivator, IAliasRegistry {
 	}
 
 	/**
+	 * Registers the location of a project with the alias registry
+	 * @param project
+	 */
+	public void registerProjectLocation(WebProject project) {
+		URI contentURI = project.getContentLocation();
+		// if the location is relative to this server, we need to register an alias so the file service can find it
+		if (!contentURI.isAbsolute() || "file".equals(contentURI.getScheme())) { //$NON-NLS-1$
+			IPath contentPath = new Path(contentURI.getSchemeSpecificPart());
+			if (contentPath.isAbsolute())
+				registerAlias(project.getId(), contentURI);
+		}
+	}
+
+	/**
 	 * Registers decorators supplied by servlets in this bundle
 	 */
 	private void registerDecorators() {
@@ -167,7 +182,13 @@ public class Activator implements BundleActivator, IAliasRegistry {
 		singleton = this;
 		bundleContext = context;
 		initializeFileSystem();
+		initializeProjects();
 		registerDecorators();
+	}
+
+	private void initializeProjects() {
+		for (WebProject project : WebProject.allProjects())
+			registerProjectLocation(project);
 	}
 
 	public void stop(BundleContext context) throws Exception {

@@ -46,7 +46,7 @@ public class WorkspaceServlet extends OrionServlet {
 
 	public WorkspaceServlet() {
 		aliasRegistry = Activator.getDefault();
-		workspaceResourceHandler = new WorkspaceResourceHandler(getStatusHandler(), aliasRegistry);
+		workspaceResourceHandler = new WorkspaceResourceHandler(getStatusHandler());
 		projectResourceHandler = new WebProjectResourceHandler();
 	}
 
