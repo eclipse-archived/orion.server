@@ -81,6 +81,8 @@ public class GitConstants {
 
 	public static final String KEY_DIFF_NEW = "New"; //$NON-NLS-1$
 
+	public static final String KEY_DIFF_OLD = "Old"; //$NON-NLS-1$
+
 	public static final String KEY_COMMIT_MESSAGE = "Message"; //$NON-NLS-1$
 
 	public static final String KEY_COMMIT_AMEND = "Amend"; //$NON-NLS-1$
@@ -90,4 +92,6 @@ public class GitConstants {
 	public static final String KEY_PATH = "Path"; //$NON-NLS-1$
 
 	public static final String KEY_AUTHOR_NAME = "AuthorName"; //$NON-NLS-1$
+
+	public static final String KEY_FETCH = "Fetch"; //$NON-NLS-1$
 }
