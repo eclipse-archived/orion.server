@@ -12,6 +12,7 @@ package org.eclipse.orion.server.tests.servlets.git;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,6 +24,7 @@ import java.net.URISyntaxException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
@@ -129,14 +131,22 @@ public class GitRemoteTest extends GitTest {
 		request = getGetGitRemoteRequest(remoteLocation);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		// TODO: check response body
+		remote = new JSONObject(response.getText());
+		assertNotNull(remote);
+		assertEquals(Constants.DEFAULT_REMOTE_NAME, remote.getString(ProtocolConstants.KEY_NAME));
+		assertNotNull(remote.getString(ProtocolConstants.KEY_LOCATION));
+		JSONArray refsArray = remote.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		assertEquals(1, refsArray.length());
+		JSONObject ref = refsArray.getJSONObject(0);
+		assertNotNull(ref);
+		assertEquals(Constants.R_REMOTES + Constants.DEFAULT_REMOTE_NAME + "/" + Constants.MASTER, ref.getString(ProtocolConstants.KEY_NAME));
+		String refId = ref.getString(ProtocolConstants.KEY_ID);
+		assertNotNull(refId);
+		assertTrue(ObjectId.isId(refId));
 	}
 
 	@Test
 	public void testGetUnknownRemote() throws IOException, SAXException, JSONException, URISyntaxException {
-		// clone repo
-		// get list = 1
-		// get xxx, NOT_FOUND
 		URIish uri = new URIish(gitDir.toURL());
 		String name = null;
 		WebRequest request = GitCloneTest.getPostGitCloneRequest(uri, name);
@@ -190,7 +200,7 @@ public class GitRemoteTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 	}
 
-	private static WebRequest getGetGitRemoteRequest(String location) {
+	static WebRequest getGetGitRemoteRequest(String location) {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;
@@ -201,5 +211,4 @@ public class GitRemoteTest extends GitTest {
 		setAuthentication(request);
 		return request;
 	}
-
 }
