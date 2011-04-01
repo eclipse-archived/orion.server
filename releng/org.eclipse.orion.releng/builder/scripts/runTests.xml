@@ -17,7 +17,7 @@
 		<antcall target="processResults" />
 	</target>
 
-	<target name="buildTests" >
+	<target name="buildTests" unless="runTestsLocally" >
 		<ant antfile="${eclipse.pdebuild.scripts}/build.xml" >
 			<property name="topLevelElementId" value="org.eclipse.orion.releng.test.master" />
 			<property name="customTargets" value="${builder}/customTargets-Tests.xml"/>
@@ -28,13 +28,22 @@
 	</target>
 	
 	<target name="initProperties" >
+		<condition property="buildDirectory" value="${basedir}/../../build" >
+			<isset property="runTestsLocally" />
+		</condition>
+		<condition property="builder" value="${basedir}/.." >
+			<isset property="runTestsLocally" />
+		</condition>
 		<property file="${builder}/build.properties" />
+		<condition property="orionRepo" value="http://download.eclipse.org/e4/updates/orion/0.2-${buildType}-builds" else="file:${buildDirectory}/buildRepo">
+			<isset property="runTestsLocally"/>
+		</condition>
 	</target>
 	
 	<target name="installTests" depends="buildTests,initProperties">
 		<!-- combine the build repo with the platform repo -->
 		<p2.composite.repository destination="file:${buildDirectory}/test/composite">
-			<add location="file:${buildDirectory}/buildRepo" />
+			<add location="${orionRepo}" />
 			<add location="${eclipsePlatformRepo}"/>
 		</p2.composite.repository>
 		
@@ -86,6 +95,7 @@
 			<arg line="-xvfb" />
 		</exec>
 		
+		<echo message="Launching Orion Server" />
 		<exec executable="bash" failonerror="false" outputproperty="serverPID" >
 			<arg value="${builder}/scripts/runTests.sh" />
 			<arg value="-server" />
