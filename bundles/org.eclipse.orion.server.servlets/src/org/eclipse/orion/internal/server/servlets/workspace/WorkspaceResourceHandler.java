@@ -132,12 +132,12 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		} else {
 			//use the content location specified by the user
 			try {
-				contentURI = Util.getURIWithAuthority(new URI(location), user);
+				contentURI = new URI(location);
 				EFS.getFileSystem(contentURI.getScheme());//check if we support this scheme
 			} catch (URISyntaxException e) {
 				contentURI = new File(location).toURI(); //if this is not a valid URI try to parse it as file path
 			} catch (CoreException e) {
-				contentURI = new File(location).toURI();//if we don't support given scheme try to parse as location as a file path
+				contentURI = new File(location).toURI();//if we don't support given scheme try to parse location as a file path
 			}
 			if (init) {
 				IFileStore child = EFS.getStore(contentURI);
@@ -155,7 +155,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 	 */
 	private URI generateProjectLocation(WebProject project, String user) throws CoreException, URISyntaxException {
 		URI platformLocationURI = Activator.getDefault().getRootLocationURI();
-		IFileStore root = EFS.getStore(Util.getURIWithAuthority(platformLocationURI, user));
+		IFileStore root = EFS.getStore(platformLocationURI);
 
 		//consult layout preference
 		IEclipsePreferences preferences = InstanceScope.INSTANCE.getNode("org.eclipse.orion.server.configurator"); //$NON-NLS-1$
@@ -381,7 +381,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		URI contentURI = null;
 		//use the content location specified by the user
 		try {
-			contentURI = Util.getURIWithAuthority(new URI(content), user);
+			contentURI = new URI(content);
 			EFS.getFileSystem(contentURI.getScheme());//check if we support this scheme
 		} catch (URISyntaxException e) {
 			contentURI = new File(content).toURI(); //if this is not a valid URI try to parse it as file path
@@ -412,7 +412,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		if (project.getId().equals(contentURI.toString())) {
 			URI platformLocationURI = Activator.getDefault().getRootLocationURI();
 			IFileStore child;
-			child = EFS.getStore(Util.getURIWithAuthority(platformLocationURI, authority)).getChild(project.getId());
+			child = EFS.getStore(platformLocationURI).getChild(project.getId());
 			if (child.fetchInfo().exists()) {
 				child.delete(EFS.NONE, null);
 			}

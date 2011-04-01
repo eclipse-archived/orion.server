@@ -164,7 +164,7 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 		String sourcePath = getURI(request).resolve(sourceLocation).getPath();
 		//first segment is the servlet path
 		IPath path = new Path(sourcePath).removeFirstSegments(1);
-		IFileStore source = NewFileServlet.getFileStore(path, request.getRemoteUser());
+		IFileStore source = NewFileServlet.getFileStore(path);
 		return source;
 	}
 

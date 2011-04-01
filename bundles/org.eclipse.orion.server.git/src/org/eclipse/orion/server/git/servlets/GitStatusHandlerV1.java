@@ -43,7 +43,7 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 			Path path = new Path(gitPathInfo);
 			if (!path.hasTrailingSeparator())
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Cannot get status on a file.", null));
-			File gitDir = GitUtils.getGitDir(path.uptoSegment(2), request.getRemoteUser());
+			File gitDir = GitUtils.getGitDir(path.uptoSegment(2));
 			if (gitDir == null)
 				return false; // TODO: or an error response code, 405?
 			Repository db = new FileRepository(gitDir);

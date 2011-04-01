@@ -54,7 +54,7 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 		Repository db = null;
 		try {
 			Path p = new Path(path);
-			File gitDir = GitUtils.getGitDir(p.uptoSegment(2), request.getRemoteUser());
+			File gitDir = GitUtils.getGitDir(p.uptoSegment(2));
 			if (gitDir == null)
 				return false; // TODO: or an error response code, 405?
 			db = new FileRepository(gitDir);

@@ -35,7 +35,7 @@ public class Export {
 	}
 
 	public void doExport(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
-		IFileStore source = NewFileServlet.getFileStore(sourcePath, req.getRemoteUser());
+		IFileStore source = NewFileServlet.getFileStore(sourcePath);
 
 		try {
 			if (source.fetchInfo().isDirectory() && source.childNames(EFS.NONE, null).length == 0) {

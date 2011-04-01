@@ -63,7 +63,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		Path p = new Path(path);
 		// FIXME: what if a remote is named "file"?
 		if (p.segment(0).equals("file")) {
-			File gitDir = GitUtils.getGitDir(p, request.getRemoteUser());
+			File gitDir = GitUtils.getGitDir(p);
 			Repository db = new FileRepository(gitDir);
 			Set<String> configNames = db.getConfig().getSubsections("remote");
 			JSONObject result = new JSONObject();
@@ -80,7 +80,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			return true;
 		} else {
 			// TODO: return remote info
-			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(1), request.getRemoteUser());
+			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(1));
 			Repository db = new FileRepository(gitDir);
 			Set<String> configNames = db.getConfig().getSubsections("remote");
 			JSONObject result = new JSONObject();
@@ -118,7 +118,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		if (fetch) {
 			// {remote}/{branch}/{file}/{path}
 			Path p = new Path(path);
-			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2), request.getRemoteUser());
+			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2));
 			Repository db = new FileRepository(gitDir);
 			Git git = new Git(db);
 			try {

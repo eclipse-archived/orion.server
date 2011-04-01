@@ -52,7 +52,7 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 		Repository db = null;
 		try {
 			Path path = new Path(gitPathInfo);
-			File gitDir = GitUtils.getGitDir(path.removeFirstSegments(1).uptoSegment(2), request.getRemoteUser());
+			File gitDir = GitUtils.getGitDir(path.removeFirstSegments(1).uptoSegment(2));
 			if (gitDir == null)
 				return false; // TODO: or an error response code, 405?
 			db = new FileRepository(gitDir);

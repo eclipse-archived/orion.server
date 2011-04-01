@@ -46,7 +46,7 @@ public class NewFileServlet extends OrionServlet {
 		traceRequest(req);
 		String pathInfo = req.getPathInfo();
 		IPath path = pathInfo == null ? Path.ROOT : new Path(pathInfo);
-		IFileStore file = getFileStore(path, req.getRemoteUser());
+		IFileStore file = getFileStore(path);
 		if (file == null) {
 			handleException(resp, new ServerStatus(IStatus.ERROR, 404, NLS.bind("File not found: {0}", path), null));
 			return;
@@ -76,13 +76,13 @@ public class NewFileServlet extends OrionServlet {
 	 * Returns the store representing the file to be retrieved for the given
 	 * request or <code>null</code> if an error occurred.
 	 */
-	public static IFileStore getFileStore(IPath path, String authority) {
+	public static IFileStore getFileStore(IPath path) {
 		//first check if we have an alias registered
 		if (path.segmentCount() > 0) {
 			URI alias = Activator.getDefault().lookupAlias(path.segment(0));
 			if (alias != null)
 				try {
-					return EFS.getStore(Util.getURIWithAuthority(alias, authority)).getFileStore(path.removeFirstSegments(1));
+					return EFS.getStore(alias).getFileStore(path.removeFirstSegments(1));
 				} catch (CoreException e) {
 					LogHelper.log(new Status(IStatus.WARNING, Activator.PI_SERVER_SERVLETS, 1, "An error occured when getting file store for path '" + path + "' and alias '" + alias + "'", e));
 					// fallback is to try the same path relatively to the root
@@ -91,7 +91,7 @@ public class NewFileServlet extends OrionServlet {
 		//assume it is relative to the root
 		URI rootStoreURI = Activator.getDefault().getRootLocationURI();
 		try {
-			return EFS.getStore(Util.getURIWithAuthority(rootStoreURI, authority)).getFileStore(path);
+			return EFS.getStore(rootStoreURI).getFileStore(path);
 		} catch (CoreException e) {
 			LogHelper.log(new Status(IStatus.WARNING, Activator.PI_SERVER_SERVLETS, 1, "An error occured when getting file store for path '" + path + "' and root '" + rootStoreURI + "'", e));
 			// fallback and return null

@@ -27,9 +27,9 @@ public class GitUtils {
 	 * repository or an error occurred while transforming the given path into 
 	 * a store.  
 	 */
-	public static File getGitDir(IPath path, String authority) throws CoreException {
+	public static File getGitDir(IPath path) throws CoreException {
 		IPath p = path.removeFirstSegments(1);
-		IFileStore fileStore = NewFileServlet.getFileStore(p, authority);
+		IFileStore fileStore = NewFileServlet.getFileStore(p);
 		if (fileStore == null)
 			return null;
 		File file = fileStore.toLocalFile(EFS.NONE, null);

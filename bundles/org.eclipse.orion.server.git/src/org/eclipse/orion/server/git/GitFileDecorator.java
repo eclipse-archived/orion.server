@@ -55,7 +55,7 @@ public class GitFileDecorator implements IWebResourceDecorator {
 				// initialize a new git repository on project creation if specified by configuration
 				initGitRepository(request, targetPath, representation);
 
-				if (GitUtils.getGitDir(path, request.getRemoteUser()) != null)
+				if (GitUtils.getGitDir(path) != null)
 					addGitLinks(new URI(contentLocation), representation);
 				return;
 			}
@@ -67,7 +67,7 @@ public class GitFileDecorator implements IWebResourceDecorator {
 						JSONObject child = children.getJSONObject(i);
 						String location = child.getString(ProtocolConstants.KEY_LOCATION);
 						IPath path = new Path(new URI(location).getPath());
-						if (GitUtils.getGitDir(path, request.getRemoteUser()) != null)
+						if (GitUtils.getGitDir(path) != null)
 							addGitLinks(new URI(location), child);
 					}
 				}
@@ -75,7 +75,7 @@ public class GitFileDecorator implements IWebResourceDecorator {
 			}
 
 			if (!isWorkspace && "GET".equals(request.getMethod())) {
-				if (GitUtils.getGitDir(targetPath, request.getRemoteUser()) != null) {
+				if (GitUtils.getGitDir(targetPath) != null) {
 					addGitLinks(resource, representation);
 
 					// assumption that Git resources may live only under another Git resource

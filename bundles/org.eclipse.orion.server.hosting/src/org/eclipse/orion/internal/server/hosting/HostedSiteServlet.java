@@ -152,7 +152,7 @@ public class HostedSiteServlet extends OrionServlet {
 			// start copied
 			String pathInfo = path.toString();
 			IPath filePath = pathInfo == null ? Path.ROOT : new Path(pathInfo);
-			IFileStore file = tempGetFileStore(filePath, userName);
+			IFileStore file = tempGetFileStore(filePath);
 			if (file == null) {
 				handleException(resp, new ServerStatus(IStatus.ERROR, 404, NLS.bind("File not found: {0}", filePath), null));
 				//return;
@@ -177,23 +177,23 @@ public class HostedSiteServlet extends OrionServlet {
 	}
 
 	// temp code for grabbing files from filesystem
-	protected IFileStore tempGetFileStore(IPath path, String authority) {
+	protected IFileStore tempGetFileStore(IPath path) {
 		//first check if we have an alias registered
 		if (path.segmentCount() > 0) {
 			URI alias = aliasRegistry.lookupAlias(path.segment(0));
 			if (alias != null)
 				try {
-					return EFS.getStore(Util.getURIWithAuthority(alias, authority)).getFileStore(path.removeFirstSegments(1));
+					return EFS.getStore(alias).getFileStore(path.removeFirstSegments(1));
 				} catch (CoreException e) {
-					LogHelper.log(new Status(IStatus.WARNING, Activator.PI_SERVER_SERVLETS, 1, "An error occured when getting file store for path '" + path + "' and alias '" + alias + "'", e));
+					LogHelper.log(new Status(IStatus.WARNING, HostingActivator.PI_SERVER_HOSTING, 1, "An error occured when getting file store for path '" + path + "' and alias '" + alias + '\'', e)); //$NON-NLS-1$ //$NON-NLS-2$
 					// fallback is to try the same path relatively to the root
 				}
 		}
 		//assume it is relative to the root
 		try {
-			return EFS.getStore(Util.getURIWithAuthority(rootStoreURI, authority)).getFileStore(path);
+			return EFS.getStore(rootStoreURI).getFileStore(path);
 		} catch (CoreException e) {
-			LogHelper.log(new Status(IStatus.WARNING, Activator.PI_SERVER_SERVLETS, 1, "An error occured when getting file store for path '" + path + "' and root '" + rootStoreURI + "'", e));
+			LogHelper.log(new Status(IStatus.WARNING, HostingActivator.PI_SERVER_HOSTING, 1, "An error occured when getting file store for path '" + path + "' and root '" + rootStoreURI + '\'', e)); //$NON-NLS-1$ //$NON-NLS-2$
 			// fallback and return null
 		}
 
