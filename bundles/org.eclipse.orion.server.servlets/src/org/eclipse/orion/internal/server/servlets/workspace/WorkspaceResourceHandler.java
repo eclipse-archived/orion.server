@@ -130,10 +130,9 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 			try {
 				contentURI = new URI(location);
 				EFS.getFileSystem(contentURI.getScheme());//check if we support this scheme
-			} catch (URISyntaxException e) {
-				contentURI = new File(location).toURI(); //if this is not a valid URI try to parse it as file path
-			} catch (CoreException e) {
-				contentURI = new File(location).toURI();//if we don't support given scheme try to parse location as a file path
+			} catch (Exception e) {
+				//if this is not a valid URI or scheme try to parse it as file path
+				contentURI = new File(location).toURI();
 			}
 			if (init) {
 				IFileStore child = EFS.getStore(contentURI);
