@@ -93,9 +93,14 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 			// TODO: decode
 			diff.setOldTree(getTreeIterator(db, commits[0]));
 			diff.setNewTree(getTreeIterator(db, commits[1]));
+		} else if (scope.equals(GitConstants.KEY_DIFF_CACHED)) {
+			diff.setCached(true);
+		} else if (scope.equals(GitConstants.KEY_DIFF_DEFAULT)) {
+			diff.setCached(false);
 		} else {
-			diff.setCached(scope.equals(GitConstants.KEY_DIFF_CACHED));
+			diff.setOldTree(getTreeIterator(db, scope));
 		}
+
 		if (path.segmentCount() > 3)
 			diff.setPathFilter(PathFilter.create(path.removeFirstSegments(3).toString()));
 		diff.run();
@@ -186,9 +191,10 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 		} else if (scope.equals(GitConstants.KEY_DIFF_DEFAULT)) {
 			IPath p = new Path(GitServlet.GIT_URI + '/' + GitConstants.INDEX_RESOURCE).append(path.removeFirstSegments(1));
 			return new URI(location.getScheme(), location.getAuthority(), p.toString(), null, null);
+		} else {
+			IPath p = new Path(GitServlet.GIT_URI + '/' + GitConstants.COMMIT_RESOURCE).append(scope).append(path.removeFirstSegments(1));
+			return new URI(location.getScheme(), location.getAuthority(), p.toString(), "parts=body", null); //$NON-NLS-1$
 		}
-		// TODO: shouldn't get here
-		throw new IllegalArgumentException();
 	}
 
 	private URI getNewLocation(URI location, Path path) throws URISyntaxException {
@@ -205,11 +211,9 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 		} else if (scope.equals(GitConstants.KEY_DIFF_CACHED)) {
 			IPath p = new Path(GitServlet.GIT_URI + '/' + GitConstants.INDEX_RESOURCE).append(path.removeFirstSegments(1));
 			return new URI(location.getScheme(), location.getAuthority(), p.toString(), null, null);
-		} else if (scope.equals(GitConstants.KEY_DIFF_DEFAULT)) {
+		} else {
+			/* including scope.equals(GitConstants.KEY_DIFF_DEFAULT */
 			return new URI(location.getScheme(), location.getAuthority(), path.removeFirstSegments(1).makeAbsolute().toString(), null, null);
 		}
-		// TODO: shouldn't get here
-		throw new IllegalArgumentException();
 	}
-
 }
