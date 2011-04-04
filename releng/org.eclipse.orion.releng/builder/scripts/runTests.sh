@@ -67,11 +67,11 @@ if [ ! -z "$serverPath" ]; then
 	exit
 fi
 
-killFirefox() {
+killBrowser() {
 	string=$1 ; shift
 	
-	firefoxPID=$( ps -ef | grep e4Build | grep $string | grep -v grep | awk '{print $2}' )
-	for p in $firefoxPID; do
+	browserPID=$( ps -ef | grep e4Build | grep $string | grep -v grep | awk '{print $2}' )
+	for p in $browserPID; do
 		kill $p
 	done
 }
@@ -82,18 +82,12 @@ then
 mkdir $testDir
 fi
 
-firefox=/shared/common/firefox-3.6.13/firefox
-if [[ ! -e "$firefox" ]]; then
-firefox=`which firefox`
-fi
-
-firefox4=/shared/common/firefox-4.0/firefox
-chrome10=/shared/common/chrome-10.0.648.133/google-chrome
-
-chrome=/shared/common/chrome-8.0.552.237/google-chrome
-if [[ ! -e "$chrome" ]]; then
-	chrome=`which chrome`
-fi
+browsers=(\
+		firefox-3.6.13/firefox,firefox-3.6.13/firefox-bin \
+        firefox-4.0/firefox,firefox-4.0/firefox-bin \
+        chrome-8.0.552.237/google-chrome,chrome-8.0.552.237/chrome \
+        chrome-10.0.648.133/google-chrome,chrome-10.0.648.133/chrome \
+        chrome-11.0.696.28/google-chome,chrome-11.0.696.28/chrome )
 
 export DISPLAY=:63		# set display to use that of the xvfb
 
@@ -101,12 +95,13 @@ export DISPLAY=:63		# set display to use that of the xvfb
 port=`head -1 $testConf | sed 's_.*:\([0-9]*\)$_\1_'`
 
 # run the tests
-echo Running $testConf on port $port
-$java -Dbrowser.timeout=120 -jar $testDir/../JsTestDriver.jar --config $testConf --port $port --browser $firefox,$chrome --tests all --testOutput $testDir
-
-killFirefox "firefox-3.6.13/firefox-bin"
-
-$java -Dbrowser.timeout=120 -jar $testDir/../JsTestDriver.jar --config $testConf --port $port --browser $firefox4,$chrome10 --tests all --testOutput $testDir
-
-killFirefox "firefox-4.0/firefox-bin"
+for entry in ${browsers[@]}; do
+	OLD_IFS="$IFS"; IFS=","
+	browser=( $entry )	
+	IFS="$OLD_IFS"
+	
+	echo Running $testConf on port $port
+	$java -Dbrowser.timeout=120 -jar $testDir/../JsTestDriver.jar --config $testConf --port $port --browser /shared/common/${browser[0]} --tests all --testOutput $testDir
+	killBrowser "${browser[1]}"
+done
 
