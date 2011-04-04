@@ -11,6 +11,23 @@
 
 <project name="Orion-Tests" default="runTests">
 
+	<target name="bootstrapTests" >
+		<property name="base" value="${basedir}" />
+		<mkdir dir="${base}" />
+		
+		<!-- fetch the basebuilder -->
+		<cvs command="export -d org.eclipse.releng.basebuilder" tag="v20110302" cvsroot="dev.eclipse.org:/cvsroot/eclipse" dest="${base}" />
+		
+		<!-- launch the antRunner on this script -->
+		<java fork="true" jar="${base}/org.eclipse.releng.basebuilder/plugins/org.eclipse.equinox.launcher.jar" >
+			<arg line="-application org.eclipse.ant.core.antRunner"/>
+			<arg line="-f "/>
+			<arg value="junitTests" />
+			<arg value="-DrunTestsLocally=true"/>
+			<arg value="-DbuildType=N" />
+		</java>
+	</target>
+		
 	<target name="runTests" >
 		<antcall target="junitTests" />
 		<antcall target="jsTests" />
@@ -179,6 +196,9 @@
 		<junitreport todir="${dropLocation}" tofile="Chrome-8.0-testResults.xml">
 			<fileset dir="${jsTestDir}" includes="**/TEST-Chrome_80*.xml" />
 		</junitreport>
+		<junitreport todir="${dropLocation}" tofile="Chrome-11.0-testResults.xml">
+			<fileset dir="${jsTestDir}" includes="**/TEST-Chrome_110*.xml" />
+		</junitreport>
 		<junitreport todir="${dropLocation}" tofile="Firefox-3.6-testResults.xml">
 			<fileset dir="${jsTestDir}" includes="**/TEST-Firefox_36*.xml" />
 		</junitreport>
@@ -195,8 +215,9 @@
 		<xslt style="${builder}/html/JUNIT.XSL" basedir="${buildDirectory}/test/eclipse/results" destdir="${dropLocation}" includes="*.xml" />
 		
 		<!-- update the test status -->
-		<updateTestResult testFile="Chrome-10.0-testResults.html" token="@JS-CHROME10@"/>
 		<updateTestResult testFile="Chrome-8.0-testResults.html" token="@JS-CHROME8@"/>
+		<updateTestResult testFile="Chrome-10.0-testResults.html" token="@JS-CHROME10@"/>
+		<updateTestResult testFile="Chrome-11.0-testResults.html" token="@JS-CHROME11@"/>
 		<updateTestResult testFile="Firefox-3.6-testResults.html" token="@JS-FIREFOX36@"/>
 		<updateTestResult testFile="Firefox-4.0-testResults.html" token="@JS-FIREFOX40@"/>
 		<updateTestResult testFile="org.eclipse.orion.server.tests.AllServerTests.html" token="@SERVER-TESTS@"/>

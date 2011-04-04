@@ -57,16 +57,16 @@
          unpack="false"/>
 
    <plugin
-         id="nekohtml"
+         id="org.cyberneko.html"
          download-size="0"
          install-size="0"
-         version="0.0.0"/>
+         version="1.9.14.qualifier"/>
 
    <plugin
-         id="openid4java"
+         id="org.openid4java"
          download-size="0"
          install-size="0"
-         version="0.0.0"/>
+         version="0.9.5.qualifier"/>
 
    <plugin
          id="org.eclipse.orion.server.authentication.basic"

@@ -15,9 +15,11 @@ Export-Package: org.eclipse.orion.internal.server.core;
    org.eclipse.orion.server.servlets,
    org.eclipse.orion.server.search,
    org.eclipse.orion.server.git",
+ org.eclipse.orion.internal.server.core.tasks;x-internal:=true,
  org.eclipse.orion.server.core,
  org.eclipse.orion.server.core.authentication,
  org.eclipse.orion.server.core.resources,
+ org.eclipse.orion.server.core.tasks,
  org.eclipse.orion.server.core.users
 Bundle-ActivationPolicy: lazy
 Bundle-Vendor: %Bundle-Vendor

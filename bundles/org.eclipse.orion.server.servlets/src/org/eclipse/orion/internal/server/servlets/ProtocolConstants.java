@@ -22,6 +22,12 @@ public class ProtocolConstants {
 	public static final String CONTENT_TYPE_JSON = "application/json; charset=UTF-8";//$NON-NLS-1$
 
 	/**
+	 * Standard HTTP request or response value for the Content-Type header,
+	 * indicating that the request or response body consists of HTML.
+	 */
+	public static final String CONTENT_TYPE_HTML = "text/html;charset=UTF-8";//$NON-NLS-1$
+
+	/**
 	 * Standard HTTP request or response header indicating the content length of the request
 	 * or response body.
 	 */

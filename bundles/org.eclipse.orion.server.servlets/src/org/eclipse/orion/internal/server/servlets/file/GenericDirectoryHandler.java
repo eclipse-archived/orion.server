@@ -15,6 +15,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.filesystem.*;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.osgi.util.NLS;
 
@@ -28,10 +29,11 @@ public class GenericDirectoryHandler extends ServletResourceHandler<IFileStore> 
 		if (getMethod(request) != Method.GET)
 			return false;
 		try {
+			response.setContentType(ProtocolConstants.CONTENT_TYPE_HTML);
 			String path = request.getPathInfo();
 			IFileStore[] children = dir.childStores(EFS.NONE, null);
 			PrintWriter writer = response.getWriter();
-			writer.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2 Final//EN\">"); //$NON-NLS-1$
+			writer.println("<!DOCTYPE HTML>"); //$NON-NLS-1$
 			writer.println("<html>"); //$NON-NLS-1$
 			writer.println(" <head>"); //$NON-NLS-1$
 			writer.println("<title>Index of " + path + "</title>"); //$NON-NLS-1$ //$NON-NLS-2$
