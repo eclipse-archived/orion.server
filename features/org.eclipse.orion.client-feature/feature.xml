@@ -45,6 +45,7 @@
          id="org.openajax"
          download-size="0"
          install-size="0"
+         unpack="true"
          version="0.0.0"/>
 
    <plugin
