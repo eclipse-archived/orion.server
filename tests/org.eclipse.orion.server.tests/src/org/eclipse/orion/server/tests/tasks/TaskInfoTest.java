@@ -18,24 +18,9 @@ import org.junit.Test;
  * Tests for {@link TaskInfo}.
  */
 public class TaskInfoTest extends TestCase {
-	private void assertEqualTasks(TaskInfo task1, TaskInfo task2) {
-		assertEquals(task1.getTaskId(), task2.getTaskId());
-		assertEquals(task1.getMessage(), task2.getMessage());
-		assertEquals(task1.getPercentComplete(), task2.getPercentComplete());
-		assertEquals(task1.isRunning(), task2.isRunning());
-	}
-
-	private TaskInfo createTestTask() {
-		TaskInfo info = new TaskInfo("mytask");
-		info.setMessage("THIS#)(&$^@)(ISA%20MESSAGE");
-		info.setPercentComplete(50);
-		info.setRunning(true);
-		return info;
-	}
-
 	@Test
 	public void testBadJSON() {
-		TaskInfo task = createTestTask();
+		TaskInfo task = AllTaskTests.createTestTask();
 		String json = task.toJSON();
 		json = json.replace('}', ')');
 		assertNull(TaskInfo.fromJSON(json));
@@ -50,9 +35,9 @@ public class TaskInfoTest extends TestCase {
 	 */
 	@Test
 	public void testJSONRoundTrip() {
-		TaskInfo info = createTestTask();
+		TaskInfo info = AllTaskTests.createTestTask();
 		TaskInfo task2 = TaskInfo.fromJSON(info.toJSON());
-		assertEqualTasks(info, task2);
+		AllTaskTests.assertEqualTasks(info, task2);
 	}
 
 	@Test

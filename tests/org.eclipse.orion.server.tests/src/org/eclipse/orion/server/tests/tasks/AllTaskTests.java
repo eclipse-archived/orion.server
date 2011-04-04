@@ -10,15 +10,36 @@
  *******************************************************************************/
 package org.eclipse.orion.server.tests.tasks;
 
+import static org.junit.Assert.assertEquals;
+
+import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
+
 
 /**
  * Runs all automated server tests for site configuration/hosting support.
  */
 @RunWith(Suite.class)
-@SuiteClasses({TaskInfoTest.class})
+@SuiteClasses({TaskInfoTest.class, TaskStoreTest.class})
 public class AllTaskTests {
-	//goofy junit4, no class body needed
+
+	/**
+	 * Helper method for creating a sample task for testing purposes.
+	 */
+	public static TaskInfo createTestTask() {
+		TaskInfo info = new TaskInfo("mytask");
+		info.setMessage("THIS#)(&$^@)(ISA%20MESSAGE");
+		info.setPercentComplete(50);
+		info.setRunning(true);
+		return info;
+	}
+
+	public static void assertEqualTasks(TaskInfo task1, TaskInfo task2) {
+		assertEquals(task1.getTaskId(), task2.getTaskId());
+		assertEquals(task1.getMessage(), task2.getMessage());
+		assertEquals(task1.getPercentComplete(), task2.getPercentComplete());
+		assertEquals(task1.isRunning(), task2.isRunning());
+	}
 }
