@@ -54,7 +54,6 @@
 				<arg value="--js=${orion.client.core}/js/util.js" />
 				<arg value="--js=${orion.client.core}/js/commands.js" />
 				<arg value="--js=${orion.client.core}/js/dialogs.js" />
-				<arg value="--js=${orion.client.core}/js/input.js" />
 			 	<arg value="--js=${orion.client.core}/js/log.js" />
 			 	<arg value="--js=${orion.client.core}/js/preferences.js" />
 			 	<arg value="--js=${orion.client.core}/js/selection.js" />
@@ -92,7 +91,6 @@
 				<arg value="--js=${orion.client.core}/js/util.js" />
 				<arg value="--js=${orion.client.core}/js/commands.js" />
 				<arg value="--js=${orion.client.core}/js/dialogs.js" />
-				<arg value="--js=${orion.client.core}/js/input.js" />
 			 	<arg value="--js=${orion.client.core}/js/log.js" />
 			 	<arg value="--js=${orion.client.core}/js/preferences.js" />
 			 	<arg value="--js=${orion.client.core}/js/selection.js" />
@@ -165,7 +163,6 @@
 				<arg value="--js=${orion.client.core}/js/util.js" />
 				<arg value="--js=${orion.client.core}/js/commands.js" />
 				<arg value="--js=${orion.client.core}/js/dialogs.js" />
-				<arg value="--js=${orion.client.core}/js/input.js" />
 			 	<arg value="--js=${orion.client.core}/js/log.js" />
 			 	<arg value="--js=${orion.client.core}/js/preferences.js" />
 			 	<arg value="--js=${orion.client.core}/js/selection.js" />
