@@ -11,6 +11,23 @@
 
 <project name="Orion-Tests" default="runTests">
 
+	<target name="bootstrapTests" >
+		<property name="base" value="${basedir}" />
+		<mkdir dir="${base}" />
+		
+		<!-- fetch the basebuilder -->
+		<cvs command="export -d org.eclipse.releng.basebuilder" tag="v20110302" cvsroot="dev.eclipse.org:/cvsroot/eclipse" dest="${base}" />
+		
+		<!-- launch the antRunner on this script -->
+		<java fork="true" jar="${base}/org.eclipse.releng.basebuilder/plugins/org.eclipse.equinox.launcher.jar" >
+			<arg line="-application org.eclipse.ant.core.antRunner"/>
+			<arg line="-f "/>
+			<arg value="junitTests" />
+			<arg value="-DrunTestsLocally=true"/>
+			<arg value="-DbuildType=N" />
+		</java>
+	</target>
+		
 	<target name="runTests" >
 		<antcall target="junitTests" />
 		<antcall target="jsTests" />
