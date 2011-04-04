@@ -87,7 +87,7 @@ browsers=(\
         firefox-4.0/firefox,firefox-4.0/firefox-bin \
         chrome-8.0.552.237/google-chrome,chrome-8.0.552.237/chrome \
         chrome-10.0.648.133/google-chrome,chrome-10.0.648.133/chrome \
-        chrome-11.0.696.28/google-chome,chrome-11.0.696.28/chrome )
+        chrome-11.0.696.28/google-chrome,chrome-11.0.696.28/chrome )
 
 export DISPLAY=:63		# set display to use that of the xvfb
 
