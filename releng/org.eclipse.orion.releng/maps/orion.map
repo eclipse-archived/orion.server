@@ -39,8 +39,6 @@ plugin@org.dojotoolkit,1.5.0=p2IU,id=org.dojotoolkit,version=1.5.0.v201101262320
 plugin@org.openajax=GIT,tag=v20110329-0848,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=dependencies/org.openajax_2.0.3.v20101208-1555.jar
 #plugin@openid4java=GET,http://git.eclipse.org/c/e4/org.eclipse.orion.server.git/plain/dependencies/openid4java_0.9.5.jar,unpack=true
 plugin@org.openid4java,0.9.5=p2IU,id=org.openid4java,version=0.9.5.v20110120926,repository=http://download.eclipse.org/tools/orbit/downloads/drops/S20110304120314/repository
-#plugin@nekohtml=GET,http://git.eclipse.org/c/e4/org.eclipse.orion.server.git/plain/dependencies/nekohtml_0.9.5.jar,unpack=true
-plugin@org.cyberneko.html,1.9.14=p2IU,id=org.cyberneko.html,version=1.9.14.v20110120926,repository=http://download.eclipse.org/tools/orbit/downloads/drops/S20110304120314/repository
 
 #tests
 plugin@org.eclipse.orion.server.tests=GIT,tag=v20110329-0848,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=tests/org.eclipse.orion.server.tests
