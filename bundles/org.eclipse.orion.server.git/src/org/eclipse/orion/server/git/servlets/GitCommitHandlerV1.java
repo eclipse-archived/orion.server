@@ -212,15 +212,11 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		}
 
 		boolean amend = Boolean.parseBoolean(toReset.optString(GitConstants.KEY_COMMIT_AMEND, null));
-		if (amend) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_IMPLEMENTED, "Amending is not yet supported.", null));
-		}
 
 		Git git = new Git(db);
 		// "git commit [--amend] -m '{message}' [-a|{path}]"
 		try {
-			// see bug 339242
-			git.commit()/*.setAmend(amend).*/.setMessage(message).call();
+			git.commit().setAmend(amend).setMessage(message).call();
 			return true;
 		} catch (GitAPIException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "An error occured when commiting.", e));
