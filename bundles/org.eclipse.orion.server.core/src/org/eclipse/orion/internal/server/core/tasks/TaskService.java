@@ -10,19 +10,19 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.core.tasks;
 
+import java.io.File;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
-
-import org.eclipse.orion.server.core.tasks.TaskInfo;
-
 import org.eclipse.orion.server.core.tasks.ITaskService;
+import org.eclipse.orion.server.core.tasks.TaskInfo;
 
 /**
  * A concrete implementation of the {@link ITaskService}.
  */
 public class TaskService implements ITaskService {
 	TaskStore store;
-	public TaskService() {
-		store = new TaskStore(null);
+
+	public TaskService(String baseLocation) {
+		store = new TaskStore(new File(baseLocation));
 	}
 
 	public TaskInfo createTask() {
@@ -34,11 +34,12 @@ public class TaskService implements ITaskService {
 	public TaskInfo getTask(String id) {
 		String taskString = store.readTask(id);
 		if (taskString == null)
-		return null;
+			return null;
 		return TaskInfo.fromJSON(taskString);
 	}
 
 	public void updateTask(TaskInfo task) {
+		store.writeTask(task.getTaskId(), task.toJSON());
 	}
 
 }

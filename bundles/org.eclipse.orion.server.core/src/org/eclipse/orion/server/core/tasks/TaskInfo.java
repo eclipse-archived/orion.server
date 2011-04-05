@@ -119,4 +119,8 @@ public class TaskInfo {
 		}
 		return result.toString();
 	}
+	@Override
+	public String toString() {
+		return "TaskInfo" + toJSON(); //$NON-NLS-1$
+	}
 }
