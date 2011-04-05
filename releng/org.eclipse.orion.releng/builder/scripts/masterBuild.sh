@@ -194,7 +194,7 @@ sendMail () {
 	prereqMsg=""
 	failed=""
 	
-	testsMsg=$(sed -n '/<!--START-TESTS-->/,/<!--END-TESTS-->/p' $buildDirectory/$buildLabel/drop/index.html | head -n 9 | tail -n 8 > mail.txt)
+	testsMsg=$(sed -n '/<!--START-TESTS-->/,/<!--END-TESTS-->/p' $buildDirectory/$buildLabel/drop/index.html > mail.txt)
 	testsMsg=$(cat mail.txt | sed s_href=\"_href=\"http://download.eclipse.org/e4/orion/drops/$buildType$timestamp/_)
 	rm mail.txt
 	
