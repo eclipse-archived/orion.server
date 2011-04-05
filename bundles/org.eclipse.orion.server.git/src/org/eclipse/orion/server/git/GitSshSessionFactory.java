@@ -50,6 +50,10 @@ public class GitSshSessionFactory extends SshSessionFactory {
 				if (credentialsProvider != null && !credentialsProvider.isInteractive()) {
 					session.setUserInfo(new CredentialsProviderUserInfo(session, credentialsProvider));
 				}
+
+				if (!session.isConnected())
+					session.connect(tms);
+
 				return new JschSession(session, uri);
 			} catch (JSchException e) {
 				throw new TransportException(uri, e.getMessage(), e);

@@ -41,7 +41,7 @@ import com.meterware.httpunit.WebResponse;
 public class GitCommitTest extends GitTest {
 
 	@Test
-	@Ignore("not yet implemented")
+	@Ignore("not yet implemented, see bug 339190")
 	public void testCommit() throws JSONException, IOException, SAXException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
@@ -259,7 +259,6 @@ public class GitCommitTest extends GitTest {
 	}
 
 	@Test
-	@Ignore("not yet, see bug 339242")
 	public void testCommitAmend() throws IOException, SAXException, URISyntaxException, JSONException, NoHeadException, JGitInternalException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
@@ -314,13 +313,13 @@ public class GitCommitTest extends GitTest {
 	@Test
 	@Ignore("not yet implemented")
 	public void testCommitLog() {
-		// TODO: implement, see bug 339104
+		// TODO: implement, see bug 340051
 	}
 
 	@Test
 	@Ignore("not yet implemented")
 	public void testCommitLogWithPath() {
-		// TODO: implement, see bug 339104
+		// TODO: implement, see bug 340051
 	}
 
 	@Test
