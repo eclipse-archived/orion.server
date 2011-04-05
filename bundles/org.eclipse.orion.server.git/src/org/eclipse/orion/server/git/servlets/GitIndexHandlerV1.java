@@ -80,9 +80,13 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 		return false;
 	}
 
-	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws CoreException, IOException {
+	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws CoreException, IOException, ServletException {
 		DirCache cache = db.readDirCache();
 		DirCacheEntry entry = cache.getEntry(path.removeFirstSegments(2).toString());
+		if (entry == null) {
+			String msg = NLS.bind("{0} not found in index", path); //$NON-NLS-1$
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.OK, HttpServletResponse.SC_NOT_FOUND, msg, null));
+		}
 		ObjectId blobId = entry.getObjectId();
 		ObjectStream stream = db.open(blobId, Constants.OBJ_BLOB).openStream();
 		IOUtilities.pipe(stream, response.getOutputStream(), true, false);

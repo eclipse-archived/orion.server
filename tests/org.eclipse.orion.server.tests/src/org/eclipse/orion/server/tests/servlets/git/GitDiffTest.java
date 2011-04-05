@@ -527,6 +527,56 @@ public class GitDiffTest extends GitTest {
 		assertDiffUris(location, "test", "change", new JSONObject(response.getText()));
 	}
 
+	@Test
+	public void testDiffUntrackedUri() throws JSONException, IOException, SAXException, URISyntaxException {
+		URI workspaceLocation = createWorkspace(getMethodName());
+
+		String projectName = getMethodName();
+		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
+
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		JSONObject project = new JSONObject(response.getText());
+		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
+		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
+		assertNotNull(projectId);
+
+		String fileName = "new.txt";
+		WebRequest request = getPostFilesRequest(projectId + "/", getNewFileJSON(fileName).toString(), fileName);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+		String gitDiffUri = gitSection.optString(GitConstants.KEY_DIFF, null);
+		assertNotNull(gitDiffUri);
+		// TODO: don't create URIs out of thin air
+		gitDiffUri += "new.txt";
+
+		request = getGetFilesRequest(gitDiffUri + "?parts=uris");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// assertDiffUris(gitDiffUri, "test", "change", new JSONObject(response.getText()));
+		gitSection = new JSONObject(response.getText()).getJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+		String fileOldUri = gitSection.getString(GitConstants.KEY_DIFF_OLD);
+		assertNotNull(fileOldUri);
+		request = getGetFilesRequest(fileOldUri);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
+		// assertEquals(expectedOld, response.getText());
+		String fileNewUri = gitSection.getString(GitConstants.KEY_DIFF_NEW);
+		assertNotNull(fileNewUri);
+		request = getGetFilesRequest(fileNewUri);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals("", response.getText());
+
+		String diffUri = gitSection.getString(GitConstants.KEY_DIFF);
+		assertNotNull(diffUri);
+		assertEquals(gitDiffUri, diffUri);
+	}
+
 	private void assertDiffUris(String expectedLocation, String expectedOld, String expectedNew, JSONObject jsonPart) throws JSONException, IOException, SAXException {
 		JSONObject gitSection = jsonPart.getJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
