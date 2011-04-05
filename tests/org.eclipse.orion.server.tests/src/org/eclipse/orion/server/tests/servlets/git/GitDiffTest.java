@@ -371,6 +371,104 @@ public class GitDiffTest extends GitTest {
 	}
 
 	@Test
+	public void testDiffCommitWithWorkingTree() throws IOException, SAXException, URISyntaxException, JSONException {
+		URI workspaceLocation = createWorkspace(getMethodName());
+
+		String projectName = getMethodName();
+		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
+
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		JSONObject project = new JSONObject(response.getText());
+		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
+		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
+		assertNotNull(projectId);
+
+		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+		String gitDiffUri = gitSection.optString(GitConstants.KEY_DIFF, null);
+		assertNotNull(gitDiffUri);
+		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
+		assertNotNull(gitIndexUri);
+		String gitCommitUri = gitSection.optString(GitConstants.KEY_COMMIT, null);
+		assertNotNull(gitCommitUri);
+
+		// modify
+		WebRequest request = getPutFileRequest(projectId + "/test.txt", "first change");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// TODO: don't create URIs out of thin air
+		// add
+		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// commit1
+		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "commit1", false);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// modify again
+		request = getPutFileRequest(projectId + "/test.txt", "second change");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// add
+		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// commit2
+		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "commit2", false);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// modify again and leave the change in the working tree only
+		request = getPutFileRequest(projectId + "/test.txt", "third change (in tree only)");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		String commit1 = db.resolve(Constants.HEAD + "^").getName();
+		String commit2 = db.resolve(Constants.HEAD).getName();
+
+		// TODO: don't create URIs out of thin air
+		String enc = URLEncoder.encode(commit1, "UTF-8");
+		request = getGetGitDiffRequest(new String(gitDiffUri).replaceAll(GitConstants.KEY_DIFF_DEFAULT, enc) + "test.txt");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		StringBuffer sb = new StringBuffer();
+		sb.append("diff --git a/test.txt b/test.txt").append("\n");
+		sb.append("index 3c26ed4..4cb5d38 100644").append("\n");
+		sb.append("--- a/test.txt").append("\n");
+		sb.append("+++ b/test.txt").append("\n");
+		sb.append("@@ -1 +1 @@").append("\n");
+		sb.append("-first change").append("\n");
+		sb.append("\\ No newline at end of file").append("\n");
+		sb.append("+third change (in tree only)").append("\n");
+		sb.append("\\ No newline at end of file").append("\n");
+		String[] parts = parseMultiPartResponse(response);
+		assertEquals(sb.toString(), parts[1]);
+
+		// TODO: don't create URIs out of thin air
+		enc = URLEncoder.encode(commit2, "UTF-8");
+		request = getGetGitDiffRequest(new String(gitDiffUri).replaceAll(GitConstants.KEY_DIFF_DEFAULT, enc) + "test.txt");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		sb = new StringBuffer();
+		sb.append("diff --git a/test.txt b/test.txt").append("\n");
+		sb.append("index 58bcb48..4cb5d38 100644").append("\n");
+		sb.append("--- a/test.txt").append("\n");
+		sb.append("+++ b/test.txt").append("\n");
+		sb.append("@@ -1 +1 @@").append("\n");
+		sb.append("-second change").append("\n");
+		sb.append("\\ No newline at end of file").append("\n");
+		sb.append("+third change (in tree only)").append("\n");
+		sb.append("\\ No newline at end of file").append("\n");
+		parts = parseMultiPartResponse(response);
+		assertEquals(sb.toString(), parts[1]);
+	}
+
+	@Test
 	public void testDiffPost() throws JSONException, IOException, SAXException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
