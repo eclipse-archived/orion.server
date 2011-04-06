@@ -12,12 +12,11 @@ rd /S /Q %WORKSPACE%\test\eclipse
 
 cd %WORKSPACE%\test\eclipse
 
-REM start "Test Orion" eclipse
+start "Test Orion" eclipse
 
 for /F "tokens=2" %%I in ('TASKLIST /NH /FI "Windowtitle eq Test Orion"') do set ORION_PID=%%I
 
-"c:\java\jdk1.6.0_20\jre\bin\java" -Xmx500m -jar %WORKSPACE%/org.eclipse.releng.basebuilder/plugins/org.eclipse.equinox.launcher.jar 
--Dworkspace=%WORKSPACE% -DbuildZip=%buildZip% -Dosgi.ws=win32 -Dosgi.arch=x86 -Dhudson=true -Djava.home=%java.home% -application org.eclipse.ant.core.antRunner -f %WORKSPACE%/releng/org.eclipse.orion.releng/builder/scripts/runTests.xml hudsonJsTests
+"c:\java\jdk1.6.0_20\jre\bin\java" -Xmx500m -jar %WORKSPACE%/org.eclipse.releng.basebuilder/plugins/org.eclipse.equinox.launcher.jar -Dworkspace=%WORKSPACE% -DbuildZip=%buildZip% -Djava.home=%java.home% -application org.eclipse.ant.core.antRunner -f %WORKSPACE%/releng/org.eclipse.orion.releng/builder/scripts/runTests.xml hudsonJsTests
 
 
 taskkill /PID %ORION_PID%

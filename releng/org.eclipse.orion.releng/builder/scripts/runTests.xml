@@ -87,7 +87,7 @@
 		
 		<property name="baseURL" value="http://build.eclipse.org/eclipse/e4/orion" />
 		<property name="paramName" value="&quot;name&quot;:&quot;buildZip&quot;"/>
-		<property name="paramValue" value="&quot;value&quot;:&quot;${baseURL}/${buildType}${timestamp}/${buildLabel}.zip&quot;"/>
+		<property name="paramValue" value="&quot;value&quot;:&quot;${baseURL}/${buildType}${timestamp}/test/${buildLabel}.zip&quot;"/>
 		<property name="repoName" value="&quot;name&quot;:&quot;repository&quot;"/>
 		<property name="repoValue" value="&quot;value&quot;:&quot;${baseURL}/target/0.2-${buildType}-builds/${buildLabel}&quot;"/>
 		<property name="json" value="{&quot;parameter&quot;: [{${paramName}, ${paramValue}}, {${repoName}, ${repoValue}}] }"/>
