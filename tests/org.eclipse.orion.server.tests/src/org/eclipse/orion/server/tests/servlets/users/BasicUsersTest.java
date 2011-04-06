@@ -59,7 +59,7 @@ public class BasicUsersTest extends UsersTest {
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 		WebRequest request = getGetUsersRequest("", true);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		JSONObject responseObject = new JSONObject(response.getText());
 		assertTrue("Invalid format of response.", responseObject.has("users"));
@@ -99,12 +99,12 @@ public class BasicUsersTest extends UsersTest {
 		params.put("password", "pass_" + System.currentTimeMillis());
 		WebRequest request = getPostUsersRequest("", params, true);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// check user details
 		request = getGetUsersRequest(params.get("login"), true);
 		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject responseObject = new JSONObject(response.getText());
 		assertEquals("Invalid user login", params.get("login"), responseObject.getString("login"));
 		assertEquals("Invalid user name", params.get("Name"), responseObject.getString("Name"));
@@ -119,7 +119,7 @@ public class BasicUsersTest extends UsersTest {
 		request = getDeleteUsersRequest(params.get("login"), true);
 		setAuthentication(request, params.get("login"), params.get("password"));
 		response = webConversation.getResponse(request);
-		assertEquals("User could not delete his own account", HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals("User could not delete his own account, response: " + response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 	}
 
@@ -137,7 +137,7 @@ public class BasicUsersTest extends UsersTest {
 		params.put("password", "pass_" + System.currentTimeMillis());
 		WebRequest request = getPostUsersRequest("", params, true);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// check if user can authenticate
 		request = getGetUsersRequest("", true);
@@ -154,7 +154,7 @@ public class BasicUsersTest extends UsersTest {
 		request = getGetUsersRequest("", true);
 		setAuthentication(request, params.get("login"), params.get("password"));
 		response = webConversation.getResponse(request);
-		assertEquals("User tried to use his admin role but did not get the valid response", HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals("User tried to use his admin role but did not get the valid response: " + response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// delete admin rights
 		AuthorizationService.removeUserRight(params.get("login"), "/users");
@@ -169,7 +169,7 @@ public class BasicUsersTest extends UsersTest {
 		// delete user
 		request = getDeleteUsersRequest(params.get("login"), true);
 		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 	}
 
@@ -188,7 +188,7 @@ public class BasicUsersTest extends UsersTest {
 		params.put("password", "pass_" + System.currentTimeMillis());
 		WebRequest request = getPostUsersRequest("", params, true);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// update user
 		JSONObject updateBody = new JSONObject();
@@ -198,12 +198,12 @@ public class BasicUsersTest extends UsersTest {
 
 		request = getPutUsersRequest(params.get("login"), updateBody, true);
 		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// check user details
 		request = getGetUsersRequest(params.get("login"), true);
 		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject responseObject = new JSONObject(response.getText());
 		assertEquals("Invalid user login", params.get("login"), responseObject.getString("login"));
 		assertEquals("Invalid user name", updateBody.getString("Name"), responseObject.getString("Name"));
@@ -222,6 +222,6 @@ public class BasicUsersTest extends UsersTest {
 		// delete user
 		request = getDeleteUsersRequest(params.get("login"), true);
 		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 	}
 }
