@@ -10,23 +10,6 @@
 -->
 
 <project name="Orion-Tests" default="runTests">
-
-	<target name="bootstrapTests" >
-		<property name="base" value="${basedir}" />
-		<mkdir dir="${base}" />
-		
-		<!-- fetch the basebuilder -->
-		<cvs command="export -d org.eclipse.releng.basebuilder" tag="v20110302" cvsroot="dev.eclipse.org:/cvsroot/eclipse" dest="${base}" />
-		
-		<!-- launch the antRunner on this script -->
-		<java fork="true" jar="${base}/org.eclipse.releng.basebuilder/plugins/org.eclipse.equinox.launcher.jar" >
-			<arg line="-application org.eclipse.ant.core.antRunner"/>
-			<arg line="-f "/>
-			<arg value="junitTests" />
-			<arg value="-DrunTestsLocally=true"/>
-			<arg value="-DbuildType=N" />
-		</java>
-	</target>
 		
 	<target name="runTests" >
 		<antcall target="junitTests" />
@@ -94,6 +77,54 @@
 		
 	</target>
 	
+	<target name="triggerHudsonTests" >
+		<zip destfile="${buildDirectory}/test/${buildLabel}.zip" >
+			<include dir="${base}" includes="${buildLabel}/plugins/**" />
+			<include dir="${base}/tests" includes="JsTestDriver.jar" />
+		</zip>
+		
+		<property environment="env" />
+		
+		<property name="baseURL" value="http://build.eclipse.org/eclipse/e4/orion" />
+		<property name="paramName" value="&quot;name&quot;:&quot;buildZip&quot;"/>
+		<property name="paramValue" value="&quot;value&quot;:&quot;${baseURL}/${buildType}${timestamp}/${buildLabel}.zip&quot;"/>
+		<property name="repoName" value="&quot;name&quot;:&quot;repository&quot;"/>
+		<property name="repoValue" value="&quot;value&quot;:&quot;${baseURL}/target/0.2-${buildType}-builds/${buildLabel}&quot;"/>
+		<property name="json" value="{&quot;parameter&quot;: [{${paramName}, ${paramValue}}, {${repoName}, ${repoValue}}] }"/>
+		
+		<exec command="curl">
+			<arg line="-X POST" />
+			<arg value="https://hudson.eclipse.org/hudson/job/orion-jstest-windows/build" />
+			<arg line="-d token=${env.HUDSON_TOKEN}" />
+			<arg line="--data-urlencode json=&quot;${json}&quot;" />
+		</exec>
+	</target>
+	
+	<target name="hudsonJsTests" >
+		<property environment="env" />
+		<property name="workingDir" value="${env.WORKSPACE}/${env.BUILD_NUMBER}" />
+		
+		<mkdir dir="${workingDir}/results"/>
+		
+		<get src="${buildZip}" dest="${workingDir}/build.zip" />
+		<unzip src="${workingDir}/build.zip" dest="${workingDir}" />
+		
+		<apply executable="${java.home}/bin/java" parallel="false" >
+			<arg line="-jar ${workingDir}/JsTestDriver.jar" />
+			<arg line="--port 42442" />
+			<arg line="--tests all" />
+			<arg line="--testOutput ${workingDir}/results" />
+			<arg value="--browser" />
+			<arg value="C:\\Program Files\\Internet Explorer\\iexplore.exe" />
+			<arg value="--config" />
+			<fileset dir="${workingDir}" includes="**/jsTestDriver.conf" />	
+		</apply>
+		
+		<junitreport todir="${workingDir}" tofile="IE-9.0-testResults.xml">
+			<fileset dir="${workingDir}/results" includes="**/TEST-*.xml" />
+		</junitreport>
+	</target>
+			
 	<target name="jsTests" >
 		<!-- js tests need dojo & open ajax extracted -->
 		<mkdir dir="${buildDirectory}/plugins/org.dojotoolkit" />
