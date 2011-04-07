@@ -107,6 +107,7 @@
 	</target>
 	
 	<target name="hudsonJsTests" >
+		<!-- This target runs on the Hudson Windows Slave -->
 		<property environment="env" />
 		<property name="workingDir" value="${env.WORKSPACE}/${env.BUILD_NUMBER}" />
 		
@@ -131,7 +132,7 @@
 		</junitreport>
 		
 		<mkdir dir="${env.WORKSPACE}/${buildLabel}"/>
-		<xslt style="${builder}/html/JUNIT.XSL" basedir="${workingDir}" destdir="${env.WORKSPACE}/${buildLabel}" includes="*.xml" />
+		<xslt style="${basedir}/../html/JUNIT.XSL" basedir="${workingDir}" destdir="${env.WORKSPACE}/${buildLabel}" includes="*.xml" />
 		
 		<delete dir="${workingDir}" excludes="results/**" />
 	</target>
