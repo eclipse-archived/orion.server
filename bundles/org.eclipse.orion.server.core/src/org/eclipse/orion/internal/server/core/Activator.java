@@ -68,7 +68,7 @@ public class Activator implements BundleActivator {
 	}
 
 	/**
-	 * Returns the root file system location for storing task data
+	 * Returns the root file system location for storing task data. Never returns null.
 	 * @throws IOException 
 	 */
 	private IPath getTaskLocation() throws IOException {
@@ -81,12 +81,12 @@ public class Activator implements BundleActivator {
 			throw new RuntimeException(e);
 		}
 		if (refs.isEmpty())
-			return null;
+			throw new IOException("Framework instance location is undefined"); //$NON-NLS-1$
 		ServiceReference<Location> ref = refs.iterator().next();
 		Location location = context.getService(ref);
 		try {
 			if (location == null)
-				return null;
+				throw new IOException("Framework instance location is undefined"); //$NON-NLS-1$
 			URL root = location.getDataArea(PI_SERVER_CORE);
 			// strip off file: prefix from URL
 			return new Path(root.toExternalForm().substring(5)).append("tasks"); //$NON-NLS-1$
