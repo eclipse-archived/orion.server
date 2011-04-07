@@ -11,6 +11,9 @@
 
 <project name="Orion-Tests" default="runTests">
 		
+	<property name="dropLocation" value="${buildDirectory}/${buildLabel}/drop" />
+	<property name="jsTestDir" value="${base}/tests/${buildLabel}" />
+	
 	<target name="runTests" >
 		<antcall target="junitTests" />
 		
@@ -104,6 +107,21 @@
 			<arg value="--data-urlencode" />
 			<arg value="json=${json}" />
 		</exec>
+		
+		<property name="hudsonResultURL" value="http://hudson.eclipse.org/hudson/job/orion-jstest-windows/ws/${buildLabel}/IE-9.0-testResults.html" />
+		<property name="hudsonDownloadedHTML" value="${buildDirectory}/${buildLabel}/drop/IE-9.0-testResults.html"/>
+		<delete file="${hudsonDownloadedHTML}" failonerror="false"/>
+		<antcall target="getHudsonResults" />	
+	</target>
+	
+	<target name="getHudsonResults" unless="stopHudsonResultLoop" >
+		<!-- wait for the test results to appear -->
+		<waitfor maxwait="30" maxwaitunit="minute" checkevery="30" checkeveryunit="second">
+			<http url="${hudsonResultURL}" />
+		</waitfor>
+
+		<get ignoreerrors="true" src="${hudsonResultURL}" dest="${hudsonDownloadedHTML}"/>
+		<updateTestResult testFile="IE-9.0-testResults.html" token="@JS-IE9@"/>	
 	</target>
 	
 	<target name="hudsonJsTests" >
@@ -229,10 +247,7 @@
 		</sequential>
 	</macrodef>
 	
-	<target name="processResults" >
-		<property name="dropLocation" value="${buildDirectory}/${buildLabel}/drop" />
-		<property name="jsTestDir" value="${base}/tests/${buildLabel}" />
-		
+	<target name="processResults" >	
 		<!-- js unit results -->
 		<junitreport todir="${dropLocation}" tofile="Chrome-10.0-testResults.xml">
 			<fileset dir="${jsTestDir}" includes="**/TEST-Chrome_100*.xml" />
