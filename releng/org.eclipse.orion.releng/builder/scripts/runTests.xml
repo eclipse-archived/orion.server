@@ -13,7 +13,12 @@
 		
 	<target name="runTests" >
 		<antcall target="junitTests" />
-		<antcall target="jsTests" />
+		
+		<antcall target="prepareJsTests"/>
+		<parallel>
+			<antcall target="triggerHudsonTests"/>
+			<antcall target="jsTests" />
+		</parallel>
 		<antcall target="processResults" />
 	</target>
 
@@ -79,23 +84,25 @@
 	
 	<target name="triggerHudsonTests" >
 		<zip destfile="${buildDirectory}/test/${buildLabel}.zip" >
-			<include dir="${base}" includes="${buildLabel}/plugins/**" />
-			<include dir="${base}/tests" includes="JsTestDriver.jar" />
+			<fileset dir="${buildDirectory}" includes="plugins/**" />
+			<fileset dir="${base}/tests" includes="JsTestDriver.jar" />
 		</zip>
 		
 		<property environment="env" />
 		
 		<property name="baseURL" value="http://build.eclipse.org/eclipse/e4/orion" />
-		<property name="JSON_buildZip" value="{&quot;name&quot;:&quot;buildZip&quot;},{&quot;value&quot;:&quot;${baseURL}/${buildType}${timestamp}/test/${buildLabel}.zip&quot;}"/>
-		<property name="JSON_repository" value="{&quot;name&quot;:&quot;repository&quot;},{&quot;value&quot;:&quot;${baseURL}/target/0.2-${buildType}-builds/${buildLabel}&quot;}"/>
-		<property name="JSON_buildLabel" value="{&quot;name&quot;:&quot;buildLabel&quot;},{&quot;value&quot;:&quot;${buildLabel}&quot;}"/>
+		<property name="JSON_buildZip" value="{&quot;name&quot;:&quot;buildZip&quot;,&quot;value&quot;:&quot;${baseURL}/${buildType}${timestamp}/test/${buildLabel}.zip&quot;}"/>
+		<property name="JSON_repository" value="{&quot;name&quot;:&quot;repository&quot;,&quot;value&quot;:&quot;${baseURL}/target/0.2-${buildType}-builds/${buildLabel}&quot;}"/>
+		<property name="JSON_buildLabel" value="{&quot;name&quot;:&quot;buildLabel&quot;,&quot;value&quot;:&quot;${buildLabel}&quot;}"/>
 		<property name="json" value="{&quot;parameter&quot;: [${JSON_buildZip}, ${JSON_repository}, ${JSON_buildLabel}] }"/>
 		
-		<exec command="curl">
+		<echo message="${json}"/>
+		<exec executable="curl">
 			<arg line="-X POST" />
 			<arg value="https://hudson.eclipse.org/hudson/job/orion-jstest-windows/build" />
 			<arg line="-d token=${env.HUDSON_TOKEN}" />
-			<arg line="--data-urlencode json=&quot;${json}&quot;" />
+			<arg value="--data-urlencode" />
+			<arg value="json=${json}" />
 		</exec>
 	</target>
 	
@@ -119,15 +126,17 @@
 			<fileset dir="${workingDir}" includes="**/jsTestDriver.conf" />	
 		</apply>
 		
-		<mkdir dir="${env.WORKSPACE}/${buildLabel}"/>
-		<junitreport todir="${workingDir}" tofile="${env.WORKSPACE}/${buildLabel}/IE-9.0-testResults.xml">
+		<junitreport todir="${workingDir}" tofile="IE-9.0-testResults.xml">
 			<fileset dir="${workingDir}/results" includes="**/TEST-*.xml" />
 		</junitreport>
 		
-		<delete dir="${workingDir}" />
+		<mkdir dir="${env.WORKSPACE}/${buildLabel}"/>
+		<xslt style="${builder}/html/JUNIT.XSL" basedir="${workingDir}" destdir="${env.WORKSPACE}/${buildLabel}" includes="*.xml" />
+		
+		<delete dir="${workingDir}" excludes="results/**" />
 	</target>
 			
-	<target name="jsTests" >
+	<target name="prepareJsTests" >
 		<!-- js tests need dojo & open ajax extracted -->
 		<mkdir dir="${buildDirectory}/plugins/org.dojotoolkit" />
 		<unzip dest="${buildDirectory}/plugins/org.dojotoolkit">
@@ -137,8 +146,9 @@
 		<unzip dest="${buildDirectory}/plugins/org.openajax">
 			<fileset dir="${buildDirectory}/buildRepo/plugins" includes="org.openajax_2.0.3.*.jar" />
 		</unzip>
-			
+	</target>			
 		
+	<target name="jsTests" >
 		<echo message="Launching Xvfb" />
 		<exec executable="bash" failonerror="false" outputproperty="xvfbPID" >
 			<arg value="${builder}/scripts/runTests.sh" />
