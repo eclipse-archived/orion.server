@@ -13,7 +13,6 @@ package org.eclipse.orion.server.useradmin.servlets;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.useradmin.UserServiceHelper;
@@ -23,13 +22,12 @@ import org.eclipse.orion.server.useradmin.UserServiceHelper;
  */
 public class UserRoleHandlerV1 extends ServletResourceHandler<String> {
 
-	private UserServiceHelper userServiceHelper;
-
-	private ServletResourceHandler<IStatus> statusHandler;
+//	private UserServiceHelper userServiceHelper;
+//	private ServletResourceHandler<IStatus> statusHandler;
 
 	UserRoleHandlerV1(UserServiceHelper userServiceHelper, ServletResourceHandler<IStatus> statusHandler) {
-		this.statusHandler = statusHandler;
-		this.userServiceHelper = userServiceHelper;
+//		this.statusHandler = statusHandler;
+//		this.userServiceHelper = userServiceHelper;
 	}
 
 	@Override

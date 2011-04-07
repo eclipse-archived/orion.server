@@ -11,11 +11,9 @@
 package org.eclipse.orion.server.useradmin.servlets;
 
 import java.io.PrintWriter;
-
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
@@ -29,10 +27,7 @@ public class GenericUserHandler extends ServletResourceHandler<String> {
 
 	private UserServiceHelper userServiceHelper;
 
-	private ServletResourceHandler<IStatus> statusHandler;
-
 	GenericUserHandler(UserServiceHelper userServiceHelper, ServletResourceHandler<IStatus> statusHandler) {
-		this.statusHandler = statusHandler;
 		this.userServiceHelper = userServiceHelper;
 	}
 
@@ -61,7 +56,7 @@ public class GenericUserHandler extends ServletResourceHandler<String> {
 				writer.println("<h2>Part : " + partName + "</h2>"); //$NON-NLS-1$ //$NON-NLS-2$
 				IOrionUserProfileNode partNode = userProfileNode.getUserProfileNode(partName);
 				for (String key : partNode.keys()) {
-					writer.println(key + " : " + partNode.get(key, "") + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
+					writer.println(key + " : " + partNode.get(key, "") + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 				}
 			}
 

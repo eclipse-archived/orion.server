@@ -13,48 +13,29 @@ package org.eclipse.orion.server.useradmin.servlets;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-
+import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.URIUtil;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.ServerStatus;
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.core.runtime.*;
+import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.servlets.OrionServlet;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
-import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
-import org.eclipse.orion.server.useradmin.UnsupportedUserStoreException;
-import org.eclipse.orion.server.useradmin.User;
-import org.eclipse.orion.server.useradmin.UserConstants;
-import org.eclipse.orion.server.useradmin.UserServiceHelper;
+import org.eclipse.orion.server.user.profile.*;
+import org.eclipse.orion.server.useradmin.*;
 import org.eclipse.osgi.util.NLS;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.*;
 
 /**
  * A user handler for Orion User API v 1.0.
  */
 public class UserHandlerV1 extends ServletResourceHandler<String> {
 
-	private UserServiceHelper userServiceHelper;
-
 	private ServletResourceHandler<IStatus> statusHandler;
 
 	UserHandlerV1(UserServiceHelper userServiceHelper, ServletResourceHandler<IStatus> statusHandler) {
 		this.statusHandler = statusHandler;
-		this.userServiceHelper = userServiceHelper;
 	}
 
 	@Override
@@ -229,7 +210,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		json.put("GitMail", userProfile.get("GitMail", null));
 		json.put("GitName", userProfile.get("GitName", null));
 
-		Set<String> roles = new HashSet<String>();
+		//		Set<String> roles = new HashSet<String>();
 		//			for (Role role : user.getRoles()) {
 		//				roles.add(role.getName());
 		//			}
