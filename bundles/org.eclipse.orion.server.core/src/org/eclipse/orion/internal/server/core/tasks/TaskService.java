@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.core.tasks;
 
-import java.io.File;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
@@ -21,8 +21,8 @@ import org.eclipse.orion.server.core.tasks.TaskInfo;
 public class TaskService implements ITaskService {
 	TaskStore store;
 
-	public TaskService(String baseLocation) {
-		store = new TaskStore(new File(baseLocation));
+	public TaskService(IPath baseLocation) {
+		store = new TaskStore(baseLocation.toFile());
 	}
 
 	public TaskInfo createTask() {
