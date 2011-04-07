@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?><WebIdeUsers>
-<roles>
-<role name="admin"/>
-<role name="user"/>
-<role name="guest"/>
-</roles>
-<users>
-<user login="test" name="" password="test"/><user login="test3" name="" password="test"/></users>
-</WebIdeUsers>

@@ -52,6 +52,10 @@
             alias="/hosted"
             class="org.eclipse.orion.internal.server.hosting.HostedSiteServlet">
       </servlet>
+      <servlet
+            alias="/task"
+            class="org.eclipse.orion.internal.server.servlets.task.TaskServlet">
+      </servlet>
    </extension>
    <extension
          point="org.eclipse.equinox.http.registry.filters">
