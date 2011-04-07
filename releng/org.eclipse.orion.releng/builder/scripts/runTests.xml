@@ -108,7 +108,7 @@
 			<arg value="json=${json}" />
 		</exec>
 		
-		<property name="hudsonResultURL" value="http://hudson.eclipse.org/hudson/job/orion-jstest-windows/ws/${buildLabel}/IE-9.0-testResults.html" />
+		<property name="hudsonResultURL" value="https://hudson.eclipse.org/hudson/job/orion-jstest-windows/ws/${buildLabel}/IE-9.0-testResults.html" />
 		<property name="hudsonDownloadedHTML" value="${buildDirectory}/${buildLabel}/drop/IE-9.0-testResults.html"/>
 		<delete file="${hudsonDownloadedHTML}" failonerror="false"/>
 		<antcall target="getHudsonResults" />	
