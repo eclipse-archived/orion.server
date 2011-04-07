@@ -86,11 +86,10 @@
 		<property environment="env" />
 		
 		<property name="baseURL" value="http://build.eclipse.org/eclipse/e4/orion" />
-		<property name="paramName" value="&quot;name&quot;:&quot;buildZip&quot;"/>
-		<property name="paramValue" value="&quot;value&quot;:&quot;${baseURL}/${buildType}${timestamp}/test/${buildLabel}.zip&quot;"/>
-		<property name="repoName" value="&quot;name&quot;:&quot;repository&quot;"/>
-		<property name="repoValue" value="&quot;value&quot;:&quot;${baseURL}/target/0.2-${buildType}-builds/${buildLabel}&quot;"/>
-		<property name="json" value="{&quot;parameter&quot;: [{${paramName}, ${paramValue}}, {${repoName}, ${repoValue}}] }"/>
+		<property name="JSON_buildZip" value="{&quot;name&quot;:&quot;buildZip&quot;},{&quot;value&quot;:&quot;${baseURL}/${buildType}${timestamp}/test/${buildLabel}.zip&quot;}"/>
+		<property name="JSON_repository" value="{&quot;name&quot;:&quot;repository&quot;},{&quot;value&quot;:&quot;${baseURL}/target/0.2-${buildType}-builds/${buildLabel}&quot;}"/>
+		<property name="JSON_buildLabel" value="{&quot;name&quot;:&quot;buildLabel&quot;},{&quot;value&quot;:&quot;${buildLabel}&quot;}"/>
+		<property name="json" value="{&quot;parameter&quot;: [${JSON_buildZip}, ${JSON_repository}, ${JSON_buildLabel}] }"/>
 		
 		<exec command="curl">
 			<arg line="-X POST" />
@@ -120,9 +119,12 @@
 			<fileset dir="${workingDir}" includes="**/jsTestDriver.conf" />	
 		</apply>
 		
-		<junitreport todir="${workingDir}" tofile="IE-9.0-testResults.xml">
+		<mkdir dir="${env.WORKSPACE}/${buildLabel}"/>
+		<junitreport todir="${workingDir}" tofile="${env.WORKSPACE}/${buildLabel}/IE-9.0-testResults.xml">
 			<fileset dir="${workingDir}/results" includes="**/TEST-*.xml" />
 		</junitreport>
+		
+		<delete dir="${workingDir}" />
 	</target>
 			
 	<target name="jsTests" >
