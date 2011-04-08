@@ -14,36 +14,21 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringBufferInputStream;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URISyntaxException;
+import com.meterware.httpunit.*;
+import java.io.*;
+import java.net.*;
 import java.util.Arrays;
-
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
 import org.eclipse.orion.internal.server.servlets.workspace.WorkspaceServlet;
 import org.eclipse.orion.server.core.users.OrionScope;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import org.json.*;
+import org.junit.*;
 import org.junit.Test;
 import org.osgi.service.prefs.BackingStoreException;
 import org.xml.sax.SAXException;
-
-import com.meterware.httpunit.GetMethodWebRequest;
-import com.meterware.httpunit.PostMethodWebRequest;
-import com.meterware.httpunit.WebConversation;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 
 /**
  * Tests for {@link WorkspaceServlet}.
@@ -237,7 +222,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		//expecting a status response
 		JSONObject responseObject = new JSONObject(response.getText());
 		assertNotNull("No error response", responseObject);
-		assertEquals("error", responseObject.optString("severity"));
+		assertEquals("Error", responseObject.optString("Severity"));
 		assertNotNull(responseObject.optString("message"));
 	}
 

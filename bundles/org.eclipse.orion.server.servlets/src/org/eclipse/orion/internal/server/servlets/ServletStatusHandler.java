@@ -1,5 +1,3 @@
-package org.eclipse.orion.internal.server.servlets;
-
 /*******************************************************************************
  * Copyright (c) 2010 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
@@ -10,13 +8,12 @@ package org.eclipse.orion.internal.server.servlets;
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
+package org.eclipse.orion.internal.server.servlets;
 
 import java.io.IOException;
-
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.eclipse.core.runtime.IStatus;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,47 +23,47 @@ import org.json.JSONObject;
  */
 public class ServletStatusHandler extends ServletResourceHandler<IStatus> {
 
-	public static final String SEVERITY_CANCEL = "cancel"; //$NON-NLS-1$
-	public static final String SEVERITY_INFO = "info"; //$NON-NLS-1$
-	public static final String SEVERITY_OK = "ok"; //$NON-NLS-1$
-	public static final String SEVERITY_WARNING = "warning"; //$NON-NLS-1$
-	public static final String SEVERITY_ERROR = "error"; //$NON-NLS-1$
+	public static final String SEVERITY_CANCEL = "Cancel"; //$NON-NLS-1$
+	public static final String SEVERITY_INFO = "Info"; //$NON-NLS-1$
+	public static final String SEVERITY_OK = "Ok"; //$NON-NLS-1$
+	public static final String SEVERITY_WARNING = "Warning"; //$NON-NLS-1$
+	public static final String SEVERITY_ERROR = "Error"; //$NON-NLS-1$
 
 	/**
 	 * A detailed human readable error message string.
 	 */
-	public static final String PROP_DETAILED_MESSAGE = "detailedMessage"; //$NON-NLS-1$
+	public static final String PROP_DETAILED_MESSAGE = "DetailedMessage"; //$NON-NLS-1$
 	/**
 	 * A string representing the status severity. The value is one of the 
 	 * <code>SEVERITY_*</code> constants defined in this class.
 	 */
-	public static final String PROP_SEVERITY = "severity"; //$NON-NLS-1$
+	public static final String PROP_SEVERITY = "Severity"; //$NON-NLS-1$
 	/**
 	 * A high level error message string, suitable for display to a user.
 	 */
-	public static final String PROP_MESSAGE = "message"; //$NON-NLS-1$
+	public static final String PROP_MESSAGE = "Message"; //$NON-NLS-1$
 	/**
 	 * The integer HTTP response code.
 	 */
-	public static final String PROP_HTTP_CODE = "httpCode"; //$NON-NLS-1$
+	public static final String PROP_HTTP_CODE = "HttpCode"; //$NON-NLS-1$
 
 	/**
 	 * An integer status code. The value is specific to the component returning
 	 * the exception.
 	 */
-	public static final String PROP_CODE = "code"; //$NON-NLS-1$
+	public static final String PROP_CODE = "Code"; //$NON-NLS-1$
 
 	/**
 	 * A property defining an optional status object indicating the cause
 	 * of the exception.
 	 */
-	public static final String PROP_CAUSE = "cause"; //$NON-NLS-1$
+	public static final String PROP_CAUSE = "Cause"; //$NON-NLS-1$
 
 	/**
 	 * A property defining a URL of a page with further details about the
 	 * exception and how it can be resolved.
 	 */
-	public static final String PROP_SEE_ALSO = "seeAlso"; //$NON-NLS-1$
+	public static final String PROP_SEE_ALSO = "SeeAlso"; //$NON-NLS-1$
 
 	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, IStatus error) throws ServletException {
 		int httpCode = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
