@@ -98,8 +98,10 @@
 		<property name="JSON_repository" value="{&quot;name&quot;:&quot;repository&quot;,&quot;value&quot;:&quot;${baseURL}/target/0.2-${buildType}-builds/${buildLabel}&quot;}"/>
 		<property name="json" value="{&quot;parameter&quot;: [${JSON_buildZip}, ${JSON_repository}] }"/>
 		
-		<loadfile property="nextHudsonBuild" srcFile="/shared/jobs/orion-jstest-windows/nextBuildNumber"/>
-		<echo message="Next hudson build number is ${nextHudsonBuild}"/>
+		<loadfile property="nextHudsonBuild" srcFile="/shared/jobs/orion-jstest-windows/nextBuildNumber">
+			<filterchain><striplinebreaks/></filterchain>
+		</loadfile>
+		<echo message="Next hudson build number is ${nextHudsonBuild}."/>
 		<echo message="${json}"/>
 		<exec executable="curl">
 			<arg line="-X POST" />
@@ -117,6 +119,7 @@
 	
 	<target name="getHudsonResults" >
 		<!-- wait for the test results to appear -->
+		<echo message="Waiting for ${hudsonResultURL}." />
 		<waitfor maxwait="30" maxwaitunit="minute" checkevery="30" checkeveryunit="second">
 			<http url="${hudsonResultURL}" />
 		</waitfor>
