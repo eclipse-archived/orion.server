@@ -42,9 +42,14 @@ public class Indexer extends Job {
 	private final SolrServer server;
 
 	public Indexer(SolrServer server) {
-		super("Indexing");
+		super("Indexing"); //$NON-NLS-1$
 		this.server = server;
 		setSystem(true);
+	}
+
+	@Override
+	public boolean belongsTo(Object family) {
+		return SearchActivator.JOB_FAMILY.equals(family);
 	}
 
 	/**
