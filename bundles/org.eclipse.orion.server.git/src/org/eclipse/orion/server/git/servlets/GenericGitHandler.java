@@ -35,7 +35,7 @@ public class GenericGitHandler extends ServletResourceHandler<String> {
 
 		try {
 			PrintWriter writer = response.getWriter();
-			writer.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2 Final//EN\">"); //$NON-NLS-1$
+			writer.println("<!DOCTYPE HTML>"); //$NON-NLS-1$
 			writer.println("<html>"); //$NON-NLS-1$
 			writer.println(" <head>"); //$NON-NLS-1$
 			writer.println("<title>Git</title>"); //$NON-NLS-1$

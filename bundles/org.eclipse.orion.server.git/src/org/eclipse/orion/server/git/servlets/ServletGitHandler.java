@@ -26,14 +26,14 @@ public class ServletGitHandler extends ServletResourceHandler<String> {
 
 	public static VersionRange VERSION1 = new VersionRange("[1,2)"); //$NON-NLS-1$
 
-	//	private final ServletResourceHandler<String> genericGitHandler;
+	private final ServletResourceHandler<String> genericGitHandler;
 	private final ServletResourceHandler<String> gitHandlerV1;
 
 	final ServletResourceHandler<IStatus> statusHandler;
 
 	ServletGitHandler(ServletResourceHandler<IStatus> statusHandler) {
 		this.statusHandler = statusHandler;
-		//		genericGitHandler = new GenericGitHandler(statusHandler);
+		genericGitHandler = new GenericGitHandler(statusHandler);
 		gitHandlerV1 = new GitHandlerV1(statusHandler);
 	}
 
@@ -42,10 +42,10 @@ public class ServletGitHandler extends ServletResourceHandler<String> {
 		Version version = versionString == null ? null : new Version(versionString);
 
 		ServletResourceHandler<String> handler;
-		if (version != null && VERSION1.isIncluded(version))
+		if (version == null || VERSION1.isIncluded(version))
 			handler = gitHandlerV1;
 		else
-			handler = gitHandlerV1;
+			handler = genericGitHandler;
 		return handler.handleRequest(request, response, gitPathInfo);
 	}
 }
