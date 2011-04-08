@@ -15,14 +15,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringBufferInputStream;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URISyntaxException;
-
+import com.meterware.httpunit.*;
+import java.io.*;
+import java.net.*;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -35,16 +30,10 @@ import org.eclipse.jgit.transport.URIish;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
 import org.eclipse.orion.server.git.GitConstants;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.*;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.xml.sax.SAXException;
-
-import com.meterware.httpunit.PostMethodWebRequest;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 
 public class GitFetchTest extends GitTest {
 	@Test
@@ -55,6 +44,12 @@ public class GitFetchTest extends GitTest {
 		WebRequest request = GitCloneTest.getPostGitCloneRequest(uri, name);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		assertNotNull(taskLocation);
+		String cloneLocation = waitForCloneCompletion(taskLocation);
+
+		//validate the clone metadata
+		response = webConversation.getResponse(getCloneRequest(cloneLocation));
 		String location = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(location);
 		JSONObject clone = new JSONObject(response.getText());

@@ -12,6 +12,10 @@ package org.eclipse.orion.server.tests.servlets.git;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import com.meterware.httpunit.GetMethodWebRequest;
 
 import java.io.File;
 import java.io.IOException;
@@ -120,6 +124,43 @@ public abstract class GitTest extends FileSystemTest {
 
 	protected IPath getRandomLocation() {
 		return FileSystemHelper.getRandomLocation(FileSystemHelper.getTempDir());
+	}
+
+	/**
+	 * A clone operation is long running. This method waits until the remote clone
+	 * operation has completed, and then returns the location of the resulting clone resource.
+	 */
+	protected String waitForCloneCompletion(String taskLocation) throws IOException, SAXException, JSONException {
+		JSONObject status = null;
+		long start = System.currentTimeMillis();
+		while (true) {
+			WebRequest request = new GetMethodWebRequest(taskLocation);
+			WebResponse response = webConversation.getResponse(request);
+			status = new JSONObject(response.getText());
+			boolean running = status.getBoolean("Running");
+			if (!running)
+				break;
+			//timeout after reasonable time to avoid hanging tests
+			if (System.currentTimeMillis() - start > 10000)
+				assertTrue("Clone operation took too long", false);
+			try {
+				Thread.sleep(200);
+			} catch (InterruptedException e) {
+				//ignore
+			}
+		}
+		assertNotNull(status);
+		return status.getString("ResultLocation");
+	}
+
+	/**
+	 * Returns a request for obtaining metadata about a single git clone.
+	 */
+	protected WebRequest getCloneRequest(String cloneLocation) {
+		WebRequest request = new GetMethodWebRequest(cloneLocation);
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		return request;
 	}
 
 	protected static String getMethodName() {

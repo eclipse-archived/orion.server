@@ -23,7 +23,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import org.eclipse.core.filesystem.*;
-import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -56,7 +56,14 @@ public abstract class FileSystemTest extends AbstractServerTest {
 
 	protected static void clearWorkspace() throws CoreException {
 		IFileStore workspaceDir = EFS.getStore(URI.create(FILESTORE_PREFIX));
-		workspaceDir.delete(EFS.NONE, null);
+		//delete all projects
+		for (IFileStore child : workspaceDir.childStores(EFS.NONE, null)) {
+			if (!".metadata".equals(child.getName()))
+				child.delete(EFS.NONE, null);
+		}
+		//delete workspace metadata
+		IFileStore metaDir = workspaceDir.getFileStore(new Path(".metadata/.plugins/org.eclipse.orion.server.core/.settings"));
+		metaDir.delete(EFS.NONE, null);
 		workspaceDir.mkdir(EFS.NONE, null);
 	}
 

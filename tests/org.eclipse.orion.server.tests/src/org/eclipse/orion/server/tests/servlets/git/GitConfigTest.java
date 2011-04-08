@@ -14,24 +14,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringBufferInputStream;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URISyntaxException;
-
+import com.meterware.httpunit.*;
+import java.io.*;
+import java.net.*;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.errors.ConfigInvalidException;
-import org.eclipse.jgit.lib.ConfigConstants;
-import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.PersonIdent;
-import org.eclipse.jgit.lib.RepositoryCache;
-import org.eclipse.jgit.lib.StoredConfig;
+import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.URIish;
@@ -43,11 +34,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Test;
 import org.xml.sax.SAXException;
-
-import com.meterware.httpunit.PostMethodWebRequest;
-import com.meterware.httpunit.PutMethodWebRequest;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 
 public class GitConfigTest extends GitTest {
 
@@ -69,8 +55,12 @@ public class GitConfigTest extends GitTest {
 		request = GitCloneTest.getPostGitCloneRequest(uri, name);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		String location = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(location);
+		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		assertNotNull(taskLocation);
+		String cloneLocation = waitForCloneCompletion(taskLocation);
+
+		//validate the clone metadata
+		response = webConversation.getResponse(getCloneRequest(cloneLocation));
 		JSONObject clone = new JSONObject(response.getText());
 		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		assertNotNull(contentLocation);

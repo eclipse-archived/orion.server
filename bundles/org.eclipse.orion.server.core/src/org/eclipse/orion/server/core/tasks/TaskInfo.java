@@ -21,10 +21,12 @@ public class TaskInfo {
 	private static final String KEY_ID = "Id"; //$NON-NLS-1$
 	private static final String KEY_MESSAGE = "Message"; //$NON-NLS-1$
 	private static final String KEY_RUNNING = "Running"; //$NON-NLS-1$
+	private static final String KEY_RESULT_LOCATION = "ResultLocation"; //$NON-NLS-1$
 	private final String id;
 	private String message = ""; //$NON-NLS-1$
 	private int percentComplete = 0;
 	private boolean running = false;
+	private String resultLocation = null;
 
 	/**
 	 * Returns a task object based on its JSON representation. Returns
@@ -38,6 +40,7 @@ public class TaskInfo {
 			info.setMessage(json.optString(KEY_MESSAGE, "")); //$NON-NLS-1$
 			info.setRunning(json.optBoolean(KEY_RUNNING, false));
 			info.setPercentComplete(json.optInt(KEY_PERCENT_COMPLETE, 0));
+			info.setResultLocation(json.optString(KEY_RESULT_LOCATION));
 			return info;
 		} catch (JSONException e) {
 			return null;
@@ -62,6 +65,15 @@ public class TaskInfo {
 	 */
 	public int getPercentComplete() {
 		return percentComplete;
+	}
+	
+	/**
+	 * Returns the location of the resource representing the result of the computation. 
+	 * Returns <code>null</code> if the task has not completed, or if it did not complete successfully
+	 * @return The task result location, or <code>null</code>
+	 */
+	public String getResultLocation() {
+		return resultLocation;
 	}
 
 	public String getTaskId() {
@@ -96,6 +108,13 @@ public class TaskInfo {
 			percentComplete = 100;
 		this.percentComplete = percentComplete;
 	}
+	
+	/**
+	 * Sets the task result location.
+	 */
+	public void setResultLocation(String location) {
+		this.resultLocation = location;
+	}
 
 	/**
 	 * @param running sets whether the task is currently running
@@ -114,6 +133,8 @@ public class TaskInfo {
 			result.put(KEY_MESSAGE, getMessage());
 			result.put(KEY_ID, getTaskId()); 
 			result.put(KEY_PERCENT_COMPLETE, getPercentComplete());
+			if (resultLocation != null)
+				result.put(KEY_RESULT_LOCATION, resultLocation);
 		} catch (JSONException e) {
 			//can only happen if key is null
 		}

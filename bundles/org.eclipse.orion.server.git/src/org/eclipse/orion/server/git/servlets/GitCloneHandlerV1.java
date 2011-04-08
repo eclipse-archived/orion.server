@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -19,18 +18,12 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
-import org.eclipse.jgit.api.CloneCommand;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.lib.*;
-import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.orion.internal.server.servlets.*;
+import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.servlets.OrionServlet;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
-import org.eclipse.orion.server.useradmin.UserServiceHelper;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
 
@@ -107,65 +100,42 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		IPath path = new Path(userArea).append(request.getRemoteUser()).append(GitConstants.CLONE_FOLDER).append(clone.getId());
 		clone.setContentLocation(path.toFile().toURI());
 
-		doClone(clone, cp, request.getRemoteUser());
-
-		// save the clone metadata
-		try {
-			clone.save();
-		} catch (CoreException e) {
-			String msg = "Error persisting clone state"; //$NON-NLS-1$
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
-		}
-
-		URI baseLocation = getURI(request);
-		JSONObject result = WebCloneResourceHandler.toJSON(clone, baseLocation);
-		OrionServlet.writeJSONResponse(request, response, result);
-
-		// add project location to response header
-		response.setHeader(ProtocolConstants.HEADER_LOCATION, result.optString(ProtocolConstants.KEY_LOCATION));
+		JSONObject cloneObject = WebCloneResourceHandler.toJSON(clone, getURI(request));
+		String cloneLocation = cloneObject.optString(ProtocolConstants.KEY_LOCATION);
+		CloneJob job = new CloneJob(clone, cp, request.getRemoteUser(), cloneLocation);
+		job.schedule();
 		response.setStatus(HttpServletResponse.SC_CREATED);
-
+		TaskInfo task = job.getTask();
+		//Not nice that the git service knows the location of the task servlet, but task service doesn't know this either
+		URI taskLocation = getURI(request).resolve("../../task/id/" + task.getTaskId()); //$NON-NLS-1$
+		response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation.toString());
 		return true;
 	}
 
-	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, String path) throws IOException, JSONException, ServletException, URISyntaxException {
-		List<WebClone> clones = WebClone.allClones();
-		JSONObject result = new JSONObject();
+	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, String pathString) throws IOException, JSONException, ServletException, URISyntaxException {
+		IPath path = pathString == null ? Path.EMPTY : new Path(pathString);
 		URI baseLocation = getURI(request);
-		JSONArray children = new JSONArray();
-		for (WebClone clone : clones) {
-			JSONObject child = WebCloneResourceHandler.toJSON(clone, baseLocation);
-			children.put(child);
+		if (path.segmentCount() < 1) {
+			List<WebClone> clones = WebClone.allClones();
+			JSONObject result = new JSONObject();
+			JSONArray children = new JSONArray();
+			for (WebClone clone : clones) {
+				JSONObject child = WebCloneResourceHandler.toJSON(clone, baseLocation);
+				children.put(child);
+			}
+			result.put(ProtocolConstants.KEY_CHILDREN, children);
+			OrionServlet.writeJSONResponse(request, response, result);
+			return true;
+		} else if (path.segmentCount() == 1) {
+			WebClone clone = WebClone.fromId(path.segment(0));
+			JSONObject result = WebCloneResourceHandler.toJSON(clone, baseLocation);
+			response.setHeader(ProtocolConstants.HEADER_LOCATION, result.optString(ProtocolConstants.KEY_LOCATION, "")); //$NON-NLS-1$
+			OrionServlet.writeJSONResponse(request, response, result);
+			return true;
 		}
-		result.put(ProtocolConstants.KEY_CHILDREN, children);
-		OrionServlet.writeJSONResponse(request, response, result);
-		return true;
-	}
-
-	private void doClone(WebClone clone, CredentialsProvider cp, String userId) throws URISyntaxException, IOException, CoreException {
-		File cloneFolder = new File(clone.getContentLocation().getPath());
-		if (!cloneFolder.exists())
-			cloneFolder.mkdir();
-		CloneCommand cc = Git.cloneRepository();
-		cc.setBare(false);
-		cc.setCredentialsProvider(cp);
-		cc.setDirectory(cloneFolder);
-		cc.setRemote(Constants.DEFAULT_REMOTE_NAME);
-		cc.setURI(clone.getUrl());
-		Git git = cc.call();
-
-		// Configure the clone, see Bug 337820
-		doConfigureClone(git, userId);
-	}
-
-	private void doConfigureClone(Git git, String userId) throws IOException, CoreException {
-		StoredConfig config = git.getRepository().getConfig();
-		IOrionUserProfileNode userNode = UserServiceHelper.getDefault().getUserProfileService().getUserProfileNode(userId, true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
-		if (userNode.get(GitConstants.KEY_NAME, null) != null)
-			config.setString(ConfigConstants.CONFIG_USER_SECTION, null, ConfigConstants.CONFIG_KEY_NAME, userNode.get(GitConstants.KEY_NAME, null));
-		if (userNode.get(GitConstants.KEY_MAIL, null) != null)
-			config.setString(ConfigConstants.CONFIG_USER_SECTION, null, ConfigConstants.CONFIG_KEY_EMAIL, userNode.get(GitConstants.KEY_MAIL, null));
-		config.save();
+		//else the request is malformed
+		String msg = NLS.bind("Invalid clone request: {0}", path);
+		return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 	}
 
 	/**

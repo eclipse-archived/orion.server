@@ -48,6 +48,7 @@ public class TaskStore {
 	}
 
 	public void writeTask(String id, String representation) {
+		root.mkdirs();
 		try {
 			File taskFile = new File(root, id);
 			FileWriter writer = new FileWriter(taskFile);
