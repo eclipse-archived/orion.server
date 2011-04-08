@@ -63,7 +63,7 @@ public class CoreFilesTest extends FileSystemTest {
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 		JSONObject responseObject = new JSONObject(response.getText());
-		assertEquals("error", responseObject.get("severity"));
+		assertEquals("Error", responseObject.get("Severity"));
 	}
 
 	@Test
