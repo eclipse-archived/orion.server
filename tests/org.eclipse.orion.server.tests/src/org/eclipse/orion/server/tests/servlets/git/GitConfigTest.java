@@ -12,21 +12,23 @@ package org.eclipse.orion.server.tests.servlets.git;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.*;
-import java.io.*;
-import java.net.*;
-import org.eclipse.core.runtime.URIUtil;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringBufferInputStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
+
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.errors.ConfigInvalidException;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.ConfigConstants;
+import org.eclipse.jgit.lib.PersonIdent;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.URIish;
-import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
 import org.eclipse.orion.server.git.GitConstants;
@@ -34,6 +36,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Test;
 import org.xml.sax.SAXException;
+
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.PutMethodWebRequest;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 public class GitConfigTest extends GitTest {
 
@@ -66,10 +73,7 @@ public class GitConfigTest extends GitTest {
 		assertNotNull(contentLocation);
 
 		// check the repository configuration using JGit API
-		File file = new File(URIUtil.toFile(new URI(contentLocation)), Constants.DOT_GIT);
-		Git git = new Git(new FileRepository(file));
-		assertTrue(file.exists());
-		assertTrue(RepositoryCache.FileKey.isGitRepository(file, FS.DETECTED));
+		Git git = new Git(getRepositoryForContentLocation(contentLocation));
 		StoredConfig config = git.getRepository().getConfig();
 		assertEquals(GIT_NAME, config.getString(ConfigConstants.CONFIG_USER_SECTION, null, ConfigConstants.CONFIG_KEY_NAME));
 		assertEquals(GIT_MAIL, config.getString(ConfigConstants.CONFIG_USER_SECTION, null, ConfigConstants.CONFIG_KEY_EMAIL));

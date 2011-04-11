@@ -15,8 +15,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.GetMethodWebRequest;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,11 +26,15 @@ import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.core.tests.harness.FileSystemHelper;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.RepositoryCache;
 import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.util.FS;
 import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
@@ -45,6 +47,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.xml.sax.SAXException;
 
+import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.PostMethodWebRequest;
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebRequest;
@@ -178,5 +181,12 @@ public abstract class GitTest extends FileSystemTest {
 
 	protected static JSONObject getChildByName(List<JSONObject> children, String name) throws JSONException {
 		return getChildByKey(children, ProtocolConstants.KEY_NAME, name);
+	}
+
+	protected Repository getRepositoryForContentLocation(String location) throws URISyntaxException, IOException {
+		File file = new File(URIUtil.toFile(new URI(location)), Constants.DOT_GIT);
+		assertTrue(file.exists());
+		assertTrue(RepositoryCache.FileKey.isGitRepository(file, FS.DETECTED));
+		return new FileRepository(file);
 	}
 }
