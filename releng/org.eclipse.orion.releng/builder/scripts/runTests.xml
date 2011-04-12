@@ -235,26 +235,52 @@
 		<attribute name="testFile" />
 		<attribute name="token" />
 		<sequential>
+			<!-- grab the status summary -->
 			<loadfile srcfile="${dropLocation}/@{testFile}" property="@{testFile}_status" failonerror="false" >
 				<filterchain>
 					<linecontainsregexp>
 						<regexp pattern=".*&lt;td&gt;[0-9]*&lt;/td&gt;&lt;td&gt;[0-9]*&lt;/td&gt;&lt;td&gt;(NaN|([.0-9]*%))&lt;/td&gt;.*" />
 					</linecontainsregexp>
-					<replaceregex pattern=".*&lt;td&gt;(NaN|([0-9]+[.][0-9]+%))&lt;/td&gt;.*" replace="\1" />
+					<replaceregex pattern="&lt;td&gt;" replace="&lt;td align=&quot;center&quot; style=&quot;color:black&quot;&gt;" flags="g" />
 					<striplinebreaks/>
 				</filterchain>
 			</loadfile>
-			<condition property="@{testFile}_value" value="${@{testFile}_status}" else="DNF" >
+
+			<!-- if we couldn't read a status, use DNF -->
+			<condition property="@{testFile}_value" value="${@{testFile}_status}" else="&lt;td align=&quot;center&quot; style=&quot;color:black&quot;&gt;DNF&lt;/td&gt;" >
 				<isset property="@{testFile}_status" />
 			</condition>
-			<condition property="@{testFile}_result" value="${@{testFile}_value}" else="&lt;font color=&quot;#ff0000&quot;&gt;${@{testFile}_value}&lt;/font&gt;">
-				<equals arg1="${@{testFile}_value}" arg2="100.00%" />
+			
+			<!-- results will be red if they arent't 100% -->
+			<condition property="@{testFile}_color" value="black" else="red">
+				<contains string="${@{testFile}_value}" substring="100.00%" />
 			</condition>
+			
+			<!-- switch the color -->
+			<loadresource property="@{testFile}_result" >
+				<string value="${@{testFile}_value}" />
+				<filterchain>
+					<replaceregex pattern="color:black" replace="color:${@{testFile}_color}" flags="g"/>
+				</filterchain>
+			</loadresource>
+			
+			<echo message="${@{testFile}_result}"/>
+			<!-- update the html -->
 			<replace file="${dropLocation}/index.html">
-				<replacefilter token="@{token}" value="${@{testFile}_result}" />
+				<replacefilter token="&lt;td&gt;@{token}" value="${@{testFile}_result}" />
 			</replace>
 		</sequential>
 	</macrodef>
+	
+	<target name="testResult">
+		<updateTestResult testFile="Chrome-8.0-testResults.html" token="@JS-CHROME8@"/>
+		<updateTestResult testFile="Chrome-10.0-testResults.html" token="@JS-CHROME10@"/>
+		<updateTestResult testFile="Chrome-11.0-testResults.html" token="@JS-CHROME11@"/>
+		<updateTestResult testFile="Firefox-3.6-testResults.html" token="@JS-FIREFOX36@"/>
+		<updateTestResult testFile="Firefox-4.0-testResults.html" token="@JS-FIREFOX40@"/>
+		<updateTestResult testFile="IE-9.0-testResults.html" token="@JS-IE9@"/>
+		<updateTestResult testFile="org.eclipse.orion.server.tests.AllServerTests.html" token="@SERVER-TESTS@"/>
+	</target>
 	
 	<target name="processResults" >	
 		<!-- js unit results -->

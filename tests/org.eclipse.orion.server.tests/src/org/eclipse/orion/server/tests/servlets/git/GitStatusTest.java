@@ -12,8 +12,11 @@ package org.eclipse.orion.server.tests.servlets.git;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringBufferInputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -21,9 +24,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.MergeResult.MergeStatus;
+import org.eclipse.jgit.api.PullResult;
 import org.eclipse.jgit.api.RmCommand;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.NoFilepatternException;
+import org.eclipse.jgit.dircache.DirCache;
+import org.eclipse.jgit.dircache.DirCacheEntry;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.transport.URIish;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -33,6 +45,7 @@ import org.junit.Test;
 import org.xml.sax.SAXException;
 
 import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PostMethodWebRequest;
 import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
 
@@ -548,6 +561,47 @@ public class GitStatusTest extends GitTest {
 		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
 		assertEquals(0, statusArray.length());
+
+		String stageAll = statusResponse.getString(GitConstants.KEY_INDEX);
+		assertNotNull(stageAll);
+		String commitAll = statusResponse.getString(GitConstants.KEY_COMMIT);
+		assertNotNull(commitAll);
+
+		request = GitAddTest.getPutGitIndexRequest(stageAll);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		request = getGetGitStatusRequest(gitStatusUri);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		statusResponse = new JSONObject(response.getText());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
+		assertEquals(2, statusArray.length());
+		child = getChildByName(statusArray, "test.txt");
+		assertChildLocation(child, "file change");
+		child = getChildByName(statusArray, "folder/folder.txt");
+		assertNotNull(child);
+		assertChildLocation(child, "folder change");
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
+		assertEquals(0, statusArray.length());
+
+		request = GitCommitTest.getPostGitCommitRequest(commitAll, "committing all changes", false);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		request = getGetGitStatusRequest(gitStatusUri);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		statusResponse = new JSONObject(response.getText());
+		assertStatusClean(statusResponse);
 	}
 
 	@Test
@@ -689,6 +743,171 @@ public class GitStatusTest extends GitTest {
 		// TODO: commit and check status
 	}
 
+	// "status -s" > "UU test.txt", both modified
+	@Test
+	public void testConfilct() throws IOException, SAXException, URISyntaxException, JSONException, JGitInternalException, GitAPIException {
+		URI workspaceLocation = createWorkspace(getMethodName());
+
+		// clone1: create
+		URIish uri = new URIish(gitDir.toURL());
+		String name = null;
+		WebRequest request = GitCloneTest.getPostGitCloneRequest(uri, name);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		assertNotNull(taskLocation);
+		String cloneLocation = waitForCloneCompletion(taskLocation);
+
+		response = webConversation.getResponse(getCloneRequest(cloneLocation));
+		JSONObject clone = new JSONObject(response.getText());
+		String contentLocation1 = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		assertNotNull(contentLocation1);
+
+		// clone1: link
+		ServletTestingSupport.allowedPrefixes = contentLocation1;
+		String projectName1 = getMethodName() + "1";
+		JSONObject body = new JSONObject();
+		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, contentLocation1);
+		InputStream in = new StringBufferInputStream(body.toString());
+		// http://<host>/workspace/<workspaceId>/
+		request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
+		if (projectName1 != null)
+			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName1);
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		JSONObject project1 = new JSONObject(response.getText());
+		String projectId1 = project1.optString(ProtocolConstants.KEY_ID, null);
+		assertNotNull(projectId1);
+		JSONObject gitSection1 = project1.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection1);
+		String gitStatusUri1 = gitSection1.optString(GitConstants.KEY_STATUS, null);
+		assertNotNull(gitStatusUri1);
+		String gitIndexUri1 = gitSection1.optString(GitConstants.KEY_INDEX, null);
+		assertNotNull(gitIndexUri1);
+		String gitCommitUri1 = gitSection1.optString(GitConstants.KEY_COMMIT, null);
+		assertNotNull(gitCommitUri1);
+
+		// clone2: create
+		request = GitCloneTest.getPostGitCloneRequest(uri, name);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+		taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		assertNotNull(taskLocation);
+		cloneLocation = waitForCloneCompletion(taskLocation);
+
+		response = webConversation.getResponse(getCloneRequest(cloneLocation));
+		clone = new JSONObject(response.getText());
+		String contentLocation2 = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		assertNotNull(contentLocation2);
+
+		// clone2: link
+		ServletTestingSupport.allowedPrefixes = contentLocation2;
+		String projectName2 = getMethodName() + "2";
+		body = new JSONObject();
+		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, contentLocation2);
+		in = new StringBufferInputStream(body.toString());
+		// http://<host>/workspace/<workspaceId>/
+		request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
+		if (projectName2 != null)
+			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName2);
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		JSONObject project2 = new JSONObject(response.getText());
+		String projectId2 = project2.optString(ProtocolConstants.KEY_ID, null);
+		assertNotNull(projectId2);
+		JSONObject gitSection2 = project2.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection2);
+		String gitStatusUri2 = gitSection2.optString(GitConstants.KEY_STATUS, null);
+		assertNotNull(gitStatusUri2);
+		String gitIndexUri2 = gitSection2.optString(GitConstants.KEY_INDEX, null);
+		assertNotNull(gitIndexUri2);
+		String gitCommitUri2 = gitSection2.optString(GitConstants.KEY_COMMIT, null);
+		assertNotNull(gitCommitUri2);
+
+		// clone1: change
+		request = getPutFileRequest(projectId1 + "/test.txt", "change from clone1");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// clone1: add
+		request = GitAddTest.getPutGitIndexRequest(gitIndexUri1);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// clone1: commit
+		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri1, "change from clone1", false);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// clone1: push
+		// TODO: replace with REST API for git push once bug 339115 is fixed
+		Repository db1 = getRepositoryForContentLocation(contentLocation1);
+		Git git = new Git(db1);
+		git.push().call();
+
+		// this is how EGit checks for conflicts
+		DirCache cache = db1.readDirCache();
+		DirCacheEntry entry = cache.getEntry("test.txt");
+		assertTrue(entry.getStage() == 0);
+
+		// clone2: change
+		request = getPutFileRequest(projectId2 + "/test.txt", "change from clone2");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// clone2: add
+		request = GitAddTest.getPutGitIndexRequest(gitIndexUri2);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// clone2: commit
+		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri2, "change from clone2", false);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// clone2: pull
+		// TODO: replace with REST API for git pull once bug 339114 is fixed
+		Repository db2 = getRepositoryForContentLocation(contentLocation2);
+		git = new Git(db2);
+		PullResult pullResult = git.pull().call();
+		assertEquals(pullResult.getMergeResult().getMergeStatus(), MergeStatus.CONFLICTING);
+
+		// this is how EGit checks for conflicts
+		cache = db2.readDirCache();
+		entry = cache.getEntry("test.txt");
+		assertTrue(entry.getStage() > 0);
+
+		request = getGetGitStatusRequest(gitStatusUri2);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject statusResponse = new JSONObject(response.getText());
+		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
+		assertEquals(1, statusArray.length());
+		assertNotNull(getChildByName(statusArray, "test.txt"));
+		assertNotNull(getChildByKey(statusArray, GitConstants.KEY_PATH, "test.txt"));
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
+		assertEquals(1, statusArray.length());
+		assertNotNull(getChildByName(statusArray, "test.txt"));
+		assertNotNull(getChildByKey(statusArray, GitConstants.KEY_PATH, "test.txt"));
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
+		assertEquals(1, statusArray.length());
+		assertNotNull(getChildByName(statusArray, "test.txt"));
+		assertNotNull(getChildByKey(statusArray, GitConstants.KEY_PATH, "test.txt"));
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
+		assertEquals(1, statusArray.length());
+		assertNotNull(getChildByName(statusArray, "test.txt"));
+		assertNotNull(getChildByKey(statusArray, GitConstants.KEY_PATH, "test.txt"));
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
+		assertEquals(0, statusArray.length());
+	}
+
 	private void assertChildLocation(JSONObject child, String expectedFileContent) throws JSONException, IOException, SAXException {
 		assertNotNull(child);
 		String location = child.getString(ProtocolConstants.KEY_LOCATION);
@@ -717,7 +936,7 @@ public class GitStatusTest extends GitTest {
 		assertNotNull(gitSection);
 		String commit = gitSection.getString(GitConstants.KEY_COMMIT);
 		assertNotNull(commit);
-		WebRequest request = GitCommitTest.getGetGitCommitRequest(commit);
+		WebRequest request = GitCommitTest.getGetGitCommitRequest(commit, true);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("Invalid file content", expectedFileContent, response.getText());

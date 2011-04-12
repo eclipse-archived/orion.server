@@ -74,6 +74,9 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 			children = toJSONArray(diff.getUntracked(), basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
 			result.put(GitConstants.KEY_STATUS_UNTRACKED, children);
 
+			result.put(GitConstants.KEY_INDEX, statusToIndexLocation(baseLocation));
+			result.put(GitConstants.KEY_COMMIT, statusToCommitLocation(baseLocation, Constants.HEAD));
+
 			OrionServlet.writeJSONResponse(request, response, result);
 			return true;
 

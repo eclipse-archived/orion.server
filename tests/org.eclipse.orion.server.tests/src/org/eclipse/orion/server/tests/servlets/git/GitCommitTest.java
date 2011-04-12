@@ -359,7 +359,7 @@ public class GitCommitTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// TODO: don't create URIs out of thin air
-		request = getGetGitCommitRequest(gitCommitUri + "test.txt");
+		request = getGetGitCommitRequest(gitCommitUri + "test.txt", true);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("in HEAD", response.getText());
@@ -388,12 +388,14 @@ public class GitCommitTest extends GitTest {
 		return request;
 	}
 
-	static WebRequest getGetGitCommitRequest(String location) {
+	static WebRequest getGetGitCommitRequest(String location, boolean body) {
 		String requestURI;
 		if (location.startsWith("http://"))
-			requestURI = location + "?parts=body";
+			requestURI = location;
 		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.COMMIT_RESOURCE + '/' + location + "?parts=body";
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.COMMIT_RESOURCE + '/' + location;
+		if (body)
+			requestURI += "?parts=body";
 		WebRequest request = new GetMethodWebRequest(requestURI);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);

@@ -19,13 +19,13 @@ import com.meterware.httpunit.*;
 import java.io.*;
 import java.net.*;
 import java.util.List;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.tests.harness.FileSystemHelper;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.util.FS;
 import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
@@ -40,7 +40,7 @@ public abstract class GitTest extends FileSystemTest {
 
 	protected static final String GIT_SERVLET_LOCATION = GitServlet.GIT_URI + '/';
 
-	WebConversation webConversation;
+	static WebConversation webConversation;
 	File gitDir;
 	File testFile;
 	protected FileRepository db;
@@ -164,5 +164,12 @@ public abstract class GitTest extends FileSystemTest {
 
 	protected static JSONObject getChildByName(List<JSONObject> children, String name) throws JSONException {
 		return getChildByKey(children, ProtocolConstants.KEY_NAME, name);
+	}
+
+	protected Repository getRepositoryForContentLocation(String location) throws URISyntaxException, IOException {
+		File file = new File(URIUtil.toFile(new URI(location)), Constants.DOT_GIT);
+		assertTrue(file.exists());
+		assertTrue(RepositoryCache.FileKey.isGitRepository(file, FS.DETECTED));
+		return new FileRepository(file);
 	}
 }

@@ -63,6 +63,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		Path p = new Path(path);
 		// FIXME: what if a remote is named "file"?
 		if (p.segment(0).equals("file")) {
+			// /git/remote/file/{path}
 			File gitDir = GitUtils.getGitDir(p);
 			Repository db = new FileRepository(gitDir);
 			Set<String> configNames = db.getConfig().getSubsections("remote");
@@ -78,8 +79,8 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			result.put(ProtocolConstants.KEY_CHILDREN, children);
 			OrionServlet.writeJSONResponse(request, response, result);
 			return true;
-		} else {
-			// TODO: return remote info
+		} else if (p.segment(1).equals("file")) {
+			// /git/remote/{remote}/file/{path}
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(1));
 			Repository db = new FileRepository(gitDir);
 			Set<String> configNames = db.getConfig().getSubsections("remote");
@@ -98,7 +99,10 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 							String name = ref.getName();
 							o.put(ProtocolConstants.KEY_NAME, name);
 							o.put(ProtocolConstants.KEY_ID, ref.getObjectId().name());
+							// see bug 342602
+							// o.put(GitConstants.KEY_COMMIT, baseToCommitLocation(baseLocation, name));
 							o.put(ProtocolConstants.KEY_LOCATION, baseToRemoteLocation(baseLocation, 3, name.substring(Constants.R_REMOTES.length())));
+							o.put(GitConstants.KEY_COMMIT, baseToCommitLocation(baseLocation, 3, ref.getObjectId().name()));
 							children.put(o);
 						}
 					}
@@ -109,7 +113,31 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			}
 			String msg = NLS.bind("Couldn't find remote : {0}", p.segment(0)); //$NON-NLS-1$
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
+		} else if (p.segment(2).equals("file")) {
+			// /git/remote/{remote}/{branch}/file/{path}
+			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2));
+			Repository db = new FileRepository(gitDir);
+			Set<String> configNames = db.getConfig().getSubsections("remote");
+			URI baseLocation = getURI(request);
+			for (String configName : configNames) {
+				if (configName.equals(p.segment(0))) {
+					for (Entry<String, Ref> refEntry : db.getRefDatabase().getRefs(Constants.R_REMOTES).entrySet()) {
+						Ref ref = refEntry.getValue();
+						if (!ref.isSymbolic() && ref.getName().equals(Constants.R_REMOTES + p.uptoSegment(2).removeTrailingSeparator())) {
+							JSONObject result = new JSONObject();
+							// see bug 342602
+							// result.put(GitConstants.KEY_COMMIT, baseToCommitLocation(baseLocation, name));
+							result.put(GitConstants.KEY_COMMIT, baseToCommitLocation(baseLocation, 4, ref.getObjectId().name()));
+							OrionServlet.writeJSONResponse(request, response, result);
+							return true;
+						}
+					}
+				}
+				// TODO: 404
+			}
 		}
+		// TODO: 400
+		return false;
 	}
 
 	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, String path) throws IOException, JSONException, ServletException, URISyntaxException, CoreException {
@@ -140,5 +168,13 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		IPath p = new Path(u.getPath());
 		p = p.uptoSegment(2).append(remoteName).addTrailingSeparator().append(p.removeFirstSegments(count));
 		return new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), p.toString(), u.getQuery(), u.getFragment());
+	}
+
+	private URI baseToCommitLocation(URI u, int c, String ref) throws URISyntaxException {
+		String uriPath = u.getPath();
+		IPath path = new Path(uriPath);
+		IPath filePath = path.removeFirstSegments(c).makeAbsolute();
+		uriPath = GitServlet.GIT_URI + "/" + GitConstants.COMMIT_RESOURCE + "/" + ref + filePath.toString(); //$NON-NLS-1$ //$NON-NLS-2$
+		return new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), uriPath, u.getQuery(), u.getFragment());
 	}
 }

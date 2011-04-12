@@ -15,25 +15,60 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.*;
-import java.io.*;
-import java.net.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringBufferInputStream;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.MergeResult.MergeStatus;
+import org.eclipse.jgit.api.PullResult;
+import org.eclipse.jgit.api.errors.CanceledException;
+import org.eclipse.jgit.api.errors.DetachedHeadException;
+import org.eclipse.jgit.api.errors.InvalidConfigurationException;
+import org.eclipse.jgit.api.errors.InvalidRemoteException;
+import org.eclipse.jgit.api.errors.RefNotFoundException;
+import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.RepositoryCache;
+import org.eclipse.jgit.lib.RepositoryState;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
 import org.eclipse.orion.server.git.GitConstants;
-import org.json.*;
-import org.junit.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.Assume;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.xml.sax.SAXException;
+
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 public class GitCloneTest extends GitTest {
 
@@ -51,6 +86,7 @@ public class GitCloneTest extends GitTest {
 	public void testGetClone() throws IOException, SAXException, JSONException {
 		List<String> locations = new ArrayList<String>();
 
+		// 1st clone
 		URIish uri = new URIish(gitDir.toURL());
 		String name = null;
 		WebRequest request = getPostGitCloneRequest(uri, name);
@@ -60,6 +96,7 @@ public class GitCloneTest extends GitTest {
 		assertNotNull(location);
 		locations.add(location);
 
+		// 2nd clone
 		request = getPostGitCloneRequest(uri, name);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
@@ -67,6 +104,7 @@ public class GitCloneTest extends GitTest {
 		assertNotNull(location);
 		locations.add(location);
 
+		// 3rd clone
 		request = getPostGitCloneRequest(uri, name);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
@@ -74,6 +112,7 @@ public class GitCloneTest extends GitTest {
 		assertNotNull(location);
 		locations.add(location);
 
+		// get clones list
 		request = listGitClonesRequest();
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
@@ -465,6 +504,40 @@ public class GitCloneTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		assertFalse(file.exists());
+	}
+
+	@Test
+	public void testGetCloneAndPull() throws IOException, SAXException, JSONException, URISyntaxException, WrongRepositoryStateException, InvalidConfigurationException, DetachedHeadException, InvalidRemoteException, CanceledException, RefNotFoundException {
+		// see bug 339254
+		URIish uri = new URIish(gitDir.toURL());
+		String name = null;
+		WebRequest request = getPostGitCloneRequest(uri, name);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		assertNotNull(taskLocation);
+		String cloneLocation = waitForCloneCompletion(taskLocation);
+
+		// validate the clone metadata
+		response = webConversation.getResponse(getCloneRequest(cloneLocation));
+		JSONObject clone = new JSONObject(response.getText());
+		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		assertNotNull(contentLocation);
+
+		// TODO: add assertion on clones number once bug 340553 is fixed and we're able to clean clones after each test
+		// request = listGitClonesRequest();
+		// response = webConversation.getResponse(request);
+		// assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		// JSONObject clones = new JSONObject(response.getText());
+		// JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		// assertEquals(1, clonesArray.length());
+		// String contentLocation = clonesArray.getJSONObject(0).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+		Git git = new Git(getRepositoryForContentLocation(contentLocation));
+		// TODO: replace with RESTful API when ready, see bug 339114
+		PullResult pullResult = git.pull().call();
+		assertEquals(pullResult.getMergeResult().getMergeStatus(), MergeStatus.ALREADY_UP_TO_DATE);
+		assertEquals(RepositoryState.SAFE, git.getRepository().getRepositoryState());
 	}
 
 	/**
