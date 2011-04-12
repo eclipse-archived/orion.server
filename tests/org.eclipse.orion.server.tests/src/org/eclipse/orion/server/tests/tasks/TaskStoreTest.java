@@ -34,7 +34,7 @@ public class TaskStoreTest extends TestCase {
 	public void testRoundTrip() {
 		TaskInfo task = AllTaskTests.createTestTask();
 		TaskStore store = new TaskStore(tempDir);
-		store.writeTask(task.getTaskId(), task.toJSON());
+		store.writeTask(task.getTaskId(), task.toJSON().toString());
 
 		TaskInfo task2 = TaskInfo.fromJSON(store.readTask(task.getTaskId()));
 		AllTaskTests.assertEqualTasks(task, task2);

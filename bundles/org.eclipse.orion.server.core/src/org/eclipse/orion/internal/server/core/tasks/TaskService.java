@@ -27,7 +27,7 @@ public class TaskService implements ITaskService {
 
 	public TaskInfo createTask() {
 		TaskInfo task = new TaskInfo(new UniversalUniqueIdentifier().toBase64String());
-		store.writeTask(task.getTaskId(), task.toJSON());
+		store.writeTask(task.getTaskId(), task.toJSON().toString());
 		return task;
 	}
 
@@ -39,7 +39,7 @@ public class TaskService implements ITaskService {
 	}
 
 	public void updateTask(TaskInfo task) {
-		store.writeTask(task.getTaskId(), task.toJSON());
+		store.writeTask(task.getTaskId(), task.toJSON().toString());
 	}
 
 }

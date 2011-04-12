@@ -17,7 +17,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
-
 /**
  * Runs all automated server tests for site configuration/hosting support.
  */
@@ -32,7 +31,6 @@ public class AllTaskTests {
 		TaskInfo info = new TaskInfo("mytask");
 		info.setMessage("THIS#)(&$^@)(ISA%20MESSAGE");
 		info.setPercentComplete(50);
-		info.setRunning(true);
 		return info;
 	}
 

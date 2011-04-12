@@ -21,7 +21,7 @@ public class TaskInfoTest extends TestCase {
 	@Test
 	public void testBadJSON() {
 		TaskInfo task = AllTaskTests.createTestTask();
-		String json = task.toJSON();
+		String json = task.toJSON().toString();
 		json = json.replace('}', ')');
 		assertNull(TaskInfo.fromJSON(json));
 
@@ -36,7 +36,7 @@ public class TaskInfoTest extends TestCase {
 	@Test
 	public void testJSONRoundTrip() {
 		TaskInfo info = AllTaskTests.createTestTask();
-		TaskInfo task2 = TaskInfo.fromJSON(info.toJSON());
+		TaskInfo task2 = TaskInfo.fromJSON(info.toJSON().toString());
 		AllTaskTests.assertEqualTasks(info, task2);
 	}
 

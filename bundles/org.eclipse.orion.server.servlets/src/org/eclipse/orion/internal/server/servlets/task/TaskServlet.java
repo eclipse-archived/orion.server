@@ -17,6 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.servlets.Activator;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.servlets.OrionServlet;
@@ -61,10 +62,13 @@ public class TaskServlet extends OrionServlet {
 			handleException(resp, "Task not found: " + taskId, null, HttpServletResponse.SC_NOT_FOUND);
 			return;
 		}
+		JSONObject result = task.toJSON();
 		try {
-			writeJSONResponse(req, resp, new JSONObject(task.toJSON()));
+			if (result.optString(ProtocolConstants.KEY_LOCATION, "").isEmpty())
+				result.put(ProtocolConstants.KEY_LOCATION, getURI(req).toString());
 		} catch (JSONException e) {
-			handleException(resp, "Task service returned invalid task representation", e);
+			//cannot happen
 		}
+		writeJSONResponse(req, resp, result);
 	}
 }

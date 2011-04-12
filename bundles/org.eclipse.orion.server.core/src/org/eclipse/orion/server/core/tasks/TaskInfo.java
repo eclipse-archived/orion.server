@@ -21,11 +21,11 @@ public class TaskInfo {
 	private static final String KEY_ID = "Id"; //$NON-NLS-1$
 	private static final String KEY_MESSAGE = "Message"; //$NON-NLS-1$
 	private static final String KEY_RUNNING = "Running"; //$NON-NLS-1$
-	private static final String KEY_RESULT_LOCATION = "ResultLocation"; //$NON-NLS-1$
+	private static final String KEY_LOCATION = "Location"; //$NON-NLS-1$
 	private final String id;
 	private String message = ""; //$NON-NLS-1$
 	private int percentComplete = 0;
-	private boolean running = false;
+	private boolean running = true;
 	private String resultLocation = null;
 
 	/**
@@ -38,9 +38,9 @@ public class TaskInfo {
 			JSONObject json = new JSONObject(taskString);
 			info = new TaskInfo(json.getString(KEY_ID));
 			info.setMessage(json.optString(KEY_MESSAGE, "")); //$NON-NLS-1$
-			info.setRunning(json.optBoolean(KEY_RUNNING, false));
+			info.running = json.optBoolean(KEY_RUNNING, true);
 			info.setPercentComplete(json.optInt(KEY_PERCENT_COMPLETE, 0));
-			info.setResultLocation(json.optString(KEY_RESULT_LOCATION));
+			info.resultLocation = json.optString(KEY_LOCATION);
 			return info;
 		} catch (JSONException e) {
 			return null;
@@ -90,9 +90,11 @@ public class TaskInfo {
 	/**
 	 * Sets a message describing the current task state. 
 	 * @param message the message to set
+	 * @return Returns this task
 	 */
-	public void setMessage(String message) {
+	public TaskInfo setMessage(String message) {
 		this.message = message == null ? "" : message; //$NON-NLS-1$
+		return this;
 	}
 
 	/**
@@ -100,33 +102,34 @@ public class TaskInfo {
 	 * and values above 100 will be rounded down to 100;
 	 * @param percentComplete an integer between 0 and 100 representing the
 	 * current progress state
+	 * @return Returns this task
 	 */
-	public void setPercentComplete(int percentComplete) {
+	public TaskInfo setPercentComplete(int percentComplete) {
 		if (percentComplete < 0)
 			percentComplete = 0;
 		if (percentComplete > 100)
 			percentComplete = 100;
 		this.percentComplete = percentComplete;
+		return this;
 	}
 	
 	/**
-	 * Sets the task result location.
+	 * Indicates that this task is completed.
+	 * @param location The location of the result resource for the task, or
+	 * <code>null</code> if not applicable.
+	 * @return Returns this task
 	 */
-	public void setResultLocation(String location) {
-		this.resultLocation = location;
-	}
-
-	/**
-	 * @param running sets whether the task is currently running
-	 */
-	public void setRunning(boolean running) {
-		this.running = running;
+	public TaskInfo done(String location) {
+		this.running = false;
+		this.percentComplete = 100;
+		this.resultLocation  = location;
+		return this;
 	}
 
 	/**
 	 * Returns a JSON representation of this task state.
 	 */
-	public String toJSON() {
+	public JSONObject toJSON() {
 		JSONObject result = new JSONObject();
 		try {
 			result.put(KEY_RUNNING, isRunning()); 
@@ -134,11 +137,11 @@ public class TaskInfo {
 			result.put(KEY_ID, getTaskId()); 
 			result.put(KEY_PERCENT_COMPLETE, getPercentComplete());
 			if (resultLocation != null)
-				result.put(KEY_RESULT_LOCATION, resultLocation);
+				result.put(KEY_LOCATION, resultLocation);
 		} catch (JSONException e) {
 			//can only happen if key is null
 		}
-		return result.toString();
+		return result;
 	}
 	@Override
 	public String toString() {
