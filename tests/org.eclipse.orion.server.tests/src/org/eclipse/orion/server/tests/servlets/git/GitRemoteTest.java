@@ -140,7 +140,7 @@ public class GitRemoteTest extends GitTest {
 		String remoteLocation = remote.getString(ProtocolConstants.KEY_LOCATION);
 		assertNotNull(remoteLocation);
 
-		JSONObject remoteBranch = getRemoteBranch(remoteLocation);
+		JSONObject remoteBranch = getRemoteBranch(remoteLocation, 1, 0);
 		assertNotNull(remoteBranch);
 	}
 
@@ -258,8 +258,14 @@ public class GitRemoteTest extends GitTest {
 		String remoteLocation = remote.getString(ProtocolConstants.KEY_LOCATION);
 		assertNotNull(remoteLocation);
 
-		JSONObject remoteBranch = getRemoteBranch(remoteLocation);
+		JSONObject remoteBranch = getRemoteBranch(remoteLocation, 1, 0);
 		assertNotNull(remoteBranch);
+		String remoteBranchLocation = remoteBranch.getString(ProtocolConstants.KEY_LOCATION);
+		request = getGetGitRemoteRequest(remoteBranchLocation);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		remoteBranch = new JSONObject(response.getText());
+
 		String commitLocation = remoteBranch.getString(GitConstants.KEY_COMMIT);
 		request = GitCommitTest.getGetGitCommitRequest(commitLocation, false);
 		response = webConversation.getResponse(request);
@@ -289,8 +295,14 @@ public class GitRemoteTest extends GitTest {
 		Git git = new Git(db2);
 		git.push().call();
 
-		remoteBranch = getRemoteBranch(remoteLocation);
+		remoteBranch = getRemoteBranch(remoteLocation, 1, 0);
 		assertNotNull(remoteBranch);
+		remoteBranchLocation = remoteBranch.getString(ProtocolConstants.KEY_LOCATION);
+		request = getGetGitRemoteRequest(remoteBranchLocation);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		remoteBranch = new JSONObject(response.getText());
+
 		commitLocation = remoteBranch.getString(GitConstants.KEY_COMMIT);
 		request = GitCommitTest.getGetGitCommitRequest(commitLocation, false);
 		response = webConversation.getResponse(request);
@@ -314,7 +326,7 @@ public class GitRemoteTest extends GitTest {
 		return request;
 	}
 
-	static JSONObject getRemoteBranch(String remoteLocation) throws IOException, SAXException, JSONException {
+	static JSONObject getRemoteBranch(String remoteLocation, int size, int i) throws IOException, SAXException, JSONException {
 		WebRequest request = GitRemoteTest.getGetGitRemoteRequest(remoteLocation);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
@@ -323,8 +335,8 @@ public class GitRemoteTest extends GitTest {
 		assertEquals(Constants.DEFAULT_REMOTE_NAME, remote.getString(ProtocolConstants.KEY_NAME));
 		assertNotNull(remote.getString(ProtocolConstants.KEY_LOCATION));
 		JSONArray refsArray = remote.getJSONArray(ProtocolConstants.KEY_CHILDREN);
-		assertEquals(1, refsArray.length());
-		JSONObject ref = refsArray.getJSONObject(0);
+		assertEquals(size, refsArray.length());
+		JSONObject ref = refsArray.getJSONObject(i);
 		assertNotNull(ref);
 		assertEquals(Constants.R_REMOTES + Constants.DEFAULT_REMOTE_NAME + "/" + Constants.MASTER, ref.getString(ProtocolConstants.KEY_NAME));
 		String newRefId = ref.getString(ProtocolConstants.KEY_ID);
