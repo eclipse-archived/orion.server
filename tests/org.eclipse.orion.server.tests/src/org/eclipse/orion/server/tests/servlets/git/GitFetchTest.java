@@ -29,6 +29,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.URIish;
@@ -249,7 +250,7 @@ public class GitFetchTest extends GitTest {
 
 		// clone1: log master..origin/master
 		// TODO replace with tests methods from GitLogTest
-		FileRepository db1 = new FileRepository(new File(URIUtil.toFile(new URI(contentLocation1)), Constants.DOT_GIT));
+		Repository db1 = getRepositoryForContentLocation(contentLocation1);
 		ObjectId master = db1.resolve(Constants.MASTER);
 		ObjectId originMaster = db1.resolve(Constants.R_REMOTES + Constants.DEFAULT_REMOTE_NAME + '/' + Constants.MASTER);
 		Iterable<RevCommit> commits = git.log().addRange(master, originMaster).call();
