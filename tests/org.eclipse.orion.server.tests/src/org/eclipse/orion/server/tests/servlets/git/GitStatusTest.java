@@ -936,7 +936,7 @@ public class GitStatusTest extends GitTest {
 		assertNotNull(gitSection);
 		String commit = gitSection.getString(GitConstants.KEY_COMMIT);
 		assertNotNull(commit);
-		WebRequest request = GitCommitTest.getGetGitCommitRequest(commit);
+		WebRequest request = GitCommitTest.getGetGitCommitRequest(commit, true);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("Invalid file content", expectedFileContent, response.getText());

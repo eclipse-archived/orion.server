@@ -13,9 +13,7 @@ package org.eclipse.orion.server.tests.servlets.git;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringBufferInputStream;
@@ -23,7 +21,6 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
@@ -31,7 +28,6 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
@@ -103,7 +99,7 @@ public class GitFetchTest extends GitTest {
 		assertNotNull(remoteLocation);
 
 		// get remote details
-		JSONObject details = getRemoteBranch(remoteLocation);
+		JSONObject details = GitRemoteTest.getRemoteBranch(remoteLocation);
 		String refId = details.getString(ProtocolConstants.KEY_ID);
 		String remoteBranchLocation = details.getString(ProtocolConstants.KEY_LOCATION);
 
@@ -113,7 +109,7 @@ public class GitFetchTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// get remote details again
-		String newRefId = getRemoteBranch(remoteLocation).getString(ProtocolConstants.KEY_ID);
+		String newRefId = GitRemoteTest.getRemoteBranch(remoteLocation).getString(ProtocolConstants.KEY_ID);
 		// nothing new
 		assertEquals(refId, newRefId);
 	}
@@ -213,7 +209,7 @@ public class GitFetchTest extends GitTest {
 		assertNotNull(remoteLocation1);
 
 		// clone1: get remote details
-		JSONObject details = getRemoteBranch(remoteLocation1);
+		JSONObject details = GitRemoteTest.getRemoteBranch(remoteLocation1);
 		String refId1 = details.getString(ProtocolConstants.KEY_ID);
 		String remoteBranchLocation1 = details.getString(ProtocolConstants.KEY_LOCATION);
 
@@ -234,7 +230,7 @@ public class GitFetchTest extends GitTest {
 
 		// clone2: push
 		// TODO: replace with REST API for git push once bug 339115 is fixed
-		FileRepository db2 = new FileRepository(new File(URIUtil.toFile(new URI(contentLocation2)), Constants.DOT_GIT));
+		Repository db2 = getRepositoryForContentLocation(contentLocation2);
 		Git git = new Git(db2);
 		git.push().call();
 
@@ -244,7 +240,7 @@ public class GitFetchTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone1: get remote details again
-		String newRefId1 = getRemoteBranch(remoteLocation1).getString(ProtocolConstants.KEY_ID);
+		String newRefId1 = GitRemoteTest.getRemoteBranch(remoteLocation1).getString(ProtocolConstants.KEY_ID);
 		// an incoming commit
 		assertFalse(refId1.equals(newRefId1));
 
@@ -261,27 +257,6 @@ public class GitFetchTest extends GitTest {
 		}
 		// a single incoming commit
 		assertEquals(1, c);
-	}
-
-	private JSONObject getRemoteBranch(String remoteLocation) throws IOException, SAXException, JSONException {
-		WebRequest request = GitRemoteTest.getGetGitRemoteRequest(remoteLocation);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject remote = new JSONObject(response.getText());
-		assertNotNull(remote);
-		assertEquals(Constants.DEFAULT_REMOTE_NAME, remote.getString(ProtocolConstants.KEY_NAME));
-		assertNotNull(remote.getString(ProtocolConstants.KEY_LOCATION));
-		JSONArray refsArray = remote.getJSONArray(ProtocolConstants.KEY_CHILDREN);
-		assertEquals(1, refsArray.length());
-		JSONObject ref = refsArray.getJSONObject(0);
-		assertNotNull(ref);
-		assertEquals(Constants.R_REMOTES + Constants.DEFAULT_REMOTE_NAME + "/" + Constants.MASTER, ref.getString(ProtocolConstants.KEY_NAME));
-		String newRefId = ref.getString(ProtocolConstants.KEY_ID);
-		assertNotNull(newRefId);
-		assertTrue(ObjectId.isId(newRefId));
-		String remoteBranchLocation = ref.getString(ProtocolConstants.KEY_LOCATION);
-		assertNotNull(remoteBranchLocation);
-		return ref;
 	}
 
 	private static WebRequest getPostGitRemoteRequest(String location, boolean fetch) throws JSONException {

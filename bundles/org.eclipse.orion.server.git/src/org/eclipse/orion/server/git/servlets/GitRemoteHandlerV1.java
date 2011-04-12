@@ -99,6 +99,9 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 							o.put(ProtocolConstants.KEY_NAME, name);
 							o.put(ProtocolConstants.KEY_ID, ref.getObjectId().name());
 							o.put(ProtocolConstants.KEY_LOCATION, baseToRemoteLocation(baseLocation, 3, name.substring(Constants.R_REMOTES.length())));
+							// see bug 342602
+							// o.put(GitConstants.KEY_COMMIT, baseToCommitLocation(baseLocation, name));
+							o.put(GitConstants.KEY_COMMIT, baseToCommitLocation(baseLocation, ref.getObjectId().name()));
 							children.put(o);
 						}
 					}
@@ -140,5 +143,13 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		IPath p = new Path(u.getPath());
 		p = p.uptoSegment(2).append(remoteName).addTrailingSeparator().append(p.removeFirstSegments(count));
 		return new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), p.toString(), u.getQuery(), u.getFragment());
+	}
+
+	private URI baseToCommitLocation(URI u, String ref) throws URISyntaxException {
+		String uriPath = u.getPath();
+		IPath path = new Path(uriPath);
+		IPath filePath = path.removeFirstSegments(3).makeAbsolute();
+		uriPath = GitServlet.GIT_URI + "/" + GitConstants.COMMIT_RESOURCE + "/" + ref + filePath.toString(); //$NON-NLS-1$ //$NON-NLS-2$
+		return new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), uriPath, u.getQuery(), u.getFragment());
 	}
 }

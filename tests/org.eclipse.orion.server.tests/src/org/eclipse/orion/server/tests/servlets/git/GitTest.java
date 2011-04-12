@@ -57,7 +57,7 @@ public abstract class GitTest extends FileSystemTest {
 
 	protected static final String GIT_SERVLET_LOCATION = GitServlet.GIT_URI + '/';
 
-	WebConversation webConversation;
+	static WebConversation webConversation;
 	File gitDir;
 	File testFile;
 	protected FileRepository db;
