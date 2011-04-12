@@ -561,6 +561,47 @@ public class GitStatusTest extends GitTest {
 		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
 		assertEquals(0, statusArray.length());
+
+		String stageAll = statusResponse.getString(GitConstants.KEY_INDEX);
+		assertNotNull(stageAll);
+		String commitAll = statusResponse.getString(GitConstants.KEY_COMMIT);
+		assertNotNull(commitAll);
+
+		request = GitAddTest.getPutGitIndexRequest(stageAll);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		request = getGetGitStatusRequest(gitStatusUri);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		statusResponse = new JSONObject(response.getText());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
+		assertEquals(2, statusArray.length());
+		child = getChildByName(statusArray, "test.txt");
+		assertChildLocation(child, "file change");
+		child = getChildByName(statusArray, "folder/folder.txt");
+		assertNotNull(child);
+		assertChildLocation(child, "folder change");
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
+		assertEquals(0, statusArray.length());
+
+		request = GitCommitTest.getPostGitCommitRequest(commitAll, "committing all changes", false);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		request = getGetGitStatusRequest(gitStatusUri);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		statusResponse = new JSONObject(response.getText());
+		assertStatusClean(statusResponse);
 	}
 
 	@Test
