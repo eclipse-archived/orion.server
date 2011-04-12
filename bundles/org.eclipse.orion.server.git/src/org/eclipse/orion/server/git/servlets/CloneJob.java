@@ -27,6 +27,7 @@ import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
 import org.eclipse.orion.server.useradmin.UserServiceHelper;
+import org.eclipse.osgi.util.NLS;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
@@ -53,7 +54,10 @@ public class CloneJob extends Job {
 	}
 
 	private TaskInfo createTask() {
-		return getTaskService().createTask();
+		TaskInfo info = getTaskService().createTask();
+		info.setMessage(NLS.bind("Cloning {0}...", clone.getUrl()));
+		getTaskService().updateTask(info);
+		return info;
 	}
 
 	private void doClone() throws IOException, CoreException {
@@ -69,6 +73,8 @@ public class CloneJob extends Job {
 		Git git = cc.call();
 
 		// Configure the clone, see Bug 337820
+		task.setMessage(NLS.bind("Configuring {0}...", clone.getUrl()));
+		updateTask();
 		doConfigureClone(git);
 	}
 
@@ -114,10 +120,8 @@ public class CloneJob extends Job {
 			String msg = "Error persisting clone state"; //$NON-NLS-1$
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 		}
-		task.setPercentComplete(100);
-		task.setRunning(false);
-		task.setMessage("Clone location: " + clone.getContentLocation());
-		task.setResultLocation(cloneLocation);
+		task.done(cloneLocation);
+		task.setMessage(NLS.bind("Repository cloned. You may now link to {0}", clone.getContentLocation()));
 		updateTask();
 		taskService = null;
 		GitActivator.getDefault().getBundleContext().ungetService(taskServiceRef);

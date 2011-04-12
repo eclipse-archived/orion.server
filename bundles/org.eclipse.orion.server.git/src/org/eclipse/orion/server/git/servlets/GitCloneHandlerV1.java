@@ -106,9 +106,11 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		job.schedule();
 		response.setStatus(HttpServletResponse.SC_CREATED);
 		TaskInfo task = job.getTask();
+		JSONObject result = task.toJSON();
 		//Not nice that the git service knows the location of the task servlet, but task service doesn't know this either
 		URI taskLocation = getURI(request).resolve("../../task/id/" + task.getTaskId()); //$NON-NLS-1$
-		response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation.toString());
+		result.put(ProtocolConstants.KEY_LOCATION, taskLocation.toString());
+		OrionServlet.writeJSONResponse(request, response, result);
 		return true;
 	}
 
