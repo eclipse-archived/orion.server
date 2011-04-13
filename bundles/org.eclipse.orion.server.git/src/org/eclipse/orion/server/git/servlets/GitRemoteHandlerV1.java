@@ -20,12 +20,10 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.servlets.*;
+import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
@@ -146,21 +144,25 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		if (fetch) {
 			// {remote}/{branch}/{file}/{path}
 			Path p = new Path(path);
-			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2));
-			Repository db = new FileRepository(gitDir);
-			Git git = new Git(db);
-			try {
-				// TODO: set branch to fetch -- p.segment(1)
-				git.fetch().setRemote(p.segment(0)).call();
-				return true;
-			} catch (GitAPIException e) {
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "An error occured when fetching.", e));
-			} catch (JGitInternalException e) {
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An internal error occured when fetching.", e));
-			}
+			FetchJob job = new FetchJob(p, request.getRemoteUser());
+			job.schedule();
+
+			TaskInfo task = job.getTask();
+			JSONObject result = task.toJSON();
+			URI taskLocation = createTaskLocation(OrionServlet.getURI(request), task.getTaskId());
+			result.put(ProtocolConstants.KEY_LOCATION, taskLocation);
+			response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation.toString());
+			OrionServlet.writeJSONResponse(request, response, result);
+			response.setStatus(HttpServletResponse.SC_CREATED);
+			return true;
+
 		} else {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Only Fetch:true is currently supported.", null));
 		}
+	}
+
+	private URI createTaskLocation(URI baseLocation, String taskId) throws URISyntaxException {
+		return new URI(baseLocation.getScheme(), baseLocation.getAuthority(), "/task/id/" + taskId, null, null);
 	}
 
 	private URI baseToRemoteLocation(URI u, int count, String remoteName) throws URISyntaxException {
