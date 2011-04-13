@@ -251,4 +251,22 @@ public class ProtocolConstants {
 	 */
 	public static final String KEY_ATTRIBUTE_SYMLINK = "SymLink"; //$NON-NLS-1$
 
+	/**
+	 * JSON representation key for a server host attribute. The value's data
+	 * type is a String.
+	 */
+	public static final String KEY_HOST = "Host"; //$NON-NLS-1$
+
+	/**
+	 * JSON representation key for a passphrase attribute. The value's data
+	 * type is a String.
+	 */
+	public static final String KEY_PASSPHRASE = "Passphrase"; //$NON-NLS-1$
+
+	/**
+	 * JSON representation key for a server port attribute. The value's data
+	 * type is an Integer.
+	 */
+	public static final String KEY_PORT = null;
+
 }
