@@ -77,13 +77,13 @@ public class FetchJob extends Job {
 		try {
 			doFetch();
 		} catch (IOException e) {
-			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error cloning git repository", e); //$NON-NLS-1$
+			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error fetching git remote", e); //$NON-NLS-1$
 		} catch (CoreException e) {
 			return e.getStatus();
 		} catch (JGitInternalException e) {
-			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error cloning git repository", e); //$NON-NLS-1$
+			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error fetching git remote", e); //$NON-NLS-1$
 		} catch (InvalidRemoteException e) {
-			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error cloning git repository", e); //$NON-NLS-1$
+			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error fetching git remote", e); //$NON-NLS-1$
 		}
 
 		task.done("Fetching done");
