@@ -23,13 +23,13 @@ import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 
 /**
- * This class performs exports of files from the workspace.
+ * This class performs exports of files from the workspace to the servlet client
  */
-public class Export {
+public class ClientExport {
 
 	private final IPath sourcePath;
 
-	public Export(IPath path, ServletResourceHandler<IStatus> statusHandler) {
+	public ClientExport(IPath path, ServletResourceHandler<IStatus> statusHandler) {
 		this.sourcePath = path;
 		//		this.statusHandler = statusHandler;
 	}

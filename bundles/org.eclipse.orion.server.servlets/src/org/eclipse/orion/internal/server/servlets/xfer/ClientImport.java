@@ -33,9 +33,9 @@ import org.eclipse.osgi.util.NLS;
 import org.osgi.framework.FrameworkUtil;
 
 /**
- * Represents an import operation in progress.
+ * Represents an import from client operation in progress.
  */
-class Import {
+class ClientImport {
 
 	private static final String FILE_DATA = "xfer.data"; //$NON-NLS-1$
 	private static final String FILE_INDEX = "xfer.properties"; //$NON-NLS-1$
@@ -57,7 +57,7 @@ class Import {
 	 * Creates a new import. This may represent an import that has not yet started,
 	 * or one that is already underway.
 	 */
-	Import(String id, ServletResourceHandler<IStatus> servletResourceHandler) throws IOException {
+	ClientImport(String id, ServletResourceHandler<IStatus> servletResourceHandler) throws IOException {
 		this.id = id;
 		this.statusHandler = servletResourceHandler;
 		restore();
@@ -257,7 +257,7 @@ class Import {
 	}
 
 	private File getStorageDirectory() {
-		return FrameworkUtil.getBundle(Import.class).getDataFile("xfer/" + id); //$NON-NLS-1$
+		return FrameworkUtil.getBundle(ClientImport.class).getDataFile("xfer/" + id); //$NON-NLS-1$
 	}
 
 	/**

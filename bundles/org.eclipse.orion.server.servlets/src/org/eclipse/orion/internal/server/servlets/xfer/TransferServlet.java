@@ -11,6 +11,8 @@
 package org.eclipse.orion.internal.server.servlets.xfer;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -34,6 +36,14 @@ public class TransferServlet extends OrionServlet {
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		//initiating a new file transfer
 		traceRequest(req);
+		String optionString = req.getHeader(ProtocolConstants.HEADER_XFER_OPTIONS);
+		if (optionString == null)
+			optionString = ""; //$NON-NLS-1$
+		List<String> options = Arrays.asList(optionString.split(",")); //$NON-NLS-1$
+		if (options.contains("sftp")) { //$NON-NLS-1$
+			new SFTPImport(req, resp, getStatusHandler()).doImport();
+			return;
+		}
 		long length = -1;
 		try {
 			//a chunked upload indicates the length to be uploaded in future calls
@@ -46,9 +56,6 @@ public class TransferServlet extends OrionServlet {
 			handleException(resp, "Transfer request must indicate transfer size", e, HttpServletResponse.SC_BAD_REQUEST);
 			return;
 		}
-		String options = req.getHeader(ProtocolConstants.HEADER_XFER_OPTIONS);
-		if (options == null)
-			options = ""; //$NON-NLS-1$
 		boolean unzip = !options.contains("raw"); //$NON-NLS-1$
 		String fileName = req.getHeader(ProtocolConstants.HEADER_SLUG);
 		if (fileName == null && !unzip) {
@@ -58,11 +65,11 @@ public class TransferServlet extends OrionServlet {
 		String pathInfo = req.getPathInfo();
 		IPath path = pathInfo == null ? Path.ROOT : new Path(pathInfo);
 		String uuid = new UniversalUniqueIdentifier().toBase64String();
-		Import newImport = new Import(uuid, getStatusHandler());
+		ClientImport newImport = new ClientImport(uuid, getStatusHandler());
 		newImport.setPath(path);
 		newImport.setLength(length);
 		newImport.setFileName(fileName);
-		newImport.setOptions(options);
+		newImport.setOptions(optionString);
 		newImport.doPost(req, resp);
 	}
 
@@ -73,7 +80,7 @@ public class TransferServlet extends OrionServlet {
 		IPath path = pathInfo == null ? Path.ROOT : new Path(pathInfo);
 		if (path.segmentCount() >= 2) {
 			if ("export".equals(path.segment(0)) && "zip".equals(path.getFileExtension())) { //$NON-NLS-1$ //$NON-NLS-2$
-				Export export = new Export(path.removeFirstSegments(1).removeFileExtension(), getStatusHandler());
+				ClientExport export = new ClientExport(path.removeFirstSegments(1).removeFileExtension(), getStatusHandler());
 				export.doExport(req, resp);
 				return;
 			}
@@ -90,7 +97,7 @@ public class TransferServlet extends OrionServlet {
 		//format is /xfer/import/<uuid>
 		if (path.segmentCount() == 2) {
 			id = path.segment(1);
-			Import importOp = new Import(id, getStatusHandler());
+			ClientImport importOp = new ClientImport(id, getStatusHandler());
 			importOp.doPut(req, resp);
 			return;
 		}
