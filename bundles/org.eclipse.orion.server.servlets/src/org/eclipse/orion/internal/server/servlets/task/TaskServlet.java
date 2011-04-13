@@ -64,7 +64,7 @@ public class TaskServlet extends OrionServlet {
 		}
 		JSONObject result = task.toJSON();
 		try {
-			if (result.optString(ProtocolConstants.KEY_LOCATION, "").isEmpty())
+			if (result.optString(ProtocolConstants.KEY_LOCATION, "").equals(""))
 				result.put(ProtocolConstants.KEY_LOCATION, getURI(req).toString());
 		} catch (JSONException e) {
 			//cannot happen
