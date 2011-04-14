@@ -165,7 +165,6 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			OrionServlet.writeJSONResponse(request, response, result);
 			response.setStatus(HttpServletResponse.SC_CREATED);
 			return true;
-
 		} else {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Only Fetch:true is currently supported.", null));
 		}

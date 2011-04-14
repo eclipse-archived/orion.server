@@ -151,7 +151,7 @@ public class GitCloneTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(taskLocation);
-		String cloneLocation = waitForCloneCompletion(taskLocation);
+		String cloneLocation = waitForTaskCompletion(taskLocation);
 
 		//validate the clone metadata
 		response = webConversation.getResponse(getCloneRequest(cloneLocation));
@@ -174,7 +174,7 @@ public class GitCloneTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(taskLocation);
-		String cloneLocation = waitForCloneCompletion(taskLocation);
+		String cloneLocation = waitForTaskCompletion(taskLocation);
 
 		//validate the clone metadata
 		response = webConversation.getResponse(getCloneRequest(cloneLocation));
@@ -230,7 +230,7 @@ public class GitCloneTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(taskLocation);
-		String cloneLocation = waitForCloneCompletion(taskLocation);
+		String cloneLocation = waitForTaskCompletion(taskLocation);
 
 		//validate the clone metadata
 		response = webConversation.getResponse(getCloneRequest(cloneLocation));
@@ -516,7 +516,7 @@ public class GitCloneTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(taskLocation);
-		String cloneLocation = waitForCloneCompletion(taskLocation);
+		String cloneLocation = waitForTaskCompletion(taskLocation);
 
 		// validate the clone metadata
 		response = webConversation.getResponse(getCloneRequest(cloneLocation));

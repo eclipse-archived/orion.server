@@ -756,7 +756,7 @@ public class GitStatusTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(taskLocation);
-		String cloneLocation = waitForCloneCompletion(taskLocation);
+		String cloneLocation = waitForTaskCompletion(taskLocation);
 
 		response = webConversation.getResponse(getCloneRequest(cloneLocation));
 		JSONObject clone = new JSONObject(response.getText());
@@ -796,7 +796,7 @@ public class GitStatusTest extends GitTest {
 
 		taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(taskLocation);
-		cloneLocation = waitForCloneCompletion(taskLocation);
+		cloneLocation = waitForTaskCompletion(taskLocation);
 
 		response = webConversation.getResponse(getCloneRequest(cloneLocation));
 		clone = new JSONObject(response.getText());

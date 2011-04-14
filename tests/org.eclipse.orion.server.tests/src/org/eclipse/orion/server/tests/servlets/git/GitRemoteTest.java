@@ -101,7 +101,7 @@ public class GitRemoteTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(taskLocation);
-		String cloneLocation = waitForCloneCompletion(taskLocation);
+		String cloneLocation = waitForTaskCompletion(taskLocation);
 
 		//validate the clone metadata
 		response = webConversation.getResponse(getCloneRequest(cloneLocation));
@@ -157,7 +157,7 @@ public class GitRemoteTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(taskLocation);
-		String cloneLocation = waitForCloneCompletion(taskLocation);
+		String cloneLocation = waitForTaskCompletion(taskLocation);
 
 		//validate the clone metadata
 		response = webConversation.getResponse(getCloneRequest(cloneLocation));
@@ -218,7 +218,7 @@ public class GitRemoteTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(taskLocation);
-		String cloneLocation = waitForCloneCompletion(taskLocation);
+		String cloneLocation = waitForTaskCompletion(taskLocation);
 
 		response = webConversation.getResponse(getCloneRequest(cloneLocation));
 		String location = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
@@ -274,7 +274,7 @@ public class GitRemoteTest extends GitTest {
 		request = GitCommitTest.getGetGitCommitRequest(commitLocation, false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		// TODO replace with tests methods from GitLogTest
+		// TODO replace with tests methods from GitLogTest, bug 340051
 		JSONArray log = new JSONArray(response.getText());
 		assertEquals(1, log.length());
 
@@ -311,7 +311,7 @@ public class GitRemoteTest extends GitTest {
 		request = GitCommitTest.getGetGitCommitRequest(commitLocation, false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		// TODO replace with tests methods from GitLogTest
+		// TODO replace with tests methods from GitLogTest, bug 340051
 		log = new JSONArray(response.getText());
 		assertEquals(2, log.length());
 
@@ -330,7 +330,7 @@ public class GitRemoteTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(taskLocation);
-		String cloneLocation = waitForCloneCompletion(taskLocation);
+		String cloneLocation = waitForTaskCompletion(taskLocation);
 
 		// clone: validate the clone metadata
 		response = webConversation.getResponse(getCloneRequest(cloneLocation));
