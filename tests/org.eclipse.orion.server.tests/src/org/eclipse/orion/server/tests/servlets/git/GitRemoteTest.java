@@ -432,7 +432,7 @@ public class GitRemoteTest extends GitTest {
 		return ref;
 	}
 
-	private void ensureOnBranch(Git git, String branch) {
+	static void ensureOnBranch(Git git, String branch) {
 		// ensure the branch exists locally
 		List<Ref> list = git.branchList().call();
 		for (Ref ref : list) {

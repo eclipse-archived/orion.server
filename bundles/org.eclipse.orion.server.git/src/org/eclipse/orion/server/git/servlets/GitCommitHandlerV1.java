@@ -195,6 +195,13 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			return false; // TODO: or an error response code, 405?
 		db = new FileRepository(gitDir);
 
+		JSONObject requestObject = OrionServlet.readJSONRequest(request);
+		String commitToMerge = requestObject.optString(GitConstants.KEY_MERGE, null);
+		if (commitToMerge != null) {
+			return merge(request, response, db, commitToMerge);
+		}
+		// continue with commit
+
 		if (path.segmentCount() > 3) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_IMPLEMENTED, "Committing by path is not yet supported.", null));
 		}
@@ -205,13 +212,12 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 		}
 
-		JSONObject toReset = OrionServlet.readJSONRequest(request);
-		String message = toReset.optString(GitConstants.KEY_COMMIT_MESSAGE, null);
+		String message = requestObject.optString(GitConstants.KEY_COMMIT_MESSAGE, null);
 		if (message == null || message.isEmpty()) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Missing commit message.", null));
 		}
 
-		boolean amend = Boolean.parseBoolean(toReset.optString(GitConstants.KEY_COMMIT_AMEND, null));
+		boolean amend = Boolean.parseBoolean(requestObject.optString(GitConstants.KEY_COMMIT_AMEND, null));
 
 		Git git = new Git(db);
 		// "git commit [--amend] -m '{message}' [-a|{path}]"
@@ -222,6 +228,19 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "An error occured when commiting.", e));
 		} catch (JGitInternalException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An internal error occured when commiting.", e));
+		}
+	}
+
+	private boolean merge(HttpServletRequest request, HttpServletResponse response, Repository db, String commitToMerge) throws ServletException {
+		try {
+			ObjectId objectId = db.resolve(commitToMerge);
+			Git git = new Git(db);
+			git.merge().include(objectId).call();
+			return true;
+		} catch (IOException e) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when merging.", e));
+		} catch (GitAPIException e) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when merging.", e));
 		}
 	}
 }

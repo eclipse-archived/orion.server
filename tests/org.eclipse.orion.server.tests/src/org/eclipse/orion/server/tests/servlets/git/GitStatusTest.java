@@ -954,11 +954,11 @@ public class GitStatusTest extends GitTest {
 		assertEquals("Invalid file content", expectedFileContent, response.getText());
 	}
 
-	private static JSONObject getChildByName(JSONArray array, String value) throws JSONException {
+	static JSONObject getChildByName(JSONArray array, String value) throws JSONException {
 		return getChildByKey(array, ProtocolConstants.KEY_NAME, value);
 	}
 
-	private static JSONObject getChildByKey(JSONArray array, String key, String value) throws JSONException {
+	static JSONObject getChildByKey(JSONArray array, String key, String value) throws JSONException {
 		List<JSONObject> children = new ArrayList<JSONObject>();
 		for (int i = 0; i < array.length(); i++) {
 			children.add(array.getJSONObject(i));
