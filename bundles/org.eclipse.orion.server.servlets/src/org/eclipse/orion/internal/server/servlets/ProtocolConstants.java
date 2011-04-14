@@ -267,6 +267,12 @@ public class ProtocolConstants {
 	 * JSON representation key for a server port attribute. The value's data
 	 * type is an Integer.
 	 */
-	public static final String KEY_PORT = null;
+	public static final String KEY_PORT = "Port"; //$NON-NLS-1$
+
+	/**
+	 * JSON representation key for a server path attribute. The value's data
+	 * type is an Integer.
+	 */
+	public static final String KEY_PATH = "Path"; //$NON-NLS-1$
 
 }
