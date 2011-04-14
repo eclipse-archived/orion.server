@@ -45,6 +45,8 @@ public class GitConstants {
 
 	public static final String KEY_REMOTE = "RemoteLocation"; //$NON-NLS-1$
 
+	public static final String KEY_HEAD = "HeadLocation"; //$NON-NLS-1$
+
 	public static final String KEY_URL = "GitUrl"; //$NON-NLS-1$
 
 	public static final String CLONE_FOLDER = ".gitclone"; //$NON-NLS-1$

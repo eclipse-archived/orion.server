@@ -131,11 +131,15 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 				if (configName.equals(p.segment(0))) {
 					for (Entry<String, Ref> refEntry : db.getRefDatabase().getRefs(Constants.R_REMOTES).entrySet()) {
 						Ref ref = refEntry.getValue();
-						if (!ref.isSymbolic() && ref.getName().equals(Constants.R_REMOTES + p.uptoSegment(2).removeTrailingSeparator())) {
+						String name = ref.getName();
+						if (!ref.isSymbolic() && name.equals(Constants.R_REMOTES + p.uptoSegment(2).removeTrailingSeparator())) {
 							JSONObject result = new JSONObject();
+							result.put(ProtocolConstants.KEY_ID, ref.getObjectId().name());
 							// see bug 342602
 							// result.put(GitConstants.KEY_COMMIT, baseToCommitLocation(baseLocation, name));
+							result.put(ProtocolConstants.KEY_LOCATION, baseToRemoteLocation(baseLocation, 4, Repository.shortenRefName(name)));
 							result.put(GitConstants.KEY_COMMIT, baseToCommitLocation(baseLocation, 4, ref.getObjectId().name()));
+							result.put(GitConstants.KEY_HEAD, baseToCommitLocation(baseLocation, 4, Constants.HEAD));
 							OrionServlet.writeJSONResponse(request, response, result);
 							return true;
 						}
