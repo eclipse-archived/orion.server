@@ -94,4 +94,6 @@ public class GitConstants {
 	public static final String KEY_AUTHOR_NAME = "AuthorName"; //$NON-NLS-1$
 
 	public static final String KEY_FETCH = "Fetch"; //$NON-NLS-1$
+
+	public static final String KEY_MERGE = "Merge"; //$NON-NLS-1$
 }

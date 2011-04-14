@@ -53,7 +53,7 @@ public class GitFetchTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(taskLocation);
-		String cloneLocation = waitForCloneCompletion(taskLocation);
+		String cloneLocation = waitForTaskCompletion(taskLocation);
 
 		//validate the clone metadata
 		response = webConversation.getResponse(getCloneRequest(cloneLocation));
@@ -99,17 +99,20 @@ public class GitFetchTest extends GitTest {
 		assertNotNull(remoteLocation);
 
 		// get remote details
-		JSONObject details = GitRemoteTest.getRemoteBranch(remoteLocation, 1, 0);
+		JSONObject details = GitRemoteTest.getRemoteBranch(remoteLocation, 1, 0, Constants.MASTER);
 		String refId = details.getString(ProtocolConstants.KEY_ID);
 		String remoteBranchLocation = details.getString(ProtocolConstants.KEY_LOCATION);
 
 		// fetch
 		request = getPostGitRemoteRequest(remoteBranchLocation, true);
 		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		assertNotNull(taskLocation);
+		waitForTaskCompletion(taskLocation);
 
 		// get remote details again
-		String newRefId = GitRemoteTest.getRemoteBranch(remoteLocation, 1, 0).getString(ProtocolConstants.KEY_ID);
+		String newRefId = GitRemoteTest.getRemoteBranch(remoteLocation, 1, 0, Constants.MASTER).getString(ProtocolConstants.KEY_ID);
 		// nothing new
 		assertEquals(refId, newRefId);
 	}
@@ -126,7 +129,7 @@ public class GitFetchTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(taskLocation);
-		String cloneLocation = waitForCloneCompletion(taskLocation);
+		String cloneLocation = waitForTaskCompletion(taskLocation);
 
 		//validate the clone metadata
 		response = webConversation.getResponse(getCloneRequest(cloneLocation));
@@ -161,7 +164,7 @@ public class GitFetchTest extends GitTest {
 
 		taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(taskLocation);
-		cloneLocation = waitForCloneCompletion(taskLocation);
+		cloneLocation = waitForTaskCompletion(taskLocation);
 
 		//validate the clone metadata
 		response = webConversation.getResponse(getCloneRequest(cloneLocation));
@@ -209,7 +212,7 @@ public class GitFetchTest extends GitTest {
 		assertNotNull(remoteLocation1);
 
 		// clone1: get remote details
-		JSONObject details = GitRemoteTest.getRemoteBranch(remoteLocation1, 1, 0);
+		JSONObject details = GitRemoteTest.getRemoteBranch(remoteLocation1, 1, 0, Constants.MASTER);
 		String refId1 = details.getString(ProtocolConstants.KEY_ID);
 		String remoteBranchLocation1 = details.getString(ProtocolConstants.KEY_LOCATION);
 
@@ -237,15 +240,18 @@ public class GitFetchTest extends GitTest {
 		// clone1: fetch
 		request = getPostGitRemoteRequest(remoteBranchLocation1, true);
 		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		assertNotNull(taskLocation);
+		waitForTaskCompletion(taskLocation);
 
 		// clone1: get remote details again
-		String newRefId1 = GitRemoteTest.getRemoteBranch(remoteLocation1, 1, 0).getString(ProtocolConstants.KEY_ID);
+		String newRefId1 = GitRemoteTest.getRemoteBranch(remoteLocation1, 1, 0, Constants.MASTER).getString(ProtocolConstants.KEY_ID);
 		// an incoming commit
 		assertFalse(refId1.equals(newRefId1));
 
 		// clone1: log master..origin/master
-		// TODO replace with tests methods from GitLogTest
+		// TODO replace with tests methods from GitLogTest, bug 340051
 		Repository db1 = getRepositoryForContentLocation(contentLocation1);
 		ObjectId master = db1.resolve(Constants.MASTER);
 		ObjectId originMaster = db1.resolve(Constants.R_REMOTES + Constants.DEFAULT_REMOTE_NAME + '/' + Constants.MASTER);
@@ -259,7 +265,7 @@ public class GitFetchTest extends GitTest {
 		assertEquals(1, c);
 	}
 
-	private static WebRequest getPostGitRemoteRequest(String location, boolean fetch) throws JSONException {
+	static WebRequest getPostGitRemoteRequest(String location, boolean fetch) throws JSONException {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;

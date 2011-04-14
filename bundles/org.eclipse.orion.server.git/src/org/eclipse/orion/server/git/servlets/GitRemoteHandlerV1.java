@@ -14,18 +14,16 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.servlets.*;
+import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
@@ -92,19 +90,29 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 					result.put(ProtocolConstants.KEY_LOCATION, baseToRemoteLocation(baseLocation, 3, configName));
 
 					JSONArray children = new JSONArray();
+					List<Ref> refs = new ArrayList<Ref>();
 					for (Entry<String, Ref> refEntry : db.getRefDatabase().getRefs(Constants.R_REMOTES).entrySet()) {
 						if (!refEntry.getValue().isSymbolic()) {
 							Ref ref = refEntry.getValue();
-							JSONObject o = new JSONObject();
 							String name = ref.getName();
-							o.put(ProtocolConstants.KEY_NAME, name);
-							o.put(ProtocolConstants.KEY_ID, ref.getObjectId().name());
-							// see bug 342602
-							// o.put(GitConstants.KEY_COMMIT, baseToCommitLocation(baseLocation, name));
-							o.put(ProtocolConstants.KEY_LOCATION, baseToRemoteLocation(baseLocation, 3, name.substring(Constants.R_REMOTES.length())));
-							o.put(GitConstants.KEY_COMMIT, baseToCommitLocation(baseLocation, 3, ref.getObjectId().name()));
-							children.put(o);
+							name = Repository.shortenRefName(name).substring(Constants.DEFAULT_REMOTE_NAME.length() + 1);
+							if (db.getBranch().equals(name)) {
+								refs.add(0, ref);
+							} else {
+								refs.add(ref);
+							}
 						}
+					}
+					for (Ref ref : refs) {
+						JSONObject o = new JSONObject();
+						String name = ref.getName();
+						o.put(ProtocolConstants.KEY_NAME, name);
+						o.put(ProtocolConstants.KEY_ID, ref.getObjectId().name());
+						// see bug 342602
+						// o.put(GitConstants.KEY_COMMIT, baseToCommitLocation(baseLocation, name));
+						o.put(ProtocolConstants.KEY_LOCATION, baseToRemoteLocation(baseLocation, 3, Repository.shortenRefName(name)));
+						o.put(GitConstants.KEY_COMMIT, baseToCommitLocation(baseLocation, 3, ref.getObjectId().name()));
+						children.put(o);
 					}
 					result.put(ProtocolConstants.KEY_CHILDREN, children);
 					OrionServlet.writeJSONResponse(request, response, result);
@@ -146,21 +154,24 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		if (fetch) {
 			// {remote}/{branch}/{file}/{path}
 			Path p = new Path(path);
-			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2));
-			Repository db = new FileRepository(gitDir);
-			Git git = new Git(db);
-			try {
-				// TODO: set branch to fetch -- p.segment(1)
-				git.fetch().setRemote(p.segment(0)).call();
-				return true;
-			} catch (GitAPIException e) {
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "An error occured when fetching.", e));
-			} catch (JGitInternalException e) {
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An internal error occured when fetching.", e));
-			}
+			FetchJob job = new FetchJob(p, request.getRemoteUser());
+			job.schedule();
+
+			TaskInfo task = job.getTask();
+			JSONObject result = task.toJSON();
+			URI taskLocation = createTaskLocation(OrionServlet.getURI(request), task.getTaskId());
+			result.put(ProtocolConstants.KEY_LOCATION, taskLocation);
+			response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation.toString());
+			OrionServlet.writeJSONResponse(request, response, result);
+			response.setStatus(HttpServletResponse.SC_CREATED);
+			return true;
 		} else {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Only Fetch:true is currently supported.", null));
 		}
+	}
+
+	private URI createTaskLocation(URI baseLocation, String taskId) throws URISyntaxException {
+		return new URI(baseLocation.getScheme(), baseLocation.getAuthority(), "/task/id/" + taskId, null, null);
 	}
 
 	private URI baseToRemoteLocation(URI u, int count, String remoteName) throws URISyntaxException {

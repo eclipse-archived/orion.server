@@ -756,7 +756,7 @@ public class GitStatusTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(taskLocation);
-		String cloneLocation = waitForCloneCompletion(taskLocation);
+		String cloneLocation = waitForTaskCompletion(taskLocation);
 
 		response = webConversation.getResponse(getCloneRequest(cloneLocation));
 		JSONObject clone = new JSONObject(response.getText());
@@ -796,7 +796,7 @@ public class GitStatusTest extends GitTest {
 
 		taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(taskLocation);
-		cloneLocation = waitForCloneCompletion(taskLocation);
+		cloneLocation = waitForTaskCompletion(taskLocation);
 
 		response = webConversation.getResponse(getCloneRequest(cloneLocation));
 		clone = new JSONObject(response.getText());
@@ -954,11 +954,11 @@ public class GitStatusTest extends GitTest {
 		assertEquals("Invalid file content", expectedFileContent, response.getText());
 	}
 
-	private static JSONObject getChildByName(JSONArray array, String value) throws JSONException {
+	static JSONObject getChildByName(JSONArray array, String value) throws JSONException {
 		return getChildByKey(array, ProtocolConstants.KEY_NAME, value);
 	}
 
-	private static JSONObject getChildByKey(JSONArray array, String key, String value) throws JSONException {
+	static JSONObject getChildByKey(JSONArray array, String key, String value) throws JSONException {
 		List<JSONObject> children = new ArrayList<JSONObject>();
 		for (int i = 0; i < array.length(); i++) {
 			children.add(array.getJSONObject(i));

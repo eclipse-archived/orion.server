@@ -15,15 +15,24 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.*;
-import java.io.*;
-import java.net.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringBufferInputStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
-import org.eclipse.core.runtime.*;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.core.tests.harness.FileSystemHelper;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.RepositoryCache;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.jgit.util.FileUtils;
@@ -33,8 +42,16 @@ import org.eclipse.orion.server.git.servlets.GitServlet;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.xml.sax.SAXException;
+
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 public abstract class GitTest extends FileSystemTest {
 
@@ -113,10 +130,10 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	/**
-	 * A clone operation is long running. This method waits until the remote clone
-	 * operation has completed, and then returns the location of the resulting clone resource.
+	 * A clone or fetch are long running operations. This method waits until the
+	 * given task has completed, and then returns the location from the status object.
 	 */
-	protected String waitForCloneCompletion(String taskLocation) throws IOException, SAXException, JSONException {
+	protected String waitForTaskCompletion(String taskLocation) throws IOException, SAXException, JSONException {
 		JSONObject status = null;
 		long start = System.currentTimeMillis();
 		while (true) {
@@ -128,7 +145,7 @@ public abstract class GitTest extends FileSystemTest {
 				break;
 			//timeout after reasonable time to avoid hanging tests
 			if (System.currentTimeMillis() - start > 10000)
-				assertTrue("Clone operation took too long", false);
+				assertTrue("The operation took too long", false);
 			try {
 				Thread.sleep(200);
 			} catch (InterruptedException e) {
