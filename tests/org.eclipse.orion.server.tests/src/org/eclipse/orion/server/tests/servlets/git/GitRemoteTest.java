@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.server.tests.servlets.git;
 
+import static junit.framework.Assert.fail;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -21,15 +22,18 @@ import java.io.StringBufferInputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.ListBranchCommand.ListMode;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -140,7 +144,7 @@ public class GitRemoteTest extends GitTest {
 		String remoteLocation = remote.getString(ProtocolConstants.KEY_LOCATION);
 		assertNotNull(remoteLocation);
 
-		JSONObject remoteBranch = getRemoteBranch(remoteLocation, 1, 0);
+		JSONObject remoteBranch = getRemoteBranch(remoteLocation, 1, 0, Constants.MASTER);
 		assertNotNull(remoteBranch);
 	}
 
@@ -258,7 +262,7 @@ public class GitRemoteTest extends GitTest {
 		String remoteLocation = remote.getString(ProtocolConstants.KEY_LOCATION);
 		assertNotNull(remoteLocation);
 
-		JSONObject remoteBranch = getRemoteBranch(remoteLocation, 1, 0);
+		JSONObject remoteBranch = getRemoteBranch(remoteLocation, 1, 0, Constants.MASTER);
 		assertNotNull(remoteBranch);
 		String remoteBranchLocation = remoteBranch.getString(ProtocolConstants.KEY_LOCATION);
 		request = getGetGitRemoteRequest(remoteBranchLocation);
@@ -295,7 +299,7 @@ public class GitRemoteTest extends GitTest {
 		Git git = new Git(db2);
 		git.push().call();
 
-		remoteBranch = getRemoteBranch(remoteLocation, 1, 0);
+		remoteBranch = getRemoteBranch(remoteLocation, 1, 0, Constants.MASTER);
 		assertNotNull(remoteBranch);
 		remoteBranchLocation = remoteBranch.getString(ProtocolConstants.KEY_LOCATION);
 		request = getGetGitRemoteRequest(remoteBranchLocation);
@@ -314,6 +318,85 @@ public class GitRemoteTest extends GitTest {
 		// TODO: test pushing change from another repo and fetch here
 	}
 
+	@Test
+	public void testGetRemoteBranches() throws JSONException, IOException, SAXException, URISyntaxException, JGitInternalException, GitAPIException {
+		URI workspaceLocation = createWorkspace(getMethodName());
+
+		// clone: create
+		URIish uri = new URIish(gitDir.toURL());
+		String name = null;
+		WebRequest request = GitCloneTest.getPostGitCloneRequest(uri, name);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		assertNotNull(taskLocation);
+		String cloneLocation = waitForCloneCompletion(taskLocation);
+
+		// clone: validate the clone metadata
+		response = webConversation.getResponse(getCloneRequest(cloneLocation));
+		JSONObject clone = new JSONObject(response.getText());
+		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		assertNotNull(contentLocation);
+
+		// clone: link
+		ServletTestingSupport.allowedPrefixes = contentLocation;
+		String projectName = getMethodName();
+		JSONObject body = new JSONObject();
+		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, contentLocation);
+		InputStream in = new StringBufferInputStream(body.toString());
+		// http://<host>/workspace/<workspaceId>/
+		request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
+		if (projectName != null)
+			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		JSONObject project = new JSONObject(response.getText());
+		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+		String gitRemoteUri = gitSection.optString(GitConstants.KEY_REMOTE, null);
+		assertNotNull(gitRemoteUri);
+
+		FileRepository db1 = new FileRepository(new File(URIUtil.toFile(new URI(contentLocation)), Constants.DOT_GIT));
+		Git git = new Git(db1);
+		int localBefore = git.branchList().call().size();
+		int remoteBefore = git.branchList().setListMode(ListMode.REMOTE).call().size();
+		int allBefore = git.branchList().setListMode(ListMode.ALL).call().size();
+		Ref aBranch = git.branchCreate().setName("a").call();
+		assertEquals(Constants.R_HEADS + "a", aBranch.getName());
+
+		assertEquals(1, git.branchList().call().size() - localBefore);
+		assertEquals(0, git.branchList().setListMode(ListMode.REMOTE).call().size() - remoteBefore);
+		assertEquals(1, git.branchList().setListMode(ListMode.ALL).call().size() - allBefore);
+
+		git.push().setPushAll().call();
+
+		assertEquals(1, git.branchList().call().size() - localBefore);
+		assertEquals(1, git.branchList().setListMode(ListMode.REMOTE).call().size() - remoteBefore);
+		assertEquals(2, git.branchList().setListMode(ListMode.ALL).call().size() - allBefore);
+
+		request = getGetGitRemoteRequest(gitRemoteUri);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject remotes = new JSONObject(response.getText());
+		JSONArray remotesArray = remotes.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		assertEquals(1, remotesArray.length());
+		JSONObject remote = remotesArray.getJSONObject(0);
+		assertNotNull(remote);
+		assertEquals(Constants.DEFAULT_REMOTE_NAME, remote.getString(ProtocolConstants.KEY_NAME));
+		String remoteLocation = remote.getString(ProtocolConstants.KEY_LOCATION);
+		assertNotNull(remoteLocation);
+
+		ensureOnBranch(git, Constants.MASTER);
+		JSONObject remoteBranch = getRemoteBranch(remoteLocation, 2, 0, Constants.MASTER);
+		assertNotNull(remoteBranch);
+
+		ensureOnBranch(git, "a");
+		remoteBranch = getRemoteBranch(remoteLocation, 2, 0, "a");
+		assertNotNull(remoteBranch);
+	}
+
 	static WebRequest getGetGitRemoteRequest(String location) {
 		String requestURI;
 		if (location.startsWith("http://"))
@@ -326,7 +409,7 @@ public class GitRemoteTest extends GitTest {
 		return request;
 	}
 
-	static JSONObject getRemoteBranch(String remoteLocation, int size, int i) throws IOException, SAXException, JSONException {
+	static JSONObject getRemoteBranch(String remoteLocation, int size, int i, String name) throws IOException, SAXException, JSONException {
 		WebRequest request = GitRemoteTest.getGetGitRemoteRequest(remoteLocation);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
@@ -338,7 +421,7 @@ public class GitRemoteTest extends GitTest {
 		assertEquals(size, refsArray.length());
 		JSONObject ref = refsArray.getJSONObject(i);
 		assertNotNull(ref);
-		assertEquals(Constants.R_REMOTES + Constants.DEFAULT_REMOTE_NAME + "/" + Constants.MASTER, ref.getString(ProtocolConstants.KEY_NAME));
+		assertEquals(Constants.R_REMOTES + Constants.DEFAULT_REMOTE_NAME + "/" + name, ref.getString(ProtocolConstants.KEY_NAME));
 		String newRefId = ref.getString(ProtocolConstants.KEY_ID);
 		assertNotNull(newRefId);
 		assertTrue(ObjectId.isId(newRefId));
@@ -347,6 +430,24 @@ public class GitRemoteTest extends GitTest {
 		String commitLocation = ref.getString(GitConstants.KEY_COMMIT);
 		assertNotNull(commitLocation);
 		return ref;
+	}
+
+	private void ensureOnBranch(Git git, String branch) {
+		// ensure the branch exists locally
+		List<Ref> list = git.branchList().call();
+		for (Ref ref : list) {
+			if (ref.getName().equals(Constants.R_HEADS + branch)) {
+				try {
+					Ref r = git.checkout().setName(branch).call();
+					assertEquals(Constants.R_HEADS + branch, r.getName());
+					assertNotNull(git.getRepository().getRef(branch));
+					return;
+				} catch (Exception e) {
+					fail(e.getMessage());
+				}
+			}
+		}
+		fail("branch '" + branch + "' doesn't exist locally");
 	}
 
 }

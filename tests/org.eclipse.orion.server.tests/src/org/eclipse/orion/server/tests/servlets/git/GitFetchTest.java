@@ -99,7 +99,7 @@ public class GitFetchTest extends GitTest {
 		assertNotNull(remoteLocation);
 
 		// get remote details
-		JSONObject details = GitRemoteTest.getRemoteBranch(remoteLocation, 1, 0);
+		JSONObject details = GitRemoteTest.getRemoteBranch(remoteLocation, 1, 0, Constants.MASTER);
 		String refId = details.getString(ProtocolConstants.KEY_ID);
 		String remoteBranchLocation = details.getString(ProtocolConstants.KEY_LOCATION);
 
@@ -109,7 +109,7 @@ public class GitFetchTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// get remote details again
-		String newRefId = GitRemoteTest.getRemoteBranch(remoteLocation, 1, 0).getString(ProtocolConstants.KEY_ID);
+		String newRefId = GitRemoteTest.getRemoteBranch(remoteLocation, 1, 0, Constants.MASTER).getString(ProtocolConstants.KEY_ID);
 		// nothing new
 		assertEquals(refId, newRefId);
 	}
@@ -209,7 +209,7 @@ public class GitFetchTest extends GitTest {
 		assertNotNull(remoteLocation1);
 
 		// clone1: get remote details
-		JSONObject details = GitRemoteTest.getRemoteBranch(remoteLocation1, 1, 0);
+		JSONObject details = GitRemoteTest.getRemoteBranch(remoteLocation1, 1, 0, Constants.MASTER);
 		String refId1 = details.getString(ProtocolConstants.KEY_ID);
 		String remoteBranchLocation1 = details.getString(ProtocolConstants.KEY_LOCATION);
 
@@ -240,7 +240,7 @@ public class GitFetchTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone1: get remote details again
-		String newRefId1 = GitRemoteTest.getRemoteBranch(remoteLocation1, 1, 0).getString(ProtocolConstants.KEY_ID);
+		String newRefId1 = GitRemoteTest.getRemoteBranch(remoteLocation1, 1, 0, Constants.MASTER).getString(ProtocolConstants.KEY_ID);
 		// an incoming commit
 		assertFalse(refId1.equals(newRefId1));
 

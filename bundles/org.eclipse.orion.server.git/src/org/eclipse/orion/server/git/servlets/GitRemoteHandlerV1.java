@@ -14,8 +14,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -90,19 +90,29 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 					result.put(ProtocolConstants.KEY_LOCATION, baseToRemoteLocation(baseLocation, 3, configName));
 
 					JSONArray children = new JSONArray();
+					List<Ref> refs = new ArrayList<Ref>();
 					for (Entry<String, Ref> refEntry : db.getRefDatabase().getRefs(Constants.R_REMOTES).entrySet()) {
 						if (!refEntry.getValue().isSymbolic()) {
 							Ref ref = refEntry.getValue();
-							JSONObject o = new JSONObject();
 							String name = ref.getName();
-							o.put(ProtocolConstants.KEY_NAME, name);
-							o.put(ProtocolConstants.KEY_ID, ref.getObjectId().name());
-							// see bug 342602
-							// o.put(GitConstants.KEY_COMMIT, baseToCommitLocation(baseLocation, name));
-							o.put(ProtocolConstants.KEY_LOCATION, baseToRemoteLocation(baseLocation, 3, name.substring(Constants.R_REMOTES.length())));
-							o.put(GitConstants.KEY_COMMIT, baseToCommitLocation(baseLocation, 3, ref.getObjectId().name()));
-							children.put(o);
+							name = Repository.shortenRefName(name).substring(Constants.DEFAULT_REMOTE_NAME.length() + 1);
+							if (db.getBranch().equals(name)) {
+								refs.add(0, ref);
+							} else {
+								refs.add(ref);
+							}
 						}
+					}
+					for (Ref ref : refs) {
+						JSONObject o = new JSONObject();
+						String name = ref.getName();
+						o.put(ProtocolConstants.KEY_NAME, name);
+						o.put(ProtocolConstants.KEY_ID, ref.getObjectId().name());
+						// see bug 342602
+						// o.put(GitConstants.KEY_COMMIT, baseToCommitLocation(baseLocation, name));
+						o.put(ProtocolConstants.KEY_LOCATION, baseToRemoteLocation(baseLocation, 3, Repository.shortenRefName(name)));
+						o.put(GitConstants.KEY_COMMIT, baseToCommitLocation(baseLocation, 3, ref.getObjectId().name()));
+						children.put(o);
 					}
 					result.put(ProtocolConstants.KEY_CHILDREN, children);
 					OrionServlet.writeJSONResponse(request, response, result);
