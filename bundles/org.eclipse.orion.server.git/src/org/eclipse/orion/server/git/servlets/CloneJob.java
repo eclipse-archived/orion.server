@@ -60,22 +60,29 @@ public class CloneJob extends Job {
 		return info;
 	}
 
-	private void doClone() throws IOException, CoreException {
-		File cloneFolder = new File(clone.getContentLocation().getPath());
-		if (!cloneFolder.exists())
-			cloneFolder.mkdir();
-		CloneCommand cc = Git.cloneRepository();
-		cc.setBare(false);
-		cc.setCredentialsProvider(credentials);
-		cc.setDirectory(cloneFolder);
-		cc.setRemote(Constants.DEFAULT_REMOTE_NAME);
-		cc.setURI(clone.getUrl());
-		Git git = cc.call();
+	private IStatus doClone() {
+		try {
+			File cloneFolder = new File(clone.getContentLocation().getPath());
+			if (!cloneFolder.exists())
+				cloneFolder.mkdir();
+			CloneCommand cc = Git.cloneRepository();
+			cc.setBare(false);
+			cc.setCredentialsProvider(credentials);
+			cc.setDirectory(cloneFolder);
+			cc.setRemote(Constants.DEFAULT_REMOTE_NAME);
+			cc.setURI(clone.getUrl());
+			Git git = cc.call();
 
-		// Configure the clone, see Bug 337820
-		task.setMessage(NLS.bind("Configuring {0}...", clone.getUrl()));
-		updateTask();
-		doConfigureClone(git);
+			// Configure the clone, see Bug 337820
+			task.setMessage(NLS.bind("Configuring {0}...", clone.getUrl()));
+			updateTask();
+			doConfigureClone(git);
+		} catch (IOException e) {
+			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error cloning git repository", e); //$NON-NLS-1$
+		} catch (CoreException e) {
+			return e.getStatus();
+		}
+		return Status.OK_STATUS;
 	}
 
 	private void doConfigureClone(Git git) throws IOException, CoreException {
@@ -93,39 +100,48 @@ public class CloneJob extends Job {
 	}
 
 	private ITaskService getTaskService() {
-		BundleContext context = GitActivator.getDefault().getBundleContext();
-		taskServiceRef = context.getServiceReference(ITaskService.class);
-		if (taskServiceRef == null)
-			throw new IllegalStateException("Task service not available"); //$NON-NLS-1$
-		taskService = context.getService(taskServiceRef);
-		if (taskService == null)
-			throw new IllegalStateException("Task service not available"); //$NON-NLS-1$
+		if (taskService == null) {
+			BundleContext context = GitActivator.getDefault().getBundleContext();
+			if (taskServiceRef == null) {
+				taskServiceRef = context.getServiceReference(ITaskService.class);
+				if (taskServiceRef == null)
+					throw new IllegalStateException("Task service not available"); //$NON-NLS-1$
+			}
+			taskService = context.getService(taskServiceRef);
+			if (taskService == null)
+				throw new IllegalStateException("Task service not available"); //$NON-NLS-1$
+		}
 		return taskService;
 	}
 
 	@Override
 	protected IStatus run(IProgressMonitor monitor) {
 		try {
-			doClone();
-		} catch (IOException e) {
-			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error cloning git repository", e); //$NON-NLS-1$
-		} catch (CoreException e) {
-			return e.getStatus();
+			IStatus result = doClone();
+			if (!result.isOK())
+				return result;
+			// save the clone metadata
+			try {
+				clone.save();
+			} catch (CoreException e) {
+				String msg = "Error persisting clone state"; //$NON-NLS-1$
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
+			}
+			task.done(cloneLocation);
+			task.setMessage(NLS.bind("Repository cloned. You may now link to {0}", clone.getContentLocation()));
+			updateTask();
+		} finally {
+			cleanUp();
 		}
-
-		// save the clone metadata
-		try {
-			clone.save();
-		} catch (CoreException e) {
-			String msg = "Error persisting clone state"; //$NON-NLS-1$
-			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
-		}
-		task.done(cloneLocation);
-		task.setMessage(NLS.bind("Repository cloned. You may now link to {0}", clone.getContentLocation()));
-		updateTask();
-		taskService = null;
-		GitActivator.getDefault().getBundleContext().ungetService(taskServiceRef);
 		return Status.OK_STATUS;
+	}
+
+	private void cleanUp() {
+		taskService = null;
+		if (taskServiceRef != null) {
+			GitActivator.getDefault().getBundleContext().ungetService(taskServiceRef);
+			taskServiceRef = null;
+		}
 	}
 
 	private void updateTask() {
