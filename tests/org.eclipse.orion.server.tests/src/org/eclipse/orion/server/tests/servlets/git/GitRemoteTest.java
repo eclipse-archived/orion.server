@@ -420,16 +420,21 @@ public class GitRemoteTest extends GitTest {
 		JSONArray refsArray = remote.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 		assertEquals(size, refsArray.length());
 		JSONObject ref = refsArray.getJSONObject(i);
-		assertNotNull(ref);
 		assertEquals(Constants.R_REMOTES + Constants.DEFAULT_REMOTE_NAME + "/" + name, ref.getString(ProtocolConstants.KEY_NAME));
 		String newRefId = ref.getString(ProtocolConstants.KEY_ID);
 		assertNotNull(newRefId);
 		assertTrue(ObjectId.isId(newRefId));
 		String remoteBranchLocation = ref.getString(ProtocolConstants.KEY_LOCATION);
-		assertNotNull(remoteBranchLocation);
-		String commitLocation = ref.getString(GitConstants.KEY_COMMIT);
-		assertNotNull(commitLocation);
-		return ref;
+		ref.getString(GitConstants.KEY_COMMIT);
+
+		request = GitRemoteTest.getGetGitRemoteRequest(remoteBranchLocation);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject remoteBranch = new JSONObject(response.getText());
+		remoteBranch.getString(GitConstants.KEY_COMMIT);
+		remoteBranch.getString(GitConstants.KEY_HEAD);
+
+		return remoteBranch;
 	}
 
 	static void ensureOnBranch(Git git, String branch) {
