@@ -59,12 +59,16 @@ public class SFTPImportJob extends Job {
 	}
 
 	private void doImportDirectory(ChannelSftp channel, IPath sourcePath, File destination) throws SftpException, IOException {
-		task.setMessage(NLS.bind("Importing {0}...", host + sourceRoot.toString()));
+		task.setMessage(NLS.bind("Importing {0}...", host + sourcePath.toString()));
 		getTaskService().updateTask(task);
+		destination.mkdirs();
 		@SuppressWarnings("unchecked")
 		Vector<LsEntry> children = channel.ls(sourcePath.toString());
 		for (LsEntry child : children) {
 			String childName = child.getFilename();
+			//skip self and parent references
+			if (".".equals(childName) || "..".equals(childName)) //$NON-NLS-1$ //$NON-NLS-2$
+				continue;
 			if (child.getAttrs().isDir()) {
 				doImportDirectory(channel, sourcePath.append(childName), new File(destination, childName));
 			} else {
@@ -100,24 +104,38 @@ public class SFTPImportJob extends Job {
 	protected IStatus run(IProgressMonitor monitor) {
 		try {
 			JSch jsch = new JSch();
+			IStatus result = null;
 			try {
 				Session session = jsch.getSession(user, host, port);
-				session.setUserInfo(new BasicUserInfo(null, passphrase));
+				session.setUserInfo(new BasicUserInfo(passphrase, passphrase));
 				session.connect();
-				ChannelSftp channel = (ChannelSftp) session.openChannel("sftp"); //$NON-NLS-1$
 				try {
-					channel.connect();
-					doImportDirectory(channel, sourceRoot, destinationRoot);
+					ChannelSftp channel = (ChannelSftp) session.openChannel("sftp"); //$NON-NLS-1$
+					try {
+						channel.connect();
+						doImportDirectory(channel, sourceRoot, destinationRoot);
+					} finally {
+						channel.disconnect();
+					}
 				} finally {
-					channel.disconnect();
+					session.disconnect();
 				}
 			} catch (Exception e) {
-				return new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "SFTP import failed", e); //$NON-NLS-1$
+				String msg = NLS.bind("Import from {0} failed: {1}", host + sourceRoot, e.getMessage());
+				result = new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, msg, e);
 			}
+			if (result == null) {
+				//fill in message to client for successful result
+				String msg = NLS.bind("Import from {0} complete", host + sourceRoot);
+				result = new Status(IStatus.OK, Activator.PI_SERVER_SERVLETS, msg);
+			}
+			//update task for both good or bad result cases
+			task.done(result);
+			getTaskService().updateTask(task);
+			return result;
 		} finally {
 			cleanUp();
 		}
-		return Status.OK_STATUS;
 	}
 
 	private void cleanUp() {
