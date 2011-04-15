@@ -12,7 +12,6 @@ package org.eclipse.orion.internal.server.servlets.workspace;
 
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 

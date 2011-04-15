@@ -21,8 +21,10 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
-import org.eclipse.orion.internal.server.servlets.*;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
@@ -54,15 +56,16 @@ class SFTPImport {
 		}
 
 		public boolean promptPassphrase(String message) {
-			return false;
+			return true;
 		}
 
 		public boolean promptPassword(String message) {
-			return false;
+			return true;
 		}
 
 		public boolean promptYesNo(String message) {
-			return false;
+			//continue connecting to unknown host
+			return true;
 		}
 
 		public void showMessage(String message) {
@@ -121,8 +124,7 @@ class SFTPImport {
 		JSONObject result = task.toJSON();
 		//Not nice that the import service knows the location of the task servlet, but task service doesn't know this either
 		URI requestLocation = ServletResourceHandler.getURI(request);
-		URI taskLocation;
-		taskLocation = new URI(requestLocation.getScheme(), requestLocation.getHost(), "/task/id/" + task.getTaskId(), null); //$NON-NLS-1$
+		URI taskLocation = new URI(requestLocation.getScheme(), requestLocation.getAuthority(), "/task/id/" + task.getTaskId(), null, null); //$NON-NLS-1$
 		result.put(ProtocolConstants.KEY_LOCATION, taskLocation.toString());
 		response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation.toString());
 		OrionServlet.writeJSONResponse(request, response, result);

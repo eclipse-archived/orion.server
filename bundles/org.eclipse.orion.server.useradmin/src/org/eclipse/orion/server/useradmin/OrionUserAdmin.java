@@ -11,7 +11,6 @@
 package org.eclipse.orion.server.useradmin;
 
 import java.util.Collection;
-
 import org.osgi.service.useradmin.UserAdmin;
 
 public abstract class OrionUserAdmin implements UserAdmin {

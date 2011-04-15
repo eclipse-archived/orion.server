@@ -74,19 +74,19 @@ public class FetchJob extends Job {
 
 	@Override
 	protected IStatus run(IProgressMonitor monitor) {
+		IStatus result = Status.OK_STATUS;
 		try {
 			doFetch();
 		} catch (IOException e) {
-			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error fetching git remote", e); //$NON-NLS-1$
+			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error fetching git remote", e); //$NON-NLS-1$
 		} catch (CoreException e) {
-			return e.getStatus();
+			result = e.getStatus();
 		} catch (JGitInternalException e) {
-			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error fetching git remote", e); //$NON-NLS-1$
+			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error fetching git remote", e); //$NON-NLS-1$
 		} catch (InvalidRemoteException e) {
-			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error fetching git remote", e); //$NON-NLS-1$
+			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error fetching git remote", e); //$NON-NLS-1$
 		}
-
-		task.done("Fetching done");
+		task.done(result);
 		task.setMessage(NLS.bind("Fetching {0} done", remote));
 		updateTask();
 		taskService = null;

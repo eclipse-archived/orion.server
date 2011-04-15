@@ -11,7 +11,6 @@
 package org.eclipse.orion.server.useradmin;
 
 import java.util.Set;
-
 import org.osgi.service.useradmin.Authorization;
 import org.osgi.service.useradmin.Role;
 

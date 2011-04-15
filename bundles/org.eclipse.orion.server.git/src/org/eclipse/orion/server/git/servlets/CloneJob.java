@@ -19,7 +19,7 @@ import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.transport.CredentialsProvider;
-import org.eclipse.orion.internal.server.servlets.ServerStatus;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitActivator;
@@ -118,17 +118,21 @@ public class CloneJob extends Job {
 	protected IStatus run(IProgressMonitor monitor) {
 		try {
 			IStatus result = doClone();
-			if (!result.isOK())
-				return result;
 			// save the clone metadata
 			try {
-				clone.save();
+				if (result.isOK())
+					clone.save();
 			} catch (CoreException e) {
 				String msg = "Error persisting clone state"; //$NON-NLS-1$
-				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
+				result = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 			}
-			task.done(cloneLocation);
-			task.setMessage(NLS.bind("Repository cloned. You may now link to {0}", clone.getContentLocation()));
+			if (result.isOK()) {
+				task.setResultLocation(cloneLocation);
+				String message = NLS.bind("Repository cloned. You may now link to {0}", clone.getContentLocation());
+				task.setMessage(message);
+				result = new Status(IStatus.OK, GitActivator.PI_GIT, message);
+			}
+			task.done(result);
 			updateTask();
 		} finally {
 			cleanUp();
