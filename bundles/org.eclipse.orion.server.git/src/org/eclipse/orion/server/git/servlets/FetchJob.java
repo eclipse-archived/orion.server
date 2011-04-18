@@ -85,6 +85,8 @@ public class FetchJob extends Job {
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error fetching git remote", e); //$NON-NLS-1$
 		} catch (InvalidRemoteException e) {
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error fetching git remote", e); //$NON-NLS-1$
+		} catch (Exception e) {
+			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error fetching git remote", e); //$NON-NLS-1$
 		}
 		task.done(result);
 		task.setMessage(NLS.bind("Fetching {0} done", remote));

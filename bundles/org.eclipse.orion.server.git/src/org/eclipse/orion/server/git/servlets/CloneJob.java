@@ -81,6 +81,8 @@ public class CloneJob extends Job {
 			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error cloning git repository", e); //$NON-NLS-1$
 		} catch (CoreException e) {
 			return e.getStatus();
+		} catch (Exception e) {
+			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error cloning git repository", e); //$NON-NLS-1$
 		}
 		return Status.OK_STATUS;
 	}

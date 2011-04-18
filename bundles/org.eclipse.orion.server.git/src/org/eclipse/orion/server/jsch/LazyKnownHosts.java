@@ -28,15 +28,17 @@ public class LazyKnownHosts implements HostKeyRepository {
 	private int lastStatus = OK;
 
 	LazyKnownHosts(JSch jsch, String knownHosts) throws JSchException {
-		try {
-			final InputStream in = new StringBufferInputStream(knownHosts);
+		if (knownHosts != null) {
 			try {
-				jsch.setKnownHosts(in);
-			} finally {
-				in.close();
+				final InputStream in = new StringBufferInputStream(knownHosts);
+				try {
+					jsch.setKnownHosts(in);
+				} finally {
+					in.close();
+				}
+			} catch (IOException e) {
+				// no known hosts
 			}
-		} catch (IOException e) {
-			// no known hosts
 		}
 		this.repo = jsch.getHostKeyRepository();
 
