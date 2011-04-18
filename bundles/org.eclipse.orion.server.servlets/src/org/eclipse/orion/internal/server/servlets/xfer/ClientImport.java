@@ -300,7 +300,7 @@ class ClientImport {
 	}
 
 	public void setOptions(String options) {
-		props.put(KEY_OPTIONS, options);
+		props.put(KEY_OPTIONS, options == null ? "" : options); //$NON-NLS-1$
 	}
 
 	/**

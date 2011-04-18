@@ -12,10 +12,11 @@ package org.eclipse.orion.internal.server.servlets.xfer;
 
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.SftpException;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.util.*;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.osgi.util.NLS;
 
 /**
  * Implements export from workspace over SFTP.
@@ -27,7 +28,35 @@ public class SFTPExportJob extends SFTPTransferJob {
 	}
 
 	@Override
-	void doTransferFile(ChannelSftp channel, IPath remotePath, File localFile) throws IOException, SftpException {
+	protected void transferDirectory(ChannelSftp channel, IPath remotePath, File localFile) throws SftpException, IOException {
+		setTaskMessage(NLS.bind("Exporting {0}...", host + remotePath.toString()));
+		//create the remote folder on export
+		channel.mkdir(remotePath.toString());
+		//visit local children
+		List<File> localChildren = new ArrayList<File>();
+		File[] localFiles = localFile.listFiles();
+		if (localFiles != null)
+			localChildren.addAll(Arrays.asList(localFiles));
+		for (File localChild : localChildren) {
+			String childName = localChild.getName();
+			//skip self and parent references
+			if (".".equals(childName) || "..".equals(childName)) //$NON-NLS-1$ //$NON-NLS-2$
+				continue;
+			IPath remoteChild = remotePath.append(childName);
+			if (localChild.isDirectory()) {
+				transferDirectory(channel, remoteChild, localChild);
+			} else {
+				doTransferFile(channel, remoteChild, localChild);
+			}
+		}
 	}
 
+	protected void doTransferFile(ChannelSftp channel, IPath remotePath, File localFile) throws IOException, SftpException {
+		try {
+			//on export, copy the local file to the remote destination
+			channel.put(new FileInputStream(localFile), remotePath.toString());
+		} catch (FileNotFoundException e) {
+			//if local file doesn't exist there is nothing to export
+		}
+	}
 }

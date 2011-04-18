@@ -11,10 +11,8 @@
 package org.eclipse.orion.internal.server.servlets.xfer;
 
 import com.jcraft.jsch.*;
-import com.jcraft.jsch.ChannelSftp.LsEntry;
 import java.io.File;
 import java.io.IOException;
-import java.util.Vector;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.orion.internal.server.servlets.Activator;
@@ -65,26 +63,10 @@ public abstract class SFTPTransferJob extends Job {
 		return info;
 	}
 
-	protected void doTransferDirectory(ChannelSftp channel, IPath remotePath, File localFile) throws SftpException, IOException {
-		@SuppressWarnings("unchecked")
-		Vector<LsEntry> children = channel.ls(remotePath.toString());
-		for (LsEntry child : children) {
-			String childName = child.getFilename();
-			//skip self and parent references
-			if (".".equals(childName) || "..".equals(childName)) //$NON-NLS-1$ //$NON-NLS-2$
-				continue;
-			if (child.getAttrs().isDir()) {
-				doTransferDirectory(channel, remotePath.append(childName), new File(localFile, childName));
-			} else {
-				doTransferFile(channel, remotePath.append(childName), new File(localFile, childName));
-			}
-		}
-	}
-
 	/**
 	 * Method overwritten by subclass to implement import/export
 	 */
-	abstract void doTransferFile(ChannelSftp channel, IPath remotePath, File localFile) throws IOException, SftpException;
+	protected abstract void transferDirectory(ChannelSftp channel, IPath remotePath, File localFile) throws SftpException, IOException;
 
 	public TaskInfo getTask() {
 		return task;
@@ -118,7 +100,7 @@ public abstract class SFTPTransferJob extends Job {
 					ChannelSftp channel = (ChannelSftp) session.openChannel("sftp"); //$NON-NLS-1$
 					try {
 						channel.connect();
-						doTransferDirectory(channel, remoteRoot, localRoot);
+						transferDirectory(channel, remoteRoot, localRoot);
 					} finally {
 						channel.disconnect();
 					}
