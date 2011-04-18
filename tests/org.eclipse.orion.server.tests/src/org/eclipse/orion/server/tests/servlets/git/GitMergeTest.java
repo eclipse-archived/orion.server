@@ -581,7 +581,7 @@ public class GitMergeTest extends GitTest {
 		assertEquals("incoming change", response.getText());
 	}
 
-	private WebRequest getPostGitMergeRequest(String location, String commit) throws JSONException {
+	static WebRequest getPostGitMergeRequest(String location, String commit) throws JSONException {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;
