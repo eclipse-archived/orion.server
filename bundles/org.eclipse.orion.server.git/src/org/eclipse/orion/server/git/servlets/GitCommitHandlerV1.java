@@ -74,6 +74,23 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		return false;
 	}
 
+	private boolean createCommitLocation(HttpServletRequest request, HttpServletResponse response, Repository db, String newCommitToCreatelocation) throws IOException, JSONException, URISyntaxException {
+		URI u = getURI(request);
+		IPath p = new Path(u.getPath());
+		IPath np = new Path("/"); //$NON-NLS-1$
+		for (int i = 0; i < p.segmentCount(); i++) {
+			String s = p.segment(i);
+			if (i == 2) {
+				s += ".." + newCommitToCreatelocation; //$NON-NLS-1$
+			}
+			np = np.append(s);
+		}
+		URI nu = new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), np.toString(), u.getQuery(), u.getFragment());
+		response.setHeader(ProtocolConstants.HEADER_LOCATION, nu.toString());
+		response.setStatus(HttpServletResponse.SC_OK);
+		return true;
+	}
+
 	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws CoreException, IOException, ServletException, JSONException, URISyntaxException {
 		File gitDir = GitUtils.getGitDir(path.removeFirstSegments(1).uptoSegment(2));
 		if (gitDir == null)
@@ -189,7 +206,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		return new URI(baseLocation.getScheme(), baseLocation.getAuthority(), GitServlet.GIT_URI + "/" + GitConstants.DIFF_RESOURCE + "/" + commitName + "/" + new Path(baseLocation.getPath()).removeFirstSegments(3), null, null);
 	}
 
-	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws ServletException, NoFilepatternException, IOException, JSONException, CoreException {
+	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws ServletException, NoFilepatternException, IOException, JSONException, CoreException, URISyntaxException {
 		File gitDir = GitUtils.getGitDir(path.removeFirstSegments(1).uptoSegment(2));
 		if (gitDir == null)
 			return false; // TODO: or an error response code, 405?
@@ -200,8 +217,14 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		if (commitToMerge != null) {
 			return merge(request, response, db, commitToMerge);
 		}
-		// continue with commit
 
+		// continue with creating new commit location
+
+		String newCommitToCreatelocation = requestObject.optString(GitConstants.KEY_COMMIT_NEW, null);
+		if (newCommitToCreatelocation != null)
+			return createCommitLocation(request, response, db, newCommitToCreatelocation);
+
+		// continue with commit
 		if (path.segmentCount() > 3) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_IMPLEMENTED, "Committing by path is not yet supported.", null));
 		}

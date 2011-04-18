@@ -112,8 +112,8 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 		JSONObject gitSection = new JSONObject();
 		URI link = getURI(request);
 		gitSection.put(GitConstants.KEY_DIFF, link.toString());
-		gitSection.put(GitConstants.KEY_DIFF_OLD, getOldLocation(link, path).toString());
-		gitSection.put(GitConstants.KEY_DIFF_NEW, getNewLocation(link, path).toString());
+		gitSection.put(GitConstants.KEY_COMMIT_OLD, getOldLocation(link, path).toString());
+		gitSection.put(GitConstants.KEY_COMMIT_NEW, getNewLocation(link, path).toString());
 		o.put(GitConstants.KEY_GIT, gitSection);
 		out.write(o.toString().getBytes());
 		return true;
@@ -150,7 +150,7 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 		for (int i = 0; i < p.segmentCount(); i++) {
 			String s = p.segment(i);
 			if (i == 2) {
-				s += ".." + requestObject.getString(GitConstants.KEY_DIFF_NEW); //$NON-NLS-1$
+				s += ".." + requestObject.getString(GitConstants.KEY_COMMIT_NEW); //$NON-NLS-1$
 			}
 			np = np.append(s);
 		}
