@@ -657,13 +657,13 @@ public class GitDiffTest extends GitTest {
 		// assertDiffUris(gitDiffUri, "test", "change", new JSONObject(response.getText()));
 		gitSection = new JSONObject(response.getText()).getJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-		String fileOldUri = gitSection.getString(GitConstants.KEY_DIFF_OLD);
+		String fileOldUri = gitSection.getString(GitConstants.KEY_COMMIT_OLD);
 		assertNotNull(fileOldUri);
 		request = getGetFilesRequest(fileOldUri);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 		// assertEquals(expectedOld, response.getText());
-		String fileNewUri = gitSection.getString(GitConstants.KEY_DIFF_NEW);
+		String fileNewUri = gitSection.getString(GitConstants.KEY_COMMIT_NEW);
 		assertNotNull(fileNewUri);
 		request = getGetFilesRequest(fileNewUri);
 		response = webConversation.getResponse(request);
@@ -678,13 +678,13 @@ public class GitDiffTest extends GitTest {
 	private void assertDiffUris(String expectedLocation, String expectedOld, String expectedNew, JSONObject jsonPart) throws JSONException, IOException, SAXException {
 		JSONObject gitSection = jsonPart.getJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-		String fileOldUri = gitSection.getString(GitConstants.KEY_DIFF_OLD);
+		String fileOldUri = gitSection.getString(GitConstants.KEY_COMMIT_OLD);
 		assertNotNull(fileOldUri);
 		WebRequest request = getGetFilesRequest(fileOldUri);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals(expectedOld, response.getText());
-		String fileNewUri = gitSection.getString(GitConstants.KEY_DIFF_NEW);
+		String fileNewUri = gitSection.getString(GitConstants.KEY_COMMIT_NEW);
 		assertNotNull(fileNewUri);
 		request = getGetFilesRequest(fileNewUri);
 		response = webConversation.getResponse(request);
@@ -720,7 +720,7 @@ public class GitDiffTest extends GitTest {
 			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.DIFF_RESOURCE + location;
 
 		JSONObject body = new JSONObject();
-		body.put(GitConstants.KEY_DIFF_NEW, right);
+		body.put(GitConstants.KEY_COMMIT_NEW, right);
 		InputStream in = new StringBufferInputStream(body.toString());
 		WebRequest request = new PostMethodWebRequest(requestURI, in, "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
