@@ -10,11 +10,11 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git;
 
-import com.jcraft.jsch.*;
-import java.io.*;
+import com.jcraft.jsch.JSchException;
 import org.eclipse.jgit.errors.TransportException;
 import org.eclipse.jgit.transport.*;
 import org.eclipse.jgit.util.FS;
+import org.eclipse.orion.server.jsch.SessionHandler;
 
 public class GitSshSessionFactory extends SshSessionFactory {
 
@@ -44,17 +44,16 @@ public class GitSshSessionFactory extends SshSessionFactory {
 			}
 
 			try {
-				final Session session = createSession(user, uri.getHost(), port, cp);
+				final SessionHandler session = new SessionHandler(user, uri.getHost(), port, cp.getKnownHosts(), cp.getPrivateKey(), cp.getPublicKey(), cp.getPassphrase());
 				if (pass != null)
 					session.setPassword(pass);
 				if (credentialsProvider != null && !credentialsProvider.isInteractive()) {
-					session.setUserInfo(new CredentialsProviderUserInfo(session, credentialsProvider));
+					session.setUserInfo(new CredentialsProviderUserInfo(session.getSession(), credentialsProvider));
 				}
 
-				if (!session.isConnected())
-					session.connect(tms);
+				session.connect(tms);
 
-				return new JschSession(session, uri);
+				return new JschSession(session.getSession(), uri);
 			} catch (JSchException e) {
 				throw new TransportException(uri, e.getMessage(), e);
 			}
@@ -62,29 +61,4 @@ public class GitSshSessionFactory extends SshSessionFactory {
 		return null;
 	}
 
-	private Session createSession(String user, String host, int port, GitCredentialsProvider cp) throws JSchException {
-		JSch jsch = new JSch();
-		knownHosts(jsch, cp.getKnownHosts());
-		identity(jsch, cp.getPrivateKey(), cp.getPublicKey(), cp.getPassphrase());
-		return jsch.getSession(user, host);
-	}
-
-	private static void knownHosts(final JSch sch, String knownHosts) throws JSchException {
-		try {
-			final InputStream in = new StringBufferInputStream(knownHosts);
-			try {
-				sch.setKnownHosts(in);
-			} finally {
-				in.close();
-			}
-		} catch (IOException e) {
-			// no known hosts
-		}
-	}
-
-	private static void identity(final JSch sch, byte[] prvkey, byte[] pubkey, byte[] passphrase) throws JSchException {
-		if (prvkey != null && prvkey.length > 0) {
-			sch.addIdentity("identity", prvkey, pubkey, passphrase);
-		}
-	}
 }
