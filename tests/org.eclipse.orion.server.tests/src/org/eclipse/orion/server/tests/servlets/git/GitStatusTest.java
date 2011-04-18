@@ -15,8 +15,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringBufferInputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -34,7 +32,6 @@ import org.eclipse.jgit.dircache.DirCache;
 import org.eclipse.jgit.dircache.DirCacheEntry;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -44,7 +41,6 @@ import org.junit.Test;
 import org.xml.sax.SAXException;
 
 import com.meterware.httpunit.GetMethodWebRequest;
-import com.meterware.httpunit.PostMethodWebRequest;
 import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
 
@@ -751,20 +747,7 @@ public class GitStatusTest extends GitTest {
 		String contentLocation1 = clone(null);
 
 		// clone1: link
-		ServletTestingSupport.allowedPrefixes = contentLocation1;
-		String projectName1 = getMethodName() + "1";
-		JSONObject body = new JSONObject();
-		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, contentLocation1);
-		InputStream in = new StringBufferInputStream(body.toString());
-		// http://<host>/workspace/<workspaceId>/
-		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
-		if (projectName1 != null)
-			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName1);
-		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		setAuthentication(request);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project1 = new JSONObject(response.getText());
+		JSONObject project1 = linkProject(contentLocation1, getMethodName() + "1");
 		String projectId1 = project1.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId1);
 		JSONObject gitSection1 = project1.optJSONObject(GitConstants.KEY_GIT);
@@ -780,20 +763,7 @@ public class GitStatusTest extends GitTest {
 		String contentLocation2 = clone(null);
 
 		// clone2: link
-		ServletTestingSupport.allowedPrefixes = contentLocation2;
-		String projectName2 = getMethodName() + "2";
-		body = new JSONObject();
-		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, contentLocation2);
-		in = new StringBufferInputStream(body.toString());
-		// http://<host>/workspace/<workspaceId>/
-		request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
-		if (projectName2 != null)
-			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName2);
-		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		setAuthentication(request);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project2 = new JSONObject(response.getText());
+		JSONObject project2 = linkProject(contentLocation2, getMethodName() + "2");
 		String projectId2 = project2.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId2);
 		JSONObject gitSection2 = project2.optJSONObject(GitConstants.KEY_GIT);
@@ -806,8 +776,8 @@ public class GitStatusTest extends GitTest {
 		assertNotNull(gitCommitUri2);
 
 		// clone1: change
-		request = getPutFileRequest(projectId1 + "/test.txt", "change from clone1");
-		response = webConversation.getResponse(request);
+		WebRequest request = getPutFileRequest(projectId1 + "/test.txt", "change from clone1");
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone1: add

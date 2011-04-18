@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringBufferInputStream;
 import java.net.HttpURLConnection;
-import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.eclipse.jgit.api.Git;
@@ -29,14 +28,12 @@ import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
-import com.meterware.httpunit.PostMethodWebRequest;
 import com.meterware.httpunit.PutMethodWebRequest;
 import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
@@ -67,23 +64,8 @@ public class GitConfigTest extends GitTest {
 		// now check if commits have the right committer set
 
 		// link a project to the cloned repo
-		URI workspaceLocation = createWorkspace(getMethodName());
-		ServletTestingSupport.allowedPrefixes = contentLocation;
-		String projectName = getMethodName();
-		JSONObject body = new JSONObject();
-		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, contentLocation);
-		InputStream in = new StringBufferInputStream(body.toString());
-		// POST http://<host>/workspace/<workspaceId>/
-		request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
-		if (projectName != null)
-			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
-		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		setAuthentication(request);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject newProject = new JSONObject(response.getText());
+		JSONObject newProject = linkProject(contentLocation, getMethodName());
 		String projectContentLocation = newProject.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		assertNotNull(projectContentLocation);
 
 		// GET http://<host>/file/<projectId>/
 		request = getGetFilesRequest(projectContentLocation);

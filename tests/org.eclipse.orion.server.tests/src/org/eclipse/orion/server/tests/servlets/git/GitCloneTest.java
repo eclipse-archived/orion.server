@@ -142,28 +142,12 @@ public class GitCloneTest extends GitTest {
 	public void testCloneAndLink() throws IOException, SAXException, JSONException, URISyntaxException {
 		String contentLocation = clone(null);
 
-		URI workspaceLocation = createWorkspace(getMethodName());
-
-		ServletTestingSupport.allowedPrefixes = contentLocation;
-		String projectName = getMethodName();
-		JSONObject body = new JSONObject();
-		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, contentLocation);
-		InputStream in = new StringBufferInputStream(body.toString());
-		// http://<host>/workspace/<workspaceId>/
-		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
-		if (projectName != null)
-			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
-		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		setAuthentication(request);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject newProject = new JSONObject(response.getText());
+		JSONObject newProject = linkProject(contentLocation, getMethodName());
 		String projectContentLocation = newProject.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		assertNotNull(projectContentLocation);
 
 		// http://<host>/file/<projectId>/
-		request = getGetFilesRequest(projectContentLocation);
-		response = webConversation.getResponse(request);
+		WebRequest request = getGetFilesRequest(projectContentLocation);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject project = new JSONObject(response.getText());
 		String childrenLocation = project.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
@@ -188,28 +172,12 @@ public class GitCloneTest extends GitTest {
 		File file = URIUtil.toFile(new URI(contentLocation));
 		File folder = new File(file, "folder");
 
-		URI workspaceLocation = createWorkspace(getMethodName());
-
-		ServletTestingSupport.allowedPrefixes = contentLocation.toString();
-		String projectName = getMethodName();
-		JSONObject body = new JSONObject();
-		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, folder.toURI().toString());
-		InputStream in = new StringBufferInputStream(body.toString());
-		// http://<host>/workspace/<workspaceId>/
-		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
-		if (projectName != null)
-			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
-		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		setAuthentication(request);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject newProject = new JSONObject(response.getText());
+		JSONObject newProject = linkProject(folder.toURI().toString(), getMethodName());
 		String projectContentLocation = newProject.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		assertNotNull(projectContentLocation);
 
 		// http://<host>/file/<projectId>/
-		request = getGetFilesRequest(projectContentLocation);
-		response = webConversation.getResponse(request);
+		WebRequest request = getGetFilesRequest(projectContentLocation);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject project = new JSONObject(response.getText());
 		String childrenLocation = project.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
@@ -234,28 +202,12 @@ public class GitCloneTest extends GitTest {
 
 		String contentLocation = new File(gitDir, "folder").getAbsolutePath();
 
-		URI workspaceLocation = createWorkspace(getMethodName());
-
-		ServletTestingSupport.allowedPrefixes = contentLocation.toString();
-		String projectName = getMethodName();
-		JSONObject body = new JSONObject();
-		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, contentLocation);
-		InputStream in = new StringBufferInputStream(body.toString());
-		// http://<host>/workspace/<workspaceId>/
-		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
-		if (projectName != null)
-			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
-		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		setAuthentication(request);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject newProject = new JSONObject(response.getText());
+		JSONObject newProject = linkProject(contentLocation, getMethodName());
 		String projectContentLocation = newProject.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		assertNotNull(projectContentLocation);
 
 		// http://<host>/file/<projectId>/
-		request = getGetFilesRequest(projectContentLocation);
-		response = webConversation.getResponse(request);
+		WebRequest request = getGetFilesRequest(projectContentLocation);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject project = new JSONObject(response.getText());
 		String childrenLocation = project.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);

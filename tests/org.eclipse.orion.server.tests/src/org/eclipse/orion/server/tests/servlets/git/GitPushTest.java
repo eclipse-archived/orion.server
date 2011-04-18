@@ -22,7 +22,6 @@ import java.net.URISyntaxException;
 
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -41,30 +40,15 @@ public class GitPushTest extends GitTest {
 		// add clone
 		String contentLocation = clone(null);
 
-		URI workspaceLocation = createWorkspace(getMethodName());
-
 		// link
-		ServletTestingSupport.allowedPrefixes = contentLocation;
-		String projectName = getMethodName();
-		JSONObject body = new JSONObject();
-		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, contentLocation);
-		InputStream in = new StringBufferInputStream(body.toString());
-		// http://<host>/workspace/<workspaceId>/
-		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
-		if (projectName != null)
-			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
-		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		setAuthentication(request);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
+		JSONObject project = linkProject(contentLocation, getMethodName());
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
 		String gitRemoteUri = gitSection.getString(GitConstants.KEY_REMOTE);
 
 		// list remotes
-		request = GitRemoteTest.getGetGitRemoteRequest(gitRemoteUri);
-		response = webConversation.getResponse(request);
+		WebRequest request = GitRemoteTest.getGetGitRemoteRequest(gitRemoteUri);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject remotes = new JSONObject(response.getText());
 		JSONArray remotesArray = remotes.getJSONArray(ProtocolConstants.KEY_CHILDREN);
@@ -92,20 +76,7 @@ public class GitPushTest extends GitTest {
 		String contentLocation1 = clone(null);
 
 		// clone1: link
-		ServletTestingSupport.allowedPrefixes = contentLocation1;
-		String projectName1 = getMethodName() + "1";
-		JSONObject body = new JSONObject();
-		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, contentLocation1);
-		InputStream in = new StringBufferInputStream(body.toString());
-		// http://<host>/workspace/<workspaceId>/
-		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
-		if (projectName1 != null)
-			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName1);
-		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		setAuthentication(request);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project1 = new JSONObject(response.getText());
+		JSONObject project1 = linkProject(contentLocation1, getMethodName() + "1");
 		String projectId1 = project1.getString(ProtocolConstants.KEY_ID);
 		JSONObject gitSection1 = project1.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection1);
@@ -117,20 +88,7 @@ public class GitPushTest extends GitTest {
 		String contentLocation2 = clone(null);
 
 		// clone2: link
-		ServletTestingSupport.allowedPrefixes = contentLocation2;
-		String projectName2 = getMethodName() + "2";
-		body = new JSONObject();
-		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, contentLocation2);
-		in = new StringBufferInputStream(body.toString());
-		// http://<host>/workspace/<workspaceId>/
-		request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
-		if (projectName2 != null)
-			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName2);
-		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		setAuthentication(request);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project2 = new JSONObject(response.getText());
+		JSONObject project2 = linkProject(contentLocation2, getMethodName() + "2");
 		String projectId2 = project2.getString(ProtocolConstants.KEY_ID);
 		JSONObject gitSection2 = project2.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection2);
@@ -142,8 +100,8 @@ public class GitPushTest extends GitTest {
 		assertNotNull(gitCommitUri2);
 
 		// clone1: list remotes
-		request = GitRemoteTest.getGetGitRemoteRequest(gitRemoteUri1);
-		response = webConversation.getResponse(request);
+		WebRequest request = GitRemoteTest.getGetGitRemoteRequest(gitRemoteUri1);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject remotes = new JSONObject(response.getText());
 		JSONArray remotesArray = remotes.getJSONArray(ProtocolConstants.KEY_CHILDREN);

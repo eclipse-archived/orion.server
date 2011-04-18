@@ -192,6 +192,8 @@ public abstract class GitTest extends FileSystemTest {
 		return new FileRepository(file);
 	}
 
+	// clone
+
 	protected String clone(URIish uri, String name, String kh, char[] p) throws JSONException, IOException, SAXException {
 		WebRequest request = getPostGitCloneRequest(uri.toString(), name, kh, p);
 		WebResponse response = webConversation.getResponse(request);
@@ -219,6 +221,26 @@ public abstract class GitTest extends FileSystemTest {
 
 	protected static WebRequest getPostGitCloneRequest(URIish uri, String name) throws JSONException {
 		return getPostGitCloneRequest(uri.toString(), name, null, null);
+	}
+
+	// link
+
+	protected JSONObject linkProject(String contentLocation, String projectName) throws IOException, SAXException, URISyntaxException, JSONException {
+		URI workspaceLocation = createWorkspace(getMethodName());
+
+		ServletTestingSupport.allowedPrefixes = contentLocation;
+		JSONObject body = new JSONObject();
+		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, contentLocation);
+		InputStream in = new StringBufferInputStream(body.toString());
+		// http://<host>/workspace/<workspaceId>/
+		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
+		if (projectName != null)
+			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		return new JSONObject(response.getText());
 	}
 
 	/**
