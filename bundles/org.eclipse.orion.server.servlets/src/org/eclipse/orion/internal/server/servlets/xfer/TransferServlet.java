@@ -26,6 +26,8 @@ import org.eclipse.orion.server.servlets.OrionServlet;
  * A servlet for doing imports and exports of large files.
  */
 public class TransferServlet extends OrionServlet {
+	private static final String PREFIX_EXPORT = "export";//$NON-NLS-1$
+	private static final String PREFIX_IMPORT = "import";//$NON-NLS-1$
 	private static final long serialVersionUID = 1L;
 
 	public TransferServlet() {
@@ -34,6 +36,28 @@ public class TransferServlet extends OrionServlet {
 
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		String pathInfo = req.getPathInfo();
+		IPath path = pathInfo == null ? Path.ROOT : new Path(pathInfo);
+		//first segment must be either "import" or "export"
+		if (path.segmentCount() > 0) {
+			if (PREFIX_IMPORT.equals(path.segment(0))) {
+				doPostImport(req, resp);
+				return;
+			} else if (PREFIX_EXPORT.equals(path.segment(0))) {
+				doPostExport(req, resp);
+				return;
+			}
+		}
+		//we don't know how to interpret this request
+		super.doPost(req, resp);
+
+	}
+
+	private void doPostExport(HttpServletRequest req, HttpServletResponse resp) {
+		//TBD not implemented
+	}
+
+	protected void doPostImport(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		//initiating a new file transfer
 		traceRequest(req);
 		String optionString = req.getHeader(ProtocolConstants.HEADER_XFER_OPTIONS);
@@ -62,8 +86,8 @@ public class TransferServlet extends OrionServlet {
 			handleException(resp, "Transfer request must indicate target filename", null, HttpServletResponse.SC_BAD_REQUEST);
 			return;
 		}
-		String pathInfo = req.getPathInfo();
-		IPath path = pathInfo == null ? Path.ROOT : new Path(pathInfo);
+		//chop "import" segment off the front
+		IPath path = new Path(req.getPathInfo()).removeFirstSegments(1);
 		String uuid = new UniversalUniqueIdentifier().toBase64String();
 		ClientImport newImport = new ClientImport(uuid, getStatusHandler());
 		newImport.setPath(path);
@@ -79,7 +103,7 @@ public class TransferServlet extends OrionServlet {
 		String pathInfo = req.getPathInfo();
 		IPath path = pathInfo == null ? Path.ROOT : new Path(pathInfo);
 		if (path.segmentCount() >= 2) {
-			if ("export".equals(path.segment(0)) && "zip".equals(path.getFileExtension())) { //$NON-NLS-1$ //$NON-NLS-2$
+			if (PREFIX_EXPORT.equals(path.segment(0)) && "zip".equals(path.getFileExtension())) { //$NON-NLS-1$
 				ClientExport export = new ClientExport(path.removeFirstSegments(1).removeFileExtension(), getStatusHandler());
 				export.doExport(req, resp);
 				return;

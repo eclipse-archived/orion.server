@@ -23,6 +23,8 @@ import org.osgi.service.prefs.BackingStoreException;
 
 public class AuthorizationService {
 
+	private static final String PREFIX_EXPORT = "/xfer/export/"; //$NON-NLS-1$
+	private static final String PREFIX_IMPORT = "/xfer/import/"; //$NON-NLS-1$
 	public static final int POST = 1;
 	public static final int PUT = 2;
 	public static final int GET = 4;
@@ -34,13 +36,13 @@ public class AuthorizationService {
 	private static final int CURRENT_VERSION = 2;
 
 	private static int getMethod(String methodName) {
-		if (methodName.equals("POST"))
+		if (methodName.equals("POST")) //$NON-NLS-1$
 			return 1;
-		if (methodName.equals("PUT"))
+		if (methodName.equals("PUT")) //$NON-NLS-1$
 			return 2;
-		if (methodName.equals("GET"))
+		if (methodName.equals("GET")) //$NON-NLS-1$
 			return 4;
-		if (methodName.equals("DELETE"))
+		if (methodName.equals("DELETE")) //$NON-NLS-1$
 			return 8;
 		return 0;
 	}
@@ -133,10 +135,10 @@ public class AuthorizationService {
 			return true;
 
 		//import/export rights depend on access to the file content
-		if (uri.startsWith("/xfer/export/") && uri.endsWith(".zip")) { //$NON-NLS-1$ //$NON-NLS-2$
+		if (uri.startsWith(PREFIX_EXPORT) && uri.endsWith(".zip")) { //$NON-NLS-1$
 			uri = "/file/" + uri.substring(13, uri.length() - 4) + '/'; //$NON-NLS-1$
-		} else if (uri.startsWith("/xfer/")) { //$NON-NLS-1$
-			uri = "/file/" + uri.substring(6); //$NON-NLS-1$
+		} else if (uri.startsWith(PREFIX_IMPORT)) {
+			uri = "/file/" + uri.substring(PREFIX_IMPORT.length()); //$NON-NLS-1$
 			if (!uri.endsWith("/")) //$NON-NLS-1$
 				uri += '/';
 		}
@@ -161,11 +163,11 @@ public class AuthorizationService {
 	}
 
 	private static boolean wildCardMatch(String text, String pattern) {
-		String[] cards = pattern.split("\\*");
-		if (!pattern.startsWith("*") && !text.startsWith(cards[0])) {
+		String[] cards = pattern.split("\\*"); //$NON-NLS-1$
+		if (!pattern.startsWith("*") && !text.startsWith(cards[0])) { //$NON-NLS-1$
 			return false;
 		}
-		if (!pattern.endsWith("*") && !text.endsWith(cards[cards.length - 1])) {
+		if (!pattern.endsWith("*") && !text.endsWith(cards[cards.length - 1])) { //$NON-NLS-1$
 			return false;
 		}
 

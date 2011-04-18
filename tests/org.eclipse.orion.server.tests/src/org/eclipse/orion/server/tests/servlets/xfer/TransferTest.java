@@ -61,7 +61,7 @@ public class TransferTest extends FileSystemTest {
 		File source = new File(FileLocator.toFileURL(entry).getPath());
 		long length = source.length();
 		InputStream in = new BufferedInputStream(new FileInputStream(source));
-		PostMethodWebRequest request = new PostMethodWebRequest(ServerTestsActivator.getServerLocation() + "/xfer/" + directoryPath, in, "application/zip");
+		PostMethodWebRequest request = new PostMethodWebRequest(ServerTestsActivator.getServerLocation() + "/xfer/import/" + directoryPath, in, "application/zip");
 		request.setHeaderField("Content-Length", "" + length);
 		request.setHeaderField("Content-Type", "application/zip");
 		setAuthentication(request);
@@ -85,7 +85,7 @@ public class TransferTest extends FileSystemTest {
 		URL entry = ServerTestsActivator.getContext().getBundle().getEntry("testData/importTest/client.zip");
 		File source = new File(FileLocator.toFileURL(entry).getPath());
 		long length = source.length();
-		PostMethodWebRequest request = new PostMethodWebRequest(ServerTestsActivator.getServerLocation() + "/xfer/" + directoryPath);
+		PostMethodWebRequest request = new PostMethodWebRequest(ServerTestsActivator.getServerLocation() + "/xfer/import/" + directoryPath);
 		request.setHeaderField("X-Xfer-Content-Length", Long.toString(length));
 		setAuthentication(request);
 		WebResponse postResponse = webConversation.getResponse(request);
@@ -109,7 +109,7 @@ public class TransferTest extends FileSystemTest {
 		URL entry = ServerTestsActivator.getContext().getBundle().getEntry("testData/importTest/client.zip");
 		File source = new File(FileLocator.toFileURL(entry).getPath());
 		long length = source.length();
-		PostMethodWebRequest request = new PostMethodWebRequest(ServerTestsActivator.getServerLocation() + "/xfer/" + directoryPath);
+		PostMethodWebRequest request = new PostMethodWebRequest(ServerTestsActivator.getServerLocation() + "/xfer/import/" + directoryPath);
 		request.setHeaderField("X-Xfer-Content-Length", Long.toString(length));
 		request.setHeaderField("X-Xfer-Options", "raw");
 
