@@ -30,7 +30,6 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepository;
-import org.eclipse.jgit.transport.URIish;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
 import org.eclipse.orion.server.git.GitConstants;
@@ -78,20 +77,7 @@ public class GitMergeTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		// clone: create
-		URIish uri = new URIish(gitDir.toURL());
-		String name = null;
-		WebRequest request = GitCloneTest.getPostGitCloneRequest(uri, name);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(taskLocation);
-		String cloneLocation = waitForTaskCompletion(taskLocation);
-
-		// clone: validate the clone metadata
-		response = webConversation.getResponse(getCloneRequest(cloneLocation));
-		JSONObject clone = new JSONObject(response.getText());
-		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		assertNotNull(contentLocation);
+		String contentLocation = clone(null);
 
 		// clone: link
 		ServletTestingSupport.allowedPrefixes = contentLocation;
@@ -100,12 +86,12 @@ public class GitMergeTest extends GitTest {
 		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, contentLocation);
 		InputStream in = new StringBufferInputStream(body.toString());
 		// http://<host>/workspace/<workspaceId>/
-		request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
+		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
 		if (projectName != null)
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		JSONObject project = new JSONObject(response.getText());
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
@@ -285,20 +271,7 @@ public class GitMergeTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		// clone: create
-		URIish uri = new URIish(gitDir.toURL());
-		String name = null;
-		WebRequest request = GitCloneTest.getPostGitCloneRequest(uri, name);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(taskLocation);
-		String cloneLocation = waitForTaskCompletion(taskLocation);
-
-		// clone: validate the clone metadata
-		response = webConversation.getResponse(getCloneRequest(cloneLocation));
-		JSONObject clone = new JSONObject(response.getText());
-		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		assertNotNull(contentLocation);
+		String contentLocation = clone(null);
 
 		// clone: link
 		ServletTestingSupport.allowedPrefixes = contentLocation;
@@ -307,12 +280,12 @@ public class GitMergeTest extends GitTest {
 		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, contentLocation);
 		InputStream in = new StringBufferInputStream(body.toString());
 		// http://<host>/workspace/<workspaceId>/
-		request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
+		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
 		if (projectName != null)
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		JSONObject project = new JSONObject(response.getText());
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
@@ -441,20 +414,7 @@ public class GitMergeTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		// clone1: create
-		URIish uri = new URIish(gitDir.toURL());
-		String name = null;
-		WebRequest request = GitCloneTest.getPostGitCloneRequest(uri, name);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(taskLocation);
-		String cloneLocation = waitForTaskCompletion(taskLocation);
-
-		//validate the clone metadata
-		response = webConversation.getResponse(getCloneRequest(cloneLocation));
-		JSONObject clone = new JSONObject(response.getText());
-		String contentLocation1 = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		assertNotNull(contentLocation1);
+		String contentLocation1 = clone(null);
 
 		// clone1: link
 		ServletTestingSupport.allowedPrefixes = contentLocation1;
@@ -463,12 +423,12 @@ public class GitMergeTest extends GitTest {
 		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, contentLocation1);
 		InputStream in = new StringBufferInputStream(body.toString());
 		// http://<host>/workspace/<workspaceId>/
-		request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
+		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
 		if (projectName1 != null)
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName1);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		JSONObject project1 = new JSONObject(response.getText());
 		String projectId1 = project1.getString(ProtocolConstants.KEY_ID);
@@ -476,19 +436,7 @@ public class GitMergeTest extends GitTest {
 		String gitRemoteUri1 = gitSection1.getString(GitConstants.KEY_REMOTE);
 
 		// clone2: create
-		request = GitCloneTest.getPostGitCloneRequest(uri, name);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-
-		taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(taskLocation);
-		cloneLocation = waitForTaskCompletion(taskLocation);
-
-		//validate the clone metadata
-		response = webConversation.getResponse(getCloneRequest(cloneLocation));
-		clone = new JSONObject(response.getText());
-		String contentLocation2 = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		assertNotNull(contentLocation2);
+		String contentLocation2 = clone(null);
 
 		// clone2: link
 		ServletTestingSupport.allowedPrefixes = contentLocation2;
@@ -554,7 +502,7 @@ public class GitMergeTest extends GitTest {
 		request = GitFetchTest.getPostGitRemoteRequest(remoteBranchLocation1, true);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(taskLocation);
 		waitForTaskCompletion(taskLocation);
 

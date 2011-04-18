@@ -35,7 +35,6 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.storage.file.FileRepository;
-import org.eclipse.jgit.transport.URIish;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
 import org.eclipse.orion.server.git.GitConstants;
@@ -94,22 +93,7 @@ public class GitRemoteTest extends GitTest {
 
 	@Test
 	public void testGetOrigin() throws IOException, SAXException, JSONException, URISyntaxException {
-		URIish uri = new URIish(gitDir.toURL());
-		String name = null;
-		WebRequest request = GitCloneTest.getPostGitCloneRequest(uri, name);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(taskLocation);
-		String cloneLocation = waitForTaskCompletion(taskLocation);
-
-		//validate the clone metadata
-		response = webConversation.getResponse(getCloneRequest(cloneLocation));
-		String location = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(location);
-		JSONObject clone = new JSONObject(response.getText());
-		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		assertNotNull(contentLocation);
+		String contentLocation = clone(null);
 
 		URI workspaceLocation = createWorkspace(getMethodName());
 
@@ -119,12 +103,12 @@ public class GitRemoteTest extends GitTest {
 		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, contentLocation);
 		InputStream in = new StringBufferInputStream(body.toString());
 		// http://<host>/workspace/<workspaceId>/
-		request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
+		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
 		if (projectName != null)
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		JSONObject project = new JSONObject(response.getText());
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
@@ -150,22 +134,7 @@ public class GitRemoteTest extends GitTest {
 
 	@Test
 	public void testGetUnknownRemote() throws IOException, SAXException, JSONException, URISyntaxException {
-		URIish uri = new URIish(gitDir.toURL());
-		String name = null;
-		WebRequest request = GitCloneTest.getPostGitCloneRequest(uri, name);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(taskLocation);
-		String cloneLocation = waitForTaskCompletion(taskLocation);
-
-		//validate the clone metadata
-		response = webConversation.getResponse(getCloneRequest(cloneLocation));
-		String location = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(location);
-		JSONObject clone = new JSONObject(response.getText());
-		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		assertNotNull(contentLocation);
+		String contentLocation = clone(null);
 
 		URI workspaceLocation = createWorkspace(getMethodName());
 
@@ -175,12 +144,12 @@ public class GitRemoteTest extends GitTest {
 		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, contentLocation);
 		InputStream in = new StringBufferInputStream(body.toString());
 		// http://<host>/workspace/<workspaceId>/
-		request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
+		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
 		if (projectName != null)
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		JSONObject project = new JSONObject(response.getText());
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
@@ -211,21 +180,7 @@ public class GitRemoteTest extends GitTest {
 
 	@Test
 	public void testGetRemoteCommits() throws JSONException, IOException, SAXException, URISyntaxException, JGitInternalException, GitAPIException {
-		URIish uri = new URIish(gitDir.toURL());
-		String name = null;
-		WebRequest request = GitCloneTest.getPostGitCloneRequest(uri, name);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(taskLocation);
-		String cloneLocation = waitForTaskCompletion(taskLocation);
-
-		response = webConversation.getResponse(getCloneRequest(cloneLocation));
-		String location = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(location);
-		JSONObject clone = new JSONObject(response.getText());
-		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		assertNotNull(contentLocation);
+		String contentLocation = clone(null);
 
 		URI workspaceLocation = createWorkspace(getMethodName());
 
@@ -235,12 +190,12 @@ public class GitRemoteTest extends GitTest {
 		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, contentLocation);
 		InputStream in = new StringBufferInputStream(body.toString());
 		// http://<host>/workspace/<workspaceId>/
-		request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
+		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
 		if (projectName != null)
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		JSONObject project = new JSONObject(response.getText());
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
@@ -323,20 +278,7 @@ public class GitRemoteTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		// clone: create
-		URIish uri = new URIish(gitDir.toURL());
-		String name = null;
-		WebRequest request = GitCloneTest.getPostGitCloneRequest(uri, name);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(taskLocation);
-		String cloneLocation = waitForTaskCompletion(taskLocation);
-
-		// clone: validate the clone metadata
-		response = webConversation.getResponse(getCloneRequest(cloneLocation));
-		JSONObject clone = new JSONObject(response.getText());
-		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		assertNotNull(contentLocation);
+		String contentLocation = clone(null);
 
 		// clone: link
 		ServletTestingSupport.allowedPrefixes = contentLocation;
@@ -345,12 +287,12 @@ public class GitRemoteTest extends GitTest {
 		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, contentLocation);
 		InputStream in = new StringBufferInputStream(body.toString());
 		// http://<host>/workspace/<workspaceId>/
-		request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
+		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
 		if (projectName != null)
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		JSONObject project = new JSONObject(response.getText());
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);

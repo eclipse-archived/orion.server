@@ -34,10 +34,12 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.RepositoryCache;
 import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
+import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitServlet;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.json.JSONException;
@@ -188,5 +190,56 @@ public abstract class GitTest extends FileSystemTest {
 		assertTrue(file.exists());
 		assertTrue(RepositoryCache.FileKey.isGitRepository(file, FS.DETECTED));
 		return new FileRepository(file);
+	}
+
+	protected String clone(URIish uri, String name, String kh, char[] p) throws JSONException, IOException, SAXException {
+		WebRequest request = getPostGitCloneRequest(uri.toString(), name, kh, p);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		assertNotNull(taskLocation);
+		String cloneLocation = waitForTaskCompletion(taskLocation);
+
+		// validate the clone metadata
+		response = webConversation.getResponse(getCloneRequest(cloneLocation));
+		JSONObject clone = new JSONObject(response.getText());
+		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		assertNotNull(contentLocation);
+		return contentLocation;
+	}
+
+	protected String clone(URIish uri, String name) throws JSONException, IOException, SAXException {
+		return clone(uri, name, null, null);
+	}
+
+	protected String clone(String name) throws JSONException, IOException, SAXException {
+		URIish uri = new URIish(gitDir.toURL());
+		return clone(uri, name);
+	}
+
+	protected static WebRequest getPostGitCloneRequest(URIish uri, String name) throws JSONException {
+		return getPostGitCloneRequest(uri.toString(), name, null, null);
+	}
+
+	/**
+	 * Creates a request to create a git clone for the given uri.
+	 * @param uri
+	 * @param name  
+	 * @throws JSONException 
+	 */
+	protected static WebRequest getPostGitCloneRequest(String uri, String name, String kh, char[] p) throws JSONException {
+		String requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.CLONE_RESOURCE + '/';
+		JSONObject body = new JSONObject();
+		body.put(GitConstants.KEY_URL, uri);
+		body.put(ProtocolConstants.KEY_NAME, name);
+		if (kh != null)
+			body.put(GitConstants.KEY_KNOWN_HOSTS, kh);
+		if (p != null)
+			body.put(GitConstants.KEY_PASSWORD, new String(p));
+		InputStream in = new StringBufferInputStream(body.toString());
+		WebRequest request = new PostMethodWebRequest(requestURI, in, "UTF-8");
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		return request;
 	}
 }

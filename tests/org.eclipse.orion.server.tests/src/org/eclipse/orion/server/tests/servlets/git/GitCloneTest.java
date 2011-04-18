@@ -87,34 +87,20 @@ public class GitCloneTest extends GitTest {
 		List<String> locations = new ArrayList<String>();
 
 		// 1st clone
-		URIish uri = new URIish(gitDir.toURL());
-		String name = null;
-		WebRequest request = getPostGitCloneRequest(uri, name);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		String location = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(location);
-		locations.add(location);
+		String contentLocation = clone(null);
+		locations.add(contentLocation);
 
 		// 2nd clone
-		request = getPostGitCloneRequest(uri, name);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		location = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(location);
-		locations.add(location);
+		contentLocation = clone(null);
+		locations.add(contentLocation);
 
 		// 3rd clone
-		request = getPostGitCloneRequest(uri, name);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		location = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(location);
-		locations.add(location);
+		contentLocation = clone(null);
+		locations.add(contentLocation);
 
 		// get clones list
-		request = listGitClonesRequest();
-		response = webConversation.getResponse(request);
+		WebRequest request = listGitClonesRequest();
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject clones = new JSONObject(response.getText());
 		JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
@@ -144,20 +130,7 @@ public class GitCloneTest extends GitTest {
 
 	@Test
 	public void testClone() throws IOException, SAXException, JSONException, URISyntaxException {
-		URIish uri = new URIish(gitDir.toURL());
-		String name = null;
-		WebRequest request = getPostGitCloneRequest(uri, name);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(taskLocation);
-		String cloneLocation = waitForTaskCompletion(taskLocation);
-
-		//validate the clone metadata
-		response = webConversation.getResponse(getCloneRequest(cloneLocation));
-		JSONObject clone = new JSONObject(response.getText());
-		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		assertNotNull(contentLocation);
+		String contentLocation = clone(null);
 
 		File file = URIUtil.toFile(new URI(contentLocation));
 		assertTrue(file.exists());
@@ -167,20 +140,7 @@ public class GitCloneTest extends GitTest {
 
 	@Test
 	public void testCloneAndLink() throws IOException, SAXException, JSONException, URISyntaxException {
-		URIish uri = new URIish(gitDir.toURL());
-		String name = null;
-		WebRequest request = getPostGitCloneRequest(uri, name);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(taskLocation);
-		String cloneLocation = waitForTaskCompletion(taskLocation);
-
-		//validate the clone metadata
-		response = webConversation.getResponse(getCloneRequest(cloneLocation));
-		JSONObject clone = new JSONObject(response.getText());
-		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		assertNotNull(contentLocation);
+		String contentLocation = clone(null);
 
 		URI workspaceLocation = createWorkspace(getMethodName());
 
@@ -190,12 +150,12 @@ public class GitCloneTest extends GitTest {
 		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, contentLocation);
 		InputStream in = new StringBufferInputStream(body.toString());
 		// http://<host>/workspace/<workspaceId>/
-		request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
+		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
 		if (projectName != null)
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		JSONObject newProject = new JSONObject(response.getText());
 		String projectContentLocation = newProject.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
@@ -223,20 +183,7 @@ public class GitCloneTest extends GitTest {
 
 	@Test
 	public void testCloneAndLinkToFolder() throws IOException, SAXException, JSONException, URISyntaxException {
-		URIish uri = new URIish(gitDir.toURL());
-		String name = null;
-		WebRequest request = getPostGitCloneRequest(uri, name);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(taskLocation);
-		String cloneLocation = waitForTaskCompletion(taskLocation);
-
-		//validate the clone metadata
-		response = webConversation.getResponse(getCloneRequest(cloneLocation));
-		JSONObject clone = new JSONObject(response.getText());
-		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		assertNotNull(contentLocation);
+		String contentLocation = clone(null);
 
 		File file = URIUtil.toFile(new URI(contentLocation));
 		File folder = new File(file, "folder");
@@ -249,12 +196,12 @@ public class GitCloneTest extends GitTest {
 		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, folder.toURI().toString());
 		InputStream in = new StringBufferInputStream(body.toString());
 		// http://<host>/workspace/<workspaceId>/
-		request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
+		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
 		if (projectName != null)
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		JSONObject newProject = new JSONObject(response.getText());
 		String projectContentLocation = newProject.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
@@ -413,15 +360,7 @@ public class GitCloneTest extends GitTest {
 		Assume.assumeTrue(knownHosts != null);
 
 		URIish uri = new URIish(sshRepo);
-		String name = null;
-		WebRequest request = getPostGitCloneRequest(uri, name, knownHosts, password);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		String location = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(location);
-		JSONObject clone = new JSONObject(response.getText());
-		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		assertNotNull(contentLocation);
+		String contentLocation = clone(uri, null, knownHosts, password);
 
 		File file = URIUtil.toFile(new URI(contentLocation));
 		assertTrue(file.exists());
@@ -456,17 +395,7 @@ public class GitCloneTest extends GitTest {
 	@Test
 	@Ignore("see bug 336216")
 	public void testCloneAndDelete() throws IOException, SAXException, JSONException, URISyntaxException {
-		// clone
-		URIish uri = new URIish(gitDir.toURL());
-		String name = null;
-		WebRequest request = getPostGitCloneRequest(uri, name);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		String location = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(location);
-		JSONObject clone = new JSONObject(response.getText());
-		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		assertNotNull(contentLocation);
+		String contentLocation = clone(null);
 
 		File file = URIUtil.toFile(new URI(contentLocation));
 		assertTrue(file.exists());
@@ -482,12 +411,12 @@ public class GitCloneTest extends GitTest {
 		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, contentLocation);
 		InputStream in = new StringBufferInputStream(body.toString());
 		// http://localhost:8080/workspace/{workspaceId}
-		request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
+		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
 		if (projectName != null)
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		JSONObject newProject = new JSONObject(response.getText());
 		String projectContentLocation = newProject.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
@@ -509,20 +438,7 @@ public class GitCloneTest extends GitTest {
 	@Test
 	public void testGetCloneAndPull() throws IOException, SAXException, JSONException, URISyntaxException, WrongRepositoryStateException, InvalidConfigurationException, DetachedHeadException, InvalidRemoteException, CanceledException, RefNotFoundException {
 		// see bug 339254
-		URIish uri = new URIish(gitDir.toURL());
-		String name = null;
-		WebRequest request = getPostGitCloneRequest(uri, name);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(taskLocation);
-		String cloneLocation = waitForTaskCompletion(taskLocation);
-
-		// validate the clone metadata
-		response = webConversation.getResponse(getCloneRequest(cloneLocation));
-		JSONObject clone = new JSONObject(response.getText());
-		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		assertNotNull(contentLocation);
+		String contentLocation = clone(null);
 
 		// TODO: add assertion on clones number once bug 340553 is fixed and we're able to clean clones after each test
 		// request = listGitClonesRequest();
@@ -538,28 +454,6 @@ public class GitCloneTest extends GitTest {
 		PullResult pullResult = git.pull().call();
 		assertEquals(pullResult.getMergeResult().getMergeStatus(), MergeStatus.ALREADY_UP_TO_DATE);
 		assertEquals(RepositoryState.SAFE, git.getRepository().getRepositoryState());
-	}
-
-	/**
-	 * Creates a request to create a git clone for the given uri.
-	 * @param uri
-	 * @param name  
-	 * @throws JSONException 
-	 */
-	private static WebRequest getPostGitCloneRequest(String uri, String name, String kh, char[] p) throws JSONException {
-		String requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.CLONE_RESOURCE + '/';
-		JSONObject body = new JSONObject();
-		body.put(GitConstants.KEY_URL, uri);
-		body.put(ProtocolConstants.KEY_NAME, name);
-		if (kh != null)
-			body.put(GitConstants.KEY_KNOWN_HOSTS, kh);
-		if (p != null)
-			body.put(GitConstants.KEY_PASSWORD, new String(p));
-		InputStream in = new StringBufferInputStream(body.toString());
-		WebRequest request = new PostMethodWebRequest(requestURI, in, "UTF-8");
-		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		setAuthentication(request);
-		return request;
 	}
 
 	private WebRequest getPostGitCloneRequest(String uri, String name, String kh, byte[] privk, byte[] pubk, byte[] p) throws JSONException {
@@ -591,10 +485,6 @@ public class GitCloneTest extends GitTest {
 	}
 
 	// Convenience methods for creating requests
-
-	static WebRequest getPostGitCloneRequest(URIish uri, String name) throws JSONException {
-		return getPostGitCloneRequest(uri.toString(), name, null, null);
-	}
 
 	private WebRequest getPostGitCloneRequest(String uri, String name) throws JSONException {
 		return getPostGitCloneRequest(uri, name, null, null);

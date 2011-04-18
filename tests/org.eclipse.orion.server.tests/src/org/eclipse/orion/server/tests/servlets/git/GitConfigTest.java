@@ -28,7 +28,6 @@ import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.transport.URIish;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
 import org.eclipse.orion.server.git.GitConstants;
@@ -57,20 +56,7 @@ public class GitConfigTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone a  repo
-		URIish uri = new URIish(gitDir.toURL());
-		String name = null;
-		request = GitCloneTest.getPostGitCloneRequest(uri, name);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(taskLocation);
-		String cloneLocation = waitForTaskCompletion(taskLocation);
-
-		//validate the clone metadata
-		response = webConversation.getResponse(getCloneRequest(cloneLocation));
-		JSONObject clone = new JSONObject(response.getText());
-		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		assertNotNull(contentLocation);
+		String contentLocation = clone(null);
 
 		// check the repository configuration using JGit API
 		Git git = new Git(getRepositoryForContentLocation(contentLocation));
