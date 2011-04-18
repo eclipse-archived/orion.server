@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.server.core.tasks;
 
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -22,11 +24,13 @@ public class TaskInfo {
 	private static final String KEY_MESSAGE = "Message"; //$NON-NLS-1$
 	private static final String KEY_RUNNING = "Running"; //$NON-NLS-1$
 	private static final String KEY_LOCATION = "Location"; //$NON-NLS-1$
+	private static final String KEY_RESULT = "Result"; //$NON-NLS-1$
 	private final String id;
 	private String message = ""; //$NON-NLS-1$
 	private int percentComplete = 0;
 	private boolean running = true;
 	private String resultLocation = null;
+	private IStatus result;
 
 	/**
 	 * Returns a task object based on its JSON representation. Returns
@@ -41,6 +45,9 @@ public class TaskInfo {
 			info.running = json.optBoolean(KEY_RUNNING, true);
 			info.setPercentComplete(json.optInt(KEY_PERCENT_COMPLETE, 0));
 			info.resultLocation = json.optString(KEY_LOCATION);
+			String resultString = json.optString(KEY_RESULT, null);
+			if (resultString!= null)
+				info.result = ServerStatus.fromJSON(resultString);
 			return info;
 		} catch (JSONException e) {
 			return null;
@@ -66,7 +73,7 @@ public class TaskInfo {
 	public int getPercentComplete() {
 		return percentComplete;
 	}
-	
+
 	/**
 	 * Returns the location of the resource representing the result of the computation. 
 	 * Returns <code>null</code> if the task has not completed, or if it did not complete successfully
@@ -75,13 +82,24 @@ public class TaskInfo {
 	public String getResultLocation() {
 		return resultLocation;
 	}
+	
+	/**
+	 * Returns the status describing the result of the operation, or <code>null</code>
+	 * if the operation has not yet completed.
+	 * @return The result status
+	 */
+	public IStatus getResult() {
+		return result;
+	}
 
 	public String getTaskId() {
 		return id;
 	}
 
 	/**
-	 * @return whether the task is currently running
+	 * Returns whether the task is currently running.
+	 * @return <code>true</code> if the task is currently running, and
+	 * <code>false</code> otherwise.
 	 */
 	public boolean isRunning() {
 		return running;
@@ -112,17 +130,28 @@ public class TaskInfo {
 		this.percentComplete = percentComplete;
 		return this;
 	}
-	
+
 	/**
 	 * Indicates that this task is completed.
+	 * @param status The result status
+	 * @return Returns this task
+	 */
+	public TaskInfo done(IStatus status) {
+		this.running = false;
+		this.percentComplete = 100;
+		this.result = status;
+		this.message = status.getMessage();
+		return this;
+	}
+
+	/**
+	 * Sets the location of the task result object.
 	 * @param location The location of the result resource for the task, or
 	 * <code>null</code> if not applicable.
 	 * @return Returns this task
 	 */
-	public TaskInfo done(String location) {
-		this.running = false;
-		this.percentComplete = 100;
-		this.resultLocation  = location;
+	public TaskInfo setResultLocation(String location) {
+		this.resultLocation = location;
 		return this;
 	}
 
@@ -130,19 +159,23 @@ public class TaskInfo {
 	 * Returns a JSON representation of this task state.
 	 */
 	public JSONObject toJSON() {
-		JSONObject result = new JSONObject();
+		JSONObject resultObject = new JSONObject();
 		try {
-			result.put(KEY_RUNNING, isRunning()); 
-			result.put(KEY_MESSAGE, getMessage());
-			result.put(KEY_ID, getTaskId()); 
-			result.put(KEY_PERCENT_COMPLETE, getPercentComplete());
+			resultObject.put(KEY_RUNNING, isRunning());
+			resultObject.put(KEY_MESSAGE, getMessage());
+			resultObject.put(KEY_ID, getTaskId());
+			resultObject.put(KEY_PERCENT_COMPLETE, getPercentComplete());
 			if (resultLocation != null)
-				result.put(KEY_LOCATION, resultLocation);
+				resultObject.put(KEY_LOCATION, resultLocation);
+			if (result != null) {
+				resultObject.put(KEY_RESULT, ServerStatus.convert(result).toJSON());
+			}
 		} catch (JSONException e) {
 			//can only happen if key is null
 		}
-		return result;
+		return resultObject;
 	}
+
 	@Override
 	public String toString() {
 		return "TaskInfo" + toJSON(); //$NON-NLS-1$

@@ -10,6 +10,7 @@ import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.internal.server.servlets.hosting.*;
 import org.eclipse.orion.internal.server.servlets.workspace.WebElementResourceHandler;
 import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;

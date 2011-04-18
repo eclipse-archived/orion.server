@@ -11,12 +11,7 @@
 package org.eclipse.orion.server.useradmin;
 
 import org.eclipse.orion.server.core.authentication.IAuthenticationService;
-
-import org.osgi.framework.BundleActivator;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.Constants;
-import org.osgi.framework.Filter;
-import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.*;
 import org.osgi.util.tracker.ServiceTracker;
 
 public class UserAdminActivator implements BundleActivator {

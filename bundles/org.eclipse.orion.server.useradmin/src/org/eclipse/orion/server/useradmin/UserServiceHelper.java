@@ -10,11 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.server.useradmin;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-
+import java.util.*;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
 import org.osgi.service.useradmin.UserAdmin;
 

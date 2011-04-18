@@ -22,6 +22,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
 import org.eclipse.orion.internal.server.servlets.*;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.json.*;
 import org.slf4j.LoggerFactory;
 

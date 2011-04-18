@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.core.users;
 
-import org.eclipse.orion.internal.server.core.Activator;
-
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
@@ -19,6 +17,7 @@ import org.eclipse.core.internal.preferences.EclipsePreferences;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.orion.internal.server.core.Activator;
 import org.eclipse.osgi.service.datalocation.Location;
 import org.osgi.framework.*;
 

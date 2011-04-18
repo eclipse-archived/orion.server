@@ -10,21 +10,25 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.xfer;
 
-import com.jcraft.jsch.*;
-import com.jcraft.jsch.ChannelSftp.LsEntry;
-import java.io.*;
-import java.util.Vector;
+import com.jcraft.jsch.UserInfo;
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
-import org.eclipse.orion.internal.server.core.IOUtilities;
-import org.eclipse.orion.internal.server.servlets.*;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
+import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -52,15 +56,16 @@ class SFTPImport {
 		}
 
 		public boolean promptPassphrase(String message) {
-			return false;
+			return true;
 		}
 
 		public boolean promptPassword(String message) {
-			return false;
+			return true;
 		}
 
 		public boolean promptYesNo(String message) {
-			return false;
+			//continue connecting to unknown host
+			return true;
 		}
 
 		public void showMessage(String message) {
@@ -68,6 +73,7 @@ class SFTPImport {
 		}
 
 	}
+
 	private IFileStore destinationRoot;
 	private final HttpServletRequest request;
 	private final HttpServletResponse response;
@@ -82,11 +88,16 @@ class SFTPImport {
 	}
 
 	public void doImport() throws ServletException {
-		String fileName = request.getHeader(ProtocolConstants.HEADER_SLUG);
-		if (fileName == null) {
-			handleException("Transfer request must indicate target filename", null, HttpServletResponse.SC_BAD_REQUEST);
-			return;
+		try {
+			importWithExceptions();
+		} catch (ServletException e) {
+			throw e;
+		} catch (Exception e) {
+			handleException("Internal error during import", e, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 		}
+	}
+
+	private void importWithExceptions() throws ServletException, IOException, URISyntaxException, JSONException {
 		String host, sourcePath, user, passphrase;
 		int port;
 		try {
@@ -100,16 +111,6 @@ class SFTPImport {
 			handleException("Request body is not in the expected format", e, HttpServletResponse.SC_BAD_REQUEST);
 			return;
 		}
-		try {
-			doImport(host, port, new Path(sourcePath), user, passphrase);
-		} catch (ServletException e) {
-			throw e;
-		} catch (Exception e) {
-			handleException("Import failed", e, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-		}
-	}
-
-	private void doImport(String host, int port, IPath sourcePath, String user, String passphrase) throws JSchException, ServletException, SftpException, IOException {
 		File destination;
 		try {
 			destination = destinationRoot.toLocalFile(EFS.NONE, null);
@@ -117,34 +118,17 @@ class SFTPImport {
 			handleException(NLS.bind("Import is not supported at this location: {0}", destinationRoot.toString()), e, HttpServletResponse.SC_NOT_IMPLEMENTED);
 			return;
 		}
-		JSch jsch = new JSch();
-		Session session = jsch.getSession(user, host, port);
-		session.setUserInfo(new BasicUserInfo(null, passphrase));
-		session.connect();
-		ChannelSftp channel = (ChannelSftp) session.openChannel("sftp"); //$NON-NLS-1$
-		try {
-			channel.connect();
-			doImportDirectory(channel, sourcePath, destination);
-		} finally {
-			channel.disconnect();
-		}
-	}
-
-	private void doImportDirectory(ChannelSftp channel, IPath sourcePath, File destination) throws SftpException, IOException {
-		@SuppressWarnings("unchecked")
-		Vector<LsEntry> children = channel.ls(sourcePath.toString());
-		for (LsEntry child : children) {
-			String childName = child.getFilename();
-			if (child.getAttrs().isDir()) {
-				doImportDirectory(channel, sourcePath.append(childName), new File(destination, childName));
-			} else {
-				doImportFile(channel, sourcePath.append(childName), new File(destination, childName));
-			}
-		}
-	}
-
-	private void doImportFile(ChannelSftp channel, IPath sourcePath, File destination) throws IOException, SftpException {
-		IOUtilities.pipe(channel.get(sourcePath.toString()), new FileOutputStream(destination), true, true);
+		SFTPImportJob job = new SFTPImportJob(destination, host, port, new Path(sourcePath), user, passphrase);
+		job.schedule();
+		TaskInfo task = job.getTask();
+		JSONObject result = task.toJSON();
+		//Not nice that the import service knows the location of the task servlet, but task service doesn't know this either
+		URI requestLocation = ServletResourceHandler.getURI(request);
+		URI taskLocation = new URI(requestLocation.getScheme(), requestLocation.getAuthority(), "/task/id/" + task.getTaskId(), null, null); //$NON-NLS-1$
+		result.put(ProtocolConstants.KEY_LOCATION, taskLocation.toString());
+		response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation.toString());
+		OrionServlet.writeJSONResponse(request, response, result);
+		response.setStatus(HttpServletResponse.SC_CREATED);
 	}
 
 	private void handleException(String string, Exception exception, int httpCode) throws ServletException {

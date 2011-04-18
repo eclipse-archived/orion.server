@@ -12,6 +12,8 @@ package org.eclipse.orion.server.tests.tasks;
 
 import static org.junit.Assert.assertEquals;
 
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
@@ -30,14 +32,28 @@ public class AllTaskTests {
 	public static TaskInfo createTestTask() {
 		TaskInfo info = new TaskInfo("mytask");
 		info.setMessage("THIS#)(&$^@)(ISA%20MESSAGE");
-		info.setPercentComplete(50);
+		info.done(new Status(IStatus.ERROR, "pluginid", "status message"));
 		return info;
 	}
 
-	public static void assertEqualTasks(TaskInfo task1, TaskInfo task2) {
-		assertEquals(task1.getTaskId(), task2.getTaskId());
-		assertEquals(task1.getMessage(), task2.getMessage());
-		assertEquals(task1.getPercentComplete(), task2.getPercentComplete());
-		assertEquals(task1.isRunning(), task2.isRunning());
+	public static void assertEqualTasks(TaskInfo expected, TaskInfo actual) {
+		assertEquals(expected.getTaskId(), actual.getTaskId());
+		assertEquals(expected.getMessage(), actual.getMessage());
+		assertEquals(expected.getPercentComplete(), actual.getPercentComplete());
+		assertEquals(expected.isRunning(), actual.isRunning());
+		assertEqualStatus(expected.getResult(), actual.getResult());
+	}
+
+	private static void assertEqualStatus(IStatus expected, IStatus actual) {
+		assertEquals(expected.getSeverity(), actual.getSeverity());
+		assertEquals(expected.getMessage(), actual.getMessage());
+		assertEquals(expected.getCode(), actual.getCode());
+		Throwable expectedException = expected.getException();
+		Throwable actualException = actual.getException();
+		if (expectedException == null) {
+			assertEquals(expectedException, actualException);
+		} else {
+			assertEquals(expectedException.getMessage(), actualException.getMessage());
+		}
 	}
 }

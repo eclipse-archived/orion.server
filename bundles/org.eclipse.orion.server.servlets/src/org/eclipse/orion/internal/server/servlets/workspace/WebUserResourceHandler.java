@@ -10,13 +10,12 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.workspace;
 
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-
 import java.net.URI;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.json.*;
 
 /**

@@ -10,11 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.server.useradmin;
 
-import java.util.Dictionary;
-import java.util.HashSet;
-import java.util.Properties;
-import java.util.Set;
-
+import java.util.*;
 import org.eclipse.orion.server.useradmin.servlets.UserServlet;
 import org.osgi.service.useradmin.Role;
 
