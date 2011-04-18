@@ -15,8 +15,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.Enumeration;
-import java.util.Properties;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import javax.servlet.ServletException;
@@ -84,7 +83,7 @@ class ClientImport {
 	 * workspace.
 	 */
 	private void completeTransfer(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
-		String options = getOptions();
+		List<String> options = getOptions();
 		if (!options.contains("raw")) { //$NON-NLS-1$
 			completeUnzip(req, resp);
 		} else {
@@ -209,7 +208,7 @@ class ClientImport {
 	private byte[] readChunk(HttpServletRequest req, int chunkSize) throws IOException {
 		ServletInputStream requestStream = req.getInputStream();
 		String contentType = req.getHeader(ProtocolConstants.HEADER_CONTENT_TYPE);
-		if (contentType.startsWith("multipart"))
+		if (contentType.startsWith("multipart")) //$NON-NLS-1$
 			return readMultiPartChunk(requestStream, contentType);
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream(chunkSize);
 		IOUtilities.pipe(requestStream, outputStream, false, false);
@@ -217,10 +216,10 @@ class ClientImport {
 	}
 
 	private byte[] readMultiPartChunk(ServletInputStream requestStream, String contentType) throws IOException {
-		//fast forward stream past multipart header
-		int boundaryOff = contentType.indexOf("boundary=");
+		//fast forward stream past multi-part header
+		int boundaryOff = contentType.indexOf("boundary="); //$NON-NLS-1$
 		String boundary = contentType.substring(boundaryOff + 9);
-		BufferedReader reader = new BufferedReader(new InputStreamReader(requestStream, "ISO-8859-1"));
+		BufferedReader reader = new BufferedReader(new InputStreamReader(requestStream, "ISO-8859-1")); //$NON-NLS-1$
 		StringBuffer out = new StringBuffer();
 		//skip headers up to the first blank line
 		String line = reader.readLine();
@@ -235,7 +234,7 @@ class ClientImport {
 		}
 		//remove the boundary from the output (end of input is \r\n--<boundary>--\r\n)
 		out.setLength(out.length() - (boundary.length() + 8));
-		return out.toString().getBytes("ISO-8859-1");
+		return out.toString().getBytes("ISO-8859-1"); //$NON-NLS-1$
 	}
 
 	private void fail(HttpServletRequest req, HttpServletResponse resp, String msg) throws ServletException {
@@ -250,8 +249,8 @@ class ClientImport {
 		return Integer.valueOf(props.getProperty(KEY_LENGTH, "0")); //$NON-NLS-1$
 	}
 
-	private String getOptions() {
-		return props.getProperty(KEY_OPTIONS, ""); //$NON-NLS-1$
+	private List<String> getOptions() {
+		return TransferServlet.getOptions(props.getProperty(KEY_OPTIONS, ""));//$NON-NLS-1$
 	}
 
 	private String getPath() {

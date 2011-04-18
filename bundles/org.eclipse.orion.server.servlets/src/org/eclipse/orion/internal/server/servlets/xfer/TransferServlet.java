@@ -26,8 +26,14 @@ import org.eclipse.orion.server.servlets.OrionServlet;
  * A servlet for doing imports and exports of large files.
  */
 public class TransferServlet extends OrionServlet {
-	private static final String PREFIX_EXPORT = "export";//$NON-NLS-1$
-	private static final String PREFIX_IMPORT = "import";//$NON-NLS-1$
+	/**
+	 * The servlet path prefix for export operations.
+	 */
+	static final String PREFIX_EXPORT = "export";//$NON-NLS-1$
+	/**
+	 * The servlet path prefix for import operations.
+	 */
+	static final String PREFIX_IMPORT = "import";//$NON-NLS-1$
 	private static final long serialVersionUID = 1L;
 
 	public TransferServlet() {
@@ -36,6 +42,7 @@ public class TransferServlet extends OrionServlet {
 
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		traceRequest(req);
 		String pathInfo = req.getPathInfo();
 		IPath path = pathInfo == null ? Path.ROOT : new Path(pathInfo);
 		//first segment must be either "import" or "export"
@@ -53,19 +60,30 @@ public class TransferServlet extends OrionServlet {
 
 	}
 
-	private void doPostExport(HttpServletRequest req, HttpServletResponse resp) {
-		//TBD not implemented
+	private void doPostExport(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		String optionString = req.getHeader(ProtocolConstants.HEADER_XFER_OPTIONS);
+		List<String> options = getOptions(optionString);
+		if (options.contains("sftp")) { //$NON-NLS-1$
+			new SFTPTransfer(req, resp, getStatusHandler()).doTransfer();
+			return;
+		}
+		//don't know how to handle this
+		super.doPost(req, resp);
+	}
+
+	static List<String> getOptions(String optionString) {
+		if (optionString == null)
+			optionString = ""; //$NON-NLS-1$
+		return Arrays.asList(optionString.split(",")); //$NON-NLS-1$
+
 	}
 
 	protected void doPostImport(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		//initiating a new file transfer
-		traceRequest(req);
 		String optionString = req.getHeader(ProtocolConstants.HEADER_XFER_OPTIONS);
-		if (optionString == null)
-			optionString = ""; //$NON-NLS-1$
-		List<String> options = Arrays.asList(optionString.split(",")); //$NON-NLS-1$
+		List<String> options = getOptions(optionString);
 		if (options.contains("sftp")) { //$NON-NLS-1$
-			new SFTPImport(req, resp, getStatusHandler()).doImport();
+			new SFTPTransfer(req, resp, getStatusHandler()).doTransfer();
 			return;
 		}
 		long length = -1;
