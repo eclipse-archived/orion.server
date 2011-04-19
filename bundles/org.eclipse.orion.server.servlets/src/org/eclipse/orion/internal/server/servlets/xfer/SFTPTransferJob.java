@@ -63,11 +63,6 @@ public abstract class SFTPTransferJob extends Job {
 		return info;
 	}
 
-	/**
-	 * Method overwritten by subclass to implement import/export
-	 */
-	protected abstract void transferDirectory(ChannelSftp channel, IPath remotePath, File localFile) throws SftpException, IOException;
-
 	public TaskInfo getTask() {
 		return task;
 	}
@@ -129,4 +124,20 @@ public abstract class SFTPTransferJob extends Job {
 		task.setMessage(message);
 		getTaskService().updateTask(task);
 	}
+
+	/**
+	 * Returns whether the given file name should be ignored during transfer.
+	 */
+	protected boolean shouldSkip(String fileName) {
+		//skip parent and self references
+		if (".".equals(fileName) || "..".equals(fileName))//$NON-NLS-1$ //$NON-NLS-2$
+			return true;
+		//skip git metadata
+		return ".git".equals(fileName); //$NON-NLS-1$
+	}
+
+	/**
+	 * Method overwritten by subclass to implement import/export
+	 */
+	protected abstract void transferDirectory(ChannelSftp channel, IPath remotePath, File localFile) throws SftpException, IOException;
 }

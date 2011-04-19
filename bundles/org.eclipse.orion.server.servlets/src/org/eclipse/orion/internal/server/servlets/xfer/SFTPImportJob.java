@@ -37,8 +37,7 @@ public class SFTPImportJob extends SFTPTransferJob {
 		//visit remote children
 		for (LsEntry remoteChild : remoteChildren) {
 			String childName = remoteChild.getFilename();
-			//skip self and parent references
-			if (".".equals(childName) || "..".equals(childName)) //$NON-NLS-1$ //$NON-NLS-2$
+			if (shouldSkip(childName))
 				continue;
 			File localChild = new File(localFile, childName);
 			if (remoteChild.getAttrs().isDir()) {
