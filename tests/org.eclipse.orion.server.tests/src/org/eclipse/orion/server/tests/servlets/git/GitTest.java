@@ -30,7 +30,9 @@ import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.core.tests.harness.FileSystemHelper;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.RepositoryCache;
 import org.eclipse.jgit.storage.file.FileRepository;
@@ -42,6 +44,7 @@ import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSuppor
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitServlet;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.After;
@@ -240,6 +243,82 @@ public abstract class GitTest extends FileSystemTest {
 		setAuthentication(request);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		return new JSONObject(response.getText());
+	}
+
+	// remotes
+
+	protected JSONObject getRemoteBranch(String gitRemoteUri, int size, int i, String name) throws IOException, SAXException, JSONException {
+		WebRequest request = GitRemoteTest.getGetGitRemoteRequest(gitRemoteUri);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject remotes = new JSONObject(response.getText());
+		JSONArray remotesArray = remotes.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		assertEquals(1, remotesArray.length());
+		JSONObject remote = remotesArray.getJSONObject(0);
+		assertNotNull(remote);
+		assertEquals(Constants.DEFAULT_REMOTE_NAME, remote.getString(ProtocolConstants.KEY_NAME));
+		String remoteLocation = remote.getString(ProtocolConstants.KEY_LOCATION);
+
+		request = GitRemoteTest.getGetGitRemoteRequest(remoteLocation);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		remote = new JSONObject(response.getText());
+		assertNotNull(remote);
+		assertEquals(Constants.DEFAULT_REMOTE_NAME, remote.getString(ProtocolConstants.KEY_NAME));
+		assertNotNull(remote.getString(ProtocolConstants.KEY_LOCATION));
+		JSONArray refsArray = remote.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		assertEquals(size, refsArray.length());
+		JSONObject ref = refsArray.getJSONObject(i);
+		assertEquals(Constants.R_REMOTES + Constants.DEFAULT_REMOTE_NAME + "/" + name, ref.getString(ProtocolConstants.KEY_NAME));
+		String newRefId = ref.getString(ProtocolConstants.KEY_ID);
+		assertNotNull(newRefId);
+		assertTrue(ObjectId.isId(newRefId));
+		String remoteBranchLocation = ref.getString(ProtocolConstants.KEY_LOCATION);
+		ref.getString(GitConstants.KEY_COMMIT);
+
+		request = GitRemoteTest.getGetGitRemoteRequest(remoteBranchLocation);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject remoteBranch = new JSONObject(response.getText());
+		remoteBranch.getString(GitConstants.KEY_COMMIT);
+		remoteBranch.getString(GitConstants.KEY_HEAD);
+
+		return remoteBranch;
+	}
+
+	// push
+
+	protected void pushAll(String contentLocation) throws IOException, URISyntaxException, JGitInternalException, GitAPIException {
+		FileRepository db1 = new FileRepository(new File(URIUtil.toFile(new URI(contentLocation)), Constants.DOT_GIT));
+		Git git = new Git(db1);
+		// TODO: replace with REST API when bug 339115 is fixed
+		git.push().setPushAll().call();
+	}
+
+	protected void push(String gitRemoteUri, String srcRef) throws IOException, SAXException, JSONException {
+		push(gitRemoteUri, 1, 0, Constants.MASTER, srcRef);
+	}
+
+	protected void push(String gitRemoteUri, int size, int i, String name, String srcRef) throws IOException, SAXException, JSONException {
+		String remoteBranchLocation = getRemoteBranch(gitRemoteUri, size, i, name).getString(ProtocolConstants.KEY_LOCATION);
+		WebRequest request = GitPushTest.getPostGitRemoteRequest(remoteBranchLocation, srcRef);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+	}
+
+	protected JSONObject fetch(String remoteBranchLocation) throws JSONException, IOException, SAXException {
+		WebRequest request = GitFetchTest.getPostGitRemoteRequest(remoteBranchLocation, true);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		assertNotNull(taskLocation);
+		waitForTaskCompletion(taskLocation);
+
+		// get remote details again
+		request = GitRemoteTest.getGetGitRemoteRequest(remoteBranchLocation);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		return new JSONObject(response.getText());
 	}
 

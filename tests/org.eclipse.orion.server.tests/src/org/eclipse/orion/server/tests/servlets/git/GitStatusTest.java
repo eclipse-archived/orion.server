@@ -30,6 +30,7 @@ import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.NoFilepatternException;
 import org.eclipse.jgit.dircache.DirCache;
 import org.eclipse.jgit.dircache.DirCacheEntry;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
@@ -748,32 +749,26 @@ public class GitStatusTest extends GitTest {
 
 		// clone1: link
 		JSONObject project1 = linkProject(contentLocation1, getMethodName() + "1");
-		String projectId1 = project1.optString(ProtocolConstants.KEY_ID, null);
-		assertNotNull(projectId1);
+		String projectId1 = project1.getString(ProtocolConstants.KEY_ID);
 		JSONObject gitSection1 = project1.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection1);
-		String gitStatusUri1 = gitSection1.optString(GitConstants.KEY_STATUS, null);
-		assertNotNull(gitStatusUri1);
-		String gitIndexUri1 = gitSection1.optString(GitConstants.KEY_INDEX, null);
-		assertNotNull(gitIndexUri1);
-		String gitCommitUri1 = gitSection1.optString(GitConstants.KEY_COMMIT, null);
-		assertNotNull(gitCommitUri1);
+		String gitStatusUri1 = gitSection1.getString(GitConstants.KEY_STATUS);
+		String gitIndexUri1 = gitSection1.getString(GitConstants.KEY_INDEX);
+		String gitCommitUri1 = gitSection1.getString(GitConstants.KEY_COMMIT);
+		String gitRemoteUri1 = gitSection1.getString(GitConstants.KEY_REMOTE);
 
 		// clone2: create
 		String contentLocation2 = clone(null);
 
 		// clone2: link
 		JSONObject project2 = linkProject(contentLocation2, getMethodName() + "2");
-		String projectId2 = project2.optString(ProtocolConstants.KEY_ID, null);
+		String projectId2 = project2.getString(ProtocolConstants.KEY_ID);
 		assertNotNull(projectId2);
 		JSONObject gitSection2 = project2.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection2);
-		String gitStatusUri2 = gitSection2.optString(GitConstants.KEY_STATUS, null);
-		assertNotNull(gitStatusUri2);
-		String gitIndexUri2 = gitSection2.optString(GitConstants.KEY_INDEX, null);
-		assertNotNull(gitIndexUri2);
-		String gitCommitUri2 = gitSection2.optString(GitConstants.KEY_COMMIT, null);
-		assertNotNull(gitCommitUri2);
+		String gitStatusUri2 = gitSection2.getString(GitConstants.KEY_STATUS);
+		String gitIndexUri2 = gitSection2.getString(GitConstants.KEY_INDEX);
+		String gitCommitUri2 = gitSection2.getString(GitConstants.KEY_COMMIT);
 
 		// clone1: change
 		WebRequest request = getPutFileRequest(projectId1 + "/test.txt", "change from clone1");
@@ -791,12 +786,11 @@ public class GitStatusTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone1: push
-		// TODO: replace with REST API for git push once bug 339115 is fixed
-		Repository db1 = getRepositoryForContentLocation(contentLocation1);
-		Git git = new Git(db1);
-		git.push().call();
+		push(gitRemoteUri1, Constants.HEAD);
 
 		// this is how EGit checks for conflicts
+		Repository db1 = getRepositoryForContentLocation(contentLocation1);
+		Git git = new Git(db1);
 		DirCache cache = db1.readDirCache();
 		DirCacheEntry entry = cache.getEntry("test.txt");
 		assertTrue(entry.getStage() == 0);
