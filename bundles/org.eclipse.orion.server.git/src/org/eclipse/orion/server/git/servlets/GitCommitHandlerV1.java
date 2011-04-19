@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
+import java.util.Map.Entry;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -179,13 +180,37 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		if (p != null && !"".equals(p))
 			walk.setTreeFilter(AndTreeFilter.create(PathFilterGroup.createFromStrings(Collections.singleton(p)), TreeFilter.ANY_DIFF));
 
-		OrionServlet.writeJSONResponse(request, response, toJSON(OrionServlet.getURI(request), walk));
+		JSONObject result = toJSON(OrionServlet.getURI(request), walk);
+		result.put(GitConstants.KEY_REMOTE, getRemoteBranchLocation(getURI(request), db));
+		OrionServlet.writeJSONResponse(request, response, result);
 
 		return true;
 	}
 
-	private JSONArray toJSON(URI baseLocation, Iterable<RevCommit> commits) throws JSONException, URISyntaxException {
-		JSONArray result = new JSONArray();
+	private URI getRemoteBranchLocation(URI base, Repository db) throws IOException, URISyntaxException {
+		for (Entry<String, Ref> refEntry : db.getRefDatabase().getRefs(Constants.R_REMOTES).entrySet()) {
+			if (!refEntry.getValue().isSymbolic()) {
+				Ref ref = refEntry.getValue();
+				String name = ref.getName();
+				name = Repository.shortenRefName(name).substring(Constants.DEFAULT_REMOTE_NAME.length() + 1);
+				if (db.getBranch().equals(name)) {
+					return baseToRemoteLocation(base, Constants.DEFAULT_REMOTE_NAME, name);
+				}
+			}
+		}
+		return null;
+	}
+
+	private URI baseToRemoteLocation(URI u, String remote, String branch) throws URISyntaxException {
+		// URIUtil.append(baseLocation, configName)
+		IPath p = new Path(u.getPath());
+		p = p.uptoSegment(1).append(GitConstants.REMOTE_RESOURCE).append(remote).append(branch).addTrailingSeparator().append(p.removeFirstSegments(3));
+		return new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), p.toString(), u.getQuery(), u.getFragment());
+	}
+
+	private JSONObject toJSON(URI baseLocation, Iterable<RevCommit> commits) throws JSONException, URISyntaxException {
+		JSONObject result = new JSONObject();
+		JSONArray children = new JSONArray();
 		for (RevCommit revCommit : commits) {
 			JSONObject commit = new JSONObject();
 			commit.put(ProtocolConstants.KEY_LOCATION, createCommitLocation(baseLocation, revCommit.getName(), null));
@@ -195,8 +220,9 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			commit.put(GitConstants.KEY_AUTHOR_NAME, revCommit.getAuthorIdent().getName());
 			commit.put(GitConstants.KEY_COMMIT_TIME, ((long) revCommit.getCommitTime()) * 1000 /* time in milliseconds */);
 			commit.put(GitConstants.KEY_COMMIT_MESSAGE, revCommit.getFullMessage());
-			result.put(commit);
+			children.put(commit);
 		}
+		result.put(ProtocolConstants.KEY_CHILDREN, children);
 		return result;
 	}
 

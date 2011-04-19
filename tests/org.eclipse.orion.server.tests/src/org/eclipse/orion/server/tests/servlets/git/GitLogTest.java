@@ -91,17 +91,17 @@ public class GitLogTest extends GitTest {
 		request = GitCommitTest.getGetGitCommitRequest(gitCommitUri, false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONArray statusResponse = new JSONArray(response.getText());
+		JSONObject logResponse = new JSONObject(response.getText());
+		JSONArray commitsArray = logResponse.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		assertEquals(3, commitsArray.length());
 
-		assertEquals(3, statusResponse.length());
-
-		JSONObject commit = statusResponse.getJSONObject(0);
+		JSONObject commit = commitsArray.getJSONObject(0);
 		assertEquals("commit2", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
 
-		commit = statusResponse.getJSONObject(1);
+		commit = commitsArray.getJSONObject(1);
 		assertEquals("commit1", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
 
-		commit = statusResponse.getJSONObject(2);
+		commit = commitsArray.getJSONObject(2);
 		assertEquals("Initial commit", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
 		String initialGitCommitName = commit.getString(ProtocolConstants.KEY_NAME);
 		String initialGitCommitURI = gitCommitUri.replaceAll("HEAD", initialGitCommitName);
@@ -116,14 +116,14 @@ public class GitLogTest extends GitTest {
 		request = GitCommitTest.getGetGitCommitRequest(newGitCommitUri, false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		statusResponse = new JSONArray(response.getText());
+		logResponse = new JSONObject(response.getText());
+		commitsArray = logResponse.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		assertEquals(2, commitsArray.length());
 
-		assertEquals(2, statusResponse.length());
-
-		commit = statusResponse.getJSONObject(0);
+		commit = commitsArray.getJSONObject(0);
 		assertEquals("commit2", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
 
-		commit = statusResponse.getJSONObject(1);
+		commit = commitsArray.getJSONObject(1);
 		assertEquals("commit1", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
 	}
 

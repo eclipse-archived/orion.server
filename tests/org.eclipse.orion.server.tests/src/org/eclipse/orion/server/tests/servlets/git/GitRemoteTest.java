@@ -165,9 +165,9 @@ public class GitRemoteTest extends GitTest {
 		request = GitCommitTest.getGetGitCommitRequest(commitLocation, false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		// TODO replace with tests methods from GitLogTest, bug 340051
-		JSONArray log = new JSONArray(response.getText());
-		assertEquals(1, log.length());
+		JSONObject logResponse = new JSONObject(response.getText());
+		JSONArray commitsArray = logResponse.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		assertEquals(1, commitsArray.length());
 
 		// change
 		request = getPutFileRequest(projectId + "/test.txt", "change");
@@ -202,9 +202,9 @@ public class GitRemoteTest extends GitTest {
 		request = GitCommitTest.getGetGitCommitRequest(commitLocation, false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		// TODO replace with tests methods from GitLogTest, bug 340051
-		log = new JSONArray(response.getText());
-		assertEquals(2, log.length());
+		logResponse = new JSONObject(response.getText());
+		commitsArray = logResponse.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		assertEquals(2, commitsArray.length());
 
 		// TODO: test pushing change from another repo and fetch here
 	}
@@ -275,7 +275,7 @@ public class GitRemoteTest extends GitTest {
 	}
 
 	static JSONObject getRemoteBranch(String remoteLocation, int size, int i, String name) throws IOException, SAXException, JSONException {
-		WebRequest request = GitRemoteTest.getGetGitRemoteRequest(remoteLocation);
+		WebRequest request = getGetGitRemoteRequest(remoteLocation);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject remote = new JSONObject(response.getText());
@@ -292,7 +292,7 @@ public class GitRemoteTest extends GitTest {
 		String remoteBranchLocation = ref.getString(ProtocolConstants.KEY_LOCATION);
 		ref.getString(GitConstants.KEY_COMMIT);
 
-		request = GitRemoteTest.getGetGitRemoteRequest(remoteBranchLocation);
+		request = getGetGitRemoteRequest(remoteBranchLocation);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject remoteBranch = new JSONObject(response.getText());

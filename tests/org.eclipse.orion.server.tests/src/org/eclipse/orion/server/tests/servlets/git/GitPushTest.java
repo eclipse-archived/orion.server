@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringBufferInputStream;
 import java.net.HttpURLConnection;
-import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.eclipse.jgit.lib.Constants;
@@ -70,8 +69,6 @@ public class GitPushTest extends GitTest {
 
 	@Test
 	public void testPushHead() throws JSONException, IOException, SAXException, URISyntaxException {
-		URI workspaceLocation = createWorkspace(getMethodName());
-
 		// clone1: create
 		String contentLocation1 = clone(null);
 
@@ -210,6 +207,58 @@ public class GitPushTest extends GitTest {
 		// list remote branches, assert=2
 		// clone1: DELETE 'a' ('git push origin :a')
 		// list remote branches, assert=1
+	}
+
+	@Test
+	public void testPushFromLog() throws JSONException, IOException, SAXException, URISyntaxException {
+		String contentLocation = clone(null);
+
+		JSONObject project = linkProject(contentLocation, getMethodName());
+		String projectId = project.getString(ProtocolConstants.KEY_ID);
+		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX);
+		String gitCommitUri = gitSection.optString(GitConstants.KEY_COMMIT);
+
+		// log
+		WebRequest request = GitCommitTest.getGetGitCommitRequest(gitCommitUri, false);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject logResponse = new JSONObject(response.getText());
+		JSONArray commitsArray = logResponse.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		// one commit
+		assertEquals(1, commitsArray.length());
+
+		// change
+		request = getPutFileRequest(projectId + "/test.txt", "incoming change");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// add
+		request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// commit
+		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "incoming change commit", false);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// log again
+		request = GitCommitTest.getGetGitCommitRequest(gitCommitUri, false);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		logResponse = new JSONObject(response.getText());
+		commitsArray = logResponse.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		// two commits
+		assertEquals(2, commitsArray.length());
+
+		String remoteBranchLocation = logResponse.getString(GitConstants.KEY_REMOTE);
+
+		// push
+		request = getPostGitRemoteRequest(remoteBranchLocation, Constants.HEAD);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 	}
 
 	private static WebRequest getPostGitRemoteRequest(String location, String srcRef) throws JSONException {
