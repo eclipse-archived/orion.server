@@ -30,8 +30,12 @@ public class SFTPExportJob extends SFTPTransferJob {
 	@Override
 	protected void transferDirectory(ChannelSftp channel, IPath remotePath, File localFile) throws SftpException, IOException {
 		setTaskMessage(NLS.bind("Exporting {0}...", host + remotePath.toString()));
-		//create the remote folder on export
-		channel.mkdir(remotePath.toString());
+		try {
+			//create the remote folder on export
+			channel.mkdir(remotePath.toString());
+		} catch (SftpException e) {
+			//mkdir failure likely means the folder already exists
+		}
 		//visit local children
 		List<File> localChildren = new ArrayList<File>();
 		File[] localFiles = localFile.listFiles();
@@ -52,11 +56,8 @@ public class SFTPExportJob extends SFTPTransferJob {
 	}
 
 	protected void doTransferFile(ChannelSftp channel, IPath remotePath, File localFile) throws IOException, SftpException {
-		try {
-			//on export, copy the local file to the remote destination
-			channel.put(new FileInputStream(localFile), remotePath.toString());
-		} catch (FileNotFoundException e) {
-			//if local file doesn't exist there is nothing to export
-		}
+		//on export, copy the local file to the remote destination
+		String remote = remotePath.toString();
+		channel.put(new FileInputStream(localFile), remote);
 	}
 }

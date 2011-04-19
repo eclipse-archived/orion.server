@@ -104,6 +104,6 @@ class SFTPTransfer {
 	private void initLocalPath() {
 		IPath path = new Path(request.getPathInfo());
 		//first segment is "import" or "export"
-		localRoot = NewFileServlet.getFileStore(path.removeFirstSegments(1));
+		localRoot = NewFileServlet.getFileStore(path.removeFirstSegments(1).removeFileExtension());
 	}
 }
