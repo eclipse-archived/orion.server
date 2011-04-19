@@ -45,25 +45,13 @@ public class GitPushTest extends GitTest {
 		assertNotNull(gitSection);
 		String gitRemoteUri = gitSection.getString(GitConstants.KEY_REMOTE);
 
-		// list remotes
-		WebRequest request = GitRemoteTest.getGetGitRemoteRequest(gitRemoteUri);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject remotes = new JSONObject(response.getText());
-		JSONArray remotesArray = remotes.getJSONArray(ProtocolConstants.KEY_CHILDREN);
-		assertEquals(1, remotesArray.length());
-		JSONObject remote = remotesArray.getJSONObject(0);
-		assertNotNull(remote);
-		assertEquals(Constants.DEFAULT_REMOTE_NAME, remote.getString(ProtocolConstants.KEY_NAME));
-		String remoteLocation = remote.getString(ProtocolConstants.KEY_LOCATION);
-
 		// get remote branch location
-		JSONObject remoteBranch = GitRemoteTest.getRemoteBranch(remoteLocation, 1, 0, Constants.MASTER);
+		JSONObject remoteBranch = getRemoteBranch(gitRemoteUri, 1, 0, Constants.MASTER);
 		String remoteBranchLocation = remoteBranch.getString(ProtocolConstants.KEY_LOCATION);
 
 		// push with no body
-		request = getPostGitRemoteRequest(remoteBranchLocation, null);
-		response = webConversation.getResponse(request);
+		WebRequest request = getPostGitRemoteRequest(remoteBranchLocation, null);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
 	}
 
@@ -106,7 +94,6 @@ public class GitPushTest extends GitTest {
 		JSONObject remote = remotesArray.getJSONObject(0);
 		assertNotNull(remote);
 		assertEquals(Constants.DEFAULT_REMOTE_NAME, remote.getString(ProtocolConstants.KEY_NAME));
-		String remoteLocation1 = remote.getString(ProtocolConstants.KEY_LOCATION);
 
 		// clone1: change
 		request = getPutFileRequest(projectId1 + "/test.txt", "incoming change");
@@ -123,14 +110,8 @@ public class GitPushTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		// clone1: get remote branch location
-		JSONObject remoteBranch1 = GitRemoteTest.getRemoteBranch(remoteLocation1, 1, 0, Constants.MASTER);
-		String remoteBranchLocation1 = remoteBranch1.getString(ProtocolConstants.KEY_LOCATION);
-
 		// clone1: push
-		request = getPostGitRemoteRequest(remoteBranchLocation1, Constants.HEAD);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		push(gitRemoteUri1, Constants.HEAD);
 
 		// clone2: list remotes
 		request = GitRemoteTest.getGetGitRemoteRequest(gitRemoteUri2);
@@ -145,7 +126,7 @@ public class GitPushTest extends GitTest {
 		String remoteLocation2 = remote.getString(ProtocolConstants.KEY_LOCATION);
 
 		// clone2: get remote branch location
-		JSONObject remoteBranch = GitRemoteTest.getRemoteBranch(remoteLocation2, 1, 0, Constants.MASTER);
+		JSONObject remoteBranch = getRemoteBranch(gitRemoteUri2, 1, 0, Constants.MASTER);
 		String remoteBranchLocation2 = remoteBranch.getString(ProtocolConstants.KEY_LOCATION);
 
 		// clone2: fetch
@@ -157,7 +138,7 @@ public class GitPushTest extends GitTest {
 		waitForTaskCompletion(taskLocation);
 
 		// clone2: get remote details
-		JSONObject remoteBranch2 = GitRemoteTest.getRemoteBranch(remoteLocation2, 1, 0, Constants.MASTER);
+		JSONObject remoteBranch2 = getRemoteBranch(gitRemoteUri2, 1, 0, Constants.MASTER);
 		String newRefId2 = remoteBranch2.getString(ProtocolConstants.KEY_ID);
 
 		// clone2: merge into HEAD, "git merge origin/master"
@@ -215,10 +196,9 @@ public class GitPushTest extends GitTest {
 
 		JSONObject project = linkProject(contentLocation, getMethodName());
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
-		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX);
-		String gitCommitUri = gitSection.optString(GitConstants.KEY_COMMIT);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
 
 		// log
 		WebRequest request = GitCommitTest.getGetGitCommitRequest(gitCommitUri, false);
@@ -261,7 +241,7 @@ public class GitPushTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 	}
 
-	private static WebRequest getPostGitRemoteRequest(String location, String srcRef) throws JSONException {
+	static WebRequest getPostGitRemoteRequest(String location, String srcRef) throws JSONException {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;

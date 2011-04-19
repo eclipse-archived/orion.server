@@ -28,7 +28,6 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Ref;
-import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
@@ -86,6 +85,7 @@ public class GitMergeTest extends GitTest {
 		String gitRemoteUri = gitSection.optString(GitConstants.KEY_REMOTE, null);
 		assertNotNull(gitRemoteUri);
 
+		// TODO: replace with REST API once bug 341384 is fixed
 		// create branch 'a'
 		FileRepository db1 = new FileRepository(new File(URIUtil.toFile(new URI(contentLocation)), Constants.DOT_GIT));
 		Git git = new Git(db1);
@@ -406,27 +406,14 @@ public class GitMergeTest extends GitTest {
 		String gitIndexUri2 = gitSection2.getString(GitConstants.KEY_INDEX);
 		String gitCommitUri2 = gitSection2.getString(GitConstants.KEY_COMMIT);
 
-		// clone1: list remotes
-		WebRequest request = GitRemoteTest.getGetGitRemoteRequest(gitRemoteUri1);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject remotes = new JSONObject(response.getText());
-		JSONArray remotesArray = remotes.getJSONArray(ProtocolConstants.KEY_CHILDREN);
-		assertEquals(1, remotesArray.length());
-		JSONObject remote = remotesArray.getJSONObject(0);
-		assertNotNull(remote);
-		assertEquals(Constants.DEFAULT_REMOTE_NAME, remote.getString(ProtocolConstants.KEY_NAME));
-		String remoteLocation1 = remote.getString(ProtocolConstants.KEY_LOCATION);
-		assertNotNull(remoteLocation1);
-
 		// clone1: get remote details
-		JSONObject details = GitRemoteTest.getRemoteBranch(remoteLocation1, 1, 0, Constants.MASTER);
+		JSONObject details = getRemoteBranch(gitRemoteUri1, 1, 0, Constants.MASTER);
 		String refId1 = details.getString(ProtocolConstants.KEY_ID);
 		String remoteBranchLocation1 = details.getString(ProtocolConstants.KEY_LOCATION);
 
 		// clone2: change
-		request = getPutFileRequest(projectId2 + "/test.txt", "incoming change");
-		response = webConversation.getResponse(request);
+		WebRequest request = getPutFileRequest(projectId2 + "/test.txt", "incoming change");
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone2: add
@@ -440,10 +427,7 @@ public class GitMergeTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone2: push
-		// TODO: replace with REST API for git push once bug 339115 is fixed
-		Repository db2 = getRepositoryForContentLocation(contentLocation2);
-		Git git = new Git(db2);
-		git.push().call();
+		push(gitRemoteUri2, Constants.HEAD);
 
 		// clone1: fetch
 		request = GitFetchTest.getPostGitRemoteRequest(remoteBranchLocation1, true);
@@ -454,7 +438,7 @@ public class GitMergeTest extends GitTest {
 		waitForTaskCompletion(taskLocation);
 
 		// clone1: get remote details again
-		JSONObject remoteBranch = GitRemoteTest.getRemoteBranch(remoteLocation1, 1, 0, Constants.MASTER);
+		JSONObject remoteBranch = getRemoteBranch(gitRemoteUri1, 1, 0, Constants.MASTER);
 		String newRefId1 = remoteBranch.getString(ProtocolConstants.KEY_ID);
 		// an incoming commit
 		assertFalse(refId1.equals(newRefId1));
