@@ -44,7 +44,12 @@ public class ServerStatus extends Status {
 	 * A high level error message string, suitable for display to a user.
 	 */
 	private static final String PROP_MESSAGE = "Message"; //$NON-NLS-1$
-
+	
+	/**
+	 * A property containing JSON object with data needed to handle exception
+	 */
+	private static final String ERROR_DATA = "ErrorData"; //$NON-NLS-1$
+	
 	/**
 	 * A property defining a URL of a page with further details about the
 	 * exception and how it can be resolved.
@@ -65,6 +70,7 @@ public class ServerStatus extends Status {
 	private static final String SEVERITY_WARNING = "Warning"; //$NON-NLS-1$
 
 	private int httpCode;
+	private JSONObject errorData;
 	
 	/**
 	 * Converts a status into a server status.
@@ -100,18 +106,32 @@ public class ServerStatus extends Status {
 		int severity = fromSeverityString(object.getString(PROP_SEVERITY));
 		String detailMessage = object.optString(PROP_DETAILED_MESSAGE, null);
 		Exception cause = detailMessage == null ? null : new Exception(detailMessage);
-		return new ServerStatus(new Status(severity, Activator.PI_SERVER_CORE, code, message, cause), httpCode);
+		JSONObject errorData = object.optJSONObject(ERROR_DATA);
+		return new ServerStatus(new Status(severity, Activator.PI_SERVER_CORE, code, message, cause), httpCode, errorData);
 	}
 
 	public ServerStatus(int severity, int httpCode, String message, Throwable exception) {
 		super(severity, Activator.PI_SERVER_CORE, message, exception);
 		this.httpCode = httpCode;
 	}
+	
+	public ServerStatus(int severity, int httpCode, String message, JSONObject errorData, Throwable exception) {
+		super(severity, Activator.PI_SERVER_CORE, message, exception);
+		this.httpCode = httpCode;
+		this.errorData = errorData;
+	}
 
 	public ServerStatus(IStatus status, int httpCode) {
 		super(status.getSeverity(), status.getPlugin(), status.getCode(), status.getMessage(), status.getException());
 		this.httpCode = httpCode;
 	}
+	
+	public ServerStatus(IStatus status, int httpCode, JSONObject errorData) {
+		super(status.getSeverity(), status.getPlugin(), status.getCode(), status.getMessage(), status.getException());
+		this.httpCode = httpCode;
+		this.errorData = errorData;
+	}
+
 
 	/**
 	 * Returns the HTTP response code associated with this status.
@@ -164,6 +184,9 @@ public class ServerStatus extends Status {
 			result.put(PROP_CODE, getCode());
 			result.put(PROP_MESSAGE, getMessage());
 			result.put(PROP_SEVERITY, getSeverityString());
+			if(errorData!=null){
+				result.put(ERROR_DATA, errorData);
+			}
 			Throwable exception = getException();
 			if (exception != null)
 				result.put(PROP_DETAILED_MESSAGE, exception.getMessage());
