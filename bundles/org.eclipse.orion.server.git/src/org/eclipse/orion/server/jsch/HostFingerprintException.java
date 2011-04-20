@@ -28,7 +28,7 @@ public class HostFingerprintException extends JSchException {
 	private HostKey hostkey;
 
 	public HostFingerprintException(String host, byte[] key) {
-		super("Unknown server key.");
+		super("The authenticity of host " + host + " can't be established");
 		try {
 			this.hostkey = new HostKey(host, key);
 		} catch (JSchException e) {
