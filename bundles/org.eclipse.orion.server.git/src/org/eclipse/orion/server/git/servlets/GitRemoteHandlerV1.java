@@ -20,12 +20,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.InvalidRemoteException;
-import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileRepository;
-import org.eclipse.jgit.transport.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -183,7 +179,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			if (srcRef.equals("")) { //$NON-NLS-1$
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Pushing with an empty source ref is not allowed. Did you mean DELETE?", null));
 			}
-			return push(request, response, path, srcRef);
+			return push(request, response, path, cp, srcRef);
 		} else {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Only Fetch:true is currently supported.", null));
 		}
@@ -205,39 +201,24 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private boolean push(HttpServletRequest request, HttpServletResponse response, String path, String srcRef) throws ServletException, CoreException, IOException, JSONException {
+	private boolean push(HttpServletRequest request, HttpServletResponse response, String path, GitCredentialsProvider cp, String srcRef) throws ServletException, CoreException, IOException, JSONException, URISyntaxException {
 		Path p = new Path(path);
 		// FIXME: what if a remote or branch is named "file"?
 		if (p.segment(2).equals("file")) {
 			// /git/remote/{remote}/{branch}/file/{path}
-			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2));
-			Repository db = new FileRepository(gitDir);
-			Git git = new Git(db);
-			// ObjectId ref = db.resolve(srcRef);
-			try {
-				RefSpec spec = new RefSpec(srcRef + ":" + Constants.R_HEADS + p.segment(1));
-				Iterable<PushResult> resultIterable = git.push().setRemote(p.segment(0)).setRefSpecs(spec).call();
-				PushResult pushResult = resultIterable.iterator().next();
-				JSONObject result = new JSONObject();
-				for (final RemoteRefUpdate rru : pushResult.getRemoteUpdates()) {
-					final String rm = rru.getRemoteName();
-					// final String sr = rru.isDelete() ? null : rru.getSrcRef();
-					if (p.segment(1).equals(Repository.shortenRefName(rm))) {
-						result.put(GitConstants.KEY_RESULT, rru.getStatus());
-						break;
-					}
-					// TODO: return results for all updated branches once push is available for remote, see bug 342727, comment 1
-				}
-				OrionServlet.writeJSONResponse(request, response, result);
-				return true;
-			} catch (JGitInternalException e) {
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An internal error occured when pushing.", e));
-			} catch (InvalidRemoteException e) {
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when pushing.", e));
-			}
+			PushJob job = new PushJob(cp, p, srcRef);
+			job.schedule();
 
+			TaskInfo task = job.getTask();
+			JSONObject result = task.toJSON();
+			URI taskLocation = createTaskLocation(OrionServlet.getURI(request), task.getTaskId());
+			result.put(ProtocolConstants.KEY_LOCATION, taskLocation);
+			response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation.toString());
+			OrionServlet.writeJSONResponse(request, response, result);
+			response.setStatus(HttpServletResponse.SC_CREATED);
+			return true;
 		}
-		return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Pushing is only allowed on a remote branch.", null));
+		return false;
 	}
 
 	private URI createTaskLocation(URI baseLocation, String taskId) throws URISyntaxException {
