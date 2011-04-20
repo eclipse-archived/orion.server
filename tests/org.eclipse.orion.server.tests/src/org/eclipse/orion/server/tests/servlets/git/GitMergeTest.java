@@ -16,20 +16,20 @@ import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringBufferInputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.MergeResult;
+import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Ref;
-import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.transport.RemoteRefUpdate.Status;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONArray;
@@ -38,13 +38,12 @@ import org.json.JSONObject;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
-import com.meterware.httpunit.PostMethodWebRequest;
 import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
 
 public class GitMergeTest extends GitTest {
 	@Test
-	public void testMergeSelf() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testMergeSelf() throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -66,15 +65,13 @@ public class GitMergeTest extends GitTest {
 		assertNotNull(gitCommitUri);
 
 		// "git merge master"
-		WebRequest request = getPostGitMergeRequest(gitCommitUri, Constants.MASTER);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject merge = merge(gitCommitUri, Constants.MASTER);
+		MergeStatus mergeResult = MergeStatus.valueOf(merge.getString(GitConstants.KEY_RESULT));
+		assertEquals(MergeStatus.ALREADY_UP_TO_DATE, mergeResult);
 	}
 
 	@Test
 	public void testMerge() throws IOException, SAXException, JSONException, URISyntaxException, JGitInternalException, GitAPIException {
-		URI workspaceLocation = createWorkspace(getMethodName());
-
 		// clone: create
 		String contentLocation = clone(null);
 
@@ -86,6 +83,7 @@ public class GitMergeTest extends GitTest {
 		String gitRemoteUri = gitSection.optString(GitConstants.KEY_REMOTE, null);
 		assertNotNull(gitRemoteUri);
 
+		// TODO: replace with REST API once bug 341384 is fixed
 		// create branch 'a'
 		FileRepository db1 = new FileRepository(new File(URIUtil.toFile(new URI(contentLocation)), Constants.DOT_GIT));
 		Git git = new Git(db1);
@@ -155,9 +153,9 @@ public class GitMergeTest extends GitTest {
 		GitStatusTest.assertStatusClean(statusResponse);
 
 		// merge: "git merge a"
-		request = getPostGitMergeRequest(gitCommitUri, "a");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject merge = merge(gitCommitUri, "a");
+		MergeStatus mergeResult = MergeStatus.valueOf(merge.getString(GitConstants.KEY_RESULT));
+		assertEquals(MergeStatus.MERGED, mergeResult);
 
 		// assert clean
 		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
@@ -182,7 +180,7 @@ public class GitMergeTest extends GitTest {
 	}
 
 	@Test
-	public void testMergeAlreadyUpToDate() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testMergeAlreadyUpToDate() throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -227,10 +225,9 @@ public class GitMergeTest extends GitTest {
 		assertEquals(0, statusArray.length());
 
 		// "git merge master"
-		request = getPostGitMergeRequest(gitCommitUri, Constants.MASTER);
-		response = webConversation.getResponse(request);
-		// "Already up-to-date"
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject merge = merge(gitCommitUri, Constants.MASTER);
+		MergeStatus mergeResult = MergeResult.MergeStatus.valueOf(merge.getString(GitConstants.KEY_RESULT));
+		assertEquals(MergeResult.MergeStatus.ALREADY_UP_TO_DATE, mergeResult);
 
 		// assert clean
 		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
@@ -254,8 +251,6 @@ public class GitMergeTest extends GitTest {
 
 	@Test
 	public void testMergeConflict() throws IOException, SAXException, JSONException, URISyntaxException, JGitInternalException, GitAPIException {
-		URI workspaceLocation = createWorkspace(getMethodName());
-
 		// clone: create
 		String contentLocation = clone(null);
 
@@ -336,9 +331,9 @@ public class GitMergeTest extends GitTest {
 		GitStatusTest.assertStatusClean(statusResponse);
 
 		// merge: "git merge a"
-		request = getPostGitMergeRequest(gitCommitUri, "a");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject merge = merge(gitCommitUri, "a");
+		MergeStatus mergeResult = MergeStatus.valueOf(merge.getString(GitConstants.KEY_RESULT));
+		assertEquals(MergeStatus.CONFLICTING, mergeResult);
 
 		// assert clean
 		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
@@ -383,9 +378,7 @@ public class GitMergeTest extends GitTest {
 	}
 
 	@Test
-	public void testMergeRemote() throws IOException, SAXException, JSONException, URISyntaxException, JGitInternalException, GitAPIException {
-		URI workspaceLocation = createWorkspace(getMethodName());
-
+	public void testMergeRemote() throws IOException, SAXException, JSONException, JGitInternalException {
 		// clone1: create
 		String contentLocation1 = clone(null);
 
@@ -406,27 +399,14 @@ public class GitMergeTest extends GitTest {
 		String gitIndexUri2 = gitSection2.getString(GitConstants.KEY_INDEX);
 		String gitCommitUri2 = gitSection2.getString(GitConstants.KEY_COMMIT);
 
-		// clone1: list remotes
-		WebRequest request = GitRemoteTest.getGetGitRemoteRequest(gitRemoteUri1);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject remotes = new JSONObject(response.getText());
-		JSONArray remotesArray = remotes.getJSONArray(ProtocolConstants.KEY_CHILDREN);
-		assertEquals(1, remotesArray.length());
-		JSONObject remote = remotesArray.getJSONObject(0);
-		assertNotNull(remote);
-		assertEquals(Constants.DEFAULT_REMOTE_NAME, remote.getString(ProtocolConstants.KEY_NAME));
-		String remoteLocation1 = remote.getString(ProtocolConstants.KEY_LOCATION);
-		assertNotNull(remoteLocation1);
-
 		// clone1: get remote details
-		JSONObject details = GitRemoteTest.getRemoteBranch(remoteLocation1, 1, 0, Constants.MASTER);
+		JSONObject details = getRemoteBranch(gitRemoteUri1, 1, 0, Constants.MASTER);
 		String refId1 = details.getString(ProtocolConstants.KEY_ID);
 		String remoteBranchLocation1 = details.getString(ProtocolConstants.KEY_LOCATION);
 
 		// clone2: change
-		request = getPutFileRequest(projectId2 + "/test.txt", "incoming change");
-		response = webConversation.getResponse(request);
+		WebRequest request = getPutFileRequest(projectId2 + "/test.txt", "incoming change");
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone2: add
@@ -440,10 +420,9 @@ public class GitMergeTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone2: push
-		// TODO: replace with REST API for git push once bug 339115 is fixed
-		Repository db2 = getRepositoryForContentLocation(contentLocation2);
-		Git git = new Git(db2);
-		git.push().call();
+		JSONObject push = push(gitRemoteUri2, Constants.HEAD);
+		Status result = Status.valueOf(push.getString(GitConstants.KEY_RESULT));
+		assertEquals(Status.OK, result);
 
 		// clone1: fetch
 		request = GitFetchTest.getPostGitRemoteRequest(remoteBranchLocation1, true);
@@ -454,7 +433,7 @@ public class GitMergeTest extends GitTest {
 		waitForTaskCompletion(taskLocation);
 
 		// clone1: get remote details again
-		JSONObject remoteBranch = GitRemoteTest.getRemoteBranch(remoteLocation1, 1, 0, Constants.MASTER);
+		JSONObject remoteBranch = getRemoteBranch(gitRemoteUri1, 1, 0, Constants.MASTER);
 		String newRefId1 = remoteBranch.getString(ProtocolConstants.KEY_ID);
 		// an incoming commit
 		assertFalse(refId1.equals(newRefId1));
@@ -466,30 +445,15 @@ public class GitMergeTest extends GitTest {
 		String gitCommitUri = remoteBranch.getString(GitConstants.KEY_HEAD);
 		assertNotNull(gitCommitUri);
 
-		request = getPostGitMergeRequest(gitCommitUri, newRefId1);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		// merge
+		JSONObject merge = merge(gitCommitUri, newRefId1);
+		MergeStatus mergeResult = MergeStatus.valueOf(merge.getString(GitConstants.KEY_RESULT));
+		assertEquals(MergeStatus.FAST_FORWARD, mergeResult);
 
 		request = getGetFilesRequest(projectId1 + "/test.txt");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("incoming change", response.getText());
-	}
-
-	static WebRequest getPostGitMergeRequest(String location, String commit) throws JSONException {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.COMMIT_RESOURCE + location;
-
-		JSONObject body = new JSONObject();
-		body.put(GitConstants.KEY_MERGE, commit);
-		InputStream in = new StringBufferInputStream(body.toString());
-		WebRequest request = new PostMethodWebRequest(requestURI, in, "UTF-8");
-		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		setAuthentication(request);
-		return request;
 	}
 
 }

@@ -43,8 +43,7 @@ public class SFTPExportJob extends SFTPTransferJob {
 			localChildren.addAll(Arrays.asList(localFiles));
 		for (File localChild : localChildren) {
 			String childName = localChild.getName();
-			//skip self and parent references
-			if (".".equals(childName) || "..".equals(childName)) //$NON-NLS-1$ //$NON-NLS-2$
+			if (shouldSkip(childName))
 				continue;
 			IPath remoteChild = remotePath.append(childName);
 			if (localChild.isDirectory()) {

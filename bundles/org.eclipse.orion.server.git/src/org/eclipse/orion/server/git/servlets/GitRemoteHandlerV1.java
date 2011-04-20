@@ -25,8 +25,7 @@ import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileRepository;
-import org.eclipse.jgit.transport.PushResult;
-import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -179,19 +178,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		cp.setPassphrase(passphrase);
 
 		if (fetch) {
-			// {remote}/{branch}/{file}/{path}
-			Path p = new Path(path);
-			FetchJob job = new FetchJob(cp, p);
-			job.schedule();
-
-			TaskInfo task = job.getTask();
-			JSONObject result = task.toJSON();
-			URI taskLocation = createTaskLocation(OrionServlet.getURI(request), task.getTaskId());
-			result.put(ProtocolConstants.KEY_LOCATION, taskLocation);
-			response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation.toString());
-			OrionServlet.writeJSONResponse(request, response, result);
-			response.setStatus(HttpServletResponse.SC_CREATED);
-			return true;
+			return fetch(request, response, cp, path);
 		} else if (srcRef != null) {
 			if (srcRef.equals("")) { //$NON-NLS-1$
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Pushing with an empty source ref is not allowed. Did you mean DELETE?", null));
@@ -202,7 +189,23 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		}
 	}
 
-	private boolean push(HttpServletRequest request, HttpServletResponse response, String path, String srcRef) throws ServletException, CoreException, IOException {
+	private boolean fetch(HttpServletRequest request, HttpServletResponse response, GitCredentialsProvider cp, String path) throws URISyntaxException, JSONException, IOException {
+		// {remote}/{branch}/{file}/{path}
+		Path p = new Path(path);
+		FetchJob job = new FetchJob(cp, p);
+		job.schedule();
+
+		TaskInfo task = job.getTask();
+		JSONObject result = task.toJSON();
+		URI taskLocation = createTaskLocation(OrionServlet.getURI(request), task.getTaskId());
+		result.put(ProtocolConstants.KEY_LOCATION, taskLocation);
+		response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation.toString());
+		OrionServlet.writeJSONResponse(request, response, result);
+		response.setStatus(HttpServletResponse.SC_CREATED);
+		return true;
+	}
+
+	private boolean push(HttpServletRequest request, HttpServletResponse response, String path, String srcRef) throws ServletException, CoreException, IOException, JSONException {
 		Path p = new Path(path);
 		// FIXME: what if a remote or branch is named "file"?
 		if (p.segment(2).equals("file")) {
@@ -214,8 +217,18 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			try {
 				RefSpec spec = new RefSpec(srcRef + ":" + Constants.R_HEADS + p.segment(1));
 				Iterable<PushResult> resultIterable = git.push().setRemote(p.segment(0)).setRefSpecs(spec).call();
-				PushResult result = resultIterable.iterator().next();
-				// TODO: check status org.eclipse.jgit.transport.RemoteRefUpdate.Status
+				PushResult pushResult = resultIterable.iterator().next();
+				JSONObject result = new JSONObject();
+				for (final RemoteRefUpdate rru : pushResult.getRemoteUpdates()) {
+					final String rm = rru.getRemoteName();
+					// final String sr = rru.isDelete() ? null : rru.getSrcRef();
+					if (p.segment(1).equals(Repository.shortenRefName(rm))) {
+						result.put(GitConstants.KEY_RESULT, rru.getStatus());
+						break;
+					}
+					// TODO: return results for all updated branches once push is available for remote, see bug 342727, comment 1
+				}
+				OrionServlet.writeJSONResponse(request, response, result);
 				return true;
 			} catch (JGitInternalException e) {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An internal error occured when pushing.", e));
