@@ -32,6 +32,8 @@ import org.eclipse.jgit.dircache.DirCache;
 import org.eclipse.jgit.dircache.DirCacheEntry;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.transport.RemoteRefUpdate;
+import org.eclipse.jgit.transport.RemoteRefUpdate.Status;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONArray;
@@ -786,7 +788,9 @@ public class GitStatusTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone1: push
-		push(gitRemoteUri1, Constants.HEAD);
+		JSONObject push = push(gitRemoteUri1, Constants.HEAD);
+		Status result = RemoteRefUpdate.Status.valueOf(push.getString(GitConstants.KEY_RESULT));
+		assertEquals(RemoteRefUpdate.Status.OK, result);
 
 		// this is how EGit checks for conflicts
 		Repository db1 = getRepositoryForContentLocation(contentLocation1);
