@@ -26,6 +26,7 @@ import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.core.tests.harness.FileSystemHelper;
 import org.eclipse.jgit.api.Git;
@@ -99,12 +100,12 @@ public abstract class GitTest extends FileSystemTest {
 		return webConversation.getResponse(request);
 	}
 
-	protected URI createWorkspace(String suffix) throws IOException, SAXException, URISyntaxException {
+	protected URI createWorkspace(String suffix) throws IOException, SAXException {
 		String workspaceName = getClass().getName() + "#" + suffix;
 		WebRequest request = getCreateWorkspaceRequest(workspaceName);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		return new URI(response.getHeaderField(ProtocolConstants.HEADER_LOCATION));
+		return URI.create(response.getHeaderField(ProtocolConstants.HEADER_LOCATION));
 	}
 
 	protected void createRepository() throws IOException, GitAPIException, CoreException {
@@ -228,7 +229,7 @@ public abstract class GitTest extends FileSystemTest {
 
 	// link
 
-	protected JSONObject linkProject(String contentLocation, String projectName) throws IOException, SAXException, URISyntaxException, JSONException {
+	protected JSONObject linkProject(String contentLocation, String projectName) throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		ServletTestingSupport.allowedPrefixes = contentLocation;
@@ -249,6 +250,7 @@ public abstract class GitTest extends FileSystemTest {
 	// remotes
 
 	protected JSONObject getRemoteBranch(String gitRemoteUri, int size, int i, String name) throws IOException, SAXException, JSONException {
+		assertRemoteUri(gitRemoteUri);
 		WebRequest request = GitRemoteTest.getGetGitRemoteRequest(gitRemoteUri);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
@@ -296,18 +298,43 @@ public abstract class GitTest extends FileSystemTest {
 		git.push().setPushAll().call();
 	}
 
-	protected void push(String gitRemoteUri, String srcRef) throws IOException, SAXException, JSONException {
-		push(gitRemoteUri, 1, 0, Constants.MASTER, srcRef);
+	/**
+	 * Pushes the changes from the the source ref to "origin/master". 
+	 * The implementation assumes there is only single remote branch i.e. "master".
+	 * 
+	 * @param gitRemoteUri remote URI
+	 * @param srcRef the source ref to push
+	 * @return JSON object representing response
+	 * @throws IOException
+	 * @throws SAXException
+	 * @throws JSONException
+	 */
+	protected JSONObject push(String gitRemoteUri, String srcRef) throws IOException, SAXException, JSONException {
+		return push(gitRemoteUri, 1, 0, Constants.MASTER, srcRef);
 	}
 
-	protected void push(String gitRemoteUri, int size, int i, String name, String srcRef) throws IOException, SAXException, JSONException {
+	protected JSONObject push(String gitRemoteUri, int size, int i, String name, String srcRef) throws IOException, SAXException, JSONException {
+		assertRemoteUri(gitRemoteUri);
 		String remoteBranchLocation = getRemoteBranch(gitRemoteUri, size, i, name).getString(ProtocolConstants.KEY_LOCATION);
 		WebRequest request = GitPushTest.getPostGitRemoteRequest(remoteBranchLocation, srcRef);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		return new JSONObject(response.getText());
 	}
 
+	/**
+	 * Fetch objects and refs from the given remote branch. 
+	 * 
+	 * @param remoteBranchLocation remote branch URI
+	 * @return JSONObject representing remote branch after the fetch is done
+	 * @throws JSONException
+	 * @throws IOException
+	 * @throws SAXException
+	 */
 	protected JSONObject fetch(String remoteBranchLocation) throws JSONException, IOException, SAXException {
+		assertRemoteBranchLocation(remoteBranchLocation);
+
+		// fetch
 		WebRequest request = GitFetchTest.getPostGitRemoteRequest(remoteBranchLocation, true);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
@@ -315,18 +342,41 @@ public abstract class GitTest extends FileSystemTest {
 		assertNotNull(taskLocation);
 		waitForTaskCompletion(taskLocation);
 
-		// get remote details again
+		// get remote branch details again
 		request = GitRemoteTest.getGetGitRemoteRequest(remoteBranchLocation);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		return new JSONObject(response.getText());
 	}
 
+	private void assertRemoteUri(String remoteUri) {
+		URI uri = URI.create(remoteUri);
+		IPath path = new Path(uri.getPath());
+		// /git/remote/file/{path}
+		assertTrue(path.segmentCount() > 3);
+		assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
+		assertEquals(GitConstants.REMOTE_RESOURCE, path.segment(1));
+		assertEquals("file", path.segment(2));
+	}
+
+	private void assertRemoteBranchLocation(String remoteBranchLocation) {
+		URI uri = URI.create(remoteBranchLocation);
+		IPath path = new Path(uri.getPath());
+		// /git/remote/{remote}/{branch}/file/{path}
+		assertTrue(path.segmentCount() > 5);
+		assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
+		assertEquals(GitConstants.REMOTE_RESOURCE, path.segment(1));
+		assertEquals("file", path.segment(4));
+	}
+
 	/**
-	 * Creates a request to create a git clone for the given uri.
-	 * @param uri
-	 * @param name  
-	 * @throws JSONException 
+	 * Creates a request to create a git clone for the given URI.
+	 * @param uri Git URL to clone
+	 * @param name project name
+	 * @param kh known hosts
+	 * @param p password
+	 * @return the request
+	 * @throws JSONException
 	 */
 	protected static WebRequest getPostGitCloneRequest(String uri, String name, String kh, char[] p) throws JSONException {
 		String requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.CLONE_RESOURCE + '/';

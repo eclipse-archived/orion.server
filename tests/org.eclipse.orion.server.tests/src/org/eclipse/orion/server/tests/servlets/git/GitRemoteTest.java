@@ -31,6 +31,8 @@ import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.transport.RemoteRefUpdate;
+import org.eclipse.jgit.transport.RemoteRefUpdate.Status;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONArray;
@@ -159,7 +161,9 @@ public class GitRemoteTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// push
-		push(gitRemoteUri, Constants.HEAD);
+		JSONObject push = push(gitRemoteUri, Constants.HEAD);
+		Status result = RemoteRefUpdate.Status.valueOf(push.getString(GitConstants.KEY_RESULT));
+		assertEquals(RemoteRefUpdate.Status.OK, result);
 
 		remoteBranch = getRemoteBranch(gitRemoteUri, 1, 0, Constants.MASTER);
 		assertNotNull(remoteBranch);

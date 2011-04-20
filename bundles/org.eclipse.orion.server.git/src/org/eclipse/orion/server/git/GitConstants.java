@@ -100,4 +100,6 @@ public class GitConstants {
 	public static final String KEY_MERGE = "Merge"; //$NON-NLS-1$
 
 	public static final String KEY_PUSH_SRC_REF = "PushSrcRef"; //$NON-NLS-1$
+
+	public static final String KEY_RESULT = "Result"; //$NON-NLS-1$
 }
