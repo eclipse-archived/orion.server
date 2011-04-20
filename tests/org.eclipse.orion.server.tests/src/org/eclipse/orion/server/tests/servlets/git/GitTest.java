@@ -289,6 +289,14 @@ public abstract class GitTest extends FileSystemTest {
 		return remoteBranch;
 	}
 
+	protected JSONObject merge(String gitCommitUri, String commit) throws JSONException, IOException, SAXException {
+		assertCommitUri(gitCommitUri);
+		WebRequest request = getPostGitMergeRequest(gitCommitUri, commit);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		return new JSONObject(response.getText());
+	}
+
 	// push
 
 	protected void pushAll(String contentLocation) throws IOException, URISyntaxException, JGitInternalException, GitAPIException {
@@ -359,6 +367,16 @@ public abstract class GitTest extends FileSystemTest {
 		assertEquals("file", path.segment(2));
 	}
 
+	private void assertCommitUri(String commitUri) {
+		URI uri = URI.create(commitUri);
+		IPath path = new Path(uri.getPath());
+		// /git/commit/{ref}/file/{path}
+		assertTrue(path.segmentCount() > 4);
+		assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
+		assertEquals(GitConstants.COMMIT_RESOURCE, path.segment(1));
+		assertEquals("file", path.segment(3));
+	}
+
 	private void assertRemoteBranchLocation(String remoteBranchLocation) {
 		URI uri = URI.create(remoteBranchLocation);
 		IPath path = new Path(uri.getPath());
@@ -387,6 +405,22 @@ public abstract class GitTest extends FileSystemTest {
 			body.put(GitConstants.KEY_KNOWN_HOSTS, kh);
 		if (p != null)
 			body.put(GitConstants.KEY_PASSWORD, new String(p));
+		InputStream in = new StringBufferInputStream(body.toString());
+		WebRequest request = new PostMethodWebRequest(requestURI, in, "UTF-8");
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		return request;
+	}
+
+	private static WebRequest getPostGitMergeRequest(String location, String commit) throws JSONException {
+		String requestURI;
+		if (location.startsWith("http://"))
+			requestURI = location;
+		else
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.COMMIT_RESOURCE + location;
+
+		JSONObject body = new JSONObject();
+		body.put(GitConstants.KEY_MERGE, commit);
 		InputStream in = new StringBufferInputStream(body.toString());
 		WebRequest request = new PostMethodWebRequest(requestURI, in, "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");

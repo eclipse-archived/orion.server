@@ -21,6 +21,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.MergeResult;
 import org.eclipse.jgit.api.errors.*;
 import org.eclipse.jgit.errors.AmbiguousObjectException;
 import org.eclipse.jgit.lib.*;
@@ -282,11 +283,14 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		}
 	}
 
-	private boolean merge(HttpServletRequest request, HttpServletResponse response, Repository db, String commitToMerge) throws ServletException {
+	private boolean merge(HttpServletRequest request, HttpServletResponse response, Repository db, String commitToMerge) throws ServletException, JSONException {
 		try {
 			ObjectId objectId = db.resolve(commitToMerge);
 			Git git = new Git(db);
-			git.merge().include(objectId).call();
+			MergeResult mergeResult = git.merge().include(objectId).call();
+			JSONObject result = new JSONObject();
+			result.put(GitConstants.KEY_RESULT, mergeResult.getMergeStatus().name());
+			OrionServlet.writeJSONResponse(request, response, result);
 			return true;
 		} catch (IOException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when merging.", e));

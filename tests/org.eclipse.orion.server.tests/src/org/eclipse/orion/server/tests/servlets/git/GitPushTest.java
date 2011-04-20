@@ -18,8 +18,8 @@ import java.io.InputStream;
 import java.io.StringBufferInputStream;
 import java.net.HttpURLConnection;
 
+import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.eclipse.jgit.transport.RemoteRefUpdate.Status;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
@@ -113,8 +113,8 @@ public class GitPushTest extends GitTest {
 
 		// clone1: push
 		JSONObject push = push(gitRemoteUri1, Constants.HEAD);
-		Status result = RemoteRefUpdate.Status.valueOf(push.getString(GitConstants.KEY_RESULT));
-		assertEquals(RemoteRefUpdate.Status.OK, result);
+		Status result = Status.valueOf(push.getString(GitConstants.KEY_RESULT));
+		assertEquals(Status.OK, result);
 
 		// clone2: get remote branch location
 		JSONObject remoteBranch = getRemoteBranch(gitRemoteUri2, 1, 0, Constants.MASTER);
@@ -129,9 +129,9 @@ public class GitPushTest extends GitTest {
 
 		// clone2: merge into HEAD, "git merge origin/master"
 		gitCommitUri2 = remoteBranch2.getString(GitConstants.KEY_HEAD);
-		request = GitMergeTest.getPostGitMergeRequest(gitCommitUri2, newRefId2);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject merge = merge(gitCommitUri2, newRefId2);
+		MergeStatus mergeResult = MergeStatus.valueOf(merge.getString(GitConstants.KEY_RESULT));
+		assertEquals(MergeStatus.FAST_FORWARD, mergeResult);
 
 		// clone2: assert change from clone1 is in place
 		request = getGetFilesRequest(projectId2 + "/test.txt");
@@ -271,8 +271,8 @@ public class GitPushTest extends GitTest {
 
 		// clone1: push
 		JSONObject push = push(gitRemoteUri1, Constants.HEAD);
-		Status result = RemoteRefUpdate.Status.valueOf(push.getString(GitConstants.KEY_RESULT));
-		assertEquals(RemoteRefUpdate.Status.OK, result);
+		Status result = Status.valueOf(push.getString(GitConstants.KEY_RESULT));
+		assertEquals(Status.OK, result);
 
 		// clone2: change
 		request = getPutFileRequest(projectId2 + "/test.txt", "clone2 change");
@@ -291,8 +291,8 @@ public class GitPushTest extends GitTest {
 
 		// clone2: push
 		push = push(gitRemoteUri2, Constants.HEAD);
-		result = RemoteRefUpdate.Status.valueOf(push.getString(GitConstants.KEY_RESULT));
-		assertEquals(RemoteRefUpdate.Status.REJECTED_NONFASTFORWARD, result);
+		result = Status.valueOf(push.getString(GitConstants.KEY_RESULT));
+		assertEquals(Status.REJECTED_NONFASTFORWARD, result);
 	}
 
 	static WebRequest getPostGitRemoteRequest(String location, String srcRef) throws JSONException {
