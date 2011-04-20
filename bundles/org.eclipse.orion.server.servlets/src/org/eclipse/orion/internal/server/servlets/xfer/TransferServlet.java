@@ -34,6 +34,7 @@ public class TransferServlet extends OrionServlet {
 	 * The servlet path prefix for import operations.
 	 */
 	static final String PREFIX_IMPORT = "import";//$NON-NLS-1$
+
 	private static final long serialVersionUID = 1L;
 
 	public TransferServlet() {
@@ -64,7 +65,7 @@ public class TransferServlet extends OrionServlet {
 		String optionString = req.getHeader(ProtocolConstants.HEADER_XFER_OPTIONS);
 		List<String> options = getOptions(optionString);
 		if (options.contains("sftp")) { //$NON-NLS-1$
-			new SFTPTransfer(req, resp, getStatusHandler()).doTransfer();
+			new SFTPTransfer(req, resp, getStatusHandler(), options).doTransfer();
 			return;
 		}
 		//don't know how to handle this
@@ -83,7 +84,7 @@ public class TransferServlet extends OrionServlet {
 		String optionString = req.getHeader(ProtocolConstants.HEADER_XFER_OPTIONS);
 		List<String> options = getOptions(optionString);
 		if (options.contains("sftp")) { //$NON-NLS-1$
-			new SFTPTransfer(req, resp, getStatusHandler()).doTransfer();
+			new SFTPTransfer(req, resp, getStatusHandler(), options).doTransfer();
 			return;
 		}
 		long length = -1;

@@ -78,6 +78,19 @@ public class ProtocolConstants {
 	public static final String HEADER_XFER_OPTIONS = "X-Xfer-Options"; //$NON-NLS-1$
 
 	/**
+	 * Option header value indicating that no overwrite should occur if the destination
+	 * resource already exists. An attempt to replace an existing destination resource will
+	 * fail if this option is specified.
+	 */
+	public static final String OPTION_NO_OVERWRITE = "no-overwrite"; //$NON-NLS-1$
+
+	/**
+	 * Option header value indicating that overwrite should only occur if the destination
+	 * resource is older than the resource to be added.
+	 */
+	public static final String OPTION_OVERWRITE_OLDER = "overwrite-older"; //$NON-NLS-1$
+
+	/**
 	 * JSON representation key for an object's children. The value's data
 	 * type is a JSON array of workspace objects.
 	 */

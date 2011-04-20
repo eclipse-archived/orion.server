@@ -13,6 +13,7 @@ package org.eclipse.orion.internal.server.servlets.xfer;
 import com.jcraft.jsch.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.orion.internal.server.servlets.Activator;
@@ -29,6 +30,7 @@ public abstract class SFTPTransferJob extends Job {
 
 	protected final String host;
 	protected final File localRoot;
+	private final List<String> options;
 	protected final String passphrase;
 	protected final int port;
 	protected final IPath remoteRoot;
@@ -37,7 +39,7 @@ public abstract class SFTPTransferJob extends Job {
 	private ServiceReference<ITaskService> taskServiceRef;
 	protected final String user;
 
-	public SFTPTransferJob(File localFile, String host, int port, IPath remotePath, String user, String passphrase) {
+	public SFTPTransferJob(File localFile, String host, int port, IPath remotePath, String user, String passphrase, List<String> options) {
 		super("Transfer over SFTP"); //$NON-NLS-1$
 		this.localRoot = localFile;
 		this.host = host;
@@ -45,6 +47,7 @@ public abstract class SFTPTransferJob extends Job {
 		this.remoteRoot = remotePath;
 		this.user = user;
 		this.passphrase = passphrase;
+		this.options = options;
 		this.task = createTask();
 	}
 
@@ -61,6 +64,10 @@ public abstract class SFTPTransferJob extends Job {
 		info.setMessage(NLS.bind("Connecting to {0}...", host));
 		getTaskService().updateTask(info);
 		return info;
+	}
+
+	protected List<String> getOptions() {
+		return options;
 	}
 
 	public TaskInfo getTask() {
