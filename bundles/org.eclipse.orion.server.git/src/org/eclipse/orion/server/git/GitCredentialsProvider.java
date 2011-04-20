@@ -47,6 +47,10 @@ public class GitCredentialsProvider extends UsernamePasswordCredentialsProvider 
 		return passphrase;
 	}
 
+	public void setUri(URIish uri) {
+		this.uri = uri;
+	}
+
 	public void setPrivateKey(byte[] privateKey) {
 		this.privateKey = privateKey;
 	}

@@ -11,16 +11,21 @@
 package org.eclipse.orion.server.git.servlets;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitActivator;
+import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.osgi.util.NLS;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
@@ -30,15 +35,17 @@ import org.osgi.framework.ServiceReference;
  */
 public class FetchJob extends Job {
 
+	private final CredentialsProvider credentials;
 	private final TaskInfo task;
 	private ITaskService taskService;
 	private ServiceReference<ITaskService> taskServiceRef;
 	private IPath gitDir;
 	private String remote;
 
-	public FetchJob(Path path, String user) {
+	public FetchJob(CredentialsProvider credentials, Path path) {
 		super("Fetching"); //$NON-NLS-1$
 
+		this.credentials = credentials;
 		this.gitDir = path.removeFirstSegments(2);
 		this.remote = path.segment(0);
 		this.task = createTask();
@@ -51,10 +58,18 @@ public class FetchJob extends Job {
 		return info;
 	}
 
-	private void doFetch() throws IOException, CoreException, JGitInternalException, InvalidRemoteException {
+	private void doFetch() throws IOException, CoreException, JGitInternalException, InvalidRemoteException, URISyntaxException {
 		Repository db = new FileRepository(GitUtils.getGitDir(gitDir));
 		Git git = new Git(db);
-		git.fetch().setRemote(remote).call();
+		FetchCommand cc = git.fetch();
+
+		RemoteConfig remoteConfig = new RemoteConfig(git.getRepository().getConfig(), remote);
+		((GitCredentialsProvider) credentials).setUri(remoteConfig.getURIs().get(0));
+
+		cc.setCredentialsProvider(credentials);
+		cc.setRemote(remote).call();
+
+		cc.call();
 	}
 
 	public TaskInfo getTask() {
