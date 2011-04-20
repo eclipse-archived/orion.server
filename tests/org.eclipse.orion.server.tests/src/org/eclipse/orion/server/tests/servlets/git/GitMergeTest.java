@@ -47,10 +47,7 @@ public class GitMergeTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
+		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
@@ -184,16 +181,13 @@ public class GitMergeTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
+		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		// TODO: don't create URIs out of thin air
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change in master");
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);

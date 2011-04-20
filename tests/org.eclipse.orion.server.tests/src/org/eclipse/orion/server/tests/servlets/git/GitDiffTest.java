@@ -24,7 +24,6 @@ import java.io.StringReader;
 import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,14 +43,11 @@ import com.meterware.httpunit.WebResponse;
 
 public class GitDiffTest extends GitTest {
 	@Test
-	public void testNoDiff() throws IOException, SAXException, URISyntaxException, JSONException {
+	public void testNoDiff() throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
+		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
@@ -63,7 +59,7 @@ public class GitDiffTest extends GitTest {
 		assertNotNull(gitDiffUri);
 
 		WebRequest request = getGetGitDiffRequest(gitDiffUri);
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		//		assertEquals(HttpURLConnection.HTTP_NO_CONTENT, response.getResponseCode());
 		String[] parts = parseMultiPartResponse(response);
@@ -71,7 +67,7 @@ public class GitDiffTest extends GitTest {
 	}
 
 	@Test
-	public void testDiffAlreadyModified() throws IOException, SAXException, URISyntaxException, JSONException {
+	public void testDiffAlreadyModified() throws IOException, SAXException, JSONException {
 		Writer w = new OutputStreamWriter(new FileOutputStream(testFile), "UTF-8");
 		try {
 			w.write("hello");
@@ -82,10 +78,7 @@ public class GitDiffTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
+		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
@@ -97,7 +90,7 @@ public class GitDiffTest extends GitTest {
 		assertNotNull(gitDiffUri);
 
 		WebRequest request = getGetGitDiffRequest(gitDiffUri);
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		String[] parts = parseMultiPartResponse(response);
 
@@ -115,20 +108,17 @@ public class GitDiffTest extends GitTest {
 	}
 
 	@Test
-	public void testDiffModifiedByOrion() throws IOException, SAXException, URISyntaxException, JSONException {
+	public void testDiffModifiedByOrion() throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
+		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
 
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "hello");
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
@@ -155,14 +145,11 @@ public class GitDiffTest extends GitTest {
 	}
 
 	@Test
-	public void testDiffFilter() throws IOException, SAXException, URISyntaxException, JSONException {
+	public void testDiffFilter() throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
+		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
@@ -174,7 +161,7 @@ public class GitDiffTest extends GitTest {
 		assertNotNull(gitDiffUri);
 
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "hi");
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		request = getPutFileRequest(projectId + "/folder/folder.txt", "hello");
@@ -221,14 +208,11 @@ public class GitDiffTest extends GitTest {
 	}
 
 	@Test
-	public void testDiffCached() throws IOException, SAXException, URISyntaxException, JSONException {
+	public void testDiffCached() throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
+		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString("Id", null);
 		assertNotNull(projectId);
@@ -242,7 +226,7 @@ public class GitDiffTest extends GitTest {
 		assertNotNull(gitIndexUri);
 
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "stage me");
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// TODO: don't create URIs out of thin air
@@ -274,14 +258,11 @@ public class GitDiffTest extends GitTest {
 	}
 
 	@Test
-	public void testDiffCommits() throws IOException, SAXException, URISyntaxException, JSONException {
+	public void testDiffCommits() throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
+		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
@@ -297,7 +278,7 @@ public class GitDiffTest extends GitTest {
 
 		// modify
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "first change");
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// TODO: don't create URIs out of thin air
@@ -371,14 +352,11 @@ public class GitDiffTest extends GitTest {
 	}
 
 	@Test
-	public void testDiffCommitWithWorkingTree() throws IOException, SAXException, URISyntaxException, JSONException {
+	public void testDiffCommitWithWorkingTree() throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
+		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
@@ -394,7 +372,7 @@ public class GitDiffTest extends GitTest {
 
 		// modify
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "first change");
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// TODO: don't create URIs out of thin air
@@ -469,14 +447,11 @@ public class GitDiffTest extends GitTest {
 	}
 
 	@Test
-	public void testDiffPost() throws JSONException, IOException, SAXException, URISyntaxException {
+	public void testDiffPost() throws JSONException, IOException, SAXException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
+		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
@@ -492,7 +467,7 @@ public class GitDiffTest extends GitTest {
 
 		// modify
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change");
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// add
@@ -542,14 +517,11 @@ public class GitDiffTest extends GitTest {
 	}
 
 	@Test
-	public void testDiffParts() throws JSONException, IOException, SAXException, URISyntaxException {
+	public void testDiffParts() throws JSONException, IOException, SAXException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
+		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
@@ -565,7 +537,7 @@ public class GitDiffTest extends GitTest {
 
 		// modify
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change");
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// add
@@ -626,21 +598,18 @@ public class GitDiffTest extends GitTest {
 	}
 
 	@Test
-	public void testDiffUntrackedUri() throws JSONException, IOException, SAXException, URISyntaxException {
+	public void testDiffUntrackedUri() throws JSONException, IOException, SAXException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
+		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
 
 		String fileName = "new.txt";
 		WebRequest request = getPostFilesRequest(projectId + "/", getNewFileJSON(fileName).toString(), fileName);
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);

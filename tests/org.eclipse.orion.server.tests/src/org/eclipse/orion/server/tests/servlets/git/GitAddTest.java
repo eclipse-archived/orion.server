@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URISyntaxException;
 
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
@@ -35,20 +34,17 @@ public class GitAddTest extends GitTest {
 
 	// modified + add = changed
 	@Test
-	public void testAddChanged() throws IOException, SAXException, URISyntaxException, JSONException {
+	public void testAddChanged() throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
+		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
 
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "hello");
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
@@ -83,20 +79,17 @@ public class GitAddTest extends GitTest {
 
 	// missing + add = removed
 	@Test
-	public void testAddMissing() throws IOException, SAXException, URISyntaxException, JSONException {
+	public void testAddMissing() throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
+		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
 
 		WebRequest request = getDeleteFilesRequest(projectId + "/test.txt");
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
@@ -153,20 +146,17 @@ public class GitAddTest extends GitTest {
 	}
 
 	@Test
-	public void testAddAll() throws IOException, SAXException, URISyntaxException, JSONException {
+	public void testAddAll() throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
+		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
 
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "hello");
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		String fileName = "new.txt";
@@ -230,20 +220,17 @@ public class GitAddTest extends GitTest {
 	}
 
 	@Test
-	public void testAddInFolder() throws IOException, SAXException, URISyntaxException, JSONException {
+	public void testAddInFolder() throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
+		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
 
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "hello");
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		request = getPutFileRequest(projectId + "/folder/folder.txt", "hello");

@@ -37,10 +37,7 @@ public class GitUriTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
+		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
@@ -60,10 +57,7 @@ public class GitUriTest extends GitTest {
 
 		String projectName = getMethodName();
 		// http://<host>/workspace/<workspaceId>/
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject newProject = new JSONObject(response.getText());
+		JSONObject newProject = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
 		assertEquals(projectName, newProject.getString(ProtocolConstants.KEY_NAME));
 		String projectId = newProject.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
@@ -72,7 +66,7 @@ public class GitUriTest extends GitTest {
 
 		// http://<host>/file/<projectId>/
 		WebRequest request = getGetFilesRequest(contentLocation);
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject project = new JSONObject(response.getText());
 
@@ -132,10 +126,7 @@ public class GitUriTest extends GitTest {
 		ServletTestingSupport.allowedPrefixes = emptyDir.toString();
 
 		String projectName = getMethodName();
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, emptyDir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
+		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
@@ -143,7 +134,7 @@ public class GitUriTest extends GitTest {
 		assertNotNull(location);
 
 		WebRequest request = getGetFilesRequest(location);
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject files = new JSONObject(response.getText());
 
@@ -168,10 +159,7 @@ public class GitUriTest extends GitTest {
 		ServletTestingSupport.allowedPrefixes = dir.toString();
 
 		String projectName = getMethodName();
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, dir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
+		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
@@ -179,7 +167,7 @@ public class GitUriTest extends GitTest {
 		assertNotNull(location);
 
 		WebRequest request = getGetFilesRequest(location);
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject files = new JSONObject(response.getText());
 

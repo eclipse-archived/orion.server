@@ -18,7 +18,6 @@ import java.io.InputStream;
 import java.io.StringBufferInputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URISyntaxException;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ResetCommand;
@@ -44,20 +43,17 @@ public class GitResetTest extends GitTest {
 	@Test
 	@Ignore("not yet implemented")
 	//TODO:
-	public void testResetMixedChanged() throws IOException, SAXException, URISyntaxException, JSONException {
+	public void testResetMixedChanged() throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
+		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
 
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "hello");
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// TODO: don't create URIs out of thin air
@@ -123,20 +119,17 @@ public class GitResetTest extends GitTest {
 	}
 
 	@Test
-	public void testResetNull() throws JSONException, IOException, SAXException, URISyntaxException {
+	public void testResetNull() throws JSONException, IOException, SAXException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
+		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
 
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "hello");
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
@@ -151,20 +144,17 @@ public class GitResetTest extends GitTest {
 	}
 
 	@Test
-	public void testResetNotImplemented() throws JSONException, IOException, SAXException, URISyntaxException {
+	public void testResetNotImplemented() throws JSONException, IOException, SAXException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
+		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
 
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "hello");
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
@@ -191,20 +181,17 @@ public class GitResetTest extends GitTest {
 	}
 
 	@Test
-	public void testResetBadType() throws JSONException, IOException, SAXException, URISyntaxException {
+	public void testResetBadType() throws JSONException, IOException, SAXException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
+		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
 
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "hello");
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
@@ -219,20 +206,17 @@ public class GitResetTest extends GitTest {
 	}
 
 	@Test
-	public void testResetMixedAll() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testResetMixedAll() throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
+		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
 
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "hello");
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		String fileName = "new.txt";
@@ -320,7 +304,7 @@ public class GitResetTest extends GitTest {
 
 	@Test
 	@Ignore("see bug 339397")
-	public void testResetAutocrlfTrue() throws IOException, SAXException, URISyntaxException, JSONException {
+	public void testResetAutocrlfTrue() throws IOException, SAXException, JSONException {
 
 		// "git config core.autocrlf true"
 		Git git = new Git(db);
@@ -331,10 +315,7 @@ public class GitResetTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		WebResponse response = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
+		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
@@ -351,7 +332,7 @@ public class GitResetTest extends GitTest {
 		// CRLF
 		// TODO: don't create URIs out of thin air
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "f" + "\r\n" + "older");
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// "git add {path}"

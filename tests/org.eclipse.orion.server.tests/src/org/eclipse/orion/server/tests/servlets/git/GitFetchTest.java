@@ -48,7 +48,7 @@ import com.meterware.httpunit.WebResponse;
 
 public class GitFetchTest extends GitTest {
 	@Test
-	public void testFetch() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testFetch() throws IOException, SAXException, JSONException {
 		// add clone
 		String contentLocation = clone(null);
 

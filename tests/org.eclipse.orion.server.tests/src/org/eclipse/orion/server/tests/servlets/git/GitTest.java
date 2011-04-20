@@ -88,7 +88,7 @@ public abstract class GitTest extends FileSystemTest {
 		FileUtils.delete(gitDir, FileUtils.RECURSIVE);
 	}
 
-	protected WebResponse createProjectWithContentLocation(URI workspaceLocation, String projectName, String location) throws JSONException, IOException, SAXException {
+	protected JSONObject createProjectWithContentLocation(URI workspaceLocation, String projectName, String location) throws JSONException, IOException, SAXException {
 		JSONObject body = new JSONObject();
 		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, location);
 		InputStream in = new StringBufferInputStream(body.toString());
@@ -97,7 +97,9 @@ public abstract class GitTest extends FileSystemTest {
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
-		return webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		return new JSONObject(response.getText());
 	}
 
 	protected URI createWorkspace(String suffix) throws IOException, SAXException {

@@ -219,7 +219,6 @@ public class GitPushTest extends GitTest {
 
 		String remoteBranchLocation = logResponse.getString(GitConstants.KEY_REMOTE);
 
-		// push
 		request = getPostGitRemoteRequest(remoteBranchLocation, Constants.HEAD);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
@@ -293,6 +292,12 @@ public class GitPushTest extends GitTest {
 		push = push(gitRemoteUri2, Constants.HEAD);
 		result = Status.valueOf(push.getString(GitConstants.KEY_RESULT));
 		assertEquals(Status.REJECTED_NONFASTFORWARD, result);
+	}
+
+	@Test
+	@Ignore("not implemented yet")
+	public void testPushTags() {
+		// not implemented yet
 	}
 
 	static WebRequest getPostGitRemoteRequest(String location, String srcRef) throws JSONException {

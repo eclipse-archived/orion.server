@@ -139,7 +139,7 @@ public class GitCloneTest extends GitTest {
 	}
 
 	@Test
-	public void testCloneAndLink() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testCloneAndLink() throws IOException, SAXException, JSONException {
 		String contentLocation = clone(null);
 
 		JSONObject newProject = linkProject(contentLocation, getMethodName());
@@ -194,7 +194,7 @@ public class GitCloneTest extends GitTest {
 	}
 
 	@Test
-	public void testLinkToFolderWithDefaultSCM() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testLinkToFolderWithDefaultSCM() throws IOException, SAXException, JSONException {
 		IEclipsePreferences preferences = InstanceScope.INSTANCE.getNode("org.eclipse.orion.server.configurator");
 		preferences.put("orion.project.defaultSCM", "git");
 		// XXX: see org.eclipse.orion.internal.server.servlets.workspace.WorkspaceResourceHandler.generateProjectLocation(WebProject, String)

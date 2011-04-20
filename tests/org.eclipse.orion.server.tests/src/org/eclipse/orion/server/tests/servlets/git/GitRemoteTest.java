@@ -72,7 +72,7 @@ public class GitRemoteTest extends GitTest {
 	}
 
 	@Test
-	public void testGetOrigin() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testGetOrigin() throws IOException, SAXException, JSONException {
 		String contentLocation = clone(null);
 
 		JSONObject project = linkProject(contentLocation.toString(), getMethodName());
@@ -116,7 +116,7 @@ public class GitRemoteTest extends GitTest {
 	}
 
 	@Test
-	public void testGetRemoteCommits() throws JSONException, IOException, SAXException, URISyntaxException, JGitInternalException, GitAPIException {
+	public void testGetRemoteCommits() throws JSONException, IOException, SAXException, JGitInternalException, GitAPIException {
 		String contentLocation = clone(null);
 
 		JSONObject project = linkProject(contentLocation.toString(), getMethodName());
@@ -185,8 +185,6 @@ public class GitRemoteTest extends GitTest {
 
 	@Test
 	public void testGetRemoteBranches() throws JSONException, IOException, SAXException, URISyntaxException, JGitInternalException, GitAPIException {
-		URI workspaceLocation = createWorkspace(getMethodName());
-
 		// clone: create
 		String contentLocation = clone(null);
 
