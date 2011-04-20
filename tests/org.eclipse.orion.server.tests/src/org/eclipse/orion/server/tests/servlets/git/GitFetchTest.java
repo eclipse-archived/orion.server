@@ -32,8 +32,8 @@ import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileRepository;
-import org.eclipse.jgit.transport.RemoteRefUpdate.Status;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -124,9 +124,8 @@ public class GitFetchTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone2: push
-		JSONObject push = push(gitRemoteUri2, Constants.HEAD);
-		Status result = Status.valueOf(push.getString(GitConstants.KEY_RESULT));
-		assertEquals(Status.OK, result);
+		ServerStatus pushStatus = push(gitRemoteUri2, Constants.HEAD);
+		assertEquals(true, pushStatus.isOK());
 
 		JSONObject details = getRemoteBranch(gitRemoteUri1, 1, 0, Constants.MASTER);
 		String refId1 = details.getString(ProtocolConstants.KEY_ID);
@@ -209,9 +208,8 @@ public class GitFetchTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone1: push
-		JSONObject push = push(gitRemoteUri1, 2, 0, "a", Constants.HEAD);
-		Status result = Status.valueOf(push.getString(GitConstants.KEY_RESULT));
-		assertEquals(Status.OK, result);
+		ServerStatus pushStatus = push(gitRemoteUri1, 2, 0, "a", Constants.HEAD);
+		assertEquals(true, pushStatus.isOK());
 
 		// clone1: switch to 'master'
 		GitRemoteTest.ensureOnBranch(git1, Constants.MASTER);

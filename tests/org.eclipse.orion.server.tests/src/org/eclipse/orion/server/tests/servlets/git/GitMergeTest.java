@@ -29,8 +29,8 @@ import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.storage.file.FileRepository;
-import org.eclipse.jgit.transport.RemoteRefUpdate.Status;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -414,9 +414,8 @@ public class GitMergeTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone2: push
-		JSONObject push = push(gitRemoteUri2, Constants.HEAD);
-		Status result = Status.valueOf(push.getString(GitConstants.KEY_RESULT));
-		assertEquals(Status.OK, result);
+		ServerStatus pushStatus = push(gitRemoteUri2, Constants.HEAD);
+		assertEquals(true, pushStatus.isOK());
 
 		// clone1: fetch
 		request = GitFetchTest.getPostGitRemoteRequest(remoteBranchLocation1, true);

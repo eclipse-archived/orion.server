@@ -18,10 +18,11 @@ import java.io.InputStream;
 import java.io.StringBufferInputStream;
 import java.net.HttpURLConnection;
 
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.transport.RemoteRefUpdate.Status;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -112,9 +113,8 @@ public class GitPushTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone1: push
-		JSONObject push = push(gitRemoteUri1, Constants.HEAD);
-		Status result = Status.valueOf(push.getString(GitConstants.KEY_RESULT));
-		assertEquals(Status.OK, result);
+		ServerStatus pushStatus = push(gitRemoteUri1, Constants.HEAD);
+		assertEquals(true, pushStatus.isOK());
 
 		// clone2: get remote branch location
 		JSONObject remoteBranch = getRemoteBranch(gitRemoteUri2, 1, 0, Constants.MASTER);
@@ -219,9 +219,10 @@ public class GitPushTest extends GitTest {
 
 		String remoteBranchLocation = logResponse.getString(GitConstants.KEY_REMOTE);
 
+		// push
 		request = getPostGitRemoteRequest(remoteBranchLocation, Constants.HEAD);
 		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 	}
 
 	@Test
@@ -269,9 +270,8 @@ public class GitPushTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone1: push
-		JSONObject push = push(gitRemoteUri1, Constants.HEAD);
-		Status result = Status.valueOf(push.getString(GitConstants.KEY_RESULT));
-		assertEquals(Status.OK, result);
+		ServerStatus pushStatus = push(gitRemoteUri1, Constants.HEAD);
+		assertEquals(true, pushStatus.isOK());
 
 		// clone2: change
 		request = getPutFileRequest(projectId2 + "/test.txt", "clone2 change");
@@ -289,9 +289,10 @@ public class GitPushTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone2: push
-		push = push(gitRemoteUri2, Constants.HEAD);
-		result = Status.valueOf(push.getString(GitConstants.KEY_RESULT));
-		assertEquals(Status.REJECTED_NONFASTFORWARD, result);
+		pushStatus = push(gitRemoteUri2, Constants.HEAD);
+		//result = Status.valueOf(push.getString(GitConstants.KEY_RESULT));
+		//assertEquals(Status.REJECTED_NONFASTFORWARD, result);
+		assertEquals(IStatus.WARNING, pushStatus.getSeverity());
 	}
 
 	@Test

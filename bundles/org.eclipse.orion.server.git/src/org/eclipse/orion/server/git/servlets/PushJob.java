@@ -25,7 +25,6 @@ import org.eclipse.jgit.transport.*;
 import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitActivator;
-import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -59,28 +58,28 @@ public class PushJob extends Job {
 		return info;
 	}
 
-	private void doPush() throws IOException, CoreException, JGitInternalException, InvalidRemoteException, URISyntaxException, JSONException {
-		if (p.segment(2).equals("file")) {
-			// /git/remote/{remote}/{branch}/file/{path}
-			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2));
-			Repository db = new FileRepository(gitDir);
-			Git git = new Git(db);
+	private IStatus doPush() throws IOException, CoreException, JGitInternalException, InvalidRemoteException, URISyntaxException, JSONException {
+		// /git/remote/{remote}/{branch}/file/{path}
+		File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2));
+		Repository db = new FileRepository(gitDir);
+		Git git = new Git(db);
 
-			// ObjectId ref = db.resolve(srcRef);
-			RefSpec spec = new RefSpec(srcRef + ":" + Constants.R_HEADS + p.segment(1));
-			Iterable<PushResult> resultIterable = git.push().setRemote(p.segment(0)).setRefSpecs(spec).call();
-			PushResult pushResult = resultIterable.iterator().next();
-			JSONObject result = new JSONObject();
-			for (final RemoteRefUpdate rru : pushResult.getRemoteUpdates()) {
-				final String rm = rru.getRemoteName();
-				// final String sr = rru.isDelete() ? null : rru.getSrcRef();
-				if (p.segment(1).equals(Repository.shortenRefName(rm))) {
-					result.put(GitConstants.KEY_RESULT, rru.getStatus());
-					break;
-				}
-				// TODO: return results for all updated branches once push is available for remote, see bug 342727, comment 1
+		// ObjectId ref = db.resolve(srcRef);
+		RefSpec spec = new RefSpec(srcRef + ":" + Constants.R_HEADS + p.segment(1));
+		Iterable<PushResult> resultIterable = git.push().setRemote(p.segment(0)).setRefSpecs(spec).call();
+		PushResult pushResult = resultIterable.iterator().next();
+		JSONObject result = new JSONObject();
+		for (final RemoteRefUpdate rru : pushResult.getRemoteUpdates()) {
+			final String rm = rru.getRemoteName();
+			// final String sr = rru.isDelete() ? null : rru.getSrcRef();
+			if (p.segment(1).equals(Repository.shortenRefName(rm))) {
+				if (rru.getStatus() != org.eclipse.jgit.transport.RemoteRefUpdate.Status.OK)
+					return new Status(IStatus.WARNING, GitActivator.PI_GIT, rru.getStatus().name());
+				break;
 			}
+			// TODO: return results for all updated branches once push is available for remote, see bug 342727, comment 1
 		}
+		return Status.OK_STATUS;
 	}
 
 	public TaskInfo getTask() {
@@ -102,7 +101,7 @@ public class PushJob extends Job {
 	protected IStatus run(IProgressMonitor monitor) {
 		IStatus result = Status.OK_STATUS;
 		try {
-			doPush();
+			result = doPush();
 		} catch (IOException e) {
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error pushing git remote", e); //$NON-NLS-1$
 		} catch (CoreException e) {
