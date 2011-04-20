@@ -36,7 +36,6 @@ import org.osgi.framework.ServiceReference;
  */
 public class PushJob extends Job {
 
-	private final CredentialsProvider credentials;
 	private final TaskInfo task;
 	private ITaskService taskService;
 	private ServiceReference<ITaskService> taskServiceRef;
@@ -45,7 +44,6 @@ public class PushJob extends Job {
 
 	public PushJob(CredentialsProvider credentials, Path path, String srcRef) {
 		super("Pushing"); //$NON-NLS-1$
-		this.credentials = credentials;
 		this.p = path;
 		this.srcRef = srcRef;
 		this.task = createTask();
