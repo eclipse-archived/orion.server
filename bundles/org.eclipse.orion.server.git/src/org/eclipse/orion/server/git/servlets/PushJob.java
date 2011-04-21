@@ -129,7 +129,7 @@ public class PushJob extends Job {
 		} catch (InvalidRemoteException e) {
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error pushing git remote", e); //$NON-NLS-1$
 		} catch (Exception e) {
-			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error cloning git repository", e); //$NON-NLS-1$
+			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error cloning git repository", e); //$NON-NLS-1$
 		}
 		task.done(result);
 		task.setMessage(NLS.bind("Pushing {0} done", p.segment(0)));
