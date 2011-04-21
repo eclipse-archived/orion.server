@@ -10,12 +10,12 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.xfer;
 
-import com.jcraft.jsch.ChannelSftp;
-import com.jcraft.jsch.SftpException;
+import com.jcraft.jsch.*;
 import java.io.*;
 import java.util.*;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.osgi.util.NLS;
 
 /**
@@ -23,8 +23,46 @@ import org.eclipse.osgi.util.NLS;
  */
 public class SFTPExportJob extends SFTPTransferJob {
 
-	public SFTPExportJob(File localFile, String host, int port, Path remotePath, String user, String passphrase) {
-		super(localFile, host, port, remotePath, user, passphrase);
+	public SFTPExportJob(File localFile, String host, int port, Path remotePath, String user, String passphrase, List<String> options) {
+		super(localFile, host, port, remotePath, user, passphrase, options);
+	}
+
+	protected void doTransferFile(ChannelSftp channel, IPath remotePath, File localFile) throws IOException, SftpException {
+		if (shouldSkip(channel, remotePath, localFile))
+			return;
+		//on export, copy the local file to the remote destination
+		channel.put(new FileInputStream(localFile), remotePath.toString());
+	}
+
+	/**
+	 * Check if we should skip writing this file due to timestamp checks and overwrite options.
+	 * @throws IOException If the operation should abort completely
+	 */
+	private boolean shouldSkip(ChannelSftp channel, IPath remotePath, File localFile) throws IOException {
+		SftpATTRS remoteAttributes;
+		try {
+			remoteAttributes = channel.stat(remotePath.toString());
+		} catch (SftpException e) {
+			//remote file doesn't exist, so we need to traverse it.
+			return false;
+		}
+		//abort the entire import if we have a collision and no-overwrite is specified
+		if (getOptions().contains(ProtocolConstants.OPTION_NO_OVERWRITE)) {
+			//give path relative to root in error message
+			throw new IOException(NLS.bind("Remote file exists: {0}", remotePath.removeFirstSegments(remoteRoot.segmentCount()).toString()));
+		}
+		//time is expressed as seconds since the epoch
+		int localMTime = (int) (localFile.lastModified() / 1000L);
+		int remoteMTime = remoteAttributes.getMTime();
+
+		//check if we should skip overwrite of newer files
+		if (getOptions().contains(ProtocolConstants.OPTION_OVERWRITE_OLDER) && remoteMTime > localMTime)
+			return true;
+
+		//skip file if unchanged
+		if (localMTime == remoteMTime && localFile.length() == remoteAttributes.getSize())
+			return true;
+		return false;
 	}
 
 	@Override
@@ -52,11 +90,5 @@ public class SFTPExportJob extends SFTPTransferJob {
 				doTransferFile(channel, remoteChild, localChild);
 			}
 		}
-	}
-
-	protected void doTransferFile(ChannelSftp channel, IPath remotePath, File localFile) throws IOException, SftpException {
-		//on export, copy the local file to the remote destination
-		String remote = remotePath.toString();
-		channel.put(new FileInputStream(localFile), remote);
 	}
 }

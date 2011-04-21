@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -40,11 +41,13 @@ class SFTPTransfer {
 	private final HttpServletResponse response;
 
 	private final ServletResourceHandler<IStatus> statusHandler;
+	private final List<String> options;
 
-	SFTPTransfer(HttpServletRequest req, HttpServletResponse resp, ServletResourceHandler<IStatus> statusHandler) {
+	SFTPTransfer(HttpServletRequest req, HttpServletResponse resp, ServletResourceHandler<IStatus> statusHandler, List<String> options) {
 		this.request = req;
 		this.response = resp;
 		this.statusHandler = statusHandler;
+		this.options = options;
 		initLocalPath();
 	}
 
@@ -81,9 +84,9 @@ class SFTPTransfer {
 		}
 		SFTPTransferJob job;
 		if (TransferServlet.PREFIX_IMPORT.equals(new Path(request.getPathInfo()).segment(0))) {
-			job = new SFTPImportJob(localFile, host, port, new Path(remotePath), user, passphrase);
+			job = new SFTPImportJob(localFile, host, port, new Path(remotePath), user, passphrase, options);
 		} else {
-			job = new SFTPExportJob(localFile, host, port, new Path(remotePath), user, passphrase);
+			job = new SFTPExportJob(localFile, host, port, new Path(remotePath), user, passphrase, options);
 		}
 		job.schedule();
 		TaskInfo task = job.getTask();

@@ -41,6 +41,7 @@ import org.eclipse.jgit.util.FS;
 import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitServlet;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
@@ -317,17 +318,28 @@ public abstract class GitTest extends FileSystemTest {
 	 * @throws SAXException
 	 * @throws JSONException
 	 */
-	protected JSONObject push(String gitRemoteUri, String srcRef) throws IOException, SAXException, JSONException {
+	protected ServerStatus push(String gitRemoteUri, String srcRef) throws IOException, SAXException, JSONException {
 		return push(gitRemoteUri, 1, 0, Constants.MASTER, srcRef);
 	}
 
-	protected JSONObject push(String gitRemoteUri, int size, int i, String name, String srcRef) throws IOException, SAXException, JSONException {
+	protected ServerStatus push(String gitRemoteUri, int size, int i, String name, String srcRef) throws IOException, SAXException, JSONException {
 		assertRemoteUri(gitRemoteUri);
 		String remoteBranchLocation = getRemoteBranch(gitRemoteUri, size, i, name).getString(ProtocolConstants.KEY_LOCATION);
 		WebRequest request = GitPushTest.getPostGitRemoteRequest(remoteBranchLocation, srcRef);
 		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		assertNotNull(taskLocation);
+		waitForTaskCompletion(taskLocation);
+
+		// get task details again
+		request = new GetMethodWebRequest(taskLocation);
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		return new JSONObject(response.getText());
+
+		return ServerStatus.fromJSON(new JSONObject(response.getText()).optJSONObject("Result"/*TaskInfo.KEY_RESULT*/).toString());
 	}
 
 	/**
