@@ -60,6 +60,7 @@
 
 	<!-- This target runs the performance test suites. -->
 	<target name="performance">
+		<property name="jsPerformanceResults" value="" />
 		<property name="server-perf-folder" value="${eclipse-home}/server-perf-folder" />
 		<delete dir="${server-perf-folder}" quiet="true" />
 		<ant target="core-test" antfile="${library-file}" dir="${eclipse-home}">
@@ -67,7 +68,11 @@
 			<property name="plugin-name" value="${plugin-name}" />
 			<property name="classname" value="org.eclipse.orion.server.tests.performance.AllPerformanceTests" />
 			<property name="timeout" value="12000000" />
-			<property name="extraVMargs" value="-Declipse.log.level=WARNING -Dorg.eclipse.equinox.http.jetty.http.port=8080 " />
+			<property name="extraVMargs" value="-Declipse.log.level=WARNING
+												-Dorg.eclipse.equinox.http.jetty.http.port=8080
+												-Dorg.eclipse.equinox.http.jetty.autostart=false
+												-Dorion.tests.authtype=Basic
+												-DjsPerformanceResults=${jsPerformanceResults}" />
 		</ant>
 	</target>
 

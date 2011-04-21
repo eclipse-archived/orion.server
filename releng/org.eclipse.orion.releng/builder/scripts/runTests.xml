@@ -22,6 +22,9 @@
 			<antcall target="triggerHudsonTests"/>
 			<antcall target="jsTests" />
 		</parallel>
+		
+		<!-- <antcall target="performanceTests" /> -->
+		
 		<antcall target="processResults" />
 	</target>
 
@@ -83,6 +86,27 @@
 			<property name="arch" value="${osgi.arch}" />
 		</subant>
 		
+	</target>
+	
+	<target name="performanceTests" >
+		<!-- collect javascript performance results to be reported here -->
+		<junitreport todir="${dropLocation}" tofile="Performance-testResults.xml">
+			<fileset dir="${jsTestDir}" includes="**/TEST-*.Performance.xml" />
+		</junitreport>
+		
+		<dirset id="testLib.ref" dir="${buildDirectory}/test/eclipse/plugins" includes="org.eclipse.test_*" />
+		<property name="testLibrary" refid="testLib.ref" />
+		
+		<subant target="performance">
+			<property name="junit-stylesheet" value="${buildDirectory}/test/eclipse/plugins/${testLibrary}/JUNIT.XSL" />
+	        <property name="library-file" value="${buildDirectory}/test/eclipse/plugins/${testLibrary}/library.xml" />
+			<property name="eclipse-home" value="${buildDirectory}/test/eclipse" />
+			<fileset dir="${buildDirectory}/test/eclipse/plugins" includes="*/test.xml" excludes="org.eclipse.core.tests.resources_*/*" />
+			<property name="os" value="${osgi.os}" />
+			<property name="ws" value="${osgi.ws}" />
+			<property name="arch" value="${osgi.arch}" />
+			<property name="jsPerformanceResults" value="${dropLocation}/Performance-testResults.xml" />
+		</subant>
 	</target>
 	
 	<target name="triggerHudsonTests" >
