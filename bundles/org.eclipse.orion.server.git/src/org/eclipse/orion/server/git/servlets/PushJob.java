@@ -16,6 +16,7 @@ import java.net.URISyntaxException;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Constants;
@@ -25,6 +26,7 @@ import org.eclipse.jgit.transport.*;
 import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitActivator;
+import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -36,6 +38,7 @@ import org.osgi.framework.ServiceReference;
  */
 public class PushJob extends Job {
 
+	private final CredentialsProvider credentials;
 	private final TaskInfo task;
 	private ITaskService taskService;
 	private ServiceReference<ITaskService> taskServiceRef;
@@ -44,6 +47,8 @@ public class PushJob extends Job {
 
 	public PushJob(CredentialsProvider credentials, Path path, String srcRef) {
 		super("Pushing"); //$NON-NLS-1$
+
+		this.credentials = credentials;
 		this.p = path;
 		this.srcRef = srcRef;
 		this.task = createTask();
@@ -64,7 +69,14 @@ public class PushJob extends Job {
 
 		// ObjectId ref = db.resolve(srcRef);
 		RefSpec spec = new RefSpec(srcRef + ":" + Constants.R_HEADS + p.segment(1));
-		Iterable<PushResult> resultIterable = git.push().setRemote(p.segment(0)).setRefSpecs(spec).call();
+
+		PushCommand cc = git.push();
+
+		RemoteConfig remoteConfig = new RemoteConfig(git.getRepository().getConfig(), p.segment(0));
+		((GitCredentialsProvider) credentials).setUri(remoteConfig.getURIs().get(0));
+		cc.setCredentialsProvider(credentials);
+
+		Iterable<PushResult> resultIterable = cc.setRemote(p.segment(0)).setRefSpecs(spec).call();
 		PushResult pushResult = resultIterable.iterator().next();
 		JSONObject result = new JSONObject();
 		for (final RemoteRefUpdate rru : pushResult.getRemoteUpdates()) {
