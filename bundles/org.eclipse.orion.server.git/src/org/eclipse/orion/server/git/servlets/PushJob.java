@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Constants;
@@ -28,28 +29,33 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitActivator;
+import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.jsch.HostFingerprintException;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONException;
-import org.json.JSONObject;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
 /**
- * A job to perform a fetch operation in the background
+ * A job to perform a push operation in the background
  */
 public class PushJob extends Job {
 
+	private final CredentialsProvider credentials;
 	private final TaskInfo task;
 	private ITaskService taskService;
 	private ServiceReference<ITaskService> taskServiceRef;
 	private Path p;
 	private String srcRef;
+	private boolean tags;
 
-	public PushJob(CredentialsProvider credentials, Path path, String srcRef) {
+	public PushJob(CredentialsProvider credentials, Path path, String srcRef, boolean tags) {
 		super("Pushing"); //$NON-NLS-1$
+
+		this.credentials = credentials;
 		this.p = path;
 		this.srcRef = srcRef;
+		this.tags = tags;
 		this.task = createTask();
 	}
 
@@ -66,11 +72,19 @@ public class PushJob extends Job {
 		Repository db = new FileRepository(gitDir);
 		Git git = new Git(db);
 
+		PushCommand pushCommand = git.push();
+
+		RemoteConfig remoteConfig = new RemoteConfig(git.getRepository().getConfig(), p.segment(0));
+		((GitCredentialsProvider) credentials).setUri(remoteConfig.getURIs().get(0));
+		pushCommand.setCredentialsProvider(credentials);
+
 		// ObjectId ref = db.resolve(srcRef);
-		RefSpec spec = new RefSpec(srcRef + ":" + Constants.R_HEADS + p.segment(1));
-		Iterable<PushResult> resultIterable = git.push().setRemote(p.segment(0)).setRefSpecs(spec).call();
+		RefSpec spec = new RefSpec(srcRef + ":" + Constants.R_HEADS + p.segment(1)); //$NON-NLS-1$
+		pushCommand.setRemote(p.segment(0)).setRefSpecs(spec);
+		if (tags)
+			pushCommand.setPushTags();
+		Iterable<PushResult> resultIterable = pushCommand.call();
 		PushResult pushResult = resultIterable.iterator().next();
-		JSONObject result = new JSONObject();
 		for (final RemoteRefUpdate rru : pushResult.getRemoteUpdates()) {
 			final String rm = rru.getRemoteName();
 			// final String sr = rru.isDelete() ? null : rru.getSrcRef();

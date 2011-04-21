@@ -14,15 +14,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringBufferInputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.NoHeadException;
-import org.eclipse.jgit.errors.ConfigInvalidException;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.StoredConfig;
@@ -45,7 +43,7 @@ public class GitConfigTest extends GitTest {
 	private static final String GIT_COMMIT_MESSAGE = "message";
 
 	@Test
-	public void testConfigUsingUserProfile() throws JSONException, IOException, SAXException, URISyntaxException, NoHeadException, JGitInternalException, ConfigInvalidException {
+	public void testConfigUsingUserProfile() throws JSONException, IOException, SAXException, URISyntaxException, NoHeadException, JGitInternalException {
 
 		// set Git name and mail in the user profile
 		WebRequest request = getPutUserRequest();
@@ -117,13 +115,12 @@ public class GitConfigTest extends GitTest {
 	}
 
 	// TODO: should be moved to User tests as a static method
-	private WebRequest getPutUserRequest() throws JSONException {
+	private WebRequest getPutUserRequest() throws JSONException, UnsupportedEncodingException {
 		String requestURI = SERVER_LOCATION + "/users/test";
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_NAME, GIT_NAME);
 		body.put(GitConstants.KEY_MAIL, GIT_MAIL);
-		InputStream in = new StringBufferInputStream(body.toString());
-		WebRequest request = new PutMethodWebRequest(requestURI, in, "UTF-8");
+		WebRequest request = new PutMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;

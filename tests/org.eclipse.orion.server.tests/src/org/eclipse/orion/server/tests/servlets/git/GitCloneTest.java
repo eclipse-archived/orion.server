@@ -24,8 +24,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.io.StringBufferInputStream;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -353,9 +353,8 @@ public class GitCloneTest extends GitTest {
 		String projectName = getMethodName();
 		JSONObject body = new JSONObject();
 		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, contentLocation);
-		InputStream in = new StringBufferInputStream(body.toString());
 		// http://localhost:8080/workspace/{workspaceId}
-		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
+		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), getJsonAsStream(body.toString()), "UTF-8");
 		if (projectName != null)
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
@@ -400,7 +399,7 @@ public class GitCloneTest extends GitTest {
 		assertEquals(RepositoryState.SAFE, git.getRepository().getRepositoryState());
 	}
 
-	private WebRequest getPostGitCloneRequest(String uri, String name, String kh, byte[] privk, byte[] pubk, byte[] p) throws JSONException {
+	private WebRequest getPostGitCloneRequest(String uri, String name, String kh, byte[] privk, byte[] pubk, byte[] p) throws JSONException, UnsupportedEncodingException {
 		String requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.CLONE_RESOURCE + '/';
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_URL, uri);
@@ -413,8 +412,7 @@ public class GitCloneTest extends GitTest {
 			body.put(GitConstants.KEY_PUBLIC_KEY, new String(pubk));
 		if (p != null)
 			body.put(GitConstants.KEY_PASSPHRASE, new String(p));
-		InputStream in = new StringBufferInputStream(body.toString());
-		WebRequest request = new PostMethodWebRequest(requestURI, in, "UTF-8");
+		WebRequest request = new PostMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
@@ -430,7 +428,7 @@ public class GitCloneTest extends GitTest {
 
 	// Convenience methods for creating requests
 
-	private WebRequest getPostGitCloneRequest(String uri, String name) throws JSONException {
+	private WebRequest getPostGitCloneRequest(String uri, String name) throws JSONException, UnsupportedEncodingException {
 		return getPostGitCloneRequest(uri, name, null, null);
 	}
 

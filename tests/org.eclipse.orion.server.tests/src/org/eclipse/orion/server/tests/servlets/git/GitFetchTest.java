@@ -13,11 +13,11 @@ package org.eclipse.orion.server.tests.servlets.git;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringBufferInputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -124,7 +124,7 @@ public class GitFetchTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone2: push
-		ServerStatus pushStatus = push(gitRemoteUri2, Constants.HEAD);
+		ServerStatus pushStatus = push(gitRemoteUri2, Constants.HEAD, false);
 		assertEquals(true, pushStatus.isOK());
 
 		JSONObject details = getRemoteBranch(gitRemoteUri1, 1, 0, Constants.MASTER);
@@ -208,8 +208,8 @@ public class GitFetchTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone1: push
-		ServerStatus pushStatus = push(gitRemoteUri1, 2, 0, "a", Constants.HEAD);
-		assertEquals(true, pushStatus.isOK());
+		ServerStatus pushStatus = push(gitRemoteUri1, 2, 0, "a", Constants.HEAD, false);
+		assertTrue(pushStatus.isOK());
 
 		// clone1: switch to 'master'
 		GitRemoteTest.ensureOnBranch(git1, Constants.MASTER);
@@ -230,7 +230,7 @@ public class GitFetchTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone1: push
-		push(gitRemoteUri1, 2, 0, Constants.MASTER, Constants.HEAD);
+		push(gitRemoteUri1, 2, 0, Constants.MASTER, Constants.HEAD, false);
 
 		// clone2: get remote details
 		// XXX: checked out 'a'
@@ -248,7 +248,7 @@ public class GitFetchTest extends GitTest {
 		assertEquals(masterOldRefId, newRefId);
 	}
 
-	static WebRequest getPostGitRemoteRequest(String location, boolean fetch) throws JSONException {
+	static WebRequest getPostGitRemoteRequest(String location, boolean fetch) throws JSONException, UnsupportedEncodingException {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;
@@ -257,8 +257,7 @@ public class GitFetchTest extends GitTest {
 
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_FETCH, Boolean.toString(fetch));
-		InputStream in = new StringBufferInputStream(body.toString());
-		WebRequest request = new PostMethodWebRequest(requestURI, in, "UTF-8");
+		WebRequest request = new PostMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;

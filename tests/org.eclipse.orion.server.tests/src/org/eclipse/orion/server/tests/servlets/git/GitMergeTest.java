@@ -414,7 +414,7 @@ public class GitMergeTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone2: push
-		ServerStatus pushStatus = push(gitRemoteUri2, Constants.HEAD);
+		ServerStatus pushStatus = push(gitRemoteUri2, Constants.HEAD, false);
 		assertEquals(true, pushStatus.isOK());
 
 		// clone1: fetch

@@ -159,6 +159,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		JSONObject requestObject = OrionServlet.readJSONRequest(request);
 		boolean fetch = Boolean.parseBoolean(requestObject.optString(GitConstants.KEY_FETCH, null));
 		String srcRef = requestObject.optString(GitConstants.KEY_PUSH_SRC_REF, null);
+		boolean tags = requestObject.optBoolean(GitConstants.KEY_PUSH_TAGS, false);
 
 		String username = requestObject.optString(GitConstants.KEY_USERNAME, null);
 		char[] password = requestObject.optString(GitConstants.KEY_PASSWORD, "").toCharArray(); //$NON-NLS-1$
@@ -167,7 +168,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		byte[] publicKey = requestObject.optString(GitConstants.KEY_PUBLIC_KEY, "").getBytes(); //$NON-NLS-1$
 		byte[] passphrase = requestObject.optString(GitConstants.KEY_PASSPHRASE, "").getBytes(); //$NON-NLS-1$
 
-		// if all went well, clone
+		// if all went well, push
 		GitCredentialsProvider cp = new GitCredentialsProvider(null, username, password, knownHosts);
 		cp.setPrivateKey(privateKey);
 		cp.setPublicKey(publicKey);
@@ -179,7 +180,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			if (srcRef.equals("")) { //$NON-NLS-1$
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Pushing with an empty source ref is not allowed. Did you mean DELETE?", null));
 			}
-			return push(request, response, path, cp, srcRef);
+			return push(request, response, path, cp, srcRef, tags);
 		} else {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Only Fetch:true is currently supported.", null));
 		}
@@ -201,12 +202,12 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private boolean push(HttpServletRequest request, HttpServletResponse response, String path, GitCredentialsProvider cp, String srcRef) throws ServletException, CoreException, IOException, JSONException, URISyntaxException {
+	private boolean push(HttpServletRequest request, HttpServletResponse response, String path, GitCredentialsProvider cp, String srcRef, boolean tags) throws ServletException, CoreException, IOException, JSONException, URISyntaxException {
 		Path p = new Path(path);
 		// FIXME: what if a remote or branch is named "file"?
 		if (p.segment(2).equals("file")) {
 			// /git/remote/{remote}/{branch}/file/{path}
-			PushJob job = new PushJob(cp, p, srcRef);
+			PushJob job = new PushJob(cp, p, srcRef, tags);
 			job.schedule();
 
 			TaskInfo task = job.getTask();

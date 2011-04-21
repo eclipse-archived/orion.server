@@ -46,7 +46,7 @@ import com.meterware.httpunit.WebResponse;
 
 public class GitRemoteTest extends GitTest {
 	@Test
-	public void testGetNoRemote() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testGetNoRemote() throws IOException, SAXException, JSONException {
 		URI contentLocation = gitDir.toURI();
 
 		JSONObject project = linkProject(contentLocation.toString(), getMethodName());
@@ -116,7 +116,7 @@ public class GitRemoteTest extends GitTest {
 	}
 
 	@Test
-	public void testGetRemoteCommits() throws JSONException, IOException, SAXException, JGitInternalException, GitAPIException {
+	public void testGetRemoteCommits() throws JSONException, IOException, SAXException, JGitInternalException {
 		String contentLocation = clone(null);
 
 		JSONObject project = linkProject(contentLocation.toString(), getMethodName());
@@ -160,7 +160,7 @@ public class GitRemoteTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// push
-		ServerStatus pushStatus = push(gitRemoteUri, Constants.HEAD);
+		ServerStatus pushStatus = push(gitRemoteUri, Constants.HEAD, false);
 		assertEquals(true, pushStatus.isOK());
 
 		remoteBranch = getRemoteBranch(gitRemoteUri, 1, 0, Constants.MASTER);

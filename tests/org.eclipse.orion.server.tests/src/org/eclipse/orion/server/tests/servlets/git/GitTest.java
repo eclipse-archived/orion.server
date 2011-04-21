@@ -17,8 +17,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringBufferInputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -56,6 +55,7 @@ import org.xml.sax.SAXException;
 
 import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.PutMethodWebRequest;
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
@@ -92,8 +92,7 @@ public abstract class GitTest extends FileSystemTest {
 	protected JSONObject createProjectWithContentLocation(URI workspaceLocation, String projectName, String location) throws JSONException, IOException, SAXException {
 		JSONObject body = new JSONObject();
 		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, location);
-		InputStream in = new StringBufferInputStream(body.toString());
-		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
+		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), getJsonAsStream(body.toString()), "UTF-8");
 		if (projectName != null)
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
@@ -226,7 +225,7 @@ public abstract class GitTest extends FileSystemTest {
 		return clone(uri, name);
 	}
 
-	protected static WebRequest getPostGitCloneRequest(URIish uri, String name) throws JSONException {
+	protected static WebRequest getPostGitCloneRequest(URIish uri, String name) throws JSONException, UnsupportedEncodingException {
 		return getPostGitCloneRequest(uri.toString(), name, null, null);
 	}
 
@@ -238,9 +237,8 @@ public abstract class GitTest extends FileSystemTest {
 		ServletTestingSupport.allowedPrefixes = contentLocation;
 		JSONObject body = new JSONObject();
 		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, contentLocation);
-		InputStream in = new StringBufferInputStream(body.toString());
 		// http://<host>/workspace/<workspaceId>/
-		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
+		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), getJsonAsStream(body.toString()), "UTF-8");
 		if (projectName != null)
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
@@ -315,19 +313,20 @@ public abstract class GitTest extends FileSystemTest {
 	 * 
 	 * @param gitRemoteUri remote URI
 	 * @param srcRef the source ref to push
+	 * @param tags <code>true</code> to push tags
 	 * @return JSON object representing response
 	 * @throws IOException
 	 * @throws SAXException
 	 * @throws JSONException
 	 */
-	protected ServerStatus push(String gitRemoteUri, String srcRef) throws IOException, SAXException, JSONException {
-		return push(gitRemoteUri, 1, 0, Constants.MASTER, srcRef);
+	protected ServerStatus push(String gitRemoteUri, String srcRef, boolean tags) throws IOException, SAXException, JSONException {
+		return push(gitRemoteUri, 1, 0, Constants.MASTER, srcRef, tags);
 	}
 
-	protected ServerStatus push(String gitRemoteUri, int size, int i, String name, String srcRef) throws IOException, SAXException, JSONException {
+	protected ServerStatus push(String gitRemoteUri, int size, int i, String name, String srcRef, boolean tags) throws IOException, SAXException, JSONException {
 		assertRemoteUri(gitRemoteUri);
 		String remoteBranchLocation = getRemoteBranch(gitRemoteUri, size, i, name).getString(ProtocolConstants.KEY_LOCATION);
-		WebRequest request = GitPushTest.getPostGitRemoteRequest(remoteBranchLocation, srcRef);
+		WebRequest request = GitPushTest.getPostGitRemoteRequest(remoteBranchLocation, srcRef, tags);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
@@ -371,7 +370,35 @@ public abstract class GitTest extends FileSystemTest {
 		return new JSONObject(response.getText());
 	}
 
-	private void assertRemoteUri(String remoteUri) {
+	// tag
+	protected JSONObject tag(String gitTagUri, String tagName, String commitId) throws JSONException, IOException, SAXException, URISyntaxException {
+		assertTagUri(gitTagUri);
+		WebRequest request = getPostGitTagRequest(gitTagUri, tagName, commitId);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		return new JSONObject(response.getText());
+	}
+
+	protected JSONObject tag(String gitCommitUri, String tagName) throws JSONException, IOException, SAXException, URISyntaxException {
+		assertCommitUri(gitCommitUri);
+		WebRequest request = getPutGitCommitRequest(gitCommitUri, tagName);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		return new JSONObject(response.getText());
+	}
+
+	protected JSONArray listTags(String gitTagUri) throws IOException, SAXException, JSONException {
+		assertTagUri(gitTagUri);
+		WebRequest request = getGetGitTagRequest(gitTagUri);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject tags = new JSONObject(response.getText());
+		return tags.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+	}
+
+	// assertions for URIs
+
+	private static void assertRemoteUri(String remoteUri) {
 		URI uri = URI.create(remoteUri);
 		IPath path = new Path(uri.getPath());
 		// /git/remote/file/{path}
@@ -381,7 +408,7 @@ public abstract class GitTest extends FileSystemTest {
 		assertEquals("file", path.segment(2));
 	}
 
-	private void assertCommitUri(String commitUri) {
+	private static void assertCommitUri(String commitUri) {
 		URI uri = URI.create(commitUri);
 		IPath path = new Path(uri.getPath());
 		// /git/commit/{ref}/file/{path}
@@ -391,7 +418,7 @@ public abstract class GitTest extends FileSystemTest {
 		assertEquals("file", path.segment(3));
 	}
 
-	private void assertRemoteBranchLocation(String remoteBranchLocation) {
+	private static void assertRemoteBranchLocation(String remoteBranchLocation) {
 		URI uri = URI.create(remoteBranchLocation);
 		IPath path = new Path(uri.getPath());
 		// /git/remote/{remote}/{branch}/file/{path}
@@ -401,6 +428,18 @@ public abstract class GitTest extends FileSystemTest {
 		assertEquals("file", path.segment(4));
 	}
 
+	private static void assertTagUri(String tagUri) {
+		URI uri = URI.create(tagUri);
+		IPath path = new Path(uri.getPath());
+		// /git/tag/file/{path}
+		assertTrue(path.segmentCount() > 3);
+		assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
+		assertEquals(GitConstants.TAG_RESOURCE, path.segment(1));
+		assertEquals("file", path.segment(2));
+	}
+
+	// web requests
+
 	/**
 	 * Creates a request to create a git clone for the given URI.
 	 * @param uri Git URL to clone
@@ -409,8 +448,9 @@ public abstract class GitTest extends FileSystemTest {
 	 * @param p password
 	 * @return the request
 	 * @throws JSONException
+	 * @throws UnsupportedEncodingException 
 	 */
-	protected static WebRequest getPostGitCloneRequest(String uri, String name, String kh, char[] p) throws JSONException {
+	protected static WebRequest getPostGitCloneRequest(String uri, String name, String kh, char[] p) throws JSONException, UnsupportedEncodingException {
 		String requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.CLONE_RESOURCE + '/';
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_URL, uri);
@@ -419,14 +459,13 @@ public abstract class GitTest extends FileSystemTest {
 			body.put(GitConstants.KEY_KNOWN_HOSTS, kh);
 		if (p != null)
 			body.put(GitConstants.KEY_PASSWORD, new String(p));
-		InputStream in = new StringBufferInputStream(body.toString());
-		WebRequest request = new PostMethodWebRequest(requestURI, in, "UTF-8");
+		WebRequest request = new PostMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
 	}
 
-	private static WebRequest getPostGitMergeRequest(String location, String commit) throws JSONException {
+	private static WebRequest getPostGitMergeRequest(String location, String commit) throws JSONException, UnsupportedEncodingException {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;
@@ -435,10 +474,53 @@ public abstract class GitTest extends FileSystemTest {
 
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_MERGE, commit);
-		InputStream in = new StringBufferInputStream(body.toString());
-		WebRequest request = new PostMethodWebRequest(requestURI, in, "UTF-8");
+		WebRequest request = new PostMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
 	}
+
+	private static WebRequest getPostGitTagRequest(String location, String tagName, String commitId) throws JSONException, UnsupportedEncodingException, URISyntaxException {
+		assertTagUri(location);
+		String requestURI;
+		if (location.startsWith("http://"))
+			requestURI = location;
+		else
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.TAG_RESOURCE + location;
+
+		JSONObject body = new JSONObject();
+		body.put(ProtocolConstants.KEY_NAME, tagName);
+		body.put(GitConstants.KEY_TAG_COMMIT, commitId);
+		WebRequest request = new PostMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "application/json");
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		return request;
+	}
+
+	private static WebRequest getPutGitCommitRequest(String location, String tagName) throws UnsupportedEncodingException, JSONException {
+		String requestURI;
+		if (location.startsWith("http://"))
+			requestURI = location;
+		else
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.COMMIT_RESOURCE + location;
+		JSONObject body = new JSONObject();
+		body.put(ProtocolConstants.KEY_NAME, tagName);
+		WebRequest request = new PutMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "application/json");
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		return request;
+	}
+
+	private static WebRequest getGetGitTagRequest(String location) {
+		String requestURI;
+		if (location.startsWith("http://"))
+			requestURI = location;
+		else
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.TAG_RESOURCE + location;
+		WebRequest request = new GetMethodWebRequest(requestURI);
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		return request;
+	}
+
 }
