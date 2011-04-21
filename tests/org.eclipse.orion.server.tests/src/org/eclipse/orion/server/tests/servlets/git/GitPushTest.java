@@ -14,8 +14,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringBufferInputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 
 import org.eclipse.core.runtime.IStatus;
@@ -301,7 +300,7 @@ public class GitPushTest extends GitTest {
 		// not implemented yet
 	}
 
-	static WebRequest getPostGitRemoteRequest(String location, String srcRef) throws JSONException {
+	static WebRequest getPostGitRemoteRequest(String location, String srcRef) throws JSONException, UnsupportedEncodingException {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;
@@ -311,8 +310,7 @@ public class GitPushTest extends GitTest {
 		JSONObject body = new JSONObject();
 		if (srcRef != null)
 			body.put(GitConstants.KEY_PUSH_SRC_REF, srcRef);
-		InputStream in = new StringBufferInputStream(body.toString());
-		WebRequest request = new PostMethodWebRequest(requestURI, in, "UTF-8");
+		WebRequest request = new PostMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;

@@ -29,6 +29,7 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 	private ServletResourceHandler<String> indexHandlerV1;
 	private ServletResourceHandler<String> remoteHandlerV1;
 	private ServletResourceHandler<String> statusHandlerV1;
+	private ServletResourceHandler<String> tagHandlerV1;
 
 	GitHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
 		cloneHandlerV1 = new GitCloneHandlerV1(statusHandler);
@@ -38,6 +39,7 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 		indexHandlerV1 = new GitIndexHandlerV1(statusHandler);
 		remoteHandlerV1 = new GitRemoteHandlerV1(statusHandler);
 		statusHandlerV1 = new GitStatusHandlerV1(statusHandler);
+		tagHandlerV1 = new GitTagHandlerV1(statusHandler);
 	}
 
 	@Override
@@ -59,6 +61,8 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 			return remoteHandlerV1.handleRequest(request, response, infoParts[2]);
 		} else if (infoParts[1].equals(GitConstants.STATUS_RESOURCE)) {
 			return statusHandlerV1.handleRequest(request, response, infoParts[2]);
+		} else if (infoParts[1].equals(GitConstants.TAG_RESOURCE)) {
+			return tagHandlerV1.handleRequest(request, response, infoParts[2]);
 		}
 		return false;
 	}

@@ -17,10 +17,9 @@ import static org.junit.Assert.assertTrue;
 import java.io.BufferedReader;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStreamWriter;
-import java.io.StringBufferInputStream;
 import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -681,7 +680,7 @@ public class GitDiffTest extends GitTest {
 		return request;
 	}
 
-	private static WebRequest getPostGitDiffRequest(String location, String right) throws JSONException {
+	private static WebRequest getPostGitDiffRequest(String location, String right) throws JSONException, UnsupportedEncodingException {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;
@@ -690,8 +689,7 @@ public class GitDiffTest extends GitTest {
 
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_COMMIT_NEW, right);
-		InputStream in = new StringBufferInputStream(body.toString());
-		WebRequest request = new PostMethodWebRequest(requestURI, in, "UTF-8");
+		WebRequest request = new PostMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;

@@ -29,6 +29,8 @@ public class GitConstants {
 
 	public static final String REMOTE_RESOURCE = "remote"; //$NON-NLS-1$
 
+	public static final String TAG_RESOURCE = "tag"; //$NON-NLS-1$
+
 	public static final String KEY_GIT = "Git"; //$NON-NLS-1$
 
 	public static final String KEY_NAME = "GitName"; //$NON-NLS-1$
@@ -44,6 +46,8 @@ public class GitConstants {
 	public static final String KEY_COMMIT = "CommitLocation"; //$NON-NLS-1$
 
 	public static final String KEY_REMOTE = "RemoteLocation"; //$NON-NLS-1$
+
+	public static final String KEY_TAG = "TagLocation"; //$NON-NLS-1$
 
 	public static final String KEY_HEAD = "HeadLocation"; //$NON-NLS-1$
 
@@ -102,4 +106,7 @@ public class GitConstants {
 	public static final String KEY_PUSH_SRC_REF = "PushSrcRef"; //$NON-NLS-1$
 
 	public static final String KEY_RESULT = "Result"; //$NON-NLS-1$
+
+	public static final String KEY_TAG_COMMIT = "Commit"; //$NON-NLS-1$
+
 }
