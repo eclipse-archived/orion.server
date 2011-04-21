@@ -72,13 +72,15 @@ public class GitTagTest extends GitTest {
 
 		JSONObject commit = commitsArray.getJSONObject(0);
 		String commitId = commit.getString(ProtocolConstants.KEY_NAME);
+		String commitLocation = commit.getString(ProtocolConstants.KEY_LOCATION);
 
 		tag(gitTagUri, "tag1", commitId);
 
 		tags = listTags(gitTagUri);
 		assertEquals(1, tags.length());
 
-		tag(gitTagUri, "tag2", commitId);
+		// update commit with tag
+		tag(commitLocation, "tag2");
 
 		tags = listTags(gitTagUri);
 		assertEquals(2, tags.length());

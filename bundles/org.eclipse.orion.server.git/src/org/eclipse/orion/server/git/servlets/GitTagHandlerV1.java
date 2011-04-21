@@ -49,8 +49,8 @@ public class GitTagHandlerV1 extends ServletResourceHandler<String> {
 			switch (getMethod(request)) {
 				case GET :
 					return handleGet(request, response, path);
-				case PUT :
-					return handlePut(request, response, path);
+				case POST :
+					return handlePost(request, response, path);
 			}
 		} catch (Exception e) {
 			String msg = NLS.bind("Failed to handle 'tag' request for {0}", path); //$NON-NLS-1$
@@ -82,24 +82,29 @@ public class GitTagHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private boolean handlePut(HttpServletRequest request, HttpServletResponse response, String path) throws IOException, JSONException, CoreException, JGitInternalException, GitAPIException {
+	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, String path) throws IOException, JSONException, CoreException, JGitInternalException, GitAPIException {
 		IPath p = new Path(path);
-		File gitDir = GitUtils.getGitDir(p.removeFirstSegments(1));
+		File gitDir = GitUtils.getGitDir(p);
 		Repository db = new FileRepository(gitDir);
 		Git git = new Git(db);
 		JSONObject toPut = OrionServlet.readJSONRequest(request);
+		String tagName = toPut.getString(ProtocolConstants.KEY_NAME);
 		String commitId = toPut.getString(GitConstants.KEY_TAG_COMMIT);
 		ObjectId objectId = db.resolve(commitId);
 
 		RevWalk walk = new RevWalk(db);
 		RevCommit revCommit = walk.lookupCommit(objectId);
 
-		RevTag revTag = git.tag().setObjectId(revCommit).setName(p.segment(0)).call();
+		RevTag revTag = tag(git, revCommit, tagName);
 		JSONObject result = new JSONObject();
 		result.put(ProtocolConstants.KEY_NAME, revTag.getTagName());
 		result.put(ProtocolConstants.KEY_CONTENT_LOCATION, OrionServlet.getURI(request));
 		OrionServlet.writeJSONResponse(request, response, result);
 		walk.dispose();
 		return true;
+	}
+
+	static RevTag tag(Git git, RevCommit revCommit, String tagName) throws JGitInternalException, GitAPIException {
+		return git.tag().setObjectId(revCommit).setName(tagName).call();
 	}
 }

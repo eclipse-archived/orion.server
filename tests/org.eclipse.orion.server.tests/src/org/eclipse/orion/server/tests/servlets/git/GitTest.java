@@ -373,7 +373,15 @@ public abstract class GitTest extends FileSystemTest {
 	// tag
 	protected JSONObject tag(String gitTagUri, String tagName, String commitId) throws JSONException, IOException, SAXException, URISyntaxException {
 		assertTagUri(gitTagUri);
-		WebRequest request = getPutGitTagRequest(gitTagUri, tagName, commitId);
+		WebRequest request = getPostGitTagRequest(gitTagUri, tagName, commitId);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		return new JSONObject(response.getText());
+	}
+
+	protected JSONObject tag(String gitCommitUri, String tagName) throws JSONException, IOException, SAXException, URISyntaxException {
+		assertCommitUri(gitCommitUri);
+		WebRequest request = getPutGitCommitRequest(gitCommitUri, tagName);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		return new JSONObject(response.getText());
@@ -472,17 +480,31 @@ public abstract class GitTest extends FileSystemTest {
 		return request;
 	}
 
-	private static WebRequest getPutGitTagRequest(String location, String tagName, String commitId) throws JSONException, UnsupportedEncodingException, URISyntaxException {
+	private static WebRequest getPostGitTagRequest(String location, String tagName, String commitId) throws JSONException, UnsupportedEncodingException, URISyntaxException {
 		assertTagUri(location);
-		URI u = URI.create(location);
-		IPath p = new Path(u.getPath());
-		p = p.uptoSegment(2).append(tagName).append(p.removeFirstSegments(2));
-		u = new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), p.toString(), u.getQuery(), u.getFragment());
-
-		String requestURI = u.toString();
+		String requestURI;
+		if (location.startsWith("http://"))
+			requestURI = location;
+		else
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.TAG_RESOURCE + location;
 
 		JSONObject body = new JSONObject();
+		body.put(ProtocolConstants.KEY_NAME, tagName);
 		body.put(GitConstants.KEY_TAG_COMMIT, commitId);
+		WebRequest request = new PostMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "application/json");
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		return request;
+	}
+
+	private static WebRequest getPutGitCommitRequest(String location, String tagName) throws UnsupportedEncodingException, JSONException {
+		String requestURI;
+		if (location.startsWith("http://"))
+			requestURI = location;
+		else
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.COMMIT_RESOURCE + location;
+		JSONObject body = new JSONObject();
+		body.put(ProtocolConstants.KEY_NAME, tagName);
 		WebRequest request = new PutMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "application/json");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);

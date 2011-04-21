@@ -39,17 +39,12 @@ public class GitLogTest extends GitTest {
 		String projectName = getMethodName();
 		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
-		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
-		assertNotNull(projectId);
+		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-		String gitDiffUri = gitSection.optString(GitConstants.KEY_DIFF, null);
-		assertNotNull(gitDiffUri);
-		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
-		assertNotNull(gitIndexUri);
-		String gitCommitUri = gitSection.optString(GitConstants.KEY_COMMIT, null);
-		assertNotNull(gitCommitUri);
+		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
 
 		// modify
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "first change");
@@ -122,7 +117,7 @@ public class GitLogTest extends GitTest {
 		assertEquals("commit1", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
 	}
 
-	static WebRequest getPostForScopedLogRequest(String location, String newCommit) throws JSONException, UnsupportedEncodingException {
+	private static WebRequest getPostForScopedLogRequest(String location, String newCommit) throws JSONException, UnsupportedEncodingException {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;
