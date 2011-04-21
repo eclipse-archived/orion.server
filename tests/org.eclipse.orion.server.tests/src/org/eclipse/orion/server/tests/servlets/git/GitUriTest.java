@@ -126,7 +126,7 @@ public class GitUriTest extends GitTest {
 		ServletTestingSupport.allowedPrefixes = emptyDir.toString();
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
+		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, emptyDir.toString());
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
@@ -159,7 +159,7 @@ public class GitUriTest extends GitTest {
 		ServletTestingSupport.allowedPrefixes = dir.toString();
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
+		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, dir.toString());
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
