@@ -23,7 +23,7 @@ public class JSchUtil {
 
 	public static void identity(final JSch sch, byte[] prvkey, byte[] pubkey, byte[] passphrase) throws JSchException {
 		if (prvkey != null && prvkey.length > 0) {
-			sch.addIdentity("identity", prvkey, pubkey, passphrase);
+			sch.addIdentity("identity", prvkey, pubkey != null && pubkey.length > 0 ? pubkey : null, passphrase);
 		}
 	}
 }
