@@ -33,7 +33,7 @@ import org.eclipse.osgi.util.NLS;
 import org.json.*;
 
 /**
- * A handler for Git Clone operation.
+ * A handler for Git Tag operation.
  */
 public class GitTagHandlerV1 extends ServletResourceHandler<String> {
 
@@ -52,7 +52,6 @@ public class GitTagHandlerV1 extends ServletResourceHandler<String> {
 				case PUT :
 					return handlePut(request, response, path);
 			}
-
 		} catch (Exception e) {
 			String msg = NLS.bind("Failed to handle 'tag' request for {0}", path); //$NON-NLS-1$
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
@@ -79,7 +78,7 @@ public class GitTagHandlerV1 extends ServletResourceHandler<String> {
 		}
 		result.put(ProtocolConstants.KEY_CHILDREN, children);
 		OrionServlet.writeJSONResponse(request, response, result);
-		// TODO: release walk
+		walk.dispose();
 		return true;
 	}
 
@@ -95,9 +94,12 @@ public class GitTagHandlerV1 extends ServletResourceHandler<String> {
 		RevWalk walk = new RevWalk(db);
 		RevCommit revCommit = walk.lookupCommit(objectId);
 
-		RevTag tag = git.tag().setObjectId(revCommit).setName(p.segment(0)).call();
-		// TODO: result status
-		// TODO: release walk
+		RevTag revTag = git.tag().setObjectId(revCommit).setName(p.segment(0)).call();
+		JSONObject result = new JSONObject();
+		result.put(ProtocolConstants.KEY_NAME, revTag.getTagName());
+		result.put(ProtocolConstants.KEY_CONTENT_LOCATION, OrionServlet.getURI(request));
+		OrionServlet.writeJSONResponse(request, response, result);
+		walk.dispose();
 		return true;
 	}
 }

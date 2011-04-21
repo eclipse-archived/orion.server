@@ -370,12 +370,21 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	// tag
-	protected void /*JSONObject*/tag(String gitTagUri, String tagName, String commitId) throws JSONException, IOException, SAXException, URISyntaxException {
+	protected JSONObject tag(String gitTagUri, String tagName, String commitId) throws JSONException, IOException, SAXException, URISyntaxException {
 		assertTagUri(gitTagUri);
 		WebRequest request = getPutGitTagRequest(gitTagUri, tagName, commitId);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		//		return new JSONObject(response.getText());
+		return new JSONObject(response.getText());
+	}
+
+	protected JSONArray listTags(String gitTagUri) throws IOException, SAXException, JSONException {
+		assertTagUri(gitTagUri);
+		WebRequest request = getGetGitTagRequest(gitTagUri);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject tags = new JSONObject(response.getText());
+		return tags.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 	}
 
 	// assertions for URIs
@@ -419,6 +428,8 @@ public abstract class GitTest extends FileSystemTest {
 		assertEquals(GitConstants.TAG_RESOURCE, path.segment(1));
 		assertEquals("file", path.segment(2));
 	}
+
+	// web requests
 
 	/**
 	 * Creates a request to create a git clone for the given URI.
@@ -472,6 +483,18 @@ public abstract class GitTest extends FileSystemTest {
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_TAG_COMMIT, commitId);
 		WebRequest request = new PutMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "application/json");
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		return request;
+	}
+
+	private static WebRequest getGetGitTagRequest(String location) {
+		String requestURI;
+		if (location.startsWith("http://"))
+			requestURI = location;
+		else
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.TAG_RESOURCE + location;
+		WebRequest request = new GetMethodWebRequest(requestURI);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;

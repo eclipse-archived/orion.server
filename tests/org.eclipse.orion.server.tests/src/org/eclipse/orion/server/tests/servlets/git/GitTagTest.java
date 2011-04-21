@@ -17,26 +17,34 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
-import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
 
 public class GitTagTest extends GitTest {
 	@Test
-	@Ignore("not implemented yet")
-	public void testTag() {
-		// TODO: 
-		// tag
-		// => tag
+	public void testTag() throws IOException, SAXException, JSONException, URISyntaxException {
+
+		URI workspaceLocation = createWorkspace(getMethodName());
+
+		String projectName = getMethodName();
+		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
+
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+		String gitTagUri = gitSection.getString(GitConstants.KEY_TAG);
+
+		// tag HEAD with 'tag'
+		JSONObject tag = tag(gitTagUri, "tag", Constants.HEAD);
+		assertEquals("tag", tag.getString(ProtocolConstants.KEY_NAME));
+		new URI(tag.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 	}
 
 	@Test
@@ -51,15 +59,12 @@ public class GitTagTest extends GitTest {
 		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
 		String gitTagUri = gitSection.getString(GitConstants.KEY_TAG);
 
-		WebRequest request = getGetGitTagRequest(gitTagUri);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject tags = new JSONObject(response.getText());
-		JSONArray tagsArray = tags.getJSONArray(ProtocolConstants.KEY_CHILDREN);
-		assertEquals(0, tagsArray.length());
+		JSONArray tags = listTags(gitTagUri);
+		assertEquals(0, tags.length());
 
-		request = GitCommitTest.getGetGitCommitRequest(gitCommitUri, false);
-		response = webConversation.getResponse(request);
+		// log
+		WebRequest request = GitCommitTest.getGetGitCommitRequest(gitCommitUri, false);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject logResponse = new JSONObject(response.getText());
 		JSONArray commitsArray = logResponse.getJSONArray(ProtocolConstants.KEY_CHILDREN);
@@ -70,33 +75,12 @@ public class GitTagTest extends GitTest {
 
 		tag(gitTagUri, "tag1", commitId);
 
-		request = getGetGitTagRequest(gitTagUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		tags = new JSONObject(response.getText());
-		tagsArray = tags.getJSONArray(ProtocolConstants.KEY_CHILDREN);
-		assertEquals(1, tagsArray.length());
+		tags = listTags(gitTagUri);
+		assertEquals(1, tags.length());
 
 		tag(gitTagUri, "tag2", commitId);
 
-		request = getGetGitTagRequest(gitTagUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		tags = new JSONObject(response.getText());
-		tagsArray = tags.getJSONArray(ProtocolConstants.KEY_CHILDREN);
-		assertEquals(2, tagsArray.length());
+		tags = listTags(gitTagUri);
+		assertEquals(2, tags.length());
 	}
-
-	static WebRequest getGetGitTagRequest(String location) {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.TAG_RESOURCE + location;
-		WebRequest request = new GetMethodWebRequest(requestURI);
-		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		setAuthentication(request);
-		return request;
-	}
-
 }
