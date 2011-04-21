@@ -748,7 +748,7 @@ public class GitStatusTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone1: push
-		ServerStatus pushStatus = push(gitRemoteUri1, Constants.HEAD);
+		ServerStatus pushStatus = push(gitRemoteUri1, Constants.HEAD, false);
 		assertEquals(true, pushStatus.isOK());
 
 		// this is how EGit checks for conflicts

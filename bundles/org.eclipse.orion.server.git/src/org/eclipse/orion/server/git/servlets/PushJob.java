@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Constants;
@@ -36,7 +37,7 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
 /**
- * A job to perform a fetch operation in the background
+ * A job to perform a push operation in the background
  */
 public class PushJob extends Job {
 
@@ -45,11 +46,13 @@ public class PushJob extends Job {
 	private ServiceReference<ITaskService> taskServiceRef;
 	private Path p;
 	private String srcRef;
+	private boolean tags;
 
-	public PushJob(CredentialsProvider credentials, Path path, String srcRef) {
+	public PushJob(CredentialsProvider credentials, Path path, String srcRef, boolean tags) {
 		super("Pushing"); //$NON-NLS-1$
 		this.p = path;
 		this.srcRef = srcRef;
+		this.tags = tags;
 		this.task = createTask();
 	}
 
@@ -67,8 +70,11 @@ public class PushJob extends Job {
 		Git git = new Git(db);
 
 		// ObjectId ref = db.resolve(srcRef);
-		RefSpec spec = new RefSpec(srcRef + ":" + Constants.R_HEADS + p.segment(1));
-		Iterable<PushResult> resultIterable = git.push().setRemote(p.segment(0)).setRefSpecs(spec).call();
+		RefSpec spec = new RefSpec(srcRef + ":" + Constants.R_HEADS + p.segment(1)); //$NON-NLS-1$
+		PushCommand pushCommand = git.push().setRemote(p.segment(0)).setRefSpecs(spec);
+		if (tags)
+			pushCommand.setPushTags();
+		Iterable<PushResult> resultIterable = pushCommand.call();
 		PushResult pushResult = resultIterable.iterator().next();
 		JSONObject result = new JSONObject();
 		for (final RemoteRefUpdate rru : pushResult.getRemoteUpdates()) {

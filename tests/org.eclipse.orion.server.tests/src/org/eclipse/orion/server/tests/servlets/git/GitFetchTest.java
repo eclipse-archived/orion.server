@@ -13,6 +13,7 @@ package org.eclipse.orion.server.tests.servlets.git;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -123,7 +124,7 @@ public class GitFetchTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone2: push
-		ServerStatus pushStatus = push(gitRemoteUri2, Constants.HEAD);
+		ServerStatus pushStatus = push(gitRemoteUri2, Constants.HEAD, false);
 		assertEquals(true, pushStatus.isOK());
 
 		JSONObject details = getRemoteBranch(gitRemoteUri1, 1, 0, Constants.MASTER);
@@ -207,8 +208,8 @@ public class GitFetchTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone1: push
-		ServerStatus pushStatus = push(gitRemoteUri1, 2, 0, "a", Constants.HEAD);
-		assertEquals(true, pushStatus.isOK());
+		ServerStatus pushStatus = push(gitRemoteUri1, 2, 0, "a", Constants.HEAD, false);
+		assertTrue(pushStatus.isOK());
 
 		// clone1: switch to 'master'
 		GitRemoteTest.ensureOnBranch(git1, Constants.MASTER);
@@ -229,7 +230,7 @@ public class GitFetchTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone1: push
-		push(gitRemoteUri1, 2, 0, Constants.MASTER, Constants.HEAD);
+		push(gitRemoteUri1, 2, 0, Constants.MASTER, Constants.HEAD, false);
 
 		// clone2: get remote details
 		// XXX: checked out 'a'

@@ -313,19 +313,20 @@ public abstract class GitTest extends FileSystemTest {
 	 * 
 	 * @param gitRemoteUri remote URI
 	 * @param srcRef the source ref to push
+	 * @param tags <code>true</code> to push tags
 	 * @return JSON object representing response
 	 * @throws IOException
 	 * @throws SAXException
 	 * @throws JSONException
 	 */
-	protected ServerStatus push(String gitRemoteUri, String srcRef) throws IOException, SAXException, JSONException {
-		return push(gitRemoteUri, 1, 0, Constants.MASTER, srcRef);
+	protected ServerStatus push(String gitRemoteUri, String srcRef, boolean tags) throws IOException, SAXException, JSONException {
+		return push(gitRemoteUri, 1, 0, Constants.MASTER, srcRef, tags);
 	}
 
-	protected ServerStatus push(String gitRemoteUri, int size, int i, String name, String srcRef) throws IOException, SAXException, JSONException {
+	protected ServerStatus push(String gitRemoteUri, int size, int i, String name, String srcRef, boolean tags) throws IOException, SAXException, JSONException {
 		assertRemoteUri(gitRemoteUri);
 		String remoteBranchLocation = getRemoteBranch(gitRemoteUri, size, i, name).getString(ProtocolConstants.KEY_LOCATION);
-		WebRequest request = GitPushTest.getPostGitRemoteRequest(remoteBranchLocation, srcRef);
+		WebRequest request = GitPushTest.getPostGitRemoteRequest(remoteBranchLocation, srcRef, tags);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);

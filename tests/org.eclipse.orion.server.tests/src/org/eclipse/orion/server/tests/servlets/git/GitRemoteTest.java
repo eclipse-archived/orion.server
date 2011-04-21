@@ -160,7 +160,7 @@ public class GitRemoteTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// push
-		ServerStatus pushStatus = push(gitRemoteUri, Constants.HEAD);
+		ServerStatus pushStatus = push(gitRemoteUri, Constants.HEAD, false);
 		assertEquals(true, pushStatus.isOK());
 
 		remoteBranch = getRemoteBranch(gitRemoteUri, 1, 0, Constants.MASTER);

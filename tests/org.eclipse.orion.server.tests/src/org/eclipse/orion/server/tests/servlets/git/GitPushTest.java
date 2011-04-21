@@ -16,6 +16,7 @@ import static org.junit.Assert.assertNotNull;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
+import java.net.URISyntaxException;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
@@ -51,7 +52,7 @@ public class GitPushTest extends GitTest {
 		String remoteBranchLocation = remoteBranch.getString(ProtocolConstants.KEY_LOCATION);
 
 		// push with no body
-		WebRequest request = getPostGitRemoteRequest(remoteBranchLocation, null);
+		WebRequest request = getPostGitRemoteRequest(remoteBranchLocation, null, false);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
 	}
@@ -78,12 +79,8 @@ public class GitPushTest extends GitTest {
 		String projectId2 = project2.getString(ProtocolConstants.KEY_ID);
 		JSONObject gitSection2 = project2.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection2);
-		String gitRemoteUri2 = gitSection2.optString(GitConstants.KEY_REMOTE, null);
-		assertNotNull(gitRemoteUri2);
-		String gitIndexUri2 = gitSection2.optString(GitConstants.KEY_INDEX, null);
-		assertNotNull(gitIndexUri2);
-		String gitCommitUri2 = gitSection2.optString(GitConstants.KEY_COMMIT, null);
-		assertNotNull(gitCommitUri2);
+		String gitRemoteUri2 = gitSection2.getString(GitConstants.KEY_REMOTE);
+		String gitCommitUri2 = gitSection2.getString(GitConstants.KEY_COMMIT);
 
 		// clone1: list remotes
 		WebRequest request = GitRemoteTest.getGetGitRemoteRequest(gitRemoteUri1);
@@ -112,7 +109,7 @@ public class GitPushTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone1: push
-		ServerStatus pushStatus = push(gitRemoteUri1, Constants.HEAD);
+		ServerStatus pushStatus = push(gitRemoteUri1, Constants.HEAD, false);
 		assertEquals(true, pushStatus.isOK());
 
 		// clone2: get remote branch location
@@ -219,7 +216,7 @@ public class GitPushTest extends GitTest {
 		String remoteBranchLocation = logResponse.getString(GitConstants.KEY_REMOTE);
 
 		// push
-		request = getPostGitRemoteRequest(remoteBranchLocation, Constants.HEAD);
+		request = getPostGitRemoteRequest(remoteBranchLocation, Constants.HEAD, false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 	}
@@ -246,12 +243,9 @@ public class GitPushTest extends GitTest {
 		String projectId2 = project2.getString(ProtocolConstants.KEY_ID);
 		JSONObject gitSection2 = project2.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection2);
-		String gitRemoteUri2 = gitSection2.optString(GitConstants.KEY_REMOTE, null);
-		assertNotNull(gitRemoteUri2);
-		String gitIndexUri2 = gitSection2.optString(GitConstants.KEY_INDEX, null);
-		assertNotNull(gitIndexUri2);
-		String gitCommitUri2 = gitSection2.optString(GitConstants.KEY_COMMIT, null);
-		assertNotNull(gitCommitUri2);
+		String gitRemoteUri2 = gitSection2.getString(GitConstants.KEY_REMOTE);
+		String gitIndexUri2 = gitSection2.getString(GitConstants.KEY_INDEX);
+		String gitCommitUri2 = gitSection2.getString(GitConstants.KEY_COMMIT);
 
 		// clone1: change
 		WebRequest request = getPutFileRequest(projectId1 + "/test.txt", "clone1 change");
@@ -269,7 +263,7 @@ public class GitPushTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone1: push
-		ServerStatus pushStatus = push(gitRemoteUri1, Constants.HEAD);
+		ServerStatus pushStatus = push(gitRemoteUri1, Constants.HEAD, false);
 		assertEquals(true, pushStatus.isOK());
 
 		// clone2: change
@@ -288,19 +282,57 @@ public class GitPushTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone2: push
-		pushStatus = push(gitRemoteUri2, Constants.HEAD);
+		pushStatus = push(gitRemoteUri2, Constants.HEAD, false);
 		//result = Status.valueOf(push.getString(GitConstants.KEY_RESULT));
 		//assertEquals(Status.REJECTED_NONFASTFORWARD, result);
 		assertEquals(IStatus.WARNING, pushStatus.getSeverity());
 	}
 
 	@Test
-	@Ignore("not implemented yet")
-	public void testPushTags() {
-		// not implemented yet
+	public void testPushTags() throws JSONException, IOException, SAXException, URISyntaxException {
+		// clone1: create
+		String contentLocation1 = clone(null);
+
+		// clone1: link
+		JSONObject project1 = linkProject(contentLocation1, getMethodName() + "1");
+		JSONObject gitSection1 = project1.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection1);
+		String gitRemoteUri1 = gitSection1.optString(GitConstants.KEY_REMOTE);
+		String gitTagUri1 = gitSection1.optString(GitConstants.KEY_TAG);
+
+		// clone2: create
+		String contentLocation2 = clone(null);
+
+		// clone2: link
+		JSONObject project2 = linkProject(contentLocation2, getMethodName() + "2");
+		JSONObject gitSection2 = project2.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection2);
+		String gitRemoteUri2 = gitSection2.getString(GitConstants.KEY_REMOTE);
+		String gitCommitUri2 = gitSection2.getString(GitConstants.KEY_COMMIT);
+		String gitTagUri2 = gitSection2.getString(GitConstants.KEY_TAG);
+
+		// clone1: tag HEAD with 'tag'
+		tag(gitTagUri1, "tag", Constants.HEAD);
+
+		push(gitRemoteUri1, Constants.HEAD, true);
+
+		// clone2: list tags
+		JSONArray tags = listTags(gitTagUri2);
+		assertEquals(0, tags.length());
+
+		// clone2: fetch + merge
+		JSONObject remoteBranch = getRemoteBranch(gitRemoteUri2, 1, 0, Constants.MASTER);
+		String remoteBranchLocation2 = remoteBranch.getString(ProtocolConstants.KEY_LOCATION);
+		remoteBranch = fetch(remoteBranchLocation2);
+		String id = remoteBranch.getString(ProtocolConstants.KEY_ID);
+		merge(gitCommitUri2, id);
+
+		// clone2: list tags again
+		tags = listTags(gitTagUri2);
+		assertEquals(1, tags.length());
 	}
 
-	static WebRequest getPostGitRemoteRequest(String location, String srcRef) throws JSONException, UnsupportedEncodingException {
+	static WebRequest getPostGitRemoteRequest(String location, String srcRef, boolean tags) throws JSONException, UnsupportedEncodingException {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;
@@ -310,6 +342,7 @@ public class GitPushTest extends GitTest {
 		JSONObject body = new JSONObject();
 		if (srcRef != null)
 			body.put(GitConstants.KEY_PUSH_SRC_REF, srcRef);
+		body.put(GitConstants.KEY_PUSH_TAGS, tags);
 		WebRequest request = new PostMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);

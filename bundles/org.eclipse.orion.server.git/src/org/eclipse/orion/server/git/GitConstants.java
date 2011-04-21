@@ -105,6 +105,8 @@ public class GitConstants {
 
 	public static final String KEY_PUSH_SRC_REF = "PushSrcRef"; //$NON-NLS-1$
 
+	public static final String KEY_PUSH_TAGS = "PushTags"; //$NON-NLS-1$
+
 	public static final String KEY_RESULT = "Result"; //$NON-NLS-1$
 
 	public static final String KEY_TAG_COMMIT = "Commit"; //$NON-NLS-1$
