@@ -142,7 +142,7 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 
 	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws ServletException {
 		IFileInfo fileInfo = file.fetchInfo();
-		if (!fileInfo.exists())
+		if (!request.getMethod().equals("PUT") && !fileInfo.exists())
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, 404, NLS.bind("File not found: {0}", request.getPathInfo()), null));
 		if (fileInfo.isDirectory())
 			return handleDirectory(request, response, file);
