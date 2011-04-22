@@ -332,20 +332,17 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 
 		RevWalk walk = new RevWalk(db);
 		RevCommit revCommit = walk.lookupCommit(objectId);
+		walk.parseBody(revCommit);
 
-		RevTag revTag = GitTagHandlerV1.tag(git, revCommit, tagName);
-		// TODO: return updated commit, not tag; see bug 343386
-		//		JSONObject result = toJSON(db, revCommit, OrionServlet.getURI(request));
+		GitTagHandlerV1.tag(git, revCommit, tagName);
 
-		JSONObject result = new JSONObject();
-		result.put(ProtocolConstants.KEY_NAME, revTag.getTagName());
-		result.put(ProtocolConstants.KEY_CONTENT_LOCATION, OrionServlet.getURI(request));
+		JSONObject result = toJSON(db, revCommit, OrionServlet.getURI(request));
 		OrionServlet.writeJSONResponse(request, response, result);
 		walk.dispose();
 		return true;
 	}
 
-	// from https://gist.github.com/839693
+	// from https://gist.github.com/839693, credits to zx
 	private static Set<Ref> getTagsForCommit(Repository repo, RevCommit commit) throws MissingObjectException, IOException {
 		final Set<Ref> tags = new HashSet<Ref>();
 		final RevWalk walk = new RevWalk(repo);

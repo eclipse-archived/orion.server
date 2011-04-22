@@ -27,7 +27,6 @@ import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -80,14 +79,12 @@ public class GitMergeTest extends GitTest {
 		String gitRemoteUri = gitSection.optString(GitConstants.KEY_REMOTE, null);
 		assertNotNull(gitRemoteUri);
 
-		// TODO: replace with REST API once bug 341384 is fixed
 		// create branch 'a'
-		FileRepository db1 = new FileRepository(new File(URIUtil.toFile(new URI(contentLocation)), Constants.DOT_GIT));
-		Git git = new Git(db1);
-		Ref aBranch = git.branchCreate().setName("a").call();
-		assertEquals(Constants.R_HEADS + "a", aBranch.getName());
+		branch(contentLocation, "a");
 
 		// checkout 'a'
+		FileRepository db1 = new FileRepository(new File(URIUtil.toFile(new URI(contentLocation)), Constants.DOT_GIT));
+		Git git = new Git(db1);
 		GitRemoteTest.ensureOnBranch(git, "a");
 
 		// modify while on 'a'
@@ -257,12 +254,11 @@ public class GitMergeTest extends GitTest {
 		assertNotNull(gitRemoteUri);
 
 		// create branch 'a'
-		FileRepository db1 = new FileRepository(new File(URIUtil.toFile(new URI(contentLocation)), Constants.DOT_GIT));
-		Git git = new Git(db1);
-		Ref aBranch = git.branchCreate().setName("a").call();
-		assertEquals(Constants.R_HEADS + "a", aBranch.getName());
+		branch(contentLocation, "a");
 
 		// checkout 'a'
+		FileRepository db1 = new FileRepository(new File(URIUtil.toFile(new URI(contentLocation)), Constants.DOT_GIT));
+		Git git = new Git(db1);
 		GitRemoteTest.ensureOnBranch(git, "a");
 
 		// modify while on 'a'

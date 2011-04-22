@@ -33,6 +33,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.RepositoryCache;
 import org.eclipse.jgit.storage.file.FileRepository;
@@ -44,6 +45,7 @@ import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSuppor
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitServlet;
+import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -371,6 +373,18 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	// tag
+	/**
+	 * Tag the commit with given tag name 
+	 * 
+	 * @param gitTagUri tags URI
+	 * @param tagName tag name to use
+	 * @param commitId commit to tag
+	 * @return created tag object
+	 * @throws JSONException
+	 * @throws IOException
+	 * @throws SAXException
+	 * @throws URISyntaxException
+	 */
 	protected JSONObject tag(String gitTagUri, String tagName, String commitId) throws JSONException, IOException, SAXException, URISyntaxException {
 		assertTagUri(gitTagUri);
 		WebRequest request = getPostGitTagRequest(gitTagUri, tagName, commitId);
@@ -379,7 +393,17 @@ public abstract class GitTest extends FileSystemTest {
 		return new JSONObject(response.getText());
 	}
 
-	protected JSONObject tag(String gitCommitUri, String tagName) throws JSONException, IOException, SAXException, URISyntaxException {
+	/**
+	 * Tag the selected commit with the given name.
+	 * 
+	 * @param gitCommitUri selected commit URI
+	 * @param tagName tag name to use
+	 * @return an updated commit object
+	 * @throws JSONException
+	 * @throws IOException
+	 * @throws SAXException
+	 */
+	protected JSONObject tag(String gitCommitUri, String tagName) throws JSONException, IOException, SAXException {
 		assertCommitUri(gitCommitUri);
 		WebRequest request = getPutGitCommitRequest(gitCommitUri, tagName);
 		WebResponse response = webConversation.getResponse(request);
@@ -394,6 +418,37 @@ public abstract class GitTest extends FileSystemTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject tags = new JSONObject(response.getText());
 		return tags.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+	}
+
+	/**
+	 * Return commits for the given URI.
+	 * 
+	 * @param gitCommitUri commit URI
+	 * @param remote <code>true</code> if remote location is expected
+	 * @return
+	 * @throws IOException
+	 * @throws SAXException
+	 * @throws JSONException
+	 */
+	protected JSONArray log(String gitCommitUri, boolean remote) throws IOException, SAXException, JSONException {
+		assertCommitUri(gitCommitUri);
+		WebRequest request = GitCommitTest.getGetGitCommitRequest(gitCommitUri, false);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject log = new JSONObject(response.getText());
+		if (remote)
+			log.getString(GitConstants.KEY_REMOTE);
+		return log.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+	}
+
+	// branch
+	protected void branch(String contentLocation, String branchName) throws IOException, SAXException, JSONException, JGitInternalException, GitAPIException {
+		assertContentLocation(contentLocation);
+		// TODO: replace with REST API once bug 341384 is fixed
+		FileRepository repo = new FileRepository(new File(URIUtil.toFile(URI.create(contentLocation)), Constants.DOT_GIT));
+		Git git = new Git(repo);
+		Ref aBranch = git.branchCreate().setName(branchName).call();
+		assertEquals(Constants.R_HEADS + branchName, aBranch.getName());
 	}
 
 	// assertions for URIs
@@ -438,6 +493,12 @@ public abstract class GitTest extends FileSystemTest {
 		assertEquals("file", path.segment(2));
 	}
 
+	private void assertContentLocation(String contentLocation) {
+		URI uri = URI.create(contentLocation);
+		File file = URIUtil.toFile(uri);
+		assertNotNull(GitUtils.getGitDirForFile(file));
+	}
+
 	// web requests
 
 	/**
@@ -480,7 +541,7 @@ public abstract class GitTest extends FileSystemTest {
 		return request;
 	}
 
-	private static WebRequest getPostGitTagRequest(String location, String tagName, String commitId) throws JSONException, UnsupportedEncodingException, URISyntaxException {
+	private static WebRequest getPostGitTagRequest(String location, String tagName, String commitId) throws JSONException, UnsupportedEncodingException {
 		assertTagUri(location);
 		String requestURI;
 		if (location.startsWith("http://"))

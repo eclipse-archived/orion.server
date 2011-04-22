@@ -28,7 +28,6 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileRepository;
@@ -171,10 +170,7 @@ public class GitFetchTest extends GitTest {
 		String gitCommitUri1 = gitSection1.getString(GitConstants.KEY_COMMIT);
 
 		// clone1: branch 'a'
-		FileRepository db1 = new FileRepository(new File(URIUtil.toFile(new URI(contentLocation1)), Constants.DOT_GIT));
-		Git git1 = new Git(db1);
-		Ref aBranch = git1.branchCreate().setName("a").call();
-		assertEquals(Constants.R_HEADS + "a", aBranch.getName());
+		branch(contentLocation1, "a");
 
 		// clone1: push all
 		pushAll(contentLocation1);
@@ -190,6 +186,8 @@ public class GitFetchTest extends GitTest {
 		String gitRemoteUri2 = gitSection2.getString(GitConstants.KEY_REMOTE);
 
 		// clone1: switch to 'a'
+		FileRepository db1 = new FileRepository(new File(URIUtil.toFile(new URI(contentLocation1)), Constants.DOT_GIT));
+		Git git1 = new Git(db1);
 		GitRemoteTest.ensureOnBranch(git1, "a");
 
 		// clone1: change

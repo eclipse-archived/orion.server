@@ -199,8 +199,7 @@ public class GitRemoteTest extends GitTest {
 		int localBefore = git.branchList().call().size();
 		int remoteBefore = git.branchList().setListMode(ListMode.REMOTE).call().size();
 		int allBefore = git.branchList().setListMode(ListMode.ALL).call().size();
-		Ref aBranch = git.branchCreate().setName("a").call();
-		assertEquals(Constants.R_HEADS + "a", aBranch.getName());
+		branch(contentLocation, "a");
 
 		assertEquals(1, git.branchList().call().size() - localBefore);
 		assertEquals(0, git.branchList().setListMode(ListMode.REMOTE).call().size() - remoteBefore);

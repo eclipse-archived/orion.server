@@ -18,11 +18,15 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
@@ -33,12 +37,11 @@ import com.meterware.httpunit.WebResponse;
 public class GitLogTest extends GitTest {
 
 	@Test
-	public void testGetLog() throws IOException, SAXException, JSONException {
+	public void testLog() throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
@@ -78,11 +81,7 @@ public class GitLogTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// get the full log
-		request = GitCommitTest.getGetGitCommitRequest(gitCommitUri, false);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject logResponse = new JSONObject(response.getText());
-		JSONArray commitsArray = logResponse.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		JSONArray commitsArray = log(gitCommitUri, false);
 		assertEquals(3, commitsArray.length());
 
 		JSONObject commit = commitsArray.getJSONObject(0);
@@ -103,11 +102,7 @@ public class GitLogTest extends GitTest {
 		String newGitCommitUri = response.getHeaderField(ProtocolConstants.KEY_LOCATION);
 
 		// get a scoped log
-		request = GitCommitTest.getGetGitCommitRequest(newGitCommitUri, false);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		logResponse = new JSONObject(response.getText());
-		commitsArray = logResponse.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		commitsArray = log(newGitCommitUri, false);
 		assertEquals(2, commitsArray.length());
 
 		commit = commitsArray.getJSONObject(0);
@@ -115,6 +110,65 @@ public class GitLogTest extends GitTest {
 
 		commit = commitsArray.getJSONObject(1);
 		assertEquals("commit1", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
+	}
+
+	@Test
+	public void testLogWithRemote() throws IOException, SAXException, JSONException {
+		String contentLocation = clone(null);
+		JSONObject project = linkProject(contentLocation, getMethodName());
+		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+
+		JSONArray commitsArray = log(gitCommitUri, true);
+		assertEquals(1, commitsArray.length());
+	}
+
+	@Test
+	public void testLogWithTag() throws IOException, SAXException, JSONException {
+		String contentLocation = clone(null);
+		JSONObject project = linkProject(contentLocation, getMethodName());
+		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+
+		JSONArray commitsArray = log(gitCommitUri, true);
+		assertEquals(1, commitsArray.length());
+
+		String commitUri = commitsArray.getJSONObject(0).getString(ProtocolConstants.KEY_LOCATION);
+		JSONObject updatedCommit = tag(commitUri, "tag");
+		JSONArray tagsAndBranchesArray = updatedCommit.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		assertEquals(1, tagsAndBranchesArray.length());
+		assertEquals(Constants.R_TAGS + "tag", tagsAndBranchesArray.get(0));
+
+		commitsArray = log(gitCommitUri, true);
+		assertEquals(1, commitsArray.length());
+
+		tagsAndBranchesArray = commitsArray.getJSONObject(0).getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		assertEquals(1, tagsAndBranchesArray.length());
+		assertEquals(Constants.R_TAGS + "tag", tagsAndBranchesArray.get(0));
+	}
+
+	@Test
+	@Ignore("not implemented yet")
+	public void testLogWithBranch() throws IOException, SAXException, JSONException, JGitInternalException, GitAPIException {
+		String contentLocation = clone(null);
+		JSONObject project = linkProject(contentLocation, getMethodName());
+		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+
+		JSONArray commitsArray = log(gitCommitUri, true);
+		assertEquals(1, commitsArray.length());
+
+		branch(contentLocation, "branch");
+
+		commitsArray = log(gitCommitUri, true);
+		assertEquals(1, commitsArray.length());
+
+		JSONArray tagsAndBranchesArray = commitsArray.getJSONObject(0).getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		assertEquals(1, tagsAndBranchesArray.length());
+		assertEquals(Constants.R_HEADS + "branch", tagsAndBranchesArray.get(0));
 	}
 
 	private static WebRequest getPostForScopedLogRequest(String location, String newCommit) throws JSONException, UnsupportedEncodingException {
