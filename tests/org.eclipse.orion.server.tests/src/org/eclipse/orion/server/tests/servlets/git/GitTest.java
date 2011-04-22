@@ -166,16 +166,6 @@ public abstract class GitTest extends FileSystemTest {
 		return status.getString("Location");
 	}
 
-	/**
-	 * Returns a request for obtaining metadata about a single git clone.
-	 */
-	protected WebRequest getCloneRequest(String cloneLocation) {
-		WebRequest request = new GetMethodWebRequest(cloneLocation);
-		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		setAuthentication(request);
-		return request;
-	}
-
 	protected static String getMethodName() {
 		final StackTraceElement[] ste = Thread.currentThread().getStackTrace();
 		return ste[3].getMethodName();
@@ -211,7 +201,7 @@ public abstract class GitTest extends FileSystemTest {
 		String cloneLocation = waitForTaskCompletion(taskLocation);
 
 		// validate the clone metadata
-		response = webConversation.getResponse(getCloneRequest(cloneLocation));
+		response = webConversation.getResponse(getGetGitCloneRequest(cloneLocation));
 		JSONObject clone = new JSONObject(response.getText());
 		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		assertNotNull(contentLocation);
@@ -584,4 +574,13 @@ public abstract class GitTest extends FileSystemTest {
 		return request;
 	}
 
+	/**
+	 * Returns a request for obtaining metadata about a single git clone.
+	 */
+	protected WebRequest getGetGitCloneRequest(String cloneLocation) {
+		WebRequest request = new GetMethodWebRequest(cloneLocation);
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		return request;
+	}
 }

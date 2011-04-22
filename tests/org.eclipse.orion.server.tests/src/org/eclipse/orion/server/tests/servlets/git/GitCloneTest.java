@@ -399,6 +399,24 @@ public class GitCloneTest extends GitTest {
 		assertEquals(RepositoryState.SAFE, git.getRepository().getRepositoryState());
 	}
 
+	@Test
+	public void testGetNonexistingClone() throws IOException, SAXException, JSONException {
+		WebRequest request = listGitClonesRequest();
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject clones = new JSONObject(response.getText());
+		JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+
+		String nonexistingCloneId = "nonexistingCloneId";
+
+		ensureCloneIdDoesntExist(clonesArray, nonexistingCloneId);
+
+		String requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.CLONE_RESOURCE + '/' + nonexistingCloneId;
+		request = getGetGitCloneRequest(requestURI);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
+	}
+
 	private WebRequest getPostGitCloneRequest(String uri, String name, String kh, byte[] privk, byte[] pubk, byte[] p) throws JSONException, UnsupportedEncodingException {
 		String requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.CLONE_RESOURCE + '/';
 		JSONObject body = new JSONObject();
@@ -441,11 +459,18 @@ public class GitCloneTest extends GitTest {
 		String cloneLocation = waitForTaskCompletion(taskLocation);
 
 		// validate the clone metadata
-		response = webConversation.getResponse(getCloneRequest(cloneLocation));
+		response = webConversation.getResponse(getGetGitCloneRequest(cloneLocation));
 		JSONObject clone = new JSONObject(response.getText());
 		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		assertNotNull(contentLocation);
 		return contentLocation;
+	}
+
+	private void ensureCloneIdDoesntExist(JSONArray clonesArray, String id) throws JSONException {
+		for (int i = 0; i < clonesArray.length(); i++) {
+			JSONObject clone = clonesArray.getJSONObject(i);
+			assertFalse(id.equals(clone.get(ProtocolConstants.KEY_ID)));
+		}
 	}
 
 	// Utility methods

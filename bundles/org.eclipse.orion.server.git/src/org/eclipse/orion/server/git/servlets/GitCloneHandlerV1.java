@@ -132,11 +132,16 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			OrionServlet.writeJSONResponse(request, response, result);
 			return true;
 		} else if (path.segmentCount() == 1) {
-			WebClone clone = WebClone.fromId(path.segment(0));
-			JSONObject result = WebCloneResourceHandler.toJSON(clone, baseLocation);
-			response.setHeader(ProtocolConstants.HEADER_LOCATION, result.optString(ProtocolConstants.KEY_LOCATION, "")); //$NON-NLS-1$
-			OrionServlet.writeJSONResponse(request, response, result);
-			return true;
+			if (WebClone.exists(path.segment(0))) {
+				WebClone clone = WebClone.fromId(path.segment(0));
+				JSONObject result = WebCloneResourceHandler.toJSON(clone, baseLocation);
+				response.setHeader(ProtocolConstants.HEADER_LOCATION, result.optString(ProtocolConstants.KEY_LOCATION, "")); //$NON-NLS-1$
+				OrionServlet.writeJSONResponse(request, response, result);
+				return true;
+			} else {
+				String msg = NLS.bind("Clone with the given ID not found: {0}", path.segment(0));
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
+			}
 		}
 		//else the request is malformed
 		String msg = NLS.bind("Invalid clone request: {0}", path);
