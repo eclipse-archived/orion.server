@@ -13,11 +13,13 @@ package org.eclipse.orion.server.tests.servlets.git;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
@@ -35,6 +37,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
@@ -56,6 +60,7 @@ import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
 import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -126,6 +131,67 @@ public class GitCloneTest extends GitTest {
 		WebRequest request = getPostGitCloneRequest("I'm//bad!", null);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
+	}
+
+	@Test
+	public void testCloneNotGitRepository() throws IOException, SAXException, JSONException {
+
+		// remember number of clone directories
+		String userArea = System.getProperty("org.eclipse.orion.server.core.userArea");
+		IPath path = new Path(userArea).append("test").append(GitConstants.CLONE_FOLDER);
+		int cloneFoldersNumber = path.toFile().listFiles(new FileFilter() {
+			public boolean accept(File f) {
+				return f.isDirectory();
+			}
+		}).length;
+
+		// remember number of WebClones
+		WebRequest request = listGitClonesRequest();
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject clones = new JSONObject(response.getText());
+		JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		int clonesNumber = clonesArray.length();
+
+		// clone
+		IPath randomLocation = getRandomLocation();
+		assertNull(GitUtils.getGitDirForFile(randomLocation.toFile()));
+		request = getPostGitCloneRequest(randomLocation.toString(), null);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		assertNotNull(taskLocation);
+		String completedTaskLocation = waitForTaskCompletion(taskLocation);
+
+		// task completed, but cloning failed
+		request = new GetMethodWebRequest(completedTaskLocation);
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject completedTask = new JSONObject(response.getText());
+		assertEquals(false, completedTask.getBoolean("Running"));
+		assertEquals(100, completedTask.getInt("PercentComplete"));
+		JSONObject result = completedTask.getJSONObject("Result");
+		assertEquals(500, result.getInt("HttpCode"));
+		assertEquals("Error", result.getString("Severity"));
+		assertEquals("An internal git error cloning git remote", result.getString("Message"));
+		assertEquals("Invalid remote: origin", result.getString("DetailedMessage"));
+
+		// we don't know ID of the clone that failed to be created, so we're checking if none has been added
+		request = listGitClonesRequest();
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		clones = new JSONObject(response.getText());
+		clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		assertEquals(clonesNumber, clonesArray.length());
+
+		int newCloneFoldersNumber = path.toFile().listFiles(new FileFilter() {
+			public boolean accept(File f) {
+				return f.isDirectory();
+			}
+		}).length;
+		assertEquals(cloneFoldersNumber, newCloneFoldersNumber);
 	}
 
 	@Test

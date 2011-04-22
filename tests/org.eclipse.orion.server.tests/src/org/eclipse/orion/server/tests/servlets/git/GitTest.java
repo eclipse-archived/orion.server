@@ -163,7 +163,7 @@ public abstract class GitTest extends FileSystemTest {
 			}
 		}
 		assertNotNull(status);
-		return status.getString("Location");
+		return status.getString(ProtocolConstants.KEY_LOCATION);
 	}
 
 	protected static String getMethodName() {
@@ -432,7 +432,7 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	// branch
-	protected void branch(String contentLocation, String branchName) throws IOException, SAXException, JSONException, JGitInternalException, GitAPIException {
+	protected void branch(String contentLocation, String branchName) throws IOException, JGitInternalException, GitAPIException {
 		assertContentLocation(contentLocation);
 		// TODO: replace with REST API once bug 341384 is fixed
 		FileRepository repo = new FileRepository(new File(URIUtil.toFile(URI.create(contentLocation)), Constants.DOT_GIT));

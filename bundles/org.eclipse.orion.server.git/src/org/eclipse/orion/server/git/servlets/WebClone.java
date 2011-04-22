@@ -14,8 +14,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.jgit.transport.URIish;
+import org.eclipse.orion.internal.server.core.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.WebElement;
 import org.eclipse.orion.server.core.LogHelper;
@@ -98,11 +100,12 @@ public class WebClone extends WebElement {
 		super(store);
 	}
 
-	public void remove() {
-		store.remove(ProtocolConstants.KEY_CONTENT_LOCATION);
-		store.remove(ProtocolConstants.KEY_ID);
-		store.remove(ProtocolConstants.KEY_NAME);
-		store.remove(GitConstants.KEY_URL);
+	public void remove() throws CoreException {
+		try {
+			store.removeNode();
+		} catch (BackingStoreException e) {
+			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_SERVER_CORE, "Error removing node"));
+		}
 	}
 
 	/**

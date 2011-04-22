@@ -128,10 +128,8 @@ public class GitUriTest extends GitTest {
 		String projectName = getMethodName();
 		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, emptyDir.toString());
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
-		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
-		assertNotNull(projectId);
-		String location = project.optString(ProtocolConstants.KEY_CONTENT_LOCATION, null);
-		assertNotNull(location);
+		project.getString(ProtocolConstants.KEY_ID);
+		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		WebRequest request = getGetFilesRequest(location);
 		WebResponse response = webConversation.getResponse(request);

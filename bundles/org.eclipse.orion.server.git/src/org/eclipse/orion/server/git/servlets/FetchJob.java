@@ -116,12 +116,12 @@ public class FetchJob extends Job {
 				HostFingerprintException cause = (HostFingerprintException) jschEx;
 				result = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, cause.getMessage(), cause.formJson(), cause);
 			} else {
-				result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error fetching git remote", e); //$NON-NLS-1$
+				result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "An internal git error fetching git remote", e); //$NON-NLS-1$
 			}
 		} catch (InvalidRemoteException e) {
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error fetching git remote", e); //$NON-NLS-1$
 		} catch (Exception e) {
-			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error cloning git repository", e); //$NON-NLS-1$
+			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error fetching git remote", e); //$NON-NLS-1$
 		}
 		task.done(result);
 		task.setMessage(NLS.bind("Fetching {0} done", remote));

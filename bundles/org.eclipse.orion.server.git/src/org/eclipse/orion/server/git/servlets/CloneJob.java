@@ -18,8 +18,10 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
@@ -62,16 +64,6 @@ public class CloneJob extends Job {
 		return info;
 	}
 
-	private static JSchException getJSchException(Throwable e) {
-		if (e instanceof JSchException) {
-			return (JSchException) e;
-		}
-		if (e.getCause() != null) {
-			return getJSchException(e.getCause());
-		}
-		return null;
-	}
-
 	private IStatus doClone() {
 		try {
 			File cloneFolder = new File(clone.getContentLocation().getPath());
@@ -93,12 +85,15 @@ public class CloneJob extends Job {
 			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error cloning git repository", e); //$NON-NLS-1$
 		} catch (CoreException e) {
 			return e.getStatus();
-		} catch (Exception e) {
+		} catch (JGitInternalException e) {
 			JSchException jschEx = getJSchException(e);
 			if (jschEx != null && jschEx instanceof HostFingerprintException) {
 				HostFingerprintException cause = (HostFingerprintException) jschEx;
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, cause.getMessage(), cause.formJson(), cause);
+			} else {
+				return new Status(IStatus.ERROR, GitActivator.PI_GIT, "An internal git error cloning git remote", e); //$NON-NLS-1$
 			}
+		} catch (Exception e) {
 			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error cloning git repository", e); //$NON-NLS-1$
 		}
 		return Status.OK_STATUS;
@@ -139,17 +134,22 @@ public class CloneJob extends Job {
 			IStatus result = doClone();
 			// save the clone metadata
 			try {
-				if (result.isOK())
+				if (result.isOK()) {
 					clone.save();
+					task.setResultLocation(cloneLocation);
+					String message = NLS.bind("Repository cloned. You may now link to {0}", clone.getContentLocation());
+					task.setMessage(message);
+					result = new Status(IStatus.OK, GitActivator.PI_GIT, message);
+				} else {
+					FileUtils.delete(URIUtil.toFile(clone.getContentLocation()), FileUtils.RECURSIVE);
+					clone.remove();
+				}
 			} catch (CoreException e) {
 				String msg = "Error persisting clone state"; //$NON-NLS-1$
 				result = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
-			}
-			if (result.isOK()) {
-				task.setResultLocation(cloneLocation);
-				String message = NLS.bind("Repository cloned. You may now link to {0}", clone.getContentLocation());
-				task.setMessage(message);
-				result = new Status(IStatus.OK, GitActivator.PI_GIT, message);
+			} catch (IOException e) {
+				String msg = "Error persisting clone state"; //$NON-NLS-1$
+				result = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 			}
 			task.done(result);
 			updateTask();
@@ -169,6 +169,16 @@ public class CloneJob extends Job {
 
 	private void updateTask() {
 		getTaskService().updateTask(task);
+	}
+
+	private static JSchException getJSchException(Throwable e) {
+		if (e instanceof JSchException) {
+			return (JSchException) e;
+		}
+		if (e.getCause() != null) {
+			return getJSchException(e.getCause());
+		}
+		return null;
 	}
 
 }
