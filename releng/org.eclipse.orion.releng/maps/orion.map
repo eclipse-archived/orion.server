@@ -33,10 +33,10 @@ plugin@org.eclipse.orion.doc.isv=GIT,tag=v20110124-1700,repo=dev.eclipse.org:/gi
 plugin@org.eclipse.e4.languages.javascript.framework=CVS,tag=v20101028-1345,cvsRoot=:pserver:anonymous@dev.eclipse.org:/cvsroot/eclipse,path=e4/org.eclipse.e4.languages/bundles/org.eclipse.e4.languages.javascript.framework
 plugin@org.eclipse.e4.languages.javascript.junit=CVS,tag=v20101028-1345,cvsRoot=:pserver:anonymous@dev.eclipse.org:/cvsroot/eclipse,path=e4/org.eclipse.e4.languages/bundles/org.eclipse.e4.languages.javascript.junit
 
-plugin@org.dojotoolkit,1.5.0=p2IU,id=org.dojotoolkit,version=1.5.0.v201101262320,repository=http://download.eclipse.org/tools/orbit/downloads/drops/S20110304120314/repository
+plugin@org.dojotoolkit,1.5.0=p2IU,id=org.dojotoolkit,version=1.5.0.v201104191148,repository=http://download.eclipse.org/tools/orbit/downloads/drops/S20110422041657/repository
 
 plugin@org.openajax=GET,http://git.eclipse.org/c/e4/org.eclipse.orion.server.git/plain/dependencies/org.openajax_2.0.3.v20101208-1555.jar,unpack=true
-plugin@org.openid4java,0.9.5=p2IU,id=org.openid4java,version=0.9.5.v20110120926,repository=http://download.eclipse.org/tools/orbit/downloads/drops/S20110304120314/repository
+plugin@org.openid4java,0.9.5=p2IU,id=org.openid4java,version=0.9.5.v20110120926,repository=http://download.eclipse.org/tools/orbit/downloads/drops/S20110422041657/repository
 
 #tests
 plugin@org.eclipse.orion.server.tests=GIT,tag=v20110419-0950,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=tests/org.eclipse.orion.server.tests
