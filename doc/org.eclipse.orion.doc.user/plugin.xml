@@ -15,17 +15,16 @@
 <!-- ============================================================================= -->
 
    <extension point="org.eclipse.help.toc">
-       <toc file="topics_Guide.xml" />
+       <toc file="topics_GettingStarted.xml" />
+   </extension>
+   <extension point="org.eclipse.help.toc">
+       <toc file="topics_Concepts.xml" />
+   </extension>
+   <extension point="org.eclipse.help.toc">
+       <toc file="topics_Tasks.xml" />
    </extension>
    <extension point="org.eclipse.help.toc">
        <toc file="topics_Reference.xml" />
    </extension>
    
-   <extension
-         point="org.eclipse.equinox.http.registry.resources">
-      <resource
-            alias="/jsdoc"
-            base-name="/jsdoc">
-      </resource>
-   </extension>
 </plugin>

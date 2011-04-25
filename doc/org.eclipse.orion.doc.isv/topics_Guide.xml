@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?NLS TYPE="org.eclipse.help.toc"?>
+<!-- ========================== -->
+<!-- Define topics for the Programmer's Guide -->
+<!-- ========================== -->
+<toc label="Programmer's Guide">
+   <topic label="Orion architecture" href="guide/architecture.html">
+   </topic>
+</toc>

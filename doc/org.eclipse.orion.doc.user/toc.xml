@@ -4,9 +4,15 @@
 <!-- Define the top level topics                                                   -->
 <!-- ============================================================================= -->
 
-<toc label="Orion Developer Guide">
-	<topic label="Programmer's Guide">
-		<link toc="topics_Guide.xml" />
+<toc label="Orion User's Guide">
+	<topic label="Getting started">
+		<link toc="topics_GettingStarted.xml" />
+	</topic>
+	<topic label="Concepts">
+		<link toc="topics_Concepts.xml" />
+	</topic>
+	<topic label="Tasks">
+		<link toc="topics_Tasks.xml" />
 	</topic>
 	<topic label="Reference">
 		<link toc="topics_Reference.xml" />
