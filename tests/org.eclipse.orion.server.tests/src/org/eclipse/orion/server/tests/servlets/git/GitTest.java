@@ -15,13 +15,23 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
+import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -74,6 +84,49 @@ public abstract class GitTest extends FileSystemTest {
 	@BeforeClass
 	public static void setupWorkspace() {
 		initializeWorkspaceLocation();
+	}
+
+	protected static String sshRepo;
+	protected static String sshRepo2;
+	protected static char[] password;
+	protected static String knownHosts;
+	protected static byte[] privateKey;
+	protected static byte[] publicKey;
+	protected static byte[] passphrase;
+
+	protected static void readSshProperties() {
+		String propertiesFile = System.getProperty("orion.tests.ssh");
+		// if (propertiesFile == null) return;
+		Map<String, String> properties = new HashMap<String, String>();
+		try {
+			File file = new File(propertiesFile);
+			if (file.isDirectory())
+				file = new File(file, "sshtest.properties");
+			BufferedReader reader = new BufferedReader(new FileReader(file));
+			try {
+				for (String line; (line = reader.readLine()) != null;) {
+					if (line.startsWith("#"))
+						continue;
+					int sep = line.indexOf("=");
+					String property = line.substring(0, sep).trim();
+					String value = line.substring(sep + 1).trim();
+					properties.put(property, value);
+				}
+			} finally {
+				reader.close();
+			}
+			// initialize constants
+			sshRepo = properties.get("host");
+			sshRepo2 = properties.get("host2");
+			password = properties.get("password").toCharArray();
+			knownHosts = properties.get("knownHosts");
+			privateKey = loadFileContents(properties.get("privateKeyPath")).getBytes();
+			publicKey = loadFileContents(properties.get("publicKeyPath")).getBytes();
+			passphrase = properties.get("passphrase").getBytes();
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.err.println("Could not read ssh properties file: " + propertiesFile);
+		}
 	}
 
 	@Before
@@ -335,6 +388,71 @@ public abstract class GitTest extends FileSystemTest {
 		return ServerStatus.fromJSON(new JSONObject(response.getText()).optJSONObject("Result"/*TaskInfo.KEY_RESULT*/).toString());
 	}
 
+	protected ServerStatus push(String gitRemoteUri, int size, int i, String name, String srcRef, boolean tags, String userName, String kh, byte[] privk, byte[] pubk, byte[] p, boolean shouldBeOK) throws IOException, SAXException, JSONException {
+		assertRemoteUri(gitRemoteUri);
+		String remoteBranchLocation = getRemoteBranch(gitRemoteUri, size, i, name).getString(ProtocolConstants.KEY_LOCATION);
+		WebRequest request = GitPushTest.getPostGitRemoteRequest(remoteBranchLocation, srcRef, tags, userName, kh, privk, pubk, p);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		assertNotNull(taskLocation);
+		String location = waitForTaskCompletion(taskLocation);
+
+		if (shouldBeOK) {
+			request = new GetMethodWebRequest(location);
+			response = webConversation.getResponse(request);
+			JSONObject status = new JSONObject(response.getText());
+
+			assertFalse(status.getBoolean("Running"));
+			assertEquals(HttpURLConnection.HTTP_OK, status.getJSONObject("Result").getInt("HttpCode"));
+		}
+
+		// get task details again
+		request = new GetMethodWebRequest(taskLocation);
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		return ServerStatus.fromJSON(new JSONObject(response.getText()).optJSONObject("Result"/*TaskInfo.KEY_RESULT*/).toString());
+	}
+
+	/**
+	 * Fetch objects and refs from the given remote branch. 
+	 * 
+	 * @param remoteBranchLocation remote branch URI
+	 * @return JSONObject representing remote branch after the fetch is done
+	 * @throws JSONException
+	 * @throws IOException
+	 * @throws SAXException
+	 */
+	protected JSONObject fetch(String remoteBranchLocation, String userName, String kh, byte[] privk, byte[] pubk, byte[] p, boolean shouldBeOK) throws JSONException, IOException, SAXException {
+		assertRemoteBranchLocation(remoteBranchLocation);
+
+		// fetch
+		WebRequest request = GitFetchTest.getPostGitRemoteRequest(remoteBranchLocation, true, userName, kh, privk, pubk, p);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		assertNotNull(taskLocation);
+		String location = waitForTaskCompletion(taskLocation);
+
+		if (shouldBeOK) {
+			request = new GetMethodWebRequest(location);
+			response = webConversation.getResponse(request);
+			JSONObject status = new JSONObject(response.getText());
+
+			assertFalse(status.getBoolean("Running"));
+			assertEquals(HttpURLConnection.HTTP_OK, status.getJSONObject("Result").getInt("HttpCode"));
+		}
+
+		// get remote branch details again
+		request = GitRemoteTest.getGetGitRemoteRequest(remoteBranchLocation);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		return new JSONObject(response.getText());
+	}
+
 	/**
 	 * Fetch objects and refs from the given remote branch. 
 	 * 
@@ -582,5 +700,66 @@ public abstract class GitTest extends FileSystemTest {
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
+	}
+
+	private WebRequest getPostGitCloneRequest(String uri, String name, String kh, byte[] privk, byte[] pubk, byte[] p) throws JSONException, UnsupportedEncodingException {
+		String requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.CLONE_RESOURCE + '/';
+		JSONObject body = new JSONObject();
+		body.put(GitConstants.KEY_URL, uri);
+		body.put(ProtocolConstants.KEY_NAME, name);
+		if (kh != null)
+			body.put(GitConstants.KEY_KNOWN_HOSTS, kh);
+		if (privk != null)
+			body.put(GitConstants.KEY_PRIVATE_KEY, new String(privk));
+		if (pubk != null)
+			body.put(GitConstants.KEY_PUBLIC_KEY, new String(pubk));
+		if (p != null)
+			body.put(GitConstants.KEY_PASSPHRASE, new String(p));
+		WebRequest request = new PostMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "UTF-8");
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		return request;
+	}
+
+	protected String clone(URIish uri, String name, String kh, byte[] privk, byte[] pubk, byte[] p) throws JSONException, IOException, SAXException {
+		WebRequest request = getPostGitCloneRequest(uri.toString(), name, kh, privk, pubk, p);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		assertNotNull(taskLocation);
+		String cloneLocation = waitForTaskCompletion(taskLocation);
+
+		// validate the clone metadata
+		response = webConversation.getResponse(getGetGitCloneRequest(cloneLocation));
+		JSONObject clone = new JSONObject(response.getText());
+		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		assertNotNull(contentLocation);
+		return contentLocation;
+	}
+
+	// Utility methods
+
+	protected static String loadFileContents(String path) throws IOException {
+		File file = new File(path);
+		InputStream is = new FileInputStream(file);
+		return toString(is);
+	}
+
+	private static String toString(InputStream is) throws IOException {
+		if (is != null) {
+			Writer writer = new StringWriter();
+			char[] buffer = new char[1024];
+			try {
+				Reader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+				int n;
+				while ((n = reader.read(buffer)) != -1) {
+					writer.write(buffer, 0, n);
+				}
+			} finally {
+				is.close();
+			}
+			return writer.toString();
+		}
+		return "";
 	}
 }

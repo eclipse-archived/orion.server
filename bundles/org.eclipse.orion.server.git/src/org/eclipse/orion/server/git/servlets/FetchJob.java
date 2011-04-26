@@ -71,7 +71,7 @@ public class FetchJob extends Job {
 		((GitCredentialsProvider) credentials).setUri(remoteConfig.getURIs().get(0));
 
 		cc.setCredentialsProvider(credentials);
-		cc.setRemote(remote).call();
+		cc.setRemote(remote);
 
 		cc.call();
 	}

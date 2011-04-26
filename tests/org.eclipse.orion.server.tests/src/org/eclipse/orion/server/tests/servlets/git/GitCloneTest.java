@@ -16,26 +16,16 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
-import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
@@ -293,47 +283,9 @@ public class GitCloneTest extends GitTest {
 		preferences.remove(Activator.PROP_FILE_LAYOUT);
 	}
 
-	private static String sshRepo;
-	private static String sshRepo2;
-	private static char[] password;
-	private static String knownHosts;
-	private static byte[] privateKey;
-	private static byte[] publicKey;
-	private static byte[] passphrase;
-
 	@BeforeClass
-	public static void readSshProperties() {
-		String propertiesFile = System.getProperty("orion.tests.ssh");
-		// if (propertiesFile == null) return;
-		Map<String, String> properties = new HashMap<String, String>();
-		try {
-			File file = new File(propertiesFile);
-			if (file.isDirectory())
-				file = new File(file, "sshtest.properties");
-			BufferedReader reader = new BufferedReader(new FileReader(file));
-			try {
-				for (String line; (line = reader.readLine()) != null;) {
-					if (line.startsWith("#"))
-						continue;
-					int sep = line.indexOf("=");
-					String property = line.substring(0, sep).trim();
-					String value = line.substring(sep + 1).trim();
-					properties.put(property, value);
-				}
-			} finally {
-				reader.close();
-			}
-			// initialize constants
-			sshRepo = properties.get("host");
-			sshRepo2 = properties.get("host2");
-			password = properties.get("password").toCharArray();
-			knownHosts = properties.get("knownHosts");
-			privateKey = loadFileContents(properties.get("privateKeyPath")).getBytes();
-			publicKey = loadFileContents(properties.get("publicKeyPath")).getBytes();
-			passphrase = properties.get("passphrase").getBytes();
-		} catch (Exception e) {
-			System.err.println("Could not read ssh properties file: " + propertiesFile);
-		}
+	public static void prepareSsh() {
+		readSshProperties();
 	}
 
 	@Test
@@ -483,25 +435,6 @@ public class GitCloneTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 	}
 
-	private WebRequest getPostGitCloneRequest(String uri, String name, String kh, byte[] privk, byte[] pubk, byte[] p) throws JSONException, UnsupportedEncodingException {
-		String requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.CLONE_RESOURCE + '/';
-		JSONObject body = new JSONObject();
-		body.put(GitConstants.KEY_URL, uri);
-		body.put(ProtocolConstants.KEY_NAME, name);
-		if (kh != null)
-			body.put(GitConstants.KEY_KNOWN_HOSTS, kh);
-		if (privk != null)
-			body.put(GitConstants.KEY_PRIVATE_KEY, new String(privk));
-		if (pubk != null)
-			body.put(GitConstants.KEY_PUBLIC_KEY, new String(pubk));
-		if (p != null)
-			body.put(GitConstants.KEY_PASSPHRASE, new String(p));
-		WebRequest request = new PostMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "UTF-8");
-		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		setAuthentication(request);
-		return request;
-	}
-
 	private WebRequest listGitClonesRequest() {
 		String requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.CLONE_RESOURCE + '/';
 		WebRequest request = new GetMethodWebRequest(requestURI);
@@ -516,52 +449,10 @@ public class GitCloneTest extends GitTest {
 		return getPostGitCloneRequest(uri, name, null, null);
 	}
 
-	private String clone(URIish uri, String name, String kh, byte[] privk, byte[] pubk, byte[] p) throws JSONException, IOException, SAXException {
-		WebRequest request = getPostGitCloneRequest(uri.toString(), name, kh, privk, pubk, p);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(taskLocation);
-		String cloneLocation = waitForTaskCompletion(taskLocation);
-
-		// validate the clone metadata
-		response = webConversation.getResponse(getGetGitCloneRequest(cloneLocation));
-		JSONObject clone = new JSONObject(response.getText());
-		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		assertNotNull(contentLocation);
-		return contentLocation;
-	}
-
 	private void ensureCloneIdDoesntExist(JSONArray clonesArray, String id) throws JSONException {
 		for (int i = 0; i < clonesArray.length(); i++) {
 			JSONObject clone = clonesArray.getJSONObject(i);
 			assertFalse(id.equals(clone.get(ProtocolConstants.KEY_ID)));
 		}
-	}
-
-	// Utility methods
-
-	private static String loadFileContents(String path) throws IOException {
-		File file = new File(path);
-		InputStream is = new FileInputStream(file);
-		return toString(is);
-	}
-
-	private static String toString(InputStream is) throws IOException {
-		if (is != null) {
-			Writer writer = new StringWriter();
-			char[] buffer = new char[1024];
-			try {
-				Reader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-				int n;
-				while ((n = reader.read(buffer)) != -1) {
-					writer.write(buffer, 0, n);
-				}
-			} finally {
-				is.close();
-			}
-			return writer.toString();
-		}
-		return "";
 	}
 }
