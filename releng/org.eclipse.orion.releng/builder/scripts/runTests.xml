@@ -184,7 +184,7 @@
 			<fileset dir="${workingDir}/results" includes="**/TEST-*.xml" />
 		</junitreport>
 		<copy todir="${env.WORKSPACE}" >
-			<filset dir="${workingDir}/results" includes="TEST-*.Performance.xml"/>
+			<fileset dir="${workingDir}/results" includes="TEST-*.Performance.xml"/>
 			<globmapper from="TEST-Microsoft_Internet_Explorer_90_Windows*" to="TEST-IE-9.0*" />
 		</copy>
 		<xslt style="${basedir}/../html/JUNIT.XSL" basedir="${env.WORKSPACE}" destdir="${env.WORKSPACE}" includes="IE-9.0-testResults.xml" />
