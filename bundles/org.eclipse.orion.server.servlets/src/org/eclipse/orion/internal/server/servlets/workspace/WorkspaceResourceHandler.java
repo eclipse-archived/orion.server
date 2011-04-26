@@ -350,16 +350,15 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		}
 
 		String prefixes = System.getProperty("org.eclipse.orion.server.core.allowedPathPrefixes"); //$NON-NLS-1$
-		if (prefixes == null) {
+		if (prefixes == null)
 			prefixes = ServletTestingSupport.allowedPrefixes;
-			if (prefixes == null)
-				return false;
-		}
-		StringTokenizer t = new StringTokenizer(prefixes, ","); //$NON-NLS-1$
-		while (t.hasMoreTokens()) {
-			String prefix = t.nextToken();
-			if (content.startsWith(prefix)) {
-				return true;
+		if (prefixes != null) {
+			StringTokenizer t = new StringTokenizer(prefixes, ","); //$NON-NLS-1$
+			while (t.hasMoreTokens()) {
+				String prefix = t.nextToken();
+				if (content.startsWith(prefix)) {
+					return true;
+				}
 			}
 		}
 
