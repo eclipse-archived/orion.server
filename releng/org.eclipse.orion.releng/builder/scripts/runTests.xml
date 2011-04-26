@@ -149,7 +149,8 @@
 			<http url="${hudsonResultURL}" />
 		</waitfor>
 
-		<get ignoreerrors="true" src="${hudsonResultURL}" dest="${hudsonDownloadedHTML}"/>			
+		<get ignoreerrors="true" src="${hudsonResultURL}" dest="${hudsonDownloadedHTML}"/>	
+		<get ignoreerrors="true" src="${hudsonResultRootURL}/TEST-IE-9.0.Performance.xml" dest="${jsTestDir}/TEST-IE-9.0.Performance.xml" />
 	</target>
 	
 	<target name="hudsonJsTests" >
