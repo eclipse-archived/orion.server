@@ -135,7 +135,8 @@
 			<arg value="json=${json}" />
 		</exec>
 		
-		<property name="hudsonResultURL" value="https://hudson.eclipse.org/hudson/job/orion-jstest-windows/${nextHudsonBuild}/artifact/IE-9.0-testResults.html" />
+		<property name="hudsonResultRootURL" value="https://hudson.eclipse.org/hudson/job/orion-jstest-windows/${nextHudsonBuild}/artifact" />
+		<property name="hudsonResultURL" value="${hudsonResultRootURL}/IE-9.0-testResults.html" />
 		<property name="hudsonDownloadedHTML" value="${buildDirectory}/${buildLabel}/drop/IE-9.0-testResults.html"/>
 		<delete file="${hudsonDownloadedHTML}" failonerror="false"/>
 		<antcall target="getHudsonResults" />	
@@ -182,7 +183,7 @@
 		<junitreport todir="${env.WORKSPACE}" tofile="IE-9.0-testResults.xml">
 			<fileset dir="${workingDir}/results" includes="**/TEST-*.xml" />
 		</junitreport>
-		
+		<copy file="${workngDir}/results/TEST-*.Performance.xml" todir="${env.WORKSPACE}" />
 		<xslt style="${basedir}/../html/JUNIT.XSL" basedir="${env.WORKSPACE}" destdir="${env.WORKSPACE}" includes="IE-9.0-testResults.xml" />
 		
 		<delete dir="${workingDir}" />
