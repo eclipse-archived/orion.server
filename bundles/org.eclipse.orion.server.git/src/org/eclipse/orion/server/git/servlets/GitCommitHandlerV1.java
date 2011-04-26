@@ -44,6 +44,8 @@ import org.json.*;
  */
 public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 
+	private final static int PAGE_SIZE = 50;
+
 	private ServletResourceHandler<IStatus> statusHandler;
 
 	GitCommitHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
@@ -140,6 +142,8 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 	private boolean handleGetCommitLog(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws AmbiguousObjectException, IOException, ServletException, JSONException, URISyntaxException {
 		String refIdsRange = path.segment(0);
 
+		int page = request.getParameter("page") != null ? new Integer(request.getParameter("page")).intValue() : 0;
+
 		ObjectId toRefId = null;
 		ObjectId fromRefId = null;
 
@@ -181,7 +185,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		if (p != null && !"".equals(p)) //$NON-NLS-1$
 			walk.setTreeFilter(AndTreeFilter.create(PathFilterGroup.createFromStrings(Collections.singleton(p)), TreeFilter.ANY_DIFF));
 
-		JSONObject result = toJSON(db, OrionServlet.getURI(request), walk);
+		JSONObject result = toJSON(db, OrionServlet.getURI(request), walk, page);
 		result.put(GitConstants.KEY_REMOTE, getRemoteBranchLocation(getURI(request), db));
 		OrionServlet.writeJSONResponse(request, response, result);
 		walk.dispose();
@@ -209,10 +213,24 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		return new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), p.toString(), u.getQuery(), u.getFragment());
 	}
 
-	private JSONObject toJSON(Repository db, URI baseLocation, Iterable<RevCommit> commits) throws JSONException, URISyntaxException, MissingObjectException, IOException {
+	private JSONObject toJSON(Repository db, URI baseLocation, Iterable<RevCommit> commits, int page) throws JSONException, URISyntaxException, MissingObjectException, IOException {
+		boolean pageable = (page > 0);
+		int startIndex = (page - 1) * PAGE_SIZE;
+		int index = 0;
+
 		JSONObject result = new JSONObject();
 		JSONArray children = new JSONArray();
 		for (RevCommit revCommit : commits) {
+			if (pageable && index < startIndex) {
+				index++;
+				continue;
+			}
+
+			if (pageable && index >= startIndex + PAGE_SIZE)
+				break;
+
+			index++;
+
 			children.put(toJSON(db, revCommit, baseLocation));
 		}
 		result.put(ProtocolConstants.KEY_CHILDREN, children);
