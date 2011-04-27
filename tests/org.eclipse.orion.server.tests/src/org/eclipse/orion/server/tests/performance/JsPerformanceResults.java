@@ -38,7 +38,7 @@ public class JsPerformanceResults extends TestCase {
 
 	public static Test suite() {
 		String results = System.getProperty("jsPerformanceResults");
-		assertNotNull(results);
+		assertNotNull("\"jsPerformanceResults\" system property must be defined", results);
 
 		File resultsFile = new File(results);
 		assertTrue(resultsFile.isFile());
