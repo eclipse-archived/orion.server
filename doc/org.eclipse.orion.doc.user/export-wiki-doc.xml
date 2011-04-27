@@ -18,23 +18,20 @@
 	<property name="mylyn.help.doc.url.base" value="http://wiki.eclipse.org"/>
 	<property name="mylyn.wiki.url.base" value="${mylyn.help.doc.url.base}/Orion"/>
 	<property name="imageFolder" value="images"/>
-	
+
+	<property name="wikitext.standalone" value="C:\temp\mylyn-wikitext-standalone-3.5.0.I20110104-0100"/><!-- path to wikitext standalone package -->
+
+	<path id="wikitext.classpath">
+		<fileset dir="${wikitext.standalone}">
+			<include name="org.eclipse.mylyn.wikitext.*core*.jar"/>
+		</fileset>
+	</path>
+
+	<taskdef classpathref="wikitext.classpath" resource="org/eclipse/mylyn/wikitext/core/util/anttask/tasks.properties" />	
+	<taskdef classpathref="wikitext.classpath" resource="org/eclipse/mylyn/internal/wikitext/mediawiki/core/tasks/tasks.properties"/>	
 	<path id="wikitext.tasks.classpath">
 		<pathelement path="${wikitext.tasks.classpath.path}"/>
 	</path>
-	<!--
-	<path id="wikitext.tasks.classpath">
-		<pathelement location="../org.eclipse.mylyn.wikitext.core/@dot"/>
-		<pathelement location="../org.eclipse.mylyn.wikitext.core/bin"/>
-		<pathelement location="../org.eclipse.mylyn.wikitext.core/bin_ant"/>
-		<pathelement location="../org.eclipse.mylyn.wikitext.mediawiki.core/@dot"/>
-		<pathelement location="../org.eclipse.mylyn.wikitext.mediawiki.core/bin"/>
-		<pathelement location="../org.eclipse.mylyn.wikitext.mediawiki.core/bin_ant"/>
-	</path>
-	-->
-
-	<taskdef classpathref="wikitext.tasks.classpath" resource="org/eclipse/mylyn/internal/wikitext/mediawiki/core/tasks/tasks.properties"/>
-	<taskdef classpathref="wikitext.tasks.classpath" resource="org/eclipse/mylyn/wikitext/core/util/anttask/tasks.properties"/>
 	
 	<target name="init">
 		<mkdir dir="tmp"/>
@@ -58,11 +55,11 @@
     		dest="${basedir}"
     		title="Orion"
     		generateUnifiedToc="false">
-    		<path name="Orion/Getting_Started_with_Orion" title="Getting started with Orion" generateToc="true"/>
+    		<path name="Orion/Getting_Started_with_Orion" title="Getting started" generateToc="true"/>
 			<stylesheet url="book.css"/>
     		<pageAppendum>
 
-= Updating This Document =
+= Updating this document =
 
 This document is maintained in a collaborative wiki.  If you wish to update or modify this document please visit 
 {url}</pageAppendum>

@@ -4,6 +4,5 @@
 <!-- Define topics for the GettingStarted -->
 <!-- ========================== -->
 <toc label="GettingStarted">
-   <topic label="Basic tutorial" href="gettingStarted/tutorial-01.html">
-   </topic>
+	<link toc="Orion-Getting-Started-with-Orion-toc.xml" />
 </toc>
