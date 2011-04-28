@@ -152,7 +152,8 @@ public class JUnitResults {
 		NodeList nodes = element.getChildNodes();
 		for (int i = 0; i < nodes.getLength(); i++) {
 			Node suite = nodes.item(i);
-
+			if (suite.getNodeType() != Node.ELEMENT_NODE)
+				continue;
 			String suiteName = getAttribute(suite, "name");
 			String suitePackage = getAttribute(suite, "package");
 			int errors = Integer.valueOf(getAttribute(suite, "errors"));
@@ -163,7 +164,7 @@ public class JUnitResults {
 			JUnitTestSuite newSuite = new JUnitTestSuite(suiteName, suitePackage, errors, failures, tests, time);
 			suites.add(newSuite);
 
-			NodeList children = element.getChildNodes();
+			NodeList children = suite.getChildNodes();
 			for (int j = 0; j < children.getLength(); j++) {
 				Node child = children.item(j);
 				if (child.getNodeType() != Node.ELEMENT_NODE)

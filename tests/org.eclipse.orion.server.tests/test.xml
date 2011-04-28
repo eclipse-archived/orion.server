@@ -60,7 +60,7 @@
 
 	<!-- This target runs the performance test suites. -->
 	<target name="performance">
-		<property name="jsPerformanceResults" value="" />
+		<property name="performanceVMArgs" value="" />
 		<property name="server-perf-folder" value="${eclipse-home}/server-perf-folder" />
 		<delete dir="${server-perf-folder}" quiet="true" />
 		<ant target="core-test" antfile="${library-file}" dir="${eclipse-home}">
@@ -72,7 +72,7 @@
 												-Dorg.eclipse.equinox.http.jetty.http.port=8080
 												-Dorg.eclipse.equinox.http.jetty.autostart=false
 												-Dorion.tests.authtype=Basic
-												-DjsPerformanceResults=${jsPerformanceResults}" />
+												${performanceVMArgs}" />
 		</ant>
 	</target>
 

@@ -23,8 +23,7 @@
 			<antcall target="jsTests" />
 		</parallel>
 		
-		<!-- <antcall target="performanceTests" /> -->
-		
+		<antcall target="performanceTests" />
 		<antcall target="processResults" />
 	</target>
 
@@ -105,7 +104,9 @@
 			<property name="os" value="${osgi.os}" />
 			<property name="ws" value="${osgi.ws}" />
 			<property name="arch" value="${osgi.arch}" />
-			<property name="jsPerformanceResults" value="${dropLocation}/Performance-testResults.xml" />
+			<property name="performanceVMArgs" value="-DjsPerformanceResults=${dropLocation}/Performance-testResults.xml 
+													  -Declipse.perf.dbloc=${base}/tests/derby
+													  -Declipse.perf.config=build=0.2M7" /> <!-- for now average some results together to establish a baseline -->
 		</subant>
 	</target>
 	
@@ -328,6 +329,9 @@
 		<junitreport todir="${dropLocation}" tofile="Firefox-4.0-testResults.xml">
 			<fileset dir="${jsTestDir}" includes="**/TEST-Firefox_40*.xml" />
 		</junitreport>
+		<junitreport todir="${dropLocation}" tofile="Performance-testResults.xml">
+			<fileset dir="${jsTestDir}" includes="**/TEST-*.Performance.xml" />
+		</junitreport>
 		
 		<xslt style="${builder}/html/JUNIT.XSL" basedir="${dropLocation}" destdir="${dropLocation}" includes="*.xml" />
 		<delete>
@@ -344,6 +348,7 @@
 		<updateTestResult testFile="Firefox-3.6-testResults.html" token="@JS-FIREFOX36@"/>
 		<updateTestResult testFile="Firefox-4.0-testResults.html" token="@JS-FIREFOX40@"/>
 		<updateTestResult testFile="IE-9.0-testResults.html" token="@JS-IE9@"/>
+		<updateTestResult testFile="Performance-testResults.html" token="@PERFORMANCE@"/>
 		<updateTestResult testFile="org.eclipse.orion.server.tests.AllServerTests.html" token="@SERVER-TESTS@"/>
 	</target>
 </project>
