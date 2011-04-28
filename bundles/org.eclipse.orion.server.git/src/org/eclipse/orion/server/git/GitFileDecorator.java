@@ -14,7 +14,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
 import java.util.Map.Entry;
 import javax.servlet.http.HttpServletRequest;
 import org.eclipse.core.runtime.*;
@@ -128,24 +127,16 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		File gitDir = GitUtils.getGitDir(targetPath);
 		Repository db = new FileRepository(gitDir);
 
-		List<Ref> refs = new ArrayList<Ref>();
 		for (Entry<String, Ref> refEntry : db.getRefDatabase().getRefs(Constants.R_REMOTES).entrySet()) {
 			if (!refEntry.getValue().isSymbolic()) {
 				Ref ref = refEntry.getValue();
-				String name = ref.getName();
-				name = Repository.shortenRefName(name).substring(Constants.DEFAULT_REMOTE_NAME.length() + 1);
-				if (db.getBranch().equals(name)) {
-					refs.add(0, ref);
-				} else {
-					refs.add(ref);
+				String shortName = Repository.shortenRefName(ref.getName());
+				if (db.getBranch().equals(shortName.substring(Constants.DEFAULT_REMOTE_NAME.length() + 1))) {
+					link = new URI(location.getScheme(), location.getAuthority(), GitRemoteHandlerV1.baseToRemoteLocation(link, 2, shortName).getPath(), null, null);
+					gitSection.put(GitConstants.KEY_DEFAULT_REMOTE_BRANCH, link);
+					break;
 				}
 			}
-		}
-
-		if (refs.size() > 0) {
-			String name = refs.get(0).getName();
-			link = new URI(location.getScheme(), location.getAuthority(), GitRemoteHandlerV1.baseToRemoteLocation(link, 2, Repository.shortenRefName(name)).getPath(), null, null);
-			gitSection.put("DefaultRemoteBranchLocation", link);
 		}
 
 		// add Git Tag URI
