@@ -14,21 +14,21 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.*;
+import java.util.Map.Entry;
 import javax.servlet.http.HttpServletRequest;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.git.servlets.GitServlet;
-import org.eclipse.orion.server.git.servlets.GitUtils;
+import org.eclipse.orion.server.git.servlets.*;
 import org.json.*;
 
 /**
@@ -95,7 +95,7 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		}
 	}
 
-	private void addGitLinks(URI location, JSONObject representation) throws URISyntaxException, JSONException {
+	private void addGitLinks(URI location, JSONObject representation) throws URISyntaxException, JSONException, CoreException, IOException {
 		JSONObject gitSection = new JSONObject();
 		IPath targetPath = new Path(location.getPath());
 
@@ -123,6 +123,30 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.REMOTE_RESOURCE).append(targetPath);
 		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_REMOTE, link.toString());
+
+		// add Git Default Remote Branch URI
+		File gitDir = GitUtils.getGitDir(targetPath);
+		Repository db = new FileRepository(gitDir);
+
+		List<Ref> refs = new ArrayList<Ref>();
+		for (Entry<String, Ref> refEntry : db.getRefDatabase().getRefs(Constants.R_REMOTES).entrySet()) {
+			if (!refEntry.getValue().isSymbolic()) {
+				Ref ref = refEntry.getValue();
+				String name = ref.getName();
+				name = Repository.shortenRefName(name).substring(Constants.DEFAULT_REMOTE_NAME.length() + 1);
+				if (db.getBranch().equals(name)) {
+					refs.add(0, ref);
+				} else {
+					refs.add(ref);
+				}
+			}
+		}
+
+		if (refs.size() > 0) {
+			String name = refs.get(0).getName();
+			link = new URI(location.getScheme(), location.getAuthority(), GitRemoteHandlerV1.baseToRemoteLocation(link, 2, Repository.shortenRefName(name)).getPath(), null, null);
+			gitSection.put("DefaultRemoteBranchLocation", link);
+		}
 
 		// add Git Tag URI
 		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.TAG_RESOURCE).append(targetPath);

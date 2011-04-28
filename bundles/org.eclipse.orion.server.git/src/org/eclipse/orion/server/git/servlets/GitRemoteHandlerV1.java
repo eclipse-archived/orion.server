@@ -226,7 +226,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		return new URI(baseLocation.getScheme(), baseLocation.getAuthority(), "/task/id/" + taskId, null, null);
 	}
 
-	private URI baseToRemoteLocation(URI u, int count, String remoteName) throws URISyntaxException {
+	public static URI baseToRemoteLocation(URI u, int count, String remoteName) throws URISyntaxException {
 		// URIUtil.append(baseLocation, configName)
 		IPath p = new Path(u.getPath());
 		p = p.uptoSegment(2).append(remoteName).addTrailingSeparator().append(p.removeFirstSegments(count));
