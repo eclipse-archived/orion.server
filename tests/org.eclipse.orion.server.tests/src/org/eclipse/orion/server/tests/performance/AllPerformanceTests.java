@@ -11,12 +11,11 @@
 
 package org.eclipse.orion.server.tests.performance;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.junit.runners.Suite.SuiteClasses;
+import junit.framework.Test;
 
-@RunWith(Suite.class)
-@SuiteClasses({JsPerformanceResults.class})
 public class AllPerformanceTests {
-	//goofy junit4, no class body needed
+
+	public static Test suite() {
+		return JsPerformanceResults.suite();
+	}
 }
