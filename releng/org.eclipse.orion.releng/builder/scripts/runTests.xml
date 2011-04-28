@@ -55,6 +55,7 @@
 		<p2.composite.repository destination="file:${buildDirectory}/test/composite">
 			<add location="${orionRepo}" />
 			<add location="${eclipsePlatformRepo}"/>
+			<add location="${orbitRepo}" />
 		</p2.composite.repository>
 		
 		<!-- install server + tests feature -->
@@ -68,6 +69,7 @@
 			<iu id="org.eclipse.orion.server.tests.feature.feature.group" />
 			<iu id="org.eclipse.test" />
 			<iu id="org.eclipse.ant.optional.junit" />
+			<iu id="org.apache.derby" />
 		</p2.director>
 	</target>
 	
