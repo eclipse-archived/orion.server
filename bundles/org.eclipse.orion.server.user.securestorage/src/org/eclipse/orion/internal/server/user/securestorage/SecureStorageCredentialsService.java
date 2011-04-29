@@ -70,15 +70,15 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 		String adminDefaultPassword = System.getProperty(Activator.ORION_STORAGE_ADMIN_DEFAULT_PASSWORD, null);
 		if (adminDefaultPassword != null && getUser(USER_LOGIN, ADMIN_LOGIN_VALUE) == null) {
 			createUser(new User(ADMIN_LOGIN_VALUE, ADMIN_NAME_VALUE, adminDefaultPassword));
+		}
 
-			// TODO: see bug 335699, the user storage should not configure authorization rules
-			// it should add Admin role, which will be used during authorization process
-			try {
-				AuthorizationService.addUserRight(ADMIN_LOGIN_VALUE, UserServlet.USERS_URI);
-				AuthorizationService.addUserRight(ADMIN_LOGIN_VALUE, UserServlet.USERS_URI + "/*"); //$NON-NLS-1$
-			} catch (CoreException e) {
-				LogHelper.log(e);
-			}
+		// TODO: see bug 335699, the user storage should not configure authorization rules
+		// it should add Admin role, which will be used during authorization process
+		try {
+			AuthorizationService.addUserRight(ADMIN_LOGIN_VALUE, UserServlet.USERS_URI);
+			AuthorizationService.addUserRight(ADMIN_LOGIN_VALUE, UserServlet.USERS_URI + "/*"); //$NON-NLS-1$
+		} catch (CoreException e) {
+			LogHelper.log(e);
 		}
 		//add default roles
 		for (String role : new String[] {"admin", "user", "quest"}) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
