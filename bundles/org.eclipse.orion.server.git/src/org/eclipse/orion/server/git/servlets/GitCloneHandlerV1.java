@@ -19,8 +19,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.transport.URIish;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitConstants;
@@ -124,9 +123,12 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			List<WebClone> clones = WebClone.allClones();
 			JSONObject result = new JSONObject();
 			JSONArray children = new JSONArray();
+			String user = request.getRemoteUser();
 			for (WebClone clone : clones) {
-				JSONObject child = WebCloneResourceHandler.toJSON(clone, baseLocation);
-				children.put(child);
+				if (isAccessAllowed(user, clone)) {
+					JSONObject child = WebCloneResourceHandler.toJSON(clone, baseLocation);
+					children.put(child);
+				}
 			}
 			result.put(ProtocolConstants.KEY_CHILDREN, children);
 			OrionServlet.writeJSONResponse(request, response, result);
@@ -146,6 +148,24 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		//else the request is malformed
 		String msg = NLS.bind("Invalid clone request: {0}", path);
 		return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+	}
+
+	/**
+	 * Returns whether the user can access the given clone
+	 */
+	private boolean isAccessAllowed(String user, WebClone clone) {
+		URI contentURI = clone.getContentLocation();
+		//TODO Not sure if this is even possible
+		if (contentURI == null)
+			return true;
+		String userArea = System.getProperty(Activator.PROP_USER_AREA);
+		if (userArea == null)
+			return false;
+		//ensure the clone is in this user's user area
+		IPath path = new Path(userArea).append(user);
+		if (contentURI.toString().startsWith(path.toFile().toURI().toString()))
+			return true;
+		return false;
 	}
 
 	/**
