@@ -371,17 +371,20 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		URI contentURI = null;
 		//use the content location specified by the user
 		try {
-			contentURI = new URI(content);
-			EFS.getFileSystem(contentURI.getScheme());//check if we support this scheme
+			URI candidate = new URI(content);
+			//check if we support this scheme
+			String scheme = candidate.getScheme();
+			if (scheme != null && EFS.getFileSystem(scheme) != null)
+				contentURI = candidate;
 		} catch (URISyntaxException e) {
-			contentURI = new File(content).toURI(); //if this is not a valid URI try to parse it as file path
+			//if this is not a valid URI try to parse it as file path below
 		} catch (CoreException e) {
-			contentURI = new File(content).toURI();//if we don't support given scheme try to parse as location as a file path
+			//if we don't support given scheme try to parse as location as a file path below
 		}
-
+		if (contentURI == null)
+			contentURI = new File(content).toURI();
 		if (contentURI.toString().startsWith(path.toFile().toURI().toString()))
 			return true;
-
 		return false;
 	}
 
