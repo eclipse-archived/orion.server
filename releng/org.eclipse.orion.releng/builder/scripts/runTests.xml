@@ -108,7 +108,8 @@
 			<property name="arch" value="${osgi.arch}" />
 			<property name="performanceVMArgs" value="-DjsPerformanceResults=${dropLocation}/Performance-testResults.xml 
 													  -Declipse.perf.dbloc=${base}/tests/derby
-													  -Declipse.perf.config=build=0.2M7" /> <!-- for now average some results together to establish a baseline -->
+													  -Declipse.perf.config=build=${buildLabel}
+													  -Declipse.perf.assertAgainst=build=0.2M7" />
 		</subant>
 	</target>
 	
