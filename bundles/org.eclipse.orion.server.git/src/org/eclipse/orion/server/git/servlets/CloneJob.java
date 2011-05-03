@@ -82,7 +82,7 @@ public class CloneJob extends Job {
 			updateTask();
 			doConfigureClone(git);
 		} catch (IOException e) {
-			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error cloning git repository", e); //$NON-NLS-1$
+			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error cloning git repository", e);
 		} catch (CoreException e) {
 			return e.getStatus();
 		} catch (JGitInternalException e) {
@@ -90,11 +90,10 @@ public class CloneJob extends Job {
 			if (jschEx != null && jschEx instanceof HostFingerprintException) {
 				HostFingerprintException cause = (HostFingerprintException) jschEx;
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, cause.getMessage(), cause.formJson(), cause);
-			} else {
-				return new Status(IStatus.ERROR, GitActivator.PI_GIT, "An internal git error cloning git remote", e); //$NON-NLS-1$
 			}
+			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "An internal git error cloning git remote", e);
 		} catch (Exception e) {
-			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error cloning git repository", e); //$NON-NLS-1$
+			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error cloning git repository", e);
 		}
 		return Status.OK_STATUS;
 	}
@@ -130,8 +129,9 @@ public class CloneJob extends Job {
 
 	@Override
 	protected IStatus run(IProgressMonitor monitor) {
+		IStatus result = Status.OK_STATUS;
 		try {
-			IStatus result = doClone();
+			result = doClone();
 			// save the clone metadata
 			try {
 				if (result.isOK()) {
@@ -156,7 +156,8 @@ public class CloneJob extends Job {
 		} finally {
 			cleanUp();
 		}
-		return Status.OK_STATUS;
+		//return the actual result so errors are logged
+		return result;
 	}
 
 	private void cleanUp() {
