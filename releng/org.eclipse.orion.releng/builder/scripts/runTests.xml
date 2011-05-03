@@ -353,5 +353,6 @@
 		<updateTestResult testFile="IE-9.0-testResults.html" token="@JS-IE9@"/>
 		<updateTestResult testFile="Performance-testResults.html" token="@PERFORMANCE@"/>
 		<updateTestResult testFile="org.eclipse.orion.server.tests.AllServerTests.html" token="@SERVER-TESTS@"/>
+		<updateTestResult testFile="org.eclipse.orion.server.tests.performance.AllPerformanceTests.html" token="@JUNIT_PERF_BASELINE@"/>
 	</target>
 </project>
