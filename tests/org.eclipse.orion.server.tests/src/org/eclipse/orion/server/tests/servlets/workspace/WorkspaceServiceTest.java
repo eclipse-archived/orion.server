@@ -45,6 +45,24 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		return request;
 	}
 
+	protected WebRequest getCopyMoveProjectRequest(URI workspaceLocation, String projectName, String sourceLocation, boolean isMove) throws UnsupportedEncodingException {
+		JSONObject requestObject = new JSONObject();
+		try {
+			requestObject.put("Location", sourceLocation);
+		} catch (JSONException e) {
+			//should never happen
+			Assert.fail("Invalid source location: " + sourceLocation);
+		}
+		InputStream source = getJsonAsStream(requestObject.toString());
+		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), source, "application/json");
+		if (projectName != null)
+			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		request.setHeaderField(ProtocolConstants.HEADER_CREATE_OPTIONS, isMove ? "move" : "copy");
+		setAuthentication(request);
+		return request;
+	}
+
 	@BeforeClass
 	public static void setupWorkspace() {
 		initializeWorkspaceLocation();
@@ -116,6 +134,84 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		assertEquals("true", child.optString("Directory"));
 		String contentLocation = child.optString(ProtocolConstants.KEY_LOCATION);
 		assertNotNull(contentLocation);
+	}
+
+	@Test
+	public void testMoveBadRequest() throws IOException, SAXException, URISyntaxException {
+		//create workspace
+		String workspaceName = WorkspaceServiceTest.class.getName() + "#testMoveProject";
+		WebResponse response = createWorkspace(workspaceName);
+		URI workspaceLocation = new URI(response.getHeaderField(ProtocolConstants.HEADER_LOCATION));
+
+		//request a bogus move
+		String projectName = "My Project";
+		WebRequest request = getCopyMoveProjectRequest(workspaceLocation, projectName, "badsource", true);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
+
+	}
+
+	@Test
+	public void testMoveProject() throws IOException, SAXException, URISyntaxException, JSONException {
+		//create workspace
+		String workspaceName = WorkspaceServiceTest.class.getName() + "#testMoveProject";
+		WebResponse response = createWorkspace(workspaceName);
+		URI workspaceLocation = new URI(response.getHeaderField(ProtocolConstants.HEADER_LOCATION));
+
+		//create a project
+		String projectName = "Source Project";
+		WebRequest request = getCreateProjectRequest(workspaceLocation, projectName);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		String sourceLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+
+		// move the project
+		String destinationName = "Destination Project";
+		request = getCopyMoveProjectRequest(workspaceLocation, destinationName, sourceLocation, true);
+		response = webConversation.getResponse(request);
+		//since project already existed, we should get OK rather than CREATED
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		String destinationLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+
+		//assert the move (rename) took effect
+		assertEquals(sourceLocation, destinationLocation);
+		JSONObject resultObject = new JSONObject(response.getText());
+		assertEquals(destinationName, resultObject.getString("Name"));
+	}
+
+	@Test
+	public void testCopyProject() throws IOException, SAXException, URISyntaxException, JSONException {
+		//create workspace
+		String workspaceName = WorkspaceServiceTest.class.getName() + "#testMoveProject";
+		WebResponse response = createWorkspace(workspaceName);
+		URI workspaceLocation = new URI(response.getHeaderField(ProtocolConstants.HEADER_LOCATION));
+
+		//create a project
+		String projectName = "Source Project";
+		WebRequest request = getCreateProjectRequest(workspaceLocation, projectName);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		String sourceLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		JSONObject responseObject = new JSONObject(response.getText());
+		String contentLocation = responseObject.optString("ContentLocation");
+		assertNotNull(contentLocation);
+
+		//add a file in the project
+		request = getPostFilesRequest(contentLocation, "{}", "file.txt");
+		response = webConversation.getResource(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+		// copy the project
+		//		String destinationName = "Destination Project";
+		//		request = getCopyMoveProjectRequest(workspaceLocation, destinationName, sourceLocation, false);
+		//		response = webConversation.getResponse(request);
+		//		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		//		String destinationLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+
+		//assert the copy took effect
+		//		assertFalse(sourceLocation.equals(destinationLocation));
+		//		JSONObject resultObject = new JSONObject(response.getText());
+		//		assertEquals(destinationName, resultObject.getString("Name"));
 	}
 
 	@Test
@@ -229,7 +325,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	@Test
 	public void testDeleteProject() throws IOException, SAXException, JSONException, URISyntaxException {
 		//create workspace
-		String workspaceName = WorkspaceServiceTest.class.getName() + "#testCreateProject";
+		String workspaceName = WorkspaceServiceTest.class.getName() + "#testDeleteProject";
 		WebResponse response = createWorkspace(workspaceName);
 		URI workspaceLocation = new URI(response.getHeaderField(ProtocolConstants.HEADER_LOCATION));
 

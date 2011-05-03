@@ -78,6 +78,16 @@ public class ProtocolConstants {
 	public static final String HEADER_XFER_OPTIONS = "X-Xfer-Options"; //$NON-NLS-1$
 
 	/**
+	 * Option header value indicating that this is a copy request.
+	 */
+	public static final String OPTION_COPY = "copy"; //$NON-NLS-1$
+
+	/**
+	 * Option header value indicating that this is a move request.
+	 */
+	public static final String OPTION_MOVE = "move"; //$NON-NLS-1$
+
+	/**
 	 * Option header value indicating that no overwrite should occur if the destination
 	 * resource already exists. An attempt to replace an existing destination resource will
 	 * fail if this option is specified.

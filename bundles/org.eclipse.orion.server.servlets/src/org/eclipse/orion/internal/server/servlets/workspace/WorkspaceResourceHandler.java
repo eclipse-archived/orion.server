@@ -32,9 +32,12 @@ import org.json.*;
 import org.osgi.service.prefs.BackingStoreException;
 
 /**
- * 
+ * Handles requests against a single workspace.
  */
 public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorkspace> {
+	static final int CREATE_COPY = 0x1;
+	static final int CREATE_MOVE = 0x2;
+	static final int CREATE_NO_OVERWRITE = 0x4;
 
 	private final ServletResourceHandler<IStatus> statusHandler;
 
@@ -122,6 +125,22 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		this.statusHandler = statusHandler;
 	}
 
+	private void addProjectRights(HttpServletRequest request, HttpServletResponse response, String location) throws ServletException {
+		try {
+			String locationPath = URI.create(location).getPath();
+			//right to access the location
+			AuthorizationService.addUserRight(request.getRemoteUser(), locationPath);
+			//right to access all children of the location
+			if (locationPath.endsWith("/")) //$NON-NLS-1$
+				locationPath += "*"; //$NON-NLS-1$
+			else
+				locationPath += "/*"; //$NON-NLS-1$
+			AuthorizationService.addUserRight(request.getRemoteUser(), locationPath);
+		} catch (CoreException e) {
+			statusHandler.handleRequest(request, response, e.getStatus());
+		}
+	}
+
 	private void computeProjectLocation(WebProject project, String location, String user, boolean init) throws URISyntaxException, CoreException {
 		URI contentURI;
 		if (location == null) {
@@ -173,6 +192,25 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		return location;
 	}
 
+	/**
+	 * Returns a bit-mask of create options as specified by the request.
+	 */
+	private int getCreateOptions(HttpServletRequest request) {
+		int result = 0;
+		String optionString = request.getHeader(ProtocolConstants.HEADER_CREATE_OPTIONS);
+		if (optionString != null) {
+			for (String option : optionString.split(",")) { //$NON-NLS-1$
+				if (ProtocolConstants.OPTION_COPY.equalsIgnoreCase(option))
+					result |= CREATE_COPY;
+				else if (ProtocolConstants.OPTION_MOVE.equalsIgnoreCase(option))
+					result |= CREATE_MOVE;
+				else if (ProtocolConstants.OPTION_NO_OVERWRITE.equalsIgnoreCase(option))
+					result |= CREATE_NO_OVERWRITE;
+			}
+		}
+		return result;
+	}
+
 	private boolean getInit(JSONObject toAdd) {
 		return Boolean.valueOf(toAdd.optBoolean(ProtocolConstants.KEY_CREATE_IF_DOESNT_EXIST));
 	}
@@ -182,6 +220,9 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		JSONObject data = OrionServlet.readJSONRequest(request);
 		if (!data.isNull("Remove")) //$NON-NLS-1$
 			return handleRemoveProject(request, response, workspace, data);
+		int options = getCreateOptions(request);
+		if ((options & (CREATE_COPY | CREATE_MOVE)) != 0)
+			return handleCopyMoveProject(request, response, workspace, data);
 		return handleAddProject(request, response, workspace, data);
 	}
 
@@ -242,20 +283,55 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		return true;
 	}
 
-	private void addProjectRights(HttpServletRequest request, HttpServletResponse response, String location) throws ServletException {
-		try {
-			String locationPath = URI.create(location).getPath();
-			//right to access the location
-			AuthorizationService.addUserRight(request.getRemoteUser(), locationPath);
-			//right to access all children of the location
-			if (locationPath.endsWith("/")) //$NON-NLS-1$
-				locationPath += "*"; //$NON-NLS-1$
-			else
-				locationPath += "/*"; //$NON-NLS-1$
-			AuthorizationService.addUserRight(request.getRemoteUser(), locationPath);
-		} catch (CoreException e) {
-			statusHandler.handleRequest(request, response, e.getStatus());
+	/**
+	 * Handle a project copy or move request. Returns <code>true</code> if the request
+	 * was handled (either success or failure). Returns <code>false</code> if this method
+	 * does not know how to handle the request.
+	 */
+	private boolean handleCopyMoveProject(HttpServletRequest request, HttpServletResponse response, WebWorkspace workspace, JSONObject data) throws ServletException, IOException {
+		String sourceLocation = data.optString(ProtocolConstants.HEADER_LOCATION);
+		String sourceId = projectForLocation(request, response, sourceLocation);
+		//null result means there was an error and we already handled it
+		if (sourceId == null)
+			return true;
+		boolean sourceExists = WebProject.exists(sourceId);
+		if (!sourceExists) {
+			handleError(request, response, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Source does not exist: {0}", sourceId));
+			return true;
 		}
+		int options = getCreateOptions(request);
+		if (!validateOptions(request, response, options))
+			return true;
+		String destinationName = request.getHeader(ProtocolConstants.HEADER_SLUG);
+		if (!validateProjectName(destinationName, request, response))
+			return true;
+		WebProject project = WebProject.fromId(sourceId);
+		if ((options & CREATE_MOVE) != 0) {
+			project.setName(destinationName);
+			try {
+				project.save();
+			} catch (CoreException e) {
+				String msg = NLS.bind("Error persisting project state: {0}", project.getName());
+				return handleError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
+			}
+		} else {
+			//copy the project
+		}
+		//location doesn't change on copy/move project
+		URI baseLocation = getURI(request);
+		JSONObject result = WebProjectResourceHandler.toJSON(project, baseLocation);
+		OrionServlet.writeJSONResponse(request, response, result);
+		response.setHeader(ProtocolConstants.HEADER_LOCATION, sourceLocation);
+		response.setStatus(HttpServletResponse.SC_OK);
+		return true;
+	}
+
+	private boolean handleError(HttpServletRequest request, HttpServletResponse response, int httpCode, String message) throws ServletException {
+		return handleError(request, response, httpCode, message, null);
+	}
+
+	private boolean handleError(HttpServletRequest request, HttpServletResponse response, int httpCode, String message, Throwable cause) throws ServletException {
+		return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, httpCode, message, cause));
 	}
 
 	private boolean handleGetWorkspaceMetadata(HttpServletRequest request, HttpServletResponse response, WebWorkspace workspace) throws IOException {
@@ -388,6 +464,29 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		return false;
 	}
 
+	/**
+	 * Returns the project id for the given project location. If the project id cannot
+	 * be determined, this method will handle setting an appropriate HTTP response
+	 * and return <code>null</code>.
+	 */
+	private String projectForLocation(HttpServletRequest request, HttpServletResponse response, String sourceLocation) throws ServletException {
+		try {
+			if (sourceLocation != null) {
+				URI sourceURI = new URI(sourceLocation);
+				String path = sourceURI.getPath();
+				if (path != null) {
+					String id = new Path(path).lastSegment();
+					if (id != null)
+						return id;
+				}
+			}
+		} catch (URISyntaxException e) {
+			//fall through and fail below
+		}
+		handleError(request, response, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Invalid source location for copy/move request: {0}", sourceLocation));
+		return null;
+	}
+
 	private void removeProject(WebProject project, String authority) throws CoreException {
 		URI contentURI = project.getContentLocation();
 
@@ -402,6 +501,20 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		}
 
 		project.remove();
+	}
+
+	/**
+	 * Asserts that request options are valid. If options are not valid then this method handles the request response and return false. If the options
+	 * are valid this method return true.
+	 */
+	private boolean validateOptions(HttpServletRequest request, HttpServletResponse response, int options) throws ServletException {
+		//operation cannot be both copy and move
+		int copyMove = CREATE_COPY | CREATE_MOVE;
+		if ((options & copyMove) == copyMove) {
+			handleError(request, response, HttpServletResponse.SC_BAD_REQUEST, "Syntax error in request");
+			return false;
+		}
+		return true;
 	}
 
 	/**

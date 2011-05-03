@@ -90,8 +90,8 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "File name not specified.", null));
 		int options = getCreateOptions(request);
 		IFileStore toCreate = dir.getChild(name);
-		boolean sourceExists = toCreate.fetchInfo().exists();
-		if (!validateOptions(request, response, toCreate, sourceExists, options))
+		boolean destinationExists = toCreate.fetchInfo().exists();
+		if (!validateOptions(request, response, toCreate, destinationExists, options))
 			return true;
 		//perform the operation
 		if (performPost(request, response, requestObject, toCreate, options)) {
@@ -101,7 +101,7 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 			OrionServlet.writeJSONResponse(request, response, result);
 			response.setHeader(ProtocolConstants.HEADER_LOCATION, location.toString());
 			//response code should indicate if a new resource was actually created or not
-			response.setStatus(sourceExists ? HttpServletResponse.SC_OK : HttpServletResponse.SC_CREATED);
+			response.setStatus(destinationExists ? HttpServletResponse.SC_OK : HttpServletResponse.SC_CREATED);
 		}
 		return true;
 	}
@@ -194,7 +194,7 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 	 * Asserts that request options are valid. If options are not valid then this method handles the request response and return false. If the options
 	 * are valid this method return true.
 	 */
-	private boolean validateOptions(HttpServletRequest request, HttpServletResponse response, IFileStore toCreate, boolean sourceExists, int options) throws ServletException {
+	private boolean validateOptions(HttpServletRequest request, HttpServletResponse response, IFileStore toCreate, boolean destinationExists, int options) throws ServletException {
 		//operation cannot be both copy and move
 		int copyMove = CREATE_COPY | CREATE_MOVE;
 		if ((options & copyMove) == copyMove) {
@@ -203,7 +203,7 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 		}
 		//if overwrite is disallowed make sure destination does not exist yet
 		boolean noOverwrite = (options & CREATE_NO_OVERWRITE) != 0;
-		if (noOverwrite && sourceExists) {
+		if (noOverwrite && destinationExists) {
 			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_PRECONDITION_FAILED, "Resource cannot be overwritten", null));
 			return false;
 		}
@@ -218,11 +218,11 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 		String optionString = request.getHeader(ProtocolConstants.HEADER_CREATE_OPTIONS);
 		if (optionString != null) {
 			for (String option : optionString.split(",")) { //$NON-NLS-1$
-				if ("copy".equalsIgnoreCase(option)) //$NON-NLS-1$
+				if (ProtocolConstants.OPTION_COPY.equalsIgnoreCase(option))
 					result |= CREATE_COPY;
-				else if ("move".equalsIgnoreCase(option)) //$NON-NLS-1$
+				else if (ProtocolConstants.OPTION_MOVE.equalsIgnoreCase(option))
 					result |= CREATE_MOVE;
-				else if ("no-overwrite".equalsIgnoreCase(option)) //$NON-NLS-1$
+				else if (ProtocolConstants.OPTION_NO_OVERWRITE.equalsIgnoreCase(option))
 					result |= CREATE_NO_OVERWRITE;
 			}
 		}

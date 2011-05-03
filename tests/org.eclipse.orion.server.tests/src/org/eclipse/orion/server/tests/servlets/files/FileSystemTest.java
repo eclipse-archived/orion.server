@@ -249,7 +249,7 @@ public abstract class FileSystemTest extends AbstractServerTest {
 
 	protected WebRequest getPostFilesRequest(String uri, String json, String slug) {
 		try {
-			WebRequest request = new PostMethodWebRequest(makeAbsolute(uri), getJsonAsStream(json), "plain/text");
+			WebRequest request = new PostMethodWebRequest(makeAbsolute(uri), getJsonAsStream(json), "application/json");
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, slug);
 			request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 			setAuthentication(request);
@@ -280,7 +280,7 @@ public abstract class FileSystemTest extends AbstractServerTest {
 
 	protected WebRequest getPutFileRequest(String uri, String body) {
 		try {
-			WebRequest request = new PutMethodWebRequest(makeAbsolute(uri), getJsonAsStream(body), "text/plain");
+			WebRequest request = new PutMethodWebRequest(makeAbsolute(uri), getJsonAsStream(body), "application/json");
 			request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 			setAuthentication(request);
 			return request;

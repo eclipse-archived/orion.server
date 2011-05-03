@@ -76,7 +76,6 @@ public class TransferServlet extends OrionServlet {
 		if (optionString == null)
 			optionString = ""; //$NON-NLS-1$
 		return Arrays.asList(optionString.split(",")); //$NON-NLS-1$
-
 	}
 
 	protected void doPostImport(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
