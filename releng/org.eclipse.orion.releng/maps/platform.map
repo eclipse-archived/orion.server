@@ -1,3 +1,4 @@
+feature@org.eclipse.license=v20110208,:pserver:anonymous@dev.eclipse.org:/cvsroot/eclipse,,org.eclipse.sdk-feature/features/org.eclipse.license
 
 plugin@org.eclipse.core.contenttype=p2IU,id=org.eclipse.core.contenttype,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.core.expressions=p2IU,id=org.eclipse.core.expressions,repository=ECLIPSE_PLATFORM_REPO

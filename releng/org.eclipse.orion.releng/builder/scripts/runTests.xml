@@ -108,7 +108,8 @@
 			<property name="arch" value="${osgi.arch}" />
 			<property name="performanceVMArgs" value="-DjsPerformanceResults=${dropLocation}/Performance-testResults.xml 
 													  -Declipse.perf.dbloc=${base}/tests/derby
-													  -Declipse.perf.config=build=0.2M7" /> <!-- for now average some results together to establish a baseline -->
+													  -Declipse.perf.config=build=${buildLabel}
+													  -Declipse.perf.assertAgainst=build=0.2M7" />
 		</subant>
 	</target>
 	
@@ -352,5 +353,6 @@
 		<updateTestResult testFile="IE-9.0-testResults.html" token="@JS-IE9@"/>
 		<updateTestResult testFile="Performance-testResults.html" token="@PERFORMANCE@"/>
 		<updateTestResult testFile="org.eclipse.orion.server.tests.AllServerTests.html" token="@SERVER-TESTS@"/>
+		<updateTestResult testFile="org.eclipse.orion.server.tests.performance.AllPerformanceTests.html" token="@JUNIT_PERF_BASELINE@"/>
 	</target>
 </project>
