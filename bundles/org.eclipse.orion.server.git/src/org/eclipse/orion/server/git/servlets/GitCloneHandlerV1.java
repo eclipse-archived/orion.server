@@ -119,11 +119,11 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, String pathString) throws IOException, JSONException, ServletException, URISyntaxException {
 		IPath path = pathString == null ? Path.EMPTY : new Path(pathString);
 		URI baseLocation = getURI(request);
+		String user = request.getRemoteUser();
 		if (path.segmentCount() < 1) {
 			List<WebClone> clones = WebClone.allClones();
 			JSONObject result = new JSONObject();
 			JSONArray children = new JSONArray();
-			String user = request.getRemoteUser();
 			for (WebClone clone : clones) {
 				if (isAccessAllowed(user, clone)) {
 					JSONObject child = WebCloneResourceHandler.toJSON(clone, baseLocation);
@@ -136,14 +136,15 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		} else if (path.segmentCount() == 1) {
 			if (WebClone.exists(path.segment(0))) {
 				WebClone clone = WebClone.fromId(path.segment(0));
-				JSONObject result = WebCloneResourceHandler.toJSON(clone, baseLocation);
-				response.setHeader(ProtocolConstants.HEADER_LOCATION, result.optString(ProtocolConstants.KEY_LOCATION, "")); //$NON-NLS-1$
-				OrionServlet.writeJSONResponse(request, response, result);
-				return true;
-			} else {
-				String msg = NLS.bind("Clone with the given ID not found: {0}", path.segment(0));
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
+				if (isAccessAllowed(user, clone)) {
+					JSONObject result = WebCloneResourceHandler.toJSON(clone, baseLocation);
+					response.setHeader(ProtocolConstants.HEADER_LOCATION, result.optString(ProtocolConstants.KEY_LOCATION, "")); //$NON-NLS-1$
+					OrionServlet.writeJSONResponse(request, response, result);
+					return true;
+				}
 			}
+			String msg = NLS.bind("Clone with the given ID not found: {0}", path.segment(0));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
 		}
 		//else the request is malformed
 		String msg = NLS.bind("Invalid clone request: {0}", path);

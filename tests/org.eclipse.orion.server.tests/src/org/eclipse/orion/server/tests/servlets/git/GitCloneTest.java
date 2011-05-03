@@ -435,6 +435,51 @@ public class GitCloneTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 	}
 
+	@Test
+	public void testGetOthersClones() throws IOException, SAXException, JSONException {
+		// my clone
+		clone(null);
+
+		// TODO: workaround until bug 340553 is fixed
+		WebRequest request = listGitClonesRequest();
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject clones = new JSONObject(response.getText());
+		JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		int c = clonesArray.length();
+
+		createUser("bob", "bob");
+
+		// bob's clone
+		URIish uri = new URIish(gitDir.toURL());
+		request = getPostGitCloneRequest(uri.toString(), null, null, null);
+		setAuthentication(request, "bob", "bob");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		assertNotNull(taskLocation);
+		String cloneLocation = waitForTaskCompletion(taskLocation);
+
+		// validate the clone metadata
+		request = getGetGitCloneRequest(cloneLocation);
+		setAuthentication(request, "bob", "bob");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// list clones
+		request = listGitClonesRequest();
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		clones = new JSONObject(response.getText());
+		clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		assertEquals(c, clonesArray.length());
+
+		// try to get Bob's clone
+		request = getGetGitCloneRequest(cloneLocation);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
+	}
+
 	private WebRequest listGitClonesRequest() {
 		String requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.CLONE_RESOURCE + '/';
 		WebRequest request = new GetMethodWebRequest(requestURI);

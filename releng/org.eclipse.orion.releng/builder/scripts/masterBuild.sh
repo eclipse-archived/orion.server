@@ -21,7 +21,7 @@ builderDir=$supportDir/org.eclipse.orion.releng
 basebuilderBranch=v20110302
 publish=""
 user=aniefer
-resultsEmail=orion-dev@eclipse.org
+resultsEmail=orion-releng@eclipse.org
 
 buildType=I
 date=$(date +%Y%m%d)
@@ -157,7 +157,7 @@ runBuild () {
 			prereqMsg=`cat $buildDirectory/prereqErrors.log` 
 		fi
 		
-		mailx -s "[orion-build] Orion Build : $buildLabel failed" $resultsEmail <<EOF
+		mailx -s "Orion Build : $buildLabel failed" $resultsEmail <<EOF
 $compileMsg
 $compileProblems
 
@@ -222,7 +222,7 @@ echo "From: e4Build@build.eclipse.org "
 echo "To: $resultsEmail "
 echo "MIME-Version: 1.0 "
 echo "Content-Type: text/html; charset=us-ascii"
-echo "Subject: [orion-build] Orion Build : $buildLabel $failed"
+echo "Subject: Orion Build : $buildLabel $failed"
 echo ""
 echo "<html><head><title>Orion Build $buildLabel</title></head>" 
 echo "<body>Check here for the build results: <a href="http://download.eclipse.org/e4/orion/drops/$buildType$timestamp">$buildLabel</a><br>" 
