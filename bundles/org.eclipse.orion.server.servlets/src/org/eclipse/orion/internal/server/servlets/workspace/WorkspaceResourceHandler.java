@@ -126,6 +126,8 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 	}
 
 	private void addProjectRights(HttpServletRequest request, HttpServletResponse response, String location) throws ServletException {
+		if (location == null)
+			return;
 		try {
 			String locationPath = URI.create(location).getPath();
 			//right to access the location
@@ -226,7 +228,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		return handleAddProject(request, response, workspace, data);
 	}
 
-	private boolean handleAddProject(HttpServletRequest request, HttpServletResponse response, WebWorkspace workspace, JSONObject data) throws IOException, JSONException, ServletException {
+	private boolean handleAddProject(HttpServletRequest request, HttpServletResponse response, WebWorkspace workspace, JSONObject data) throws IOException, ServletException {
 		//make sure required fields are set
 		JSONObject toAdd = data;
 		String id = toAdd.optString(ProtocolConstants.KEY_ID, null);
@@ -278,8 +280,8 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		response.setStatus(HttpServletResponse.SC_CREATED);
 
 		// give the project creator access rights to the project
-		addProjectRights(request, response, result.getString(ProtocolConstants.KEY_LOCATION));
-		addProjectRights(request, response, result.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		addProjectRights(request, response, result.optString(ProtocolConstants.KEY_LOCATION));
+		addProjectRights(request, response, result.optString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		return true;
 	}
 
@@ -305,25 +307,77 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		String destinationName = request.getHeader(ProtocolConstants.HEADER_SLUG);
 		if (!validateProjectName(destinationName, request, response))
 			return true;
-		WebProject project = WebProject.fromId(sourceId);
+		WebProject sourceProject = WebProject.fromId(sourceId);
 		if ((options & CREATE_MOVE) != 0) {
-			project.setName(destinationName);
-			try {
-				project.save();
-			} catch (CoreException e) {
-				String msg = NLS.bind("Error persisting project state: {0}", project.getName());
-				return handleError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
-			}
-		} else {
-			//copy the project
+			return handleMoveProject(request, response, sourceProject, sourceLocation, destinationName);
+		} else if ((options & CREATE_COPY) != 0) {
+			return handleCopyProject(request, response, workspace, sourceProject, destinationName);
 		}
-		//location doesn't change on copy/move project
+		//if we got here, it isn't a copy or a move, so we don't know how to handle the request
+		return false;
+	}
+
+	/**
+	 * Implementation of project copy
+	 * Returns <code>false</code> if this method doesn't know how to intepret the request.
+	 */
+	private boolean handleCopyProject(HttpServletRequest request, HttpServletResponse response, WebWorkspace workspace, WebProject sourceProject, String destinationName) throws IOException, ServletException {
+		//first create the destination project
+		String destinationId = WebProject.nextProjectId();
+		JSONObject projectInfo = new JSONObject();
+		try {
+			projectInfo.put(ProtocolConstants.KEY_ID, destinationId);
+			projectInfo.put(ProtocolConstants.KEY_NAME, destinationName);
+		} catch (JSONException e) {
+			//should never happen
+			throw new RuntimeException(e);
+		}
+		handleAddProject(request, response, workspace, projectInfo);
+		//copy the project data from source
+		WebProject destinationProject = WebProject.fromId(destinationId);
+		String sourceName = sourceProject.getName();
+		try {
+			copyProjectContents(sourceProject, destinationProject);
+		} catch (CoreException e) {
+			handleError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, NLS.bind("Error copying project {0} to {1}", sourceName, destinationName));
+			return true;
+		}
 		URI baseLocation = getURI(request);
-		JSONObject result = WebProjectResourceHandler.toJSON(project, baseLocation);
+		JSONObject result = WebProjectResourceHandler.toJSON(destinationProject, baseLocation);
+		OrionServlet.writeJSONResponse(request, response, result);
+		response.setHeader(ProtocolConstants.HEADER_LOCATION, result.optString(ProtocolConstants.KEY_LOCATION, "")); //$NON-NLS-1$
+		response.setStatus(HttpServletResponse.SC_CREATED);
+		return true;
+	}
+
+	/**
+	 * Implementation of project move. Returns whether the move requested was handled.
+	 * Returns <code>false</code> if this method doesn't know how to intepret the request.
+	 */
+	private boolean handleMoveProject(HttpServletRequest request, HttpServletResponse response, WebProject sourceProject, String sourceLocation, String destinationName) throws ServletException, IOException {
+		String sourceName = sourceProject.getName();
+		//a project move is simply a rename
+		sourceProject.setName(destinationName);
+		try {
+			sourceProject.save();
+		} catch (CoreException e) {
+			String msg = NLS.bind("Error persisting project state: {0}", sourceName);
+			return handleError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
+		}
+		//location doesn't change on move project
+		URI baseLocation = getURI(request);
+		JSONObject result = WebProjectResourceHandler.toJSON(sourceProject, baseLocation);
 		OrionServlet.writeJSONResponse(request, response, result);
 		response.setHeader(ProtocolConstants.HEADER_LOCATION, sourceLocation);
 		response.setStatus(HttpServletResponse.SC_OK);
 		return true;
+	}
+
+	/**
+	 * Copies the content of one project to the location of a second project. 
+	 */
+	private void copyProjectContents(WebProject sourceProject, WebProject destinationProject) throws CoreException {
+		sourceProject.getProjectStore().copy(destinationProject.getProjectStore(), EFS.OVERWRITE, null);
 	}
 
 	private boolean handleError(HttpServletRequest request, HttpServletResponse response, int httpCode, String message) throws ServletException {

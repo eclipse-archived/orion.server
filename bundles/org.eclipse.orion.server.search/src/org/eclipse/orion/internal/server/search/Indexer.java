@@ -11,7 +11,6 @@
 package org.eclipse.orion.internal.server.search;
 
 import java.io.*;
-import java.net.URI;
 import java.util.*;
 import org.apache.solr.client.solrj.*;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -100,36 +99,16 @@ public class Indexer extends Job {
 		if (logger.isDebugEnabled())
 			logger.debug("Indexing project id: " + project.getId() + " name: " + project.getName()); //$NON-NLS-1$ //$NON-NLS-2$
 		checkCanceled(monitor);
-		URI location = project.getContentLocation();
 		IFileStore projectStore;
-		IPath projectLocation;
 		try {
-			if (location.isAbsolute()) {
-				projectStore = EFS.getStore(location);
-				//location will be based on alias registered with file service
-				projectLocation = new Path(Activator.LOCATION_FILE_SERVLET).append(project.getId());
-			} else {
-				//there is no scheme but it could still be an absolute path
-				IPath localPath = new Path(location.getPath());
-				if (localPath.isAbsolute()) {
-					projectStore = EFS.getLocalFileSystem().getStore(localPath);
-					//location will be based on alias registered with file service
-					projectLocation = new Path(Activator.LOCATION_FILE_SERVLET).append(project.getId());
-				} else {
-					//treat relative location as relative to the file system root
-					URI rootLocation = Activator.getDefault().getRootLocationURI();
-					IFileStore root = EFS.getStore(rootLocation);
-					projectStore = root.getChild(location.toString());
-					projectLocation = new Path(Activator.LOCATION_FILE_SERVLET).append(localPath.segment(0));
-				}
-			}
+			projectStore = project.getProjectStore();
 		} catch (CoreException e) {
 			//TODO implement indexing of remote content
 			handleIndexingFailure(e);
 			return;
 		}
 		//project location is always a directory
-		projectLocation = projectLocation.addTrailingSeparator();
+		IPath projectLocation = new Path(Activator.LOCATION_FILE_SERVLET).append(project.getId()).addTrailingSeparator();
 		//gather all files
 		int projectLocationLength = projectStore.toURI().toString().length();
 		final List<IFileStore> toIndex = new ArrayList<IFileStore>();

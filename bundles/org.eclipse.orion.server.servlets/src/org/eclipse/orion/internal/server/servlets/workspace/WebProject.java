@@ -14,7 +14,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.resources.Base64Counter;
@@ -124,6 +128,26 @@ public class WebProject extends WebElement {
 		}
 		//by default the location is simply the unique id of the project.
 		return URI.create(getId());
+	}
+
+	/**
+	 * Returns the server local file system location for this project's contents.
+	 * @throws CoreException 
+	 */
+	public IFileStore getProjectStore() throws CoreException {
+		URI location = getContentLocation();
+		if (location.isAbsolute()) {
+			return EFS.getStore(location);
+		}
+		//there is no scheme but it could still be an absolute path
+		IPath localPath = new Path(location.getPath());
+		if (localPath.isAbsolute()) {
+			return EFS.getLocalFileSystem().getStore(localPath);
+		}
+		//treat relative location as relative to the file system root
+		URI rootLocation = Activator.getDefault().getRootLocationURI();
+		IFileStore root = EFS.getStore(rootLocation);
+		return root.getChild(location.toString());
 	}
 
 }
