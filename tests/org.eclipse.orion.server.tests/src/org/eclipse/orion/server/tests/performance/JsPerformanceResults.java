@@ -80,7 +80,7 @@ public class JsPerformanceResults extends TestCase {
 		points[1] = new DataPoint(1, map);
 
 		final Sample sample = new Sample(scenarioId, System.currentTimeMillis(), Collections.EMPTY_MAP, points);
-
+		sample.tagAsSummary(true, performanceResult.getName(), new Dimension[] {Dimension.CPU_TIME}, 0, null);
 		Variations variations = PerformanceTestPlugin.getVariations();
 		variations.put("browser", suiteName);
 		DB.store(variations, sample);
