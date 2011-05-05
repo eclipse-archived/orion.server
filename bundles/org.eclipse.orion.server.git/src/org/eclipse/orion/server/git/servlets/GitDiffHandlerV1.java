@@ -18,6 +18,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.merge.ResolveMerger;
+import org.eclipse.jgit.merge.ThreeWayMerger;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.treewalk.AbstractTreeIterator;
@@ -116,6 +119,7 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 		gitSection.put(GitConstants.KEY_DIFF, link.toString());
 		gitSection.put(GitConstants.KEY_COMMIT_OLD, getOldLocation(link, path).toString());
 		gitSection.put(GitConstants.KEY_COMMIT_NEW, getNewLocation(link, path).toString());
+		gitSection.put(GitConstants.KEY_COMMIT_BASE, getBaseLocation(link, db, path).toString());
 		o.put(GitConstants.KEY_GIT, gitSection);
 		out.write(o.toString().getBytes());
 		return true;
@@ -216,6 +220,39 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 		} else {
 			/* including scope.equals(GitConstants.KEY_DIFF_DEFAULT */
 			return new URI(location.getScheme(), location.getAuthority(), path.removeFirstSegments(1).makeAbsolute().toString(), null, null);
+		}
+	}
+
+	private URI getBaseLocation(URI location, Repository db, Path path) throws URISyntaxException, IOException {
+		String scope = path.segment(0);
+		if (scope.contains("..")) { //$NON-NLS-1$
+			String[] commits = scope.split("\\.\\."); //$NON-NLS-1$
+			if (commits.length != 2) {
+				// TODO:
+				throw new IllegalArgumentException();
+			}
+			// TODO: decode commits[]
+
+			ThreeWayMerger merger = new ResolveMerger(db) {
+				protected boolean mergeImpl() throws IOException {
+					// do nothing
+					return false;
+				}
+			};
+			// use #merge to set sourceObjects
+			merger.merge(new ObjectId[] {db.resolve(commits[0]), db.resolve(commits[1])});
+			RevCommit baseCommit = merger.getBaseCommit(0, 1);
+
+			IPath p = new Path(GitServlet.GIT_URI + '/' + GitConstants.COMMIT_RESOURCE).append(baseCommit.getId().getName()).append(path.removeFirstSegments(1));
+			return new URI(location.getScheme(), location.getAuthority(), p.toString(), "parts=body", null); //$NON-NLS-1$
+		} else if (scope.equals(GitConstants.KEY_DIFF_CACHED)) {
+			// HEAD is the base
+			IPath p = new Path(GitServlet.GIT_URI + '/' + GitConstants.COMMIT_RESOURCE).append(Constants.HEAD).append(path.removeFirstSegments(1));
+			return new URI(location.getScheme(), location.getAuthority(), p.toString(), "parts=body", null); //$NON-NLS-1$
+		} else {
+			// index is the base
+			IPath p = new Path(GitServlet.GIT_URI + '/' + GitConstants.INDEX_RESOURCE).append(path.removeFirstSegments(1));
+			return new URI(location.getScheme(), location.getAuthority(), p.toString(), null, null);
 		}
 	}
 }

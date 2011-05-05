@@ -15,6 +15,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -23,11 +24,17 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONException;
@@ -191,7 +198,7 @@ public class GitDiffTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		parts = parseMultiPartResponse(response);
 
-		assertDiffUris(gitDiffUri, "test", "hi", new JSONObject(parts[0]));
+		assertDiffUris(gitDiffUri, new String[] {"test", "hi", "test"}, new JSONObject(parts[0]));
 
 		sb.setLength(0);
 		sb.append("diff --git a/test.txt b/test.txt").append("\n");
@@ -241,7 +248,7 @@ public class GitDiffTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		String[] parts = parseMultiPartResponse(response);
 
-		assertDiffUris(gitDiffUri, "test", "stage me", new JSONObject(parts[0]));
+		assertDiffUris(gitDiffUri, new String[] {"test", "stage me", "test"}, new JSONObject(parts[0]));
 
 		StringBuffer sb = new StringBuffer();
 		sb.append("diff --git a/test.txt b/test.txt").append("\n");
@@ -330,7 +337,7 @@ public class GitDiffTest extends GitTest {
 
 		String initialCommitId = db.resolve(initialCommit).getName();
 		String commit2Id = db.resolve(commit2).getName();
-		gitDiffUri = gitSection.optString(GitConstants.KEY_DIFF, null);
+		gitDiffUri = gitSection.getString(GitConstants.KEY_DIFF);
 		// TODO: don't create URIs out of thin air
 		gitDiffUri = gitDiffUri.replaceAll(GitConstants.KEY_DIFF_DEFAULT, initialCommitId + ".." + commit2Id);
 		request = getGetGitDiffRequest(gitDiffUri + "test.txt");
@@ -500,7 +507,7 @@ public class GitDiffTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		String[] parts = parseMultiPartResponse(response);
 
-		assertDiffUris(expectedLocation, "test", "change", new JSONObject(parts[0]));
+		assertDiffUris(expectedLocation, new String[] {"test", "change", "test"}, new JSONObject(parts[0]));
 
 		StringBuffer sb = new StringBuffer();
 		sb.append("diff --git a/test.txt b/test.txt").append("\n");
@@ -549,8 +556,7 @@ public class GitDiffTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		// TODO: don't create URIs out of thin air
-		// replace with REST API for git log when ready, see bug 339104
+		// TODO: replace with REST API for git log when ready, see bug 339104
 		String initialCommit = Constants.HEAD + "^";
 		String commit = Constants.HEAD;
 		// TODO: don't create URIs out of thin air
@@ -563,7 +569,7 @@ public class GitDiffTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		String[] parts = parseMultiPartResponse(response);
 
-		assertDiffUris(location, "test", "change", new JSONObject(parts[0]));
+		assertDiffUris(location, new String[] {"test", "change", "test"}, new JSONObject(parts[0]));
 
 		StringBuffer sb = new StringBuffer();
 		sb.append("diff --git a/test.txt b/test.txt").append("\n");
@@ -582,7 +588,7 @@ public class GitDiffTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		parseMultiPartResponse(response);
 
-		assertDiffUris(location, "test", "change", new JSONObject(parts[0]));
+		assertDiffUris(location, new String[] {"test", "change", "test"}, new JSONObject(parts[0]));
 		assertEquals(sb.toString(), parts[1]);
 
 		request = getGetFilesRequest(location + "?parts=diff");
@@ -593,7 +599,7 @@ public class GitDiffTest extends GitTest {
 		request = getGetFilesRequest(location + "?parts=uris");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		assertDiffUris(location, "test", "change", new JSONObject(response.getText()));
+		assertDiffUris(location, new String[] {"test", "change", "test"}, new JSONObject(response.getText()));
 	}
 
 	@Test
@@ -643,21 +649,122 @@ public class GitDiffTest extends GitTest {
 		assertEquals(gitDiffUri, diffUri);
 	}
 
-	private void assertDiffUris(String expectedLocation, String expectedOld, String expectedNew, JSONObject jsonPart) throws JSONException, IOException, SAXException {
+	@Test
+	public void testDiffWithCommonAncestor() throws JSONException, IOException, SAXException, JGitInternalException, GitAPIException, URISyntaxException {
+		// clone: create
+		String contentLocation = clone(null);
+
+		// clone: link
+		JSONObject project = linkProject(contentLocation, getMethodName());
+		String projectId = project.getString(ProtocolConstants.KEY_ID);
+		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+
+		String a = "a";
+		branch(contentLocation, a);
+		// checkout 'a'
+		FileRepository db1 = new FileRepository(new File(URIUtil.toFile(new URI(contentLocation)), Constants.DOT_GIT));
+		Git git = new Git(db1);
+		GitRemoteTest.ensureOnBranch(git, a);
+
+		// modify while on 'a'
+		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change in a");
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
+		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+		String gitDiffUri = gitSection.getString(GitConstants.KEY_DIFF);
+
+		// "git add ."
+		request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// commit all
+		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "commit on a", false);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// assert clean
+		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject statusResponse = new JSONObject(response.getText());
+		GitStatusTest.assertStatusClean(statusResponse);
+
+		// checkout 'master'
+		GitRemoteTest.ensureOnBranch(git, Constants.MASTER);
+
+		// modify the same file on master
+		request = getPutFileRequest(projectId + "/test.txt", "change in master");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+		gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+		gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
+		gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+
+		// "git add ."
+		request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// commit all
+		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "commit on master", false);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// assert clean
+		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		statusResponse = new JSONObject(response.getText());
+		GitStatusTest.assertStatusClean(statusResponse);
+
+		// TODO: replace with REST API for git log when ready, see bug 339104
+		// TODO: don't create URIs out of thin air
+		String enc = URLEncoder.encode(Constants.MASTER + ".." + a, "UTF-8");
+		String location = gitDiffUri.replaceAll(GitConstants.KEY_DIFF_DEFAULT, enc);
+		location += "test.txt";
+
+		request = getGetFilesRequest(location + "?parts=uris,diff");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		String[] parts = parseMultiPartResponse(response);
+
+		assertDiffUris(location, new String[] {"change in master", "change in a", "test"}, new JSONObject(parts[0]));
+	}
+
+	private void assertDiffUris(String expectedLocation, String[] expectedContent, JSONObject jsonPart) throws JSONException, IOException, SAXException {
 		JSONObject gitSection = jsonPart.getJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
+
 		String fileOldUri = gitSection.getString(GitConstants.KEY_COMMIT_OLD);
 		assertNotNull(fileOldUri);
 		WebRequest request = getGetFilesRequest(fileOldUri);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		assertEquals(expectedOld, response.getText());
+		assertEquals(expectedContent[0], response.getText());
+
 		String fileNewUri = gitSection.getString(GitConstants.KEY_COMMIT_NEW);
 		assertNotNull(fileNewUri);
 		request = getGetFilesRequest(fileNewUri);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		assertEquals(expectedNew, response.getText());
+		assertEquals(expectedContent[1], response.getText());
+
+		String fileBaseUri = gitSection.getString(GitConstants.KEY_COMMIT_BASE);
+		assertNotNull(fileBaseUri);
+		request = getGetFilesRequest(fileBaseUri);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals(expectedContent[2], response.getText());
 
 		String diffUri = gitSection.getString(GitConstants.KEY_DIFF);
 		assertNotNull(diffUri);
