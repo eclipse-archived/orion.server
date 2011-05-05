@@ -125,11 +125,11 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 			ResetType rt = ResetType.valueOf(resetType);
 			switch (rt) {
 				case MIXED :
+				case HARD :
 					Git git = new Git(db);
 					// "git reset --{type} HEAD ."
 					git.reset().setMode(rt).setRef(Constants.HEAD).call();
 					return true;
-				case HARD :
 				case KEEP :
 				case MERGE :
 				case SOFT :
