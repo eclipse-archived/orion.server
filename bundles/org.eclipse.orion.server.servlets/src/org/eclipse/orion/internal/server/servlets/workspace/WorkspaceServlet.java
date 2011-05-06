@@ -10,18 +10,14 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.workspace;
 
-import java.io.*;
+import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.runtime.*;
-import org.eclipse.orion.internal.server.core.IAliasRegistry;
 import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
-import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.JSONObject;
 
@@ -29,11 +25,6 @@ import org.json.JSONObject;
  * Servlet for accessing workspace metadata.
  */
 public class WorkspaceServlet extends OrionServlet {
-
-	//sample project names - should eventually be removed
-	private static final String CLIENT_CORE_PROJECT_NAME = "org.eclipse.orion.client.core";
-	private static final String EDITOR_PROJECT_NAME = "org.eclipse.orion.client.editor";
-
 	/**
 	 * Version number of java serialization.
 	 */
@@ -42,10 +33,7 @@ public class WorkspaceServlet extends OrionServlet {
 	private ServletResourceHandler<WebWorkspace> workspaceResourceHandler;
 	private ServletResourceHandler<WebProject> projectResourceHandler;
 
-	private final IAliasRegistry aliasRegistry;
-
 	public WorkspaceServlet() {
-		aliasRegistry = Activator.getDefault();
 		workspaceResourceHandler = new WorkspaceResourceHandler(getStatusHandler());
 		projectResourceHandler = new WebProjectResourceHandler();
 	}
@@ -145,7 +133,6 @@ public class WorkspaceServlet extends OrionServlet {
 		try {
 			WebUser user = WebUser.fromUserName(userName);
 			WebWorkspace workspace = user.createWorkspace(workspaceName);
-			createSampleContent(workspace, userName);
 			JSONObject result = WorkspaceResourceHandler.toJSON(workspace, ServletResourceHandler.getURI(req));
 			writeJSONResponse(req, resp, result);
 			String resultLocation = result.optString(ProtocolConstants.KEY_LOCATION);
@@ -158,65 +145,6 @@ public class WorkspaceServlet extends OrionServlet {
 			handleException(resp, e.getStatus());
 			return;
 		}
-	}
-
-	/**
-	 * This code is only temporary for demo purposes.
-	 */
-	private void createSampleContent(WebWorkspace workspace, String userName) {
-		createSampleProject(workspace, CLIENT_CORE_PROJECT_NAME, userName);
-		createSampleProject(workspace, EDITOR_PROJECT_NAME, userName);
-	}
-
-	/**
-	 * This code is only temporary for demo purposes.
-	 */
-	private void createSampleProject(WebWorkspace workspace, String projectName, String userName) {
-		File location = findSampleProject(projectName);
-		if (location == null)
-			return;
-		try {
-			WebProject project = WebProject.fromId(projectName);
-			//only create the project once
-			if (project.getName() == null) {
-				project.setName(projectName);
-				project.setContentLocation(location.toURI());
-				aliasRegistry.registerAlias(projectName, EFS.getLocalFileSystem().fromLocalFile(location).toURI());
-				project.save();
-			}
-			workspace.addProject(project);
-			workspace.save();
-			AuthorizationService.addUserRight(userName, "/file/" + projectName);
-			AuthorizationService.addUserRight(userName, "/file/" + projectName + "/*");
-		} catch (CoreException e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "Error creating sample project", e)); //$NON-NLS-1$
-		}
-	}
-
-	/**
-	 * Finds the org.eclipse.e4.webide bundle location. Returns <code>null</code>
-	 * if it could not be found.
-	 */
-	private File findSampleProject(final String projectName) {
-		String url = Activator.getDefault().getContext().getProperty("osgi.install.area");
-		File installArea = null;
-		try {
-			installArea = URIUtil.toFile(URIUtil.fromString(url));
-		} catch (URISyntaxException e) {
-			//will just use relative to working directory
-		}
-
-		File dir = installArea != null ? new File(installArea, "serverworkspace") : new File("serverworkspace");
-		if (!dir.isDirectory())
-			return null;
-		File[] children = dir.listFiles(new FilenameFilter() {
-			public boolean accept(File dir, String name) {
-				return name.equals(projectName) || name.startsWith(projectName + '_');
-			}
-		});
-		if (children.length != 1)
-			return null;
-		return children[0];
 	}
 
 	@Override
