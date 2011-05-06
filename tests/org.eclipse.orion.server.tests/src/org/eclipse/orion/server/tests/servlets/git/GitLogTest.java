@@ -171,6 +171,62 @@ public class GitLogTest extends GitTest {
 		assertEquals(Constants.R_HEADS + "branch", tagsAndBranchesArray.get(0));
 	}
 
+	@Test
+	public void testLogFile() throws IOException, SAXException, JSONException {
+		URI workspaceLocation = createWorkspace(getMethodName());
+
+		String projectName = getMethodName();
+		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
+		String projectId = project.getString(ProtocolConstants.KEY_ID);
+
+		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+
+		// modify
+		WebRequest request = getPutFileRequest(projectId + "/test.txt", "test.txt change");
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// TODO: don't create URIs out of thin air
+		// add
+		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// commit1
+		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "commit1", false);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// modify again
+		request = getPutFileRequest(projectId + "/folder/folder.txt", "folder.txt change");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// add
+		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "folder/folder.txt");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// commit2
+		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "commit2", false);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// get log for file
+		// TODO: don't create URIs out of thin air
+		JSONArray commitsArray = log(gitCommitUri + "test.txt", false);
+		assertEquals(2, commitsArray.length());
+
+		JSONObject commit = commitsArray.getJSONObject(0);
+		assertEquals("commit1", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
+
+		commit = commitsArray.getJSONObject(1);
+		assertEquals("Initial commit", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
+	}
+
 	private static WebRequest getPostForScopedLogRequest(String location, String newCommit) throws JSONException, UnsupportedEncodingException {
 		String requestURI;
 		if (location.startsWith("http://"))
