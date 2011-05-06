@@ -20,6 +20,8 @@ public interface UserConstants {
 
 	public static final String KEY_PASSWORD = "password"; //$NON-NLS-1$
 	
+	public static final String KEY_OLD_PASSWORD = "oldPassword"; //$NON-NLS-1$
+	
 	public static final String KEY_STORE = "store"; //$NON-NLS-1$
 	
 	public static final String KEY_PLUGINS = "Plugins"; //$NON-NLS-1$

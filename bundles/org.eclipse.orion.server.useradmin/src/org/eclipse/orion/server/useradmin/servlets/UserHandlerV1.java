@@ -162,9 +162,13 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		}
 
 		User user = (User) userAdmin.getUser(UserConstants.KEY_LOGIN, userId);
-
+		
 		if (user == null)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + userId + " could not be found.", null));
+		
+		if(data.has(UserConstants.KEY_PASSWORD) && (!data.has(UserConstants.KEY_OLD_PASSWORD) || !user.getPassword().equals(data.getString(UserConstants.KEY_OLD_PASSWORD)))){
+			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_UNAUTHORIZED, "Invalid old password", null));
+		}
 
 		if (data.has(UserConstants.KEY_LOGIN))
 			user.setLogin(data.getString(UserConstants.KEY_LOGIN));
