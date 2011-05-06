@@ -71,7 +71,8 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 	public static JSONObject toJSON(WebWorkspace workspace, URI baseLocation) {
 		JSONObject result = WebElementResourceHandler.toJSON(workspace);
 		JSONArray projects = workspace.getProjectsJSON();
-		URI projectBaseLocation = URIUtil.append(baseLocation, "projects"); //$NON-NLS-1$
+		URI workspaceLocation = URIUtil.append(baseLocation, workspace.getId());
+		URI projectBaseLocation = URIUtil.append(workspaceLocation, "project"); //$NON-NLS-1$
 		if (projects == null)
 			projects = new JSONArray();
 		//augment project objects with their location
@@ -87,7 +88,6 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 
 		//add basic fields to workspace result
 		try {
-			URI workspaceLocation = URIUtil.append(baseLocation, workspace.getId());
 			result.put(ProtocolConstants.KEY_LOCATION, workspaceLocation.toString());
 			result.put(ProtocolConstants.KEY_CHILDREN_LOCATION, workspaceLocation.toString());
 			result.put(ProtocolConstants.KEY_PROJECTS, projects);
@@ -107,6 +107,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 				String contentLocation = computeProjectContentLocation(baseLocation, project);
 				child.put(ProtocolConstants.KEY_LOCATION, contentLocation);
 				child.put(ProtocolConstants.KEY_CHILDREN_LOCATION, contentLocation + "?depth=1"); //$NON-NLS-1$
+				child.put(ProtocolConstants.KEY_ID, project.getId());
 				children.put(child);
 			} catch (JSONException e) {
 				//ignore malformed children
@@ -221,7 +222,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		//make sure required fields are set
 		JSONObject data = OrionServlet.readJSONRequest(request);
 		if (!data.isNull("Remove")) //$NON-NLS-1$
-			return handleRemoveProject(request, response, workspace, data);
+			return handleRemoveProject(request, response, workspace);
 		int options = getCreateOptions(request);
 		if ((options & (CREATE_COPY | CREATE_MOVE)) != 0)
 			return handleCopyMoveProject(request, response, workspace, data);
@@ -402,13 +403,12 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		return false;
 	}
 
-	private boolean handleRemoveProject(HttpServletRequest request, HttpServletResponse response, WebWorkspace workspace, JSONObject data) throws IOException, JSONException, ServletException {
-		//make sure required fields are set
-		JSONObject toRemove = data;
-
-		// project Id should be the last URL segment
-		String[] s = toRemove.getString("ProjectURL").split("/"); //$NON-NLS-1$ //$NON-NLS-2$
-		String projectId = s[s.length - 1];
+	private boolean handleRemoveProject(HttpServletRequest request, HttpServletResponse response, WebWorkspace workspace) throws IOException, JSONException, ServletException {
+		IPath path = new Path(request.getPathInfo());
+		//format is /workspaceId/project/<projectId>
+		if (path.segmentCount() != 3)
+			return false;
+		String projectId = path.segment(2);
 		if (!WebProject.exists(projectId)) {
 			//nothing to do
 			return true;
@@ -464,6 +464,9 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 					return handlePutWorkspaceMetadata(request, response, workspace);
 				case POST :
 					return handleAddOrRemoveProject(request, response, workspace);
+				case DELETE :
+					//TBD could also handle deleting the workspace itself
+					return handleRemoveProject(request, response, workspace);
 			}
 		} catch (IOException e) {
 			String msg = NLS.bind("Error handling request against workspace {0}", workspace.getId());

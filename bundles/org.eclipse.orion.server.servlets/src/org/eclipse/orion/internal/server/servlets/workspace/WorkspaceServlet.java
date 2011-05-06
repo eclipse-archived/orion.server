@@ -76,12 +76,26 @@ public class WorkspaceServlet extends OrionServlet {
 			WebWorkspace workspace = WebWorkspace.fromId(path.segment(0));
 			if (workspaceResourceHandler.handleRequest(req, resp, workspace))
 				return;
-		} else if (path.segmentCount() == 2) {
-			WebProject project = WebProject.fromId(path.segment(1));
+		} else if (path.segmentCount() == 3) {
+			//path format is /<wsId>/project/<projectId>
+			WebProject project = WebProject.fromId(path.segment(2));
 			if (projectResourceHandler.handleRequest(req, resp, project))
 				return;
 		}
 		super.doGet(req, resp);
+	}
+
+	@Override
+	protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		traceRequest(req);
+		String pathString = req.getPathInfo();
+		IPath path = new Path(pathString == null ? "" : pathString); //$NON-NLS-1$
+		if (path.segmentCount() > 0) {
+			WebWorkspace workspace = WebWorkspace.fromId(path.segment(0));
+			if (workspaceResourceHandler.handleRequest(req, resp, workspace))
+				return;
+		}
+		super.doDelete(req, resp);
 	}
 
 	/**
