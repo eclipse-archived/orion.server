@@ -185,7 +185,8 @@ public class BasicUsersTest extends UsersTest {
 		//		params.put("email", "test@test_" + System.currentTimeMillis());
 		//		params.put("workspace", "workspace_" + System.currentTimeMillis());
 		params.put("roles", "admin");
-		params.put("password", "pass_" + System.currentTimeMillis());
+		String oldPass = "pass_" + System.currentTimeMillis();
+		params.put("password", oldPass);
 		WebRequest request = getPostUsersRequest("", params, true);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
@@ -193,6 +194,7 @@ public class BasicUsersTest extends UsersTest {
 		// update user
 		JSONObject updateBody = new JSONObject();
 		updateBody.put("Name", "usernameUpdate_" + System.currentTimeMillis());
+		updateBody.put("oldPassword", oldPass);
 		updateBody.put("password", "passUpdate_" + System.currentTimeMillis());
 		updateBody.put("roles", "");
 
