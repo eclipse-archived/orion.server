@@ -30,8 +30,8 @@ public class WebProjectResourceHandler extends WebElementResourceHandler<WebProj
 	public static JSONObject toJSON(WebProject project, URI parentLocation) {
 		JSONObject result = WebElementResourceHandler.toJSON(project);
 		try {
-			result.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(parentLocation, project.getId()));
-			URI base = parentLocation.resolve("");
+			result.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(parentLocation, "project/" + project.getId())); //$NON-NLS-1$
+			URI base = parentLocation.resolve(""); //$NON-NLS-1$
 			result.put(ProtocolConstants.KEY_CONTENT_LOCATION, WorkspaceResourceHandler.computeProjectContentLocation(base, project));
 		} catch (JSONException e) {
 			//can't happen because key and value are well-formed
