@@ -325,31 +325,26 @@ public class GitMergeTest extends GitTest {
 		MergeStatus mergeResult = MergeStatus.valueOf(merge.getString(GitConstants.KEY_RESULT));
 		assertEquals(MergeStatus.CONFLICTING, mergeResult);
 
-		// assert clean
+		// check status
 		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		statusResponse = new JSONObject(response.getText());
 		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
-		assertEquals(1, statusArray.length());
-		assertNotNull(GitStatusTest.getChildByName(statusArray, "test.txt"));
-		assertNotNull(GitStatusTest.getChildByKey(statusArray, GitConstants.KEY_PATH, "test.txt"));
+		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
-		assertEquals(1, statusArray.length());
-		assertNotNull(GitStatusTest.getChildByName(statusArray, "test.txt"));
-		assertNotNull(GitStatusTest.getChildByKey(statusArray, GitConstants.KEY_PATH, "test.txt"));
+		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
-		assertEquals(1, statusArray.length());
-		assertNotNull(GitStatusTest.getChildByName(statusArray, "test.txt"));
-		assertNotNull(GitStatusTest.getChildByKey(statusArray, GitConstants.KEY_PATH, "test.txt"));
+		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-		assertEquals(1, statusArray.length());
-		assertNotNull(GitStatusTest.getChildByName(statusArray, "test.txt"));
-		assertNotNull(GitStatusTest.getChildByKey(statusArray, GitConstants.KEY_PATH, "test.txt"));
+		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
 		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
 		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CONFLICTING);
+		assertEquals(1, statusArray.length());
+		assertNotNull(GitStatusTest.getChildByName(statusArray, "test.txt"));
 
 		// TODO: don't create URIs out of thin air
 		request = getGetFilesRequest(projectId + "/test.txt");

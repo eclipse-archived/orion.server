@@ -21,14 +21,16 @@ import java.net.*;
 import java.util.*;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
 import org.eclipse.orion.internal.server.servlets.workspace.WorkspaceServlet;
 import org.eclipse.orion.server.core.users.OrionScope;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
+import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
 import org.json.*;
 import org.junit.*;
+import org.junit.Assert;
 import org.junit.Test;
 import org.osgi.service.prefs.BackingStoreException;
 import org.xml.sax.SAXException;
@@ -130,10 +132,13 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
 
-		//ensure project location  workspace location + project id
+		//ensure project location = <workspace location>/project/<projectId>
 		URI projectLocation = new URI(locationHeader);
 		URI relative = workspaceLocation.relativize(projectLocation);
-		assertEquals(projectId, relative.getPath());
+		IPath projectPath = new Path(relative.getPath());
+		assertEquals(2, projectPath.segmentCount());
+		assertEquals("project", projectPath.segment(0));
+		assertEquals(projectId, projectPath.segment(1));
 
 		//ensure project appears in the workspace metadata
 		request = new GetMethodWebRequest(workspaceLocation.toString());
@@ -442,22 +447,15 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		String projectLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 
 		//delete project
-		JSONObject data = new JSONObject();
-		data.put("Remove", "true");
-		data.put("ProjectURL", projectLocation);
-		request = new PostMethodWebRequest(workspaceLocation.toString(), new ByteArrayInputStream(data.toString().getBytes()), "UTF8");
+		request = new DeleteMethodWebRequest(projectLocation);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		//deleting again should be safe (DELETE is idempotent)
-		request = new PostMethodWebRequest(workspaceLocation.toString(), new ByteArrayInputStream(data.toString().getBytes()), "UTF8");
-		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		setAuthentication(request);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
 	}
 
 	@Test

@@ -354,5 +354,12 @@
 		<updateTestResult testFile="Performance-testResults.html" token="@PERFORMANCE@"/>
 		<updateTestResult testFile="org.eclipse.orion.server.tests.AllServerTests.html" token="@SERVER-TESTS@"/>
 		<updateTestResult testFile="org.eclipse.orion.server.tests.performance.AllPerformanceTests.html" token="@JUNIT_PERF_BASELINE@"/>
+		
+		<available file="${base}/logs/current.log" property="logExists" />
+		<antcall target="copyLog" />
+	</target>
+	
+	<target name="copyLog" if="logExists" >
+		<copy file="${base}/logs/current.log" tofile="${dropLocation}/buildLog-${buildLabel}.txt" />
 	</target>
 </project>
