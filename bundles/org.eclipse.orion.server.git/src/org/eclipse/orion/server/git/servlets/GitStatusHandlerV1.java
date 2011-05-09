@@ -75,6 +75,8 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 			result.put(GitConstants.KEY_STATUS_REMOVED, children);
 			children = toJSONArray(diff.getUntracked(), basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
 			result.put(GitConstants.KEY_STATUS_UNTRACKED, children);
+			children = toJSONArray(diff.getConflicting(), basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
+			result.put(GitConstants.KEY_STATUS_CONFLICTING, children);
 
 			result.put(GitConstants.KEY_INDEX, statusToIndexLocation(baseLocation));
 			result.put(GitConstants.KEY_COMMIT, statusToCommitLocation(baseLocation, Constants.HEAD));

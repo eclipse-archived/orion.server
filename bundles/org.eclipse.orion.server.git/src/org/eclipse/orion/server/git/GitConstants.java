@@ -81,6 +81,8 @@ public class GitConstants {
 
 	public static final String KEY_STATUS_UNTRACKED = "Untracked"; //$NON-NLS-1$
 
+	public static final String KEY_STATUS_CONFLICTING = "Conflicting"; //$NON-NLS-1$
+
 	public static final String KEY_RESET_TYPE = "Reset"; //$NON-NLS-1$
 
 	public static final String KEY_DIFF_DEFAULT = "Default"; //$NON-NLS-1$

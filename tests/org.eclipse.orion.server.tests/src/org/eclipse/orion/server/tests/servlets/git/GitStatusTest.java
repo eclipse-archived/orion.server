@@ -784,25 +784,20 @@ public class GitStatusTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject statusResponse = new JSONObject(response.getText());
 		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
-		assertEquals(1, statusArray.length());
-		assertNotNull(getChildByName(statusArray, "test.txt"));
-		assertNotNull(getChildByKey(statusArray, GitConstants.KEY_PATH, "test.txt"));
+		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
-		assertEquals(1, statusArray.length());
-		assertNotNull(getChildByName(statusArray, "test.txt"));
-		assertNotNull(getChildByKey(statusArray, GitConstants.KEY_PATH, "test.txt"));
+		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
-		assertEquals(1, statusArray.length());
-		assertNotNull(getChildByName(statusArray, "test.txt"));
-		assertNotNull(getChildByKey(statusArray, GitConstants.KEY_PATH, "test.txt"));
+		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-		assertEquals(1, statusArray.length());
-		assertNotNull(getChildByName(statusArray, "test.txt"));
-		assertNotNull(getChildByKey(statusArray, GitConstants.KEY_PATH, "test.txt"));
+		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
 		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
 		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CONFLICTING);
+		assertEquals(1, statusArray.length());
+		assertNotNull(getChildByName(statusArray, "test.txt"));
 	}
 
 	@Test
@@ -1010,6 +1005,8 @@ public class GitStatusTest extends GitTest {
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
 		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CONFLICTING);
 		assertEquals(0, statusArray.length());
 	}
 
