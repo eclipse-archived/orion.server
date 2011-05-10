@@ -4,9 +4,10 @@
 <!-- Define topics for the Reference -->
 <!-- ========================== -->
 <toc label="Reference">
-
-	<topic label="REST API" href="reference/restapi/index.html">
-		<topic label="Search API" href="reference/restapi/search.html"></topic>
+	<topic label="Server API">
+		<link toc="Orion-Server-API-toc.xml" />
+		<topic label = "Server File API">
+			<link toc="Orion-Server-API-File-API-toc.xml" />
+		</topic>
 	</topic>
-
 </toc>

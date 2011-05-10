@@ -1,0 +1,167 @@
+<?xml version='1.0' encoding='utf-8' ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<title>Server File API - JSON representations</title>
+		<link type="text/css" rel="stylesheet" href="../../../book.css"/>
+	</head>
+	<body>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<th style="width: 100%" align="center" colspan="3">JSON representations</th>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="File-API.html" title="Server File API">
+						<img alt="Previous" border="0" src="../../../images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right">
+					<a href="References.html" title="References">
+						<img alt="Next" border="0" src="../../../images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">Server File API</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">References</td>
+			</tr>
+		</table><hr/>
+		<h1 id="JSON_representations">JSON representations</h1>
+		<h2 id="File">File</h2>
+		<p>The file API uses the following JSON representation for file and directory objects in request and response bodies. Required fields are shown in 
+			<b>bold</b>. A client cannot rely on the existence of non-required attribute in a file representation from a given Orion server.
+		</p>
+		<table style="text-align: center; width:90%" border="1">
+			<tr style="background:#ccccff; padding: 0 5px 0 5px;" align="center">
+				<th>Field</th>
+				<th>Data type</th>
+				<th>Value</th>
+			</tr>
+			<tr>
+				<td>
+					<b>Name</b>
+				</td>
+				<td>String</td>
+				<td>String file name</td>
+			</tr>
+			<tr>
+				<td>
+					<b>Directory</b>
+				</td>
+				<td>Boolean</td>
+				<td>"true" for a directory and "false" for a file</td>
+			</tr>
+			<tr>
+				<td>ETag</td>
+				<td>String</td>
+				<td>Opaque token representing a unique state of this file or directory</td>
+			</tr>
+			<tr>
+				<td>LocalTimeStamp</td>
+				<td>long</td>
+				<td>last modified time in milliseconds since January 1, 1970</td>
+			</tr>
+			<tr>
+				<td>Attributes</td>
+				<td>Object</td>
+				<td>The file's permission attributes (see 
+					<a href="JSON-representations.html#File_Attributes">File Attributes</a>)
+				</td>
+			</tr>
+			<tr>
+				<td>Children</td>
+				<td>Array of Object</td>
+				<td>The children of a directory (see 
+					<a href="JSON-representations.html#File_Children">File Children</a>)
+				</td>
+			</tr>
+			<tr>
+				<td>Parents</td>
+				<td>Array of Object</td>
+				<td>The parents of a file or directory (see 
+					<a href="JSON-representations.html#File_Parents">File Parents</a>)
+				</td>
+			</tr>
+			<tr>
+				<td>Charset</td>
+				<td>String</td>
+				<td>file character set (method used to convert the file bytes into characters)</td>
+			</tr>
+			<tr>
+				<td>ContentType</td>
+				<td>String</td>
+				<td>MIME content type</td>
+			</tr>
+			<tr>
+				<td>ContentLength</td>
+				<td>long</td>
+				<td>The length of the file in bytes</td>
+			</tr>
+		</table>
+		<h2 id="File_Attributes">File Attributes</h2>
+		<p>If present, the Attributes object within the JSON representation of the file may support the following values:</p>
+		<table style="text-align: center; width:90%" border="1">
+			<tr style="background:#ccccff; padding: 0 5px 0 5px;" align="center">
+				<th>Field</th>
+				<th>Data type</th>
+				<th>Value</th>
+			</tr>
+			<tr>
+				<td>ReadOnly</td>
+				<td>boolean</td>
+				<td>Whether the file is modifiable</td>
+			</tr>
+			<tr>
+				<td>Executable</td>
+				<td>boolean</td>
+				<td>Whether the file is executable</td>
+			</tr>
+			<tr>
+				<td>Hidden</td>
+				<td>boolean</td>
+				<td>Whether the file is hidden</td>
+			</tr>
+			<tr>
+				<td>Archive</td>
+				<td>boolean</td>
+				<td>Whether the file has the archive bit set</td>
+			</tr>
+			<tr>
+				<td>SymbolicLink</td>
+				<td>boolean</td>
+				<td>Whether the file is a symbolic link</td>
+			</tr>
+		</table>
+		<h2 id="File_Children">File Children</h2>
+		<p>JSON representations of files (directories) may include a Children attribute. The value of this attribute is an array of file objects, one for each child of the directory. Those children may in turn include Children attributes for listing their own children. In this way, a JSON file representation may represent an entire file system sub-tree.</p>
+		<h2 id="File_Parents">File Parents</h2>
+		<p>JSON representations of files may include a Parents attribute. The value of this attribute is an array of file objects, one for each parent. The array is ordered so that the first element is the immediate parent, the second entry is the grandparent, etc. Note that it is not possible in all cases to accurately represent the parents of a file. For example the target of a symbolic link may be seen to have multiple direct parents. The purpose of the Parents attribute is to allow for logical navigation (such as a ".." link to a file's parent), rather than providing a canonical physical description of the file hierarchy. For example, deleting the parent of a file is not guaranteed to delete the file, due to the possibility of other parents of that file continuing to exist.</p><hr/>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="File-API.html" title="Server File API">
+						<img alt="Previous" border="0" src="../../../images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center">
+					<a href="File-API.html" title="Server File API">
+						<img alt="Server File API" border="0" src="../../../images/home.gif"/>
+					</a>
+				</td>
+				<td style="width: 20%" align="right">
+					<a href="References.html" title="References">
+						<img alt="Next" border="0" src="../../../images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">Server File API</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">References</td>
+			</tr>
+		</table>
+	</body>
+</html>

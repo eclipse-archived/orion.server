@@ -4,6 +4,9 @@
 <!-- Define topics for the Programmer's Guide -->
 <!-- ========================== -->
 <toc label="Programmer's Guide">
+	<topic label="Welcome to Orion" href="guide/welcome.html">
+		<link toc="Orion-Project-mission-statement-toc.xml" />
+	</topic>
    <topic label="Orion architecture" href="guide/architecture.html">
    </topic>
 </toc>

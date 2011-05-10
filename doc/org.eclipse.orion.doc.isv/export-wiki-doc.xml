@@ -12,11 +12,11 @@
 
 <project name="org.eclipse.orion.doc.user" default="all">
     <description>
-            Generate Eclipse help content for the Orion user guide
+            Generate Eclipse help content for the Orion ISV guide
     </description>
 
 	<property name="mylyn.help.doc.url.base" value="http://wiki.eclipse.org"/>
-	<property name="orion.user.guide" value="Orion/Documentation/User_Guide"/>
+	<property name="orion.user.guide" value="Orion"/>
 	<property name="mylyn.wiki.url.base" value="${mylyn.help.doc.url.base}/${orion.user.guide}"/>
 	<property name="imageFolder" value="images"/>
 
@@ -34,10 +34,6 @@
 		<pathelement path="${wikitext.tasks.classpath.path}"/>
 	</path>
 	
-	<target name="init">
-		<mkdir dir="tmp"/>
-	</target>
-	
 	<target name="clean" depends="init">
 		<delete includeemptydirs="true" failonerror="false">
 			<fileset dir="tmp"/>
@@ -45,19 +41,25 @@
 		</delete>
 	</target>
 
-    <target name="all" depends="clean, init" description="Generate Eclipse help content for the Orion user guide">
+	<target name="init">
+		<mkdir dir="tmp"/>
+	</target>
+
+    <target name="all" depends="clean, init" description="Generate Eclipse help content for the Orion ISV guide">
 		
     	<mediawiki-to-eclipse-help
     		wikiBaseUrl="${mylyn.help.doc.url.base}"
 			validate="true"
 			failonvalidationerror="true"
 			prependImagePrefix="${imageFolder}"
-			formatOutput="true"
+			formatoutput="true"
 			defaultAbsoluteLinkTarget="orion_external"
     		dest="${basedir}"
     		title="Orion"
     		generateUnifiedToc="false">
-    		<path name="${orion.user.guide}/Getting started" title="Getting started" generateToc="true"/>
+    		<path name="Orion/Project_mission_statement" title="Welcome to Orion" generateToc="true"/>
+    		<path name="Orion/Server_API" title="Server API" generateToc="true"/>
+    		<path name="Orion/Server_API/File_API" title="Server File API" generateToc="true"/>
 			<stylesheet url="book.css"/>
     		<pageAppendum>
 
