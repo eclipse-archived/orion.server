@@ -13,6 +13,12 @@
          </run>
       </application>
    </extension>
+    <extension id="org.eclipse.orion.product" point="org.eclipse.core.runtime.products"> 
+      <product name="%productName" application="org.eclipse.orion.application" description="%productBlurb"> 
+          <property name="appName" value="Orion"/> 
+          <property name="preferenceCustomization" value="plugin_customization.ini"/>
+      </product> 
+    </extension> 
    <extension
          point="org.eclipse.equinox.http.registry.servlets">
       <servlet
