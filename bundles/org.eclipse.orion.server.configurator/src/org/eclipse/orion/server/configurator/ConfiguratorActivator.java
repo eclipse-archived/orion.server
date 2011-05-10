@@ -124,6 +124,9 @@ public class ConfiguratorActivator implements BundleActivator {
 			properties.put(JettyConstants.HTTP_PORT, new Integer(preferences.get(HTTP_PORT, System.getProperty("org.eclipse.equinox.http.jetty.http.port", "8080")))); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 
+		//properties for help system
+		properties.put("other.info", "org.eclipse.help"); //$NON-NLS-1$ //$NON-NLS-2$ 
+
 		JettyConfigurator.startServer("MasterJetty", properties); //$NON-NLS-1$
 	}
 
