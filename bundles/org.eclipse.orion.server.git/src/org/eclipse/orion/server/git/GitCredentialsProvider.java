@@ -10,8 +10,9 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git;
 
-import org.eclipse.jgit.transport.URIish;
-import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import java.util.Locale;
+import org.eclipse.jgit.errors.UnsupportedCredentialItem;
+import org.eclipse.jgit.transport.*;
 
 public class GitCredentialsProvider extends UsernamePasswordCredentialsProvider {
 
@@ -61,5 +62,25 @@ public class GitCredentialsProvider extends UsernamePasswordCredentialsProvider 
 
 	public void setPassphrase(byte[] passphrase) {
 		this.passphrase = passphrase;
+	}
+
+	@Override
+	public boolean get(URIish uri, CredentialItem... items) throws UnsupportedCredentialItem {
+		for (CredentialItem item : items) {
+			if (super.supports(item)) {
+				super.get(uri, item);
+			} else if (item instanceof CredentialItem.StringType) {
+				if (item.getPromptText().toLowerCase(Locale.ENGLISH).contains("passphrase") && passphrase != null && passphrase.length > 0) {
+					((CredentialItem.StringType) item).setValue(new String(passphrase));
+				} else {
+					((CredentialItem.StringType) item).setValue("");
+				}
+			} else if (item instanceof CredentialItem.CharArrayType) {
+				((CredentialItem.CharArrayType) item).setValue(new char[0]);
+			} else {
+				throw new UnsupportedCredentialItem(uri, item.getPromptText());
+			}
+		}
+		return true; //we assume that user provided all credentials that are needed
 	}
 }

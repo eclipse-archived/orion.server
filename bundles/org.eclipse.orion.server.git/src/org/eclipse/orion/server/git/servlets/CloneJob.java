@@ -10,12 +10,10 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
-import com.jcraft.jsch.JSchException;
 import java.io.File;
 import java.io.IOException;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
-import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.JGitInternalException;
@@ -27,7 +25,6 @@ import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.jsch.HostFingerprintException;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
 import org.eclipse.orion.server.useradmin.UserServiceHelper;
@@ -38,7 +35,7 @@ import org.osgi.framework.ServiceReference;
 /**
  * A job to perform a clone operation in the background
  */
-public class CloneJob extends Job {
+public class CloneJob extends GitJob {
 
 	private final WebClone clone;
 	private final CredentialsProvider credentials;
@@ -86,12 +83,7 @@ public class CloneJob extends Job {
 		} catch (CoreException e) {
 			return e.getStatus();
 		} catch (JGitInternalException e) {
-			JSchException jschEx = getJSchException(e);
-			if (jschEx != null && jschEx instanceof HostFingerprintException) {
-				HostFingerprintException cause = (HostFingerprintException) jschEx;
-				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, cause.getMessage(), cause.formJson(), cause);
-			}
-			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "An internal git error cloning git remote", e);
+			return getJGitInternalExceptionStatus(e, "An internal git error cloning git remote");
 		} catch (Exception e) {
 			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error cloning git repository", e);
 		}
@@ -170,16 +162,6 @@ public class CloneJob extends Job {
 
 	private void updateTask() {
 		getTaskService().updateTask(task);
-	}
-
-	private static JSchException getJSchException(Throwable e) {
-		if (e instanceof JSchException) {
-			return (JSchException) e;
-		}
-		if (e.getCause() != null) {
-			return getJSchException(e.getCause());
-		}
-		return null;
 	}
 
 }
