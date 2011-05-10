@@ -16,6 +16,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map.Entry;
 import javax.servlet.http.HttpServletRequest;
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
@@ -159,25 +161,23 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		String scm = preferences.get("orion.project.defaultSCM", "").toLowerCase(); //$NON-NLS-1$ //$NON-NLS-2$
 		if (!"git".equals(scm)) //$NON-NLS-1$
 			return;
-		URI location = WebProject.fromId(representation.optString("Id")).getContentLocation();
-		//TODO support relative locations
-		if (!location.isAbsolute())
-			return;
-		//create repository in each project if it doesn't already exist
-		File gitDir = GitUtils.getGitDirForFile(new File(location));
-		if (gitDir == null) {
-			gitDir = new File(new File(location), Constants.DOT_GIT);
-			FileRepository repo = new FileRepositoryBuilder().setGitDir(gitDir).build();
-			repo.create();
-			//we need to perform an initial commit to workaround JGit bug 339610.
-			Git git = new Git(repo);
-			try {
+		try {
+			IFileStore store = WebProject.fromId(representation.optString("Id")).getProjectStore();
+			//create repository in each project if it doesn't already exist
+			File localFile = store.toLocalFile(EFS.NONE, null);
+			File gitDir = GitUtils.getGitDirForFile(localFile);
+			if (gitDir == null) {
+				gitDir = new File(localFile, Constants.DOT_GIT);
+				FileRepository repo = new FileRepositoryBuilder().setGitDir(gitDir).build();
+				repo.create();
+				//we need to perform an initial commit to workaround JGit bug 339610.
+				Git git = new Git(repo);
 				git.add().addFilepattern(".").call();
 				git.commit().setMessage("Initial commit").call();
-			} catch (Exception e) {
-				//just log it - this is not the purpose of the file decorator
-				LogHelper.log(e);
 			}
+		} catch (Exception e) {
+			//just log it - this is not the purpose of the file decorator
+			LogHelper.log(e);
 		}
 	}
 }
