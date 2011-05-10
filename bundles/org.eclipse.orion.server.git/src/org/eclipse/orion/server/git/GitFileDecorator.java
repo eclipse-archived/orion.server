@@ -19,8 +19,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.InstanceScope;
+import org.eclipse.core.runtime.preferences.IPreferencesService;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileRepository;
@@ -157,8 +156,8 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		//project creation URL is of the form POST /workspace/<id>
 		if (!(targetPath.segmentCount() == 2 && "workspace".equals(targetPath.segment(0)) && "POST".equals(request.getMethod()))) //$NON-NLS-1$ //$NON-NLS-2$
 			return;
-		IEclipsePreferences preferences = InstanceScope.INSTANCE.getNode("org.eclipse.orion.server.configurator"); //$NON-NLS-1$
-		String scm = preferences.get("orion.project.defaultSCM", "").toLowerCase(); //$NON-NLS-1$ //$NON-NLS-2$
+		IPreferencesService preferences = GitActivator.getDefault().getPreferenceService();
+		String scm = preferences.getString("org.eclipse.orion.server.configurator", "orion.project.defaultSCM", "", null).toLowerCase(); //$NON-NLS-1$ //$NON-NLS-2$
 		if (!"git".equals(scm)) //$NON-NLS-1$
 			return;
 		try {
