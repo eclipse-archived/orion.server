@@ -44,7 +44,7 @@ public abstract class GitJob extends Job {
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, cause.getMessage(), cause.formJson(), cause);
 		}
 		//JSch handles auth fail by exception message
-		if (jschEx.getMessage() != null && jschEx.getMessage().toLowerCase(Locale.ENGLISH).contains("auth fail")) {
+		if (jschEx != null && jschEx.getMessage() != null && jschEx.getMessage().toLowerCase(Locale.ENGLISH).contains("auth fail")) {
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_UNAUTHORIZED, jschEx.getMessage(), null, jschEx);
 		}
 		return new Status(IStatus.ERROR, GitActivator.PI_GIT, message, e);
