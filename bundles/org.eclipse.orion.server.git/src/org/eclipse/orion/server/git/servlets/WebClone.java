@@ -30,7 +30,7 @@ import org.osgi.service.prefs.BackingStoreException;
  */
 public class WebClone extends WebElement {
 	public static final String CLONE_NODE_NAME = "Clones"; //$NON-NLS-1$
-	private static final Base64Counter cloneCounter = new Base64Counter("a"); //$NON-NLS-1$
+	private static final Base64Counter cloneCounter = new Base64Counter();
 
 	/**
 	 * Creates a clone instance with the given globally unique id. The clone may
@@ -59,7 +59,7 @@ public class WebClone extends WebElement {
 			do {
 				candidate = cloneCounter.toString();
 				cloneCounter.increment();
-			} while (exists(candidate));
+			} while (exists(candidate) || (!caseSensitive && containsUpperCase(candidate)));
 			return candidate;
 		}
 	}

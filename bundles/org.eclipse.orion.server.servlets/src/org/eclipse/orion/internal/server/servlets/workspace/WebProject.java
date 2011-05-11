@@ -54,7 +54,7 @@ public class WebProject extends WebElement {
 			do {
 				candidate = projectCounter.toString();
 				projectCounter.increment();
-			} while (exists(candidate));
+			} while (exists(candidate) || (!caseSensitive && containsUpperCase(candidate)));
 			return candidate;
 		}
 	}
