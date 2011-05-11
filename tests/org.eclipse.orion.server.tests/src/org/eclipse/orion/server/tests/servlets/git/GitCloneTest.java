@@ -30,8 +30,7 @@ import java.util.List;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.URIUtil;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.InstanceScope;
+import org.eclipse.core.runtime.preferences.IPreferencesService;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.api.PullResult;
@@ -46,9 +45,9 @@ import org.eclipse.jgit.lib.RepositoryCache;
 import org.eclipse.jgit.lib.RepositoryState;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
-import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
+import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.json.JSONArray;
@@ -126,6 +125,7 @@ public class GitCloneTest extends GitTest {
 	@Test
 	public void testCloneNotGitRepository() throws IOException, SAXException, JSONException {
 
+		// TODO: workaround for bug 340553
 		// remember number of clone directories
 		String userArea = System.getProperty("org.eclipse.orion.server.core.userArea");
 		IPath path = new Path(userArea).append("test").append(GitConstants.CLONE_FOLDER);
@@ -251,10 +251,9 @@ public class GitCloneTest extends GitTest {
 
 	@Test
 	public void testLinkToFolderWithDefaultSCM() throws IOException, SAXException, JSONException {
-		IEclipsePreferences preferences = InstanceScope.INSTANCE.getNode("org.eclipse.orion.server.configurator");
-		preferences.put("orion.project.defaultSCM", "git");
-		// XXX: see org.eclipse.orion.internal.server.servlets.workspace.WorkspaceResourceHandler.generateProjectLocation(WebProject, String)
-		preferences.put(Activator.PROP_FILE_LAYOUT, "usertree");
+		IPreferencesService preferences = GitActivator.getDefault().getPreferenceService();
+		String scm = preferences.getString("org.eclipse.orion.server.configurator", "orion.project.defaultSCM", "", null).toLowerCase(); //$NON-NLS-1$ //$NON-NLS-2$
+		Assume.assumeTrue("git".equals(scm)); //$NON-NLS-1$
 
 		String contentLocation = new File(gitDir, "folder").getAbsolutePath();
 
@@ -274,13 +273,9 @@ public class GitCloneTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));
-		String[] expectedChildren = new String[] {"folder.txt"};
+		String[] expectedChildren = new String[] {"folder.txt"}; // no .git even though auto-git is on
 		assertEquals("Wrong number of directory children", expectedChildren.length, children.size());
 		assertEquals(expectedChildren[0], children.get(0).getString(ProtocolConstants.KEY_NAME));
-
-		// TODO: clean up, should be done in finally block
-		preferences.remove("orion.project.defaultSCM");
-		preferences.remove(Activator.PROP_FILE_LAYOUT);
 	}
 
 	@BeforeClass
