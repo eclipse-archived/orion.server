@@ -265,21 +265,20 @@ function confirmCreateUser() {
 			return response;
 		},
 		error : function(response, ioArgs) {
-			if (ioArgs.xhr.responseText) {
-
-				var tempDiv = document.createElement('div');
-				tempDiv.innerHTML = ioArgs.xhr.responseText;
-				tempDiv.childNodes;
-				var error = tempDiv.getElementsByTagName("title")[0];
-				if(error)
-					login(error.text);
-				else
-					login("User could not be created.");
-				showCreateUser();
-			} else {
-				login("User could not be created.");
-				showCreateUser();
-			}
+			if (response.responseText) {
+				
+				try {
+					if (JSON.parse(response.responseText).Message) {
+						login(JSON.parse(response.responseText).Message);
+						showCreateUser();
+						return response;
+					}
+				} catch (e) {
+				}
+			} 
+			login("User could not be created.");
+			showCreateUser();
+			
 			return response;
 		}
 	});
