@@ -201,7 +201,7 @@
 		<!-- js tests need dojo & open ajax extracted -->
 		<mkdir dir="${buildDirectory}/plugins/org.dojotoolkit" />
 		<unzip dest="${buildDirectory}/plugins/org.dojotoolkit">
-			<fileset dir="${buildDirectory}/buildRepo/plugins" includes="org.dojotoolkit_1.5.0.*.jar" />
+			<fileset dir="${buildDirectory}/buildRepo/plugins" includes="org.dojotoolkit_*.jar" />
 		</unzip>
 		<mkdir dir="${buildDirectory}/plugins/org.openajax" />
 		<unzip dest="${buildDirectory}/plugins/org.openajax">
