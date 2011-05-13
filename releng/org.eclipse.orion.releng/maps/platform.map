@@ -64,5 +64,6 @@ plugin@org.eclipse.help.base=p2IU,id=org.eclipse.help.base,repository=ECLIPSE_PL
 plugin@org.eclipse.help=p2IU,id=org.eclipse.help,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.help.webapp=p2IU,id=org.eclipse.help.webapp,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.apache.jasper=p2IU,id=org.apache.jasper,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.equinox.jsp.jasper.registry=p2IU,id=org.eclipse.equinox.jsp.jasper.registry,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.equinox.jsp.jasper=p2IU,id=org.eclipse.equinox.jsp.jasper,repository=ECLIPSE_PLATFORM_REPO
 plugin@com.ibm.icu=p2IU,id=com.ibm.icu,repository=ECLIPSE_PLATFORM_REPO
