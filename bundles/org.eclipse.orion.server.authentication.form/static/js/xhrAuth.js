@@ -67,6 +67,10 @@ function closeLoginWindow() {
 }
 
 function confirmLogin() {
+	if(dojo.byId("login").value===""){
+		login("You must provide a user name and password.");
+		return;
+	}
 	/* don't wait for the login response, notify anyway */
 	notify = true;
 	dojo
@@ -216,6 +220,11 @@ function confirmCreateUser() {
 	var userPassword = dojo.byId("create_password").value;
 	var userPasswordRetype = dojo.byId("create_passwordRetype").value;
 	var userStore = dojo.byId("create_store").value;
+	if(userLogin===""){
+		login("You must provide a user name.");
+		showCreateUser();
+		return;
+	}
 	if (userPassword !== userPasswordRetype) {
 		login("Passwords do not match.");
 		showCreateUser();

@@ -11,12 +11,16 @@
 package org.eclipse.orion.server.git.servlets;
 
 import com.jcraft.jsch.JSchException;
+import java.text.MessageFormat;
 import java.util.Locale;
+import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jgit.JGitText;
 import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.errors.TransportException;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.jsch.HostFingerprintException;
@@ -47,11 +51,54 @@ public abstract class GitJob extends Job {
 		if (jschEx != null && jschEx.getMessage() != null && jschEx.getMessage().toLowerCase(Locale.ENGLISH).contains("auth fail")) {
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_UNAUTHORIZED, jschEx.getMessage(), null, jschEx);
 		}
-		return new Status(IStatus.ERROR, GitActivator.PI_GIT, message, e);
+
+		//Log connection problems directly
+		if (e.getCause() instanceof TransportException) {
+			TransportException cause = (TransportException) e.getCause();
+			if (matchMessage(JGitText.get().serviceNotPermitted, cause.getMessage())) {
+				//Http connection problems are distinguished by exception message
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, cause.getMessage(), null, cause);
+			} else if (matchMessage(JGitText.get().notAuthorized, cause.getMessage())) {
+				//Http connection problems are distinguished by exception message
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_UNAUTHORIZED, cause.getMessage(), null, cause);
+			} else {
+				//Other http connection problems reported directly
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, cause.getMessage() == null ? message : cause.getMessage(), null, cause);
+			}
+
+		}
+
+		return new Status(IStatus.ERROR, GitActivator.PI_GIT, message, e.getCause() == null ? e : e.getCause());
 	}
 
 	public GitJob(String name) {
 		super(name);
 	}
 
+	/**
+	 * Check if message matches or contains pattern in {@link MessageFormat} format.
+	 *  
+	 * @param pattern 
+	 * @param message
+	 * @see {@link MessageFormat}
+	 * @return
+	 */
+	private static boolean matchMessage(String pattern, String message) {
+		if (message == null) {
+			return false;
+		}
+		int argsNum = 0;
+		for (int i = 0; i < pattern.length(); i++) {
+			if (pattern.charAt(i) == '{') {
+				argsNum++;
+			}
+		}
+		Object[] args = new Object[argsNum];
+		for (int i = 0; i < args.length; i++) {
+			args[i] = ".*";
+		}
+
+		return Pattern.matches(".*" + MessageFormat.format(pattern, args) + ".*", message);
+
+	}
 }

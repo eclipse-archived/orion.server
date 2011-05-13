@@ -94,7 +94,7 @@ class SFTPTransfer {
 		//Not nice that the import service knows the location of the task servlet, but task service doesn't know this either
 		URI requestLocation = ServletResourceHandler.getURI(request);
 		URI taskLocation = new URI(requestLocation.getScheme(), requestLocation.getAuthority(), "/task/id/" + task.getTaskId(), null, null); //$NON-NLS-1$
-		result.put(ProtocolConstants.KEY_LOCATION, taskLocation.toString());
+		result.put(ProtocolConstants.KEY_LOCATION, taskLocation);
 		response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation.toString());
 		OrionServlet.writeJSONResponse(request, response, result);
 		response.setStatus(HttpServletResponse.SC_CREATED);

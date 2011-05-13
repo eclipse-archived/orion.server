@@ -73,10 +73,9 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 		if (!("file".equals(service) || "workspace".equals(service))) //$NON-NLS-1$ //$NON-NLS-2$
 			return;
 		try {
-			// we can also augment with a query argument that includes the
-			// resource path
+			// we can also augment with a query argument that includes the resource path
 			URI result = new URI(resource.getScheme(), resource.getUserInfo(), resource.getHost(), resource.getPort(), "/filesearch", "q=", null); //$NON-NLS-1$//$NON-NLS-2$
-			representation.put(ProtocolConstants.KEY_SEARCH_LOCATION, result.toString());
+			representation.put(ProtocolConstants.KEY_SEARCH_LOCATION, result);
 		} catch (URISyntaxException e) {
 			LogHelper.log(e);
 		} catch (JSONException e) {
