@@ -12,6 +12,7 @@ package org.eclipse.orion.internal.server.servlets.file;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -87,7 +88,11 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 			if (location != null) {
 				result.put(ProtocolConstants.KEY_LOCATION, location);
 				if (info.isDirectory())
-					result.put(ProtocolConstants.KEY_CHILDREN_LOCATION, location + "?depth=1"); //$NON-NLS-1$
+					try {
+						result.put(ProtocolConstants.KEY_CHILDREN_LOCATION, new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), location.getPath(), "depth=1", location.getFragment()));
+					} catch (URISyntaxException e) {
+						throw new RuntimeException(e);
+					} //$NON-NLS-1$
 			}
 			result.put(ProtocolConstants.KEY_ATTRIBUTES, getAttributes(store, info));
 		} catch (JSONException e) {

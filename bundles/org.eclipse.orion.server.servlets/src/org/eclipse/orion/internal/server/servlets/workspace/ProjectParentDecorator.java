@@ -86,7 +86,12 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 		JSONObject parent = new JSONObject();
 		parent.put(ProtocolConstants.KEY_NAME, name);
 		parent.put(ProtocolConstants.KEY_LOCATION, location);
-		String childLocation = location.toString() + "?depth=1"; //$NON-NLS-1$
+		URI childLocation;
+		try {
+			childLocation = new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), location.getPath(), "depth=1", location.getFragment());
+		} catch (URISyntaxException e) {
+			throw new RuntimeException(e);
+		} //$NON-NLS-1$
 		parent.put(ProtocolConstants.KEY_CHILDREN_LOCATION, childLocation);
 		parents.put(parent);
 	}

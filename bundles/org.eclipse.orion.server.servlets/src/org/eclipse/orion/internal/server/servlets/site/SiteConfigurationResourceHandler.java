@@ -89,7 +89,7 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 	public static JSONObject toJSON(SiteConfiguration site, URI baseLocation) {
 		JSONObject result = WebElementResourceHandler.toJSON(site);
 		try {
-			result.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(baseLocation, site.getId()).toString());
+			result.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(baseLocation, site.getId()));
 			result.putOpt(SiteConfigurationConstants.KEY_HOST_HINT, site.getHostHint());
 			result.putOpt(SiteConfigurationConstants.KEY_WORKSPACE, site.getWorkspace());
 			result.put(SiteConfigurationConstants.KEY_MAPPINGS, site.getMappingsJSON());

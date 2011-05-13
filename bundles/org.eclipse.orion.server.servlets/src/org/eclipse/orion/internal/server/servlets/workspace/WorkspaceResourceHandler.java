@@ -44,7 +44,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 	/**
 	 * Returns the location of the project's content (conforming to File REST API).
 	 */
-	static String computeProjectContentLocation(URI parentLocation, WebProject project) {
+	static URI computeProjectContentLocation(URI parentLocation, WebProject project) {
 		URI contentLocation = project.getContentLocation();
 		//relative URIs (any URI with no scheme) are resolved against the location of the workspace servlet.
 		//note when relative URIs are used we must hard-code knowledge of the file servlet
@@ -53,13 +53,19 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 			//absolute file system paths are mapped via the alias registry so we just provide the project id as the alias
 			if (contentPath.isAbsolute())
 				contentPath = new Path(project.getId());
-			contentLocation = URIUtil.append(parentLocation, ".." + Activator.LOCATION_FILE_SERVLET + contentPath.makeAbsolute().toString()); //$NON-NLS-1$
+			String contentPathString = contentPath.makeAbsolute().toString();
+			if (!contentPathString.endsWith("/")) //$NON-NLS-1$
+				contentPathString += "/"; //$NON-NLS-1$
+			contentLocation = URIUtil.append(parentLocation, ".." + Activator.LOCATION_FILE_SERVLET + contentPathString); //$NON-NLS-1$
 		}
-		String locationString = contentLocation.toString();
-		//projects are directories
-		if (!locationString.endsWith("/")) //$NON-NLS-1$
-			locationString += "/"; //$NON-NLS-1$
-		return locationString;
+		if (!contentLocation.getPath().endsWith("/")) {
+			try {
+				contentLocation = new URI(contentLocation.getScheme(), contentLocation.getUserInfo(), contentLocation.getHost(), contentLocation.getPort(), contentLocation.getPath() + "/", contentLocation.getQuery(), contentLocation.getFragment());
+			} catch (URISyntaxException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		return contentLocation;
 	}
 
 	/**
@@ -88,8 +94,8 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 
 		//add basic fields to workspace result
 		try {
-			result.put(ProtocolConstants.KEY_LOCATION, workspaceLocation.toString());
-			result.put(ProtocolConstants.KEY_CHILDREN_LOCATION, workspaceLocation.toString());
+			result.put(ProtocolConstants.KEY_LOCATION, workspaceLocation);
+			result.put(ProtocolConstants.KEY_CHILDREN_LOCATION, workspaceLocation);
 			result.put(ProtocolConstants.KEY_PROJECTS, projects);
 			result.put(ProtocolConstants.KEY_DIRECTORY, "true"); //$NON-NLS-1$
 		} catch (JSONException e) {
@@ -104,9 +110,13 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 				child.put(ProtocolConstants.KEY_NAME, project.getName());
 				child.put(ProtocolConstants.KEY_DIRECTORY, true);
 				//this is the location of the project file contents
-				String contentLocation = computeProjectContentLocation(baseLocation, project);
+				URI contentLocation = computeProjectContentLocation(baseLocation, project);
 				child.put(ProtocolConstants.KEY_LOCATION, contentLocation);
-				child.put(ProtocolConstants.KEY_CHILDREN_LOCATION, contentLocation + "?depth=1"); //$NON-NLS-1$
+				try {
+					child.put(ProtocolConstants.KEY_CHILDREN_LOCATION, new URI(contentLocation.getScheme(), contentLocation.getUserInfo(), contentLocation.getHost(), contentLocation.getPort(), contentLocation.getPath(), "depth=1", contentLocation.getFragment()));
+				} catch (URISyntaxException e) {
+					throw new RuntimeException(e);
+				} //$NON-NLS-1$
 				child.put(ProtocolConstants.KEY_ID, project.getId());
 				children.put(child);
 			} catch (JSONException e) {

@@ -53,13 +53,66 @@ public abstract class OrionServlet extends HttpServlet {
 		Assert.isLegal(result instanceof JSONObject || result instanceof JSONArray);
 		resp.setStatus(HttpServletResponse.SC_OK);
 		resp.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
-		if (result instanceof JSONObject)
+		if (result instanceof JSONObject) {
 			decorateResponse(req, (JSONObject) result);
+			removeOwnProtocolHostPort((JSONObject) result, req.getScheme(), req.getServerName(), req.getServerPort());
+		}
 		//TODO look at accept header and chose appropriate response representation
 		resp.setContentType(ProtocolConstants.CONTENT_TYPE_JSON);
 		String response = prettyPrint(result);
 		resp.getWriter().print(response);
 		LoggerFactory.getLogger(OrionServlet.class).debug(response);
+	}
+
+	private static void removeOwnProtocolHostPort(JSONObject json, String scheme, String hostname, int port) {
+		String[] names = JSONObject.getNames(json);
+		for (String name : names) {
+			Object o = json.opt(name);
+			if (o instanceof URI) {
+				try {
+					json.put(name, simplified((URI) o, scheme, hostname, port));
+				} catch (JSONException e) {
+				}
+			} else {
+				removeProtocolHostPort(o, scheme, hostname, port);
+			}
+		}
+	}
+
+	private static void removeProtocolHostPort(Object o, String scheme, String hostname, int port) {
+		if (o instanceof JSONObject) {
+			removeOwnProtocolHostPort((JSONObject) o, scheme, hostname, port);
+		} else if (o instanceof JSONArray) {
+			JSONArray a = (JSONArray) o;
+			for (int i = 0; i < a.length(); i++) {
+				Object v = a.opt(i);
+				if (v instanceof URI) {
+					try {
+						a.put(i, simplified((URI) v, scheme, hostname, port));
+					} catch (JSONException e) {
+					}
+				} else {
+					removeProtocolHostPort(v, scheme, hostname, port);
+				}
+			}
+		}
+	}
+
+	private static URI simplified(Object o, String scheme, String hostname, int port) {
+		URI uri = (URI) o;
+		URI simpleURI = uri;
+		int uriPort = uri.getPort();
+		if (uriPort == -1) {
+			uriPort = 80;
+		}
+		if (scheme.equals(uri.getScheme()) && hostname.equals(uri.getHost()) && port == uriPort) {
+			try {
+				simpleURI = new URI(null, null, null, -1, uri.getPath(), uri.getQuery(), uri.getFragment());
+			} catch (URISyntaxException e) {
+				simpleURI = uri;
+			}
+		}
+		return simpleURI;
 	}
 
 	/**

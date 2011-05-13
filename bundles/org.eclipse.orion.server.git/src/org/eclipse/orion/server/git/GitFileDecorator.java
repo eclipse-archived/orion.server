@@ -102,27 +102,27 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		// add Git Diff URI
 		IPath path = new Path(GitServlet.GIT_URI + '/' + GitConstants.DIFF_RESOURCE + '/' + GitConstants.KEY_DIFF_DEFAULT).append(targetPath);
 		URI link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
-		gitSection.put(GitConstants.KEY_DIFF, link.toString());
+		gitSection.put(GitConstants.KEY_DIFF, link);
 
 		// add Git Status URI
 		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.STATUS_RESOURCE).append(targetPath);
 		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
-		gitSection.put(GitConstants.KEY_STATUS, link.toString());
+		gitSection.put(GitConstants.KEY_STATUS, link);
 
 		// add Git Index URI
 		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.INDEX_RESOURCE).append(targetPath);
 		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
-		gitSection.put(GitConstants.KEY_INDEX, link.toString());
+		gitSection.put(GitConstants.KEY_INDEX, link);
 
 		// add Git Commit URI
 		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.COMMIT_RESOURCE).append(Constants.HEAD).append(targetPath);
 		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
-		gitSection.put(GitConstants.KEY_COMMIT, link.toString());
+		gitSection.put(GitConstants.KEY_COMMIT, link);
 
 		// add Git Remote URI
 		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.REMOTE_RESOURCE).append(targetPath);
 		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
-		gitSection.put(GitConstants.KEY_REMOTE, link.toString());
+		gitSection.put(GitConstants.KEY_REMOTE, link);
 
 		// add Git Default Remote Branch URI
 		File gitDir = GitUtils.getGitDir(targetPath);
@@ -143,7 +143,7 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		// add Git Tag URI
 		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.TAG_RESOURCE).append(targetPath);
 		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
-		gitSection.put(GitConstants.KEY_TAG, link.toString());
+		gitSection.put(GitConstants.KEY_TAG, link);
 
 		representation.put(GitConstants.KEY_GIT, gitSection);
 	}
