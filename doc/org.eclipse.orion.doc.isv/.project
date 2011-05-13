@@ -6,11 +6,6 @@
 	</projects>
 	<buildSpec>
 		<buildCommand>
-			<name>com.ibm.piiclipse.core.chkpiiBuilder</name>
-			<arguments>
-			</arguments>
-		</buildCommand>
-		<buildCommand>
 			<name>org.eclipse.pde.ManifestBuilder</name>
 			<arguments>
 			</arguments>
@@ -22,7 +17,6 @@
 		</buildCommand>
 	</buildSpec>
 	<natures>
-		<nature>com.ibm.piiclipse.core.chkpiiNature</nature>
 		<nature>org.eclipse.pde.PluginNature</nature>
 	</natures>
 </projectDescription>

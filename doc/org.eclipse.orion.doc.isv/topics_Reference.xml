@@ -7,9 +7,9 @@
 	<topic label="Client API" href="jsdoc/index.html">
 	</topic>
 	<topic label="Server API">
-		<link toc="Orion-Server-API-toc.xml" />
+		<link toc="WikiDoc/Orion-Server-API-toc.xml" />
 		<topic label = "Server File API">
-			<link toc="Orion-Server-API-File-API-toc.xml" />
+			<link toc="WikiDoc/Orion-Server-API-File-API-toc.xml" />
 		</topic>
 	</topic>
 </toc>

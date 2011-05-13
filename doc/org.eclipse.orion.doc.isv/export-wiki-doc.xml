@@ -17,6 +17,7 @@
 
 	<property name="mylyn.help.doc.url.base" value="http://wiki.eclipse.org"/>
 	<property name="orion.user.guide" value="Orion"/>
+	<property name="output.folder" value="WikiDoc"/>
 	<property name="mylyn.wiki.url.base" value="${mylyn.help.doc.url.base}/${orion.user.guide}"/>
 	<property name="imageFolder" value="images"/>
 
@@ -37,7 +38,7 @@
 	<target name="clean" depends="init">
 		<delete includeemptydirs="true" failonerror="false">
 			<fileset dir="tmp"/>
-			<fileset dir="Orion"/>
+			<fileset dir="${output.folder}"/>
 		</delete>
 	</target>
 
@@ -53,11 +54,13 @@
 			failonvalidationerror="true"
 			prependImagePrefix="${imageFolder}"
 			formatoutput="true"
+    		helpPrefix="${output.folder}"
 			defaultAbsoluteLinkTarget="orion_external"
-    		dest="${basedir}"
+    		dest="${basedir}/${output.folder}"
     		title="Orion"
     		generateUnifiedToc="false">
     		<path name="Orion/Project_mission_statement" title="Welcome to Orion" generateToc="true"/>
+    		<path name="Orion/Documentation/Developer_Guide/Architecture" title="Architecture overview" generateToc="true"/>
     		<path name="Orion/Server_API" title="Server API" generateToc="true"/>
     		<path name="Orion/Server_API/File_API" title="Server File API" generateToc="true"/>
 			<stylesheet url="book.css"/>
@@ -95,10 +98,10 @@ or inadvertently starting a line with a space character (in MediaWiki this start
 		<mkdir dir="tmp"/>
 		<echo file="tmp/__empty.dtd" message=""/>
 		<xmlvalidate lenient="true">
-			<fileset dir="Orion">
+			<fileset dir="${output.folder}">
 				<include name="**/*.xml"/>
 			</fileset>
-			<fileset dir="Orion">
+			<fileset dir="${output.folder}">
 				<include name="**/*.html"/>
 			</fileset>
 			<fileset dir=".">

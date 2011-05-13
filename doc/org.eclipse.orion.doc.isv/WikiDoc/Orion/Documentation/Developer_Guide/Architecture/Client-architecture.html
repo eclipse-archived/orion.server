@@ -1,0 +1,121 @@
+<?xml version='1.0' encoding='utf-8' ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<title>Architecture overview - Client architecture</title>
+		<link type="text/css" rel="stylesheet" href="../../../../book.css"/>
+	</head>
+	<body>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<th style="width: 100%" align="center" colspan="3">Client architecture</th>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="Architecture.html" title="Architecture overview">
+						<img alt="Previous" border="0" src="../../../../images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right">
+					<a href="Server-architecture.html" title="Server architecture">
+						<img alt="Next" border="0" src="../../../../images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">Architecture overview</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">Server architecture</td>
+			</tr>
+		</table><hr/>
+		<h1 id="Client_architecture">Client architecture</h1>
+		<h2 id="Web_components">Web components</h2>
+		<p>Orion aims to provide independently useful web components with minimal coupling between them, so that application developers can choose to deploy only the subsets of interest to their applications. Each component is represented by a JavaScript library (typically a single JavaScript file) and any directly associated resources like style sheets or images. With Orion we consciously do not mandate the use of a special packaging format or component library requirement so you can for example use your favorite DOM manipulation library as is. </p>
+		<p>For the moment “implementation-level” dependencies between components in Orion are managed using a limited and relatively manual form of dependency injection. At some point in the near-term future (and given recent events) we’re expecting to move our component model over to using some variant of CommonJS/AMD though as alluded to above web components are not forced into using this model. For more loosely coupled functional interactions Orion provides both a service registry and an extension registry (both described below) not unlike what we currently have in desktop Eclipse.</p>
+		<h2 id="Services">Services</h2>
+		<p>References between client library objects are directed through a service registry. Library objects are provided with a service registry object on construction, allowing a developer using the library to override what service implementations are used by any given library object. For example, while the default implementation of the Preferences object uses the remote preference service over HTTP, a client could provide an implementation that uses HTML5 local storage, cookies, etc.</p>
+		<p>Here is a simplified example of the <tt>Explorer</tt> object using a service to prompt the user to confirm a file deletion:</p>
+		<pre> function Explorer(serviceRegistry, treeRoot, breadcrumbParentId, searcher, parentId, navToolBarId) {
+     '''this.registry = serviceRegistry;'''
+     ...
+  }
+  ...
+  deleteFile: function(itemId) {
+     var item = this.myTree.getItem(itemId);
+     this.'''registry.callService'''("IDialogService", "confirm", null, 
+       ["Are you sure you want to delete '" + item.Name + "'?", 
+     ...
+  }
+</pre>
+		<p>The format of the <tt>callService</tt> function is fairly straight-forward. The caller specifies the name of the library, the function to call, and the function arguments as an array. The additional parameter ('null' in the example above), allows a client to provide a callback function that receives the return value of the service invocation. One particularly important point to emphasize is that 
+			<b>all</b> service calls through the service registry are 
+			<b>asynchronous</b>. You cannot assume that the service function will have been executed by the time the <tt>callService</tt> method returns. This attribute allows the service implementation to employ a variety of long-running techniques to execute the service, such as calls to a remote web service, cross-domain postMessage, HTML5 web workers, etc.
+		</p>
+		<p>The service object can also be obtained directly for clients that need to make more complex interactions with the service (such as invoking multiple functions against the service in sequence).</p>
+		<h2 id="Extensions">Extensions</h2>
+		<p>As a means of declarative contribution Orion will continue to promote the use of extensions and extension points. Extensions as used by Orion are conceptually very similar to what we currently use in the desktop and in particular will continue to have broad support in the UI and provide excellent lazy activation characteristics. One notable difference with the desktop is that code level functionality is always provided by a service reference instead of through class instantiation. Another difference is that Orion uses JSON instead of XML as a representation format for extensions.</p>
+		<h2 id="Plugins">Plugins</h2>
+		<p>Services and Extensions outside of the base platform are contributed to Orion by registering plugins. A plugin is declared via an HTML file, is opened in a "head-less" child IFrame and uses window.postMessage to advertise capabilities in the form of services and extensions back to Orion. Orion persists plugin information and at a later date when functionality is requested the plugin will be re-loaded either in an IFrame, in a Web Worker, or in-line as a web component based on security restrictions and functionality offered. </p>
+		<pre> &lt;!DOCTYPE html&gt;
+ &lt;html&gt;
+ &lt;head&gt;
+   &amp;lt;!-- Dependencies --&amp;gt;
+   &lt;meta http-equiv="Content-Type" content="text/html; charset=UTF-8"&gt;
+   &lt;script type="text/javascript" src="/openajax/release/all/OpenAjaxManagedHub-all.js"&gt;&lt;/script&gt;
+   &lt;script type="text/javascript" src="js/plugin.js"&gt;&lt;/script&gt;
+   &amp;lt;!-- Contributed Scripts --&amp;gt;
+   &lt;script type="text/javascript" src="js/jslintworker.js"&gt;&lt;/script&gt;
+   &lt;script type="text/javascript" src="js/jslintPlugin.js"&gt;&lt;/script&gt;
+ &lt;/head&gt;
+ &lt;body&gt;
+ &lt;/body&gt;
+ &lt;/html&gt;
+</pre>
+		<p>The corresponding JavaScript then contributes its services by using the <tt>ServiceProvider.extend</tt> function:</p>
+		<pre> eclipse.JSLintServiceProvider.prototype = eclipse.ServiceProvider.extend({
+   checkSyntax: function(title, contents) {
+     ...
+   }
+ });
+</pre>
+		<p>Currently, plugins must be declared and started manually, but in the future we expect to simplify this. Here is a current example of starting a plugin programmatically. This example contributes one service library called <tt>IEditorSyntaxChecker</tt>, with a single method <tt>checkSyntax</tt>.</p>
+		<pre> var pluginData = {
+   services : [{
+     id : "JSLintEditorSyntaxChecker", 
+     serviceType : {
+       id: "IEditorSyntaxChecker", 
+       interfaces : ["checkSyntax"]
+     },
+     properties: {}
+   }]
+  };
+ var serviceProvider = new eclipse.JSLintServiceProvider();
+ new eclipse.Plugin(pluginData, serviceProvider).start();
+</pre><hr/>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="Architecture.html" title="Architecture overview">
+						<img alt="Previous" border="0" src="../../../../images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center">
+					<a href="Architecture.html" title="Architecture overview">
+						<img alt="Architecture overview" border="0" src="../../../../images/home.gif"/>
+					</a>
+				</td>
+				<td style="width: 20%" align="right">
+					<a href="Server-architecture.html" title="Server architecture">
+						<img alt="Next" border="0" src="../../../../images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">Architecture overview</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">Server architecture</td>
+			</tr>
+		</table>
+	</body>
+</html>
