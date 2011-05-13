@@ -93,6 +93,10 @@ function closeLoginWindow() {
 }
 
 function confirmLogin() {
+	if(dojo.byId("login").value===""){
+		login("You must provide a user name and password.");
+		return;
+	}
 	/* don't wait for the login response, notify anyway */
 	notify = true;
 	dojo
@@ -242,6 +246,11 @@ function confirmCreateUser() {
 	var userPassword = dojo.byId("create_password").value;
 	var userPasswordRetype = dojo.byId("create_passwordRetype").value;
 	var userStore = dojo.byId("create_store").value;
+	if(userLogin===""){
+		login("You must provide a user name.");
+		showCreateUser();
+		return;
+	}
 	if (userPassword !== userPasswordRetype) {
 		login("Passwords do not match.");
 		showCreateUser();
@@ -265,21 +274,20 @@ function confirmCreateUser() {
 			return response;
 		},
 		error : function(response, ioArgs) {
-			if (ioArgs.xhr.responseText) {
-
-				var tempDiv = document.createElement('div');
-				tempDiv.innerHTML = ioArgs.xhr.responseText;
-				tempDiv.childNodes;
-				var error = tempDiv.getElementsByTagName("title")[0];
-				if(error)
-					login(error.text);
-				else
-					login("User could not be created.");
-				showCreateUser();
-			} else {
-				login("User could not be created.");
-				showCreateUser();
-			}
+			if (response.responseText) {
+				
+				try {
+					if (JSON.parse(response.responseText).Message) {
+						login(JSON.parse(response.responseText).Message);
+						showCreateUser();
+						return response;
+					}
+				} catch (e) {
+				}
+			} 
+			login("User could not be created.");
+			showCreateUser();
+			
 			return response;
 		}
 	});
