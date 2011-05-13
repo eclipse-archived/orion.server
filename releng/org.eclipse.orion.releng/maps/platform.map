@@ -59,3 +59,9 @@ plugin@org.eclipse.pde.junit.runtime=p2IU,id=org.eclipse.pde.junit.runtime,repos
 plugin@org.eclipse.jdt.junit.runtime=p2IU,id=org.eclipse.jdt.junit.runtime,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.core.runtime.compatibility=p2IU,id=org.eclipse.core.runtime.compatibility,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.update.configurator=p2IU,id=org.eclipse.update.configurator,repository=ECLIPSE_PLATFORM_REPO
+
+plugin@org.eclipse.help.base=p2IU,id=org.eclipse.help.base,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.help=p2IU,id=org.eclipse.help,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.help.webapp=p2IU,id=org.eclipse.help.webapp,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.apache.jasper=p2IU,id=org.apache.jasper,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.equinox.jsp.jasper=p2IU,id=org.eclipse.equinox.jsp.jasper,repository=ECLIPSE_PLATFORM_REPO
