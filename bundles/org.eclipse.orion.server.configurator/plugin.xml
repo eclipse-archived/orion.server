@@ -34,7 +34,7 @@
             class="org.eclipse.orion.server.servlets.PreferencesServlet">
       </servlet>
       <servlet
-            alias="/search"
+            alias="/filesearch"
             class="org.eclipse.orion.internal.server.search.SearchServlet"
             httpcontextId="org.eclipse.orion.server.configurator.httpcontext.search">
       </servlet>
@@ -90,7 +90,7 @@
             class="org.eclipse.orion.server.configurator.servlet.AuthenticationFilter">
       </filter>
       <filter
-            alias="/search"
+            alias="/filesearch"
             class="org.eclipse.orion.server.configurator.servlet.AuthenticationFilter">
       </filter>
       <filter

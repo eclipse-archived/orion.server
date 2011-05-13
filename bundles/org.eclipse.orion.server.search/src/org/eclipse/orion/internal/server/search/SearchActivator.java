@@ -75,7 +75,7 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 		try {
 			// we can also augment with a query argument that includes the
 			// resource path
-			URI result = new URI(resource.getScheme(), resource.getUserInfo(), resource.getHost(), resource.getPort(), "/search", "q=", null); //$NON-NLS-1$//$NON-NLS-2$
+			URI result = new URI(resource.getScheme(), resource.getUserInfo(), resource.getHost(), resource.getPort(), "/filesearch", "q=", null); //$NON-NLS-1$//$NON-NLS-2$
 			representation.put(ProtocolConstants.KEY_SEARCH_LOCATION, result.toString());
 		} catch (URISyntaxException e) {
 			LogHelper.log(e);
