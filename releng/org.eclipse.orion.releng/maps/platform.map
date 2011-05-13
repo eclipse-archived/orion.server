@@ -67,3 +67,6 @@ plugin@org.apache.jasper=p2IU,id=org.apache.jasper,repository=ECLIPSE_PLATFORM_R
 plugin@org.eclipse.equinox.jsp.jasper.registry=p2IU,id=org.eclipse.equinox.jsp.jasper.registry,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.equinox.jsp.jasper=p2IU,id=org.eclipse.equinox.jsp.jasper,repository=ECLIPSE_PLATFORM_REPO
 plugin@com.ibm.icu=p2IU,id=com.ibm.icu,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.apache.commons.logging=p2IU,id=org.apache.commons.logging,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.apache.commons.el=p2IU,id=org.apache.commons.el,repository=ECLIPSE_PLATFORM_REPO
+plugin@javax.servlet.jsp=p2IU,id=javax.servlet.jsp,repository=ECLIPSE_PLATFORM_REPO
