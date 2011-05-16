@@ -55,7 +55,10 @@ public abstract class OrionServlet extends HttpServlet {
 		resp.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 		if (result instanceof JSONObject) {
 			decorateResponse(req, (JSONObject) result);
-			//			removeOwnProtocolHostPort((JSONObject) result, req.getScheme(), req.getServerName(), req.getServerPort());
+			if ("XMLHttpRequest".equals(req.getHeader("X-Requested-With"))) {
+				// In JSON that is sent to in-Browser clients, remove scheme/userInfo/port information from URLs.
+				removeOwnProtocolHostPort((JSONObject) result, req.getScheme(), req.getServerName(), req.getServerPort());
+			}
 		}
 		//TODO look at accept header and chose appropriate response representation
 		resp.setContentType(ProtocolConstants.CONTENT_TYPE_JSON);
