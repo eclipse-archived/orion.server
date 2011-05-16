@@ -334,6 +334,40 @@ public class CoreFilesTest extends FileSystemTest {
 		WebRequest request = getGetFilesRequest(basePath);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+	}
+
+	/**
+	 * Tests that we are not allowed to get metadata files
+	 */
+	@Test
+	public void testGetForbiddenFiles() throws IOException, SAXException {
+		String globalReadProp = "org.eclipse.orion.server.core.projectsWorldReadable";
+		String oldValue = System.getProperty(globalReadProp);
+		System.setProperty(globalReadProp, "true");
+		try {
+			//should not be allowed to get at file root
+			WebRequest request = new GetMethodWebRequest(SERVER_LOCATION + FILE_SERVLET_LOCATION);
+			setAuthentication(request);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals("Should not be able to get the root", HttpURLConnection.HTTP_FORBIDDEN, response.getResponseCode());
+
+			//should not be allowed to access the metadata directory
+			request = new GetMethodWebRequest(SERVER_LOCATION + FILE_SERVLET_LOCATION + ".metadata");
+			setAuthentication(request);
+			response = webConversation.getResponse(request);
+			assertEquals("Should not be able to get metadata", HttpURLConnection.HTTP_FORBIDDEN, response.getResponseCode());
+
+			//should not be allowed to read specific metadata files
+			request = new GetMethodWebRequest(SERVER_LOCATION + FILE_SERVLET_LOCATION + ".metadata/.plugins/org.eclipse.orion.server.user.securestorage/user_store");
+			setAuthentication(request);
+			response = webConversation.getResponse(request);
+			assertEquals("Should not be able to get metadata", HttpURLConnection.HTTP_FORBIDDEN, response.getResponseCode());
+		} finally {
+			if (oldValue == null)
+				System.clearProperty(globalReadProp);
+			else
+				System.setProperty(globalReadProp, oldValue);
+		}
 
 	}
 
