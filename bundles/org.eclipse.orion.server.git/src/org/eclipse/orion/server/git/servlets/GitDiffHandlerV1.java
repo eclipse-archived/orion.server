@@ -68,7 +68,7 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 					if (parts == null || "uris,diff".equals(parts) || "diff,uris".equals(parts))
 						return handleMultiPartGet(request, response, db, path);
 					if ("uris".equals(parts))
-						return handleGetUris(request, response, db, path, response.getOutputStream());
+						return handleGetUris(request, response, db, path);
 					if ("diff".equals(parts))
 						return handleGetDiff(request, response, db, path, response.getOutputStream());
 				case POST :
@@ -112,16 +112,16 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private boolean handleGetUris(HttpServletRequest request, HttpServletResponse response, Repository db, Path path, OutputStream out) throws Exception {
+	private boolean handleGetUris(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws Exception {
 		JSONObject o = new JSONObject();
 		JSONObject gitSection = new JSONObject();
 		URI link = getURI(request);
-		gitSection.put(GitConstants.KEY_DIFF, new URI(null, null, null, -1, link.getPath(), link.getQuery(), link.getFragment()));
+		gitSection.put(GitConstants.KEY_DIFF, link);
 		gitSection.put(GitConstants.KEY_COMMIT_OLD, getOldLocation(link, path));
 		gitSection.put(GitConstants.KEY_COMMIT_NEW, getNewLocation(link, path));
 		gitSection.put(GitConstants.KEY_COMMIT_BASE, getBaseLocation(link, db, path));
 		o.put(GitConstants.KEY_GIT, gitSection);
-		out.write(o.toString().getBytes());
+		OrionServlet.writeJSONResponse(request, response, o);
 		return true;
 	}
 
@@ -134,7 +134,7 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 		out.write("--" + boundary + EOL); //$NON-NLS-1$
 		out.write(ProtocolConstants.HEADER_CONTENT_TYPE + ": " + ProtocolConstants.CONTENT_TYPE_JSON + EOL + EOL); //$NON-NLS-1$
 		out.flush();
-		handleGetUris(request, response, db, path, outputStream);
+		handleGetUris(request, response, db, path);
 		out.write(EOL + "--" + boundary + EOL); //$NON-NLS-1$
 		out.write(ProtocolConstants.HEADER_CONTENT_TYPE + ": plain/text" + EOL + EOL); //$NON-NLS-1$
 		out.flush();
@@ -190,16 +190,16 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 			}
 			// TODO: decode commits[0]
 			IPath p = new Path(GitServlet.GIT_URI + '/' + GitConstants.COMMIT_RESOURCE).append(commits[0]).append(path.removeFirstSegments(1));
-			return new URI(null, null, p.toString(), "parts=body", null); //$NON-NLS-1$
+			return new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), p.toString(), "parts=body", null); //$NON-NLS-1$
 		} else if (scope.equals(GitConstants.KEY_DIFF_CACHED)) {
 			IPath p = new Path(GitServlet.GIT_URI + '/' + GitConstants.COMMIT_RESOURCE).append(Constants.HEAD).append(path.removeFirstSegments(1));
-			return new URI(null, null, p.toString(), "parts=body", null); //$NON-NLS-1$
+			return new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), p.toString(), "parts=body", null); //$NON-NLS-1$
 		} else if (scope.equals(GitConstants.KEY_DIFF_DEFAULT)) {
 			IPath p = new Path(GitServlet.GIT_URI + '/' + GitConstants.INDEX_RESOURCE).append(path.removeFirstSegments(1));
-			return new URI(null, null, p.toString(), null, null);
+			return new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), p.toString(), null, null);
 		} else {
 			IPath p = new Path(GitServlet.GIT_URI + '/' + GitConstants.COMMIT_RESOURCE).append(scope).append(path.removeFirstSegments(1));
-			return new URI(null, null, p.toString(), "parts=body", null); //$NON-NLS-1$
+			return new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), p.toString(), "parts=body", null); //$NON-NLS-1$
 		}
 	}
 
@@ -213,13 +213,13 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 			}
 			// TODO: decode commits[1]
 			IPath p = new Path(GitServlet.GIT_URI + '/' + GitConstants.COMMIT_RESOURCE).append(commits[1]).append(path.removeFirstSegments(1));
-			return new URI(null, null, p.toString(), "parts=body", null); //$NON-NLS-1$
+			return new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), p.toString(), "parts=body", null); //$NON-NLS-1$
 		} else if (scope.equals(GitConstants.KEY_DIFF_CACHED)) {
 			IPath p = new Path(GitServlet.GIT_URI + '/' + GitConstants.INDEX_RESOURCE).append(path.removeFirstSegments(1));
-			return new URI(null, null, p.toString(), null, null);
+			return new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), p.toString(), null, null);
 		} else {
 			/* including scope.equals(GitConstants.KEY_DIFF_DEFAULT */
-			return new URI(null, null, path.removeFirstSegments(1).makeAbsolute().toString(), null, null);
+			return new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), path.removeFirstSegments(1).makeAbsolute().toString(), null, null);
 		}
 	}
 
@@ -244,15 +244,15 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 			RevCommit baseCommit = merger.getBaseCommit(0, 1);
 
 			IPath p = new Path(GitServlet.GIT_URI + '/' + GitConstants.COMMIT_RESOURCE).append(baseCommit.getId().getName()).append(path.removeFirstSegments(1));
-			return new URI(null, null, p.toString(), "parts=body", null); //$NON-NLS-1$
+			return new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), p.toString(), "parts=body", null); //$NON-NLS-1$
 		} else if (scope.equals(GitConstants.KEY_DIFF_CACHED)) {
 			// HEAD is the base
 			IPath p = new Path(GitServlet.GIT_URI + '/' + GitConstants.COMMIT_RESOURCE).append(Constants.HEAD).append(path.removeFirstSegments(1));
-			return new URI(null, null, p.toString(), "parts=body", null); //$NON-NLS-1$
+			return new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), p.toString(), "parts=body", null); //$NON-NLS-1$
 		} else {
 			// index is the base
 			IPath p = new Path(GitServlet.GIT_URI + '/' + GitConstants.INDEX_RESOURCE).append(path.removeFirstSegments(1));
-			return new URI(null, null, p.toString(), null, null);
+			return new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), p.toString(), null, null);
 		}
 	}
 }
