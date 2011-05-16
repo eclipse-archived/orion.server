@@ -20,6 +20,8 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.List;
 
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -165,6 +167,63 @@ public class GitUriTest extends GitTest {
 		assertNull(files.optString(GitConstants.KEY_REMOTE, null));
 
 		FileUtils.delete(dir, FileUtils.RECURSIVE);
+	}
+
+	@Test
+	public void testGitUrisForRepositoryClonedIntoSubfolder() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		String projectId = project.getString(ProtocolConstants.KEY_ID);
+		String folderName = "subfolder";
+		WebRequest request = getPostFilesRequest(projectId + "/", getNewDirJSON(folderName).toString(), folderName);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).append(folderName).makeAbsolute();
+		clone(clonePath);
+
+		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		request = getGetFilesRequest(location);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject responseJSON = new JSONObject(response.getText());
+
+		// no Git section for /file/{projectId}
+		assertNull(responseJSON.optString(GitConstants.KEY_STATUS, null));
+		assertNull(responseJSON.optString(GitConstants.KEY_DIFF, null));
+		assertNull(responseJSON.optString(GitConstants.KEY_DIFF, null));
+		assertNull(responseJSON.optString(GitConstants.KEY_COMMIT, null));
+		assertNull(responseJSON.optString(GitConstants.KEY_REMOTE, null));
+
+		request = getGetFilesRequest(responseJSON.getString(ProtocolConstants.KEY_CHILDREN_LOCATION));
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));
+		assertEquals(1, children.size());
+
+		// expected Git section for /file/{projectId}/?depth=1
+		JSONObject gitSection = children.get(0).getJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+		assertNotNull(gitSection.optString(GitConstants.KEY_STATUS, null));
+		assertNotNull(gitSection.optString(GitConstants.KEY_DIFF, null));
+		assertNotNull(gitSection.optString(GitConstants.KEY_DIFF, null));
+		assertNotNull(gitSection.optString(GitConstants.KEY_COMMIT, null));
+		assertNotNull(gitSection.optString(GitConstants.KEY_REMOTE, null));
+
+		location = children.get(0).getString(ProtocolConstants.KEY_LOCATION);
+		request = getGetFilesRequest(location);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		responseJSON = new JSONObject(response.getText());
+
+		// expected Git section for /file/{projectId}/subfolder
+		gitSection = responseJSON.getJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+		assertNotNull(gitSection.optString(GitConstants.KEY_STATUS, null));
+		assertNotNull(gitSection.optString(GitConstants.KEY_DIFF, null));
+		assertNotNull(gitSection.optString(GitConstants.KEY_DIFF, null));
+		assertNotNull(gitSection.optString(GitConstants.KEY_COMMIT, null));
+		assertNotNull(gitSection.optString(GitConstants.KEY_REMOTE, null));
 	}
 
 }
