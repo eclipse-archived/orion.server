@@ -40,7 +40,7 @@ plugin@org.openajax=GET,http://git.eclipse.org/c/e4/org.eclipse.orion.server.git
 plugin@org.openid4java,0.9.5=p2IU,id=org.openid4java,version=0.9.5.v20110120926,repository=http://download.eclipse.org/tools/orbit/downloads/drops/S20110422041657/repository
 
 #tests
-plugin@org.eclipse.orion.server.tests=GIT,tag=v20110516-1746,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=tests/org.eclipse.orion.server.tests
+plugin@org.eclipse.orion.server.tests=GIT,tag=v20110516-1749,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=tests/org.eclipse.orion.server.tests
 plugin@org.eclipse.orion.server.sshconfig.home=GIT,tag=v20110207-1740,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.sshconfig.home
 
 #git
