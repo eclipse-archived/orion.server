@@ -159,8 +159,9 @@ public class Indexer extends Job {
 	private boolean skip(IFileInfo fileInfo) {
 		if (fileInfo.getLength() > MAX_SEARCH_SIZE)
 			return true;
+		//skip files with no extension, or known binary file type extensions
 		String extension = new Path(fileInfo.getName()).getFileExtension();
-		if (extension != null && IGNORED_FILE_TYPES.contains(extension))
+		if (extension == null || IGNORED_FILE_TYPES.contains(extension))
 			return true;
 		return false;
 	}

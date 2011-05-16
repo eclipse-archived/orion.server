@@ -15,62 +15,31 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
-import java.io.Writer;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.URIUtil;
+import com.meterware.httpunit.*;
+import java.io.*;
+import java.net.*;
+import java.util.*;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.tests.harness.FileSystemHelper;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
-import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.Ref;
-import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.lib.RepositoryCache;
+import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
+import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitServlet;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import org.json.*;
+import org.junit.*;
 import org.xml.sax.SAXException;
-
-import com.meterware.httpunit.GetMethodWebRequest;
-import com.meterware.httpunit.PostMethodWebRequest;
-import com.meterware.httpunit.PutMethodWebRequest;
-import com.meterware.httpunit.WebConversation;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 
 public abstract class GitTest extends FileSystemTest {
 
@@ -261,9 +230,13 @@ public abstract class GitTest extends FileSystemTest {
 	// clone
 
 	protected String clone(URIish uri, IPath path, String kh, char[] p) throws JSONException, IOException, SAXException {
+		assertNotNull(path);
+		assertEquals("file", path.segment(0));
+		assertTrue(path.segmentCount() > 1);
+
 		WebRequest request = getPostGitCloneRequest(uri.toString(), path, kh, p);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(taskLocation);
 		String cloneLocation = waitForTaskCompletion(taskLocation);
@@ -275,7 +248,9 @@ public abstract class GitTest extends FileSystemTest {
 		JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 		assertEquals(1, clonesArray.length());
 		JSONObject clone = clonesArray.getJSONObject(0);
-		// TODO: check name
+		String name = clone.getString(ProtocolConstants.KEY_NAME);
+		assertTrue(path.segmentCount() == 2 && name.equals(WebProject.fromId(path.segment(1)).getName()) || name.equals(path.lastSegment()));
+		assertCloneUri(clone.getString(ProtocolConstants.KEY_LOCATION));
 		return clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 	}
 
@@ -284,9 +259,6 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	protected String clone(IPath path) throws JSONException, IOException, SAXException {
-		assertNotNull(path);
-		assertEquals("file", path.segment(0));
-		assertTrue(path.segmentCount() > 1);
 		URIish uri = new URIish(gitDir.toURL());
 		return clone(uri, path);
 	}
@@ -375,7 +347,7 @@ public abstract class GitTest extends FileSystemTest {
 		String remoteBranchLocation = getRemoteBranch(gitRemoteUri, size, i, name).getString(ProtocolConstants.KEY_LOCATION);
 		WebRequest request = GitPushTest.getPostGitRemoteRequest(remoteBranchLocation, srcRef, tags);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(taskLocation);
 		waitForTaskCompletion(taskLocation);
@@ -395,7 +367,7 @@ public abstract class GitTest extends FileSystemTest {
 		String remoteBranchLocation = getRemoteBranch(gitRemoteUri, size, i, name).getString(ProtocolConstants.KEY_LOCATION);
 		WebRequest request = GitPushTest.getPostGitRemoteRequest(remoteBranchLocation, srcRef, tags, userName, kh, privk, pubk, p);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(taskLocation);
 		String location = waitForTaskCompletion(taskLocation);
@@ -434,7 +406,7 @@ public abstract class GitTest extends FileSystemTest {
 		// fetch
 		WebRequest request = GitFetchTest.getPostGitRemoteRequest(remoteBranchLocation, true, userName, kh, privk, pubk, p);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(taskLocation);
 		String location = waitForTaskCompletion(taskLocation);
@@ -470,7 +442,7 @@ public abstract class GitTest extends FileSystemTest {
 		// fetch
 		WebRequest request = GitFetchTest.getPostGitRemoteRequest(remoteBranchLocation, true);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(taskLocation);
 		waitForTaskCompletion(taskLocation);
@@ -613,6 +585,18 @@ public abstract class GitTest extends FileSystemTest {
 		assertEquals("file", path.segment(2));
 	}
 
+	void assertCloneUri(String cloneUri) {
+		URI uri = URI.create(cloneUri);
+		IPath path = new Path(uri.getPath());
+		// /git/clone/workspace/{id} or /git/clone/file/{id}[/{path}]
+		assertTrue(path.segmentCount() > 3);
+		assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
+		assertEquals(GitConstants.CLONE_RESOURCE, path.segment(1));
+		assertTrue("workspace".equals(path.segment(2)) || "file".equals(path.segment(2)));
+		if ("workspace".equals(path.segment(2)))
+			assertEquals(4, path.segmentCount());
+	}
+
 	private void assertContentLocation(String contentLocation) {
 		File file = new File(contentLocation);
 		assertNotNull(GitUtils.getGitDir(file));
@@ -746,7 +730,7 @@ public abstract class GitTest extends FileSystemTest {
 	protected String clone(URIish uri, String name, String kh, byte[] privk, byte[] pubk, byte[] p) throws JSONException, IOException, SAXException {
 		WebRequest request = getPostGitCloneRequest(uri.toString(), name, kh, privk, pubk, p);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(taskLocation);
 		String cloneLocation = waitForTaskCompletion(taskLocation);

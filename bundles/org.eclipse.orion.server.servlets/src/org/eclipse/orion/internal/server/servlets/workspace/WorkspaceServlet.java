@@ -74,7 +74,7 @@ public class WorkspaceServlet extends OrionServlet {
 	}
 
 	@Override
-	protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+	protected synchronized void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
 		String pathString = req.getPathInfo();
 		IPath path = new Path(pathString == null ? "" : pathString); //$NON-NLS-1$
