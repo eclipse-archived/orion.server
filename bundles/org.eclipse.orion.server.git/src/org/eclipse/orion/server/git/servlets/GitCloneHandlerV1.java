@@ -72,6 +72,14 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		if (!validateCloneUrl(url, request, response))
 			return true;
 		clone.setUrl(new URIish(url));
+		// expected path /file/{projectId}[/{path}]
+		IPath path = new Path(toAdd.getString(ProtocolConstants.KEY_LOCATION));
+		clone.setId(path.removeFirstSegments(1).toString());
+		WebProject webProject = WebProject.fromId(path.segment(1));
+		clone.setContentLocation(webProject.getProjectStore().getFileStore(path.removeFirstSegments(2)).toURI());
+		clone.setName(path.segmentCount() > 2 ? path.lastSegment() : webProject.getName());
+
+		// prepare creds
 		String username = toAdd.optString(GitConstants.KEY_USERNAME, null);
 		char[] password = toAdd.optString(GitConstants.KEY_PASSWORD, "").toCharArray(); //$NON-NLS-1$
 		String knownHosts = toAdd.optString(GitConstants.KEY_KNOWN_HOSTS, null);
@@ -79,27 +87,15 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		byte[] publicKey = toAdd.optString(GitConstants.KEY_PUBLIC_KEY, "").getBytes(); //$NON-NLS-1$
 		byte[] passphrase = toAdd.optString(GitConstants.KEY_PASSPHRASE, "").getBytes(); //$NON-NLS-1$
 
-		// if all went well, clone
 		GitCredentialsProvider cp = new GitCredentialsProvider(new URIish(clone.getUrl()), username, password, knownHosts);
 		cp.setPrivateKey(privateKey);
 		cp.setPublicKey(publicKey);
 		cp.setPassphrase(passphrase);
 
-		IPath path = new Path(toAdd.getString(ProtocolConstants.KEY_LOCATION));
-		// TODO: remove leading separator, is absolute
-		clone.setId(path.removeFirstSegments(1).toString());
-		// TODO: segment(0) = workspaceId
-		WebProject webProject = WebProject.fromId(path.segment(1));
-		// TODO: ignore rest of segments for now
-		clone.setContentLocation(webProject.getProjectStore().getFileStore(path.removeFirstSegments(2)).toURI());
-		if (path.segmentCount() > 2)
-			clone.setName(path.lastSegment());
-		else
-			clone.setName(webProject.getName());
-
 		JSONObject cloneObject = WebClone.toJSON(clone, getURI(request));
 		String cloneLocation = cloneObject.getString(ProtocolConstants.KEY_LOCATION);
 
+		// if all went well, clone
 		CloneJob job = new CloneJob(clone, cp, request.getRemoteUser(), cloneLocation);
 		job.schedule();
 		TaskInfo task = job.getTask();
@@ -138,7 +134,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 							Map<IPath, File> gitDirs = new HashMap<IPath, File>();
 							GitUtils.getGitDirs(projectPath, gitDirs);
 							for (Map.Entry<IPath, File> entry : gitDirs.entrySet()) {
-								JSONObject child = toJSON(workspace.getId(), entry, baseLocation);
+								JSONObject child = toJSON(entry, baseLocation);
 								children.put(child);
 							}
 						}
@@ -164,7 +160,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 				JSONObject result = new JSONObject();
 				JSONArray children = new JSONArray();
 				for (Map.Entry<IPath, File> entry : gitDirs.entrySet()) {
-					JSONObject child = toJSON(path.segment(0), entry, baseLocation);
+					JSONObject child = toJSON(entry, baseLocation);
 					children.put(child);
 				}
 				result.put(ProtocolConstants.KEY_CHILDREN, children);
@@ -207,7 +203,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 
 	/**
 	 * Validates that the provided clone name is valid. Returns
-	 * <code>true</code> if the project name is valid, and <code>false</code>
+	 * <code>true</code> if the clone name is valid, and <code>false</code>
 	 * otherwise. This method takes care of setting the error response when the
 	 * clone name is not valid.
 	 */
@@ -230,22 +226,17 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private JSONObject toJSON(String workspaceId, Entry<IPath, File> entry, URI baseLocation) throws URISyntaxException {
+	private JSONObject toJSON(Entry<IPath, File> entry, URI baseLocation) throws URISyntaxException {
+		IPath k = entry.getKey();
+		File v = entry.getValue();
 		JSONObject result = new JSONObject();
 		try {
-			result.put(ProtocolConstants.KEY_ID, new Path(workspaceId).append(entry.getKey()));
-			String name = null;
-			if (entry.getKey().segmentCount() > 2)
-				name = entry.getKey().lastSegment();
-			else
-				name = WebProject.fromId(entry.getKey().segment(0)).getName();
-
-			result.put(ProtocolConstants.KEY_NAME, name);
-			IPath np = new Path(GitServlet.GIT_URI).append(GitConstants.CLONE_RESOURCE).append(workspaceId).append(entry.getKey());
+			result.put(ProtocolConstants.KEY_ID, k);
+			result.put(ProtocolConstants.KEY_NAME, k.segmentCount() == 1 ? WebProject.fromId(k.segment(0)).getName() : k.lastSegment());
+			IPath np = new Path(GitServlet.GIT_URI).append(GitConstants.CLONE_RESOURCE).append("file").append(k);
 			URI location = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), np.toString(), baseLocation.getQuery(), baseLocation.getFragment());
 			result.put(ProtocolConstants.KEY_LOCATION, location);
-			result.put(ProtocolConstants.KEY_CONTENT_LOCATION, entry.getValue());
-			//			result.put(GitConstants.KEY_URL, value);
+			result.put(ProtocolConstants.KEY_CONTENT_LOCATION, v);
 		} catch (JSONException e) {
 			//cannot happen, we know keys and values are valid
 		}
