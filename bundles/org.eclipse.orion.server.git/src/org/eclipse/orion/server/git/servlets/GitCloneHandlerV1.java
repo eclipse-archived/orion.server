@@ -10,16 +10,20 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
+import java.util.*;
+import java.util.Map.Entry;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.transport.URIish;
-import org.eclipse.orion.internal.server.servlets.*;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.internal.server.servlets.workspace.*;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitConstants;
@@ -63,21 +67,10 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 	private boolean handlePost(HttpServletRequest request, HttpServletResponse response) throws IOException, JSONException, ServletException, URISyntaxException, CoreException {
 		// make sure required fields are set
 		JSONObject toAdd = OrionServlet.readJSONRequest(request);
-		String id = toAdd.optString(ProtocolConstants.KEY_ID, null);
-		if (id == null)
-			id = WebClone.nextCloneId();
-		WebClone clone = WebClone.fromId(id);
+		WebClone clone = new WebClone();
 		String url = toAdd.optString(GitConstants.KEY_URL, null);
 		if (!validateCloneUrl(url, request, response))
 			return true;
-		String name = toAdd.optString(ProtocolConstants.KEY_NAME, null);
-		if (name == null)
-			name = request.getHeader(ProtocolConstants.HEADER_SLUG);
-		if (name == null)
-			name = url;
-		if (!validateCloneName(name, request, response))
-			return true;
-		clone.setName(name);
 		clone.setUrl(new URIish(url));
 		String username = toAdd.optString(GitConstants.KEY_USERNAME, null);
 		char[] password = toAdd.optString(GitConstants.KEY_PASSWORD, "").toCharArray(); //$NON-NLS-1$
@@ -92,17 +85,21 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		cp.setPublicKey(publicKey);
 		cp.setPassphrase(passphrase);
 
-		String userArea = System.getProperty("org.eclipse.orion.server.core.userArea");
-		if (userArea == null) {
-			String msg = "Error persisting clone state"; //$NON-NLS-1$
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, null));
-		}
+		IPath path = new Path(toAdd.getString(ProtocolConstants.KEY_LOCATION));
+		// TODO: remove leading separator, is absolute
+		clone.setId(path.removeFirstSegments(1).toString());
+		// TODO: segment(0) = workspaceId
+		WebProject webProject = WebProject.fromId(path.segment(1));
+		// TODO: ignore rest of segments for now
+		clone.setContentLocation(webProject.getProjectStore().getFileStore(path.removeFirstSegments(2)).toURI());
+		if (path.segmentCount() > 2)
+			clone.setName(path.lastSegment());
+		else
+			clone.setName(webProject.getName());
 
-		IPath path = new Path(userArea).append(request.getRemoteUser()).append(GitConstants.CLONE_FOLDER).append(clone.getId());
-		clone.setContentLocation(path.toFile().toURI());
+		JSONObject cloneObject = WebClone.toJSON(clone, getURI(request));
+		String cloneLocation = cloneObject.getString(ProtocolConstants.KEY_LOCATION);
 
-		JSONObject cloneObject = WebCloneResourceHandler.toJSON(clone, getURI(request));
-		String cloneLocation = cloneObject.optString(ProtocolConstants.KEY_LOCATION);
 		CloneJob job = new CloneJob(clone, cp, request.getRemoteUser(), cloneLocation);
 		job.schedule();
 		TaskInfo task = job.getTask();
@@ -116,35 +113,67 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, String pathString) throws IOException, JSONException, ServletException, URISyntaxException {
+	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, String pathString) throws IOException, JSONException, ServletException, URISyntaxException, CoreException {
 		IPath path = pathString == null ? Path.EMPTY : new Path(pathString);
 		URI baseLocation = getURI(request);
 		String user = request.getRemoteUser();
-		if (path.segmentCount() < 1) {
-			List<WebClone> clones = WebClone.allClones();
-			JSONObject result = new JSONObject();
-			JSONArray children = new JSONArray();
-			for (WebClone clone : clones) {
-				if (isAccessAllowed(user, clone)) {
-					JSONObject child = WebCloneResourceHandler.toJSON(clone, baseLocation);
+		// expected path format is 'workspace/{workspaceId}' or 'file/{projectId}[/{path}]'
+		if (path.segment(0).equals("workspace") && path.segmentCount() == 2) {
+			// all clones in the workspace
+			if (WebWorkspace.exists(path.segment(1))) {
+				WebWorkspace workspace = WebWorkspace.fromId(path.segment(1));
+				JSONArray projects = workspace.getProjectsJSON();
+				if (projects == null)
+					projects = new JSONArray();
+				JSONObject result = new JSONObject();
+				JSONArray children = new JSONArray();
+				for (int i = 0; i < projects.length(); i++) {
+					try {
+						JSONObject project = (JSONObject) projects.get(i);
+						//this is the location of the project metadata
+						WebProject webProject = WebProject.fromId(project.getString(ProtocolConstants.KEY_ID));
+						if (isAccessAllowed(user, webProject)) {
+							URI contentLocation = webProject.getContentLocation();
+							IPath projectPath = new Path(contentLocation.getPath());
+							Map<IPath, File> gitDirs = new HashMap<IPath, File>();
+							GitUtils.getGitDirs(projectPath, gitDirs);
+							for (Map.Entry<IPath, File> entry : gitDirs.entrySet()) {
+								JSONObject child = toJSON(workspace.getId(), entry, baseLocation);
+								children.put(child);
+							}
+						}
+					} catch (JSONException e) {
+						//ignore malformed children
+					}
+				}
+				result.put(ProtocolConstants.KEY_CHILDREN, children);
+				OrionServlet.writeJSONResponse(request, response, result);
+				return true;
+			} else {
+				String msg = NLS.bind("Nothing found for the given ID: {0}", path);
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
+			}
+		} else if (path.segment(0).equals("file") && path.segmentCount() > 1) {
+			// clones under given path
+			WebProject webProject = WebProject.fromId(path.segment(1));
+			if (isAccessAllowed(user, webProject)) {
+				URI contentLocation = webProject.getContentLocation();
+				IPath projectPath = new Path(contentLocation.getPath()).append(path.removeFirstSegments(2));
+				Map<IPath, File> gitDirs = new HashMap<IPath, File>();
+				GitUtils.getGitDirs(projectPath, gitDirs);
+				JSONObject result = new JSONObject();
+				JSONArray children = new JSONArray();
+				for (Map.Entry<IPath, File> entry : gitDirs.entrySet()) {
+					JSONObject child = toJSON(path.segment(0), entry, baseLocation);
 					children.put(child);
 				}
+				result.put(ProtocolConstants.KEY_CHILDREN, children);
+				OrionServlet.writeJSONResponse(request, response, result);
+				return true;
+			} else {
+				String msg = NLS.bind("Nothing found for the given ID: {0}", path);
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
 			}
-			result.put(ProtocolConstants.KEY_CHILDREN, children);
-			OrionServlet.writeJSONResponse(request, response, result);
-			return true;
-		} else if (path.segmentCount() == 1) {
-			if (WebClone.exists(path.segment(0))) {
-				WebClone clone = WebClone.fromId(path.segment(0));
-				if (isAccessAllowed(user, clone)) {
-					JSONObject result = WebCloneResourceHandler.toJSON(clone, baseLocation);
-					response.setHeader(ProtocolConstants.HEADER_LOCATION, result.optString(ProtocolConstants.KEY_LOCATION, "")); //$NON-NLS-1$
-					OrionServlet.writeJSONResponse(request, response, result);
-					return true;
-				}
-			}
-			String msg = NLS.bind("Clone with the given ID not found: {0}", path.segment(0));
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
 		}
 		//else the request is malformed
 		String msg = NLS.bind("Invalid clone request: {0}", path);
@@ -152,20 +181,27 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	/**
-	 * Returns whether the user can access the given clone
+	 * Returns whether the user can access the given project
 	 */
-	private boolean isAccessAllowed(String user, WebClone clone) {
-		URI contentURI = clone.getContentLocation();
-		//TODO Not sure if this is even possible
-		if (contentURI == null)
-			return true;
-		String userArea = System.getProperty(Activator.PROP_USER_AREA);
-		if (userArea == null)
-			return false;
-		//ensure the clone is in this user's user area
-		IPath path = new Path(userArea).append(user);
-		if (contentURI.toString().startsWith(path.toFile().toURI().toString()))
-			return true;
+	private boolean isAccessAllowed(String userName, WebProject webProject) {
+		try {
+			WebUser webUser = WebUser.fromUserName(userName);
+			JSONArray workspacesJSON = webUser.getWorkspacesJSON();
+			for (int i = 0; i < workspacesJSON.length(); i++) {
+				JSONObject workspace = workspacesJSON.getJSONObject(i);
+				String workspaceId = workspace.getString(ProtocolConstants.KEY_ID);
+				WebWorkspace webWorkspace = WebWorkspace.fromId(workspaceId);
+				JSONArray projectsJSON = webWorkspace.getProjectsJSON();
+				for (int j = 0; j < projectsJSON.length(); j++) {
+					JSONObject project = projectsJSON.getJSONObject(j);
+					String projectId = project.getString(ProtocolConstants.KEY_ID);
+					if (projectId.equals(webProject.getId()))
+						return true;
+				}
+			}
+		} catch (JSONException e) {
+			// ignore, deny access
+		}
 		return false;
 	}
 
@@ -192,6 +228,29 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			return false;
 		}
 		return true;
+	}
+
+	private JSONObject toJSON(String workspaceId, Entry<IPath, File> entry, URI baseLocation) throws URISyntaxException {
+		JSONObject result = new JSONObject();
+		try {
+			result.put(ProtocolConstants.KEY_ID, new Path(workspaceId).append(entry.getKey()));
+			String name = null;
+			if (entry.getKey().segmentCount() > 2)
+				name = entry.getKey().lastSegment();
+			else
+				name = WebProject.fromId(entry.getKey().segment(0)).getName();
+
+			result.put(ProtocolConstants.KEY_NAME, name);
+			IPath np = new Path(GitServlet.GIT_URI).append(GitConstants.CLONE_RESOURCE).append(workspaceId).append(entry.getKey());
+			URI location = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), np.toString(), baseLocation.getQuery(), baseLocation.getFragment());
+			result.put(ProtocolConstants.KEY_LOCATION, location);
+			result.put(ProtocolConstants.KEY_CONTENT_LOCATION, entry.getValue());
+			//			result.put(GitConstants.KEY_URL, value);
+		} catch (JSONException e) {
+			//cannot happen, we know keys and values are valid
+		}
+		return result;
+
 	}
 
 }
