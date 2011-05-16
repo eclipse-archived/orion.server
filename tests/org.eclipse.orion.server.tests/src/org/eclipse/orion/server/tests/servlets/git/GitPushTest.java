@@ -46,7 +46,7 @@ public class GitPushTest extends GitTest {
 	}
 
 	@Test
-	public void testPushNoBody() throws JSONException, IOException, SAXException {
+	public void testPushNoBody() throws JSONException, IOException, SAXException, URISyntaxException {
 		// add clone
 		String contentLocation = clone(null);
 
@@ -67,7 +67,7 @@ public class GitPushTest extends GitTest {
 	}
 
 	@Test
-	public void testPushHead() throws JSONException, IOException, SAXException {
+	public void testPushHead() throws JSONException, IOException, SAXException, URISyntaxException {
 		// clone1: create
 		String contentLocation1 = clone(null);
 
@@ -268,7 +268,7 @@ public class GitPushTest extends GitTest {
 	}
 
 	@Test
-	public void testPushFromLog() throws JSONException, IOException, SAXException {
+	public void testPushFromLog() throws JSONException, IOException, SAXException, URISyntaxException {
 		String contentLocation = clone(null);
 
 		JSONObject project = linkProject(contentLocation, getMethodName());
@@ -317,7 +317,7 @@ public class GitPushTest extends GitTest {
 	}
 
 	@Test
-	public void testPushRejected() throws JSONException, IOException, SAXException {
+	public void testPushRejected() throws JSONException, IOException, SAXException, URISyntaxException {
 		// clone1: create
 		String contentLocation1 = clone(null);
 

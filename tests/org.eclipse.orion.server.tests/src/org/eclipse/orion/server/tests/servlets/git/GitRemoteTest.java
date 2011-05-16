@@ -46,7 +46,7 @@ import com.meterware.httpunit.WebResponse;
 
 public class GitRemoteTest extends GitTest {
 	@Test
-	public void testGetNoRemote() throws IOException, SAXException, JSONException {
+	public void testGetNoRemote() throws IOException, SAXException, JSONException, URISyntaxException {
 		URI contentLocation = gitDir.toURI();
 
 		JSONObject project = linkProject(contentLocation.toString(), getMethodName());
@@ -72,7 +72,7 @@ public class GitRemoteTest extends GitTest {
 	}
 
 	@Test
-	public void testGetOrigin() throws IOException, SAXException, JSONException {
+	public void testGetOrigin() throws IOException, SAXException, JSONException, URISyntaxException {
 		String contentLocation = clone(null);
 
 		JSONObject project = linkProject(contentLocation.toString(), getMethodName());
@@ -116,7 +116,7 @@ public class GitRemoteTest extends GitTest {
 	}
 
 	@Test
-	public void testGetRemoteCommits() throws JSONException, IOException, SAXException, JGitInternalException {
+	public void testGetRemoteCommits() throws JSONException, IOException, SAXException, JGitInternalException, URISyntaxException {
 		String contentLocation = clone(null);
 
 		JSONObject project = linkProject(contentLocation.toString(), getMethodName());
@@ -225,6 +225,8 @@ public class GitRemoteTest extends GitTest {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;
+		else if (location.startsWith("/"))
+			requestURI = SERVER_LOCATION + location;
 		else
 			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.REMOTE_RESOURCE + location;
 		WebRequest request = new GetMethodWebRequest(requestURI);

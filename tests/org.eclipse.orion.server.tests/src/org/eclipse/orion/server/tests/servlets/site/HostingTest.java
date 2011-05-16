@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.URISyntaxException;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -65,7 +66,7 @@ public class HostingTest extends CoreSiteTest {
 	}
 
 	@Test
-	public void testStartSite() throws SAXException, IOException, JSONException {
+	public void testStartSite() throws SAXException, IOException, JSONException, URISyntaxException {
 		JSONArray mappings = makeMappings(new String[][] {{"/", "/A/bogusWorkspacePath"}});
 		WebResponse siteResp = createSite("Fizz site", workspaceId, mappings, "fizzsite", null);
 		JSONObject siteObject = new JSONObject(siteResp.getText());
@@ -73,7 +74,7 @@ public class HostingTest extends CoreSiteTest {
 	}
 
 	@Test
-	public void testStartSiteNoMappings() throws SAXException, IOException, JSONException {
+	public void testStartSiteNoMappings() throws SAXException, IOException, JSONException, URISyntaxException {
 		// Empty array
 		JSONArray mappings = makeMappings(new String[0][0]);
 		WebResponse siteResp = createSite("Empty mappings site", workspaceId, mappings, "empty", null);
@@ -87,7 +88,7 @@ public class HostingTest extends CoreSiteTest {
 	}
 
 	@Test
-	public void testStopSite() throws SAXException, IOException, JSONException {
+	public void testStopSite() throws SAXException, IOException, JSONException, URISyntaxException {
 		JSONArray mappings = makeMappings(new String[][] {{"/", "/A/bogusWorkspacePath"}});
 		WebResponse siteResp = createSite("Buzz site", workspaceId, mappings, "buzzsite", null);
 		JSONObject siteObject = new JSONObject(siteResp.getText());
@@ -100,7 +101,7 @@ public class HostingTest extends CoreSiteTest {
 	/**
 	 * Tests accessing a workspace file <del>and remote URL</del> that are part of a running site.
 	 */
-	public void testSiteAccess() throws SAXException, IOException, JSONException {
+	public void testSiteAccess() throws SAXException, IOException, JSONException, URISyntaxException {
 		// Create file in workspace
 		final String filename = "foo.html";
 		final String fileContent = "<html><body>This is a test file</body></html>";
@@ -154,14 +155,15 @@ public class HostingTest extends CoreSiteTest {
 
 	/**
 	 * Starts the site at <code>siteLocation</code>, and asserts that it was started.
+	 * @throws URISyntaxException 
 	 * @returns The JSON representation of the started site.
 	 */
-	private JSONObject startSite(String siteLocation) throws JSONException, IOException, SAXException {
+	private JSONObject startSite(String siteLocation) throws JSONException, IOException, SAXException, URISyntaxException {
 		JSONObject hostingStatus = new JSONObject();
 		hostingStatus.put(SiteConfigurationConstants.KEY_HOSTING_STATUS_STATUS, "started");
 		WebRequest launchSiteReq = getUpdateSiteRequest(siteLocation, null, null, null, null, hostingStatus);
 		WebResponse launchSiteResp = webConversation.getResponse(launchSiteReq);
-		assertEquals(HttpURLConnection.HTTP_OK, launchSiteResp.getResponseCode());
+		assertEquals(launchSiteResp.getText(), HttpURLConnection.HTTP_OK, launchSiteResp.getResponseCode());
 
 		// Check that it's started
 		JSONObject siteObject = new JSONObject(launchSiteResp.getText());
@@ -172,8 +174,9 @@ public class HostingTest extends CoreSiteTest {
 
 	/**
 	 * Stops the site at <code>siteLocation</code>, and asserts that it was stopped.
+	 * @throws URISyntaxException 
 	 */
-	private void stopSite(final String siteLocation) throws JSONException, IOException, SAXException {
+	private void stopSite(final String siteLocation) throws JSONException, IOException, SAXException, URISyntaxException {
 		JSONObject hostingStatus = new JSONObject();
 		hostingStatus.put(SiteConfigurationConstants.KEY_HOSTING_STATUS_STATUS, "stopped");
 		WebRequest stopReq = getUpdateSiteRequest(siteLocation, null, null, null, null, hostingStatus);

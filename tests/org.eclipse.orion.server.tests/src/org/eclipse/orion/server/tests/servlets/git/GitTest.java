@@ -145,10 +145,10 @@ public abstract class GitTest extends FileSystemTest {
 		FileUtils.delete(gitDir, FileUtils.RECURSIVE);
 	}
 
-	protected JSONObject createProjectWithContentLocation(URI workspaceLocation, String projectName, String location) throws JSONException, IOException, SAXException {
+	protected JSONObject createProjectWithContentLocation(URI workspaceLocation, String projectName, String location) throws JSONException, IOException, SAXException, URISyntaxException {
 		JSONObject body = new JSONObject();
 		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, location);
-		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), getJsonAsStream(body.toString()), "UTF-8");
+		WebRequest request = new PostMethodWebRequest(makeAbsolute(workspaceLocation.toString()), getJsonAsStream(body.toString()), "UTF-8");
 		if (projectName != null)
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
@@ -277,14 +277,14 @@ public abstract class GitTest extends FileSystemTest {
 
 	// link
 
-	protected JSONObject linkProject(String contentLocation, String projectName) throws IOException, SAXException, JSONException {
+	protected JSONObject linkProject(String contentLocation, String projectName) throws IOException, SAXException, JSONException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		ServletTestingSupport.allowedPrefixes = contentLocation;
 		JSONObject body = new JSONObject();
 		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, contentLocation);
 		// http://<host>/workspace/<workspaceId>/
-		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), getJsonAsStream(body.toString()), "UTF-8");
+		WebRequest request = new PostMethodWebRequest(makeAbsolute(workspaceLocation.toString()), getJsonAsStream(body.toString()), "UTF-8");
 		if (projectName != null)
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");

@@ -195,7 +195,7 @@ public class GitCloneTest extends GitTest {
 	}
 
 	@Test
-	public void testCloneAndLink() throws IOException, SAXException, JSONException {
+	public void testCloneAndLink() throws IOException, SAXException, JSONException, URISyntaxException {
 		String contentLocation = clone(null);
 
 		JSONObject newProject = linkProject(contentLocation, getMethodName());
@@ -250,7 +250,7 @@ public class GitCloneTest extends GitTest {
 	}
 
 	@Test
-	public void testLinkToFolderWithDefaultSCM() throws IOException, SAXException, JSONException {
+	public void testLinkToFolderWithDefaultSCM() throws IOException, SAXException, JSONException, URISyntaxException {
 		IPreferencesService preferences = GitActivator.getDefault().getPreferenceService();
 		String scm = preferences.getString("org.eclipse.orion.server.configurator", "orion.project.defaultSCM", "", null).toLowerCase(); //$NON-NLS-1$ //$NON-NLS-2$
 		Assume.assumeTrue("git".equals(scm)); //$NON-NLS-1$

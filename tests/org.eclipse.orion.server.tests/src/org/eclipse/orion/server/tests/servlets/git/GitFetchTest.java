@@ -56,7 +56,7 @@ public class GitFetchTest extends GitTest {
 	}
 
 	@Test
-	public void testFetch() throws IOException, SAXException, JSONException {
+	public void testFetch() throws IOException, SAXException, JSONException, URISyntaxException {
 		// add clone
 		String contentLocation = clone(null);
 

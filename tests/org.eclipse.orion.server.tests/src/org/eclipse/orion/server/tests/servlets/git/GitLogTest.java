@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URISyntaxException;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
@@ -37,7 +38,7 @@ import com.meterware.httpunit.WebResponse;
 public class GitLogTest extends GitTest {
 
 	@Test
-	public void testLog() throws IOException, SAXException, JSONException {
+	public void testLog() throws IOException, SAXException, JSONException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -113,7 +114,7 @@ public class GitLogTest extends GitTest {
 	}
 
 	@Test
-	public void testLogWithRemote() throws IOException, SAXException, JSONException {
+	public void testLogWithRemote() throws IOException, SAXException, JSONException, URISyntaxException {
 		String contentLocation = clone(null);
 		JSONObject project = linkProject(contentLocation, getMethodName());
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
@@ -125,7 +126,7 @@ public class GitLogTest extends GitTest {
 	}
 
 	@Test
-	public void testLogWithTag() throws IOException, SAXException, JSONException {
+	public void testLogWithTag() throws IOException, SAXException, JSONException, URISyntaxException {
 		String contentLocation = clone(null);
 		JSONObject project = linkProject(contentLocation, getMethodName());
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
@@ -151,7 +152,7 @@ public class GitLogTest extends GitTest {
 
 	@Test
 	@Ignore("not implemented yet")
-	public void testLogWithBranch() throws IOException, SAXException, JSONException, JGitInternalException, GitAPIException {
+	public void testLogWithBranch() throws IOException, SAXException, JSONException, JGitInternalException, GitAPIException, URISyntaxException {
 		String contentLocation = clone(null);
 		JSONObject project = linkProject(contentLocation, getMethodName());
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
@@ -172,7 +173,7 @@ public class GitLogTest extends GitTest {
 	}
 
 	@Test
-	public void testLogFile() throws IOException, SAXException, JSONException {
+	public void testLogFile() throws IOException, SAXException, JSONException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();

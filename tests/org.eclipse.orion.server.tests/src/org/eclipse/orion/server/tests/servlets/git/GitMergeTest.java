@@ -42,7 +42,7 @@ import com.meterware.httpunit.WebResponse;
 
 public class GitMergeTest extends GitTest {
 	@Test
-	public void testMergeSelf() throws IOException, SAXException, JSONException {
+	public void testMergeSelf() throws IOException, SAXException, JSONException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -174,7 +174,7 @@ public class GitMergeTest extends GitTest {
 	}
 
 	@Test
-	public void testMergeAlreadyUpToDate() throws IOException, SAXException, JSONException {
+	public void testMergeAlreadyUpToDate() throws IOException, SAXException, JSONException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -363,7 +363,7 @@ public class GitMergeTest extends GitTest {
 	}
 
 	@Test
-	public void testMergeRemote() throws IOException, SAXException, JSONException, JGitInternalException {
+	public void testMergeRemote() throws IOException, SAXException, JSONException, JGitInternalException, URISyntaxException {
 		// clone1: create
 		String contentLocation1 = clone(null);
 
