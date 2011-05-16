@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URISyntaxException;
 
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
@@ -34,7 +35,7 @@ public class GitAddTest extends GitTest {
 
 	// modified + add = changed
 	@Test
-	public void testAddChanged() throws IOException, SAXException, JSONException {
+	public void testAddChanged() throws IOException, SAXException, JSONException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -77,7 +78,7 @@ public class GitAddTest extends GitTest {
 
 	// missing + add = removed
 	@Test
-	public void testAddMissing() throws IOException, SAXException, JSONException {
+	public void testAddMissing() throws IOException, SAXException, JSONException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -142,7 +143,7 @@ public class GitAddTest extends GitTest {
 	}
 
 	@Test
-	public void testAddAll() throws IOException, SAXException, JSONException {
+	public void testAddAll() throws IOException, SAXException, JSONException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -214,7 +215,7 @@ public class GitAddTest extends GitTest {
 	}
 
 	@Test
-	public void testAddInFolder() throws IOException, SAXException, JSONException {
+	public void testAddInFolder() throws IOException, SAXException, JSONException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -280,6 +281,8 @@ public class GitAddTest extends GitTest {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;
+		else if (location.startsWith("/"))
+			requestURI = SERVER_LOCATION + location;
 		else
 			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.INDEX_RESOURCE + location;
 		JSONObject dummy = new JSONObject();

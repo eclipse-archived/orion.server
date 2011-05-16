@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.URISyntaxException;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -109,7 +110,7 @@ public class SiteTest extends CoreSiteTest {
 	/**
 	 * Create a site, then fetch its resource via a GET and check the result.
 	 */
-	public void testRetrieveSite() throws SAXException, JSONException, IOException {
+	public void testRetrieveSite() throws SAXException, JSONException, IOException, URISyntaxException {
 		// Create site
 		final String name = "Bob's site";
 		final String workspaceId = workspaceObject.getString(ProtocolConstants.KEY_ID);
@@ -134,7 +135,7 @@ public class SiteTest extends CoreSiteTest {
 	/**
 	 * Create a site, then update it via PUT and check the result.
 	 */
-	public void testUpdateSite() throws SAXException, JSONException, IOException {
+	public void testUpdateSite() throws SAXException, JSONException, IOException, URISyntaxException {
 		// Create site
 		final String name = "A site to update";
 		final String workspaceId = workspaceObject.getString(ProtocolConstants.KEY_ID);
@@ -164,7 +165,7 @@ public class SiteTest extends CoreSiteTest {
 	/**
 	 * Create a site, then delete it and make sure it's gone.
 	 */
-	public void testDeleteSite() throws SAXException, JSONException, IOException {
+	public void testDeleteSite() throws SAXException, JSONException, IOException, URISyntaxException {
 		// Create site
 		final String name = "A site to delete";
 		final String workspaceId = workspaceObject.getString(ProtocolConstants.KEY_ID);
@@ -187,7 +188,7 @@ public class SiteTest extends CoreSiteTest {
 	/**
 	 * Try to access site created by another user, verify that we can't.
 	 */
-	public void testDisallowedAccess() throws SAXException, JSONException, IOException {
+	public void testDisallowedAccess() throws SAXException, JSONException, IOException, URISyntaxException {
 		createUser("alice", "alice");
 		createUser("bob", "bob");
 

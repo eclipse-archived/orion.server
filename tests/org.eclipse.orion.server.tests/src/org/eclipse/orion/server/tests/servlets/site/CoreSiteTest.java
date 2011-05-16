@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
+import java.net.URISyntaxException;
 
 import junit.framework.Assert;
 
@@ -113,9 +114,10 @@ public abstract class CoreSiteTest extends FileSystemTest {
 	/**
 	 * @param locationUri
 	 * @return Returns a request that will DELETE the site at the given URI.
+	 * @throws URISyntaxException 
 	 */
-	protected WebRequest getDeleteSiteRequest(String locationUri) {
-		WebRequest request = new DeleteMethodWebRequest(locationUri);
+	protected WebRequest getDeleteSiteRequest(String locationUri) throws URISyntaxException {
+		WebRequest request = new DeleteMethodWebRequest(makeAbsolute(locationUri));
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
@@ -125,9 +127,10 @@ public abstract class CoreSiteTest extends FileSystemTest {
 	 * @param locationUri
 	 * @param user If nonnull, value to use as username and password for auth.
 	 * @return Returns a request that will GET the site at the given URI.
+	 * @throws URISyntaxException 
 	 */
-	protected WebRequest getRetrieveSiteRequest(String locationUri, String user) {
-		WebRequest request = new GetMethodWebRequest(locationUri);
+	protected WebRequest getRetrieveSiteRequest(String locationUri, String user) throws URISyntaxException {
+		WebRequest request = new GetMethodWebRequest(makeAbsolute(locationUri));
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		if (user == null)
 			setAuthentication(request);
@@ -143,8 +146,9 @@ public abstract class CoreSiteTest extends FileSystemTest {
 	 * @param mappings Can be null
 	 * @param hostHint Can be null
 	 * @param hostingStatus Can be null
+	 * @throws URISyntaxException 
 	 */
-	protected WebRequest getUpdateSiteRequest(String locationUri, String name, String workspaceId, JSONArray mappings, String hostHint, JSONObject hostingStatus) {
+	protected WebRequest getUpdateSiteRequest(String locationUri, String name, String workspaceId, JSONArray mappings, String hostHint, JSONObject hostingStatus) throws URISyntaxException {
 		try {
 			JSONObject json = new JSONObject();
 			json.put(ProtocolConstants.KEY_NAME, name);
@@ -152,7 +156,7 @@ public abstract class CoreSiteTest extends FileSystemTest {
 			json.putOpt(SiteConfigurationConstants.KEY_MAPPINGS, mappings);
 			json.putOpt(SiteConfigurationConstants.KEY_HOST_HINT, hostHint);
 			json.putOpt(SiteConfigurationConstants.KEY_HOSTING_STATUS, hostingStatus);
-			WebRequest request = new PutMethodWebRequest(locationUri, getJsonAsStream(json.toString()), "application/json");
+			WebRequest request = new PutMethodWebRequest(makeAbsolute(locationUri), getJsonAsStream(json.toString()), "application/json");
 			request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 			setAuthentication(request);
 			return request;

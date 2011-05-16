@@ -193,7 +193,7 @@ public class GitCloneTest extends GitTest {
 	}
 
 	@Test
-	public void testCloneAndLink() throws IOException, SAXException, JSONException {
+	public void testCloneAndLink() throws IOException, SAXException, JSONException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
@@ -254,7 +254,7 @@ public class GitCloneTest extends GitTest {
 	}
 
 	@Test
-	public void testLinkToFolderWithDefaultSCM() throws IOException, SAXException, JSONException {
+	public void testLinkToFolderWithDefaultSCM() throws IOException, SAXException, JSONException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		IPreferencesService preferences = GitActivator.getDefault().getPreferenceService();

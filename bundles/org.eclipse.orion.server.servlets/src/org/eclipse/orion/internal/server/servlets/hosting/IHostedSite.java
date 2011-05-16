@@ -1,5 +1,6 @@
 package org.eclipse.orion.internal.server.servlets.hosting;
 
+import java.util.List;
 import java.util.Map;
 
 public interface IHostedSite {
@@ -12,7 +13,7 @@ public interface IHostedSite {
 	/**
 	 * @return Mappings defined by the site configuration that this hosted site was launched from.
 	 */
-	public Map<String, String> getMappings();
+	public Map<String, List<String>> getMappings();
 
 	/**
 	 * @return The name of the user who launched this site.

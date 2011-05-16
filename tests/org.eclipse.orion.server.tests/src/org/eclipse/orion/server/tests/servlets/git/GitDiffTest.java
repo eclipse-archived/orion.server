@@ -24,6 +24,7 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +50,7 @@ import com.meterware.httpunit.WebResponse;
 
 public class GitDiffTest extends GitTest {
 	@Test
-	public void testNoDiff() throws IOException, SAXException, JSONException {
+	public void testNoDiff() throws IOException, SAXException, JSONException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -68,7 +69,7 @@ public class GitDiffTest extends GitTest {
 	}
 
 	@Test
-	public void testDiffAlreadyModified() throws IOException, SAXException, JSONException {
+	public void testDiffAlreadyModified() throws IOException, SAXException, JSONException, URISyntaxException {
 		Writer w = new OutputStreamWriter(new FileOutputStream(testFile), "UTF-8");
 		try {
 			w.write("hello");
@@ -106,7 +107,7 @@ public class GitDiffTest extends GitTest {
 	}
 
 	@Test
-	public void testDiffModifiedByOrion() throws IOException, SAXException, JSONException {
+	public void testDiffModifiedByOrion() throws IOException, SAXException, JSONException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -139,7 +140,7 @@ public class GitDiffTest extends GitTest {
 	}
 
 	@Test
-	public void testDiffFilter() throws IOException, SAXException, JSONException {
+	public void testDiffFilter() throws IOException, SAXException, JSONException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -198,7 +199,7 @@ public class GitDiffTest extends GitTest {
 	}
 
 	@Test
-	public void testDiffCached() throws IOException, SAXException, JSONException {
+	public void testDiffCached() throws IOException, SAXException, JSONException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -246,7 +247,7 @@ public class GitDiffTest extends GitTest {
 	}
 
 	@Test
-	public void testDiffCommits() throws IOException, SAXException, JSONException {
+	public void testDiffCommits() throws IOException, SAXException, JSONException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -335,7 +336,7 @@ public class GitDiffTest extends GitTest {
 	}
 
 	@Test
-	public void testDiffCommitWithWorkingTree() throws IOException, SAXException, JSONException {
+	public void testDiffCommitWithWorkingTree() throws IOException, SAXException, JSONException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -425,7 +426,7 @@ public class GitDiffTest extends GitTest {
 	}
 
 	@Test
-	public void testDiffPost() throws JSONException, IOException, SAXException {
+	public void testDiffPost() throws JSONException, IOException, SAXException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -490,7 +491,7 @@ public class GitDiffTest extends GitTest {
 	}
 
 	@Test
-	public void testDiffParts() throws JSONException, IOException, SAXException {
+	public void testDiffParts() throws JSONException, IOException, SAXException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -565,7 +566,7 @@ public class GitDiffTest extends GitTest {
 	}
 
 	@Test
-	public void testDiffUntrackedUri() throws JSONException, IOException, SAXException {
+	public void testDiffUntrackedUri() throws JSONException, IOException, SAXException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -744,6 +745,8 @@ public class GitDiffTest extends GitTest {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;
+		else if (location.startsWith("/"))
+			requestURI = SERVER_LOCATION + location;
 		else
 			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.DIFF_RESOURCE + location;
 		WebRequest request = new GetMethodWebRequest(requestURI);
@@ -756,6 +759,8 @@ public class GitDiffTest extends GitTest {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;
+		else if (location.startsWith("/"))
+			requestURI = SERVER_LOCATION + location;
 		else
 			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.DIFF_RESOURCE + location;
 

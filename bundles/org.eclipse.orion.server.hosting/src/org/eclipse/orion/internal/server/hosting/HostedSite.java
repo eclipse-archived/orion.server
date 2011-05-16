@@ -20,7 +20,7 @@ import org.json.*;
 class HostedSite implements IHostedSite {
 
 	private String siteConfigurationId;
-	private Map<String, String> mappings;
+	private Map<String, List<String>> mappings;
 	private String userName;
 	private String workspaceId;
 	private String host;
@@ -39,8 +39,8 @@ class HostedSite implements IHostedSite {
 		}
 	}
 
-	private static Map<String, String> createMap(SiteConfiguration siteConfig) {
-		Map<String, String> map = new HashMap<String, String>();
+	private static Map<String, List<String>> createMap(SiteConfiguration siteConfig) {
+		Map<String, List<String>> map = new HashMap<String, List<String>>();
 		JSONArray mappingsJson = siteConfig.getMappingsJSON();
 		for (int i = 0; i < mappingsJson.length(); i++) {
 			try {
@@ -48,7 +48,12 @@ class HostedSite implements IHostedSite {
 				String source = mapping.optString(SiteConfigurationConstants.KEY_SOURCE, null);
 				String target = mapping.optString(SiteConfigurationConstants.KEY_TARGET, null);
 				if (source != null && target != null) {
-					map.put(source, target);
+					List<String> existingTarget = map.get(source);
+					if (existingTarget != null) {
+						existingTarget.add(target);
+					} else {
+						map.put(source, new ArrayList<String>(Collections.singletonList(target)));
+					}
 				}
 			} catch (JSONException e) {
 				// Shouldn't happen
@@ -63,7 +68,7 @@ class HostedSite implements IHostedSite {
 	}
 
 	@Override
-	public Map<String, String> getMappings() {
+	public Map<String, List<String>> getMappings() {
 		return mappings;
 	}
 

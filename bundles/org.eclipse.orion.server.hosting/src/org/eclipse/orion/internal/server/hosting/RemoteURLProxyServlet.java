@@ -27,9 +27,11 @@ import org.mortbay.util.IO;
 public class RemoteURLProxyServlet extends ProxyServlet {
 
 	private URL url;
+	private final boolean failEarlyOn404;
 
-	public RemoteURLProxyServlet(URL url) {
+	public RemoteURLProxyServlet(URL url, boolean failEarlyOn404) {
 		this.url = url;
+		this.failEarlyOn404 = failEarlyOn404;
 	}
 
 	@Override
@@ -137,6 +139,10 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 				proxy_in = http.getErrorStream();
 
 				code = http.getResponseCode();
+				if (failEarlyOn404 && code == 404) {
+					// make sure this is thrown only in the "fail early on 404" case
+					throw new NotFoundException();
+				}
 				response.setStatus(code, http.getResponseMessage());
 			}
 
