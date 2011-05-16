@@ -67,8 +67,10 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 					String parts = request.getParameter("parts"); //$NON-NLS-1$
 					if (parts == null || "uris,diff".equals(parts) || "diff,uris".equals(parts))
 						return handleMultiPartGet(request, response, db, path);
-					if ("uris".equals(parts))
-						return handleGetUris(request, response, db, path);
+					if ("uris".equals(parts)) {
+						OrionServlet.writeJSONResponse(request, response, jsonForGetUris(request, response, db, path));
+						return true;
+					}
 					if ("diff".equals(parts))
 						return handleGetDiff(request, response, db, path, response.getOutputStream());
 				case POST :
@@ -112,7 +114,7 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private boolean handleGetUris(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws Exception {
+	private JSONObject jsonForGetUris(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws Exception {
 		JSONObject o = new JSONObject();
 		JSONObject gitSection = new JSONObject();
 		URI link = getURI(request);
@@ -121,8 +123,7 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 		gitSection.put(GitConstants.KEY_COMMIT_NEW, getNewLocation(link, path));
 		gitSection.put(GitConstants.KEY_COMMIT_BASE, getBaseLocation(link, db, path));
 		o.put(GitConstants.KEY_GIT, gitSection);
-		OrionServlet.writeJSONResponse(request, response, o);
-		return true;
+		return o;
 	}
 
 	private boolean handleMultiPartGet(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws Exception {
@@ -134,7 +135,8 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 		out.write("--" + boundary + EOL); //$NON-NLS-1$
 		out.write(ProtocolConstants.HEADER_CONTENT_TYPE + ": " + ProtocolConstants.CONTENT_TYPE_JSON + EOL + EOL); //$NON-NLS-1$
 		out.flush();
-		handleGetUris(request, response, db, path);
+		JSONObject getURIs = jsonForGetUris(request, response, db, path);
+		out.write(getURIs.toString());
 		out.write(EOL + "--" + boundary + EOL); //$NON-NLS-1$
 		out.write(ProtocolConstants.HEADER_CONTENT_TYPE + ": plain/text" + EOL + EOL); //$NON-NLS-1$
 		out.flush();
