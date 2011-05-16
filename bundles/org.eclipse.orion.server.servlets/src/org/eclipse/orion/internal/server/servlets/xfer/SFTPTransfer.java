@@ -97,7 +97,7 @@ class SFTPTransfer {
 		result.put(ProtocolConstants.KEY_LOCATION, taskLocation);
 		response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation.toString());
 		OrionServlet.writeJSONResponse(request, response, result);
-		response.setStatus(HttpServletResponse.SC_CREATED);
+		response.setStatus(HttpServletResponse.SC_ACCEPTED);
 	}
 
 	private void handleException(String string, Exception exception, int httpCode) throws ServletException {

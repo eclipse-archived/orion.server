@@ -105,7 +105,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		result.put(ProtocolConstants.KEY_LOCATION, taskLocation);
 		response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation);
 		OrionServlet.writeJSONResponse(request, response, result);
-		response.setStatus(HttpServletResponse.SC_CREATED);
+		response.setStatus(HttpServletResponse.SC_ACCEPTED);
 		return true;
 	}
 

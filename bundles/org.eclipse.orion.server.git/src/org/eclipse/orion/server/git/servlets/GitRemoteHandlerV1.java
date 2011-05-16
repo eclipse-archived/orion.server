@@ -198,7 +198,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		result.put(ProtocolConstants.KEY_LOCATION, taskLocation);
 		response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation.toString());
 		OrionServlet.writeJSONResponse(request, response, result);
-		response.setStatus(HttpServletResponse.SC_CREATED);
+		response.setStatus(HttpServletResponse.SC_ACCEPTED);
 		return true;
 	}
 
@@ -216,7 +216,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			result.put(ProtocolConstants.KEY_LOCATION, taskLocation);
 			response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation.toString());
 			OrionServlet.writeJSONResponse(request, response, result);
-			response.setStatus(HttpServletResponse.SC_CREATED);
+			response.setStatus(HttpServletResponse.SC_ACCEPTED);
 			return true;
 		}
 		return false;
