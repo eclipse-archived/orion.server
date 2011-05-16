@@ -66,8 +66,10 @@ public class GitUtils {
 			if (file.exists() && file.isDirectory()) {
 				if (RepositoryCache.FileKey.isGitRepository(file, FS.DETECTED)) {
 					gitDirs.put(path, file);
+					return;
 				} else if (RepositoryCache.FileKey.isGitRepository(new File(file, Constants.DOT_GIT), FS.DETECTED)) {
 					gitDirs.put(path, new File(file, Constants.DOT_GIT));
+					return;
 				}
 				File[] folders = file.listFiles(new FileFilter() {
 					public boolean accept(File file) {
@@ -76,8 +78,8 @@ public class GitUtils {
 				});
 				for (File folder : folders) {
 					getGitDirs(path.append(folder.getName()), gitDirs);
-					return;
 				}
+				return;
 			}
 		}
 	}
