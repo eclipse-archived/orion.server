@@ -48,9 +48,14 @@ public class NewFileServlet extends OrionServlet {
 		traceRequest(req);
 		String pathInfo = req.getPathInfo();
 		IPath path = pathInfo == null ? Path.ROOT : new Path(pathInfo);
+		//don't allow anyone to mess with metadata
+		if (path.segmentCount() > 0 && ".metadata".equals(path.segment(0))) { //$NON-NLS-1$
+			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, NLS.bind("Forbidden: {0}", path), null));
+			return;
+		}
 		IFileStore file = getFileStore(path);
 		if (file == null) {
-			handleException(resp, new ServerStatus(IStatus.ERROR, 404, NLS.bind("File not found: {0}", path), null));
+			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("File not found: {0}", path), null));
 			return;
 		}
 		if (fileSerializer.handleRequest(req, resp, file))

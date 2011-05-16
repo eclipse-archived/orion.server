@@ -21,6 +21,8 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.api.PullResult;
@@ -54,8 +56,7 @@ public class GitStatusTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
@@ -74,8 +75,7 @@ public class GitStatusTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		String fileName = "new.txt";
@@ -85,8 +85,7 @@ public class GitStatusTest extends GitTest {
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
-		assertNotNull(gitIndexUri);
+		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
 		// TODO: don't create URIs out of thin air
@@ -116,7 +115,7 @@ public class GitStatusTest extends GitTest {
 	@Test
 	@Ignore("not yet implemented")
 	public void testStatusAssumeUnchanged() {
-		// TODO: implement
+		// TODO: see bug 338913
 	}
 
 	// "status -s" > "M  test.txt", staged
@@ -125,8 +124,7 @@ public class GitStatusTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change");
@@ -168,8 +166,7 @@ public class GitStatusTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change in index");
@@ -216,8 +213,7 @@ public class GitStatusTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		WebRequest request = getDeleteFilesRequest(projectId + "/test.txt");
@@ -254,8 +250,7 @@ public class GitStatusTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change");
@@ -291,8 +286,7 @@ public class GitStatusTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change");
@@ -334,8 +328,7 @@ public class GitStatusTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		String fileName = "new.txt";
@@ -371,11 +364,9 @@ public class GitStatusTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
-		String contentLocation = project.optString(ProtocolConstants.KEY_CONTENT_LOCATION, null);
-		assertNotNull(contentLocation);
+		String contentLocation = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		WebRequest request = getGetFilesRequest(contentLocation);
 		WebResponse response = webConversation.getResponse(request);
@@ -465,8 +456,7 @@ public class GitStatusTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "file change");
@@ -552,14 +542,12 @@ public class GitStatusTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
-		assertNotNull(gitIndexUri);
+		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "in index");
@@ -625,17 +613,14 @@ public class GitStatusTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
-		assertNotNull(gitIndexUri);
+		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
-		String gitCommitUri = gitSection.optString(GitConstants.KEY_COMMIT, null);
-		assertNotNull(gitCommitUri);
+		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
 
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "index");
 		WebResponse response = webConversation.getResponse(request);
@@ -700,13 +685,20 @@ public class GitStatusTest extends GitTest {
 
 	// "status -s" > "UU test.txt", both modified
 	@Test
-	public void testConfilct() throws IOException, SAXException, URISyntaxException, JSONException, JGitInternalException, GitAPIException {
-		// clone1: create
-		String contentLocation1 = clone(null);
+	public void testConfilct() throws IOException, SAXException, JSONException, JGitInternalException, GitAPIException {
+		URI workspaceLocation = createWorkspace(getMethodName());
 
-		// clone1: link
-		JSONObject project1 = linkProject(contentLocation1, getMethodName() + "1");
+		// clone1: create
+		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
 		String projectId1 = project1.getString(ProtocolConstants.KEY_ID);
+		IPath clonePath1 = new Path("file").append(project1.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		String contentLocation1 = clone(clonePath1);
+
+		// get project metadata
+		WebRequest request = getGetFilesRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		project1 = new JSONObject(response.getText());
 		JSONObject gitSection1 = project1.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection1);
 		String gitIndexUri1 = gitSection1.getString(GitConstants.KEY_INDEX);
@@ -714,21 +706,25 @@ public class GitStatusTest extends GitTest {
 		String gitRemoteUri1 = gitSection1.getString(GitConstants.KEY_REMOTE);
 
 		// clone2: create
-		String contentLocation2 = clone(null);
-
-		// clone2: link
-		JSONObject project2 = linkProject(contentLocation2, getMethodName() + "2");
+		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
 		String projectId2 = project2.getString(ProtocolConstants.KEY_ID);
-		assertNotNull(projectId2);
+		IPath clonePath2 = new Path("file").append(project2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		String contentLocation2 = clone(clonePath2);
+
+		// get project metadata
+		request = getGetFilesRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		project2 = new JSONObject(response.getText());
 		JSONObject gitSection2 = project2.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection2);
-		String gitStatusUri2 = gitSection2.getString(GitConstants.KEY_STATUS);
 		String gitIndexUri2 = gitSection2.getString(GitConstants.KEY_INDEX);
 		String gitCommitUri2 = gitSection2.getString(GitConstants.KEY_COMMIT);
+		String gitStatusUri2 = gitSection2.getString(GitConstants.KEY_STATUS);
 
 		// clone1: change
-		WebRequest request = getPutFileRequest(projectId1 + "/test.txt", "change from clone1");
-		WebResponse response = webConversation.getResponse(request);
+		request = getPutFileRequest(projectId1 + "/test.txt", "change from clone1");
+		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone1: add
@@ -805,8 +801,7 @@ public class GitStatusTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);

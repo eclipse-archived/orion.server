@@ -5,8 +5,9 @@
 <!-- ========================== -->
 <toc label="Programmer's Guide">
 	<topic label="Welcome to Orion" href="guide/welcome.html">
-		<link toc="Orion-Project-mission-statement-toc.xml" />
+		<link toc="WikiDoc/Orion-Project-mission-statement-toc.xml" />
 	</topic>
-   <topic label="Orion architecture" href="guide/architecture.html">
+   <topic label="Orion architecture">
+		<link toc="WikiDoc/Orion-Documentation-Developer-Guide-Architecture-toc.xml" />
    </topic>
 </toc>

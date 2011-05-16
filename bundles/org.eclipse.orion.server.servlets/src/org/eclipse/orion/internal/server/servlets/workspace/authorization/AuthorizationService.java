@@ -143,9 +143,14 @@ public class AuthorizationService {
 				uri += '/';
 		}
 
+		//allow anonymous read if the corresponding property is set
 		String projectWorldReadable = System.getProperty("org.eclipse.orion.server.core.projectsWorldReadable"); //$NON-NLS-1$
-		if (getMethod(method) == GET && uri.startsWith("/file/") && "true".equalsIgnoreCase(projectWorldReadable)) //$NON-NLS-1$ //$NON-NLS-2$
+		if (getMethod(method) == GET && uri.startsWith("/file/") && "true".equalsIgnoreCase(projectWorldReadable)) {//$NON-NLS-1$ //$NON-NLS-2$
+			//except don't allow access to metadata
+			if ("/file/".equals(uri) || uri.startsWith("/file/.metadata/")) //$NON-NLS-1$//$NON-NLS-2$
+				return false;
 			return true;
+		}
 
 		IEclipsePreferences users = new OrionScope().getNode("Users"); //$NON-NLS-1$
 		JSONArray userRightArray = AuthorizationReader.getAuthorizationData((IEclipsePreferences) users.node(name));

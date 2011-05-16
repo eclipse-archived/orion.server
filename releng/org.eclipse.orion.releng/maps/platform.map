@@ -59,3 +59,14 @@ plugin@org.eclipse.pde.junit.runtime=p2IU,id=org.eclipse.pde.junit.runtime,repos
 plugin@org.eclipse.jdt.junit.runtime=p2IU,id=org.eclipse.jdt.junit.runtime,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.core.runtime.compatibility=p2IU,id=org.eclipse.core.runtime.compatibility,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.update.configurator=p2IU,id=org.eclipse.update.configurator,repository=ECLIPSE_PLATFORM_REPO
+
+plugin@org.eclipse.help.base=p2IU,id=org.eclipse.help.base,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.help=p2IU,id=org.eclipse.help,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.help.webapp=p2IU,id=org.eclipse.help.webapp,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.apache.jasper=p2IU,id=org.apache.jasper,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.equinox.jsp.jasper.registry=p2IU,id=org.eclipse.equinox.jsp.jasper.registry,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.equinox.jsp.jasper=p2IU,id=org.eclipse.equinox.jsp.jasper,repository=ECLIPSE_PLATFORM_REPO
+plugin@com.ibm.icu=p2IU,id=com.ibm.icu,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.apache.commons.logging=p2IU,id=org.apache.commons.logging,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.apache.commons.el=p2IU,id=org.apache.commons.el,repository=ECLIPSE_PLATFORM_REPO
+plugin@javax.servlet.jsp=p2IU,id=javax.servlet.jsp,repository=ECLIPSE_PLATFORM_REPO

@@ -55,7 +55,7 @@ public abstract class OrionServlet extends HttpServlet {
 		resp.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 		if (result instanceof JSONObject) {
 			decorateResponse(req, (JSONObject) result);
-			removeOwnProtocolHostPort((JSONObject) result, req.getScheme(), req.getServerName(), req.getServerPort());
+			//			removeOwnProtocolHostPort((JSONObject) result, req.getScheme(), req.getServerName(), req.getServerPort());
 		}
 		//TODO look at accept header and chose appropriate response representation
 		resp.setContentType(ProtocolConstants.CONTENT_TYPE_JSON);

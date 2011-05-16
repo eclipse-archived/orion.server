@@ -16,8 +16,11 @@ import static org.junit.Assert.assertNotNull;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URISyntaxException;
 
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.NoHeadException;
@@ -51,7 +54,10 @@ public class GitConfigTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone a  repo
-		String contentLocation = clone(null);
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		String contentLocation = clone(clonePath);
 
 		// check the repository configuration using JGit API
 		Git git = new Git(getRepositoryForContentLocation(contentLocation));
@@ -61,30 +67,22 @@ public class GitConfigTest extends GitTest {
 
 		// now check if commits have the right committer set
 
-		// link a project to the cloned repo
-		JSONObject newProject = linkProject(contentLocation, getMethodName());
-		String projectContentLocation = newProject.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-
-		// GET http://<host>/file/<projectId>/
-		request = getGetFilesRequest(projectContentLocation);
+		request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
+		project = new JSONObject(response.getText());
 		String childrenLocation = project.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
 		assertNotNull(childrenLocation);
 
 		// check if Git locations are in place
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
-		assertNotNull(gitIndexUri);
-		String gitCommitUri = gitSection.optString(GitConstants.KEY_COMMIT, null);
-		assertNotNull(gitCommitUri);
+		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
 
 		// modify
-		String projectId = project.optString(ProtocolConstants.KEY_LOCATION, null);
-		assertNotNull(projectId);
-		request = getPutFileRequest(projectId + "/test.txt", "change to commit");
+		String projectLocation = project.getString(ProtocolConstants.KEY_LOCATION);
+		request = getPutFileRequest(projectLocation + "/test.txt", "change to commit");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 

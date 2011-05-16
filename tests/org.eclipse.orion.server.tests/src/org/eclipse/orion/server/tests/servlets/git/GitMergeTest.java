@@ -14,20 +14,20 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeResult;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
@@ -46,19 +46,11 @@ public class GitMergeTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
-		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
-		assertNotNull(projectId);
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
-		assertNotNull(gitIndexUri);
-		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
-		assertNotNull(gitStatusUri);
-		String gitCommitUri = gitSection.optString(GitConstants.KEY_COMMIT, null);
-		assertNotNull(gitCommitUri);
+		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
 
 		// "git merge master"
 		JSONObject merge = merge(gitCommitUri, Constants.MASTER);
@@ -67,32 +59,34 @@ public class GitMergeTest extends GitTest {
 	}
 
 	@Test
-	public void testMerge() throws IOException, SAXException, JSONException, URISyntaxException, JGitInternalException, GitAPIException {
-		// clone: create
-		String contentLocation = clone(null);
-
-		// clone: link
-		JSONObject project = linkProject(contentLocation, getMethodName());
+	public void testMerge() throws IOException, SAXException, JSONException, JGitInternalException, GitAPIException {
+		// clone a repo
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
-		String gitRemoteUri = gitSection.optString(GitConstants.KEY_REMOTE, null);
-		assertNotNull(gitRemoteUri);
+		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		String contentLocation = clone(clonePath);
+
+		// get project metadata
+		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		project = new JSONObject(response.getText());
 
 		// create branch 'a'
 		branch(contentLocation, "a");
 
 		// checkout 'a'
-		FileRepository db1 = new FileRepository(new File(URIUtil.toFile(new URI(contentLocation)), Constants.DOT_GIT));
+		Repository db1 = getRepositoryForContentLocation(contentLocation);
 		Git git = new Git(db1);
 		GitRemoteTest.ensureOnBranch(git, "a");
 
 		// modify while on 'a'
-		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change in a");
-		WebResponse response = webConversation.getResponse(request);
+		request = getPutFileRequest(projectId + "/test.txt", "change in a");
+		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
@@ -178,8 +172,7 @@ public class GitMergeTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		// TODO: don't create URIs out of thin air
@@ -241,13 +234,19 @@ public class GitMergeTest extends GitTest {
 	}
 
 	@Test
-	public void testMergeConflict() throws IOException, SAXException, JSONException, URISyntaxException, JGitInternalException, GitAPIException {
-		// clone: create
-		String contentLocation = clone(null);
-
-		// clone: link
-		JSONObject project = linkProject(contentLocation, getMethodName());
+	public void testMergeConflict() throws IOException, SAXException, JSONException, JGitInternalException, GitAPIException {
+		// clone a repo
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
+		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		String contentLocation = clone(clonePath);
+
+		// get project metadata
+		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		project = new JSONObject(response.getText());
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
 		String gitRemoteUri = gitSection.optString(GitConstants.KEY_REMOTE, null);
@@ -257,13 +256,13 @@ public class GitMergeTest extends GitTest {
 		branch(contentLocation, "a");
 
 		// checkout 'a'
-		FileRepository db1 = new FileRepository(new File(URIUtil.toFile(new URI(contentLocation)), Constants.DOT_GIT));
+		Repository db1 = getRepositoryForContentLocation(contentLocation);
 		Git git = new Git(db1);
 		GitRemoteTest.ensureOnBranch(git, "a");
 
 		// modify while on 'a'
-		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change in a");
-		WebResponse response = webConversation.getResponse(request);
+		request = getPutFileRequest(projectId + "/test.txt", "change in a");
+		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		gitSection = project.optJSONObject(GitConstants.KEY_GIT);
@@ -364,21 +363,33 @@ public class GitMergeTest extends GitTest {
 
 	@Test
 	public void testMergeRemote() throws IOException, SAXException, JSONException, JGitInternalException, URISyntaxException {
-		// clone1: create
-		String contentLocation1 = clone(null);
+		URI workspaceLocation = createWorkspace(getMethodName());
 
-		// clone1: link
-		JSONObject project1 = linkProject(contentLocation1, getMethodName() + "1");
+		// clone1
+		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
 		String projectId1 = project1.getString(ProtocolConstants.KEY_ID);
+		IPath clonePath1 = new Path("file").append(project1.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		clone(clonePath1);
+
+		// get project1 metadata
+		WebRequest request = getGetFilesRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		project1 = new JSONObject(response.getText());
 		JSONObject gitSection1 = project1.getJSONObject(GitConstants.KEY_GIT);
 		String gitRemoteUri1 = gitSection1.getString(GitConstants.KEY_REMOTE);
 
-		// clone2: create
-		String contentLocation2 = clone(null);
-
-		// clone2: link
-		JSONObject project2 = linkProject(contentLocation2, getMethodName() + "2");
+		// clone2
+		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
 		String projectId2 = project2.getString(ProtocolConstants.KEY_ID);
+		IPath clonePath2 = new Path("file").append(project2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		clone(clonePath2);
+
+		// get project2 metadata
+		request = getGetFilesRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		project2 = new JSONObject(response.getText());
 		JSONObject gitSection2 = project2.getJSONObject(GitConstants.KEY_GIT);
 		String gitRemoteUri2 = gitSection2.getString(GitConstants.KEY_REMOTE);
 		String gitIndexUri2 = gitSection2.getString(GitConstants.KEY_INDEX);
@@ -390,8 +401,8 @@ public class GitMergeTest extends GitTest {
 		String remoteBranchLocation1 = details.getString(ProtocolConstants.KEY_LOCATION);
 
 		// clone2: change
-		WebRequest request = getPutFileRequest(projectId2 + "/test.txt", "incoming change");
-		WebResponse response = webConversation.getResponse(request);
+		request = getPutFileRequest(projectId2 + "/test.txt", "incoming change");
+		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone2: add

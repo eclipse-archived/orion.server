@@ -65,7 +65,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		workspaceLocation = addSchemeHostPort(workspaceLocation);
 		JSONObject body = new JSONObject();
 		if (projectLocation != null)
-			body.put(ProtocolConstants.KEY_CONTENT_LOCATION, projectLocation.toString());
+			body.put(ProtocolConstants.KEY_CONTENT_LOCATION, projectLocation);
 		InputStream in = getJsonAsStream(body.toString());
 		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
 		if (projectName != null)
@@ -157,7 +157,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		//create workspace
 		String workspaceName = WorkspaceServiceTest.class.getName() + "#testCreateProject";
 		WebResponse response = createWorkspace(workspaceName);
-		URI workspaceLocation = new URI(response.getHeaderField("Location"));
+		URI workspaceLocation = new URI(response.getHeaderField(ProtocolConstants.HEADER_LOCATION));
 
 		//create a project
 		String projectName = "My Project";

@@ -10,31 +10,14 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.search;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-
+import java.io.*;
+import java.net.*;
 import javax.servlet.http.HttpServletRequest;
-
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
-import org.apache.solr.core.CoreContainer;
-import org.apache.solr.core.CoreDescriptor;
-import org.apache.solr.core.SolrCore;
+import org.apache.solr.core.*;
 import org.eclipse.core.filesystem.EFS;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.FileLocator;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
@@ -43,9 +26,7 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.LogHelper;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.osgi.framework.BundleActivator;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceRegistration;
+import org.osgi.framework.*;
 
 public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 	private static BundleContext context;
@@ -92,9 +73,8 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 		if (!("file".equals(service) || "workspace".equals(service))) //$NON-NLS-1$ //$NON-NLS-2$
 			return;
 		try {
-			// we can also augment with a query argument that includes the
-			// resource path
-			URI result = new URI(resource.getScheme(), resource.getUserInfo(), resource.getHost(), resource.getPort(), "/search", "q=", null); //$NON-NLS-1$//$NON-NLS-2$
+			// we can also augment with a query argument that includes the resource path
+			URI result = new URI(resource.getScheme(), resource.getUserInfo(), resource.getHost(), resource.getPort(), "/filesearch", "q=", null); //$NON-NLS-1$//$NON-NLS-2$
 			representation.put(ProtocolConstants.KEY_SEARCH_LOCATION, result);
 		} catch (URISyntaxException e) {
 			LogHelper.log(e);

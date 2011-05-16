@@ -28,6 +28,7 @@ plugin@org.eclipse.orion.server.hosting=GIT,tag=v20110428-1342,repo=dev.eclipse.
 
 #doc
 plugin@org.eclipse.orion.doc.isv=GIT,tag=v20110511-0951,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=doc/org.eclipse.orion.doc.isv
+plugin@org.eclipse.orion.doc.user=GIT,tag=v20110511-0951,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=doc/org.eclipse.orion.doc.user
 
 
 plugin@org.eclipse.e4.languages.javascript.framework=CVS,tag=v20101028-1345,cvsRoot=:pserver:anonymous@dev.eclipse.org:/cvsroot/eclipse,path=e4/org.eclipse.e4.languages/bundles/org.eclipse.e4.languages.javascript.framework
