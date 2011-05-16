@@ -16,8 +16,7 @@ import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+import java.util.zip.*;
 import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
@@ -64,7 +63,12 @@ class ClientImport {
 		restore();
 	}
 
-	private void completeMove(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
+	/**
+	 * Completes a move after a file transfer. Returns <code>true</code> if the move was
+	 * successful, and <code>false</code> otherwise. In case of failure, this method
+	 * handles setting an appropriate response.
+	 */
+	private boolean completeMove(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
 		IPath destPath = new Path(getPath()).append(getFileName());
 		try {
 			IFileStore source = EFS.getStore(new File(getStorageDirectory(), FILE_DATA).toURI());
@@ -73,8 +77,9 @@ class ClientImport {
 		} catch (CoreException e) {
 			String msg = NLS.bind("Failed to complete file transfer on {0}", destPath.toString());
 			statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
-			return;
+			return false;
 		}
+		return true;
 	}
 
 	/**
@@ -84,16 +89,24 @@ class ClientImport {
 	 */
 	private void completeTransfer(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
 		List<String> options = getOptions();
+		boolean success;
 		if (!options.contains("raw")) { //$NON-NLS-1$
-			completeUnzip(req, resp);
+			success = completeUnzip(req, resp);
 		} else {
-			completeMove(req, resp);
+			success = completeMove(req, resp);
 		}
-		resp.setHeader(ProtocolConstants.HEADER_LOCATION, "/file" + getPath()); //$NON-NLS-1$
-		resp.setStatus(HttpServletResponse.SC_CREATED);
+		if (success) {
+			resp.setHeader(ProtocolConstants.HEADER_LOCATION, "/file" + getPath()); //$NON-NLS-1$
+			resp.setStatus(HttpServletResponse.SC_CREATED);
+		}
 	}
 
-	private void completeUnzip(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
+	/**
+	 * Unzips the transferred file. Returns <code>true</code> if the unzip was
+	 * successful, and <code>false</code> otherwise. In case of failure, this method
+	 * handles setting an appropriate response.
+	 */
+	private boolean completeUnzip(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
 		IPath destPath = new Path(getPath());
 		try {
 			ZipFile source = new ZipFile(new File(getStorageDirectory(), FILE_DATA));
@@ -110,11 +123,18 @@ class ClientImport {
 				}
 			}
 			source.close();
+		} catch (ZipException e) {
+			//zip exception implies client sent us invalid input
+			String msg = NLS.bind("Failed to complete file transfer on {0}", destPath.toString());
+			statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, e));
+			return false;
 		} catch (Exception e) {
+			//other failures should be considered server errors
 			String msg = NLS.bind("Failed to complete file transfer on {0}", destPath.toString());
 			statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
-			return;
+			return false;
 		}
+		return true;
 	}
 
 	/**

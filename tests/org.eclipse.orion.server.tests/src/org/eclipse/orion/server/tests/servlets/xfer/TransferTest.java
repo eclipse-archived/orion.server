@@ -16,6 +16,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.meterware.httpunit.*;
 import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -72,7 +73,6 @@ public class TransferTest extends FileSystemTest {
 
 		//assert the file has been unzipped in the workspace
 		assertTrue(checkFileExists(directoryPath + "/org.eclipse.e4.webide/static/js/navigate-tree/navigate-tree.js"));
-
 	}
 
 	@Test
@@ -89,7 +89,7 @@ public class TransferTest extends FileSystemTest {
 		request.setHeaderField("X-Xfer-Content-Length", Long.toString(length));
 		setAuthentication(request);
 		WebResponse postResponse = webConversation.getResponse(request);
-		assertEquals(200, postResponse.getResponseCode());
+		assertEquals(HttpURLConnection.HTTP_OK, postResponse.getResponseCode());
 		String location = postResponse.getHeaderField("Location");
 		assertNotNull(location);
 
@@ -97,6 +97,28 @@ public class TransferTest extends FileSystemTest {
 
 		//assert the file has been unzipped in the workspace
 		assertTrue(checkFileExists(directoryPath + "/org.eclipse.e4.webide/static/js/navigate-tree/navigate-tree.js"));
+	}
+
+	/**
+	 * Tests attempting to import and unzip a file that is not a zip file.
+	 */
+	@Test
+	public void testImportUnzipNonZipFile() throws CoreException, IOException, SAXException {
+		//create a directory to upload to
+		String directoryPath = "sample/testImportWithPost/path" + System.currentTimeMillis();
+		createDirectory(directoryPath);
+
+		//start the import
+		URL entry = ServerTestsActivator.getContext().getBundle().getEntry("testData/importTest/junk.zip");
+		File source = new File(FileLocator.toFileURL(entry).getPath());
+		long length = source.length();
+		InputStream in = new BufferedInputStream(new FileInputStream(source));
+		PostMethodWebRequest request = new PostMethodWebRequest(ServerTestsActivator.getServerLocation() + "/xfer/import/" + directoryPath, in, "application/zip");
+		request.setHeaderField("Content-Length", "" + length);
+		request.setHeaderField("Content-Type", "application/zip");
+		setAuthentication(request);
+		WebResponse postResponse = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, postResponse.getResponseCode());
 	}
 
 	@Test
@@ -116,7 +138,7 @@ public class TransferTest extends FileSystemTest {
 		request.setHeaderField("Slug", "client.zip");
 		setAuthentication(request);
 		WebResponse postResponse = webConversation.getResponse(request);
-		assertEquals(200, postResponse.getResponseCode());
+		assertEquals(HttpURLConnection.HTTP_OK, postResponse.getResponseCode());
 		String location = postResponse.getHeaderField("Location");
 		assertNotNull(location);
 
@@ -137,7 +159,7 @@ public class TransferTest extends FileSystemTest {
 		GetMethodWebRequest export = new GetMethodWebRequest(ServerTestsActivator.getServerLocation() + "/xfer/export/" + directoryPath + ".zip");
 		setAuthentication(export);
 		WebResponse response = webConversation.getResponse(export);
-		assertEquals(200, response.getResponseCode());
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		boolean found = false;
 		ZipInputStream in = new ZipInputStream(response.getInputStream());
 		ZipEntry entry;
