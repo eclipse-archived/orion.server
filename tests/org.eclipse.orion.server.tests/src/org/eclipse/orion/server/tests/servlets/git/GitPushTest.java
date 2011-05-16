@@ -49,7 +49,7 @@ public class GitPushTest extends GitTest {
 	}
 
 	@Test
-	public void testPushNoBody() throws JSONException, IOException, SAXException {
+	public void testPushNoBody() throws JSONException, IOException, SAXException, URISyntaxException {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
@@ -77,7 +77,7 @@ public class GitPushTest extends GitTest {
 	}
 
 	@Test
-	public void testPushHead() throws JSONException, IOException, SAXException {
+	public void testPushHead() throws JSONException, IOException, SAXException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		// clone1
@@ -291,7 +291,7 @@ public class GitPushTest extends GitTest {
 	}
 
 	@Test
-	public void testPushFromLog() throws JSONException, IOException, SAXException {
+	public void testPushFromLog() throws JSONException, IOException, SAXException, URISyntaxException {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
@@ -349,7 +349,7 @@ public class GitPushTest extends GitTest {
 	}
 
 	@Test
-	public void testPushRejected() throws JSONException, IOException, SAXException {
+	public void testPushRejected() throws JSONException, IOException, SAXException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		// clone1

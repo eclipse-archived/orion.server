@@ -52,6 +52,7 @@ import org.eclipse.jgit.util.FS;
 import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
+import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitServlet;
@@ -261,6 +262,10 @@ public abstract class GitTest extends FileSystemTest {
 	// clone
 
 	protected String clone(URIish uri, IPath path, String kh, char[] p) throws JSONException, IOException, SAXException {
+		assertNotNull(path);
+		assertEquals("file", path.segment(0));
+		assertTrue(path.segmentCount() > 1);
+
 		WebRequest request = getPostGitCloneRequest(uri.toString(), path, kh, p);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
@@ -275,7 +280,9 @@ public abstract class GitTest extends FileSystemTest {
 		JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 		assertEquals(1, clonesArray.length());
 		JSONObject clone = clonesArray.getJSONObject(0);
-		// TODO: check name
+		String name = clone.getString(ProtocolConstants.KEY_NAME);
+		assertTrue(path.segmentCount() == 2 && name.equals(WebProject.fromId(path.segment(1)).getName()) || name.equals(path.lastSegment()));
+		assertCloneUri(clone.getString(ProtocolConstants.KEY_LOCATION));
 		return clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 	}
 
@@ -284,9 +291,6 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	protected String clone(IPath path) throws JSONException, IOException, SAXException {
-		assertNotNull(path);
-		assertEquals("file", path.segment(0));
-		assertTrue(path.segmentCount() > 1);
 		URIish uri = new URIish(gitDir.toURL());
 		return clone(uri, path);
 	}
@@ -611,6 +615,18 @@ public abstract class GitTest extends FileSystemTest {
 		assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
 		assertEquals(GitConstants.TAG_RESOURCE, path.segment(1));
 		assertEquals("file", path.segment(2));
+	}
+
+	void assertCloneUri(String cloneUri) {
+		URI uri = URI.create(cloneUri);
+		IPath path = new Path(uri.getPath());
+		// /git/clone/workspace/{id} or /git/clone/file/{id}[/{path}]
+		assertTrue(path.segmentCount() > 3);
+		assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
+		assertEquals(GitConstants.CLONE_RESOURCE, path.segment(1));
+		assertTrue("workspace".equals(path.segment(2)) || "file".equals(path.segment(2)));
+		if ("workspace".equals(path.segment(2)))
+			assertEquals(4, path.segmentCount());
 	}
 
 	private void assertContentLocation(String contentLocation) {

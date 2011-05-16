@@ -13,7 +13,6 @@ package org.eclipse.orion.server.tests.servlets.workspace;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -63,6 +62,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	protected final List<IFileStore> toDelete = new ArrayList<IFileStore>();
 
 	protected WebRequest getCreateProjectRequest(URI workspaceLocation, String projectName, String projectLocation) throws JSONException, IOException {
+		workspaceLocation = addSchemeHostPort(workspaceLocation);
 		JSONObject body = new JSONObject();
 		if (projectLocation != null)
 			body.put(ProtocolConstants.KEY_CONTENT_LOCATION, projectLocation);
@@ -75,7 +75,28 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		return request;
 	}
 
+	private URI addSchemeHostPort(URI uri) {
+		String scheme = uri.getScheme();
+		String host = uri.getHost();
+		int port = uri.getPort();
+		if (scheme == null) {
+			scheme = "http";
+		}
+		if (host == null) {
+			host = "localhost";
+		}
+		if (port == -1) {
+			port = 8080;
+		}
+		try {
+			return new URI(scheme, uri.getUserInfo(), host, port, uri.getPath(), uri.getQuery(), uri.getFragment());
+		} catch (URISyntaxException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	protected WebRequest getCopyMoveProjectRequest(URI workspaceLocation, String projectName, String sourceLocation, boolean isMove) throws UnsupportedEncodingException {
+		workspaceLocation = addSchemeHostPort(workspaceLocation);
 		JSONObject requestObject = new JSONObject();
 		try {
 			requestObject.put("Location", sourceLocation);
@@ -160,7 +181,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		assertEquals(projectId, projectPath.segment(1));
 
 		//ensure project appears in the workspace metadata
-		request = new GetMethodWebRequest(workspaceLocation.toString());
+		request = new GetMethodWebRequest(addSchemeHostPort(workspaceLocation).toString());
 		setAuthentication(request);
 		response = webConversation.getResponse(request);
 		JSONObject workspace = new JSONObject(response.getText());
@@ -407,7 +428,6 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		String location = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(location);
-		assertTrue(location.startsWith(SERVER_LOCATION));
 		assertEquals("application/json", response.getContentType());
 		JSONObject responseObject = new JSONObject(response.getText());
 		assertNotNull("No workspace information in response", responseObject);
@@ -426,7 +446,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		String workspaceId = workspace.getString(ProtocolConstants.KEY_ID);
 
 		//get workspace metadata and ensure it is correct
-		WebRequest request = new GetMethodWebRequest(workspaceLocation.toString());
+		WebRequest request = new GetMethodWebRequest(addSchemeHostPort(workspaceLocation).toString());
 		setAuthentication(request);
 		response = webConversation.getResponse(request);
 		workspace = new JSONObject(response.getText());
@@ -466,7 +486,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		String projectLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 
 		//delete project
-		request = new DeleteMethodWebRequest(projectLocation);
+		request = new DeleteMethodWebRequest(makeAbsolute(projectLocation));
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		response = webConversation.getResponse(request);

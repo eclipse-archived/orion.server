@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URISyntaxException;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.JGitInternalException;
@@ -40,7 +41,7 @@ public class GitCommitTest extends GitTest {
 
 	@Test
 	@Ignore("not yet implemented, see bug 339190")
-	public void testCommit() throws JSONException, IOException, SAXException {
+	public void testCommit() throws JSONException, IOException, SAXException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -115,7 +116,7 @@ public class GitCommitTest extends GitTest {
 	}
 
 	@Test
-	public void testCommitNoComment() throws JSONException, IOException, SAXException {
+	public void testCommitNoComment() throws JSONException, IOException, SAXException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -145,7 +146,7 @@ public class GitCommitTest extends GitTest {
 	}
 
 	@Test
-	public void testCommitEmptyComment() throws JSONException, IOException, SAXException {
+	public void testCommitEmptyComment() throws JSONException, IOException, SAXException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -175,7 +176,7 @@ public class GitCommitTest extends GitTest {
 	}
 
 	@Test
-	public void testCommitAll() throws IOException, SAXException, JSONException {
+	public void testCommitAll() throws IOException, SAXException, JSONException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -237,7 +238,7 @@ public class GitCommitTest extends GitTest {
 	}
 
 	@Test
-	public void testCommitAmend() throws IOException, SAXException, JSONException, NoHeadException, JGitInternalException {
+	public void testCommitAmend() throws IOException, SAXException, JSONException, NoHeadException, JGitInternalException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -296,7 +297,7 @@ public class GitCommitTest extends GitTest {
 	}
 
 	@Test
-	public void testCommitHeadContent() throws IOException, SAXException, JSONException {
+	public void testCommitHeadContent() throws IOException, SAXException, JSONException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -343,6 +344,8 @@ public class GitCommitTest extends GitTest {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;
+		else if (location.startsWith("/"))
+			requestURI = SERVER_LOCATION + location;
 		else
 			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.COMMIT_RESOURCE + location;
 
@@ -359,6 +362,8 @@ public class GitCommitTest extends GitTest {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;
+		else if (location.startsWith("/"))
+			requestURI = SERVER_LOCATION + location;
 		else
 			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.COMMIT_RESOURCE + '/' + location;
 		if (body)

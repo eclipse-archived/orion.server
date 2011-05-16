@@ -26,6 +26,7 @@ import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler.Method;
 import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.git.servlets.*;
@@ -48,7 +49,7 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		boolean isWorkspace = ("workspace".equals(servlet)); //$NON-NLS-1$
 
 		try {
-			if (isWorkspace && "POST".equals(request.getMethod())) {
+			if (isWorkspace && Method.POST.equals(Method.fromString(request.getMethod()))) {
 				String contentLocation = representation.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 				IPath path = new Path(new URI(contentLocation).getPath());
 
@@ -60,7 +61,7 @@ public class GitFileDecorator implements IWebResourceDecorator {
 				return;
 			}
 
-			if (isWorkspace && "GET".equals(request.getMethod())) {
+			if (isWorkspace && Method.GET.equals(Method.fromString(request.getMethod()))) {
 				JSONArray children = representation.optJSONArray(ProtocolConstants.KEY_CHILDREN);
 				if (children != null) {
 					for (int i = 0; i < children.length(); i++) {
@@ -74,18 +75,19 @@ public class GitFileDecorator implements IWebResourceDecorator {
 				return;
 			}
 
-			if (!isWorkspace && "GET".equals(request.getMethod())) {
+			if (!isWorkspace && Method.GET.equals(Method.fromString(request.getMethod()))) {
+				boolean git = false;
 				if (GitUtils.getGitDir(targetPath) != null) {
 					addGitLinks(resource, representation);
-
-					// assumption that Git resources may live only under another Git resource
-					JSONArray children = representation.optJSONArray(ProtocolConstants.KEY_CHILDREN);
-					if (children != null) {
-						for (int i = 0; i < children.length(); i++) {
-							JSONObject child = children.getJSONObject(i);
-							String location = child.getString(ProtocolConstants.KEY_LOCATION);
+				}
+				JSONArray children = representation.optJSONArray(ProtocolConstants.KEY_CHILDREN);
+				if (children != null) {
+					for (int i = 0; i < children.length(); i++) {
+						JSONObject child = children.getJSONObject(i);
+						String location = child.getString(ProtocolConstants.KEY_LOCATION);
+						// assumption that Git resources may live only under another Git resource
+						if (git || GitUtils.getGitDir(targetPath.append(child.getString(ProtocolConstants.KEY_NAME))) != null)
 							addGitLinks(new URI(location), child);
-						}
 					}
 				}
 			}
@@ -154,14 +156,14 @@ public class GitFileDecorator implements IWebResourceDecorator {
 	 */
 	private void initGitRepository(HttpServletRequest request, IPath targetPath, JSONObject representation) throws IOException {
 		//project creation URL is of the form POST /workspace/<id>
-		if (!(targetPath.segmentCount() == 2 && "workspace".equals(targetPath.segment(0)) && "POST".equals(request.getMethod()))) //$NON-NLS-1$ //$NON-NLS-2$
+		if (!(targetPath.segmentCount() == 2 && "workspace".equals(targetPath.segment(0)) && Method.POST.equals(Method.fromString(request.getMethod())))) //$NON-NLS-1$
 			return;
 		IPreferencesService preferences = GitActivator.getDefault().getPreferenceService();
 		String scm = preferences.getString("org.eclipse.orion.server.configurator", "orion.project.defaultSCM", "", null).toLowerCase(); //$NON-NLS-1$ //$NON-NLS-2$
 		if (!"git".equals(scm)) //$NON-NLS-1$
 			return;
 		try {
-			IFileStore store = WebProject.fromId(representation.optString("Id")).getProjectStore();
+			IFileStore store = WebProject.fromId(representation.optString(ProtocolConstants.KEY_ID)).getProjectStore();
 			//create repository in each project if it doesn't already exist
 			File localFile = store.toLocalFile(EFS.NONE, null);
 			File gitDir = GitUtils.getGitDir(localFile);

@@ -17,6 +17,7 @@ import static org.junit.Assert.assertNotNull;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URISyntaxException;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
@@ -41,7 +42,7 @@ import com.meterware.httpunit.WebResponse;
 
 public class GitMergeTest extends GitTest {
 	@Test
-	public void testMergeSelf() throws IOException, SAXException, JSONException {
+	public void testMergeSelf() throws IOException, SAXException, JSONException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -167,7 +168,7 @@ public class GitMergeTest extends GitTest {
 	}
 
 	@Test
-	public void testMergeAlreadyUpToDate() throws IOException, SAXException, JSONException {
+	public void testMergeAlreadyUpToDate() throws IOException, SAXException, JSONException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -361,7 +362,7 @@ public class GitMergeTest extends GitTest {
 	}
 
 	@Test
-	public void testMergeRemote() throws IOException, SAXException, JSONException, JGitInternalException {
+	public void testMergeRemote() throws IOException, SAXException, JSONException, JGitInternalException, URISyntaxException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		// clone1

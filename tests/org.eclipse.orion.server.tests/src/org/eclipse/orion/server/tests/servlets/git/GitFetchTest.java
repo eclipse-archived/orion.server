@@ -58,7 +58,7 @@ public class GitFetchTest extends GitTest {
 	}
 
 	@Test
-	public void testFetch() throws IOException, SAXException, JSONException {
+	public void testFetch() throws IOException, SAXException, JSONException, URISyntaxException {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
