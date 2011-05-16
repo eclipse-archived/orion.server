@@ -154,7 +154,7 @@ public class GitDiffTest extends GitTest {
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		request = getPutFileRequest(projectId + "/folder/folder.txt", "hello");
+		request = getPutFileRequest(projectId + "/folder/folder.txt", "folder change");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -164,13 +164,13 @@ public class GitDiffTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		StringBuffer sb = new StringBuffer();
 		sb.append("diff --git a/folder/folder.txt b/folder/folder.txt").append("\n");
-		sb.append("index 0119635..b6fc4c6 100644").append("\n");
+		sb.append("index 0119635..95c4c65 100644").append("\n");
 		sb.append("--- a/folder/folder.txt").append("\n");
 		sb.append("+++ b/folder/folder.txt").append("\n");
 		sb.append("@@ -1 +1 @@").append("\n");
 		sb.append("-folder").append("\n");
 		sb.append("\\ No newline at end of file").append("\n");
-		sb.append("+hello").append("\n");
+		sb.append("+folder change").append("\n");
 		sb.append("\\ No newline at end of file").append("\n");
 		String[] parts = parseMultiPartResponse(response);
 		assertEquals(sb.toString(), parts[1]);
