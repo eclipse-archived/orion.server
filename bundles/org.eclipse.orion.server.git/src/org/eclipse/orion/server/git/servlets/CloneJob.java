@@ -127,18 +127,13 @@ public class CloneJob extends GitJob {
 			// save the clone metadata
 			try {
 				if (result.isOK()) {
-					clone.save();
 					task.setResultLocation(cloneLocation);
 					String message = "Clone complete. Use the Repositories page to link the clone to a folder.";
 					task.setMessage(message);
 					result = new Status(IStatus.OK, GitActivator.PI_GIT, message);
 				} else {
 					FileUtils.delete(URIUtil.toFile(clone.getContentLocation()), FileUtils.RECURSIVE);
-					clone.remove();
 				}
-			} catch (CoreException e) {
-				String msg = "Error persisting clone state"; //$NON-NLS-1$
-				result = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 			} catch (IOException e) {
 				String msg = "Error persisting clone state"; //$NON-NLS-1$
 				result = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);

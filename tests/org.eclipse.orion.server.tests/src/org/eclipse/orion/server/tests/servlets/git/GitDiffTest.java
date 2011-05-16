@@ -24,12 +24,12 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
@@ -53,16 +53,11 @@ public class GitDiffTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
-		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
-		assertNotNull(projectId);
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-
-		String gitDiffUri = gitSection.optString(GitConstants.KEY_DIFF, null);
-		assertNotNull(gitDiffUri);
+		String gitDiffUri = gitSection.getString(GitConstants.KEY_DIFF);
 
 		WebRequest request = getGetGitDiffRequest(gitDiffUri);
 		WebResponse response = webConversation.getResponse(request);
@@ -84,10 +79,7 @@ public class GitDiffTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
-		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
-		assertNotNull(projectId);
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
@@ -118,10 +110,8 @@ public class GitDiffTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
-		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
-		assertNotNull(projectId);
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
+		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "hello");
 		WebResponse response = webConversation.getResponse(request);
@@ -129,9 +119,7 @@ public class GitDiffTest extends GitTest {
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-
-		String gitDiffUri = gitSection.optString(GitConstants.KEY_DIFF, null);
-		assertNotNull(gitDiffUri);
+		String gitDiffUri = gitSection.getString(GitConstants.KEY_DIFF);
 
 		request = getGetGitDiffRequest(gitDiffUri);
 		response = webConversation.getResponse(request);
@@ -155,16 +143,12 @@ public class GitDiffTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
-		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
-		assertNotNull(projectId);
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
+		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-
-		String gitDiffUri = gitSection.optString(GitConstants.KEY_DIFF, null);
-		assertNotNull(gitDiffUri);
+		String gitDiffUri = gitSection.getString(GitConstants.KEY_DIFF);
 
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "hi");
 		WebResponse response = webConversation.getResponse(request);
@@ -218,10 +202,8 @@ public class GitDiffTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
-		String projectId = project.optString("Id", null);
-		assertNotNull(projectId);
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
+		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
@@ -268,19 +250,14 @@ public class GitDiffTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
-		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
-		assertNotNull(projectId);
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
+		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-		String gitDiffUri = gitSection.optString(GitConstants.KEY_DIFF, null);
-		assertNotNull(gitDiffUri);
-		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
-		assertNotNull(gitIndexUri);
-		String gitCommitUri = gitSection.optString(GitConstants.KEY_COMMIT, null);
-		assertNotNull(gitCommitUri);
+		String gitDiffUri = gitSection.getString(GitConstants.KEY_DIFF);
+		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
 
 		// modify
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "first change");
@@ -362,19 +339,14 @@ public class GitDiffTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
-		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
-		assertNotNull(projectId);
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
+		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-		String gitDiffUri = gitSection.optString(GitConstants.KEY_DIFF, null);
-		assertNotNull(gitDiffUri);
-		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
-		assertNotNull(gitIndexUri);
-		String gitCommitUri = gitSection.optString(GitConstants.KEY_COMMIT, null);
-		assertNotNull(gitCommitUri);
+		String gitDiffUri = gitSection.getString(GitConstants.KEY_DIFF);
+		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
 
 		// modify
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "first change");
@@ -457,19 +429,14 @@ public class GitDiffTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
-		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
-		assertNotNull(projectId);
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
+		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-		String gitDiffUri = gitSection.optString(GitConstants.KEY_DIFF, null);
-		assertNotNull(gitDiffUri);
-		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
-		assertNotNull(gitIndexUri);
-		String gitCommitUri = gitSection.optString(GitConstants.KEY_COMMIT, null);
-		assertNotNull(gitCommitUri);
+		String gitDiffUri = gitSection.getString(GitConstants.KEY_DIFF);
+		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
 
 		// modify
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change");
@@ -527,19 +494,14 @@ public class GitDiffTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
-		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
-		assertNotNull(projectId);
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
+		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-		String gitDiffUri = gitSection.optString(GitConstants.KEY_DIFF, null);
-		assertNotNull(gitDiffUri);
-		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
-		assertNotNull(gitIndexUri);
-		String gitCommitUri = gitSection.optString(GitConstants.KEY_COMMIT, null);
-		assertNotNull(gitCommitUri);
+		String gitDiffUri = gitSection.getString(GitConstants.KEY_DIFF);
+		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
 
 		// modify
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change");
@@ -607,10 +569,8 @@ public class GitDiffTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
-		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
-		assertNotNull(projectId);
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
+		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		String fileName = "new.txt";
 		WebRequest request = getPostFilesRequest(projectId + "/", getNewFileJSON(fileName).toString(), fileName);
@@ -619,8 +579,7 @@ public class GitDiffTest extends GitTest {
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-		String gitDiffUri = gitSection.optString(GitConstants.KEY_DIFF, null);
-		assertNotNull(gitDiffUri);
+		String gitDiffUri = gitSection.getString(GitConstants.KEY_DIFF);
 		// TODO: don't create URIs out of thin air
 		gitDiffUri += "new.txt";
 
@@ -650,26 +609,32 @@ public class GitDiffTest extends GitTest {
 	}
 
 	@Test
-	public void testDiffWithCommonAncestor() throws JSONException, IOException, SAXException, JGitInternalException, GitAPIException, URISyntaxException {
+	public void testDiffWithCommonAncestor() throws JSONException, IOException, SAXException, JGitInternalException, GitAPIException {
 		// clone: create
-		String contentLocation = clone(null);
-
-		// clone: link
-		JSONObject project = linkProject(contentLocation, getMethodName());
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
+		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		String contentLocation = clone(clonePath);
+
+		// get project metadata
+		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		project = new JSONObject(response.getText());
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
 
 		String a = "a";
 		branch(contentLocation, a);
 		// checkout 'a'
-		FileRepository db1 = new FileRepository(new File(URIUtil.toFile(new URI(contentLocation)), Constants.DOT_GIT));
+		FileRepository db1 = new FileRepository(new File(contentLocation));
 		Git git = new Git(db1);
 		GitRemoteTest.ensureOnBranch(git, a);
 
 		// modify while on 'a'
-		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change in a");
-		WebResponse response = webConversation.getResponse(request);
+		request = getPutFileRequest(projectId + "/test.txt", "change in a");
+		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		gitSection = project.optJSONObject(GitConstants.KEY_GIT);

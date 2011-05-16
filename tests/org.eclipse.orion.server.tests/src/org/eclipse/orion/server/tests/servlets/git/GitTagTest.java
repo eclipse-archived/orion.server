@@ -36,7 +36,7 @@ public class GitTagTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitTagUri = gitSection.getString(GitConstants.KEY_TAG);
@@ -53,7 +53,7 @@ public class GitTagTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);

@@ -164,7 +164,7 @@ public class GitFileDecorator implements IWebResourceDecorator {
 			IFileStore store = WebProject.fromId(representation.optString("Id")).getProjectStore();
 			//create repository in each project if it doesn't already exist
 			File localFile = store.toLocalFile(EFS.NONE, null);
-			File gitDir = GitUtils.getGitDirForFile(localFile);
+			File gitDir = GitUtils.getGitDir(localFile);
 			if (gitDir == null) {
 				gitDir = new File(localFile, Constants.DOT_GIT);
 				FileRepository repo = new FileRepositoryBuilder().setGitDir(gitDir).build();

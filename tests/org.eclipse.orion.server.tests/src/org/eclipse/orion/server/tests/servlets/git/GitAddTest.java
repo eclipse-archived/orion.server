@@ -38,10 +38,8 @@ public class GitAddTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
-		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
-		assertNotNull(projectId);
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
+		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "hello");
 		WebResponse response = webConversation.getResponse(request);
@@ -83,10 +81,8 @@ public class GitAddTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
-		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
-		assertNotNull(projectId);
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
+		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		WebRequest request = getDeleteFilesRequest(projectId + "/test.txt");
 		WebResponse response = webConversation.getResponse(request);
@@ -150,10 +146,8 @@ public class GitAddTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
-		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
-		assertNotNull(projectId);
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
+		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "hello");
 		WebResponse response = webConversation.getResponse(request);
@@ -224,10 +218,8 @@ public class GitAddTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
-		JSONObject project = createProjectWithContentLocation(workspaceLocation, projectName, gitDir.toString());
-		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
-		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
-		assertNotNull(projectId);
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
+		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "hello");
 		WebResponse response = webConversation.getResponse(request);
