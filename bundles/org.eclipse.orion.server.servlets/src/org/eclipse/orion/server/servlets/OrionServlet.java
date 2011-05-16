@@ -184,7 +184,7 @@ public abstract class OrionServlet extends HttpServlet {
 	@SuppressWarnings("unchecked")
 	protected void printHeaders(HttpServletRequest req, StringBuffer out) {
 		for (String header : Collections.<String> list(req.getHeaderNames()))
-			out.append(header + ": " + req.getHeader(header)); //$NON-NLS-1$
+			out.append(header + ": " + req.getHeader(header) + "\n"); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
 	/**
