@@ -89,7 +89,7 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 				result.put(ProtocolConstants.KEY_LOCATION, location);
 				if (info.isDirectory())
 					try {
-						result.put(ProtocolConstants.KEY_CHILDREN_LOCATION, new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), location.getPath(), "depth=1", location.getFragment()));
+						result.put(ProtocolConstants.KEY_CHILDREN_LOCATION, new URI(null, null, null, -1, location.getPath(), "depth=1", location.getFragment()));
 					} catch (URISyntaxException e) {
 						throw new RuntimeException(e);
 					} //$NON-NLS-1$

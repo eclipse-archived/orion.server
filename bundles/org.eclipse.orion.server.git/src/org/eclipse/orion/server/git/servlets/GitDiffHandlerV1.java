@@ -116,10 +116,10 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 		JSONObject o = new JSONObject();
 		JSONObject gitSection = new JSONObject();
 		URI link = getURI(request);
-		gitSection.put(GitConstants.KEY_DIFF, link.toString());
-		gitSection.put(GitConstants.KEY_COMMIT_OLD, getOldLocation(link, path).toString());
-		gitSection.put(GitConstants.KEY_COMMIT_NEW, getNewLocation(link, path).toString());
-		gitSection.put(GitConstants.KEY_COMMIT_BASE, getBaseLocation(link, db, path).toString());
+		gitSection.put(GitConstants.KEY_DIFF, new URI(null, null, null, -1, link.getPath(), link.getQuery(), link.getFragment()));
+		gitSection.put(GitConstants.KEY_COMMIT_OLD, getOldLocation(link, path));
+		gitSection.put(GitConstants.KEY_COMMIT_NEW, getNewLocation(link, path));
+		gitSection.put(GitConstants.KEY_COMMIT_BASE, getBaseLocation(link, db, path));
 		o.put(GitConstants.KEY_GIT, gitSection);
 		out.write(o.toString().getBytes());
 		return true;
@@ -190,16 +190,16 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 			}
 			// TODO: decode commits[0]
 			IPath p = new Path(GitServlet.GIT_URI + '/' + GitConstants.COMMIT_RESOURCE).append(commits[0]).append(path.removeFirstSegments(1));
-			return new URI(location.getScheme(), location.getAuthority(), p.toString(), "parts=body", null); //$NON-NLS-1$
+			return new URI(null, null, p.toString(), "parts=body", null); //$NON-NLS-1$
 		} else if (scope.equals(GitConstants.KEY_DIFF_CACHED)) {
 			IPath p = new Path(GitServlet.GIT_URI + '/' + GitConstants.COMMIT_RESOURCE).append(Constants.HEAD).append(path.removeFirstSegments(1));
-			return new URI(location.getScheme(), location.getAuthority(), p.toString(), "parts=body", null); //$NON-NLS-1$
+			return new URI(null, null, p.toString(), "parts=body", null); //$NON-NLS-1$
 		} else if (scope.equals(GitConstants.KEY_DIFF_DEFAULT)) {
 			IPath p = new Path(GitServlet.GIT_URI + '/' + GitConstants.INDEX_RESOURCE).append(path.removeFirstSegments(1));
-			return new URI(location.getScheme(), location.getAuthority(), p.toString(), null, null);
+			return new URI(null, null, p.toString(), null, null);
 		} else {
 			IPath p = new Path(GitServlet.GIT_URI + '/' + GitConstants.COMMIT_RESOURCE).append(scope).append(path.removeFirstSegments(1));
-			return new URI(location.getScheme(), location.getAuthority(), p.toString(), "parts=body", null); //$NON-NLS-1$
+			return new URI(null, null, p.toString(), "parts=body", null); //$NON-NLS-1$
 		}
 	}
 
@@ -213,13 +213,13 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 			}
 			// TODO: decode commits[1]
 			IPath p = new Path(GitServlet.GIT_URI + '/' + GitConstants.COMMIT_RESOURCE).append(commits[1]).append(path.removeFirstSegments(1));
-			return new URI(location.getScheme(), location.getAuthority(), p.toString(), "parts=body", null); //$NON-NLS-1$
+			return new URI(null, null, p.toString(), "parts=body", null); //$NON-NLS-1$
 		} else if (scope.equals(GitConstants.KEY_DIFF_CACHED)) {
 			IPath p = new Path(GitServlet.GIT_URI + '/' + GitConstants.INDEX_RESOURCE).append(path.removeFirstSegments(1));
-			return new URI(location.getScheme(), location.getAuthority(), p.toString(), null, null);
+			return new URI(null, null, p.toString(), null, null);
 		} else {
 			/* including scope.equals(GitConstants.KEY_DIFF_DEFAULT */
-			return new URI(location.getScheme(), location.getAuthority(), path.removeFirstSegments(1).makeAbsolute().toString(), null, null);
+			return new URI(null, null, path.removeFirstSegments(1).makeAbsolute().toString(), null, null);
 		}
 	}
 
@@ -244,15 +244,15 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 			RevCommit baseCommit = merger.getBaseCommit(0, 1);
 
 			IPath p = new Path(GitServlet.GIT_URI + '/' + GitConstants.COMMIT_RESOURCE).append(baseCommit.getId().getName()).append(path.removeFirstSegments(1));
-			return new URI(location.getScheme(), location.getAuthority(), p.toString(), "parts=body", null); //$NON-NLS-1$
+			return new URI(null, null, p.toString(), "parts=body", null); //$NON-NLS-1$
 		} else if (scope.equals(GitConstants.KEY_DIFF_CACHED)) {
 			// HEAD is the base
 			IPath p = new Path(GitServlet.GIT_URI + '/' + GitConstants.COMMIT_RESOURCE).append(Constants.HEAD).append(path.removeFirstSegments(1));
-			return new URI(location.getScheme(), location.getAuthority(), p.toString(), "parts=body", null); //$NON-NLS-1$
+			return new URI(null, null, p.toString(), "parts=body", null); //$NON-NLS-1$
 		} else {
 			// index is the base
 			IPath p = new Path(GitServlet.GIT_URI + '/' + GitConstants.INDEX_RESOURCE).append(path.removeFirstSegments(1));
-			return new URI(location.getScheme(), location.getAuthority(), p.toString(), null, null);
+			return new URI(null, null, p.toString(), null, null);
 		}
 	}
 }

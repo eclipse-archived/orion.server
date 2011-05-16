@@ -64,7 +64,8 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 		//for all but the project we can just manipulate the path to get the name and location
 		while (resourcePath.segmentCount() > 2) {
 			try {
-				addParent(parents, resourcePath.lastSegment(), resource.resolve(new URI(null, resourcePath.toString(), null)));
+				URI uri = resource.resolve(new URI(null, resourcePath.toString(), null));
+				addParent(parents, resourcePath.lastSegment(), new URI(null, null, null, -1, uri.getPath(), uri.getQuery(), uri.getFragment()));
 			} catch (URISyntaxException e) {
 				//ignore this parent
 				LogHelper.log(e);
@@ -74,7 +75,13 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 		//add the project
 		if (resourcePath.segmentCount() == 2) {
 			WebProject project = WebProject.fromId(resourcePath.segment(1));
-			addParent(parents, project.getName(), resource.resolve(resourcePath.toString()));
+			URI uri = resource.resolve(resourcePath.toString());
+			try {
+				addParent(parents, project.getName(), new URI(null, null, null, -1, uri.getPath(), uri.getQuery(), uri.getFragment()));
+			} catch (URISyntaxException e) {
+				//ignore this project
+				LogHelper.log(e);
+			}
 		}
 		representation.put(ProtocolConstants.KEY_PARENTS, parents);
 	}
