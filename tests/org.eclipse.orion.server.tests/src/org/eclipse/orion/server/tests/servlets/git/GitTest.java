@@ -19,6 +19,7 @@ import com.meterware.httpunit.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import junit.framework.Assert;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.tests.harness.FileSystemHelper;
 import org.eclipse.jgit.api.Git;
@@ -185,7 +186,10 @@ public abstract class GitTest extends FileSystemTest {
 		while (true) {
 			WebRequest request = new GetMethodWebRequest(taskLocation);
 			WebResponse response = webConversation.getResponse(request);
-			status = new JSONObject(response.getText());
+			String text = response.getText();
+			status = new JSONObject(text);
+			if (status.isNull("Running"))
+				Assert.fail("Unexpected task format: " + text);
 			boolean running = status.getBoolean("Running");
 			if (!running)
 				break;
