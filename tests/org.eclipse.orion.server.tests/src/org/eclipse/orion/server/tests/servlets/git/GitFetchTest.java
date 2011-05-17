@@ -15,16 +15,15 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
@@ -32,7 +31,6 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -58,7 +56,7 @@ public class GitFetchTest extends GitTest {
 	}
 
 	@Test
-	public void testFetch() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testFetch() throws IOException, SAXException, JSONException {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
@@ -103,7 +101,7 @@ public class GitFetchTest extends GitTest {
 	}
 
 	@Test
-	public void testPushAndFetch() throws IOException, SAXException, JSONException, JGitInternalException, GitAPIException {
+	public void testPushAndFetch() throws IOException, SAXException, JSONException, JGitInternalException, GitAPIException, CoreException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		// clone1
@@ -184,7 +182,7 @@ public class GitFetchTest extends GitTest {
 	}
 
 	@Test
-	public void testPushAndFetchWithPrivateKeyAndPassphrase() throws IOException, SAXException, JSONException, URISyntaxException, JGitInternalException, GitAPIException {
+	public void testPushAndFetchWithPrivateKeyAndPassphrase() throws IOException, SAXException, JSONException, URISyntaxException, JGitInternalException, GitAPIException, CoreException {
 
 		Assume.assumeTrue(sshRepo2 != null);
 		Assume.assumeTrue(privateKey != null);
@@ -261,7 +259,7 @@ public class GitFetchTest extends GitTest {
 
 	@Test
 	@Ignore("see bug 342727")
-	public void testFetchSingleBranch() throws JSONException, IOException, SAXException, URISyntaxException, JGitInternalException, GitAPIException {
+	public void testFetchSingleBranch() throws JSONException, IOException, SAXException, URISyntaxException, JGitInternalException, GitAPIException, CoreException {
 
 		// clone1
 		String contentLocation1 = clone(null);
@@ -276,7 +274,8 @@ public class GitFetchTest extends GitTest {
 		String gitCommitUri1 = gitSection1.getString(GitConstants.KEY_COMMIT);
 
 		// clone1: branch 'a'
-		branch(contentLocation1, "a");
+		Repository db1 = getRepositoryForContentLocation(contentLocation1);
+		branch(db1, "a");
 
 		// clone1: push all
 		pushAll(contentLocation1);
@@ -292,7 +291,6 @@ public class GitFetchTest extends GitTest {
 		String gitRemoteUri2 = gitSection2.getString(GitConstants.KEY_REMOTE);
 
 		// clone1: switch to 'a'
-		FileRepository db1 = new FileRepository(new File(URIUtil.toFile(new URI(contentLocation1)), Constants.DOT_GIT));
 		Git git1 = new Git(db1);
 		GitRemoteTest.ensureOnBranch(git1, "a");
 

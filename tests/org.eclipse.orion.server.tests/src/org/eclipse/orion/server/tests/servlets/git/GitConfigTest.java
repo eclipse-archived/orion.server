@@ -17,8 +17,8 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URISyntaxException;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
@@ -46,7 +46,7 @@ public class GitConfigTest extends GitTest {
 	private static final String GIT_COMMIT_MESSAGE = "message";
 
 	@Test
-	public void testConfigUsingUserProfile() throws JSONException, IOException, SAXException, URISyntaxException, NoHeadException, JGitInternalException {
+	public void testConfigUsingUserProfile() throws JSONException, IOException, SAXException, NoHeadException, JGitInternalException, CoreException {
 
 		// set Git name and mail in the user profile
 		WebRequest request = getPutUserRequest();

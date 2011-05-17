@@ -14,13 +14,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 import java.io.IOException;
-import java.net.*;
+import java.net.HttpURLConnection;
+import java.net.URI;
+
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.jgit.api.*;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.MergeResult;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
@@ -29,13 +31,18 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
+
 public class GitMergeTest extends GitTest {
 	@Test
-	public void testMergeSelf() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testMergeSelf() throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -52,7 +59,7 @@ public class GitMergeTest extends GitTest {
 	}
 
 	@Test
-	public void testMerge() throws IOException, SAXException, JSONException, JGitInternalException, GitAPIException {
+	public void testMerge() throws IOException, SAXException, JSONException, JGitInternalException, GitAPIException, CoreException {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
@@ -67,10 +74,10 @@ public class GitMergeTest extends GitTest {
 		project = new JSONObject(response.getText());
 
 		// create branch 'a'
-		branch(contentLocation, "a");
+		Repository db1 = getRepositoryForContentLocation(contentLocation);
+		branch(db1, "a");
 
 		// checkout 'a'
-		Repository db1 = getRepositoryForContentLocation(contentLocation);
 		Git git = new Git(db1);
 		GitRemoteTest.ensureOnBranch(git, "a");
 
@@ -161,7 +168,7 @@ public class GitMergeTest extends GitTest {
 	}
 
 	@Test
-	public void testMergeAlreadyUpToDate() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testMergeAlreadyUpToDate() throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -227,7 +234,7 @@ public class GitMergeTest extends GitTest {
 	}
 
 	@Test
-	public void testMergeConflict() throws IOException, SAXException, JSONException, JGitInternalException, GitAPIException {
+	public void testMergeConflict() throws IOException, SAXException, JSONException, JGitInternalException, GitAPIException, CoreException {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
@@ -246,10 +253,10 @@ public class GitMergeTest extends GitTest {
 		assertNotNull(gitRemoteUri);
 
 		// create branch 'a'
-		branch(contentLocation, "a");
+		Repository db1 = getRepositoryForContentLocation(contentLocation);
+		branch(db1, "a");
 
 		// checkout 'a'
-		Repository db1 = getRepositoryForContentLocation(contentLocation);
 		Git git = new Git(db1);
 		GitRemoteTest.ensureOnBranch(git, "a");
 
@@ -355,7 +362,7 @@ public class GitMergeTest extends GitTest {
 	}
 
 	@Test
-	public void testMergeRemote() throws IOException, SAXException, JSONException, JGitInternalException, URISyntaxException {
+	public void testMergeRemote() throws IOException, SAXException, JSONException, JGitInternalException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		// clone1

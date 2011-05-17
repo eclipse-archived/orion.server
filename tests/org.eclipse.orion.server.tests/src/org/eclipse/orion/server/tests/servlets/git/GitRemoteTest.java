@@ -20,6 +20,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
@@ -44,7 +45,7 @@ import com.meterware.httpunit.WebResponse;
 
 public class GitRemoteTest extends GitTest {
 	@Test
-	public void testGetNoRemote() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testGetNoRemote() throws IOException, SAXException, JSONException {
 		URI contentLocation = gitDir.toURI();
 
 		JSONObject project = linkProject(contentLocation.toString(), getMethodName());
@@ -70,7 +71,7 @@ public class GitRemoteTest extends GitTest {
 	}
 
 	@Test
-	public void testGetOrigin() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testGetOrigin() throws IOException, SAXException, JSONException {
 		// clone a  repo
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
@@ -131,7 +132,7 @@ public class GitRemoteTest extends GitTest {
 	}
 
 	@Test
-	public void testGetRemoteCommits() throws JSONException, IOException, SAXException, JGitInternalException, URISyntaxException {
+	public void testGetRemoteCommits() throws JSONException, IOException, SAXException, JGitInternalException {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
@@ -206,7 +207,7 @@ public class GitRemoteTest extends GitTest {
 	}
 
 	@Test
-	public void testGetRemoteBranches() throws JSONException, IOException, SAXException, JGitInternalException, GitAPIException {
+	public void testGetRemoteBranches() throws JSONException, IOException, SAXException, JGitInternalException, GitAPIException, CoreException {
 		// clone a  repo
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
@@ -229,7 +230,7 @@ public class GitRemoteTest extends GitTest {
 		int localBefore = git.branchList().call().size();
 		int remoteBefore = git.branchList().setListMode(ListMode.REMOTE).call().size();
 		int allBefore = git.branchList().setListMode(ListMode.ALL).call().size();
-		branch(contentLocation, "a");
+		branch(db1, "a");
 
 		assertEquals(1, git.branchList().call().size() - localBefore);
 		assertEquals(0, git.branchList().setListMode(ListMode.REMOTE).call().size() - remoteBefore);

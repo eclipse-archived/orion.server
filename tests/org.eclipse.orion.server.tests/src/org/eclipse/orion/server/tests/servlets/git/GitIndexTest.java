@@ -16,7 +16,6 @@ import static org.junit.Assert.assertNotNull;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URISyntaxException;
 
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
@@ -31,7 +30,7 @@ import com.meterware.httpunit.WebResponse;
 
 public class GitIndexTest extends GitTest {
 	@Test
-	public void testIndexModifiedByOrion() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testIndexModifiedByOrion() throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();

@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URISyntaxException;
 
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
@@ -35,7 +34,7 @@ public class GitAddTest extends GitTest {
 
 	// modified + add = changed
 	@Test
-	public void testAddChanged() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testAddChanged() throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -78,7 +77,7 @@ public class GitAddTest extends GitTest {
 
 	// missing + add = removed
 	@Test
-	public void testAddMissing() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testAddMissing() throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -143,7 +142,7 @@ public class GitAddTest extends GitTest {
 	}
 
 	@Test
-	public void testAddAll() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testAddAll() throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -215,7 +214,7 @@ public class GitAddTest extends GitTest {
 	}
 
 	@Test
-	public void testAddInFolder() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testAddInFolder() throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();

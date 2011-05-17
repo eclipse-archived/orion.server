@@ -114,7 +114,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		URI baseLocation = getURI(request);
 		String user = request.getRemoteUser();
 		// expected path format is 'workspace/{workspaceId}' or 'file/{projectId}[/{path}]'
-		if (path.segment(0).equals("workspace") && path.segmentCount() == 2) {
+		if (path.segment(0).equals("workspace") && path.segmentCount() == 2) { //$NON-NLS-1$
 			// all clones in the workspace
 			if (WebWorkspace.exists(path.segment(1))) {
 				WebWorkspace workspace = WebWorkspace.fromId(path.segment(1));
@@ -149,7 +149,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 				String msg = NLS.bind("Nothing found for the given ID: {0}", path);
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
 			}
-		} else if (path.segment(0).equals("file") && path.segmentCount() > 1) {
+		} else if (path.segment(0).equals("file") && path.segmentCount() > 1) { //$NON-NLS-1$
 			// clones under given path
 			WebProject webProject = WebProject.fromId(path.segment(1));
 			if (isAccessAllowed(user, webProject)) {
@@ -228,15 +228,16 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 
 	private JSONObject toJSON(Entry<IPath, File> entry, URI baseLocation) throws URISyntaxException {
 		IPath k = entry.getKey();
-		File v = entry.getValue();
 		JSONObject result = new JSONObject();
 		try {
 			result.put(ProtocolConstants.KEY_ID, k);
 			result.put(ProtocolConstants.KEY_NAME, k.segmentCount() == 1 ? WebProject.fromId(k.segment(0)).getName() : k.lastSegment());
-			IPath np = new Path(GitServlet.GIT_URI).append(GitConstants.CLONE_RESOURCE).append("file").append(k);
+			IPath np = new Path(GitServlet.GIT_URI).append(GitConstants.CLONE_RESOURCE).append("file").append(k); //$NON-NLS-1$
 			URI location = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), np.toString(), baseLocation.getQuery(), baseLocation.getFragment());
 			result.put(ProtocolConstants.KEY_LOCATION, location);
-			result.put(ProtocolConstants.KEY_CONTENT_LOCATION, v);
+			np = new Path("file").append(k).makeAbsolute(); //$NON-NLS-1$
+			location = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), np.toString(), baseLocation.getQuery(), baseLocation.getFragment());
+			result.put(ProtocolConstants.KEY_CONTENT_LOCATION, location);
 		} catch (JSONException e) {
 			//cannot happen, we know keys and values are valid
 		}
