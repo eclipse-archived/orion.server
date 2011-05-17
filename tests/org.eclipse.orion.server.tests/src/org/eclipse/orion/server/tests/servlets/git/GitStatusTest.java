@@ -17,10 +17,10 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
@@ -52,7 +52,7 @@ public class GitStatusTest extends GitTest {
 
 	// "status -s" > ""
 	@Test
-	public void testStatusClean() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testStatusClean() throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -71,7 +71,7 @@ public class GitStatusTest extends GitTest {
 
 	// "status -s" > "A  new.txt", staged
 	@Test
-	public void testStatusAdded() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testStatusAdded() throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -120,7 +120,7 @@ public class GitStatusTest extends GitTest {
 
 	// "status -s" > "M  test.txt", staged
 	@Test
-	public void testStatusChanged() throws JSONException, IOException, SAXException, URISyntaxException {
+	public void testStatusChanged() throws JSONException, IOException, SAXException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -162,7 +162,7 @@ public class GitStatusTest extends GitTest {
 
 	// "status -s" > "MM test.txt", portions staged for commit
 	@Test
-	public void testStatusChangedAndModified() throws JSONException, IOException, SAXException, URISyntaxException {
+	public void testStatusChangedAndModified() throws JSONException, IOException, SAXException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -209,7 +209,7 @@ public class GitStatusTest extends GitTest {
 
 	// "status -s" > " D test.txt", not staged
 	@Test
-	public void testStatusMissing() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testStatusMissing() throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -246,7 +246,7 @@ public class GitStatusTest extends GitTest {
 
 	// "status -s" > " M test.txt", not staged
 	@Test
-	public void testStatusModified() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testStatusModified() throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -282,7 +282,7 @@ public class GitStatusTest extends GitTest {
 
 	// "status -s" > "D  test.txt", staged
 	@Test
-	public void testStatusRemoved() throws IOException, SAXException, JSONException, NoFilepatternException, URISyntaxException {
+	public void testStatusRemoved() throws IOException, SAXException, JSONException, NoFilepatternException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -324,7 +324,7 @@ public class GitStatusTest extends GitTest {
 
 	// "status -s" > "?? new.txt", not staged
 	@Test
-	public void testStatusUntracked() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testStatusUntracked() throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -360,7 +360,7 @@ public class GitStatusTest extends GitTest {
 	}
 
 	@Test
-	public void testStatusWithPath() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testStatusWithPath() throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -452,7 +452,7 @@ public class GitStatusTest extends GitTest {
 	}
 
 	@Test
-	public void testStatusLocation() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testStatusLocation() throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -538,7 +538,7 @@ public class GitStatusTest extends GitTest {
 	}
 
 	@Test
-	public void testStatusDiff() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testStatusDiff() throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -609,7 +609,7 @@ public class GitStatusTest extends GitTest {
 	}
 
 	@Test
-	public void testStatusCommit() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testStatusCommit() throws IOException, SAXException, JSONException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -685,7 +685,7 @@ public class GitStatusTest extends GitTest {
 
 	// "status -s" > "UU test.txt", both modified
 	@Test
-	public void testConfilct() throws IOException, SAXException, JSONException, JGitInternalException, GitAPIException {
+	public void testConfilct() throws IOException, SAXException, JSONException, JGitInternalException, GitAPIException, CoreException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		// clone1: create
@@ -797,7 +797,7 @@ public class GitStatusTest extends GitTest {
 	}
 
 	@Test
-	public void testFileLogFromStatus() throws IOException, SAXException, JSONException, GitAPIException, URISyntaxException {
+	public void testFileLogFromStatus() throws IOException, SAXException, JSONException, GitAPIException {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
