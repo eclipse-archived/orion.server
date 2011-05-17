@@ -26,6 +26,11 @@ import org.mortbay.util.IO;
  */
 public class RemoteURLProxyServlet extends ProxyServlet {
 
+	{
+		// Bug 346139
+		_DontProxyHeaders.add("host");
+	}
+
 	private URL url;
 	private final boolean failEarlyOn404;
 
@@ -81,6 +86,17 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 				// TODO could be better than this!
 				String hdr = (String) enm.nextElement();
 				String lhdr = hdr.toLowerCase();
+
+				if ("host".equals(lhdr)) {
+					// Bug 346139: set Host based on the destination URL being proxied
+					int port = url.getPort();
+					String realHost;
+					if (port == -1 || port == url.getDefaultPort())
+						realHost = url.getHost();
+					else
+						realHost = url.getHost() + ":" + port;
+					connection.addRequestProperty("Host", realHost);
+				}
 
 				if (_DontProxyHeaders.contains(lhdr))
 					continue;
