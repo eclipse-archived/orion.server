@@ -77,7 +77,10 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		clone.setId(path.removeFirstSegments(1).toString());
 		WebProject webProject = WebProject.fromId(path.segment(1));
 		clone.setContentLocation(webProject.getProjectStore().getFileStore(path.removeFirstSegments(2)).toURI());
-		clone.setName(path.segmentCount() > 2 ? path.lastSegment() : webProject.getName());
+		String cloneName = path.segmentCount() > 2 ? path.lastSegment() : webProject.getName();
+		if (!validateCloneName(cloneName, request, response))
+			return true;
+		clone.setName(cloneName);
 
 		// prepare creds
 		String username = toAdd.optString(GitConstants.KEY_USERNAME, null);
