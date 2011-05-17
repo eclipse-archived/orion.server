@@ -132,7 +132,8 @@
             id="org.eclipse.orion.server.configurator.httpcontext.webide">
          <resource-mapping
                bundle="org.eclipse.orion.client.core"
-               path="/static"></resource-mapping>
+               path="/static">
+         </resource-mapping>
          <resource-mapping
                bundle="org.eclipse.orion.client.git"
                path="/static">
@@ -180,28 +181,13 @@
                path="/static">
          </resource-mapping>
       </httpcontext>
-            <httpcontext
+      <httpcontext
             id="org.eclipse.orion.server.configurator.httpcontext.userprofile">
          <resource-mapping
                bundle="org.eclipse.orion.client.users.ui"
                path="/static/profile">
          </resource-mapping>
-         <resource-mapping
-               bundle="org.eclipse.orion.client.users.ui"
-               path="/static/user-profile.css">
-         </resource-mapping>
-         <resource-mapping bundle="org.eclipse.orion.client.users.ui"
-                     path="/static/manage-users.html">
-               </resource-mapping>
-               <resource-mapping
-                     bundle="org.eclipse.orion.client.users.ui"
-                     path="/static/manage-users.html">
-               </resource-mapping>
-               <resource-mapping
-                     bundle="org.eclipse.orion.client.users.ui"
-                     path="/static/profile">
-               </resource-mapping>
-            </httpcontext>
+      </httpcontext>
    </extension>
    <extension
          point="org.eclipse.equinox.http.registry.resources">
@@ -227,7 +213,7 @@
       </resource>
       <resource
             alias="/usersstatic"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.useradmin">erprofilr.httpcontext.userprofile">
+            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.useradmin">
             </resource>
       <resource
             alias="/profile"

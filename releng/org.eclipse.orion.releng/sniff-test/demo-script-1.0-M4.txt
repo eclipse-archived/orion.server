@@ -11,7 +11,7 @@
 	- create username/password
 	- login using username/password
 	
-2. You should have been directed to navigate-table.html unless you had already set up the
+2. You should have been directed to /navigate/table.html unless you had already set up the
 	tree view as your default navigation view.
 3. Create a project
 4. Create a folder
@@ -39,7 +39,7 @@
 	folder structure and ensure that breadcrumbs can be used to move back up.  In tree-view, you can
 	navigate the tree deeply using a previously stored favorite or by typing a path in the URL for
 	the page, such as
-		http://localhost:8080/navigate-tree.html#/file/UGEcINDiAB8bJO_Yskwmnw/static/js?depth=1
+		http://localhost:8080/navigate/tree.html#/file/UGEcINDiAB8bJO_Yskwmnw/static/js?depth=1
 13. Use favorites:
 	- Select a folder and click "Make Favorite" in context menu
 	- Rename the favorite
