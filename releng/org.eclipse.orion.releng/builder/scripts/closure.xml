@@ -17,12 +17,13 @@
 	<macrodef name="closure" >
 		<attribute name="dir" />
 		<attribute name="compiled" />
+		<attribute name="outputFolder" default="${output}" />
 		<element name="closure-args" />
 		<element name="replace-in" />
 		<sequential>
 			<java jar="${closureJar}" fork="true" >
 				<closure-args/>
-				<arg value="--js_output_file=${output}/@{compiled}" />
+				<arg value="--js_output_file=@{outputFolder}/@{compiled}" />
 			</java>
 			
 			<echo message="Replace @{compiled} "/>
@@ -30,7 +31,7 @@
 				<replace-in/>
 				<replacefilter token="&lt;!-- START:@{compiled} --&gt;" value="&lt;!-- @{compiled}"/>
 				<replacefilter token="&lt;!-- END:@{compiled} --&gt;" value="@{compiled} --&gt;"/>
-				<replacefilter token="!-- INSERT:@{compiled} --" value="script src=&quot;js/compiled/@{compiled}&quot;&gt;&lt;/script"/>
+				<replacefilter token="!-- INSERT:@{compiled} --" value="script src=&quot;@{compiled}&quot;&gt;&lt;/script"/>
 			</replace>
 		</sequential>
 	</macrodef>
@@ -42,7 +43,7 @@
 		
 	<target name="_closure" if="haveClosureJar" >
 		<mkdir dir="${output}"/>
-		<closure dir="${orion.client.core}" compiled="navigate-table.js" >
+		<closure dir="${orion.client.core}" compiled="navigate-table.js" outputFolder="${orion.client.core}/navigate" >
 			<replace-in>
 				<include name="navigate/table.html" />
 			</replace-in>
@@ -54,6 +55,7 @@
 				<arg value="--js=${orion.client.core}/js/util.js" />
 				<arg value="--js=${orion.client.core}/js/commands.js" />
 				<arg value="--js=${orion.client.core}/js/dialogs.js" />
+				<arg value="--js=${orion.client.core}/js/selection.js" />
 			 	<arg value="--js=${orion.client.core}/js/log.js" />
 			 	<arg value="--js=${orion.client.core}/js/preferences.js" />
 			 	<arg value="--js=${orion.client.core}/js/status.js" />
@@ -74,7 +76,7 @@
 			</closure-args>
 		</closure>
 		
-		<closure dir="${orion.client.core}" compiled="coding-editor.js" >
+		<closure dir="${orion.client.core}" compiled="coding-editor.js" outputFolder="${orion.client.core}/edit" >
 			<replace-in>
 				<include name="edit/edit.html" />
 			</replace-in>
