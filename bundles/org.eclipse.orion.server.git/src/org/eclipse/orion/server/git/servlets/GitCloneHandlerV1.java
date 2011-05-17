@@ -20,6 +20,10 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
+import org.eclipse.jgit.lib.ConfigConstants;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.storage.file.FileBasedConfig;
+import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
@@ -238,6 +242,15 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			np = new Path("file").append(k).makeAbsolute(); //$NON-NLS-1$
 			location = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), np.toString(), baseLocation.getQuery(), baseLocation.getFragment());
 			result.put(ProtocolConstants.KEY_CONTENT_LOCATION, location);
+
+			try {
+				FileBasedConfig config = new FileRepository(entry.getValue()).getConfig();
+				String remoteUri = config.getString(ConfigConstants.CONFIG_REMOTE_SECTION, Constants.DEFAULT_REMOTE_NAME, ConfigConstants.CONFIG_KEY_URL);
+				if (remoteUri != null)
+					result.put(GitConstants.KEY_URL, remoteUri);
+			} catch (IOException e) {
+				// ignore and skip Git URL
+			}
 		} catch (JSONException e) {
 			//cannot happen, we know keys and values are valid
 		}
