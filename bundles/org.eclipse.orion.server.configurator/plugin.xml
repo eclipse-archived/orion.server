@@ -184,15 +184,15 @@
             id="org.eclipse.orion.server.configurator.httpcontext.userprofile">
          <resource-mapping
                bundle="org.eclipse.orion.client.users.ui"
-               path="/static/user-profile.html">
+               path="/static/profile">
          </resource-mapping>
          <resource-mapping
                bundle="org.eclipse.orion.client.users.ui"
-               path="/static/profile">
+               path="/static/user-profile.css">
          </resource-mapping>
-      </httpcontext>
-            <httpcontext
-                  id="org.eclipse.orion.server.configurator.httpcontext.adminprofile">
+         <resource-mapping bundle="org.eclipse.orion.client.users.ui"
+                     path="/static/manage-users.html">
+               </resource-mapping>
                <resource-mapping
                      bundle="org.eclipse.orion.client.users.ui"
                      path="/static/manage-users.html">
@@ -227,19 +227,11 @@
       </resource>
       <resource
             alias="/usersstatic"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.useradmin">
-      </resource>
-            <resource
-            alias="/user-profile.html"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.userprofile">
-      </resource>
+            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.useradmin">erprofilr.httpcontext.userprofile">
+            </resource>
       <resource
             alias="/profile"
             httpcontextId="org.eclipse.orion.server.configurator.httpcontext.userprofile">
-      </resource>
-      <resource
-            alias="/manage-users.html"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.adminprofile">
       </resource>
    </extension>
 </plugin>
