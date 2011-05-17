@@ -23,6 +23,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeResult;
 import org.eclipse.jgit.api.errors.*;
+import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.errors.AmbiguousObjectException;
 import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.*;
@@ -244,9 +245,34 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		commit.put(GitConstants.KEY_DIFF, createDiffLocation(baseLocation, revCommit.getName()));
 		commit.put(ProtocolConstants.KEY_NAME, revCommit.getName());
 		commit.put(GitConstants.KEY_AUTHOR_NAME, revCommit.getAuthorIdent().getName());
+		commit.put(GitConstants.KEY_AUTHOR_EMAIL, revCommit.getAuthorIdent().getEmailAddress());
+		commit.put(GitConstants.KEY_COMMITTER_NAME, revCommit.getCommitterIdent().getName());
+		commit.put(GitConstants.KEY_COMMITTER_EMAIL, revCommit.getCommitterIdent().getEmailAddress());
 		commit.put(GitConstants.KEY_COMMIT_TIME, ((long) revCommit.getCommitTime()) * 1000 /* time in milliseconds */);
 		commit.put(GitConstants.KEY_COMMIT_MESSAGE, revCommit.getFullMessage());
 		commit.put(ProtocolConstants.KEY_CHILDREN, toJSON(getTagsForCommit(db, revCommit)));
+
+		if (revCommit.getParentCount() > 0) {
+			JSONArray diffs = new JSONArray();
+
+			final TreeWalk tw = new TreeWalk(db);
+			tw.reset(revCommit.getParent(0).getTree(), revCommit.getTree());
+			tw.setRecursive(true);
+			tw.setFilter(TreeFilter.ANY_DIFF);
+
+			List<DiffEntry> l = DiffEntry.scan(tw);
+			for (DiffEntry entr : l) {
+				JSONObject diff = new JSONObject();
+				diff.put(GitConstants.KEY_COMMIT_DIFF_NEWPATH, entr.getNewPath());
+				diff.put(GitConstants.KEY_COMMIT_DIFF_OLDPATH, entr.getOldPath());
+				diff.put(GitConstants.KEY_COMMIT_DIFF_CHANGETYPE, entr.getChangeType().toString());
+				diffs.put(diff);
+			}
+			tw.release();
+
+			commit.put(GitConstants.KEY_COMMIT_DIFFS, diffs);
+		}
+
 		return commit;
 	}
 
