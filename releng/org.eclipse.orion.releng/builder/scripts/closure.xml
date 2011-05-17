@@ -44,7 +44,7 @@
 		<mkdir dir="${output}"/>
 		<closure dir="${orion.client.core}" compiled="navigate-table.js" >
 			<replace-in>
-				<include name="navigate-table.html" />
+				<include name="navigate/table.html" />
 			</replace-in>
 			<closure-args>			
 				<arg value="--js=${orion.client.core}/js/auth.js" />
@@ -56,28 +56,27 @@
 				<arg value="--js=${orion.client.core}/js/dialogs.js" />
 			 	<arg value="--js=${orion.client.core}/js/log.js" />
 			 	<arg value="--js=${orion.client.core}/js/preferences.js" />
-			 	<arg value="--js=${orion.client.core}/js/selection.js" />
 			 	<arg value="--js=${orion.client.core}/js/status.js" />
 			 	<arg value="--js=${orion.client.core}/js/users.js" />		
+				<arg value="--js=${orion.client.core}/js/explorer.js" />
 				<arg value="--js=${orion.client.core}/js/favorites.js" />
 				<arg value="--js=${orion.client.core}/js/fileClient.js" />
 				<arg value="--js=${orion.client.core}/js/searchClient.js" />
 				<arg value="--js=${orion.client.core}/js/ssh/sshTools.js" />
 				<arg value="--js=${orion.client.git}/js/gitClient.js" />
 				<arg value="--js=${orion.client.git}/js/gitCommands.js" />
-				<arg value="--js=${orion.client.core}/js/explorer.js" />
 					
 				<arg value="--js=${orion.client.core}/js/globalCommands.js" />
 				<arg value="--js=${orion.client.core}/js/breadcrumbs.js" />
 				<arg value="--js=${orion.client.core}/js/explorer-table.js" />
 				<arg value="--js=${orion.client.core}/js/fileCommands.js" />
-				<arg value="--js=${orion.client.core}/js/navigate-table/navigate-table.js" />
+				<arg value="--js=${orion.client.core}/navigate/table.js" />
 			</closure-args>
 		</closure>
 		
 		<closure dir="${orion.client.core}" compiled="coding-editor.js" >
 			<replace-in>
-				<include name="coding.html" />
+				<include name="edit/edit.html" />
 			</replace-in>
 			<closure-args>
 				<arg value="--js=${orion.client.editor}/samples/styler.js" />
@@ -110,8 +109,8 @@
 				<arg value="--js=${orion.client.core}/js/problems.js" />
 				<arg value="--js=${orion.client.core}/js/editorContainer.js" />
 				<arg value="--js=${orion.client.core}/js/syntaxchecker.js" />
-				<arg value="--js=${orion.client.core}/js/coding/coding.js" />
 				<arg value="--js=${orion.client.core}/js/styler/textMateStyler.js" />
+				<arg value="--js=${orion.client.core}/edit/edit.js" />
 			</closure-args>
 		</closure>
 	</target>
