@@ -15,18 +15,13 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URISyntaxException;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
@@ -42,7 +37,6 @@ import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.xml.sax.SAXException;
 
 import com.meterware.httpunit.PostMethodWebRequest;
 import com.meterware.httpunit.WebRequest;
@@ -56,7 +50,7 @@ public class GitFetchTest extends GitTest {
 	}
 
 	@Test
-	public void testFetch() throws IOException, SAXException, JSONException {
+	public void testFetch() throws Exception {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
@@ -101,13 +95,13 @@ public class GitFetchTest extends GitTest {
 	}
 
 	@Test
-	public void testPushAndFetch() throws IOException, SAXException, JSONException, JGitInternalException, GitAPIException, CoreException {
+	public void testPushAndFetch() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		// clone1
 		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
 		IPath clonePath1 = new Path("file").append(project1.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-		String contentLocation1 = clone(clonePath1);
+		String contentLocation1 = clone(clonePath1).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		// get project1 metadata
 		WebRequest request = getGetFilesRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
@@ -182,7 +176,7 @@ public class GitFetchTest extends GitTest {
 	}
 
 	@Test
-	public void testPushAndFetchWithPrivateKeyAndPassphrase() throws IOException, SAXException, JSONException, URISyntaxException, JGitInternalException, GitAPIException, CoreException {
+	public void testPushAndFetchWithPrivateKeyAndPassphrase() throws Exception {
 
 		Assume.assumeTrue(sshRepo2 != null);
 		Assume.assumeTrue(privateKey != null);
@@ -259,14 +253,22 @@ public class GitFetchTest extends GitTest {
 
 	@Test
 	@Ignore("see bug 342727")
-	public void testFetchSingleBranch() throws JSONException, IOException, SAXException, URISyntaxException, JGitInternalException, GitAPIException, CoreException {
+	public void testFetchSingleBranch() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
 
-		// clone1
-		String contentLocation1 = clone(null);
-
-		// clone1: link
-		JSONObject project1 = linkProject(contentLocation1, getMethodName() + "1");
+		// clone1: create
+		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
 		String projectId1 = project1.getString(ProtocolConstants.KEY_ID);
+		IPath clonePath1 = new Path("file").append(project1.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		JSONObject clone1 = clone(clonePath1);
+		String cloneContentLocation1 = clone1.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		String cloneLocation1 = clone1.getString(ProtocolConstants.KEY_LOCATION);
+
+		// get project1 metadata
+		WebRequest request = getGetFilesRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		project1 = new JSONObject(response.getText());
 		JSONObject gitSection1 = project1.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection1);
 		String gitRemoteUri1 = gitSection1.getString(GitConstants.KEY_REMOTE);
@@ -274,29 +276,36 @@ public class GitFetchTest extends GitTest {
 		String gitCommitUri1 = gitSection1.getString(GitConstants.KEY_COMMIT);
 
 		// clone1: branch 'a'
-		Repository db1 = getRepositoryForContentLocation(contentLocation1);
-		branch(db1, "a");
+		Repository db1 = getRepositoryForContentLocation(cloneContentLocation1);
+		Git git1 = new Git(db1);
+		branch(git1, "a");
 
 		// clone1: push all
-		pushAll(contentLocation1);
+		// TODO: replace with REST API when bug 339115 is fixed
+		git1.push().setPushAll().call();
 
 		// clone2
-		String contentLocation2 = clone(null);
+		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
+		IPath clonePath2 = new Path("file").append(project2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		clone(clonePath2);
 		// XXX: checked out 'a'
 
-		// clone2:  link
-		JSONObject project2 = linkProject(contentLocation2, getMethodName() + "2");
+		// get project2 metadata
+		request = getGetFilesRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		project2 = new JSONObject(response.getText());
 		JSONObject gitSection2 = project2.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection2);
 		String gitRemoteUri2 = gitSection2.getString(GitConstants.KEY_REMOTE);
 
 		// clone1: switch to 'a'
-		Git git1 = new Git(db1);
-		GitRemoteTest.ensureOnBranch(git1, "a");
+		assertBranchExist(git1, "a");
+		checkoutBranch(cloneLocation1, "a");
 
 		// clone1: change
-		WebRequest request = getPutFileRequest(projectId1 + "/test.txt", "a change");
-		WebResponse response = webConversation.getResponse(request);
+		request = getPutFileRequest(projectId1 + "/test.txt", "a change");
+		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone1: add
@@ -314,7 +323,7 @@ public class GitFetchTest extends GitTest {
 		assertTrue(pushStatus.isOK());
 
 		// clone1: switch to 'master'
-		GitRemoteTest.ensureOnBranch(git1, Constants.MASTER);
+		checkoutBranch(cloneLocation1, Constants.MASTER);
 
 		// clone1: change
 		request = getPutFileRequest(projectId1 + "/test.txt", "master change");

@@ -18,15 +18,12 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.URIUtil;
@@ -34,7 +31,6 @@ import org.eclipse.core.runtime.preferences.IPreferencesService;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.api.PullResult;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.RepositoryCache;
@@ -53,7 +49,6 @@ import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.xml.sax.SAXException;
 
 import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.PostMethodWebRequest;
@@ -63,18 +58,18 @@ import com.meterware.httpunit.WebResponse;
 public class GitCloneTest extends GitTest {
 
 	@Test
-	public void testClone() throws IOException, SAXException, JSONException, CoreException {
+	public void testClone() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-		String contentLocation = clone(clonePath);
+		String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		Repository repository = getRepositoryForContentLocation(contentLocation);
 		assertNotNull(repository);
 	}
 
 	@Test
-	public void testGetCloneEmpty() throws IOException, SAXException, JSONException {
+	public void testGetCloneEmpty() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		String workspaceId = getWorkspaceId(workspaceLocation);
 
@@ -88,7 +83,7 @@ public class GitCloneTest extends GitTest {
 	}
 
 	@Test
-	public void testGetClone() throws IOException, SAXException, JSONException {
+	public void testGetClone() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		String workspaceId = getWorkspaceId(workspaceLocation);
 
@@ -96,17 +91,17 @@ public class GitCloneTest extends GitTest {
 
 		// 1st clone
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
-		String contentLocation = clone(new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute());
+		String contentLocation = clone(new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute()).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		locations.add(contentLocation);
 
 		// 2nd clone
 		project = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
-		contentLocation = clone(new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute());
+		contentLocation = clone(new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute()).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		locations.add(contentLocation);
 
 		// 3rd clone
 		project = createProjectOrLink(workspaceLocation, getMethodName() + "3", null);
-		contentLocation = clone(new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute());
+		contentLocation = clone(new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute()).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		locations.add(contentLocation);
 
 		// get clones for workspace
@@ -128,7 +123,7 @@ public class GitCloneTest extends GitTest {
 	}
 
 	@Test
-	public void testCloneEmptyUrl() throws IOException, SAXException, JSONException {
+	public void testCloneEmptyUrl() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
@@ -139,7 +134,7 @@ public class GitCloneTest extends GitTest {
 	}
 
 	@Test
-	public void testCloneBadUrl() throws IOException, SAXException, JSONException {
+	public void testCloneBadUrl() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
@@ -150,7 +145,7 @@ public class GitCloneTest extends GitTest {
 	}
 
 	@Test
-	public void testCloneNotGitRepository() throws IOException, SAXException, JSONException {
+	public void testCloneNotGitRepository() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		String workspaceId = getWorkspaceId(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
@@ -191,11 +186,11 @@ public class GitCloneTest extends GitTest {
 	}
 
 	@Test
-	public void testCloneAndLink() throws IOException, SAXException, JSONException, CoreException {
+	public void testCloneAndLink() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-		String contentLocation = clone(clonePath);
+		String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		File contentFile = getRepositoryForContentLocation(contentLocation).getDirectory().getParentFile();
 
 		JSONObject newProject = createProjectOrLink(workspaceLocation, getMethodName() + "-link", contentFile.toString());
@@ -222,11 +217,11 @@ public class GitCloneTest extends GitTest {
 	}
 
 	@Test
-	public void testCloneAndLinkToFolder() throws IOException, SAXException, JSONException, CoreException {
+	public void testCloneAndLinkToFolder() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-		String contentLocation = clone(clonePath);
+		String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		File folder = new File(getRepositoryForContentLocation(contentLocation).getDirectory().getParentFile(), "folder");
 
@@ -252,7 +247,7 @@ public class GitCloneTest extends GitTest {
 	}
 
 	@Test
-	public void testLinkToFolderWithDefaultSCM() throws IOException, SAXException, JSONException {
+	public void testLinkToFolderWithDefaultSCM() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		IPreferencesService preferences = GitActivator.getDefault().getPreferenceService();
@@ -289,7 +284,7 @@ public class GitCloneTest extends GitTest {
 	}
 
 	@Test
-	public void testCloneOverSshWithNoKnownHosts() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testCloneOverSshWithNoKnownHosts() throws Exception {
 		Assume.assumeTrue(sshRepo != null);
 
 		URIish uri = new URIish(sshRepo);
@@ -300,7 +295,7 @@ public class GitCloneTest extends GitTest {
 	}
 
 	@Test
-	public void testCloneOverSshWithNoPassword() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testCloneOverSshWithNoPassword() throws Exception {
 		Assume.assumeTrue(sshRepo != null);
 		Assume.assumeTrue(knownHosts != null);
 
@@ -312,7 +307,7 @@ public class GitCloneTest extends GitTest {
 	}
 
 	@Test
-	public void testCloneOverSshWithBadPassword() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testCloneOverSshWithBadPassword() throws Exception {
 		Assume.assumeTrue(sshRepo != null);
 		Assume.assumeTrue(knownHosts != null);
 
@@ -324,13 +319,13 @@ public class GitCloneTest extends GitTest {
 	}
 
 	@Test
-	public void testCloneOverSshWithPassword() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testCloneOverSshWithPassword() throws Exception {
 		Assume.assumeTrue(sshRepo != null);
 		Assume.assumeTrue(password != null);
 		Assume.assumeTrue(knownHosts != null);
 
 		URIish uri = new URIish(sshRepo);
-		String contentLocation = clone(uri, null, knownHosts, password);
+		String contentLocation = clone(uri, null, knownHosts, password).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		File file = URIUtil.toFile(new URI(contentLocation));
 		assertTrue(file.exists());
@@ -339,7 +334,7 @@ public class GitCloneTest extends GitTest {
 	}
 
 	@Test
-	public void testCloneOverSshWithPassphraseProtectedKey() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testCloneOverSshWithPassphraseProtectedKey() throws Exception {
 		Assume.assumeTrue(sshRepo2 != null);
 		Assume.assumeTrue(privateKey != null);
 		Assume.assumeTrue(passphrase != null);
@@ -356,8 +351,8 @@ public class GitCloneTest extends GitTest {
 
 	@Test
 	@Ignore("see bug 340553")
-	public void testCloneAndDelete() throws IOException, SAXException, JSONException, URISyntaxException {
-		String contentLocation = clone(null);
+	public void testCloneAndDelete() throws Exception {
+		String contentLocation = clone(null).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		File file = URIUtil.toFile(new URI(contentLocation));
 		assertTrue(file.exists());
@@ -397,14 +392,14 @@ public class GitCloneTest extends GitTest {
 	}
 
 	@Test
-	public void testGetCloneAndPull() throws IOException, SAXException, JSONException, GitAPIException, CoreException {
+	public void testGetCloneAndPull() throws Exception {
 		// see bug 339254
 		URI workspaceLocation = createWorkspace(getMethodName());
 		String workspaceId = getWorkspaceId(workspaceLocation);
 
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-		String contentLocation = clone(clonePath);
+		String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		// get clones for workspace
 		WebRequest request = listGitClonesRequest(workspaceId, null);
@@ -422,7 +417,7 @@ public class GitCloneTest extends GitTest {
 	}
 
 	@Test
-	public void testGetNonexistingClone() throws IOException, SAXException, JSONException {
+	public void testGetNonexistingClone() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		String workspaceId = getWorkspaceId(workspaceLocation);
 
@@ -449,7 +444,7 @@ public class GitCloneTest extends GitTest {
 	}
 
 	@Test
-	public void testGetOthersClones() throws IOException, SAXException, JSONException {
+	public void testGetOthersClones() throws Exception {
 		// my clone
 		URI workspaceLocation = createWorkspace(getMethodName());
 		String workspaceId = getWorkspaceId(workspaceLocation);

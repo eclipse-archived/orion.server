@@ -67,7 +67,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			// /git/remote/file/{path}
 			File gitDir = GitUtils.getGitDir(p);
 			Repository db = new FileRepository(gitDir);
-			Set<String> configNames = db.getConfig().getSubsections("remote");
+			Set<String> configNames = db.getConfig().getSubsections(ConfigConstants.CONFIG_REMOTE_SECTION);
 			JSONObject result = new JSONObject();
 			JSONArray children = new JSONArray();
 			URI baseLocation = getURI(request);
@@ -84,7 +84,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			// /git/remote/{remote}/file/{path}
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(1));
 			Repository db = new FileRepository(gitDir);
-			Set<String> configNames = db.getConfig().getSubsections("remote");
+			Set<String> configNames = db.getConfig().getSubsections(ConfigConstants.CONFIG_REMOTE_SECTION);
 			JSONObject result = new JSONObject();
 			URI baseLocation = getURI(request);
 			for (String configName : configNames) {
@@ -205,7 +205,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 	private boolean push(HttpServletRequest request, HttpServletResponse response, String path, GitCredentialsProvider cp, String srcRef, boolean tags) throws ServletException, CoreException, IOException, JSONException, URISyntaxException {
 		Path p = new Path(path);
 		// FIXME: what if a remote or branch is named "file"?
-		if (p.segment(2).equals("file")) {
+		if (p.segment(2).equals("file")) { //$NON-NLS-1$
 			// /git/remote/{remote}/{branch}/file/{path}
 			PushJob job = new PushJob(cp, p, srcRef, tags);
 			job.schedule();

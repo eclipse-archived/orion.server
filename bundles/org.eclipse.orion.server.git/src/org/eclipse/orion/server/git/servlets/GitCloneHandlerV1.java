@@ -20,8 +20,10 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
-import org.eclipse.jgit.lib.ConfigConstants;
-import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.api.CheckoutCommand;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.*;
+import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileBasedConfig;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.URIish;
@@ -53,8 +55,8 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			switch (getMethod(request)) {
 				case GET :
 					return handleGet(request, response, path);
-					// case PUT :
-					// return handlePut(request, response, path);
+				case PUT :
+					return handlePut(request, response, path);
 				case POST :
 					return handlePost(request, response);
 					// case DELETE :
@@ -180,6 +182,55 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		}
 		//else the request is malformed
 		String msg = NLS.bind("Invalid clone request: {0}", path);
+		return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+	}
+
+	private boolean handlePut(HttpServletRequest request, HttpServletResponse response, String pathString) throws IOException, JSONException, ServletException, URISyntaxException, CoreException, JGitInternalException, GitAPIException {
+		IPath path = pathString == null ? Path.EMPTY : new Path(pathString);
+		if (path.segment(0).equals("file") && path.segmentCount() > 1) { //$NON-NLS-1$
+
+			// make sure a clone is addressed
+			WebProject webProject = WebProject.fromId(path.segment(1));
+			if (isAccessAllowed(request.getRemoteUser(), webProject)) {
+				URI contentLocation = webProject.getContentLocation();
+				IPath projectPath = new Path(contentLocation.getPath()).append(path.removeFirstSegments(2));
+				// FIXME: don't go up
+				File gitDir = GitUtils.getGitDir(new Path("file").append(projectPath));
+
+				// make sure required fields are set
+				JSONObject toCheckout = OrionServlet.readJSONRequest(request);
+				JSONArray paths = toCheckout.optJSONArray(GitConstants.KEY_PATH);
+				String branch = toCheckout.optString(GitConstants.KEY_BRANCH);
+				if ((paths == null || paths.length() == 0) && (branch == null || branch.isEmpty())) {
+					String msg = NLS.bind("Either '" + GitConstants.KEY_PATH + "' or '" + GitConstants.KEY_BRANCH + "' should be provided: {0}", toCheckout);
+					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+				}
+
+				Git git = new Git(new FileRepository(gitDir));
+				if (paths != null) {
+					CheckoutCommand checkout = git.checkout();
+					for (int i = 0; i < paths.length(); i++) {
+						checkout.addPath(paths.getString(i));
+					}
+					checkout.call();
+					return true;
+				} else if (branch != null) {
+					try {
+						Ref r = git.checkout().setName(branch).call();
+						// TODO: handle result and exceptions
+						return true;
+					} catch (RefNotFoundException e) {
+						String msg = NLS.bind("Branch name not found: {0}", branch);
+						return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, e));
+					}
+
+				}
+			} else {
+				String msg = NLS.bind("Nothing found for the given ID: {0}", path);
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
+			}
+		}
+		String msg = NLS.bind("Invalid checkout request {0}", pathString);
 		return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 	}
 

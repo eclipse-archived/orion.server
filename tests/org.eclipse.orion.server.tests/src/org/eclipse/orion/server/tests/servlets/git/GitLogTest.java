@@ -13,16 +13,13 @@ package org.eclipse.orion.server.tests.servlets.git;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -32,7 +29,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.xml.sax.SAXException;
 
 import com.meterware.httpunit.PostMethodWebRequest;
 import com.meterware.httpunit.WebRequest;
@@ -41,7 +37,7 @@ import com.meterware.httpunit.WebResponse;
 public class GitLogTest extends GitTest {
 
 	@Test
-	public void testLog() throws IOException, SAXException, JSONException {
+	public void testLog() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -117,7 +113,7 @@ public class GitLogTest extends GitTest {
 	}
 
 	@Test
-	public void testLogWithRemote() throws IOException, SAXException, JSONException {
+	public void testLogWithRemote() throws Exception {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
@@ -139,7 +135,7 @@ public class GitLogTest extends GitTest {
 	}
 
 	@Test
-	public void testLogWithTag() throws IOException, SAXException, JSONException {
+	public void testLogWithTag() throws Exception {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
@@ -175,8 +171,8 @@ public class GitLogTest extends GitTest {
 
 	@Test
 	@Ignore("not implemented yet")
-	public void testLogWithBranch() throws IOException, SAXException, JSONException, JGitInternalException, GitAPIException, CoreException {
-		String contentLocation = clone(null);
+	public void testLogWithBranch() throws Exception {
+		String contentLocation = clone(null).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		JSONObject project = linkProject(contentLocation, getMethodName());
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
@@ -186,7 +182,8 @@ public class GitLogTest extends GitTest {
 		assertEquals(1, commitsArray.length());
 
 		Repository db1 = getRepositoryForContentLocation(contentLocation);
-		branch(db1, "branch");
+		Git git1 = new Git(db1);
+		branch(git1, "branch");
 
 		commitsArray = log(gitCommitUri, true);
 		assertEquals(1, commitsArray.length());
@@ -197,7 +194,7 @@ public class GitLogTest extends GitTest {
 	}
 
 	@Test
-	public void testLogFile() throws IOException, SAXException, JSONException {
+	public void testLogFile() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
