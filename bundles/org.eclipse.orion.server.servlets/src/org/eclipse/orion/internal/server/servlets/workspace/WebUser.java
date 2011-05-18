@@ -13,10 +13,10 @@ package org.eclipse.orion.internal.server.servlets.workspace;
 import java.net.URI;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.orion.internal.server.core.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.site.*;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.core.users.OrionScope;
 import org.json.*;
@@ -130,7 +130,7 @@ public class WebUser extends WebElement {
 			// Remove this user's record of the site configuration.
 			getSiteConfigurationsNode().node(siteConfig.getId()).removeNode();
 		} catch (BackingStoreException e) {
-			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_SERVER_CORE, "Error removing site configuration", e));
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "Error removing site configuration", e));
 		}
 		save();
 	}
@@ -170,7 +170,7 @@ public class WebUser extends WebElement {
 					return siteConfig;
 				} else {
 					// Shouldn't happen
-					LogHelper.log(new Status(IStatus.ERROR, Activator.PI_SERVER_CORE, "Site configuration does not exist in backing store"));
+					LogHelper.log(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "Site configuration does not exist in backing store"));
 				}
 			}
 		} catch (BackingStoreException e) {

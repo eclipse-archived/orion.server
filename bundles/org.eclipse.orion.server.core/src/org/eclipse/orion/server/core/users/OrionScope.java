@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2010, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -20,7 +20,7 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 public class OrionScope extends AbstractScope {
 	/**
 	 * String constant (value of <code>"configuration"</code>) used for the 
-	 * scope name for the configuration preference scope.
+	 * scope name for the orion preference scope.
 	 */
 	public static final String SCOPE = "eclipseweb"; //$NON-NLS-1$
 

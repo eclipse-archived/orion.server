@@ -58,6 +58,6 @@ public class LogHelper {
 	}
 	
 	public static void log(Throwable t) {
-		log(new Status(IStatus.ERROR, Activator.PI_SERVER_CORE, "Internal server error", t)); //$NON-NLS-1$
+		log(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "Internal server error", t)); //$NON-NLS-1$
 	}
 }

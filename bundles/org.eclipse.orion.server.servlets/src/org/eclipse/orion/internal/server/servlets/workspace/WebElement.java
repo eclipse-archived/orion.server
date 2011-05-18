@@ -13,8 +13,8 @@ package org.eclipse.orion.internal.server.servlets.workspace;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.IScopeContext;
-import org.eclipse.orion.internal.server.core.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.users.OrionScope;
 import org.osgi.service.prefs.BackingStoreException;
 
@@ -61,7 +61,7 @@ public class WebElement {
 		try {
 			store.flush();
 		} catch (BackingStoreException e) {
-			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_SERVER_CORE, "Error saving state"));
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "Error saving state"));
 		}
 	}
 

@@ -12,7 +12,6 @@ package org.eclipse.orion.server.core;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.orion.internal.server.core.Activator;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -107,16 +106,16 @@ public class ServerStatus extends Status {
 		String detailMessage = object.optString(PROP_DETAILED_MESSAGE, null);
 		Exception cause = detailMessage == null ? null : new Exception(detailMessage);
 		JSONObject errorData = object.optJSONObject(ERROR_DATA);
-		return new ServerStatus(new Status(severity, Activator.PI_SERVER_CORE, code, message, cause), httpCode, errorData);
+		return new ServerStatus(new Status(severity, ServerConstants.PI_SERVER_CORE, code, message, cause), httpCode, errorData);
 	}
 
 	public ServerStatus(int severity, int httpCode, String message, Throwable exception) {
-		super(severity, Activator.PI_SERVER_CORE, message, exception);
+		super(severity, ServerConstants.PI_SERVER_CORE, message, exception);
 		this.httpCode = httpCode;
 	}
 	
 	public ServerStatus(int severity, int httpCode, String message, JSONObject errorData, Throwable exception) {
-		super(severity, Activator.PI_SERVER_CORE, message, exception);
+		super(severity, ServerConstants.PI_SERVER_CORE, message, exception);
 		this.httpCode = httpCode;
 		this.errorData = errorData;
 	}
