@@ -12,32 +12,17 @@ package org.eclipse.orion.internal.server.user.securestorage;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
+import java.util.*;
 import javax.crypto.spec.PBEKeySpec;
-
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.equinox.security.storage.ISecurePreferences;
-import org.eclipse.equinox.security.storage.SecurePreferencesFactory;
-import org.eclipse.equinox.security.storage.StorageException;
+import org.eclipse.core.runtime.*;
+import org.eclipse.equinox.security.storage.*;
 import org.eclipse.equinox.security.storage.provider.IProviderHints;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.useradmin.EmptyAuthorization;
-import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
-import org.eclipse.orion.server.useradmin.Role;
-import org.eclipse.orion.server.useradmin.User;
-import org.eclipse.orion.server.useradmin.WebIdeAuthorization;
+import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.useradmin.*;
 import org.eclipse.orion.server.useradmin.servlets.UserServlet;
 import org.eclipse.osgi.service.datalocation.Location;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.InvalidSyntaxException;
-import org.osgi.framework.ServiceReference;
+import org.osgi.framework.*;
 import org.osgi.service.useradmin.Authorization;
 
 /**
@@ -67,7 +52,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 
 	private void initStorage() {
 		// initialize the admin account
-		String adminDefaultPassword = System.getProperty(Activator.ORION_STORAGE_ADMIN_DEFAULT_PASSWORD, null);
+		String adminDefaultPassword = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_ADMIN_DEFAULT_PASSWORD);
 		if (adminDefaultPassword != null && getUser(USER_LOGIN, ADMIN_LOGIN_VALUE) == null) {
 			createUser(new User(ADMIN_LOGIN_VALUE, ADMIN_NAME_VALUE, adminDefaultPassword));
 		}

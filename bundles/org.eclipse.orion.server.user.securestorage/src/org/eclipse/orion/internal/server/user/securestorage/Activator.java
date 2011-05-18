@@ -23,11 +23,6 @@ public class Activator implements BundleActivator {
 	 */
 	public static final String ORION_STORAGE_PASSWORD = "orion.storage.password"; //$NON-NLS-1$
 	
-	/**
-	 * The system property name for the secure storage master password.
-	 */
-	public static final String ORION_STORAGE_ADMIN_DEFAULT_PASSWORD = "orion.storage.admin.default.password"; //$NON-NLS-1$
-
 	static BundleContext bundleContext;
 	private ServiceRegistration<UserAdmin> registerService;
 

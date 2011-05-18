@@ -29,6 +29,17 @@ public class ServerConstants {
 	public static final String CONFIG_AUTH_USER_CREATION= "orion.auth.user.creation"; //$NON-NLS-1$
 
 	/**
+	 * The system property name for the secure storage master password.
+	 */
+	public static final String CONFIG_AUTH_ADMIN_DEFAULT_PASSWORD = "orion.auth.admin.default.password"; //$NON-NLS-1$
+
+	/**
+	 * The name of a configuration property specifying the default source configuration management
+	 * system to use for newly created top level folders.
+	 */
+	public static final String CONFIG_FILE_DEFAULT_SCM = "orion.file.defaultSCM"; //$NON-NLS-1$
+	
+	/**
 	 * The name of a configuration property specifying the layout format for user data files.
 	 */
 	public static final String CONFIG_FILE_LAYOUT = "orion.file.layout"; //$NON-NLS-1$
@@ -37,11 +48,11 @@ public class ServerConstants {
 	 * The bundle ID of the server core. 
 	 */
 	public static final String PI_SERVER_CORE = "org.eclipse.orion.server.core"; //$NON-NLS-1$
-	
 	/**
 	 * The preference qualifier for server configuration preferences.
 	 */
 	public static final String PREFERENCE_SCOPE = "org.eclipse.orion.server.configurator"; //$NON-NLS-1$
+
 	/**
 	 * The system property name for the location of the server configuration file.
 	 * When this property is not set, the default is a file called "orion.conf" in the
