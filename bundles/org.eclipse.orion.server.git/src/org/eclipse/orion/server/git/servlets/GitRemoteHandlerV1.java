@@ -63,7 +63,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, String path) throws IOException, JSONException, ServletException, URISyntaxException, CoreException {
 		Path p = new Path(path);
 		// FIXME: what if a remote or branch is named "file"?
-		if (p.segment(0).equals("file")) {
+		if (p.segment(0).equals("file")) { //$NON-NLS-1$
 			// /git/remote/file/{path}
 			File gitDir = GitUtils.getGitDir(p);
 			Repository db = new FileRepository(gitDir);
@@ -80,7 +80,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			result.put(ProtocolConstants.KEY_CHILDREN, children);
 			OrionServlet.writeJSONResponse(request, response, result);
 			return true;
-		} else if (p.segment(1).equals("file")) {
+		} else if (p.segment(1).equals("file")) { //$NON-NLS-1$
 			// /git/remote/{remote}/file/{path}
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(1));
 			Repository db = new FileRepository(gitDir);
@@ -124,7 +124,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			}
 			String msg = NLS.bind("Couldn't find remote : {0}", p.segment(0)); //$NON-NLS-1$
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
-		} else if (p.segment(2).equals("file")) {
+		} else if (p.segment(2).equals("file")) { //$NON-NLS-1$
 			// /git/remote/{remote}/{branch}/file/{path}
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2));
 			Repository db = new FileRepository(gitDir);
@@ -223,7 +223,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	private URI createTaskLocation(URI baseLocation, String taskId) throws URISyntaxException {
-		return new URI(baseLocation.getScheme(), baseLocation.getAuthority(), "/task/id/" + taskId, null, null);
+		return new URI(baseLocation.getScheme(), baseLocation.getAuthority(), "/task/id/" + taskId, null, null); //$NON-NLS-1$
 	}
 
 	public static URI baseToRemoteLocation(URI u, int count, String remoteName) throws URISyntaxException {

@@ -62,6 +62,7 @@ public class GitMergeTest extends GitTest {
 		JSONObject clone = clone(clonePath);
 		String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
+		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 		// get project metadata
 		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
@@ -70,11 +71,11 @@ public class GitMergeTest extends GitTest {
 		project = new JSONObject(response.getText());
 
 		// create branch 'a'
-		Repository db1 = getRepositoryForContentLocation(cloneContentLocation);
-		Git git = new Git(db1);
-		branch(git, "a");
+		branch(branchesLocation, "a");
 
 		// checkout 'a'
+		Repository db1 = getRepositoryForContentLocation(cloneContentLocation);
+		Git git = new Git(db1);
 		assertBranchExist(git, "a");
 		checkoutBranch(cloneLocation, "a");
 
@@ -240,6 +241,7 @@ public class GitMergeTest extends GitTest {
 		JSONObject clone = clone(clonePath);
 		String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
+		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 		// get project metadata
 		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
@@ -252,11 +254,11 @@ public class GitMergeTest extends GitTest {
 		assertNotNull(gitRemoteUri);
 
 		// create branch 'a'
-		Repository db1 = getRepositoryForContentLocation(cloneContentLocation);
-		Git git = new Git(db1);
-		branch(git, "a");
+		branch(branchesLocation, "a");
 
 		// checkout 'a'
+		Repository db1 = getRepositoryForContentLocation(cloneContentLocation);
+		Git git = new Git(db1);
 		assertBranchExist(git, "a");
 		checkoutBranch(cloneLocation, "a");
 

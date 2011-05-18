@@ -114,7 +114,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 					child.put(ProtocolConstants.KEY_CHILDREN_LOCATION, new URI(contentLocation.getScheme(), contentLocation.getUserInfo(), contentLocation.getHost(), contentLocation.getPort(), contentLocation.getPath(), "depth=1", contentLocation.getFragment()));
 				} catch (URISyntaxException e) {
 					throw new RuntimeException(e);
-				} //$NON-NLS-1$
+				}
 				child.put(ProtocolConstants.KEY_ID, project.getId());
 				children.put(child);
 			} catch (JSONException e) {

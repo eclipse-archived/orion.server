@@ -207,7 +207,7 @@ public class HostedSiteServlet extends OrionServlet {
 	}
 
 	private void addEditHeaders(HttpServletResponse resp, IHostedSite site, IPath path) {
-		resp.addHeader("X-Edit-Server", site.getEditServerUrl() + "/coding.html#"); //$NON-NLS-1$ //$NON-NLS-2$
+		resp.addHeader("X-Edit-Server", site.getEditServerUrl() + "/edit/edit.html#"); //$NON-NLS-1$ //$NON-NLS-2$
 		resp.addHeader("X-Edit-Token", FILE_SERVLET_ALIAS + path.toString()); //$NON-NLS-1$
 	}
 

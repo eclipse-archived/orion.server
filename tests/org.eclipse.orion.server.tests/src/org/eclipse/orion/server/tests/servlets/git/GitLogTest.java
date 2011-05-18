@@ -19,9 +19,7 @@ import java.net.URI;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.Repository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONArray;
@@ -177,13 +175,12 @@ public class GitLogTest extends GitTest {
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
 		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+		String gitBranchUri = gitSection.getString(GitConstants.KEY_BRANCH);
 
 		JSONArray commitsArray = log(gitCommitUri, true);
 		assertEquals(1, commitsArray.length());
 
-		Repository db1 = getRepositoryForContentLocation(contentLocation);
-		Git git1 = new Git(db1);
-		branch(git1, "branch");
+		branch(gitBranchUri, "branch");
 
 		commitsArray = log(gitCommitUri, true);
 		assertEquals(1, commitsArray.length());
