@@ -10,13 +10,14 @@
  *******************************************************************************/
 package org.eclipse.orion.server.authentication.form.core;
 
+import org.eclipse.orion.server.core.ServerConstants;
+
 import java.io.IOException;
 import java.util.*;
 import javax.servlet.http.*;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.user.profile.*;
 import org.eclipse.orion.server.useradmin.*;
 import org.json.JSONException;
@@ -36,12 +37,11 @@ public class FormAuthHelper {
 	
 	private static IOrionUserProfileService userProfileService;
 	
-	private static boolean everyoneCanCreateUsers;
+	private static boolean allowAnonymousAccountCreation;
 
 	static {
-		//FIXME preferences are temporary storage, change to proper configuration storage when it's established
-		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode("org.eclipse.orion.server.configurator"); //$NON-NLS-1$
-		everyoneCanCreateUsers = prefs.getBoolean("everyoneCanCreateUsers", true); //$NON-NLS-1$
+		//if there is no list of users authorised to create accounts, it means everyone can create accounts
+		allowAnonymousAccountCreation = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION, null) == null; //$NON-NLS-1$
 	}
 
 	/**
@@ -147,18 +147,6 @@ public class FormAuthHelper {
 		return getSupportedUserStores().contains(userStoreId);
 	}
 
-	/**
-	 * Returns whether new users can be created in the given store.
-	 * @param userStoreId if <code>null</code> checks for default user store
-	 * @throws UnsupportedUserStoreException
-	 */
-	public static boolean canAddUsers(String userStoreId) throws UnsupportedUserStoreException {
-		if (!everyoneCanCreateUsers) {
-			return false;
-		}
-		return userStoreId == null ? defaultUserAdmin.canCreateUsers() : userStores.get(userStoreId).canCreateUsers();
-	}
-
 	public static Collection<String> getSupportedUserStores() {
 		List<String> list = new ArrayList<String>(userStores.keySet());
 		list.remove(defaultUserAdmin.getStoreName());
@@ -167,10 +155,11 @@ public class FormAuthHelper {
 	}
 
 	/**
-	 * Uses default user store
+	 * Returns <code>true</code>ue if an unauthorised user can create a new account, 
+	 * and <code>false</code> otherwise.
 	 */
 	public static boolean canAddUsers() {
-		return everyoneCanCreateUsers ? defaultUserAdmin.canCreateUsers() : false;
+		return allowAnonymousAccountCreation ? defaultUserAdmin.canCreateUsers() : false;
 	}
 
 	public static IOrionCredentialsService getDefaultUserAdmin() {
