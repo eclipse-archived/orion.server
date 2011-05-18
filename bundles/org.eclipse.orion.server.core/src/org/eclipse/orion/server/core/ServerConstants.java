@@ -16,6 +16,24 @@ package org.eclipse.orion.server.core;
 public class ServerConstants {
 
 	/**
+	 * The name of a configuration property specifying the name of the authorization
+	 * component to be used.
+	 */
+	public static final String CONFIG_AUTH_NAME= "orion.auth.name"; //$NON-NLS-1$
+	
+	/**
+	 * The name of a configuration property specifying a comma-separated list of users
+	 * that are allowed to create accounts. If unspecified, then anonymous users can
+	 * create accounts.
+	 */
+	public static final String CONFIG_AUTH_USER_CREATION= "orion.auth.user.creation"; //$NON-NLS-1$
+
+	/**
+	 * The name of a configuration property specifying the layout format for user data files.
+	 */
+	public static final String CONFIG_FILE_LAYOUT = "orion.file.layout"; //$NON-NLS-1$
+	
+	/**
 	 * The bundle ID of the server core. 
 	 */
 	public static final String PI_SERVER_CORE = "org.eclipse.orion.server.core"; //$NON-NLS-1$
@@ -24,7 +42,6 @@ public class ServerConstants {
 	 * The preference qualifier for server configuration preferences.
 	 */
 	public static final String PREFERENCE_SCOPE = "org.eclipse.orion.server.configurator"; //$NON-NLS-1$
-
 	/**
 	 * The system property name for the location of the server configuration file.
 	 * When this property is not set, the default is a file called "orion.conf" in the

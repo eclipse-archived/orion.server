@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.configurator;
 
-import static org.eclipse.orion.server.configurator.configuration.ConfigurationFormat.AUTHENTICATION_NAME;
 import static org.eclipse.orion.server.configurator.configuration.ConfigurationFormat.DEFAULT_AUTHENTICATION_NAME;
 import static org.eclipse.orion.server.configurator.configuration.ConfigurationFormat.HTTPS_PORT;
 import static org.eclipse.orion.server.configurator.configuration.ConfigurationFormat.HTTP_PORT;
@@ -27,7 +26,7 @@ import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.equinox.http.jetty.JettyConfigurator;
 import org.eclipse.equinox.http.jetty.JettyConstants;
 import org.eclipse.orion.server.configurator.configuration.ConfigurationFormat;
-import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.core.authentication.IAuthenticationService;
 import org.eclipse.orion.server.core.authentication.NoneAuthenticationService;
 import org.osgi.framework.*;
@@ -51,7 +50,7 @@ public class ConfiguratorActivator implements BundleActivator {
 
 	Filter getAuthFilter() throws InvalidSyntaxException {
 		StringBuilder sb = new StringBuilder("("); //$NON-NLS-1$
-		sb.append(ConfigurationFormat.AUTHENTICATION_NAME);
+		sb.append(ServerConstants.CONFIG_AUTH_NAME);
 		sb.append('=');
 		sb.append(getAuthName());
 		sb.append(')');
@@ -65,7 +64,7 @@ public class ConfiguratorActivator implements BundleActivator {
 			// TODO: Filters are case sensitive, we should be too
 			if (NoneAuthenticationService.AUTH_TYPE.equalsIgnoreCase(getAuthName())) {
 				Dictionary<String, String> properties = new Hashtable<String, String>();
-				properties.put(ConfigurationFormat.AUTHENTICATION_NAME, getAuthName());
+				properties.put(ServerConstants.CONFIG_AUTH_NAME, getAuthName());
 				// TODO: shouldn't we always register the none-auth service?
 				context.registerService(IAuthenticationService.class, new NoneAuthenticationService(), properties);
 			}
@@ -166,7 +165,10 @@ public class ConfiguratorActivator implements BundleActivator {
 	}
 
 	String getAuthName() {
-		IEclipsePreferences preferences = InstanceScope.INSTANCE.getNode(PI_CONFIGURATOR);
-		return preferences.get(AUTHENTICATION_NAME, System.getProperty("orion.tests.authtype", DEFAULT_AUTHENTICATION_NAME)); //$NON-NLS-1$
+		//lookup order is:
+		// 1: Defined preference called "orion.auth.name"
+		// 2: System property called "orion.tests.authtype"
+		// 3: Default to Form+OpenID
+		return PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_NAME, System.getProperty("orion.tests.authtype", DEFAULT_AUTHENTICATION_NAME)); //$NON-NLS-1$
 	}
 }

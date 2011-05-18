@@ -44,7 +44,6 @@ public class Activator implements BundleActivator, IAliasRegistry {
 
 	public static final String PI_SERVER_SERVLETS = "org.eclipse.orion.server.servlets"; //$NON-NLS-1$
 	public static final String PROP_USER_AREA = "org.eclipse.orion.server.core.userArea"; //$NON-NLS-1$
-	public static final String PROP_FILE_LAYOUT = "orion.file.layout"; //$NON-NLS-1$
 
 	static Activator singleton;
 

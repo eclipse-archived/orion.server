@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Collection;
 import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.preferences.IPreferencesService;
 import org.eclipse.orion.internal.server.core.tasks.TaskService;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerConstants;
@@ -32,6 +33,7 @@ public class Activator implements BundleActivator {
 
 	static Activator singleton;
 	ServiceTracker<FrameworkLog, FrameworkLog> logTracker;
+	ServiceTracker<IPreferencesService, IPreferencesService> prefTracker;
 	private ServiceRegistration<ITaskService> taskServiceRegistration;
 
 	public static Activator getDefault() {
@@ -52,6 +54,20 @@ public class Activator implements BundleActivator {
 		return tracker.getService();
 	}
 
+	/**
+	 * Returns the preference service, or <code>null</code> if not available.
+	 */
+	public static IPreferencesService getPreferenceService() {
+		//protect against concurrent shutdown
+		Activator a = singleton;
+		if (a == null)
+			return null;
+		ServiceTracker<IPreferencesService, IPreferencesService> tracker = a.getPrefTracker();
+		if (tracker == null)
+			return null;
+		return tracker.getService();
+	}
+
 	public BundleContext getContext() {
 		return bundleContext;
 	}
@@ -65,6 +81,17 @@ public class Activator implements BundleActivator {
 		logTracker = new ServiceTracker<FrameworkLog, FrameworkLog>(bundleContext, FrameworkLog.class, null);
 		logTracker.open();
 		return logTracker;
+	}
+
+	private ServiceTracker<IPreferencesService, IPreferencesService> getPrefTracker() {
+		if (prefTracker != null)
+			return prefTracker;
+		//lazy init if the bundle has been started
+		if (bundleContext == null)
+			return null;
+		prefTracker = new ServiceTracker<IPreferencesService, IPreferencesService>(bundleContext, IPreferencesService.class, null);
+		prefTracker.open();
+		return prefTracker;
 	}
 
 	/**
@@ -95,6 +122,9 @@ public class Activator implements BundleActivator {
 		}
 	}
 
+	/*(non-Javadoc)
+	 * @see org.osgi.framework.BundleActivator#start(org.osgi.framework.BundleContext)
+	 */
 	public void start(BundleContext context) throws Exception {
 		singleton = this;
 		bundleContext = context;
@@ -111,9 +141,20 @@ public class Activator implements BundleActivator {
 		}
 	}
 
+	/*(non-Javadoc)
+	 * @see org.osgi.framework.BundleActivator#stop(org.osgi.framework.BundleContext)
+	 */
 	public void stop(BundleContext context) throws Exception {
 		bundleContext = null;
 		stopTaskService();
+		if (prefTracker != null) {
+			prefTracker.close();
+			prefTracker = null;
+		}
+		if (logTracker != null) {
+			logTracker.close();
+			logTracker = null;
+		}
 	}
 
 	private void stopTaskService() {

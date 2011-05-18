@@ -11,16 +11,14 @@
 package org.eclipse.orion.server.useradmin.servlets;
 
 import java.io.IOException;
-import java.util.Properties;
+import java.util.*;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
-import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.core.authentication.IAuthenticationService;
 import org.eclipse.orion.server.useradmin.UserAdminActivator;
 import org.json.JSONException;
@@ -30,8 +28,8 @@ public class UserAuthFilter implements Filter {
 
 	private IAuthenticationService authenticationService;
 	private Properties authProperties;
-	
-	private boolean everyoneCanCreateUsers = true;
+
+	private List<String> authorizedAccountCreators;
 
 	public void init(FilterConfig filterConfig) throws ServletException {
 		authenticationService = UserAdminActivator.getDefault().getAuthenticationService();
@@ -42,29 +40,28 @@ public class UserAuthFilter implements Filter {
 			LogHelper.log(new Status(IStatus.ERROR, UserAdminActivator.PI_USERADMIN, msg, null));
 			throw new ServletException(msg);
 		}
-		
-		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode("org.eclipse.orion.server.configurator");
-		everyoneCanCreateUsers = prefs.getBoolean("everyoneCanCreateUsers", true);
-		
-		// TODO need to read auth properties from InstanceScope preferences
-		// authProperties =
-		// ConfiguratorActivator.getDefault().getAuthProperties();
+		String creators = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION, null);
+		if (creators != null) {
+			authorizedAccountCreators = new ArrayList<String>();
+			authorizedAccountCreators.addAll(Arrays.asList(creators.split(","))); //$NON-NLS-1$
+		}
 	}
 
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
 		HttpServletRequest httpRequest = (HttpServletRequest) request;
 		HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-		// everyone can create a new user
-		if (everyoneCanCreateUsers && "POST".equals(httpRequest.getMethod())) {
-			chain.doFilter(request, response);
-			return;
+		if ("POST".equals(httpRequest.getMethod())) { //$NON-NLS-1$
+			// either everyone can create users, or only the specific list
+			if (authorizedAccountCreators == null || authorizedAccountCreators.contains(httpRequest.getRemoteUser())) {
+				chain.doFilter(request, response);
+				return;
+			}
 		}
 
 		String login = authenticationService.authenticateUser(httpRequest, httpResponse, authProperties);
-		if (login == null) {
+		if (login == null)
 			return;
-		}
 
 		request.setAttribute(HttpContext.REMOTE_USER, login);
 		request.setAttribute(HttpContext.AUTHENTICATION_TYPE, authenticationService.getAuthType());
@@ -82,6 +79,6 @@ public class UserAuthFilter implements Filter {
 	}
 
 	public void destroy() {
-		// TODO Auto-generated method stub
+		// nothing to do
 	}
 }

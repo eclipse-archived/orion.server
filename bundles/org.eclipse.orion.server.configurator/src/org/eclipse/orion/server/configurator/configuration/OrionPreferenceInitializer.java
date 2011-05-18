@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.server.core.users;
+package org.eclipse.orion.server.configurator.configuration;
 
 import java.io.*;
 import java.util.Properties;

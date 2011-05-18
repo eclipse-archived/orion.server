@@ -45,10 +45,6 @@ public class AuthenticationFilter implements Filter {
 			LogHelper.log(new Status(IStatus.ERROR, ConfiguratorActivator.PI_CONFIGURATOR, msg, null));
 			throw new ServletException(msg);
 		}
-
-		// TODO need to read auth properties from InstanceScope preferences
-		// authProperties =
-		// ConfiguratorActivator.getDefault().getAuthProperties();
 	}
 
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
@@ -72,6 +68,6 @@ public class AuthenticationFilter implements Filter {
 	}
 
 	public void destroy() {
-		// TODO Auto-generated method stub
+		// nothing to do
 	}
 }
