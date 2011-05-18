@@ -24,6 +24,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeResult;
 import org.eclipse.jgit.api.errors.*;
 import org.eclipse.jgit.diff.DiffEntry;
+import org.eclipse.jgit.diff.DiffEntry.ChangeType;
 import org.eclipse.jgit.errors.AmbiguousObjectException;
 import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.*;
@@ -183,10 +184,14 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 
 		// set the path filter
 		String p = path.removeFirstSegments(3).toString();
-		if (p != null && !"".equals(p)) //$NON-NLS-1$
-			walk.setTreeFilter(AndTreeFilter.create(PathFilterGroup.createFromStrings(Collections.singleton(p)), TreeFilter.ANY_DIFF));
+		TreeFilter filter = null;
 
-		JSONObject result = toJSON(db, OrionServlet.getURI(request), walk, page);
+		if (p != null && !"".equals(p)) { //$NON-NLS-1$
+			filter = AndTreeFilter.create(PathFilterGroup.createFromStrings(Collections.singleton(p)), TreeFilter.ANY_DIFF);
+			walk.setTreeFilter(filter);
+		}
+
+		JSONObject result = toJSON(db, OrionServlet.getURI(request), walk, page, filter);
 		result.put(GitConstants.KEY_REMOTE, getRemoteBranchLocation(getURI(request), db));
 		OrionServlet.writeJSONResponse(request, response, result);
 		walk.dispose();
@@ -214,7 +219,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		return new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), p.toString(), u.getQuery(), u.getFragment());
 	}
 
-	private JSONObject toJSON(Repository db, URI baseLocation, Iterable<RevCommit> commits, int page) throws JSONException, URISyntaxException, MissingObjectException, IOException {
+	private JSONObject toJSON(Repository db, URI baseLocation, Iterable<RevCommit> commits, int page, TreeFilter filter) throws JSONException, URISyntaxException, MissingObjectException, IOException {
 		boolean pageable = (page > 0);
 		int startIndex = (page - 1) * PAGE_SIZE;
 		int index = 0;
@@ -232,17 +237,17 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 
 			index++;
 
-			children.put(toJSON(db, revCommit, baseLocation));
+			children.put(toJSON(db, revCommit, baseLocation, filter));
 		}
 		result.put(ProtocolConstants.KEY_CHILDREN, children);
 		return result;
 	}
 
-	private JSONObject toJSON(Repository db, RevCommit revCommit, URI baseLocation) throws JSONException, URISyntaxException, IOException {
+	private JSONObject toJSON(Repository db, RevCommit revCommit, URI baseLocation, TreeFilter filter) throws JSONException, URISyntaxException, IOException {
 		JSONObject commit = new JSONObject();
 		commit.put(ProtocolConstants.KEY_LOCATION, createCommitLocation(baseLocation, revCommit.getName(), null));
 		commit.put(ProtocolConstants.KEY_CONTENT_LOCATION, createCommitLocation(baseLocation, revCommit.getName(), "parts=body"));
-		commit.put(GitConstants.KEY_DIFF, createDiffLocation(baseLocation, revCommit.getName()));
+		commit.put(GitConstants.KEY_DIFF, createDiffLocation(baseLocation, revCommit.getName(), null, null));
 		commit.put(ProtocolConstants.KEY_NAME, revCommit.getName());
 		commit.put(GitConstants.KEY_AUTHOR_NAME, revCommit.getAuthorIdent().getName());
 		commit.put(GitConstants.KEY_AUTHOR_EMAIL, revCommit.getAuthorIdent().getEmailAddress());
@@ -258,7 +263,9 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			final TreeWalk tw = new TreeWalk(db);
 			tw.reset(revCommit.getParent(0).getTree(), revCommit.getTree());
 			tw.setRecursive(true);
-			tw.setFilter(TreeFilter.ANY_DIFF);
+
+			if (filter != null)
+				tw.setFilter(filter);
 
 			List<DiffEntry> l = DiffEntry.scan(tw);
 			for (DiffEntry entr : l) {
@@ -266,6 +273,10 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 				diff.put(GitConstants.KEY_COMMIT_DIFF_NEWPATH, entr.getNewPath());
 				diff.put(GitConstants.KEY_COMMIT_DIFF_OLDPATH, entr.getOldPath());
 				diff.put(GitConstants.KEY_COMMIT_DIFF_CHANGETYPE, entr.getChangeType().toString());
+
+				// add diff location for the commit
+				diff.put(GitConstants.KEY_DIFF, createDiffLocation(baseLocation, revCommit.getName(), revCommit.getParent(0).getName(), entr.getChangeType() != ChangeType.DELETE ? entr.getNewPath() : entr.getOldPath()));
+
 				diffs.put(diff);
 			}
 			tw.release();
@@ -288,8 +299,22 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		return new URI(baseLocation.getScheme(), baseLocation.getAuthority(), GitServlet.GIT_URI + "/" + GitConstants.COMMIT_RESOURCE + "/" + commitName + "/" + new Path(baseLocation.getPath()).removeFirstSegments(3), parameters, null); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 	}
 
-	private URI createDiffLocation(URI baseLocation, String commitName) throws URISyntaxException {
-		return new URI(baseLocation.getScheme(), baseLocation.getAuthority(), GitServlet.GIT_URI + "/" + GitConstants.DIFF_RESOURCE + "/" + commitName + "/" + new Path(baseLocation.getPath()).removeFirstSegments(3), null, null); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+	private URI createDiffLocation(URI baseLocation, String toRefId, String fromRefId, String path) throws URISyntaxException {
+		String diffPath = GitServlet.GIT_URI + "/" + GitConstants.DIFF_RESOURCE + "/";
+
+		if (fromRefId != null)
+			diffPath += fromRefId + "..";
+
+		diffPath += toRefId + "/";
+
+		if (path == null)
+			diffPath += new Path(baseLocation.getPath()).removeFirstSegments(3);
+		else {
+			IPath s = new Path(baseLocation.getPath());
+			diffPath += s.removeLastSegments(s.segmentCount() - 5).removeFirstSegments(3).append(path);
+		}
+
+		return new URI(baseLocation.getScheme(), baseLocation.getAuthority(), diffPath, null, null); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 	}
 
 	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws ServletException, NoFilepatternException, IOException, JSONException, CoreException, URISyntaxException {
@@ -382,7 +407,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 
 		GitTagHandlerV1.tag(git, revCommit, tagName);
 
-		JSONObject result = toJSON(db, revCommit, OrionServlet.getURI(request));
+		JSONObject result = toJSON(db, revCommit, OrionServlet.getURI(request), null);
 		OrionServlet.writeJSONResponse(request, response, result);
 		walk.dispose();
 		return true;
