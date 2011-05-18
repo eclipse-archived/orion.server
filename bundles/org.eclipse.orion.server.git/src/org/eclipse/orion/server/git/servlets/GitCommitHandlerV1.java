@@ -189,6 +189,8 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		if (p != null && !"".equals(p)) { //$NON-NLS-1$
 			filter = AndTreeFilter.create(PathFilterGroup.createFromStrings(Collections.singleton(p)), TreeFilter.ANY_DIFF);
 			walk.setTreeFilter(filter);
+		} else {
+			walk.setTreeFilter(TreeFilter.ANY_DIFF);
 		}
 
 		JSONObject result = toJSON(db, OrionServlet.getURI(request), walk, page, filter);
@@ -266,6 +268,8 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 
 			if (filter != null)
 				tw.setFilter(filter);
+			else
+				tw.setFilter(TreeFilter.ANY_DIFF);
 
 			List<DiffEntry> l = DiffEntry.scan(tw);
 			for (DiffEntry entr : l) {
