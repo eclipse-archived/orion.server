@@ -289,13 +289,24 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		JSONObject result = new JSONObject();
 		try {
 			result.put(ProtocolConstants.KEY_ID, k);
+
 			result.put(ProtocolConstants.KEY_NAME, k.segmentCount() == 1 ? WebProject.fromId(k.segment(0)).getName() : k.lastSegment());
+
 			IPath np = new Path(GitServlet.GIT_URI).append(GitConstants.CLONE_RESOURCE).append("file").append(k); //$NON-NLS-1$
 			URI location = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), np.toString(), baseLocation.getQuery(), baseLocation.getFragment());
 			result.put(ProtocolConstants.KEY_LOCATION, location);
+
 			np = new Path("file").append(k).makeAbsolute(); //$NON-NLS-1$
 			location = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), np.toString(), baseLocation.getQuery(), baseLocation.getFragment());
 			result.put(ProtocolConstants.KEY_CONTENT_LOCATION, location);
+
+			np = new Path(GitServlet.GIT_URI).append(GitConstants.REMOTE_RESOURCE).append("file").append(k); //$NON-NLS-1$
+			location = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), np.toString(), baseLocation.getQuery(), baseLocation.getFragment());
+			result.put(GitConstants.KEY_REMOTE, location);
+
+			np = new Path(GitServlet.GIT_URI).append(GitConstants.BRANCH_RESOURCE).append("file").append(k); //$NON-NLS-1$
+			location = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), np.toString(), baseLocation.getQuery(), baseLocation.getFragment());
+			result.put(GitConstants.KEY_BRANCH, location);
 
 			try {
 				FileBasedConfig config = new FileRepository(entry.getValue()).getConfig();

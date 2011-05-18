@@ -311,6 +311,7 @@ public abstract class GitTest extends FileSystemTest {
 		assertEquals("file", path.segment(0));
 		assertTrue(path.segmentCount() > 1);
 
+		// clone
 		WebRequest request = getPostGitCloneRequest(uri.toString(), path, kh, p);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
@@ -329,6 +330,8 @@ public abstract class GitTest extends FileSystemTest {
 		assertTrue(path.segmentCount() == 2 && name.equals(WebProject.fromId(path.segment(1)).getName()) || name.equals(path.lastSegment()));
 		assertCloneUri(clone.getString(ProtocolConstants.KEY_LOCATION));
 		assertFileUri(clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		assertRemoteUri(clone.getString(GitConstants.KEY_REMOTE));
+		assertBranchUri(clone.getString(GitConstants.KEY_BRANCH));
 		return clone;
 	}
 
@@ -708,6 +711,16 @@ public abstract class GitTest extends FileSystemTest {
 		// /file/{id}[/{path}]
 		assertTrue(path.segmentCount() > 1);
 		assertEquals("file", path.segment(0));
+	}
+
+	private static void assertBranchUri(String branchUri) {
+		URI uri = URI.create(branchUri);
+		IPath path = new Path(uri.getPath());
+		// /git/branch/[{name}/]file/{path}
+		assertTrue(path.segmentCount() > 3);
+		assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
+		assertEquals(GitConstants.BRANCH_RESOURCE, path.segment(1));
+		assertEquals("file", path.segment(2));
 	}
 
 	// web requests

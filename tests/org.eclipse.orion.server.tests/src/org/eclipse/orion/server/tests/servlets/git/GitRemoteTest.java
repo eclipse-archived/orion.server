@@ -67,7 +67,10 @@ public class GitRemoteTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-		clone(clonePath);
+		JSONObject clone = clone(clonePath);
+		String gitRemoteUri = clone.getString(GitConstants.KEY_REMOTE);
+		JSONObject remoteBranch = getRemoteBranch(gitRemoteUri, 1, 0, Constants.MASTER);
+		assertNotNull(remoteBranch);
 
 		// get project metadata
 		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
@@ -78,10 +81,7 @@ public class GitRemoteTest extends GitTest {
 		// check if Git locations are in place
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-		String gitRemoteUri = gitSection.getString(GitConstants.KEY_REMOTE);
-
-		JSONObject remoteBranch = getRemoteBranch(gitRemoteUri, 1, 0, Constants.MASTER);
-		assertNotNull(remoteBranch);
+		assertEquals(gitRemoteUri, gitSection.getString(GitConstants.KEY_REMOTE));
 	}
 
 	@Test
