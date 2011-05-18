@@ -124,6 +124,24 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 			if (!xForwardedFor)
 				connection.addRequestProperty("X-Forwarded-For", request.getRemoteAddr());
 
+			// Bug 346139: prevent an infinite proxy loop by decrementing the Max-Forwards header
+			Enumeration maxForwardsHeaders = request.getHeaders("Max-Forwards");
+			String maxForwardsHeader = null;
+			while (maxForwardsHeaders.hasMoreElements()) {
+				maxForwardsHeader = (String) maxForwardsHeaders.nextElement();
+			}
+			int maxForwards = 5;
+			try {
+				maxForwards = Math.max(0, Integer.parseInt(maxForwardsHeader));
+			} catch (NumberFormatException e) {
+				// Use default
+			}
+			if (maxForwards-- < 1) {
+				response.sendError(HttpURLConnection.HTTP_BAD_GATEWAY, "Max-Forwards exceeded");
+				return;
+			}
+			connection.addRequestProperty("Max-Forwards", "" + maxForwards);
+
 			// a little bit of cache control
 			String cache_control = request.getHeader("Cache-Control");
 			if (cache_control != null && (cache_control.indexOf("no-cache") >= 0 || cache_control.indexOf("no-store") >= 0))
