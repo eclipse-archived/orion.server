@@ -13,17 +13,13 @@ package org.eclipse.orion.server.tests.servlets.git;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.JGitInternalException;
-import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.StoredConfig;
@@ -33,7 +29,6 @@ import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Test;
-import org.xml.sax.SAXException;
 
 import com.meterware.httpunit.PutMethodWebRequest;
 import com.meterware.httpunit.WebRequest;
@@ -46,7 +41,7 @@ public class GitConfigTest extends GitTest {
 	private static final String GIT_COMMIT_MESSAGE = "message";
 
 	@Test
-	public void testConfigUsingUserProfile() throws JSONException, IOException, SAXException, NoHeadException, JGitInternalException, CoreException {
+	public void testConfigUsingUserProfile() throws Exception {
 
 		// set Git name and mail in the user profile
 		WebRequest request = getPutUserRequest();
@@ -57,7 +52,7 @@ public class GitConfigTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-		String contentLocation = clone(clonePath);
+		String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		// check the repository configuration using JGit API
 		Git git = new Git(getRepositoryForContentLocation(contentLocation));

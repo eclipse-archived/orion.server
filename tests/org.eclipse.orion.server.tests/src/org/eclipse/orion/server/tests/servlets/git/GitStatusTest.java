@@ -20,16 +20,12 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.api.PullResult;
 import org.eclipse.jgit.api.RmCommand;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.JGitInternalException;
-import org.eclipse.jgit.api.errors.NoFilepatternException;
 import org.eclipse.jgit.dircache.DirCache;
 import org.eclipse.jgit.dircache.DirCacheEntry;
 import org.eclipse.jgit.lib.Constants;
@@ -52,7 +48,7 @@ public class GitStatusTest extends GitTest {
 
 	// "status -s" > ""
 	@Test
-	public void testStatusClean() throws IOException, SAXException, JSONException {
+	public void testStatusClean() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -71,7 +67,7 @@ public class GitStatusTest extends GitTest {
 
 	// "status -s" > "A  new.txt", staged
 	@Test
-	public void testStatusAdded() throws IOException, SAXException, JSONException {
+	public void testStatusAdded() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -120,7 +116,7 @@ public class GitStatusTest extends GitTest {
 
 	// "status -s" > "M  test.txt", staged
 	@Test
-	public void testStatusChanged() throws JSONException, IOException, SAXException {
+	public void testStatusChanged() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -162,7 +158,7 @@ public class GitStatusTest extends GitTest {
 
 	// "status -s" > "MM test.txt", portions staged for commit
 	@Test
-	public void testStatusChangedAndModified() throws JSONException, IOException, SAXException {
+	public void testStatusChangedAndModified() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -209,7 +205,7 @@ public class GitStatusTest extends GitTest {
 
 	// "status -s" > " D test.txt", not staged
 	@Test
-	public void testStatusMissing() throws IOException, SAXException, JSONException {
+	public void testStatusMissing() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -246,7 +242,7 @@ public class GitStatusTest extends GitTest {
 
 	// "status -s" > " M test.txt", not staged
 	@Test
-	public void testStatusModified() throws IOException, SAXException, JSONException {
+	public void testStatusModified() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -282,7 +278,7 @@ public class GitStatusTest extends GitTest {
 
 	// "status -s" > "D  test.txt", staged
 	@Test
-	public void testStatusRemoved() throws IOException, SAXException, JSONException, NoFilepatternException {
+	public void testStatusRemoved() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -324,7 +320,7 @@ public class GitStatusTest extends GitTest {
 
 	// "status -s" > "?? new.txt", not staged
 	@Test
-	public void testStatusUntracked() throws IOException, SAXException, JSONException {
+	public void testStatusUntracked() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -360,7 +356,7 @@ public class GitStatusTest extends GitTest {
 	}
 
 	@Test
-	public void testStatusWithPath() throws IOException, SAXException, JSONException {
+	public void testStatusWithPath() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -452,7 +448,7 @@ public class GitStatusTest extends GitTest {
 	}
 
 	@Test
-	public void testStatusLocation() throws IOException, SAXException, JSONException {
+	public void testStatusLocation() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -538,7 +534,7 @@ public class GitStatusTest extends GitTest {
 	}
 
 	@Test
-	public void testStatusDiff() throws IOException, SAXException, JSONException {
+	public void testStatusDiff() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -609,7 +605,7 @@ public class GitStatusTest extends GitTest {
 	}
 
 	@Test
-	public void testStatusCommit() throws IOException, SAXException, JSONException {
+	public void testStatusCommit() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -685,14 +681,14 @@ public class GitStatusTest extends GitTest {
 
 	// "status -s" > "UU test.txt", both modified
 	@Test
-	public void testConfilct() throws IOException, SAXException, JSONException, JGitInternalException, GitAPIException, CoreException {
+	public void testConfilct() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		// clone1: create
 		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
 		String projectId1 = project1.getString(ProtocolConstants.KEY_ID);
 		IPath clonePath1 = new Path("file").append(project1.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-		String contentLocation1 = clone(clonePath1);
+		String contentLocation1 = clone(clonePath1).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		// get project metadata
 		WebRequest request = getGetFilesRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
@@ -709,7 +705,7 @@ public class GitStatusTest extends GitTest {
 		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
 		String projectId2 = project2.getString(ProtocolConstants.KEY_ID);
 		IPath clonePath2 = new Path("file").append(project2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-		String contentLocation2 = clone(clonePath2);
+		String contentLocation2 = clone(clonePath2).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		// get project metadata
 		request = getGetFilesRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
@@ -797,7 +793,7 @@ public class GitStatusTest extends GitTest {
 	}
 
 	@Test
-	public void testFileLogFromStatus() throws IOException, SAXException, JSONException, GitAPIException {
+	public void testFileLogFromStatus() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();

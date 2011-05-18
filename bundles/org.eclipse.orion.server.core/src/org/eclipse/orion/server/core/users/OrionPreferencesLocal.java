@@ -18,6 +18,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.core.Activator;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.osgi.service.datalocation.Location;
 import org.osgi.framework.*;
 
@@ -66,7 +67,7 @@ public class OrionPreferencesLocal extends EclipsePreferences {
 				return null;
 			URL root;
 			try {
-				root = location.getDataArea(Activator.PI_SERVER_CORE);
+				root = location.getDataArea(ServerConstants.PI_SERVER_CORE);
 			} catch (IOException e) {
 				return null;
 			}

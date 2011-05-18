@@ -122,7 +122,7 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		gitSection.put(GitConstants.KEY_COMMIT, link);
 
 		// add Git Remote URI
-		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.REMOTE_RESOURCE).append(targetPath);
+		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.REMOTE_RESOURCE).append(targetPath).removeTrailingSeparator();
 		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_REMOTE, link);
 
@@ -146,6 +146,11 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.TAG_RESOURCE).append(targetPath);
 		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_TAG, link);
+
+		// add Git Clone URI
+		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.CLONE_RESOURCE).append(targetPath);
+		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
+		gitSection.put(GitConstants.KEY_CLONE, link);
 
 		representation.put(GitConstants.KEY_GIT, gitSection);
 	}

@@ -12,26 +12,22 @@ package org.eclipse.orion.server.tests.servlets.git;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URISyntaxException;
 
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Test;
-import org.xml.sax.SAXException;
 
 import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
 
 public class GitTagTest extends GitTest {
 	@Test
-	public void testTag() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testTag() throws Exception {
 
 		URI workspaceLocation = createWorkspace(getMethodName());
 
@@ -48,7 +44,7 @@ public class GitTagTest extends GitTest {
 	}
 
 	@Test
-	public void testListTags() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testListTags() throws Exception {
 
 		URI workspaceLocation = createWorkspace(getMethodName());
 

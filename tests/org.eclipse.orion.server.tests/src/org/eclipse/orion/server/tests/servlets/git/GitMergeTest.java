@@ -14,35 +14,29 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
-import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeResult;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Test;
-import org.xml.sax.SAXException;
 
 import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
 
 public class GitMergeTest extends GitTest {
 	@Test
-	public void testMergeSelf() throws IOException, SAXException, JSONException {
+	public void testMergeSelf() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -59,13 +53,16 @@ public class GitMergeTest extends GitTest {
 	}
 
 	@Test
-	public void testMerge() throws IOException, SAXException, JSONException, JGitInternalException, GitAPIException, CoreException {
+	public void testMerge() throws Exception {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
 		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-		String contentLocation = clone(clonePath);
+		JSONObject clone = clone(clonePath);
+		String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
+		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 		// get project metadata
 		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
@@ -74,12 +71,13 @@ public class GitMergeTest extends GitTest {
 		project = new JSONObject(response.getText());
 
 		// create branch 'a'
-		Repository db1 = getRepositoryForContentLocation(contentLocation);
-		branch(db1, "a");
+		branch(branchesLocation, "a");
 
 		// checkout 'a'
+		Repository db1 = getRepositoryForContentLocation(cloneContentLocation);
 		Git git = new Git(db1);
-		GitRemoteTest.ensureOnBranch(git, "a");
+		assertBranchExist(git, "a");
+		checkoutBranch(cloneLocation, "a");
 
 		// modify while on 'a'
 		request = getPutFileRequest(projectId + "/test.txt", "change in a");
@@ -110,7 +108,7 @@ public class GitMergeTest extends GitTest {
 		GitStatusTest.assertStatusClean(statusResponse);
 
 		// checkout 'master'
-		GitRemoteTest.ensureOnBranch(git, Constants.MASTER);
+		checkoutBranch(cloneLocation, Constants.MASTER);
 
 		// modify a different file on master
 		request = getPutFileRequest(projectId + "/folder/folder.txt", "change in master");
@@ -168,7 +166,7 @@ public class GitMergeTest extends GitTest {
 	}
 
 	@Test
-	public void testMergeAlreadyUpToDate() throws IOException, SAXException, JSONException {
+	public void testMergeAlreadyUpToDate() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -234,13 +232,16 @@ public class GitMergeTest extends GitTest {
 	}
 
 	@Test
-	public void testMergeConflict() throws IOException, SAXException, JSONException, JGitInternalException, GitAPIException, CoreException {
+	public void testMergeConflict() throws Exception {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
 		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-		String contentLocation = clone(clonePath);
+		JSONObject clone = clone(clonePath);
+		String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
+		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 		// get project metadata
 		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
@@ -253,12 +254,13 @@ public class GitMergeTest extends GitTest {
 		assertNotNull(gitRemoteUri);
 
 		// create branch 'a'
-		Repository db1 = getRepositoryForContentLocation(contentLocation);
-		branch(db1, "a");
+		branch(branchesLocation, "a");
 
 		// checkout 'a'
+		Repository db1 = getRepositoryForContentLocation(cloneContentLocation);
 		Git git = new Git(db1);
-		GitRemoteTest.ensureOnBranch(git, "a");
+		assertBranchExist(git, "a");
+		checkoutBranch(cloneLocation, "a");
 
 		// modify while on 'a'
 		request = getPutFileRequest(projectId + "/test.txt", "change in a");
@@ -289,7 +291,7 @@ public class GitMergeTest extends GitTest {
 		GitStatusTest.assertStatusClean(statusResponse);
 
 		// checkout 'master'
-		GitRemoteTest.ensureOnBranch(git, Constants.MASTER);
+		checkoutBranch(cloneLocation, Constants.MASTER);
 
 		// modify a different file on master
 		request = getPutFileRequest(projectId + "/test.txt", "change in master");
@@ -362,7 +364,7 @@ public class GitMergeTest extends GitTest {
 	}
 
 	@Test
-	public void testMergeRemote() throws IOException, SAXException, JSONException, JGitInternalException {
+	public void testMergeRemote() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		// clone1

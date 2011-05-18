@@ -48,6 +48,10 @@ public class GitUriTest extends GitTest {
 		assertNotNull(gitSection.optString(GitConstants.KEY_INDEX, null));
 		assertNotNull(gitSection.optString(GitConstants.KEY_COMMIT, null));
 		assertNotNull(gitSection.optString(GitConstants.KEY_REMOTE, null));
+		assertNotNull(gitSection.optString(GitConstants.KEY_TAG, null));
+		assertNotNull(gitSection.optString(GitConstants.KEY_CLONE, null));
+		// TODO: it's a linked repo, see bug 346114
+		// assertCloneUri(gitSection.optString(GitConstants.KEY_CLONE, null));
 	}
 
 	@Test
@@ -73,6 +77,10 @@ public class GitUriTest extends GitTest {
 		assertNotNull(gitSection.optString(GitConstants.KEY_INDEX, null));
 		assertNotNull(gitSection.optString(GitConstants.KEY_COMMIT, null));
 		assertNotNull(gitSection.optString(GitConstants.KEY_REMOTE, null));
+		assertNotNull(gitSection.optString(GitConstants.KEY_TAG, null));
+		assertNotNull(gitSection.optString(GitConstants.KEY_CLONE, null));
+		// TODO: it's a linked repo, see bug 346114
+		// assertCloneUri(gitSection.optString(GitConstants.KEY_CLONE, null));
 
 		String childrenLocation = project.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
 		assertNotNull(childrenLocation);
@@ -92,6 +100,10 @@ public class GitUriTest extends GitTest {
 			assertNotNull(gitSection.optString(GitConstants.KEY_INDEX, null));
 			assertNotNull(gitSection.optString(GitConstants.KEY_COMMIT, null));
 			assertNotNull(gitSection.optString(GitConstants.KEY_REMOTE, null));
+			assertNotNull(gitSection.optString(GitConstants.KEY_TAG, null));
+			assertNotNull(gitSection.optString(GitConstants.KEY_CLONE, null));
+			// TODO: it's a linked repo, see bug 346114
+			// assertCloneUri(gitSection.optString(GitConstants.KEY_CLONE, null));
 		}
 		childrenLocation = getChildByName(children, "folder").getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
 
@@ -110,6 +122,10 @@ public class GitUriTest extends GitTest {
 			assertNotNull(gitSection.optString(GitConstants.KEY_INDEX, null));
 			assertNotNull(gitSection.optString(GitConstants.KEY_COMMIT, null));
 			assertNotNull(gitSection.optString(GitConstants.KEY_REMOTE, null));
+			assertNotNull(gitSection.optString(GitConstants.KEY_TAG, null));
+			assertNotNull(gitSection.optString(GitConstants.KEY_CLONE, null));
+			// TODO: it's a linked repo, see bug 346114
+			// assertCloneUri(gitSection.optString(GitConstants.KEY_CLONE, null));
 		}
 	}
 
@@ -136,6 +152,8 @@ public class GitUriTest extends GitTest {
 		assertNull(files.optString(GitConstants.KEY_DIFF, null));
 		assertNull(files.optString(GitConstants.KEY_COMMIT, null));
 		assertNull(files.optString(GitConstants.KEY_REMOTE, null));
+		assertNull(files.optString(GitConstants.KEY_TAG, null));
+		assertNull(files.optString(GitConstants.KEY_CLONE, null));
 
 		assertTrue(emptyDir.delete());
 	}
@@ -165,6 +183,8 @@ public class GitUriTest extends GitTest {
 		assertNull(files.optString(GitConstants.KEY_DIFF, null));
 		assertNull(files.optString(GitConstants.KEY_COMMIT, null));
 		assertNull(files.optString(GitConstants.KEY_REMOTE, null));
+		assertNull(files.optString(GitConstants.KEY_TAG, null));
+		assertNull(files.optString(GitConstants.KEY_CLONE, null));
 
 		FileUtils.delete(dir, FileUtils.RECURSIVE);
 	}
@@ -193,6 +213,8 @@ public class GitUriTest extends GitTest {
 		assertNull(responseJSON.optString(GitConstants.KEY_DIFF, null));
 		assertNull(responseJSON.optString(GitConstants.KEY_COMMIT, null));
 		assertNull(responseJSON.optString(GitConstants.KEY_REMOTE, null));
+		assertNull(responseJSON.optString(GitConstants.KEY_TAG, null));
+		assertNull(responseJSON.optString(GitConstants.KEY_CLONE, null));
 
 		request = getGetFilesRequest(responseJSON.getString(ProtocolConstants.KEY_CHILDREN_LOCATION));
 		response = webConversation.getResponse(request);
@@ -209,6 +231,9 @@ public class GitUriTest extends GitTest {
 		assertNotNull(gitSection.optString(GitConstants.KEY_DIFF, null));
 		assertNotNull(gitSection.optString(GitConstants.KEY_COMMIT, null));
 		assertNotNull(gitSection.optString(GitConstants.KEY_REMOTE, null));
+		assertNotNull(gitSection.optString(GitConstants.KEY_TAG, null));
+		assertNotNull(gitSection.optString(GitConstants.KEY_CLONE, null));
+		assertCloneUri(gitSection.optString(GitConstants.KEY_CLONE, null));
 
 		location = children.get(0).getString(ProtocolConstants.KEY_LOCATION);
 		request = getGetFilesRequest(location);
@@ -224,6 +249,9 @@ public class GitUriTest extends GitTest {
 		assertNotNull(gitSection.optString(GitConstants.KEY_DIFF, null));
 		assertNotNull(gitSection.optString(GitConstants.KEY_COMMIT, null));
 		assertNotNull(gitSection.optString(GitConstants.KEY_REMOTE, null));
+		assertNotNull(gitSection.optString(GitConstants.KEY_TAG, null));
+		assertNotNull(gitSection.optString(GitConstants.KEY_CLONE, null));
+		assertCloneUri(gitSection.optString(GitConstants.KEY_CLONE, null));
 	}
 
 }

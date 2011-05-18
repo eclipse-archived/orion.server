@@ -16,6 +16,7 @@ import java.util.Collection;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.core.tasks.TaskService;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.osgi.framework.log.FrameworkLog;
 import org.eclipse.osgi.service.datalocation.Location;
@@ -29,7 +30,6 @@ public class Activator implements BundleActivator {
 
 	public static volatile BundleContext bundleContext;
 
-	public static final String PI_SERVER_CORE = "org.eclipse.orion.server.core"; //$NON-NLS-1$
 	static Activator singleton;
 	ServiceTracker<FrameworkLog, FrameworkLog> logTracker;
 	private ServiceRegistration<ITaskService> taskServiceRegistration;
@@ -87,7 +87,7 @@ public class Activator implements BundleActivator {
 		try {
 			if (location == null)
 				throw new IOException("Framework instance location is undefined"); //$NON-NLS-1$
-			URL root = location.getDataArea(PI_SERVER_CORE);
+			URL root = location.getDataArea(ServerConstants.PI_SERVER_CORE);
 			// strip off file: prefix from URL
 			return new Path(root.toExternalForm().substring(5)).append("tasks"); //$NON-NLS-1$
 		} finally {
@@ -107,7 +107,7 @@ public class Activator implements BundleActivator {
 			ITaskService service = new TaskService(taskLocation);
 			taskServiceRegistration = bundleContext.registerService(ITaskService.class, service, null);
 		} catch (IOException e) {
-			LogHelper.log(new Status(IStatus.ERROR, PI_SERVER_CORE, "Failed to initialize task service", e)); //$NON-NLS-1$
+			LogHelper.log(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "Failed to initialize task service", e)); //$NON-NLS-1$
 		}
 	}
 

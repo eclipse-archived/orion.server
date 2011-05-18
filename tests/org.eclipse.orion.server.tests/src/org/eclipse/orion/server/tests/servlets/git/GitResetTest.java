@@ -13,7 +13,6 @@ package org.eclipse.orion.server.tests.servlets.git;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -30,7 +29,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.xml.sax.SAXException;
 
 import com.meterware.httpunit.PostMethodWebRequest;
 import com.meterware.httpunit.WebRequest;
@@ -42,7 +40,7 @@ public class GitResetTest extends GitTest {
 	@Test
 	@Ignore("not yet implemented")
 	//TODO: see bug 338701
-	public void testResetMixedChanged() throws IOException, SAXException, JSONException {
+	public void testResetMixedChanged() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -114,7 +112,7 @@ public class GitResetTest extends GitTest {
 	}
 
 	@Test
-	public void testResetNull() throws JSONException, IOException, SAXException {
+	public void testResetNull() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -136,7 +134,7 @@ public class GitResetTest extends GitTest {
 	}
 
 	@Test
-	public void testResetNotImplemented() throws JSONException, IOException, SAXException {
+	public void testResetNotImplemented() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -166,7 +164,7 @@ public class GitResetTest extends GitTest {
 	}
 
 	@Test
-	public void testResetBadType() throws JSONException, IOException, SAXException {
+	public void testResetBadType() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -188,7 +186,7 @@ public class GitResetTest extends GitTest {
 	}
 
 	@Test
-	public void testResetMixedAll() throws IOException, SAXException, JSONException {
+	public void testResetMixedAll() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -281,7 +279,7 @@ public class GitResetTest extends GitTest {
 	}
 
 	@Test
-	public void testResetHardAll() throws IOException, SAXException, JSONException {
+	public void testResetHardAll() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -364,7 +362,7 @@ public class GitResetTest extends GitTest {
 
 	@Test
 	@Ignore("see bug 339397")
-	public void testResetAutocrlfTrue() throws IOException, SAXException, JSONException {
+	public void testResetAutocrlfTrue() throws Exception {
 
 		// "git config core.autocrlf true"
 		Git git = new Git(db);

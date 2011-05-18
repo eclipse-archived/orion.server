@@ -10,34 +10,25 @@
  *******************************************************************************/
 package org.eclipse.orion.server.tests.servlets.git;
 
-import static junit.framework.Assert.fail;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.List;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ListBranchCommand.ListMode;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Test;
-import org.xml.sax.SAXException;
 
 import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.WebRequest;
@@ -45,7 +36,7 @@ import com.meterware.httpunit.WebResponse;
 
 public class GitRemoteTest extends GitTest {
 	@Test
-	public void testGetNoRemote() throws IOException, SAXException, JSONException {
+	public void testGetNoRemote() throws Exception {
 		URI contentLocation = gitDir.toURI();
 
 		JSONObject project = linkProject(contentLocation.toString(), getMethodName());
@@ -71,12 +62,15 @@ public class GitRemoteTest extends GitTest {
 	}
 
 	@Test
-	public void testGetOrigin() throws IOException, SAXException, JSONException {
+	public void testGetOrigin() throws Exception {
 		// clone a  repo
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-		clone(clonePath);
+		JSONObject clone = clone(clonePath);
+		String gitRemoteUri = clone.getString(GitConstants.KEY_REMOTE);
+		JSONObject remoteBranch = getRemoteBranch(gitRemoteUri, 1, 0, Constants.MASTER);
+		assertNotNull(remoteBranch);
 
 		// get project metadata
 		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
@@ -87,14 +81,11 @@ public class GitRemoteTest extends GitTest {
 		// check if Git locations are in place
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-		String gitRemoteUri = gitSection.getString(GitConstants.KEY_REMOTE);
-
-		JSONObject remoteBranch = getRemoteBranch(gitRemoteUri, 1, 0, Constants.MASTER);
-		assertNotNull(remoteBranch);
+		assertEquals(gitRemoteUri, gitSection.getString(GitConstants.KEY_REMOTE));
 	}
 
 	@Test
-	public void testGetUnknownRemote() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testGetUnknownRemote() throws Exception {
 		// clone a  repo
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
@@ -132,7 +123,7 @@ public class GitRemoteTest extends GitTest {
 	}
 
 	@Test
-	public void testGetRemoteCommits() throws JSONException, IOException, SAXException, JGitInternalException {
+	public void testGetRemoteCommits() throws Exception {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
@@ -207,12 +198,15 @@ public class GitRemoteTest extends GitTest {
 	}
 
 	@Test
-	public void testGetRemoteBranches() throws JSONException, IOException, SAXException, JGitInternalException, GitAPIException, CoreException {
+	public void testGetRemoteBranches() throws Exception {
 		// clone a  repo
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-		String contentLocation = clone(clonePath);
+		JSONObject clone = clone(clonePath);
+		String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
+		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 		// get project metadata
 		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
@@ -225,12 +219,12 @@ public class GitRemoteTest extends GitTest {
 		String gitRemoteUri = gitSection.optString(GitConstants.KEY_REMOTE, null);
 		assertNotNull(gitRemoteUri);
 
-		Repository db1 = getRepositoryForContentLocation(contentLocation);
+		Repository db1 = getRepositoryForContentLocation(cloneContentLocation);
 		Git git = new Git(db1);
 		int localBefore = git.branchList().call().size();
 		int remoteBefore = git.branchList().setListMode(ListMode.REMOTE).call().size();
 		int allBefore = git.branchList().setListMode(ListMode.ALL).call().size();
-		branch(db1, "a");
+		branch(branchesLocation, "a");
 
 		assertEquals(1, git.branchList().call().size() - localBefore);
 		assertEquals(0, git.branchList().setListMode(ListMode.REMOTE).call().size() - remoteBefore);
@@ -243,11 +237,11 @@ public class GitRemoteTest extends GitTest {
 		assertEquals(1, git.branchList().setListMode(ListMode.REMOTE).call().size() - remoteBefore);
 		assertEquals(2, git.branchList().setListMode(ListMode.ALL).call().size() - allBefore);
 
-		ensureOnBranch(git, Constants.MASTER);
+		checkoutBranch(cloneLocation, Constants.MASTER);
 		JSONObject remoteBranch = getRemoteBranch(gitRemoteUri, 2, 0, Constants.MASTER);
 		assertNotNull(remoteBranch);
 
-		ensureOnBranch(git, "a");
+		checkoutBranch(cloneLocation, "a");
 		remoteBranch = getRemoteBranch(gitRemoteUri, 2, 0, "a");
 		assertNotNull(remoteBranch);
 	}
@@ -266,22 +260,8 @@ public class GitRemoteTest extends GitTest {
 		return request;
 	}
 
-	static void ensureOnBranch(Git git, String branch) {
-		// ensure the branch exists locally
-		List<Ref> list = git.branchList().call();
-		for (Ref ref : list) {
-			if (ref.getName().equals(Constants.R_HEADS + branch)) {
-				try {
-					Ref r = git.checkout().setName(branch).call();
-					assertEquals(Constants.R_HEADS + branch, r.getName());
-					assertNotNull(git.getRepository().getRef(branch));
-					return;
-				} catch (Exception e) {
-					fail(e.getMessage());
-				}
-			}
-		}
-		fail("branch '" + branch + "' doesn't exist locally");
+	static void assertOnBranch(Git git, String branch) throws IOException {
+		assertNotNull(git.getRepository().getRef(branch));
 	}
 
 }

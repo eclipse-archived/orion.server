@@ -27,14 +27,9 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.Repository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONException;
@@ -49,7 +44,7 @@ import com.meterware.httpunit.WebResponse;
 
 public class GitDiffTest extends GitTest {
 	@Test
-	public void testNoDiff() throws IOException, SAXException, JSONException {
+	public void testNoDiff() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -68,7 +63,7 @@ public class GitDiffTest extends GitTest {
 	}
 
 	@Test
-	public void testDiffAlreadyModified() throws IOException, SAXException, JSONException {
+	public void testDiffAlreadyModified() throws Exception {
 		Writer w = new OutputStreamWriter(new FileOutputStream(testFile), "UTF-8");
 		try {
 			w.write("hello");
@@ -106,7 +101,7 @@ public class GitDiffTest extends GitTest {
 	}
 
 	@Test
-	public void testDiffModifiedByOrion() throws IOException, SAXException, JSONException {
+	public void testDiffModifiedByOrion() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -139,7 +134,7 @@ public class GitDiffTest extends GitTest {
 	}
 
 	@Test
-	public void testDiffFilter() throws IOException, SAXException, JSONException {
+	public void testDiffFilter() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -198,7 +193,7 @@ public class GitDiffTest extends GitTest {
 	}
 
 	@Test
-	public void testDiffCached() throws IOException, SAXException, JSONException {
+	public void testDiffCached() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -246,7 +241,7 @@ public class GitDiffTest extends GitTest {
 	}
 
 	@Test
-	public void testDiffCommits() throws IOException, SAXException, JSONException {
+	public void testDiffCommits() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -335,7 +330,7 @@ public class GitDiffTest extends GitTest {
 	}
 
 	@Test
-	public void testDiffCommitWithWorkingTree() throws IOException, SAXException, JSONException {
+	public void testDiffCommitWithWorkingTree() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -425,7 +420,7 @@ public class GitDiffTest extends GitTest {
 	}
 
 	@Test
-	public void testDiffPost() throws JSONException, IOException, SAXException {
+	public void testDiffPost() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -490,7 +485,7 @@ public class GitDiffTest extends GitTest {
 	}
 
 	@Test
-	public void testDiffParts() throws JSONException, IOException, SAXException {
+	public void testDiffParts() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -565,7 +560,7 @@ public class GitDiffTest extends GitTest {
 	}
 
 	@Test
-	public void testDiffUntrackedUri() throws JSONException, IOException, SAXException {
+	public void testDiffUntrackedUri() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -609,13 +604,15 @@ public class GitDiffTest extends GitTest {
 	}
 
 	@Test
-	public void testDiffWithCommonAncestor() throws JSONException, IOException, SAXException, JGitInternalException, GitAPIException, CoreException {
+	public void testDiffWithCommonAncestor() throws Exception {
 		// clone: create
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
 		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-		String contentLocation = clone(clonePath);
+		JSONObject clone = clone(clonePath);
+		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
+		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 		// get project metadata
 		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
@@ -626,11 +623,10 @@ public class GitDiffTest extends GitTest {
 		assertNotNull(gitSection);
 
 		String a = "a";
-		Repository db1 = getRepositoryForContentLocation(contentLocation);
-		branch(db1, a);
+		branch(branchesLocation, a);
+
 		// checkout 'a'
-		Git git = new Git(db1);
-		GitRemoteTest.ensureOnBranch(git, a);
+		checkoutBranch(cloneLocation, a);
 
 		// modify while on 'a'
 		request = getPutFileRequest(projectId + "/test.txt", "change in a");
@@ -662,7 +658,7 @@ public class GitDiffTest extends GitTest {
 		GitStatusTest.assertStatusClean(statusResponse);
 
 		// checkout 'master'
-		GitRemoteTest.ensureOnBranch(git, Constants.MASTER);
+		checkoutBranch(cloneLocation, Constants.MASTER);
 
 		// modify the same file on master
 		request = getPutFileRequest(projectId + "/test.txt", "change in master");
