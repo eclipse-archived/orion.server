@@ -13,14 +13,11 @@ package org.eclipse.orion.server.tests.servlets.git;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.JGitInternalException;
-import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
@@ -29,7 +26,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.xml.sax.SAXException;
 
 import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.PostMethodWebRequest;
@@ -40,7 +36,7 @@ public class GitCommitTest extends GitTest {
 
 	@Test
 	@Ignore("not yet implemented, see bug 339190")
-	public void testCommit() throws JSONException, IOException, SAXException {
+	public void testCommit() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -115,7 +111,7 @@ public class GitCommitTest extends GitTest {
 	}
 
 	@Test
-	public void testCommitNoComment() throws JSONException, IOException, SAXException {
+	public void testCommitNoComment() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -145,7 +141,7 @@ public class GitCommitTest extends GitTest {
 	}
 
 	@Test
-	public void testCommitEmptyComment() throws JSONException, IOException, SAXException {
+	public void testCommitEmptyComment() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -175,7 +171,7 @@ public class GitCommitTest extends GitTest {
 	}
 
 	@Test
-	public void testCommitAll() throws IOException, SAXException, JSONException {
+	public void testCommitAll() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -237,7 +233,7 @@ public class GitCommitTest extends GitTest {
 	}
 
 	@Test
-	public void testCommitAmend() throws IOException, SAXException, JSONException, NoHeadException, JGitInternalException {
+	public void testCommitAmend() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -296,7 +292,7 @@ public class GitCommitTest extends GitTest {
 	}
 
 	@Test
-	public void testCommitHeadContent() throws IOException, SAXException, JSONException {
+	public void testCommitHeadContent() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();

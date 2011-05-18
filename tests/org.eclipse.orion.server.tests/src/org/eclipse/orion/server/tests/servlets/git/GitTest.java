@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.server.tests.servlets.git;
 
+import static junit.framework.Assert.fail;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -40,7 +41,6 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.core.tests.harness.FileSystemHelper;
@@ -63,7 +63,6 @@ import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitServlet;
-import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -273,12 +272,14 @@ public abstract class GitTest extends FileSystemTest {
 		fsStore = fsStore.getFileStore(path.removeFirstSegments(2));
 
 		File file = new File(fsStore.toURI());
-		File gitDirFile = GitUtils.getGitDir(file);
-		assertNotNull(gitDirFile);
-		assertTrue(gitDirFile.exists());
-		assertTrue(gitDirFile.isDirectory());
-		assertTrue(RepositoryCache.FileKey.isGitRepository(gitDirFile, FS.DETECTED));
-		return new FileRepository(gitDirFile);
+		if (RepositoryCache.FileKey.isGitRepository(file, FS.DETECTED)) {
+			// 'file' is what we're looking for
+		} else if (RepositoryCache.FileKey.isGitRepository(new File(file, Constants.DOT_GIT), FS.DETECTED)) {
+			file = new File(file, Constants.DOT_GIT);
+		} else {
+			fail(fileLocation + " is not a repository");
+		}
+		return new FileRepository(file);
 	}
 
 	// see org.eclipse.orion.internal.server.servlets.workspace.WorkspaceResourceHandler.generateProjectLocation(WebProject, String)
@@ -305,11 +306,12 @@ public abstract class GitTest extends FileSystemTest {
 
 	// clone
 
-	protected String clone(URIish uri, IPath path, String kh, char[] p) throws JSONException, IOException, SAXException {
+	protected JSONObject clone(URIish uri, IPath path, String kh, char[] p) throws JSONException, IOException, SAXException, CoreException {
 		assertNotNull(path);
 		assertEquals("file", path.segment(0));
 		assertTrue(path.segmentCount() > 1);
 
+		// clone
 		WebRequest request = getPostGitCloneRequest(uri.toString(), path, kh, p);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
@@ -328,14 +330,16 @@ public abstract class GitTest extends FileSystemTest {
 		assertTrue(path.segmentCount() == 2 && name.equals(WebProject.fromId(path.segment(1)).getName()) || name.equals(path.lastSegment()));
 		assertCloneUri(clone.getString(ProtocolConstants.KEY_LOCATION));
 		assertFileUri(clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
-		return clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		assertRemoteUri(clone.getString(GitConstants.KEY_REMOTE));
+		assertBranchUri(clone.getString(GitConstants.KEY_BRANCH));
+		return clone;
 	}
 
-	protected String clone(URIish uri, IPath path) throws JSONException, IOException, SAXException {
+	protected JSONObject clone(URIish uri, IPath path) throws JSONException, IOException, SAXException, CoreException {
 		return clone(uri, path, null, null);
 	}
 
-	protected String clone(IPath path) throws JSONException, IOException, SAXException {
+	protected JSONObject clone(IPath path) throws JSONException, IOException, SAXException, CoreException {
 		URIish uri = new URIish(gitDir.toURL());
 		return clone(uri, path);
 	}
@@ -395,13 +399,6 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	// push
-
-	protected void pushAll(String contentLocation) throws IOException, URISyntaxException, JGitInternalException, GitAPIException {
-		FileRepository db1 = new FileRepository(new File(URIUtil.toFile(new URI(contentLocation)), Constants.DOT_GIT));
-		Git git = new Git(db1);
-		// TODO: replace with REST API when bug 339115 is fixed
-		git.push().setPushAll().call();
-	}
 
 	/**
 	 * Pushes the changes from the the source ref to "origin/master". 
@@ -601,11 +598,37 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	// branch
-	protected void branch(Repository reposiory, String branchName) throws JGitInternalException, GitAPIException {
+	protected void branch(Git git, String branchName) throws JGitInternalException, GitAPIException {
 		// TODO: replace with REST API once bug 341384 is fixed
-		Git git = new Git(reposiory);
 		Ref aBranch = git.branchCreate().setName(branchName).call();
 		assertEquals(Constants.R_HEADS + branchName, aBranch.getName());
+	}
+
+	static void assertBranchExist(Git git, String branch) {
+		List<Ref> list = git.branchList().call();
+		for (Ref ref : list) {
+			if (ref.getName().equals(Constants.R_HEADS + branch)) {
+				return; // found
+			}
+		}
+		fail("branch '" + branch + "' doesn't exist locally");
+	}
+
+	protected WebResponse checkoutBranch(String cloneLocation, String branchName) throws JSONException, IOException, SAXException {
+		String requestURI;
+		if (cloneLocation.startsWith("http://")) {
+			// assume the caller knows what he's doing
+			// assertCloneUri(location);
+			requestURI = cloneLocation;
+		} else {
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.CLONE_RESOURCE + cloneLocation;
+		}
+		JSONObject body = new JSONObject();
+		body.put(GitConstants.KEY_BRANCH, branchName);
+		WebRequest request = new PutMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "UTF-8");
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		return webConversation.getResponse(request);
 	}
 
 	protected String getWorkspaceId(URI uri) throws IOException, SAXException, JSONException {
@@ -660,7 +683,7 @@ public abstract class GitTest extends FileSystemTest {
 		assertEquals("file", path.segment(2));
 	}
 
-	void assertCloneUri(String cloneUri) {
+	void assertCloneUri(String cloneUri) throws CoreException, IOException {
 		URI uri = URI.create(cloneUri);
 		IPath path = new Path(uri.getPath());
 		// /git/clone/workspace/{id} or /git/clone/file/{id}[/{path}]
@@ -670,6 +693,9 @@ public abstract class GitTest extends FileSystemTest {
 		assertTrue("workspace".equals(path.segment(2)) || "file".equals(path.segment(2)));
 		if ("workspace".equals(path.segment(2)))
 			assertEquals(4, path.segmentCount());
+		// TODO: check if clone
+		if ("file".equals(path.segment(2)))
+			getRepositoryForContentLocation(SERVER_LOCATION + path.removeFirstSegments(2).makeAbsolute());
 	}
 
 	private static void assertWorkspaceUri(URI uri) {
@@ -685,6 +711,16 @@ public abstract class GitTest extends FileSystemTest {
 		// /file/{id}[/{path}]
 		assertTrue(path.segmentCount() > 1);
 		assertEquals("file", path.segment(0));
+	}
+
+	private static void assertBranchUri(String branchUri) {
+		URI uri = URI.create(branchUri);
+		IPath path = new Path(uri.getPath());
+		// /git/branch/[{name}/]file/{path}
+		assertTrue(path.segmentCount() > 3);
+		assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
+		assertEquals(GitConstants.BRANCH_RESOURCE, path.segment(1));
+		assertEquals("file", path.segment(2));
 	}
 
 	// web requests

@@ -17,12 +17,13 @@
 	<macrodef name="closure" >
 		<attribute name="dir" />
 		<attribute name="compiled" />
+		<attribute name="outputFolder" default="${output}" />
 		<element name="closure-args" />
 		<element name="replace-in" />
 		<sequential>
 			<java jar="${closureJar}" fork="true" >
 				<closure-args/>
-				<arg value="--js_output_file=${output}/@{compiled}" />
+				<arg value="--js_output_file=@{outputFolder}/@{compiled}" />
 			</java>
 			
 			<echo message="Replace @{compiled} "/>
@@ -30,7 +31,7 @@
 				<replace-in/>
 				<replacefilter token="&lt;!-- START:@{compiled} --&gt;" value="&lt;!-- @{compiled}"/>
 				<replacefilter token="&lt;!-- END:@{compiled} --&gt;" value="@{compiled} --&gt;"/>
-				<replacefilter token="!-- INSERT:@{compiled} --" value="script src=&quot;js/compiled/@{compiled}&quot;&gt;&lt;/script"/>
+				<replacefilter token="!-- INSERT:@{compiled} --" value="script src=&quot;@{compiled}&quot;&gt;&lt;/script"/>
 			</replace>
 		</sequential>
 	</macrodef>
@@ -42,9 +43,9 @@
 		
 	<target name="_closure" if="haveClosureJar" >
 		<mkdir dir="${output}"/>
-		<closure dir="${orion.client.core}" compiled="navigate-table.js" >
+		<closure dir="${orion.client.core}" compiled="navigate-table.js" outputFolder="${orion.client.core}/navigate" >
 			<replace-in>
-				<include name="navigate-table.html" />
+				<include name="navigate/table.html" />
 			</replace-in>
 			<closure-args>			
 				<arg value="--js=${orion.client.core}/js/auth.js" />
@@ -54,30 +55,30 @@
 				<arg value="--js=${orion.client.core}/js/util.js" />
 				<arg value="--js=${orion.client.core}/js/commands.js" />
 				<arg value="--js=${orion.client.core}/js/dialogs.js" />
+				<arg value="--js=${orion.client.core}/js/selection.js" />
 			 	<arg value="--js=${orion.client.core}/js/log.js" />
 			 	<arg value="--js=${orion.client.core}/js/preferences.js" />
-			 	<arg value="--js=${orion.client.core}/js/selection.js" />
 			 	<arg value="--js=${orion.client.core}/js/status.js" />
 			 	<arg value="--js=${orion.client.core}/js/users.js" />		
+				<arg value="--js=${orion.client.core}/js/explorer.js" />
 				<arg value="--js=${orion.client.core}/js/favorites.js" />
 				<arg value="--js=${orion.client.core}/js/fileClient.js" />
 				<arg value="--js=${orion.client.core}/js/searchClient.js" />
 				<arg value="--js=${orion.client.core}/js/ssh/sshTools.js" />
 				<arg value="--js=${orion.client.git}/js/gitClient.js" />
 				<arg value="--js=${orion.client.git}/js/gitCommands.js" />
-				<arg value="--js=${orion.client.core}/js/explorer.js" />
 					
 				<arg value="--js=${orion.client.core}/js/globalCommands.js" />
 				<arg value="--js=${orion.client.core}/js/breadcrumbs.js" />
 				<arg value="--js=${orion.client.core}/js/explorer-table.js" />
 				<arg value="--js=${orion.client.core}/js/fileCommands.js" />
-				<arg value="--js=${orion.client.core}/js/navigate-table/navigate-table.js" />
+				<arg value="--js=${orion.client.core}/navigate/table.js" />
 			</closure-args>
 		</closure>
 		
-		<closure dir="${orion.client.core}" compiled="coding-editor.js" >
+		<closure dir="${orion.client.core}" compiled="coding-editor.js" outputFolder="${orion.client.core}/edit" >
 			<replace-in>
-				<include name="coding.html" />
+				<include name="edit/edit.html" />
 			</replace-in>
 			<closure-args>
 				<arg value="--js=${orion.client.editor}/samples/styler.js" />
@@ -110,8 +111,8 @@
 				<arg value="--js=${orion.client.core}/js/problems.js" />
 				<arg value="--js=${orion.client.core}/js/editorContainer.js" />
 				<arg value="--js=${orion.client.core}/js/syntaxchecker.js" />
-				<arg value="--js=${orion.client.core}/js/coding/coding.js" />
 				<arg value="--js=${orion.client.core}/js/styler/textMateStyler.js" />
+				<arg value="--js=${orion.client.core}/edit/edit.js" />
 			</closure-args>
 		</closure>
 	</target>

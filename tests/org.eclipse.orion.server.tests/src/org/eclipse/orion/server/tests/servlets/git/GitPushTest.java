@@ -13,11 +13,9 @@ package org.eclipse.orion.server.tests.servlets.git;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URISyntaxException;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
@@ -35,7 +33,6 @@ import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.xml.sax.SAXException;
 
 import com.meterware.httpunit.PostMethodWebRequest;
 import com.meterware.httpunit.WebRequest;
@@ -49,7 +46,7 @@ public class GitPushTest extends GitTest {
 	}
 
 	@Test
-	public void testPushNoBody() throws JSONException, IOException, SAXException {
+	public void testPushNoBody() throws Exception {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
@@ -77,7 +74,7 @@ public class GitPushTest extends GitTest {
 	}
 
 	@Test
-	public void testPushHead() throws JSONException, IOException, SAXException {
+	public void testPushHead() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		// clone1
@@ -169,7 +166,7 @@ public class GitPushTest extends GitTest {
 	}
 
 	@Test
-	public void testPushHeadSshWithPrivateKeyPassphrase() throws JSONException, IOException, SAXException, URISyntaxException {
+	public void testPushHeadSshWithPrivateKeyPassphrase() throws Exception {
 
 		Assume.assumeTrue(sshRepo2 != null);
 		Assume.assumeTrue(privateKey != null);
@@ -291,7 +288,7 @@ public class GitPushTest extends GitTest {
 	}
 
 	@Test
-	public void testPushFromLog() throws JSONException, IOException, SAXException {
+	public void testPushFromLog() throws Exception {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
@@ -349,7 +346,7 @@ public class GitPushTest extends GitTest {
 	}
 
 	@Test
-	public void testPushRejected() throws JSONException, IOException, SAXException {
+	public void testPushRejected() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		// clone1
@@ -428,7 +425,7 @@ public class GitPushTest extends GitTest {
 	}
 
 	@Test
-	public void testPushTags() throws JSONException, IOException, SAXException, URISyntaxException {
+	public void testPushTags() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		// clone1

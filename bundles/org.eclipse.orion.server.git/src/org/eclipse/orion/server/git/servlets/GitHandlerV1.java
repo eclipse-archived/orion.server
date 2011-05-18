@@ -22,6 +22,7 @@ import org.eclipse.orion.server.git.GitConstants;
  */
 public class GitHandlerV1 extends ServletResourceHandler<String> {
 
+	private ServletResourceHandler<String> branchHandlerV1;
 	private ServletResourceHandler<String> cloneHandlerV1;
 	private ServletResourceHandler<String> commitHandlerV1;
 	private ServletResourceHandler<String> configHandlerV1;
@@ -32,6 +33,7 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 	private ServletResourceHandler<String> tagHandlerV1;
 
 	GitHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
+		branchHandlerV1 = new GitBranchHandlerV1(statusHandler);
 		cloneHandlerV1 = new GitCloneHandlerV1(statusHandler);
 		commitHandlerV1 = new GitCommitHandlerV1(statusHandler);
 		configHandlerV1 = new GitConfigHandlerV1(statusHandler);
@@ -47,7 +49,9 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 
 		String[] infoParts = gitPathInfo.split("\\/", 3); //$NON-NLS-1$
 
-		if (infoParts[1].equals(GitConstants.CLONE_RESOURCE)) {
+		if (infoParts[1].equals(GitConstants.BRANCH_RESOURCE)) {
+			return branchHandlerV1.handleRequest(request, response, infoParts[2]);
+		} else if (infoParts[1].equals(GitConstants.CLONE_RESOURCE)) {
 			return cloneHandlerV1.handleRequest(request, response, infoParts[2]);
 		} else if (infoParts[1].equals(GitConstants.COMMIT_RESOURCE)) {
 			return commitHandlerV1.handleRequest(request, response, infoParts[2]);

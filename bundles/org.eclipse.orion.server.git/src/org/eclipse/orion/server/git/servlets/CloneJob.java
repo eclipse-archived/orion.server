@@ -128,7 +128,7 @@ public class CloneJob extends GitJob {
 			try {
 				if (result.isOK()) {
 					task.setResultLocation(cloneLocation);
-					String message = "Clone complete. Use the Repositories page to link the clone to a folder.";
+					String message = "Clone complete.";
 					task.setMessage(message);
 					result = new Status(IStatus.OK, GitActivator.PI_GIT, message);
 				} else {
