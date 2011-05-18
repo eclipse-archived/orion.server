@@ -283,8 +283,9 @@ public class GitCheckoutTest extends GitTest {
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 		JSONObject clone = clone(clonePath);
-		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		String location = clone.getString(ProtocolConstants.KEY_LOCATION);
+		String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
+		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 		// get project metadata
 		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
@@ -293,12 +294,12 @@ public class GitCheckoutTest extends GitTest {
 		project = new JSONObject(response.getText());
 
 		// create branch 'a'
-		Repository db1 = getRepositoryForContentLocation(contentLocation);
+		Repository db1 = getRepositoryForContentLocation(cloneContentLocation);
 		Git git = new Git(db1);
-		branch(git, "a");
+		branch(branchesLocation, "a");
 
 		// checkout 'a'
-		response = checkoutBranch(location, "a");
+		response = checkoutBranch(cloneLocation, "a");
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		GitRemoteTest.assertOnBranch(git, "a");
 	}

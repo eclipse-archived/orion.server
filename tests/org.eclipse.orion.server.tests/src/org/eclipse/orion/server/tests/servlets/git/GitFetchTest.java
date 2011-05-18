@@ -263,6 +263,7 @@ public class GitFetchTest extends GitTest {
 		JSONObject clone1 = clone(clonePath1);
 		String cloneContentLocation1 = clone1.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		String cloneLocation1 = clone1.getString(ProtocolConstants.KEY_LOCATION);
+		String branchesLocation1 = clone1.getString(GitConstants.KEY_BRANCH);
 
 		// get project1 metadata
 		WebRequest request = getGetFilesRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
@@ -278,7 +279,7 @@ public class GitFetchTest extends GitTest {
 		// clone1: branch 'a'
 		Repository db1 = getRepositoryForContentLocation(cloneContentLocation1);
 		Git git1 = new Git(db1);
-		branch(git1, "a");
+		branch(branchesLocation1, "a");
 
 		// clone1: push all
 		// TODO: replace with REST API when bug 339115 is fixed
