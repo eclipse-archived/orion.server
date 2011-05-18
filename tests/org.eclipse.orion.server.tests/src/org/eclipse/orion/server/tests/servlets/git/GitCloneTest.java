@@ -432,12 +432,12 @@ public class GitCloneTest extends GitTest {
 		ensureCloneIdDoesntExist(clonesArray, dummyId);
 
 		String requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.CLONE_RESOURCE + "/workspace/" + dummyId;
-		request = getGetGitCloneRequest(requestURI);
+		request = getGetRequest(requestURI);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 
 		requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.CLONE_RESOURCE + "/file/" + dummyId;
-		request = getGetGitCloneRequest(requestURI);
+		request = getGetRequest(requestURI);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 
@@ -504,7 +504,7 @@ public class GitCloneTest extends GitTest {
 		String cloneLocation = waitForTaskCompletion(taskLocation);
 
 		// validate the clone metadata
-		request = getGetGitCloneRequest(cloneLocation);
+		request = getGetRequest(cloneLocation);
 		setAuthentication(request, "bob", "bob");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
@@ -518,7 +518,7 @@ public class GitCloneTest extends GitTest {
 		assertEquals(1, clonesArray.length()); // nothing has been added
 
 		// try to get Bob's clone
-		request = getGetGitCloneRequest(cloneLocation);
+		request = getGetRequest(cloneLocation);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 	}

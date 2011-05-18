@@ -206,6 +206,7 @@ public class GitRemoteTest extends GitTest {
 		JSONObject clone = clone(clonePath);
 		String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
+		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 		// get project metadata
 		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
@@ -223,7 +224,7 @@ public class GitRemoteTest extends GitTest {
 		int localBefore = git.branchList().call().size();
 		int remoteBefore = git.branchList().setListMode(ListMode.REMOTE).call().size();
 		int allBefore = git.branchList().setListMode(ListMode.ALL).call().size();
-		branch(git, "a");
+		branch(branchesLocation, "a");
 
 		assertEquals(1, git.branchList().call().size() - localBefore);
 		assertEquals(0, git.branchList().setListMode(ListMode.REMOTE).call().size() - remoteBefore);

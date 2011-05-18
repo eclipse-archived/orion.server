@@ -320,7 +320,7 @@ public abstract class GitTest extends FileSystemTest {
 		String cloneLocation = waitForTaskCompletion(taskLocation);
 
 		// validate the clone metadata
-		response = webConversation.getResponse(getGetGitCloneRequest(cloneLocation));
+		response = webConversation.getResponse(getGetRequest(cloneLocation));
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject clones = new JSONObject(response.getText());
 		JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
@@ -598,10 +598,12 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	// branch
-	protected void branch(Git git, String branchName) throws JGitInternalException, GitAPIException {
-		// TODO: replace with REST API once bug 341384 is fixed
-		Ref aBranch = git.branchCreate().setName(branchName).call();
-		assertEquals(Constants.R_HEADS + branchName, aBranch.getName());
+	protected WebResponse branch(String branchesLocation, String branchName) throws JGitInternalException, IOException, JSONException, SAXException {
+		assertBranchUri(branchesLocation);
+		WebRequest request = getPostGitBranchRequest(branchesLocation, branchName);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		return response;
 	}
 
 	static void assertBranchExist(Git git, String branch) {
@@ -713,14 +715,14 @@ public abstract class GitTest extends FileSystemTest {
 		assertEquals("file", path.segment(0));
 	}
 
-	private static void assertBranchUri(String branchUri) {
+	protected static void assertBranchUri(String branchUri) {
 		URI uri = URI.create(branchUri);
 		IPath path = new Path(uri.getPath());
 		// /git/branch/[{name}/]file/{path}
 		assertTrue(path.segmentCount() > 3);
 		assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
 		assertEquals(GitConstants.BRANCH_RESOURCE, path.segment(1));
-		assertEquals("file", path.segment(2));
+		assertTrue("file".equals(path.segment(2)) || "file".equals(path.segment(3)));
 	}
 
 	// web requests
@@ -813,10 +815,10 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	/**
-	 * Returns a request for obtaining metadata about a single git clone.
+	 * Returns a GET request for the given location.
 	 */
-	protected WebRequest getGetGitCloneRequest(String cloneLocation) {
-		WebRequest request = new GetMethodWebRequest(cloneLocation);
+	protected WebRequest getGetRequest(String location) {
+		WebRequest request = new GetMethodWebRequest(location);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
@@ -841,6 +843,21 @@ public abstract class GitTest extends FileSystemTest {
 		return request;
 	}
 
+	private WebRequest getPostGitBranchRequest(String location, String branchName) throws IOException, JSONException {
+		String requestURI;
+		if (location.startsWith("http://")) {
+			requestURI = location;
+		} else {
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.BRANCH_RESOURCE + location;
+		}
+		JSONObject body = new JSONObject();
+		body.put(GitConstants.KEY_BRANCH_NAME, branchName);
+		WebRequest request = new PostMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "UTF-8");
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		return request;
+	}
+
 	protected String clone(URIish uri, String name, String kh, byte[] privk, byte[] pubk, byte[] p) throws JSONException, IOException, SAXException {
 		WebRequest request = getPostGitCloneRequest(uri.toString(), name, kh, privk, pubk, p);
 		WebResponse response = webConversation.getResponse(request);
@@ -850,7 +867,7 @@ public abstract class GitTest extends FileSystemTest {
 		String cloneLocation = waitForTaskCompletion(taskLocation);
 
 		// validate the clone metadata
-		response = webConversation.getResponse(getGetGitCloneRequest(cloneLocation));
+		response = webConversation.getResponse(getGetRequest(cloneLocation));
 		JSONObject clone = new JSONObject(response.getText());
 		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		assertNotNull(contentLocation);

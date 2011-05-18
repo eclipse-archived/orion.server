@@ -29,9 +29,7 @@ import java.util.List;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.Repository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONException;
@@ -613,8 +611,8 @@ public class GitDiffTest extends GitTest {
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
 		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 		JSONObject clone = clone(clonePath);
-		String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
+		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 		// get project metadata
 		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
@@ -625,9 +623,7 @@ public class GitDiffTest extends GitTest {
 		assertNotNull(gitSection);
 
 		String a = "a";
-		Repository db1 = getRepositoryForContentLocation(cloneContentLocation);
-		Git git = new Git(db1);
-		branch(git, a);
+		branch(branchesLocation, a);
 
 		// checkout 'a'
 		checkoutBranch(cloneLocation, a);
