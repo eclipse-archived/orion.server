@@ -162,7 +162,7 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		//project creation URL is of the form POST /workspace/<id>
 		if (!(targetPath.segmentCount() == 2 && "workspace".equals(targetPath.segment(0)) && Method.POST.equals(Method.fromString(request.getMethod())))) //$NON-NLS-1$
 			return;
-		String scm = PreferenceHelper.getString(ServerConstants.CONFIG_FILE_DEFAULT_SCM, null).toLowerCase();
+		String scm = PreferenceHelper.getString(ServerConstants.CONFIG_FILE_DEFAULT_SCM, "").toLowerCase(); //$NON-NLS-1$
 		if (!"git".equals(scm)) //$NON-NLS-1$
 			return;
 		try {

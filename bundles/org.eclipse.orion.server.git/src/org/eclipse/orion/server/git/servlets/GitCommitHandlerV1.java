@@ -131,7 +131,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		RevCommit commit = walk.parseCommit(refId);
 		final TreeWalk w = TreeWalk.forPath(db, p, commit.getTree());
 		if (w == null) {
-			// TODO:
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, null, null));
 		}
 
 		ObjectId blobId = w.getObjectId(0);
