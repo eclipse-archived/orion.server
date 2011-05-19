@@ -99,7 +99,7 @@ updateRelengProject () {
 	
 	echo "[`date +%H\:%M\:%S`] Get org.eclipse.orion.releng"	
 
-	git archive --format=tar --remote=/gitroot/e4/org.eclipse.orion.server.git master releng/org.eclipse.orion.releng | tar -xf -
+	git archive --format=tar --remote=/gitroot/e4/org.eclipse.orion.server.git v20110516-1749-fixes releng/org.eclipse.orion.releng | tar -xf -
 	mv releng/org.eclipse.orion.releng org.eclipse.orion.releng;
 	rm -rf releng
 
