@@ -12,4 +12,7 @@
 			<link toc="WikiDoc/Orion-Server-API-File-API-toc.xml" />
 		</topic>
 	</topic>
+	<topic label = "Server administration guide">
+		<link toc="WikiDoc/Orion-Server-admin-guide-toc.xml" />
+	</topic>
 </toc>
