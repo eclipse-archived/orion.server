@@ -134,6 +134,56 @@ public class GitCloneTest extends GitTest {
 	}
 
 	@Test
+	public void testCloneAndCreateProjectByName() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		IPath clonePath = new Path("workspace").append(getWorkspaceId(workspaceLocation)).makeAbsolute();
+
+		// /workspace/{id} + {methodName}
+		JSONObject clone = clone(clonePath, null, getMethodName());
+
+		String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		WebRequest request = getGetFilesRequest(cloneContentLocation);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject project = new JSONObject(response.getText());
+		assertEquals(getMethodName(), project.getString(ProtocolConstants.KEY_NAME));
+		assertGitSectionExists(project);
+	}
+
+	@Test
+	public void testCloneAndCreateFolderByPath() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).append("clones").append("clone1").makeAbsolute();
+
+		// /file/{id}/clones/clone1, folders: 'clones' and 'clone1' don't exist
+		JSONObject clone = clone(clonePath);
+
+		String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		WebRequest request = getGetFilesRequest(cloneContentLocation);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject folder = new JSONObject(response.getText());
+		assertGitSectionExists(folder);
+	}
+
+	@Test
+	public void testCloneEmptyPath() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		IPath clonePath = new Path("workspace").append(getWorkspaceId(workspaceLocation)).makeAbsolute();
+		// /workspace/{id}
+		JSONObject clone = clone(clonePath, null, null);
+
+		String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		WebRequest request = getGetFilesRequest(cloneContentLocation);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject project = new JSONObject(response.getText());
+		assertEquals(gitDir.getName(), project.getString(ProtocolConstants.KEY_NAME));
+		assertGitSectionExists(project);
+	}
+
+	@Test
 	public void testCloneBadUrl() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
@@ -289,7 +339,7 @@ public class GitCloneTest extends GitTest {
 
 		URIish uri = new URIish(sshRepo);
 		IPath path = new Path(getMethodName());
-		WebRequest request = getPostGitCloneRequest(uri.toString(), path, null, null);
+		WebRequest request = getPostGitCloneRequest(uri.toString(), null, path, null, null, null);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, response.getResponseCode());
 	}
@@ -301,7 +351,7 @@ public class GitCloneTest extends GitTest {
 
 		URIish uri = new URIish(sshRepo);
 		IPath path = new Path(getMethodName());
-		WebRequest request = getPostGitCloneRequest(uri.toString(), path, knownHosts, (char[]) null);
+		WebRequest request = getPostGitCloneRequest(uri.toString(), null, path, null, knownHosts, (char[]) null);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, response.getResponseCode());
 	}
@@ -313,7 +363,7 @@ public class GitCloneTest extends GitTest {
 
 		URIish uri = new URIish(sshRepo);
 		IPath path = new Path(getMethodName());
-		WebRequest request = getPostGitCloneRequest(uri.toString(), path, knownHosts, "I'm bad".toCharArray());
+		WebRequest request = getPostGitCloneRequest(uri.toString(), null, path, null, knownHosts, "I'm bad".toCharArray());
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, response.getResponseCode());
 	}
@@ -325,7 +375,7 @@ public class GitCloneTest extends GitTest {
 		Assume.assumeTrue(knownHosts != null);
 
 		URIish uri = new URIish(sshRepo);
-		String contentLocation = clone(uri, null, knownHosts, password).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		String contentLocation = clone(uri, null, null, null, knownHosts, password).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		File file = URIUtil.toFile(new URI(contentLocation));
 		assertTrue(file.exists());
@@ -350,7 +400,7 @@ public class GitCloneTest extends GitTest {
 	}
 
 	@Test
-	@Ignore("see bug 340553")
+	@Ignore(/*TODO*/"see bug 340553")
 	public void testCloneAndDelete() throws Exception {
 		String contentLocation = clone(null).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
@@ -475,8 +525,6 @@ public class GitCloneTest extends GitTest {
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request, "bob", "bob");
 		response = webConversation.getResponse(request);
-		JSONObject workspace = new JSONObject(response.getText());
-		String bobWorkspaceId = workspace.getString(ProtocolConstants.KEY_ID);
 
 		// JSONObject bobProject = createProjectOrLink(bobWorkspaceLocation, getMethodName() + "bob", null);
 		JSONObject body = new JSONObject();
@@ -491,11 +539,11 @@ public class GitCloneTest extends GitTest {
 		String bobProjectId = bobProject.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(bobProjectId);
 
-		IPath bobClonePath = new Path(bobWorkspaceId).append(bobProjectId).makeAbsolute();
+		IPath bobClonePath = new Path("file").append(bobProjectId).makeAbsolute();
 
 		// bob's clone
 		URIish uri = new URIish(gitDir.toURL());
-		request = getPostGitCloneRequest(uri.toString(), bobClonePath, null, null);
+		request = getPostGitCloneRequest(uri.toString(), null, bobClonePath, null, null, null);
 		setAuthentication(request, "bob", "bob");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
@@ -548,7 +596,7 @@ public class GitCloneTest extends GitTest {
 	// Convenience methods for creating requests
 
 	private WebRequest getPostGitCloneRequest(String uri, IPath path) throws JSONException, UnsupportedEncodingException {
-		return getPostGitCloneRequest(uri, path, null, null);
+		return getPostGitCloneRequest(uri, null, path, null, null, null);
 	}
 
 	private void ensureCloneIdDoesntExist(JSONArray clonesArray, String id) throws JSONException {

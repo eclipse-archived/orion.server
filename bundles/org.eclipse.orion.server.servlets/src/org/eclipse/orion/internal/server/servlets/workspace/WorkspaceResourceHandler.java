@@ -56,9 +56,9 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 				contentPathString += "/"; //$NON-NLS-1$
 			contentLocation = URIUtil.append(parentLocation, ".." + Activator.LOCATION_FILE_SERVLET + contentPathString); //$NON-NLS-1$
 		}
-		if (!contentLocation.getPath().endsWith("/")) {
+		if (!contentLocation.getPath().endsWith("/")) { //$NON-NLS-1$
 			try {
-				contentLocation = new URI(contentLocation.getScheme(), contentLocation.getUserInfo(), contentLocation.getHost(), contentLocation.getPort(), contentLocation.getPath() + "/", contentLocation.getQuery(), contentLocation.getFragment());
+				contentLocation = new URI(contentLocation.getScheme(), contentLocation.getUserInfo(), contentLocation.getHost(), contentLocation.getPort(), contentLocation.getPath() + "/", contentLocation.getQuery(), contentLocation.getFragment()); //$NON-NLS-1$
 			} catch (URISyntaxException e) {
 				throw new RuntimeException(e);
 			}
@@ -111,7 +111,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 				URI contentLocation = computeProjectContentLocation(baseLocation, project);
 				child.put(ProtocolConstants.KEY_LOCATION, contentLocation);
 				try {
-					child.put(ProtocolConstants.KEY_CHILDREN_LOCATION, new URI(contentLocation.getScheme(), contentLocation.getUserInfo(), contentLocation.getHost(), contentLocation.getPort(), contentLocation.getPath(), "depth=1", contentLocation.getFragment()));
+					child.put(ProtocolConstants.KEY_CHILDREN_LOCATION, new URI(contentLocation.getScheme(), contentLocation.getUserInfo(), contentLocation.getHost(), contentLocation.getPort(), contentLocation.getPath(), ProtocolConstants.PARM_DEPTH + "=1", contentLocation.getFragment())); //$NON-NLS-1$
 				} catch (URISyntaxException e) {
 					throw new RuntimeException(e);
 				}
@@ -152,7 +152,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		}
 	}
 
-	private void computeProjectLocation(WebProject project, String location, String user, boolean init) throws URISyntaxException, CoreException {
+	public static void computeProjectLocation(WebProject project, String location, String user, boolean init) throws URISyntaxException, CoreException {
 		URI contentURI;
 		if (location == null) {
 			contentURI = generateProjectLocation(project, user);
@@ -179,7 +179,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 	/**
 	 * Generates a file system location for newly created project
 	 */
-	private URI generateProjectLocation(WebProject project, String user) throws CoreException, URISyntaxException {
+	private static URI generateProjectLocation(WebProject project, String user) throws CoreException, URISyntaxException {
 		URI platformLocationURI = Activator.getDefault().getRootLocationURI();
 		IFileStore root = EFS.getStore(platformLocationURI);
 

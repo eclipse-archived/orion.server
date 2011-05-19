@@ -16,21 +16,42 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.*;
-import java.io.*;
-import java.net.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
+import java.io.Writer;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import junit.framework.Assert;
+
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.core.tests.harness.FileSystemHelper;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.RepositoryCache;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
@@ -44,9 +65,20 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitServlet;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
-import org.json.*;
-import org.junit.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.xml.sax.SAXException;
+
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.PutMethodWebRequest;
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 public abstract class GitTest extends FileSystemTest {
 
@@ -275,13 +307,9 @@ public abstract class GitTest extends FileSystemTest {
 
 	// clone
 
-	protected JSONObject clone(URIish uri, IPath path, String kh, char[] p) throws JSONException, IOException, SAXException, CoreException {
-		assertNotNull(path);
-		assertEquals("file", path.segment(0));
-		assertTrue(path.segmentCount() > 1);
-
+	protected JSONObject clone(URIish uri, IPath workspacePath, IPath filePath, String name, String kh, char[] p) throws JSONException, IOException, SAXException, CoreException {
 		// clone
-		WebRequest request = getPostGitCloneRequest(uri.toString(), path, kh, p);
+		WebRequest request = getPostGitCloneRequest(uri.toString(), workspacePath, filePath, name, kh, p);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
@@ -295,8 +323,14 @@ public abstract class GitTest extends FileSystemTest {
 		JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 		assertEquals(1, clonesArray.length());
 		JSONObject clone = clonesArray.getJSONObject(0);
-		String name = clone.getString(ProtocolConstants.KEY_NAME);
-		assertTrue(path.segmentCount() == 2 && name.equals(WebProject.fromId(path.segment(1)).getName()) || name.equals(path.lastSegment()));
+		String n = clone.getString(ProtocolConstants.KEY_NAME);
+		if (filePath != null)
+			assertTrue(filePath.segmentCount() == 2 && n.equals(WebProject.fromId(filePath.segment(1)).getName()) || n.equals(filePath.lastSegment()));
+		if (workspacePath != null)
+			if (name != null)
+				assertEquals(name, n);
+			else
+				assertEquals(uri.getHumanishName(), n);
 		assertCloneUri(clone.getString(ProtocolConstants.KEY_LOCATION));
 		assertFileUri(clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		assertRemoteUri(clone.getString(GitConstants.KEY_REMOTE));
@@ -304,17 +338,14 @@ public abstract class GitTest extends FileSystemTest {
 		return clone;
 	}
 
-	protected JSONObject clone(URIish uri, IPath path) throws JSONException, IOException, SAXException, CoreException {
-		return clone(uri, path, null, null);
-	}
-
-	protected JSONObject clone(IPath path) throws JSONException, IOException, SAXException, CoreException {
+	protected JSONObject clone(IPath workspacePath, IPath filePath, String name) throws JSONException, IOException, SAXException, CoreException {
 		URIish uri = new URIish(gitDir.toURL());
-		return clone(uri, path);
+		return clone(uri, workspacePath, filePath, name, null, null);
 	}
 
-	protected static WebRequest getPostGitCloneRequest(URIish uri, IPath path) throws JSONException, UnsupportedEncodingException {
-		return getPostGitCloneRequest(uri.toString(), path, null, null);
+	protected JSONObject clone(IPath filePath) throws JSONException, IOException, SAXException, CoreException {
+		URIish uri = new URIish(gitDir.toURL());
+		return clone(uri, null, filePath, null, null, null);
 	}
 
 	// remotes
@@ -694,27 +725,43 @@ public abstract class GitTest extends FileSystemTest {
 		assertTrue("file".equals(path.segment(2)) || "file".equals(path.segment(3)));
 	}
 
+	protected static void assertGitSectionExists(JSONObject json) {
+		JSONObject gitSection = json.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+		assertNotNull(gitSection.optString(GitConstants.KEY_STATUS, null));
+		assertNotNull(gitSection.optString(GitConstants.KEY_DIFF, null));
+		assertNotNull(gitSection.optString(GitConstants.KEY_INDEX, null));
+		assertNotNull(gitSection.optString(GitConstants.KEY_COMMIT, null));
+		assertNotNull(gitSection.optString(GitConstants.KEY_REMOTE, null));
+		assertNotNull(gitSection.optString(GitConstants.KEY_TAG, null));
+		assertNotNull(gitSection.optString(GitConstants.KEY_CLONE, null));
+	}
+
 	// web requests
 
 	/**
 	 * Creates a request to create a git clone for the given URI.
 	 * @param uri Git URL to clone
-	 * @param name project name
+	 * @param workspacePath workspace path (/workspace/{workspaceId}), required when no filePath is given
+	 * @param filePath project/folder path
+	 * @param name new project name
 	 * @param kh known hosts
 	 * @param p password
 	 * @return the request
 	 * @throws JSONException
 	 * @throws UnsupportedEncodingException 
 	 */
-	protected static WebRequest getPostGitCloneRequest(String uri, IPath path, String kh, char[] p) throws JSONException, UnsupportedEncodingException {
-		assertNotNull(path);
+	protected static WebRequest getPostGitCloneRequest(String uri, IPath workspacePath, IPath filePath, String name, String kh, char[] p) throws JSONException, UnsupportedEncodingException {
+		if (filePath != null && filePath.isAbsolute()) {
+			assertEquals("file", filePath.segment(0));
+			assertTrue(filePath.segmentCount() > 1);
+		}
 		String requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.CLONE_RESOURCE + '/';
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_URL, uri);
-		if (path.isAbsolute())
-			body.put(ProtocolConstants.KEY_LOCATION, path);
-		else
-			body.put(ProtocolConstants.KEY_NAME, path); // TODO: path.segment(0)
+		body.put(ProtocolConstants.KEY_LOCATION, workspacePath);
+		body.put(ProtocolConstants.KEY_PATH, filePath);
+		body.put(ProtocolConstants.KEY_NAME, name);
 		if (kh != null)
 			body.put(GitConstants.KEY_KNOWN_HOSTS, kh);
 		if (p != null)

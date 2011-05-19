@@ -40,16 +40,7 @@ public class GitUriTest extends GitTest {
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
-
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
-		assertNotNull(gitSection.optString(GitConstants.KEY_STATUS, null));
-		assertNotNull(gitSection.optString(GitConstants.KEY_DIFF, null));
-		assertNotNull(gitSection.optString(GitConstants.KEY_INDEX, null));
-		assertNotNull(gitSection.optString(GitConstants.KEY_COMMIT, null));
-		assertNotNull(gitSection.optString(GitConstants.KEY_REMOTE, null));
-		assertNotNull(gitSection.optString(GitConstants.KEY_TAG, null));
-		assertNotNull(gitSection.optString(GitConstants.KEY_CLONE, null));
+		assertGitSectionExists(project);
 		// TODO: it's a linked repo, see bug 346114
 		// assertCloneUri(gitSection.optString(GitConstants.KEY_CLONE, null));
 	}
@@ -69,16 +60,7 @@ public class GitUriTest extends GitTest {
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject project = new JSONObject(response.getText());
-
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
-		assertNotNull(gitSection.optString(GitConstants.KEY_STATUS, null));
-		assertNotNull(gitSection.optString(GitConstants.KEY_DIFF, null));
-		assertNotNull(gitSection.optString(GitConstants.KEY_INDEX, null));
-		assertNotNull(gitSection.optString(GitConstants.KEY_COMMIT, null));
-		assertNotNull(gitSection.optString(GitConstants.KEY_REMOTE, null));
-		assertNotNull(gitSection.optString(GitConstants.KEY_TAG, null));
-		assertNotNull(gitSection.optString(GitConstants.KEY_CLONE, null));
+		assertGitSectionExists(project);
 		// TODO: it's a linked repo, see bug 346114
 		// assertCloneUri(gitSection.optString(GitConstants.KEY_CLONE, null));
 
@@ -93,15 +75,7 @@ public class GitUriTest extends GitTest {
 		String[] expectedChildren = new String[] {Constants.DOT_GIT, "folder", "test.txt"};
 		assertEquals("Wrong number of directory children", expectedChildren.length, children.size());
 		for (JSONObject child : children) {
-			gitSection = child.optJSONObject(GitConstants.KEY_GIT);
-			assertNotNull(gitSection);
-			assertNotNull(gitSection.optString(GitConstants.KEY_STATUS, null));
-			assertNotNull(gitSection.optString(GitConstants.KEY_DIFF, null));
-			assertNotNull(gitSection.optString(GitConstants.KEY_INDEX, null));
-			assertNotNull(gitSection.optString(GitConstants.KEY_COMMIT, null));
-			assertNotNull(gitSection.optString(GitConstants.KEY_REMOTE, null));
-			assertNotNull(gitSection.optString(GitConstants.KEY_TAG, null));
-			assertNotNull(gitSection.optString(GitConstants.KEY_CLONE, null));
+			assertGitSectionExists(child);
 			// TODO: it's a linked repo, see bug 346114
 			// assertCloneUri(gitSection.optString(GitConstants.KEY_CLONE, null));
 		}
@@ -115,15 +89,7 @@ public class GitUriTest extends GitTest {
 		expectedChildren = new String[] {"folder.txt"};
 		assertEquals("Wrong number of directory children", expectedChildren.length, children.size());
 		for (JSONObject child : children) {
-			gitSection = child.optJSONObject(GitConstants.KEY_GIT);
-			assertNotNull(gitSection);
-			assertNotNull(gitSection.optString(GitConstants.KEY_STATUS, null));
-			assertNotNull(gitSection.optString(GitConstants.KEY_DIFF, null));
-			assertNotNull(gitSection.optString(GitConstants.KEY_INDEX, null));
-			assertNotNull(gitSection.optString(GitConstants.KEY_COMMIT, null));
-			assertNotNull(gitSection.optString(GitConstants.KEY_REMOTE, null));
-			assertNotNull(gitSection.optString(GitConstants.KEY_TAG, null));
-			assertNotNull(gitSection.optString(GitConstants.KEY_CLONE, null));
+			assertGitSectionExists(child);
 			// TODO: it's a linked repo, see bug 346114
 			// assertCloneUri(gitSection.optString(GitConstants.KEY_CLONE, null));
 		}
@@ -224,15 +190,8 @@ public class GitUriTest extends GitTest {
 		assertEquals(1, children.size());
 
 		// expected Git section for /file/{projectId}/?depth=1
+		assertGitSectionExists(children.get(0));
 		JSONObject gitSection = children.get(0).getJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
-		assertNotNull(gitSection.optString(GitConstants.KEY_STATUS, null));
-		assertNotNull(gitSection.optString(GitConstants.KEY_DIFF, null));
-		assertNotNull(gitSection.optString(GitConstants.KEY_DIFF, null));
-		assertNotNull(gitSection.optString(GitConstants.KEY_COMMIT, null));
-		assertNotNull(gitSection.optString(GitConstants.KEY_REMOTE, null));
-		assertNotNull(gitSection.optString(GitConstants.KEY_TAG, null));
-		assertNotNull(gitSection.optString(GitConstants.KEY_CLONE, null));
 		assertCloneUri(gitSection.optString(GitConstants.KEY_CLONE, null));
 
 		location = children.get(0).getString(ProtocolConstants.KEY_LOCATION);
@@ -242,15 +201,8 @@ public class GitUriTest extends GitTest {
 		responseJSON = new JSONObject(response.getText());
 
 		// expected Git section for /file/{projectId}/subfolder
+		assertGitSectionExists(responseJSON);
 		gitSection = responseJSON.getJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
-		assertNotNull(gitSection.optString(GitConstants.KEY_STATUS, null));
-		assertNotNull(gitSection.optString(GitConstants.KEY_DIFF, null));
-		assertNotNull(gitSection.optString(GitConstants.KEY_DIFF, null));
-		assertNotNull(gitSection.optString(GitConstants.KEY_COMMIT, null));
-		assertNotNull(gitSection.optString(GitConstants.KEY_REMOTE, null));
-		assertNotNull(gitSection.optString(GitConstants.KEY_TAG, null));
-		assertNotNull(gitSection.optString(GitConstants.KEY_CLONE, null));
 		assertCloneUri(gitSection.optString(GitConstants.KEY_CLONE, null));
 	}
 
