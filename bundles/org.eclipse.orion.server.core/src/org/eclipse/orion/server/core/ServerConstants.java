@@ -38,12 +38,33 @@ public class ServerConstants {
 	 * system to use for newly created top level folders.
 	 */
 	public static final String CONFIG_FILE_DEFAULT_SCM = "orion.file.defaultSCM"; //$NON-NLS-1$
-	
+
+	/**
+	 * The name of a configuration property specifying whether anonymous read access
+	 * is allowed to files stored on this orion server. The property value is a boolean and
+	 * the default is <code>false</code>.
+	 */
+	public static final String CONFIG_FILE_ANONYMOUS_READ= "orion.file.anonymous.read"; //$NON-NLS-1$
+
+	/**
+	 * The name of a configuration property specifying a comma-separated list of server
+	 * file system paths where user content can be written. By default user content
+	 * can only appear within the server instance location (workspace).
+	 */
+	public static final String CONFIG_FILE_ALLOWED_PATHS = "orion.file.allowedPaths"; //$NON-NLS-1$
+
 	/**
 	 * The name of a configuration property specifying the layout format for user data files.
 	 */
 	public static final String CONFIG_FILE_LAYOUT = "orion.file.layout"; //$NON-NLS-1$
-	
+
+	/**
+	 * The name of a configuration property specifying the virtual hosts to use for
+	 * test sites launched by this server. The property value is a comma-separated 
+	 * list of host names.
+	 */
+	public static final String CONFIG_SITE_VIRTUAL_HOSTS= "orion.site.virtualHosts"; //$NON-NLS-1$
+
 	/**
 	 * The bundle ID of the server core. 
 	 */

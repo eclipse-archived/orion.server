@@ -17,8 +17,10 @@
 
   <!-- Prints successful and failed logins -->
   <logger name="org.eclipse.orion.server.login" level="INFO"/>
- 
- 
+
+  <!-- Prints information on locating and reading the server configuration file -->
+  <logger name="org.eclipse.orion.server.config" level="INFO"/>
+
   <root level="WARN">
     <appender-ref ref="STDOUT" />
   </root>

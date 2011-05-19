@@ -16,7 +16,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.core.users.OrionScope;
 import org.json.*;
 import org.osgi.service.prefs.BackingStoreException;
@@ -144,7 +144,7 @@ public class AuthorizationService {
 		}
 
 		//allow anonymous read if the corresponding property is set
-		String projectWorldReadable = System.getProperty("org.eclipse.orion.server.core.projectsWorldReadable"); //$NON-NLS-1$
+		String projectWorldReadable = PreferenceHelper.getString(ServerConstants.CONFIG_FILE_ANONYMOUS_READ, "false"); //$NON-NLS-1$
 		if (getMethod(method) == GET && uri.startsWith("/file/") && "true".equalsIgnoreCase(projectWorldReadable)) {//$NON-NLS-1$ //$NON-NLS-2$
 			//except don't allow access to metadata
 			if ("/file/".equals(uri) || uri.startsWith("/file/.metadata/")) //$NON-NLS-1$//$NON-NLS-2$

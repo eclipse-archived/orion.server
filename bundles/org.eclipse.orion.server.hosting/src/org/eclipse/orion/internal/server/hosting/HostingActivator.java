@@ -12,6 +12,8 @@ package org.eclipse.orion.internal.server.hosting;
 
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
 import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
+import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.osgi.framework.*;
 
 public class HostingActivator implements BundleActivator {
@@ -47,7 +49,7 @@ public class HostingActivator implements BundleActivator {
 	private void registerHostingService() {
 		String jettyPort = System.getProperty("org.eclipse.equinox.http.jetty.http.port", "8080"); //$NON-NLS-1$ //$NON-NLS-2$
 		int port = Integer.parseInt(jettyPort);
-		SiteHostingConfig config = SiteHostingConfig.getSiteHostingConfig(port, System.getProperty("org.eclipse.orion.server.hosting.virtualHosts")); //$NON-NLS-1$
+		SiteHostingConfig config = SiteHostingConfig.getSiteHostingConfig(port, PreferenceHelper.getString(ServerConstants.CONFIG_SITE_VIRTUAL_HOSTS));
 		siteHostingService = new SiteHostingService(config);
 		siteHostingRegistration = bundleContext.registerService(ISiteHostingService.class, siteHostingService, null);
 	}

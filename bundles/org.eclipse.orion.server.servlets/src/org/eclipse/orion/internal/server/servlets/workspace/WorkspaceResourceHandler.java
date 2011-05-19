@@ -489,7 +489,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 			return true;
 		}
 
-		String prefixes = System.getProperty("org.eclipse.orion.server.core.allowedPathPrefixes"); //$NON-NLS-1$
+		String prefixes = PreferenceHelper.getString(ServerConstants.CONFIG_FILE_ALLOWED_PATHS);
 		if (prefixes == null)
 			prefixes = ServletTestingSupport.allowedPrefixes;
 		if (prefixes != null) {
