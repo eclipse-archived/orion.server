@@ -65,10 +65,10 @@ public class GitUtils {
 			File file = store.toLocalFile(EFS.NONE, null);
 			if (file.exists() && file.isDirectory()) {
 				if (RepositoryCache.FileKey.isGitRepository(file, FS.DETECTED)) {
-					gitDirs.put(path, file);
+					gitDirs.put(path.addTrailingSeparator(), file);
 					return;
 				} else if (RepositoryCache.FileKey.isGitRepository(new File(file, Constants.DOT_GIT), FS.DETECTED)) {
-					gitDirs.put(path, new File(file, Constants.DOT_GIT));
+					gitDirs.put(path.addTrailingSeparator(), new File(file, Constants.DOT_GIT));
 					return;
 				}
 				File[] folders = file.listFiles(new FileFilter() {
