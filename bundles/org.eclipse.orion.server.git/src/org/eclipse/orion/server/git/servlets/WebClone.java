@@ -85,7 +85,7 @@ public class WebClone {
 		try {
 			result.put(ProtocolConstants.KEY_ID, clone.getId());
 			result.put(ProtocolConstants.KEY_NAME, clone.getName());
-			result.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(parentLocation, "file/" + clone.getId()));
+			result.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(parentLocation, "file/" + clone.getId())); //$NON-NLS-1$
 			result.put(ProtocolConstants.KEY_CONTENT_LOCATION, clone.getContentLocation().toString());
 		} catch (JSONException e) {
 			// can't happen because key and value are well-formed

@@ -27,8 +27,7 @@ import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileBasedConfig;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.URIish;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.internal.server.servlets.workspace.*;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
@@ -78,14 +77,60 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		if (!validateCloneUrl(url, request, response))
 			return true;
 		clone.setUrl(new URIish(url));
+		String cloneName = toAdd.optString(ProtocolConstants.KEY_NAME, null);
+		if (cloneName == null)
+			cloneName = request.getHeader(ProtocolConstants.HEADER_SLUG);
+		// expected path /workspace/{workspaceId}
+		String workspacePath = toAdd.optString(ProtocolConstants.KEY_LOCATION, null);
 		// expected path /file/{projectId}[/{path}]
-		IPath path = new Path(toAdd.getString(ProtocolConstants.KEY_LOCATION));
-		clone.setId(path.removeFirstSegments(1).toString());
-		WebProject webProject = WebProject.fromId(path.segment(1));
-		clone.setContentLocation(webProject.getProjectStore().getFileStore(path.removeFirstSegments(2)).toURI());
-		String cloneName = path.segmentCount() > 2 ? path.lastSegment() : webProject.getName();
+		String filePath = toAdd.optString(ProtocolConstants.KEY_PATH, null);
+		if (filePath == null && workspacePath == null) {
+			String msg = NLS.bind("Either '" + GitConstants.KEY_PATH + "' or '" + GitConstants.KEY_PATH + "' should be provided: {0}", toAdd);
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+		}
 		if (!validateCloneName(cloneName, request, response))
 			return true;
+
+		if (filePath != null) {
+			IPath path = new Path(filePath);
+			clone.setId(path.removeFirstSegments(1).toString());
+			WebProject webProject = WebProject.fromId(path.segment(1));
+			clone.setContentLocation(webProject.getProjectStore().getFileStore(path.removeFirstSegments(2)).toURI());
+			if (cloneName == null)
+				cloneName = path.segmentCount() > 2 ? path.lastSegment() : webProject.getName();
+		} else if (workspacePath != null) {
+			IPath path = new Path(workspacePath);
+			// TODO: move this to CloneJob
+			String id = WebProject.nextProjectId();
+			WebProject webProject = WebProject.fromId(id);
+			if (cloneName == null)
+				cloneName = new URIish(url).getHumanishName();
+			webProject.setName(cloneName);
+
+			try {
+				WorkspaceResourceHandler.computeProjectLocation(webProject, null, request.getRemoteUser(), false);
+			} catch (CoreException e) {
+				//we are unable to write in the platform location!
+				String msg = NLS.bind("Server content location could not be written: {0}", Activator.getDefault().getRootLocationURI());
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+			} catch (URISyntaxException e) {
+				// should not happen, we do not allow linking at this point
+			}
+			WebWorkspace workspace = WebWorkspace.fromId(path.segment(1));
+			//If all went well, add project to workspace
+			workspace.addProject(webProject);
+
+			//save the workspace and project metadata
+			try {
+				webProject.save();
+				workspace.save();
+			} catch (CoreException e) {
+				String msg = "Error persisting project state";
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+			}
+			clone.setId(webProject.getId());
+			clone.setContentLocation(webProject.getProjectStore().toURI());
+		}
 		clone.setName(cloneName);
 
 		// prepare creds
@@ -320,7 +365,6 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			//cannot happen, we know keys and values are valid
 		}
 		return result;
-
 	}
 
 }
