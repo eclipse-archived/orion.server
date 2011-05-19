@@ -100,8 +100,8 @@
 		<p><div id="progress"></div>
 			Long running operations that cannot complete within a single request will instead return the location of a resource for tracking progress on that operation. The typical client work flow is:</p>
 		<ol>
-			<li>Client sends request to start operation. The <tt>Location</tt> header in the response indicates the location of a progress resource</li>
-			<li>Client periodically checks state of progress resource</li>
+			<li>Client sends request to start operation. The <tt>Location</tt> header in the response indicates the location of a progress resource. The response code is 202 Accepted, which helps the client distinguish long running operations from operations that complete within a single method invocation.</li>
+			<li>Client periodically checks state of progress resource.</li>
 			<li>When long running task completes, progress resource includes a link to a resource representing the completed operation.</li>
 		</ol>
 		<p>A progress resource has the following attributes:</p>
