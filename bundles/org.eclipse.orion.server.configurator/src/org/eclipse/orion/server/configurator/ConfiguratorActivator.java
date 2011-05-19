@@ -29,6 +29,7 @@ import org.eclipse.orion.server.configurator.configuration.ConfigurationFormat;
 import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.core.authentication.IAuthenticationService;
 import org.eclipse.orion.server.core.authentication.NoneAuthenticationService;
+import org.eclipse.osgi.service.datalocation.Location;
 import org.osgi.framework.*;
 import org.osgi.service.packageadmin.PackageAdmin;
 import org.osgi.util.tracker.ServiceTracker;
@@ -47,6 +48,8 @@ public class ConfiguratorActivator implements BundleActivator {
 
 	private ServiceTracker<IAuthenticationService, IAuthenticationService> authServiceTracker;
 	private ServiceTracker<PackageAdmin, PackageAdmin> packageAdminTracker;
+	private ServiceTracker<Location, Location> instanceLocationTracker;
+	private BundleContext bundleContext;
 
 	Filter getAuthFilter() throws InvalidSyntaxException {
 		StringBuilder sb = new StringBuilder("("); //$NON-NLS-1$
@@ -93,6 +96,7 @@ public class ConfiguratorActivator implements BundleActivator {
 
 	public void start(BundleContext context) throws Exception {
 		singleton = this;
+		bundleContext = context;
 
 		packageAdminTracker = new ServiceTracker<PackageAdmin, PackageAdmin>(context, PackageAdmin.class.getName(), null);
 		packageAdminTracker.open();
@@ -142,6 +146,11 @@ public class ConfiguratorActivator implements BundleActivator {
 			packageAdminTracker.close();
 			packageAdminTracker = null;
 		}
+
+		if (instanceLocationTracker != null) {
+			instanceLocationTracker.close();
+			instanceLocationTracker = null;
+		}
 	}
 
 	protected Bundle getBundle(String symbolicName) {
@@ -162,6 +171,24 @@ public class ConfiguratorActivator implements BundleActivator {
 
 	public IAuthenticationService getAuthService() {
 		return authServiceTracker.getService();
+	}
+
+	/**
+	 * Returns the platform instance location.
+	 */
+	public Location getInstanceLocation() {
+		if (instanceLocationTracker == null) {
+			Filter filter;
+			try {
+				filter = bundleContext.createFilter(Location.INSTANCE_FILTER);
+			} catch (InvalidSyntaxException e) {
+				LogHelper.log(e);
+				return null;
+			}
+			instanceLocationTracker = new ServiceTracker<Location, Location>(bundleContext, filter, null);
+			instanceLocationTracker.open();
+		}
+		return instanceLocationTracker.getService();
 	}
 
 	String getAuthName() {
