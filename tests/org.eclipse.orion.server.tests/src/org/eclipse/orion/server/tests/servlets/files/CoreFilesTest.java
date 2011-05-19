@@ -21,11 +21,15 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.List;
 import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.json.*;
 import org.junit.*;
 import org.junit.Test;
+import org.osgi.service.prefs.BackingStoreException;
 import org.xml.sax.SAXException;
 
 /**
@@ -340,10 +344,12 @@ public class CoreFilesTest extends FileSystemTest {
 	 * Tests that we are not allowed to get metadata files
 	 */
 	@Test
-	public void testGetForbiddenFiles() throws IOException, SAXException {
-		String globalReadProp = "org.eclipse.orion.server.core.projectsWorldReadable";
-		String oldValue = System.getProperty(globalReadProp);
-		System.setProperty(globalReadProp, "true");
+	public void testGetForbiddenFiles() throws IOException, SAXException, BackingStoreException {
+		//enable global anonymous read
+		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(ServerConstants.PREFERENCE_SCOPE);
+		String oldValue = prefs.get(ServerConstants.CONFIG_FILE_ANONYMOUS_READ, null);
+		prefs.put(ServerConstants.CONFIG_FILE_ANONYMOUS_READ, "true");
+		prefs.flush();
 		try {
 			//should not be allowed to get at file root
 			WebRequest request = new GetMethodWebRequest(SERVER_LOCATION + FILE_SERVLET_LOCATION);
@@ -363,12 +369,13 @@ public class CoreFilesTest extends FileSystemTest {
 			response = webConversation.getResponse(request);
 			assertEquals("Should not be able to get metadata", HttpURLConnection.HTTP_FORBIDDEN, response.getResponseCode());
 		} finally {
+			//reset the preference we messed with for the test
 			if (oldValue == null)
-				System.clearProperty(globalReadProp);
+				prefs.remove(ServerConstants.CONFIG_FILE_ANONYMOUS_READ);
 			else
-				System.setProperty(globalReadProp, oldValue);
+				prefs.put(ServerConstants.CONFIG_FILE_ANONYMOUS_READ, oldValue);
+			prefs.flush();
 		}
-
 	}
 
 	@Test

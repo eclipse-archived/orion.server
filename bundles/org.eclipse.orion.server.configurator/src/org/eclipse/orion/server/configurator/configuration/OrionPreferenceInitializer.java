@@ -11,10 +11,12 @@
 package org.eclipse.orion.server.configurator.configuration;
 
 import java.io.*;
+import java.net.URL;
 import java.util.Properties;
 import org.eclipse.core.runtime.preferences.*;
 import org.eclipse.orion.internal.server.core.Activator;
 import org.eclipse.orion.internal.server.core.IOUtilities;
+import org.eclipse.orion.server.configurator.ConfiguratorActivator;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.slf4j.Logger;
@@ -34,12 +36,21 @@ public class OrionPreferenceInitializer extends AbstractPreferenceInitializer {
 		String location = Activator.getDefault().getContext().getProperty(ServerConstants.PROP_CONFIG_FILE_LOCATION);
 		if (location == null)
 			location = DEFAULT_CONFIG_FILE;
+
+		//try the working directory
 		File result = new File(location);
-		if (!result.exists()) {
-			logger.info("No server configuration file found at: " + result); //$NON-NLS-1$
-			return null;
-		}
-		return result;
+		if (result.exists())
+			return result;
+		logger.info("No server configuration file found at: " + result); //$NON-NLS-1$
+
+		//try the platform instance location
+		URL instanceURL = ConfiguratorActivator.getDefault().getInstanceLocation().getURL();
+		// strip off file: prefix from URL
+		result = new File(instanceURL.toExternalForm().substring(5));
+		if (result.exists())
+			return result;
+		logger.info("No server configuration file found at: " + result); //$NON-NLS-1$
+		return null;
 	}
 
 	@Override
@@ -52,8 +63,8 @@ public class OrionPreferenceInitializer extends AbstractPreferenceInitializer {
 			return;
 		//load configuration preferences into the default scope
 		IEclipsePreferences node = DefaultScope.INSTANCE.getNode(ServerConstants.PREFERENCE_SCOPE);
-		for (Object o: props.keySet()) {
-			String key = (String)o;
+		for (Object o : props.keySet()) {
+			String key = (String) o;
 			node.put(key, props.getProperty(key));
 		}
 	}
