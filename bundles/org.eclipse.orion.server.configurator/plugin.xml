@@ -62,6 +62,23 @@
             alias="/task"
             class="org.eclipse.orion.internal.server.servlets.task.TaskServlet">
       </servlet>
+      <servlet
+            alias="/help"
+            class="org.eclipse.equinox.http.servlet.HttpServiceServlet"
+            httpcontextId="org.eclipse.help.webapp.help"
+            load-on-startup="true">
+         <init-param
+               name="other.info"
+               value="org.eclipse.help">
+         </init-param>
+         <init-param
+               name="server.description"
+               value="Orion Help">
+         </init-param>
+      </servlet>
+      <serviceSelector
+            filter="(other.info=org.eclipse.orion)">
+      </serviceSelector>
    </extension>
    <extension
          point="org.eclipse.equinox.http.registry.filters">
@@ -125,6 +142,9 @@
             alias="/site"
             class="org.eclipse.orion.server.configurator.servlet.AuthorizationFilter">
       </filter>
+      <serviceSelector
+            filter="(other.info=org.eclipse.orion)">
+      </serviceSelector>
    </extension>
    <extension
          point="org.eclipse.equinox.http.registry.httpcontexts">
@@ -219,11 +239,14 @@
             alias="/profile"
             httpcontextId="org.eclipse.orion.server.configurator.httpcontext.userprofile">
       </resource>
+      <serviceSelector
+            filter="(other.info=org.eclipse.orion)">
+      </serviceSelector>
    </extension>
    <extension
          point="org.eclipse.equinox.preferences.preferences">
       <initializer
             class="org.eclipse.orion.server.configurator.configuration.OrionPreferenceInitializer">
       </initializer>
-   </extension>
+   </extension>   
 </plugin>
