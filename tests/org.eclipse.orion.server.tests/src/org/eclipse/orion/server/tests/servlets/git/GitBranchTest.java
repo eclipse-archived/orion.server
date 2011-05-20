@@ -11,6 +11,8 @@
 package org.eclipse.orion.server.tests.servlets.git;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -46,8 +48,9 @@ public class GitBranchTest extends GitTest {
 
 		// validate branch metadata
 		JSONObject branch = branchesArray.getJSONObject(0);
-		assertEquals(Constants.MASTER, branch.getString(GitConstants.KEY_BRANCH_NAME));
+		assertEquals(Constants.MASTER, branch.getString(ProtocolConstants.KEY_NAME));
 		assertBranchUri(branch.getString(ProtocolConstants.KEY_LOCATION));
+		assertTrue(branch.optBoolean(GitConstants.KEY_BRANCH_CURRENT, false));
 		// that's it for now
 	}
 
@@ -75,6 +78,12 @@ public class GitBranchTest extends GitTest {
 		JSONObject branches = new JSONObject(response.getText());
 		JSONArray branchesArray = branches.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 		assertEquals(2, branchesArray.length());
+		JSONObject branch0 = branchesArray.getJSONObject(0);
+		JSONObject branch1 = branchesArray.getJSONObject(1);
+		if (branch0.optBoolean(GitConstants.KEY_BRANCH_CURRENT, false))
+			assertFalse(branch1.optBoolean(GitConstants.KEY_BRANCH_CURRENT, false));
+		else
+			assertTrue(branch1.optBoolean(GitConstants.KEY_BRANCH_CURRENT, false));
 
 		// remove branch
 		request = getDeleteGitBranchRequest(branchLocation);
@@ -88,6 +97,8 @@ public class GitBranchTest extends GitTest {
 		branches = new JSONObject(response.getText());
 		branchesArray = branches.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 		assertEquals(1, branchesArray.length());
+		JSONObject branch = branchesArray.getJSONObject(0);
+		assertTrue(branch.optBoolean(GitConstants.KEY_BRANCH_CURRENT, false));
 	}
 
 	private WebRequest getDeleteGitBranchRequest(String location) {

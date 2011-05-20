@@ -74,6 +74,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			for (String configName : configNames) {
 				JSONObject o = new JSONObject();
 				o.put(ProtocolConstants.KEY_NAME, configName);
+				o.put(ProtocolConstants.KEY_TYPE, GitConstants.KEY_REMOTE_NAME);
 				o.put(ProtocolConstants.KEY_LOCATION, baseToRemoteLocation(baseLocation, 2, configName));
 				children.put(o);
 			}
@@ -90,6 +91,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			for (String configName : configNames) {
 				if (configName.equals(p.segment(0))) {
 					result.put(ProtocolConstants.KEY_NAME, configName);
+					result.put(ProtocolConstants.KEY_TYPE, GitConstants.KEY_REMOTE_NAME);
 					result.put(ProtocolConstants.KEY_LOCATION, baseToRemoteLocation(baseLocation, 3, configName));
 
 					JSONArray children = new JSONArray();
