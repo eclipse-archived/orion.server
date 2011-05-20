@@ -149,6 +149,12 @@ public class GitBranchHandlerV1 extends ServletResourceHandler<String> {
 		IPath newPath = new Path(GitServlet.GIT_URI).append(GitConstants.BRANCH_RESOURCE).append(shortName).append(basePath.removeFirstSegments(s));
 		URI location = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), newPath.toString(), baseLocation.getQuery(), baseLocation.getFragment());
 		result.put(ProtocolConstants.KEY_LOCATION, location);
+
+		// add Git Clone URI
+		newPath = new Path(GitServlet.GIT_URI).append(GitConstants.CLONE_RESOURCE).append(basePath.removeFirstSegments(s));
+		URI cloneLocation = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), newPath.toString(), baseLocation.getQuery(), baseLocation.getFragment());
+		result.put(GitConstants.KEY_CLONE, cloneLocation);
+
 		return result;
 	}
 
