@@ -254,7 +254,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 				// make sure required fields are set
 				JSONObject toCheckout = OrionServlet.readJSONRequest(request);
 				JSONArray paths = toCheckout.optJSONArray(GitConstants.KEY_PATH);
-				String branch = toCheckout.optString(GitConstants.KEY_BRANCH);
+				String branch = toCheckout.optString(GitConstants.KEY_BRANCH_NAME);
 				if ((paths == null || paths.length() == 0) && (branch == null || branch.isEmpty())) {
 					String msg = NLS.bind("Either '" + GitConstants.KEY_PATH + "' or '" + GitConstants.KEY_BRANCH + "' should be provided: {0}", toCheckout);
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
