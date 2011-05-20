@@ -39,6 +39,7 @@ import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
+import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitUtils;
@@ -138,6 +139,9 @@ public class GitCloneTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		IPath clonePath = new Path("workspace").append(getWorkspaceId(workspaceLocation)).makeAbsolute();
 
+		AuthorizationService.removeUserRight("test", "/");
+		AuthorizationService.removeUserRight("test", "/*");
+
 		// /workspace/{id} + {methodName}
 		JSONObject clone = clone(clonePath, null, getMethodName());
 
@@ -148,6 +152,13 @@ public class GitCloneTest extends GitTest {
 		JSONObject project = new JSONObject(response.getText());
 		assertEquals(getMethodName(), project.getString(ProtocolConstants.KEY_NAME));
 		assertGitSectionExists(project);
+		String childrenLocation = project.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
+		assertNotNull(childrenLocation);
+
+		// http://<host>/file/<projectId>/?depth=1
+		request = getGetFilesRequest(childrenLocation);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 	}
 
 	@Test
@@ -171,6 +182,10 @@ public class GitCloneTest extends GitTest {
 	public void testCloneEmptyPath() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		IPath clonePath = new Path("workspace").append(getWorkspaceId(workspaceLocation)).makeAbsolute();
+
+		AuthorizationService.removeUserRight("test", "/");
+		AuthorizationService.removeUserRight("test", "/*");
+
 		// /workspace/{id}
 		JSONObject clone = clone(clonePath, null, null);
 
@@ -181,6 +196,15 @@ public class GitCloneTest extends GitTest {
 		JSONObject project = new JSONObject(response.getText());
 		assertEquals(gitDir.getName(), project.getString(ProtocolConstants.KEY_NAME));
 		assertGitSectionExists(project);
+
+		String childrenLocation = project.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
+		assertNotNull(childrenLocation);
+
+		// http://<host>/file/<projectId>/?depth=1
+		request = getGetFilesRequest(childrenLocation);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
 	}
 
 	@Test

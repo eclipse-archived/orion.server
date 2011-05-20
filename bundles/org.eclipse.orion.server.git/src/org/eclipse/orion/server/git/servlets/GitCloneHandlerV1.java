@@ -29,6 +29,7 @@ import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.internal.server.servlets.workspace.*;
+import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitConstants;
@@ -128,6 +129,14 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 				String msg = "Error persisting project state";
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
 			}
+
+			URI baseLocation = getURI(request);
+			baseLocation = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), workspacePath, baseLocation.getQuery(), baseLocation.getFragment());
+			JSONObject jsonProject = WebProjectResourceHandler.toJSON(webProject, baseLocation);
+			// give the clone creator access rights to the new project
+			addProjectRights(request, response, jsonProject.optString(ProtocolConstants.KEY_LOCATION));
+			addProjectRights(request, response, jsonProject.optString(ProtocolConstants.KEY_CONTENT_LOCATION));
+
 			clone.setId(webProject.getId());
 			clone.setContentLocation(webProject.getProjectStore().toURI());
 		}
@@ -367,4 +376,30 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		return result;
 	}
 
+	/**
+	 * It's a copy @see WorkspaceResourceHandler#addProjectRights().
+	 * TODO: We can do better than that.
+	 *
+	 * @param request
+	 * @param response
+	 * @param location
+	 * @throws ServletException
+	 */
+	private void addProjectRights(HttpServletRequest request, HttpServletResponse response, String location) throws ServletException {
+		if (location == null)
+			return;
+		try {
+			String locationPath = URI.create(location).getPath();
+			//right to access the location
+			AuthorizationService.addUserRight(request.getRemoteUser(), locationPath);
+			//right to access all children of the location
+			if (locationPath.endsWith("/")) //$NON-NLS-1$
+				locationPath += "*"; //$NON-NLS-1$
+			else
+				locationPath += "/*"; //$NON-NLS-1$
+			AuthorizationService.addUserRight(request.getRemoteUser(), locationPath);
+		} catch (CoreException e) {
+			statusHandler.handleRequest(request, response, e.getStatus());
+		}
+	}
 }
