@@ -177,6 +177,11 @@ public class ProtocolConstants {
 	public static final String KEY_NAME = "Name"; //$NON-NLS-1$
 
 	/**
+	 * JSON representation key for an object's type. The value's data type is a String
+	 */
+	public static final String KEY_TYPE = "Type"; //$NON-NLS-1$
+
+	/**
 	 * JSON representation key for an object's parents. The value's data
 	 * type is a JSON array of objects with name and location values.
 	 */

@@ -26,6 +26,9 @@ plugin@org.eclipse.orion.server.search=GIT,tag=v20110516-1746,repo=dev.eclipse.o
 fragment@org.eclipse.orion.server.logback.config=GIT,tag=v20110509-1730,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.logback.config
 plugin@org.eclipse.orion.server.hosting=GIT,tag=v20110516-1746,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.hosting
 
+#ui
+plugin@org.eclipse.orion.server.ui=GIT,tag=v20110516-1746,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.ui
+
 #doc
 plugin@org.eclipse.orion.doc.isv=GIT,tag=v20110516-1746,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=doc/org.eclipse.orion.doc.isv
 plugin@org.eclipse.orion.doc.user=GIT,tag=v20110516-1746,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=doc/org.eclipse.orion.doc.user
@@ -51,6 +54,7 @@ feature@org.eclipse.orion.base.feature=GIT,tag=v20110516-1746,repo=dev.eclipse.o
 feature@org.eclipse.orion.server.feature=GIT,tag=v20110509-1730,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=features/org.eclipse.orion.server-feature
 feature@org.eclipse.orion.server.search.feature=GIT,tag=v20110509-1730,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=features/org.eclipse.orion.server.search-feature
 feature@org.eclipse.orion.server.authentication.feature=GIT,tag=v20110509-1730,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=features/org.eclipse.orion.server.authentication-feature
+feature@org.eclipse.orion.server.ui.feature=GIT,tag=v20110516-1746,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=features/org.eclipse.orion.server.ui-feature
 feature@org.eclipse.orion.client.feature=GIT,tag=v20110516-1746,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=features/org.eclipse.orion.client-feature
 feature@org.eclipse.orion.server.tests.feature=GIT,tag=v20110509-1730,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=features/org.eclipse.orion.server.tests-feature
 feature@org.eclipse.orion.releng.test.master=GIT,tag=v20110425-1718,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=features/org.eclipse.orion.releng.test.master-feature
