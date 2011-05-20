@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+	<extension
+		id="org.eclipse.orion.ui.console"
+		point="org.eclipse.core.runtime.applications">
+		<application
+			cardinality="1"
+			thread="main"
+			visible="true">
+			<run
+				class="org.eclipse.orion.internal.server.ui.Application">
+			</run>
+		</application>
+	</extension>
+	<extension
+		id="org.eclipse.orion.ui.console"
+		point="org.eclipse.core.runtime.products">
+		<product
+			application="org.eclipse.orion.ui.console"
+			name="Orion Console">
+			<property
+				name="appName"
+				value="Orion Server Console">
+			</property>
+			<property
+				name="windowImages"
+				value="icons/orion16.png,icons/orion32.png">
+			</property>
+		</product>
+	</extension>
+	<extension
+		point="org.eclipse.ui.views">
+		<view
+			name="Orion Server Console"
+			class="org.eclipse.orion.internal.server.ui.console.OrionConsoleView"
+			id="org.eclipse.orion.server.console.view"
+			icon="$nl$/icons/osgiconsole.gif">
+		</view>
+	</extension>
+   <extension
+         point="org.eclipse.ui.perspectives">
+      <perspective
+            name="Perspective"
+            class="org.eclipse.orion.internal.server.ui.Perspective"
+            id="org.eclipse.orion.server.ui.perspective">
+      </perspective>
+   </extension>
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            locationURI="menu:org.eclipse.ui.main.menu">
+         <menu
+               label="File">
+            <command
+                  commandId="org.eclipse.ui.file.exit"
+                  label="Exit">
+            </command>
+         </menu>
+      </menuContribution>
+   </extension>
+</plugin>
