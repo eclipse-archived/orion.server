@@ -119,6 +119,8 @@ public class GitConstants {
 
 	public static final String KEY_BRANCH_NAME = "Branch"; //$NON-NLS-1$
 
+	public static final String KEY_REMOTE_NAME = "Remote"; //$NON-NLS-1$
+
 	public static final String KEY_AUTHOR_NAME = "AuthorName"; //$NON-NLS-1$
 
 	public static final String KEY_AUTHOR_EMAIL = "AuthorEmail"; //$NON-NLS-1$

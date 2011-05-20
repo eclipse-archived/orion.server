@@ -46,7 +46,7 @@ public class GitBranchTest extends GitTest {
 
 		// validate branch metadata
 		JSONObject branch = branchesArray.getJSONObject(0);
-		assertEquals(Constants.MASTER, branch.getString(GitConstants.KEY_BRANCH_NAME));
+		assertEquals(Constants.MASTER, branch.getString(ProtocolConstants.KEY_NAME));
 		assertBranchUri(branch.getString(ProtocolConstants.KEY_LOCATION));
 		// that's it for now
 	}

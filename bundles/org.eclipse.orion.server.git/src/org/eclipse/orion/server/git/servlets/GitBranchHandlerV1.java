@@ -143,7 +143,8 @@ public class GitBranchHandlerV1 extends ServletResourceHandler<String> {
 	private JSONObject toJSON(Ref ref, URI baseLocation, int s) throws JSONException, URISyntaxException {
 		JSONObject result = new JSONObject();
 		String shortName = Repository.shortenRefName(ref.getName());
-		result.put(GitConstants.KEY_BRANCH_NAME, shortName);
+		result.put(ProtocolConstants.KEY_NAME, shortName);
+		result.put(ProtocolConstants.KEY_TYPE, GitConstants.KEY_BRANCH_NAME);
 
 		IPath basePath = new Path(baseLocation.getPath());
 		IPath newPath = new Path(GitServlet.GIT_URI).append(GitConstants.BRANCH_RESOURCE).append(shortName).append(basePath.removeFirstSegments(s));
