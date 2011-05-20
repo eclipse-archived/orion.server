@@ -120,7 +120,7 @@
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.swt.cocoa.macosx.x86"
+         id="org.eclipse.swt.cocoa.macosx"
          os="macosx"
          ws="cocoa"
          arch="x86"
