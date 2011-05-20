@@ -8,6 +8,7 @@
 
    <launcherArgs>
       <programArgs>-consoleLog -console -data serverworkspace -nosplash</programArgs>
+      <programArgsMac>-product org.eclipse.orion.ui.console</programArgsMac>
       <vmArgs>-Dorg.eclipse.equinox.http.jetty.http.port=8080
 -Dorg.eclipse.equinox.http.jetty.autostart=false
 -Xms40m

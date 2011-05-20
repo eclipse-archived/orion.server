@@ -86,8 +86,9 @@ plugin@org.eclipse.swt.gtk.linux.x86_64=p2IU,id=org.eclipse.swt.gtk.linux.x86_64
 plugin@org.eclipse.swt.gtk.linux.x86=p2IU,id=org.eclipse.swt.gtk.linux.x86,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.swt.win32.win32.x86=p2IU,id=org.eclipse.swt.win32.win32.x86,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.swt.win32.win32.x86_64=p2IU,id=org.eclipse.swt.win32.win32.x86_64,repository=ECLIPSE_PLATFORM_REPO
-plugin@org.eclipse.swt.cocoa.macosx.x86=p2IU,id=org.eclipse.swt.win32.win32.x86,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.swt.cocoa.macosx.x86=p2IU,id=org.eclipse.swt.cocoa.macosx.x86,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.core.commands=p2IU,id=org.eclipse.core.commands,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.core.variable=p2IU,id=org.eclipse.core.variable,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.compare.core=p2IU,id=org.eclipse.compare.core,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.text=p2IU,id=org.eclipse.text,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.jface.databinding=p2IU,id=org.eclipse.jface.databinding,repository=ECLIPSE_PLATFORM_REPO
