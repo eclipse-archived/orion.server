@@ -70,7 +70,7 @@ public class GitBranchHandlerV1 extends ServletResourceHandler<String> {
 			JSONObject result = new JSONObject();
 			JSONArray children = new JSONArray();
 			for (Ref ref : branches) {
-				JSONObject child = toJSON(ref, getURI(request), 2);
+				JSONObject child = toJSON(db, ref, getURI(request), 2);
 				children.put(child);
 			}
 			result.put(ProtocolConstants.KEY_CHILDREN, children);
@@ -85,7 +85,7 @@ public class GitBranchHandlerV1 extends ServletResourceHandler<String> {
 			JSONObject result = null;
 			for (Ref ref : branches) {
 				if (Repository.shortenRefName(ref.getName()).equals(p.segment(0))) {
-					result = toJSON(ref, getURI(request), 3);
+					result = toJSON(db, ref, getURI(request), 3);
 					break;
 				}
 			}
@@ -116,7 +116,7 @@ public class GitBranchHandlerV1 extends ServletResourceHandler<String> {
 			Git git = new Git(db);
 			Ref ref = git.branchCreate().setName(branchName).call();
 			// TODO: what if something went wrong, handle exception
-			JSONObject result = toJSON(ref, getURI(request), 2);
+			JSONObject result = toJSON(db, ref, getURI(request), 2);
 			response.setHeader(ProtocolConstants.HEADER_LOCATION, result.getString(ProtocolConstants.KEY_LOCATION));
 			response.setStatus(HttpServletResponse.SC_CREATED);
 			return true;
@@ -140,7 +140,7 @@ public class GitBranchHandlerV1 extends ServletResourceHandler<String> {
 		return false;
 	}
 
-	private JSONObject toJSON(Ref ref, URI baseLocation, int s) throws JSONException, URISyntaxException {
+	private JSONObject toJSON(Repository db, Ref ref, URI baseLocation, int s) throws JSONException, URISyntaxException, IOException {
 		JSONObject result = new JSONObject();
 		String shortName = Repository.shortenRefName(ref.getName());
 		result.put(ProtocolConstants.KEY_NAME, shortName);
@@ -156,7 +156,7 @@ public class GitBranchHandlerV1 extends ServletResourceHandler<String> {
 		URI cloneLocation = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), newPath.toString(), baseLocation.getQuery(), baseLocation.getFragment());
 		result.put(GitConstants.KEY_CLONE, cloneLocation);
 
+		result.put(GitConstants.KEY_BRANCH_CURRENT, shortName.equals(db.getBranch()));
 		return result;
 	}
-
 }

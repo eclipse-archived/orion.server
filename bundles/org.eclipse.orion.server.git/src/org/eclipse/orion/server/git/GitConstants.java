@@ -61,8 +61,6 @@ public class GitConstants {
 
 	public static final String KEY_URL = "GitUrl"; //$NON-NLS-1$
 
-	public static final String CLONE_FOLDER = ".gitclone"; //$NON-NLS-1$
-
 	public static final String KEY_USERNAME = "GitSshUsername"; //$NON-NLS-1$
 
 	public static final String KEY_PASSWORD = "GitSshPassword"; //$NON-NLS-1$
@@ -121,6 +119,8 @@ public class GitConstants {
 
 	public static final String KEY_REMOTE_NAME = "Remote"; //$NON-NLS-1$
 
+	public static final String KEY_BRANCH_CURRENT = "Current"; //$NON-NLS-1$
+
 	public static final String KEY_AUTHOR_NAME = "AuthorName"; //$NON-NLS-1$
 
 	public static final String KEY_AUTHOR_EMAIL = "AuthorEmail"; //$NON-NLS-1$
@@ -140,5 +140,4 @@ public class GitConstants {
 	public static final String KEY_RESULT = "Result"; //$NON-NLS-1$
 
 	public static final String KEY_TAG_COMMIT = "Commit"; //$NON-NLS-1$
-
 }
