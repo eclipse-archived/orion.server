@@ -18,9 +18,11 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.Status;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepository;
-import org.eclipse.jgit.treewalk.FileTreeIterator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -49,33 +51,29 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 			if (gitDir == null)
 				return false; // TODO: or an error response code, 405?
 			Repository db = new FileRepository(gitDir);
-			FileTreeIterator iterator = new FileTreeIterator(db);
-			IndexDiff diff = new IndexDiff(db, Constants.HEAD, iterator);
-			// see bug 339351
-			// if (path.segmentCount() > 2)
-			// diff.setFilter(PathFilter.create(path.removeFirstSegments(2).toString()));
-			diff.diff();
+			Git git = new Git(db);
+			Status status = git.status().call();
 
 			URI baseLocation = getURI(request);
 			baseLocation = stripOffPath(baseLocation);
 			IPath basePath = path.removeFirstSegments(2);
 			JSONObject result = new JSONObject();
-			JSONArray children = toJSONArray(diff.getAdded(), basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
+			JSONArray children = toJSONArray(status.getAdded(), basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
 			result.put(GitConstants.KEY_STATUS_ADDED, children);
 			// TODO: bug 338913
 			// children = toJSONArray(diff.getAssumeUnchanged(), baseLocation, ?);
 			// result.put(GitConstants.KEY_STATUS_ASSUME_UNCHANGED, children);
-			children = toJSONArray(diff.getChanged(), basePath, baseLocation, GitConstants.KEY_DIFF_CACHED);
+			children = toJSONArray(status.getChanged(), basePath, baseLocation, GitConstants.KEY_DIFF_CACHED);
 			result.put(GitConstants.KEY_STATUS_CHANGED, children);
-			children = toJSONArray(diff.getMissing(), basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
+			children = toJSONArray(status.getMissing(), basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
 			result.put(GitConstants.KEY_STATUS_MISSING, children);
-			children = toJSONArray(diff.getModified(), basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
+			children = toJSONArray(status.getModified(), basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
 			result.put(GitConstants.KEY_STATUS_MODIFIED, children);
-			children = toJSONArray(diff.getRemoved(), basePath, baseLocation, GitConstants.KEY_DIFF_CACHED);
+			children = toJSONArray(status.getRemoved(), basePath, baseLocation, GitConstants.KEY_DIFF_CACHED);
 			result.put(GitConstants.KEY_STATUS_REMOVED, children);
-			children = toJSONArray(diff.getUntracked(), basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
+			children = toJSONArray(status.getUntracked(), basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
 			result.put(GitConstants.KEY_STATUS_UNTRACKED, children);
-			children = toJSONArray(diff.getConflicting(), basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
+			children = toJSONArray(status.getConflicting(), basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
 			result.put(GitConstants.KEY_STATUS_CONFLICTING, children);
 
 			result.put(GitConstants.KEY_INDEX, statusToIndexLocation(baseLocation));
