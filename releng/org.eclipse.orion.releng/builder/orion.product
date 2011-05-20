@@ -15,9 +15,10 @@
       <vmArgsMac>-XstartOnFirstThread -Dorg.eclipse.swt.internal.carbon.smallFonts</vmArgsMac>
    </launcherArgs>
 
-   <launcher name="eclipse">
+   <launcher name="orion">
       <solaris/>
-      <win useIco="false">
+      <win useIco="true">
+         <ico path="html/orion.ico"/>
          <bmp/>
       </win>
    </launcher>

@@ -129,7 +129,7 @@ lastMapTag=${mapsTagTag}
 		<property name="macRootArchive" refid="root.cocoa.macosx" />
 		<mkdir dir="${buildDirectory}/rootMacosx"/>
 		<unzip src="${buildDirectory}/buildRepo/binary/${macRootArchive}" dest="${buildDirectory}/rootMacosx" overwrite="true" />
-		<replace file="${buildDirectory}/rootMacosx/eclipse.app/Contents/Info.plist">
+		<replace file="${buildDirectory}/rootMacosx/orion.app/Contents/Info.plist">
 			<replacetoken>CFBundleExecutable</replacetoken>
 			<replacevalue>LSBackgroundOnly&lt;/key&gt;
 		&lt;string&gt;1&lt;/string&gt;
