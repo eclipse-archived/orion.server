@@ -35,17 +35,12 @@ import com.meterware.httpunit.WebResponse;
 public class GitCommitTest extends GitTest {
 
 	@Test
-	@Ignore("not yet implemented, see bug 339190")
 	public void testCommit() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
-
-		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change to commit");
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
@@ -56,13 +51,21 @@ public class GitCommitTest extends GitTest {
 		String gitCommitUri = gitSection.optString(GitConstants.KEY_COMMIT, null);
 		assertNotNull(gitCommitUri);
 
+		// modify first file and add it to index
+		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change to commit");
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		// TODO: don't create URIs out of thin air
 		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		// TODO: don't create URIs out of thin air
+		// modify second file and add it to index
 		request = getPutFileRequest(projectId + "/folder/folder.txt", "change to commit");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		// TODO: don't create URIs out of thin air
+		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "folder/folder.txt");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -74,7 +77,6 @@ public class GitCommitTest extends GitTest {
 		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
 		assertEquals(2, statusArray.length());
-		assertEquals("test.txt", statusArray.getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
 		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);

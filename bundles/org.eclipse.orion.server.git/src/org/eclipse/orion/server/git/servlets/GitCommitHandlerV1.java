@@ -20,8 +20,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.MergeResult;
+import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.*;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffEntry.ChangeType;
@@ -339,11 +338,6 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		if (newCommitToCreatelocation != null)
 			return createCommitLocation(request, response, db, newCommitToCreatelocation);
 
-		// continue with commit
-		if (path.segmentCount() > 3) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_IMPLEMENTED, "Committing by path is not yet supported.", null));
-		}
-
 		ObjectId refId = db.resolve(path.segment(0));
 		if (refId == null || !Constants.HEAD.equals(path.segment(0))) {
 			String msg = NLS.bind("Commit failed. Ref must be HEAD and is {0}", path.segment(0)); //$NON-NLS-1$
@@ -357,10 +351,16 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 
 		boolean amend = Boolean.parseBoolean(requestObject.optString(GitConstants.KEY_COMMIT_AMEND, null));
 
-		Git git = new Git(db);
+		CommitCommand commit = new Git(db).commit();
+
+		// support for committing by path: "git commit -o path"
+		if (path.segmentCount() > 3) {
+			String p = path.removeFirstSegments(3).toString();
+			commit.setOnly(p);
+		}
 		// "git commit [--amend] -m '{message}' [-a|{path}]"
 		try {
-			git.commit().setAmend(amend).setMessage(message).call();
+			commit.setAmend(amend).setMessage(message).call();
 			return true;
 		} catch (GitAPIException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "An error occured when commiting.", e));
