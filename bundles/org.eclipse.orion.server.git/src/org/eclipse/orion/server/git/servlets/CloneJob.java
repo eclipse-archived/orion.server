@@ -78,6 +78,7 @@ public class CloneJob extends GitJob {
 			task.setMessage(NLS.bind("Configuring {0}...", clone.getUrl()));
 			updateTask();
 			doConfigureClone(git);
+			git.getRepository().close();
 		} catch (IOException e) {
 			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error cloning git repository", e);
 		} catch (CoreException e) {
