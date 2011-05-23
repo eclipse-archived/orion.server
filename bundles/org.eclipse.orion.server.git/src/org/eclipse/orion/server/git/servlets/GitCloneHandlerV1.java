@@ -27,6 +27,7 @@ import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileBasedConfig;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.URIish;
+import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.internal.server.servlets.workspace.*;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
@@ -59,8 +60,8 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 					return handlePut(request, response, path);
 				case POST :
 					return handlePost(request, response);
-					// case DELETE :
-					// return handleDelete(request, response, path);
+				case DELETE :
+					return handleDelete(request, response, path);
 			}
 
 		} catch (Exception e) {
@@ -285,6 +286,31 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			}
 		}
 		String msg = NLS.bind("Invalid checkout request {0}", pathString);
+		return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+	}
+
+	private boolean handleDelete(HttpServletRequest request, HttpServletResponse response, String pathString) throws IOException, JSONException, ServletException, URISyntaxException, CoreException, JGitInternalException, GitAPIException {
+		IPath path = pathString == null ? Path.EMPTY : new Path(pathString);
+		if (path.segment(0).equals("file") && path.segmentCount() > 1) { //$NON-NLS-1$
+
+			// make sure a clone is addressed
+			WebProject webProject = WebProject.fromId(path.segment(1));
+			if (isAccessAllowed(request.getRemoteUser(), webProject)) {
+				URI contentLocation = webProject.getContentLocation();
+				IPath projectPath = new Path(contentLocation.getPath()).append(path.removeFirstSegments(2));
+				// FIXME: don't go up
+				File gitDir = GitUtils.getGitDir(new Path("file").append(projectPath));
+
+				Repository repo = new FileRepository(gitDir);
+				repo.close();
+				FileUtils.delete(repo.getWorkTree(), FileUtils.RECURSIVE | FileUtils.RETRY);
+				return true;
+			} else {
+				String msg = NLS.bind("Nothing found for the given ID: {0}", path);
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
+			}
+		}
+		String msg = NLS.bind("Invalid delete request {0}", pathString);
 		return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 	}
 

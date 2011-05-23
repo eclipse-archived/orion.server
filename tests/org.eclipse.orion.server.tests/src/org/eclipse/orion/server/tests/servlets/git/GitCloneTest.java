@@ -16,14 +16,15 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.URIUtil;
@@ -38,17 +39,16 @@ import org.eclipse.jgit.lib.RepositoryState;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitUtils;
+import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Assume;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.meterware.httpunit.GetMethodWebRequest;
@@ -424,45 +424,90 @@ public class GitCloneTest extends GitTest {
 	}
 
 	@Test
-	@Ignore(/*TODO*/"see bug 340553")
-	public void testCloneAndDelete() throws Exception {
-		String contentLocation = clone(null).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-
-		File file = URIUtil.toFile(new URI(contentLocation));
-		assertTrue(file.exists());
-		assertTrue(file.isDirectory());
-		assertTrue(RepositoryCache.FileKey.isGitRepository(new File(file, Constants.DOT_GIT), FS.DETECTED));
-
+	public void testDeleteInProject() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		JSONObject clone = clone(clonePath);
+		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
+		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
-		// link
-		ServletTestingSupport.allowedPrefixes = contentLocation;
-		String projectName = getMethodName();
-		JSONObject body = new JSONObject();
-		body.put(ProtocolConstants.KEY_CONTENT_LOCATION, contentLocation);
-		// http://localhost:8080/workspace/{workspaceId}
-		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), getJsonAsStream(body.toString()), "UTF-8");
-		if (projectName != null)
-			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
-		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		setAuthentication(request);
+		// delete clone
+		WebRequest request = getDeleteCloneRequest(cloneLocation);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		JSONObject newProject = new JSONObject(response.getText());
-		String projectContentLocation = newProject.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		assertNotNull(projectContentLocation);
-
-		// delete
-		JSONObject data = new JSONObject();
-		data.put("Remove", "true");
-		data.put("ProjectURL", projectContentLocation);
-		request = new PostMethodWebRequest(workspaceLocation.toString(), new ByteArrayInputStream(data.toString().getBytes()), "UTF8");
-		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		setAuthentication(request);
-		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		assertFalse(file.exists());
+		// the clone is gone
+		request = getGetRequest(cloneLocation);
+		response = webConversation.getResponse(request);
+		// assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject clones = new JSONObject(response.getText());
+		JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		assertEquals(0, clonesArray.length());
+
+		// so it's the folder
+		request = getGetRequest(contentLocation);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
+	}
+
+	@Test
+	public void testDeleteInFolder() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).append("clone").makeAbsolute();
+		JSONObject clone = clone(clonePath);
+		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
+		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+		// delete clone
+		WebRequest request = getDeleteCloneRequest(cloneLocation);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// the clone is gone
+		request = getGetRequest(cloneLocation);
+		response = webConversation.getResponse(request);
+		// assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject clones = new JSONObject(response.getText());
+		JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		assertEquals(0, clonesArray.length());
+
+		// so it's the folder
+		request = getGetRequest(contentLocation);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
+	}
+
+	@Test
+	public void testDeleteInWorkspace() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		JSONObject clone = clone(clonePath);
+		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
+		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+		Repository repository = getRepositoryForContentLocation(contentLocation);
+		assertNotNull(repository);
+
+		// delete folder with cloned repository in it
+		WebRequest request = getDeleteFilesRequest(contentLocation);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// the clone is gone
+		request = getGetRequest(cloneLocation);
+		response = webConversation.getResponse(request);
+		// assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject clones = new JSONObject(response.getText());
+		JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		assertEquals(0, clonesArray.length());
+
+		assertFalse(repository.getDirectory().exists());
 	}
 
 	@Test
@@ -621,6 +666,14 @@ public class GitCloneTest extends GitTest {
 
 	private WebRequest getPostGitCloneRequest(String uri, IPath path) throws JSONException, UnsupportedEncodingException {
 		return getPostGitCloneRequest(uri, null, path, null, null, null);
+	}
+
+	private WebRequest getDeleteCloneRequest(String requestURI) throws CoreException, IOException {
+		assertCloneUri(requestURI);
+		WebRequest request = new DeleteMethodWebRequest(requestURI);
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		return request;
 	}
 
 	private void ensureCloneIdDoesntExist(JSONArray clonesArray, String id) throws JSONException {
