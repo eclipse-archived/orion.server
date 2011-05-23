@@ -156,6 +156,11 @@ public class GitBranchHandlerV1 extends ServletResourceHandler<String> {
 		URI cloneLocation = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), newPath.toString(), baseLocation.getQuery(), baseLocation.getFragment());
 		result.put(GitConstants.KEY_CLONE, cloneLocation);
 
+		// add Git Commit URI
+		newPath = new Path(GitServlet.GIT_URI).append(GitConstants.COMMIT_RESOURCE).append(shortName).append(basePath.removeFirstSegments(s));
+		URI commitLocation = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), newPath.toString(), baseLocation.getQuery(), baseLocation.getFragment());
+		result.put(GitConstants.KEY_COMMIT, commitLocation);
+
 		result.put(GitConstants.KEY_BRANCH_CURRENT, shortName.equals(db.getBranch()));
 		return result;
 	}
