@@ -140,4 +140,6 @@ public class GitConstants {
 	public static final String KEY_RESULT = "Result"; //$NON-NLS-1$
 
 	public static final String KEY_TAG_COMMIT = "Commit"; //$NON-NLS-1$
+
+	public static final String REMOTE_TRACKING_BRANCH_TYPE = "RemoteTrackingBranch"; //$NON-NLS-1$
 }
