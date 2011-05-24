@@ -24,11 +24,12 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.internal.preferences.ExportedPreferences;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.URIUtil;
-import org.eclipse.core.runtime.preferences.IPreferencesService;
+import org.eclipse.core.runtime.preferences.IExportedPreferences;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.api.PullResult;
@@ -38,9 +39,11 @@ import org.eclipse.jgit.lib.RepositoryCache;
 import org.eclipse.jgit.lib.RepositoryState;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
+import org.eclipse.orion.internal.server.core.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
-import org.eclipse.orion.server.git.GitActivator;
+import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
@@ -322,12 +325,16 @@ public class GitCloneTest extends GitTest {
 
 	@Test
 	public void testLinkToFolderWithDefaultSCM() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		IExportedPreferences testNode = (IExportedPreferences) ExportedPreferences.newRoot().node(ServerConstants.PREFERENCE_SCOPE);
+		testNode.put(ServerConstants.CONFIG_FILE_DEFAULT_SCM, "git");
+		Activator.getPreferenceService().applyPreferences(testNode);
+		// FIXME: the above is wrong as we never pass the assumption below
 
-		IPreferencesService preferences = GitActivator.getDefault().getPreferenceService();
-		String scm = preferences.getString("org.eclipse.orion.server.configurator", "orion.project.defaultSCM", "", null).toLowerCase(); //$NON-NLS-1$ //$NON-NLS-2$
+		// the same check as in org.eclipse.orion.server.git.GitFileDecorator.initGitRepository(HttpServletRequest, IPath, JSONObject)
+		String scm = PreferenceHelper.getString(ServerConstants.CONFIG_FILE_DEFAULT_SCM, "");
 		Assume.assumeTrue("git".equals(scm)); //$NON-NLS-1$
-		// FIXME: we never get here
+
+		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String contentLocation = new File(gitDir, "folder").getAbsolutePath();
 
@@ -642,6 +649,37 @@ public class GitCloneTest extends GitTest {
 		request = getGetRequest(cloneLocation);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
+	}
+
+	@Test
+	public void testCloneAlreadyExists() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		clone(clonePath);
+
+		// clone again into the same path
+		WebRequest request = getPostGitCloneRequest(new URIish(gitDir.toURL()).toString(), clonePath);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
+		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		assertNotNull(taskLocation);
+		String completedTaskLocation = waitForTaskCompletion(taskLocation);
+
+		// task completed, but cloning failed
+		request = new GetMethodWebRequest(completedTaskLocation);
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject completedTask = new JSONObject(response.getText());
+		assertEquals(false, completedTask.getBoolean("Running"));
+		assertEquals(100, completedTask.getInt("PercentComplete"));
+		JSONObject result = completedTask.getJSONObject("Result");
+		assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, result.getInt("HttpCode"));
+		assertEquals("Error", result.getString("Severity"));
+		assertEquals("Error cloning git repository", result.getString("Message"));
+		assertEquals("Destination folder already exists and contains a repository", result.getString("DetailedMessage"));
 	}
 
 	/**

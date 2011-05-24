@@ -64,8 +64,14 @@ public class CloneJob extends GitJob {
 	private IStatus doClone() {
 		try {
 			File cloneFolder = new File(clone.getContentLocation().getPath());
-			if (!cloneFolder.exists())
+			if (!cloneFolder.exists()) {
 				cloneFolder.mkdir();
+			} else {
+				// workaround until http://egit.eclipse.org/r/#change,3518 is fixed
+				File dotGit = new File(cloneFolder, Constants.DOT_GIT);
+				if (dotGit.exists())
+					throw new IOException("Destination folder already exists and contains a repository");
+			}
 			CloneCommand cc = Git.cloneRepository();
 			cc.setBare(false);
 			cc.setCredentialsProvider(credentials);
