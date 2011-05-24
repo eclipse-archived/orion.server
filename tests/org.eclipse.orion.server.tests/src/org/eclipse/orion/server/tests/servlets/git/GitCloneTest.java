@@ -427,6 +427,7 @@ public class GitCloneTest extends GitTest {
 	public void testDeleteInProject() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		String projectId = project.getString(ProtocolConstants.KEY_ID);
 		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 		JSONObject clone = clone(clonePath);
 		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
@@ -440,16 +441,22 @@ public class GitCloneTest extends GitTest {
 		// the clone is gone
 		request = getGetRequest(cloneLocation);
 		response = webConversation.getResponse(request);
-		// assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject clones = new JSONObject(response.getText());
-		JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
-		assertEquals(0, clonesArray.length());
+		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 
-		// so it's the folder
+		// so it's the folder (top-level)
 		request = getGetRequest(contentLocation);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
+
+		// make sure the project doesn't exist
+		request = getGetRequest(workspaceLocation.toString());
+		response = webConversation.getResponse(request);
+		JSONObject workspace = new JSONObject(response.getText());
+		JSONArray projects = workspace.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		for (int i = 0; i < projects.length(); i++) {
+			JSONObject p = projects.getJSONObject(i);
+			assertFalse(projectId.equals(p.getString(ProtocolConstants.KEY_ID)));
+		}
 	}
 
 	@Test
@@ -469,16 +476,17 @@ public class GitCloneTest extends GitTest {
 		// the clone is gone
 		request = getGetRequest(cloneLocation);
 		response = webConversation.getResponse(request);
-		// assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject clones = new JSONObject(response.getText());
-		JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
-		assertEquals(0, clonesArray.length());
+		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 
 		// so it's the folder
 		request = getGetRequest(contentLocation);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
+
+		// but the project is still there
+		request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_ID));
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 	}
 
 	@Test
@@ -501,11 +509,7 @@ public class GitCloneTest extends GitTest {
 		// the clone is gone
 		request = getGetRequest(cloneLocation);
 		response = webConversation.getResponse(request);
-		// assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject clones = new JSONObject(response.getText());
-		JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
-		assertEquals(0, clonesArray.length());
+		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 
 		assertFalse(repository.getDirectory().exists());
 	}

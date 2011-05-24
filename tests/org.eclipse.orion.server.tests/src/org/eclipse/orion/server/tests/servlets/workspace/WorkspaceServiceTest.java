@@ -193,7 +193,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		assertNotNull(createdProject.optString(ProtocolConstants.KEY_LOCATION, null));
 
 		//check for children element to conform to structure of file API
-		JSONArray children = workspace.optJSONArray("Children");
+		JSONArray children = workspace.optJSONArray(ProtocolConstants.KEY_CHILDREN);
 		assertNotNull(children);
 		assertEquals(1, children.length());
 		JSONObject child = children.getJSONObject(0);

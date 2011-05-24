@@ -551,7 +551,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		return null;
 	}
 
-	private void removeProject(WebProject project, String authority) throws CoreException {
+	public static void removeProject(WebProject project, String authority) throws CoreException {
 		URI contentURI = project.getContentLocation();
 
 		// don't remove linked projects

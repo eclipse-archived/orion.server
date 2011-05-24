@@ -216,7 +216,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		} else if (path.segment(0).equals("file") && path.segmentCount() > 1) { //$NON-NLS-1$
 			// clones under given path
 			WebProject webProject = WebProject.fromId(path.segment(1));
-			if (isAccessAllowed(user, webProject)) {
+			if (isAccessAllowed(user, webProject) && webProject.getProjectStore().getFileStore(path.removeFirstSegments(2)).fetchInfo().exists()) {
 				URI contentLocation = webProject.getContentLocation();
 				IPath projectPath = new Path(contentLocation.getPath()).append(path.removeFirstSegments(2));
 				Map<IPath, File> gitDirs = new HashMap<IPath, File>();
@@ -304,6 +304,8 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 				Repository repo = new FileRepository(gitDir);
 				repo.close();
 				FileUtils.delete(repo.getWorkTree(), FileUtils.RECURSIVE | FileUtils.RETRY);
+				if (path.segmentCount() == 2)
+					return removeProject(request, response, webProject);
 				return true;
 			} else {
 				String msg = NLS.bind("Nothing found for the given ID: {0}", path);
@@ -335,6 +337,63 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			}
 		} catch (JSONException e) {
 			// ignore, deny access
+		}
+		return false;
+	}
+
+	/**
+	 * Looks for the project in all workspaces of the user and removes it when found.
+	 * 
+	 * @see WorkspaceResourceHandler#handleRemoveProject(HttpServletRequest, HttpServletResponse, WebWorkspace)
+	 * 
+	 * @param userName the user name
+	 * @param webProject the project to remove
+	 * @return <code>true</code> if the project has been found and successfully removed,
+	 * <code>false</code> if an error occurred or the project couldn't be found
+	 * @throws ServletException 
+	 */
+	private boolean removeProject(HttpServletRequest request, HttpServletResponse response, WebProject webProject) throws ServletException {
+		String userName = request.getRemoteUser();
+		try {
+			WebUser webUser = WebUser.fromUserName(userName);
+			JSONArray workspacesJSON = webUser.getWorkspacesJSON();
+			for (int i = 0; i < workspacesJSON.length(); i++) {
+				JSONObject workspace = workspacesJSON.getJSONObject(i);
+				String workspaceId = workspace.getString(ProtocolConstants.KEY_ID);
+				WebWorkspace webWorkspace = WebWorkspace.fromId(workspaceId);
+				JSONArray projectsJSON = webWorkspace.getProjectsJSON();
+				for (int j = 0; j < projectsJSON.length(); j++) {
+					JSONObject project = projectsJSON.getJSONObject(j);
+					String projectId = project.getString(ProtocolConstants.KEY_ID);
+					if (projectId.equals(webProject.getId())) {
+
+						//If found, remove project from workspace
+						webWorkspace.removeProject(webProject);
+
+						// remove the project folder
+						try {
+							WorkspaceResourceHandler.removeProject(webProject, userName);
+						} catch (CoreException e) {
+							//we are unable to write in the platform location!
+							String msg = NLS.bind("Server content location could not be written: {0}", Activator.getDefault().getRootLocationURI());
+							return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+						}
+
+						//save the workspace and project metadata
+						try {
+							webProject.save();
+							webWorkspace.save();
+						} catch (CoreException e) {
+							String msg = "Error persisting project state";
+							return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+						}
+
+						return true;
+					}
+				}
+			}
+		} catch (JSONException e) {
+			// ignore, no project will be harmed
 		}
 		return false;
 	}
