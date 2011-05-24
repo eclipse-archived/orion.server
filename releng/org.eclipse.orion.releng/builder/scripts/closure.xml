@@ -112,6 +112,7 @@
 				<arg value="--js=${orion.client.core}/js/editorContainer.js" />
 				<arg value="--js=${orion.client.core}/js/syntaxchecker.js" />
 				<arg value="--js=${orion.client.core}/js/styler/textMateStyler.js" />
+				<arg value="--js=${orion.client.core}/edit/setup.js" />
 				<arg value="--js=${orion.client.core}/edit/edit.js" />
 			</closure-args>
 		</closure>
