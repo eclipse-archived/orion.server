@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
-import java.util.Map.Entry;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -200,14 +199,18 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	private URI getRemoteBranchLocation(URI base, Repository db) throws IOException, URISyntaxException {
-		for (Entry<String, Ref> refEntry : db.getRefDatabase().getRefs(Constants.R_REMOTES).entrySet()) {
-			if (!refEntry.getValue().isSymbolic()) {
-				Ref ref = refEntry.getValue();
-				String name = ref.getName();
-				name = Repository.shortenRefName(name).substring(Constants.DEFAULT_REMOTE_NAME.length() + 1);
-				if (db.getBranch().equals(name)) {
-					return baseToRemoteLocation(base, Constants.DEFAULT_REMOTE_NAME, name);
-				}
+		Config repoConfig = db.getConfig();
+		String branch = db.getBranch();
+		String remote = repoConfig.getString(ConfigConstants.CONFIG_BRANCH_SECTION, branch, ConfigConstants.CONFIG_KEY_REMOTE);
+		if (remote == null)
+			// fall back to default remote
+			remote = Constants.DEFAULT_REMOTE_NAME;
+		String fetch = repoConfig.getString(ConfigConstants.CONFIG_REMOTE_SECTION, remote, "fetch"); //$NON-NLS-1$
+		if (fetch != null) {
+			// expecting something like: +refs/heads/*:refs/remotes/origin/*
+			String[] split = fetch.split(":"); //$NON-NLS-1$
+			if (split[0].endsWith("*") /*src*/&& split[1].endsWith("*") /*dst*/) { //$NON-NLS-1$ //$NON-NLS-2$
+				return baseToRemoteLocation(base, remote, branch);
 			}
 		}
 		return null;
