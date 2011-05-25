@@ -349,22 +349,29 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	// remotes
-
-	protected JSONObject getRemoteBranch(String gitRemoteUri, int size, int i, String name) throws IOException, SAXException, JSONException {
+	protected JSONObject getRemote(String gitRemoteUri, int size, int i, String name) throws IOException, SAXException, JSONException {
 		assertRemoteUri(gitRemoteUri);
 		WebRequest request = GitRemoteTest.getGetGitRemoteRequest(gitRemoteUri);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject remotes = new JSONObject(response.getText());
 		JSONArray remotesArray = remotes.getJSONArray(ProtocolConstants.KEY_CHILDREN);
-		assertEquals(1, remotesArray.length());
-		JSONObject remote = remotesArray.getJSONObject(0);
+		assertEquals(size, remotesArray.length());
+		JSONObject remote = remotesArray.getJSONObject(i);
 		assertNotNull(remote);
-		assertEquals(Constants.DEFAULT_REMOTE_NAME, remote.getString(ProtocolConstants.KEY_NAME));
+		assertEquals(name, remote.getString(ProtocolConstants.KEY_NAME));
+		String remoteLocation = remote.getString(ProtocolConstants.KEY_LOCATION);
+		assertNotNull(remoteLocation);
+		return remote;
+	}
+
+	protected JSONObject getRemoteBranch(String gitRemoteUri, int size, int i, String name) throws IOException, SAXException, JSONException {
+		assertRemoteUri(gitRemoteUri);
+		JSONObject remote = getRemote(gitRemoteUri, 1, 0, Constants.DEFAULT_REMOTE_NAME);
 		String remoteLocation = remote.getString(ProtocolConstants.KEY_LOCATION);
 
-		request = GitRemoteTest.getGetGitRemoteRequest(remoteLocation);
-		response = webConversation.getResponse(request);
+		WebRequest request = GitRemoteTest.getGetGitRemoteRequest(remoteLocation);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		remote = new JSONObject(response.getText());
 		assertNotNull(remote);
@@ -475,7 +482,7 @@ public abstract class GitTest extends FileSystemTest {
 	 * @throws SAXException
 	 */
 	protected JSONObject fetch(String remoteBranchLocation, String userName, String kh, byte[] privk, byte[] pubk, byte[] p, boolean shouldBeOK) throws JSONException, IOException, SAXException {
-		assertRemoteBranchLocation(remoteBranchLocation);
+		assertRemoteOrRemoteBranchLocation(remoteBranchLocation);
 
 		// fetch
 		WebRequest request = GitFetchTest.getPostGitRemoteRequest(remoteBranchLocation, true, userName, kh, privk, pubk, p);
@@ -502,27 +509,34 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	/**
-	 * Fetch objects and refs from the given remote branch. 
+	 * Fetch objects and refs from the given remote or remote branch.
 	 * 
-	 * @param remoteBranchLocation remote branch URI
-	 * @return JSONObject representing remote branch after the fetch is done
+	 * @param remoteLocation remote (branch) URI
+	 * @return JSONObject representing remote (branch) after the fetch is done
 	 * @throws JSONException
 	 * @throws IOException
 	 * @throws SAXException
 	 */
-	protected JSONObject fetch(String remoteBranchLocation) throws JSONException, IOException, SAXException {
-		assertRemoteBranchLocation(remoteBranchLocation);
+	protected JSONObject fetch(String remoteLocation) throws JSONException, IOException, SAXException {
+		assertRemoteOrRemoteBranchLocation(remoteLocation);
 
 		// fetch
-		WebRequest request = GitFetchTest.getPostGitRemoteRequest(remoteBranchLocation, true);
+		WebRequest request = GitFetchTest.getPostGitRemoteRequest(remoteLocation, true);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(taskLocation);
-		waitForTaskCompletion(taskLocation);
+		String location = waitForTaskCompletion(taskLocation);
 
-		// get remote branch details again
-		request = GitRemoteTest.getGetGitRemoteRequest(remoteBranchLocation);
+		// validate task completed successfully
+		request = getGetRequest(location);
+		response = webConversation.getResponse(request);
+		JSONObject status = new JSONObject(response.getText());
+		assertFalse(status.getBoolean("Running"));
+		assertEquals(HttpURLConnection.HTTP_OK, status.getJSONObject("Result").getInt("HttpCode"));
+
+		// get remote (branch) details again
+		request = GitRemoteTest.getGetGitRemoteRequest(remoteLocation);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		return new JSONObject(response.getText());
@@ -665,14 +679,31 @@ public abstract class GitTest extends FileSystemTest {
 		assertEquals("file", path.segment(3));
 	}
 
-	private static void assertRemoteBranchLocation(String remoteBranchLocation) {
-		URI uri = URI.create(remoteBranchLocation);
+	private static void assertRemoteOrRemoteBranchLocation(String remoteLocation) {
+		URI uri = URI.create(remoteLocation);
 		IPath path = new Path(uri.getPath());
+		AssertionError error = null;
+		// /git/remote/{remote}/file/{path}
+		try {
+			assertTrue(path.segmentCount() > 4);
+			assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
+			assertEquals(GitConstants.REMOTE_RESOURCE, path.segment(1));
+			assertEquals("file", path.segment(3));
+		} catch (AssertionError e) {
+			error = e;
+		}
+
 		// /git/remote/{remote}/{branch}/file/{path}
-		assertTrue(path.segmentCount() > 5);
-		assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
-		assertEquals(GitConstants.REMOTE_RESOURCE, path.segment(1));
-		assertEquals("file", path.segment(4));
+		try {
+			assertTrue(path.segmentCount() > 5);
+			assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
+			assertEquals(GitConstants.REMOTE_RESOURCE, path.segment(1));
+			assertEquals("file", path.segment(4));
+		} catch (AssertionError e) {
+			if (error != null) {
+				throw error; // rethrow the first exception
+			} // otherwise it's a remote location, ignore this exception
+		}
 	}
 
 	private static void assertTagUri(String tagUri) {

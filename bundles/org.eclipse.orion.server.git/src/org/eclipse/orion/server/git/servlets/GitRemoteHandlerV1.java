@@ -167,6 +167,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		String srcRef = requestObject.optString(GitConstants.KEY_PUSH_SRC_REF, null);
 		boolean tags = requestObject.optBoolean(GitConstants.KEY_PUSH_TAGS, false);
 
+		// prepare creds
 		String username = requestObject.optString(GitConstants.KEY_USERNAME, null);
 		char[] password = requestObject.optString(GitConstants.KEY_PASSWORD, "").toCharArray(); //$NON-NLS-1$
 		String knownHosts = requestObject.optString(GitConstants.KEY_KNOWN_HOSTS, null);
@@ -174,12 +175,12 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		byte[] publicKey = requestObject.optString(GitConstants.KEY_PUBLIC_KEY, "").getBytes(); //$NON-NLS-1$
 		byte[] passphrase = requestObject.optString(GitConstants.KEY_PASSPHRASE, "").getBytes(); //$NON-NLS-1$
 
-		// if all went well, push
 		GitCredentialsProvider cp = new GitCredentialsProvider(null, username, password, knownHosts);
 		cp.setPrivateKey(privateKey);
 		cp.setPublicKey(publicKey);
 		cp.setPassphrase(passphrase);
 
+		// if all went well, continue with fetch or push
 		if (fetch) {
 			return fetch(request, response, cp, path);
 		} else if (srcRef != null) {
