@@ -118,6 +118,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 						// o.put(GitConstants.KEY_COMMIT, baseToCommitLocation(baseLocation, name));
 						o.put(ProtocolConstants.KEY_LOCATION, baseToRemoteLocation(baseLocation, 3, Repository.shortenRefName(name)));
 						o.put(GitConstants.KEY_COMMIT, baseToCommitLocation(baseLocation, 3, ref.getObjectId().name()));
+						o.put(GitConstants.KEY_HEAD, baseToCommitLocation(baseLocation, 3, Constants.HEAD));
 						children.put(o);
 					}
 					result.put(ProtocolConstants.KEY_CHILDREN, children);
