@@ -10,17 +10,9 @@
  *******************************************************************************/
 package org.eclipse.orion.server.tests;
 
-import java.util.Dictionary;
-import java.util.Hashtable;
-
-import org.eclipse.equinox.http.jetty.JettyConfigurator;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.server.configurator.ConfiguratorActivator;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleActivator;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.BundleException;
-import org.osgi.framework.ServiceReference;
+import org.osgi.framework.*;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.packageadmin.PackageAdmin;
 import org.osgi.util.tracker.ServiceTracker;
@@ -30,7 +22,7 @@ public class ServerTestsActivator implements BundleActivator {
 	private static final String EQUINOX_HTTP_REGISTRY = "org.eclipse.equinox.http.registry"; //$NON-NLS-1$
 
 	public static BundleContext bundleContext;
-	private static ServiceTracker httpServiceTracker;
+	private static ServiceTracker<HttpService, HttpService> httpServiceTracker;
 	private static ServiceTracker<PackageAdmin, PackageAdmin> packageAdminTracker;
 
 	private static boolean initialized = false;
@@ -61,14 +53,7 @@ public class ServerTestsActivator implements BundleActivator {
 	}
 
 	private static void initialize() throws Exception {
-		// ensure that the http stuff is started
-		Dictionary<String, Object> d = new Hashtable<String, Object>();
-		d.put("http.port", new Integer(0)); //$NON-NLS-1$
-
-		JettyConfigurator.startServer("webide server tests", d);
-
-		ServiceReference reference = httpServiceTracker.getServiceReference();
-
+		ServiceReference<HttpService> reference = httpServiceTracker.getServiceReference();
 		String port = (String) reference.getProperty("http.port"); //$NON-NLS-1$
 		serverHost = "localhost"; //$NON-NLS-1$
 		serverPort = Integer.parseInt(port);
@@ -77,7 +62,7 @@ public class ServerTestsActivator implements BundleActivator {
 
 	public void start(BundleContext context) throws Exception {
 		bundleContext = context;
-		httpServiceTracker = new ServiceTracker(context, HttpService.class.getName(), null);
+		httpServiceTracker = new ServiceTracker<HttpService, HttpService>(context, HttpService.class, null);
 		httpServiceTracker.open();
 
 		packageAdminTracker = new ServiceTracker<PackageAdmin, PackageAdmin>(context, PackageAdmin.class.getName(), null);
