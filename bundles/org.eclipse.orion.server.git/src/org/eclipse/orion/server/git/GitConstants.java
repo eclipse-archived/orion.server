@@ -119,6 +119,14 @@ public class GitConstants {
 
 	public static final String KEY_REMOTE_NAME = "Remote"; //$NON-NLS-1$
 
+	public static final String KEY_REMOTE_URI = "RemoteURI"; //$NON-NLS-1$
+
+	public static final String KEY_REMOTE_PUSH_URI = "PushURI"; //$NON-NLS-1$
+
+	public static final String KEY_REMOTE_PUSH_REF = "PushRefSpec"; //$NON-NLS-1$
+
+	public static final String KEY_REMOTE_FETCH_REF = "FetchRefSpec"; //$NON-NLS-1$
+
 	public static final String KEY_BRANCH_CURRENT = "Current"; //$NON-NLS-1$
 
 	public static final String KEY_AUTHOR_NAME = "AuthorName"; //$NON-NLS-1$

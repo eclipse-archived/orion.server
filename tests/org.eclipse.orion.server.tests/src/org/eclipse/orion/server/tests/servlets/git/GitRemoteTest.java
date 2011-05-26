@@ -175,7 +175,7 @@ public class GitRemoteTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// push
-		ServerStatus pushStatus = push(gitRemoteUri, Constants.HEAD, false);
+		ServerStatus pushStatus = push(gitRemoteUri, 1, 0, Constants.MASTER, Constants.HEAD, false);
 		assertEquals(true, pushStatus.isOK());
 
 		remoteBranch = getRemoteBranch(gitRemoteUri, 1, 0, Constants.MASTER);
@@ -230,7 +230,8 @@ public class GitRemoteTest extends GitTest {
 		assertEquals(0, git.branchList().setListMode(ListMode.REMOTE).call().size() - remoteBefore);
 		assertEquals(1, git.branchList().setListMode(ListMode.ALL).call().size() - allBefore);
 
-		// push all, replace with REST API when bug 339115 is fixed
+		// push all
+		// TODO: replace with REST API when bug 339115 is fixed
 		git.push().setPushAll().call();
 
 		assertEquals(1, git.branchList().call().size() - localBefore);

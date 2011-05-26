@@ -168,19 +168,26 @@ public class GitLogTest extends GitTest {
 	}
 
 	@Test
-	@Ignore("not implemented yet")
+	@Ignore("bug 343644")
 	public void testLogWithBranch() throws Exception {
-		String contentLocation = clone(null).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		JSONObject project = linkProject(contentLocation, getMethodName());
+		URI workspaceLocation = createWorkspace(getMethodName());
+
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject clone = clone(new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute());
+		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
+
+		// get project metadata
+		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		project = new JSONObject(response.getText());
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
 		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
-		String gitBranchUri = gitSection.getString(GitConstants.KEY_BRANCH);
 
 		JSONArray commitsArray = log(gitCommitUri, true);
 		assertEquals(1, commitsArray.length());
 
-		branch(gitBranchUri, "branch");
+		branch(branchesLocation, "branch");
 
 		commitsArray = log(gitCommitUri, true);
 		assertEquals(1, commitsArray.length());
@@ -244,6 +251,40 @@ public class GitLogTest extends GitTest {
 
 		commit = commitsArray.getJSONObject(1);
 		assertEquals("Initial commit", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
+	}
+
+	@Test
+	public void testLogNewBranch() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject clone = clone(new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute());
+		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
+		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
+
+		// get project metadata
+		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		project = new JSONObject(response.getText());
+		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+
+		JSONArray commitsArray = log(gitCommitUri, true);
+		assertEquals(1, commitsArray.length());
+
+		branch(branchesLocation, "a");
+		checkoutBranch(cloneLocation, "a");
+
+		// get project metadata again
+		request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_LOCATION));
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		project = new JSONObject(response.getText());
+		gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+
+		log(gitCommitUri, true /* RemoteLocation should be available */);
 	}
 
 	private static WebRequest getPostForScopedLogRequest(String location, String newCommit) throws JSONException, UnsupportedEncodingException {

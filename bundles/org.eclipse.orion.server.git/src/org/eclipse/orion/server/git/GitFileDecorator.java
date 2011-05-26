@@ -14,13 +14,13 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Map.Entry;
 import javax.servlet.http.HttpServletRequest;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
@@ -28,7 +28,8 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler.Method;
 import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.server.core.*;
-import org.eclipse.orion.server.git.servlets.*;
+import org.eclipse.orion.server.git.servlets.GitServlet;
+import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.json.*;
 
 /**
@@ -128,18 +129,7 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		// add Git Default Remote Branch URI
 		File gitDir = GitUtils.getGitDir(targetPath);
 		Repository db = new FileRepository(gitDir);
-
-		for (Entry<String, Ref> refEntry : db.getRefDatabase().getRefs(Constants.R_REMOTES).entrySet()) {
-			if (!refEntry.getValue().isSymbolic()) {
-				Ref ref = refEntry.getValue();
-				String shortName = Repository.shortenRefName(ref.getName());
-				if (db.getBranch().equals(shortName.substring(Constants.DEFAULT_REMOTE_NAME.length() + 1))) {
-					link = new URI(location.getScheme(), location.getAuthority(), GitRemoteHandlerV1.baseToRemoteLocation(link, 2, shortName).getPath(), null, null);
-					gitSection.put(GitConstants.KEY_DEFAULT_REMOTE_BRANCH, link);
-					break;
-				}
-			}
-		}
+		gitSection.put(GitConstants.KEY_DEFAULT_REMOTE_BRANCH, BaseToRemoteConverter.getRemoteBranchLocation(location, db, BaseToRemoteConverter.FILE));
 
 		// add Git Tag URI
 		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.TAG_RESOURCE).append(targetPath);
@@ -176,7 +166,7 @@ public class GitFileDecorator implements IWebResourceDecorator {
 				repo.create();
 				//we need to perform an initial commit to workaround JGit bug 339610.
 				Git git = new Git(repo);
-				git.add().addFilepattern(".").call();
+				git.add().addFilepattern(".").call(); //$NON-NLS-1$
 				git.commit().setMessage("Initial commit").call();
 			}
 		} catch (Exception e) {

@@ -28,6 +28,7 @@ import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.git.BaseToRemoteConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
@@ -117,6 +118,7 @@ public class GitBranchHandlerV1 extends ServletResourceHandler<String> {
 			Ref ref = git.branchCreate().setName(branchName).call();
 			// TODO: what if something went wrong, handle exception
 			JSONObject result = toJSON(db, ref, getURI(request), 2);
+			OrionServlet.writeJSONResponse(request, response, result);
 			response.setHeader(ProtocolConstants.HEADER_LOCATION, result.getString(ProtocolConstants.KEY_LOCATION));
 			response.setStatus(HttpServletResponse.SC_CREATED);
 			return true;
@@ -160,6 +162,8 @@ public class GitBranchHandlerV1 extends ServletResourceHandler<String> {
 		newPath = new Path(GitServlet.GIT_URI).append(GitConstants.COMMIT_RESOURCE).append(shortName).append(basePath.removeFirstSegments(s));
 		URI commitLocation = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), newPath.toString(), baseLocation.getQuery(), baseLocation.getFragment());
 		result.put(GitConstants.KEY_COMMIT, commitLocation);
+
+		result.put(GitConstants.KEY_REMOTE, BaseToRemoteConverter.getRemoteBranchLocation(baseLocation, db, BaseToRemoteConverter.REMOVE_FIRST_2));
 
 		result.put(GitConstants.KEY_BRANCH_CURRENT, shortName.equals(db.getBranch()));
 		return result;

@@ -17,10 +17,10 @@ import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepository;
-import org.eclipse.jgit.transport.CredentialsProvider;
-import org.eclipse.jgit.transport.RemoteConfig;
+import org.eclipse.jgit.transport.*;
 import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitActivator;
@@ -38,14 +38,15 @@ public class FetchJob extends GitJob {
 	private final TaskInfo task;
 	private ITaskService taskService;
 	private ServiceReference<ITaskService> taskServiceRef;
-	private IPath gitDir;
+	private IPath path;
 	private String remote;
 
 	public FetchJob(CredentialsProvider credentials, Path path) {
 		super("Fetching"); //$NON-NLS-1$
 
 		this.credentials = credentials;
-		this.gitDir = path.removeFirstSegments(2);
+		// path: {remote}[/{branch}]/file/{...}
+		this.path = path;
 		this.remote = path.segment(0);
 		this.task = createTask();
 	}
@@ -58,17 +59,39 @@ public class FetchJob extends GitJob {
 	}
 
 	private void doFetch() throws IOException, CoreException, JGitInternalException, InvalidRemoteException, URISyntaxException {
-		Repository db = new FileRepository(GitUtils.getGitDir(gitDir));
+		Repository db = getRepository();
+		String branch = getRemoteBranch();
+
 		Git git = new Git(db);
-		FetchCommand cc = git.fetch();
+		FetchCommand fc = git.fetch();
 
 		RemoteConfig remoteConfig = new RemoteConfig(git.getRepository().getConfig(), remote);
 		((GitCredentialsProvider) credentials).setUri(remoteConfig.getURIs().get(0));
 
-		cc.setCredentialsProvider(credentials);
-		cc.setRemote(remote);
+		fc.setCredentialsProvider(credentials);
+		fc.setRemote(remote);
+		if (branch != null) {
+			// refs/heads/{branch}:refs/remotes/{remote}/{branch}
+			RefSpec spec = new RefSpec(Constants.R_HEADS + branch + ":" + Constants.R_REMOTES + remote + "/" + branch); //$NON-NLS-1$ //$NON-NLS-2$
+			fc.setRefSpecs(spec);
+		}
+		fc.call();
+	}
 
-		cc.call();
+	private Repository getRepository() throws IOException, CoreException {
+		IPath p = null;
+		if (path.segment(1).equals("file")) //$NON-NLS-1$
+			p = path.removeFirstSegments(1);
+		else
+			p = path.removeFirstSegments(2);
+		return new FileRepository(GitUtils.getGitDir(p));
+	}
+
+	private String getRemoteBranch() {
+		if (path.segment(1).equals("file")) //$NON-NLS-1$
+			return null;
+		else
+			return path.segment(1);
 	}
 
 	public TaskInfo getTask() {
@@ -92,15 +115,15 @@ public class FetchJob extends GitJob {
 		try {
 			doFetch();
 		} catch (IOException e) {
-			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error fetching git remote", e); //$NON-NLS-1$
+			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error fetching git remote", e);
 		} catch (CoreException e) {
 			result = e.getStatus();
 		} catch (JGitInternalException e) {
 			result = getJGitInternalExceptionStatus(e, "An internal git error fetching git remote");
 		} catch (InvalidRemoteException e) {
-			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error fetching git remote", e); //$NON-NLS-1$
+			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error fetching git remote", e);
 		} catch (Exception e) {
-			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error fetching git remote", e); //$NON-NLS-1$
+			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error fetching git remote", e);
 		}
 		task.done(result);
 		task.setMessage(NLS.bind("Fetching {0} done", remote));

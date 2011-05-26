@@ -64,8 +64,14 @@ public class CloneJob extends GitJob {
 	private IStatus doClone() {
 		try {
 			File cloneFolder = new File(clone.getContentLocation().getPath());
-			if (!cloneFolder.exists())
+			if (!cloneFolder.exists()) {
 				cloneFolder.mkdir();
+			} else {
+				// workaround until http://egit.eclipse.org/r/#change,3518 is fixed
+				File dotGit = new File(cloneFolder, Constants.DOT_GIT);
+				if (dotGit.exists())
+					throw new IOException("Destination folder already exists and contains a repository");
+			}
 			CloneCommand cc = Git.cloneRepository();
 			cc.setBare(false);
 			cc.setCredentialsProvider(credentials);
@@ -111,11 +117,11 @@ public class CloneJob extends GitJob {
 			if (taskServiceRef == null) {
 				taskServiceRef = context.getServiceReference(ITaskService.class);
 				if (taskServiceRef == null)
-					throw new IllegalStateException("Task service not available"); //$NON-NLS-1$
+					throw new IllegalStateException("Task service not available");
 			}
 			taskService = context.getService(taskServiceRef);
 			if (taskService == null)
-				throw new IllegalStateException("Task service not available"); //$NON-NLS-1$
+				throw new IllegalStateException("Task service not available");
 		}
 		return taskService;
 	}
@@ -136,7 +142,7 @@ public class CloneJob extends GitJob {
 					FileUtils.delete(URIUtil.toFile(clone.getContentLocation()), FileUtils.RECURSIVE);
 				}
 			} catch (IOException e) {
-				String msg = "Error persisting clone state"; //$NON-NLS-1$
+				String msg = "Error persisting clone state";
 				result = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 			}
 			task.done(result);
