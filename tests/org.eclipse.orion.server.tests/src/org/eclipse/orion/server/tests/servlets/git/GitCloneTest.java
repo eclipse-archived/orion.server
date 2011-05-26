@@ -24,12 +24,12 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.internal.preferences.ExportedPreferences;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.URIUtil;
-import org.eclipse.core.runtime.preferences.IExportedPreferences;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.api.PullResult;
@@ -39,7 +39,6 @@ import org.eclipse.jgit.lib.RepositoryCache;
 import org.eclipse.jgit.lib.RepositoryState;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
-import org.eclipse.orion.internal.server.core.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.PreferenceHelper;
@@ -325,38 +324,48 @@ public class GitCloneTest extends GitTest {
 
 	@Test
 	public void testLinkToFolderWithDefaultSCM() throws Exception {
-		IExportedPreferences testNode = (IExportedPreferences) ExportedPreferences.newRoot().node(ServerConstants.PREFERENCE_SCOPE);
-		testNode.put(ServerConstants.CONFIG_FILE_DEFAULT_SCM, "git");
-		Activator.getPreferenceService().applyPreferences(testNode);
-		// FIXME: the above is wrong as we never pass the assumption below
+		// enable git autoinit for new projects
+		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(ServerConstants.PREFERENCE_SCOPE);
+		String oldValue = prefs.get(ServerConstants.CONFIG_FILE_DEFAULT_SCM, null);
+		prefs.put(ServerConstants.CONFIG_FILE_DEFAULT_SCM, "git");
+		prefs.flush();
 
-		// the same check as in org.eclipse.orion.server.git.GitFileDecorator.initGitRepository(HttpServletRequest, IPath, JSONObject)
-		String scm = PreferenceHelper.getString(ServerConstants.CONFIG_FILE_DEFAULT_SCM, "");
-		Assume.assumeTrue("git".equals(scm)); //$NON-NLS-1$
+		try {
+			// the same check as in org.eclipse.orion.server.git.GitFileDecorator.initGitRepository(HttpServletRequest, IPath, JSONObject)
+			String scm = PreferenceHelper.getString(ServerConstants.CONFIG_FILE_DEFAULT_SCM, "");
+			Assume.assumeTrue("git".equals(scm)); //$NON-NLS-1$
 
-		URI workspaceLocation = createWorkspace(getMethodName());
+			URI workspaceLocation = createWorkspace(getMethodName());
 
-		String contentLocation = new File(gitDir, "folder").getAbsolutePath();
+			String contentLocation = new File(gitDir, "folder").getAbsolutePath();
 
-		JSONObject newProject = createProjectOrLink(workspaceLocation, getMethodName() + "-link", contentLocation);
-		String projectContentLocation = newProject.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+			JSONObject newProject = createProjectOrLink(workspaceLocation, getMethodName() + "-link", contentLocation);
+			String projectContentLocation = newProject.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
-		// http://<host>/file/<projectId>/
-		WebRequest request = getGetFilesRequest(projectContentLocation);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject project = new JSONObject(response.getText());
-		String childrenLocation = project.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
-		assertNotNull(childrenLocation);
+			// http://<host>/file/<projectId>/
+			WebRequest request = getGetFilesRequest(projectContentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject project = new JSONObject(response.getText());
+			String childrenLocation = project.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
+			assertNotNull(childrenLocation);
 
-		// http://<host>/file/<projectId>/?depth=1
-		request = getGetFilesRequest(childrenLocation);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));
-		String[] expectedChildren = new String[] {"folder.txt"}; // no .git even though auto-git is on
-		assertEquals("Wrong number of directory children", expectedChildren.length, children.size());
-		assertEquals(expectedChildren[0], children.get(0).getString(ProtocolConstants.KEY_NAME));
+			// http://<host>/file/<projectId>/?depth=1
+			request = getGetFilesRequest(childrenLocation);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));
+			String[] expectedChildren = new String[] {"folder.txt"}; // no .git even though auto-git is on
+			assertEquals("Wrong number of directory children", expectedChildren.length, children.size());
+			assertEquals(expectedChildren[0], children.get(0).getString(ProtocolConstants.KEY_NAME));
+		} finally {
+			// reset the preference we messed with for the test
+			if (oldValue == null)
+				prefs.remove(ServerConstants.CONFIG_FILE_DEFAULT_SCM);
+			else
+				prefs.put(ServerConstants.CONFIG_FILE_DEFAULT_SCM, oldValue);
+			prefs.flush();
+		}
 	}
 
 	@BeforeClass
