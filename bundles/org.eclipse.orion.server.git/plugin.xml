@@ -17,6 +17,8 @@
             alias="/plugins/git"
             httpcontextId="org.eclipse.orion.server.git.httpcontext.plugins">
       </resource>
+      <serviceSelector
+            filter="(other.info=org.eclipse.orion)">
+      </serviceSelector>
    </extension>
-
 </plugin>
