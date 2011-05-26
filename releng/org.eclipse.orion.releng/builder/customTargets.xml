@@ -70,11 +70,13 @@ lastMapTag=${mapsTagTag}
 		<antcall target="jsdocs" />
 		<antcall target="optimizeCSS" />
 		
+		<!--
 		<ant dir="${basedir}" antfile="${builder}/scripts/closure.xml" target="runClosure" >
 			<property name="orion.client.core" value="${buildDirectory}/plugins/org.eclipse.orion.client.core/static"/>
 			<property name="orion.client.editor" value="${buildDirectory}/plugins/org.eclipse.orion.client.editor/web"/>
 			<property name="orion.client.git" value="${buildDirectory}/plugins/org.eclipse.orion.client.git/static"/>
 		</ant>
+		-->
 	</target>
 	
 	<target name="jsdocs" if="jsdocHome" >
