@@ -22,6 +22,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.transport.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -49,8 +50,8 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 					// return handlePut(request, response, path);
 				case POST :
 					return handlePost(request, response, path);
-					// case DELETE :
-					// return handleDelete(request, response, path);
+				case DELETE :
+					return handleDelete(request, response, path);
 			}
 
 		} catch (Exception e) {
@@ -161,36 +162,109 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		return false;
 	}
 
-	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, String path) throws IOException, JSONException, ServletException, URISyntaxException, CoreException {
-		JSONObject requestObject = OrionServlet.readJSONRequest(request);
-		boolean fetch = Boolean.parseBoolean(requestObject.optString(GitConstants.KEY_FETCH, null));
-		String srcRef = requestObject.optString(GitConstants.KEY_PUSH_SRC_REF, null);
-		boolean tags = requestObject.optBoolean(GitConstants.KEY_PUSH_TAGS, false);
+	// remove remote
+	private boolean handleDelete(HttpServletRequest request, HttpServletResponse response, String path) throws CoreException, IOException, URISyntaxException {
+		Path p = new Path(path);
+		if (p.segment(1).equals("file")) { //$NON-NLS-1$
+			// expected path: /git/remote/{remote}/file/{path}
+			String remoteName = p.segment(0);
 
-		// prepare creds
-		String username = requestObject.optString(GitConstants.KEY_USERNAME, null);
-		char[] password = requestObject.optString(GitConstants.KEY_PASSWORD, "").toCharArray(); //$NON-NLS-1$
-		String knownHosts = requestObject.optString(GitConstants.KEY_KNOWN_HOSTS, null);
-		byte[] privateKey = requestObject.optString(GitConstants.KEY_PRIVATE_KEY, "").getBytes(); //$NON-NLS-1$
-		byte[] publicKey = requestObject.optString(GitConstants.KEY_PUBLIC_KEY, "").getBytes(); //$NON-NLS-1$
-		byte[] passphrase = requestObject.optString(GitConstants.KEY_PASSPHRASE, "").getBytes(); //$NON-NLS-1$
-
-		GitCredentialsProvider cp = new GitCredentialsProvider(null, username, password, knownHosts);
-		cp.setPrivateKey(privateKey);
-		cp.setPublicKey(publicKey);
-		cp.setPassphrase(passphrase);
-
-		// if all went well, continue with fetch or push
-		if (fetch) {
-			return fetch(request, response, cp, path);
-		} else if (srcRef != null) {
-			if (srcRef.equals("")) { //$NON-NLS-1$
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Pushing with an empty source ref is not allowed. Did you mean DELETE?", null));
-			}
-			return push(request, response, path, cp, srcRef, tags);
-		} else {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Only Fetch:true is currently supported.", null));
+			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(1));
+			Repository db = new FileRepository(gitDir);
+			StoredConfig config = db.getConfig();
+			config.unsetSection("remote", remoteName);
+			config.save();
+			//TODO: handle result
+			return true;
 		}
+		return false;
+	}
+
+	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, String path) throws IOException, JSONException, ServletException, URISyntaxException, CoreException {
+		Path p = new Path(path);
+		if (p.segment(0).equals("file")) { //$NON-NLS-1$
+			// handle adding new remote
+			// expected path: /git/remote/file/{path}
+			return addRemote(request, response, path);
+		} else {
+			JSONObject requestObject = OrionServlet.readJSONRequest(request);
+			boolean fetch = Boolean.parseBoolean(requestObject.optString(GitConstants.KEY_FETCH, null));
+			String srcRef = requestObject.optString(GitConstants.KEY_PUSH_SRC_REF, null);
+			boolean tags = requestObject.optBoolean(GitConstants.KEY_PUSH_TAGS, false);
+
+			// prepare creds
+			String username = requestObject.optString(GitConstants.KEY_USERNAME, null);
+			char[] password = requestObject.optString(GitConstants.KEY_PASSWORD, "").toCharArray(); //$NON-NLS-1$
+			String knownHosts = requestObject.optString(GitConstants.KEY_KNOWN_HOSTS, null);
+			byte[] privateKey = requestObject.optString(GitConstants.KEY_PRIVATE_KEY, "").getBytes(); //$NON-NLS-1$
+			byte[] publicKey = requestObject.optString(GitConstants.KEY_PUBLIC_KEY, "").getBytes(); //$NON-NLS-1$
+			byte[] passphrase = requestObject.optString(GitConstants.KEY_PASSPHRASE, "").getBytes(); //$NON-NLS-1$
+
+			GitCredentialsProvider cp = new GitCredentialsProvider(null, username, password, knownHosts);
+			cp.setPrivateKey(privateKey);
+			cp.setPublicKey(publicKey);
+			cp.setPassphrase(passphrase);
+
+			// if all went well, continue with fetch or push
+			if (fetch) {
+				return fetch(request, response, cp, path);
+			} else if (srcRef != null) {
+				if (srcRef.equals("")) { //$NON-NLS-1$
+					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Pushing with an empty source ref is not allowed. Did you mean DELETE?", null));
+				}
+				return push(request, response, path, cp, srcRef, tags);
+			} else {
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Only Fetch:true is currently supported.", null));
+			}
+		}
+	}
+
+	// add new remote
+	private boolean addRemote(HttpServletRequest request, HttpServletResponse response, String path) throws IOException, JSONException, ServletException, CoreException, URISyntaxException {
+		// expected path: /git/remote/file/{path}
+		Path p = new Path(path);
+		JSONObject toPut = OrionServlet.readJSONRequest(request);
+		String remoteName = toPut.optString(GitConstants.KEY_REMOTE_NAME, null);
+		// remoteName is required
+		if (remoteName == null || remoteName.isEmpty()) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Remote name must be provided", null));
+		}
+		String remoteURI = toPut.optString(GitConstants.KEY_REMOTE_URI, null);
+		// remoteURI is required
+		if (remoteURI == null || remoteURI.isEmpty()) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Remote URI must be provided", null));
+		}
+		String fetchRefSpec = toPut.optString(GitConstants.KEY_REMOTE_FETCH_REF, null);
+		String remotePushURI = toPut.optString(GitConstants.KEY_REMOTE_PUSH_URI, null);
+		String pushRefSpec = toPut.optString(GitConstants.KEY_REMOTE_PUSH_REF, null);
+
+		File gitDir = GitUtils.getGitDir(p);
+		Repository db = new FileRepository(gitDir);
+		StoredConfig config = db.getConfig();
+
+		RemoteConfig rc = new RemoteConfig(config, remoteName);
+		rc.addURI(new URIish(remoteURI));
+		// FetchRefSpec is required, but default version can be generated
+		// if it isn't provided
+		if (fetchRefSpec == null || fetchRefSpec.isEmpty()) {
+			fetchRefSpec = String.format("+refs/heads/*:refs/remotes/%s/*", remoteName); //$NON-NLS-1$
+		}
+		rc.addFetchRefSpec(new RefSpec(fetchRefSpec));
+		// pushURI is optional
+		if (remotePushURI != null && !remotePushURI.isEmpty())
+			rc.addPushURI(new URIish(remotePushURI));
+		// PushRefSpec is optional
+		if (pushRefSpec != null && !pushRefSpec.isEmpty())
+			rc.addPushRefSpec(new RefSpec(pushRefSpec));
+
+		rc.update(config);
+		config.save();
+
+		URI baseLocation = getURI(request);
+		response.setHeader(ProtocolConstants.HEADER_LOCATION, baseToRemoteLocation(baseLocation, 3, remoteName).toString());
+		response.setStatus(HttpServletResponse.SC_CREATED);
+		//TODO: handle result
+		return true;
 	}
 
 	private boolean fetch(HttpServletRequest request, HttpServletResponse response, GitCredentialsProvider cp, String path) throws URISyntaxException, JSONException, IOException {
