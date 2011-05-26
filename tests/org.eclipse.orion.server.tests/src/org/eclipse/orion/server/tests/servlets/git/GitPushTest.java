@@ -12,6 +12,7 @@ package org.eclipse.orion.server.tests.servlets.git;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
@@ -22,6 +23,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.transport.RemoteRefUpdate.Status;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -138,7 +140,7 @@ public class GitPushTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone1: push
-		ServerStatus pushStatus = push(gitRemoteUri1, Constants.HEAD, false);
+		ServerStatus pushStatus = push(gitRemoteUri1, 1, 0, Constants.MASTER, Constants.HEAD, false);
 		assertEquals(true, pushStatus.isOK());
 
 		// clone2: get remote branch location
@@ -252,17 +254,76 @@ public class GitPushTest extends GitTest {
 	}
 
 	@Test
-	@Ignore("not implemented yet")
-	public void testPushBranch() {
-		// TODO:
-		// clone1
+	public void testPushBranch() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+
+		// clone1: create
+		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
+		String projectId1 = project1.getString(ProtocolConstants.KEY_ID);
+		IPath clonePath1 = new Path("file").append(project1.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		JSONObject clone1 = clone(clonePath1);
+		String cloneLocation1 = clone1.getString(ProtocolConstants.KEY_LOCATION);
+		String branchesLocation1 = clone1.getString(GitConstants.KEY_BRANCH);
+
+		// get project1 metadata
+		WebRequest request = getGetFilesRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		project1 = new JSONObject(response.getText());
+		JSONObject gitSection1 = project1.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection1);
+		String gitIndexUri1 = gitSection1.getString(GitConstants.KEY_INDEX);
+		String gitCommitUri1 = gitSection1.getString(GitConstants.KEY_COMMIT);
+
+		// clone1: branch 'a'
+		response = branch(branchesLocation1, "a");
+		JSONObject branch = new JSONObject(response.getText());
+
+		checkoutBranch(cloneLocation1, "a");
+
+		// clone1: change
+		request = getPutFileRequest(projectId1 + "/test.txt", "branch 'a' change");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// clone1: add
+		request = GitAddTest.getPutGitIndexRequest(gitIndexUri1);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// clone1: commit
+		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri1, "incoming branch 'a' commit", false);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// clone1: push by remote branch
+		String remoteBranchLocation = branch.getString(GitConstants.KEY_REMOTE);
+		ServerStatus pushStatus = push(remoteBranchLocation, Constants.HEAD, false);
+		assertTrue(pushStatus.isOK());
+
 		// clone2
-		// clone1: create branch 'a'
-		// clone1: add, commit
-		// clone1: switch to master
-		// clone1: push 'a'
-		// clone2: fetch, merge
-		// clone2: assert branch 'a' and change from clone1 are in place
+		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
+		String projectId2 = project2.getString(ProtocolConstants.KEY_ID);
+		IPath clonePath2 = new Path("file").append(project2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		JSONObject clone2 = clone(clonePath2);
+		String cloneLocation2 = clone2.getString(ProtocolConstants.KEY_LOCATION);
+
+		// get project2 metadata
+		request = getGetFilesRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		project2 = new JSONObject(response.getText());
+		JSONObject gitSection2 = project2.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection2);
+
+		// check if the new branch exists
+		response = checkoutBranch(cloneLocation2, "a");
+		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
+
+		request = getGetFilesRequest(projectId2 + "/test.txt");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals("branch 'a' change", response.getText());
 	}
 
 	@Test
@@ -399,7 +460,7 @@ public class GitPushTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone1: push
-		ServerStatus pushStatus = push(gitRemoteUri1, Constants.HEAD, false);
+		ServerStatus pushStatus = push(gitRemoteUri1, 1, 0, Constants.MASTER, Constants.HEAD, false);
 		assertEquals(true, pushStatus.isOK());
 
 		// clone2: change
@@ -418,10 +479,10 @@ public class GitPushTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone2: push
-		pushStatus = push(gitRemoteUri2, Constants.HEAD, false);
-		//result = Status.valueOf(push.getString(GitConstants.KEY_RESULT));
-		//assertEquals(Status.REJECTED_NONFASTFORWARD, result);
+		pushStatus = push(gitRemoteUri2, 1, 0, Constants.MASTER, Constants.HEAD, false);
 		assertEquals(IStatus.WARNING, pushStatus.getSeverity());
+		Status pushResult = Status.valueOf(pushStatus.getMessage());
+		assertEquals(Status.REJECTED_NONFASTFORWARD, pushResult);
 	}
 
 	@Test
@@ -464,7 +525,7 @@ public class GitPushTest extends GitTest {
 		// clone1: tag HEAD with 'tag'
 		tag(gitTagUri1, "tag", Constants.HEAD);
 
-		push(gitRemoteUri1, Constants.HEAD, true);
+		push(gitRemoteUri1, 1, 0, Constants.MASTER, Constants.HEAD, true);
 
 		// clone2: list tags
 		JSONArray tags = listTags(gitTagUri2);

@@ -407,11 +407,16 @@ public abstract class GitTest extends FileSystemTest {
 
 	// push
 
+	protected ServerStatus push(String gitRemoteUri, int size, int i, String name, String srcRef, boolean tags) throws IOException, SAXException, JSONException {
+		assertRemoteUri(gitRemoteUri);
+		String remoteBranchLocation = getRemoteBranch(gitRemoteUri, size, i, name).getString(ProtocolConstants.KEY_LOCATION);
+		return push(remoteBranchLocation, srcRef, tags);
+	}
+
 	/**
-	 * Pushes the changes from the the source ref to "origin/master". 
-	 * The implementation assumes there is only single remote branch i.e. "master".
+	 * Pushes the changes from the the source ref to the given remote branch.
 	 * 
-	 * @param gitRemoteUri remote URI
+	 * @param gitRemoteBranchUri remote branch URI
 	 * @param srcRef the source ref to push
 	 * @param tags <code>true</code> to push tags
 	 * @return JSON object representing response
@@ -419,14 +424,9 @@ public abstract class GitTest extends FileSystemTest {
 	 * @throws SAXException
 	 * @throws JSONException
 	 */
-	protected ServerStatus push(String gitRemoteUri, String srcRef, boolean tags) throws IOException, SAXException, JSONException {
-		return push(gitRemoteUri, 1, 0, Constants.MASTER, srcRef, tags);
-	}
-
-	protected ServerStatus push(String gitRemoteUri, int size, int i, String name, String srcRef, boolean tags) throws IOException, SAXException, JSONException {
-		assertRemoteUri(gitRemoteUri);
-		String remoteBranchLocation = getRemoteBranch(gitRemoteUri, size, i, name).getString(ProtocolConstants.KEY_LOCATION);
-		WebRequest request = GitPushTest.getPostGitRemoteRequest(remoteBranchLocation, srcRef, tags);
+	protected ServerStatus push(String gitRemoteBranchUri, String srcRef, boolean tags) throws IOException, SAXException, JSONException {
+		assertRemoteOrRemoteBranchLocation(gitRemoteBranchUri);
+		WebRequest request = GitPushTest.getPostGitRemoteRequest(gitRemoteBranchUri, srcRef, tags);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);

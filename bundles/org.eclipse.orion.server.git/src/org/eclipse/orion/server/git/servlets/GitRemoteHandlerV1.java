@@ -27,8 +27,7 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
-import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.git.GitCredentialsProvider;
+import org.eclipse.orion.server.git.*;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
@@ -76,7 +75,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 				JSONObject o = new JSONObject();
 				o.put(ProtocolConstants.KEY_NAME, configName);
 				o.put(ProtocolConstants.KEY_TYPE, GitConstants.KEY_REMOTE_NAME);
-				o.put(ProtocolConstants.KEY_LOCATION, baseToRemoteLocation(baseLocation, 2, configName));
+				o.put(ProtocolConstants.KEY_LOCATION, BaseToRemoteConverter.REMOVE_FIRST_2.baseToRemoteLocation(baseLocation, configName, "" /* no branch name */)); //$NON-NLS-1$
 				children.put(o);
 			}
 			result.put(ProtocolConstants.KEY_CHILDREN, children);
@@ -93,7 +92,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 				if (configName.equals(p.segment(0))) {
 					result.put(ProtocolConstants.KEY_NAME, configName);
 					result.put(ProtocolConstants.KEY_TYPE, GitConstants.KEY_REMOTE_NAME);
-					result.put(ProtocolConstants.KEY_LOCATION, baseToRemoteLocation(baseLocation, 3, configName));
+					result.put(ProtocolConstants.KEY_LOCATION, BaseToRemoteConverter.REMOVE_FIRST_3.baseToRemoteLocation(baseLocation, p.segment(0), "" /* no branch name */)); //$NON-NLS-1$
 
 					JSONArray children = new JSONArray();
 					List<Ref> refs = new ArrayList<Ref>();
@@ -117,7 +116,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 						o.put(ProtocolConstants.KEY_ID, ref.getObjectId().name());
 						// see bug 342602
 						// o.put(GitConstants.KEY_COMMIT, baseToCommitLocation(baseLocation, name));
-						o.put(ProtocolConstants.KEY_LOCATION, baseToRemoteLocation(baseLocation, 3, Repository.shortenRefName(name)));
+						o.put(ProtocolConstants.KEY_LOCATION, BaseToRemoteConverter.REMOVE_FIRST_3.baseToRemoteLocation(baseLocation, "" /*short name is {remote}/{branch}*/, Repository.shortenRefName(name))); //$NON-NLS-1$
 						o.put(GitConstants.KEY_COMMIT, baseToCommitLocation(baseLocation, 3, ref.getObjectId().name()));
 						o.put(GitConstants.KEY_HEAD, baseToCommitLocation(baseLocation, 3, Constants.HEAD));
 						children.put(o);
@@ -127,13 +126,13 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 					return true;
 				}
 			}
-			String msg = NLS.bind("Couldn't find remote : {0}", p.segment(0)); //$NON-NLS-1$
+			String msg = NLS.bind("Couldn't find remote : {0}", p.segment(0));
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
 		} else if (p.segment(2).equals("file")) { //$NON-NLS-1$
 			// /git/remote/{remote}/{branch}/file/{path}
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2));
 			Repository db = new FileRepository(gitDir);
-			Set<String> configNames = db.getConfig().getSubsections("remote");
+			Set<String> configNames = db.getConfig().getSubsections(ConfigConstants.CONFIG_REMOTE_SECTION);
 			URI baseLocation = getURI(request);
 			for (String configName : configNames) {
 				if (configName.equals(p.segment(0))) {
@@ -147,7 +146,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 							result.put(ProtocolConstants.KEY_ID, ref.getObjectId().name());
 							// see bug 342602
 							// result.put(GitConstants.KEY_COMMIT, baseToCommitLocation(baseLocation, name));
-							result.put(ProtocolConstants.KEY_LOCATION, baseToRemoteLocation(baseLocation, 4, Repository.shortenRefName(name)));
+							result.put(ProtocolConstants.KEY_LOCATION, BaseToRemoteConverter.REMOVE_FIRST_4.baseToRemoteLocation(baseLocation, "" /*short name is {remote}/{branch}*/, Repository.shortenRefName(name))); //$NON-NLS-1$
 							result.put(GitConstants.KEY_COMMIT, baseToCommitLocation(baseLocation, 4, ref.getObjectId().name()));
 							result.put(GitConstants.KEY_HEAD, baseToCommitLocation(baseLocation, 4, Constants.HEAD));
 							OrionServlet.writeJSONResponse(request, response, result);
@@ -172,7 +171,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(1));
 			Repository db = new FileRepository(gitDir);
 			StoredConfig config = db.getConfig();
-			config.unsetSection("remote", remoteName);
+			config.unsetSection(Constants.R_REMOTES, remoteName);
 			config.save();
 			//TODO: handle result
 			return true;
@@ -261,7 +260,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		config.save();
 
 		URI baseLocation = getURI(request);
-		response.setHeader(ProtocolConstants.HEADER_LOCATION, baseToRemoteLocation(baseLocation, 3, remoteName).toString());
+		response.setHeader(ProtocolConstants.HEADER_LOCATION, BaseToRemoteConverter.REMOVE_FIRST_3.baseToRemoteLocation(baseLocation, p.segment(0), Repository.shortenRefName(remoteName)).toString());
 		response.setStatus(HttpServletResponse.SC_CREATED);
 		//TODO: handle result
 		return true;
@@ -305,13 +304,6 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 
 	private URI createTaskLocation(URI baseLocation, String taskId) throws URISyntaxException {
 		return new URI(baseLocation.getScheme(), baseLocation.getAuthority(), "/task/id/" + taskId, null, null); //$NON-NLS-1$
-	}
-
-	public static URI baseToRemoteLocation(URI u, int count, String remoteName) throws URISyntaxException {
-		// URIUtil.append(baseLocation, configName)
-		IPath p = new Path(u.getPath());
-		p = p.uptoSegment(2).append(remoteName).addTrailingSeparator().append(p.removeFirstSegments(count));
-		return new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), p.toString(), u.getQuery(), u.getFragment());
 	}
 
 	private URI baseToCommitLocation(URI u, int c, String ref) throws URISyntaxException {

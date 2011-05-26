@@ -34,6 +34,7 @@ import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.git.BaseToRemoteConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
@@ -192,35 +193,10 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		}
 
 		JSONObject result = toJSON(db, OrionServlet.getURI(request), walk, page, filter);
-		result.put(GitConstants.KEY_REMOTE, getRemoteBranchLocation(getURI(request), db));
+		result.put(GitConstants.KEY_REMOTE, BaseToRemoteConverter.getRemoteBranchLocation(getURI(request), db, BaseToRemoteConverter.REMOVE_FIRST_3));
 		OrionServlet.writeJSONResponse(request, response, result);
 		walk.dispose();
 		return true;
-	}
-
-	private URI getRemoteBranchLocation(URI base, Repository db) throws IOException, URISyntaxException {
-		Config repoConfig = db.getConfig();
-		String branch = db.getBranch();
-		String remote = repoConfig.getString(ConfigConstants.CONFIG_BRANCH_SECTION, branch, ConfigConstants.CONFIG_KEY_REMOTE);
-		if (remote == null)
-			// fall back to default remote
-			remote = Constants.DEFAULT_REMOTE_NAME;
-		String fetch = repoConfig.getString(ConfigConstants.CONFIG_REMOTE_SECTION, remote, "fetch"); //$NON-NLS-1$
-		if (fetch != null) {
-			// expecting something like: +refs/heads/*:refs/remotes/origin/*
-			String[] split = fetch.split(":"); //$NON-NLS-1$
-			if (split[0].endsWith("*") /*src*/&& split[1].endsWith("*") /*dst*/) { //$NON-NLS-1$ //$NON-NLS-2$
-				return baseToRemoteLocation(base, remote, branch);
-			}
-		}
-		return null;
-	}
-
-	private URI baseToRemoteLocation(URI u, String remote, String branch) throws URISyntaxException {
-		// URIUtil.append(baseLocation, configName)
-		IPath p = new Path(u.getPath());
-		p = p.uptoSegment(1).append(GitConstants.REMOTE_RESOURCE).append(remote).append(branch).addTrailingSeparator().append(p.removeFirstSegments(3));
-		return new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), p.toString(), u.getQuery(), u.getFragment());
 	}
 
 	private JSONObject toJSON(Repository db, URI baseLocation, Iterable<RevCommit> commits, int page, TreeFilter filter) throws JSONException, URISyntaxException, MissingObjectException, IOException {
