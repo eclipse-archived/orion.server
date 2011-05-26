@@ -41,12 +41,12 @@ public class OrionPreferenceInitializer extends AbstractPreferenceInitializer {
 		File result = new File(location);
 		if (result.exists())
 			return result;
-		logger.info("No server configuration file found at: " + result); //$NON-NLS-1$
+		logger.info("No server configuration file found at: " + result.getAbsolutePath()); //$NON-NLS-1$
 
 		//try the platform instance location
 		URL instanceURL = ConfiguratorActivator.getDefault().getInstanceLocation().getURL();
 		// strip off file: prefix from URL
-		result = new File(instanceURL.toExternalForm().substring(5));
+		result = new File(new File(instanceURL.toExternalForm().substring(5)), DEFAULT_CONFIG_FILE);
 		if (result.exists())
 			return result;
 		logger.info("No server configuration file found at: " + result); //$NON-NLS-1$
