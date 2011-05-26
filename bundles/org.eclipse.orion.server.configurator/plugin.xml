@@ -173,6 +173,17 @@
                path="/">
          </resource-mapping>
       </httpcontext>
+      <httpcontext
+            id="org.eclipse.orion.server.configurator.httpcontext.orion.dojox">
+         <resource-mapping
+               bundle="org.eclipse.orion.client.core"
+               path="/static/dojox">
+         </resource-mapping>
+         <resource-mapping
+               bundle="org.dojotoolkit"
+               path="/dojox">
+         </resource-mapping>
+      </httpcontext>
     <httpcontext
             id="org.eclipse.orion.server.configurator.httpcontext.orion.dojo">
          <resource-mapping
@@ -222,6 +233,10 @@
       <resource
             alias="/org.dojotoolkit"
             httpcontextId="org.eclipse.orion.server.configurator.httpcontext.dojo">
+      </resource>
+      <resource
+            alias="/org.dojotoolkit/dojox"
+            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.orion.dojox">
       </resource>
       <resource
             alias="/org.dojotoolkit/orion"
