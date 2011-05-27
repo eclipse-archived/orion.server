@@ -88,6 +88,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			Set<String> configNames = db.getConfig().getSubsections(ConfigConstants.CONFIG_REMOTE_SECTION);
 			JSONObject result = new JSONObject();
 			URI baseLocation = getURI(request);
+
 			for (String configName : configNames) {
 				if (configName.equals(p.segment(0))) {
 					result.put(ProtocolConstants.KEY_NAME, configName);
@@ -96,7 +97,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 
 					JSONArray children = new JSONArray();
 					List<Ref> refs = new ArrayList<Ref>();
-					for (Entry<String, Ref> refEntry : db.getRefDatabase().getRefs(Constants.R_REMOTES).entrySet()) {
+					for (Entry<String, Ref> refEntry : db.getRefDatabase().getRefs(Constants.R_REMOTES + p.uptoSegment(1)).entrySet()) {
 						if (!refEntry.getValue().isSymbolic()) {
 							Ref ref = refEntry.getValue();
 							String name = ref.getName();
