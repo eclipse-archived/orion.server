@@ -22,14 +22,12 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
-import org.eclipse.jgit.lib.Ref;
-import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
-import org.eclipse.orion.server.git.BaseToRemoteConverter;
-import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.*;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
@@ -159,13 +157,12 @@ public class GitBranchHandlerV1 extends ServletResourceHandler<String> {
 		result.put(GitConstants.KEY_CLONE, cloneLocation);
 
 		// add Git Commit URI
-		newPath = new Path(GitServlet.GIT_URI).append(GitConstants.COMMIT_RESOURCE).append(shortName).append(basePath.removeFirstSegments(s));
-		URI commitLocation = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), newPath.toString(), baseLocation.getQuery(), baseLocation.getFragment());
-		result.put(GitConstants.KEY_COMMIT, commitLocation);
+		result.put(GitConstants.KEY_COMMIT, BaseToCommitConverter.getCommitLocation(baseLocation, shortName, BaseToCommitConverter.REMOVE_FIRST_2));
 
 		result.put(GitConstants.KEY_REMOTE, BaseToRemoteConverter.getRemoteBranchLocation(baseLocation, db, BaseToRemoteConverter.REMOVE_FIRST_2));
-
+		result.put(GitConstants.KEY_HEAD, BaseToCommitConverter.getCommitLocation(baseLocation, Constants.HEAD, BaseToCommitConverter.REMOVE_FIRST_2));
 		result.put(GitConstants.KEY_BRANCH_CURRENT, shortName.equals(db.getBranch()));
+
 		return result;
 	}
 }

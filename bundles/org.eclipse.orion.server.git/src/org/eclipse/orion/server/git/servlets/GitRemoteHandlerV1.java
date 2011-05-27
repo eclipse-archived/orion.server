@@ -117,8 +117,8 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 						// see bug 342602
 						// o.put(GitConstants.KEY_COMMIT, baseToCommitLocation(baseLocation, name));
 						o.put(ProtocolConstants.KEY_LOCATION, BaseToRemoteConverter.REMOVE_FIRST_3.baseToRemoteLocation(baseLocation, "" /*short name is {remote}/{branch}*/, Repository.shortenRefName(name))); //$NON-NLS-1$
-						o.put(GitConstants.KEY_COMMIT, baseToCommitLocation(baseLocation, 3, ref.getObjectId().name()));
-						o.put(GitConstants.KEY_HEAD, baseToCommitLocation(baseLocation, 3, Constants.HEAD));
+						o.put(GitConstants.KEY_COMMIT, BaseToCommitConverter.getCommitLocation(baseLocation, ref.getObjectId().name(), BaseToCommitConverter.REMOVE_FIRST_3));
+						o.put(GitConstants.KEY_HEAD, BaseToCommitConverter.getCommitLocation(baseLocation, Constants.HEAD, BaseToCommitConverter.REMOVE_FIRST_3));
 						children.put(o);
 					}
 					result.put(ProtocolConstants.KEY_CHILDREN, children);
@@ -147,8 +147,8 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 							// see bug 342602
 							// result.put(GitConstants.KEY_COMMIT, baseToCommitLocation(baseLocation, name));
 							result.put(ProtocolConstants.KEY_LOCATION, BaseToRemoteConverter.REMOVE_FIRST_4.baseToRemoteLocation(baseLocation, "" /*short name is {remote}/{branch}*/, Repository.shortenRefName(name))); //$NON-NLS-1$
-							result.put(GitConstants.KEY_COMMIT, baseToCommitLocation(baseLocation, 4, ref.getObjectId().name()));
-							result.put(GitConstants.KEY_HEAD, baseToCommitLocation(baseLocation, 4, Constants.HEAD));
+							result.put(GitConstants.KEY_COMMIT, BaseToCommitConverter.getCommitLocation(baseLocation, ref.getObjectId().name(), BaseToCommitConverter.REMOVE_FIRST_4));
+							result.put(GitConstants.KEY_HEAD, BaseToCommitConverter.getCommitLocation(baseLocation, Constants.HEAD, BaseToCommitConverter.REMOVE_FIRST_4));
 							OrionServlet.writeJSONResponse(request, response, result);
 							return true;
 						}
@@ -304,13 +304,5 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 
 	private URI createTaskLocation(URI baseLocation, String taskId) throws URISyntaxException {
 		return new URI(baseLocation.getScheme(), baseLocation.getAuthority(), "/task/id/" + taskId, null, null); //$NON-NLS-1$
-	}
-
-	private URI baseToCommitLocation(URI u, int c, String ref) throws URISyntaxException {
-		String uriPath = u.getPath();
-		IPath path = new Path(uriPath);
-		IPath filePath = path.removeFirstSegments(c).makeAbsolute();
-		uriPath = GitServlet.GIT_URI + "/" + GitConstants.COMMIT_RESOURCE + "/" + ref + filePath.toString(); //$NON-NLS-1$ //$NON-NLS-2$
-		return new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), uriPath, u.getQuery(), u.getFragment());
 	}
 }
