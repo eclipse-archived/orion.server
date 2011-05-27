@@ -236,6 +236,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		commit.put(GitConstants.KEY_COMMIT_TIME, ((long) revCommit.getCommitTime()) * 1000 /* time in milliseconds */);
 		commit.put(GitConstants.KEY_COMMIT_MESSAGE, revCommit.getFullMessage());
 		commit.put(ProtocolConstants.KEY_CHILDREN, toJSON(getTagsForCommit(db, revCommit)));
+		commit.put(ProtocolConstants.KEY_TYPE, GitConstants.COMMIT_TYPE);
 
 		if (revCommit.getParentCount() > 0) {
 			JSONArray diffs = new JSONArray();
@@ -252,6 +253,8 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			List<DiffEntry> l = DiffEntry.scan(tw);
 			for (DiffEntry entr : l) {
 				JSONObject diff = new JSONObject();
+				diff.put(ProtocolConstants.KEY_TYPE, GitConstants.DIFF_TYPE);
+
 				diff.put(GitConstants.KEY_COMMIT_DIFF_NEWPATH, entr.getNewPath());
 				diff.put(GitConstants.KEY_COMMIT_DIFF_OLDPATH, entr.getOldPath());
 				diff.put(GitConstants.KEY_COMMIT_DIFF_CHANGETYPE, entr.getChangeType().toString());

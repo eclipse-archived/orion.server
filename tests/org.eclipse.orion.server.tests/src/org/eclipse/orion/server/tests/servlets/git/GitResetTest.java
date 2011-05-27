@@ -36,11 +36,9 @@ import com.meterware.httpunit.WebResponse;
 
 public class GitResetTest extends GitTest {
 
-	// modified + add = changed, changed + reset --mixed = modified
+	// modified + add = changed, changed + reset = modified
 	@Test
-	@Ignore("not yet implemented")
-	//TODO: see bug 338701
-	public void testResetMixedChanged() throws Exception {
+	public void testResetChanged() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -56,9 +54,7 @@ public class GitResetTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
-
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
@@ -67,6 +63,7 @@ public class GitResetTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
+		// TODO: don't create URIs out of thin air
 		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "folder/folder.txt");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
@@ -89,7 +86,78 @@ public class GitResetTest extends GitTest {
 		assertEquals(0, statusArray.length());
 
 		// TODO: don't create URIs out of thin air
-		request = getPostGitIndexRequest(gitIndexUri + "test.txt", ResetType.MIXED);
+		request = getPostGitIndexRequest(gitIndexUri + "test.txt", null, (String) null);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		statusResponse = new JSONObject(response.getText());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
+		assertEquals(1, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
+		assertEquals(1, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
+		assertEquals(0, statusArray.length());
+	}
+
+	@Test
+	public void testResetChangedWithPath() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+
+		String projectName = getMethodName();
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
+		String projectId = project.getString(ProtocolConstants.KEY_ID);
+
+		WebRequest request = getPutFileRequest(projectId + "/test.txt", "hello");
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// TODO: don't create URIs out of thin air
+		request = getPutFileRequest(projectId + "/folder/folder.txt", "hello");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
+
+		// TODO: don't create URIs out of thin air
+		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// TODO: don't create URIs out of thin air
+		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "folder/folder.txt");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject statusResponse = new JSONObject(response.getText());
+		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
+		assertEquals(2, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
+		assertEquals(0, statusArray.length());
+
+		// TODO: don't create URIs out of thin air
+		request = getPostGitIndexRequest(gitIndexUri, new String[] {"test.txt"}, (String) null);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -123,12 +191,10 @@ public class GitResetTest extends GitTest {
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
-
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 
-		request = getPostGitIndexRequest(gitIndexUri, (String) null);
+		request = getPostGitIndexRequest(gitIndexUri, null, (String) null);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
 	}
@@ -180,7 +246,7 @@ public class GitResetTest extends GitTest {
 
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 
-		request = getPostGitIndexRequest(gitIndexUri, "BAD");
+		request = getPostGitIndexRequest(gitIndexUri, null, "BAD");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
 	}
@@ -207,9 +273,7 @@ public class GitResetTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
-
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
@@ -300,9 +364,7 @@ public class GitResetTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
-
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
@@ -376,8 +438,7 @@ public class GitResetTest extends GitTest {
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
@@ -456,10 +517,10 @@ public class GitResetTest extends GitTest {
 	 * @throws UnsupportedEncodingException 
 	 */
 	private WebRequest getPostGitIndexRequest(String location, ResetCommand.ResetType resetType) throws JSONException, UnsupportedEncodingException {
-		return getPostGitIndexRequest(location, resetType.toString());
+		return getPostGitIndexRequest(location, null, resetType.toString());
 	}
 
-	private WebRequest getPostGitIndexRequest(String location, String resetType) throws JSONException, UnsupportedEncodingException {
+	private WebRequest getPostGitIndexRequest(String location, String[] paths, String resetType) throws JSONException, UnsupportedEncodingException {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;
@@ -469,7 +530,14 @@ public class GitResetTest extends GitTest {
 			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.INDEX_RESOURCE + location;
 
 		JSONObject body = new JSONObject();
-		body.put(GitConstants.KEY_RESET_TYPE, resetType);
+		if (resetType != null)
+			body.put(GitConstants.KEY_RESET_TYPE, resetType);
+		if (paths != null) {
+			JSONArray jsonPaths = new JSONArray();
+			for (String path : paths)
+				jsonPaths.put(path);
+			body.put(GitConstants.KEY_PATH, jsonPaths);
+		}
 		WebRequest request = new PostMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);

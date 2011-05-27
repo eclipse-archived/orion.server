@@ -126,21 +126,31 @@ lastMapTag=${mapsTagTag}
 		<replace file="${buildDirectory}/features/org.eclipse.pde.build.container.feature/feature.xml" token="1.0.0" value="0.2.0.qualifier" />
 	</target>
 
+	<macrodef name="adjustInfoPlist">
+		<attribute name="suffix" />
+		<sequential>
+			<pathconvert property="macRootArchive.@{suffix}" >
+				<last><sort><fileset dir="${buildDirectory}/buildRepo/binary" includes="org.eclipse.orion_root.@{suffix}*" /></sort></last>
+			</pathconvert>
+			
+			<mkdir dir="${buildDirectory}/rootMacosx/@{suffix}"/>
+			<unzip src="${macRootArchive.@{suffix}}" dest="${buildDirectory}/rootMacosx/@{suffix}" overwrite="true" />
+			<replace file="${buildDirectory}/rootMacosx/@{suffix}/eclipse.app/Contents/Info.plist">
+				<replacetoken>CFBundleExecutable</replacetoken>
+				<replacevalue>LSBackgroundOnly&lt;/key&gt;
+			&lt;string&gt;1&lt;/string&gt;
+		&lt;key&gt;CFBundleExecutable</replacevalue>
+			</replace>
+			<zip destfile="${macRootArchive.@{suffix}}" basedir="${buildDirectory}/rootMacosx/@{suffix}" includes="**"/>
+		</sequential>
+	</macrodef>
+
 	<target name="postAssemble">
-		<fileset dir="${buildDirectory}/buildRepo/binary" includes="org.eclipse.orion_root.cocoa.macosx*" id="root.cocoa.macosx" />
-		<property name="macRootArchive" refid="root.cocoa.macosx" />
-		<mkdir dir="${buildDirectory}/rootMacosx"/>
-		<unzip src="${buildDirectory}/buildRepo/binary/${macRootArchive}" dest="${buildDirectory}/rootMacosx" overwrite="true" />
-		<replace file="${buildDirectory}/rootMacosx/eclipse.app/Contents/Info.plist">
-			<replacetoken>CFBundleExecutable</replacetoken>
-			<replacevalue>LSBackgroundOnly&lt;/key&gt;
-		&lt;string&gt;1&lt;/string&gt;
-	&lt;key&gt;CFBundleExecutable</replacevalue>
-		</replace>
-		<zip destfile="${buildDirectory}/buildRepo/binary/${macRootArchive}" basedir="${buildDirectory}/rootMacosx" includes="**"/>
+		<adjustInfoPlist suffix="cocoa.macosx.x86" />
+		<adjustInfoPlist suffix="cocoa.macosx.x86_64" />
 		<p2.process.artifacts repositoryPath="file:${buildDirectory}/buildRepo" />
-	</target>
-		
+	</target>	
+	
 	<target name="postBuild" >
 		<property name="buildResultLocation" value="${buildDirectory}/${buildLabel}" />
 		<property name="dropLocation" value="${buildResultLocation}/drop" />

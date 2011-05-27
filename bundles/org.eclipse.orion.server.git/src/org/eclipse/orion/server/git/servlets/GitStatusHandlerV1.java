@@ -26,6 +26,7 @@ import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.*;
@@ -55,9 +56,11 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 			Status status = git.status().call();
 
 			URI baseLocation = getURI(request);
+			JSONObject result = new JSONObject();
+			result.put(GitConstants.KEY_CLONE, BaseToCloneConverter.getCloneLocation(baseLocation, BaseToCloneConverter.STATUS));
+
 			baseLocation = stripOffPath(baseLocation);
 			IPath basePath = path.removeFirstSegments(2);
-			JSONObject result = new JSONObject();
 			JSONArray children = toJSONArray(status.getAdded(), basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
 			result.put(GitConstants.KEY_STATUS_ADDED, children);
 			// TODO: bug 338913

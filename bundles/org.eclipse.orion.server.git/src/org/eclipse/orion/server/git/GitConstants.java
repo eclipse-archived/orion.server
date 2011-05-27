@@ -150,4 +150,8 @@ public class GitConstants {
 	public static final String KEY_TAG_COMMIT = "Commit"; //$NON-NLS-1$
 
 	public static final String REMOTE_TRACKING_BRANCH_TYPE = "RemoteTrackingBranch"; //$NON-NLS-1$
+
+	public static final String DIFF_TYPE = "Diff"; //$NON-NLS-1$
+
+	public static final String COMMIT_TYPE = "Commit"; //$NON-NLS-1$
 }

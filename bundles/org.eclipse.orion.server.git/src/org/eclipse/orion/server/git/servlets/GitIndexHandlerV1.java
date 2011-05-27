@@ -29,8 +29,7 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.*;
 
 /**
  * A handler for Git operations on index:
@@ -66,8 +65,6 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 					return handlePut(request, response, db, p);
 				case POST :
 					return handlePost(request, response, db, p);
-					// case DELETE :
-					// return handleDelete(request, response, path);
 			}
 
 		} catch (Exception e) {
@@ -117,28 +114,49 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws ServletException, NoFilepatternException, IOException, JSONException {
 		JSONObject toReset = OrionServlet.readJSONRequest(request);
 		String resetType = toReset.optString(GitConstants.KEY_RESET_TYPE, null);
-		if (resetType == null) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Reset type must be specified.", null));
-		}
-
-		try {
-			ResetType rt = ResetType.valueOf(resetType);
-			switch (rt) {
-				case MIXED :
-				case HARD :
-					Git git = new Git(db);
-					// "git reset --{type} HEAD ."
-					git.reset().setMode(rt).setRef(Constants.HEAD).call();
-					return true;
-				case KEEP :
-				case MERGE :
-				case SOFT :
-					String msg = NLS.bind("The reset type is not yet supported: {0}.", resetType);
-					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_IMPLEMENTED, msg, null));
+		if (resetType != null) {
+			JSONArray paths = toReset.optJSONArray(GitConstants.KEY_PATH);
+			if (paths != null) {
+				String msg = NLS.bind("Mixing {0} and {1} parameters is not allowed.", new Object[] {GitConstants.KEY_PATH, GitConstants.KEY_RESET_TYPE});
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_IMPLEMENTED, msg, null));
 			}
-		} catch (IllegalArgumentException e) {
-			String msg = NLS.bind("Unknown or malformed reset type: {0}.", resetType);
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+			try {
+				ResetType type = ResetType.valueOf(resetType);
+				switch (type) {
+					case MIXED :
+					case HARD :
+						Git git = new Git(db);
+						// "git reset --{type} HEAD ."
+						git.reset().setMode(type).setRef(Constants.HEAD).call();
+						return true;
+					case KEEP :
+					case MERGE :
+					case SOFT :
+						String msg = NLS.bind("The reset type is not yet supported: {0}.", resetType);
+						return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_IMPLEMENTED, msg, null));
+				}
+			} catch (IllegalArgumentException e) {
+				String msg = NLS.bind("Unknown or malformed reset type: {0}.", resetType);
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+			}
+		} else {
+			JSONArray paths = toReset.optJSONArray(GitConstants.KEY_PATH);
+			Git git = new Git(db);
+			ResetCommand reset = git.reset().setRef(Constants.HEAD);
+			if (paths != null) {
+				for (int i = 0; i < paths.length(); i++) {
+					reset.addPath(paths.getString(i));
+				}
+			} else {
+				String p = path.removeFirstSegments(2).toString();
+				if (p.isEmpty()) {
+					String msg = "Path cannot be empty.";
+					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+				}
+				reset.addPath(p);
+			}
+			reset.call();
+			return true;
 		}
 		return false;
 	}
