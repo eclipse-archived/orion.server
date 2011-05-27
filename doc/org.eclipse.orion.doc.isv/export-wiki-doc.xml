@@ -61,6 +61,7 @@
     		generateUnifiedToc="false">
     		<path name="Orion/Project_mission_statement" title="Welcome to Orion" generateToc="true"/>
     		<path name="Orion/Documentation/Developer_Guide/Architecture" title="Architecture overview" generateToc="true"/>
+    		<path name="Orion/Documentation/Developer_Guide/Core_client_services" title="Core client services" generateToc="true"/>
     		<path name="Orion/Server_API" title="Server API" generateToc="true"/>
     		<path name="Orion/Server_API/File_API" title="Server File API" generateToc="true"/>
     		<path name="Orion/Server_admin_guide" title="Server administration guide" generateToc="true"/>

@@ -43,7 +43,7 @@
   ...
   deleteFile: function(itemId) {
      var item = this.myTree.getItem(itemId);
-     this.'''registry.callService'''("IDialogService", "confirm", null, 
+     this.'''registry.callService'''("orion.page.dialog", "confirm", null, 
        ["Are you sure you want to delete '" + item.Name + "'?", 
      ...
   }
@@ -79,12 +79,12 @@
    }
  });
 </pre>
-		<p>Currently, plugins must be declared and started manually, but in the future we expect to simplify this. Here is a current example of starting a plugin programmatically. This example contributes one service library called <tt>IEditorSyntaxChecker</tt>, with a single method <tt>checkSyntax</tt>.</p>
+		<p>Currently, plugins must be declared and started manually, but in the future we expect to simplify this. Here is a current example of starting a plugin programmatically. This example contributes one service library called <tt>orion.edit.validator</tt>, with a single method <tt>checkSyntax</tt>.</p>
 		<pre> var pluginData = {
    services : [{
      id : "JSLintEditorSyntaxChecker", 
      serviceType : {
-       id: "IEditorSyntaxChecker", 
+       id: "orion.edit.validator", 
        interfaces : ["checkSyntax"]
      },
      properties: {}
