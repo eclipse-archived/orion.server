@@ -261,7 +261,7 @@ public abstract class GitTest extends FileSystemTest {
 		return getChildByKey(children, ProtocolConstants.KEY_NAME, name);
 	}
 
-	protected Repository getRepositoryForContentLocation(String fileLocation) throws CoreException, IOException {
+	protected static Repository getRepositoryForContentLocation(String fileLocation) throws CoreException, IOException {
 		assertFileUri(fileLocation);
 
 		URI uri = URI.create(fileLocation);
@@ -274,7 +274,7 @@ public abstract class GitTest extends FileSystemTest {
 
 		File file = new File(fsStore.toURI());
 		if (RepositoryCache.FileKey.isGitRepository(file, FS.DETECTED)) {
-			// 'file' is what we're looking for
+			// 'file' is already what we're looking for
 		} else if (RepositoryCache.FileKey.isGitRepository(new File(file, Constants.DOT_GIT), FS.DETECTED)) {
 			file = new File(file, Constants.DOT_GIT);
 		} else {
@@ -284,7 +284,7 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	// see org.eclipse.orion.internal.server.servlets.workspace.WorkspaceResourceHandler.generateProjectLocation(WebProject, String)
-	private IFileStore getProjectStore(WebProject project, String user) throws CoreException {
+	private static IFileStore getProjectStore(WebProject project, String user) throws CoreException {
 		URI platformLocationURI = Activator.getDefault().getRootLocationURI();
 		IFileStore root = EFS.getStore(platformLocationURI);
 
@@ -679,6 +679,16 @@ public abstract class GitTest extends FileSystemTest {
 		assertEquals("file", path.segment(3));
 	}
 
+	static void assertStatusUri(String statusUri) {
+		URI uri = URI.create(statusUri);
+		IPath path = new Path(uri.getPath());
+		// /git/status/file/{path}
+		assertTrue(path.segmentCount() > 3);
+		assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
+		assertEquals(GitConstants.STATUS_RESOURCE, path.segment(1));
+		assertEquals("file", path.segment(2));
+	}
+
 	private static void assertRemoteOrRemoteBranchLocation(String remoteLocation) {
 		URI uri = URI.create(remoteLocation);
 		IPath path = new Path(uri.getPath());
@@ -716,7 +726,7 @@ public abstract class GitTest extends FileSystemTest {
 		assertEquals("file", path.segment(2));
 	}
 
-	void assertCloneUri(String cloneUri) throws CoreException, IOException {
+	static void assertCloneUri(String cloneUri) throws CoreException, IOException {
 		URI uri = URI.create(cloneUri);
 		IPath path = new Path(uri.getPath());
 		// /git/clone/workspace/{id} or /git/clone/file/{id}[/{path}]

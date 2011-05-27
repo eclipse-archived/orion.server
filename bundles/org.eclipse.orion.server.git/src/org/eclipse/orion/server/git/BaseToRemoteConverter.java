@@ -21,6 +21,7 @@ import org.eclipse.orion.server.git.servlets.GitServlet;
 public abstract class BaseToRemoteConverter {
 
 	public static final BaseToRemoteConverter FILE = new BaseToRemoteConverter() {
+		@Override
 		public URI baseToRemoteLocation(URI base, String remote, String branch) throws URISyntaxException {
 			IPath p = new Path(base.getPath());
 			p = new Path(GitServlet.GIT_URI).append(GitConstants.REMOTE_RESOURCE).append(remote).append(branch).addTrailingSeparator().append(p);
@@ -29,6 +30,7 @@ public abstract class BaseToRemoteConverter {
 	};
 
 	public static final BaseToRemoteConverter REMOVE_FIRST_2 = new BaseToRemoteConverter() {
+		@Override
 		public URI baseToRemoteLocation(URI base, String remote, String branch) throws URISyntaxException {
 			IPath p = new Path(base.getPath());
 			p = p.uptoSegment(1).append(GitConstants.REMOTE_RESOURCE).append(remote).append(branch).addTrailingSeparator().append(p.removeFirstSegments(2));
@@ -37,6 +39,7 @@ public abstract class BaseToRemoteConverter {
 	};
 
 	public static final BaseToRemoteConverter REMOVE_FIRST_3 = new BaseToRemoteConverter() {
+		@Override
 		public URI baseToRemoteLocation(URI base, String remote, String branch) throws URISyntaxException {
 			IPath p = new Path(base.getPath());
 			p = p.uptoSegment(1).append(GitConstants.REMOTE_RESOURCE).append(remote).append(branch).addTrailingSeparator().append(p.removeFirstSegments(3));
@@ -45,6 +48,7 @@ public abstract class BaseToRemoteConverter {
 	};
 
 	public static final BaseToRemoteConverter REMOVE_FIRST_4 = new BaseToRemoteConverter() {
+		@Override
 		public URI baseToRemoteLocation(URI base, String remote, String branch) throws URISyntaxException {
 			IPath p = new Path(base.getPath());
 			p = p.uptoSegment(1).append(GitConstants.REMOTE_RESOURCE).append(remote).append(branch).addTrailingSeparator().append(p.removeFirstSegments(4));
