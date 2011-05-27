@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-SymbolicName: org.eclipse.orion.server.core;singleton:=true
 Bundle-Version: 0.2.0.qualifier
 Bundle-Name: %Bundle-Name
-Bundle-Vendor: Eclipse.org - Orion
+Bundle-Vendor: %Bundle-Vendor
 Bundle-Localization: bundle
 Require-Bundle: org.eclipse.core.filesystem;bundle-version="1.3.100",
  org.eclipse.equinox.common;bundle-version="3.6.0",
@@ -22,7 +22,6 @@ Export-Package: org.eclipse.orion.internal.server.core;
  org.eclipse.orion.server.core.tasks,
  org.eclipse.orion.server.core.users
 Bundle-ActivationPolicy: lazy
-Bundle-Vendor: %Bundle-Vendor
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Import-Package: javax.servlet;version="2.5.0",
  javax.servlet.http;version="2.5.0",
