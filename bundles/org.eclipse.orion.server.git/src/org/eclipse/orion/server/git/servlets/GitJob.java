@@ -48,7 +48,7 @@ public abstract class GitJob extends Job {
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, cause.getMessage(), cause.formJson(), cause);
 		}
 		//JSch handles auth fail by exception message
-		if (jschEx != null && jschEx.getMessage() != null && jschEx.getMessage().toLowerCase(Locale.ENGLISH).contains("auth fail")) {
+		if (jschEx != null && jschEx.getMessage() != null && jschEx.getMessage().toLowerCase(Locale.ENGLISH).contains("auth fail")) { //$NON-NLS-1$
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_UNAUTHORIZED, jschEx.getMessage(), null, jschEx);
 		}
 
@@ -80,8 +80,8 @@ public abstract class GitJob extends Job {
 	 *  
 	 * @param pattern 
 	 * @param message
-	 * @see {@link MessageFormat}
-	 * @return
+	 * @return <code>true</code> if the messages match, and <code>false</code> otherwise
+	 * @see MessageFormat
 	 */
 	private static boolean matchMessage(String pattern, String message) {
 		if (message == null) {
@@ -95,10 +95,9 @@ public abstract class GitJob extends Job {
 		}
 		Object[] args = new Object[argsNum];
 		for (int i = 0; i < args.length; i++) {
-			args[i] = ".*";
+			args[i] = ".*"; //$NON-NLS-1$
 		}
 
-		return Pattern.matches(".*" + MessageFormat.format(pattern, args) + ".*", message);
-
+		return Pattern.matches(".*" + MessageFormat.format(pattern, args) + ".*", message); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 }
