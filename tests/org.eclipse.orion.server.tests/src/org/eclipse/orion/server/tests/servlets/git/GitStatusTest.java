@@ -20,6 +20,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
@@ -1017,5 +1018,16 @@ public class GitStatusTest extends GitTest {
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
+	}
+
+	public static String getCloneUri(String statusUri) throws JSONException, IOException, SAXException, CoreException {
+		assertStatusUri(statusUri);
+		WebRequest request = getGetGitStatusRequest(statusUri);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject status = new JSONObject(response.getText());
+		String cloneUri = status.getString(GitConstants.KEY_CLONE);
+		assertCloneUri(cloneUri);
+		return cloneUri;
 	}
 }
