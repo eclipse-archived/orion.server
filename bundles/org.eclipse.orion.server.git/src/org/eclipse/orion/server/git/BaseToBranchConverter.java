@@ -23,35 +23,28 @@ import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.server.git.servlets.GitServlet;
 
-public abstract class BaseToCloneConverter {
+public abstract class BaseToBranchConverter {
 
-	public static final BaseToCloneConverter FILE = new BaseToCloneConverter() {
+	public static final BaseToBranchConverter FILE = new BaseToBranchConverter() {
 		@Override
 		public IPath getFilePath(URI base) throws URISyntaxException {
 			return new Path(base.getPath()).makeRelative();
 		};
 	};
 
-	public static final BaseToCloneConverter STATUS = new BaseToCloneConverter() {
-		@Override
-		public IPath getFilePath(URI base) throws URISyntaxException {
-			return new Path(base.getPath()).removeFirstSegments(2).makeRelative();
-		};
-	};
-
-	public static final BaseToCloneConverter REMOTE_BRANCH = new BaseToCloneConverter() {
+	public static final BaseToBranchConverter REMOTE_BRANCH = new BaseToBranchConverter() {
 		@Override
 		public IPath getFilePath(URI base) throws URISyntaxException {
 			return new Path(base.getPath()).removeFirstSegments(3).makeRelative();
 		};
 	};
 
-	public static URI getCloneLocation(URI base, BaseToCloneConverter converter) throws IOException, URISyntaxException, CoreException {
+	public static URI getBranchLocation(URI base, BaseToBranchConverter converter) throws IOException, URISyntaxException, CoreException {
 		IPath filePath = converter.getFilePath(base);
 		IPath clonePath = findClonePath(filePath);
 		if (clonePath == null)
 			return null;
-		IPath p = new Path(GitServlet.GIT_URI).append(GitConstants.CLONE_RESOURCE).append("file").append(clonePath).addTrailingSeparator();
+		IPath p = new Path(GitServlet.GIT_URI).append(GitConstants.BRANCH_RESOURCE).append("file").append(clonePath).addTrailingSeparator();
 		return new URI(base.getScheme(), base.getUserInfo(), base.getHost(), base.getPort(), p.toString(), base.getQuery(), base.getFragment());
 	}
 

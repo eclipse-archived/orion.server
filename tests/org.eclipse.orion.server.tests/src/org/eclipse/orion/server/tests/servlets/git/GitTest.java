@@ -908,7 +908,7 @@ public abstract class GitTest extends FileSystemTest {
 			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.BRANCH_RESOURCE + location;
 		}
 		JSONObject body = new JSONObject();
-		body.put(GitConstants.KEY_BRANCH_NAME, branchName);
+		body.put(ProtocolConstants.KEY_NAME, branchName);
 		WebRequest request = new PostMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
