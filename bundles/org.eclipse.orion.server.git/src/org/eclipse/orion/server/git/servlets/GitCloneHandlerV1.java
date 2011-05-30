@@ -193,7 +193,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 						//this is the location of the project metadata
 						WebProject webProject = WebProject.fromId(project.getString(ProtocolConstants.KEY_ID));
 						if (isAccessAllowed(user, webProject)) {
-							URI contentLocation = webProject.getContentLocation();
+							URI contentLocation = URI.create(webProject.getId());
 							IPath projectPath = new Path(contentLocation.getPath());
 							Map<IPath, File> gitDirs = new HashMap<IPath, File>();
 							GitUtils.getGitDirs(projectPath, gitDirs);
@@ -247,9 +247,9 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			// make sure a clone is addressed
 			WebProject webProject = WebProject.fromId(path.segment(1));
 			if (isAccessAllowed(request.getRemoteUser(), webProject)) {
-				URI contentLocation = webProject.getContentLocation();
+				URI contentLocation = URI.create(webProject.getId());
 				IPath projectPath = new Path(contentLocation.getPath()).append(path.removeFirstSegments(2));
-				// FIXME: don't go up
+				// FIXME: don't go up, bug 347627
 				File gitDir = GitUtils.getGitDir(new Path("file").append(projectPath));
 
 				// make sure required fields are set
@@ -296,9 +296,9 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			// make sure a clone is addressed
 			WebProject webProject = WebProject.fromId(path.segment(1));
 			if (isAccessAllowed(request.getRemoteUser(), webProject)) {
-				URI contentLocation = webProject.getContentLocation();
+				URI contentLocation = URI.create(webProject.getId());
 				IPath projectPath = new Path(contentLocation.getPath()).append(path.removeFirstSegments(2));
-				// FIXME: don't go up
+				// FIXME: don't go up, bug 347627
 				File gitDir = GitUtils.getGitDir(new Path("file").append(projectPath));
 
 				Repository repo = new FileRepository(gitDir);
