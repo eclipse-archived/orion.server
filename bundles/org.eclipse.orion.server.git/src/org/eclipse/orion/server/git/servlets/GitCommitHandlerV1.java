@@ -92,6 +92,8 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			}
 			np = np.append(s);
 		}
+		if (p.hasTrailingSeparator())
+			np = np.addTrailingSeparator();
 		URI nu = new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), np.toString(), u.getQuery(), u.getFragment());
 		response.setHeader(ProtocolConstants.HEADER_LOCATION, nu.toString());
 		response.setStatus(HttpServletResponse.SC_OK);
@@ -99,7 +101,8 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws CoreException, IOException, ServletException, JSONException, URISyntaxException {
-		File gitDir = GitUtils.getGitDir(path.removeFirstSegments(1));
+		IPath filePath = path.hasTrailingSeparator() ? path.removeFirstSegments(1) : path.removeFirstSegments(1).removeLastSegments(1);
+		File gitDir = GitUtils.getGitDir(filePath);
 		if (gitDir == null)
 			return false; // TODO: or an error response code, 405?
 
