@@ -126,17 +126,6 @@ public class GitCloneTest extends GitTest {
 	}
 
 	@Test
-	public void testCloneEmptyUrl() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		WebRequest request = getPostGitCloneRequest("", clonePath);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
-	}
-
-	@Test
 	public void testCloneAndCreateProjectByName() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		IPath clonePath = new Path("workspace").append(getWorkspaceId(workspaceLocation)).makeAbsolute();

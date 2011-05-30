@@ -20,8 +20,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
-import org.eclipse.jgit.api.CheckoutCommand;
-import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.*;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileBasedConfig;
@@ -71,14 +70,22 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		return false;
 	}
 
-	private boolean handlePost(HttpServletRequest request, HttpServletResponse response) throws IOException, JSONException, ServletException, URISyntaxException, CoreException {
+	private boolean handlePost(HttpServletRequest request, HttpServletResponse response) throws IOException, JSONException, ServletException, URISyntaxException, CoreException, NoHeadException, NoMessageException, ConcurrentRefUpdateException, JGitInternalException, WrongRepositoryStateException {
 		// make sure required fields are set
 		JSONObject toAdd = OrionServlet.readJSONRequest(request);
 		WebClone clone = new WebClone();
 		String url = toAdd.optString(GitConstants.KEY_URL, null);
-		if (!validateCloneUrl(url, request, response))
-			return true;
-		clone.setUrl(new URIish(url));
+		// method handles repository clone or just repository init
+		// decision is based on existence of GitUrl argument 
+		boolean initOnly;
+		if (url == null || url.isEmpty())
+			initOnly = true;
+		else {
+			initOnly = false;
+			if (!validateCloneUrl(url, request, response))
+				return true;
+			clone.setUrl(new URIish(url));
+		}
 		String cloneName = toAdd.optString(ProtocolConstants.KEY_NAME, null);
 		if (cloneName == null)
 			cloneName = request.getHeader(ProtocolConstants.HEADER_SLUG);
@@ -90,9 +97,16 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			String msg = NLS.bind("Either '" + GitConstants.KEY_PATH + "' or '" + GitConstants.KEY_PATH + "' should be provided: {0}", toAdd);
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 		}
+		// only during init operation filePath or cloneName must be provided
+		// during clone operation, name can be obtained from URL
+		if (initOnly && filePath == null && cloneName == null) {
+			String msg = NLS.bind("Either '" + GitConstants.KEY_PATH + "' or '" + GitConstants.KEY_NAME + "' should be provided: {0}", toAdd);
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+		}
 		if (!validateCloneName(cloneName, request, response))
 			return true;
 
+		// prepare the WebClone object, create a new project if necessary
 		if (filePath != null) {
 			IPath path = new Path(filePath);
 			clone.setId(path.removeFirstSegments(1).toString());
@@ -103,6 +117,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		} else if (workspacePath != null) {
 			IPath path = new Path(workspacePath);
 			// TODO: move this to CloneJob
+			// if so, modify init part to create a new project if necessary
 			String id = WebProject.nextProjectId();
 			WebProject webProject = WebProject.fromId(id);
 			if (cloneName == null)
@@ -143,34 +158,57 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		}
 		clone.setName(cloneName);
 
-		// prepare creds
-		String username = toAdd.optString(GitConstants.KEY_USERNAME, null);
-		char[] password = toAdd.optString(GitConstants.KEY_PASSWORD, "").toCharArray(); //$NON-NLS-1$
-		String knownHosts = toAdd.optString(GitConstants.KEY_KNOWN_HOSTS, null);
-		byte[] privateKey = toAdd.optString(GitConstants.KEY_PRIVATE_KEY, "").getBytes(); //$NON-NLS-1$
-		byte[] publicKey = toAdd.optString(GitConstants.KEY_PUBLIC_KEY, "").getBytes(); //$NON-NLS-1$
-		byte[] passphrase = toAdd.optString(GitConstants.KEY_PASSPHRASE, "").getBytes(); //$NON-NLS-1$
+		if (initOnly) {
+			// git init
+			// call Init using JGit porcelain API
+			InitCommand command = new InitCommand();
+			File directory = new File(clone.getContentLocation());
+			command.setDirectory(directory);
+			Repository repository = command.call().getRepository();
+			Git git = new Git(repository);
 
-		GitCredentialsProvider cp = new GitCredentialsProvider(new URIish(clone.getUrl()), username, password, knownHosts);
-		cp.setPrivateKey(privateKey);
-		cp.setPublicKey(publicKey);
-		cp.setPassphrase(passphrase);
+			// without initial commit, there are plenty of errors
+			// doing initial commit manually using orion is impossible
+			// workaround:
+			git.commit().setMessage("Initial commit").call();
 
-		JSONObject cloneObject = WebClone.toJSON(clone, getURI(request));
-		String cloneLocation = cloneObject.getString(ProtocolConstants.KEY_LOCATION);
+			JSONObject result = WebClone.toJSON(clone, getURI(request));
+			String cloneLocation = result.getString(ProtocolConstants.KEY_LOCATION);
+			OrionServlet.writeJSONResponse(request, response, result);
+			response.setHeader(ProtocolConstants.HEADER_LOCATION, cloneLocation);
+			response.setStatus(HttpServletResponse.SC_CREATED);
+			return true;
+		} else {
+			// git clone
+			// prepare creds
+			String username = toAdd.optString(GitConstants.KEY_USERNAME, null);
+			char[] password = toAdd.optString(GitConstants.KEY_PASSWORD, "").toCharArray(); //$NON-NLS-1$
+			String knownHosts = toAdd.optString(GitConstants.KEY_KNOWN_HOSTS, null);
+			byte[] privateKey = toAdd.optString(GitConstants.KEY_PRIVATE_KEY, "").getBytes(); //$NON-NLS-1$
+			byte[] publicKey = toAdd.optString(GitConstants.KEY_PUBLIC_KEY, "").getBytes(); //$NON-NLS-1$
+			byte[] passphrase = toAdd.optString(GitConstants.KEY_PASSPHRASE, "").getBytes(); //$NON-NLS-1$
 
-		// if all went well, clone
-		CloneJob job = new CloneJob(clone, cp, request.getRemoteUser(), cloneLocation);
-		job.schedule();
-		TaskInfo task = job.getTask();
-		JSONObject result = task.toJSON();
-		//Not nice that the git service knows the location of the task servlet, but task service doesn't know this either
-		String taskLocation = getURI(request).resolve("../../task/id/" + task.getTaskId()).toString(); //$NON-NLS-1$
-		result.put(ProtocolConstants.KEY_LOCATION, taskLocation);
-		response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation);
-		OrionServlet.writeJSONResponse(request, response, result);
-		response.setStatus(HttpServletResponse.SC_ACCEPTED);
-		return true;
+			GitCredentialsProvider cp = new GitCredentialsProvider(new URIish(clone.getUrl()), username, password, knownHosts);
+			cp.setPrivateKey(privateKey);
+			cp.setPublicKey(publicKey);
+			cp.setPassphrase(passphrase);
+
+			JSONObject cloneObject = WebClone.toJSON(clone, getURI(request));
+			String cloneLocation = cloneObject.getString(ProtocolConstants.KEY_LOCATION);
+
+			// if all went well, clone
+			CloneJob job = new CloneJob(clone, cp, request.getRemoteUser(), cloneLocation);
+			job.schedule();
+			TaskInfo task = job.getTask();
+			JSONObject result = task.toJSON();
+			//Not nice that the git service knows the location of the task servlet, but task service doesn't know this either
+			String taskLocation = getURI(request).resolve("../../task/id/" + task.getTaskId()).toString(); //$NON-NLS-1$
+			result.put(ProtocolConstants.KEY_LOCATION, taskLocation);
+			response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation);
+			OrionServlet.writeJSONResponse(request, response, result);
+			response.setStatus(HttpServletResponse.SC_ACCEPTED);
+			return true;
+		}
 	}
 
 	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, String pathString) throws IOException, JSONException, ServletException, URISyntaxException, CoreException {
