@@ -99,7 +99,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws CoreException, IOException, ServletException, JSONException, URISyntaxException {
-		File gitDir = GitUtils.getGitDir(path.removeFirstSegments(1).uptoSegment(2));
+		File gitDir = GitUtils.getGitDir(path.removeFirstSegments(1));
 		if (gitDir == null)
 			return false; // TODO: or an error response code, 405?
 
