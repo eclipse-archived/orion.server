@@ -19,7 +19,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
-import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.*;
+import org.eclipse.jgit.api.CreateBranchCommand.SetupUpstreamMode;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.*;
@@ -105,15 +106,30 @@ public class GitBranchHandlerV1 extends ServletResourceHandler<String> {
 		if (p.segment(0).equals("file")) { //$NON-NLS-1$
 
 			JSONObject toCreate = OrionServlet.readJSONRequest(request);
-			String branchName = toCreate.optString(GitConstants.KEY_BRANCH_NAME, null);
+			String branchName = toCreate.optString(ProtocolConstants.KEY_NAME, null);
+			String startPoint = toCreate.optString(GitConstants.KEY_BRANCH_NAME, null);
+
 			if (branchName == null || branchName.isEmpty()) {
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Branch name must be provided", null));
+				if (startPoint == null || startPoint.isEmpty())
+					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Branch name must be provided", null));
+				else
+					branchName = Repository.shortenRefName(startPoint).replace('/', '_');
 			}
 
 			File gitDir = GitUtils.getGitDir(p);
 			Repository db = new FileRepository(gitDir);
 			Git git = new Git(db);
-			Ref ref = git.branchCreate().setName(branchName).call();
+
+			CreateBranchCommand cc = git.branchCreate();
+			cc.setName(branchName);
+
+			if (startPoint != null && !startPoint.isEmpty()) {
+				cc.setStartPoint(startPoint);
+				cc.setUpstreamMode(SetupUpstreamMode.TRACK);
+			}
+
+			Ref ref = cc.call();
+
 			// TODO: what if something went wrong, handle exception
 			JSONObject result = toJSON(db, ref, getURI(request), 2);
 			OrionServlet.writeJSONResponse(request, response, result);
