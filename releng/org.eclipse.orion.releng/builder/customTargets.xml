@@ -193,9 +193,11 @@ lastMapTag=${mapsTagTag}
 	</macrodef>
 
 	<target name="postAssemble">
+		<!--
 		<adjustInfoPlist suffix="cocoa.macosx.x86" />
 		<adjustInfoPlist suffix="cocoa.macosx.x86_64" />
 		<p2.process.artifacts repositoryPath="file:${buildDirectory}/buildRepo" />
+		-->
 	</target>	
 	
 	<target name="postBuild" >
