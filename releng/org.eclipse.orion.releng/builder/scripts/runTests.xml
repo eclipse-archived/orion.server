@@ -203,10 +203,6 @@
 		<unzip dest="${buildDirectory}/plugins/org.dojotoolkit">
 			<fileset dir="${buildDirectory}/buildRepo/plugins" includes="org.dojotoolkit_*.jar" />
 		</unzip>
-		<mkdir dir="${buildDirectory}/plugins/org.openajax" />
-		<unzip dest="${buildDirectory}/plugins/org.openajax">
-			<fileset dir="${buildDirectory}/buildRepo/plugins" includes="org.openajax_2.0.3.*.jar" />
-		</unzip>
 	</target>			
 		
 	<target name="jsTests" >

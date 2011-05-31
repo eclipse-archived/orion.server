@@ -192,13 +192,6 @@
          </resource-mapping>
       </httpcontext>
       <httpcontext
-            id="org.eclipse.orion.server.configurator.httpcontext.openajax">
-         <resource-mapping
-               bundle="org.openajax"
-               path="/">
-         </resource-mapping>
-      </httpcontext>
-      <httpcontext
             id="org.eclipse.orion.server.configurator.httpcontext.search">
          <resource-mapping
                bundle="org.eclipse.orion.server.search"
@@ -241,10 +234,6 @@
       <resource
             alias="/org.dojotoolkit/orion"
             httpcontextId="org.eclipse.orion.server.configurator.httpcontext.orion.dojo">
-      </resource>
-      <resource
-            alias="/openajax"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.openajax">
       </resource>
       <resource
             alias="/usersstatic"

@@ -132,16 +132,7 @@ lastMapTag=${mapsTagTag}
 		<property name="dojoFolder" value="${buildDirectory}/optimization/org.dojotoolkit" />
 		<mkdir dir="${dojoFolder}" />
 		<unzip src="${dojoJar}" dest="${dojoFolder}" overwrite="false"/>
-
-		<property name="openajaxFolder" value="${buildDirectory}/optimization/openajax" />
-		<mkdir dir="${openajaxFolder}" />
-		<pathconvert property="openajax" >
-			<last><sort><dirset dir="${buildDirectory}/plugins" includes="org.openajax_*" /></sort></last>
-		</pathconvert>
-		<copy todir="${openajaxFolder}" >
-			<fileset dir="${openajax}" includes="**" />
-		</copy>
-		
+	
 		<copy todir="${buildDirectory}/optimization" >
 			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.core/static" includes="**"/>
 		</copy>
@@ -174,7 +165,7 @@ lastMapTag=${mapsTagTag}
 
 		<!-- copy css back -->
 		<copy todir="${buildDirectory}/plugins/org.eclipse.orion.client.core/static" >
-			<fileset dir="${buildDirectory}/optimization" includes="**/*.css" excludes="org.dojotoolkit/, openajax/"/>
+			<fileset dir="${buildDirectory}/optimization" includes="**/*.css" excludes="org.dojotoolkit/"/>
 		</copy>
 	</target>
 		
