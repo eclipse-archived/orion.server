@@ -112,8 +112,10 @@ public class GitBranchHandlerV1 extends ServletResourceHandler<String> {
 			if (branchName == null || branchName.isEmpty()) {
 				if (startPoint == null || startPoint.isEmpty())
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Branch name must be provided", null));
-				else
-					branchName = Repository.shortenRefName(startPoint).replace('/', '_');
+				else {
+					String shortName = Repository.shortenRefName(startPoint);
+					branchName = shortName.substring(shortName.lastIndexOf("/") + 1);
+				}
 			}
 
 			File gitDir = GitUtils.getGitDir(p);
@@ -149,7 +151,13 @@ public class GitBranchHandlerV1 extends ServletResourceHandler<String> {
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(1));
 			Repository db = new FileRepository(gitDir);
 			Git git = new Git(db);
-			List<String> branches = git.branchDelete().setBranchNames(p.segment(0)).call();
+
+			DeleteBranchCommand cc = git.branchDelete();
+			cc.setBranchNames(p.segment(0));
+			// TODO: the force flag should be passed in the API call
+			cc.setForce(true);
+			cc.call();
+
 			// TODO: do something with the result, and handle any exceptions
 			return true;
 		}
