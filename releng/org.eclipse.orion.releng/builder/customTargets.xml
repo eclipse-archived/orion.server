@@ -68,7 +68,7 @@ lastMapTag=${mapsTagTag}
 		<property name="closureJar" value="/shared/common/closure/compiler.jar" />
 
 		<antcall target="jsdocs" />
-		<antcall target="optimizeCSS" />
+		<antcall target="requirejs" />
 		
 		<!--
 		<ant dir="${basedir}" antfile="${builder}/scripts/closure.xml" target="runClosure" >
@@ -92,17 +92,72 @@ lastMapTag=${mapsTagTag}
 		</java>
 	</target>
 	
-	<target name="optimizeCSS" if="requirejsHome" >
-		<!-- Stage files for css optimization -->
+	<macrodef name="optimize" >
+		<attribute name="name" />
+		<attribute name="appDir" default="@{name}" />
+		<sequential>
+			<java classname="org.mozilla.javascript.tools.shell.Main" fork="true" 
+				  dir="${buildDirectory}/optimization">
+				<classpath>
+					<pathelement location="${requirejsHome}/build/lib/rhino/js.jar" />
+					<pathelement location="${requirejsHome}/build/lib/closure/compiler.jar" />
+				</classpath>
+				<arg value="${requirejsHome}/bin/x.js"/>
+				<arg value="${requirejsHome}/bin"/>
+				<arg value="${requirejsHome}/build/build.js"/>
+				<arg value="./orion.build.js"/>
+				<arg value="optimize=closure" />
+				<arg value="name=@{name}" />
+				<arg value="out=@{appDir}/built-@{name}.js"/>
+				<arg value="appDir=@{appDir}" />
+				<arg value="baseUrl=." />
+				<arg value="dir=." />
+			</java>
+			
+			<replace file="${buildDirectory}/optimization/@{appDir}/@{name}.html" token="require([&quot;@{name}&quot;]);" value="require([&quot;built-@{name}&quot;]);" />
+			<copy todir="${buildDirectory}/plugins/org.eclipse.orion.client.core/static/@{appDir}" >
+				<fileset dir="${buildDirectory}/optimization/@{appDir}" includes="built-@{name}.js, @{name}.html" />
+			</copy>
+		</sequential>
+	</macrodef>
+	
+	<target name="requirejs" if="requirejsHome" >
+		<delete dir="${buildDirectory}/optimization" />
+		<copy file="${builder}/scripts/orion.build.js" tofile="${buildDirectory}/optimization/orion.build.js" overwrite="true"/>
+
+		<!-- Stage files for optimization --> 
 		<pathconvert property="dojoJar" >
 			<last><sort><fileset dir="${transformedRepoLocation}/plugins" includes="org.dojotoolkit_*.jar" /></sort></last>
 		</pathconvert>
-		<property name="dojoFolder" value="${buildDirectory}/cssOptimization/org.dojotoolkit" />
-		<delete dir="${buildDirectory}/cssOptimization" />
+		<property name="dojoFolder" value="${buildDirectory}/optimization/org.dojotoolkit" />
 		<mkdir dir="${dojoFolder}" />
 		<unzip src="${dojoJar}" dest="${dojoFolder}" overwrite="false"/>
+
+		<property name="openajaxFolder" value="${buildDirectory}/optimization/openajax" />
+		<mkdir dir="${openajaxFolder}" />
+		<pathconvert property="openajax" >
+			<last><sort><dirset dir="${buildDirectory}/plugins" includes="org.openajax_*" /></sort></last>
+		</pathconvert>
+		<copy todir="${openajaxFolder}" >
+			<fileset dir="${openajax}" includes="**" />
+		</copy>
+		
+		<copy todir="${buildDirectory}/optimization" >
+			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.core/static" includes="**"/>
+		</copy>
+		<copy todir="${dojoFolder}" >
+			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.core/static" includes="dojox/**" />
+		</copy>
 		
 		<!-- invoke requirejs -->
+		<optimize appDir="navigate" name="table" />
+		<optimize appDir="navigate" name="tree" />
+		<optimize name="edit" />
+		<optimize name="compare" />
+		<optimize name="search" />
+		<optimize appDir="sites" name="site" />
+		<optimize appDir="sites" name="sites" />
+		
 		<java classname="org.mozilla.javascript.tools.shell.Main">
 			<classpath>
 				<pathelement location="${requirejsHome}/build/lib/rhino/js.jar" />
@@ -112,13 +167,14 @@ lastMapTag=${mapsTagTag}
 			<arg value="${requirejsHome}/bin"/>
 			<arg value="${requirejsHome}/build/build.js"/>
 			<arg value="${builder}/scripts/orion.build.js"/>
-			<arg value="appDir=${buildDirectory}/plugins/org.eclipse.orion.client.core/static" />
-			<arg value="dir=${buildDirectory}/cssOptimization" />
+			<arg value="optimize=none" />
+			<arg value="appDir=${buildDirectory}/optimization" />
+			<arg value="dir=${buildDirectory}/optimization" />
 		</java>
-		
-		<!-- copy results back -->
+
+		<!-- copy css back -->
 		<copy todir="${buildDirectory}/plugins/org.eclipse.orion.client.core/static" >
-			<fileset dir="${buildDirectory}/cssOptimization" includes="**/*.css" excludes="org.dojotoolkit/"/>
+			<fileset dir="${buildDirectory}/optimization" includes="**/*.css" excludes="org.dojotoolkit/, openajax/"/>
 		</copy>
 	</target>
 		
