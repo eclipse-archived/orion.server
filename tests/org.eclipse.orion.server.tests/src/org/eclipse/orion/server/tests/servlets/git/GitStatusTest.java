@@ -12,6 +12,7 @@ package org.eclipse.orion.server.tests.servlets.git;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -55,8 +56,7 @@ public class GitStatusTest extends GitTest {
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
 		WebRequest request = getGetGitStatusRequest(gitStatusUri);
@@ -80,8 +80,7 @@ public class GitStatusTest extends GitTest {
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
@@ -128,8 +127,7 @@ public class GitStatusTest extends GitTest {
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
@@ -170,8 +168,7 @@ public class GitStatusTest extends GitTest {
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
@@ -217,8 +214,7 @@ public class GitStatusTest extends GitTest {
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
 		request = getGetGitStatusRequest(gitStatusUri);
@@ -254,8 +250,7 @@ public class GitStatusTest extends GitTest {
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
 		request = getGetGitStatusRequest(gitStatusUri);
@@ -296,8 +291,7 @@ public class GitStatusTest extends GitTest {
 		rm.addFilepattern("test.txt");
 		rm.call();
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
 		request = getGetGitStatusRequest(gitStatusUri);
@@ -333,8 +327,7 @@ public class GitStatusTest extends GitTest {
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
 		request = getGetGitStatusRequest(gitStatusUri);
@@ -389,8 +382,7 @@ public class GitStatusTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
 		// GET /git/status/file/{proj}/
@@ -465,8 +457,7 @@ public class GitStatusTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
 		// GET /git/status/file/{proj}/
@@ -542,8 +533,7 @@ public class GitStatusTest extends GitTest {
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
@@ -613,8 +603,7 @@ public class GitStatusTest extends GitTest {
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
@@ -696,8 +685,7 @@ public class GitStatusTest extends GitTest {
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project1 = new JSONObject(response.getText());
-		JSONObject gitSection1 = project1.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection1);
+		JSONObject gitSection1 = project1.getJSONObject(GitConstants.KEY_GIT);
 		String gitIndexUri1 = gitSection1.getString(GitConstants.KEY_INDEX);
 		String gitCommitUri1 = gitSection1.getString(GitConstants.KEY_COMMIT);
 		String gitRemoteUri1 = gitSection1.getString(GitConstants.KEY_REMOTE);
@@ -713,8 +701,7 @@ public class GitStatusTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project2 = new JSONObject(response.getText());
-		JSONObject gitSection2 = project2.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection2);
+		JSONObject gitSection2 = project2.getJSONObject(GitConstants.KEY_GIT);
 		String gitIndexUri2 = gitSection2.getString(GitConstants.KEY_INDEX);
 		String gitCommitUri2 = gitSection2.getString(GitConstants.KEY_COMMIT);
 		String gitStatusUri2 = gitSection2.getString(GitConstants.KEY_STATUS);
@@ -801,8 +788,7 @@ public class GitStatusTest extends GitTest {
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
@@ -925,6 +911,37 @@ public class GitStatusTest extends GitTest {
 		gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
 		log = log(gitCommitUri, false);
 		assertEquals(0, log.length());
+	}
+
+	@Test
+	public void testStatusForRepositoryInFolder() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).append("myClone").makeAbsolute();
+
+		// /file/{id}/myClone
+		JSONObject clone = clone(clonePath);
+
+		String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		WebRequest request = getGetFilesRequest(cloneContentLocation);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		assertNull(gitSection);
+
+		request = getGetFilesRequest(cloneContentLocation);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject folder = new JSONObject(response.getText());
+		gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
+		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
+
+		request = getGetGitStatusRequest(gitStatusUri);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject statusResponse = new JSONObject(response.getText());
+		assertStatusClean(statusResponse);
 	}
 
 	private void assertChildLocation(JSONObject child, String expectedFileContent) throws JSONException, IOException, SAXException {

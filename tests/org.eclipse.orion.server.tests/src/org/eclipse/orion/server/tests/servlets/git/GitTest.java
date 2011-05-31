@@ -338,6 +338,35 @@ public abstract class GitTest extends FileSystemTest {
 		return clone;
 	}
 
+	// init
+
+	protected JSONObject init(IPath workspacePath, IPath filePath, String name) throws JSONException, IOException, SAXException, CoreException {
+		// clone
+		WebRequest request = getPostGitCloneRequest(null, workspacePath, filePath, name, null, null);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		String cloneLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		assertNotNull(cloneLocation);
+
+		// validate the clone metadata
+		response = webConversation.getResponse(getGetRequest(cloneLocation));
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject clones = new JSONObject(response.getText());
+		JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		assertEquals(1, clonesArray.length());
+		JSONObject clone = clonesArray.getJSONObject(0);
+		String n = clone.getString(ProtocolConstants.KEY_NAME);
+		if (filePath != null)
+			assertTrue(filePath.segmentCount() == 2 && n.equals(WebProject.fromId(filePath.segment(1)).getName()) || n.equals(filePath.lastSegment()));
+		if (workspacePath != null && name != null)
+			assertEquals(name, n);
+		assertCloneUri(clone.getString(ProtocolConstants.KEY_LOCATION));
+		assertFileUri(clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		assertRemoteUri(clone.getString(GitConstants.KEY_REMOTE));
+		assertBranchUri(clone.getString(GitConstants.KEY_BRANCH));
+		return clone;
+	}
+
 	protected JSONObject clone(IPath workspacePath, IPath filePath, String name) throws JSONException, IOException, SAXException, CoreException {
 		URIish uri = new URIish(gitDir.toURL());
 		return clone(uri, workspacePath, filePath, name, null, null);
@@ -908,7 +937,7 @@ public abstract class GitTest extends FileSystemTest {
 			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.BRANCH_RESOURCE + location;
 		}
 		JSONObject body = new JSONObject();
-		body.put(GitConstants.KEY_BRANCH_NAME, branchName);
+		body.put(ProtocolConstants.KEY_NAME, branchName);
 		WebRequest request = new PostMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);

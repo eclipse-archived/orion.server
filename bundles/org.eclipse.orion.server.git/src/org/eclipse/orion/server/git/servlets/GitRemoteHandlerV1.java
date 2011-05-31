@@ -120,6 +120,8 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 						o.put(ProtocolConstants.KEY_LOCATION, BaseToRemoteConverter.REMOVE_FIRST_3.baseToRemoteLocation(baseLocation, "" /*short name is {remote}/{branch}*/, Repository.shortenRefName(name))); //$NON-NLS-1$
 						o.put(GitConstants.KEY_COMMIT, BaseToCommitConverter.getCommitLocation(baseLocation, ref.getObjectId().name(), BaseToCommitConverter.REMOVE_FIRST_3));
 						o.put(GitConstants.KEY_HEAD, BaseToCommitConverter.getCommitLocation(baseLocation, Constants.HEAD, BaseToCommitConverter.REMOVE_FIRST_3));
+						o.put(GitConstants.KEY_CLONE, BaseToCloneConverter.getCloneLocation(baseLocation, BaseToCloneConverter.REMOTE_BRANCH));
+						o.put(GitConstants.KEY_BRANCH, BaseToBranchConverter.getBranchLocation(baseLocation, BaseToBranchConverter.REMOTE_BRANCH));
 						children.put(o);
 					}
 					result.put(ProtocolConstants.KEY_CHILDREN, children);
