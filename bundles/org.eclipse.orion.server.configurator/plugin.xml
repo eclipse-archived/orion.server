@@ -47,7 +47,7 @@
             class="org.eclipse.orion.internal.server.servlets.xfer.TransferServlet">
       </servlet>
       <servlet
-            alias="/git"
+            alias="/gitapi"
             class="org.eclipse.orion.server.git.servlets.GitServlet">
       </servlet>
       <servlet
@@ -115,7 +115,7 @@
             class="org.eclipse.orion.server.configurator.servlet.AuthenticationFilter">
       </filter>
       <filter
-            alias="/git"
+            alias="/gitapi"
             class="org.eclipse.orion.server.configurator.servlet.AuthenticationFilter">
       </filter>
       <filter

@@ -24,7 +24,7 @@ public class GitServlet extends OrionServlet {
 
 	private static final long serialVersionUID = 1L;
 
-	public static final String GIT_URI = "/git"; //$NON-NLS-1$
+	public static final String GIT_URI = "/gitapi"; //$NON-NLS-1$
 
 	private ServletResourceHandler<String> gitSerializer;
 
@@ -38,8 +38,7 @@ public class GitServlet extends OrionServlet {
 		String pathInfo = req.getPathInfo();
 		if (gitSerializer.handleRequest(req, resp, pathInfo))
 			return;
-		// finally invoke super to return an error for requests we don't know
-		// how to handle
+		// finally invoke super to return an error for requests we don't know how to handle
 		super.doGet(req, resp);
 	}
 
