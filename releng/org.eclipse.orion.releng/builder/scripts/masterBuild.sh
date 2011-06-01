@@ -58,6 +58,9 @@ do
 			date=${timestamp:0:8}
 			time=${timestamp:8};
 			shift;;
+		
+		"-noTag")
+			noTag=true;;
 			
 		"-email")
 			resultsEmail="$2"; shift;;
@@ -122,6 +125,42 @@ updateBaseBuilder () {
     ln -s ${supportDir}/org.eclipse.releng.basebuilder_${basebuilderBranch} org.eclipse.releng.basebuilder
     echo "[`date +%H\:%M\:%S`] Done setting org.eclipse.releng.basebuilder"
 	popd
+}
+
+tagRepositories() {
+	#do this for I builds and if -noTag was not specified
+	if [ "$buildType" == "I" -a -z "$noTag" ]; then 
+		tag=v$date-$time
+		
+		pushd $writableBuildRoot/gitClones
+		
+        if [ ! -f git-map.sh ]; then
+	        wget -O git-map.sh http://dev.eclipse.org/viewcvs/viewvc.cgi/e4/releng/org.eclipse.e4.builder/scripts/git-map.sh?view=co&content-type=text/plain
+        fi
+		
+		#pull the server first to get the latest map files before updating with new tags
+		cd $writableBuildRoot/gitClones/server
+		git pull
+	
+		cd $writableBuildRoot/gitClones/client
+		git pull
+		git tag $tag
+		git push --tags
+		/bin/bash $writableBuildRoot/gitClones/git-map.sh $tag ../server/releng/org.eclipse.orion.releng/maps/orion.map bundles
+		
+		cd $writableBuildRoot/gitClones/server
+		git tag $tag
+		for f in *; do
+			/bin/bash $writableBuildRoot/gitClones/git-map.sh $tag releng/org.eclipse.orion.releng/maps/orion.map $f
+		done 
+		git add releng/org.eclipse.orion.releng/maps/orion.map
+		git commit -m "Releng build tagging for $buildType$timestamp"
+		git tag -f $tag   #move the tag to include the map file change
+		git push
+		git push --tags
+	
+		popd
+	fi
 }
 
 runBuild () {
@@ -248,6 +287,8 @@ publish () {
 
 cd $writableBuildRoot
 
+#tag before updateRelengProject so that we get the new map files
+tagRepositories 
 updateRelengProject
 updateBaseBuilder
 setProperties
