@@ -174,7 +174,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(1));
 			Repository db = new FileRepository(gitDir);
 			StoredConfig config = db.getConfig();
-			config.unsetSection(Constants.R_REMOTES, remoteName);
+			config.unsetSection(ConfigConstants.CONFIG_REMOTE_SECTION, remoteName);
 			config.save();
 			//TODO: handle result
 			return true;
@@ -263,9 +263,10 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		config.save();
 
 		URI baseLocation = getURI(request);
-		response.setHeader(ProtocolConstants.HEADER_LOCATION, BaseToRemoteConverter.REMOVE_FIRST_3.baseToRemoteLocation(baseLocation, p.segment(0), Repository.shortenRefName(remoteName)).toString());
+		JSONObject result = toJSON(remoteName, baseLocation);
+		OrionServlet.writeJSONResponse(request, response, result);
+		response.setHeader(ProtocolConstants.HEADER_LOCATION, result.getString(ProtocolConstants.KEY_LOCATION));
 		response.setStatus(HttpServletResponse.SC_CREATED);
-		//TODO: handle result
 		return true;
 	}
 
@@ -307,5 +308,11 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 
 	private URI createTaskLocation(URI baseLocation, String taskId) throws URISyntaxException {
 		return new URI(baseLocation.getScheme(), baseLocation.getAuthority(), "/task/id/" + taskId, null, null); //$NON-NLS-1$
+	}
+
+	private JSONObject toJSON(String remoteName, URI baseLocation) throws JSONException, URISyntaxException {
+		JSONObject result = new JSONObject();
+		result.put(ProtocolConstants.KEY_LOCATION, BaseToRemoteConverter.REMOVE_FIRST_2.baseToRemoteLocation(baseLocation, Repository.shortenRefName(remoteName), ""));
+		return result;
 	}
 }
