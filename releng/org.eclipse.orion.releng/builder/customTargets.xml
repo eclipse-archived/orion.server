@@ -77,7 +77,7 @@ lastMapTag=${mapsTagTag}
 			<arg value="-r=3" />
 			<arg value="-t=${jsdocHome}/templates/jsdoc" />
 			<arg value="-d=${buildDirectory}/plugins/org.eclipse.orion.doc.isv/jsdoc" />
-			<arg value="${buildDirectory}/plugins/org.eclipse.orion.client.core/web/js/" />
+			<arg value="${buildDirectory}/plugins/org.eclipse.orion.client.core/web/orion/" />
 			<arg value="${buildDirectory}/plugins/org.eclipse.orion.client.editor/web/js/" />
 			<arg value="${buildDirectory}/plugins/org.eclipse.orion.client.git/static/js/" />
 			<arg value="${buildDirectory}/plugins/org.eclipse.orion.client.users.ui/static/profile/js/" />

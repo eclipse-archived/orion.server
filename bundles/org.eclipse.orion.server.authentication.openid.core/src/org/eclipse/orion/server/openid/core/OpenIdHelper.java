@@ -100,7 +100,7 @@ public class OpenIdHelper {
 			out.println("<html><head></head>"); //$NON-NLS-1$
 			// TODO: send a message using
 			// window.eclipseMessage.postImmediate(otherWindow, message) from
-			// /org.eclipse.e4.webide/static/js/message.js
+			// /org.eclipse.e4.webide/web/orion/message.js
 			out.print("<body onload=\"window.opener.handleOpenIDResponse((window.location+'').split('?')[1],'");
 			out.print(error);
 			out.println("');window.close();\">"); //$NON-NLS-1$
@@ -114,7 +114,7 @@ public class OpenIdHelper {
 		out.println("<html><head></head>"); //$NON-NLS-1$
 		// TODO: send a message using
 		// window.eclipseMessage.postImmediate(otherWindow, message) from
-		// /org.eclipse.e4.webide/static/js/message.js
+		// /org.eclipse.e4.webide/web/orion/message.js
 
 		String url = req.getParameter(REDIRECT);
 		url = url.replaceAll("/&error(\\=[^&]*)?(?=&|$)|^error(\\=[^&]*)?(&|$)/", ""); // remove
