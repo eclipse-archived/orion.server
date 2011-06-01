@@ -6,7 +6,7 @@
  * 
  * Contributors: IBM Corporation - initial API and implementation
  ******************************************************************************/
-dojo.require("dojo.date.locale");
+//dojo.require("dojo.date.locale");
 
 if (document.getElementById("formAuth") == null) {
 	document.documentElement.getElementsByTagName("head")[0].appendChild(stylg);
