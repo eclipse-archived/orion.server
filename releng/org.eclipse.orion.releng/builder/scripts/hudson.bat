@@ -12,7 +12,7 @@ rd /S /Q %WORKSPACE%\test\eclipse
 
 cd %WORKSPACE%\test\eclipse
 
-start "Test Orion" eclipse
+start "Test Orion" orion
 
 REM emulate a sleep for 10 seconds to let eclipse get started 
 ping -n 11 127.0.0.1 >nul

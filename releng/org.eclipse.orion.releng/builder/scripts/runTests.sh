@@ -61,7 +61,7 @@ fi
 if [ ! -z "$serverPath" ]; then
 	#remove -console from the .ini
 	sed -i '/^-console$/ d' $serverPath/eclipse.ini
-	$serverPath/eclipse -vm /shared/common/sun-jdk1.6.0_21_x64/jre/lib/amd64/server/libjvm.so > $serverPath/server.log 2>&1 &	
+	$serverPath/orion -vm /shared/common/sun-jdk1.6.0_21_x64/jre/lib/amd64/server/libjvm.so > $serverPath/server.log 2>&1 &	
 	pid_server="$!"			# take the process ID
 	echo $pid_server
 	exit
