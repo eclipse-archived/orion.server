@@ -152,7 +152,7 @@
             id="org.eclipse.orion.server.configurator.httpcontext.webide">
          <resource-mapping
                bundle="org.eclipse.orion.client.core"
-               path="/static">
+               path="/web">
          </resource-mapping>
       </httpcontext>
       <httpcontext
@@ -180,18 +180,11 @@
             id="org.eclipse.orion.server.configurator.httpcontext.orion.dojox">
          <resource-mapping
                bundle="org.eclipse.orion.client.core"
-               path="/static/dojox">
+               path="/web/dojox">
          </resource-mapping>
          <resource-mapping
                bundle="org.dojotoolkit"
                path="/dojox">
-         </resource-mapping>
-      </httpcontext>
-    <httpcontext
-            id="org.eclipse.orion.server.configurator.httpcontext.orion.dojo">
-         <resource-mapping
-               bundle="org.eclipse.orion.dojo"
-               path="/static">
          </resource-mapping>
       </httpcontext>
       <httpcontext
@@ -233,10 +226,6 @@
       <resource
             alias="/org.dojotoolkit/dojox"
             httpcontextId="org.eclipse.orion.server.configurator.httpcontext.orion.dojox">
-      </resource>
-      <resource
-            alias="/org.dojotoolkit/orion"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.orion.dojo">
       </resource>
       <resource
             alias="/usersstatic"
