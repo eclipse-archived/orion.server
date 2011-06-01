@@ -288,12 +288,12 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	private URI createDiffLocation(URI baseLocation, String toRefId, String fromRefId, String path) throws URISyntaxException {
-		String diffPath = GitServlet.GIT_URI + "/" + GitConstants.DIFF_RESOURCE + "/";
+		String diffPath = GitServlet.GIT_URI + "/" + GitConstants.DIFF_RESOURCE + "/"; //$NON-NLS-1$ //$NON-NLS-2$
 
 		if (fromRefId != null)
-			diffPath += fromRefId + "..";
+			diffPath += fromRefId + ".."; //$NON-NLS-1$
 
-		diffPath += toRefId + "/";
+		diffPath += toRefId + "/"; //$NON-NLS-1$
 
 		if (path == null)
 			diffPath += new Path(baseLocation.getPath()).removeFirstSegments(3);
@@ -302,7 +302,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			diffPath += s.removeLastSegments(s.segmentCount() - 5).removeFirstSegments(3).append(path);
 		}
 
-		return new URI(baseLocation.getScheme(), baseLocation.getAuthority(), diffPath, null, null); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		return new URI(baseLocation.getScheme(), baseLocation.getAuthority(), diffPath, null, null);
 	}
 
 	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws ServletException, NoFilepatternException, IOException, JSONException, CoreException, URISyntaxException {

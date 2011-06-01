@@ -14,7 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.Map;
 import java.util.Map.Entry;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -34,6 +34,7 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
+import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
@@ -233,8 +234,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 						if (isAccessAllowed(user, webProject)) {
 							URI contentLocation = URI.create(webProject.getId());
 							IPath projectPath = new Path(contentLocation.getPath());
-							Map<IPath, File> gitDirs = new HashMap<IPath, File>();
-							GitUtils.getGitDirs(projectPath, gitDirs);
+							Map<IPath, File> gitDirs = GitUtils.getGitDirs(projectPath, Traverse.GO_DOWN);
 							for (Map.Entry<IPath, File> entry : gitDirs.entrySet()) {
 								JSONObject child = toJSON(entry, baseLocation);
 								children.put(child);
@@ -257,8 +257,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			if (isAccessAllowed(user, webProject) && webProject.getProjectStore().getFileStore(path.removeFirstSegments(2)).fetchInfo().exists()) {
 				URI contentLocation = webProject.getContentLocation();
 				IPath projectPath = new Path(contentLocation.getPath()).append(path.removeFirstSegments(2));
-				Map<IPath, File> gitDirs = new HashMap<IPath, File>();
-				GitUtils.getGitDirs(projectPath, gitDirs);
+				Map<IPath, File> gitDirs = GitUtils.getGitDirs(projectPath, Traverse.GO_DOWN);
 				JSONObject result = new JSONObject();
 				JSONArray children = new JSONArray();
 				for (Map.Entry<IPath, File> entry : gitDirs.entrySet()) {
@@ -287,15 +286,15 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			if (isAccessAllowed(request.getRemoteUser(), webProject)) {
 				URI contentLocation = URI.create(webProject.getId());
 				IPath projectPath = new Path(contentLocation.getPath()).append(path.removeFirstSegments(2));
-				// FIXME: don't go up, bug 347627
-				File gitDir = GitUtils.getGitDir(new Path("file").append(projectPath));
+				projectPath = path.hasTrailingSeparator() ? projectPath : projectPath.removeLastSegments(1);
+				File gitDir = GitUtils.getGitDirs(new Path("file").append(projectPath), Traverse.CURRENT).values().iterator().next();
 
 				// make sure required fields are set
 				JSONObject toCheckout = OrionServlet.readJSONRequest(request);
 				JSONArray paths = toCheckout.optJSONArray(ProtocolConstants.KEY_PATH);
 				String branch = toCheckout.optString(GitConstants.KEY_BRANCH_NAME);
 				if ((paths == null || paths.length() == 0) && (branch == null || branch.isEmpty())) {
-					String msg = NLS.bind("Either '{0}' or '{1}' should be provided: {2}", new Object[] {ProtocolConstants.KEY_PATH, GitConstants.KEY_BRANCH, toCheckout});
+					String msg = NLS.bind("Either '{0}' or '{1}' should be provided: {2}", new Object[] {ProtocolConstants.KEY_PATH, GitConstants.KEY_BRANCH_NAME, toCheckout});
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 				}
 
@@ -336,8 +335,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			if (isAccessAllowed(request.getRemoteUser(), webProject)) {
 				URI contentLocation = URI.create(webProject.getId());
 				IPath projectPath = new Path(contentLocation.getPath()).append(path.removeFirstSegments(2));
-				// FIXME: don't go up, bug 347627
-				File gitDir = GitUtils.getGitDir(new Path("file").append(projectPath));
+				File gitDir = GitUtils.getGitDirs(new Path("file").append(projectPath), Traverse.CURRENT).values().iterator().next();
 
 				Repository repo = new FileRepository(gitDir);
 				repo.close();

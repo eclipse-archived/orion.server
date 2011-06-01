@@ -19,13 +19,15 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.net.HttpURLConnection;
 import java.net.URI;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.servlets.GitUtils;
+import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
 import org.json.JSONObject;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -60,9 +62,14 @@ public class GitUtilsTest extends GitTest {
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), new File(gitDir, "folder").toURI().toString());
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		URI uri = URI.create(location);
-		File gitDirFile = GitUtils.getGitDir(new Path(uri.getPath()));
+		Set<Entry<IPath, File>> set = GitUtils.getGitDirs(new Path(uri.getPath()), Traverse.GO_UP).entrySet();
+		assertEquals(1, set.size());
+		Entry<IPath, File> entry = set.iterator().next();
+		File gitDirFile = entry.getValue();
 		assertNotNull(gitDirFile);
 		assertEquals(gitDir, gitDirFile.getParentFile());
+		IPath path = entry.getKey();
+		assertEquals(new Path("../"), path);
 	}
 
 	@Test
@@ -77,8 +84,7 @@ public class GitUtilsTest extends GitTest {
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		URI uri = URI.create(location);
 		IPath projectPath = new Path(uri.getPath());
-		Map<IPath, File> gitDirs = new HashMap<IPath, File>();
-		GitUtils.getGitDirs(projectPath, gitDirs);
+		Map<IPath, File> gitDirs = GitUtils.getGitDirs(projectPath, Traverse.GO_DOWN);
 		assertTrue(gitDirs.isEmpty());
 	}
 
@@ -90,8 +96,7 @@ public class GitUtilsTest extends GitTest {
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		URI uri = URI.create(location);
 		IPath projectPath = new Path(uri.getPath());
-		Map<IPath, File> gitDirs = new HashMap<IPath, File>();
-		GitUtils.getGitDirs(projectPath, gitDirs);
+		Map<IPath, File> gitDirs = GitUtils.getGitDirs(projectPath, Traverse.GO_DOWN);
 		assertFalse(gitDirs.isEmpty());
 	}
 
@@ -104,8 +109,7 @@ public class GitUtilsTest extends GitTest {
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		URI uri = URI.create(location);
 		IPath projectPath = new Path(uri.getPath()).removeFirstSegments(1); // remove /file
-		Map<IPath, File> gitDirs = new HashMap<IPath, File>();
-		GitUtils.getGitDirs(projectPath, gitDirs);
+		Map<IPath, File> gitDirs = GitUtils.getGitDirs(projectPath, Traverse.GO_DOWN);
 		assertFalse(gitDirs.isEmpty());
 	}
 
@@ -133,22 +137,21 @@ public class GitUtilsTest extends GitTest {
 		String cloneLocation = cloneFolder1.getString(ProtocolConstants.KEY_LOCATION);
 		URI subfolderUri = URI.create(cloneLocation);
 		IPath subfolderPath = new Path(subfolderUri.getPath()).removeFirstSegments(1); // remove /file
-		Map<IPath, File> gitDirs = new HashMap<IPath, File>();
-		GitUtils.getGitDirs(subfolderPath, gitDirs);
+		Map<IPath, File> gitDirs = GitUtils.getGitDirs(subfolderPath, Traverse.GO_DOWN);
 		assertFalse(gitDirs.isEmpty());
 		gitDirs.clear();
 
 		cloneLocation = cloneFolder2.getString(ProtocolConstants.KEY_LOCATION);
 		subfolderUri = URI.create(cloneLocation);
 		subfolderPath = new Path(subfolderUri.getPath()).removeFirstSegments(1); // remove /file
-		GitUtils.getGitDirs(subfolderPath, gitDirs);
+		gitDirs = GitUtils.getGitDirs(subfolderPath, Traverse.GO_DOWN);
 		assertFalse(gitDirs.isEmpty());
 		gitDirs.clear();
 
 		String projectLocation = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		URI projectUri = URI.create(projectLocation);
 		IPath projectPath = new Path(projectUri.getPath()).removeFirstSegments(1); // remove /file
-		GitUtils.getGitDirs(projectPath, gitDirs);
+		gitDirs = GitUtils.getGitDirs(projectPath, Traverse.GO_DOWN);
 		assertFalse(gitDirs.isEmpty());
 		assertEquals(2, gitDirs.size());
 	}

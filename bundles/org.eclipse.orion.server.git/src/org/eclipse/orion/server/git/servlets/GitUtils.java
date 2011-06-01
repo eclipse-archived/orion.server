@@ -12,11 +12,10 @@ package org.eclipse.orion.server.git.servlets;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.util.Map;
+import java.util.*;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.RepositoryCache;
 import org.eclipse.jgit.util.FS;
@@ -24,6 +23,11 @@ import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 
 public class GitUtils {
+
+	public enum Traverse {
+		GO_UP, GO_DOWN, CURRENT
+	}
+
 	/**
 	 * Returns the file representing the Git repository directory for the given 
 	 * file path or any of its parent in the filesystem. If the file doesn't exits,
@@ -36,12 +40,8 @@ public class GitUtils {
 	 * @throws CoreException
 	 */
 	public static File getGitDir(IPath path) throws CoreException {
-		IPath p = path.removeFirstSegments(1);
-		IFileStore fileStore = NewFileServlet.getFileStore(p);
-		if (fileStore == null)
-			return null;
-		File file = fileStore.toLocalFile(EFS.NONE, null);
-		return getGitDir(file);
+		Collection<File> values = GitUtils.getGitDirs(path, Traverse.GO_UP).values();
+		return values.isEmpty() ? null : values.toArray(new File[] {})[0];
 	}
 
 	public static File getGitDir(File file) {
@@ -58,7 +58,59 @@ public class GitUtils {
 		return null;
 	}
 
-	public static void getGitDirs(IPath path, Map<IPath, File> gitDirs) throws CoreException {
+	public static Map<IPath, File> getGitDirs(IPath path, Traverse traverse) throws CoreException {
+		IPath p = path.removeFirstSegments(1);
+		IFileStore fileStore = NewFileServlet.getFileStore(p);
+		if (fileStore == null)
+			return null;
+		File file = fileStore.toLocalFile(EFS.NONE, null);
+
+		Map<IPath, File> result = new HashMap<IPath, File>();
+		switch (traverse) {
+			case CURRENT :
+				if (RepositoryCache.FileKey.isGitRepository(file, FS.DETECTED)) {
+					result.put(new Path(""), file); //$NON-NLS-1$
+				} else if (RepositoryCache.FileKey.isGitRepository(new File(file, Constants.DOT_GIT), FS.DETECTED)) {
+					result.put(new Path(""), new File(file, Constants.DOT_GIT)); //$NON-NLS-1$
+				}
+				break;
+			case GO_UP :
+				getGitDirsInParents(file, result);
+				break;
+			case GO_DOWN :
+				getGitDirsInChildren(path, result);
+				break;
+		}
+		return result;
+	}
+
+	private static void getGitDirsInParents(File file, Map<IPath, File> gitDirs) {
+		int levelUp = 0;
+		if (file.exists()) {
+			while (file != null) {
+				if (RepositoryCache.FileKey.isGitRepository(file, FS.DETECTED)) {
+					gitDirs.put(getPathForLevelUp(levelUp), file);
+					return;
+				} else if (RepositoryCache.FileKey.isGitRepository(new File(file, Constants.DOT_GIT), FS.DETECTED)) {
+					gitDirs.put(getPathForLevelUp(levelUp), new File(file, Constants.DOT_GIT));
+					return;
+				}
+				file = file.getParentFile();
+				levelUp++;
+			}
+		}
+		return;
+	}
+
+	private static IPath getPathForLevelUp(int levelUp) {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < levelUp; i++) {
+			sb.append("../"); //$NON-NLS-1$
+		}
+		return new Path(sb.toString());
+	}
+
+	private static void getGitDirsInChildren(IPath path, Map<IPath, File> gitDirs) throws CoreException {
 		if (WebProject.exists(path.segment(0))) {
 			WebProject webProject = WebProject.fromId(path.segment(0));
 			IFileStore store = webProject.getProjectStore().getFileStore(path.removeFirstSegments(1));
@@ -77,10 +129,11 @@ public class GitUtils {
 					}
 				});
 				for (File folder : folders) {
-					getGitDirs(path.append(folder.getName()), gitDirs);
+					getGitDirsInChildren(path.append(folder.getName()), gitDirs);
 				}
 				return;
 			}
 		}
 	}
+
 }
