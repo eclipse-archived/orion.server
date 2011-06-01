@@ -341,7 +341,7 @@ public abstract class GitTest extends FileSystemTest {
 	// init
 
 	protected JSONObject init(IPath workspacePath, IPath filePath, String name) throws JSONException, IOException, SAXException, CoreException {
-		// clone
+		// no Git URL for init
 		WebRequest request = getPostGitCloneRequest(null, workspacePath, filePath, name, null, null);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());

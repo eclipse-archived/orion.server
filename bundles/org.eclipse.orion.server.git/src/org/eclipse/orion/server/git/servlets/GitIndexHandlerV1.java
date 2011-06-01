@@ -12,6 +12,8 @@ package org.eclipse.orion.server.git.servlets;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map.Entry;
+import java.util.Set;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -28,6 +30,7 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
@@ -50,24 +53,26 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 
 	@Override
 	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String path) throws ServletException {
-
 		Repository db = null;
 		try {
-			Path p = new Path(path);
-			File gitDir = GitUtils.getGitDir(p.uptoSegment(2));
+			IPath p = new Path(path);
+			IPath filePath = p.hasTrailingSeparator() ? p : p.removeLastSegments(1);
+			Set<Entry<IPath, File>> set = GitUtils.getGitDirs(filePath, Traverse.GO_UP).entrySet();
+			File gitDir = set.iterator().next().getValue();
 			if (gitDir == null)
 				return false; // TODO: or an error response code, 405?
 			db = new FileRepository(gitDir);
-
 			switch (getMethod(request)) {
 				case GET :
-					return handleGet(request, response, db, p);
+					return handleGet(request, response, db, GitUtils.getRelativePath(p, set.iterator().next().getKey()));
 				case PUT :
-					return handlePut(request, response, db, p);
+					String pattern = GitUtils.getRelativePath(p, set.iterator().next().getKey());
+					if (pattern.isEmpty())
+						pattern = ADD_ALL_PATTERN;
+					return handlePut(request, response, db, pattern);
 				case POST :
 					return handlePost(request, response, db, p);
 			}
-
 		} catch (Exception e) {
 			String msg = NLS.bind("Failed to process an operation on index for {0}", path); //$NON-NLS-1$
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
@@ -78,11 +83,11 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 		return false;
 	}
 
-	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws CoreException, IOException, ServletException {
+	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, Repository db, String pattern) throws CoreException, IOException, ServletException {
 		DirCache cache = db.readDirCache();
-		DirCacheEntry entry = cache.getEntry(path.removeFirstSegments(2).toString());
+		DirCacheEntry entry = cache.getEntry(pattern);
 		if (entry == null) {
-			String msg = NLS.bind("{0} not found in index", path); //$NON-NLS-1$
+			String msg = NLS.bind("{0} not found in index", pattern); //$NON-NLS-1$
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.OK, HttpServletResponse.SC_NOT_FOUND, msg, null));
 		}
 		ObjectId blobId = entry.getObjectId();
@@ -91,28 +96,18 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private boolean handlePut(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws ServletException, NoFilepatternException {
-		String pattern;
-		if (path.segmentCount() > 2) {
-			// PUT file/{project}/{path}
-			pattern = path.removeFirstSegments(2).toString();
-		} else {
-			// PUT file/{project}/
-			pattern = ADD_ALL_PATTERN;
-		}
+	private boolean handlePut(HttpServletRequest request, HttpServletResponse response, Repository db, String pattern) throws ServletException, NoFilepatternException {
 		Git git = new Git(db);
 		AddCommand add = git.add().addFilepattern(pattern);
 		// "git add {pattern}"
 		add.call();
-
 		// TODO: we're calling "add" twice, this is inefficient
 		// "git add -u {pattern}"
 		git.add().setUpdate(true).addFilepattern(pattern).call();
-
 		return true;
 	}
 
-	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws ServletException, NoFilepatternException, IOException, JSONException {
+	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, Repository db, IPath path) throws ServletException, NoFilepatternException, IOException, JSONException {
 		JSONObject toReset = OrionServlet.readJSONRequest(request);
 		String resetType = toReset.optString(GitConstants.KEY_RESET_TYPE, null);
 		if (resetType != null) {

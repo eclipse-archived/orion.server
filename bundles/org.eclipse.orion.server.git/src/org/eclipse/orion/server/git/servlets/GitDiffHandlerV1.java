@@ -13,6 +13,8 @@ package org.eclipse.orion.server.git.servlets;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Map.Entry;
+import java.util.Set;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -31,6 +33,7 @@ import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONException;
@@ -57,7 +60,9 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 		Repository db = null;
 		try {
 			Path path = new Path(gitPathInfo);
-			File gitDir = GitUtils.getGitDir(path.removeFirstSegments(1).uptoSegment(2));
+			IPath filePath = path.hasTrailingSeparator() ? path : path.removeLastSegments(1);
+			Set<Entry<IPath, File>> set = GitUtils.getGitDirs(filePath.removeFirstSegments(1), Traverse.GO_UP).entrySet();
+			File gitDir = set.iterator().next().getValue();
 			if (gitDir == null)
 				return false; // TODO: or an error response code, 405?
 			db = new FileRepository(gitDir);
@@ -65,14 +70,16 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 			switch (getMethod(request)) {
 				case GET :
 					String parts = request.getParameter("parts"); //$NON-NLS-1$
+					String pattern = GitUtils.getRelativePath(path.removeFirstSegments(1), set.iterator().next().getKey());
+					pattern = pattern.isEmpty() ? null : pattern;
 					if (parts == null || "uris,diff".equals(parts) || "diff,uris".equals(parts))
-						return handleMultiPartGet(request, response, db, path);
+						return handleMultiPartGet(request, response, db, path, pattern);
 					if ("uris".equals(parts)) {
 						OrionServlet.writeJSONResponse(request, response, jsonForGetUris(request, response, db, path));
 						return true;
 					}
 					if ("diff".equals(parts))
-						return handleGetDiff(request, response, db, path, response.getOutputStream());
+						return handleGetDiff(request, response, db, path.segment(0), pattern, response.getOutputStream());
 				case POST :
 					return handlePost(request, response, db, path);
 			}
@@ -87,10 +94,9 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 		return false;
 	}
 
-	private boolean handleGetDiff(HttpServletRequest request, HttpServletResponse response, Repository db, Path path, OutputStream out) throws Exception {
+	private boolean handleGetDiff(HttpServletRequest request, HttpServletResponse response, Repository db, String scope, String pattern, OutputStream out) throws Exception {
 		Diff diff = new Diff(out);
 		diff.setRepository(db);
-		String scope = path.segment(0);
 		if (scope.contains("..")) { //$NON-NLS-1$
 			String[] commits = scope.split("\\.\\."); //$NON-NLS-1$
 			if (commits.length != 2) {
@@ -108,8 +114,8 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 			diff.setOldTree(getTreeIterator(db, scope));
 		}
 
-		if (path.segmentCount() > 3)
-			diff.setPathFilter(PathFilter.create(path.removeFirstSegments(3).toString()));
+		if (pattern != null)
+			diff.setPathFilter(PathFilter.create(pattern));
 		diff.run();
 		return true;
 	}
@@ -126,7 +132,7 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 		return o;
 	}
 
-	private boolean handleMultiPartGet(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws Exception {
+	private boolean handleMultiPartGet(HttpServletRequest request, HttpServletResponse response, Repository db, Path path, String pattern) throws Exception {
 		String boundary = createBoundaryString();
 		response.setHeader(ProtocolConstants.HEADER_CONTENT_TYPE, "multipart/related; boundary=\"" + boundary + '"'); //$NON-NLS-1$
 		OutputStream outputStream = response.getOutputStream();
@@ -140,7 +146,7 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 		out.write(EOL + "--" + boundary + EOL); //$NON-NLS-1$
 		out.write(ProtocolConstants.HEADER_CONTENT_TYPE + ": plain/text" + EOL + EOL); //$NON-NLS-1$
 		out.flush();
-		handleGetDiff(request, response, db, path, outputStream);
+		handleGetDiff(request, response, db, path.segment(0), pattern, outputStream);
 		out.write(EOL);
 		out.flush();
 		return true;

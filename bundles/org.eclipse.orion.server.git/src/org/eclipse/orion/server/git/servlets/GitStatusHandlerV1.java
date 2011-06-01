@@ -13,6 +13,7 @@ package org.eclipse.orion.server.git.servlets;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Map.Entry;
 import java.util.Set;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -28,7 +29,9 @@ import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
 import org.eclipse.orion.server.servlets.OrionServlet;
+import org.eclipse.osgi.util.NLS;
 import org.json.*;
 
 /**
@@ -46,9 +49,12 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String gitPathInfo) throws ServletException {
 		try {
 			Path path = new Path(gitPathInfo);
-			if (!path.hasTrailingSeparator())
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Cannot get status on a file.", null));
-			File gitDir = GitUtils.getGitDir(path);
+			if (!path.hasTrailingSeparator()) {
+				String msg = NLS.bind("Cannot get status on a file: {0}", gitPathInfo);
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+			}
+			Set<Entry<IPath, File>> set = GitUtils.getGitDirs(path, Traverse.GO_UP).entrySet();
+			File gitDir = set.iterator().next().getValue();
 			if (gitDir == null)
 				return false; // TODO: or an error response code, 405?
 			Repository db = new FileRepository(gitDir);
@@ -59,8 +65,9 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 			JSONObject result = new JSONObject();
 			result.put(GitConstants.KEY_CLONE, BaseToCloneConverter.getCloneLocation(baseLocation, BaseToCloneConverter.STATUS));
 
-			baseLocation = stripOffPath(baseLocation);
-			IPath basePath = path.removeFirstSegments(2);
+			String relativePath = GitUtils.getRelativePath(path, set.iterator().next().getKey());
+			IPath basePath = new Path(relativePath);
+
 			JSONArray children = toJSONArray(status.getAdded(), basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
 			result.put(GitConstants.KEY_STATUS_ADDED, children);
 			// TODO: bug 338913
@@ -88,12 +95,6 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 		} catch (Exception e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error generating status response", e));
 		}
-	}
-
-	private URI stripOffPath(URI u) throws URISyntaxException {
-		Path uriPath = new Path(u.getPath());
-		return new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), uriPath.uptoSegment(4).toString(), u.getQuery(), u.getFragment());
-
 	}
 
 	private JSONArray toJSONArray(Set<String> set, IPath basePath, URI baseLocation, String diffType) throws JSONException, URISyntaxException {

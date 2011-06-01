@@ -61,10 +61,8 @@ public class GitRemoteTest extends GitTest {
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
-		String gitRemoteUri = gitSection.optString(GitConstants.KEY_REMOTE, null);
-		assertNotNull(gitRemoteUri);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+		String gitRemoteUri = gitSection.getString(GitConstants.KEY_REMOTE);
 
 		request = getGetGitRemoteRequest(gitRemoteUri);
 		response = webConversation.getResponse(request);
@@ -76,25 +74,33 @@ public class GitRemoteTest extends GitTest {
 
 	@Test
 	public void testGetOrigin() throws Exception {
-		// clone a  repo
 		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-		JSONObject clone = clone(clonePath);
-		String gitRemoteUri = clone.getString(GitConstants.KEY_REMOTE);
-		JSONObject remoteBranch = getRemoteBranch(gitRemoteUri, 1, 0, Constants.MASTER);
-		assertNotNull(remoteBranch);
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 
-		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		project = new JSONObject(response.getText());
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
 
-		// check if Git locations are in place
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
-		assertEquals(gitRemoteUri, gitSection.getString(GitConstants.KEY_REMOTE));
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			JSONObject clone = clone(clonePath);
+			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+			String gitRemoteUri = clone.getString(GitConstants.KEY_REMOTE);
+			JSONObject remoteBranch = getRemoteBranch(gitRemoteUri, 1, 0, Constants.MASTER);
+			assertNotNull(remoteBranch);
+
+			// get project/folder metadata
+			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject folder = new JSONObject(response.getText());
+
+			// check if Git locations are in place
+			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
+			assertEquals(gitRemoteUri, gitSection.getString(GitConstants.KEY_REMOTE));
+		}
 	}
 
 	@Test
@@ -137,77 +143,88 @@ public class GitRemoteTest extends GitTest {
 
 	@Test
 	public void testGetRemoteCommits() throws Exception {
-		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-		clone(clonePath);
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 
-		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		project = new JSONObject(response.getText());
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
-		String gitRemoteUri = gitSection.optString(GitConstants.KEY_REMOTE);
-		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX);
-		String gitCommitUri = gitSection.optString(GitConstants.KEY_COMMIT);
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
 
-		JSONObject remoteBranch = getRemoteBranch(gitRemoteUri, 1, 0, Constants.MASTER);
-		assertNotNull(remoteBranch);
-		String remoteBranchLocation = remoteBranch.getString(ProtocolConstants.KEY_LOCATION);
-		request = getGetGitRemoteRequest(remoteBranchLocation);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		remoteBranch = new JSONObject(response.getText());
+		for (IPath clonePath : clonePaths) {
+			// clone a repo
+			JSONObject clone = clone(clonePath);
+			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
-		String commitLocation = remoteBranch.getString(GitConstants.KEY_COMMIT);
-		request = GitCommitTest.getGetGitCommitRequest(commitLocation, false);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject logResponse = new JSONObject(response.getText());
-		JSONArray commitsArray = logResponse.getJSONArray(ProtocolConstants.KEY_CHILDREN);
-		assertEquals(1, commitsArray.length());
+			// get project/folder metadata
+			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject folder = new JSONObject(response.getText());
 
-		// change
-		request = getPutFileRequest(projectId + "/test.txt", "change");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
+			String gitRemoteUri = gitSection.getString(GitConstants.KEY_REMOTE);
+			String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+			String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
 
-		// add
-		request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject remoteBranch = getRemoteBranch(gitRemoteUri, 1, 0, Constants.MASTER);
+			assertNotNull(remoteBranch);
+			String remoteBranchLocation = remoteBranch.getString(ProtocolConstants.KEY_LOCATION);
+			request = getGetGitRemoteRequest(remoteBranchLocation);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			remoteBranch = new JSONObject(response.getText());
 
-		// commit
-		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "new change commit", false);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			String commitLocation = remoteBranch.getString(GitConstants.KEY_COMMIT);
+			request = GitCommitTest.getGetGitCommitRequest(commitLocation, false);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject logResponse = new JSONObject(response.getText());
+			JSONArray commitsArray = logResponse.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+			assertEquals(1, commitsArray.length());
 
-		// push
-		ServerStatus pushStatus = push(gitRemoteUri, 1, 0, Constants.MASTER, Constants.HEAD, false);
-		assertEquals(true, pushStatus.isOK());
+			// change
+			String folderLocation = folder.getString(ProtocolConstants.KEY_LOCATION);
+			request = getPutFileRequest(folderLocation + "test.txt", "change");
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		remoteBranch = getRemoteBranch(gitRemoteUri, 1, 0, Constants.MASTER);
-		assertNotNull(remoteBranch);
-		remoteBranchLocation = remoteBranch.getString(ProtocolConstants.KEY_LOCATION);
-		request = getGetGitRemoteRequest(remoteBranchLocation);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		remoteBranch = new JSONObject(response.getText());
+			// add
+			request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		commitLocation = remoteBranch.getString(GitConstants.KEY_COMMIT);
-		request = GitCommitTest.getGetGitCommitRequest(commitLocation, false);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		logResponse = new JSONObject(response.getText());
-		commitsArray = logResponse.getJSONArray(ProtocolConstants.KEY_CHILDREN);
-		assertEquals(2, commitsArray.length());
+			// commit
+			request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "new change commit", false);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		// TODO: test pushing change from another repo and fetch here
+			// push
+			ServerStatus pushStatus = push(gitRemoteUri, 1, 0, Constants.MASTER, Constants.HEAD, false);
+			assertEquals(true, pushStatus.isOK());
+
+			remoteBranch = getRemoteBranch(gitRemoteUri, 1, 0, Constants.MASTER);
+			assertNotNull(remoteBranch);
+			remoteBranchLocation = remoteBranch.getString(ProtocolConstants.KEY_LOCATION);
+			request = getGetGitRemoteRequest(remoteBranchLocation);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			remoteBranch = new JSONObject(response.getText());
+
+			commitLocation = remoteBranch.getString(GitConstants.KEY_COMMIT);
+			request = GitCommitTest.getGetGitCommitRequest(commitLocation, false);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			logResponse = new JSONObject(response.getText());
+			commitsArray = logResponse.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+			assertEquals(2, commitsArray.length());
+
+			// TODO: test pushing change from another repo and fetch here
+
+			// creating a fresh repo: we push changes during this tests so the repo would be dirty for the next iteration
+			createRepository();
+		}
 	}
 
 	@Test

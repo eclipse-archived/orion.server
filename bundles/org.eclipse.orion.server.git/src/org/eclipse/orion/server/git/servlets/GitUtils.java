@@ -136,4 +136,21 @@ public class GitUtils {
 		}
 	}
 
+	public static String getRelativePath(IPath filePath, IPath pathToGitRoot) {
+		StringBuilder sb = new StringBuilder();
+		String file = null;
+		if (!filePath.hasTrailingSeparator()) {
+			file = filePath.lastSegment();
+			filePath = filePath.removeLastSegments(1);
+		}
+		for (int i = 0; i < pathToGitRoot.segments().length; i++) {
+			if (pathToGitRoot.segments()[i].equals(".."))
+				sb.append(filePath.segment(filePath.segments().length - pathToGitRoot.segments().length + i)).append("/");
+			// else TODO
+		}
+		if (file != null)
+			sb.append(file);
+		return sb.toString();
+	}
+
 }

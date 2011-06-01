@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
+import java.util.Map.Entry;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -36,6 +37,7 @@ import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.BaseToRemoteConverter;
 import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
@@ -59,7 +61,6 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		Repository db = null;
 		try {
 			Path p = new Path(path);
-
 			switch (getMethod(request)) {
 				case GET :
 					return handleGet(request, response, db, p);
@@ -67,8 +68,6 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 					return handlePut(request, response, db, p);
 				case POST :
 					return handlePost(request, response, db, p);
-					// case DELETE :
-					// return handleDelete(request, response, p);
 			}
 
 		} catch (Exception e) {
@@ -102,7 +101,8 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 
 	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws CoreException, IOException, ServletException, JSONException, URISyntaxException {
 		IPath filePath = path.hasTrailingSeparator() ? path.removeFirstSegments(1) : path.removeFirstSegments(1).removeLastSegments(1);
-		File gitDir = GitUtils.getGitDir(filePath);
+		Set<Entry<IPath, File>> set = GitUtils.getGitDirs(filePath, Traverse.GO_UP).entrySet();
+		File gitDir = set.iterator().next().getValue();
 		if (gitDir == null)
 			return false; // TODO: or an error response code, 405?
 
@@ -110,28 +110,28 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 
 		// /{ref}/file/{projectId}...}
 		String parts = request.getParameter("parts"); //$NON-NLS-1$
+		String pattern = GitUtils.getRelativePath(path, set.iterator().next().getKey());
 		if (path.segmentCount() > 3 && "body".equals(parts)) { //$NON-NLS-1$
-			return handleGetCommitBody(request, response, db, path);
+			return handleGetCommitBody(request, response, db, path.segment(0), pattern);
 		}
 		if (path.segmentCount() > 2 && (parts == null || "log".equals(parts))) { //$NON-NLS-1$
-			return handleGetCommitLog(request, response, db, path);
+			return handleGetCommitLog(request, response, db, path.segment(0), pattern);
 		}
 
 		return false;
 	}
 
-	private boolean handleGetCommitBody(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws AmbiguousObjectException, IOException, ServletException {
-		ObjectId refId = db.resolve(path.segment(0));
+	private boolean handleGetCommitBody(HttpServletRequest request, HttpServletResponse response, Repository db, String ref, String pattern) throws AmbiguousObjectException, IOException, ServletException {
+		ObjectId refId = db.resolve(ref);
 		if (refId == null) {
-			String msg = NLS.bind("Failed to generate commit log for ref {0}", path.segment(0)); //$NON-NLS-1$
+			String msg = NLS.bind("Failed to generate commit log for ref {0}", ref);
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 		}
 
 		RevWalk walk = new RevWalk(db);
-		String p = path.removeFirstSegments(3).toString();
-		walk.setTreeFilter(AndTreeFilter.create(PathFilterGroup.createFromStrings(Collections.singleton(p)), TreeFilter.ANY_DIFF));
+		walk.setTreeFilter(AndTreeFilter.create(PathFilterGroup.createFromStrings(Collections.singleton(pattern)), TreeFilter.ANY_DIFF));
 		RevCommit commit = walk.parseCommit(refId);
-		final TreeWalk w = TreeWalk.forPath(db, p, commit.getTree());
+		final TreeWalk w = TreeWalk.forPath(db, pattern, commit.getTree());
 		if (w == null) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, null, null));
 		}
@@ -143,10 +143,8 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private boolean handleGetCommitLog(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws AmbiguousObjectException, IOException, ServletException, JSONException, URISyntaxException {
-		String refIdsRange = path.segment(0);
-
-		int page = request.getParameter("page") != null ? new Integer(request.getParameter("page")).intValue() : 0;
+	private boolean handleGetCommitLog(HttpServletRequest request, HttpServletResponse response, Repository db, String refIdsRange, String path) throws AmbiguousObjectException, IOException, ServletException, JSONException, URISyntaxException {
+		int page = request.getParameter("page") != null ? new Integer(request.getParameter("page")).intValue() : 0; //$NON-NLS-1$ //$NON-NLS-2$
 
 		ObjectId toRefId = null;
 		ObjectId fromRefId = null;
@@ -185,11 +183,10 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			walk.markUninteresting(walk.parseCommit(fromRefId));
 
 		// set the path filter
-		String p = path.removeFirstSegments(3).toString();
 		TreeFilter filter = null;
 
-		if (p != null && !"".equals(p)) { //$NON-NLS-1$
-			filter = AndTreeFilter.create(PathFilterGroup.createFromStrings(Collections.singleton(p)), TreeFilter.ANY_DIFF);
+		if (path != null && !"".equals(path)) { //$NON-NLS-1$
+			filter = AndTreeFilter.create(PathFilterGroup.createFromStrings(Collections.singleton(path)), TreeFilter.ANY_DIFF);
 			walk.setTreeFilter(filter);
 		} else {
 			walk.setTreeFilter(TreeFilter.ANY_DIFF);
@@ -229,7 +226,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 	private JSONObject toJSON(Repository db, RevCommit revCommit, URI baseLocation, TreeFilter filter) throws JSONException, URISyntaxException, IOException {
 		JSONObject commit = new JSONObject();
 		commit.put(ProtocolConstants.KEY_LOCATION, createCommitLocation(baseLocation, revCommit.getName(), null));
-		commit.put(ProtocolConstants.KEY_CONTENT_LOCATION, createCommitLocation(baseLocation, revCommit.getName(), "parts=body"));
+		commit.put(ProtocolConstants.KEY_CONTENT_LOCATION, createCommitLocation(baseLocation, revCommit.getName(), "parts=body")); //$NON-NLS-1$
 		commit.put(GitConstants.KEY_DIFF, createDiffLocation(baseLocation, revCommit.getName(), null, null));
 		commit.put(ProtocolConstants.KEY_NAME, revCommit.getName());
 		commit.put(GitConstants.KEY_AUTHOR_NAME, revCommit.getAuthorIdent().getName());
@@ -306,7 +303,8 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws ServletException, NoFilepatternException, IOException, JSONException, CoreException, URISyntaxException {
-		File gitDir = GitUtils.getGitDir(path.removeFirstSegments(1).uptoSegment(2));
+		Set<Entry<IPath, File>> set = GitUtils.getGitDirs(path.removeFirstSegments(1), Traverse.GO_UP).entrySet();
+		File gitDir = set.iterator().next().getValue();
 		if (gitDir == null)
 			return false; // TODO: or an error response code, 405?
 		db = new FileRepository(gitDir);
@@ -325,7 +323,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 
 		ObjectId refId = db.resolve(path.segment(0));
 		if (refId == null || !Constants.HEAD.equals(path.segment(0))) {
-			String msg = NLS.bind("Commit failed. Ref must be HEAD and is {0}", path.segment(0)); //$NON-NLS-1$
+			String msg = NLS.bind("Commit failed. Ref must be HEAD and is {0}", path.segment(0));
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 		}
 
@@ -339,7 +337,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		CommitCommand commit = new Git(db).commit();
 
 		// support for committing by path: "git commit -o path"
-		if (path.segmentCount() > 3) {
+		if (!set.iterator().next().getKey().equals(Path.EMPTY)) {
 			String p = path.removeFirstSegments(3).toString();
 			commit.setOnly(p);
 		}

@@ -155,4 +155,14 @@ public class GitUtilsTest extends GitTest {
 		assertFalse(gitDirs.isEmpty());
 		assertEquals(2, gitDirs.size());
 	}
+
+	@Test
+	public void testGetRelativePath() throws Exception {
+		assertEquals(Path.EMPTY.toString(), GitUtils.getRelativePath(new Path("/file").append("a/"), Path.EMPTY));
+		assertEquals(Path.EMPTY.toString(), GitUtils.getRelativePath(new Path("/file").append("a").append("b/"), Path.EMPTY));
+		assertEquals("b/", GitUtils.getRelativePath(new Path("/file").append("a").append("b/"), new Path("../")));
+		assertEquals("b/c/", GitUtils.getRelativePath(new Path("/file").append("a").append("b").append("c/"), new Path("../../")));
+		assertEquals("c/", GitUtils.getRelativePath(new Path("/file").append("a").append("b").append("c/"), new Path("../")));
+		assertEquals("b/c", GitUtils.getRelativePath(new Path("/file").append("a").append("b").append("c"), new Path("../")));
+	}
 }

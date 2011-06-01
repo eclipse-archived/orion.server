@@ -87,7 +87,7 @@ public class GitDiffTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		String[] parts = parseMultiPartResponse(response);
 
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		sb.append("diff --git a/test.txt b/test.txt").append("\n");
 		sb.append("index 30d74d2..b6fc4c6 100644").append("\n");
 		sb.append("--- a/test.txt").append("\n");
@@ -119,7 +119,7 @@ public class GitDiffTest extends GitTest {
 		request = getGetGitDiffRequest(gitDiffUri);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		sb.append("diff --git a/test.txt b/test.txt").append("\n");
 		sb.append("index 30d74d2..b6fc4c6 100644").append("\n");
 		sb.append("--- a/test.txt").append("\n");
@@ -157,7 +157,7 @@ public class GitDiffTest extends GitTest {
 		request = getGetGitDiffRequest(gitDiffUri + "folder/");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		sb.append("diff --git a/folder/folder.txt b/folder/folder.txt").append("\n");
 		sb.append("index 0119635..95c4c65 100644").append("\n");
 		sb.append("--- a/folder/folder.txt").append("\n");
@@ -227,7 +227,7 @@ public class GitDiffTest extends GitTest {
 
 		assertDiffUris(gitDiffUri, new String[] {"test", "stage me", "test"}, new JSONObject(parts[0]));
 
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		sb.append("diff --git a/test.txt b/test.txt").append("\n");
 		sb.append("index 30d74d2..b874aa3 100644").append("\n");
 		sb.append("--- a/test.txt").append("\n");
@@ -294,7 +294,7 @@ public class GitDiffTest extends GitTest {
 		request = getGetGitDiffRequest(gitDiffUri + "test.txt");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		sb.append("diff --git a/test.txt b/test.txt").append("\n");
 		sb.append("index 30d74d2..3c26ed4 100644").append("\n");
 		sb.append("--- a/test.txt").append("\n");
@@ -387,7 +387,7 @@ public class GitDiffTest extends GitTest {
 		request = getGetGitDiffRequest(new String(gitDiffUri).replaceAll(GitConstants.KEY_DIFF_DEFAULT, enc) + "test.txt");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		sb.append("diff --git a/test.txt b/test.txt").append("\n");
 		sb.append("index 3c26ed4..4cb5d38 100644").append("\n");
 		sb.append("--- a/test.txt").append("\n");
@@ -405,7 +405,7 @@ public class GitDiffTest extends GitTest {
 		request = getGetGitDiffRequest(new String(gitDiffUri).replaceAll(GitConstants.KEY_DIFF_DEFAULT, enc) + "test.txt");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		sb = new StringBuffer();
+		sb = new StringBuilder();
 		sb.append("diff --git a/test.txt b/test.txt").append("\n");
 		sb.append("index 58bcb48..4cb5d38 100644").append("\n");
 		sb.append("--- a/test.txt").append("\n");
@@ -471,7 +471,7 @@ public class GitDiffTest extends GitTest {
 
 		assertDiffUris(expectedLocation, new String[] {"test", "change", "test"}, new JSONObject(parts[0]));
 
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		sb.append("diff --git a/test.txt b/test.txt").append("\n");
 		sb.append("index 30d74d2..8013df8 100644").append("\n");
 		sb.append("--- a/test.txt").append("\n");
@@ -528,7 +528,7 @@ public class GitDiffTest extends GitTest {
 
 		assertDiffUris(location, new String[] {"test", "change", "test"}, new JSONObject(parts[0]));
 
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		sb.append("diff --git a/test.txt b/test.txt").append("\n");
 		sb.append("index 30d74d2..8013df8 100644").append("\n");
 		sb.append("--- a/test.txt").append("\n");
@@ -772,7 +772,7 @@ public class GitDiffTest extends GitTest {
 		String boundary = typeHeader.substring(typeHeader.indexOf("boundary=\"") + 10, typeHeader.length() - 1); //$NON-NLS-1$
 		BufferedReader reader = new BufferedReader(new StringReader(response.getText()));
 
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		String line;
 		List<String> parts = new ArrayList<String>();
 		while ((line = reader.readLine()) != null) {

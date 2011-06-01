@@ -42,20 +42,18 @@ public class GitCommitTest extends GitTest {
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
-		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
-		assertNotNull(gitIndexUri);
-		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
-		assertNotNull(gitStatusUri);
-		String gitCommitUri = gitSection.optString(GitConstants.KEY_COMMIT, null);
-		assertNotNull(gitCommitUri);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
+		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
 
 		// modify first file and add it to index
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change to commit");
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
 		// TODO: don't create URIs out of thin air
+		// add
 		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
@@ -64,7 +62,9 @@ public class GitCommitTest extends GitTest {
 		request = getPutFileRequest(projectId + "/folder/folder.txt", "change to commit");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
 		// TODO: don't create URIs out of thin air
+		// add
 		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "folder/folder.txt");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());

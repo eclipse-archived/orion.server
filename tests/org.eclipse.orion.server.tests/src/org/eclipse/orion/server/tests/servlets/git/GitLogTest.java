@@ -11,7 +11,6 @@
 package org.eclipse.orion.server.tests.servlets.git;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
@@ -37,99 +36,123 @@ public class GitLogTest extends GitTest {
 	@Test
 	public void testLog() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 
-		String projectName = getMethodName();
-		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
-		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
-		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
 
-		// modify
-		WebRequest request = getPutFileRequest(projectId + "/test.txt", "first change");
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			JSONObject clone = clone(clonePath);
+			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
-		// TODO: don't create URIs out of thin air
-		// add
-		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			// get project/folder metadata
+			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject folder = new JSONObject(response.getText());
 
-		// commit1
-		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "commit1", false);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
+			String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+			String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
 
-		// modify again
-		request = getPutFileRequest(projectId + "/test.txt", "second change");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			// modify
+			String folderLocation = folder.getString(ProtocolConstants.KEY_LOCATION);
+			request = getPutFileRequest(folderLocation + "test.txt", "first change");
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		// add
-		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			// TODO: don't create URIs out of thin air
+			// add
+			request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		// commit2
-		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "commit2", false);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			// commit1
+			request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "commit1", false);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		// get the full log
-		JSONArray commitsArray = log(gitCommitUri, false);
-		assertEquals(3, commitsArray.length());
+			// modify again
+			request = getPutFileRequest(folderLocation + "test.txt", "second change");
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		JSONObject commit = commitsArray.getJSONObject(0);
-		assertEquals("commit2", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
+			// add
+			request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		commit = commitsArray.getJSONObject(1);
-		assertEquals("commit1", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
+			// commit2
+			request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "commit2", false);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		commit = commitsArray.getJSONObject(2);
-		assertEquals("Initial commit", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
-		String initialGitCommitName = commit.getString(ProtocolConstants.KEY_NAME);
-		String initialGitCommitURI = gitCommitUri.replaceAll("HEAD", initialGitCommitName);
+			// get the full log
+			JSONArray commitsArray = log(gitCommitUri, false);
+			assertEquals(3, commitsArray.length());
 
-		// prepare a scoped log location
-		request = getPostForScopedLogRequest(initialGitCommitURI, "HEAD");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		String newGitCommitUri = response.getHeaderField(ProtocolConstants.KEY_LOCATION);
+			JSONObject commit = commitsArray.getJSONObject(0);
+			assertEquals("commit2", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
 
-		// get a scoped log
-		commitsArray = log(newGitCommitUri, false);
-		assertEquals(2, commitsArray.length());
+			commit = commitsArray.getJSONObject(1);
+			assertEquals("commit1", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
 
-		commit = commitsArray.getJSONObject(0);
-		assertEquals("commit2", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
+			commit = commitsArray.getJSONObject(2);
+			assertEquals("Initial commit", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
+			String initialGitCommitName = commit.getString(ProtocolConstants.KEY_NAME);
+			String initialGitCommitURI = gitCommitUri.replaceAll(Constants.HEAD, initialGitCommitName);
 
-		commit = commitsArray.getJSONObject(1);
-		assertEquals("commit1", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
+			// prepare a scoped log location
+			request = getPostForScopedLogRequest(initialGitCommitURI, Constants.HEAD);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			String newGitCommitUri = response.getHeaderField(ProtocolConstants.KEY_LOCATION);
+
+			// get a scoped log
+			commitsArray = log(newGitCommitUri, false);
+			assertEquals(2, commitsArray.length());
+
+			commit = commitsArray.getJSONObject(0);
+			assertEquals("commit2", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
+
+			commit = commitsArray.getJSONObject(1);
+			assertEquals("commit1", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
+		}
 	}
 
 	@Test
 	public void testLogWithRemote() throws Exception {
-		// clone a repo
+
 		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-		clone(clonePath);
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 
-		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		project = new JSONObject(response.getText());
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
-		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
 
-		JSONArray commitsArray = log(gitCommitUri, true);
-		assertEquals(1, commitsArray.length());
+		for (IPath clonePath : clonePaths) {
+			// clone a repo
+			JSONObject clone = clone(clonePath);
+			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+			// get project/folder metadata
+			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject folder = new JSONObject(response.getText());
+
+			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
+			String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+
+			JSONArray commitsArray = log(gitCommitUri, true);
+			assertEquals(1, commitsArray.length());
+		}
 	}
 
 	@Test
@@ -146,8 +169,7 @@ public class GitLogTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
 
 		JSONArray commitsArray = log(gitCommitUri, true);
@@ -181,7 +203,7 @@ public class GitLogTest extends GitTest {
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
 
 		JSONArray commitsArray = log(gitCommitUri, true);
@@ -205,8 +227,7 @@ public class GitLogTest extends GitTest {
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
 
@@ -267,7 +288,7 @@ public class GitLogTest extends GitTest {
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
 
 		JSONArray commitsArray = log(gitCommitUri, true);
@@ -281,7 +302,7 @@ public class GitLogTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
-		gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
 
 		log(gitCommitUri, true /* RemoteLocation should be available */);
