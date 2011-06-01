@@ -94,13 +94,13 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		// expected path /file/{projectId}[/{path}]
 		String filePath = toAdd.optString(ProtocolConstants.KEY_PATH, null);
 		if (filePath == null && workspacePath == null) {
-			String msg = NLS.bind("Either '" + GitConstants.KEY_PATH + "' or '" + GitConstants.KEY_PATH + "' should be provided: {0}", toAdd);
+			String msg = NLS.bind("Either '" + ProtocolConstants.KEY_PATH + "' or '" + ProtocolConstants.KEY_LOCATION + "' should be provided: {0}", toAdd);
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 		}
 		// only during init operation filePath or cloneName must be provided
 		// during clone operation, name can be obtained from URL
 		if (initOnly && filePath == null && cloneName == null) {
-			String msg = NLS.bind("Either '" + GitConstants.KEY_PATH + "' or '" + GitConstants.KEY_NAME + "' should be provided: {0}", toAdd);
+			String msg = NLS.bind("Either '" + ProtocolConstants.KEY_PATH + "' or '" + GitConstants.KEY_NAME + "' should be provided: {0}", toAdd);
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 		}
 		if (!validateCloneName(cloneName, request, response))
@@ -292,10 +292,10 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 
 				// make sure required fields are set
 				JSONObject toCheckout = OrionServlet.readJSONRequest(request);
-				JSONArray paths = toCheckout.optJSONArray(GitConstants.KEY_PATH);
+				JSONArray paths = toCheckout.optJSONArray(ProtocolConstants.KEY_PATH);
 				String branch = toCheckout.optString(GitConstants.KEY_BRANCH_NAME);
 				if ((paths == null || paths.length() == 0) && (branch == null || branch.isEmpty())) {
-					String msg = NLS.bind("Either '{0}' or '{1}' should be provided: {2}", new Object[] {GitConstants.KEY_PATH, GitConstants.KEY_BRANCH, toCheckout});
+					String msg = NLS.bind("Either '{0}' or '{1}' should be provided: {2}", new Object[] {ProtocolConstants.KEY_PATH, GitConstants.KEY_BRANCH, toCheckout});
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 				}
 

@@ -299,7 +299,7 @@ public class ProtocolConstants {
 
 	/**
 	 * JSON representation key for a server path attribute. The value's data
-	 * type is an Integer.
+	 * type is a String.
 	 */
 	public static final String KEY_PATH = "Path"; //$NON-NLS-1$
 

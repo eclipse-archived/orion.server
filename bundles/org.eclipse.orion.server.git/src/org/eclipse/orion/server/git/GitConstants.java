@@ -113,8 +113,6 @@ public class GitConstants {
 
 	public static final String KEY_COMMIT_DIFF_CHANGETYPE = "ChangeType"; //$NON-NLS-1$
 
-	public static final String KEY_PATH = "Path"; //$NON-NLS-1$
-
 	public static final String KEY_BRANCH_NAME = "Branch"; //$NON-NLS-1$
 
 	public static final String KEY_REMOTE_NAME = "Remote"; //$NON-NLS-1$

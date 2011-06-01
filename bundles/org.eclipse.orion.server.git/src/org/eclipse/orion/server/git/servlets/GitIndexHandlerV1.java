@@ -24,6 +24,7 @@ import org.eclipse.jgit.dircache.DirCacheEntry;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.core.IOUtilities;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
@@ -115,9 +116,9 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 		JSONObject toReset = OrionServlet.readJSONRequest(request);
 		String resetType = toReset.optString(GitConstants.KEY_RESET_TYPE, null);
 		if (resetType != null) {
-			JSONArray paths = toReset.optJSONArray(GitConstants.KEY_PATH);
+			JSONArray paths = toReset.optJSONArray(ProtocolConstants.KEY_PATH);
 			if (paths != null) {
-				String msg = NLS.bind("Mixing {0} and {1} parameters is not allowed.", new Object[] {GitConstants.KEY_PATH, GitConstants.KEY_RESET_TYPE});
+				String msg = NLS.bind("Mixing {0} and {1} parameters is not allowed.", new Object[] {ProtocolConstants.KEY_PATH, GitConstants.KEY_RESET_TYPE});
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_IMPLEMENTED, msg, null));
 			}
 			try {
@@ -140,7 +141,7 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 			}
 		} else {
-			JSONArray paths = toReset.optJSONArray(GitConstants.KEY_PATH);
+			JSONArray paths = toReset.optJSONArray(ProtocolConstants.KEY_PATH);
 			Git git = new Git(db);
 			ResetCommand reset = git.reset().setRef(Constants.HEAD);
 			if (paths != null) {

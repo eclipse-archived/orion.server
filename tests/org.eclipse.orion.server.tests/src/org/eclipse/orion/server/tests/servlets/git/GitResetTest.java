@@ -536,7 +536,7 @@ public class GitResetTest extends GitTest {
 			JSONArray jsonPaths = new JSONArray();
 			for (String path : paths)
 				jsonPaths.put(path);
-			body.put(GitConstants.KEY_PATH, jsonPaths);
+			body.put(ProtocolConstants.KEY_PATH, jsonPaths);
 		}
 		WebRequest request = new PostMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");

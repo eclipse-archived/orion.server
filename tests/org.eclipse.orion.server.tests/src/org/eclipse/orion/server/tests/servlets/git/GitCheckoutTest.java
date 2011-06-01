@@ -333,6 +333,93 @@ public class GitCheckoutTest extends GitTest {
 	}
 
 	@Test
+	public void testCheckoutFileOutsideCurrentFolder() throws Exception {
+		// see bug 347847
+		// clone a repo
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		JSONObject clone = clone(clonePath);
+		String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+		// get folder metadata
+		WebRequest request = getGetFilesRequest(cloneContentLocation);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject folder = new JSONObject(response.getText());
+		String folderLocation = folder.getString(ProtocolConstants.KEY_LOCATION);
+
+		// TODO: don't create URIs out of thin air
+		request = getPutFileRequest(folderLocation + "test.txt", "change");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// TODO: don't create URIs out of thin air
+		request = getPutFileRequest(folderLocation + "folder/folder.txt", "change");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// TODO: don't create URIs out of thin air
+		// get status for subfolder
+		request = getGetFilesRequest(folderLocation + "folder/");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		folder = new JSONObject(response.getText());
+		folderLocation = folder.getString(ProtocolConstants.KEY_LOCATION);
+
+		JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
+		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
+		String gitCloneUri = GitStatusTest.getCloneUri(gitStatusUri);
+
+		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject statusResponse = new JSONObject(response.getText());
+		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
+		assertEquals(2, statusArray.length());
+		JSONObject testTxt = GitStatusTest.getChildByKey(statusArray, ProtocolConstants.KEY_PATH, "../test.txt");
+		assertNotNull(testTxt);
+		assertNotNull(GitStatusTest.getChildByName(statusArray, "test.txt"));
+		assertNotNull(GitStatusTest.getChildByName(statusArray, "folder/folder.txt"));
+		assertNotNull(GitStatusTest.getChildByKey(statusArray, ProtocolConstants.KEY_PATH, "folder.txt"));
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
+		assertEquals(0, statusArray.length());
+
+		// use KEY_NAME not KEY_PATH
+		// request = getCheckoutRequest(gitCloneUri, new String[] {testTxt.getString(ProtocolConstants.KEY_PATH)});
+		request = getCheckoutRequest(gitCloneUri, new String[] {testTxt.getString(ProtocolConstants.KEY_NAME)});
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// 'folder/folder.txt' is still modified
+		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		statusResponse = new JSONObject(response.getText());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
+		assertEquals(1, statusArray.length());
+		assertEquals("folder/folder.txt", statusArray.getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
+		assertEquals(0, statusArray.length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
+		assertEquals(0, statusArray.length());
+	}
+
+	@Test
 	public void testCheckoutBranch() throws Exception {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
@@ -419,7 +506,7 @@ public class GitCheckoutTest extends GitTest {
 		JSONArray jsonPaths = new JSONArray();
 		for (String path : paths)
 			jsonPaths.put(path);
-		body.put(GitConstants.KEY_PATH, jsonPaths);
+		body.put(ProtocolConstants.KEY_PATH, jsonPaths);
 		WebRequest request = new PutMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);

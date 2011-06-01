@@ -103,7 +103,7 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 
 			object.put(ProtocolConstants.KEY_NAME, s);
 			IPath relative = new Path(s).makeRelativeTo(basePath);
-			object.put(GitConstants.KEY_PATH, relative);
+			object.put(ProtocolConstants.KEY_PATH, relative);
 			URI fileLocation = statusToFileLocation(baseLocation);
 			object.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(fileLocation, s));
 

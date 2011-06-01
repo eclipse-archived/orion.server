@@ -399,9 +399,9 @@ public class GitStatusTest extends GitTest {
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
 		assertEquals(2, statusArray.length());
 		assertNotNull(getChildByName(statusArray, "test.txt"));
-		assertNotNull(getChildByKey(statusArray, GitConstants.KEY_PATH, "test.txt"));
+		assertNotNull(getChildByKey(statusArray, ProtocolConstants.KEY_PATH, "test.txt"));
 		assertNotNull(getChildByName(statusArray, "folder/folder.txt"));
-		assertNotNull(getChildByKey(statusArray, GitConstants.KEY_PATH, "folder/folder.txt"));
+		assertNotNull(getChildByKey(statusArray, ProtocolConstants.KEY_PATH, "folder/folder.txt"));
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
 		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
@@ -431,9 +431,9 @@ public class GitStatusTest extends GitTest {
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
 		assertEquals(2, statusArray.length());
 		assertNotNull(getChildByName(statusArray, "test.txt"));
-		assertNotNull(getChildByKey(statusArray, GitConstants.KEY_PATH, "../test.txt"));
+		assertNotNull(getChildByKey(statusArray, ProtocolConstants.KEY_PATH, "../test.txt"));
 		assertNotNull(getChildByName(statusArray, "folder/folder.txt"));
-		assertNotNull(getChildByKey(statusArray, GitConstants.KEY_PATH, "folder.txt"));
+		assertNotNull(getChildByKey(statusArray, ProtocolConstants.KEY_PATH, "folder.txt"));
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
 		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
