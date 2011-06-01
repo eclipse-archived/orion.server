@@ -394,6 +394,18 @@ public abstract class GitTest extends FileSystemTest {
 		return remote;
 	}
 
+	protected WebResponse addRemote(String remotesLocation, String name, String uri) throws JSONException, IOException, SAXException {
+		return addRemote(remotesLocation, name, uri, null, null, null);
+	}
+
+	protected WebResponse addRemote(String remotesLocation, String name, String uri, String fetchRefSpec, String pushUri, String pushRefSpec) throws JSONException, IOException, SAXException {
+		assertRemoteUri(remotesLocation);
+		WebRequest request = GitRemoteTest.getPostGitRemoteRequest(remotesLocation, name, uri, fetchRefSpec, pushUri, pushRefSpec);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		return response;
+	}
+
 	protected JSONObject getRemoteBranch(String gitRemoteUri, int size, int i, String name) throws IOException, SAXException, JSONException {
 		assertRemoteUri(gitRemoteUri);
 		JSONObject remote = getRemote(gitRemoteUri, 1, 0, Constants.DEFAULT_REMOTE_NAME);
