@@ -114,14 +114,17 @@ lastMapTag=${mapsTagTag}
 			</antcall>
 			
 			<copy todir="${buildDirectory}/plugins/@{bundle}/web/@{appDir}" >
-				<fileset dir="${buildDirectory}/optimization/@{appDir}" includes="built-@{name}.js, @{name}.html" />
+				<fileset dir="${buildDirectory}/optimization/@{appDir}" includes="built-@{name}.js, @{name}.html" >
+					<size when="more" value="0" />
+				</fileset>
 			</copy>
 		</sequential>
 	</macrodef>
 	
 	<target name="updateHTML" >
-		<available property="builtResult" file="${buildFile}" value="require([&quot;built-${name}&quot;]);" />
-		<property name="builtResult" value="require([&quot;${name}&quot;]);" />
+		<condition property="builtResult" value="require([&quot;built-${name}&quot;]);" else="require([&quot;${name}&quot;]);" >
+			<length file="${buildFile}" when="greater" length="0" />
+		</condition>
 		<replace file="${buildDirectory}/optimization/${appDir}/${name}.html" token="require([&quot;${name}&quot;]);" value="${builtResult}" />
 	</target>
 	
