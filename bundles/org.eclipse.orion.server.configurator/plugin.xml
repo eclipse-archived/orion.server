@@ -170,10 +170,24 @@
          </resource-mapping>
       </httpcontext>      
       <httpcontext
-            id="org.eclipse.orion.server.configurator.httpcontext.editor">
+            id="org.eclipse.orion.server.configurator.httpcontext.textview.components">
          <resource-mapping
                bundle="org.eclipse.orion.client.editor"
-               path="/web">
+               path="/web/orion/textview">
+         </resource-mapping>
+      </httpcontext>
+      <httpcontext
+            id="org.eclipse.orion.server.configurator.httpcontext.textview.examples">
+         <resource-mapping
+               bundle="org.eclipse.orion.client.editor"
+               path="/web/examples/textview">
+         </resource-mapping>
+      </httpcontext>
+      <httpcontext
+            id="org.eclipse.orion.server.configurator.httpcontext.textview.tests">
+         <resource-mapping
+               bundle="org.eclipse.orion.client.editor"
+               path="/web/js-tests/textview">
          </resource-mapping>
       </httpcontext>
       <httpcontext
@@ -230,8 +244,16 @@
             httpcontextId="org.eclipse.orion.server.configurator.httpcontext.webide">
       </resource>
       <resource
-            alias="/editor"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.editor">
+            alias="/orion/textview"
+            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.textview.components">
+      </resource>
+      <resource
+            alias="/examples/textview"
+            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.textview.examples">
+      </resource>
+      <resource
+            alias="/js-tests/textview"
+            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.textview.tests">
       </resource>
       <resource
             alias="/org.dojotoolkit"
