@@ -36,8 +36,8 @@
 	],
 	  
     paths: {
-    	orion: '../js',
-	    text: '../requirejs/text',
-	    i18n: '../requirejs/i18n'
+    	orion: '../orion',
+	    text: '../org.dojotoolkit/dojo/lib/plugins/text',
+	    i18n: '../org.dojotoolkit/dojo/lib/plugins/i18n'
     },
 })
