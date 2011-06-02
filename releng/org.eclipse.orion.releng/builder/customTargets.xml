@@ -88,6 +88,7 @@ lastMapTag=${mapsTagTag}
 		<attribute name="name" />
 		<attribute name="appDir" default="@{name}" />
 		<attribute name="bundle"  />
+		<attribute name="build" default="orion.build.js" />
 		<sequential>
 			<java classname="org.mozilla.javascript.tools.shell.Main" fork="true" 
 				  dir="${buildDirectory}/optimization">
@@ -98,7 +99,7 @@ lastMapTag=${mapsTagTag}
 				<arg value="${requirejsHome}/bin/x.js"/>
 				<arg value="${requirejsHome}/bin"/>
 				<arg value="${requirejsHome}/build/build.js"/>
-				<arg value="./orion.build.js"/>
+				<arg value="./@{build}"/>
 				<arg value="optimize=closure" />
 				<arg value="name=@{name}" />
 				<arg value="out=@{appDir}/built-@{name}.js"/>
@@ -131,6 +132,7 @@ lastMapTag=${mapsTagTag}
 	<target name="requirejs" if="requirejsHome" >
 		<delete dir="${buildDirectory}/optimization" />
 		<copy file="${builder}/scripts/orion.build.js" tofile="${buildDirectory}/optimization/orion.build.js" overwrite="true"/>
+		<copy file="${builder}/scripts/orion.index.js" tofile="${buildDirectory}/optimization/orion.index.js" overwrite="true"/>
 
 		<!-- Stage files for optimization --> 
 		<pathconvert property="dojoJar" >
@@ -150,6 +152,7 @@ lastMapTag=${mapsTagTag}
 		</copy>
 		
 		<!-- invoke requirejs -->
+		<optimize appDir="." 		name="index" 		bundle="org.eclipse.orion.client.core" build="orion.index.js" />
 		<optimize appDir="navigate" name="table" 		bundle="org.eclipse.orion.client.core"/>
 		<optimize appDir="navigate" name="tree" 		bundle="org.eclipse.orion.client.core"/>
 		<optimize appDir="edit"		name="edit" 		bundle="org.eclipse.orion.client.core"/>
