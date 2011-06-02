@@ -87,6 +87,7 @@ lastMapTag=${mapsTagTag}
 	<macrodef name="optimize" >
 		<attribute name="name" />
 		<attribute name="appDir" default="@{name}" />
+		<attribute name="bundle"  />
 		<sequential>
 			<java classname="org.mozilla.javascript.tools.shell.Main" fork="true" 
 				  dir="${buildDirectory}/optimization">
@@ -105,13 +106,24 @@ lastMapTag=${mapsTagTag}
 				<arg value="baseUrl=." />
 				<arg value="dir=." />
 			</java>
+						
+			<antcall target="updateHTML">
+				<param name="buildFile" value="${buildDirectory}/optimization/@{appDir}/built-@{name}.js" />
+				<param name="appDir" value="@{appDir}" />
+				<param name="name" value="@{name}" />
+			</antcall>
 			
-			<replace file="${buildDirectory}/optimization/@{appDir}/@{name}.html" token="require([&quot;@{name}&quot;]);" value="require([&quot;built-@{name}&quot;]);" />
-			<copy todir="${buildDirectory}/plugins/org.eclipse.orion.client.core/web/@{appDir}" >
+			<copy todir="${buildDirectory}/plugins/@{bundle}/web/@{appDir}" >
 				<fileset dir="${buildDirectory}/optimization/@{appDir}" includes="built-@{name}.js, @{name}.html" />
 			</copy>
 		</sequential>
 	</macrodef>
+	
+	<target name="updateHTML" >
+		<available property="builtResult" file="${buildFile}" value="require([&quot;built-${name}&quot;]);" />
+		<property name="builtResult" value="require([&quot;${name}&quot;]);" />
+		<replace file="${buildDirectory}/optimization/${appDir}/${name}.html" token="require([&quot;${name}&quot;]);" value="${builtResult}" />
+	</target>
 	
 	<target name="requirejs" if="requirejsHome" >
 		<delete dir="${buildDirectory}/optimization" />
@@ -127,20 +139,27 @@ lastMapTag=${mapsTagTag}
 
 		<copy todir="${buildDirectory}/optimization" >
 			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.core/web" includes="**"/>
+			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.git/web" includes="**"/>
+			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.users.ui/web" includes="**"/>
 		</copy>
 		<copy todir="${dojoFolder}" >
 			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.core/web" includes="dojox/**" />
 		</copy>
 		
 		<!-- invoke requirejs -->
-		<optimize appDir="navigate" name="table" />
-		<optimize appDir="navigate" name="tree" />
-		<optimize name="edit" />
-		<optimize name="compare" />
-		<optimize name="search" />
-		<optimize appDir="sites" name="site" />
-		<optimize appDir="sites" name="sites" />
-		
+		<optimize appDir="navigate" name="table" 		bundle="org.eclipse.orion.client.core"/>
+		<optimize appDir="navigate" name="tree" 		bundle="org.eclipse.orion.client.core"/>
+		<optimize appDir="edit"		name="edit" 		bundle="org.eclipse.orion.client.core"/>
+		<optimize appDir="compare"	name="compare" 		bundle="org.eclipse.orion.client.core"/>
+		<optimize appDir="search"	name="search" 		bundle="org.eclipse.orion.client.core"/>
+		<optimize appDir="sites" 	name="site" 		bundle="org.eclipse.orion.client.core"/>
+		<optimize appDir="sites" 	name="sites" 		bundle="org.eclipse.orion.client.core"/>
+		<optimize appDir="git" 		name="git-clone" 	bundle="org.eclipse.orion.client.git" />
+		<optimize appDir="git" 		name="git-log" 		bundle="org.eclipse.orion.client.git" />
+		<optimize appDir="git" 		name="git-status" 	bundle="org.eclipse.orion.client.git" />
+		<optimize appDir="profile"	name="manage-users"	bundle="org.eclipse.orion.client.users.ui" />
+		<optimize appDir="profile"	name="user-profile"	bundle="org.eclipse.orion.client.users.ui" />
+
 		<java classname="org.mozilla.javascript.tools.shell.Main">
 			<classpath>
 				<pathelement location="${requirejsHome}/build/lib/rhino/js.jar" />
