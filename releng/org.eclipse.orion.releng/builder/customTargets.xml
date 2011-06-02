@@ -179,7 +179,13 @@ lastMapTag=${mapsTagTag}
 
 		<!-- copy css back -->
 		<copy todir="${buildDirectory}/plugins/org.eclipse.orion.client.core/web" >
-			<fileset dir="${buildDirectory}/optimization" includes="**/*.css" excludes="org.dojotoolkit/"/>
+			<fileset dir="${buildDirectory}/optimization" includes="**/*.css" excludes="org.dojotoolkit/,git/,profile/"/>
+		</copy>
+		<copy todir="${buildDirectory}/plugins/org.eclipse.orion.client.git/web" >
+			<fileset dir="${buildDirectory}/optimization" includes="git/**/*.css" />
+		</copy>
+		<copy todir="${buildDirectory}/plugins/org.eclipse.orion.client.users.ui/web" >
+			<fileset dir="${buildDirectory}/optimization" includes="profile/**/*.css" />
 		</copy>
 	</target>
 		
