@@ -99,7 +99,7 @@ public class OpenidAuthenticationService implements IAuthenticationService {
 			httpService.registerServlet("/openid", new OpenidServlet(), null, httpContext); //$NON-NLS-1$
 			httpService.registerServlet("/logout", new OpenIdLogoutServlet(), null, httpContext); //$NON-NLS-1$
 			httpService.registerServlet("/openidform", new OpenIdFormServlet(), null, httpContext); //$NON-NLS-1$
-			httpService.registerResources("/openidstatic", "/static", //$NON-NLS-1$ //$NON-NLS-2$
+			httpService.registerResources("/openidstatic", "/web", //$NON-NLS-1$ //$NON-NLS-2$
 					httpContext);
 		} catch (ServletException e) {
 			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_OPENID_SERVLETS, 1, "An error occured when registering servlets", e));

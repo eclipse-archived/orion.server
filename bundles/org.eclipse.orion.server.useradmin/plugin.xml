@@ -17,7 +17,7 @@
             id="org.eclipse.orion.server.user.httpcontext.plugins">
          <resource-mapping
                bundle="org.eclipse.orion.server.useradmin"
-               path="/static/plugins">
+               path="/web/plugins">
          </resource-mapping>
       </httpcontext>
    </extension>

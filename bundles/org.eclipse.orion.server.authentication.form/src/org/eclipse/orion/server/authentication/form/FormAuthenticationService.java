@@ -130,7 +130,7 @@ public class FormAuthenticationService implements IAuthenticationService {
 					httpContext);
 			httpService.registerServlet("/loginform", new LoginFormServlet(), //$NON-NLS-1$
 					null, httpContext);
-			httpService.registerResources("/loginstatic", "/static", //$NON-NLS-1$ //$NON-NLS-2$
+			httpService.registerResources("/loginstatic", "/web", //$NON-NLS-1$ //$NON-NLS-2$
 					httpContext);
 		} catch (ServletException e) {
 			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORM_SERVLETS, 1, "An error occured when registering servlets", e));

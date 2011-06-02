@@ -159,7 +159,7 @@
             id="org.eclipse.orion.server.configurator.httpcontext.git">
          <resource-mapping
                bundle="org.eclipse.orion.client.git"
-               path="/static/git">
+               path="/web/git">
          </resource-mapping>
       </httpcontext>      
       <httpcontext
@@ -198,14 +198,14 @@
             id="org.eclipse.orion.server.configurator.httpcontext.useradmin">
          <resource-mapping
                bundle="org.eclipse.orion.server.useradmin"
-               path="/static">
+               path="/web">
          </resource-mapping>
       </httpcontext>
       <httpcontext
             id="org.eclipse.orion.server.configurator.httpcontext.userprofile">
          <resource-mapping
                bundle="org.eclipse.orion.client.users.ui"
-               path="/static/profile">
+               path="/web/profile">
          </resource-mapping>
       </httpcontext>
    </extension>

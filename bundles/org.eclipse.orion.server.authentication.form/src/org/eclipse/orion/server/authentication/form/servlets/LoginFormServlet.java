@@ -119,16 +119,16 @@ public class LoginFormServlet extends HttpServlet {
 
 		StringBuilder sb = new StringBuilder();
 		StringBuilder authString = new StringBuilder();
-		appendFileContentAsJsString(authString, "static/auth.html"); //$NON-NLS-1$
+		appendFileContentAsJsString(authString, "web/auth.html"); //$NON-NLS-1$
 		String authSite = replaceNewAccount(authString.toString(), req.getHeader("Referer"), true); //$NON-NLS-1$
 		authSite = replaceError(authSite, ""); //$NON-NLS-1$
 		authSite = replaceUserStores(authSite, true);
 		sb.append(authSite);
 		sb.append("';\n"); //$NON-NLS-1$
 		sb.append("var scr = '"); //$NON-NLS-1$
-		appendFileContentAsJsString(sb, "static/js/xhrAuth.js"); //$NON-NLS-1$
+		appendFileContentAsJsString(sb, "web/js/xhrAuth.js"); //$NON-NLS-1$
 		sb.append("';\n"); //$NON-NLS-1$
-		sb.append(getFileContents("static/js/loadXhrAuth.js")); //$NON-NLS-1$
+		sb.append(getFileContents("web/js/loadXhrAuth.js")); //$NON-NLS-1$
 
 		return sb.toString();
 
@@ -190,14 +190,14 @@ public class LoginFormServlet extends HttpServlet {
 		}
 		writer.println("<script type=\"text/javascript\"><!--"); //$NON-NLS-1$
 		writer.println("function confirm() {}"); //$NON-NLS-1$
-		writer.println(getFileContents("static/js/htmlAuth.js")); //$NON-NLS-1$
+		writer.println(getFileContents("web/js/htmlAuth.js")); //$NON-NLS-1$
 		writer.println("//--></script>"); //$NON-NLS-1$
 		writer.println("</head>"); //$NON-NLS-1$
 		writer.print("<body onLoad=\"javascript:setUserStore('"); //$NON-NLS-1$
 		writer.print(FormAuthHelper.getDefaultUserAdmin().getStoreName());
 		writer.println("');\">"); //$NON-NLS-1$
 
-		String authSite = getFileContents("static/auth.html"); //$NON-NLS-1$
+		String authSite = getFileContents("web/auth.html"); //$NON-NLS-1$
 		authSite = replaceForm(authSite, req.getParameter("redirect")); //$NON-NLS-1$
 		authSite = replaceNewAccount(authSite, ((req.getParameter("redirect") == null) ? req.getRequestURI() //$NON-NLS-1$
 				: req.getParameter("redirect")), false); //$NON-NLS-1$
@@ -257,7 +257,7 @@ public class LoginFormServlet extends HttpServlet {
 		if (!FormAuthHelper.canAddUsers()) {
 			return authSite;
 		}
-		String newAccountA = javascriptResp ? getFileContentAsJsString("static/createUser.html") : getFileContents("static/createUser.html"); //$NON-NLS-1$
+		String newAccountA = javascriptResp ? getFileContentAsJsString("web/createUser.html") : getFileContents("web/createUser.html"); //$NON-NLS-1$
 		Collection<String> stores = FormAuthHelper.getSupportedUserStores();
 		String userStore = FormAuthHelper.getDefaultUserAdmin().getStoreName();
 		newAccountA = newAccountA.replaceAll("<!--userStore-->", stores.size()<2 ? "" : userStore);

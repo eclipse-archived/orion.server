@@ -110,14 +110,14 @@ public class OpenIdFormServlet extends HttpServlet {
 
 		StringBuilder sb = new StringBuilder();
 		StringBuilder authSite = new StringBuilder();
-		appendFileContentAsJsString(authSite, "static/auth.html");
+		appendFileContentAsJsString(authSite, "web/auth.html");
 		String authString = replaceError(authSite.toString(), "");
 		sb.append(authString);
 		sb.append("';\n");
 		sb.append("var scr = '");
-		appendFileContentAsJsString(sb, "static/js/xhrAuth.js");
+		appendFileContentAsJsString(sb, "web/js/xhrAuth.js");
 		sb.append("';\n");
-		sb.append(getFileContents("static/js/loadXhrAuth.js"));
+		sb.append(getFileContents("web/js/loadXhrAuth.js"));
 
 		return sb.toString();
 
@@ -167,12 +167,12 @@ public class OpenIdFormServlet extends HttpServlet {
 		}
 		writer.println("<script type=\"text/javascript\"><!--");
 		writer.println("function confirm() {}");
-		writer.println(getFileContents("static/js/htmlAuth.js"));
+		writer.println(getFileContents("web/js/htmlAuth.js"));
 		writer.println("//--></script>");
 		writer.println("</head>");
 		writer.println("<body>");
 
-		String authSite = getFileContents("static/auth.html");
+		String authSite = getFileContents("web/auth.html");
 		authSite = replaceError(authSite, req.getParameter("error"));
 		writer.println(authSite);
 

@@ -114,7 +114,7 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 		try {
 			httpService.registerServlet("/mixlogin", //$NON-NLS-1$
 					new LoginFormServlet(this), null, httpContext);
-			httpService.registerResources("/mixloginstatic", "/static", //$NON-NLS-1$ //$NON-NLS-2$
+			httpService.registerResources("/mixloginstatic", "/web", //$NON-NLS-1$ //$NON-NLS-2$
 					httpContext);
 			httpService.registerResources("/openids", "/openids", httpContext);
 			httpService.registerServlet("/login", new FormOpenIdLoginServlet(this), null, httpContext); //$NON-NLS-1$

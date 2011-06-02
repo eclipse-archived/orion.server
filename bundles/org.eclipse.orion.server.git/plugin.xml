@@ -7,7 +7,7 @@
             id="org.eclipse.orion.server.git.httpcontext.plugins">
          <resource-mapping
                bundle="org.eclipse.orion.server.git"
-               path="/static/plugins">
+               path="/web/plugins">
          </resource-mapping>
       </httpcontext>
    </extension>
