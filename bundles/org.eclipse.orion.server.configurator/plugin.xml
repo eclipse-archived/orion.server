@@ -163,6 +163,13 @@
          </resource-mapping>
       </httpcontext>      
       <httpcontext
+            id="org.eclipse.orion.server.configurator.httpcontext.git.components">
+         <resource-mapping
+               bundle="org.eclipse.orion.client.git"
+               path="/web/orion/git">
+         </resource-mapping>
+      </httpcontext>      
+      <httpcontext
             id="org.eclipse.orion.server.configurator.httpcontext.editor">
          <resource-mapping
                bundle="org.eclipse.orion.client.editor"
@@ -208,6 +215,13 @@
                path="/web/profile">
          </resource-mapping>
       </httpcontext>
+      <httpcontext
+            id="org.eclipse.orion.server.configurator.httpcontext.userprofile.components">
+         <resource-mapping
+               bundle="org.eclipse.orion.client.users.ui"
+               path="/web/orion/profile">
+         </resource-mapping>
+      </httpcontext>      
    </extension>
    <extension
          point="org.eclipse.equinox.http.registry.resources">
@@ -230,14 +244,22 @@
       <resource
             alias="/usersstatic"
             httpcontextId="org.eclipse.orion.server.configurator.httpcontext.useradmin">
-            </resource>
+      </resource>
       <resource
             alias="/profile"
             httpcontextId="org.eclipse.orion.server.configurator.httpcontext.userprofile">
       </resource>
       <resource
+            alias="/orion/profile"
+            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.userprofile.components">
+      </resource>
+      <resource
             alias="/git"
             httpcontextId="org.eclipse.orion.server.configurator.httpcontext.git">
+      </resource>
+      <resource
+            alias="/orion/git"
+            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.git.components">
       </resource>
       <serviceSelector
             filter="(other.info=org.eclipse.orion)">
