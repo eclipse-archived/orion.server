@@ -37,6 +37,7 @@
 	  
     paths: {
     	orion: 'orion',
+    	examples: 'examples',
 	    text: 'requirejs/text',
 	    i18n: 'requirejs/i18n'
     },
