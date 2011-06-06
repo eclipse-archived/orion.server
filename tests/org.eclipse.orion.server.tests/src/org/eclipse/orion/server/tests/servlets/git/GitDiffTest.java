@@ -252,7 +252,7 @@ public class GitDiffTest extends GitTest {
 		assertNotNull(gitSection);
 		String gitDiffUri = gitSection.getString(GitConstants.KEY_DIFF);
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
-		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
 		// modify
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "first change");
@@ -266,7 +266,7 @@ public class GitDiffTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// commit1
-		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "commit1", false);
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit1", false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -281,7 +281,7 @@ public class GitDiffTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// commit2
-		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "commit2", false);
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit2", false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -341,7 +341,7 @@ public class GitDiffTest extends GitTest {
 		assertNotNull(gitSection);
 		String gitDiffUri = gitSection.getString(GitConstants.KEY_DIFF);
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
-		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
 		// modify
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "first change");
@@ -355,7 +355,7 @@ public class GitDiffTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// commit1
-		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "commit1", false);
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit1", false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -370,7 +370,7 @@ public class GitDiffTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// commit2
-		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "commit2", false);
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit2", false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -431,7 +431,7 @@ public class GitDiffTest extends GitTest {
 		assertNotNull(gitSection);
 		String gitDiffUri = gitSection.getString(GitConstants.KEY_DIFF);
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
-		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
 		// modify
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change");
@@ -444,7 +444,7 @@ public class GitDiffTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// commit
-		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "commit1", false);
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit1", false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -496,7 +496,7 @@ public class GitDiffTest extends GitTest {
 		assertNotNull(gitSection);
 		String gitDiffUri = gitSection.getString(GitConstants.KEY_DIFF);
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
-		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
 		// modify
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change");
@@ -509,7 +509,7 @@ public class GitDiffTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// commit
-		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "commit1", false);
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit1", false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -637,7 +637,7 @@ public class GitDiffTest extends GitTest {
 		assertNotNull(gitSection);
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
-		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 		String gitDiffUri = gitSection.getString(GitConstants.KEY_DIFF);
 
 		// "git add ."
@@ -646,7 +646,7 @@ public class GitDiffTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// commit all
-		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "commit on a", false);
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit on a", false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -669,7 +669,7 @@ public class GitDiffTest extends GitTest {
 		assertNotNull(gitSection);
 		gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
-		gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+		gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
 		// "git add ."
 		request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
@@ -677,7 +677,7 @@ public class GitDiffTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// commit all
-		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "commit on master", false);
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit on master", false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
