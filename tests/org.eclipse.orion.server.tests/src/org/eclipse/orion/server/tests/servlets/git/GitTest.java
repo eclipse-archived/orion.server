@@ -652,10 +652,14 @@ public abstract class GitTest extends FileSystemTest {
 		return log.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 	}
 
-	// branch
 	protected WebResponse branch(String branchesLocation, String branchName) throws JGitInternalException, IOException, JSONException, SAXException {
+		return branch(branchesLocation, branchName, null);
+	}
+
+	// branch
+	protected WebResponse branch(String branchesLocation, String branchName, String startPoint) throws JGitInternalException, IOException, JSONException, SAXException {
 		assertBranchUri(branchesLocation);
-		WebRequest request = getPostGitBranchRequest(branchesLocation, branchName);
+		WebRequest request = getPostGitBranchRequest(branchesLocation, branchName, startPoint);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		return response;
@@ -941,7 +945,7 @@ public abstract class GitTest extends FileSystemTest {
 		return request;
 	}
 
-	private WebRequest getPostGitBranchRequest(String location, String branchName) throws IOException, JSONException {
+	private WebRequest getPostGitBranchRequest(String location, String branchName, String startPoint) throws IOException, JSONException {
 		String requestURI;
 		if (location.startsWith("http://")) {
 			requestURI = location;
@@ -950,6 +954,7 @@ public abstract class GitTest extends FileSystemTest {
 		}
 		JSONObject body = new JSONObject();
 		body.put(ProtocolConstants.KEY_NAME, branchName);
+		body.put(GitConstants.KEY_BRANCH_NAME, startPoint);
 		WebRequest request = new PostMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);

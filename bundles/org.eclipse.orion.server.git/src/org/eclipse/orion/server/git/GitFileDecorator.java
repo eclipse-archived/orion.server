@@ -101,6 +101,9 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		JSONObject gitSection = new JSONObject();
 		IPath targetPath = new Path(location.getPath());
 
+		File gitDir = GitUtils.getGitDir(targetPath);
+		Repository db = new FileRepository(gitDir);
+
 		// add Git Diff URI
 		IPath path = new Path(GitServlet.GIT_URI + '/' + GitConstants.DIFF_RESOURCE + '/' + GitConstants.KEY_DIFF_DEFAULT).append(targetPath);
 		URI link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
@@ -121,15 +124,18 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_HEAD, link);
 
+		// add Git Commit URI
+		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.COMMIT_RESOURCE).append(db.getBranch()).append(targetPath);
+		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
+		gitSection.put(GitConstants.KEY_COMMIT, link);
+
 		// add Git Remote URI
 		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.REMOTE_RESOURCE).append(targetPath);
 		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_REMOTE, link);
 
 		// add Git Default Remote Branch URI
-		File gitDir = GitUtils.getGitDir(targetPath);
-		Repository db = new FileRepository(gitDir);
-		gitSection.put(GitConstants.KEY_DEFAULT_REMOTE_BRANCH, BaseToRemoteConverter.getRemoteBranchLocation(location, db, BaseToRemoteConverter.FILE));
+		gitSection.put(GitConstants.KEY_DEFAULT_REMOTE_BRANCH, BaseToRemoteConverter.getRemoteBranchLocation(location, db.getBranch(), db, BaseToRemoteConverter.FILE));
 
 		// add Git Tag URI
 		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.TAG_RESOURCE).append(targetPath);

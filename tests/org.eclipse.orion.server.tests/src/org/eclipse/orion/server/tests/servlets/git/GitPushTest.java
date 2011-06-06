@@ -301,12 +301,19 @@ public class GitPushTest extends GitTest {
 		ServerStatus pushStatus = push(remoteBranchLocation, Constants.HEAD, false);
 		assertTrue(pushStatus.isOK());
 
+		// clone1: get the remote branch name
+		request = getGetRequest(remoteBranchLocation);
+		response = webConversation.getResponse(request);
+		JSONObject remoteBranch1 = new JSONObject(response.getText());
+		String remoteBranchName1 = remoteBranch1.getString(ProtocolConstants.KEY_NAME);
+
 		// clone2
 		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
 		String projectId2 = project2.getString(ProtocolConstants.KEY_ID);
 		IPath clonePath2 = new Path("file").append(project2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 		JSONObject clone2 = clone(clonePath2);
 		String cloneLocation2 = clone2.getString(ProtocolConstants.KEY_LOCATION);
+		String branchesLocation2 = clone2.getString(GitConstants.KEY_BRANCH);
 
 		// get project2 metadata
 		request = getGetFilesRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
@@ -316,9 +323,11 @@ public class GitPushTest extends GitTest {
 		JSONObject gitSection2 = project2.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection2);
 
-		// check if the new branch exists
+		// create a local branch 'a' tracking remoteBranchName1 and checkout 'a'
+		response = branch(branchesLocation2, "a", remoteBranchName1);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		response = checkoutBranch(cloneLocation2, "a");
-		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		request = getGetFilesRequest(projectId2 + "/test.txt");
 		response = webConversation.getResponse(request);
