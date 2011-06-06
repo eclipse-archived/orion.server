@@ -166,7 +166,7 @@ public class GitRemoteTest extends GitTest {
 			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
 			String gitRemoteUri = gitSection.getString(GitConstants.KEY_REMOTE);
 			String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
-			String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
 			JSONObject remoteBranch = getRemoteBranch(gitRemoteUri, 1, 0, Constants.MASTER);
 			assertNotNull(remoteBranch);
@@ -196,7 +196,7 @@ public class GitRemoteTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// commit
-			request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "new change commit", false);
+			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "new change commit", false);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 

@@ -756,7 +756,7 @@ public class GitStatusTest extends GitTest {
 			// git section for the folder
 			gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
 			String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
-			String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
 			request = getGetGitStatusRequest(gitStatusUri);
 			response = webConversation.getResponse(request);
@@ -779,7 +779,7 @@ public class GitStatusTest extends GitTest {
 			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
 			assertEquals(0, statusArray.length());
 
-			request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "committing all changes", false);
+			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "committing all changes", false);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -821,7 +821,7 @@ public class GitStatusTest extends GitTest {
 		project1 = new JSONObject(response.getText());
 		JSONObject gitSection1 = project1.getJSONObject(GitConstants.KEY_GIT);
 		String gitIndexUri1 = gitSection1.getString(GitConstants.KEY_INDEX);
-		String gitCommitUri1 = gitSection1.getString(GitConstants.KEY_COMMIT);
+		String gitHeadUri1 = gitSection1.getString(GitConstants.KEY_HEAD);
 		String gitRemoteUri1 = gitSection1.getString(GitConstants.KEY_REMOTE);
 
 		// clone2: create
@@ -837,7 +837,7 @@ public class GitStatusTest extends GitTest {
 		project2 = new JSONObject(response.getText());
 		JSONObject gitSection2 = project2.getJSONObject(GitConstants.KEY_GIT);
 		String gitIndexUri2 = gitSection2.getString(GitConstants.KEY_INDEX);
-		String gitCommitUri2 = gitSection2.getString(GitConstants.KEY_COMMIT);
+		String gitHeadUri2 = gitSection2.getString(GitConstants.KEY_HEAD);
 		String gitStatusUri2 = gitSection2.getString(GitConstants.KEY_STATUS);
 
 		// clone1: change
@@ -851,7 +851,7 @@ public class GitStatusTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone1: commit
-		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri1, "change from clone1", false);
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri1, "change from clone1", false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -877,7 +877,7 @@ public class GitStatusTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone2: commit
-		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri2, "change from clone2", false);
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri2, "change from clone2", false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -981,9 +981,9 @@ public class GitStatusTest extends GitTest {
 
 			// git section for the folder
 			gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
-			String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
-			request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "committing all changes", false);
+			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "committing all changes", false);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -1047,7 +1047,7 @@ public class GitStatusTest extends GitTest {
 			assertEquals(1, statusArray.length());
 			assertEquals(addedFileName, statusArray.getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
 			gitSection = statusArray.getJSONObject(0).getJSONObject(GitConstants.KEY_GIT);
-			gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+			String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
 			JSONArray log = log(gitCommitUri, false);
 			assertEquals(0, log.length());
 			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);

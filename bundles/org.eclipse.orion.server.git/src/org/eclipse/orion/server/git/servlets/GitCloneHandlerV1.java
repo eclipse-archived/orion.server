@@ -21,6 +21,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.*;
+import org.eclipse.jgit.api.CheckoutResult.Status;
+import org.eclipse.jgit.api.CheckoutResult.Status;
 import org.eclipse.jgit.api.errors.*;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileBasedConfig;
@@ -307,10 +309,15 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 					checkout.call();
 					return true;
 				} else if (branch != null) {
+					CheckoutCommand co = git.checkout();
 					try {
-						Ref r = git.checkout().setName(branch).call();
-						// TODO: handle result and exceptions
+						co.setName(branch).call();
 						return true;
+					} catch (JGitInternalException e) {
+						if (Status.CONFLICTS.equals(co.getResult().getStatus())) {
+							return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_CONFLICT, "Checkout aborted.", e));
+						}
+						// TODO: handle other exceptions
 					} catch (RefNotFoundException e) {
 						String msg = NLS.bind("Branch name not found: {0}", branch);
 						return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, e));

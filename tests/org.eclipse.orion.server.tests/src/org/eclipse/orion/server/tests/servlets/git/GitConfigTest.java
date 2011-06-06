@@ -73,7 +73,7 @@ public class GitConfigTest extends GitTest {
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
-		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
 		// modify
 		String projectLocation = project.getString(ProtocolConstants.KEY_LOCATION);
@@ -87,7 +87,7 @@ public class GitConfigTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// commit all
-		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri /* all */, GIT_COMMIT_MESSAGE, false);
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri /* all */, GIT_COMMIT_MESSAGE, false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 

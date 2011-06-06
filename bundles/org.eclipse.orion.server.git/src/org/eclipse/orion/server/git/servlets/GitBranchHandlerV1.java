@@ -177,14 +177,14 @@ public class GitBranchHandlerV1 extends ServletResourceHandler<String> {
 
 		// add Git Clone URI
 		newPath = new Path(GitServlet.GIT_URI).append(GitConstants.CLONE_RESOURCE).append(basePath.removeFirstSegments(s));
-		URI cloneLocation = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), newPath.toString(), baseLocation.getQuery(), baseLocation.getFragment());
+		URI cloneLocation = new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), newPath.toString(), location.getQuery(), location.getFragment());
 		result.put(GitConstants.KEY_CLONE, cloneLocation);
 
 		// add Git Commit URI
-		result.put(GitConstants.KEY_COMMIT, BaseToCommitConverter.getCommitLocation(baseLocation, shortName, BaseToCommitConverter.REMOVE_FIRST_2));
+		result.put(GitConstants.KEY_COMMIT, BaseToCommitConverter.getCommitLocation(location, shortName, BaseToCommitConverter.REMOVE_FIRST_3));
 
-		result.put(GitConstants.KEY_REMOTE, BaseToRemoteConverter.getRemoteBranchLocation(baseLocation, db, BaseToRemoteConverter.REMOVE_FIRST_2));
-		result.put(GitConstants.KEY_HEAD, BaseToCommitConverter.getCommitLocation(baseLocation, Constants.HEAD, BaseToCommitConverter.REMOVE_FIRST_2));
+		result.put(GitConstants.KEY_REMOTE, BaseToRemoteConverter.getRemoteBranchLocation(location, shortName, db, BaseToRemoteConverter.REMOVE_FIRST_3));
+		result.put(GitConstants.KEY_HEAD, BaseToCommitConverter.getCommitLocation(location, Constants.HEAD, BaseToCommitConverter.REMOVE_FIRST_3));
 		result.put(GitConstants.KEY_BRANCH_CURRENT, shortName.equals(db.getBranch()));
 
 		return result;

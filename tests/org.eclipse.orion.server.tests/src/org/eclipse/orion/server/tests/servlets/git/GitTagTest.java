@@ -52,14 +52,14 @@ public class GitTagTest extends GitTest {
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
-		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 		String gitTagUri = gitSection.getString(GitConstants.KEY_TAG);
 
 		JSONArray tags = listTags(gitTagUri);
 		assertEquals(0, tags.length());
 
 		// log
-		WebRequest request = GitCommitTest.getGetGitCommitRequest(gitCommitUri, false);
+		WebRequest request = GitCommitTest.getGetGitCommitRequest(gitHeadUri, false);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject logResponse = new JSONObject(response.getText());

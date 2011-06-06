@@ -18,6 +18,7 @@
    </launcherArgs>
 
    <launcher name="orion">
+      <macosx icon="html/appicon.icns"/>
       <solaris/>
       <win useIco="true">
          <ico path="html/orion.ico"/>
@@ -27,6 +28,7 @@
 
    <vm>
    </vm>
+
 
    <plugins>
    </plugins>
