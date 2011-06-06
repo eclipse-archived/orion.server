@@ -56,10 +56,9 @@ public abstract class BaseToRemoteConverter {
 		};
 	};
 
-	public static URI getRemoteBranchLocation(URI base, Repository db, BaseToRemoteConverter converter) throws IOException, URISyntaxException {
+	public static URI getRemoteBranchLocation(URI base, String branchName, Repository db, BaseToRemoteConverter converter) throws IOException, URISyntaxException {
 		Config repoConfig = db.getConfig();
-		String branch = db.getBranch();
-		String remote = repoConfig.getString(ConfigConstants.CONFIG_BRANCH_SECTION, branch, ConfigConstants.CONFIG_KEY_REMOTE);
+		String remote = repoConfig.getString(ConfigConstants.CONFIG_BRANCH_SECTION, branchName, ConfigConstants.CONFIG_KEY_REMOTE);
 		if (remote == null)
 			// fall back to default remote
 			remote = Constants.DEFAULT_REMOTE_NAME;
@@ -68,7 +67,7 @@ public abstract class BaseToRemoteConverter {
 			// expecting something like: +refs/heads/*:refs/remotes/origin/*
 			String[] split = fetch.split(":"); //$NON-NLS-1$
 			if (split[0].endsWith("*") /*src*/&& split[1].endsWith("*") /*dst*/) { //$NON-NLS-1$ //$NON-NLS-2$
-				return converter.baseToRemoteLocation(base, remote, branch);
+				return converter.baseToRemoteLocation(base, remote, branchName);
 			}
 		}
 		return null;

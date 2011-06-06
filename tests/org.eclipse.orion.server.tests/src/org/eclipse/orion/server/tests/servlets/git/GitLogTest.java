@@ -57,7 +57,7 @@ public class GitLogTest extends GitTest {
 
 			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
 			String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
-			String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
 			// modify
 			String folderLocation = folder.getString(ProtocolConstants.KEY_LOCATION);
@@ -72,7 +72,7 @@ public class GitLogTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// commit1
-			request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "commit1", false);
+			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit1", false);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -87,12 +87,12 @@ public class GitLogTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// commit2
-			request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "commit2", false);
+			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit2", false);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// get the full log
-			JSONArray commitsArray = log(gitCommitUri, false);
+			JSONArray commitsArray = log(gitHeadUri, false);
 			assertEquals(3, commitsArray.length());
 
 			JSONObject commit = commitsArray.getJSONObject(0);
@@ -104,7 +104,7 @@ public class GitLogTest extends GitTest {
 			commit = commitsArray.getJSONObject(2);
 			assertEquals("Initial commit", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
 			String initialGitCommitName = commit.getString(ProtocolConstants.KEY_NAME);
-			String initialGitCommitURI = gitCommitUri.replaceAll(Constants.HEAD, initialGitCommitName);
+			String initialGitCommitURI = gitHeadUri.replaceAll(Constants.HEAD, initialGitCommitName);
 
 			// prepare a scoped log location
 			request = getPostForScopedLogRequest(initialGitCommitURI, Constants.HEAD);
@@ -148,9 +148,9 @@ public class GitLogTest extends GitTest {
 			JSONObject folder = new JSONObject(response.getText());
 
 			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
-			String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
-			JSONArray commitsArray = log(gitCommitUri, true);
+			JSONArray commitsArray = log(gitHeadUri, true);
 			assertEquals(1, commitsArray.length());
 		}
 	}
@@ -170,9 +170,9 @@ public class GitLogTest extends GitTest {
 		project = new JSONObject(response.getText());
 
 		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
-		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
-		JSONArray commitsArray = log(gitCommitUri, true);
+		JSONArray commitsArray = log(gitHeadUri, true);
 		assertEquals(1, commitsArray.length());
 
 		String commitUri = commitsArray.getJSONObject(0).getString(ProtocolConstants.KEY_LOCATION);
@@ -181,7 +181,7 @@ public class GitLogTest extends GitTest {
 		assertEquals(1, tagsAndBranchesArray.length());
 		assertEquals(Constants.R_TAGS + "tag", tagsAndBranchesArray.get(0));
 
-		commitsArray = log(gitCommitUri, true);
+		commitsArray = log(gitHeadUri, true);
 		assertEquals(1, commitsArray.length());
 
 		tagsAndBranchesArray = commitsArray.getJSONObject(0).getJSONArray(ProtocolConstants.KEY_CHILDREN);
@@ -229,7 +229,7 @@ public class GitLogTest extends GitTest {
 
 		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
-		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
 		// modify
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "test.txt change");
@@ -243,7 +243,7 @@ public class GitLogTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// commit1
-		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "commit1", false);
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit1", false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -258,13 +258,13 @@ public class GitLogTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// commit2
-		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "commit2", false);
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit2", false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// get log for file
 		// TODO: don't create URIs out of thin air
-		JSONArray commitsArray = log(gitCommitUri + "test.txt", false);
+		JSONArray commitsArray = log(gitHeadUri + "test.txt", false);
 		assertEquals(2, commitsArray.length());
 
 		JSONObject commit = commitsArray.getJSONObject(0);
@@ -289,9 +289,9 @@ public class GitLogTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
 		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
-		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
-		JSONArray commitsArray = log(gitCommitUri, true);
+		JSONArray commitsArray = log(gitHeadUri, true);
 		assertEquals(1, commitsArray.length());
 
 		branch(branchesLocation, "a");
@@ -303,9 +303,9 @@ public class GitLogTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
 		gitSection = project.getJSONObject(GitConstants.KEY_GIT);
-		gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+		gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
-		log(gitCommitUri, true /* RemoteLocation should be available */);
+		log(gitHeadUri, true /* RemoteLocation should be available */);
 	}
 
 	private static WebRequest getPostForScopedLogRequest(String location, String newCommit) throws JSONException, UnsupportedEncodingException {

@@ -16,6 +16,7 @@ import static org.junit.Assert.assertNotNull;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.util.List;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
@@ -437,13 +438,13 @@ public class GitCheckoutTest extends GitTest {
 		project = new JSONObject(response.getText());
 
 		// create branch 'a'
-		Repository db1 = getRepositoryForContentLocation(cloneContentLocation);
-		Git git = new Git(db1);
 		branch(branchesLocation, "a");
 
 		// checkout 'a'
 		response = checkoutBranch(cloneLocation, "a");
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		Repository db1 = getRepositoryForContentLocation(cloneContentLocation);
+		Git git = new Git(db1);
 		GitRemoteTest.assertOnBranch(git, "a");
 	}
 
@@ -488,9 +489,75 @@ public class GitCheckoutTest extends GitTest {
 	}
 
 	@Test
-	@Ignore("not implemented yet, see bug 346201")
 	public void testCheckoutAborted() throws Exception {
-		// TODO: make some changes, create branch, checkout, 409
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
+
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			JSONObject clone = clone(clonePath);
+			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+			// get project/folder metadata
+			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject folder = new JSONObject(response.getText());
+			String folderChildrenLocation = folder.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
+
+			request = getGetFilesRequest(folderChildrenLocation);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));
+			JSONObject testTxt = getChildByName(children, "test.txt");
+			String testTxtLocation = testTxt.getString(ProtocolConstants.KEY_LOCATION);
+
+			// create branch
+			JSONObject testTxtGitSection = testTxt.getJSONObject(GitConstants.KEY_GIT);
+			String cloneLocation = testTxtGitSection.getString(GitConstants.KEY_CLONE);
+			request = getGetRequest(cloneLocation);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject clones = new JSONObject(response.getText());
+			JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+			assertEquals(1, clonesArray.length());
+			clone = clonesArray.getJSONObject(0);
+
+			response = branch(clone.getString(GitConstants.KEY_BRANCH), "branch");
+
+			// change on the branch
+			request = getPutFileRequest(testTxtLocation, "master change");
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			request = GitAddTest.getPutGitIndexRequest(testTxtGitSection.getString(GitConstants.KEY_INDEX));
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			request = GitCommitTest.getPostGitCommitRequest(testTxtGitSection.getString(GitConstants.KEY_HEAD), "commit on master", false);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// local change, not committed
+			request = getPutFileRequest(testTxtLocation, "working tree change");
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// checkout
+			response = checkoutBranch(clone.getString(ProtocolConstants.KEY_LOCATION), "branch");
+			assertEquals(HttpURLConnection.HTTP_CONFLICT, response.getResponseCode());
+			JSONObject result = new JSONObject(response.getText());
+			assertEquals(HttpURLConnection.HTTP_CONFLICT, result.getInt("HttpCode"));
+			assertEquals("Error", result.getString("Severity"));
+			assertEquals("Checkout aborted.", result.getString("Message"));
+			assertEquals("Checkout conflict with files: \ntest.txt", result.getString("DetailedMessage"));
+		}
 	}
 
 	private WebRequest getCheckoutRequest(String location, String[] paths) throws IOException, JSONException {
