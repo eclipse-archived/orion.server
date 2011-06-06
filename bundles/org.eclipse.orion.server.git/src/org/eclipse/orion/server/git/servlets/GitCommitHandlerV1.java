@@ -181,29 +181,35 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			}
 		}
 
-		RevWalk walk = new RevWalk(db);
-
+		Git git = new Git(db);
+		LogCommand log = git.log();
 		// set the commit range
-		walk.markStart(walk.lookupCommit(toObjectId));
+		log.add(toObjectId);
 		if (fromObjectId != null)
-			walk.markUninteresting(walk.parseCommit(fromObjectId));
+			log.not(fromObjectId);
 
 		// set the path filter
 		TreeFilter filter = null;
 
 		if (path != null && !"".equals(path)) { //$NON-NLS-1$
 			filter = AndTreeFilter.create(PathFilterGroup.createFromStrings(Collections.singleton(path)), TreeFilter.ANY_DIFF);
-			walk.setTreeFilter(filter);
-		} else {
-			walk.setTreeFilter(TreeFilter.ANY_DIFF);
+			log.addPath(path);
 		}
 
-		JSONObject result = toJSON(db, OrionServlet.getURI(request), walk, page, filter);
-		if (toRefId != null)
-			result.put(GitConstants.KEY_REMOTE, BaseToRemoteConverter.getRemoteBranchLocation(getURI(request), Repository.shortenRefName(toRefId.getName()), db, BaseToRemoteConverter.REMOVE_FIRST_3));
-		OrionServlet.writeJSONResponse(request, response, result);
-		walk.dispose();
-		return true;
+		try {
+			Iterable<RevCommit> commits = log.call();
+			JSONObject result = toJSON(db, OrionServlet.getURI(request), commits, page, filter);
+			if (toRefId != null)
+				result.put(GitConstants.KEY_REMOTE, BaseToRemoteConverter.getRemoteBranchLocation(getURI(request), Repository.shortenRefName(toRefId.getName()), db, BaseToRemoteConverter.REMOVE_FIRST_3));
+			OrionServlet.writeJSONResponse(request, response, result);
+			return true;
+		} catch (NoHeadException e) {
+			String msg = NLS.bind("No HEAD reference found when generating log for ref {0}", refIdsRange); //$NON-NLS-1$
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+		} catch (JGitInternalException e) {
+			String msg = NLS.bind("An internal error occured when generating log for ref {0}", refIdsRange); //$NON-NLS-1$
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+		}
 	}
 
 	private JSONObject toJSON(Repository db, URI baseLocation, Iterable<RevCommit> commits, int page, TreeFilter filter) throws JSONException, URISyntaxException, MissingObjectException, IOException {
