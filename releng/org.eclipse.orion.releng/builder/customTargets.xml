@@ -149,6 +149,7 @@ lastMapTag=${mapsTagTag}
 			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.users.ui/web" includes="**"/>
 		</copy>
 		<copy todir="${dojoFolder}" >
+			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.core/web" includes="dojo/**" />
 			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.core/web" includes="dojox/**" />
 		</copy>
 		
