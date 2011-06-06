@@ -160,7 +160,7 @@ public class GitFetchTest extends GitTest {
 		assertNotNull(gitSection2);
 		String gitRemoteUri2 = gitSection2.getString(GitConstants.KEY_REMOTE);
 		String gitIndexUri2 = gitSection2.getString(GitConstants.KEY_INDEX);
-		String gitCommitUri2 = gitSection2.getString(GitConstants.KEY_COMMIT);
+		String gitHeadUri2 = gitSection2.getString(GitConstants.KEY_HEAD);
 
 		// clone2: change
 		request = getPutFileRequest(projectId2 + "/test.txt", "incoming change");
@@ -173,7 +173,7 @@ public class GitFetchTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone2: commit
-		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri2, "incoming change commit", false);
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri2, "incoming change commit", false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -306,7 +306,7 @@ public class GitFetchTest extends GitTest {
 		assertNotNull(gitSection1);
 		String gitRemoteUri1 = gitSection1.getString(GitConstants.KEY_REMOTE);
 		String gitIndexUri1 = gitSection1.getString(GitConstants.KEY_INDEX);
-		String gitCommitUri1 = gitSection1.getString(GitConstants.KEY_COMMIT);
+		String gitHeadUri1 = gitSection1.getString(GitConstants.KEY_HEAD);
 
 		// clone1: branch 'a'
 		Repository db1 = getRepositoryForContentLocation(cloneContentLocation1);
@@ -347,7 +347,7 @@ public class GitFetchTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone1: commit
-		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri1, "incoming branch 'a' commit", false);
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri1, "incoming branch 'a' commit", false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -369,7 +369,7 @@ public class GitFetchTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone1: commit
-		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri1, "incoming branch 'master' commit", false);
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri1, "incoming branch 'master' commit", false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -421,7 +421,7 @@ public class GitFetchTest extends GitTest {
 		assertNotNull(gitSection1);
 		String gitRemoteUri1 = gitSection1.getString(GitConstants.KEY_REMOTE);
 		String gitIndexUri1 = gitSection1.getString(GitConstants.KEY_INDEX);
-		String gitCommitUri1 = gitSection1.getString(GitConstants.KEY_COMMIT);
+		String gitHeadUri1 = gitSection1.getString(GitConstants.KEY_HEAD);
 
 		// clone1: branch 'a'
 		Repository db1 = getRepositoryForContentLocation(cloneContentLocation1);
@@ -462,7 +462,7 @@ public class GitFetchTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone1: commit
-		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri1, "incoming branch 'a' commit", false);
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri1, "incoming branch 'a' commit", false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -484,7 +484,7 @@ public class GitFetchTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone1: commit
-		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri1, "incoming branch 'master' commit", false);
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri1, "incoming branch 'master' commit", false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 

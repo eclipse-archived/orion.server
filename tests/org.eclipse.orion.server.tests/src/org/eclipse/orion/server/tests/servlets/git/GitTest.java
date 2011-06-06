@@ -813,7 +813,7 @@ public abstract class GitTest extends FileSystemTest {
 		assertNotNull(gitSection.optString(GitConstants.KEY_STATUS, null));
 		assertNotNull(gitSection.optString(GitConstants.KEY_DIFF, null));
 		assertNotNull(gitSection.optString(GitConstants.KEY_INDEX, null));
-		assertNotNull(gitSection.optString(GitConstants.KEY_COMMIT, null));
+		assertNotNull(gitSection.optString(GitConstants.KEY_HEAD, null));
 		assertNotNull(gitSection.optString(GitConstants.KEY_REMOTE, null));
 		assertNotNull(gitSection.optString(GitConstants.KEY_TAG, null));
 		assertNotNull(gitSection.optString(GitConstants.KEY_CLONE, null));

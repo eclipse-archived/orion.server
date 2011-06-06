@@ -45,7 +45,7 @@ public class GitCommitTest extends GitTest {
 		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
-		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
 		// modify first file and add it to index
 		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change to commit");
@@ -88,7 +88,7 @@ public class GitCommitTest extends GitTest {
 
 		// TODO: don't create URIs out of thin air
 		// "git commit -m 'message' -- test.txt
-		request = getPostGitCommitRequest(gitCommitUri + "test.txt", "message", false);
+		request = getPostGitCommitRequest(gitHeadUri + "test.txt", "message", false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -128,8 +128,8 @@ public class GitCommitTest extends GitTest {
 		assertNotNull(gitSection);
 		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
 		assertNotNull(gitIndexUri);
-		String gitCommitUri = gitSection.optString(GitConstants.KEY_COMMIT, null);
-		assertNotNull(gitCommitUri);
+		String gitHeadUri = gitSection.optString(GitConstants.KEY_HEAD, null);
+		assertNotNull(gitHeadUri);
 
 		// TODO: don't create URIs out of thin air
 		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
@@ -137,7 +137,7 @@ public class GitCommitTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// commit with a null message
-		request = getPostGitCommitRequest(gitCommitUri /* all */, null, false);
+		request = getPostGitCommitRequest(gitHeadUri /* all */, null, false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
 	}
@@ -158,8 +158,8 @@ public class GitCommitTest extends GitTest {
 		assertNotNull(gitSection);
 		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
 		assertNotNull(gitIndexUri);
-		String gitCommitUri = gitSection.optString(GitConstants.KEY_COMMIT, null);
-		assertNotNull(gitCommitUri);
+		String gitHeadUri = gitSection.optString(GitConstants.KEY_HEAD, null);
+		assertNotNull(gitHeadUri);
 
 		// TODO: don't create URIs out of thin air
 		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
@@ -167,7 +167,7 @@ public class GitCommitTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// commit with a null message
-		request = getPostGitCommitRequest(gitCommitUri /* all */, "", false);
+		request = getPostGitCommitRequest(gitHeadUri /* all */, "", false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
 	}
@@ -196,8 +196,8 @@ public class GitCommitTest extends GitTest {
 		assertNotNull(gitIndexUri);
 		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
 		assertNotNull(gitStatusUri);
-		String gitCommitUri = gitSection.optString(GitConstants.KEY_COMMIT, null);
-		assertNotNull(gitCommitUri);
+		String gitHeadUri = gitSection.optString(GitConstants.KEY_HEAD, null);
+		assertNotNull(gitHeadUri);
 
 		// "git add ."
 		request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
@@ -222,7 +222,7 @@ public class GitCommitTest extends GitTest {
 		assertEquals(0, statusArray.length());
 
 		// commit all
-		request = getPostGitCommitRequest(gitCommitUri, "message", false);
+		request = getPostGitCommitRequest(gitHeadUri, "message", false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -251,8 +251,8 @@ public class GitCommitTest extends GitTest {
 		assertNotNull(gitSection);
 		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
 		assertNotNull(gitIndexUri);
-		String gitCommitUri = gitSection.optString(GitConstants.KEY_COMMIT, null);
-		assertNotNull(gitCommitUri);
+		String gitHeadUri = gitSection.optString(GitConstants.KEY_HEAD, null);
+		assertNotNull(gitHeadUri);
 
 		// "git add ."
 		request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
@@ -260,12 +260,12 @@ public class GitCommitTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// commit all
-		request = getPostGitCommitRequest(gitCommitUri, "Comit massage", false); // typos
+		request = getPostGitCommitRequest(gitHeadUri, "Comit massage", false); // typos
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// amend last commit
-		request = getPostGitCommitRequest(gitCommitUri, "Commit message", true);
+		request = getPostGitCommitRequest(gitHeadUri, "Commit message", true);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -310,8 +310,8 @@ public class GitCommitTest extends GitTest {
 		assertNotNull(gitSection);
 		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
 		assertNotNull(gitIndexUri);
-		String gitCommitUri = gitSection.optString(GitConstants.KEY_COMMIT, null);
-		assertNotNull(gitCommitUri);
+		String gitHeadUri = gitSection.optString(GitConstants.KEY_HEAD, null);
+		assertNotNull(gitHeadUri);
 
 		// TODO: don't create URIs out of thin air
 		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
@@ -320,12 +320,12 @@ public class GitCommitTest extends GitTest {
 
 		// TODO: don't create URIs out of thin air
 		// commit all
-		request = getPostGitCommitRequest(gitCommitUri, "message", false);
+		request = getPostGitCommitRequest(gitHeadUri, "message", false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// TODO: don't create URIs out of thin air
-		request = getGetGitCommitRequest(gitCommitUri + "test.txt", true);
+		request = getGetGitCommitRequest(gitHeadUri + "test.txt", true);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("in HEAD", response.getText());

@@ -44,10 +44,10 @@ public class GitMergeTest extends GitTest {
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
-		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
 		// "git merge master"
-		JSONObject merge = merge(gitCommitUri, Constants.MASTER);
+		JSONObject merge = merge(gitHeadUri, Constants.MASTER);
 		MergeStatus mergeResult = MergeStatus.valueOf(merge.getString(GitConstants.KEY_RESULT));
 		assertEquals(MergeStatus.ALREADY_UP_TO_DATE, mergeResult);
 	}
@@ -88,7 +88,7 @@ public class GitMergeTest extends GitTest {
 		assertNotNull(gitSection);
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
-		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
 		// "git add ."
 		request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
@@ -96,7 +96,7 @@ public class GitMergeTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// commit all
-		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "commit on a", false);
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit on a", false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -119,7 +119,7 @@ public class GitMergeTest extends GitTest {
 		assertNotNull(gitSection);
 		gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
-		gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+		gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
 		// "git add ."
 		request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
@@ -127,7 +127,7 @@ public class GitMergeTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// commit all
-		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "commit on master", false);
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit on master", false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -139,7 +139,7 @@ public class GitMergeTest extends GitTest {
 		GitStatusTest.assertStatusClean(statusResponse);
 
 		// merge: "git merge a"
-		JSONObject merge = merge(gitCommitUri, "a");
+		JSONObject merge = merge(gitHeadUri, "a");
 		MergeStatus mergeResult = MergeStatus.valueOf(merge.getString(GitConstants.KEY_RESULT));
 		assertEquals(MergeStatus.MERGED, mergeResult);
 
@@ -182,7 +182,7 @@ public class GitMergeTest extends GitTest {
 		assertNotNull(gitSection);
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
-		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
 		// "git add ."
 		request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
@@ -207,7 +207,7 @@ public class GitMergeTest extends GitTest {
 		assertEquals(0, statusArray.length());
 
 		// "git merge master"
-		JSONObject merge = merge(gitCommitUri, Constants.MASTER);
+		JSONObject merge = merge(gitHeadUri, Constants.MASTER);
 		MergeStatus mergeResult = MergeResult.MergeStatus.valueOf(merge.getString(GitConstants.KEY_RESULT));
 		assertEquals(MergeResult.MergeStatus.ALREADY_UP_TO_DATE, mergeResult);
 
@@ -271,7 +271,7 @@ public class GitMergeTest extends GitTest {
 		assertNotNull(gitSection);
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
-		String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
 		// "git add ."
 		request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
@@ -279,7 +279,7 @@ public class GitMergeTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// commit all
-		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "commit on a", false);
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit on a", false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -302,7 +302,7 @@ public class GitMergeTest extends GitTest {
 		assertNotNull(gitSection);
 		gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
-		gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+		gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
 		// "git add ."
 		request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
@@ -310,7 +310,7 @@ public class GitMergeTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// commit all
-		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri, "commit on master", false);
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit on master", false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -322,7 +322,7 @@ public class GitMergeTest extends GitTest {
 		GitStatusTest.assertStatusClean(statusResponse);
 
 		// merge: "git merge a"
-		JSONObject merge = merge(gitCommitUri, "a");
+		JSONObject merge = merge(gitHeadUri, "a");
 		MergeStatus mergeResult = MergeStatus.valueOf(merge.getString(GitConstants.KEY_RESULT));
 		assertEquals(MergeStatus.CONFLICTING, mergeResult);
 
@@ -395,7 +395,7 @@ public class GitMergeTest extends GitTest {
 		JSONObject gitSection2 = project2.getJSONObject(GitConstants.KEY_GIT);
 		String gitRemoteUri2 = gitSection2.getString(GitConstants.KEY_REMOTE);
 		String gitIndexUri2 = gitSection2.getString(GitConstants.KEY_INDEX);
-		String gitCommitUri2 = gitSection2.getString(GitConstants.KEY_COMMIT);
+		String gitHeadUri2 = gitSection2.getString(GitConstants.KEY_HEAD);
 
 		// clone1: get remote details
 		JSONObject details = getRemoteBranch(gitRemoteUri1, 1, 0, Constants.MASTER);
@@ -413,7 +413,7 @@ public class GitMergeTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone2: commit
-		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri2, "incoming change commit", false);
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri2, "incoming change commit", false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -439,11 +439,11 @@ public class GitMergeTest extends GitTest {
 		//String gitCommitUri = remoteBranch.getString(GitConstants.KEY_COMMIT);
 		// TODO: should fail when POSTing to the above URI, see bug 342845
 
-		String gitCommitUri = remoteBranch.getString(GitConstants.KEY_HEAD);
-		assertNotNull(gitCommitUri);
+		String gitHeadUri = remoteBranch.getString(GitConstants.KEY_HEAD);
+		assertNotNull(gitHeadUri);
 
 		// merge
-		JSONObject merge = merge(gitCommitUri, newRefId1);
+		JSONObject merge = merge(gitHeadUri, newRefId1);
 		MergeStatus mergeResult = MergeStatus.valueOf(merge.getString(GitConstants.KEY_RESULT));
 		assertEquals(MergeStatus.FAST_FORWARD, mergeResult);
 
