@@ -310,7 +310,8 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws ServletException, NoFilepatternException, IOException, JSONException, CoreException, URISyntaxException {
-		Set<Entry<IPath, File>> set = GitUtils.getGitDirs(path.removeFirstSegments(1), Traverse.GO_UP).entrySet();
+		IPath filePath = path.hasTrailingSeparator() ? path.removeFirstSegments(1) : path.removeFirstSegments(1).removeLastSegments(1);
+		Set<Entry<IPath, File>> set = GitUtils.getGitDirs(filePath, Traverse.GO_UP).entrySet();
 		File gitDir = set.iterator().next().getValue();
 		if (gitDir == null)
 			return false; // TODO: or an error response code, 405?
@@ -344,9 +345,9 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		CommitCommand commit = new Git(db).commit();
 
 		// support for committing by path: "git commit -o path"
-		if (!set.iterator().next().getKey().equals(Path.EMPTY)) {
-			String p = path.removeFirstSegments(3).toString();
-			commit.setOnly(p);
+		String pattern = GitUtils.getRelativePath(path.removeFirstSegments(1), set.iterator().next().getKey());
+		if (!pattern.isEmpty()) {
+			commit.setOnly(pattern);
 		}
 		// "git commit [--amend] -m '{message}' [-a|{path}]"
 		try {
