@@ -84,6 +84,10 @@
          point="org.eclipse.equinox.http.registry.filters">
       <filter
             alias="/"
+            class="org.mortbay.servlet.GzipFilter">
+      </filter>
+      <filter
+            alias="/"
             class="org.eclipse.orion.server.configurator.servlet.WelcomeFileFilter">
       </filter>
       <filter
