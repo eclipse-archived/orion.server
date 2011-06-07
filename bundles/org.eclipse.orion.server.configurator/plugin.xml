@@ -227,6 +227,17 @@
          </resource-mapping>
       </httpcontext>      
       <httpcontext
+            id="org.eclipse.orion.server.configurator.httpcontext.orion.dijit">
+         <resource-mapping
+               bundle="org.eclipse.orion.client.core"
+               path="/web/dijit">
+         </resource-mapping>
+         <resource-mapping
+               bundle="org.dojotoolkit"
+               path="/dijit">
+         </resource-mapping>
+      </httpcontext>  
+      <httpcontext
             id="org.eclipse.orion.server.configurator.httpcontext.orion.dojox">
          <resource-mapping
                bundle="org.eclipse.orion.client.core"
@@ -299,6 +310,10 @@
       <resource
             alias="/org.dojotoolkit/dojo"
             httpcontextId="org.eclipse.orion.server.configurator.httpcontext.orion.dojo">
+      </resource>
+      <resource
+            alias="/org.dojotoolkit/dijit"
+            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.orion.dijit">
       </resource>
       <resource
             alias="/org.dojotoolkit/dojox"
