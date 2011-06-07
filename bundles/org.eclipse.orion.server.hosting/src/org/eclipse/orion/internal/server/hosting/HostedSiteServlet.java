@@ -198,6 +198,7 @@ public class HostedSiteServlet extends OrionServlet {
 
 			if (file != null) {
 				addEditHeaders(resp, site, path);
+				addContentTypeHeader(resp, path);
 			}
 		} else {
 			String msg = NLS.bind("No rights to access {0}", workspaceUri);
@@ -209,6 +210,12 @@ public class HostedSiteServlet extends OrionServlet {
 	private void addEditHeaders(HttpServletResponse resp, IHostedSite site, IPath path) {
 		resp.addHeader("X-Edit-Server", site.getEditServerUrl() + "/edit/edit.html#"); //$NON-NLS-1$ //$NON-NLS-2$
 		resp.addHeader("X-Edit-Token", FILE_SERVLET_ALIAS + path.toString()); //$NON-NLS-1$
+	}
+
+	private void addContentTypeHeader(HttpServletResponse resp, IPath path) {
+		String mimeType = getServletContext().getMimeType(path.lastSegment());
+		if (mimeType != null)
+			resp.addHeader("Content-Type", mimeType);
 	}
 
 	// temp code for grabbing files from filesystem
