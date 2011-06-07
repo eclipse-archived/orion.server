@@ -65,6 +65,7 @@ public class LoginServlet extends HttpServlet {
 					RequestDispatcher rd = req.getRequestDispatcher("/loginform?error=" + new String(Base64.encode(invalidLoginError.getBytes()))); //$NON-NLS-1$
 					rd.include(req, resp);
 				} else {
+					resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 					PrintWriter writer = resp.getWriter();
 					JSONObject jsonError = new JSONObject();
 					try {
@@ -73,7 +74,6 @@ public class LoginServlet extends HttpServlet {
 						resp.setContentType("application/json"); //$NON-NLS-1$
 					} catch (JSONException e) {/* ignore */
 					}
-					resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 				}
 				resp.flushBuffer();
 			}
