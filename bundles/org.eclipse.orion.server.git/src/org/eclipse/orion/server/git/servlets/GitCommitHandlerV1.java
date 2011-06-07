@@ -285,10 +285,13 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		return commit;
 	}
 
-	private JSONArray toJSON(Set<Ref> tags) {
+	private JSONArray toJSON(Map<String, Ref> revTags) throws JSONException {
 		JSONArray children = new JSONArray();
-		for (Ref ref : tags) {
-			children.put(ref.getName());
+		for (Entry<String, Ref> revTag : revTags.entrySet()) {
+			JSONObject tag = new JSONObject();
+			tag.put(ProtocolConstants.KEY_NAME, revTag.getKey());
+			tag.put(ProtocolConstants.KEY_FULL_NAME, revTag.getValue().getName());
+			children.put(tag);
 		}
 		return children;
 	}
@@ -415,12 +418,12 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	// from https://gist.github.com/839693, credits to zx
-	private static Set<Ref> getTagsForCommit(Repository repo, RevCommit commit) throws MissingObjectException, IOException {
-		final Set<Ref> tags = new HashSet<Ref>();
+	private static Map<String, Ref> getTagsForCommit(Repository repo, RevCommit commit) throws MissingObjectException, IOException {
+		final Map<String, Ref> revTags = new HashMap<String, Ref>();
 		final RevWalk walk = new RevWalk(repo);
 		walk.reset();
-		for (final Ref ref : repo.getTags().values()) {
-			final RevObject obj = walk.parseAny(ref.getObjectId());
+		for (final Entry<String, Ref> revTag : repo.getTags().entrySet()) {
+			final RevObject obj = walk.parseAny(revTag.getValue().getObjectId());
 			final RevCommit tagCommit;
 			if (obj instanceof RevCommit) {
 				tagCommit = (RevCommit) obj;
@@ -430,9 +433,9 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 				continue;
 			}
 			if (commit.equals(tagCommit) || walk.isMergedInto(commit, tagCommit)) {
-				tags.add(ref);
+				revTags.put(revTag.getKey(), revTag.getValue());
 			}
 		}
-		return tags;
+		return revTags;
 	}
 }

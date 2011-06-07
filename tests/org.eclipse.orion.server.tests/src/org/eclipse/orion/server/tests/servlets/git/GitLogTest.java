@@ -179,14 +179,14 @@ public class GitLogTest extends GitTest {
 		JSONObject updatedCommit = tag(commitUri, "tag");
 		JSONArray tagsAndBranchesArray = updatedCommit.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 		assertEquals(1, tagsAndBranchesArray.length());
-		assertEquals(Constants.R_TAGS + "tag", tagsAndBranchesArray.get(0));
+		assertEquals(Constants.R_TAGS + "tag", tagsAndBranchesArray.getJSONObject(0).get(ProtocolConstants.KEY_FULL_NAME));
 
 		commitsArray = log(gitHeadUri, true);
 		assertEquals(1, commitsArray.length());
 
 		tagsAndBranchesArray = commitsArray.getJSONObject(0).getJSONArray(ProtocolConstants.KEY_CHILDREN);
 		assertEquals(1, tagsAndBranchesArray.length());
-		assertEquals(Constants.R_TAGS + "tag", tagsAndBranchesArray.get(0));
+		assertEquals(Constants.R_TAGS + "tag", tagsAndBranchesArray.getJSONObject(0).get(ProtocolConstants.KEY_FULL_NAME));
 	}
 
 	@Test

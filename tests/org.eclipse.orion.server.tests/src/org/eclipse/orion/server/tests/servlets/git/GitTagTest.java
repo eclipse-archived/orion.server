@@ -74,11 +74,13 @@ public class GitTagTest extends GitTest {
 
 		tags = listTags(gitTagUri);
 		assertEquals(1, tags.length());
+		assertEquals("tag1", tags.getJSONObject(0).get(ProtocolConstants.KEY_NAME));
 
 		// update commit with tag
 		tag(commitLocation, "tag2");
 
 		tags = listTags(gitTagUri);
 		assertEquals(2, tags.length());
+		assertEquals("tag2", tags.getJSONObject(1).get(ProtocolConstants.KEY_NAME));
 	}
 }

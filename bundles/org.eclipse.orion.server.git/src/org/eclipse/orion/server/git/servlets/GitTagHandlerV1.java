@@ -13,7 +13,7 @@ package org.eclipse.orion.server.git.servlets;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Collection;
+import java.util.Map.Entry;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -61,24 +61,19 @@ public class GitTagHandlerV1 extends ServletResourceHandler<String> {
 
 	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, String path) throws IOException, JSONException, ServletException, URISyntaxException, CoreException {
 		IPath p = new Path(path);
-
 		File gitDir = GitUtils.getGitDir(p);
 		Repository db = new FileRepository(gitDir);
 
-		Collection<Ref> revTags = db.getTags().values();
-		RevWalk walk = new RevWalk(db);
-
 		JSONObject result = new JSONObject();
 		JSONArray children = new JSONArray();
-		for (Ref ref : revTags) {
-			RevTag revTag = walk.parseTag(db.resolve(ref.getName()));
+		for (Entry<String, Ref> revTag : db.getTags().entrySet()) {
 			JSONObject tag = new JSONObject();
-			result.put(ProtocolConstants.KEY_NAME, revTag.getName());
+			tag.put(ProtocolConstants.KEY_NAME, revTag.getKey());
+			tag.put(ProtocolConstants.KEY_FULL_NAME, revTag.getValue().getName());
 			children.put(tag);
 		}
 		result.put(ProtocolConstants.KEY_CHILDREN, children);
 		OrionServlet.writeJSONResponse(request, response, result);
-		walk.dispose();
 		return true;
 	}
 
