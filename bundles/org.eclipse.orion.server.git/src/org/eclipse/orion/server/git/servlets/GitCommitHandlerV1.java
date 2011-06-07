@@ -145,6 +145,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 
 	private boolean handleGetCommitLog(HttpServletRequest request, HttpServletResponse response, Repository db, String refIdsRange, String path) throws AmbiguousObjectException, IOException, ServletException, JSONException, URISyntaxException {
 		int page = request.getParameter("page") != null ? new Integer(request.getParameter("page")).intValue() : 0; //$NON-NLS-1$ //$NON-NLS-2$
+		int pageSize = request.getParameter("pageSize") != null ? new Integer(request.getParameter("pageSize")).intValue() : PAGE_SIZE; //$NON-NLS-1$ //$NON-NLS-2$
 
 		ObjectId toObjectId = null;
 		ObjectId fromObjectId = null;
@@ -198,7 +199,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 
 		try {
 			Iterable<RevCommit> commits = log.call();
-			JSONObject result = toJSON(db, OrionServlet.getURI(request), commits, page, filter);
+			JSONObject result = toJSON(db, OrionServlet.getURI(request), commits, page, pageSize, filter);
 			if (toRefId != null)
 				result.put(GitConstants.KEY_REMOTE, BaseToRemoteConverter.getRemoteBranchLocation(getURI(request), Repository.shortenRefName(toRefId.getName()), db, BaseToRemoteConverter.REMOVE_FIRST_3));
 			OrionServlet.writeJSONResponse(request, response, result);
@@ -212,9 +213,9 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		}
 	}
 
-	private JSONObject toJSON(Repository db, URI baseLocation, Iterable<RevCommit> commits, int page, TreeFilter filter) throws JSONException, URISyntaxException, MissingObjectException, IOException {
+	private JSONObject toJSON(Repository db, URI baseLocation, Iterable<RevCommit> commits, int page, int pageSize, TreeFilter filter) throws JSONException, URISyntaxException, MissingObjectException, IOException {
 		boolean pageable = (page > 0);
-		int startIndex = (page - 1) * PAGE_SIZE;
+		int startIndex = (page - 1) * pageSize;
 		int index = 0;
 
 		JSONObject result = new JSONObject();
@@ -225,7 +226,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 				continue;
 			}
 
-			if (pageable && index >= startIndex + PAGE_SIZE)
+			if (pageable && index >= startIndex + pageSize)
 				break;
 
 			index++;
