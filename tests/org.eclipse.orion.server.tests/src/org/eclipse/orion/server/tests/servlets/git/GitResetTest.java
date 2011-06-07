@@ -16,9 +16,11 @@ import static org.junit.Assert.assertNotNull;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.util.List;
 
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.StoredConfig;
@@ -86,7 +88,7 @@ public class GitResetTest extends GitTest {
 		assertEquals(0, statusArray.length());
 
 		// TODO: don't create URIs out of thin air
-		request = getPostGitIndexRequest(gitIndexUri + "test.txt", null, (String) null);
+		request = getPostGitIndexRequest(gitIndexUri + "test.txt", null, null, (String) null);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -157,7 +159,7 @@ public class GitResetTest extends GitTest {
 		assertEquals(0, statusArray.length());
 
 		// TODO: don't create URIs out of thin air
-		request = getPostGitIndexRequest(gitIndexUri, new String[] {"test.txt"}, (String) null);
+		request = getPostGitIndexRequest(gitIndexUri, new String[] {"test.txt"}, null, (String) null);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -194,7 +196,7 @@ public class GitResetTest extends GitTest {
 		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 
-		request = getPostGitIndexRequest(gitIndexUri, null, (String) null);
+		request = getPostGitIndexRequest(gitIndexUri, null, null, (String) null);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
 	}
@@ -246,7 +248,7 @@ public class GitResetTest extends GitTest {
 
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 
-		request = getPostGitIndexRequest(gitIndexUri, null, "BAD");
+		request = getPostGitIndexRequest(gitIndexUri, null, null, "BAD");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
 	}
@@ -509,6 +511,114 @@ public class GitResetTest extends GitTest {
 		assertEquals(1, statusArray.length());
 	}
 
+	@Test
+	public void testResetToRemoteBranch() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
+
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			JSONObject clone = clone(clonePath);
+			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+			// get project/folder metadata
+			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject folder = new JSONObject(response.getText());
+			String folderChildrenLocation = folder.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
+
+			request = getGetFilesRequest(folderChildrenLocation);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));
+			JSONObject testTxt = getChildByName(children, "test.txt");
+			String testTxtLocation = testTxt.getString(ProtocolConstants.KEY_LOCATION);
+			JSONObject testTxtGitSection = testTxt.getJSONObject(GitConstants.KEY_GIT);
+			String testTxtGitIndexUri = testTxtGitSection.getString(GitConstants.KEY_INDEX);
+			String testTxtGitHeadUri = testTxtGitSection.getString(GitConstants.KEY_HEAD);
+
+			request = getPutFileRequest(testTxtLocation, "file change");
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			request = GitAddTest.getPutGitIndexRequest(testTxtGitIndexUri);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			request = GitCommitTest.getPostGitCommitRequest(testTxtGitHeadUri, "message", false);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// git section for the folder
+			JSONObject folderGitSection = folder.getJSONObject(GitConstants.KEY_GIT);
+			String folderGitIndexUri = folderGitSection.getString(GitConstants.KEY_INDEX);
+			String folderGitStatusUri = folderGitSection.getString(GitConstants.KEY_STATUS);
+
+			request = GitStatusTest.getGetGitStatusRequest(folderGitStatusUri);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject statusResponse = new JSONObject(response.getText());
+			GitStatusTest.assertStatusClean(statusResponse);
+
+			JSONArray commitsArray = log(testTxtGitHeadUri, false);
+			assertEquals(2, commitsArray.length());
+
+			// TODO: get "origin/master" from the remote branch 
+			request = getPostGitIndexRequest(folderGitIndexUri, "origin/master", ResetType.HARD);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			request = GitStatusTest.getGetGitStatusRequest(folderGitStatusUri);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			statusResponse = new JSONObject(response.getText());
+			GitStatusTest.assertStatusClean(statusResponse);
+
+			commitsArray = log(testTxtGitHeadUri, false);
+			assertEquals(1, commitsArray.length());
+		}
+	}
+
+	@Test
+	public void testResetPathsAndRef() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+
+		String projectName = getMethodName();
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
+		String projectId = project.getString(ProtocolConstants.KEY_ID);
+
+		WebRequest request = getPutFileRequest(projectId + "/test.txt", "hello");
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+
+		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+
+		request = getPostGitIndexRequest(gitIndexUri, new String[] {"test.txt"}, "origin/master", null);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
+	}
+
+	/**
+	 * Creates a request to reset HEAD to the given commit.
+	 * @param location
+	 * @param resetType 
+	 * @throws JSONException 
+	 * @throws UnsupportedEncodingException 
+	 */
+	private WebRequest getPostGitIndexRequest(String location, String commit, ResetType resetType) throws JSONException, UnsupportedEncodingException {
+		return getPostGitIndexRequest(location, null, commit, resetType.toString());
+	}
+
 	/**
 	 * Creates a request to reset index.
 	 * @param location
@@ -516,11 +626,11 @@ public class GitResetTest extends GitTest {
 	 * @throws JSONException 
 	 * @throws UnsupportedEncodingException 
 	 */
-	private WebRequest getPostGitIndexRequest(String location, ResetCommand.ResetType resetType) throws JSONException, UnsupportedEncodingException {
-		return getPostGitIndexRequest(location, null, resetType.toString());
+	private WebRequest getPostGitIndexRequest(String location, ResetType resetType) throws JSONException, UnsupportedEncodingException {
+		return getPostGitIndexRequest(location, null, null, resetType.toString());
 	}
 
-	private WebRequest getPostGitIndexRequest(String location, String[] paths, String resetType) throws JSONException, UnsupportedEncodingException {
+	private WebRequest getPostGitIndexRequest(String location, String[] paths, String commit, String resetType) throws JSONException, UnsupportedEncodingException {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;
@@ -533,11 +643,14 @@ public class GitResetTest extends GitTest {
 		if (resetType != null)
 			body.put(GitConstants.KEY_RESET_TYPE, resetType);
 		if (paths != null) {
+			//			assertNull("Cannot mix paths and commit", commit);
 			JSONArray jsonPaths = new JSONArray();
 			for (String path : paths)
 				jsonPaths.put(path);
 			body.put(ProtocolConstants.KEY_PATH, jsonPaths);
 		}
+		if (commit != null)
+			body.put(GitConstants.KEY_TAG_COMMIT, commit);
 		WebRequest request = new PostMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);

@@ -114,8 +114,9 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 			JSONArray paths = toReset.optJSONArray(ProtocolConstants.KEY_PATH);
 			if (paths != null) {
 				String msg = NLS.bind("Mixing {0} and {1} parameters is not allowed.", new Object[] {ProtocolConstants.KEY_PATH, GitConstants.KEY_RESET_TYPE});
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_IMPLEMENTED, msg, null));
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 			}
+			String ref = toReset.optString(GitConstants.KEY_TAG_COMMIT, Constants.HEAD);
 			try {
 				ResetType type = ResetType.valueOf(resetType);
 				switch (type) {
@@ -123,7 +124,7 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 					case HARD :
 						Git git = new Git(db);
 						// "git reset --{type} HEAD ."
-						git.reset().setMode(type).setRef(Constants.HEAD).call();
+						git.reset().setMode(type).setRef(ref).call();
 						return true;
 					case KEEP :
 					case MERGE :
@@ -136,6 +137,11 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 			}
 		} else {
+			String commit = toReset.optString(GitConstants.KEY_TAG_COMMIT, null);
+			if (commit != null) {
+				String msg = NLS.bind("Mixing {0} and {1} parameters is not allowed.", new Object[] {ProtocolConstants.KEY_PATH, GitConstants.KEY_TAG_COMMIT});
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+			}
 			JSONArray paths = toReset.optJSONArray(ProtocolConstants.KEY_PATH);
 			Git git = new Git(db);
 			ResetCommand reset = git.reset().setRef(Constants.HEAD);
