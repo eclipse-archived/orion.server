@@ -57,6 +57,14 @@ public class AuthorizationService {
 			JSONObject userRight = new JSONObject();
 			userRight.put(ProtocolConstants.KEY_USER_RIGHT_URI, uri);
 			userRight.put(ProtocolConstants.KEY_USER_RIGHT_METHOD, POST | PUT | GET | DELETE);
+
+			//check if we already have this right
+			for (int i = 0; i < userRightArray.length(); i++) {
+				if (userRight.toString().equals(userRightArray.get(i).toString()))
+					return;
+			}
+
+			//add the new right
 			userRightArray.put(userRight);
 
 			saveRights(result, userRightArray);
