@@ -57,6 +57,8 @@ public class GitConstants {
 
 	public static final String KEY_CLONE = "CloneLocation"; //$NON-NLS-1$
 
+	public static final String KEY_CONFIG = "ConfigLocation"; //$NON-NLS-1$
+
 	public static final String KEY_BRANCH = "BranchLocation"; //$NON-NLS-1$
 
 	public static final String KEY_URL = "GitUrl"; //$NON-NLS-1$
@@ -112,6 +114,10 @@ public class GitConstants {
 	public static final String KEY_COMMIT_DIFF_OLDPATH = "OldPath"; //$NON-NLS-1$
 
 	public static final String KEY_COMMIT_DIFF_CHANGETYPE = "ChangeType"; //$NON-NLS-1$
+
+	public static final String KEY_CONFIG_ENTRY_KEY = "Key"; //$NON-NLS-1$
+
+	public static final String KEY_CONFIG_ENTRY_VALUE = "Value"; //$NON-NLS-1$
 
 	public static final String KEY_BRANCH_NAME = "Branch"; //$NON-NLS-1$
 

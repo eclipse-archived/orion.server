@@ -642,8 +642,24 @@ public abstract class GitTest extends FileSystemTest {
 	 * @throws JSONException
 	 */
 	protected JSONArray log(String gitCommitUri, boolean remote) throws IOException, SAXException, JSONException {
+		return log(gitCommitUri, remote, null, null);
+	}
+
+	/**
+	 * Return commits for the given URI.
+	 * 
+	 * @param gitCommitUri commit URI
+	 * @param remote <code>true</code> if remote location is expected
+	 * @param page number of page or <code>null</code> if all results
+	 * @param pageSize size of page or <code>null</code> if default
+	 * @return
+	 * @throws IOException
+	 * @throws SAXException
+	 * @throws JSONException
+	 */
+	protected JSONArray log(String gitCommitUri, boolean remote, Integer page, Integer pageSize) throws IOException, SAXException, JSONException {
 		assertCommitUri(gitCommitUri);
-		WebRequest request = GitCommitTest.getGetGitCommitRequest(gitCommitUri, false);
+		WebRequest request = GitCommitTest.getGetGitCommitRequest(gitCommitUri, false, page, pageSize);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject log = new JSONObject(response.getText());

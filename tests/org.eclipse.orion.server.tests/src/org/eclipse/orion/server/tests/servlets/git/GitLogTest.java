@@ -106,6 +106,20 @@ public class GitLogTest extends GitTest {
 			String initialGitCommitName = commit.getString(ProtocolConstants.KEY_NAME);
 			String initialGitCommitURI = gitHeadUri.replaceAll(Constants.HEAD, initialGitCommitName);
 
+			//get log for given page size
+			commitsArray = log(gitHeadUri, false, 1, 1);
+			assertEquals(1, commitsArray.length());
+
+			commit = commitsArray.getJSONObject(0);
+			assertEquals("commit2", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
+
+			//get log for second page
+			commitsArray = log(gitHeadUri, false, 2, 1);
+			assertEquals(1, commitsArray.length());
+
+			commit = commitsArray.getJSONObject(0);
+			assertEquals("commit1", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
+
 			// prepare a scoped log location
 			request = getPostForScopedLogRequest(initialGitCommitURI, Constants.HEAD);
 			response = webConversation.getResponse(request);

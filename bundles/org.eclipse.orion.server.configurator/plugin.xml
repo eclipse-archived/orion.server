@@ -88,6 +88,10 @@
       </filter>
       <filter
             alias="/"
+            class="org.eclipse.orion.server.configurator.servlet.ImageExpiresFilter">
+      </filter>
+      <filter
+            alias="/"
             class="org.eclipse.orion.server.configurator.servlet.WelcomeFileFilter">
       </filter>
       <filter
