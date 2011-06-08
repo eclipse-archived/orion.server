@@ -204,7 +204,7 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 		//if overwrite is disallowed make sure destination does not exist yet
 		boolean noOverwrite = (options & CREATE_NO_OVERWRITE) != 0;
 		if (noOverwrite && destinationExists) {
-			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_PRECONDITION_FAILED, "Resource cannot be overwritten", null));
+			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_PRECONDITION_FAILED, "A file or folder with the same name already exists at this location", null));
 			return false;
 		}
 		return true;
