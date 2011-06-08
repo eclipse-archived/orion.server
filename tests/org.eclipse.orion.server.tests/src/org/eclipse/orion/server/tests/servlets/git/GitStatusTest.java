@@ -1088,6 +1088,55 @@ public class GitStatusTest extends GitTest {
 		}
 	}
 
+	@Test
+	public void testCloneAndBranchNameFromStatus() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
+
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			JSONObject clone = clone(clonePath);
+			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+			// get project/folder metadata
+			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject folder = new JSONObject(response.getText());
+
+			// get status
+			request = getGetGitStatusRequest(folder.getJSONObject(GitConstants.KEY_GIT).getString(GitConstants.KEY_STATUS));
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject statusResponse = new JSONObject(response.getText());
+			String cloneLocation = statusResponse.getString(GitConstants.KEY_CLONE);
+			assertCloneUri(cloneLocation);
+
+			request = getGetRequest(cloneLocation);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			clone = new JSONObject(response.getText());
+			JSONArray clonesArray = clone.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+			assertEquals(1, clonesArray.length());
+			clone = clonesArray.getJSONObject(0);
+			assertEquals(folder.getString(ProtocolConstants.KEY_NAME), clone.getString(ProtocolConstants.KEY_NAME));
+
+			// get branch details
+			request = getGetRequest(clone.getString(GitConstants.KEY_BRANCH));
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject branches = new JSONObject(response.getText());
+			assertEquals(Constants.MASTER, GitBranchTest.getCurrentBranch(branches).getString(ProtocolConstants.KEY_NAME));
+		}
+
+	}
+
 	private void assertChildLocation(JSONObject child, String expectedFileContent) throws JSONException, IOException, SAXException {
 		assertNotNull(child);
 		String location = child.getString(ProtocolConstants.KEY_LOCATION);

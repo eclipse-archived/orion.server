@@ -356,6 +356,10 @@ public class GitCommitTest extends GitTest {
 	}
 
 	static WebRequest getGetGitCommitRequest(String location, boolean body) {
+		return getGetGitCommitRequest(location, body, null, null);
+	}
+
+	static WebRequest getGetGitCommitRequest(String location, boolean body, Integer page, Integer pageSize) {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;
@@ -363,8 +367,37 @@ public class GitCommitTest extends GitTest {
 			requestURI = SERVER_LOCATION + location;
 		else
 			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.COMMIT_RESOURCE + '/' + location;
-		if (body)
-			requestURI += "?parts=body";
+		boolean firstParam = true;
+		if (body) {
+			if (firstParam) {
+				requestURI += "?";
+				firstParam = false;
+			} else {
+				requestURI += "&";
+			}
+			requestURI += "parts=body";
+		}
+
+		if (page != null) {
+			if (firstParam) {
+				requestURI += "?";
+				firstParam = false;
+			} else {
+				requestURI += "&";
+			}
+			requestURI += "page=" + page.intValue();
+		}
+
+		if (pageSize != null) {
+			if (firstParam) {
+				requestURI += "?";
+				firstParam = false;
+			} else {
+				requestURI += "&";
+			}
+			requestURI += "pageSize=" + pageSize.intValue();
+		}
+
 		WebRequest request = new GetMethodWebRequest(requestURI);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
