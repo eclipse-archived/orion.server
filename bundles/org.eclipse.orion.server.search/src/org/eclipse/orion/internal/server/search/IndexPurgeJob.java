@@ -139,7 +139,8 @@ public class IndexPurgeJob extends Job {
 		if (logger.isDebugEnabled())
 			logger.debug("Purge job took " + duration + "ms"); //$NON-NLS-1$ //$NON-NLS-2$
 
-		long delay = Math.max(DEFAULT_DELAY, duration);
+		//throttle scheduling frequency so the job never runs more than 5% of the time
+		long delay = Math.max(DEFAULT_DELAY, duration * 20);
 		schedule(delay);
 		return Status.OK_STATUS;
 	}

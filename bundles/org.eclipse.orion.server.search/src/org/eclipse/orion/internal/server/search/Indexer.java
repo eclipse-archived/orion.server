@@ -37,13 +37,16 @@ public class Indexer extends Job {
 
 	private static final long DEFAULT_DELAY = 60000;//one minute
 	private static final long MAX_SEARCH_SIZE = 300000;//don't index files larger than 300,000 bytes
-	private static final List<String> IGNORED_FILE_TYPES = Arrays.asList("png", "jpg", "gif", "bmp", "pdf", "tiff", "class", "so", "zip", "jar", "tar");
+	//private static final List<String> IGNORED_FILE_TYPES = Arrays.asList("png", "jpg", "gif", "bmp", "pdf", "tiff", "class", "so", "zip", "jar", "tar");
+	private final List<String> INDEXED_FILE_TYPES;
 	private final SolrServer server;
 
 	public Indexer(SolrServer server) {
 		super("Indexing"); //$NON-NLS-1$
 		this.server = server;
 		setSystem(true);
+		INDEXED_FILE_TYPES = Arrays.asList("css", "js", "html", "txt", "xml", "java", "properties", "php", "htm", "project", "conf", "pl", "sh", "text", "xhtml", "mf", "manifest");
+		Collections.sort(INDEXED_FILE_TYPES);
 	}
 
 	@Override
@@ -161,7 +164,7 @@ public class Indexer extends Job {
 			return true;
 		//skip files with no extension, or known binary file type extensions
 		String extension = new Path(fileInfo.getName()).getFileExtension();
-		if (extension == null || IGNORED_FILE_TYPES.contains(extension))
+		if (extension == null || (Collections.binarySearch(INDEXED_FILE_TYPES, extension.toLowerCase()) < 0))
 			return true;
 		return false;
 	}
@@ -205,8 +208,8 @@ public class Indexer extends Job {
 		Logger logger = LoggerFactory.getLogger(Indexer.class);
 		if (logger.isDebugEnabled())
 			logger.debug("Indexed " + projects.size() + " projects in " + duration + "ms"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-		//reschedule the indexing - throttle if it takes too long
-		long delay = Math.max(DEFAULT_DELAY, duration);
+		//reschedule the indexing - throttle so the job never runs more than 5% of the time
+		long delay = Math.max(DEFAULT_DELAY, duration * 20);
 		if (logger.isDebugEnabled())
 			logger.debug("Rescheduling indexing in " + delay + "ms"); //$NON-NLS-1$//$NON-NLS-2$
 		schedule(delay);
