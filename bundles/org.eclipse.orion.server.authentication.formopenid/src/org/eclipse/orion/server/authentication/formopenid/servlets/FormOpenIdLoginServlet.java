@@ -77,6 +77,7 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 						RequestDispatcher rd = req.getRequestDispatcher("/mixlogin?error=" + new String(Base64.encode(invalidLoginError.getBytes()))); //$NON-NLS-1$
 						rd.include(req, resp);
 					} else {
+						resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 						PrintWriter writer = resp.getWriter();
 						JSONObject jsonError = new JSONObject();
 						try {
@@ -85,7 +86,6 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 							resp.setContentType("application/json"); //$NON-NLS-1$
 						} catch (JSONException e) {/* ignore */
 						}
-						resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 					}
 					resp.flushBuffer();
 				}
