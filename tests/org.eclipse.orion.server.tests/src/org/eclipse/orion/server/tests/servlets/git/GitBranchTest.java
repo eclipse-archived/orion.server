@@ -23,6 +23,7 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Test;
 
@@ -99,6 +100,16 @@ public class GitBranchTest extends GitTest {
 		assertEquals(1, branchesArray.length());
 		JSONObject branch = branchesArray.getJSONObject(0);
 		assertTrue(branch.optBoolean(GitConstants.KEY_BRANCH_CURRENT, false));
+	}
+
+	static JSONObject getCurrentBranch(JSONObject branches) throws JSONException {
+		JSONArray branchesArray = branches.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		for (int i = 0; i < branchesArray.length(); i++) {
+			JSONObject branch = branchesArray.getJSONObject(i);
+			if (branch.getBoolean(GitConstants.KEY_BRANCH_CURRENT))
+				return branch;
+		}
+		return null;
 	}
 
 	private WebRequest getDeleteGitBranchRequest(String location) {
