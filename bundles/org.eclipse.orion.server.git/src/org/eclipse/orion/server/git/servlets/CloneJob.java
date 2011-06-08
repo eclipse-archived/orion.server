@@ -20,6 +20,7 @@ import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.util.FileUtils;
+import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
@@ -37,21 +38,23 @@ import org.osgi.framework.ServiceReference;
  */
 public class CloneJob extends GitJob {
 
+	private final WebProject project;
 	private final WebClone clone;
 	private final CredentialsProvider credentials;
 	private final TaskInfo task;
 	private ITaskService taskService;
 	private ServiceReference<ITaskService> taskServiceRef;
-	private final String userId;
+	private final String user;
 	private final String cloneLocation;
 
-	public CloneJob(WebClone clone, CredentialsProvider credentials, String user, String cloneLocation) {
+	public CloneJob(WebClone clone, CredentialsProvider credentials, String user, String cloneLocation, WebProject project) {
 		super("Cloning"); //$NON-NLS-1$
 		this.clone = clone;
 		this.credentials = credentials;
-		this.userId = user;
+		this.user = user;
 		this.cloneLocation = cloneLocation;
 		this.task = createTask();
+		this.project = project;
 	}
 
 	private TaskInfo createTask() {
@@ -99,7 +102,7 @@ public class CloneJob extends GitJob {
 
 	private void doConfigureClone(Git git) throws IOException, CoreException {
 		StoredConfig config = git.getRepository().getConfig();
-		IOrionUserProfileNode userNode = UserServiceHelper.getDefault().getUserProfileService().getUserProfileNode(userId, true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
+		IOrionUserProfileNode userNode = UserServiceHelper.getDefault().getUserProfileService().getUserProfileNode(user, true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
 		if (userNode.get(GitConstants.KEY_NAME, null) != null)
 			config.setString(ConfigConstants.CONFIG_USER_SECTION, null, ConfigConstants.CONFIG_KEY_NAME, userNode.get(GitConstants.KEY_NAME, null));
 		if (userNode.get(GitConstants.KEY_MAIL, null) != null)
@@ -133,18 +136,21 @@ public class CloneJob extends GitJob {
 		try {
 			result = doClone();
 			// save the clone metadata
-			try {
-				if (result.isOK()) {
-					task.setResultLocation(cloneLocation);
-					String message = "Clone complete.";
-					task.setMessage(message);
-					result = new Status(IStatus.OK, GitActivator.PI_GIT, message);
-				} else {
-					FileUtils.delete(URIUtil.toFile(clone.getContentLocation()), FileUtils.RECURSIVE);
+			if (result.isOK()) {
+				task.setResultLocation(cloneLocation);
+				String message = "Clone complete.";
+				task.setMessage(message);
+				result = new Status(IStatus.OK, GitActivator.PI_GIT, message);
+			} else {
+				try {
+					if (project != null)
+						GitCloneHandlerV1.removeProject(user, project);
+					else
+						FileUtils.delete(URIUtil.toFile(clone.getContentLocation()), FileUtils.RECURSIVE);
+				} catch (IOException e) {
+					String msg = "An error occured when cleaning up after a clone failure";
+					result = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 				}
-			} catch (IOException e) {
-				String msg = "Error persisting clone state";
-				result = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 			}
 			task.done(result);
 			updateTask();

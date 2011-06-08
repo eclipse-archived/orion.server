@@ -30,7 +30,7 @@ import com.meterware.httpunit.WebRequest;
  * to all server tests.
  */
 public class AbstractServerTest {
-	protected static void setAuthentication(WebRequest request) {
+	public static void setAuthentication(WebRequest request) {
 		setAuthentication(request, "test", "test");
 	}
 

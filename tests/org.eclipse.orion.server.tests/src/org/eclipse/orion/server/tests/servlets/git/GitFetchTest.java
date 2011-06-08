@@ -212,35 +212,51 @@ public class GitFetchTest extends GitTest {
 	public void testPushAndFetchWithPrivateKeyAndPassphrase() throws Exception {
 
 		Assume.assumeTrue(sshRepo2 != null);
+		Assume.assumeTrue(knownHosts2 != null);
 		Assume.assumeTrue(privateKey != null);
 		Assume.assumeTrue(passphrase != null);
-		knownHosts = "github.com,207.97.227.239 ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==";
+
+		URI workspaceLocation = createWorkspace(getMethodName());
+		URIish uri = new URIish(sshRepo2);
 
 		// clone1: create
-		URIish uri = new URIish(sshRepo2);
-		String contentLocation1 = clone(uri, null, knownHosts, privateKey, publicKey, passphrase);
+		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
+		IPath clonePath = new Path("file").append(project1.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		WebRequest request = new PostGitCloneRequest().setURIish(uri).setFilePath(clonePath).setKnownHosts(knownHosts2).setPrivateKey(privateKey).setPublicKey(publicKey).setPassphrase(passphrase).getWebRequest();
+		String cloneContentLocation1 = clone(request);
 
-		// clone1: link
-		JSONObject project1 = linkProject(contentLocation1, getMethodName() + "1");
-		JSONObject gitSection1 = project1.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection1);
+		// clone1: get project/folder metadata
+		request = getGetFilesRequest(cloneContentLocation1);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		project1 = new JSONObject(response.getText());
+
+		// clone1: get git links
+		JSONObject gitSection1 = project1.getJSONObject(GitConstants.KEY_GIT);
 		String gitRemoteUri1 = gitSection1.getString(GitConstants.KEY_REMOTE);
 
 		// clone2: create
-		String contentLocation2 = clone(uri, null, knownHosts, privateKey, publicKey, passphrase);
-
-		// clone2: link
-		JSONObject project2 = linkProject(contentLocation2, getMethodName() + "2");
+		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
 		String projectId2 = project2.getString(ProtocolConstants.KEY_ID);
-		JSONObject gitSection2 = project2.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection2);
+		clonePath = new Path("file").append(projectId2).makeAbsolute();
+		request = new PostGitCloneRequest().setURIish(uri).setFilePath(clonePath).setKnownHosts(knownHosts2).setPrivateKey(privateKey).setPublicKey(publicKey).setPassphrase(passphrase).getWebRequest();
+		String cloneContentLocation2 = clone(request);
+
+		// clone2: get project/folder metadata
+		request = getGetFilesRequest(cloneContentLocation2);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		project2 = new JSONObject(response.getText());
+
+		// clone2: get git links
+		JSONObject gitSection2 = project2.getJSONObject(GitConstants.KEY_GIT);
 		String gitRemoteUri2 = gitSection2.getString(GitConstants.KEY_REMOTE);
 		String gitIndexUri2 = gitSection2.getString(GitConstants.KEY_INDEX);
-		String gitCommitUri2 = gitSection2.getString(GitConstants.KEY_COMMIT);
+		String gitHeadUri2 = gitSection2.getString(GitConstants.KEY_HEAD);
 
 		// clone2: change
-		WebRequest request = getPutFileRequest(projectId2 + "/test.txt", "incoming change");
-		WebResponse response = webConversation.getResponse(request);
+		request = getPutFileRequest(projectId2 + "/test.txt", "incoming change");
+		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone2: add
@@ -249,12 +265,12 @@ public class GitFetchTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone2: commit
-		request = GitCommitTest.getPostGitCommitRequest(gitCommitUri2, "incoming change commit", false);
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri2, "incoming change commit", false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone2: push
-		ServerStatus pushStatus = push(gitRemoteUri2, 1, 0, Constants.MASTER, Constants.HEAD, false, null, knownHosts, privateKey, publicKey, passphrase, true);
+		ServerStatus pushStatus = push(gitRemoteUri2, 1, 0, Constants.MASTER, Constants.HEAD, false, null, knownHosts2, privateKey, publicKey, passphrase, true);
 		assertEquals(true, pushStatus.isOK());
 
 		JSONObject details = getRemoteBranch(gitRemoteUri1, 1, 0, Constants.MASTER);
@@ -262,7 +278,7 @@ public class GitFetchTest extends GitTest {
 		String remoteBranchLocation = details.getString(ProtocolConstants.KEY_LOCATION);
 
 		// clone1: fetch
-		fetch(remoteBranchLocation, null, knownHosts, privateKey, publicKey, passphrase, true);
+		fetch(remoteBranchLocation, null, knownHosts2, privateKey, publicKey, passphrase, true);
 
 		details = getRemoteBranch(gitRemoteUri1, 1, 0, Constants.MASTER);
 		String newRefId1 = details.getString(ProtocolConstants.KEY_ID);
@@ -270,7 +286,7 @@ public class GitFetchTest extends GitTest {
 
 		// clone1: log master..origin/master
 		// TODO replace with tests methods from GitLogTest, bug 340051
-		Repository db1 = getRepositoryForContentLocation(contentLocation1);
+		Repository db1 = getRepositoryForContentLocation(cloneContentLocation1);
 		ObjectId master = db1.resolve(Constants.MASTER);
 		ObjectId originMaster = db1.resolve(Constants.R_REMOTES + Constants.DEFAULT_REMOTE_NAME + '/' + Constants.MASTER);
 		Git git = new Git(db1);
