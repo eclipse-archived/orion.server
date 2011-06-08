@@ -134,6 +134,11 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_REMOTE, link);
 
+		// add Git Clone Config URI
+		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.CONFIG_RESOURCE + '/' + GitConstants.CLONE_RESOURCE).append(targetPath);
+		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
+		gitSection.put(GitConstants.KEY_CONFIG, link);
+
 		// add Git Default Remote Branch URI
 		gitSection.put(GitConstants.KEY_DEFAULT_REMOTE_BRANCH, BaseToRemoteConverter.getRemoteBranchLocation(location, db.getBranch(), db, BaseToRemoteConverter.FILE));
 
