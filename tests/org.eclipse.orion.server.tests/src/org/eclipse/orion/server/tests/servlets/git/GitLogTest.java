@@ -18,6 +18,7 @@ import java.net.URI;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.jgit.diff.DiffEntry.ChangeType;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
@@ -320,6 +321,86 @@ public class GitLogTest extends GitTest {
 		gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
 		log(gitHeadUri, true /* RemoteLocation should be available */);
+	}
+
+	@Test
+	public void testDiffFromLog() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
+
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			JSONObject clone = clone(clonePath);
+			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+			// get project/folder metadata
+			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject folder = new JSONObject(response.getText());
+
+			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
+			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
+			String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+
+			// modify
+			String folderLocation = folder.getString(ProtocolConstants.KEY_LOCATION);
+			request = getPutFileRequest(folderLocation + "test.txt", "hello");
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// TODO: don't create URIs out of thin air
+			// add
+			request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// commit1
+			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "2nd commit", false);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// get the full log
+			JSONArray commits = log(gitHeadUri, false);
+			assertEquals(2, commits.length());
+			JSONObject commit = commits.getJSONObject(0);
+			assertEquals("2nd commit", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
+			JSONArray diffs = commit.getJSONArray(GitConstants.KEY_COMMIT_DIFFS);
+			assertEquals(1, diffs.length());
+
+			// check diff object
+			JSONObject diff = diffs.getJSONObject(0);
+			assertEquals("test.txt", diff.getString(GitConstants.KEY_COMMIT_DIFF_NEWPATH));
+			assertEquals("test.txt", diff.getString(GitConstants.KEY_COMMIT_DIFF_OLDPATH));
+			assertEquals(GitConstants.DIFF_TYPE, diff.getString(ProtocolConstants.KEY_TYPE));
+			assertEquals(ChangeType.MODIFY, ChangeType.valueOf(diff.getString(GitConstants.KEY_COMMIT_DIFF_CHANGETYPE)));
+			String diffLocation = diff.getString(GitConstants.KEY_DIFF);
+
+			// check diff location
+			request = GitDiffTest.getGetGitDiffRequest(diffLocation);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			String[] parts = GitDiffTest.parseMultiPartResponse(response);
+
+			StringBuilder sb = new StringBuilder();
+			sb.append("diff --git a/test.txt b/test.txt").append("\n");
+			sb.append("index 30d74d2..b6fc4c6 100644").append("\n");
+			sb.append("--- a/test.txt").append("\n");
+			sb.append("+++ b/test.txt").append("\n");
+			sb.append("@@ -1 +1 @@").append("\n");
+			sb.append("-test").append("\n");
+			sb.append("\\ No newline at end of file").append("\n");
+			sb.append("+hello").append("\n");
+			sb.append("\\ No newline at end of file").append("\n");
+			assertEquals(sb.toString(), parts[1]);
+
+		}
 	}
 
 	private static WebRequest getPostForScopedLogRequest(String location, String newCommit) throws JSONException, UnsupportedEncodingException {

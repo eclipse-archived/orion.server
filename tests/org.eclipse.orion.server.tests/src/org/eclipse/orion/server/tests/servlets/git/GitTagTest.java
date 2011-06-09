@@ -15,6 +15,8 @@ import static org.junit.Assert.assertEquals;
 import java.net.HttpURLConnection;
 import java.net.URI;
 
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
@@ -28,59 +30,89 @@ import com.meterware.httpunit.WebResponse;
 public class GitTagTest extends GitTest {
 	@Test
 	public void testTag() throws Exception {
-
 		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 
-		String projectName = getMethodName();
-		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
 
-		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
-		String gitTagUri = gitSection.getString(GitConstants.KEY_TAG);
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
 
-		// tag HEAD with 'tag'
-		JSONObject tag = tag(gitTagUri, "tag", Constants.HEAD);
-		assertEquals("tag", tag.getString(ProtocolConstants.KEY_NAME));
-		new URI(tag.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			JSONObject clone = clone(clonePath);
+			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+			// get project/folder metadata
+			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject folder = new JSONObject(response.getText());
+
+			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
+			String gitTagUri = gitSection.getString(GitConstants.KEY_TAG);
+
+			// tag HEAD with 'tag'
+			JSONObject tag = tag(gitTagUri, "tag", Constants.HEAD);
+			assertEquals("tag", tag.getString(ProtocolConstants.KEY_NAME));
+			new URI(tag.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		}
 	}
 
 	@Test
 	public void testListTags() throws Exception {
-
 		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 
-		String projectName = getMethodName();
-		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
 
-		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
-		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
-		String gitTagUri = gitSection.getString(GitConstants.KEY_TAG);
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
 
-		JSONArray tags = listTags(gitTagUri);
-		assertEquals(0, tags.length());
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			JSONObject clone = clone(clonePath);
+			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
-		// log
-		WebRequest request = GitCommitTest.getGetGitCommitRequest(gitHeadUri, false);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject logResponse = new JSONObject(response.getText());
-		JSONArray commitsArray = logResponse.getJSONArray(ProtocolConstants.KEY_CHILDREN);
-		assertEquals(1, commitsArray.length());
+			// get project/folder metadata
+			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject folder = new JSONObject(response.getText());
 
-		JSONObject commit = commitsArray.getJSONObject(0);
-		String commitId = commit.getString(ProtocolConstants.KEY_NAME);
-		String commitLocation = commit.getString(ProtocolConstants.KEY_LOCATION);
+			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
+			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
+			String gitTagUri = gitSection.getString(GitConstants.KEY_TAG);
 
-		tag(gitTagUri, "tag1", commitId);
+			JSONArray tags = listTags(gitTagUri);
+			assertEquals(0, tags.length());
 
-		tags = listTags(gitTagUri);
-		assertEquals(1, tags.length());
-		assertEquals("tag1", tags.getJSONObject(0).get(ProtocolConstants.KEY_NAME));
+			// log
+			request = GitCommitTest.getGetGitCommitRequest(gitHeadUri, false);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject logResponse = new JSONObject(response.getText());
+			JSONArray commitsArray = logResponse.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+			assertEquals(1, commitsArray.length());
 
-		// update commit with tag
-		tag(commitLocation, "tag2");
+			JSONObject commit = commitsArray.getJSONObject(0);
+			String commitId = commit.getString(ProtocolConstants.KEY_NAME);
+			String commitLocation = commit.getString(ProtocolConstants.KEY_LOCATION);
 
-		tags = listTags(gitTagUri);
-		assertEquals(2, tags.length());
-		assertEquals("tag2", tags.getJSONObject(1).get(ProtocolConstants.KEY_NAME));
+			tag(gitTagUri, "tag1", commitId);
+
+			tags = listTags(gitTagUri);
+			assertEquals(1, tags.length());
+			assertEquals("tag1", tags.getJSONObject(0).get(ProtocolConstants.KEY_NAME));
+
+			// update commit with tag
+			tag(commitLocation, "tag2");
+
+			tags = listTags(gitTagUri);
+			assertEquals(2, tags.length());
+			assertEquals("tag2", tags.getJSONObject(1).get(ProtocolConstants.KEY_NAME));
+		}
 	}
 }
