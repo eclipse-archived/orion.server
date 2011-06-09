@@ -23,8 +23,9 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class ImageExpiresFilter implements Filter {
 
-	private static final List<String> IMAGE_EXTENSIONS = Arrays.asList(new String[] {"gif", "jpg", "png", "bmp", "tif"});
-	private static final int EXPIRES_AFTER = 1000 * 60 * 60 * 24; // 1 day
+	private static final List<String> IMAGE_EXTENSIONS = Arrays.asList(new String[] {"gif", "jpg", "png", "bmp", "tif", "ico"});
+	private static final int EXPIRES_AFTER_S = 60 * 60 * 24; // 1 day
+	private static final int EXPIRES_AFTER_MS = 1000 * EXPIRES_AFTER_S; // 1 day
 
 	public void init(FilterConfig filterConfig) throws ServletException {
 		//nothing to do
@@ -34,7 +35,8 @@ public class ImageExpiresFilter implements Filter {
 		HttpServletRequest httpRequest = (HttpServletRequest) request;
 		if (isImage(httpRequest.getPathInfo())) {
 			HttpServletResponse httpResponse = (HttpServletResponse) response;
-			httpResponse.setDateHeader("Expires", System.currentTimeMillis() + EXPIRES_AFTER);
+			httpResponse.setDateHeader("Expires", System.currentTimeMillis() + EXPIRES_AFTER_MS);
+			httpResponse.setHeader("Cache-Control", "public, max-age=" + EXPIRES_AFTER_S + ", must-revalidate");
 		}
 		chain.doFilter(request, response);
 	}

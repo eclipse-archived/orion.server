@@ -157,7 +157,6 @@ lastMapTag=${mapsTagTag}
 		<!-- invoke requirejs -->
 		<optimize appDir="." 		name="index" 		bundle="org.eclipse.orion.client.core" build="orion.index.js" />
 		<optimize appDir="navigate" name="table" 		bundle="org.eclipse.orion.client.core"/>
-		<optimize appDir="navigate" name="tree" 		bundle="org.eclipse.orion.client.core"/>
 		<optimize appDir="edit"		name="edit" 		bundle="org.eclipse.orion.client.core"/>
 		<optimize appDir="compare"	name="compare" 		bundle="org.eclipse.orion.client.core"/>
 		<optimize appDir="search"	name="search" 		bundle="org.eclipse.orion.client.core"/>

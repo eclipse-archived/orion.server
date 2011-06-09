@@ -110,10 +110,13 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			return true;
 
 		// prepare the WebClone object, create a new project if necessary
+		WebProject webProject = null;
+		boolean webProjectExists = false;
 		if (filePath != null) {
 			IPath path = new Path(filePath);
 			clone.setId(path.removeFirstSegments(1).toString());
-			WebProject webProject = WebProject.fromId(path.segment(1));
+			webProject = WebProject.fromId(path.segment(1));
+			webProjectExists = WebProject.exists(path.segment(1));
 			clone.setContentLocation(webProject.getProjectStore().getFileStore(path.removeFirstSegments(2)).toURI());
 			if (cloneName == null)
 				cloneName = path.segmentCount() > 2 ? path.lastSegment() : webProject.getName();
@@ -122,7 +125,8 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			// TODO: move this to CloneJob
 			// if so, modify init part to create a new project if necessary
 			String id = WebProject.nextProjectId();
-			WebProject webProject = WebProject.fromId(id);
+			webProjectExists = false;
+			webProject = WebProject.fromId(id);
 			if (cloneName == null)
 				cloneName = new URIish(url).getHumanishName();
 			webProject.setName(cloneName);
@@ -170,9 +174,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			Repository repository = command.call().getRepository();
 			Git git = new Git(repository);
 
-			// without initial commit, there are plenty of errors
-			// doing initial commit manually using orion is impossible
-			// workaround:
+			// we need to perform an initial commit to workaround JGit bug 339610
 			git.commit().setMessage("Initial commit").call();
 
 			JSONObject result = WebClone.toJSON(clone, getURI(request));
@@ -200,7 +202,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			String cloneLocation = cloneObject.getString(ProtocolConstants.KEY_LOCATION);
 
 			// if all went well, clone
-			CloneJob job = new CloneJob(clone, cp, request.getRemoteUser(), cloneLocation);
+			CloneJob job = new CloneJob(clone, cp, request.getRemoteUser(), cloneLocation, webProjectExists ? null : webProject /* used for cleaning up, so null when not needed */);
 			job.schedule();
 			TaskInfo task = job.getTask();
 			JSONObject result = task.toJSON();
@@ -348,7 +350,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 				repo.close();
 				FileUtils.delete(repo.getWorkTree(), FileUtils.RECURSIVE | FileUtils.RETRY);
 				if (path.segmentCount() == 2)
-					return removeProject(request, response, webProject);
+					return statusHandler.handleRequest(request, response, removeProject(request.getRemoteUser(), webProject));
 				return true;
 			} else {
 				String msg = NLS.bind("Nothing found for the given ID: {0}", path);
@@ -391,12 +393,10 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 	 * 
 	 * @param userName the user name
 	 * @param webProject the project to remove
-	 * @return <code>true</code> if the project has been found and successfully removed,
-	 * <code>false</code> if an error occurred or the project couldn't be found
-	 * @throws ServletException 
+	 * @return ServerStatus <code>OK</code> if the project has been found and successfully removed,
+	 * <code>ERROR</code> if an error occurred or the project couldn't be found
 	 */
-	private boolean removeProject(HttpServletRequest request, HttpServletResponse response, WebProject webProject) throws ServletException {
-		String userName = request.getRemoteUser();
+	static ServerStatus removeProject(String userName, WebProject webProject) {
 		try {
 			WebUser webUser = WebUser.fromUserName(userName);
 			JSONArray workspacesJSON = webUser.getWorkspacesJSON();
@@ -419,7 +419,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 						} catch (CoreException e) {
 							//we are unable to write in the platform location!
 							String msg = NLS.bind("Server content location could not be written: {0}", Activator.getDefault().getRootLocationURI());
-							return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+							return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 						}
 
 						//save the workspace and project metadata
@@ -428,17 +428,18 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 							webWorkspace.save();
 						} catch (CoreException e) {
 							String msg = "Error persisting project state";
-							return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+							return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 						}
 
-						return true;
+						return new ServerStatus(IStatus.OK, HttpServletResponse.SC_OK, null, null);
 					}
 				}
 			}
 		} catch (JSONException e) {
 			// ignore, no project will be harmed
 		}
-		return false;
+		// FIXME: not sure about this one
+		return new ServerStatus(IStatus.OK, HttpServletResponse.SC_OK, null, null);
 	}
 
 	/**

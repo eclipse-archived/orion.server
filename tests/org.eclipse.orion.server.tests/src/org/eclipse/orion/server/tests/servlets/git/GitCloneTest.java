@@ -21,13 +21,13 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jgit.api.Git;
@@ -200,12 +200,33 @@ public class GitCloneTest extends GitTest {
 	}
 
 	@Test
+	public void testCloneEmptyPathBadUrl() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		IPath workspacePath = new Path("workspace").append(getWorkspaceId(workspaceLocation)).makeAbsolute();
+
+		AuthorizationService.removeUserRight("test", "/");
+		AuthorizationService.removeUserRight("test", "/*");
+
+		// /workspace/{id} + {methodName}
+		WebRequest request = new PostGitCloneRequest().setURIish("I'm//bad!").setWorkspacePath(workspacePath).setName(getMethodName()).getWebRequest();
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
+
+		// no project should be created
+		request = new GetMethodWebRequest(workspaceLocation.toString());
+		setAuthentication(request);
+		response = webConversation.getResponse(request);
+		JSONObject workspace = new JSONObject(response.getText());
+		assertEquals(0, workspace.getJSONArray(ProtocolConstants.KEY_CHILDREN).length());
+	}
+
+	@Test
 	public void testCloneBadUrl() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 
-		WebRequest request = getPostGitCloneRequest("I'm//bad!", clonePath);
+		WebRequest request = new PostGitCloneRequest().setURIish("I'm//bad!").setFilePath(clonePath).getWebRequest();
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
 	}
@@ -367,11 +388,39 @@ public class GitCloneTest extends GitTest {
 	public void testCloneOverSshWithNoKnownHosts() throws Exception {
 		Assume.assumeTrue(sshRepo != null);
 
+		URI workspaceLocation = createWorkspace(getMethodName());
+		IPath workspacePath = new Path("workspace").append(getWorkspaceId(workspaceLocation)).makeAbsolute();
 		URIish uri = new URIish(sshRepo);
-		IPath path = new Path(getMethodName());
-		WebRequest request = getPostGitCloneRequest(uri.toString(), null, path, null, null, null);
+		WebRequest request = new PostGitCloneRequest().setURIish(uri).setWorkspacePath(workspacePath).setName(getMethodName()).getWebRequest();
+
+		// cloning
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, response.getResponseCode());
+		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
+		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		assertNotNull(taskLocation);
+		String cloneLocation = waitForTaskCompletion(taskLocation);
+
+		// task completed, but cloning failed
+		response = webConversation.getResponse(getGetRequest(cloneLocation));
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject completedTask = new JSONObject(response.getText());
+		assertEquals(false, completedTask.getBoolean("Running"));
+		assertEquals(100, completedTask.getInt("PercentComplete"));
+		JSONObject result = completedTask.getJSONObject("Result");
+		assertEquals(HttpURLConnection.HTTP_FORBIDDEN, result.getInt("HttpCode"));
+		assertEquals("Error", result.getString("Severity"));
+		assertTrue(result.getString("Message").startsWith("The authenticity of host "));
+		assertTrue(result.getString("Message").endsWith(" can't be established"));
+		assertTrue(result.getString("DetailedMessage").startsWith("The authenticity of host "));
+		assertTrue(result.getString("DetailedMessage").endsWith(" can't be established"));
+
+		// no project should be created
+		request = new GetMethodWebRequest(workspaceLocation.toString());
+		setAuthentication(request);
+		response = webConversation.getResponse(request);
+		JSONObject workspace = new JSONObject(response.getText());
+		assertEquals(0, workspace.getJSONArray(ProtocolConstants.KEY_CHILDREN).length());
+
 	}
 
 	@Test
@@ -379,11 +428,36 @@ public class GitCloneTest extends GitTest {
 		Assume.assumeTrue(sshRepo != null);
 		Assume.assumeTrue(knownHosts != null);
 
+		URI workspaceLocation = createWorkspace(getMethodName());
+		IPath workspacePath = new Path("workspace").append(getWorkspaceId(workspaceLocation)).makeAbsolute();
 		URIish uri = new URIish(sshRepo);
-		IPath path = new Path(getMethodName());
-		WebRequest request = getPostGitCloneRequest(uri.toString(), null, path, null, knownHosts, (char[]) null);
+		WebRequest request = new PostGitCloneRequest().setURIish(uri).setWorkspacePath(workspacePath).setName(getMethodName()).setKnownHosts(knownHosts).getWebRequest();
+
+		// cloning
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, response.getResponseCode());
+		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
+		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		assertNotNull(taskLocation);
+		String cloneLocation = waitForTaskCompletion(taskLocation);
+
+		// task completed, but cloning failed
+		response = webConversation.getResponse(getGetRequest(cloneLocation));
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject completedTask = new JSONObject(response.getText());
+		assertEquals(false, completedTask.getBoolean("Running"));
+		assertEquals(100, completedTask.getInt("PercentComplete"));
+		JSONObject result = completedTask.getJSONObject("Result");
+		assertEquals(HttpURLConnection.HTTP_UNAUTHORIZED, result.getInt("HttpCode"));
+		assertEquals("Error", result.getString("Severity"));
+		assertEquals("Auth fail", result.getString("Message"));
+		assertEquals("Auth fail", result.getString("DetailedMessage"));
+
+		// no project should be created
+		request = new GetMethodWebRequest(workspaceLocation.toString());
+		setAuthentication(request);
+		response = webConversation.getResponse(request);
+		JSONObject workspace = new JSONObject(response.getText());
+		assertEquals(0, workspace.getJSONArray(ProtocolConstants.KEY_CHILDREN).length());
 	}
 
 	@Test
@@ -391,11 +465,36 @@ public class GitCloneTest extends GitTest {
 		Assume.assumeTrue(sshRepo != null);
 		Assume.assumeTrue(knownHosts != null);
 
+		URI workspaceLocation = createWorkspace(getMethodName());
 		URIish uri = new URIish(sshRepo);
-		IPath path = new Path(getMethodName());
-		WebRequest request = getPostGitCloneRequest(uri.toString(), null, path, null, knownHosts, "I'm bad".toCharArray());
+		IPath workspacePath = new Path("workspace").append(getWorkspaceId(workspaceLocation)).makeAbsolute();
+		WebRequest request = new PostGitCloneRequest().setURIish(uri).setWorkspacePath(workspacePath).setKnownHosts(knownHosts).setPassword("I'm bad".toCharArray()).getWebRequest();
+
+		// cloning
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, response.getResponseCode());
+		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
+		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		assertNotNull(taskLocation);
+		String cloneLocation = waitForTaskCompletion(taskLocation);
+
+		// task completed, but cloning failed
+		response = webConversation.getResponse(getGetRequest(cloneLocation));
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject completedTask = new JSONObject(response.getText());
+		assertEquals(false, completedTask.getBoolean("Running"));
+		assertEquals(100, completedTask.getInt("PercentComplete"));
+		JSONObject result = completedTask.getJSONObject("Result");
+		assertEquals(HttpURLConnection.HTTP_UNAUTHORIZED, result.getInt("HttpCode"));
+		assertEquals("Error", result.getString("Severity"));
+		assertEquals("Auth fail", result.getString("Message"));
+		assertEquals("Auth fail", result.getString("DetailedMessage"));
+
+		// no project should be created
+		request = new GetMethodWebRequest(workspaceLocation.toString());
+		setAuthentication(request);
+		response = webConversation.getResponse(request);
+		JSONObject workspace = new JSONObject(response.getText());
+		assertEquals(0, workspace.getJSONArray(ProtocolConstants.KEY_CHILDREN).length());
 	}
 
 	@Test
@@ -404,10 +503,14 @@ public class GitCloneTest extends GitTest {
 		Assume.assumeTrue(password != null);
 		Assume.assumeTrue(knownHosts != null);
 
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 		URIish uri = new URIish(sshRepo);
-		String contentLocation = clone(uri, null, null, null, knownHosts, password).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		WebRequest request = new PostGitCloneRequest().setURIish(uri).setFilePath(clonePath).setKnownHosts(knownHosts).setPassword(password).getWebRequest();
+		String contentLocation = clone(request);
 
-		File file = URIUtil.toFile(new URI(contentLocation));
+		File file = getRepositoryForContentLocation(contentLocation).getDirectory().getParentFile();
 		assertTrue(file.exists());
 		assertTrue(file.isDirectory());
 		assertTrue(RepositoryCache.FileKey.isGitRepository(new File(file, Constants.DOT_GIT), FS.DETECTED));
@@ -418,12 +521,15 @@ public class GitCloneTest extends GitTest {
 		Assume.assumeTrue(sshRepo2 != null);
 		Assume.assumeTrue(privateKey != null);
 		Assume.assumeTrue(passphrase != null);
-		knownHosts = "github.com,207.97.227.239 ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==";
 
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 		URIish uri = new URIish(sshRepo2);
-		String contentLocation = clone(uri, null, knownHosts, privateKey, publicKey, passphrase);
+		WebRequest request = new PostGitCloneRequest().setURIish(uri).setFilePath(clonePath).setKnownHosts(knownHosts2).setPrivateKey(privateKey).setPublicKey(publicKey).setPassphrase(passphrase).getWebRequest();
+		String contentLocation = clone(request);
 
-		File file = URIUtil.toFile(new URI(contentLocation));
+		File file = getRepositoryForContentLocation(contentLocation).getDirectory().getParentFile();
 		assertTrue(file.exists());
 		assertTrue(file.isDirectory());
 		assertTrue(RepositoryCache.FileKey.isGitRepository(new File(file, Constants.DOT_GIT), FS.DETECTED));
@@ -622,7 +728,7 @@ public class GitCloneTest extends GitTest {
 
 		// bob's clone
 		URIish uri = new URIish(gitDir.toURL());
-		request = getPostGitCloneRequest(uri.toString(), null, bobClonePath, null, null, null);
+		request = getPostGitCloneRequest(uri, null, bobClonePath, null, null, null);
 		setAuthentication(request, "bob", "bob");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
@@ -679,6 +785,14 @@ public class GitCloneTest extends GitTest {
 		assertEquals("Error", result.getString("Severity"));
 		assertEquals("Error cloning git repository", result.getString("Message"));
 		assertEquals("Destination folder already exists and contains a repository", result.getString("DetailedMessage"));
+
+		// no project should be created
+		request = new GetMethodWebRequest(workspaceLocation.toString());
+		setAuthentication(request);
+		response = webConversation.getResponse(request);
+		JSONObject workspace = new JSONObject(response.getText());
+		assertEquals(1, workspace.getJSONArray(ProtocolConstants.KEY_CHILDREN).length());
+
 	}
 
 	/**
@@ -705,8 +819,8 @@ public class GitCloneTest extends GitTest {
 
 	// Convenience methods for creating requests
 
-	private WebRequest getPostGitCloneRequest(String uri, IPath path) throws JSONException, UnsupportedEncodingException {
-		return getPostGitCloneRequest(uri, null, path, null, null, null);
+	private WebRequest getPostGitCloneRequest(String uri, IPath path) throws JSONException, UnsupportedEncodingException, URISyntaxException {
+		return getPostGitCloneRequest(new URIish(uri), null, path, null, null, null);
 	}
 
 	private WebRequest getDeleteCloneRequest(String requestURI) throws CoreException, IOException {

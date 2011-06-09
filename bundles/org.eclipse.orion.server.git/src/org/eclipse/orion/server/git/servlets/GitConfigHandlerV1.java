@@ -67,7 +67,7 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 		Path p = new Path(path);
 		if (p.segment(0).equals("clone") && p.segment(1).equals("file")) { //$NON-NLS-1$ //$NON-NLS-2$
 			// expected path /gitapi/config/clone/file/{path}
-			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(1).uptoSegment(2));
+			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(1));
 			FileBasedConfig config = getLocalConfig(gitDir);
 			URI baseLocation = getURI(request);
 
@@ -76,7 +76,7 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 			return true;
 		} else if (p.segment(1).equals("clone") && p.segment(2).equals("file")) { //$NON-NLS-1$ //$NON-NLS-2$
 			// expected path /gitapi/config/{key}/clone/file/{path}
-			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2).uptoSegment(2));
+			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2));
 			Repository db = new FileRepository(gitDir);
 			StoredConfig config = db.getConfig();
 			URI baseLocation = getURI(request);
@@ -85,10 +85,10 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 			String[] keySegments = keyToSegments(key);
 			if (keySegments == null)
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Config entry key must be provided in the following form: section[.subsection].name", null));
-			JSONObject result = configEntryToJSON(config, keySegments, baseLocation);
-			if (result == null)
+			if (!variableExist(config, keySegments))
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "There is no config entry with key provided", null));
 
+			JSONObject result = configEntryToJSON(config, keySegments, baseLocation);
 			OrionServlet.writeJSONResponse(request, response, result);
 			return true;
 		}
@@ -99,7 +99,7 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 		Path p = new Path(path);
 		if (p.segment(0).equals("clone") && p.segment(1).equals("file")) { //$NON-NLS-1$ //$NON-NLS-2$
 			// expected path /gitapi/config/clone/file/{path}
-			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(1).uptoSegment(2));
+			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(1));
 			FileBasedConfig config = getLocalConfig(gitDir);
 			URI baseLocation = getURI(request);
 
@@ -115,9 +115,7 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Config entry key must be provided in the following form: section[.subsection].name", null));
 
 			// determine if config entry is already present
-			boolean present = false;
-			if (config.getString(keySegments[0], keySegments[1], keySegments[2]) != null)
-				present = true;
+			boolean present = variableExist(config, keySegments);
 
 			// set new value
 			config.setString(keySegments[0], keySegments[1], keySegments[2], value);
@@ -137,7 +135,7 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 		Path p = new Path(path);
 		if (p.segment(1).equals("clone") && p.segment(2).equals("file")) { //$NON-NLS-1$ //$NON-NLS-2$
 			// expected path /gitapi/config/{key}/clone/file/{path}
-			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2).uptoSegment(2));
+			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2));
 			FileBasedConfig config = getLocalConfig(gitDir);
 			URI baseLocation = getURI(request);
 
@@ -155,7 +153,7 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Config entry key must be provided in the following form: section[.subsection].name", null));
 
 			// PUT allows only to modify existing config entries
-			if (config.getString(keySegments[0], keySegments[1], keySegments[2]) == null) {
+			if (!variableExist(config, keySegments)) {
 				response.setStatus(HttpServletResponse.SC_NOT_FOUND);
 				return true;
 			}
@@ -176,7 +174,7 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 		Path p = new Path(path);
 		if (p.segment(1).equals("clone") && p.segment(2).equals("file")) { //$NON-NLS-1$ //$NON-NLS-2$
 			// expected path /gitapi/config/{key}/clone/file/{path}
-			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2).uptoSegment(2));
+			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2));
 			FileBasedConfig config = getLocalConfig(gitDir);
 
 			String key = p.segment(0);
@@ -185,7 +183,7 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Config entry key must be provided in the following form: section[.subsection].name", null));
 
 			// determine if config entry exist
-			if (config.getString(keySegments[0], keySegments[1], keySegments[2]) != null) {
+			if (variableExist(config, keySegments)) {
 				// delete
 				config.unset(keySegments[0], keySegments[1], keySegments[2]);
 				config.save();
@@ -225,11 +223,10 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	// reads configuration entry and converts it to JSON representation
-	// returns null if there is no entry with given key
 	JSONObject configEntryToJSON(Config config, String[] keySegments, URI baseLocation) throws JSONException, URISyntaxException {
 		String value = config.getString(keySegments[0], keySegments[1], keySegments[2]);
 		if (value == null)
-			return null;
+			value = "";
 
 		String key = segmentsToKey(keySegments);
 		JSONObject result = new JSONObject();
@@ -237,6 +234,16 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 		result.put(GitConstants.KEY_CONFIG_ENTRY_VALUE, value);
 		result.put(ProtocolConstants.KEY_LOCATION, BaseToConfigEntryConverter.REMOVE_FIRST_2.baseToConfigEntryLocation(baseLocation, key));
 		return result;
+	}
+
+	// checks if given variable exist in configuration
+	boolean variableExist(Config config, String[] keySegments) {
+		if (keySegments[1] != null && !config.getNames(keySegments[0], keySegments[1]).contains(keySegments[2]))
+			return false;
+		else if (keySegments[1] == null && !config.getNames(keySegments[0]).contains(keySegments[2]))
+			return false;
+
+		return true;
 	}
 
 	// converts segments of key to key representation

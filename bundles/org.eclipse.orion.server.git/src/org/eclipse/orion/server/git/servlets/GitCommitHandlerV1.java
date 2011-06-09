@@ -192,14 +192,16 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		// set the path filter
 		TreeFilter filter = null;
 
+		boolean isRoot = true;
 		if (path != null && !"".equals(path)) { //$NON-NLS-1$
 			filter = AndTreeFilter.create(PathFilterGroup.createFromStrings(Collections.singleton(path)), TreeFilter.ANY_DIFF);
 			log.addPath(path);
+			isRoot = false;
 		}
 
 		try {
 			Iterable<RevCommit> commits = log.call();
-			JSONObject result = toJSON(db, OrionServlet.getURI(request), commits, page, pageSize, filter);
+			JSONObject result = toJSON(db, OrionServlet.getURI(request), commits, page, pageSize, filter, isRoot);
 			if (toRefId != null)
 				result.put(GitConstants.KEY_REMOTE, BaseToRemoteConverter.getRemoteBranchLocation(getURI(request), Repository.shortenRefName(toRefId.getName()), db, BaseToRemoteConverter.REMOVE_FIRST_3));
 			OrionServlet.writeJSONResponse(request, response, result);
@@ -213,7 +215,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		}
 	}
 
-	private JSONObject toJSON(Repository db, URI baseLocation, Iterable<RevCommit> commits, int page, int pageSize, TreeFilter filter) throws JSONException, URISyntaxException, MissingObjectException, IOException {
+	private JSONObject toJSON(Repository db, URI baseLocation, Iterable<RevCommit> commits, int page, int pageSize, TreeFilter filter, boolean isRoot) throws JSONException, URISyntaxException, MissingObjectException, IOException {
 		boolean pageable = (page > 0);
 		int startIndex = (page - 1) * pageSize;
 		int index = 0;
@@ -231,17 +233,17 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 
 			index++;
 
-			children.put(toJSON(db, revCommit, baseLocation, filter));
+			children.put(toJSON(db, revCommit, baseLocation, filter, isRoot));
 		}
 		result.put(ProtocolConstants.KEY_CHILDREN, children);
 		return result;
 	}
 
-	private JSONObject toJSON(Repository db, RevCommit revCommit, URI baseLocation, TreeFilter filter) throws JSONException, URISyntaxException, IOException {
+	private JSONObject toJSON(Repository db, RevCommit revCommit, URI baseLocation, TreeFilter filter, boolean isRoot) throws JSONException, URISyntaxException, IOException {
 		JSONObject commit = new JSONObject();
 		commit.put(ProtocolConstants.KEY_LOCATION, createCommitLocation(baseLocation, revCommit.getName(), null));
 		commit.put(ProtocolConstants.KEY_CONTENT_LOCATION, createCommitLocation(baseLocation, revCommit.getName(), "parts=body")); //$NON-NLS-1$
-		commit.put(GitConstants.KEY_DIFF, createDiffLocation(baseLocation, revCommit.getName(), null, null));
+		commit.put(GitConstants.KEY_DIFF, createDiffLocation(baseLocation, revCommit.getName(), null, null, isRoot));
 		commit.put(ProtocolConstants.KEY_NAME, revCommit.getName());
 		commit.put(GitConstants.KEY_AUTHOR_NAME, revCommit.getAuthorIdent().getName());
 		commit.put(GitConstants.KEY_AUTHOR_EMAIL, revCommit.getAuthorIdent().getEmailAddress());
@@ -274,7 +276,8 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 				diff.put(GitConstants.KEY_COMMIT_DIFF_CHANGETYPE, entr.getChangeType().toString());
 
 				// add diff location for the commit
-				diff.put(GitConstants.KEY_DIFF, createDiffLocation(baseLocation, revCommit.getName(), revCommit.getParent(0).getName(), entr.getChangeType() != ChangeType.DELETE ? entr.getNewPath() : entr.getOldPath()));
+				String path = entr.getChangeType() != ChangeType.DELETE ? entr.getNewPath() : entr.getOldPath();
+				diff.put(GitConstants.KEY_DIFF, createDiffLocation(baseLocation, revCommit.getName(), revCommit.getParent(0).getName(), path, isRoot));
 
 				diffs.put(diff);
 			}
@@ -301,7 +304,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		return new URI(baseLocation.getScheme(), baseLocation.getAuthority(), GitServlet.GIT_URI + "/" + GitConstants.COMMIT_RESOURCE + "/" + commitName + "/" + new Path(baseLocation.getPath()).removeFirstSegments(3), parameters, null); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 	}
 
-	private URI createDiffLocation(URI baseLocation, String toRefId, String fromRefId, String path) throws URISyntaxException {
+	private URI createDiffLocation(URI baseLocation, String toRefId, String fromRefId, String path, boolean isRoot) throws URISyntaxException {
 		String diffPath = GitServlet.GIT_URI + "/" + GitConstants.DIFF_RESOURCE + "/"; //$NON-NLS-1$ //$NON-NLS-2$
 
 		if (fromRefId != null)
@@ -309,11 +312,13 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 
 		diffPath += toRefId + "/"; //$NON-NLS-1$
 
-		if (path == null)
+		if (path == null) {
 			diffPath += new Path(baseLocation.getPath()).removeFirstSegments(3);
-		else {
-			IPath s = new Path(baseLocation.getPath());
-			diffPath += s.removeLastSegments(s.segmentCount() - 5).removeFirstSegments(3).append(path);
+		} else if (isRoot) {
+			diffPath += new Path(baseLocation.getPath()).removeFirstSegments(3).append(path);
+		} else {
+			IPath p = new Path(baseLocation.getPath());
+			diffPath += p.removeLastSegments(p.segmentCount() - 5).removeFirstSegments(3).append(path);
 		}
 
 		return new URI(baseLocation.getScheme(), baseLocation.getAuthority(), diffPath, null, null);
@@ -389,20 +394,23 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	private boolean handlePut(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws ServletException, IOException, JSONException, CoreException, URISyntaxException, JGitInternalException, GitAPIException {
-		File gitDir = GitUtils.getGitDir(path.removeFirstSegments(1));
+		IPath filePath = path.removeFirstSegments(1);
+		Set<Entry<IPath, File>> set = GitUtils.getGitDirs(filePath, Traverse.GO_UP).entrySet();
+		File gitDir = set.iterator().next().getValue();
+
 		if (gitDir == null)
 			return false; // TODO: or an error response code, 405?
 		db = new FileRepository(gitDir);
-
+		boolean isRoot = "".equals(GitUtils.getRelativePath(path, set.iterator().next().getKey()));
 		JSONObject toPut = OrionServlet.readJSONRequest(request);
 		String tagName = toPut.getString(ProtocolConstants.KEY_NAME);
 		if (tagName != null) {
-			return tag(request, response, db, path.segment(0), tagName);
+			return tag(request, response, db, path.segment(0), tagName, isRoot);
 		}
 		return false;
 	}
 
-	private boolean tag(HttpServletRequest request, HttpServletResponse response, Repository db, String commitId, String tagName) throws AmbiguousObjectException, IOException, JGitInternalException, GitAPIException, JSONException, URISyntaxException {
+	private boolean tag(HttpServletRequest request, HttpServletResponse response, Repository db, String commitId, String tagName, boolean isRoot) throws AmbiguousObjectException, IOException, JGitInternalException, GitAPIException, JSONException, URISyntaxException {
 		Git git = new Git(db);
 		ObjectId objectId = db.resolve(commitId);
 
@@ -412,7 +420,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 
 		GitTagHandlerV1.tag(git, revCommit, tagName);
 
-		JSONObject result = toJSON(db, revCommit, OrionServlet.getURI(request), null);
+		JSONObject result = toJSON(db, revCommit, OrionServlet.getURI(request), null, isRoot);
 		OrionServlet.writeJSONResponse(request, response, result);
 		walk.dispose();
 		return true;
