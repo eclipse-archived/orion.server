@@ -106,19 +106,19 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 			IPath relative = new Path(s).makeRelativeTo(basePath);
 			object.put(ProtocolConstants.KEY_PATH, relative);
 			URI fileLocation = statusToFileLocation(baseLocation);
-			object.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(fileLocation, s));
+			object.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(fileLocation, relative.toString()));
 
 			JSONObject gitSection = new JSONObject();
 			URI diffLocation = statusToDiffLocation(baseLocation, diffType);
-			gitSection.put(GitConstants.KEY_DIFF, URIUtil.append(diffLocation, s));
+			gitSection.put(GitConstants.KEY_DIFF, URIUtil.append(diffLocation, relative.toString()));
 			object.put(GitConstants.KEY_GIT, gitSection);
 
 			URI commitLocation = statusToCommitLocation(baseLocation, Constants.HEAD);
-			gitSection.put(GitConstants.KEY_COMMIT, URIUtil.append(commitLocation, s));
+			gitSection.put(GitConstants.KEY_COMMIT, URIUtil.append(commitLocation, relative.toString()));
 			object.put(GitConstants.KEY_GIT, gitSection);
 
 			URI indexLocation = statusToIndexLocation(baseLocation);
-			gitSection.put(GitConstants.KEY_INDEX, URIUtil.append(indexLocation, s));
+			gitSection.put(GitConstants.KEY_INDEX, URIUtil.append(indexLocation, relative.toString()));
 			object.put(GitConstants.KEY_GIT, gitSection);
 
 			result.put(object);
