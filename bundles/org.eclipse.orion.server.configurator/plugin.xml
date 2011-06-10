@@ -92,7 +92,35 @@
       </filter>
       <filter
             alias="/"
-            class="org.eclipse.orion.server.configurator.servlet.ImageExpiresFilter">
+            class="org.eclipse.orion.server.configurator.servlet.CacheFilter">
+         <init-param
+               name="directives"
+               value="public, max-age=86400, must-revalidate">
+         </init-param>
+         <init-param
+               name="includeMatches"
+               value=".*[.](gif|jpg|png|bmp|tif|ico)$">
+         </init-param>
+         <init-param
+               name="excludeMatches"
+               value="^/(file|hosted)/.*">
+         </init-param>
+      </filter>
+      <filter
+            alias="/"
+            class="org.eclipse.orion.server.configurator.servlet.CacheFilter">
+         <init-param
+               name="directives"
+               value="max-age=0, must-revalidate">
+         </init-param>
+         <init-param
+               name="includeMatches"
+               value=".*[.](js|html|css)$">
+         </init-param>
+         <init-param
+               name="excludeMatches"
+               value="^/(file|hosted)/.*">
+         </init-param>
       </filter>
       <filter
             alias="/"
