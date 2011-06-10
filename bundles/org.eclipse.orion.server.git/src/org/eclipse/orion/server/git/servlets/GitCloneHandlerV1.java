@@ -259,7 +259,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			// clones under given path
 			WebProject webProject = WebProject.fromId(path.segment(1));
 			if (isAccessAllowed(user, webProject) && webProject.getProjectStore().getFileStore(path.removeFirstSegments(2)).fetchInfo().exists()) {
-				URI contentLocation = webProject.getContentLocation();
+				URI contentLocation = URI.create(webProject.getId());
 				IPath projectPath = new Path(contentLocation.getPath()).append(path.removeFirstSegments(2));
 				Map<IPath, File> gitDirs = GitUtils.getGitDirs(projectPath, Traverse.GO_DOWN);
 				JSONObject result = new JSONObject();
