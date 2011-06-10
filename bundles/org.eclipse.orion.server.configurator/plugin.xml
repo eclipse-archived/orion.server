@@ -84,7 +84,11 @@
          point="org.eclipse.equinox.http.registry.filters">
       <filter
             alias="/"
-            class="org.mortbay.servlet.GzipFilter">
+            class="org.eclipse.orion.server.configurator.servlet.ExcludedExtensionGzipFilter">
+         <init-param
+               name="excludedExtensions"
+               value="jsp, jspx, gif, jpg, png">
+         </init-param>
       </filter>
       <filter
             alias="/"
