@@ -39,7 +39,7 @@ public class ClientExport {
 
 		try {
 			if (source.fetchInfo().isDirectory() && source.childNames(EFS.NONE, null).length == 0) {
-				resp.sendError(HttpServletResponse.SC_NOT_FOUND, "The folder is empty");
+				resp.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, "You cannot export an empty folder");
 				return;
 			}
 

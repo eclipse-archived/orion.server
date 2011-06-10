@@ -13,12 +13,10 @@ package org.eclipse.orion.internal.server.servlets.xfer;
 import java.net.URI;
 import java.net.URISyntaxException;
 import javax.servlet.http.HttpServletRequest;
-import org.eclipse.core.filesystem.EFS;
-import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.server.core.LogHelper;
 import org.json.*;
 
@@ -62,24 +60,8 @@ public class TransferResourceDecorator implements IWebResourceDecorator {
 		IPath path = new Path("/xfer/import").append(targetPath); //$NON-NLS-1$
 		URI link = new URI(resource.getScheme(), resource.getAuthority(), path.toString(), null, null);
 		representation.put(ProtocolConstants.KEY_IMPORT_LOCATION, link);
-		//don't add export links for empty directories
-		if (isEmptyDirectory(targetPath))
-			return;
 		path = new Path("/xfer/export").append(targetPath).addFileExtension("zip"); //$NON-NLS-1$ //$NON-NLS-2$
 		link = new URI(resource.getScheme(), resource.getAuthority(), path.toString(), null, null);
 		representation.put(ProtocolConstants.KEY_EXPORT_LOCATION, link);
-	}
-
-	private boolean isEmptyDirectory(IPath targetPath) {
-		IFileStore store = NewFileServlet.getFileStore(targetPath);
-		//if an error occurred we can't tell, so assume non-empty to be safe
-		if (store == null)
-			return false;
-		try {
-			return store.childNames(EFS.NONE, null).length == 0;
-		} catch (CoreException e) {
-			//this isn't the place for reporting this failure, so assume non-empty
-			return false;
-		}
 	}
 }
