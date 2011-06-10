@@ -118,6 +118,8 @@ public class GitUtilsTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
+
+		// create folder1
 		String folderName = "clone1";
 		WebRequest request = getPostFilesRequest(projectId + "/", getNewDirJSON(folderName).toString(), folderName);
 		WebResponse response = webConversation.getResponse(request);
@@ -126,6 +128,7 @@ public class GitUtilsTest extends GitTest {
 		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).append(folderName).makeAbsolute();
 		clone(clonePath);
 
+		// create folder2
 		folderName = "clone2";
 		request = getPostFilesRequest(projectId + "/", getNewDirJSON(folderName).toString(), folderName);
 		response = webConversation.getResponse(request);
