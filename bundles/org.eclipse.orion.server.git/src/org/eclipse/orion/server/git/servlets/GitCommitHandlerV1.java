@@ -258,7 +258,9 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			JSONArray diffs = new JSONArray();
 
 			final TreeWalk tw = new TreeWalk(db);
-			tw.reset(revCommit.getParent(0).getTree(), revCommit.getTree());
+			final RevWalk rw = new RevWalk(db);
+			RevCommit parent = rw.parseCommit(revCommit.getParent(0));
+			tw.reset(parent.getTree(), revCommit.getTree());
 			tw.setRecursive(true);
 
 			if (filter != null)
@@ -357,16 +359,23 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 
 		boolean amend = Boolean.parseBoolean(requestObject.optString(GitConstants.KEY_COMMIT_AMEND, null));
 
-		CommitCommand commit = new Git(db).commit();
+		Git git = new Git(db);
+		CommitCommand commit = git.commit();
 
 		// support for committing by path: "git commit -o path"
+		boolean isRoot = true;
 		String pattern = GitUtils.getRelativePath(path.removeFirstSegments(1), set.iterator().next().getKey());
 		if (!pattern.isEmpty()) {
 			commit.setOnly(pattern);
+			isRoot = false;
 		}
-		// "git commit [--amend] -m '{message}' [-a|{path}]"
+
 		try {
-			commit.setAmend(amend).setMessage(message).call();
+			// "git commit [--amend] -m '{message}' [-a|{path}]"
+			RevCommit lastCommit = commit.setAmend(amend).setMessage(message).call();
+
+			JSONObject result = toJSON(db, lastCommit, getURI(request), null, isRoot);
+			OrionServlet.writeJSONResponse(request, response, result);
 			return true;
 		} catch (GitAPIException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "An error occured when commiting.", e));

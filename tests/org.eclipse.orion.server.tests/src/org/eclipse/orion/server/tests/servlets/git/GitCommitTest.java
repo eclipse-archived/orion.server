@@ -88,9 +88,17 @@ public class GitCommitTest extends GitTest {
 
 		// TODO: don't create URIs out of thin air
 		// "git commit -m 'message' -- test.txt
-		request = getPostGitCommitRequest(gitHeadUri + "test.txt", "message", false);
+		final String commitMessage = "message";
+		request = getPostGitCommitRequest(gitHeadUri + "test.txt", commitMessage, false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// check if response contains most important parts and if commit
+		// message is valid
+		JSONObject commit = new JSONObject(response.getText());
+		assertNotNull(commit.optString(ProtocolConstants.KEY_LOCATION, null));
+		assertNotNull(commit.optString(ProtocolConstants.KEY_NAME, null));
+		assertEquals(commitMessage, commit.getString(GitConstants.KEY_COMMIT_MESSAGE));
 
 		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
 		response = webConversation.getResponse(request);
