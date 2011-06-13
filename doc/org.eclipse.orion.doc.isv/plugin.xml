@@ -22,7 +22,6 @@
        <toc file="WikiDoc/Orion-Documentation-Developer-Guide-Core-client-services-toc.xml" />
        <toc file="WikiDoc/Orion-Server-admin-guide-toc.xml" />
        <toc file="WikiDoc/Orion-Server-API-toc.xml" />
-       <toc file="WikiDoc/Orion-Server-API-File-API-toc.xml" />
    </extension>
    
    <extension

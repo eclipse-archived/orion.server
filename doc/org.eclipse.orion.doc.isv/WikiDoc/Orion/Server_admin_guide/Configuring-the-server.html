@@ -31,7 +31,7 @@
 		</table><hr/>
 		<h1 id="Configuring_the_server">Configuring the server</h1>
 		<h2 id="Server_configuration_file">Server configuration file</h2>
-		<p>Many Orion server settings are found in the Orion server configuration file. By default this file is located in the current working directory of the Orion server process in a file called <tt>orion.conf</tt>. For example you can place this file in the root of your Orion install, then launch Orion from there. If the configuration file is not in the working directory, Orion will check the platform instance location - the location specified by the -data command line argument. By default this is a directory called "serverworkspace". Alternatively, the location of the configuration file can be specified via the system property <tt>orion.core.configFile</tt>. For example add this line to eclipse.ini:</p>
+		<p>Many Orion server settings are found in the Orion server configuration file. By default Orion looks for this file in the current working directory of the Orion server process in a file called <tt>orion.conf</tt>. For example you can place this file in the root of your Orion install, then launch Orion from there. If the configuration file is not in the working directory, Orion will check the platform instance location - the location specified by the -data command line argument. By default this is a directory called "serverworkspace". Alternatively, the location of the configuration file can be specified via the system property <tt>orion.core.configFile</tt>. For example add this line to eclipse.ini:</p>
 		<pre>-Dorion.core.configFile=/home/fran/orion.conf
 </pre>
 		<p>The file is a simple text configuration file with key/value pairs delimited by '=' character. Lines starting with '#' are treated as comments and ignored</p>
@@ -55,6 +55,9 @@ ServerAlias *.orion.eclipse.org
 			<a href="Configuring-the-server.html#Server_configuration_file">server configuration file</a>. The property value is a comma-separated list of absolute file system paths. Users will be allowed to link to and edit files in any of those locations. This line in the server configuration file will enable storing of files in <tt>/home/orion</tt> on the server, or in any sub-directory thereof.
 		</p>
 		<pre>orion.file.allowedPaths=/home/orion
+</pre>
+		<p>On Windows two backslashes must be used to separate path entries:</p>
+		<pre>orion.file.allowedPaths=C:\\Users\\orion
 </pre>
 		<h2 id="Configuring_project_layout">Configuring project layout</h2>
 		<p>By default, projects are stored in the server workspace in a flat layout at the root of the workspace directory. This layout works well for single-user or small team installs. However in a large installation with hundreds or thousands of users, you may hit limits on the number of entries that can be stored in a directory. The layout can be changed to a hierarchy tree of projects organized by user id with the following property in the 

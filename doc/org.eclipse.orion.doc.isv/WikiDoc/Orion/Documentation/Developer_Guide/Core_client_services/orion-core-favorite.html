@@ -34,7 +34,12 @@
 		<ul>
 			<li>Favorites are persisted on the server, so the user can switch to another client computer or browser and access their familiar bookmarks</li>
 			<li>Favorites are associated with a specific Orion application and user, so favorites from different users or applications are not all mixed into a single place.</li>
-		</ul><hr/>
+		</ul>
+		<p>Here is an example usage of the favorites service:</p>
+		<pre>serviceRegistry.getService("orion.core.favorite").then(function(service) {
+  service.makeFavorites(item);
+});
+</pre><hr/>
 		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
 			<tr>
 				<td style="width: 20%" align="left">
