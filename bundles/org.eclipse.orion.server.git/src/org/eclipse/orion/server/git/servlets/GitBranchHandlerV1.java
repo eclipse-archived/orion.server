@@ -12,7 +12,6 @@ package org.eclipse.orion.server.git.servlets;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import javax.servlet.ServletException;
@@ -23,12 +22,14 @@ import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.CreateBranchCommand.SetupUpstreamMode;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
-import org.eclipse.orion.server.git.*;
+import org.eclipse.orion.server.git.BranchToJSONConverter;
+import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
@@ -70,7 +71,7 @@ public class GitBranchHandlerV1 extends ServletResourceHandler<String> {
 			JSONObject result = new JSONObject();
 			JSONArray children = new JSONArray();
 			for (Ref ref : branches) {
-				JSONObject child = toJSON(db, ref, getURI(request), 2);
+				JSONObject child = BranchToJSONConverter.toJSON(ref, db, getURI(request), 2);
 				children.put(child);
 			}
 			result.put(ProtocolConstants.KEY_CHILDREN, children);
@@ -85,7 +86,7 @@ public class GitBranchHandlerV1 extends ServletResourceHandler<String> {
 			JSONObject result = null;
 			for (Ref ref : branches) {
 				if (Repository.shortenRefName(ref.getName()).equals(p.segment(0))) {
-					result = toJSON(db, ref, getURI(request), 3);
+					result = BranchToJSONConverter.toJSON(ref, db, getURI(request), 3);
 					break;
 				}
 			}
@@ -133,7 +134,7 @@ public class GitBranchHandlerV1 extends ServletResourceHandler<String> {
 			Ref ref = cc.call();
 
 			// TODO: what if something went wrong, handle exception
-			JSONObject result = toJSON(db, ref, getURI(request), 2);
+			JSONObject result = BranchToJSONConverter.toJSON(ref, db, getURI(request), 2);
 			OrionServlet.writeJSONResponse(request, response, result);
 			response.setHeader(ProtocolConstants.HEADER_LOCATION, result.getString(ProtocolConstants.KEY_LOCATION));
 			response.setStatus(HttpServletResponse.SC_CREATED);
@@ -162,31 +163,5 @@ public class GitBranchHandlerV1 extends ServletResourceHandler<String> {
 			return true;
 		}
 		return false;
-	}
-
-	private JSONObject toJSON(Repository db, Ref ref, URI baseLocation, int s) throws JSONException, URISyntaxException, IOException {
-		JSONObject result = new JSONObject();
-		String shortName = Repository.shortenRefName(ref.getName());
-		result.put(ProtocolConstants.KEY_NAME, shortName);
-		result.put(ProtocolConstants.KEY_TYPE, GitConstants.KEY_BRANCH_NAME);
-
-		IPath basePath = new Path(baseLocation.getPath());
-		IPath newPath = new Path(GitServlet.GIT_URI).append(GitConstants.BRANCH_RESOURCE).append(shortName).append(basePath.removeFirstSegments(s));
-		URI location = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), newPath.toString(), baseLocation.getQuery(), baseLocation.getFragment());
-		result.put(ProtocolConstants.KEY_LOCATION, location);
-
-		// add Git Clone URI
-		newPath = new Path(GitServlet.GIT_URI).append(GitConstants.CLONE_RESOURCE).append(basePath.removeFirstSegments(s));
-		URI cloneLocation = new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), newPath.toString(), location.getQuery(), location.getFragment());
-		result.put(GitConstants.KEY_CLONE, cloneLocation);
-
-		// add Git Commit URI
-		result.put(GitConstants.KEY_COMMIT, BaseToCommitConverter.getCommitLocation(location, shortName, BaseToCommitConverter.REMOVE_FIRST_3));
-
-		result.put(GitConstants.KEY_REMOTE, BaseToRemoteConverter.getRemoteBranchLocation(location, shortName, db, BaseToRemoteConverter.REMOVE_FIRST_3));
-		result.put(GitConstants.KEY_HEAD, BaseToCommitConverter.getCommitLocation(location, Constants.HEAD, BaseToCommitConverter.REMOVE_FIRST_3));
-		result.put(GitConstants.KEY_BRANCH_CURRENT, shortName.equals(db.getBranch()));
-
-		return result;
 	}
 }

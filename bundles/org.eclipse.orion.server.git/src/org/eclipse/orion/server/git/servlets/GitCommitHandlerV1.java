@@ -35,8 +35,7 @@ import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
-import org.eclipse.orion.server.git.BaseToRemoteConverter;
-import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.*;
 import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
@@ -143,7 +142,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private boolean handleGetCommitLog(HttpServletRequest request, HttpServletResponse response, Repository db, String refIdsRange, String path) throws AmbiguousObjectException, IOException, ServletException, JSONException, URISyntaxException {
+	private boolean handleGetCommitLog(HttpServletRequest request, HttpServletResponse response, Repository db, String refIdsRange, String path) throws AmbiguousObjectException, IOException, ServletException, JSONException, URISyntaxException, CoreException {
 		int page = request.getParameter("page") != null ? new Integer(request.getParameter("page")).intValue() : 0; //$NON-NLS-1$ //$NON-NLS-2$
 		int pageSize = request.getParameter("pageSize") != null ? new Integer(request.getParameter("pageSize")).intValue() : PAGE_SIZE; //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -202,8 +201,22 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		try {
 			Iterable<RevCommit> commits = log.call();
 			JSONObject result = toJSON(db, OrionServlet.getURI(request), commits, page, pageSize, filter, isRoot);
-			if (toRefId != null)
+			if (toRefId != null) {
 				result.put(GitConstants.KEY_REMOTE, BaseToRemoteConverter.getRemoteBranchLocation(getURI(request), Repository.shortenRefName(toRefId.getName()), db, BaseToRemoteConverter.REMOVE_FIRST_3));
+
+				String refTargetName = toRefId.getTarget().getName();
+				if (refTargetName.startsWith(Constants.R_HEADS)) {
+					// this is a branch
+					result.put(GitConstants.KEY_LOG_TO_REF, BranchToJSONConverter.toJSON(toRefId.getTarget(), db, getURI(request), 3));
+				}
+			}
+			if (fromRefId != null) {
+				String refTargetName = fromRefId.getTarget().getName();
+				if (refTargetName.startsWith(Constants.R_HEADS)) {
+					// this is a branch
+					result.put(GitConstants.KEY_LOG_FROM_REF, BranchToJSONConverter.toJSON(fromRefId.getTarget(), db, getURI(request), 3));
+				}
+			}
 			OrionServlet.writeJSONResponse(request, response, result);
 			return true;
 		} catch (NoHeadException e) {
