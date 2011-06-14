@@ -19,6 +19,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -86,6 +87,44 @@ public class GitUtilsTest extends GitTest {
 		IPath projectPath = new Path(uri.getPath());
 		Map<IPath, File> gitDirs = GitUtils.getGitDirs(projectPath, Traverse.GO_DOWN);
 		assertTrue(gitDirs.isEmpty());
+	}
+
+	@Test
+	public void testGitDirPathLinkedRemovedFile() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), gitDir.toURI().toString());
+		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+		// drill down to folder/folder.txt and delete it
+		WebRequest request = getGetFilesRequest(location);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject jsonResponse = new JSONObject(response.getText());
+		request = getGetFilesRequest(jsonResponse.getString(ProtocolConstants.KEY_CHILDREN_LOCATION));
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));
+		JSONObject testTxt = getChildByName(children, "folder");
+		String folderLocation = testTxt.getString(ProtocolConstants.KEY_LOCATION);
+		request = getGetFilesRequest(folderLocation);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		jsonResponse = new JSONObject(response.getText());
+		request = getGetFilesRequest(jsonResponse.getString(ProtocolConstants.KEY_CHILDREN_LOCATION));
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		children = getDirectoryChildren(new JSONObject(response.getText()));
+		JSONObject folderTxt = getChildByName(children, "folder.txt");
+		String folderTxtLocation = folderTxt.getString(ProtocolConstants.KEY_LOCATION);
+		request = getDeleteFilesRequest(folderTxtLocation);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// then try to get git dir for the removed file
+		URI uri = URI.create(folderTxtLocation);
+		File gitDirFile = GitUtils.getGitDir(new Path(uri.getPath()));
+		assertNotNull(gitDirFile);
+		assertEquals(gitDir, gitDirFile.getParentFile());
 	}
 
 	@Test

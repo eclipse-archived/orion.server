@@ -101,7 +101,7 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 		AddCommand add = git.add().addFilepattern(pattern);
 		// "git add {pattern}"
 		add.call();
-		// TODO: we're calling "add" twice, this is inefficient
+		// TODO: we're calling "add" twice, this is inefficient, see bug 349299
 		// "git add -u {pattern}"
 		git.add().setUpdate(true).addFilepattern(pattern).call();
 		return true;

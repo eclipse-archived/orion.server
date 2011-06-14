@@ -86,8 +86,8 @@ public class GitUtils {
 
 	private static void getGitDirsInParents(File file, Map<IPath, File> gitDirs) {
 		int levelUp = 0;
-		if (file.exists()) {
-			while (file != null) {
+		while (file != null) {
+			if (file.exists()) {
 				if (RepositoryCache.FileKey.isGitRepository(file, FS.DETECTED)) {
 					gitDirs.put(getPathForLevelUp(levelUp), file);
 					return;
@@ -95,9 +95,9 @@ public class GitUtils {
 					gitDirs.put(getPathForLevelUp(levelUp), new File(file, Constants.DOT_GIT));
 					return;
 				}
-				file = file.getParentFile();
-				levelUp++;
 			}
+			file = file.getParentFile();
+			levelUp++;
 		}
 		return;
 	}

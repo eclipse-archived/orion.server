@@ -226,8 +226,6 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			if (WebWorkspace.exists(path.segment(1))) {
 				WebWorkspace workspace = WebWorkspace.fromId(path.segment(1));
 				JSONArray projects = workspace.getProjectsJSON();
-				if (projects == null)
-					projects = new JSONArray();
 				JSONObject result = new JSONObject();
 				JSONArray children = new JSONArray();
 				for (int i = 0; i < projects.length(); i++) {

@@ -338,19 +338,34 @@ public class GitStatusTest extends GitTest {
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
+		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
-		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change");
+		// get 'test.txt' location
+		WebRequest request = getGetFilesRequest(location);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject jsonResponse = new JSONObject(response.getText());
+		request = getGetFilesRequest(jsonResponse.getString(ProtocolConstants.KEY_CHILDREN_LOCATION));
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));
+		JSONObject testTxt = getChildByName(children, "test.txt");
+		String testTxtLocation = testTxt.getString(ProtocolConstants.KEY_LOCATION);
+		JSONObject gitSection = testTxt.getJSONObject(GitConstants.KEY_GIT);
+		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 
-		// TODO: replace with REST API for git rm
-		Git git = new Git(db);
-		RmCommand rm = git.rm();
-		rm.addFilepattern("test.txt");
-		rm.call();
+		// delete the file (required until bug 349299 is fixed)
+		request = getDeleteFilesRequest(testTxtLocation);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+		// stage the deletion: 'git add -u test.txt', should be 'git rm test.txt'
+		request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// check status of the project
+		gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
 		request = getGetGitStatusRequest(gitStatusUri);
