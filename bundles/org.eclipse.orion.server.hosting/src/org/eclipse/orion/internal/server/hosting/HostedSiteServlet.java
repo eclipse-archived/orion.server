@@ -12,11 +12,10 @@ package org.eclipse.orion.internal.server.hosting;
 
 import java.io.IOException;
 import java.net.*;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.Map.Entry;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.*;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
@@ -39,6 +38,68 @@ import org.mortbay.servlet.ProxyServlet;
  * <code>/<u>127.0.0.2:8080</u>/foo/bar.html</code> or <code>/<u>mysite.foo.net:8080</u>/bar/baz.html</code>.
  */
 public class HostedSiteServlet extends OrionServlet {
+
+	static class LocationHeaderServletResponseWrapper extends HttpServletResponseWrapper {
+
+		private static final String LOCATION = "Location";
+		private HttpServletRequest request;
+		private IHostedSite site;
+
+		public LocationHeaderServletResponseWrapper(HttpServletRequest request, HttpServletResponse response, IHostedSite site) {
+			super(response);
+			this.request = request;
+			this.site = site;
+		}
+
+		private String mapLocation(String location) {
+			Map<String, List<String>> mappings = site.getMappings();
+			String bestMatch = "";
+			String prefix = null;
+			for (Iterator<Entry<String, List<String>>> iterator = mappings.entrySet().iterator(); iterator.hasNext();) {
+				Entry<String, List<String>> entry = iterator.next();
+				List<String> candidates = entry.getValue();
+				for (Iterator<String> candidateIt = candidates.iterator(); candidateIt.hasNext();) {
+					String candidate = candidateIt.next();
+					if (location.startsWith(candidate) && candidate.length() > bestMatch.length()) {
+						bestMatch = candidate;
+						prefix = entry.getKey();
+					}
+				}
+			}
+			if (prefix != null) {
+				String reverseMappedPath = prefix + location.substring(bestMatch.length());
+				try {
+					URI pathlessRequestURI = new URI(request.getScheme(), null, request.getServerName(), request.getServerPort(), null, null, null);
+					return pathlessRequestURI.toString() + reverseMappedPath;
+				} catch (URISyntaxException t) {
+					// best effort
+					System.err.println(t);
+				}
+			}
+			return location;
+		}
+
+		@Override
+		public void addHeader(String name, String value) {
+			if (name.equals(LOCATION)) {
+				String newLocation = mapLocation(value.trim());
+				super.addHeader(name, newLocation);
+			} else {
+				super.addHeader(name, value);
+			}
+		}
+
+		@Override
+		public void setHeader(String name, String value) {
+			if (name.equals(LOCATION)) {
+				String newLocation = mapLocation(value.trim());
+				super.setHeader(name, newLocation);
+			} else {
+				super.setHeader(name, value);
+			}
+		}
+	}
+
 	private static final long serialVersionUID = 1L;
 
 	private static final String WORKSPACE_SERVLET_ALIAS = "/workspace"; //$NON-NLS-1$
@@ -160,7 +221,7 @@ public class HostedSiteServlet extends OrionServlet {
 				handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_METHOD_NOT_ALLOWED, NLS.bind(message, mappedPaths), null));
 			}
 		} else {
-			proxyRemotePath(req, resp, mappedPaths);
+			proxyRemotePath(req, new LocationHeaderServletResponseWrapper(req, resp, site), mappedPaths);
 		}
 	}
 
