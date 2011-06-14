@@ -20,6 +20,9 @@
        <toc file="WikiDoc/Orion-Project-mission-statement-toc.xml" />
        <toc file="WikiDoc/Orion-Documentation-Developer-Guide-Architecture-toc.xml" />
        <toc file="WikiDoc/Orion-Documentation-Developer-Guide-Core-client-services-toc.xml" />
+       <toc file="WikiDoc/Orion-Documentation-Developer-Guide-User-interface-services-toc.xml" />
+       <toc file="WikiDoc/Orion-Documentation-Developer-Guide-Plugging-into-the-editor-toc.xml" />
+       <toc file="WikiDoc/Orion-Documentation-Developer-Guide-Plugging-into-the-navigator-toc.xml" />
        <toc file="WikiDoc/Orion-Server-admin-guide-toc.xml" />
        <toc file="WikiDoc/Orion-Server-API-toc.xml" />
    </extension>

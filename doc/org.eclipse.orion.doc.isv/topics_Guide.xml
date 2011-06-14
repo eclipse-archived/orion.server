@@ -13,4 +13,13 @@
    <topic label="Core client services">
 		<link toc="WikiDoc/Orion-Documentation-Developer-Guide-Core-client-services-toc.xml" />
    </topic>
+   <topic label="User interface services">
+		<link toc="WikiDoc/Orion-Documentation-Developer-Guide-User-interface-services-toc.xml" />
+   </topic>
+   <topic label="Plugging into the editor">
+		<link toc="WikiDoc/Orion-Documentation-Developer-Guide-Plugging-into-the-editor-toc.xml" />
+   </topic>
+   <topic label="Plugging into the navigator">
+		<link toc="WikiDoc/Orion-Documentation-Developer-Guide-Plugging-into-the-navigator-toc.xml" />
+   </topic>
 </toc>

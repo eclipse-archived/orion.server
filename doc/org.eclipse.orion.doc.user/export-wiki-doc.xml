@@ -42,7 +42,10 @@
 	<target name="clean" depends="init">
 		<delete includeemptydirs="true" failonerror="false">
 			<fileset dir="tmp"/>
-			<fileset dir="${output.folder}"/>
+			<fileset dir="${output.folder}/Orion"/>
+			<fileset dir="${output.folder}">
+				<include name="Orion*.xml"/>
+			</fileset>
 		</delete>
 	</target>
 

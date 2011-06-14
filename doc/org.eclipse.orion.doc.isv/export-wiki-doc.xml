@@ -38,7 +38,10 @@
 	<target name="clean" depends="init">
 		<delete includeemptydirs="true" failonerror="false">
 			<fileset dir="tmp"/>
-			<fileset dir="${output.folder}"/>
+			<fileset dir="${output.folder}/Orion"/>
+			<fileset dir="${output.folder}">
+				<include name="Orion*.xml"/>
+			</fileset>
 		</delete>
 	</target>
 
@@ -62,6 +65,9 @@
     		<path name="Orion/Project_mission_statement" title="Welcome to Orion" generateToc="true"/>
     		<path name="Orion/Documentation/Developer_Guide/Architecture" title="Architecture overview" generateToc="true"/>
     		<path name="Orion/Documentation/Developer_Guide/Core_client_services" title="Core client services" generateToc="true"/>
+    		<path name="Orion/Documentation/Developer_Guide/User_interface_services" title="User interface services" generateToc="true"/>
+       		<path name="Orion/Documentation/Developer_Guide/Plugging_into_the_editor" title="Plugging into the editor" generateToc="true"/>
+    		<path name="Orion/Documentation/Developer_Guide/Plugging_into_the_navigator" title="Plugging into the navigator" generateToc="true"/>
     		<path name="Orion/Server_API" title="Server API" generateToc="true"/>
     		<path name="Orion/Server_admin_guide" title="Server administration guide" generateToc="true"/>
 			<stylesheet url="book.css"/>
