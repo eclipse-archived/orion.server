@@ -32,7 +32,7 @@ public abstract class BaseToBranchConverter {
 		};
 	};
 
-	public static final BaseToBranchConverter REMOTE_BRANCH = new BaseToBranchConverter() {
+	public static final BaseToBranchConverter REMOTE = new BaseToBranchConverter() {
 		@Override
 		public IPath getFilePath(URI base) throws URISyntaxException {
 			return new Path(base.getPath()).removeFirstSegments(3).makeRelative();

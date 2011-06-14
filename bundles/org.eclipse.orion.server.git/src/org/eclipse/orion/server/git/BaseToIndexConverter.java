@@ -32,7 +32,7 @@ public abstract class BaseToIndexConverter {
 		};
 	};
 
-	public static final BaseToIndexConverter REMOTE_BRANCH = new BaseToIndexConverter() {
+	public static final BaseToIndexConverter REMOTE = new BaseToIndexConverter() {
 		@Override
 		public IPath getFilePath(URI base) throws URISyntaxException {
 			return new Path(base.getPath()).removeFirstSegments(3).makeRelative();
