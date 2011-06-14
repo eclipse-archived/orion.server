@@ -13,6 +13,8 @@ package org.eclipse.orion.server.git.servlets;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.HashSet;
+import java.util.Set;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PushCommand;
@@ -80,17 +82,28 @@ public class PushJob extends GitJob {
 			pushCommand.setPushTags();
 		Iterable<PushResult> resultIterable = pushCommand.call();
 		PushResult pushResult = resultIterable.iterator().next();
+		// this set will contain only OK status or UP_TO_DATE status
+		Set<RemoteRefUpdate.Status> statusSet = new HashSet<RemoteRefUpdate.Status>();
 		for (final RemoteRefUpdate rru : pushResult.getRemoteUpdates()) {
 			final String rm = rru.getRemoteName();
 			// final String sr = rru.isDelete() ? null : rru.getSrcRef();
-			if (p.segment(1).equals(Repository.shortenRefName(rm))) {
-				if (rru.getStatus() != org.eclipse.jgit.transport.RemoteRefUpdate.Status.OK)
-					return new Status(IStatus.WARNING, GitActivator.PI_GIT, rru.getStatus().name());
-				break;
+			// check status only for branch given in the URL or tags
+			if (p.segment(1).equals(Repository.shortenRefName(rm)) || rm.startsWith(Constants.R_TAGS)) {
+				RemoteRefUpdate.Status status = rru.getStatus();
+				// any status different from UP_TO_DATE and OK should generate warning
+				if (status != RemoteRefUpdate.Status.OK && status != RemoteRefUpdate.Status.UP_TO_DATE)
+					return new Status(IStatus.WARNING, GitActivator.PI_GIT, status.name());
+				// add OK or UP_TO_DATE status to the set
+				statusSet.add(status);
 			}
 			// TODO: return results for all updated branches once push is available for remote, see bug 342727, comment 1
 		}
-		return Status.OK_STATUS;
+		if (statusSet.contains(RemoteRefUpdate.Status.OK))
+			// if there is OK status in the set -> something was updated
+			return Status.OK_STATUS;
+		else
+			// if there is no OK status in the set -> only UP_TO_DATE status is possible
+			return new Status(IStatus.WARNING, GitActivator.PI_GIT, RemoteRefUpdate.Status.UP_TO_DATE.name());
 	}
 
 	public TaskInfo getTask() {
@@ -122,7 +135,7 @@ public class PushJob extends GitJob {
 		} catch (InvalidRemoteException e) {
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error pushing git remote", e); //$NON-NLS-1$
 		} catch (Exception e) {
-			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error cloning git repository", e); //$NON-NLS-1$
+			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error pushing git repository", e); //$NON-NLS-1$
 		}
 		task.done(result);
 		task.setMessage(NLS.bind("Pushing {0} done", p.segment(0)));

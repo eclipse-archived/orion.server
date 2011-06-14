@@ -551,7 +551,8 @@ public class GitPushTest extends GitTest {
 		// clone1: tag HEAD with 'tag'
 		tag(gitTagUri1, "tag", Constants.HEAD);
 
-		push(gitRemoteUri1, 1, 0, Constants.MASTER, Constants.HEAD, true);
+		ServerStatus pushStatus = push(gitRemoteUri1, 1, 0, Constants.MASTER, Constants.HEAD, true);
+		assertEquals(true, pushStatus.isOK());
 
 		// clone2: list tags
 		JSONArray tags = listTags(gitTagUri2);
