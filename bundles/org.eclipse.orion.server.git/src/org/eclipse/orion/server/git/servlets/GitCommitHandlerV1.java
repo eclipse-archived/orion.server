@@ -201,6 +201,9 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		try {
 			Iterable<RevCommit> commits = log.call();
 			JSONObject result = toJSON(db, OrionServlet.getURI(request), commits, page, pageSize, filter, isRoot);
+
+			result.put(GitConstants.KEY_REPOSITORY_PATH, isRoot ? "" : path);
+
 			if (toRefId != null) {
 				result.put(GitConstants.KEY_REMOTE, BaseToRemoteConverter.getRemoteBranchLocation(getURI(request), Repository.shortenRefName(toRefId.getName()), db, BaseToRemoteConverter.REMOVE_FIRST_3));
 
