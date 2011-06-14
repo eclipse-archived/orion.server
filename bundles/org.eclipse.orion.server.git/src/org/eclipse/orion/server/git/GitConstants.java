@@ -49,6 +49,8 @@ public class GitConstants {
 
 	public static final String KEY_REMOTE = "RemoteLocation"; //$NON-NLS-1$
 
+	public static final String KEY_REPOSITORY_PATH = "RepositoryPath"; //$NON-NLS-1$
+
 	public static final String KEY_DEFAULT_REMOTE_BRANCH = "DefaultRemoteBranchLocation"; //$NON-NLS-1$
 
 	public static final String KEY_TAG = "TagLocation"; //$NON-NLS-1$

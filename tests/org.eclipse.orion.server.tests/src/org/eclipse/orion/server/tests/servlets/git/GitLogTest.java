@@ -235,6 +235,91 @@ public class GitLogTest extends GitTest {
 	}
 
 	@Test
+	public void testLogFolder() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+
+		String projectName = getMethodName();
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
+		String projectId = project.getString(ProtocolConstants.KEY_ID);
+
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
+
+		// modify
+		WebRequest request = getPutFileRequest(projectId + "/test.txt", "test.txt change");
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// TODO: don't create URIs out of thin air
+		// add
+		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// commit1
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit1", false);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// modify again
+		request = getPutFileRequest(projectId + "/folder/folder.txt", "folder.txt change");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// add
+		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "folder/folder.txt");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// commit2
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit2", false);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// get log for file
+		// TODO: don't create URIs out of thin air
+		request = GitCommitTest.getGetGitCommitRequest(gitHeadUri, false);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject log = new JSONObject(response.getText());
+
+		String repositoryPath = log.getString(GitConstants.KEY_REPOSITORY_PATH);
+		assertEquals("", repositoryPath);
+
+		JSONArray commitsArray = log.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+
+		assertEquals(3, commitsArray.length());
+
+		JSONObject commit = commitsArray.getJSONObject(0);
+		assertEquals("commit2", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
+
+		commit = commitsArray.getJSONObject(1);
+		assertEquals("commit1", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
+
+		commit = commitsArray.getJSONObject(2);
+		assertEquals("Initial commit", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
+
+		request = GitCommitTest.getGetGitCommitRequest(gitHeadUri + "/folder/", false);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		log = new JSONObject(response.getText());
+
+		repositoryPath = log.getString(GitConstants.KEY_REPOSITORY_PATH);
+		assertEquals("folder/", repositoryPath);
+
+		commitsArray = log.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+
+		assertEquals(2, commitsArray.length());
+
+		commit = commitsArray.getJSONObject(0);
+		assertEquals("commit2", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
+
+		commit = commitsArray.getJSONObject(1);
+		assertEquals("Initial commit", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
+	}
+
+	@Test
 	public void testLogFile() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
@@ -279,7 +364,16 @@ public class GitLogTest extends GitTest {
 
 		// get log for file
 		// TODO: don't create URIs out of thin air
-		JSONArray commitsArray = log(gitHeadUri + "test.txt", false);
+		request = GitCommitTest.getGetGitCommitRequest(gitHeadUri + "test.txt", false);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject log = new JSONObject(response.getText());
+
+		String repositoryPath = log.getString(GitConstants.KEY_REPOSITORY_PATH);
+		assertEquals("test.txt", repositoryPath);
+
+		JSONArray commitsArray = log.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+
 		assertEquals(2, commitsArray.length());
 
 		JSONObject commit = commitsArray.getJSONObject(0);
