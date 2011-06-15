@@ -30,15 +30,14 @@
 			</tr>
 		</table><hr/>
 		<h1 id="orion.core.file">orion.core.file</h1>
-		<p>The <tt>orion.core.file</tt> service is used to contribute some custom content to the Orion Navigator/Explorer. Content could be in the form of files served from some remote system. The Orion navigator already displays any content created by the application user. These include any folder, file or files within a folder.</p>
-		<ul>
-			<li>A developer who creates an Orion plugin will use this service to contribute some custom content to the Navigator.</li>
-		</ul>
+		<p>The <tt>orion.core.file</tt> service is used to provide file system contents for the Orion workspace. For example a plug-in can use this service to include content from one server into a workspace on another server. Each file service is displayed as a root element in the Orion <b>Navigator</b> page.</p>
 		<p>The code snippet below demonstrates an use of this service:</p>
-		<pre>provider.registerServiceProvider("orion.core.file", service, {Name: 'Test Project'});
+		<pre>
+ provider.registerServiceProvider("orion.core.file", service, {Name: 'Sample File System'});
 </pre>
-		<p>The above code will contribute a top level node to the Navigator named "Test Project". The parameter "service" in the API above must provide the functions specified by the Orion file client API. Refer to <tt>orion.fileClient.FileClient</tt> in the client API reference for further details. For more information on client-server interaction, see Orion 
-			<a href="http://wiki.eclipse.org/Orion/Server_API/File_API" target="orion_external">File Server API</a>
+		<p>The above code will contribute a top level node to the Navigator named "Sample File System". The parameter "service" in the API above must provide the functions specified by the Orion file client API. Refer to <tt>orion.fileClient.FileClient</tt> in the client API reference for further details. For more information on client-server interaction, see Orion 
+			<a href="http://wiki.eclipse.org/Orion/Server_API/File_API" target="orion_external">File Server API</a>. For an complete file system example, see the 
+			<a href="https://github.com/eclipse/orion.client/blob/master/bundles/org.eclipse.orion.client.core/web/plugins/sampleFilePlugin.html" target="orion_external">sample file plugin</a> in the Orion Git repository.
 		</p><hr/>
 		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
 			<tr>

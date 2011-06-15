@@ -29,7 +29,48 @@
 				<td style="width: 20%" align="right" valign="top">orion.edit.contentAssist</td>
 			</tr>
 		</table><hr/>
-		<h1 id="orion.edit.command">orion.edit.command</h1><hr/>
+		<h1 id="orion.edit.command">orion.edit.command</h1>
+		<p>The <tt>orion.edit.command</tt> service is the simplest kind of editor extension. A command service simply provides a function that takes some text as input, performs some operation or transformation on the text, and returns a new text value. The command can also optionally receive and return selection information for changing the editor selection.</p>
+		<h2 id="Service_methods">Service methods</h2>
+		<p>Implementations of <tt>orion.edit.command</tt> must define the following function:</p>
+		<dl>
+			<dt>run(selectedText, text, selection)</dt>
+			<dd>selectedText is a string containing the text that is currently selected in the editor. The <tt>text</tt> argument provides the entire editor buffer. The <tt>selection</tt> argument is a selection object with <tt>start</tt> and <tt>end</tt> fields.</dd>
+		</dl>
+		<h2 id="Service_attributes">Service attributes</h2>
+		<p>Implementations of <tt>orion.edit.command</tt> may define the following attributes:</p>
+		<dl>
+			<dt>img</dt>
+			<dd>The URL of an icon to associate with the command</dd>
+			<dt>name</dt>
+			<dd>The command text show to the user</dd>
+			<dt>key</dt>
+			<dd>An optional key binding for the command</dd>
+		</dl>
+		<h2 id="Examples">Examples</h2>
+		<p>The following simple example just converts the selected text to upper case. In this example the function return value is a simple string, so this is interpreted by the editor as replacement for the original editor selection. In the service properties, we see the command provides a key binding of Ctrl+U (or Cmd+U on Mac).</p>
+		<pre>
+ var provider = new eclipse.PluginProvider();
+ provider.registerServiceProvider("orion.edit.command", {
+   run : function(text) {
+     return text.toUpperCase();
+   }
+ }, {
+   name : "UPPERCASE",
+   img : "/images/gear.gif",
+   key : [ "u", true ]
+ });
+ provider.connect();
+</pre>
+		<p>Here is an example of a slightly more complex run function that takes the selection and wraps it in C-style block comments. In this example the function returns a complex object with both <tt>text</tt> and <tt>selection</tt> fields. These are interpreted by the editor as the new editor buffer contents, and the new editor selection.</p>
+		<pre>
+ run : function(selectedText, text, selection) {
+   return {text: text.substring(0,selection.start) + "/*" + 
+     text.substring(selection.start,selection.end) + "*/" + 
+     text.substring(selection.end),
+     selection: {start:selection.start,end:selection.end+4}};
+ }
+</pre><hr/>
 		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
 			<tr>
 				<td style="width: 20%" align="left">
