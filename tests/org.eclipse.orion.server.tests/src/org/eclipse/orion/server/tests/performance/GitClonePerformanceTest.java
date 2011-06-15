@@ -65,76 +65,93 @@ public class GitClonePerformanceTest {
 	public void cloneWithJGitOverHttp() {
 		Performance perf = Performance.getDefault();
 		PerformanceMeter perfMeter = perf.createPerformanceMeter(this.getClass().getName() + '#' + getMethodName() + "()"); //$NON-NLS-1$
-		for (int i = 0; i < LOOPS; i++) {
-			perfMeter.start();
-			Git git = Git.cloneRepository().setURI(orionClientHttp.toString()).setDirectory(getRandomLocation().toFile()).call();
-			perfMeter.stop();
+		try {
+			for (int i = 0; i < LOOPS; i++) {
+				perfMeter.start();
+				Git git = Git.cloneRepository().setURI(orionClientHttp.toString()).setDirectory(getRandomLocation().toFile()).call();
+				perfMeter.stop();
 
-			toClose.add(git.getRepository());
-			assertNotNull(git);
+				toClose.add(git.getRepository());
+				assertNotNull(git);
+			}
+			perfMeter.commit();
+			perf.assertPerformance(perfMeter);
+		} finally {
+			perfMeter.dispose();
 		}
-		perfMeter.commit();
-		perf.assertPerformance(perfMeter);
+
 	}
 
 	@Test
 	public void cloneWithJGitOverGit() {
 		Performance perf = Performance.getDefault();
 		PerformanceMeter perfMeter = perf.createPerformanceMeter(this.getClass().getName() + '#' + getMethodName() + "()"); //$NON-NLS-1$
-		for (int i = 0; i < LOOPS; i++) {
-			perfMeter.start();
-			Git git = Git.cloneRepository().setURI(orionClientGit.toString()).setDirectory(getRandomLocation().toFile()).call();
-			perfMeter.stop();
+		try {
+			for (int i = 0; i < LOOPS; i++) {
+				perfMeter.start();
+				Git git = Git.cloneRepository().setURI(orionClientGit.toString()).setDirectory(getRandomLocation().toFile()).call();
+				perfMeter.stop();
 
-			toClose.add(git.getRepository());
-			assertNotNull(git);
+				toClose.add(git.getRepository());
+				assertNotNull(git);
+			}
+			perfMeter.commit();
+			perf.assertPerformance(perfMeter);
+		} finally {
+			perfMeter.dispose();
 		}
-		perfMeter.commit();
-		perf.assertPerformance(perfMeter);
 	}
 
 	@Test
 	public void cloneWithConsoleGitOverHttp() throws IOException, InterruptedException {
 		Performance perf = Performance.getDefault();
 		PerformanceMeter perfMeter = perf.createPerformanceMeter(this.getClass().getName() + '#' + getMethodName() + "()"); //$NON-NLS-1$
-		for (int i = 0; i < LOOPS; i++) {
+		try {
+			for (int i = 0; i < LOOPS; i++) {
 
-			perfMeter.start();
-			File destination = getRandomLocation().toFile();
-			Process proc = Runtime.getRuntime().exec(cmd + "git clone " + orionClientHttp.toString() + " '" + destination + "'");
-			int exitVal = proc.waitFor();
-			perfMeter.stop();
+				perfMeter.start();
+				File destination = getRandomLocation().toFile();
+				Process proc = Runtime.getRuntime().exec(cmd + "git clone " + orionClientHttp.toString() + " '" + destination + "'");
+				int exitVal = proc.waitFor();
+				perfMeter.stop();
 
-			assertEquals(0, exitVal);
-			FileRepository repository = new FileRepository(new File(destination, Constants.DOT_GIT));
-			toClose.add(repository);
-			assertEquals(RepositoryState.SAFE, repository.getRepositoryState());
+				assertEquals(0, exitVal);
+				FileRepository repository = new FileRepository(new File(destination, Constants.DOT_GIT));
+				toClose.add(repository);
+				assertEquals(RepositoryState.SAFE, repository.getRepositoryState());
 
+			}
+			perfMeter.commit();
+			perf.assertPerformance(perfMeter);
+		} finally {
+			perfMeter.dispose();
 		}
-		perfMeter.commit();
-		perf.assertPerformance(perfMeter);
 	}
 
 	@Test
 	public void cloneWithConsoleGitOverGit() throws IOException, InterruptedException {
 		Performance perf = Performance.getDefault();
 		PerformanceMeter perfMeter = perf.createPerformanceMeter(this.getClass().getName() + '#' + getMethodName() + "()"); //$NON-NLS-1$
-		for (int i = 0; i < LOOPS; i++) {
+		try {
+			for (int i = 0; i < LOOPS; i++) {
 
-			perfMeter.start();
-			File destination = getRandomLocation().toFile();
-			Process proc = Runtime.getRuntime().exec(cmd + "git clone " + orionClientGit.toString() + " '" + destination + "'");
-			int exitVal = proc.waitFor();
-			perfMeter.stop();
+				perfMeter.start();
+				File destination = getRandomLocation().toFile();
+				Process proc = Runtime.getRuntime().exec(cmd + "git clone " + orionClientGit.toString() + " '" + destination + "'");
+				int exitVal = proc.waitFor();
+				perfMeter.stop();
 
-			assertEquals(0, exitVal);
-			FileRepository repository = new FileRepository(new File(destination, Constants.DOT_GIT));
-			toClose.add(repository);
-			assertEquals(RepositoryState.SAFE, repository.getRepositoryState());
+				assertEquals(0, exitVal);
+				FileRepository repository = new FileRepository(new File(destination, Constants.DOT_GIT));
+				toClose.add(repository);
+				assertEquals(RepositoryState.SAFE, repository.getRepositoryState());
 
+			}
+			perfMeter.commit();
+			perf.assertPerformance(perfMeter);
+		} finally {
+			perfMeter.dispose();
 		}
-		perfMeter.commit();
-		perf.assertPerformance(perfMeter);
 	}
 
 	private IPath getRandomLocation() {
