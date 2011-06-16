@@ -38,7 +38,6 @@ import org.osgi.framework.ServiceReference;
  */
 public class PushJob extends GitJob {
 
-	private final CredentialsProvider credentials;
 	private final TaskInfo task;
 	private ITaskService taskService;
 	private ServiceReference<ITaskService> taskServiceRef;
@@ -47,9 +46,8 @@ public class PushJob extends GitJob {
 	private boolean tags;
 
 	public PushJob(CredentialsProvider credentials, Path path, String srcRef, boolean tags) {
-		super("Pushing"); //$NON-NLS-1$
+		super("Pushing", (GitCredentialsProvider) credentials); //$NON-NLS-1$
 
-		this.credentials = credentials;
 		this.p = path;
 		this.srcRef = srcRef;
 		this.tags = tags;
@@ -72,7 +70,7 @@ public class PushJob extends GitJob {
 		PushCommand pushCommand = git.push();
 
 		RemoteConfig remoteConfig = new RemoteConfig(git.getRepository().getConfig(), p.segment(0));
-		((GitCredentialsProvider) credentials).setUri(remoteConfig.getURIs().get(0));
+		credentials.setUri(remoteConfig.getURIs().get(0));
 		pushCommand.setCredentialsProvider(credentials);
 
 		// ObjectId ref = db.resolve(srcRef);

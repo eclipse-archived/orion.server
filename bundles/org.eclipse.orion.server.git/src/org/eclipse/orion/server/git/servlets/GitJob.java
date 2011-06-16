@@ -23,13 +23,25 @@ import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.errors.TransportException;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitActivator;
+import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.jsch.HostFingerprintException;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Base class for all Git jobs.
  *
  */
 public abstract class GitJob extends Job {
+
+	private static final String KEY_SCHEME = "Scheme";
+	private static final String KEY_PORT = "Port";
+	private static final String KEY_PASSWORD = "Password";
+	public static final String KEY_HUMANISH_NAME = "HumanishName";
+	public static final String KEY_URL = "Url";
+	public static final String KEY_USER = "User";
+	public static final String KEY_HOST = "Host";
+	protected GitCredentialsProvider credentials;
 
 	private static JSchException getJSchException(Throwable e) {
 		if (e instanceof JSchException) {
@@ -41,15 +53,45 @@ public abstract class GitJob extends Job {
 		return null;
 	}
 
-	public static IStatus getJGitInternalExceptionStatus(JGitInternalException e, String message) {
+	public JSONObject addRepositoryInfo(JSONObject object) {
+		try {
+			if (credentials != null) {
+				object.put(KEY_URL, credentials.getUri().toString());
+				if (credentials.getUri().getUser() != null) {
+					object.put(KEY_USER, credentials.getUri().getUser());
+				}
+				if (credentials.getUri().getHost() != null) {
+					object.put(KEY_HOST, credentials.getUri().getHost());
+				}
+				if (credentials.getUri().getHumanishName() != null) {
+					object.put(KEY_HUMANISH_NAME, credentials.getUri().getHumanishName());
+				}
+				if (credentials.getUri().getPass() != null) {
+					object.put(KEY_PASSWORD, credentials.getUri().getPass());
+				}
+				if (credentials.getUri().getPort() > 0) {
+					object.put(KEY_PORT, credentials.getUri().getPort());
+				}
+				if (credentials.getUri().getScheme() != null) {
+					object.put(KEY_SCHEME, credentials.getUri().getScheme());
+				}
+
+			}
+		} catch (JSONException e) {
+			// ignore, should always be able to put string
+		}
+		return object;
+	}
+
+	public IStatus getJGitInternalExceptionStatus(JGitInternalException e, String message) {
 		JSchException jschEx = getJSchException(e);
 		if (jschEx != null && jschEx instanceof HostFingerprintException) {
 			HostFingerprintException cause = (HostFingerprintException) jschEx;
-			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, cause.getMessage(), cause.formJson(), cause);
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, cause.getMessage(), addRepositoryInfo(cause.formJson()), cause);
 		}
 		//JSch handles auth fail by exception message
 		if (jschEx != null && jschEx.getMessage() != null && jschEx.getMessage().toLowerCase(Locale.ENGLISH).contains("auth fail")) { //$NON-NLS-1$
-			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_UNAUTHORIZED, jschEx.getMessage(), null, jschEx);
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_UNAUTHORIZED, jschEx.getMessage(), addRepositoryInfo(new JSONObject()), jschEx);
 		}
 
 		//Log connection problems directly
@@ -57,18 +99,23 @@ public abstract class GitJob extends Job {
 			TransportException cause = (TransportException) e.getCause();
 			if (matchMessage(JGitText.get().serviceNotPermitted, cause.getMessage())) {
 				//Http connection problems are distinguished by exception message
-				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, cause.getMessage(), null, cause);
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, cause.getMessage(), addRepositoryInfo(new JSONObject()), cause);
 			} else if (matchMessage(JGitText.get().notAuthorized, cause.getMessage())) {
 				//Http connection problems are distinguished by exception message
-				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_UNAUTHORIZED, cause.getMessage(), null, cause);
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_UNAUTHORIZED, cause.getMessage(), addRepositoryInfo(new JSONObject()), cause);
 			} else {
 				//Other http connection problems reported directly
-				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, cause.getMessage() == null ? message : cause.getMessage(), null, cause);
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, cause.getMessage() == null ? message : cause.getMessage(), addRepositoryInfo(new JSONObject()), cause);
 			}
 
 		}
 
 		return new Status(IStatus.ERROR, GitActivator.PI_GIT, message, e.getCause() == null ? e : e.getCause());
+	}
+
+	public GitJob(String name, GitCredentialsProvider credentials) {
+		super(name);
+		this.credentials = credentials;
 	}
 
 	public GitJob(String name) {

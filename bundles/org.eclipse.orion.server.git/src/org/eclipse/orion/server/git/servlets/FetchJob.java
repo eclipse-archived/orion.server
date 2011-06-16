@@ -34,7 +34,6 @@ import org.osgi.framework.ServiceReference;
  */
 public class FetchJob extends GitJob {
 
-	private final CredentialsProvider credentials;
 	private final TaskInfo task;
 	private ITaskService taskService;
 	private ServiceReference<ITaskService> taskServiceRef;
@@ -42,9 +41,8 @@ public class FetchJob extends GitJob {
 	private String remote;
 
 	public FetchJob(CredentialsProvider credentials, Path path) {
-		super("Fetching"); //$NON-NLS-1$
+		super("Fetching", (GitCredentialsProvider) credentials); //$NON-NLS-1$
 
-		this.credentials = credentials;
 		// path: {remote}[/{branch}]/file/{...}
 		this.path = path;
 		this.remote = path.segment(0);
@@ -66,7 +64,7 @@ public class FetchJob extends GitJob {
 		FetchCommand fc = git.fetch();
 
 		RemoteConfig remoteConfig = new RemoteConfig(git.getRepository().getConfig(), remote);
-		((GitCredentialsProvider) credentials).setUri(remoteConfig.getURIs().get(0));
+		credentials.setUri(remoteConfig.getURIs().get(0));
 
 		fc.setCredentialsProvider(credentials);
 		fc.setRemote(remote);

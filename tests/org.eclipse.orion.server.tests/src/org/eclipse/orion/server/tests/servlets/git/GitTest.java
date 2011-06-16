@@ -987,4 +987,20 @@ public abstract class GitTest extends FileSystemTest {
 		}
 		return "";
 	}
+
+	protected void assertRepositoryInfo(URIish uri, JSONObject result) throws JSONException {
+		assertEquals(uri.toString(), result.getJSONObject("ErrorData").get("Url"));
+		if (uri.getUser() != null)
+			assertEquals(uri.getUser(), result.getJSONObject("ErrorData").get("User"));
+		if (uri.getHost() != null)
+			assertEquals(uri.getHost(), result.getJSONObject("ErrorData").get("Host"));
+		if (uri.getHumanishName() != null)
+			assertEquals(uri.getHumanishName(), result.getJSONObject("ErrorData").get("HumanishName"));
+		if (uri.getPass() != null)
+			assertEquals(uri.getPass(), result.getJSONObject("ErrorData").get("Password"));
+		if (uri.getPort() > 0)
+			assertEquals(uri.getPort(), result.getJSONObject("ErrorData").get("Port"));
+		if (uri.getScheme() != null)
+			assertEquals(uri.getScheme(), result.getJSONObject("ErrorData").get("Scheme"));
+	}
 }

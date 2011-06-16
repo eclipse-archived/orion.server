@@ -24,8 +24,7 @@ import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
-import org.eclipse.orion.server.git.GitActivator;
-import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.*;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
 import org.eclipse.orion.server.useradmin.UserServiceHelper;
@@ -40,7 +39,6 @@ public class CloneJob extends GitJob {
 
 	private final WebProject project;
 	private final WebClone clone;
-	private final CredentialsProvider credentials;
 	private final TaskInfo task;
 	private ITaskService taskService;
 	private ServiceReference<ITaskService> taskServiceRef;
@@ -48,9 +46,8 @@ public class CloneJob extends GitJob {
 	private final String cloneLocation;
 
 	public CloneJob(WebClone clone, CredentialsProvider credentials, String user, String cloneLocation, WebProject project) {
-		super("Cloning"); //$NON-NLS-1$
+		super("Cloning", (GitCredentialsProvider) credentials); //$NON-NLS-1$
 		this.clone = clone;
-		this.credentials = credentials;
 		this.user = user;
 		this.cloneLocation = cloneLocation;
 		this.task = createTask();
