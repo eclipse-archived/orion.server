@@ -409,6 +409,7 @@ public class GitCloneTest extends GitTest {
 		JSONObject result = completedTask.getJSONObject("Result");
 		assertEquals(HttpURLConnection.HTTP_FORBIDDEN, result.getInt("HttpCode"));
 		assertEquals("Error", result.getString("Severity"));
+		assertRepositoryInfo(uri, result);
 		assertTrue(result.getString("Message").startsWith("The authenticity of host "));
 		assertTrue(result.getString("Message").endsWith(" can't be established"));
 		assertTrue(result.getString("DetailedMessage").startsWith("The authenticity of host "));
@@ -448,6 +449,7 @@ public class GitCloneTest extends GitTest {
 		assertEquals(100, completedTask.getInt("PercentComplete"));
 		JSONObject result = completedTask.getJSONObject("Result");
 		assertEquals(HttpURLConnection.HTTP_UNAUTHORIZED, result.getInt("HttpCode"));
+		assertRepositoryInfo(uri, result);
 		assertEquals("Error", result.getString("Severity"));
 		assertEquals("Auth fail", result.getString("Message"));
 		assertEquals("Auth fail", result.getString("DetailedMessage"));
@@ -485,6 +487,7 @@ public class GitCloneTest extends GitTest {
 		assertEquals(100, completedTask.getInt("PercentComplete"));
 		JSONObject result = completedTask.getJSONObject("Result");
 		assertEquals(HttpURLConnection.HTTP_UNAUTHORIZED, result.getInt("HttpCode"));
+		assertRepositoryInfo(uri, result);
 		assertEquals("Error", result.getString("Severity"));
 		assertEquals("Auth fail", result.getString("Message"));
 		assertEquals("Auth fail", result.getString("DetailedMessage"));

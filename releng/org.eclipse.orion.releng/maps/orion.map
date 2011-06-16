@@ -1,8 +1,8 @@
 #client
-plugin@org.eclipse.orion.client.core=GIT,tag=v20110615-0910,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.core
-plugin@org.eclipse.orion.client.editor=GIT,tag=v20110614-2222,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.editor
+plugin@org.eclipse.orion.client.core=GIT,tag=v20110616-0200,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.core
+plugin@org.eclipse.orion.client.editor=GIT,tag=v20110616-0200,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.editor
 plugin@org.eclipse.orion.client.users.ui=GIT,tag=v20110615-0910,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.users.ui
-plugin@org.eclipse.orion.client.git=GIT,tag=v20110615-0910,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.git
+plugin@org.eclipse.orion.client.git=GIT,tag=v20110616-0200,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.git
 plugin@org.eclipse.orion.dojo=GIT,tag=v20110509-1730,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.dojo
 
 #server
@@ -30,7 +30,7 @@ plugin@org.eclipse.orion.server.hosting=GIT,tag=v20110614-2222,repo=dev.eclipse.
 plugin@org.eclipse.orion.server.ui=GIT,tag=v20110606-1500,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.ui
 
 #doc
-plugin@org.eclipse.orion.doc.isv=GIT,tag=v20110614-2222,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=doc/org.eclipse.orion.doc.isv
+plugin@org.eclipse.orion.doc.isv=GIT,tag=v20110616-0200,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=doc/org.eclipse.orion.doc.isv
 plugin@org.eclipse.orion.doc.user=GIT,tag=v20110614-2222,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=doc/org.eclipse.orion.doc.user
 
 
