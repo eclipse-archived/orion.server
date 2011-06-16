@@ -102,12 +102,14 @@ public class FormAuthHelper {
 		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.login"); //$NON-NLS-1$
 		String login = req.getParameter("login");//$NON-NLS-1$
 		User user = getUserForCredentials(login, req.getParameter("password"), req.getParameter("store")); //$NON-NLS-1$ //$NON-NLS-2$
+		
 		if (user != null) {
+			String actualLogin = (String)user.getCredentials().get(UserConstants.KEY_LOGIN);
 			if (logger.isInfoEnabled())
-				logger.info("Login success: " + login); //$NON-NLS-1$ 
-			req.getSession().setAttribute("user", login); //$NON-NLS-1$
+				logger.info("Login success: " + actualLogin); //$NON-NLS-1$ 
+			req.getSession().setAttribute("user", actualLogin); //$NON-NLS-1$
 			
-			IOrionUserProfileNode userProfileNode =getUserProfileService().getUserProfileNode(login, IOrionUserProfileConstants.GENERAL_PROFILE_PART);
+			IOrionUserProfileNode userProfileNode =getUserProfileService().getUserProfileNode(actualLogin, IOrionUserProfileConstants.GENERAL_PROFILE_PART);
 			try {
 				// try to store the login timestamp in the user profile
 				userProfileNode.put(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, new Long(System.currentTimeMillis()).toString(), false);
