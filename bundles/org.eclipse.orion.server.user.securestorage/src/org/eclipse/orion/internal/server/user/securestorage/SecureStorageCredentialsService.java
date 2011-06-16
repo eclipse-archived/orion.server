@@ -13,6 +13,7 @@ package org.eclipse.orion.internal.server.user.securestorage;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
+
 import javax.crypto.spec.PBEKeySpec;
 import org.eclipse.core.runtime.*;
 import org.eclipse.equinox.security.storage.*;
@@ -163,14 +164,13 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 	public User getUser(String key, String value) {
 		// TODO currently searching only by login, all other searches return nothing
 		if (key.equals(USER_LOGIN)) {
-			String nodeName = USERS + '/' + value;
-			if (!storage.nodeExists(nodeName)) {
+			ISecurePreferences node = findNodeIgnoreCase(storage, value);
+			if (node == null)
 				return null;
-			}
-			ISecurePreferences userPrefs = storage.node(nodeName);
+
 			try {
-				User user = new User(value, userPrefs.get(USER_NAME, ""), userPrefs.get(USER_PASSWORD, "")); //$NON-NLS-1$ //$NON-NLS-2$
-				for (String roleName : userPrefs.node(USER_ROLES).childrenNames()) {
+				User user = new User(node.name(), node.get(USER_NAME, ""), node.get(USER_PASSWORD, "")); //$NON-NLS-1$ //$NON-NLS-2$
+				for (String roleName : node.node(USER_ROLES).childrenNames()) {
 					user.addRole(getRole(roleName));
 				}
 				return user;
@@ -181,27 +181,36 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 		return null;
 	}
 
-	public User createUser(User user) {
-		String nodeName = USERS + '/' + user.getLogin();
-		if (storage.nodeExists(nodeName)) {
+	public User createUser(User user) {		
+		ISecurePreferences node = findNodeIgnoreCase(storage, user.getLogin());
+		if (node != null)
 			return null;
-		}
+
 		try {
-			internalCreateOrUpdateUser(storage.node(nodeName), user);
+			internalCreateOrUpdateUser(storage.node(USERS + '/' + user.getLogin().toLowerCase()), user);
 			return user;
 		} catch (Exception e) {
 			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Can not create user: " + user.getLogin(), e)); //$NON-NLS-1$
 		}
 		return null;
 	}
+	
+	private ISecurePreferences findNodeIgnoreCase(ISecurePreferences storage, String login){
+		ISecurePreferences usersPref = storage.node(USERS);
+		for (int i=0 ; i<usersPref.childrenNames().length; i++){
+			 if (login.equalsIgnoreCase(usersPref.node(usersPref.childrenNames()[i]).name()))
+				 return usersPref.node(usersPref.childrenNames()[i]);
+		}
+		return null;
+	}
 
 	public boolean updateUser(String oldLogin, User user) {
-		String nodeName = USERS + '/' + user.getLogin();
-		if (!storage.nodeExists(nodeName)) {
+		ISecurePreferences node = findNodeIgnoreCase(storage, user.getLogin());
+		if (node == null)
 			return false;
-		}
+		
 		try {
-			internalCreateOrUpdateUser(storage.node(nodeName), user);
+			internalCreateOrUpdateUser(node, user);
 			return true;
 		} catch (Exception e) {
 			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Can not update user: " + user.getLogin(), e)); //$NON-NLS-1$
@@ -222,14 +231,13 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 	}
 
 	public boolean deleteUser(User user) {
-		String nodeName = USERS + '/' + user.getLogin();
-		if (!storage.nodeExists(nodeName)) {
+		ISecurePreferences node = findNodeIgnoreCase(storage, user.getLogin());
+		if (node == null)
 			return false;
-		}
-		ISecurePreferences userPrefs = storage.node(nodeName);
-		userPrefs.removeNode();
+
+		node.removeNode();
 		try {
-			userPrefs.flush();
+			node.flush();
 			return true;
 		} catch (IOException e) {
 			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Cannot delete user: " + user.getLogin(), e)); //$NON-NLS-1$
