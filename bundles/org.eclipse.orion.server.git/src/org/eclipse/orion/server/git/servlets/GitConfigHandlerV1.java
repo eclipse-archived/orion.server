@@ -140,17 +140,14 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 			URI baseLocation = getURI(request);
 
 			String key = p.segment(0);
-			if (key == null || key.isEmpty())
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Confign entry key must be provided in URI", null));
+			String[] keySegments = keyToSegments(key);
+			if (keySegments == null)
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Config entry key must be provided in the following form: section[.subsection].name", null));
 
 			JSONObject toPut = OrionServlet.readJSONRequest(request);
 			String value = toPut.optString(GitConstants.KEY_CONFIG_ENTRY_VALUE, null);
 			if (value == null || value.isEmpty())
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Confign entry value must be provided", null));
-
-			String[] keySegments = keyToSegments(key);
-			if (keySegments == null)
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Config entry key must be provided in the following form: section[.subsection].name", null));
 
 			// PUT allows only to modify existing config entries
 			if (!variableExist(config, keySegments)) {
@@ -197,7 +194,9 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 		return false;
 	}
 
-	// retrieves local config without any base config
+	/**
+	 * Retrieves local config without any base config.
+	 */
 	private FileBasedConfig getLocalConfig(File gitDirectory) throws IOException, ConfigInvalidException {
 		FileRepository db = new FileRepository(gitDirectory);
 		FileBasedConfig config = new FileBasedConfig(db.getConfig().getFile(), FS.detect());
@@ -205,7 +204,9 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 		return config;
 	}
 
-	// converts whole config to JSON representation
+	/**
+	 * Converts whole config to JSON representation.
+	 */
 	JSONObject configToJSON(Config config, URI baseLocation) throws JSONException, URISyntaxException {
 		JSONObject result = new JSONObject();
 		JSONArray children = new JSONArray();
@@ -222,7 +223,9 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 		return result;
 	}
 
-	// reads configuration entry and converts it to JSON representation
+	/**
+	 * Reads configuration entry and converts it to JSON representation.
+	 */
 	JSONObject configEntryToJSON(Config config, String[] keySegments, URI baseLocation) throws JSONException, URISyntaxException {
 		String value = config.getString(keySegments[0], keySegments[1], keySegments[2]);
 		if (value == null)
@@ -236,7 +239,9 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 		return result;
 	}
 
-	// checks if given variable exist in configuration
+	/**
+	 * Checks if given variable exist in configuration.
+	 */
 	boolean variableExist(Config config, String[] keySegments) {
 		if (keySegments[1] != null && !config.getNames(keySegments[0], keySegments[1]).contains(keySegments[2]))
 			return false;
@@ -246,8 +251,11 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	// converts segments of key to key representation
-	// returns null if input array is invalid
+	/**
+	 * Converts array of the key segments to the string representation.
+	 * @param segments array containing three elements: section, subsection and name
+	 * @return string representation of the key or <code>null</code> if input array is invalid
+	 */
 	private String segmentsToKey(String[] segments) {
 		if (segments.length == 3)
 			// check if there is subsection part
@@ -256,17 +264,27 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 		return null;
 	}
 
-	// converts key representation to key segments
-	// returns null if input string is invalid
+	/**
+	 * Converts the string key representation to the key segments array.
+	 * @param string key representation, expected format: section[.subsection].name
+	 * @return array containing segments of keys or <code>null</code> if key is invalid
+	 */
 	private String[] keyToSegments(String key) {
-		String[] keyParts = key.split("\\.");
-		if (keyParts.length == 3)
-			// section, subsection and name provided
-			return keyParts;
-		else if (keyParts.length == 2)
-			// no subsection provided
-			return keyParts = new String[] {keyParts[0], null, keyParts[1]};
+		int firstDot = key.indexOf('.');
+		int lastDot = key.lastIndexOf('.');
+		// we expect at least one dot character
+		if (firstDot == -1 || lastDot == -1)
+			return null;
 
-		return null;
+		// section is required
+		String section = key.substring(0, firstDot);
+		// subsection is optional
+		String subsection = null;
+		if (firstDot != lastDot)
+			subsection = key.substring(firstDot + 1, lastDot);
+		// name is required
+		String name = key.substring(lastDot + 1);
+
+		return new String[] {section, subsection, name};
 	}
 }
