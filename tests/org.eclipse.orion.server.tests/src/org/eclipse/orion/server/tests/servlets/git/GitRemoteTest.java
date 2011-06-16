@@ -139,6 +139,14 @@ public class GitRemoteTest extends GitTest {
 		request = getGetGitRemoteRequest(nu.toString());
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
+
+		p = new Path(u.getPath());
+		p = p.uptoSegment(3).append("xxx").append(p.removeFirstSegments(3));
+		nu = new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), p.toString(), u.getQuery(), u.getFragment());
+
+		request = getGetGitRemoteRequest(nu.toString());
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 	}
 
 	@Test

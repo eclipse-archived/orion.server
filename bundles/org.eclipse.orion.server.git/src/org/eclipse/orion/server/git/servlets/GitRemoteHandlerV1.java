@@ -159,11 +159,10 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 						}
 					}
 				}
-				// TODO: 404
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "No remote branch found: " + p.uptoSegment(2).removeTrailingSeparator(), null));
 			}
 		}
-		// TODO: 400
-		return false;
+		return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Bad request, \"/git/remote/{remote}/{branch}/file/{path}\" expected", null));
 	}
 
 	// remove remote
