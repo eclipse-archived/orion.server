@@ -10,6 +10,9 @@
    <topic label="Orion architecture">
 		<link toc="WikiDoc/Orion-Documentation-Developer-Guide-Architecture-toc.xml" />
    </topic>
+   <topic label="Simple plugin example">
+		<link toc="WikiDoc/Orion-Documentation-Developer-Guide-Simple-plugin-example-toc.xml" />
+   </topic>
    <topic label="Core client services">
 		<link toc="WikiDoc/Orion-Documentation-Developer-Guide-Core-client-services-toc.xml" />
    </topic>

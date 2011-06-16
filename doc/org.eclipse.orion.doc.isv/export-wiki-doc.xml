@@ -64,6 +64,7 @@
     		generateUnifiedToc="false">
     		<path name="Orion/Project_mission_statement" title="Welcome to Orion" generateToc="true"/>
     		<path name="Orion/Documentation/Developer_Guide/Architecture" title="Architecture overview" generateToc="true"/>
+    		<path name="Orion/Documentation/Developer_Guide/Simple_plugin_example" title="Simple plugin example" generateToc="true"/>
     		<path name="Orion/Documentation/Developer_Guide/Core_client_services" title="Core client services" generateToc="true"/>
     		<path name="Orion/Documentation/Developer_Guide/User_interface_services" title="User interface services" generateToc="true"/>
        		<path name="Orion/Documentation/Developer_Guide/Plugging_into_the_editor" title="Plugging into the editor" generateToc="true"/>
