@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.server.tests.servlets.git;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -20,12 +21,16 @@ import java.net.URI;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.lib.Config;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.servlets.ServletStatusHandler;
 import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.servlets.GitConfigHandlerV1;
+import org.eclipse.orion.server.tests.ReflectionUtils;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -112,7 +117,7 @@ public class GitConfigTest extends GitTest {
 	}
 
 	@Test
-	public void testSetAndUnsetConfigValues() throws Exception {
+	public void testGetListOfConfigEntries() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
 		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
@@ -131,11 +136,41 @@ public class GitConfigTest extends GitTest {
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
-			JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-			assertNotNull(gitSection);
-
+			JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 			String gitConfigUri = gitSection.getString(GitConstants.KEY_CONFIG);
-			assertNotNull(gitConfigUri);
+
+			// get list of config entries
+			request = getGetGitConfigRequest(gitConfigUri);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject configResponse = new JSONObject(response.getText());
+			JSONArray configEntries = configResponse.optJSONArray(ProtocolConstants.KEY_CHILDREN);
+			assertNotNull(configEntries);
+		}
+	}
+
+	@Test
+	public void testAddConfigEntry() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
+
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+			// get project metadata
+			WebRequest request = getGetFilesRequest(contentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject project = new JSONObject(response.getText());
+			JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+			String gitConfigUri = gitSection.getString(GitConstants.KEY_CONFIG);
 
 			// get list of config entries
 			request = getGetGitConfigRequest(gitConfigUri);
@@ -147,8 +182,8 @@ public class GitConfigTest extends GitTest {
 			int initialConfigEntriesCount = configEntries.length();
 
 			// set some dummy value
-			final String ENTRY_KEY = "sectionA.subsectionB.nameC";
-			final String ENTRY_VALUE = "valueXYZ";
+			final String ENTRY_KEY = "a.b.c";
+			final String ENTRY_VALUE = "v";
 
 			request = getPostGitConfigRequest(gitConfigUri, ENTRY_KEY, ENTRY_VALUE);
 			response = webConversation.getResponse(request);
@@ -172,83 +207,376 @@ public class GitConfigTest extends GitTest {
 			}
 			assertNotNull(entryLocation);
 
-			// update config entry using POST
-			final String NEW_ENTRY_VALUE_1 = "valueABC";
+			// double check
+			Config config = getRepositoryForContentLocation(contentLocation).getConfig();
+			assertEquals(ENTRY_VALUE, config.getString("a", "b", "c"));
+		}
+	}
 
-			request = getPostGitConfigRequest(gitConfigUri, ENTRY_KEY, NEW_ENTRY_VALUE_1);
-			response = webConversation.getResponse(request);
+	@Test
+	public void testGetSingleConfigEntry() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
+
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+			// get project metadata
+			WebRequest request = getGetFilesRequest(contentLocation);
+			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject project = new JSONObject(response.getText());
+			JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+			String gitConfigUri = gitSection.getString(GitConstants.KEY_CONFIG);
 
-			// get list of config entries again
-			request = getGetGitConfigRequest(gitConfigUri);
+			// set some dummy value
+			final String ENTRY_KEY = "a.b.c";
+			final String ENTRY_VALUE = "v";
+
+			request = getPostGitConfigRequest(gitConfigUri, ENTRY_KEY, ENTRY_VALUE);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+			JSONObject configResponse = new JSONObject(response.getText());
+			String entryLocation = configResponse.getString(ProtocolConstants.KEY_LOCATION);
+
+			// get value of config entry
+			request = getGetGitConfigRequest(entryLocation);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			configResponse = new JSONObject(response.getText());
-			configEntries = configResponse.getJSONArray(ProtocolConstants.KEY_CHILDREN);
-			assertEquals(initialConfigEntriesCount + 1, configEntries.length());
+			assertEquals(ENTRY_KEY, configResponse.getString(GitConstants.KEY_CONFIG_ENTRY_KEY));
+			assertEquals(ENTRY_VALUE, configResponse.getString(GitConstants.KEY_CONFIG_ENTRY_VALUE));
+		}
+	}
 
-			entryLocation = null;
-			for (int i = 0; i < configEntries.length(); i++) {
-				JSONObject configEntry = configEntries.getJSONObject(i);
-				if (ENTRY_KEY.equals(configEntry.getString(GitConstants.KEY_CONFIG_ENTRY_KEY))) {
-					assertEquals(NEW_ENTRY_VALUE_1, configEntry.getString(GitConstants.KEY_CONFIG_ENTRY_VALUE));
-					entryLocation = configEntry.getString(ProtocolConstants.KEY_LOCATION);
-				}
-			}
-			assertNotNull(entryLocation);
+	@Test
+	public void testUpdateConfigEntryUsingPOST() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
+
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+			// get project metadata
+			WebRequest request = getGetFilesRequest(contentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject project = new JSONObject(response.getText());
+			JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+			String gitConfigUri = gitSection.getString(GitConstants.KEY_CONFIG);
+
+			// set some dummy value
+			final String ENTRY_KEY = "a.b.c";
+			final String ENTRY_VALUE = "v";
+
+			request = getPostGitConfigRequest(gitConfigUri, ENTRY_KEY, ENTRY_VALUE);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+			// update config entry using POST
+			final String NEW_ENTRY_VALUE = "valueABC";
+
+			request = getPostGitConfigRequest(gitConfigUri, ENTRY_KEY, NEW_ENTRY_VALUE);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			JSONObject configResponse = new JSONObject(response.getText());
+			String entryLocation = configResponse.getString(ProtocolConstants.KEY_LOCATION);
+
+			// get value of config entry
+			request = getGetGitConfigRequest(entryLocation);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			configResponse = new JSONObject(response.getText());
+			assertEquals(ENTRY_KEY, configResponse.getString(GitConstants.KEY_CONFIG_ENTRY_KEY));
+			assertEquals(NEW_ENTRY_VALUE, configResponse.getString(GitConstants.KEY_CONFIG_ENTRY_VALUE));
+		}
+	}
+
+	@Test
+	public void testUpdateConfigEntryUsingPUT() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
+
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+			// get project metadata
+			WebRequest request = getGetFilesRequest(contentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject project = new JSONObject(response.getText());
+			JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+			String gitConfigUri = gitSection.getString(GitConstants.KEY_CONFIG);
+
+			// set some dummy value
+			final String ENTRY_KEY = "a.b.c";
+			final String ENTRY_VALUE = "v";
+
+			request = getPostGitConfigRequest(gitConfigUri, ENTRY_KEY, ENTRY_VALUE);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+			JSONObject configResponse = new JSONObject(response.getText());
+			String entryLocation = configResponse.getString(ProtocolConstants.KEY_LOCATION);
 
 			// update config entry using PUT
-			final String NEW_ENTRY_VALUE_2 = "valueABCXYZ";
+			final String NEW_ENTRY_VALUE = "v2";
 
-			request = getPutGitConfigRequest(entryLocation, NEW_ENTRY_VALUE_2);
+			request = getPutGitConfigRequest(entryLocation, NEW_ENTRY_VALUE);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-			// get list of config entries again
-			request = getGetGitConfigRequest(gitConfigUri);
+			// get value of config entry
+			request = getGetGitConfigRequest(entryLocation);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			configResponse = new JSONObject(response.getText());
-			configEntries = configResponse.getJSONArray(ProtocolConstants.KEY_CHILDREN);
-			assertEquals(initialConfigEntriesCount + 1, configEntries.length());
+			assertEquals(ENTRY_KEY, configResponse.getString(GitConstants.KEY_CONFIG_ENTRY_KEY));
+			assertEquals(NEW_ENTRY_VALUE, configResponse.getString(GitConstants.KEY_CONFIG_ENTRY_VALUE));
+		}
+	}
 
-			entryLocation = null;
-			for (int i = 0; i < configEntries.length(); i++) {
-				JSONObject configEntry = configEntries.getJSONObject(i);
-				if (ENTRY_KEY.equals(configEntry.getString(GitConstants.KEY_CONFIG_ENTRY_KEY))) {
-					assertEquals(NEW_ENTRY_VALUE_2, configEntry.getString(GitConstants.KEY_CONFIG_ENTRY_VALUE));
-					entryLocation = configEntry.getString(ProtocolConstants.KEY_LOCATION);
-				}
-			}
-			assertNotNull(entryLocation);
+	@Test
+	public void testDeleteConfigEntry() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 
-			// test PUT with invalid entry
-			String invalidEntryLocation = entryLocation.replace(ENTRY_KEY, "qwerty.asdfg");
-			request = getPutGitConfigRequest(invalidEntryLocation, NEW_ENTRY_VALUE_2);
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
+
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+			// get project metadata
+			WebRequest request = getGetFilesRequest(contentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject project = new JSONObject(response.getText());
+			JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+			String gitConfigUri = gitSection.getString(GitConstants.KEY_CONFIG);
+
+			// set some dummy value
+			final String ENTRY_KEY = "a.b.c";
+			final String ENTRY_VALUE = "v";
+
+			request = getPostGitConfigRequest(gitConfigUri, ENTRY_KEY, ENTRY_VALUE);
 			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
+			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+			JSONObject configResponse = new JSONObject(response.getText());
+			String entryLocation = configResponse.getString(ProtocolConstants.KEY_LOCATION);
+
+			// check if it exists
+			request = getGetGitConfigRequest(entryLocation);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// delete config entry
 			request = getDeleteGitConfigRequest(entryLocation);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-			// get list of config entries again
-			request = getGetGitConfigRequest(gitConfigUri);
+			// it shouldn't exist
+			request = getGetGitConfigRequest(entryLocation);
 			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			configResponse = new JSONObject(response.getText());
-			configEntries = configResponse.getJSONArray(ProtocolConstants.KEY_CHILDREN);
-			assertEquals(initialConfigEntriesCount, configEntries.length());
+			assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 
-			boolean found = false;
-			for (int i = 0; i < configEntries.length(); i++) {
-				JSONObject configEntry = configEntries.getJSONObject(i);
-				if (ENTRY_KEY.equals(configEntry.getString(GitConstants.KEY_CONFIG_ENTRY_KEY)))
-					found = true;
-			}
-			assertEquals(false, found);
+			// so next delete operation should fail
+			request = getDeleteGitConfigRequest(entryLocation);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 		}
+	}
+
+	@Test
+	public void testCreateInvalidConfigEntry() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
+
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+			// get project metadata
+			WebRequest request = getGetFilesRequest(contentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject project = new JSONObject(response.getText());
+			JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+			String gitConfigUri = gitSection.getString(GitConstants.KEY_CONFIG);
+
+			final String INVALID_ENTRY_KEY = "a"; // no name specified, dot missing
+			final String ENTRY_VALUE = "v";
+
+			// try to set entry with invalid key
+			request = getPostGitConfigRequest(gitConfigUri, INVALID_ENTRY_KEY, ENTRY_VALUE);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
+		}
+	}
+
+	@Test
+	public void testUpdateUnexistingConfigEntryUsingPUT() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
+
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+			// get project metadata
+			WebRequest request = getGetFilesRequest(contentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject project = new JSONObject(response.getText());
+			JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+			String gitConfigUri = gitSection.getString(GitConstants.KEY_CONFIG);
+
+			final String ENTRY_KEY = "a.b.c";
+			final String ENTRY_VALUE = "v";
+
+			String invalidEntryLocation = gitConfigUri.replace(GitConstants.CONFIG_RESOURCE, GitConstants.CONFIG_RESOURCE + "/" + ENTRY_KEY);
+
+			// check if it doesn't exist
+			request = getGetGitConfigRequest(invalidEntryLocation);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
+
+			// try to update unexisting config entry using PUT (not allowed)
+			request = getPutGitConfigRequest(invalidEntryLocation, ENTRY_VALUE);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
+		}
+	}
+
+	@Test
+	public void testRequestWithMissingArguments() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
+
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+			// get project metadata
+			WebRequest request = getGetFilesRequest(contentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject project = new JSONObject(response.getText());
+			JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+			String gitConfigUri = gitSection.getString(GitConstants.KEY_CONFIG);
+
+			final String ENTRY_KEY = "a.b.c";
+			final String ENTRY_VALUE = "v";
+
+			// missing key
+			request = getPostGitConfigRequest(gitConfigUri, null, ENTRY_VALUE);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
+
+			// missing value
+			request = getPostGitConfigRequest(gitConfigUri, ENTRY_KEY, null);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
+
+			// missing key and value
+			request = getPostGitConfigRequest(gitConfigUri, null, null);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
+
+			// add some config
+			request = getPostGitConfigRequest(gitConfigUri, ENTRY_KEY, ENTRY_VALUE);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+			JSONObject configResponse = new JSONObject(response.getText());
+			String entryLocation = configResponse.getString(ProtocolConstants.KEY_LOCATION);
+
+			// put without value
+			request = getPutGitConfigRequest(entryLocation, null);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
+		}
+	}
+
+	@Test
+	public void testKeyToSegmentsMethod() throws Exception {
+		Object configHandler = ReflectionUtils.callConstructor(GitConfigHandlerV1.class, new Object[] {new ServletStatusHandler()});
+
+		String[] segments = (String[]) ReflectionUtils.callMethod(configHandler, "keyToSegments", new Object[] {"a.b.c"});
+		assertArrayEquals(new String[] {"a", "b", "c"}, segments);
+
+		segments = (String[]) ReflectionUtils.callMethod(configHandler, "keyToSegments", new Object[] {"a.c"});
+		assertArrayEquals(new String[] {"a", null, "c"}, segments);
+
+		segments = (String[]) ReflectionUtils.callMethod(configHandler, "keyToSegments", new Object[] {"a.b.c.d"});
+		assertArrayEquals(new String[] {"a", "b.c", "d"}, segments);
+
+		segments = (String[]) ReflectionUtils.callMethod(configHandler, "keyToSegments", new Object[] {"a"});
+		assertArrayEquals(null, segments);
+	}
+
+	@Test
+	public void testSegmentsToKeyMethod() throws Exception {
+		Object configHandler = ReflectionUtils.callConstructor(GitConfigHandlerV1.class, new Object[] {new ServletStatusHandler()});
+
+		String key = (String) ReflectionUtils.callMethod(configHandler, "segmentsToKey", new Object[] {new String[] {"a", "b", "c"}});
+		assertEquals("a.b.c", key);
+
+		key = (String) ReflectionUtils.callMethod(configHandler, "segmentsToKey", new Object[] {new String[] {"a", null, "c"}});
+		assertEquals("a.c", key);
+
+		key = (String) ReflectionUtils.callMethod(configHandler, "segmentsToKey", new Object[] {new String[] {"a", "b.c", "d"}});
+		assertEquals("a.b.c.d", key);
+
+		key = (String) ReflectionUtils.callMethod(configHandler, "segmentsToKey", new Object[] {new String[] {"a", "b"}});
+		assertEquals(null, key);
+
+		key = (String) ReflectionUtils.callMethod(configHandler, "segmentsToKey", new Object[] {new String[] {"a", "b", "c", "d"}});
+		assertEquals(null, key);
 	}
 
 	static WebRequest getDeleteGitConfigRequest(String location) {
