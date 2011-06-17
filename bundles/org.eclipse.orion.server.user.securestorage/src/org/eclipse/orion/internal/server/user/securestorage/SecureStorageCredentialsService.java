@@ -181,7 +181,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 		return null;
 	}
 
-	public User createUser(User user) {		
+	public User createUser(User user) {
 		ISecurePreferences node = findNodeIgnoreCase(storage, user.getLogin());
 		if (node != null)
 			return null;
@@ -194,12 +194,15 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 		}
 		return null;
 	}
-	
-	private ISecurePreferences findNodeIgnoreCase(ISecurePreferences storage, String login){
+
+	private ISecurePreferences findNodeIgnoreCase(ISecurePreferences storage, String login) {
+		if (login == null)
+			return null;
 		ISecurePreferences usersPref = storage.node(USERS);
-		for (int i=0 ; i<usersPref.childrenNames().length; i++){
-			 if (login.equalsIgnoreCase(usersPref.node(usersPref.childrenNames()[i]).name()))
-				 return usersPref.node(usersPref.childrenNames()[i]);
+		String[] childrenNames = usersPref.childrenNames();
+		for (int i = 0; i < childrenNames.length; i++) {
+			if (login.equalsIgnoreCase(usersPref.node(childrenNames[i]).name()))
+				return usersPref.node(childrenNames[i]);
 		}
 		return null;
 	}
@@ -208,7 +211,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 		ISecurePreferences node = findNodeIgnoreCase(storage, user.getLogin());
 		if (node == null)
 			return false;
-		
+
 		try {
 			internalCreateOrUpdateUser(node, user);
 			return true;
