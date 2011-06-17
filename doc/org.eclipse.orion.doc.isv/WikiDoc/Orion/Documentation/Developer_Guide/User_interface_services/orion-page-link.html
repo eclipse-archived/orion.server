@@ -29,7 +29,29 @@
 				<td style="width: 20%" align="right" valign="top">Updating this document</td>
 			</tr>
 		</table><hr/>
-		<h1 id="orion.page.link">orion.page.link</h1><hr/>
+		<h1 id="orion.page.link">orion.page.link</h1>
+		<p>The link service provides a mechanism for plugins to add links that should appear in the main header of Orion pages.  Clients supply the link name and URL.  The header code will look for implementors of this service when generating page headers for Orion.  For example, the following snippet defines the main links that are shown in a default Orion installation.</p>
+		<pre>  provider.registerServiceProvider("orion.page.link", serviceImpl, {
+     name: "Navigator",
+     id: "orion.navigator",
+     href: "/navigate/table.html#"
+  });
+  provider.registerServiceProvider("orion.page.link", serviceImpl, {
+     name: "Sites",
+     id: "orion.sites",
+     href: "/sites/sites.html"
+  });
+  provider.registerServiceProvider("orion.page.link", serviceImpl, {
+     name: "Plugins",
+     id: "orion.plugins",
+     href: "/plugin/list.html"
+  });
+  provider.registerServiceProvider("orion.page.link", serviceImpl, {
+     name: "Repositories",
+     id: "orion.repositories",
+     href: "/git/git-clone.html"
+  });
+</pre><hr/>
 		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
 			<tr>
 				<td style="width: 20%" align="left">
