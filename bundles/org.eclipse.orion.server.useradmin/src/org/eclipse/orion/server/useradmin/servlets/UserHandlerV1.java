@@ -21,8 +21,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.orion.server.user.profile.*;
 import org.eclipse.orion.server.useradmin.*;
@@ -162,12 +161,15 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		}
 
 		User user = (User) userAdmin.getUser(UserConstants.KEY_LOGIN, userId);
-		
+
 		if (user == null)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + userId + " could not be found.", null));
-		
-		if(data.has(UserConstants.KEY_PASSWORD) && (!data.has(UserConstants.KEY_OLD_PASSWORD) || !user.getPassword().equals(data.getString(UserConstants.KEY_OLD_PASSWORD)))){
-			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_UNAUTHORIZED, "Invalid old password", null));
+
+		//users other than admin have to know the old password to set a new one
+		if (!isAdmin(req.getRemoteUser())) {
+			if (data.has(UserConstants.KEY_PASSWORD) && (!data.has(UserConstants.KEY_OLD_PASSWORD) || !user.getPassword().equals(data.getString(UserConstants.KEY_OLD_PASSWORD)))) {
+				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_UNAUTHORIZED, "Invalid old password", null));
+			}
 		}
 
 		if (data.has(UserConstants.KEY_LOGIN))
@@ -187,6 +189,21 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		userNode.flush();
 
 		return true;
+	}
+
+	/**
+	 * Returns true if this user is an administrator, and false otherwise
+	 */
+	private boolean isAdmin(String user) {
+		String creators = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION, null);
+		if (creators != null) {
+			String[] admins = creators.split(",");
+			for (String admin : admins) {
+				if (admin.equals(user))
+					return true;
+			}
+		}
+		return false;
 	}
 
 	private boolean handleUserDelete(HttpServletRequest req, HttpServletResponse resp, String userId) throws ServletException {
