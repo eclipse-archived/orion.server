@@ -170,14 +170,14 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			toRefId = db.getRef(commits[1]);
 			if (toObjectId == null) {
 				String msg = NLS.bind("Failed to generate commit log for ref {0}", commits[1]); //$NON-NLS-1$
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "No ref or commit found: " + commits[1], null));
 			}
 		} else {
 			toObjectId = db.resolve(refIdsRange);
 			toRefId = db.getRef(refIdsRange);
 			if (toObjectId == null) {
 				String msg = NLS.bind("Failed to generate commit log for ref {0}", refIdsRange); //$NON-NLS-1$
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "No ref or commit found: " + refIdsRange, null));
 			}
 		}
 
