@@ -159,8 +159,8 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 						}
 					}
 				}
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "No remote branch found: " + p.uptoSegment(2).removeTrailingSeparator(), null));
 			}
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "No remote branch found: " + p.uptoSegment(2).removeTrailingSeparator(), null));
 		}
 		return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Bad request, \"/git/remote/{remote}/{branch}/file/{path}\" expected", null));
 	}
