@@ -69,6 +69,9 @@ public abstract class OrionServlet extends HttpServlet {
 
 	private static void removeOwnProtocolHostPort(JSONObject json, String scheme, String hostname, int port) {
 		String[] names = JSONObject.getNames(json);
+		if (names == null) {
+			return;
+		}
 		for (String name : names) {
 			Object o = json.opt(name);
 			if (o instanceof URI) {
