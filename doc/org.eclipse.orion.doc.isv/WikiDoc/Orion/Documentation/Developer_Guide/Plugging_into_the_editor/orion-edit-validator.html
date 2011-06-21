@@ -29,7 +29,63 @@
 				<td style="width: 20%" align="right" valign="top">Updating this document</td>
 			</tr>
 		</table><hr/>
-		<h1 id="orion.edit.validator">orion.edit.validator</h1><hr/>
+		<h1 id="orion.edit.validator">orion.edit.validator</h1>
+		<p>An <tt>orion.edit.validator</tt> service provides a function that can check the contents of a file and return a data structure indicating which lines (if any) have errors, along with the reason for the error. The result of this service is used by the Orion UI to create error annotations in the ruler beside each problematic line.</p>
+		<h2 id="Service_methods_4">Service methods</h2>
+		<p>Implementations of <tt>orion.edit.validator</tt> must define the following function:</p>
+		<dl>
+			<dt>checkSyntax(title, contents)</dt>
+			<dd>
+				<b>title</b> <tt>String</tt> The path and filename of the file being edited.
+			</dd>
+			<dd>
+				<b>contents</b> <tt>String</tt> The contents of the file being edited.
+			</dd>
+		</dl>
+		<p>Returns an <tt>Object</tt> giving the validation result. The returned object must have an <tt>errors</tt> property whose value is an array.
+			<br/>Each element of the <tt>errors</tt> array must have the properties:
+		</p>
+		<dl>
+			<dd><b>reason</b> <tt>String</tt> A description of the error.</dd>
+			<dd><b>line</b> <tt>Number</tt> Gives the line number where the error was found. (Line numbers begin counting from 1.)</dd>
+			<dd><b>character</b> <tt>Number</tt> Gives the column within the line where the error was found. (Not currently displayed in the Orion UI).</dd>
+		</dl>
+		<h2 id="Service_attributes_4">Service attributes</h2>
+		<p>Implementations of <tt>orion.edit.validator</tt> must define the following attributes:</p>
+		<dl>
+			<dt>pattern</dt>
+			<dd><tt>String</tt> A regular expression pattern matching the filenames that this validator is capable of validating.</dd>
+		</dl>
+		<h2 id="Examples_4">Examples</h2>
+		<pre>var service = {
+    checkSyntax: function(title, contents) {
+        var errors = [];
+        var lines = contents.split(/\r?\n/);
+        for (var i=0; i &lt; lines.length; i++) {
+          var line = lines[i];
+          var match = /\t \t| \t /.exec(line);
+          if (match) {
+            errors.push({ reason: "Mixed spaces and tabs", line: i+1, character: match.index });
+          }
+        }
+</pre>
+		<pre>        var result = { errors: errors };
+        this.dispatchEvent("syntaxChecked", {title: title, result: result});
+        return result;
+   },
+   dispatchEvent: null /* see below */
+}; 
+</pre>
+		<pre>var provider = new eclipse.PluginProvider();
+var serviceProvider = provider.registerServiceProvider("orion.edit.validator",
+  service,
+  {
+     pattern: "\\.(txt|js)$"
+  });
+service.dispatchEvent = serviceProvider.dispatchEvent;
+provider.connect();
+</pre>
+		<p>This example finds lines containing a sequence of space-tab-space or tab-space-tab and produces an error on each such line.</p><hr/>
 		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
 			<tr>
 				<td style="width: 20%" align="left">

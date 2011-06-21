@@ -29,7 +29,54 @@
 				<td style="width: 20%" align="right" valign="top">orion.edit.highlighter</td>
 			</tr>
 		</table><hr/>
-		<h1 id="orion.edit.contentAssist">orion.edit.contentAssist</h1><hr/>
+		<h1 id="orion.edit.contentAssist">orion.edit.contentAssist</h1>
+		<p>The <tt>orion.edit.contentAssist</tt> service contributes content assist providers to the editor. A content assist provider produces suggestions for text that may be inserted into the editor at a given point. Providers are invoked when the user triggers the "content assist" action by pressing Ctrl+Space in the editor.</p>
+		<h2 id="Service_methods_2">Service methods</h2>
+		<p>Implementations of <tt>orion.edit.contentAssist</tt> must define the following function:</p>
+		<dl>
+			<dt>getKeywords(prefix, buffer, selection)</dt>
+			<dd>When content assist is triggered, the editor calls this function to obtain suggestions from a content assist provider.
+				<br/>Returns <tt>Array</tt> giving possible strings that may be inserted into the editor.
+				<br/>Alternatively, a 
+				<a href="http://dojotoolkit.org/documentation/tutorials/1.6/promises/" target="orion_external">Dojo promise</a> may be returned, which allows the suggestions to be computed asynchronously.
+				<dl>
+					<dd>
+						<b>prefix</b> <tt>String</tt> The substring extending from the first non-word character preceding the editing caret to the editing caret. This may give a clue about what the user intended to type, and can be used to narrow down the results to be returned.
+					</dd>
+					<dd>
+						<b>buffer</b> <tt>String</tt> The entire buffer being edited.
+					</dd>
+					<dd>
+						<b>selection</b> <tt>orion.textview.Selection</tt> The current selection in the editor.
+					</dd>
+				</dl>
+			</dd>
+		</dl>
+		<h2 id="Service_attributes_2">Service attributes</h2>
+		<p>Implementations of <tt>orion.edit.contentAssist</tt> must define the following attributes:</p>
+		<dl>
+			<dt>name</dt>
+			<dd><tt>String</tt> Name for the content assist provider.</dd>
+			<dt>pattern</dt>
+			<dd><tt>String</tt> A regular expression pattern matching filenames that this provider can provide content assist for. The provider's <tt>getKeywords</tt> function will be called only for files that match this pattern.</dd>
+		</dl>
+		<h2 id="Examples_2">Examples</h2>
+		<pre>var provider = new eclipse.PluginProvider();
+provider.registerServiceProvider("orion.edit.contentAssist",
+  {
+     getKeywords: function(prefix, buffer, selection) {
+       return [ "break", "case", "catch", "continue", "debugger", "default", "delete", "do", "else",
+                "finally", "for", "function", "if", "in", "instanceof", "new", "return", "switch", "this",
+                "throw", "try", "typeof", "var", "void", "while", "with" ];
+     }
+  },
+  {
+    name: "JavaScript content assist",
+    pattern: "\\.js$"
+  });
+provider.connect();
+</pre>
+		<p>The above example provides content assist suggestions for files whose name ends in <tt>.js</tt>. It offers JavaScript keywords as suggestions.</p><hr/>
 		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
 			<tr>
 				<td style="width: 20%" align="left">

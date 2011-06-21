@@ -29,7 +29,45 @@
 				<td style="width: 20%" align="right" valign="top">orion.edit.outline</td>
 			</tr>
 		</table><hr/>
-		<h1 id="orion.edit.highlighter">orion.edit.highlighter</h1><hr/>
+		<h1 id="orion.edit.highlighter">orion.edit.highlighter</h1>
+		<p>The <tt>orion.edit.highlighter</tt> service contributes syntax highlighting rules to the editor. A highlighter service provides a <i>grammar</i>, which is a declarative description of the structure of a language and what CSS classes the different structural pieces correspond to. The service also provides a list of file extensions. When the editor opens a file of a registered extension type, the grammar is applied to the file to obtain the styling.</p>
+		<h2 id="Service_methods_3">Service methods</h2>
+		<p>None.</p>
+		<h2 id="Service_attributes_3">Service attributes</h2>
+		<p>Implementations of <tt>orion.edit.highlighter</tt> must define the following attributes:</p>
+		<dl>
+			<dt>type</dt>
+			<dd><tt>String</tt> What kind of highlight provider is being registered. For now this should always be <tt>"grammar"</tt>, although future versions may support more.</dd>
+			<dt>fileTypes</dt>
+			<dd><tt>Array</tt> An array of file extensions that this provider will be used for.</dd>
+			<dt>grammar</dt>
+			<dd><tt>Object</tt> An object giving the grammar to be used to assign style classes. This object is expected to be a JavaScript equivalent of the format described 
+				<a href="http://manual.macromates.com/en/language_grammars.html" target="orion_external">here</a>.
+			</dd>
+		</dl>
+		<h2 id="Examples_3">Examples</h2>
+		<pre>var provider = new eclipse.PluginProvider();
+provider.registerServiceProvider("orion.edit.highlighter",
+  {
+  }, {
+    type : "grammar",
+    fileTypes : ["html", "htm"],
+    grammar: {
+      patterns: [
+          {  begin: "&lt;!--", 
+             end: "--&gt;",
+             captures: { "0": "punctuation.definition.comment.html" },
+             contentName: "comment.block.html"
+          }
+      ]
+    }
+  });
+provider.connect();
+</pre>
+		<p>The above example provides a grammar to be used for <tt>.html</tt> and <tt>.htm</tt> files. It will assign the CSS class <tt>punctuation-definition-comment-html</tt> to the <tt>&lt;!--</tt> and <tt>--&gt;</tt> delimiters, and assign the CSS class <tt>comment-block-html</tt> to the text inside the delimiters. Consult 
+			<a href="http://manual.macromates.com/en/language_grammars.html" target="orion_external">this reference</a> for a full description of the grammar format.
+		</p>
+		<p><i>(Note that some aspects of the grammar format are not supported. See</i> <tt>orion.editor.TextMateStyler</tt> <i>in the Client API reference for a detailed explanation.)</i></p><hr/>
 		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
 			<tr>
 				<td style="width: 20%" align="left">
