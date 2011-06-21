@@ -36,19 +36,19 @@
 		<h3 id="Creating_folders_and_files">Creating folders and files</h3>
 		<p>For demo purposes, we currently populate every user's root folder with two folders that contain some of the Orion client source code.  Once you've successfully logged into Orion, you should see two folders:</p>
 		<p>
-			<img border="0" src="images/orion-navinitial.png"/>
+			<img border="0" src="images/Orion-navinitial.png"/>
 		</p>
 		<p>To navigate the files, you may either expand the folders (using the triangles), or you may click on the folder links to drill into that folder.  The breadcrumb at the top of the page allows you to navigate back up the tree.  </p>
 		<p>Global commands for Orion (such as search, open resource, user management) appear at the top right of the page.  Commands that operate on the navigator are located on the right side of the dark bar in the banner.  Commands that apply to individual files or folders are located in the "Actions" column next to the item.  </p>
 		<p>To start working with your own files in Orion, you can create a folder using the button on the right.</p>
 		<p>
-			<img border="0" src="images/orion-navbreadcommands.png"/>
+			<img border="0" src="images/Orion-navbreadcommands.png"/>
 		</p>
 		<p>Once you've created a top level folder, you can create additional folders and files within that folder.  </p>
 		<h3 id="Importing_folders_and_files">Importing folders and files</h3>
 		<p>You can upload zip files from your local machine to the server using the import menu.  </p>
 		<p>
-			<img border="0" src="images/orion-navimport.png"/>
+			<img border="0" src="images/Orion-navimport.png"/>
 		</p>
 		<p>To import projects from Eclipse (or any other IDE, or your local file system) into Orion, you must first zip up the files you wish to import.   Choose this zip file in the file selection prompt offered in the import dialog available when moving the cursor to a folder line and clicking More.  (Choosing a non-zip file may break the import dialog on some browsers, see 
 			<a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=335890" target="orion_external">Bug 335890</a>).
@@ -65,23 +65,23 @@
 		<h3 id="Exporting_folders_and_files">Exporting folders and files</h3>
 		<p>When you have worked with your code on Orion and are ready to export your work back to your local workstation, navigate to the folder you wish to export and choose the "Download as Zip" link.</p>
 		<p>
-			<img border="0" src="images/orion-navexport.png"/>
+			<img border="0" src="images/Orion-navexport.png"/>
 		</p>
 		<h3 id="Creating_favorites">Creating favorites</h3>
 		<p>You can use the "Favorites" icon to bookmark a folder or file in your navigator. A link to this folder or file will appear in your favorites list and can be used to navigate quickly to that file or folder. </p>
 		<p>
-			<img border="0" src="images/orion-favorites.png"/>
+			<img border="0" src="images/Orion-favorites.png"/>
 		</p>
 		<p>Favorites are also suggested as move/copy targets.</p>
 		<p>
-			<img border="0" src="images/orion-copymove.png"/>
+			<img border="0" src="images/Orion-copymove.png"/>
 		</p>
 		<h3 id="Extending_the_navigator">Extending the navigator</h3>
 		<p>We've implemented an extension point that allows a plug-in to add commands to the navigator's toolbar and local item actions.  To see what plug-ins are installed in your Orion system, open the page 
 			<a href="http://orionhub.org/view-registry.html" target="orion_external">view-registry.html</a> on your Orion server.
 		</p>
 		<p>
-			<img border="0" src="images/orion-pluginregistry.png"/>
+			<img border="0" src="images/Orion-pluginregistry.png"/>
 		</p>
 		<p>The registry shows what plug-ins you have installed, and allows you to add plug-ins by typing the URL of a plug-in in the text box on the upper right.  You can see that the several plug-ins that provide Orion functionality, such as file management, user management, git, jslint, are already installed.  Plug-ins provide different kinds of new behaviors, or "extensions" to the system.  </p>
 		<p>The "fileCommands" extension point allows plug-ins to contribute commands to the navigator.  The plug-in can specify how many and what types of files it can work with.  The command will be 	contributed in the navigator item menus.  </p>
@@ -90,7 +90,7 @@
 			<b>Install</b> button.  When you reload the navigator page, you will see new commands in the item and toolbar menus.
 		</p>
 		<p>
-			<img border="0" src="images/orion-sampleCommands.png"/>
+			<img border="0" src="images/Orion-sampleCommands.png"/>
 		</p>
 		<p>See 
 			<a href="https://github.com/eclipse/orion.client/blob/master/bundles/org.eclipse.orion.client.core/static/plugins/sampleCommandsPlugin.html" target="orion_external">sampleCommandsPlugin.html</a> for the source code.
@@ -102,7 +102,7 @@
 		<p>The editor will also match brackets when you click next to a bracket, perform auto indention, and provide source-code oriented keybindings for things like toggling comments and adding/removing block comments.</p>
 		<p>We do not yet support content assist on JavaScript files.</p>
 		<p>
-			<img border="0" src="images/orion-editjs.png"/>
+			<img border="0" src="images/Orion-editjs.png"/>
 		</p>
 		<h3 id="Firebug_Integration">Firebug Integration</h3>
 		<p>The Orion server is Firebug-savvy, so that recent alpha versions of Firebug, together with a Firebug extension, can invoke the Orion editor to make corrections.  For details about this, see 
@@ -111,12 +111,12 @@
 		<h3 id="CSS_development">CSS development</h3>
 		<p>Syntax highlighting of CSS files is also supported, but no outlining support has been provided yet.  As a proof of concept, we've implemented a bare-bones content assist.  In Orion, our goal is to provide the plug-in points for things like content assist and outlining, allowing plug-in developers to enhance the functionality.  For now, we supply a content assist based on CSS keyword proposals.  We hope to integrate existing source code analysis tools as plug-ins to enhance content assist support, outlining, and problem identification for many kinds of files.  </p>
 		<p>
-			<img border="0" src="images/orion-editcss.png"/>
+			<img border="0" src="images/Orion-editcss.png"/>
 		</p>
 		<h3 id="HTML_development">HTML development</h3>
 		<p>We've implemented a simple HTML outliner based on DOM ids.  Basic syntax highlighting is also provided for HTML files.</p>
 		<p>
-			<img border="0" src="images/orion-edithtml.png"/>
+			<img border="0" src="images/Orion-edithtml.png"/>
 		</p>
 		<h3 id="Java_development">Java development</h3>
 		<p>Java syntax highlighting is also supported.  However, we have not implemented any outlining or content assist.  Since we are building an integrated web-based toolset, we felt it important to target first the web client languages such as JavaScript, CSS, and HTML, so we can attract members of the JS community to Eclipse.  Since we are 
@@ -125,42 +125,42 @@
 		<h3 id="Extending_the_editor_with_a_Plug-in">Extending the editor with a Plug-in</h3>
 		<p>We've also implemented pluggable editor actions which allow third-party developers to extend the behavior of the Orion editor on the fly.  For example, we've developed an Orion plug-in based on 
 			<a href="http://jsbeautifier.org" target="orion_external">the JSBeautifier code formatter</a> so that source code can be easily beautified.  The plug-in is located at 
-			<a href="http://jsbeautifier.org/orion/m6/jsbeautify.html" target="orion_external">http://jsbeautifier.org/orion/m6/jsbeautify.html</a> .  Once the plug-in is installed, it will appear in the list of plug-ins.  More interestingly, when you reload an Orion editor, you should see a new icon appear with the rest of the editor commands.
+			<a href="http://jsbeautifier.org/orion/0.2/jsbeautify.html" target="orion_external">http://jsbeautifier.org/orion/0.2/jsbeautify.html</a> .  Once the plug-in is installed, it will appear in the list of plug-ins.  More interestingly, when you reload an Orion editor, you should see a new icon appear with the rest of the editor commands.
 		</p>
 		<p>
-			<img border="0" src="images/orion-editorplugin.png"/>
+			<img border="0" src="images/Orion-editorplugin.png"/>
 		</p>
 		<h2 id="Search_support">Search support</h2>
 		<p>Once you are actively using Orion, you'll find that you want to move quickly between different resources.  There are several ways to go about this.  We've integrated Apache Lucene search with the Orion server and exposed it in the Orion client in several ways.</p>
 		<h3 id="Global_search">Global search</h3>
 		<p>The search box in the Orion navigator will perform a global search on everything in your user workspace.</p>
 		<p>
-			<img border="0" src="images/orion-globalsearch.png"/>
+			<img border="0" src="images/Orion-globalsearch.png"/>
 		</p>
 		<p>The "Open resource" dialog can be opened by selecting the search icon adjacent to the search box.  This dialog lets you search for a file by name.  It can use wildcards similar to the Eclipse desktop Open Resource dialog.</p>
 		<p>
-			<img border="0" src="images/orion-openresource.png"/>
+			<img border="0" src="images/Orion-openresource.png"/>
 		</p>
 		<p>You can also perform a global search on a highlighted phrase from inside the editor</p>
 		<p>
-			<img border="0" src="images/orion-searchineditor.png"/>
+			<img border="0" src="images/Orion-searchineditor.png"/>
 		</p>
 		<p>A nice side effect of editing source code in browser pages is being able to use browser mechanisms, such as the history, to quickly find files.  If you find yourself working in the same handful of files, opening a new browser tab and typing in the filename will quickly get you there.</p>
 		<p>
-			<img border="0" src="images/orion-browserbar.png"/>
+			<img border="0" src="images/Orion-browserbar.png"/>
 		</p>
 		<h2 id="Working_with_git">Working with git</h2>
 		<p>We intend to provide many different kinds of plug-ins for integrating Orion into open source and proprietary version control systems.  Our first experiments in this area are to provide a UI for working with git repositories.  For files and folders that are managed in a git repository, you will see a menu for navigating to the git status of the repository containing your file.</p>
 		<p>
-			<img border="0" src="images/orion-gitmenu.png"/>
+			<img border="0" src="images/Orion-gitmenu.png"/>
 		</p>
 		<p>The git status page shows you all the files in your git repository that have changed, and allows you to stage, unstage, and commit changes.  You can also compare the content of the files.</p>
 		<p>
-			<img border="0" src="images/orion-gitstatus.png"/>
+			<img border="0" src="images/Orion-gitstatus.png"/>
 		</p>
 		<p>A side-by-side compare view is also provided.  This will evolve into a merge view over time.</p>
 		<p>
-			<img border="0" src="images/orion-gitsidebyside.png"/>
+			<img border="0" src="images/Orion-gitsidebyside.png"/>
 		</p>
 		<p>We are working on additional pages for cloning, viewing history, and pushing and pulling changes.  For 
 			<a href="http://wiki.eclipse.org/Orion/Getting_the_source#Self_hosting_setup" title="Orion/Getting the source#Self_hosting_setup" target="orion_external">self-hosted development</a>, we typically have an additional git client installed on the workstation.  That client is used to push and pull changes, while the Orion UI is used to stage and commit changes.
@@ -174,11 +174,11 @@
 		</p>
 		<p>You create a site by pushing the "+" button and supplying a name for your site.  Your new site will appear in the table, with commands for starting, stopping, or editing the site.</p>
 		<p>
-			<img border="0" src="images/orion-sites.png"/>
+			<img border="0" src="images/Orion-sites.png"/>
 		</p>
 		<p>Click on the new site to go to the site configuration page.  Under the "Mappings" table, click the "Add..." button.  This will give you a row in which you can define a mapping from a folder in your Orion user workspace to the location on the server where the folder will be deployed. The following screenshot shows us mapping the "MyWork" folder to the root of our new site. (The target column shows Orion's internal name for the mapping, and may be different in your installation.)</p>
 		<p>
-			<img border="0" src="images/orion-siteedit.png"/>
+			<img border="0" src="images/Orion-siteedit.png"/>
 		</p>
 		<p>Click on the "Save" button to save the site configuration. Go back to the list of site configurations and click the start button (
 			<img border="0" src="images/Orion_start_icon.gif"/>) next to your new site configuration. Now you should be able to view your site at the address shown in the "Status" column. In our case, it's 
