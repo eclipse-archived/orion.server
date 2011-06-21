@@ -11,6 +11,7 @@
 package org.eclipse.orion.server.tests.servlets.git;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
@@ -494,6 +495,155 @@ public class GitLogTest extends GitTest {
 			sb.append("\\ No newline at end of file").append("\n");
 			assertEquals(sb.toString(), parts[1]);
 
+		}
+	}
+
+	@Test
+	public void testToRefKey() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
+
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+			// get project metadata
+			WebRequest request = getGetFilesRequest(contentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject project = new JSONObject(response.getText());
+
+			JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
+
+			// git log for HEAD
+			request = GitCommitTest.getGetGitCommitRequest(gitHeadUri, false);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject log = new JSONObject(response.getText());
+
+			// project contains only initial commit, so HEAD points to master branch
+			// information about master branch is expected
+			JSONObject toRef = log.getJSONObject(GitConstants.KEY_LOG_TO_REF);
+
+			assertEquals(gitHeadUri, toRef.getString(GitConstants.KEY_HEAD));
+			assertEquals(gitSection.getString(GitConstants.KEY_CLONE), toRef.getString(GitConstants.KEY_CLONE));
+			assertEquals(GitConstants.KEY_BRANCH_NAME, toRef.getString(ProtocolConstants.KEY_TYPE));
+			assertEquals(Constants.MASTER, toRef.getString(ProtocolConstants.KEY_NAME));
+			assertEquals(true, toRef.getBoolean(GitConstants.KEY_BRANCH_CURRENT));
+		}
+	}
+
+	@Test
+	public void testFromRefKey() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
+
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+			// get project metadata
+			WebRequest request = getGetFilesRequest(contentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject project = new JSONObject(response.getText());
+
+			JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
+
+			String logUri = gitHeadUri.replace(Constants.HEAD, Constants.HEAD + ".." + Constants.HEAD);
+			// git log for HEAD..HEAD
+			request = GitCommitTest.getGetGitCommitRequest(logUri, false);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject log = new JSONObject(response.getText());
+
+			// project contains only initial commit, so HEAD points to master branch
+			// information about master branch is expected
+			JSONObject fromRef = log.getJSONObject(GitConstants.KEY_LOG_FROM_REF);
+
+			assertEquals(gitHeadUri, fromRef.getString(GitConstants.KEY_HEAD));
+			assertEquals(gitSection.getString(GitConstants.KEY_CLONE), fromRef.getString(GitConstants.KEY_CLONE));
+			assertEquals(GitConstants.KEY_BRANCH_NAME, fromRef.getString(ProtocolConstants.KEY_TYPE));
+			assertEquals(Constants.MASTER, fromRef.getString(ProtocolConstants.KEY_NAME));
+			assertEquals(true, fromRef.getBoolean(GitConstants.KEY_BRANCH_CURRENT));
+		}
+	}
+
+	@Test
+	public void testRefPropertiesForCommits() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
+
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+			// get project metadata
+			WebRequest request = getGetFilesRequest(contentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject project = new JSONObject(response.getText());
+
+			JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
+			String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+			String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+
+			// save initial commit name
+			JSONArray commitsArray = log(gitCommitUri, true);
+			JSONObject initCommit = commitsArray.getJSONObject(0);
+			String initCommitName = initCommit.getString(ProtocolConstants.KEY_NAME);
+			String initCommitLocation = initCommit.getString(ProtocolConstants.KEY_LOCATION);
+
+			// modify
+			String projectLocation = project.getString(ProtocolConstants.KEY_LOCATION);
+			request = getPutFileRequest(projectLocation + "test.txt", "test.txt change");
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// add
+			request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// commit
+			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit", false);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			String logUri = initCommitLocation.replace(initCommitName, initCommitName + ".." + initCommitName);
+			// git log for {initial commit}..{initial commit}
+			// both fromRef and toRef shouldn't exist, as commit ref doesn't point to a branch
+			request = GitCommitTest.getGetGitCommitRequest(logUri, false);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject log = new JSONObject(response.getText());
+
+			JSONObject fromRef = log.optJSONObject(GitConstants.KEY_LOG_FROM_REF);
+			JSONObject toRef = log.optJSONObject(GitConstants.KEY_LOG_TO_REF);
+
+			assertNull(fromRef);
+			assertNull(toRef);
 		}
 	}
 

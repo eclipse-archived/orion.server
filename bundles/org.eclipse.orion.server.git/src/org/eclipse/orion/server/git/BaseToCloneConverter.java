@@ -46,6 +46,13 @@ public abstract class BaseToCloneConverter {
 		};
 	};
 
+	public static final BaseToCloneConverter BRANCH = new BaseToCloneConverter() {
+		@Override
+		public IPath getFilePath(URI base) throws URISyntaxException {
+			return new Path(base.getPath()).removeFirstSegments(3).makeRelative();
+		};
+	};
+
 	public static final BaseToCloneConverter REMOTE_BRANCH = new BaseToCloneConverter() {
 		@Override
 		public IPath getFilePath(URI base) throws URISyntaxException {

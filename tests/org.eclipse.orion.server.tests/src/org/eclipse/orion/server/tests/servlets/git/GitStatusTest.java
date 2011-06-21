@@ -898,7 +898,7 @@ public class GitStatusTest extends GitTest {
 
 	// "status -s" > "UU test.txt", both modified
 	@Test
-	public void testConfilct() throws Exception {
+	public void testConflict() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		// clone1: create
