@@ -17,17 +17,15 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.JGitInternalException;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
-import org.eclipse.orion.server.git.*;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
-import org.eclipse.orion.server.useradmin.UserServiceHelper;
+import org.eclipse.orion.server.git.GitActivator;
+import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.osgi.util.NLS;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
@@ -83,7 +81,7 @@ public class CloneJob extends GitJob {
 			// Configure the clone, see Bug 337820
 			task.setMessage(NLS.bind("Configuring {0}...", clone.getUrl()));
 			updateTask();
-			doConfigureClone(git);
+			GitCloneHandlerV1.doConfigureClone(git, user);
 			git.getRepository().close();
 		} catch (IOException e) {
 			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error cloning git repository", e);
@@ -95,17 +93,6 @@ public class CloneJob extends GitJob {
 			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error cloning git repository", e);
 		}
 		return Status.OK_STATUS;
-	}
-
-	private void doConfigureClone(Git git) throws IOException, CoreException {
-		StoredConfig config = git.getRepository().getConfig();
-		IOrionUserProfileNode userNode = UserServiceHelper.getDefault().getUserProfileService().getUserProfileNode(user, true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
-		if (userNode.get(GitConstants.KEY_NAME, null) != null)
-			config.setString(ConfigConstants.CONFIG_USER_SECTION, null, ConfigConstants.CONFIG_KEY_NAME, userNode.get(GitConstants.KEY_NAME, null));
-		if (userNode.get(GitConstants.KEY_MAIL, null) != null)
-			config.setString(ConfigConstants.CONFIG_USER_SECTION, null, ConfigConstants.CONFIG_KEY_EMAIL, userNode.get(GitConstants.KEY_MAIL, null));
-		config.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_FILEMODE, false);
-		config.save();
 	}
 
 	public TaskInfo getTask() {

@@ -38,6 +38,9 @@ import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
 import org.eclipse.orion.server.servlets.OrionServlet;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
+import org.eclipse.orion.server.useradmin.UserServiceHelper;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
 
@@ -174,6 +177,9 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			Repository repository = command.call().getRepository();
 			Git git = new Git(repository);
 
+			// configure the repo
+			doConfigureClone(git, request.getRemoteUser());
+
 			// we need to perform an initial commit to workaround JGit bug 339610
 			git.commit().setMessage("Initial commit").call();
 
@@ -214,6 +220,17 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			response.setStatus(HttpServletResponse.SC_ACCEPTED);
 			return true;
 		}
+	}
+
+	static void doConfigureClone(Git git, String user) throws IOException, CoreException {
+		StoredConfig config = git.getRepository().getConfig();
+		IOrionUserProfileNode userNode = UserServiceHelper.getDefault().getUserProfileService().getUserProfileNode(user, true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
+		if (userNode.get(GitConstants.KEY_NAME, null) != null)
+			config.setString(ConfigConstants.CONFIG_USER_SECTION, null, ConfigConstants.CONFIG_KEY_NAME, userNode.get(GitConstants.KEY_NAME, null));
+		if (userNode.get(GitConstants.KEY_MAIL, null) != null)
+			config.setString(ConfigConstants.CONFIG_USER_SECTION, null, ConfigConstants.CONFIG_KEY_EMAIL, userNode.get(GitConstants.KEY_MAIL, null));
+		config.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_FILEMODE, false);
+		config.save();
 	}
 
 	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, String pathString) throws IOException, JSONException, ServletException, URISyntaxException, CoreException {
