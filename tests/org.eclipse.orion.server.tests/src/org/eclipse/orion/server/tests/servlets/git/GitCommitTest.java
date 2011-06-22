@@ -373,10 +373,6 @@ public class GitCommitTest extends GitTest {
 			JSONObject cloneFolder = new JSONObject(response.getText());
 			String cloneFolderLocation = cloneFolder.getString(ProtocolConstants.KEY_LOCATION);
 			String cloneFolderChildrenLocation = cloneFolder.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
-			JSONObject cloneFolderGitSection = cloneFolder.getJSONObject(GitConstants.KEY_GIT);
-			String cloneFolderGitStatusUri = cloneFolderGitSection.getString(GitConstants.KEY_STATUS);
-			String cloneFolderGitIndexUri = cloneFolderGitSection.getString(GitConstants.KEY_INDEX);
-			String cloneFolderGitHeadUri = cloneFolderGitSection.getString(GitConstants.KEY_HEAD);
 
 			String fileName = "folder2.txt";
 			request = getPostFilesRequest(cloneFolderLocation + "/folder/", getNewFileJSON(fileName).toString(), fileName);
@@ -392,8 +388,13 @@ public class GitCommitTest extends GitTest {
 			JSONObject testTxtGitSection = testTxt.getJSONObject(GitConstants.KEY_GIT);
 			String testTxtGitIndexUri = testTxtGitSection.getString(GitConstants.KEY_INDEX);
 
+			// drill down to 'folder'
 			JSONObject folder = getChildByName(children, "folder");
 			String folderChildrenLocation = folder.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
+			JSONObject folderGitSection = folder.getJSONObject(GitConstants.KEY_GIT);
+			String folderGitStatusUri = folderGitSection.getString(GitConstants.KEY_STATUS);
+			String folderGitIndexUri = folderGitSection.getString(GitConstants.KEY_INDEX);
+			String folderGitHeadUri = folderGitSection.getString(GitConstants.KEY_HEAD);
 
 			request = getGetFilesRequest(folderChildrenLocation);
 			response = webConversation.getResponse(request);
@@ -423,7 +424,7 @@ public class GitCommitTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// check status - clean
-			request = GitStatusTest.getGetGitStatusRequest(cloneFolderGitStatusUri);
+			request = GitStatusTest.getGetGitStatusRequest(folderGitStatusUri);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject statusResponse = new JSONObject(response.getText());
@@ -443,7 +444,7 @@ public class GitCommitTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// check status - modified=3
-			request = GitStatusTest.getGetGitStatusRequest(cloneFolderGitStatusUri);
+			request = GitStatusTest.getGetGitStatusRequest(folderGitStatusUri);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			statusResponse = new JSONObject(response.getText());
@@ -469,7 +470,7 @@ public class GitCommitTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// check status - changed=3
-			request = GitStatusTest.getGetGitStatusRequest(cloneFolderGitStatusUri);
+			request = GitStatusTest.getGetGitStatusRequest(folderGitStatusUri);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			statusResponse = new JSONObject(response.getText());
@@ -482,12 +483,12 @@ public class GitCommitTest extends GitTest {
 			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED).length());
 
 			// unstage all
-			request = GitResetTest.getPostGitIndexRequest(cloneFolderGitIndexUri /* reset all */, ResetType.MIXED);
+			request = GitResetTest.getPostGitIndexRequest(folderGitIndexUri /* reset all */, ResetType.MIXED);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// check status - modified=3, again
-			request = GitStatusTest.getGetGitStatusRequest(cloneFolderGitStatusUri);
+			request = GitStatusTest.getGetGitStatusRequest(folderGitStatusUri);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			statusResponse = new JSONObject(response.getText());
@@ -510,7 +511,7 @@ public class GitCommitTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// check status - modified=2, changed=1
-			request = GitStatusTest.getGetGitStatusRequest(cloneFolderGitStatusUri);
+			request = GitStatusTest.getGetGitStatusRequest(folderGitStatusUri);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			statusResponse = new JSONObject(response.getText());
@@ -523,12 +524,12 @@ public class GitCommitTest extends GitTest {
 			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED).length());
 
 			// commit
-			request = getPostGitCommitRequest(cloneFolderGitHeadUri, "test.txt and folder/folder.txt changed", false);
+			request = getPostGitCommitRequest(folderGitHeadUri, "test.txt and folder/folder.txt changed", false);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// check status - changed=1
-			request = GitStatusTest.getGetGitStatusRequest(cloneFolderGitStatusUri);
+			request = GitStatusTest.getGetGitStatusRequest(folderGitStatusUri);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			statusResponse = new JSONObject(response.getText());
@@ -543,7 +544,7 @@ public class GitCommitTest extends GitTest {
 			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED).length());
 
 			// check the last commit
-			JSONArray commitsArray = log(cloneFolderGitHeadUri, false);
+			JSONArray commitsArray = log(folderGitHeadUri, false);
 			assertEquals(3, commitsArray.length());
 
 			JSONObject commit = commitsArray.getJSONObject(0);
