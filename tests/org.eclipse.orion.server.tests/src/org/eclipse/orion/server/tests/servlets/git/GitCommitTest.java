@@ -22,7 +22,6 @@ import java.util.List;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
@@ -351,7 +350,7 @@ public class GitCommitTest extends GitTest {
 	}
 
 	@Test
-	public void testCommitStagedOnly() throws Exception {
+	public void testCommitAllInFolder() throws Exception {
 		// see bug 349480
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
@@ -393,7 +392,6 @@ public class GitCommitTest extends GitTest {
 			String folderChildrenLocation = folder.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
 			JSONObject folderGitSection = folder.getJSONObject(GitConstants.KEY_GIT);
 			String folderGitStatusUri = folderGitSection.getString(GitConstants.KEY_STATUS);
-			String folderGitIndexUri = folderGitSection.getString(GitConstants.KEY_INDEX);
 			String folderGitCloneUri = folderGitSection.getString(GitConstants.KEY_CLONE);
 
 			request = getGetFilesRequest(folderChildrenLocation);
@@ -444,50 +442,6 @@ public class GitCommitTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// check status - modified=3
-			request = GitStatusTest.getGetGitStatusRequest(folderGitStatusUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			statusResponse = new JSONObject(response.getText());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_CONFLICTING).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING).length());
-			assertEquals(3, statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED).length());
-
-			// add all
-			request = GitAddTest.getPutGitIndexRequest(testTxtGitIndexUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-			request = GitAddTest.getPutGitIndexRequest(folderTxtGitIndexUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-			request = GitAddTest.getPutGitIndexRequest(folder2TxtGitIndexUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-			// check status - changed=3
-			request = GitStatusTest.getGetGitStatusRequest(folderGitStatusUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			statusResponse = new JSONObject(response.getText());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED).length());
-			assertEquals(3, statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_CONFLICTING).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED).length());
-
-			// unstage all
-			request = GitResetTest.getPostGitIndexRequest(folderGitIndexUri /* reset all */, ResetType.MIXED);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-			// check status - modified=3, again
 			request = GitStatusTest.getGetGitStatusRequest(folderGitStatusUri);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
