@@ -373,6 +373,8 @@ public class GitCommitTest extends GitTest {
 			JSONObject cloneFolder = new JSONObject(response.getText());
 			String cloneFolderLocation = cloneFolder.getString(ProtocolConstants.KEY_LOCATION);
 			String cloneFolderChildrenLocation = cloneFolder.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
+			JSONObject cloneFolderGitSection = cloneFolder.getJSONObject(GitConstants.KEY_GIT);
+			String cloneFolderGitHeadUri = cloneFolderGitSection.getString(GitConstants.KEY_HEAD);
 
 			String fileName = "folder2.txt";
 			request = getPostFilesRequest(cloneFolderLocation + "/folder/", getNewFileJSON(fileName).toString(), fileName);
@@ -543,8 +545,8 @@ public class GitCommitTest extends GitTest {
 			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED).length());
 			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED).length());
 
-			// check the last commit
-			JSONArray commitsArray = log(folderGitHeadUri, false);
+			// check the last commit for the repo
+			JSONArray commitsArray = log(cloneFolderGitHeadUri, false);
 			assertEquals(3, commitsArray.length());
 
 			JSONObject commit = commitsArray.getJSONObject(0);
