@@ -40,7 +40,7 @@ import com.meterware.httpunit.WebResponse;
 public class GitCommitTest extends GitTest {
 
 	@Test
-	public void testCommit() throws Exception {
+	public void testCommitOnly() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -373,8 +373,6 @@ public class GitCommitTest extends GitTest {
 			JSONObject cloneFolder = new JSONObject(response.getText());
 			String cloneFolderLocation = cloneFolder.getString(ProtocolConstants.KEY_LOCATION);
 			String cloneFolderChildrenLocation = cloneFolder.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
-			JSONObject cloneFolderGitSection = cloneFolder.getJSONObject(GitConstants.KEY_GIT);
-			String cloneFolderGitHeadUri = cloneFolderGitSection.getString(GitConstants.KEY_HEAD);
 
 			String fileName = "folder2.txt";
 			request = getPostFilesRequest(cloneFolderLocation + "/folder/", getNewFileJSON(fileName).toString(), fileName);
@@ -396,7 +394,7 @@ public class GitCommitTest extends GitTest {
 			JSONObject folderGitSection = folder.getJSONObject(GitConstants.KEY_GIT);
 			String folderGitStatusUri = folderGitSection.getString(GitConstants.KEY_STATUS);
 			String folderGitIndexUri = folderGitSection.getString(GitConstants.KEY_INDEX);
-			String folderGitHeadUri = folderGitSection.getString(GitConstants.KEY_HEAD);
+			String folderGitCloneUri = folderGitSection.getString(GitConstants.KEY_CLONE);
 
 			request = getGetFilesRequest(folderChildrenLocation);
 			response = webConversation.getResponse(request);
@@ -525,8 +523,19 @@ public class GitCommitTest extends GitTest {
 			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED).length());
 			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED).length());
 
-			// commit
-			request = getPostGitCommitRequest(folderGitHeadUri, "test.txt and folder/folder.txt changed", false);
+			// commit all
+			// XXX: using HEAD URI for folder will commit all files in the folder, regardless of index state
+			// request = getPostGitCommitRequest(folderGitHeadUri, "test.txt and folder/folder.txt changed", false);
+			// the UI should use HEAD URI for the clone/root to commit all staged files
+			request = getGetRequest(folderGitCloneUri);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject clones = new JSONObject(response.getText());
+			JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+			assertEquals(1, clonesArray.length());
+			String cloneFolderGitHeadUri = clonesArray.getJSONObject(0).getString(GitConstants.KEY_HEAD);
+
+			request = getPostGitCommitRequest(cloneFolderGitHeadUri, "test.txt and folder/folder.txt changed", false);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
