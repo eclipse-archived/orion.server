@@ -70,13 +70,13 @@
 </pre>
 		<h3 id="Making_it_a_plugin">Making it a plugin</h3>
 		<p>Next, we'll add some code that connects our file to Orion. Add the following, again inside the &lt;head&gt; tags:</p>
-		<p>&lt;script&gt;</p>
-		<pre> window.onload = function() {
-   var provider = new eclipse.PluginProvider();
-   provider.connect();
- };
+		<pre>&lt;script&gt;
+  window.onload = function() {
+    var provider = new eclipse.PluginProvider();
+    provider.connect();
+  };
+&lt;/script&gt;
 </pre>
-		<p>&lt;/script&gt;</p>
 		<p>At this point, we've got an honest-to-goodness Orion plugin, albeit one that does nothing. Let's go over the various parts in detail. <!-- TODO maybe mention WHEN this code will be executed by the browser (ie. at load time, at install time) --></p>
 		<ul>
 			<li><tt>window.onload</tt> — Runs our function after <tt>plugin.js</tt> has been loaded by the browser. This ensures that the <tt>eclipse.PluginProvider</tt> constructor is available.</li>

@@ -18,7 +18,7 @@
 				</td>
 				<td style="width: 60%" align="center"></td>
 				<td style="width: 20%" align="right">
-					<a href="orion-edit-outline.html" title="orion.edit.outline">
+					<a href="orion-edit-validator.html" title="orion.edit.validator">
 						<img alt="Next" border="0" src="../../../../images/next.gif"/>
 					</a>
 				</td>
@@ -26,7 +26,7 @@
 			<tr>
 				<td style="width: 20%" align="left" valign="top">orion.edit.contentAssist</td>
 				<td style="width: 60%" align="center"></td>
-				<td style="width: 20%" align="right" valign="top">orion.edit.outline</td>
+				<td style="width: 20%" align="right" valign="top">orion.edit.validator</td>
 			</tr>
 		</table><hr/>
 		<h1 id="orion.edit.highlighter">orion.edit.highlighter</h1>
@@ -54,8 +54,8 @@ provider.registerServiceProvider("orion.edit.highlighter",
     fileTypes : ["html", "htm"],
     grammar: {
       patterns: [
-          {  begin: "&lt;!--", 
-             end: "--&gt;",
+          {  begin: "&amp;lt;!--", 
+             end: "--&amp;gt;",
              captures: { "0": "punctuation.definition.comment.html" },
              contentName: "comment.block.html"
           }
@@ -81,7 +81,7 @@ provider.connect();
 					</a>
 				</td>
 				<td style="width: 20%" align="right">
-					<a href="orion-edit-outline.html" title="orion.edit.outline">
+					<a href="orion-edit-validator.html" title="orion.edit.validator">
 						<img alt="Next" border="0" src="../../../../images/next.gif"/>
 					</a>
 				</td>
@@ -89,7 +89,7 @@ provider.connect();
 			<tr>
 				<td style="width: 20%" align="left" valign="top">orion.edit.contentAssist</td>
 				<td style="width: 60%" align="center"></td>
-				<td style="width: 20%" align="right" valign="top">orion.edit.outline</td>
+				<td style="width: 20%" align="right" valign="top">orion.edit.validator</td>
 			</tr>
 		</table>
 	</body>

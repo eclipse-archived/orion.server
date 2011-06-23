@@ -12,7 +12,7 @@
 			</tr>
 			<tr>
 				<td style="width: 20%" align="left">
-					<a href="orion-edit-outline.html" title="orion.edit.outline">
+					<a href="orion-edit-highlighter.html" title="orion.edit.highlighter">
 						<img alt="Previous" border="0" src="../../../../images/prev.gif"/>
 					</a>
 				</td>
@@ -24,7 +24,7 @@
 				</td>
 			</tr>
 			<tr>
-				<td style="width: 20%" align="left" valign="top">orion.edit.outline</td>
+				<td style="width: 20%" align="left" valign="top">orion.edit.highlighter</td>
 				<td style="width: 60%" align="center"></td>
 				<td style="width: 20%" align="right" valign="top">Updating this document</td>
 			</tr>
@@ -42,9 +42,7 @@
 				<b>contents</b> <tt>String</tt> The contents of the file being edited.
 			</dd>
 		</dl>
-		<p>Returns an <tt>Object</tt> giving the validation result. The returned object must have an <tt>errors</tt> property whose value is an array.
-			<br/>Each element of the <tt>errors</tt> array must have the properties:
-		</p>
+		<p>Returns an <tt>Object</tt> giving the validation result. The returned object must have an <tt>errors</tt> property whose value is an array giving the errors found in the file. Each error object must have the properties:</p>
 		<dl>
 			<dd><b>reason</b> <tt>String</tt> A description of the error.</dd>
 			<dd><b>line</b> <tt>Number</tt> Gives the line number where the error was found. (Line numbers begin counting from 1.)</dd>
@@ -57,39 +55,34 @@
 			<dd><tt>String</tt> A regular expression pattern matching the filenames that this validator is capable of validating.</dd>
 		</dl>
 		<h2 id="Examples_4">Examples</h2>
-		<pre>var service = {
-    checkSyntax: function(title, contents) {
-        var errors = [];
-        var lines = contents.split(/\r?\n/);
-        for (var i=0; i &lt; lines.length; i++) {
-          var line = lines[i];
-          var match = /\t \t| \t /.exec(line);
-          if (match) {
-            errors.push({ reason: "Mixed spaces and tabs", line: i+1, character: match.index });
-          }
-        }
-</pre>
-		<pre>        var result = { errors: errors };
-        this.dispatchEvent("syntaxChecked", {title: title, result: result});
-        return result;
-   },
-   dispatchEvent: null /* see below */
-}; 
-</pre>
 		<pre>var provider = new eclipse.PluginProvider();
 var serviceProvider = provider.registerServiceProvider("orion.edit.validator",
-  service,
+  {
+     checkSyntax: function(title, contents) {
+       var errors = [];
+       var lines = contents.split(/\r?\n/);
+       for (var i=0; i &lt; lines.length; i++) {
+         var line = lines[i];
+         var match = /\t \t| \t /.exec(line);
+         if (match) {
+           errors.push({ reason: "Mixed spaces and tabs", line: i+1, character: match.index });
+         }
+       }
+       var result = { errors: errors };
+       return result;
+     }
+  },
   {
      pattern: "\\.(txt|js)$"
-  });
-service.dispatchEvent = serviceProvider.dispatchEvent;
+  });&lt;!--
+service.dispatchEvent = serviceProvider.dispatchEvent;--&gt;
 provider.connect();
 </pre>
-		<p>This example finds lines containing a sequence of space-tab-space or tab-space-tab and produces an error on each such line.</p><hr/>
+		<p>This example will validate <tt>.txt</tt> and <tt>.js</tt> files. It finds lines containing a sequence of space-tab-space or tab-space-tab and produces an error on every such line.</p><hr/>
 		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
 			<tr>
 				<td style="width: 20%" align="left">
-					<a href="orion-edit-outline.html" title="orion.edit.outline">
+					<a href="orion-edit-highlighter.html" title="orion.edit.highlighter">
 						<img alt="Previous" border="0" src="../../../../images/prev.gif"/>
 					</a>
 				</td>
@@ -105,7 +98,7 @@ provider.connect();
 				</td>
 			</tr>
 			<tr>
-				<td style="width: 20%" align="left" valign="top">orion.edit.outline</td>
+				<td style="width: 20%" align="left" valign="top">orion.edit.highlighter</td>
 				<td style="width: 60%" align="center"></td>
 				<td style="width: 20%" align="right" valign="top">Updating this document</td>
 			</tr>

@@ -10,7 +10,7 @@
          IBM - adapted to Orion
  -->
 
-<project name="org.eclipse.orion.doc.user" default="all">
+<project name="org.eclipse.orion.doc.isv" default="all">
     <description>
             Generate Eclipse help content for the Orion ISV guide
     </description>

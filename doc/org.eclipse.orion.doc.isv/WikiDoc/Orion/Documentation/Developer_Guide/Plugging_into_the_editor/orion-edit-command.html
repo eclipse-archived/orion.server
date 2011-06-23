@@ -41,11 +41,11 @@
 		<p>Implementations of <tt>orion.edit.command</tt> may define the following attributes:</p>
 		<dl>
 			<dt>img</dt>
-			<dd>The URL of an icon to associate with the command</dd>
+			<dd><tt>String</tt> The URL of an icon to associate with the command.</dd>
 			<dt>name</dt>
-			<dd>The command text show to the user</dd>
+			<dd><tt>String</tt> The command text show to the user.</dd>
 			<dt>key</dt>
-			<dd>An optional key binding for the command</dd>
+			<dd><tt>Array</tt> An optional key binding for the command. The structure of this array matches the arguments of the <tt>orion.textview.KeyBinding</tt> constructor. See its entry in the Client API reference for details.</dd>
 		</dl>
 		<h2 id="Examples">Examples</h2>
 		<p>The following simple example just converts the selected text to upper case. In this example the function return value is a simple string, so this is interpreted by the editor as replacement for the original editor selection. In the service properties, we see the command provides a key binding of Ctrl+U (or Cmd+U on Mac).</p>

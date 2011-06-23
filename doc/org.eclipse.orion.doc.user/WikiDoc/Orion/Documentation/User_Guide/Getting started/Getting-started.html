@@ -28,23 +28,39 @@
 		<p>This tutorial will get you started with using Orion, and provides step by step walk-through of some of the core functionality.</p>
 		<h2 id="Logging_into_Orion">Logging into Orion</h2>
 		<p>When you first attempt to access the Orion server, you'll be prompted for credentials.  </p>
-		<pre>[[Image:Orion_Logon.jpg]]
-</pre>
+		<p>
+			<img border="0" src="images/Orion_Logon.jpg"/>
+		</p>
 		<p>When running from your own server, you can create an account directly from the login dialog.  If you are accessing a server hosted elsewhere, you may need to ask the server administrator to create an account for you.</p>
 		<h2 id="Working_with_folders_and_files">Working with folders and files</h2>
 		<p>In Orion, each user has a virtual root folder where various folders and files can be created.  These files are maintained on the Orion server. The <b>Navigator</b> page is used to browse and modify your files.</p>
 		<h3 id="Creating_folders_and_files">Creating folders and files</h3>
-		<p>For demo purposes, we currently populate every user's root folder with two folders that contain some of the Orion client source code.  Once you've successfully logged into Orion, you should see two folders:</p>
+		<p>Once you've successfully logged into Orion, you'll see the navigator page. This is where your files and folders will be shown. Because you haven't created any files or folders yet, the navigator is initially empty.</p>
 		<p>
 			<img border="0" src="images/Orion-navinitial.png"/>
 		</p>
-		<p>To navigate the files, you may either expand the folders (using the triangles), or you may click on the folder links to drill into that folder.  The breadcrumb at the top of the page allows you to navigate back up the tree.  </p>
-		<p>Global commands for Orion (such as search, open resource, user management) appear at the top right of the page.  Commands that operate on the navigator are located on the right side of the dark bar in the banner.  Commands that apply to individual files or folders are located in the "Actions" column next to the item.  </p>
-		<p>To start working with your own files in Orion, you can create a folder using the button on the right.</p>
+		<p><!-- For demo purposes, we currently populate every user's root folder with two folders that contain some of the Orion client source code.  Once you've successfully logged into Orion, you should see two folders: -->
+			To start working with files and folders in Orion, you can create a folder using the 
+			<b>New Folder</b> link on the left side of the dark bar in the banner:
+		</p>
 		<p>
 			<img border="0" src="images/Orion-navbreadcommands.png"/>
 		</p>
-		<p>Once you've created a top level folder, you can create additional folders and files within that folder.  </p>
+		<p>To navigate the files, you may either expand the folders (using the triangles), or you may click on the folder links to drill into that folder. After you have drilled into a folder, the breadcrumb at the top of the page allows you to navigate back up the tree.</p>
+		<p>
+			<img border="0" src="images/Orion-navbreadcrumb.png"/>
+		</p>
+		<h3 id="Using_commands">Using commands</h3>
+		<p>Global commands for Orion (such as Search, User Management, and Help) appear at the top right of the page. Links to other pages appear beside the global commands.
+			Commands that operate on the navigator (such as New File, New Folder) are located on the left side of the dark bar in the banner.</p>
+		<p>
+			<img border="0" src="images/Orion-topbanner.png"/>
+		</p>
+		<p>Commands that apply to an individual file or folder are located in the "Actions" column next to the item.</p>
+		<p>
+			<img border="0" src="images/Orion-navactions.png"/>
+		</p>
+		<p>Files and folders may be selected by clicking the checkbox beside their name. Commands that operate on the selected items (such as move, copy, and delete) will appear on the dark bar in the banner when a selection has been made.</p>
 		<h3 id="Importing_folders_and_files">Importing folders and files</h3>
 		<p>You can upload zip files from your local machine to the server using the import menu.  </p>
 		<p>
@@ -54,13 +70,13 @@
 			<a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=335890" target="orion_external">Bug 335890</a>).
 		</p>
 		<p>
-			<img border="0" src="images/_orion-navimportdialog.png"/>
+			<img border="0" src="images/_Orion-navimportdialog.png"/>
 		</p>
 		<p>The contents of the zip file will appear in your folder in the navigator.  (If you are working on the Orion demo server, you will also notice a folder associated with git inside your new folder.  To configure this feature on your own localhost version of Orion, see the 
 			<a href="http://wiki.eclipse.org/Orion/Server_admin_guide#Automatic_git_projects" title="Orion/Server admin guide#Automatic_git_projects" target="orion_external">server administration guide</a>.)  
 		</p>
 		<p>
-			<img border="0" src="images/_orion-navimportcontent.png"/>
+			<img border="0" src="images/_Orion-navimportcontent.png"/>
 		</p>
 		<h3 id="Exporting_folders_and_files">Exporting folders and files</h3>
 		<p>When you have worked with your code on Orion and are ready to export your work back to your local workstation, navigate to the folder you wish to export and choose the "Download as Zip" link.</p>

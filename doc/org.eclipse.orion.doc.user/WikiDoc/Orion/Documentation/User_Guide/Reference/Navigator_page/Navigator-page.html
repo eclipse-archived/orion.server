@@ -6,11 +6,98 @@
 		<link type="text/css" rel="stylesheet" href="../../../../../book.css"/>
 	</head>
 	<body>
-		<p>The <b>Navigator</b> page is your primary location for browsing and manipulating files in Orion.</p>
-		<h1 id="Updating_this_document">Updating this document</h1>
-		<p>This document is maintained in a collaborative wiki.  If you wish to update or modify this document please visit 
-
-			<a href="http://wiki.eclipse.org/Orion/Documentation/User_Guide/Reference/Navigator_page" target="orion_external">http://wiki.eclipse.org/Orion/Documentation/User_Guide/Reference/Navigator_page</a>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<th style="width: 100%" align="center" colspan="3">Navigator page</th>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left"></td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right">
+					<a href="Updating-this-document.html" title="Updating this document">
+						<img alt="Next" border="0" src="../../../../../images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top"></td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">Updating this document</td>
+			</tr>
+		</table><hr/>
+		<h2 id="Navigator_page_overview">Navigator page overview</h2>
+		<p>The <b>Navigator</b> page is your primary location for browsing and manipulating files in Orion. The page can be focused on any folder, including the root folder associated with each Orion user. The current folder being displayed is shown in the bread crumb below the word <b>Navigator</b> in the title area. You can browse through a directory hierarchy either by clicking on a folder to open a Navigator page on that folder, or by expanding the tree to show children in the same page. Navigate to parent folders by clicking a parent in the bread crumb at the top of the page.</p>
+		<p>Commands for operating on files in the Navigator appear in several places, depending on what files and folders they are operating upon. Commands that operate directly on the folder being displayed appear in the tool bar. Commands that operate on individual files and folders in the tree appear in the <b>Action</b> column next to that file. A <b>More</b> menu is used to show additional commands for that file or folder. Commands that operate on the files selected in the table are shown in the <b>More</b> menu in the tool bar.</p>
+		<p>
+			<img border="0" src="images/Orion-navigator-overview.png"/>
 		</p>
+		<h2 id="Basic_file_manipulation">Basic file manipulation</h2>
+		<p>To create new files and folders in the current folder, click <b>Create File</b> or <b>Create Folder</b> in the tool bar. To create files within another folder use the <b>More</b> menu in the <b>Actions</b> column. </p>
+		<p>Delete files by selecting <b>Delete</b> from the <b>More</b> menu of the <b>Actions</b> column. To delete several files at once, select them using the check boxes and click <b>Delete</b> in the <b>More</b> menu in the toolbar:</p>
+		<p>
+			<img border="0" src="images/Orion-navigator-delete.png"/>
+		</p>
+		<p>To rename a file, click the Rename icon in the <b>Actions</b> column. If you change your mind you can hit the Esc key to cancel the rename.</p>
+		<h2 id="Copying_and_moving_folders_and_files">Copying and moving folders and files</h2>
+		<p>There are two methods available for copying files in Orion. The first method uses the clipboard:</p>
+		<ol>
+			<li>Select the files and folders to copy using the check box column</li>
+			<li>Hit Ctrl+C to copy the list of files</li>
+			<li>Browse to the folder you want to copy into. Hit+V to paste the files into this folder</li>
+		</ol>
+		<p>You can also copy and move files using menu commands.</p>
+		<ol>
+			<li>Select the files and folders to copy or move using the check box column</li>
+			<li>Select <b>Copy to</b> or <b>Move to</b> from the <b>More</b> menu in the tool bar</li>
+			<li>Select a destination from the sub-menu, or click <b>Choose folder</b> to pick a different destination.</li>
+		</ol>
+		<p><i>Hint:</i> Create a Favorite for any folder you frequently copy or move files into. Favorites are always displayed as destinations in the <b>Copy to</b> and <b>Move to</b> menus, so this saves you some extra navigation to select your destination folder.</p>
+		<h2 id="Importing_folders_and_files">Importing folders and files</h2>
+		<p>To import files from your local computer, do the following:</p>
+		<ol>
+			<li>Package the files to be imported into a zip file. </li>
+			<li>Create and navigate to a folder in Orion that you want to import into</li>
+			<li>Click <b>Import from zip...</b> in the <b>Actions</b> column.</li>
+			<li>Browse to the local zip file to be imported, </li>
+		</ol>
+		<p>You can also import files from another networked computer using the 
+			<a href="http://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol" target="orion_external">SSH File Transfer Protocol</a> (SFTP):
+		</p>
+		<ol>
+			<li>Create and navigate to a folder in Orion that you want to import into</li>
+			<li>Click <b>SFTP from...</b> in the <b>Actions</b> column.</li>
+			<li>Fill in or select the host and path to import files from.</li>
+			<li>Click <b>Start Transfer</b> to begin importing. Progress will be shown in the title area until the import completes.</li>
+		</ol>
+		<p>
+			<img border="0" src="images/Orion-navigator-sftp-import.png"/>
+		</p>
+		<h2 id="Exporting_folders_and_files">Exporting folders and files</h2>
+		<p>To export files to your local computer, simply click <b>Export as zip</b> in the <b>Actions</b> column next to any folder. The contents of that folder will be exported to your local computer as a zip file.</p>
+		<p>You can also export files to another networked computer using the 
+			<a href="http://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol" target="orion_external">SSH File Transfer Protocol</a> (SFTP):
+		</p>
+		<ol>
+			<li>Navigate to a folder in Orion that you want to export</li>
+			<li>Click <b>SFTP to...</b> in the <b>Actions</b> column.</li>
+			<li>Fill in or select the host and path to export files to</li>
+			<li>Click <b>Start Transfer</b> to begin exporting. Progress will be shown in the title area until the import completes.</li>
+		</ol><hr/>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<td style="width: 20%" align="left"></td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right">
+					<a href="Updating-this-document.html" title="Updating this document">
+						<img alt="Next" border="0" src="../../../../../images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top"></td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">Updating this document</td>
+			</tr>
+		</table>
 	</body>
 </html>
