@@ -626,11 +626,11 @@ public class GitResetTest extends GitTest {
 	 * @throws JSONException 
 	 * @throws UnsupportedEncodingException 
 	 */
-	private WebRequest getPostGitIndexRequest(String location, ResetType resetType) throws JSONException, UnsupportedEncodingException {
+	static WebRequest getPostGitIndexRequest(String location, ResetType resetType) throws JSONException, UnsupportedEncodingException {
 		return getPostGitIndexRequest(location, null, null, resetType.toString());
 	}
 
-	private WebRequest getPostGitIndexRequest(String location, String[] paths, String commit, String resetType) throws JSONException, UnsupportedEncodingException {
+	private static WebRequest getPostGitIndexRequest(String location, String[] paths, String commit, String resetType) throws JSONException, UnsupportedEncodingException {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;

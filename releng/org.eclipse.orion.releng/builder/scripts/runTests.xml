@@ -219,6 +219,7 @@
 			<arg value="${buildDirectory}/test/eclipse" />
 		</exec>
 		
+		<echo message="Test Server process is: ${serverPID}"/>
 		<apply executable="bash" parallel="false">
 			<arg value="${builder}/scripts/runTests.sh" />
 			<arg line="-id ${buildLabel}" />
