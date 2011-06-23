@@ -62,21 +62,23 @@
     		dest="${basedir}/${output.folder}"
     		title="Orion"
     		generateUnifiedToc="false">
-    		<path name="${orion.user.guide}/Getting started" title="Getting started" generateToc="true"/>
+    		<path name="${orion.user.guide}/Getting_started" title="Getting started" generateToc="true"/>
     		<path name="${orion.user.guide}/Reference/Welcome_page" title="Welcome page" generateToc="false"/>
-    		<path name="${orion.user.guide}/Reference/Navigator_page" title="Navigator page" generateToc="false"/>
+    		<path name="${orion.user.guide}/Reference/Navigator_page" title="Navigator page" generateToc="true"/>
+    		<path name="${orion.user.guide}/Reference/Coding_page" title="Coding page" generateToc="false"/>
+    		<path name="${orion.user.guide}/Reference/Search_Results_page" title="Search Results page" generateToc="false"/>
     		<path name="${orion.user.guide}/Reference/Plugins_page" title="Plugins page" generateToc="false"/>
     		<path name="${orion.user.guide}/Reference/Profile_page" title="Profile page" generateToc="false"/>
     		<path name="${orion.user.guide}/Reference/Site_Configurations_page" title="Site Configurations page" generateToc="false"/>
     		<path name="${orion.user.guide}/Reference/Edit_Site_page" title="Edit Site page" generateToc="false"/>
-    		<path name="${orion.user.guide}/Reference/Repositories_page" title="Repositories page" generateToc="false"/>
-       		<path name="${orion.user.guide}/Reference/Git_Status_page" title="Git Status page" generateToc="false"/>
-       		<path name="${orion.user.guide}/Reference/Git_Log_page" title="Git Log page" generateToc="false"/>
+    		<path name="${orion.user.guide}/Reference/Repositories_page" title="Repositories page" generateToc="true"/>
+       		<path name="${orion.user.guide}/Reference/Git_Status_page" title="Git Status page" generateToc="true"/>
+       		<path name="${orion.user.guide}/Reference/Git_Log_page" title="Git Log page" generateToc="true"/>
        		<path name="${orion.user.guide}/Reference/Compare_page" title="Compare page" generateToc="false"/>
 			<stylesheet url="book.css"/>
     		<pageAppendum>
 
-= Updating this document =
+== Updating this document ==
 
 This document is maintained in a collaborative wiki.  If you wish to update or modify this document please visit 
 {url}</pageAppendum>
