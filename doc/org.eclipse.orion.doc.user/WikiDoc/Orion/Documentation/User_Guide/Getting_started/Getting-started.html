@@ -53,13 +53,13 @@
 			<a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=335890" target="orion_external">Bug 335890</a>).
 		</p>
 		<p>
-			<img border="0" src="images/_Orion-navimportdialog.png"/>
+			<img border="0" src="images/Orion-navimportdialog.png"/>
 		</p>
 		<p>The contents of the zip file will appear in your folder in the navigator.  (If you are working on the Orion demo server, you will also notice a folder associated with git inside your new folder.  To configure this feature on your own localhost version of Orion, see the 
 			<a href="http://wiki.eclipse.org/Orion/Server_admin_guide#Automatic_git_projects" title="Orion/Server admin guide#Automatic_git_projects" target="orion_external">server administration guide</a>.)  
 		</p>
 		<p>
-			<img border="0" src="images/_Orion-navimportcontent.png"/>
+			<img border="0" src="images/Orion-navimportcontent.png"/>
 		</p>
 		<h3 id="Exporting_folders_and_files">Exporting folders and files</h3>
 		<p>When you have worked with your code on Orion and are ready to export your work back to your local workstation, navigate to the folder you wish to export and choose the 
@@ -86,8 +86,10 @@
 		<p>
 			<img border="0" src="images/Orion-pluginregistry.png"/>
 		</p>
-		<p>The registry shows what plug-ins you have installed, and allows you to add plug-ins by typing the URL of a plug-in in the text box on the upper right.  You can see that the several plug-ins that provide Orion functionality, such as file management, user management, git, jslint, are already installed.  Plug-ins provide different kinds of new behaviors, or "extensions" to the system.  </p>
-		<p>The "fileCommands" extension point allows plug-ins to contribute commands to the navigator.  The plug-in can specify how many and what types of files it can work with.  The command will be 	contributed in the navigator item menus.  </p>
+		<p>The registry shows what plug-ins you have installed, and allows you to add plug-ins by typing the URL of a plug-in in the text box.  You can see that the several plug-ins that provide Orion functionality, such as file management, user management, git, jslint, are already installed.  Plug-ins provide different kinds of new behaviors, or "extensions", to the system.  </p>
+		<p>The "
+			<a href="http://wiki.eclipse.org/Orion/Documentation/Developer_Guide/Plugging_into_the_navigator#orion.navigate.command" title="Orion/Documentation/Developer Guide/Plugging into the navigator#orion.navigate.command" target="orion_external">orion.navigate.command</a>" extension point allows plug-ins to contribute commands to the navigator. Each contributed command can specify how many and what types of files it can work with. Contributed commands will appear in the navigator item menus.  
+		</p>
 		<p>A sample plug-in that demonstrates the different kinds of commands you can contribute is located at 
 			<a href="http://orionhub.org/plugins/sampleCommandsPlugin.html" target="orion_external">http://orionhub.org/plugins/sampleCommandsPlugin.html</a>.  You can paste or type this URL into the registry page and press the 
 			<b>Install</b> button.  When you reload the navigator page, you will see new commands in the item and toolbar menus.
@@ -99,11 +101,10 @@
 			<a href="https://github.com/eclipse/orion.client/blob/master/bundles/org.eclipse.orion.client.core/web/plugins/sampleCommandsPlugin.html" target="orion_external">sampleCommandsPlugin.html</a> for the source code.
 		</p>
 		<h2 id="Editing_code">Editing code</h2>
-		<p>Once you've navigated to the file you want to work with, click on its link to open the editor.  You'll find that the editor supports the basics (cut/copy/paste, undo/redo) as well as your favorite text-editing features from Eclipse desktop (move up/down, copy up/down, go to line, find, incremental find).  For now, most of these commands are accessible only through keyboard shortcuts, using the default keybindings in Eclipse desktop.  </p>
+		<p>Once you've navigated to the file you want to work with, click on its link to open the editor.  You'll find that the editor supports the basics (cut/copy/paste, undo/redo) as well as your favorite text-editing features from Eclipse desktop (move up/down, copy up/down, go to line, find, incremental find).  For now, most of these commands are accessible only through keyboard shortcuts, using the default keybindings in Eclipse desktop. To see a full list of available keyboard commands in the editor, press Ctrl+Shift+L. (Outside of the editor, you can get the same help on any page by pressing Shift+? .)</p>
 		<h3 id="JavaScript_development">JavaScript development</h3>
 		<p>If you are working with JavaScript (a *.js file), the editor will syntax highlight your code.  You will also see an outline of the functions in your JavaScript, as well as markers for problem areas in your code.  Integration with existing web tools is an important goal in Orion, so we have implemented a plug-in that runs JSLint on JavaScript files in order to produce the outline and problem markers.  The familiar Eclipse problem UI is used to display the problems in the editor.  You'll see problem markers by each line of code in the left hand ruler, and overview problem markers on the right side, which allow you to navigate quickly to a problem in a part of the file that's not currently displayed.   </p>
 		<p>The editor will also match brackets when you click next to a bracket, perform auto indention, and provide source-code oriented keybindings for things like toggling comments and adding/removing block comments.</p>
-		<p>We do not yet support content assist on JavaScript files.</p>
 		<p>
 			<img border="0" src="images/Orion-editjs.png"/>
 		</p>
@@ -128,7 +129,7 @@
 		<h3 id="Extending_the_editor_with_a_Plug-in">Extending the editor with a Plug-in</h3>
 		<p>We've also implemented pluggable editor actions which allow third-party developers to extend the behavior of the Orion editor on the fly.  For example, we've developed an Orion plug-in based on 
 			<a href="http://jsbeautifier.org" target="orion_external">the JSBeautifier code formatter</a> so that source code can be easily beautified.  The plug-in is located at 
-			<a href="http://mamacdon.github.com/0.2/plugins/beautify/jsbeautify.html" target="orion_external">http://mamacdon.github.com/0.2/plugins/beautify/jsbeautify.html</a> .  Once the plug-in is installed, it will appear in the list of plug-ins.  More interestingly, when you reload an Orion editor, you should see a new icon appear with the rest of the editor commands.
+			<a href="http://mamacdon.github.com/0.2/plugins/beautify/jsbeautify.html" target="orion_external">http://mamacdon.github.com/0.2/plugins/beautify/jsbeautify.html</a> .  Once the plug-in is installed, it will appear in the list of plug-ins.  More interestingly, when you reload an Orion editor, you should see a new command appear beside rest of the editor commands. 
 		</p>
 		<p>
 			<img border="0" src="images/Orion-editorplugin.png"/>

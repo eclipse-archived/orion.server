@@ -16,22 +16,50 @@
 		<p>
 			<img border="0" src="images/Orion-status-page-change-types.png"/>
 		</p>
-		<h2 id="Viewing_changes">Viewing changes</h2>
+		<h2 id="Comparing_changes">Comparing changes</h2>
 		<p>Click any staged or unstaged change to open a comparison between the working copy and the state of that file in the most recent commit. You can also open a separate 
 			<a href="../../../../../\Orion\Documentation\User_Guide\Reference\Compare_page/Compare-page.html" title="Orion/Documentation/User Guide/Reference/Compare page">Compare page</a> by clicking the <b>Side by side compare</b> button to the right of the file name. The compare page allows you to merge changes or perform further edits on your uncommitted changes.
 		</p>
 		<h2 id="Staging_changes">Staging changes</h2>
-		<p>Hover over any unstaged change to pop up all available action icons. Then hover over the first action. You will see the tool tip as <b>stage</b>. </p>
+		<p>Before you can commit a file in Git, it must be added to your local index. This process is called <i>staging</i>, or <i>Git add</i>. Hover over any unstaged change to pop up all available action icons. Then hover over the first action. You will see the tool tip as <b>stage</b>. </p>
 		<p>
 			<img border="0" src="images/Orion-status-page-stage-action.png"/>
 		</p>
-		<p>Click on the action to stage the change. The change is shown in the staged area.</p>
+		<p>Click on the action to stage the change. The file will be moved to the <b>Staged</b> area.</p>
 		<p>
 			<img border="0" src="images/Orion-status-page-staged-change.png"/>
 		</p>
 		<p>From the top-right corner of the unstaged area, you can also click on the <b>stage all</b> action to stage all the changes.</p>
 		<p>
 			<img border="0" src="images/Orion-status-page-staged-all-changes.png"/>
+		</p>
+		<h2 id="Reverting_an_unstaged_change">Reverting an unstaged change</h2>
+		<p>Let's say you have made a change in your working copy that you want to discard. You can discard a change by performing a checkout of the file contents from your local index. Hover over any unstaged change to pop up all available action icons. Then hover over the second action. You will see the tool tip as <b>checkout</b>. </p>
+		<p>
+			<img border="0" src="images/Orion-status-page-checkout-action.png"/>
+		</p>
+		<p>Clicking on the action pops up the confirmation dialog. Click <b>OK</b> to restore the change from the index or <b>Cancel</b> to cancel the action.</p>
+		<p>
+			<img border="0" src="images/Orion-status-page-checkout-confirm.png"/>
+		</p>
+		<h2 id="Resetting_all_changes_from_the_index">Resetting all changes from the index</h2>
+		<p>You can also reset all the unstaged and staged changes by clicking on the <b>Reset</b> from the page action.</p>
+		<p>
+			<img border="0" src="images/Orion-status-page-reset-action.png"/>
+		</p>
+		<p>A confirmation dialog pops up when you click on the action. Click <b>OK</b> to reset the changes from the index or <b>Cancel</b> to cancel the action.</p>
+		<p>
+			<img border="0" src="images/Orion-status-page-reset-confirm.png"/>
+		</p>
+		<h2 id="Unstaging_changes">Unstaging changes</h2>
+		<p>If you decide you don't want to commit a change, but want to continue working on it, you can remove it from your index by <i>unstaging</i> it. From the top-right corner of the staged area, you can click on the <b>unstage all</b> action to unstage all the changes. Unstaging a single file is not yet supported.</p>
+		<p>
+			<img border="0" src="images/Orion-status-page-unstage-action.png"/>
+		</p>
+		<h2 id="Committing_changes">Committing changes</h2>
+		<p>Once changes are staged, you can use actions in the commit area to commit all staged changes. The <b>commit</b> button is disabled if there is no message in the <b>commit message</b>, so you have to input the message before you commit the changes. The <b>Amend</b> check-box is used to amend the last commit.</p>
+		<p>
+			<img border="0" src="images/Orion-status-page-commit-action.png"/>
 		</p>
 		<h2 id="Updating_this_document">Updating this document</h2>
 		<p>This document is maintained in a collaborative wiki.  If you wish to update or modify this document please visit 

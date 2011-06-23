@@ -29,7 +29,35 @@
 				<td style="width: 20%" align="right" valign="top">Updating this document</td>
 			</tr>
 		</table><hr/>
-		<h1 id="orion.navigate.openWith">orion.navigate.openWith</h1><hr/>
+		<h1 id="orion.navigate.openWith">orion.navigate.openWith</h1>
+		<p>The <tt>orion.navigate.openWith</tt> service is used to contribute the location of an editor for a particular file type. This service is purely declarative, with no implementation methods required.</p>
+		<h2 id="Service_methods_2">Service methods</h2>
+		<p>None</p>
+		<h2 id="Service_attributes_2">Service attributes</h2>
+		<p>Implementations of <tt>orion.navigate.openWith</tt> must define the following attributes:</p>
+		<dl>
+			<dt>name</dt>
+			<dd>The name of the editor that opens with this service</dd>
+			<dt>href</dt>
+			<dd>The location of the editor to be opened. The variable <tt>${Location}</tt> is substituted with the URL of the file being edited.</dd>
+			<dt>validationProperties</dt>
+			<dd>An object specifying what file types this service is applicable to. Currently the only supported attribute is <tt>Name</tt>, specifying a regular expression to match on the file name.</dd>
+		</dl>
+		<h2 id="Example_2">Example</h2>
+		<p>Here is a sample plug-in that contributes a link to a Google search for the selected file's name:</p>
+		<pre>
+ var serviceImpl = {};
+ var serviceProperties = {
+   name: "Orion web editor",
+   href: "/edit/edit.html#${Location}",
+   validationProperties: {Name: "*.(css|js|htm|html|txt|xml|java)"}
+ };
+ provider.registerServiceProvider("orion.navigate.openWith", serviceImpl, serviceProperties);
+</pre>
+		<p>When this plug-in is installed, the user will see <tt>Orion web editor</tt> as an available target in the <b>Open With</b> Navigator menu as follows:</p>
+		<p>
+			<img border="0" src="images/Orion-file-openWith-example.png"/>
+		</p><hr/>
 		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
 			<tr>
 				<td style="width: 20%" align="left">
