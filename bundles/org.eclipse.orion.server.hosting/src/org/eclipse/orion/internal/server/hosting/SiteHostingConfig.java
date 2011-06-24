@@ -17,14 +17,13 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.core.LogHelper;
 
 /**
- * Stores the list of host names that may be allocated to hosted sites, and the port number that 
- * sites will be accessed on. The server administrator can control the host name configuration by
- * passing a parameter to the Orion server at launch.<p>
+ * Stores the list of host names that may be allocated to hosted sites.The server administrator can control 
+ * the host name configuration by setting a configuration property for the Orion server.<p>
  * 
- * The parameter's value is a comma-separated list where each entry is either a valid domain name
- * (which may include wildcards), or a valid IP address. Each entry in the list becomes the name of
- * a virtual host that a site can be served on. Wildcard domains can be used to server many different
- * virtual hosts.
+ * The property's value is a comma-separated list where each entry describes either a domain name
+ * (which may include wildcards), or an IP address. Each entry in the list becomes the name of a 
+ * virtual host that a site can be served on. Wildcard domains can be used to serve many different
+ * virtual hosts as subdomains of the wildcard domain.
  * 
  * Examples:
  * <dl>
@@ -48,16 +47,10 @@ public class SiteHostingConfig {
 
 	private static final int DEFAULT_HOST_COUNT = 16;
 
-	private int hostingPort;
 	private List<String> hosts;
 
-	private SiteHostingConfig(int port, List<String> hosts) {
-		this.hostingPort = port;
+	private SiteHostingConfig(List<String> hosts) {
 		this.hosts = hosts;
-	}
-
-	public int getHostingPort() {
-		return this.hostingPort;
 	}
 
 	/**
@@ -73,14 +66,14 @@ public class SiteHostingConfig {
 	 * @return A hosting configuration parsed from <code>hostInfo</code>. If <code>vhostInfo</code>
 	 * is <code>null</code>, returns a default configuration.
 	 */
-	static SiteHostingConfig getSiteHostingConfig(int port, String hostInfo) {
-		return hostInfo == null ? getDefault(port) : fromString(port, hostInfo);
+	static SiteHostingConfig getSiteHostingConfig(String hostInfo) {
+		return hostInfo == null ? getDefault() : fromString(hostInfo);
 	}
 
 	/**
 	 * Parses a SiteHostingConfig from the <code>hostInfo</code> string.
 	 */
-	private static SiteHostingConfig fromString(int port, String hostInfo) {
+	private static SiteHostingConfig fromString(String hostInfo) {
 		List<String> hosts = new ArrayList<String>();
 		StringTokenizer st = new StringTokenizer(hostInfo, ", "); //$NON-NLS-1$
 		if (!st.hasMoreTokens()) {
@@ -90,15 +83,14 @@ public class SiteHostingConfig {
 			String token = st.nextToken();
 			hosts.add(token);
 		}
-		return new SiteHostingConfig(port, hosts);
+		return new SiteHostingConfig(hosts);
 	}
 
 	/**
-	 * @param port
 	 * @return A default SiteHostingConfig based on the platform and network setup. If possible,
 	 * the config will include some IP addresses that point to the loopback device.
 	 */
-	private static SiteHostingConfig getDefault(int port) {
+	private static SiteHostingConfig getDefault() {
 		List<String> aliases = new ArrayList<String>();
 
 		// TODO: this guessing is fragile and only useful for self-hosting. Is it really useful?
@@ -121,7 +113,7 @@ public class SiteHostingConfig {
 				LogHelper.log(new Status(IStatus.ERROR, HostingActivator.PI_SERVER_HOSTING, e.getMessage(), e));
 			}
 		}
-		return new SiteHostingConfig(port, aliases);
+		return new SiteHostingConfig(aliases);
 	}
 
 	/**

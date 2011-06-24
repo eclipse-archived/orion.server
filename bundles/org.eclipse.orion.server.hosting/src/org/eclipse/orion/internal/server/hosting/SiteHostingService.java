@@ -140,8 +140,6 @@ public class SiteHostingService implements ISiteHostingService {
 	 */
 	private String getNextHost(String hint) throws NoMoreHostsException {
 		hint = hint == null || hint.equals("") ? "site" : hint; //$NON-NLS-1$ //$NON-NLS-2$
-		final String portSuffix = ":" + this.config.getHostingPort(); //$NON-NLS-1$
-
 		synchronized (sites) {
 			String host = null;
 
@@ -152,16 +150,15 @@ public class SiteHostingService implements ISiteHostingService {
 					final String rest = value.substring(pos + 1);
 
 					// Append digits if necessary to get a unique hostname
-					String candidate = hint + rest + portSuffix;
+					String candidate = hint + rest;
 					for (int i = 0; isHosted(candidate); i++) {
-						candidate = hint + (Integer.toString(i)) + rest + portSuffix;
+						candidate = hint + (Integer.toString(i)) + rest;
 					}
 					host = candidate;
 					break;
 				} else {
-					String candidate = value + portSuffix;
-					if (!isHosted(candidate)) {
-						host = candidate;
+					if (!isHosted(value)) {
+						host = value;
 						break;
 					}
 				}
