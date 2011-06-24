@@ -8,6 +8,11 @@
 		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Git_Status_page/Git-Status-page.html#Resetting_all_changes_from_the_index" label="Resetting all changes from the index"></topic>
 		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Git_Status_page/Git-Status-page.html#Unstaging_changes" label="Unstaging changes"></topic>
 		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Git_Status_page/Git-Status-page.html#Committing_changes" label="Committing changes"></topic>
+		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Git_Status_page/Git-Status-page.html#Recent_commits_area" label="Recent commits area">
+			<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Git_Status_page/Git-Status-page.html#Fetch_from_remote_branch" label="Fetch from remote branch"></topic>
+			<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Git_Status_page/Git-Status-page.html#Merge_from_remote_branch" label="Merge from remote branch"></topic>
+			<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Git_Status_page/Git-Status-page.html#Push_to_remote_branch" label="Push to remote branch"></topic>
+		</topic>
 		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Git_Status_page/Git-Status-page.html#Updating_this_document" label="Updating this document"></topic>
 	</topic>
 </toc>

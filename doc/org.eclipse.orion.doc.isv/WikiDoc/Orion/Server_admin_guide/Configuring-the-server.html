@@ -31,7 +31,7 @@
 		</table><hr/>
 		<h1 id="Configuring_the_server">Configuring the server</h1>
 		<h2 id="Server_configuration_file">Server configuration file</h2>
-		<p>Many Orion server settings are found in the Orion server configuration file. By default Orion looks for this file in the current working directory of the Orion server process in a file called <tt>orion.conf</tt>. For example you can place this file in the root of your Orion install, then launch Orion from there. If the configuration file is not in the working directory, Orion will check the platform instance location - the location specified by the -data command line argument. By default this is a directory called "serverworkspace". Alternatively, the location of the configuration file can be specified via the system property <tt>orion.core.configFile</tt>. For example add this line to eclipse.ini:</p>
+		<p>Many Orion server settings are found in the Orion server configuration file. By default Orion looks for this file in the current working directory of the Orion server process in a file called <tt>orion.conf</tt>. For example you can place this file in the root of your Orion install, then launch Orion from there. If the configuration file is not in the working directory, Orion will check the platform instance location - the location specified by the -data command line argument. By default this is a directory called "serverworkspace". Alternatively, the location of the configuration file can be specified via the system property <tt>orion.core.configFile</tt>. For example add this line to orion.ini:</p>
 		<pre>-Dorion.core.configFile=/home/fran/orion.conf
 </pre>
 		<p>The file is a simple text configuration file with key/value pairs delimited by '=' character. Lines starting with '#' are treated as comments and ignored</p>
@@ -39,7 +39,7 @@
 			<b>Note:</b> For those developing Orion, the server configuration file can be specified in your Eclipse launch configuration. The launch configuration file included in the bundle <tt>org.eclipse.orion.client.core</tt> will automatically use the configuration file <tt>web-ide.conf</tt> in the same bundle.
 		</p>
 		<h2 id="Changing_the_port">Changing the port</h2>
-		<p>By default Orion will run on port 8080. To change the port, edit the file eclipse/eclipse.ini, and change the value of the "org.eclipse.equinox.http.jetty.http.port" system property.</p>
+		<p>By default Orion will run on port 8080. To change the port, edit the file <tt>orion.ini</tt>, and change the value of the "org.eclipse.equinox.http.jetty.http.port" system property.</p>
 		<h2 id="Safely_running_on_port_80">Safely running on port 80</h2>
 		<p>Running a server on port 80 usually requires running the application as the root user. For security reasons, running the Orion server as root is not recommended. Instead, you can run a basic Apache server as root, with the following entries in the Apache virtual host configuration file:</p>
 		<pre>RewriteEngine On
@@ -49,6 +49,31 @@ RewriteRule ^/(.*) http://localhost:8080/$1 [P,L]
 		<p>Also, for the wildcard hosting, this is used as well (in addition to a wildcard DNS entry):</p>
 		<pre>ServerName orion.eclipse.org
 ServerAlias *.orion.eclipse.org
+</pre>
+		<h2 id="Configuring_to_run_over_SSL">Configuring to run over SSL</h2>
+		<p>The Orion server can be configured to run over the secure https protocol. In order to do it you need to generate or obtain a public/private key pair and x509 certificate and set the Orion configuration as described below..</p>
+		<h3 id="Creating_a_private.2Fpublic_key_pair_and_a_certificate">Creating a private/public key pair and a certificate</h3>
+		<p>Use the keytool from Java SDK:</p>
+		<pre>keytool -keystore keystore -alias jetty -genkey -keyalg RSA
+</pre>
+		<p>You will be prompted for information about the certificate and passwords for protecting the keystore and keys in it. Once it is done a file named <code>keystore</code> is created in the current working directory and you may proceed to 
+			<a href="Configuring-the-server.html#Setting_the_Orion_configuration">Setting the Orion configuration</a>
+		</p>
+		<h3 id="Getting_the_certificate_from_a_known_authority">Getting the certificate from a known authority</h3>
+		<p>The keys and certificate generated in the previous step are sufficient to run Orion over https however will not be trusted by the browser what will end up with a prompt on accessing Orion pages. You may request a well known certificate authority like Thawte, VISA, ValiCert, Verisign etc. to sign your key and certificate.</p>
+		<h3 id="Setting_the_Orion_configuration">Setting the Orion configuration</h3>
+		<p>Now set the following properties in the 
+			<a href="Configuring-the-server.html#Server_configuration_file">server configuration file</a>:
+		</p>
+		<pre>jetty.https.enabled = true
+jetty.https.port = 8443
+jetty.ssl.keystore = [the keystore location]
+jetty.ssl.password =  [password]
+jetty.ssl.keypassword = [password]
+jetty.ssl.protocol = SSLv3
+</pre>
+		<p>Note: In order to make the Sites feature work you need also to specify the port for http appropriately. For example add this line to <tt>orion.ini</tt>:</p>
+		<pre>-Dorg.eclipse.equinox.http.jetty.http.port=8443
 </pre>
 		<h2 id="Configuring_paths_where_users_can_store_files">Configuring paths where users can store files</h2>
 		<p>By default all files created by users are stored in the Orion "server workspace". This is the location specified by the "-data" argument when launching the server. By default this workspace is stored at eclipse/serverworkspace/. To allow users to link files in other locations to their workspace, the <tt>orion.file.allowedPaths</tt> property can be set in the 

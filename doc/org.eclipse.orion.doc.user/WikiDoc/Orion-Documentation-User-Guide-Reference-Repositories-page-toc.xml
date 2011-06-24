@@ -2,6 +2,9 @@
 <toc topic="WikiDoc/Orion/Documentation/User_Guide/Reference/Repositories_page/Repositories-page.html" label="Repositories page">
 	<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Repositories_page/Repositories-page.html" label="Repositories page">
 		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Repositories_page/Repositories-page.html#Adding_repositories" label="Adding repositories"></topic>
+		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Repositories_page/Repositories-page.html#Actions_on_a_repository" label="Actions on a repository"></topic>
+		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Repositories_page/Repositories-page.html#Adding_branches" label="Adding branches"></topic>
+		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Repositories_page/Repositories-page.html#Actions_on_a_local_branch" label="Actions on a local branch"></topic>
 		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Repositories_page/Repositories-page.html#Updating_this_document" label="Updating this document"></topic>
 	</topic>
 </toc>
