@@ -251,7 +251,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		project.setName(name);
 		String content = toAdd.optString(ProtocolConstants.KEY_CONTENT_LOCATION, null);
 		if (!isAllowedLinkDestination(content, request.getRemoteUser())) {
-			String msg = "Cannot link to server path";
+			String msg = NLS.bind("Cannot link to server path {0}. Use the orion.file.allowedPaths property to specify server locations where content can be linked.", content);
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, msg, null));
 		}
 		try {
