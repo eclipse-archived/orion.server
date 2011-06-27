@@ -35,6 +35,7 @@ import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.users.UserUtilities;
 import org.eclipse.orion.server.git.*;
 import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
 import org.eclipse.orion.server.servlets.OrionServlet;
@@ -261,10 +262,15 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		commit.put(ProtocolConstants.KEY_CONTENT_LOCATION, createCommitLocation(baseLocation, revCommit.getName(), "parts=body")); //$NON-NLS-1$
 		commit.put(GitConstants.KEY_DIFF, createDiffLocation(baseLocation, revCommit.getName(), null, null, isRoot));
 		commit.put(ProtocolConstants.KEY_NAME, revCommit.getName());
-		commit.put(GitConstants.KEY_AUTHOR_NAME, revCommit.getAuthorIdent().getName());
-		commit.put(GitConstants.KEY_AUTHOR_EMAIL, revCommit.getAuthorIdent().getEmailAddress());
-		commit.put(GitConstants.KEY_COMMITTER_NAME, revCommit.getCommitterIdent().getName());
-		commit.put(GitConstants.KEY_COMMITTER_EMAIL, revCommit.getCommitterIdent().getEmailAddress());
+		PersonIdent author = revCommit.getAuthorIdent();
+		commit.put(GitConstants.KEY_AUTHOR_NAME, author.getName());
+		commit.put(GitConstants.KEY_AUTHOR_EMAIL, author.getEmailAddress());
+		String authorImage = UserUtilities.getImageLink(author.getEmailAddress());
+		if (authorImage != null)
+			commit.put(GitConstants.KEY_AUTHOR_IMAGE, authorImage);
+		PersonIdent committer = revCommit.getCommitterIdent();
+		commit.put(GitConstants.KEY_COMMITTER_NAME, committer.getName());
+		commit.put(GitConstants.KEY_COMMITTER_EMAIL, committer.getEmailAddress());
 		commit.put(GitConstants.KEY_COMMIT_TIME, ((long) revCommit.getCommitTime()) * 1000 /* time in milliseconds */);
 		commit.put(GitConstants.KEY_COMMIT_MESSAGE, revCommit.getFullMessage());
 		commit.put(ProtocolConstants.KEY_CHILDREN, toJSON(getTagsForCommit(db, revCommit)));

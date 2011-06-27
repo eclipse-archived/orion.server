@@ -143,6 +143,8 @@ public class GitConstants {
 
 	public static final String KEY_AUTHOR_EMAIL = "AuthorEmail"; //$NON-NLS-1$
 
+	public static final String KEY_AUTHOR_IMAGE = "AuthorImage"; //$NON-NLS-1$
+
 	public static final String KEY_COMMITTER_NAME = "CommitterName"; //$NON-NLS-1$
 
 	public static final String KEY_COMMITTER_EMAIL = "CommitterEmail"; //$NON-NLS-1$
