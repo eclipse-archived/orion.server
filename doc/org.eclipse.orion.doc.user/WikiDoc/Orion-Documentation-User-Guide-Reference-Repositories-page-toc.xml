@@ -16,6 +16,7 @@
 		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Repositories_page/Repositories-page.html#Actions_on_a_remote_branch" label="Actions on a remote branch">
 			<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Repositories_page/Repositories-page.html#Checking_out_a_remote_branch" label="Checking out a remote branch"></topic>
 			<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Repositories_page/Repositories-page.html#Fetching_and_merging_content_of_a_remote_branch" label="Fetching and merging content of a remote branch"></topic>
+			<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Repositories_page/Repositories-page.html#Resetting_local_index_from_a_remote_branch" label="Resetting local index from a remote branch"></topic>
 		</topic>
 		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Repositories_page/Repositories-page.html#Updating_this_document" label="Updating this document"></topic>
 	</topic>

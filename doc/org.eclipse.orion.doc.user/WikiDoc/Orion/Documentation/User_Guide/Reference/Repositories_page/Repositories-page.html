@@ -25,25 +25,25 @@
 		<p>
 			<img border="0" src="images/Orion-repository-repo-actions.png"/>
 		</p>
-		<p>Clicking on the <b>Delete</b> action will pop up a confirmation dialog and you can decide if you want to delete it. Clicking on the <b>Show in Navigator</b> navigates to the 
+		<p>Clicking on the <b>Delete</b> action will pop up a confirmation dialog and you can decide if you want to delete it. Clicking <b>Show in Navigator</b> navigates to the 
 			<a href="../../../../../\Orion\Documentation\User_Guide\Reference\Navigator_page/Navigator-page.html" title="Orion/Documentation/User Guide/Reference/Navigator page">Navigator page</a>.
 		</p>
 		<h2 id="Adding_branches">Adding branches</h2>
-		<p>Once a repository is created or cloned, the <b>master</b> branch is set as the current branch. You can create your own branch, work on it and merge it back to master. Hover over the <b>Branch</b> row in the repository table to pop up the <b>Add Branch</b> action icon. Then hover over the action.</p>
+		<p>Once a repository is created or cloned, the <b>master</b> branch is set as the current branch. You can create your own branch, work on it and merge it back to master. Hover over the <b>Branch</b> row in the repository table to pop up the <b>Add Branch</b> icon. </p>
 		<p>
 			<img border="0" src="images/Orion-repository-page-add-branch.png"/>
 		</p>
-		<p>Clicking on the action and input the branch name. Hit enter key to create the branch.</p>
+		<p>Click on the action and input the branch name. Hit 'Enter' to create the branch.</p>
 		<p>
 			<img border="0" src="images/Orion-repository-page-add-branch-name.png"/>
 		</p>
 		<h2 id="Actions_on_a_local_branch">Actions on a local branch</h2>
-		<p>Once a new branch is created, it is in the <b>local</b> but not in the <b>remote</b> yet. Hover over the branch name row in the Branch table to pop up actions as below. You can manage the branch by these actions.</p>
+		<p>Once a new branch is created, it is in the <b>local</b> repository but not in the <b>remote</b> yet. Hover over the branch name row in the Branch table to pop up actions as below. You can manage the branches using these actions.</p>
 		<p>
 			<img border="0" src="images/Orion-repository-page-branch-actions-not-current.png"/>
 		</p>
 		<h3 id="Deleting_a_local_branch">Deleting a local branch</h3>
-		<p>From the actions when you hover over the branch, click on the first action to delete the branch. A confirmation dialog will pop up and you can decide if you want to delete it. </p>
+		<p>From the branch actions, click <b>Remove Branch</b> to delete a local branch. A confirmation dialog will pop up and you can decide if you want to delete it. </p>
 		<p>
 			<img border="0" src="images/Orion-repository-page-branch-actions-delete.png"/>
 		</p>
@@ -52,7 +52,7 @@
 			<a href="../../../../../\Orion\Documentation\User_Guide\Reference\Git_Log_page/Git-Log-page.html" title="Orion/Documentation/User Guide/Reference/Git Log page">Log page</a> to see details on the branch. From the actions when you hover over the branch, click on the <b>Show Git Log</b> as the link to the Git log page.
 		</p>
 		<h3 id="Merging_from_the_remote_tracking_branch">Merging from the remote tracking branch</h3>
-		<p>You can also perform merge action if there is a remote tracking branch. But normally the remote branch does not exist yet for a newly created branch before you <b>push</b> it. From the actions when you hover over the branch, click on the third action to merge from the remote tracking branch. </p>
+		<p>You can also perform a merge action if there is a remote tracking branch. But normally the remote branch does not exist for a newly created branch until you <b>push</b> it. From the actions when you hover over the branch, click the <b>Merge</b> icon to merge from the remote tracking branch into your local working copy. </p>
 		<p>
 			<img border="0" src="images/Orion-repository-page-branch-actions-merge-local.png"/>
 		</p>
@@ -85,24 +85,21 @@
 			<a href="../../../../../\Orion\Documentation\User_Guide\Reference\Git_Status_page/Git-Status-page.html" title="Orion/Documentation/User Guide/Reference/Git Status page">Status page</a>.
 		</p>
 		<h2 id="Fetching_remote_branches">Fetching remote branches</h2>
-		<p>If some bodies else have pushed their branches into <b>their repository/Remote/origin</b> but those branches do not appear in <b>your repository/Remote/origin</b> yet, you have to <b>fetch</b> them first. Let's say some body has pushed a branch called newBr1 in the remote. Hover over the <b>Remote/origin</b> row in the repository table to pop up the action icons. </p>
+		<p>If somebody else has pushed their branches into <b>their repository/Remote/origin</b> but those branches do not appear in <b>your repository/Remote/origin</b> yet, you have to <b>fetch</b> them first. Let's say somebody has pushed a branch called <tt>newBr1</tt> in the remote. Hover over the <b>Remote/origin</b> row in the repository table to pop up the action icons. </p>
 		<p>
 			<img border="0" src="images/Orion-repository-page-fetch-remote.png"/>
 		</p>
-		<p>Click on the <b>Fetch</b> action and put credentials if required to access the repository. The remote branches are updated.</p>
+		<p>Click <b>Fetch</b>, and enter your credentials if required to access the repository. The remote branches are updated.</p>
 		<p>
 			<img border="0" src="images/Orion-repository-page-fetch-remote-result.png"/>
 		</p>
 		<h2 id="Actions_on_a_remote_branch">Actions on a remote branch</h2>
-		<p>Actions on a remote branch are different to those on a local branch. But the <b>Show Git Log</b> and <b>Merge</b> actions are same.
-<b>			Show Git Log</b> action will navigate to the same log page but with the remote branch content. You can also switch to the local branch content there.
-			Hover over the remote branch name row in the Remote table to pop up actions as below. You can manage the remote branch by these actions. </p>
+		<p>Actions on a remote branch are different from those on a local branch. But the <b>Show Git Log</b> and <b>Merge</b> actions are same. The <b>Show Git Log</b> action will navigate to the same log page but with the remote branch content. You can also switch to the local branch content there. Hover over the remote branch name row in the Remote table to pop up actions as below. You can manage the remote branch by these actions. </p>
 		<p>
 			<img border="0" src="images/Orion-repository-page-branch-actions-remote.png"/>
 		</p>
 		<h3 id="Checking_out_a_remote_branch">Checking out a remote branch</h3>
-		<p>Normally a newly fetched remote branch is not in your local branches yet. You have to <b>checkout</b> in order to work on it. 
-			From the actions when you hover over the branch, click on the fourth action to checkout.</p>
+		<p>Normally a newly fetched remote branch is not in your local branches yet. You have to <b>checkout</b> in order to work on it. From the actions when you hover over the branch, click the <b>Checkout</b> icon.</p>
 		<p>
 			<img border="0" src="images/Orion-repository-branch-actions-remote-checkout.png"/>
 		</p>
@@ -112,14 +109,22 @@
 		</p>
 		<p><b>Please note</b> that if you try to check out a remote branch that already has a local branch in your repository, you will get a warning message : "the local branch already exists".</p>
 		<h3 id="Fetching_and_merging_content_of_a_remote_branch">Fetching and merging content of a remote branch</h3>
-		<p>You can <b>fetch</b> a remote branch and <b>merge</b> it to a local branch which is tracked by this remote branch.
-			From the actions when you hover over the branch, click on the second and third action to fetch and merge from the remote tracking branch. </p>
+		<p>You can <b>fetch</b> a remote branch and <b>merge</b> it to a local branch which is tracked by this remote branch. From the actions when you hover over the branch, click on the second and third action to fetch and merge from the remote tracking branch. </p>
 		<p>
 			<img border="0" src="images/Orion-repository-branch-actions-fetch-merge.png"/>
 		</p>
 		<p><b>Please note</b> that you can achieve the same result by performing the same actions in 
 			<a href="../../../../../\Orion\Documentation\User_Guide\Reference\Git_Log_page/Git-Log-page.html" title="Orion/Documentation/User Guide/Reference/Git Log page">Log page</a> or 
 			<a href="../../../../../\Orion\Documentation\User_Guide\Reference\Git_Status_page/Git-Status-page.html" title="Orion/Documentation/User Guide/Reference/Git Status page">Status page</a>.
+		</p>
+		<h3 id="Resetting_local_index_from_a_remote_branch">Resetting local index from a remote branch</h3>
+		<p>You can also <b>reset</b> a local branch to replace with the contents of the remote tracking branch.</p>
+		<p>
+			<img border="0" src="images/Orion-repository-branch-actions-remote-reset.png"/>
+		</p>
+		<p>From the actions when you hover over the <b>remote</b> branch, click the <b>Reset Index</b> icon to reset the local branch content. A dialog will pop up asking for confirmation.</p>
+		<p>
+			<img border="0" src="images/Orion-repository-branch-actions-remote-reset-confirm.png"/>
 		</p>
 		<h2 id="Updating_this_document">Updating this document</h2>
 		<p>This document is maintained in a collaborative wiki.  If you wish to update or modify this document please visit 
