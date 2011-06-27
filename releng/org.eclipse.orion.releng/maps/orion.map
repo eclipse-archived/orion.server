@@ -31,7 +31,7 @@ plugin@org.eclipse.orion.server.ui=GIT,tag=v20110606-1500,repo=dev.eclipse.org:/
 
 #doc
 plugin@org.eclipse.orion.doc.isv=GIT,tag=v20110624-1715,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=doc/org.eclipse.orion.doc.isv
-plugin@org.eclipse.orion.doc.user=GIT,tag=v20110624-1715,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=doc/org.eclipse.orion.doc.user
+plugin@org.eclipse.orion.doc.user=GIT,tag=v20110627-0200,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=doc/org.eclipse.orion.doc.user
 
 
 plugin@org.eclipse.e4.languages.javascript.framework=CVS,tag=v20101028-1345,cvsRoot=:pserver:anonymous@dev.eclipse.org:/cvsroot/eclipse,path=e4/org.eclipse.e4.languages/bundles/org.eclipse.e4.languages.javascript.framework
