@@ -21,19 +21,12 @@
 	<property name="mylyn.wiki.url.base" value="${mylyn.help.doc.url.base}/${orion.user.guide}"/>
 	<property name="imageFolder" value="images"/>
 
-	<property name="wikitext.standalone" value="C:\temp\mylyn-wikitext-standalone-3.5.0.I20110104-0100"/><!-- path to wikitext standalone package -->
-
-	<path id="wikitext.classpath">
-		<fileset dir="${wikitext.standalone}">
-			<include name="org.eclipse.mylyn.wikitext.*core*.jar"/>
-		</fileset>
-	</path>
-
-	<taskdef classpathref="wikitext.classpath" resource="org/eclipse/mylyn/wikitext/core/util/anttask/tasks.properties" />	
-	<taskdef classpathref="wikitext.classpath" resource="org/eclipse/mylyn/internal/wikitext/mediawiki/core/tasks/tasks.properties"/>	
 	<path id="wikitext.tasks.classpath">
 		<pathelement path="${wikitext.tasks.classpath.path}"/>
 	</path>
+
+	<taskdef classpathref="wikitext.tasks.classpath" resource="org/eclipse/mylyn/internal/wikitext/mediawiki/core/tasks/tasks.properties"/>
+	<taskdef classpathref="wikitext.tasks.classpath" resource="org/eclipse/mylyn/wikitext/core/util/anttask/tasks.properties"/>
 	
 	<target name="init">
 		<mkdir dir="tmp"/>
