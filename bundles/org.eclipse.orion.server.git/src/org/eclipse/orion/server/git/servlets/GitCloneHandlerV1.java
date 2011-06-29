@@ -167,27 +167,21 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			clone.setContentLocation(webProject.getProjectStore().toURI());
 		}
 		clone.setName(cloneName);
+		JSONObject cloneObject = WebClone.toJSON(clone, getURI(request));
+		String cloneLocation = cloneObject.getString(ProtocolConstants.KEY_LOCATION);
 
 		if (initOnly) {
 			// git init
-			// call Init using JGit porcelain API
-			InitCommand command = new InitCommand();
-			File directory = new File(clone.getContentLocation());
-			command.setDirectory(directory);
-			Repository repository = command.call().getRepository();
-			Git git = new Git(repository);
-
-			// configure the repo
-			doConfigureClone(git, request.getRemoteUser());
-
-			// we need to perform an initial commit to workaround JGit bug 339610
-			git.commit().setMessage("Initial commit").call();
-
-			JSONObject result = WebClone.toJSON(clone, getURI(request));
-			String cloneLocation = result.getString(ProtocolConstants.KEY_LOCATION);
+			InitJob job = new InitJob(clone, request.getRemoteUser(), cloneLocation);
+			job.schedule();
+			TaskInfo task = job.getTask();
+			JSONObject result = task.toJSON();
+			// Not nice that the git service knows the location of the task servlet, but task service doesn't know this either
+			String taskLocation = getURI(request).resolve("../../task/id/" + task.getTaskId()).toString(); //$NON-NLS-1$
+			result.put(ProtocolConstants.KEY_LOCATION, taskLocation);
+			response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation);
 			OrionServlet.writeJSONResponse(request, response, result);
-			response.setHeader(ProtocolConstants.HEADER_LOCATION, cloneLocation);
-			response.setStatus(HttpServletResponse.SC_CREATED);
+			response.setStatus(HttpServletResponse.SC_ACCEPTED);
 			return true;
 		} else {
 			// git clone
@@ -204,15 +198,12 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			cp.setPublicKey(publicKey);
 			cp.setPassphrase(passphrase);
 
-			JSONObject cloneObject = WebClone.toJSON(clone, getURI(request));
-			String cloneLocation = cloneObject.getString(ProtocolConstants.KEY_LOCATION);
-
 			// if all went well, clone
 			CloneJob job = new CloneJob(clone, cp, request.getRemoteUser(), cloneLocation, webProjectExists ? null : webProject /* used for cleaning up, so null when not needed */);
 			job.schedule();
 			TaskInfo task = job.getTask();
 			JSONObject result = task.toJSON();
-			//Not nice that the git service knows the location of the task servlet, but task service doesn't know this either
+			// Not nice that the git service knows the location of the task servlet, but task service doesn't know this either
 			String taskLocation = getURI(request).resolve("../../task/id/" + task.getTaskId()).toString(); //$NON-NLS-1$
 			result.put(ProtocolConstants.KEY_LOCATION, taskLocation);
 			response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation);
