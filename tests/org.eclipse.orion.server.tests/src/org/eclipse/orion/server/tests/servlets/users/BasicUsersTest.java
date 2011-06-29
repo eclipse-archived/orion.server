@@ -21,6 +21,7 @@ import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
+import org.eclipse.orion.server.useradmin.UserConstants;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -226,4 +227,43 @@ public class BasicUsersTest extends UsersTest {
 		response = webConversation.getResponse(request);
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 	}
+
+	@Test
+	public void testResetUser() throws IOException, SAXException, JSONException {
+		WebConversation webConversation = new WebConversation();
+		webConversation.setExceptionsThrownOnErrorStatus(false);
+
+		// create user
+		Map<String, String> params = new HashMap<String, String>();
+		params.put("login", "user_" + System.currentTimeMillis());
+		params.put("Name", "username_" + System.currentTimeMillis());
+		//		params.put("email", "test@test_" + System.currentTimeMillis());
+		//		params.put("workspace", "workspace_" + System.currentTimeMillis());
+		params.put("roles", "admin");
+		String oldPass = "pass_" + System.currentTimeMillis();
+		params.put("password", oldPass);
+		WebRequest request = getPostUsersRequest("", params, true);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		//reset password
+		String newPass = "newpass_" + System.currentTimeMillis();
+		params.put("password", newPass);
+		params.put(UserConstants.KEY_RESET, "true");
+		request = getPostUsersRequest("", params, true);
+		response = webConversation.getResponse(request);
+		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// check if user can authenticate
+		request = getGetUsersRequest("", true);
+		setAuthentication(request, params.get("login"), newPass);
+		response = webConversation.getResponse(request);
+		assertEquals("User with no roles has admin privilegges", HttpURLConnection.HTTP_FORBIDDEN, response.getResponseCode());
+
+		// delete user
+		request = getDeleteUsersRequest(params.get("login"), true);
+		response = webConversation.getResponse(request);
+		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
+	}
+
 }

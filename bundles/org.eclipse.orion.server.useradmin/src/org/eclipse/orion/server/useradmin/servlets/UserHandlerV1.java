@@ -48,7 +48,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 					case GET :
 						return handleUsersGet(request, response);
 					case POST :
-						return handleUserCreate(request, response);
+						return request.getParameter(UserConstants.KEY_RESET)==null ? handleUserCreate(request, response) : handleUserReset(request, response);
 					default :
 						return false;
 				}
@@ -114,6 +114,36 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
+	private boolean handleUserReset(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
+		String store = req.getParameter(UserConstants.KEY_STORE);
+		String login = req.getParameter(UserConstants.KEY_LOGIN);
+		String password = req.getParameter(UserConstants.KEY_PASSWORD);
+		
+		if (login == null || login.length() == 0)
+			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User login not specified.", null));
+
+		IOrionCredentialsService userAdmin;
+		try {
+			userAdmin = (store == null || "".equals(store)) ? getUserAdmin() : getUserAdmin(store);
+		} catch (UnsupportedUserStoreException e) {
+			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User store is not available: " + store, e));
+		}
+		
+		User user = (User) userAdmin.getUser(UserConstants.KEY_LOGIN, login);
+		
+		if (user == null)
+			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "User " + login + " could not be found.", null));
+
+		if(password == null){
+			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Provide new password", null));
+		}
+		
+		user.setPassword(password);		
+		userAdmin.updateUser(login, user);
+		
+		return true;
+	}
+	
 	private boolean handleUserCreate(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
 		String store = req.getParameter(UserConstants.KEY_STORE);
 		String login = req.getParameter(UserConstants.KEY_LOGIN);
