@@ -47,16 +47,16 @@ public class HostedStatusDecorator implements IWebResourceDecorator {
 					JSONArray siteConfigurations = representation.optJSONArray(SiteConfigurationConstants.KEY_SITE_CONFIGURATIONS);
 					if (siteConfigurations != null) {
 						for (int i = 0; i < siteConfigurations.length(); i++) {
-							addStatus(siteConfigurations.getJSONObject(i), webUser, resource);
+							addStatus(req, siteConfigurations.getJSONObject(i), webUser, resource);
 						}
 					}
 				} else if ("POST".equals(req.getMethod())) { //$NON-NLS-1$
 					// POST /site/ (create a site config)
-					addStatus(representation, webUser, resource);
+					addStatus(req, representation, webUser, resource);
 				}
 			} else if (resourcePath.segmentCount() == 2) {
 				// GET /site/siteConfigId (get a single site config)
-				addStatus(representation, webUser, resource);
+				addStatus(req, representation, webUser, resource);
 			}
 		} catch (JSONException e) {
 			// Shouldn't happen, but since we are just decorating someone else's response we shouldn't cause a failure
@@ -78,18 +78,17 @@ public class HostedStatusDecorator implements IWebResourceDecorator {
 	 * @param user The user making the request.
 	 * @param resource The original request passed to the decorator.
 	 */
-	private void addStatus(JSONObject siteConfigJson, WebUser user, URI resource) throws JSONException {
+	private void addStatus(HttpServletRequest req, JSONObject siteConfigJson, WebUser user, URI resource) throws JSONException {
 		String id = siteConfigJson.getString(ProtocolConstants.KEY_ID);
 		SiteConfiguration siteConfiguration = SiteConfiguration.fromId(id);
-		SiteHostingService hostingService = HostingActivator.getDefault().getHostingService();
-		IHostedSite site = (IHostedSite) hostingService.get(siteConfiguration, user);
+		IHostedSite site = HostingActivator.getDefault().getHostingService().get(siteConfiguration, user);
 		JSONObject hostingStatus = new JSONObject();
 		if (site != null) {
 			hostingStatus.put(SiteConfigurationConstants.KEY_HOSTING_STATUS_STATUS, "started"); //$NON-NLS-1$
+			String portSuffix = ":" + req.getLocalPort(); //$NON-NLS-1$
 			// Whatever scheme was used to access the resource, assume it's used for the sites too
-			String hostedUrl = resource.getScheme() + "://" + site.getHost(); //$NON-NLS-1$
+			String hostedUrl = resource.getScheme() + "://" + site.getHost() + portSuffix; //$NON-NLS-1$
 			hostingStatus.put(SiteConfigurationConstants.KEY_HOSTING_STATUS_URL, hostedUrl);
-
 		} else {
 			hostingStatus.put(SiteConfigurationConstants.KEY_HOSTING_STATUS_STATUS, "stopped"); //$NON-NLS-1$
 		}

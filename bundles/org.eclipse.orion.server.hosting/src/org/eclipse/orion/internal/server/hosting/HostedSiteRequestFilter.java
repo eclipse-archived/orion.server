@@ -49,7 +49,13 @@ public class HostedSiteRequestFilter implements Filter {
 	}
 
 	private static String getHost(HttpServletRequest req) {
-		return req.getHeader("Host"); //$NON-NLS-1$
+		String host = req.getHeader("Host"); //$NON-NLS-1$
+		if (host != null) {
+			int i = host.indexOf(":"); //$NON-NLS-1$
+			if (i != -1)
+				return host.substring(0, i);
+		}
+		return host;
 	}
 
 	@Override
