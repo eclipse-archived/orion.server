@@ -84,7 +84,6 @@ public class GitInitTest extends GitTest {
 	@Test
 	public void testInitWithoutNameAndFilePath() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath initPath = new Path("workspace").append(getWorkspaceId(workspaceLocation)).makeAbsolute();
 
 		WebRequest request = getPostGitInitRequest(initPath, null, null);

@@ -252,12 +252,10 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 		String status = hostingStatus.optString(SiteConfigurationConstants.KEY_HOSTING_STATUS_STATUS);
 		try {
 			if ("started".equalsIgnoreCase(status)) { //$NON-NLS-1$
-				ISiteHostingService service = getHostingService();
-				String editServer = "http://" + req.getHeader("Host"); //$NON-NLS-1$ //$NON-NLS-2$
-				service.start(site, user, editServer);
+				String editServer = req.getScheme() + "://" + req.getHeader("Host"); //$NON-NLS-1$ //$NON-NLS-2$
+				getHostingService().start(site, user, editServer);
 			} else if ("stopped".equalsIgnoreCase(status)) { //$NON-NLS-1$
-				ISiteHostingService service = getHostingService();
-				service.stop(site, user);
+				getHostingService().stop(site, user);
 			} else if (status == null) {
 				// No Status; ignore it
 			} else {
