@@ -11,7 +11,8 @@
 package org.eclipse.orion.server.core.tasks;
 
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.orion.server.core.*;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -50,6 +51,7 @@ public class TaskInfo {
 				info.result = ServerStatus.fromJSON(resultString);
 			return info;
 		} catch (JSONException e) {
+			LogHelper.log(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "Invalid task: " + taskString, e)); //$NON-NLS-1$
 			return null;
 		}
 	}
