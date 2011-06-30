@@ -36,7 +36,7 @@ public interface IHostedSite {
 	public String getWorkspaceId();
 
 	/**
-	 * @return The host where this site is accessible (hostname:port).
+	 * @return The hostname where this site is accessible.
 	 */
 	public String getHost();
 

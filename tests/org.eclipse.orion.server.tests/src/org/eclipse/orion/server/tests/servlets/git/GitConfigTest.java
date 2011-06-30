@@ -50,8 +50,7 @@ public class GitConfigTest extends GitTest {
 	private static final String GIT_COMMIT_MESSAGE = "message";
 
 	@Test
-	public void testConfigUsingUserProfile() throws Exception {
-
+	public void testClonedRepoConfigUsingUserProfile() throws Exception {
 		// set Git name and mail in the user profile
 		WebRequest request = getPutUserRequest();
 		WebResponse response = webConversation.getResponse(request);
@@ -61,7 +60,75 @@ public class GitConfigTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
 		String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+		// check the repository configuration using JGit API
+		Git git = new Git(getRepositoryForContentLocation(contentLocation));
+		StoredConfig config = git.getRepository().getConfig();
+		assertEquals(GIT_NAME, config.getString(ConfigConstants.CONFIG_USER_SECTION, null, ConfigConstants.CONFIG_KEY_NAME));
+		assertEquals(GIT_MAIL, config.getString(ConfigConstants.CONFIG_USER_SECTION, null, ConfigConstants.CONFIG_KEY_EMAIL));
+
+		// now check if commits have the right committer set
+
+		request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		project = new JSONObject(response.getText());
+		String childrenLocation = project.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
+		assertNotNull(childrenLocation);
+
+		// check if Git locations are in place
+		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
+
+		// modify
+		String projectLocation = project.getString(ProtocolConstants.KEY_LOCATION);
+		request = getPutFileRequest(projectLocation + "/test.txt", "change to commit");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// add
+		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// commit all
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri /* all */, GIT_COMMIT_MESSAGE, false);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// log
+		// TODO: replace with RESTful API for git log when available
+		Iterable<RevCommit> commits = git.log().call();
+		PersonIdent testIdent = new PersonIdent(GIT_NAME, GIT_MAIL);
+		PersonIdent[] expectedIdents = new PersonIdent[] {testIdent};
+		int c = 0;
+		for (RevCommit commit : commits) {
+			if (commit.getFullMessage().equals(GIT_COMMIT_MESSAGE)) {
+				assertEquals(expectedIdents[expectedIdents.length - 1 - c].getName(), commit.getCommitterIdent().getName());
+				assertEquals(expectedIdents[expectedIdents.length - 1 - c].getEmailAddress(), commit.getCommitterIdent().getEmailAddress());
+			}
+			c++;
+		}
+		assertEquals(2, c);
+	}
+
+	@Test
+	public void testInitializedRepoConfigUsingUserProfile() throws Exception {
+		// set Git name and mail in the user profile
+		WebRequest request = getPutUserRequest();
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// init a repo
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		IPath initPath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
+		String contentLocation = init(null, initPath, null).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		// check the repository configuration using JGit API
 		Git git = new Git(getRepositoryForContentLocation(contentLocation));

@@ -21,8 +21,8 @@ import static org.eclipse.orion.server.configurator.configuration.ConfigurationF
 import java.util.*;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.equinox.http.jetty.JettyConfigurator;
 import org.eclipse.equinox.http.jetty.JettyConstants;
 import org.eclipse.orion.server.configurator.configuration.ConfigurationFormat;
@@ -104,7 +104,7 @@ public class ConfiguratorActivator implements BundleActivator {
 		authServiceTracker = new AuthServiceTracker(context);
 		authServiceTracker.open();
 
-		IEclipsePreferences preferences = InstanceScope.INSTANCE.getNode(PI_CONFIGURATOR);
+		IEclipsePreferences preferences = DefaultScope.INSTANCE.getNode(ServerConstants.PREFERENCE_SCOPE);
 		Boolean httpsEnabled = new Boolean(preferences.get(ConfigurationFormat.HTTPS_ENABLED, "false")); //$NON-NLS-1$
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();

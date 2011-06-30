@@ -346,9 +346,10 @@ public abstract class GitTest extends FileSystemTest {
 		// no Git URL for init
 		WebRequest request = getPostGitCloneRequest(null, workspacePath, filePath, name, null, null);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		String cloneLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(cloneLocation);
+		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
+		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		assertNotNull(taskLocation);
+		String cloneLocation = waitForTaskCompletion(taskLocation);
 
 		// validate the clone metadata
 		response = webConversation.getResponse(getGetRequest(cloneLocation));
