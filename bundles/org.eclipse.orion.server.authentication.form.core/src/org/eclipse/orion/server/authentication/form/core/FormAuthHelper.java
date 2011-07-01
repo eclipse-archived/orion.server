@@ -22,8 +22,6 @@ import org.eclipse.orion.server.user.profile.*;
 import org.eclipse.orion.server.useradmin.*;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.osgi.service.useradmin.User;
-import org.osgi.service.useradmin.UserAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -104,7 +102,7 @@ public class FormAuthHelper {
 		User user = getUserForCredentials(login, req.getParameter("password"), req.getParameter("store")); //$NON-NLS-1$ //$NON-NLS-2$
 		
 		if (user != null) {
-			String actualLogin = (String)user.getCredentials().get(UserConstants.KEY_LOGIN);
+			String actualLogin = user.getUid();
 			if (logger.isInfoEnabled())
 				logger.info("Login success: " + actualLogin); //$NON-NLS-1$ 
 			req.getSession().setAttribute("user", actualLogin); //$NON-NLS-1$
@@ -127,7 +125,7 @@ public class FormAuthHelper {
 	}
 
 	private static User getUserForCredentials(String login, String password, String userStoreId) throws UnsupportedUserStoreException {
-		UserAdmin userAdmin = (userStoreId == null) ? defaultUserAdmin : userStores.get(userStoreId);
+		IOrionCredentialsService userAdmin = (userStoreId == null) ? defaultUserAdmin : userStores.get(userStoreId);
 		if (userAdmin == null) {
 			throw new UnsupportedUserStoreException(userStoreId);
 		}
@@ -168,7 +166,7 @@ public class FormAuthHelper {
 		return defaultUserAdmin;
 	}
 
-	public void setUserAdmin(UserAdmin userAdmin) {
+	public void setUserAdmin(IOrionCredentialsService userAdmin) {
 		if (userAdmin instanceof IOrionCredentialsService) {
 			IOrionCredentialsService eclipseWebUserAdmin = (IOrionCredentialsService) userAdmin;
 			userStores.put(eclipseWebUserAdmin.getStoreName(), eclipseWebUserAdmin);
@@ -178,7 +176,7 @@ public class FormAuthHelper {
 		}
 	}
 
-	public void unsetUserAdmin(UserAdmin userAdmin) {
+	public void unsetUserAdmin(IOrionCredentialsService userAdmin) {
 		if (userAdmin instanceof IOrionCredentialsService) {
 			IOrionCredentialsService eclipseWebUserAdmin = (IOrionCredentialsService) userAdmin;
 			userStores.remove(eclipseWebUserAdmin.getStoreName());

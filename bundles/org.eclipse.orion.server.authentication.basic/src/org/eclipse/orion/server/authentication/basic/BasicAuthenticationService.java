@@ -28,8 +28,7 @@ import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.UserAdminActivator;
 import org.osgi.service.useradmin.Authorization;
-import org.osgi.service.useradmin.User;
-import org.osgi.service.useradmin.UserAdmin;
+import org.eclipse.orion.server.useradmin.User;
 
 public class BasicAuthenticationService implements IAuthenticationService {
 
@@ -64,7 +63,7 @@ public class BasicAuthenticationService implements IAuthenticationService {
 			if (user != null) {
 				Authorization authorization = defaultUserAdmin.getAuthorization(user);
 				// TODO handle authorization
-				return login;
+				return user.getUid();
 			}
 		}
 		return null;
@@ -80,7 +79,7 @@ public class BasicAuthenticationService implements IAuthenticationService {
 	}
 
 	private User getUserForCredentials(String login, String password) {
-		UserAdmin userAdmin = defaultUserAdmin;
+		IOrionCredentialsService userAdmin = defaultUserAdmin;
 		if (userAdmin == null) {
 			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_SERVER_AUTHENTICATION_BASIC, "User admin server is not available"));
 			return null;
@@ -96,7 +95,7 @@ public class BasicAuthenticationService implements IAuthenticationService {
 		// nothing to do
 	}
 
-	public void bindUserAdmin(UserAdmin userAdmin) {
+	public void bindUserAdmin(IOrionCredentialsService userAdmin) {
 		if (userAdmin instanceof IOrionCredentialsService) {
 			IOrionCredentialsService eclipseWebUserAdmin = (IOrionCredentialsService) userAdmin;
 			userStores.put(eclipseWebUserAdmin.getStoreName(), eclipseWebUserAdmin);
@@ -106,7 +105,7 @@ public class BasicAuthenticationService implements IAuthenticationService {
 		}
 	}
 
-	public void unbindUserAdmin(UserAdmin userAdmin) {
+	public void unbindUserAdmin(IOrionCredentialsService userAdmin) {
 		if (userAdmin instanceof IOrionCredentialsService) {
 			IOrionCredentialsService eclipseWebUserAdmin = (IOrionCredentialsService) userAdmin;
 			userStores.remove(eclipseWebUserAdmin.getStoreName());

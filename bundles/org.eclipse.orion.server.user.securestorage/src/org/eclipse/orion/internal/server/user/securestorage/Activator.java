@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.user.securestorage;
 
+import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
@@ -24,7 +25,7 @@ public class Activator implements BundleActivator {
 	public static final String ORION_STORAGE_PASSWORD = "orion.storage.password"; //$NON-NLS-1$
 	
 	static BundleContext bundleContext;
-	private ServiceRegistration<UserAdmin> registerService;
+	private ServiceRegistration<IOrionCredentialsService> registerService;
 
 	public static BundleContext getContext() {
 		return bundleContext;
@@ -39,7 +40,7 @@ public class Activator implements BundleActivator {
 	 */
 	public void start(BundleContext bundleContext) throws Exception {
 		Activator.bundleContext = bundleContext;
-		registerService = bundleContext.registerService(UserAdmin.class, new SecureStorageCredentialsService(), null);
+		registerService = bundleContext.registerService(IOrionCredentialsService.class, new SecureStorageCredentialsService(), null);
 	}
 
 	/*

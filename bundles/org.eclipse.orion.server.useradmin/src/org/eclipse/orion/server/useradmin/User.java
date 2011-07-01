@@ -11,6 +11,8 @@
 package org.eclipse.orion.server.useradmin;
 
 import java.util.*;
+
+import org.eclipse.orion.server.core.resources.Base64Counter;
 import org.eclipse.orion.server.useradmin.servlets.UserServlet;
 import org.osgi.service.useradmin.Role;
 
@@ -19,6 +21,7 @@ public class User implements org.osgi.service.useradmin.User {
 	private Set<Role> roles = new HashSet<Role>();
 
 	private Properties userCredentials = new Properties();
+	
 
 	public Set<Role> getRoles() {
 		return roles;
@@ -35,10 +38,21 @@ public class User implements org.osgi.service.useradmin.User {
 	public User() {
 	}
 
+	public User(String uid, String login, String name, String password) {
+		userCredentials.setProperty("uid", uid);
+		setLogin(login);
+		setName(name);
+		setPassword(password);
+	}
+	
 	public User(String login, String name, String password) {
 		setLogin(login);
 		setName(name);
 		setPassword(password);
+	}
+	
+	public String getUid(){
+		return userCredentials.getProperty("uid");
 	}
 
 	public String getLogin() {
@@ -82,6 +96,6 @@ public class User implements org.osgi.service.useradmin.User {
 	}
 
 	public String getLocation() {
-		return UserServlet.USERS_URI + "/" + getLogin();
+		return UserServlet.USERS_URI + "/" + getUid();
 	}
 }

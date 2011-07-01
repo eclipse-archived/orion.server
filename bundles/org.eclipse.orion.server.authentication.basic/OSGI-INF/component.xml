@@ -5,5 +5,5 @@
       <provide interface="org.eclipse.orion.server.core.authentication.IAuthenticationService"/>
    </service>
    <property name="orion.auth.name" type="String" value="Basic"/>
-     <reference bind="bindUserAdmin" cardinality="1..n" interface="org.osgi.service.useradmin.UserAdmin" name="UserAdmin" policy="dynamic" unbind="unbindUserAdmin"/>
+     <reference bind="bindUserAdmin" cardinality="1..n" interface="org.eclipse.orion.server.useradmin.IOrionCredentialsService" name="UserAdmin" policy="dynamic" unbind="unbindUserAdmin"/>
 </scr:component>

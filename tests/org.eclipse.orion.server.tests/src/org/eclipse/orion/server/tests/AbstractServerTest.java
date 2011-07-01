@@ -30,8 +30,13 @@ import com.meterware.httpunit.WebRequest;
  * to all server tests.
  */
 public class AbstractServerTest {
+
+	protected static String testUserLogin = "test";
+	protected static String testUserPassword = "test";
+	protected String testUserId;
+
 	public static void setAuthentication(WebRequest request) {
-		setAuthentication(request, "test", "test");
+		setAuthentication(request, testUserLogin, testUserPassword);
 	}
 
 	public static InputStream getJsonAsStream(String json) throws UnsupportedEncodingException {
@@ -39,23 +44,26 @@ public class AbstractServerTest {
 	}
 
 	public void setUpAuthorization() throws CoreException {
-		createUser("test", "test");
+		User testUser = createUser(testUserLogin, testUserPassword);
+		testUserId = testUser.getUid();
 		//by default allow tests to modify anything
-		AuthorizationService.addUserRight("test", "/");
-		AuthorizationService.addUserRight("test", "/*");
+		AuthorizationService.addUserRight(testUser.getUid(), "/");
+		AuthorizationService.addUserRight(testUser.getUid(), "/*");
 	}
 
-	protected void createUser(String login, String password) {
+	protected User createUser(String login, String password) {
 		IOrionCredentialsService userAdmin = UserServiceHelper.getDefault().getUserStore();
 		if (userAdmin.getUser("login", login) != null)
-			return;
+			return userAdmin.getUser("login", login);
 		User newUser = new User(login, "", password);
-		Assert.assertNotNull(userAdmin.createUser(newUser));
+		newUser = userAdmin.createUser(newUser);
+		Assert.assertNotNull(newUser);
+		return newUser;
 	}
 
 	protected static void setAuthentication(WebRequest request, String user, String pass) {
 		try {
-			request.setHeaderField("Authorization", "Basic " + new String(Base64.encode((user + ':' + pass).getBytes()), "UTF8"));
+			request.setHeaderField("Authorization", "Basic " + new String(Base64.encode((user + ":" + pass).getBytes()), "UTF8"));
 		} catch (UnsupportedEncodingException e) {
 			// this should never happen
 			e.printStackTrace();

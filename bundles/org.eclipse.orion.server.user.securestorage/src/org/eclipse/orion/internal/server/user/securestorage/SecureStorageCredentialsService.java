@@ -20,6 +20,7 @@ import org.eclipse.equinox.security.storage.*;
 import org.eclipse.equinox.security.storage.provider.IProviderHints;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.resources.Base64Counter;
 import org.eclipse.orion.server.useradmin.*;
 import org.eclipse.orion.server.useradmin.servlets.UserServlet;
 import org.eclipse.osgi.service.datalocation.Location;
@@ -35,6 +36,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 
 	static final String USERS = "users"; //$NON-NLS-1$
 	static final String USER_LOGIN = "login"; //$NON-NLS-1$
+	static final String USER_UID = "uid"; //$NON-NLS-1$
 	static final String USER_NAME = "name"; //$NON-NLS-1$
 	static final String USER_PASSWORD = "password"; //$NON-NLS-1$
 	static final String USER_ROLES = "roles"; //$NON-NLS-1$
@@ -42,6 +44,9 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 
 	static final String ADMIN_LOGIN_VALUE = "admin"; //$NON-NLS-1$
 	static final String ADMIN_NAME_VALUE = "Administrator"; //$NON-NLS-1$
+	
+	private static final Base64Counter userCounter = new Base64Counter();
+
 
 	private ISecurePreferences storage;
 	private Map<String, Role> roles = new HashMap<String, Role>();
@@ -50,12 +55,24 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 		initSecurePreferences();
 		initStorage();
 	}
+	
+	
+	private String nextUserId() {
+		synchronized (userCounter) {
+			String candidate;
+			do {
+				candidate = userCounter.toString();
+				userCounter.increment();
+			} while (findNode(storage, candidate)!=null);
+			return candidate;
+		}
+	}
 
 	private void initStorage() {
 		// initialize the admin account
 		String adminDefaultPassword = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_ADMIN_DEFAULT_PASSWORD);
-		if (adminDefaultPassword != null && getUser(USER_LOGIN, ADMIN_LOGIN_VALUE) == null) {
-			createUser(new User(ADMIN_LOGIN_VALUE, ADMIN_NAME_VALUE, adminDefaultPassword));
+		if (adminDefaultPassword != null && getUser(USER_UID, ADMIN_LOGIN_VALUE) == null) {
+			createUser(new User(ADMIN_LOGIN_VALUE, ADMIN_LOGIN_VALUE, ADMIN_NAME_VALUE, adminDefaultPassword));
 		}
 
 		// TODO: see bug 335699, the user storage should not configure authorization rules
@@ -149,7 +166,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 				users = new ArrayList<User>();
 			ISecurePreferences userPrefs = usersPrefs.node(childName);
 			try {
-				User user = new User(childName, userPrefs.get(USER_NAME, ""), "" /* don't expose the password */); //$NON-NLS-1$ //$NON-NLS-2$
+				User user = new User(childName, userPrefs.get(USER_LOGIN, childName), userPrefs.get(USER_NAME, ""), "" /* don't expose the password */); //$NON-NLS-1$ //$NON-NLS-2$
 				for (String roleName : userPrefs.node(USER_ROLES).childrenNames()) {
 					user.addRole(getRole(roleName));
 				}
@@ -162,57 +179,104 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 	}
 
 	public User getUser(String key, String value) {
-		// TODO currently searching only by login, all other searches return nothing
+		// TODO currently searching only by uid and login, all other searches return nothing
 		if (key.equals(USER_LOGIN)) {
-			ISecurePreferences node = findNodeIgnoreCase(storage, value);
-			if (node == null)
-				return null;
 
 			try {
-				User user = new User(node.name(), node.get(USER_NAME, ""), node.get(USER_PASSWORD, "")); //$NON-NLS-1$ //$NON-NLS-2$
-				for (String roleName : node.node(USER_ROLES).childrenNames()) {
-					user.addRole(getRole(roleName));
-				}
-				return user;
+				ISecurePreferences node = findNodeByLoginIgnoreCase(storage, value);
+				return formUser(node);
 			} catch (StorageException e) {
 				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Can not get user: " + value, e)); //$NON-NLS-1$
 			}
+		} else if (key.equals(USER_UID)){
+			ISecurePreferences node = findNode(storage, value);
+			return formUser(node);
+		}
+		return null;
+	}
+	
+	public User formUser(ISecurePreferences node) {
+		if (node == null)
+			return null;
+		try {
+			User user = new User(node.name(), node.get(USER_LOGIN, node.name()), node.get(USER_NAME, ""), node.get(USER_PASSWORD, "")); //$NON-NLS-1$ //$NON-NLS-2$
+			for (String roleName : node.node(USER_ROLES).childrenNames()) {
+				user.addRole(getRole(roleName));
+			}
+			return user;
+		} catch (StorageException e) {
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Can not get user " + node.name(), e)); //$NON-NLS-1$
 		}
 		return null;
 	}
 
 	public User createUser(User user) {
-		ISecurePreferences node = findNodeIgnoreCase(storage, user.getLogin());
-		if (node != null)
-			return null;
 
 		try {
-			internalCreateOrUpdateUser(storage.node(USERS + '/' + user.getLogin().toLowerCase()), user);
-			return user;
+			
+			ISecurePreferences node = findNodeByLoginIgnoreCase(storage, user.getLogin());
+			if (node != null)
+				return null;
+			
+			String uid = nextUserId();
+			
+			return internalCreateOrUpdateUser(storage.node(USERS + '/' + uid), user);
+
 		} catch (Exception e) {
 			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Can not create user: " + user.getLogin(), e)); //$NON-NLS-1$
 		}
 		return null;
 	}
 
-	private ISecurePreferences findNodeIgnoreCase(ISecurePreferences storage, String login) {
+	private ISecurePreferences findNodeByLoginIgnoreCase(ISecurePreferences storage, String login) throws StorageException {
 		if (login == null)
 			return null;
 		ISecurePreferences usersPref = storage.node(USERS);
 		String[] childrenNames = usersPref.childrenNames();
 		for (int i = 0; i < childrenNames.length; i++) {
-			if (login.equalsIgnoreCase(usersPref.node(childrenNames[i]).name()))
+			if(usersPref.node(childrenNames[i]).get(USER_LOGIN, null) == null){
+				//migrate
+				usersPref.node(childrenNames[i]).put(USER_LOGIN, usersPref.node(childrenNames[i]).name(), false);
+				
+				if (login.equalsIgnoreCase(usersPref.node(childrenNames[i]).name()))
+					return usersPref.node(childrenNames[i]);
+				
+			} else {
+				if(login.equalsIgnoreCase(usersPref.node(childrenNames[i]).get(USER_LOGIN, null))){
+					return usersPref.node(childrenNames[i]);
+				}
+				
+			}
+			
+		}
+		return null;
+	}
+	
+	private ISecurePreferences findNode(ISecurePreferences storage, String uid) {
+		if (uid == null)
+			return null;
+		ISecurePreferences usersPref = storage.node(USERS);
+		String[] childrenNames = usersPref.childrenNames();
+		for (int i = 0; i < childrenNames.length; i++) {
+			if (uid.equals(usersPref.node(childrenNames[i]).name()))
 				return usersPref.node(childrenNames[i]);
 		}
 		return null;
 	}
 
-	public boolean updateUser(String oldLogin, User user) {
-		ISecurePreferences node = findNodeIgnoreCase(storage, user.getLogin());
+	public boolean updateUser(String uid, User user) {
+
+		ISecurePreferences node = findNode(storage, uid);
 		if (node == null)
 			return false;
 
 		try {
+			ISecurePreferences nodeByLogin = findNodeByLoginIgnoreCase(storage, user.getLogin());
+			if(nodeByLogin!=null && !node.name().equals(nodeByLogin.name())){
+				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, "User already exists " + user.getLogin())); //$NON-NLS-1$
+				return false;
+			}
+			
 			internalCreateOrUpdateUser(node, user);
 			return true;
 		} catch (Exception e) {
@@ -222,6 +286,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 	}
 
 	private User internalCreateOrUpdateUser(ISecurePreferences userPrefs, User user) throws StorageException, IOException {
+		userPrefs.put(USER_LOGIN, user.getLogin(), false);
 		userPrefs.put(USER_NAME, user.getName(), false);
 		userPrefs.put(USER_PASSWORD, user.getPassword(), true);
 		ISecurePreferences rolesPrefs = userPrefs.node(USER_ROLES);
@@ -230,11 +295,11 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 		for (org.osgi.service.useradmin.Role role : user.getRoles())
 			rolesPrefs.node(((Role) role).getName());
 		userPrefs.flush();
-		return user;
+		return new User(userPrefs.name(), userPrefs.get(USER_LOGIN, userPrefs.name()), userPrefs.get(USER_NAME, ""), userPrefs.get(USER_PASSWORD, null));
 	}
 
 	public boolean deleteUser(User user) {
-		ISecurePreferences node = findNodeIgnoreCase(storage, user.getLogin());
+		ISecurePreferences node = findNode(storage, user.getUid());
 		if (node == null)
 			return false;
 
@@ -248,7 +313,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 		return false;
 	}
 
-	public Authorization getAuthorization(org.osgi.service.useradmin.User user) {
+	public Authorization getAuthorization(User user) {
 		if (user instanceof User) {
 			return new WebIdeAuthorization((User) user);
 		}
@@ -262,4 +327,5 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 	public String getStoreName() {
 		return "Orion";
 	}
+
 }

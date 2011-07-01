@@ -92,8 +92,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		URI location = OrionServlet.getURI(req);
 		IOrionUserProfileNode userNode = null;
 		for (User user : users) {
-			URI userLocation = URIUtil.append(location, user.getLogin());
-			userNode = getUserProfileService().getUserProfileNode(user.getLogin(), true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
+			URI userLocation = URIUtil.append(location, user.getUid());
+			userNode = getUserProfileService().getUserProfileNode(user.getUid(), true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
 			userJSONs.add(formJson(user, userNode, userLocation));
 		}
 		JSONObject json = new JSONObject();
@@ -103,7 +103,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	private boolean handleUserGet(HttpServletRequest req, HttpServletResponse resp, String userId) throws IOException, JSONException, ServletException, CoreException {
-		User user = (User) getUserAdmin().getUser(UserConstants.KEY_LOGIN, userId);
+		User user = (User) getUserAdmin().getUser(UserConstants.KEY_UID, userId);
 		if (user == null)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User not found " + userId, null));
 
@@ -139,12 +139,12 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		}
 		
 		user.setPassword(password);		
-		userAdmin.updateUser(login, user);
+		userAdmin.updateUser(user.getUid(), user);
 		
 		return true;
 	}
 	
-	private boolean handleUserCreate(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
+	private boolean handleUserCreate(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, JSONException, CoreException {
 		String store = req.getParameter(UserConstants.KEY_STORE);
 		String login = req.getParameter(UserConstants.KEY_LOGIN);
 		String name = req.getParameter(ProtocolConstants.KEY_NAME);
@@ -164,16 +164,23 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + login + " already exists.", null));
 
 		User newUser = new User(login, name != null ? name : "", password == null ? "" : password);
+		
+		newUser = userAdmin.createUser(newUser);
 
-		if (userAdmin.createUser(newUser) == null) {
+		if (newUser == null) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Error creating user: {0}", login), null));
 		}
 
 		try {
-			AuthorizationService.addUserRight(newUser.getLogin(), newUser.getLocation());
+			AuthorizationService.addUserRight(newUser.getUid(), newUser.getLocation());
 		} catch (CoreException e) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User rights could not be added.", e));
 		}
+		
+		URI userLocation = URIUtil.append(OrionServlet.getURI(req), newUser.getUid());
+		IOrionUserProfileNode userNode = getUserProfileService().getUserProfileNode(newUser.getUid(), true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
+		
+		OrionServlet.writeJSONResponse(req, resp, formJson(newUser, userNode, userLocation));
 
 		return true;
 	}
@@ -190,7 +197,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User store is not available: " + store, e));
 		}
 
-		User user = (User) userAdmin.getUser(UserConstants.KEY_LOGIN, userId);
+		User user = (User) userAdmin.getUser(UserConstants.KEY_UID, userId);
 
 		if (user == null)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + userId + " could not be found.", null));
@@ -246,7 +253,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User store is not available: " + store, e));
 		}
 
-		if (userAdmin.deleteUser((User) userAdmin.getUser("login", userId)) == false) {
+		if (userAdmin.deleteUser((User) userAdmin.getUser("uid", userId)) == false) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + userId + " could not be found.", null));
 		}
 		return true;
@@ -254,6 +261,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 	private JSONObject formJson(User user, IOrionUserProfileNode userProfile, URI location) throws JSONException, CoreException {
 		JSONObject json = new JSONObject();
+		json.put(UserConstants.KEY_UID, user.getUid());
 		json.put(ProtocolConstants.KEY_LOCATION, location);
 		json.put(ProtocolConstants.KEY_NAME, user.getName());
 		json.put(UserConstants.KEY_LOGIN, user.getLogin());

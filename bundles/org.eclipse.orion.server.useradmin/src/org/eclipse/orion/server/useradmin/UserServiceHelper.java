@@ -10,9 +10,12 @@
  *******************************************************************************/
 package org.eclipse.orion.server.useradmin;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
 import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
-import org.osgi.service.useradmin.UserAdmin;
 
 public class UserServiceHelper {
 
@@ -42,7 +45,7 @@ public class UserServiceHelper {
 		return userStores.keySet();
 	}
 
-	public void setUserAdmin(UserAdmin userAdmin) {
+	public void setUserAdmin(IOrionCredentialsService userAdmin) {
 		if (userAdmin instanceof IOrionCredentialsService) {
 			IOrionCredentialsService eclipseWebUserAdmin = (IOrionCredentialsService) userAdmin;
 			userStores.put(eclipseWebUserAdmin.getStoreName(), eclipseWebUserAdmin);
@@ -52,7 +55,7 @@ public class UserServiceHelper {
 		}
 	}
 
-	public void unsetUserAdmin(UserAdmin userAdmin) {
+	public void unsetUserAdmin(IOrionCredentialsService userAdmin) {
 		if (userAdmin instanceof IOrionCredentialsService) {
 			IOrionCredentialsService eclipseWebUserAdmin = (IOrionCredentialsService) userAdmin;
 			userStores.remove(eclipseWebUserAdmin.getStoreName());

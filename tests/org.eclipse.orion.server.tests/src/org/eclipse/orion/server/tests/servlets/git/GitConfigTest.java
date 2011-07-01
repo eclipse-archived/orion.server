@@ -707,7 +707,7 @@ public class GitConfigTest extends GitTest {
 
 	// TODO: should be moved to User tests as a static method
 	private WebRequest getPutUserRequest() throws JSONException, UnsupportedEncodingException {
-		String requestURI = SERVER_LOCATION + "/users/test";
+		String requestURI = SERVER_LOCATION + "/users/" + testUserId;
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_NAME, GIT_NAME);
 		body.put(GitConstants.KEY_MAIL, GIT_MAIL);

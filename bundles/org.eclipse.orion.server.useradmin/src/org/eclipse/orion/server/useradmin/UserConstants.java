@@ -17,6 +17,8 @@ public interface UserConstants {
 	public static final String KEY_USERS = "users"; //$NON-NLS-1$
 	
 	public static final String KEY_LOGIN = "login"; //$NON-NLS-1$
+	
+	public static final String KEY_UID = "uid"; //$NON-NLS-1$
 
 	public static final String KEY_PASSWORD = "password"; //$NON-NLS-1$
 	
