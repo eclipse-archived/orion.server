@@ -10,6 +10,9 @@
  *******************************************************************************/
 package org.eclipse.orion.server.authentication.form.core;
 
+import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
+
 import org.eclipse.orion.server.core.ServerConstants;
 
 import java.io.IOException;
@@ -67,19 +70,7 @@ public class FormAuthHelper {
 	public static void writeLoginResponse(String user, HttpServletResponse resp) throws IOException {
 		resp.setStatus(HttpServletResponse.SC_OK);
 		try {
-			JSONObject array = new JSONObject();
-			array.put("login", user); //$NON-NLS-1$
-			try {
-				// try to add the login timestamp to the user info
-				IOrionUserProfileNode generalUserProfile = FormAuthHelper.getUserProfileService().getUserProfileNode(user, IOrionUserProfileConstants.GENERAL_PROFILE_PART);
-				Long lastLogin = Long.parseLong(generalUserProfile.get(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, ""));
-				array.put(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, lastLogin);
-			} catch (IllegalArgumentException e) {
-				LogHelper.log(e);
-			} catch (CoreException e) {
-				LogHelper.log(e);
-			}
-			resp.getWriter().print(array.toString());
+			resp.getWriter().print(FormAuthHelper.getUserJson(user));
 		} catch (JSONException e) {
 			//can't fail
 		}
@@ -186,6 +177,31 @@ public class FormAuthHelper {
 					defaultUserAdmin = iterator.next();
 			}
 		}
+	}
+	
+	public static JSONObject getUserJson(String uid) throws JSONException{
+		JSONObject obj = new JSONObject();
+			obj.put("login", uid); //$NON-NLS-1$
+
+			try {
+				// try to add the login timestamp to the user info
+				IOrionUserProfileNode generalUserProfile = FormAuthHelper.getUserProfileService().getUserProfileNode(uid, IOrionUserProfileConstants.GENERAL_PROFILE_PART);
+				User user = defaultUserAdmin.getUser(UserConstants.KEY_UID, uid);
+				obj.put(UserConstants.KEY_UID, uid);
+				obj.put(UserConstants.KEY_LOGIN, user.getLogin());
+				obj.put("Location", user.getLocation());
+				obj.put("Name", user.getName());
+				Long lastLogin = Long.parseLong(generalUserProfile.get(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, ""));
+				
+				obj.put(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, lastLogin);
+			} catch (IllegalArgumentException e) {
+				LogHelper.log(e);
+			} catch (CoreException e) {
+				LogHelper.log(e);
+			}
+		
+		return obj;
+		
 	}
 	
 	public static IOrionUserProfileService getUserProfileService() {

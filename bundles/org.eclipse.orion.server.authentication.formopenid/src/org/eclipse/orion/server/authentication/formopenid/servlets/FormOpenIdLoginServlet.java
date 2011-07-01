@@ -114,21 +114,7 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 		if ((user = authenticationService.getAuthenticatedUser(req, resp, authenticationService.getDefaultAuthenticationProperties())) != null) {
 			resp.setStatus(HttpServletResponse.SC_OK);
 			try {
-				JSONObject array = new JSONObject();
-				array.put("login", user); //$NON-NLS-1$
-
-				try {
-					// try to add the login timestamp to the user info
-					IOrionUserProfileNode generalUserProfile = FormAuthHelper.getUserProfileService().getUserProfileNode(user, IOrionUserProfileConstants.GENERAL_PROFILE_PART);
-					Long lastLogin = Long.parseLong(generalUserProfile.get(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, ""));
-					array.put(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, lastLogin);
-				} catch (IllegalArgumentException e) {
-					LogHelper.log(e);
-				} catch (CoreException e) {
-					LogHelper.log(e);
-				}
-
-				resp.getWriter().print(array.toString());
+				resp.getWriter().print(FormAuthHelper.getUserJson(user));
 			} catch (JSONException e) {
 				handleException(resp, "An error occured when creating JSON object for logged in user", e);
 			}
