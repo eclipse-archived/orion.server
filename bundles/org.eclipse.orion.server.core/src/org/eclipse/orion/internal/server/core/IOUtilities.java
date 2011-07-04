@@ -12,6 +12,8 @@ package org.eclipse.orion.internal.server.core;
 
 import java.io.*;
 
+import javax.servlet.http.HttpServletRequest;
+
 /**
  * Various static helper methods for I/O processing.
  */
@@ -52,6 +54,34 @@ public class IOUtilities {
 		}
 	}
 
+	/**
+	 * Returns the value of a request parameter as a String, or null if 
+	 * the parameter does not exist in the query string.
+	 * 
+	 * Method is similar to HttpServletRequest.getParameter(String name) method, but it does not
+	 * interfere with HttpServletRequest.getInputStream() and HttpServletRequest.getReader().  
+	 * @param request a request object
+	 * @param name a String specifying the name of the parameter
+	 * @return a String representing the single value of the parameter
+	 */
+	public static String getQueryParameter(HttpServletRequest request, String name) {
+		String queryString = request.getQueryString();
+		if (queryString == null)
+			return null;
+		
+		for (String paramString : queryString.split("&")) { 
+			if (paramString.startsWith(name)) {
+				String[] nameAndValue = paramString.split("=", 2);
+				if (nameAndValue.length == 2)
+					return nameAndValue[1];
+				else
+					return ""; // parameter has no value
+			}
+		}
+		// parameter not found
+		return null;
+	}
+	
 	/**
 	 * Closes a stream or reader and ignores any resulting exception. This is useful
 	 * when doing cleanup in a finally block where secondary exceptions

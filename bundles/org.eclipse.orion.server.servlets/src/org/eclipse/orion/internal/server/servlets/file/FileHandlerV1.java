@@ -105,7 +105,7 @@ class FileHandlerV1 extends GenericFileHandler {
 	@Override
 	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws ServletException {
 		try {
-			String parts = request.getParameter("parts"); //$NON-NLS-1$
+			String parts = IOUtilities.getQueryParameter(request, "parts");
 			if (parts == null || "body".equals(parts)) { //$NON-NLS-1$
 				switch (getMethod(request)) {
 					case DELETE :
