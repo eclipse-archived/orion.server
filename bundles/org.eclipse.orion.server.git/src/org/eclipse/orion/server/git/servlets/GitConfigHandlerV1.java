@@ -19,7 +19,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.errors.ConfigInvalidException;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.Config;
 import org.eclipse.jgit.storage.file.FileBasedConfig;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.util.FS;
@@ -71,14 +71,13 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 			FileBasedConfig config = getLocalConfig(gitDir);
 			URI baseLocation = getURI(request);
 
-			JSONObject result = configToJSON(config, baseLocation);
+			JSONObject result = configToJSON(config, baseLocation, BaseToConfigEntryConverter.REMOVE_FIRST_2);
 			OrionServlet.writeJSONResponse(request, response, result);
 			return true;
 		} else if (p.segment(1).equals("clone") && p.segment(2).equals("file")) { //$NON-NLS-1$ //$NON-NLS-2$
 			// expected path /gitapi/config/{key}/clone/file/{path}
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2));
-			Repository db = new FileRepository(gitDir);
-			StoredConfig config = db.getConfig();
+			FileBasedConfig config = getLocalConfig(gitDir);
 			URI baseLocation = getURI(request);
 
 			String key = p.segment(0);
@@ -88,7 +87,7 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 			if (!variableExist(config, keySegments))
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "There is no config entry with key provided", null));
 
-			JSONObject result = configEntryToJSON(config, keySegments, baseLocation);
+			JSONObject result = configEntryToJSON(config, keySegments, baseLocation, BaseToConfigEntryConverter.REMOVE_FIRST_3);
 			OrionServlet.writeJSONResponse(request, response, result);
 			return true;
 		}
@@ -121,7 +120,7 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 			config.setString(keySegments[0], keySegments[1], keySegments[2], value);
 			config.save();
 
-			JSONObject result = configEntryToJSON(config, keySegments, baseLocation);
+			JSONObject result = configEntryToJSON(config, keySegments, baseLocation, BaseToConfigEntryConverter.REMOVE_FIRST_2);
 			OrionServlet.writeJSONResponse(request, response, result);
 			response.setHeader(ProtocolConstants.HEADER_LOCATION, result.getString(ProtocolConstants.KEY_LOCATION));
 			if (!present)
@@ -159,7 +158,7 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 			config.setString(keySegments[0], keySegments[1], keySegments[2], value);
 			config.save();
 
-			JSONObject result = configEntryToJSON(config, keySegments, baseLocation);
+			JSONObject result = configEntryToJSON(config, keySegments, baseLocation, BaseToConfigEntryConverter.REMOVE_FIRST_2);
 			OrionServlet.writeJSONResponse(request, response, result);
 			response.setHeader(ProtocolConstants.HEADER_LOCATION, result.getString(ProtocolConstants.KEY_LOCATION));
 			return true;
@@ -207,17 +206,17 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 	/**
 	 * Converts whole config to JSON representation.
 	 */
-	JSONObject configToJSON(Config config, URI baseLocation) throws JSONException, URISyntaxException {
+	JSONObject configToJSON(Config config, URI baseLocation, BaseToConfigEntryConverter uriConverter) throws JSONException, URISyntaxException {
 		JSONObject result = new JSONObject();
 		JSONArray children = new JSONArray();
 		for (String section : config.getSections()) {
 			// proceed configuration entries: section.name
 			for (String name : config.getNames(section))
-				children.put(configEntryToJSON(config, new String[] {section, null, name}, baseLocation));
+				children.put(configEntryToJSON(config, new String[] {section, null, name}, baseLocation, uriConverter));
 			// proceed configuration entries: section.subsection.name
 			for (String subsection : config.getSubsections(section))
 				for (String name : config.getNames(section, subsection))
-					children.put(configEntryToJSON(config, new String[] {section, subsection, name}, baseLocation));
+					children.put(configEntryToJSON(config, new String[] {section, subsection, name}, baseLocation, uriConverter));
 		}
 		result.put(ProtocolConstants.KEY_CHILDREN, children);
 		return result;
@@ -226,7 +225,7 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 	/**
 	 * Reads configuration entry and converts it to JSON representation.
 	 */
-	JSONObject configEntryToJSON(Config config, String[] keySegments, URI baseLocation) throws JSONException, URISyntaxException {
+	JSONObject configEntryToJSON(Config config, String[] keySegments, URI baseLocation, BaseToConfigEntryConverter uriConverter) throws JSONException, URISyntaxException {
 		String value = config.getString(keySegments[0], keySegments[1], keySegments[2]);
 		if (value == null)
 			value = "";
@@ -235,7 +234,7 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 		JSONObject result = new JSONObject();
 		result.put(GitConstants.KEY_CONFIG_ENTRY_KEY, key);
 		result.put(GitConstants.KEY_CONFIG_ENTRY_VALUE, value);
-		result.put(ProtocolConstants.KEY_LOCATION, BaseToConfigEntryConverter.REMOVE_FIRST_2.baseToConfigEntryLocation(baseLocation, key));
+		result.put(ProtocolConstants.KEY_LOCATION, uriConverter.baseToConfigEntryLocation(baseLocation, key));
 		return result;
 	}
 

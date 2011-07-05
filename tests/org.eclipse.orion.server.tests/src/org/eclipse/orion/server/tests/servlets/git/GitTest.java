@@ -830,6 +830,20 @@ public abstract class GitTest extends FileSystemTest {
 		assertTrue("file".equals(path.segment(2)) || "file".equals(path.segment(3)));
 	}
 
+	protected static void assertConfigUri(String configUri) {
+		URI uri = URI.create(configUri);
+		IPath path = new Path(uri.getPath());
+		// /gitapi/config/[{key}/]clone/file/{id}
+		assertTrue(path.segmentCount() > 4);
+		assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
+		assertEquals(GitConstants.CONFIG_RESOURCE, path.segment(1));
+		assertTrue(GitConstants.CLONE_RESOURCE.equals(path.segment(2)) || GitConstants.CLONE_RESOURCE.equals(path.segment(3)));
+		if (GitConstants.CLONE_RESOURCE.equals(path.segment(2)))
+			assertTrue("file".equals(path.segment(3)));
+		else
+			assertTrue("file".equals(path.segment(4)));
+	}
+
 	protected static void assertGitSectionExists(JSONObject json) {
 		JSONObject gitSection = json.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection);
