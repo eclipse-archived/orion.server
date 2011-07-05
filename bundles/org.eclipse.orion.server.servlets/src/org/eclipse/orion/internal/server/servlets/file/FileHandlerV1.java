@@ -11,6 +11,7 @@
 package org.eclipse.orion.internal.server.servlets.file;
 
 import java.io.*;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 import javax.servlet.ServletException;
@@ -46,20 +47,25 @@ class FileHandlerV1 extends GenericFileHandler {
 	 */
 	private static final String EOL = "\r\n"; //$NON-NLS-1$
 
-	protected void handleGetMetadata(HttpServletRequest request, Writer response, IFileStore file) throws IOException {
+	// responseWriter is used, as in some cases response should be
+	// appended to response generated earlier (i.e. multipart get)
+	protected void handleGetMetadata(HttpServletRequest request, HttpServletResponse response, Writer responseWriter, IFileStore file) throws IOException, NoSuchAlgorithmException, JSONException, CoreException {
 		JSONObject result = ServletFileStoreHandler.toJSON(file, file.fetchInfo(), getURI(request));
+		String etag = generateFileETag(file);
+		result.put(ProtocolConstants.KEY_ETAG, etag);
+		response.setHeader(ProtocolConstants.KEY_ETAG, etag);
 		OrionServlet.decorateResponse(request, result);
-		response.append(result.toString());
+		responseWriter.append(result.toString());
 	}
 
-	private void handleMultiPartGet(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws IOException, CoreException {
+	private void handleMultiPartGet(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws IOException, CoreException, NoSuchAlgorithmException, JSONException {
 		String boundary = createBoundaryString();
 		response.setHeader(ProtocolConstants.HEADER_CONTENT_TYPE, "multipart/related; boundary=\"" + boundary + '"'); //$NON-NLS-1$
 		OutputStream outputStream = response.getOutputStream();
 		Writer out = new OutputStreamWriter(outputStream);
 		out.write("--" + boundary + EOL); //$NON-NLS-1$
 		out.write("Content-Type: application/json" + EOL + EOL); //$NON-NLS-1$
-		handleGetMetadata(request, out, file);
+		handleGetMetadata(request, response, out, file);
 		out.write(EOL + "--" + boundary + EOL); //$NON-NLS-1$
 		// headers for file contents go here
 		out.write(EOL);
@@ -73,7 +79,15 @@ class FileHandlerV1 extends GenericFileHandler {
 		return new UniversalUniqueIdentifier().toBase64String();
 	}
 
-	private void handleMultiPartPut(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws IOException, CoreException, JSONException {
+	private void handlePutContents(HttpServletRequest request, BufferedReader requestReader, HttpServletResponse response, IFileStore file) throws IOException, CoreException, NoSuchAlgorithmException, JSONException {
+		Writer fileWriter = new BufferedWriter(new OutputStreamWriter(file.openOutputStream(EFS.NONE, null)));
+		IOUtilities.pipe(requestReader, fileWriter, false, true);
+
+		// return metadata with the new Etag
+		handleGetMetadata(request, response, response.getWriter(), file);
+	}
+
+	private void handleMultiPartPut(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws IOException, CoreException, JSONException, NoSuchAlgorithmException {
 		String typeHeader = request.getHeader(ProtocolConstants.HEADER_CONTENT_TYPE);
 		String boundary = typeHeader.substring(typeHeader.indexOf("boundary=\"") + 10, typeHeader.length() - 1); //$NON-NLS-1$
 		BufferedReader requestReader = request.getReader();
@@ -87,8 +101,7 @@ class FileHandlerV1 extends GenericFileHandler {
 				contentHeaders.put(header[0], header[1]);
 		}
 		// now for the file contents
-		Writer fileWriter = new BufferedWriter(new OutputStreamWriter(file.openOutputStream(EFS.NONE, null)));
-		IOUtilities.pipe(requestReader, fileWriter, false, true);
+		handlePutContents(request, requestReader, response, file);
 	}
 
 	private void handlePutMetadata(BufferedReader reader, String boundary, IFileStore file) throws IOException, CoreException, JSONException {
@@ -105,11 +118,19 @@ class FileHandlerV1 extends GenericFileHandler {
 	@Override
 	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws ServletException {
 		try {
+			String receivedETag = request.getHeader("If-Match");
+			if (receivedETag != null && !receivedETag.equals(generateFileETag(file))) {
+				response.setStatus(HttpServletResponse.SC_PRECONDITION_FAILED);
+				return true;
+			}
 			String parts = IOUtilities.getQueryParameter(request, "parts");
 			if (parts == null || "body".equals(parts)) { //$NON-NLS-1$
 				switch (getMethod(request)) {
 					case DELETE :
 						file.delete(EFS.NONE, null);
+						break;
+					case PUT :
+						handlePutContents(request, request.getReader(), response, file);
 						break;
 					default :
 						handleFileContents(request, response, file);
@@ -119,7 +140,7 @@ class FileHandlerV1 extends GenericFileHandler {
 			if ("meta".equals(parts)) { //$NON-NLS-1$
 				switch (getMethod(request)) {
 					case GET :
-						handleGetMetadata(request, response.getWriter(), file);
+						handleGetMetadata(request, response, response.getWriter(), file);
 						return true;
 					case PUT :
 						handlePutMetadata(request.getReader(), null, file);
@@ -135,7 +156,6 @@ class FileHandlerV1 extends GenericFileHandler {
 						return true;
 					case PUT :
 						handleMultiPartPut(request, response, file);
-						response.setStatus(HttpServletResponse.SC_NO_CONTENT);
 						return true;
 				}
 				return false;

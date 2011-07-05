@@ -11,13 +11,16 @@
 package org.eclipse.orion.internal.server.servlets.file;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.orion.internal.server.core.HashUtilities;
 import org.eclipse.orion.internal.server.core.IOUtilities;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.osgi.util.NLS;
 
@@ -26,7 +29,12 @@ import org.eclipse.osgi.util.NLS;
  * such as a web browser.
  */
 class GenericFileHandler extends ServletResourceHandler<IFileStore> {
-	protected void handleFileContents(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws CoreException, IOException {
+	protected void handleFileContents(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws CoreException, IOException, NoSuchAlgorithmException {
+		String receivedETag = request.getHeader("If-Match");
+		if (receivedETag != null && !receivedETag.equals(generateFileETag(file))) {
+			response.setStatus(HttpServletResponse.SC_PRECONDITION_FAILED);
+			return;
+		}
 		switch (getMethod(request)) {
 			case GET :
 				IOUtilities.pipe(file.openInputStream(EFS.NONE, null), response.getOutputStream(), true, false);
@@ -36,6 +44,7 @@ class GenericFileHandler extends ServletResourceHandler<IFileStore> {
 				break;
 		}
 		response.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
+		response.setHeader(ProtocolConstants.KEY_ETAG, generateFileETag(file));
 	}
 
 	@Override
@@ -50,5 +59,12 @@ class GenericFileHandler extends ServletResourceHandler<IFileStore> {
 			throw new ServletException(NLS.bind("Error retrieving file: {0}", file), e);
 		}
 		return true;
+	}
+
+	/**
+	 * Returns an ETag calculated using SHA-1 hash function.
+	 */
+	public static String generateFileETag(IFileStore file) throws NoSuchAlgorithmException, IOException, CoreException {
+		return HashUtilities.getHash(Long.toString(file.fetchInfo().getLastModified()), HashUtilities.SHA_1);
 	}
 }

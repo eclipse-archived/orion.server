@@ -285,6 +285,12 @@ public class ProtocolConstants {
 	public static final String KEY_ATTRIBUTE_SYMLINK = "SymLink"; //$NON-NLS-1$
 
 	/**
+	 * ETag is an opaque identifier assigned to a specific version of a resource found at a URI. 
+	 * If the resource content at that URL ever changes, a new and different ETag is assigned. 
+	 */
+	public static final String KEY_ETAG = "ETag"; //$NON-NLS-1$
+
+	/**
 	 * JSON representation key for a server host attribute. The value's data
 	 * type is a String.
 	 */
