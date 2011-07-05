@@ -31,7 +31,7 @@ public class TaskStore {
 	 * Returns a string representation of the task with the given id, or <code>null</code>
 	 * if no such task exists.
 	 */
-	public String readTask(String id) {
+	public synchronized String readTask(String id) {
 		File taskFile = new File(root, id);
 		if (!taskFile.exists())
 			return null;
@@ -47,7 +47,7 @@ public class TaskStore {
 		}
 	}
 
-	public void writeTask(String id, String representation) {
+	public synchronized void writeTask(String id, String representation) {
 		root.mkdirs();
 		try {
 			File taskFile = new File(root, id);
