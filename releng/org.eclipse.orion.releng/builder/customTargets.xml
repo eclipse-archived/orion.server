@@ -165,7 +165,7 @@ lastMapTag=${mapsTagTag}
 		<optimize appDir="git" 		name="git-clone" 	bundle="org.eclipse.orion.client.git" />
 		<optimize appDir="git" 		name="git-log" 		bundle="org.eclipse.orion.client.git" />
 		<optimize appDir="git" 		name="git-status" 	bundle="org.eclipse.orion.client.git" />
-		<optimize appDir="profile"	name="manage-users"	bundle="org.eclipse.orion.client.users.ui" />
+		<optimize appDir="profile"	name="user-list"	bundle="org.eclipse.orion.client.users.ui" />
 		<optimize appDir="profile"	name="user-profile"	bundle="org.eclipse.orion.client.users.ui" />
 
 		<java classname="org.mozilla.javascript.tools.shell.Main">
