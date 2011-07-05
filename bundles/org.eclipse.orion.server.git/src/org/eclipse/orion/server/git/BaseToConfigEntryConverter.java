@@ -26,5 +26,14 @@ public abstract class BaseToConfigEntryConverter {
 		};
 	};
 
+	public static final BaseToConfigEntryConverter REMOVE_FIRST_3 = new BaseToConfigEntryConverter() {
+		@Override
+		public URI baseToConfigEntryLocation(URI base, String entryKey) throws URISyntaxException {
+			IPath p = new Path(base.getPath());
+			p = p.uptoSegment(1).append(GitConstants.CONFIG_RESOURCE).append(entryKey).addTrailingSeparator().append(p.removeFirstSegments(3));
+			return new URI(base.getScheme(), base.getUserInfo(), base.getHost(), base.getPort(), p.toString(), base.getQuery(), base.getFragment());
+		};
+	};
+
 	public abstract URI baseToConfigEntryLocation(URI base, String entryKey) throws URISyntaxException;
 }

@@ -211,8 +211,12 @@ public class GitConfigTest extends GitTest {
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject configResponse = new JSONObject(response.getText());
-			JSONArray configEntries = configResponse.optJSONArray(ProtocolConstants.KEY_CHILDREN);
-			assertNotNull(configEntries);
+			JSONArray configEntries = configResponse.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+
+			for (int i = 0; i < configEntries.length(); i++) {
+				JSONObject configEntry = configEntries.getJSONObject(i);
+				assertConfigUri(configEntry.getString(ProtocolConstants.KEY_LOCATION));
+			}
 		}
 	}
 
@@ -255,6 +259,9 @@ public class GitConfigTest extends GitTest {
 			request = getPostGitConfigRequest(gitConfigUri, ENTRY_KEY, ENTRY_VALUE);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+			configResponse = new JSONObject(response.getText());
+			String entryLocation = configResponse.getString(ProtocolConstants.KEY_LOCATION);
+			assertConfigUri(entryLocation);
 
 			// get list of config entries again
 			request = getGetGitConfigRequest(gitConfigUri);
@@ -264,15 +271,16 @@ public class GitConfigTest extends GitTest {
 			configEntries = configResponse.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 			assertEquals(initialConfigEntriesCount + 1, configEntries.length());
 
-			String entryLocation = null;
+			entryLocation = null;
 			for (int i = 0; i < configEntries.length(); i++) {
 				JSONObject configEntry = configEntries.getJSONObject(i);
 				if (ENTRY_KEY.equals(configEntry.getString(GitConstants.KEY_CONFIG_ENTRY_KEY))) {
 					assertEquals(ENTRY_VALUE, configEntry.getString(GitConstants.KEY_CONFIG_ENTRY_VALUE));
 					entryLocation = configEntry.getString(ProtocolConstants.KEY_LOCATION);
+					break;
 				}
 			}
-			assertNotNull(entryLocation);
+			assertConfigUri(entryLocation);
 
 			// double check
 			Config config = getRepositoryForContentLocation(contentLocation).getConfig();
@@ -320,6 +328,7 @@ public class GitConfigTest extends GitTest {
 			configResponse = new JSONObject(response.getText());
 			assertEquals(ENTRY_KEY, configResponse.getString(GitConstants.KEY_CONFIG_ENTRY_KEY));
 			assertEquals(ENTRY_VALUE, configResponse.getString(GitConstants.KEY_CONFIG_ENTRY_VALUE));
+			assertConfigUri(configResponse.getString(ProtocolConstants.KEY_LOCATION));
 		}
 	}
 
