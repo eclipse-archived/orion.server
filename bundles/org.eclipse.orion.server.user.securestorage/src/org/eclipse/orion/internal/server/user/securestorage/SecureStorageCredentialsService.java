@@ -45,6 +45,9 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 	static final String ADMIN_LOGIN_VALUE = "admin"; //$NON-NLS-1$
 	static final String ADMIN_NAME_VALUE = "Administrator"; //$NON-NLS-1$
 	
+	static final String ANONYMOUS_LOGIN_VALUE = "anonymous"; //$NON-NLS-1$
+	static final String ANONYMOUS_NAME_VALUE = "Anonymous"; //$NON-NLS-1$
+	
 	private static final Base64Counter userCounter = new Base64Counter();
 
 

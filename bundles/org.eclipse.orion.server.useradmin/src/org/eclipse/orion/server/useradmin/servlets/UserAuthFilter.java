@@ -64,7 +64,7 @@ public class UserAuthFilter implements Filter {
 		HttpServletRequest httpRequest = (HttpServletRequest) request;
 		HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-		if ("POST".equals(httpRequest.getMethod()) && httpRequest.getParameter(UserConstants.KEY_RESET)==null) { //$NON-NLS-1$
+		if ("POST".equals(httpRequest.getMethod()) && httpRequest.getParameter(UserConstants.KEY_RESET) == null) { //$NON-NLS-1$
 			// either everyone can create users, or only the specific list
 			if (authorizedAccountCreators == null || authorizedAccountCreators.contains(httpRequest.getRemoteUser())) {
 				chain.doFilter(request, response);

@@ -22,7 +22,11 @@ import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.core.authentication.IAuthenticationService;
 import org.osgi.service.http.HttpContext;
 
-public class AuthenticationFilter implements Filter {
+/**
+ * The filter checks whether the request is done by an authenticated user.
+ * It does not verify the rules in the autorization service.
+ */
+public class LoggedInUserFilter implements Filter {
 
 	private IAuthenticationService authenticationService;
 	private Properties authProperties;
@@ -41,12 +45,6 @@ public class AuthenticationFilter implements Filter {
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
 		HttpServletRequest httpRequest = (HttpServletRequest) request;
 		HttpServletResponse httpResponse = (HttpServletResponse) response;
-
-		String projectWorldReadable = PreferenceHelper.getString(ServerConstants.CONFIG_FILE_ANONYMOUS_READ);
-		if (httpRequest.getMethod().equals("GET") && httpRequest.getRequestURI().toString().startsWith("/file/") && "true".equalsIgnoreCase(projectWorldReadable)) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-			chain.doFilter(request, response);
-			return;
-		}
 
 		String login = authenticationService.authenticateUser(httpRequest, httpResponse, authProperties);
 		if (login == null) {

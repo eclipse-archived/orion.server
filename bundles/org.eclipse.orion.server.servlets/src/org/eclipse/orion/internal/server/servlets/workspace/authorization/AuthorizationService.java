@@ -17,6 +17,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.authentication.IAuthenticationService;
 import org.eclipse.orion.server.core.users.OrionScope;
 import org.json.*;
 import org.osgi.service.prefs.BackingStoreException;
@@ -130,19 +131,19 @@ public class AuthorizationService {
 		return matches;
 	}
 
-	public static boolean checkRights(String name, String uri, String method) throws JSONException {
-		if (uri.equals("/workspace")) //$NON-NLS-1$
+	public static boolean checkRights(String userName, String uri, String method) throws JSONException {
+		if (uri.equals("/workspace") && !IAuthenticationService.ANONYMOUS_LOGIN_VALUE.equals(userName)) //$NON-NLS-1$
 			return true;
 
-		// Any user can access their site configurations
-		if (uri.startsWith("/site")) //$NON-NLS-1$
+		// any user can access their site configurations
+		if (uri.startsWith("/site") && !IAuthenticationService.ANONYMOUS_LOGIN_VALUE.equals(userName)) //$NON-NLS-1$
 			return true;
 
-		// Any user can access their own profile
-		if (uri.equals("/users/" + name)) //$NON-NLS-1$
+		// any user can access their own profile
+		if (uri.equals("/users/" + userName) && !IAuthenticationService.ANONYMOUS_LOGIN_VALUE.equals(userName)) //$NON-NLS-1$
 			return true;
 
-		//import/export rights depend on access to the file content
+		// import/export rights depend on access to the file content
 		if (uri.startsWith(PREFIX_EXPORT) && uri.endsWith(".zip")) { //$NON-NLS-1$
 			uri = "/file/" + uri.substring(13, uri.length() - 4) + '/'; //$NON-NLS-1$
 		} else if (uri.startsWith(PREFIX_IMPORT)) {
@@ -151,17 +152,17 @@ public class AuthorizationService {
 				uri += '/';
 		}
 
-		//allow anonymous read if the corresponding property is set
+		// allow anonymous read if the corresponding property is set
 		String projectWorldReadable = PreferenceHelper.getString(ServerConstants.CONFIG_FILE_ANONYMOUS_READ, "false"); //$NON-NLS-1$
 		if (getMethod(method) == GET && uri.startsWith("/file/") && "true".equalsIgnoreCase(projectWorldReadable)) {//$NON-NLS-1$ //$NON-NLS-2$
-			//except don't allow access to metadata
+			// except don't allow access to metadata
 			if ("/file/".equals(uri) || uri.startsWith("/file/.metadata/")) //$NON-NLS-1$//$NON-NLS-2$
 				return false;
 			return true;
 		}
 
 		IEclipsePreferences users = new OrionScope().getNode("Users"); //$NON-NLS-1$
-		JSONArray userRightArray = AuthorizationReader.getAuthorizationData((IEclipsePreferences) users.node(name));
+		JSONArray userRightArray = AuthorizationReader.getAuthorizationData((IEclipsePreferences) users.node(userName));
 		for (int i = 0; i < userRightArray.length(); i++) {
 			JSONObject userRight = (JSONObject) userRightArray.get(i);
 
