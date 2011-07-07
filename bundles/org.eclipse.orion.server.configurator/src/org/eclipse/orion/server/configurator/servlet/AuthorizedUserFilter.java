@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others 
+ * Copyright (c) 2011 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -17,12 +17,17 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.configurator.ConfiguratorActivator;
-import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.authentication.IAuthenticationService;
+import org.json.JSONException;
 import org.osgi.service.http.HttpContext;
 
-public class AuthenticationFilter implements Filter {
+/**
+ * The filter checks whether the request is made by an authorized user.
+ */
+public class AuthorizedUserFilter implements Filter {
 
 	private IAuthenticationService authenticationService;
 	private Properties authProperties;
@@ -42,23 +47,39 @@ public class AuthenticationFilter implements Filter {
 		HttpServletRequest httpRequest = (HttpServletRequest) request;
 		HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-		String projectWorldReadable = PreferenceHelper.getString(ServerConstants.CONFIG_FILE_ANONYMOUS_READ);
-		if (httpRequest.getMethod().equals("GET") && httpRequest.getRequestURI().toString().startsWith("/file/") && "true".equalsIgnoreCase(projectWorldReadable)) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-			chain.doFilter(request, response);
+		String userName = authenticationService.getAuthenticatedUser(httpRequest, httpResponse, authProperties);
+
+		if (userName == null)
+			userName = IAuthenticationService.ANONYMOUS_LOGIN_VALUE;
+
+		try {
+			if (!AuthorizationService.checkRights(userName, httpRequest.getRequestURI().toString(), httpRequest.getMethod())) {
+				if (IAuthenticationService.ANONYMOUS_LOGIN_VALUE.equals(userName)) {
+					userName = authenticationService.authenticateUser(httpRequest, httpResponse, authProperties);
+					if (userName == null)
+						return;
+
+					request.setAttribute(HttpContext.REMOTE_USER, userName);
+					request.setAttribute(HttpContext.AUTHENTICATION_TYPE, authenticationService.getAuthType());
+				} else {
+					httpResponse.sendError(HttpServletResponse.SC_FORBIDDEN);
+					return;
+				}
+			} else {
+				if (!IAuthenticationService.ANONYMOUS_LOGIN_VALUE.equals(userName)) {
+					request.setAttribute(HttpContext.REMOTE_USER, userName);
+					request.setAttribute(HttpContext.AUTHENTICATION_TYPE, authenticationService.getAuthType());
+				}
+			}
+		} catch (JSONException e) {
+			httpResponse.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			return;
 		}
 
-		String login = authenticationService.authenticateUser(httpRequest, httpResponse, authProperties);
-		if (login == null) {
-			return;
-		}
-
-		request.setAttribute(HttpContext.REMOTE_USER, login);
-		request.setAttribute(HttpContext.AUTHENTICATION_TYPE, authenticationService.getAuthType());
 		chain.doFilter(request, response);
 	}
 
 	public void destroy() {
-		// nothing to do
+		// TODO Auto-generated method stub
 	}
 }

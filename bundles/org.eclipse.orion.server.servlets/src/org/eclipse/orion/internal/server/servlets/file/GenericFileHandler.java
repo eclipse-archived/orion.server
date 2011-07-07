@@ -65,6 +65,6 @@ class GenericFileHandler extends ServletResourceHandler<IFileStore> {
 	 * Returns an ETag calculated using SHA-1 hash function.
 	 */
 	public static String generateFileETag(IFileStore file) throws NoSuchAlgorithmException, IOException, CoreException {
-		return HashUtilities.getHash(Long.toString(file.fetchInfo().getLastModified()), HashUtilities.SHA_1);
+		return HashUtilities.getHash(file.openInputStream(EFS.NONE, null), true, HashUtilities.SHA_1);
 	}
 }

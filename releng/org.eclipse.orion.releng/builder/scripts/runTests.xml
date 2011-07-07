@@ -323,8 +323,8 @@
 		<junitreport todir="${dropLocation}" tofile="Chrome-12.0-testResults.xml">
 			<fileset dir="${jsTestDir}" includes="**/TEST-Chrome_120*.xml" />
 		</junitreport>
-		<junitreport todir="${dropLocation}" tofile="Firefox-3.6-testResults.xml">
-			<fileset dir="${jsTestDir}" includes="**/TEST-Firefox_36*.xml" />
+		<junitreport todir="${dropLocation}" tofile="Firefox-5.0-testResults.xml">
+			<fileset dir="${jsTestDir}" includes="**/TEST-Firefox_50*.xml" />
 		</junitreport>
 		<junitreport todir="${dropLocation}" tofile="Firefox-4.0-testResults.xml">
 			<fileset dir="${jsTestDir}" includes="**/TEST-Firefox_40*.xml" />
@@ -345,7 +345,7 @@
 		<updateTestResult testFile="Chrome-10.0-testResults.html" token="@JS-CHROME10@"/>
 		<updateTestResult testFile="Chrome-11.0-testResults.html" token="@JS-CHROME11@"/>
 		<updateTestResult testFile="Chrome-12.0-testResults.html" token="@JS-CHROME12@"/>
-		<updateTestResult testFile="Firefox-3.6-testResults.html" token="@JS-FIREFOX36@"/>
+		<updateTestResult testFile="Firefox-5.0-testResults.html" token="@JS-FIREFOX50@"/>
 		<updateTestResult testFile="Firefox-4.0-testResults.html" token="@JS-FIREFOX40@"/>
 		<updateTestResult testFile="IE-9.0-testResults.html" token="@JS-IE9@"/>
 		<updateTestResult testFile="Performance-testResults.html" token="@PERFORMANCE@"/>
