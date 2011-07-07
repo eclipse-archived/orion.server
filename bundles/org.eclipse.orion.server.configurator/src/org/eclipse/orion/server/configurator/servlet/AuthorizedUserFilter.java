@@ -56,15 +56,15 @@ public class AuthorizedUserFilter implements Filter {
 			if (!AuthorizationService.checkRights(userName, httpRequest.getRequestURI().toString(), httpRequest.getMethod())) {
 				if (IAuthenticationService.ANONYMOUS_LOGIN_VALUE.equals(userName)) {
 					userName = authenticationService.authenticateUser(httpRequest, httpResponse, authProperties);
-
 					if (userName == null)
 						return;
 
 					request.setAttribute(HttpContext.REMOTE_USER, userName);
 					request.setAttribute(HttpContext.AUTHENTICATION_TYPE, authenticationService.getAuthType());
-				} else
+				} else {
 					httpResponse.sendError(HttpServletResponse.SC_FORBIDDEN);
-				return;
+					return;
+				}
 			} else {
 				if (!IAuthenticationService.ANONYMOUS_LOGIN_VALUE.equals(userName)) {
 					request.setAttribute(HttpContext.REMOTE_USER, userName);
