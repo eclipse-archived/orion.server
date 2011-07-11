@@ -64,11 +64,6 @@ public class CloneJob extends GitJob {
 			File cloneFolder = new File(clone.getContentLocation().getPath());
 			if (!cloneFolder.exists()) {
 				cloneFolder.mkdir();
-			} else {
-				// workaround until http://egit.eclipse.org/r/#change,3518 is fixed
-				File dotGit = new File(cloneFolder, Constants.DOT_GIT);
-				if (dotGit.exists())
-					throw new IOException("Destination folder already exists and contains a repository");
 			}
 			CloneCommand cc = Git.cloneRepository();
 			cc.setBare(false);
@@ -88,7 +83,7 @@ public class CloneJob extends GitJob {
 		} catch (CoreException e) {
 			return e.getStatus();
 		} catch (JGitInternalException e) {
-			return getJGitInternalExceptionStatus(e, "An internal git error cloning git remote");
+			return getJGitInternalExceptionStatus(e, "An internal git error cloning git repository");
 		} catch (Exception e) {
 			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error cloning git repository", e);
 		}

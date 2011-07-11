@@ -260,7 +260,7 @@ public class GitCloneTest extends GitTest {
 		JSONObject result = completedTask.getJSONObject("Result");
 		assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, result.getInt("HttpCode"));
 		assertEquals("Error", result.getString("Severity"));
-		assertEquals("An internal git error cloning git remote", result.getString("Message"));
+		assertEquals("An internal git error cloning git repository", result.getString("Message"));
 		assertEquals("Invalid remote: origin", result.getString("DetailedMessage"));
 
 		// we don't know ID of the clone that failed to be created, so we're checking if none has been added
@@ -786,8 +786,8 @@ public class GitCloneTest extends GitTest {
 		JSONObject result = completedTask.getJSONObject("Result");
 		assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, result.getInt("HttpCode"));
 		assertEquals("Error", result.getString("Severity"));
-		assertEquals("Error cloning git repository", result.getString("Message"));
-		assertEquals("Destination folder already exists and contains a repository", result.getString("DetailedMessage"));
+		assertEquals("An internal git error cloning git repository", result.getString("Message"));
+		assertTrue(result.getString("DetailedMessage").contains("not an empty directory"));
 
 		// no project should be created
 		request = new GetMethodWebRequest(workspaceLocation.toString());
@@ -795,7 +795,6 @@ public class GitCloneTest extends GitTest {
 		response = webConversation.getResponse(request);
 		JSONObject workspace = new JSONObject(response.getText());
 		assertEquals(1, workspace.getJSONArray(ProtocolConstants.KEY_CHILDREN).length());
-
 	}
 
 	/**
