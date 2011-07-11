@@ -12,14 +12,20 @@ package org.eclipse.orion.server.tests.servlets.git;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.net.HttpURLConnection;
 import java.net.URI;
 
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.MergeResult.MergeStatus;
+import org.eclipse.jgit.api.PullResult;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
 import org.json.JSONArray;
@@ -100,6 +106,82 @@ public class GitBranchTest extends GitTest {
 		assertEquals(1, branchesArray.length());
 		JSONObject branch = branchesArray.getJSONObject(0);
 		assertTrue(branch.optBoolean(GitConstants.KEY_BRANCH_CURRENT, false));
+	}
+
+	@Test
+	public void testCreateTrackingBranch() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
+
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			JSONObject clone = clone(clonePath);
+			String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
+			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+			String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
+
+			// get project/folder metadata
+			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject project = new JSONObject(response.getText());
+
+			String projectLocation = project.getString(ProtocolConstants.KEY_LOCATION);
+			JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+			String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
+			String gitRemoteUri = gitSection.optString(GitConstants.KEY_REMOTE);
+
+			// create local branch tracking origin/master
+			final String BRANCH_NAME = "a";
+			final String REMOTE_BRANCH = Constants.DEFAULT_REMOTE_NAME + "/" + Constants.MASTER;
+
+			branch(branchesLocation, BRANCH_NAME, REMOTE_BRANCH);
+
+			// modify
+			request = getPutFileRequest(projectLocation + "test.txt", "some change");
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// add
+			request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// commit
+			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit1", false);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// push
+			ServerStatus pushStatus = push(gitRemoteUri, 1, 0, Constants.MASTER, Constants.HEAD, false);
+			assertEquals(true, pushStatus.isOK());
+
+			// TODO: replace with RESTful API for git pull when available
+			// try to pull - up to date status is expected
+			Git git = new Git(getRepositoryForContentLocation(cloneContentLocation));
+			PullResult pullResults = git.pull().call();
+			assertEquals(Constants.DEFAULT_REMOTE_NAME, pullResults.getFetchedFrom());
+			assertEquals(MergeStatus.ALREADY_UP_TO_DATE, pullResults.getMergeResult().getMergeStatus());
+			assertNull(pullResults.getRebaseResult());
+
+			// checkout branch which was created a moment ago
+			response = checkoutBranch(cloneLocation, BRANCH_NAME);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// TODO: replace with RESTful API for git pull when available
+			// try to pull again - now fast forward update is expected
+			pullResults = git.pull().call();
+			assertEquals(Constants.DEFAULT_REMOTE_NAME, pullResults.getFetchedFrom());
+			assertEquals(MergeStatus.FAST_FORWARD, pullResults.getMergeResult().getMergeStatus());
+			assertNull(pullResults.getRebaseResult());
+		}
 	}
 
 	static JSONObject getCurrentBranch(JSONObject branches) throws JSONException {
