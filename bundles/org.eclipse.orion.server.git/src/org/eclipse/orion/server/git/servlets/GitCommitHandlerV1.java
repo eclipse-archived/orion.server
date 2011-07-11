@@ -71,7 +71,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			}
 
 		} catch (Exception e) {
-			String msg = NLS.bind("Failed to process an operation on commits for {0}", path); //$NON-NLS-1$
+			String msg = NLS.bind("Failed to process an operation on commits for {0}", path);
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
 		} finally {
 			if (db != null)
@@ -156,29 +156,29 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		if (refIdsRange.contains("..")) { //$NON-NLS-1$
 			String[] commits = refIdsRange.split("\\.\\."); //$NON-NLS-1$
 			if (commits.length != 2) {
-				String msg = NLS.bind("Failed to generate commit log for ref {0}", refIdsRange); //$NON-NLS-1$
+				String msg = NLS.bind("Failed to generate commit log for ref {0}", refIdsRange);
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 			}
 
 			fromObjectId = db.resolve(commits[0]);
 			fromRefId = db.getRef(commits[0]);
 			if (fromObjectId == null) {
-				String msg = NLS.bind("Failed to generate commit log for ref {0}", commits[0]); //$NON-NLS-1$
+				String msg = NLS.bind("Failed to generate commit log for ref {0}", commits[0]);
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 			}
 
 			toObjectId = db.resolve(commits[1]);
 			toRefId = db.getRef(commits[1]);
 			if (toObjectId == null) {
-				String msg = NLS.bind("Failed to generate commit log for ref {0}", commits[1]); //$NON-NLS-1$
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "No ref or commit found: " + commits[1], null));
+				String msg = NLS.bind("No ref or commit found: {0}", commits[1]);
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
 			}
 		} else {
 			toObjectId = db.resolve(refIdsRange);
 			toRefId = db.getRef(refIdsRange);
 			if (toObjectId == null) {
-				String msg = NLS.bind("Failed to generate commit log for ref {0}", refIdsRange); //$NON-NLS-1$
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "No ref or commit found: " + refIdsRange, null));
+				String msg = NLS.bind("No ref or commit found: {0}", refIdsRange);
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
 			}
 		}
 
@@ -203,7 +203,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			Iterable<RevCommit> commits = log.call();
 			JSONObject result = toJSON(db, OrionServlet.getURI(request), commits, page, pageSize, filter, isRoot);
 
-			result.put(GitConstants.KEY_REPOSITORY_PATH, isRoot ? "" : path);
+			result.put(GitConstants.KEY_REPOSITORY_PATH, isRoot ? "" : path); //$NON-NLS-1$
 
 			if (toRefId != null) {
 				result.put(GitConstants.KEY_REMOTE, BaseToRemoteConverter.getRemoteBranchLocation(getURI(request), Repository.shortenRefName(toRefId.getName()), db, BaseToRemoteConverter.REMOVE_FIRST_3));
@@ -224,10 +224,10 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			OrionServlet.writeJSONResponse(request, response, result);
 			return true;
 		} catch (NoHeadException e) {
-			String msg = NLS.bind("No HEAD reference found when generating log for ref {0}", refIdsRange); //$NON-NLS-1$
+			String msg = NLS.bind("No HEAD reference found when generating log for ref {0}", refIdsRange);
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
 		} catch (JGitInternalException e) {
-			String msg = NLS.bind("An internal error occured when generating log for ref {0}", refIdsRange); //$NON-NLS-1$
+			String msg = NLS.bind("An internal error occured when generating log for ref {0}", refIdsRange);
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
 		}
 	}
@@ -432,7 +432,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		if (gitDir == null)
 			return false; // TODO: or an error response code, 405?
 		db = new FileRepository(gitDir);
-		boolean isRoot = "".equals(GitUtils.getRelativePath(path, set.iterator().next().getKey()));
+		boolean isRoot = "".equals(GitUtils.getRelativePath(path, set.iterator().next().getKey())); //$NON-NLS-1$
 		JSONObject toPut = OrionServlet.readJSONRequest(request);
 		String tagName = toPut.getString(ProtocolConstants.KEY_NAME);
 		if (tagName != null) {

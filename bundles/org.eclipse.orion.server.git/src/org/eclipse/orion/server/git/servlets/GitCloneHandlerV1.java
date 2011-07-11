@@ -70,7 +70,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			}
 
 		} catch (Exception e) {
-			String msg = NLS.bind("Failed to handle /git/clone request for {0}", path); //$NON-NLS-1$
+			String msg = NLS.bind("Failed to handle /git/clone request for {0}", path);
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
 		}
 		return false;
@@ -100,13 +100,13 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		// expected path /file/{projectId}[/{path}]
 		String filePath = toAdd.optString(ProtocolConstants.KEY_PATH, null);
 		if (filePath == null && workspacePath == null) {
-			String msg = NLS.bind("Either '" + ProtocolConstants.KEY_PATH + "' or '" + ProtocolConstants.KEY_LOCATION + "' should be provided: {0}", toAdd);
+			String msg = NLS.bind("Either {0} or {1} should be provided: {2}", new Object[] {ProtocolConstants.KEY_PATH, ProtocolConstants.KEY_LOCATION, toAdd});
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 		}
 		// only during init operation filePath or cloneName must be provided
 		// during clone operation, name can be obtained from URL
 		if (initOnly && filePath == null && cloneName == null) {
-			String msg = NLS.bind("Either '" + ProtocolConstants.KEY_PATH + "' or '" + GitConstants.KEY_NAME + "' should be provided: {0}", toAdd);
+			String msg = NLS.bind("Either {0} or {1} should be provided: {2}", new Object[] {ProtocolConstants.KEY_PATH, GitConstants.KEY_NAME, toAdd});
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 		}
 		if (!validateCloneName(cloneName, request, response))
@@ -152,8 +152,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 				webProject.save();
 				workspace.save();
 			} catch (CoreException e) {
-				String msg = "Error persisting project state";
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error persisting project state", e));
 			}
 
 			URI baseLocation = getURI(request);
@@ -297,7 +296,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 				URI contentLocation = URI.create(webProject.getId());
 				IPath projectPath = new Path(contentLocation.getPath()).append(path.removeFirstSegments(2));
 				projectPath = path.hasTrailingSeparator() ? projectPath : projectPath.removeLastSegments(1);
-				File gitDir = GitUtils.getGitDirs(new Path("file").append(projectPath), Traverse.CURRENT).values().iterator().next();
+				File gitDir = GitUtils.getGitDirs(new Path("file").append(projectPath), Traverse.CURRENT).values().iterator().next(); //$NON-NLS-1$
 
 				// make sure required fields are set
 				JSONObject toCheckout = OrionServlet.readJSONRequest(request);

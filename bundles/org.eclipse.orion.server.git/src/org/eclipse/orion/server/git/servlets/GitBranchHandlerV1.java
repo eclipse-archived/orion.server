@@ -91,7 +91,7 @@ public class GitBranchHandlerV1 extends ServletResourceHandler<String> {
 				}
 			}
 			if (result == null) {
-				String msg = NLS.bind("Branch '{0}' not found", p.segment(0)); //$NON-NLS-1$
+				String msg = NLS.bind("Branch {0} not found", p.segment(0)); //$NON-NLS-1$
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
 			}
 			OrionServlet.writeJSONResponse(request, response, result);
@@ -103,7 +103,7 @@ public class GitBranchHandlerV1 extends ServletResourceHandler<String> {
 
 	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, String path) throws IOException, JSONException, ServletException, URISyntaxException, CoreException, JGitInternalException, GitAPIException {
 		Path p = new Path(path);
-		// expected path /git/branch/file/{path}
+		// expected path /gitapi/branch/file/{path}
 		if (p.segment(0).equals("file")) { //$NON-NLS-1$
 
 			JSONObject toCreate = OrionServlet.readJSONRequest(request);
@@ -115,7 +115,7 @@ public class GitBranchHandlerV1 extends ServletResourceHandler<String> {
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Branch name must be provided", null));
 				else {
 					String shortName = Repository.shortenRefName(startPoint);
-					branchName = shortName.substring(shortName.lastIndexOf("/") + 1);
+					branchName = shortName.substring(shortName.lastIndexOf("/") + 1); //$NON-NLS-1$
 				}
 			}
 
