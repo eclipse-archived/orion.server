@@ -12,19 +12,36 @@ package org.eclipse.orion.internal.server.user.securestorage;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.crypto.spec.PBEKeySpec;
-import org.eclipse.core.runtime.*;
-import org.eclipse.equinox.security.storage.*;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.equinox.security.storage.ISecurePreferences;
+import org.eclipse.equinox.security.storage.SecurePreferencesFactory;
+import org.eclipse.equinox.security.storage.StorageException;
 import org.eclipse.equinox.security.storage.provider.IProviderHints;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
-import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.resources.Base64Counter;
-import org.eclipse.orion.server.useradmin.*;
+import org.eclipse.orion.server.useradmin.EmptyAuthorization;
+import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
+import org.eclipse.orion.server.useradmin.Role;
+import org.eclipse.orion.server.useradmin.User;
+import org.eclipse.orion.server.useradmin.WebIdeAuthorization;
 import org.eclipse.orion.server.useradmin.servlets.UserServlet;
 import org.eclipse.osgi.service.datalocation.Location;
-import org.osgi.framework.*;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.InvalidSyntaxException;
+import org.osgi.framework.ServiceReference;
 import org.osgi.service.useradmin.Authorization;
 
 /**
@@ -44,12 +61,11 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 
 	static final String ADMIN_LOGIN_VALUE = "admin"; //$NON-NLS-1$
 	static final String ADMIN_NAME_VALUE = "Administrator"; //$NON-NLS-1$
-	
+
 	static final String ANONYMOUS_LOGIN_VALUE = "anonymous"; //$NON-NLS-1$
 	static final String ANONYMOUS_NAME_VALUE = "Anonymous"; //$NON-NLS-1$
-	
-	private static final Base64Counter userCounter = new Base64Counter();
 
+	private static final Base64Counter userCounter = new Base64Counter();
 
 	private ISecurePreferences storage;
 	private Map<String, Role> roles = new HashMap<String, Role>();
@@ -58,15 +74,14 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 		initSecurePreferences();
 		initStorage();
 	}
-	
-	
+
 	private String nextUserId() {
 		synchronized (userCounter) {
 			String candidate;
 			do {
 				candidate = userCounter.toString();
 				userCounter.increment();
-			} while (findNode(storage, candidate)!=null);
+			} while (findNode(storage, candidate) != null);
 			return candidate;
 		}
 	}
@@ -146,8 +161,8 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 		throw new UnsupportedOperationException();
 	}
 
-	public boolean removeRole(String name) {
-		return false;
+	public IStatus removeRole(String name) {
+		return new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, "Removing roles not supported");
 	}
 
 	public Role getRole(String name) {
@@ -191,13 +206,13 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 			} catch (StorageException e) {
 				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Can not get user: " + value, e)); //$NON-NLS-1$
 			}
-		} else if (key.equals(USER_UID)){
+		} else if (key.equals(USER_UID)) {
 			ISecurePreferences node = findNode(storage, value);
 			return formUser(node);
 		}
 		return null;
 	}
-	
+
 	public User formUser(ISecurePreferences node) {
 		if (node == null)
 			return null;
@@ -216,13 +231,13 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 	public User createUser(User user) {
 
 		try {
-			
+
 			ISecurePreferences node = findNodeByLoginIgnoreCase(storage, user.getLogin());
 			if (node != null)
 				return null;
-			
+
 			String uid = nextUserId();
-			
+
 			return internalCreateOrUpdateUser(storage.node(USERS + '/' + uid), user);
 
 		} catch (Exception e) {
@@ -237,24 +252,24 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 		ISecurePreferences usersPref = storage.node(USERS);
 		String[] childrenNames = usersPref.childrenNames();
 		for (int i = 0; i < childrenNames.length; i++) {
-			if(usersPref.node(childrenNames[i]).get(USER_LOGIN, null) == null){
+			if (usersPref.node(childrenNames[i]).get(USER_LOGIN, null) == null) {
 				//migrate
 				usersPref.node(childrenNames[i]).put(USER_LOGIN, usersPref.node(childrenNames[i]).name(), false);
-				
+
 				if (login.equalsIgnoreCase(usersPref.node(childrenNames[i]).name()))
 					return usersPref.node(childrenNames[i]);
-				
+
 			} else {
-				if(login.equalsIgnoreCase(usersPref.node(childrenNames[i]).get(USER_LOGIN, null))){
+				if (login.equalsIgnoreCase(usersPref.node(childrenNames[i]).get(USER_LOGIN, null))) {
 					return usersPref.node(childrenNames[i]);
 				}
-				
+
 			}
-			
+
 		}
 		return null;
 	}
-	
+
 	private ISecurePreferences findNode(ISecurePreferences storage, String uid) {
 		if (uid == null)
 			return null;
@@ -267,25 +282,27 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 		return null;
 	}
 
-	public boolean updateUser(String uid, User user) {
+	public IStatus updateUser(String uid, User user) {
 
 		ISecurePreferences node = findNode(storage, uid);
 		if (node == null)
-			return false;
+			return new ServerStatus(IStatus.ERROR, 404, "User not found: " + uid, null);
 
 		try {
 			ISecurePreferences nodeByLogin = findNodeByLoginIgnoreCase(storage, user.getLogin());
-			if(nodeByLogin!=null && !node.name().equals(nodeByLogin.name())){
-				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, "User already exists " + user.getLogin())); //$NON-NLS-1$
-				return false;
+			if (nodeByLogin != null && !node.name().equals(nodeByLogin.name())) {
+				IStatus status = new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, "User already exists " + user.getLogin());
+				LogHelper.log(status); //$NON-NLS-1$
+				return status;
 			}
-			
+
 			internalCreateOrUpdateUser(node, user);
-			return true;
+			return new Status(IStatus.OK, Activator.PI_USER_SECURESTORAGE, "User updated " + user.getLogin());
 		} catch (Exception e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Can not update user: " + user.getLogin(), e)); //$NON-NLS-1$
+			IStatus status = new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Can not update user: " + user.getLogin(), e);
+			LogHelper.log(status); //$NON-NLS-1$
+			return status;
 		}
-		return false;
 	}
 
 	private User internalCreateOrUpdateUser(ISecurePreferences userPrefs, User user) throws StorageException, IOException {

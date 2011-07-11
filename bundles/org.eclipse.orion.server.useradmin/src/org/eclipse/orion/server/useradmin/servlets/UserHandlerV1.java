@@ -139,7 +139,10 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		}
 		
 		user.setPassword(password);		
-		userAdmin.updateUser(user.getUid(), user);
+		IStatus status = userAdmin.updateUser(user.getUid(), user);
+		if(!status.isOK()){
+			return statusHandler.handleRequest(req, resp, status);
+		}
 		
 		return true;
 	}
@@ -205,7 +208,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		//users other than admin have to know the old password to set a new one
 		if (!isAdmin(req.getRemoteUser())) {
 			if (data.has(UserConstants.KEY_PASSWORD) && (!data.has(UserConstants.KEY_OLD_PASSWORD) || !user.getPassword().equals(data.getString(UserConstants.KEY_OLD_PASSWORD)))) {
-				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_UNAUTHORIZED, "Invalid old password", null));
+				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Invalid old password", null));
 			}
 		}
 
@@ -215,7 +218,10 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 			user.setName(data.getString(ProtocolConstants.KEY_NAME));
 		if (data.has(UserConstants.KEY_PASSWORD))
 			user.setPassword(data.getString(UserConstants.KEY_PASSWORD));
-		userAdmin.updateUser(userId, user);
+		IStatus status = userAdmin.updateUser(userId, user);
+		if(!status.isOK()){
+			return statusHandler.handleRequest(req, resp, status);
+		}
 
 		IOrionUserProfileNode userNode = getUserProfileService().getUserProfileNode(userId, true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
 

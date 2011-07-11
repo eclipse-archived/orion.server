@@ -15,6 +15,7 @@ Require-Bundle: org.eclipse.orion.server.useradmin;bundle-version="0.1.0",
  org.eclipse.equinox.security;bundle-version="1.1.0",
  org.eclipse.orion.server.servlets;bundle-version="0.1.0",
  org.eclipse.equinox.common;bundle-version="3.6.0",
- org.eclipse.osgi;bundle-version="3.7.0"
+ org.eclipse.osgi;bundle-version="3.7.0",
+ org.json;bundle-version="1.0.0"
 Export-Package: org.eclipse.orion.internal.server.user.securestorage;x-internal:=true
 Service-Component: OSGI-INF/credentials.xml, OSGI-INF/profile.xml

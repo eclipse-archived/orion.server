@@ -12,6 +12,7 @@ package org.eclipse.orion.server.useradmin;
 
 import java.util.Collection;
 
+import org.eclipse.core.runtime.IStatus;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.service.useradmin.Authorization;
 import org.osgi.service.useradmin.UserAdminEvent;
@@ -26,7 +27,7 @@ public interface IOrionCredentialsService {
 	 *            cannot be null
 	 * @return
 	 */
-	public boolean updateUser(String uid, User user);
+	public IStatus updateUser(String uid, User user);
 
 	public User createUser(User newUser);
 
@@ -76,15 +77,15 @@ public interface IOrionCredentialsService {
 	 * 
 	 * @param name The name of the {@code Role} object to remove.
 	 * 
-	 * @return {@code true} If a {@code Role} object with the given name
+	 * @return {@code OK} status if a {@code Role} object with the given name
 	 *         is present in this User Admin service and could be removed,
-	 *         otherwise {@code false}.
+	 *         otherwise error description.
 	 * 
 	 * @throws SecurityException If a security manager exists and the caller
 	 *         does not have the {@code UserAdminPermission} with name
 	 *         {@code admin}.
 	 */
-	public boolean removeRole(String name);
+	public IStatus removeRole(String name);
 
 	/**
 	 * Gets the {@code Role} object with the given {@code name} from this
