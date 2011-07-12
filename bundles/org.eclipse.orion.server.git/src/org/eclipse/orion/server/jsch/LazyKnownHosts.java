@@ -30,7 +30,7 @@ public class LazyKnownHosts implements HostKeyRepository {
 	LazyKnownHosts(JSch jsch, String knownHosts) throws JSchException {
 		if (knownHosts != null) {
 			try {
-				final InputStream in = new StringBufferInputStream(knownHosts);
+				final InputStream in = new ByteArrayInputStream(knownHosts.getBytes("UTF-8")); //$NON-NLS-1$
 				try {
 					jsch.setKnownHosts(in);
 				} finally {
@@ -75,7 +75,7 @@ public class LazyKnownHosts implements HostKeyRepository {
 
 	@Override
 	public String getKnownHostsRepositoryID() {
-		return "LAZY_" + repo.getKnownHostsRepositoryID();
+		return "LAZY_" + repo.getKnownHostsRepositoryID(); //$NON-NLS-1$
 	}
 
 	@Override
@@ -88,7 +88,7 @@ public class LazyKnownHosts implements HostKeyRepository {
 		return repo.getHostKey();
 	}
 
-	public String getLastUnknownkedHost() {
+	public String getLastUnknownHost() {
 		return lastUnknownHost;
 	}
 

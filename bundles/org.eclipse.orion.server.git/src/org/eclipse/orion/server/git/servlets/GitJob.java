@@ -12,7 +12,6 @@ package org.eclipse.orion.server.git.servlets;
 
 import com.jcraft.jsch.JSchException;
 import java.text.MessageFormat;
-import java.util.Locale;
 import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.IStatus;
@@ -85,13 +84,15 @@ public abstract class GitJob extends Job {
 
 	public IStatus getJGitInternalExceptionStatus(JGitInternalException e, String message) {
 		JSchException jschEx = getJSchException(e);
-		if (jschEx != null && jschEx instanceof HostFingerprintException) {
-			HostFingerprintException cause = (HostFingerprintException) jschEx;
-			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, cause.getMessage(), addRepositoryInfo(cause.formJson()), cause);
-		}
-		//JSch handles auth fail by exception message
-		if (jschEx != null && jschEx.getMessage() != null && jschEx.getMessage().toLowerCase(Locale.ENGLISH).contains("auth fail")) { //$NON-NLS-1$
-			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_UNAUTHORIZED, jschEx.getMessage(), addRepositoryInfo(new JSONObject()), jschEx);
+		if (jschEx != null) {
+			if (jschEx instanceof HostFingerprintException) {
+				HostFingerprintException cause = (HostFingerprintException) jschEx;
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, cause.getMessage(), addRepositoryInfo(cause.formJson()), cause);
+			}
+			//JSch handles auth fail by exception message
+			if ("Auth fail".equals(jschEx.getMessage())) { //$NON-NLS-1$
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_UNAUTHORIZED, jschEx.getMessage(), addRepositoryInfo(new JSONObject()), jschEx);
+			}
 		}
 
 		//Log connection problems directly

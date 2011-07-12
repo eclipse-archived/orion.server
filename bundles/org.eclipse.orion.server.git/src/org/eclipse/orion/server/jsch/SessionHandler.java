@@ -84,7 +84,7 @@ public class SessionHandler {
 			if (jSch.getHostKeyRepository() instanceof LazyKnownHosts) {
 				LazyKnownHosts hostsRepo = (LazyKnownHosts) jSch.getHostKeyRepository();
 				if (hostsRepo.getLastStatus() != HostKeyRepository.OK) {
-					throw new HostFingerprintException(hostsRepo.getLastUnknownkedHost(), hostsRepo.getLastUnknownKey());
+					throw new HostFingerprintException(hostsRepo.getLastUnknownHost(), hostsRepo.getLastUnknownKey());
 				}
 			}
 			throw e;
