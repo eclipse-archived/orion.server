@@ -362,6 +362,11 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			return merge(request, response, db, commitToMerge);
 		}
 
+		String commitToCherryPick = requestObject.optString(GitConstants.KEY_CHERRY_PICK, null);
+		if (commitToCherryPick != null) {
+			return cherryPick(request, response, db, commitToCherryPick);
+		}
+
 		// continue with creating new commit location
 
 		String newCommitToCreatelocation = requestObject.optString(GitConstants.KEY_COMMIT_NEW, null);
@@ -421,6 +426,24 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when merging.", e));
 		} catch (JGitInternalException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when merging.", e.getCause()));
+		}
+	}
+
+	private boolean cherryPick(HttpServletRequest request, HttpServletResponse response, Repository db, String commitToCherryPick) throws ServletException, JSONException {
+		try {
+			ObjectId objectId = db.resolve(commitToCherryPick);
+			Git git = new Git(db);
+			CherryPickResult cherryPickResult = git.cherryPick().include(objectId).call();
+			JSONObject result = new JSONObject();
+			result.put(GitConstants.KEY_RESULT, cherryPickResult.getStatus().name());
+			OrionServlet.writeJSONResponse(request, response, result);
+			return true;
+		} catch (IOException e) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when cherry-picking.", e));
+		} catch (GitAPIException e) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when cherry-picking.", e));
+		} catch (JGitInternalException e) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when cherry-picking.", e.getCause()));
 		}
 	}
 

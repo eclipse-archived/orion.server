@@ -441,9 +441,9 @@ public abstract class GitTest extends FileSystemTest {
 		return remoteBranch;
 	}
 
-	protected JSONObject merge(String gitCommitUri, String commit) throws JSONException, IOException, SAXException {
-		assertCommitUri(gitCommitUri);
-		WebRequest request = getPostGitMergeRequest(gitCommitUri, commit);
+	protected JSONObject merge(String gitHeadUri, String commit) throws JSONException, IOException, SAXException {
+		assertCommitUri(gitHeadUri);
+		WebRequest request = getPostGitMergeRequest(gitHeadUri, commit);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		return new JSONObject(response.getText());
@@ -733,7 +733,7 @@ public abstract class GitTest extends FileSystemTest {
 		assertEquals("file", path.segment(2));
 	}
 
-	private static void assertCommitUri(String commitUri) {
+	protected static void assertCommitUri(String commitUri) {
 		URI uri = URI.create(commitUri);
 		IPath path = new Path(uri.getPath());
 		// /git/commit/{ref}/file/{path}

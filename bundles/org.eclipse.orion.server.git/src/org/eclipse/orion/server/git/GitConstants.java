@@ -153,6 +153,8 @@ public class GitConstants {
 
 	public static final String KEY_MERGE = "Merge"; //$NON-NLS-1$
 
+	public static final String KEY_CHERRY_PICK = "Cherry-Pick"; //$NON-NLS-1$
+
 	public static final String KEY_PUSH_SRC_REF = "PushSrcRef"; //$NON-NLS-1$
 
 	public static final String KEY_PUSH_TAGS = "PushTags"; //$NON-NLS-1$
