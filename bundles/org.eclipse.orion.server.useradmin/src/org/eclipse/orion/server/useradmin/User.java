@@ -10,18 +10,29 @@
  *******************************************************************************/
 package org.eclipse.orion.server.useradmin;
 
-import java.util.*;
+import java.util.Dictionary;
+import java.util.HashSet;
+import java.util.Properties;
+import java.util.Set;
 
-import org.eclipse.orion.server.core.resources.Base64Counter;
 import org.eclipse.orion.server.useradmin.servlets.UserServlet;
 import org.osgi.service.useradmin.Role;
 
 public class User implements org.osgi.service.useradmin.User {
 
+	private static final String PASSWORD = "password";
+
+	private static final String NAME = "name";
+
+	public static final String LOGIN = "login";
+
+	public static final String UID = "uid";
+
 	private Set<Role> roles = new HashSet<Role>();
 
 	private Properties userCredentials = new Properties();
-	
+
+	private Properties properties = new Properties();
 
 	public Set<Role> getRoles() {
 		return roles;
@@ -39,44 +50,53 @@ public class User implements org.osgi.service.useradmin.User {
 	}
 
 	public User(String uid, String login, String name, String password) {
-		userCredentials.setProperty("uid", uid);
+
+		userCredentials.setProperty(UID, uid);
 		setLogin(login);
-		setName(name);
-		setPassword(password);
+		if (name != null)
+			setName(name);
+		if (password != null)
+			setPassword(password);
 	}
-	
+
 	public User(String login, String name, String password) {
 		setLogin(login);
-		setName(name);
-		setPassword(password);
+		if (name != null)
+			setName(name);
+		if (password != null)
+			setPassword(password);
 	}
-	
-	public String getUid(){
-		return userCredentials.getProperty("uid");
+
+	public User(String login) {
+		setLogin(login);
+	}
+
+	public String getUid() {
+		return userCredentials.getProperty(UID);
 	}
 
 	public String getLogin() {
-		return userCredentials.getProperty("login");
+		return userCredentials.getProperty(LOGIN);
 	}
 
 	public void setLogin(String login) {
-		userCredentials.setProperty("login", login);
+		userCredentials.setProperty(LOGIN, login);
 	}
 
 	public String getName() {
-		return userCredentials.getProperty("name");
+		return userCredentials.getProperty(NAME);
 	}
 
 	public void setName(String name) {
-		userCredentials.setProperty("name", name);
+		userCredentials.setProperty(NAME, name);
 	}
 
 	public String getPassword() {
-		return userCredentials.getProperty("password");
+		return userCredentials.getProperty(PASSWORD);
 	}
 
 	public void setPassword(String password) {
-		userCredentials.setProperty("password", password);
+		userCredentials.setProperty(PASSWORD, password);
 	}
 
 	public int getType() {
@@ -84,11 +104,23 @@ public class User implements org.osgi.service.useradmin.User {
 	}
 
 	public Dictionary getProperties() {
-		return new Properties();
+		return properties;
 	}
 
 	public Dictionary getCredentials() {
 		return userCredentials;
+	}
+
+	public void addProperty(String key, String value) {
+		properties.put(key, value);
+	}
+
+	public Object getProperty(String key) {
+		return properties.get(key);
+	}
+
+	public void removeProperty(String key) {
+		properties.remove(key);
 	}
 
 	public boolean hasCredential(String key, Object value) {

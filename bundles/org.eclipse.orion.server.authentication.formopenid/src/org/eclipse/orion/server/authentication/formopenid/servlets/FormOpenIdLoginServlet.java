@@ -18,7 +18,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.server.authentication.form.core.FormAuthHelper;
 import org.eclipse.orion.server.authentication.formopenid.FormOpenIdAuthenticationService;
 import org.eclipse.orion.server.core.LogHelper;
@@ -26,8 +25,6 @@ import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.openid.core.OpenIdHelper;
 import org.eclipse.orion.server.openid.core.OpenidConsumer;
 import org.eclipse.orion.server.servlets.OrionServlet;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
 import org.eclipse.orion.server.useradmin.UnsupportedUserStoreException;
 import org.json.JSONException;
 import org.json.JSONObject;

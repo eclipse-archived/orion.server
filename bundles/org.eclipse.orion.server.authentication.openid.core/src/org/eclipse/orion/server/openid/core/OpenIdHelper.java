@@ -10,11 +10,12 @@
  *******************************************************************************/
 package org.eclipse.orion.server.openid.core;
 
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.resources.Base64;
-
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -23,9 +24,20 @@ import javax.servlet.http.HttpSession;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.core.resources.Base64;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
+import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
+import org.eclipse.orion.server.useradmin.User;
+import org.eclipse.orion.server.useradmin.UserAdminActivator;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.openid4java.consumer.ConsumerException;
+import org.openid4java.discovery.Identifier;
 
 /**
  * Groups methods to handle session attributes for OpenID authentication.
@@ -38,6 +50,17 @@ public class OpenIdHelper {
 	public static final String REDIRECT = "redirect"; //$NON-NLS-1$
 	static final String OPENID_IDENTIFIER = "openid_identifier"; //$NON-NLS-1$
 	static final String OPENID_DISC = "openid-disc"; //$NON-NLS-1$
+	private static Map<String, IOrionCredentialsService> userStores = new HashMap<String, IOrionCredentialsService>();
+	private static IOrionCredentialsService defaultUserAdmin;
+
+	private static IOrionUserProfileService userProfileService;
+
+	private static boolean allowAnonymousAccountCreation;
+
+	static {
+		//if there is no list of users authorised to create accounts, it means everyone can create accounts
+		allowAnonymousAccountCreation = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION, null) == null; //$NON-NLS-1$
+	}
 
 	/**
 	 * Checks session attributes to retrieve authenticated user identifier.
@@ -49,8 +72,8 @@ public class OpenIdHelper {
 	 */
 	public static String getAuthenticatedUser(HttpServletRequest req) throws IOException {
 		HttpSession s = req.getSession(true);
-		if (s.getAttribute(OPENID_IDENTIFIER) != null) {
-			return (String) s.getAttribute(OPENID_IDENTIFIER);
+		if (s.getAttribute("user") != null) { //$NON-NLS-1$
+			return (String) s.getAttribute("user"); //$NON-NLS-1$
 		}
 		return null;
 	}
@@ -82,7 +105,7 @@ public class OpenIdHelper {
 				sb.append(redirect);
 			}
 			consumer = new OpenidConsumer(sb.toString());
-			consumer.authRequest(req.getParameter(OPENID), req, resp); 
+			consumer.authRequest(req.getParameter(OPENID), req, resp);
 			// redirection takes place in the authRequest method
 		} catch (ConsumerException e) {
 			writeOpenIdError(e.getMessage(), req, resp);
@@ -133,6 +156,10 @@ public class OpenIdHelper {
 		out.println("</html>"); //$NON-NLS-1$
 	}
 
+	private static boolean canAddUsers() {
+		return allowAnonymousAccountCreation ? defaultUserAdmin.canCreateUsers() : false;
+	}
+
 	/**
 	 * Parses the response from OpenId provider. If <code>redirect</code>
 	 * parameter is not set closes the current window.
@@ -148,7 +175,36 @@ public class OpenIdHelper {
 		String redirect = req.getParameter(REDIRECT);
 		String op_return = req.getParameter(OP_RETURN);
 		if (Boolean.parseBoolean(op_return) && consumer != null) {
-			consumer.verifyResponse(req);
+			Identifier id = consumer.verifyResponse(req);
+			if (id == null || id.getIdentifier() == null || id.getIdentifier().equals("")) {
+				writeOpenIdError("Authentication response is not sufficient", req, resp);
+				return;
+			}
+			Set<User> users = defaultUserAdmin.getUsersByProperty("openid", ".*\\Q" + id.getIdentifier() + "\\E.*", true);
+			User user;
+			if (users.size() > 0) {
+				user = users.iterator().next();
+			} else if (canAddUsers()) {
+				User newUser = new User(id.getIdentifier());
+				newUser.addProperty("openid", id.getIdentifier());
+				user = defaultUserAdmin.createUser(newUser);
+			} else {
+				writeOpenIdError("Your authentication was successful but you are not authorized to access Orion", req, resp);
+				return;
+			}
+
+			req.getSession().setAttribute("user", user.getUid()); //$NON-NLS-1$
+
+			IOrionUserProfileNode userProfileNode = getUserProfileService().getUserProfileNode(user.getUid(), IOrionUserProfileConstants.GENERAL_PROFILE_PART);
+			try {
+				// try to store the login timestamp in the user profile
+				userProfileNode.put(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, new Long(System.currentTimeMillis()).toString(), false);
+				userProfileNode.flush();
+			} catch (CoreException e) {
+				// just log that the login timestamp was not stored
+				LogHelper.log(e);
+			}
+
 			if (redirect != null) {
 				resp.sendRedirect(redirect);
 				return;
@@ -190,8 +246,8 @@ public class OpenIdHelper {
 	 */
 	public static void performLogout(HttpServletRequest req) {
 		HttpSession s = req.getSession(true);
-		if (s.getAttribute(OPENID_IDENTIFIER) != null) {
-			s.removeAttribute(OPENID_IDENTIFIER);
+		if (s.getAttribute("user") != null) { //$NON-NLS-1$
+			s.removeAttribute("user"); //$NON-NLS-1$
 		}
 	}
 
@@ -215,5 +271,43 @@ public class OpenIdHelper {
 
 	public static String getAuthType() {
 		return "OpenId"; //$NON-NLS-1$
+	}
+
+	public static IOrionCredentialsService getDefaultUserAdmin() {
+		return defaultUserAdmin;
+	}
+
+	public void setUserAdmin(IOrionCredentialsService userAdmin) {
+		if (userAdmin instanceof IOrionCredentialsService) {
+			IOrionCredentialsService eclipseWebUserAdmin = (IOrionCredentialsService) userAdmin;
+			userStores.put(eclipseWebUserAdmin.getStoreName(), eclipseWebUserAdmin);
+			if (defaultUserAdmin == null || UserAdminActivator.eclipseWebUsrAdminName.equals(eclipseWebUserAdmin.getStoreName())) {
+				defaultUserAdmin = eclipseWebUserAdmin;
+			}
+		}
+	}
+
+	public void unsetUserAdmin(IOrionCredentialsService userAdmin) {
+		if (userAdmin instanceof IOrionCredentialsService) {
+			IOrionCredentialsService eclipseWebUserAdmin = (IOrionCredentialsService) userAdmin;
+			userStores.remove(eclipseWebUserAdmin.getStoreName());
+			if (userAdmin.equals(defaultUserAdmin)) {
+				Iterator<IOrionCredentialsService> iterator = userStores.values().iterator();
+				if (iterator.hasNext())
+					defaultUserAdmin = iterator.next();
+			}
+		}
+	}
+
+	public static IOrionUserProfileService getUserProfileService() {
+		return userProfileService;
+	}
+
+	public static void bindUserProfileService(IOrionUserProfileService _userProfileService) {
+		userProfileService = _userProfileService;
+	}
+
+	public static void unbindUserProfileService(IOrionUserProfileService userProfileService) {
+		userProfileService = null;
 	}
 }

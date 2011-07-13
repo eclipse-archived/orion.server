@@ -18,11 +18,14 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
+import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.User;
 import org.eclipse.orion.server.useradmin.UserConstants;
+import org.eclipse.orion.server.useradmin.UserServiceHelper;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -330,6 +333,53 @@ public class BasicUsersTest extends UsersTest {
 
 		responseObject = new JSONObject(response.getText());
 		assertEquals("New login wasn't returned in user details", login2, responseObject.get("login"));
+
+	}
+
+	@Test
+	public void testUserProperties() {
+		String sampleUser1 = "login_1" + System.currentTimeMillis();
+		String sampleUser2 = "login_2" + System.currentTimeMillis();
+		String login = "login" + System.currentTimeMillis();
+		String password = "password" + System.currentTimeMillis();
+		User user = createUser(login, password);
+		createUser(sampleUser1, "password");
+		createUser(sampleUser2, "password");
+
+		IOrionCredentialsService userAdmin = UserServiceHelper.getDefault().getUserStore();
+
+		String propertyName = "property" + System.currentTimeMillis();
+		String propertyValue = "value" + System.currentTimeMillis();
+
+		user.addProperty(propertyName, propertyValue);
+
+		userAdmin.updateUser(user.getUid(), user);
+
+		User updatedUser = userAdmin.getUser("uid", user.getUid());
+
+		assertEquals("The property was not set", propertyValue, updatedUser.getProperty(propertyName));
+
+		Set<User> foundUsers = userAdmin.getUsersByProperty(propertyName, propertyValue, false);
+
+		assertEquals("Invalid number of users found", 1, foundUsers.size());
+
+		User foundUser = foundUsers.iterator().next();
+
+		assertEquals("Invalid user found", user.getUid(), foundUser.getUid());
+
+		assertEquals("Found user doesn't have the property expected", propertyValue, foundUser.getProperty(propertyName));
+
+		String valuePattern = ".*" + propertyValue.substring(3, propertyValue.length() - 1) + ".";
+
+		foundUsers = userAdmin.getUsersByProperty(propertyName, valuePattern, true);
+
+		assertEquals("Invalid number of users found", 1, foundUsers.size());
+
+		foundUser = foundUsers.iterator().next();
+
+		assertEquals("Invalid user found", user.getUid(), foundUser.getUid());
+
+		assertEquals("Found user doesn't have the property expected", propertyValue, foundUser.getProperty(propertyName));
 
 	}
 }

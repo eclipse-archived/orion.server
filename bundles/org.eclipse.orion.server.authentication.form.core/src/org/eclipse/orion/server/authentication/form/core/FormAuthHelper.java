@@ -10,17 +10,11 @@
  *******************************************************************************/
 package org.eclipse.orion.server.authentication.form.core;
 
-import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
-
-import org.eclipse.orion.server.core.ServerConstants;
-
 import java.io.IOException;
 import java.util.*;
 import javax.servlet.http.*;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.user.profile.*;
 import org.eclipse.orion.server.useradmin.*;
 import org.json.JSONException;
@@ -191,9 +185,11 @@ public class FormAuthHelper {
 				obj.put(UserConstants.KEY_LOGIN, user.getLogin());
 				obj.put("Location", user.getLocation());
 				obj.put("Name", user.getName());
-				Long lastLogin = Long.parseLong(generalUserProfile.get(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, ""));
-				
-				obj.put(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, lastLogin);
+				if(generalUserProfile.get(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, null)!=null){
+					Long lastLogin = Long.parseLong(generalUserProfile.get(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, ""));
+					
+					obj.put(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, lastLogin);
+				}
 			} catch (IllegalArgumentException e) {
 				LogHelper.log(e);
 			} catch (CoreException e) {

@@ -14,8 +14,12 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 import javax.crypto.spec.PBEKeySpec;
 
@@ -58,6 +62,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 	static final String USER_PASSWORD = "password"; //$NON-NLS-1$
 	static final String USER_ROLES = "roles"; //$NON-NLS-1$
 	static final String USER_ROLE_NAME = "name"; //$NON-NLS-1$
+	static final String USER_PROPERTIES = "properties"; //$NON-NLS-1$
 
 	static final String ADMIN_LOGIN_VALUE = "admin"; //$NON-NLS-1$
 	static final String ADMIN_NAME_VALUE = "Administrator"; //$NON-NLS-1$
@@ -184,7 +189,12 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 				users = new ArrayList<User>();
 			ISecurePreferences userPrefs = usersPrefs.node(childName);
 			try {
-				User user = new User(childName, userPrefs.get(USER_LOGIN, childName), userPrefs.get(USER_NAME, ""), "" /* don't expose the password */); //$NON-NLS-1$ //$NON-NLS-2$
+				User user = new User(childName, userPrefs.get(USER_LOGIN, childName), userPrefs.get(USER_NAME, ""), userPrefs.get(USER_PASSWORD, null) == null ? null : "" /* don't expose the password */); //$NON-NLS-1$ //$NON-NLS-2$
+
+				for (String property : userPrefs.node(USER_PROPERTIES).keys()) {
+					user.addProperty(property, userPrefs.node(USER_PROPERTIES).get(property, null));
+				}
+
 				for (String roleName : userPrefs.node(USER_ROLES).childrenNames()) {
 					user.addRole(getRole(roleName));
 				}
@@ -213,14 +223,47 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 		return null;
 	}
 
+	public Set<User> getUsersByProperty(String key, String value, boolean regExp) {
+		Set<User> ret = new HashSet<User>();
+		ISecurePreferences usersPref = storage.node(USERS);
+		for (String uid : usersPref.childrenNames()) {
+			ISecurePreferences userNode = usersPref.node(uid);
+			ISecurePreferences propsNode = userNode.node(USER_PROPERTIES);
+			if (propsNode == null) {
+				continue;
+			}
+			try {
+				String propertyValue = propsNode.get(key, null);
+				if (propertyValue == null) {
+					continue;
+				}
+
+				if (regExp ? Pattern.matches(value, propertyValue) : propertyValue.equals(value)) {
+					ret.add(formUser(userNode));
+				}
+
+			} catch (StorageException e) {
+				continue;
+			}
+
+		}
+		return ret;
+	}
+
 	public User formUser(ISecurePreferences node) {
 		if (node == null)
 			return null;
 		try {
-			User user = new User(node.name(), node.get(USER_LOGIN, node.name()), node.get(USER_NAME, ""), node.get(USER_PASSWORD, "")); //$NON-NLS-1$ //$NON-NLS-2$
+
+			User user = new User(node.name(), node.get(USER_LOGIN, node.name()), node.get(USER_NAME, ""), node.get(USER_PASSWORD, null)); //$NON-NLS-1$ //$NON-NLS-2$
 			for (String roleName : node.node(USER_ROLES).childrenNames()) {
 				user.addRole(getRole(roleName));
 			}
+
+			for (String property : node.node(USER_PROPERTIES).keys()) {
+				user.addProperty(property, node.node(USER_PROPERTIES).get(property, null));
+			}
+
 			return user;
 		} catch (StorageException e) {
 			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Can not get user " + node.name(), e)); //$NON-NLS-1$
@@ -314,15 +357,22 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 			rolesPrefs.node(roleName).removeNode();
 		for (org.osgi.service.useradmin.Role role : user.getRoles())
 			rolesPrefs.node(((Role) role).getName());
+		userPrefs.node(USER_PROPERTIES).clear();
+		Enumeration<?> keys = user.getProperties().keys();
+		while (keys.hasMoreElements()) {
+			String property = (String) keys.nextElement();
+			userPrefs.node(USER_PROPERTIES).put(property, (String) user.getProperty(property), false);
+		}
+
 		userPrefs.flush();
-		return new User(userPrefs.name(), userPrefs.get(USER_LOGIN, userPrefs.name()), userPrefs.get(USER_NAME, ""), userPrefs.get(USER_PASSWORD, null));
+		return formUser(userPrefs);
 	}
 
 	public boolean deleteUser(User user) {
 		ISecurePreferences node = findNode(storage, user.getUid());
 		if (node == null)
 			return false;
-
+		node.clear();
 		node.removeNode();
 		try {
 			node.flush();
