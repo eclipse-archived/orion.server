@@ -47,7 +47,7 @@ plugin@org.eclipse.orion.server.sshconfig.home=GIT,tag=v20110207-1740,repo=dev.e
 
 #git
 #plugin@org.eclipse.jgit=p2IU,id=org.eclipse.jgit,repository=http://download.eclipse.org/egit/updates-nightly
-plugin@org.eclipse.jgit=p2IU,id=org.eclipse.jgit,repository=http://download.eclipse.org/e4/updates/orion/0.2-I-builds/I20110708-0200
+plugin@org.eclipse.jgit=GET,http://download.eclipse.org/e4/orion/jgit/org.eclipse.jgit_1.1.0.201106251700.jar
 
 #features
 feature@org.eclipse.orion.base.feature=GIT,tag=v20110516-1746,repo=dev.eclipse.org:/gitroot/e4/org.eclipse.orion.server.git,path=features/org.eclipse.orion.base-feature
