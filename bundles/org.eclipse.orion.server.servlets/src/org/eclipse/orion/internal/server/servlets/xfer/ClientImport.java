@@ -86,8 +86,9 @@ class ClientImport {
 	 * We have just received the final chunk of data for a file upload.
 	 * Complete the transfer by moving the uploaded content into the
 	 * workspace.
+	 * @throws IOException 
 	 */
-	private void completeTransfer(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
+	private void completeTransfer(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		List<String> options = getOptions();
 		boolean success;
 		if (!options.contains("raw")) { //$NON-NLS-1$
@@ -98,6 +99,7 @@ class ClientImport {
 		if (success) {
 			resp.setHeader(ProtocolConstants.HEADER_LOCATION, "/file" + getPath()); //$NON-NLS-1$
 			resp.setStatus(HttpServletResponse.SC_CREATED);
+			resp.getOutputStream().write(new String("<head></head><body><textarea>{}</textarea></body>").getBytes());
 		}
 	}
 
