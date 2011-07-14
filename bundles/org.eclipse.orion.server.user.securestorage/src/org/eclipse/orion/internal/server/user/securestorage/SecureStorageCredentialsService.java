@@ -349,9 +349,12 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 	}
 
 	private User internalCreateOrUpdateUser(ISecurePreferences userPrefs, User user) throws StorageException, IOException {
-		userPrefs.put(USER_LOGIN, user.getLogin(), false);
-		userPrefs.put(USER_NAME, user.getName(), false);
-		userPrefs.put(USER_PASSWORD, user.getPassword(), true);
+		if(user.getLogin()!=null)
+			userPrefs.put(USER_LOGIN, user.getLogin(), false);
+		if(user.getName()!=null)
+			userPrefs.put(USER_NAME, user.getName(), false);
+		if(user.getPassword()!=null)
+			userPrefs.put(USER_PASSWORD, user.getPassword(), true);
 		ISecurePreferences rolesPrefs = userPrefs.node(USER_ROLES);
 		for (String roleName : rolesPrefs.childrenNames())
 			rolesPrefs.node(roleName).removeNode();

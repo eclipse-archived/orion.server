@@ -185,7 +185,8 @@ public class OpenIdHelper {
 			if (users.size() > 0) {
 				user = users.iterator().next();
 			} else if (canAddUsers()) {
-				User newUser = new User(id.getIdentifier());
+				User newUser = new User();
+				newUser.setName(id.getIdentifier());
 				newUser.addProperty("openid", id.getIdentifier());
 				user = defaultUserAdmin.createUser(newUser);
 			} else {

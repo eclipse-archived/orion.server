@@ -119,7 +119,7 @@ function checkUser() {
 			var lastLogin = "N/A";
 			if (jsonData.lastlogintimestamp != null)
 				lastLogin = dojo.date.locale.format(new Date(jsonData.lastlogintimestamp), {formatLength: "short"});
-			eclipse.globalCommandUtils.generateUserInfo(jsonData.login, jsonData.Location, "logged in since " + lastLogin);
+			eclipse.globalCommandUtils.generateUserInfo((jsonData.Name && jsonData.Name.replace(/^\s+|\s+$/g,"")!=="") ? jsonData.Name : jsonData.login, jsonData.Location, "logged in since " + lastLogin);
 			return jsonData;
 		},
 		error : function(response, ioArgs) {
