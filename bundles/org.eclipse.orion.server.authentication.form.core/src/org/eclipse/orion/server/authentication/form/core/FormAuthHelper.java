@@ -178,9 +178,12 @@ public class FormAuthHelper {
 			obj.put("login", uid); //$NON-NLS-1$
 
 			try {
+				User user = defaultUserAdmin.getUser(UserConstants.KEY_UID, uid);
+				if(user==null){
+					return null;
+				}
 				// try to add the login timestamp to the user info
 				IOrionUserProfileNode generalUserProfile = FormAuthHelper.getUserProfileService().getUserProfileNode(uid, IOrionUserProfileConstants.GENERAL_PROFILE_PART);
-				User user = defaultUserAdmin.getUser(UserConstants.KEY_UID, uid);
 				obj.put(UserConstants.KEY_UID, uid);
 				obj.put(UserConstants.KEY_LOGIN, user.getLogin());
 				obj.put("Location", user.getLocation());
