@@ -77,7 +77,7 @@ done
 setProperties () {
 	buildDirectory=$writableBuildRoot/$buildType$timestamp
 	buildLabel=$buildType$date-$time
-	javaHome=/shared/common/jdk-1.6.x86_64
+	javaHome=/shared/common/sun-jdk1.6.0_21_x64
 	
 	pushd $supportDir
 	launcherJar=$supportDir/$( find org.eclipse.releng.basebuilder/ -name "org.eclipse.equinox.launcher_*.jar" | sort | head -1 )
