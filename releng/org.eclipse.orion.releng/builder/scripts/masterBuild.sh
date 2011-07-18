@@ -62,6 +62,9 @@ do
 		"-noTag")
 			noTag=true;;
 			
+		"-hudson")
+			hudson=true;;
+			
 		"-email")
 			resultsEmail="$2"; shift;;
 			
@@ -293,7 +296,12 @@ updateRelengProject
 updateBaseBuilder
 setProperties
 runBuild
-runTests
-publish
+
+#for now, no tests or publishing when running hudson
+if [ -z "$hudson" ]; then
+	runTests
+	publish
+fi
+
 sendMail
 
