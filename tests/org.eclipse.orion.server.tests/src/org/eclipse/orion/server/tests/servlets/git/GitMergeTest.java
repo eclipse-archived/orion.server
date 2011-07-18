@@ -13,9 +13,11 @@ package org.eclipse.orion.server.tests.servlets.git;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.util.List;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
@@ -453,4 +455,112 @@ public class GitMergeTest extends GitTest {
 		assertEquals("incoming change", response.getText());
 	}
 
+	@Test
+	public void testMergeRemovingFolders() throws Exception {
+		// see org.eclipse.jgit.api.MergeCommandTest.testMergeRemovingFolders()
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
+
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			JSONObject clone = clone(clonePath);
+			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+			// get project/folder metadata
+			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject folder = new JSONObject(response.getText());
+			String folderChildrenLocation = folder.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
+			String folderLocation = folder.getString(ProtocolConstants.KEY_LOCATION);
+			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
+			String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
+
+			String folderName = "folder1";
+			request = getPostFilesRequest(folderLocation + "/", getNewDirJSON(folderName).toString(), folderName);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+			String fileName = "file1.txt";
+			request = getPostFilesRequest(folderLocation + folderName + "/", getNewFileJSON(fileName).toString(), fileName);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+			fileName = "file2.txt";
+			request = getPostFilesRequest(folderLocation + folderName + "/", getNewFileJSON(fileName).toString(), fileName);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+			folderName = "folder2";
+			request = getPostFilesRequest(folderLocation + "/", getNewDirJSON(folderName).toString(), folderName);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+			fileName = "file1.txt";
+			request = getPostFilesRequest(folderLocation + folderName + "/", getNewFileJSON(fileName).toString(), fileName);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+			folderName = "folder2";
+			fileName = "file2.txt";
+			request = getPostFilesRequest(folderLocation + folderName + "/", getNewFileJSON(fileName).toString(), fileName);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+			request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "folders and files", false);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			request = getDeleteFilesRequest(folderLocation + "/folder1/");
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			request = getDeleteFilesRequest(folderLocation + "/folder2/");
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "removing folders", false);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			JSONArray commitsArray = log(gitHeadUri, false);
+			assertEquals(3, commitsArray.length());
+			JSONObject commit = commitsArray.getJSONObject(0);
+			assertEquals("removing folders", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
+			String toMerge = commit.getString(ProtocolConstants.KEY_NAME);
+			commit = commitsArray.getJSONObject(1);
+			assertEquals("folders and files", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
+			String toCheckout = commit.getString(ProtocolConstants.KEY_NAME);
+
+			Repository db1 = getRepositoryForContentLocation(cloneContentLocation);
+			Git git = new Git(db1);
+			git.checkout().setName(toCheckout).call();
+
+			JSONObject merge = merge(gitHeadUri, toMerge);
+			MergeStatus mergeResult = MergeStatus.valueOf(merge.getString(GitConstants.KEY_RESULT));
+			assertEquals(MergeStatus.FAST_FORWARD, mergeResult);
+
+			request = getGetFilesRequest(folderChildrenLocation);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));
+			assertNull(getChildByName(children, "folder1"));
+			assertNull(getChildByName(children, "folder2"));
+		}
+	}
 }
