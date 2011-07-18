@@ -24,7 +24,7 @@
 		</copy>
 		
 		<replace dir="${buildDirectory}/maps/" value="${eclipsePlatformRepo}" token="ECLIPSE_PLATFORM_REPO" />
-		<antcall target="replaceUser" />
+		<!--<antcall target="replaceUser" />-->
 	</target>
 	
 	<target name="replaceUser" if="gitUser" >
@@ -61,7 +61,9 @@ lastMapTag=${mapsTagTag}
 			<replacefilter token="HEAD" value="${buildLabel}" />
 			<replacefilter token="origin/master" value="${buildLabel}" />
 		</replace>
+		<!--
 		<replace dir="${buildDirectory}" includes="sourceReferences.properties" token="${gitUser}@" value="" />
+		-->
 		
 		<available property="jsdocHome" value="${base}/jsdoc-toolkit" file="${base}/jsdoc-toolkit" />
 		<available property="requirejsHome" value="${base}/requirejs" file="${base}/requirejs" />
