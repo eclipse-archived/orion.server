@@ -1,19 +1,17 @@
 <html><head>
-<link rel="stylesheet" href="../default_style.css">
+<link rel="stylesheet" href="default_style.css">
 <title>Eclipse Orion Downloads</title></head>
 <body>
 	<table border=0 cellspacing=5 cellpadding=2 width="100%" >
 		<tr><td align=left width="72%">
 			<font class=indextop>Eclipse Orion<br>downloads</font><br>
-			<font class=indexsub>latest downloads from the eclipse Orion project</font></td>
-			<td width="28%"><img src="http://www.eclipse.org/images/egg-incubation.png" alt="Incubation" ></td>
-			 
+			<font class=indexsub>latest downloads from the eclipse Orion project</font></td>		 
 		</tr>
 	</table>
 	<table border=0 cellspacing=5 cellpadding=2 width="100%" >  	
 		<!-- The Eclipse Projects --> 
 		<tr><td> 
-			<p>On this page you can find the latest e4 Web IDE builds.</p>
+			<p>On this page you can find the latest Orion builds.</p>
 			<?php
 				$lastLabel=file_get_contents('build.label');
 				if ($lastLabel != "") {

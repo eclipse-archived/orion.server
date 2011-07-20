@@ -2,7 +2,7 @@
 <head>
 <title>Eclipse Download Click Through</title>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-<link rel="stylesheet" href="../../../default_style.css" type="text/css">
+<link rel="stylesheet" href="../../default_style.css" type="text/css">
 <?php
 
 		$servername=$_SERVER['SERVER_NAME'];
@@ -32,7 +32,7 @@
         if (strstr($_SERVER['SERVER_NAME'],"eclipse.org")) {
 #       if (strstr($_SERVER['SERVER_NAME'],"ibm.com")) {
         	$mirror=false;
-        	$eclipselink="http://www.eclipse.org/downloads/download.php?file=/e4/orion/drops/$buildLabel/$dropFile";
+        	$eclipselink="http://www.eclipse.org/downloads/download.php?file=/orion/drops/$buildLabel/$dropFile";
         } else {
         	$mirrorlink  = "http://$servername$path/$dropFile";
         }

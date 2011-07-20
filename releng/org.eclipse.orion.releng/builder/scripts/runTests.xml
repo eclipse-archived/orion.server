@@ -45,7 +45,7 @@
 			<isset property="runTestsLocally" />
 		</condition>
 		<property file="${builder}/build.properties" />
-		<condition property="orionRepo" value="http://download.eclipse.org/e4/updates/orion/0.2-${buildType}-builds" else="file:${buildDirectory}/buildRepo">
+		<condition property="orionRepo" value="http://download.eclipse.org/orion/updates/0.3-${buildType}-builds" else="file:${buildDirectory}/buildRepo">
 			<isset property="runTestsLocally"/>
 		</condition>
 	</target>
@@ -123,7 +123,7 @@
 		
 		<property name="baseURL" value="http://build.eclipse.org/eclipse/e4/orion" />
 		<property name="JSON_buildZip" value="{&quot;name&quot;:&quot;buildZip&quot;,&quot;value&quot;:&quot;${baseURL}/${buildType}${timestamp}/test/${buildLabel}.zip&quot;}"/>
-		<property name="JSON_repository" value="{&quot;name&quot;:&quot;repository&quot;,&quot;value&quot;:&quot;${baseURL}/target/0.2-${buildType}-builds/${buildLabel}&quot;}"/>
+		<property name="JSON_repository" value="{&quot;name&quot;:&quot;repository&quot;,&quot;value&quot;:&quot;${baseURL}/target/0.3-${buildType}-builds/${buildLabel}&quot;}"/>
 		<property name="json" value="{&quot;parameter&quot;: [${JSON_buildZip}, ${JSON_repository}] }"/>
 		
 		<loadfile property="nextHudsonBuild" srcFile="/shared/jobs/orion-jstest-windows/nextBuildNumber">
