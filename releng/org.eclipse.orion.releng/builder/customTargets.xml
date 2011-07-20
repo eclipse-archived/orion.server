@@ -10,7 +10,7 @@
 		
 		<!--
 		<exec executable="git" dir="${buildDirectory}/maps">
-			<arg line="archive -format=tar -remote=ssh://dev.eclipse.org/gitroot/e4/org.eclipse.orion.server.git master releng/org.eclipse.orion.releng/maps | tar -xf -" />
+			<arg line="archive -format=tar -remote=ssh://dev.eclipse.org/gitroot/orion/org.eclipse.orion.server.git master releng/org.eclipse.orion.releng/maps | tar -xf -" />
 		</exec>
 		
 		<cvs cvsRoot="${mapsRepo}" package="${mapsRoot}" dest="${buildDirectory}/maps" tag="${mapsCheckoutTag}" />
