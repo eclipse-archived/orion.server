@@ -424,7 +424,7 @@ public class GitMergeTest extends GitTest {
 		assertEquals(true, pushStatus.isOK());
 
 		// clone1: fetch
-		request = GitFetchTest.getPostGitRemoteRequest(remoteBranchLocation1, true);
+		request = GitFetchTest.getPostGitRemoteRequest(remoteBranchLocation1, true, false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);

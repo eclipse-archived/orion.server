@@ -17,8 +17,8 @@ import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
-import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.RefUpdate.Result;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.*;
 import org.eclipse.orion.server.core.tasks.ITaskService;
@@ -39,14 +39,16 @@ public class FetchJob extends GitJob {
 	private ServiceReference<ITaskService> taskServiceRef;
 	private IPath path;
 	private String remote;
+	private boolean force;
 
-	public FetchJob(CredentialsProvider credentials, Path path) {
+	public FetchJob(CredentialsProvider credentials, Path path, boolean force) {
 		super("Fetching", (GitCredentialsProvider) credentials); //$NON-NLS-1$
 
 		// path: {remote}[/{branch}]/file/{...}
 		this.path = path;
 		this.remote = path.segment(0);
 		this.task = createTask();
+		this.force = force;
 	}
 
 	private TaskInfo createTask() {
@@ -56,7 +58,7 @@ public class FetchJob extends GitJob {
 		return info;
 	}
 
-	private void doFetch() throws IOException, CoreException, JGitInternalException, InvalidRemoteException, URISyntaxException {
+	private IStatus doFetch() throws IOException, CoreException, JGitInternalException, InvalidRemoteException, URISyntaxException {
 		Repository db = getRepository();
 		String branch = getRemoteBranch();
 
@@ -71,9 +73,33 @@ public class FetchJob extends GitJob {
 		if (branch != null) {
 			// refs/heads/{branch}:refs/remotes/{remote}/{branch}
 			RefSpec spec = new RefSpec(Constants.R_HEADS + branch + ":" + Constants.R_REMOTES + remote + "/" + branch); //$NON-NLS-1$ //$NON-NLS-2$
+			spec = spec.setForceUpdate(force);
 			fc.setRefSpecs(spec);
 		}
-		fc.call();
+		FetchResult fetchResult = fc.call();
+
+		// handle result
+		for (TrackingRefUpdate updateRes : fetchResult.getTrackingRefUpdates()) {
+			Result res = updateRes.getResult();
+			// handle status for given ref
+			switch (res) {
+				case NOT_ATTEMPTED :
+				case NO_CHANGE :
+				case NEW :
+				case FORCED :
+				case FAST_FORWARD :
+				case RENAMED :
+					// do nothing, as these statuses are OK
+					break;
+				case REJECTED :
+				case REJECTED_CURRENT_BRANCH :
+					// show warning, as only force fetch can finish successfully 
+					return new Status(IStatus.WARNING, GitActivator.PI_GIT, res.name());
+				default :
+					return new Status(IStatus.ERROR, GitActivator.PI_GIT, res.name());
+			}
+		}
+		return Status.OK_STATUS;
 	}
 
 	private Repository getRepository() throws IOException, CoreException {
@@ -111,7 +137,7 @@ public class FetchJob extends GitJob {
 	protected IStatus run(IProgressMonitor monitor) {
 		IStatus result = Status.OK_STATUS;
 		try {
-			doFetch();
+			result = doFetch();
 		} catch (IOException e) {
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error fetching git remote", e);
 		} catch (CoreException e) {

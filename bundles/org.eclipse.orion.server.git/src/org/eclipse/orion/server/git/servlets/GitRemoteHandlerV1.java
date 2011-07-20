@@ -198,6 +198,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			boolean fetch = Boolean.parseBoolean(requestObject.optString(GitConstants.KEY_FETCH, null));
 			String srcRef = requestObject.optString(GitConstants.KEY_PUSH_SRC_REF, null);
 			boolean tags = requestObject.optBoolean(GitConstants.KEY_PUSH_TAGS, false);
+			boolean force = requestObject.optBoolean(GitConstants.KEY_FORCE, false);
 
 			// prepare creds
 			String username = requestObject.optString(GitConstants.KEY_USERNAME, null);
@@ -214,12 +215,12 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 
 			// if all went well, continue with fetch or push
 			if (fetch) {
-				return fetch(request, response, cp, path);
+				return fetch(request, response, cp, path, force);
 			} else if (srcRef != null) {
 				if (srcRef.equals("")) { //$NON-NLS-1$
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Pushing with an empty source ref is not allowed. Did you mean DELETE?", null));
 				}
-				return push(request, response, path, cp, srcRef, tags);
+				return push(request, response, path, cp, srcRef, tags, force);
 			} else {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Only Fetch:true is currently supported.", null));
 			}
@@ -275,10 +276,10 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private boolean fetch(HttpServletRequest request, HttpServletResponse response, GitCredentialsProvider cp, String path) throws URISyntaxException, JSONException, IOException {
+	private boolean fetch(HttpServletRequest request, HttpServletResponse response, GitCredentialsProvider cp, String path, boolean force) throws URISyntaxException, JSONException, IOException {
 		// {remote}/{branch}/{file}/{path}
 		Path p = new Path(path);
-		FetchJob job = new FetchJob(cp, p);
+		FetchJob job = new FetchJob(cp, p, force);
 		job.schedule();
 
 		TaskInfo task = job.getTask();
@@ -291,12 +292,12 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private boolean push(HttpServletRequest request, HttpServletResponse response, String path, GitCredentialsProvider cp, String srcRef, boolean tags) throws ServletException, CoreException, IOException, JSONException, URISyntaxException {
+	private boolean push(HttpServletRequest request, HttpServletResponse response, String path, GitCredentialsProvider cp, String srcRef, boolean tags, boolean force) throws ServletException, CoreException, IOException, JSONException, URISyntaxException {
 		Path p = new Path(path);
 		// FIXME: what if a remote or branch is named "file"?
 		if (p.segment(2).equals("file")) { //$NON-NLS-1$
 			// /git/remote/{remote}/{branch}/file/{path}
-			PushJob job = new PushJob(cp, p, srcRef, tags);
+			PushJob job = new PushJob(cp, p, srcRef, tags, force);
 			job.schedule();
 
 			TaskInfo task = job.getTask();

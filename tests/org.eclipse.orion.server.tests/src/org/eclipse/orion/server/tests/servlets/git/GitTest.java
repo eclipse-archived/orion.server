@@ -452,9 +452,13 @@ public abstract class GitTest extends FileSystemTest {
 	// push
 
 	protected ServerStatus push(String gitRemoteUri, int size, int i, String name, String srcRef, boolean tags) throws IOException, SAXException, JSONException {
+		return push(gitRemoteUri, size, i, name, srcRef, tags, false);
+	}
+
+	protected ServerStatus push(String gitRemoteUri, int size, int i, String name, String srcRef, boolean tags, boolean force) throws IOException, SAXException, JSONException {
 		assertRemoteUri(gitRemoteUri);
 		String remoteBranchLocation = getRemoteBranch(gitRemoteUri, size, i, name).getString(ProtocolConstants.KEY_LOCATION);
-		return push(remoteBranchLocation, srcRef, tags);
+		return push(remoteBranchLocation, srcRef, tags, force);
 	}
 
 	/**
@@ -469,8 +473,24 @@ public abstract class GitTest extends FileSystemTest {
 	 * @throws JSONException
 	 */
 	protected ServerStatus push(String gitRemoteBranchUri, String srcRef, boolean tags) throws IOException, SAXException, JSONException {
+		return push(gitRemoteBranchUri, srcRef, tags, false);
+	}
+
+	/**
+	 * Pushes the changes from the the source ref to the given remote branch.
+	 * 
+	 * @param gitRemoteBranchUri remote branch URI
+	 * @param srcRef the source ref to push
+	 * @param tags <code>true</code> to push tags
+	 * @param force <code>true</code> to force push
+	 * @return JSON object representing response
+	 * @throws IOException
+	 * @throws SAXException
+	 * @throws JSONException
+	 */
+	protected ServerStatus push(String gitRemoteBranchUri, String srcRef, boolean tags, boolean force) throws IOException, SAXException, JSONException {
 		assertRemoteOrRemoteBranchLocation(gitRemoteBranchUri);
-		WebRequest request = GitPushTest.getPostGitRemoteRequest(gitRemoteBranchUri, srcRef, tags);
+		WebRequest request = GitPushTest.getPostGitRemoteRequest(gitRemoteBranchUri, srcRef, tags, force);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
@@ -488,9 +508,13 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	protected ServerStatus push(String gitRemoteUri, int size, int i, String name, String srcRef, boolean tags, String userName, String kh, byte[] privk, byte[] pubk, byte[] p, boolean shouldBeOK) throws IOException, SAXException, JSONException {
+		return push(gitRemoteUri, size, i, name, srcRef, tags, false, userName, kh, privk, pubk, p, shouldBeOK);
+	}
+
+	protected ServerStatus push(String gitRemoteUri, int size, int i, String name, String srcRef, boolean tags, boolean force, String userName, String kh, byte[] privk, byte[] pubk, byte[] p, boolean shouldBeOK) throws IOException, SAXException, JSONException {
 		assertRemoteUri(gitRemoteUri);
 		String remoteBranchLocation = getRemoteBranch(gitRemoteUri, size, i, name).getString(ProtocolConstants.KEY_LOCATION);
-		WebRequest request = GitPushTest.getPostGitRemoteRequest(remoteBranchLocation, srcRef, tags, userName, kh, privk, pubk, p);
+		WebRequest request = GitPushTest.getPostGitRemoteRequest(remoteBranchLocation, srcRef, tags, force, userName, kh, privk, pubk, p);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
@@ -526,10 +550,24 @@ public abstract class GitTest extends FileSystemTest {
 	 * @throws SAXException
 	 */
 	protected JSONObject fetch(String remoteBranchLocation, String userName, String kh, byte[] privk, byte[] pubk, byte[] p, boolean shouldBeOK) throws JSONException, IOException, SAXException {
+		return fetch(remoteBranchLocation, false, userName, kh, privk, pubk, p, shouldBeOK);
+	}
+
+	/**
+	 * Fetch objects and refs from the given remote branch. 
+	 * 
+	 * @param remoteBranchLocation remote branch URI
+	 * @param force <code>true</code> to force fetch
+	 * @return JSONObject representing remote branch after the fetch is done
+	 * @throws JSONException
+	 * @throws IOException
+	 * @throws SAXException
+	 */
+	protected JSONObject fetch(String remoteBranchLocation, boolean force, String userName, String kh, byte[] privk, byte[] pubk, byte[] p, boolean shouldBeOK) throws JSONException, IOException, SAXException {
 		assertRemoteOrRemoteBranchLocation(remoteBranchLocation);
 
 		// fetch
-		WebRequest request = GitFetchTest.getPostGitRemoteRequest(remoteBranchLocation, true, userName, kh, privk, pubk, p);
+		WebRequest request = GitFetchTest.getPostGitRemoteRequest(remoteBranchLocation, true, force, userName, kh, privk, pubk, p);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
@@ -562,10 +600,24 @@ public abstract class GitTest extends FileSystemTest {
 	 * @throws SAXException
 	 */
 	protected JSONObject fetch(String remoteLocation) throws JSONException, IOException, SAXException {
+		return fetch(remoteLocation, false);
+	}
+
+	/**
+	 * Fetch objects and refs from the given remote or remote branch.
+	 * 
+	 * @param remoteLocation remote (branch) URI
+	 * @param force <code>true</code> to force fetch
+	 * @return JSONObject representing remote (branch) after the fetch is done
+	 * @throws JSONException
+	 * @throws IOException
+	 * @throws SAXException
+	 */
+	protected JSONObject fetch(String remoteLocation, boolean force) throws JSONException, IOException, SAXException {
 		assertRemoteOrRemoteBranchLocation(remoteLocation);
 
 		// fetch
-		WebRequest request = GitFetchTest.getPostGitRemoteRequest(remoteLocation, true);
+		WebRequest request = GitFetchTest.getPostGitRemoteRequest(remoteLocation, true, force);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);

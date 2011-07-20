@@ -20,12 +20,14 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.transport.RemoteRefUpdate.Status;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -530,7 +532,126 @@ public class GitFetchTest extends GitTest {
 
 	}
 
-	static WebRequest getPostGitRemoteRequest(String location, boolean fetch) throws JSONException, UnsupportedEncodingException {
+	@Test
+	public void testForcedFetch() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop1 = createProjectOrLink(workspaceLocation, getMethodName() + "-top1", null);
+		IPath clonePathTop1 = new Path("file").append(projectTop1.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
+		JSONObject projectTop2 = createProjectOrLink(workspaceLocation, getMethodName() + "-top2", null);
+		IPath clonePathTop2 = new Path("file").append(projectTop2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
+		JSONObject projectFolder1 = createProjectOrLink(workspaceLocation, getMethodName() + "-folder1", null);
+		IPath clonePathFolder1 = new Path("file").append(projectFolder1.getString(ProtocolConstants.KEY_ID)).append("folder1").makeAbsolute();
+
+		JSONObject projectFolder2 = createProjectOrLink(workspaceLocation, getMethodName() + "-folder2", null);
+		IPath clonePathFolder2 = new Path("file").append(projectFolder2.getString(ProtocolConstants.KEY_ID)).append("folder2").makeAbsolute();
+
+		JSONObject projectTop3 = createProjectOrLink(workspaceLocation, getMethodName() + "-top3", null);
+		IPath clonePathTop3 = new Path("file").append(projectTop3.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
+		JSONObject projectFolder3 = createProjectOrLink(workspaceLocation, getMethodName() + "-folder3", null);
+		IPath clonePathFolder3 = new Path("file").append(projectFolder3.getString(ProtocolConstants.KEY_ID)).append("folder1").makeAbsolute();
+
+		IPath[] clonePathsTop = new IPath[] {clonePathTop1, clonePathTop2};
+		IPath[] clonePathsFolder = new IPath[] {clonePathFolder1, clonePathFolder2};
+		IPath[] clonePathsMixed = new IPath[] {clonePathTop3, clonePathFolder3};
+		IPath[][] clonePaths = new IPath[][] {clonePathsTop, clonePathsFolder, clonePathsMixed};
+
+		for (IPath[] clonePath : clonePaths) {
+			// clone1
+			String contentLocation1 = clone(clonePath[0]).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+			// get project1 metadata
+			WebRequest request = getGetFilesRequest(contentLocation1);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject project1 = new JSONObject(response.getText());
+			String project1Location = project1.getString(ProtocolConstants.KEY_LOCATION);
+			JSONObject gitSection1 = project1.getJSONObject(GitConstants.KEY_GIT);
+			String gitRemoteUri1 = gitSection1.getString(GitConstants.KEY_REMOTE);
+			String gitIndexUri1 = gitSection1.getString(GitConstants.KEY_INDEX);
+			String gitHeadUri1 = gitSection1.getString(GitConstants.KEY_HEAD);
+
+			// clone2
+			String contentLocation2 = clone(clonePath[1]).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+			// get project2 metadata
+			request = getGetFilesRequest(contentLocation2);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject project2 = new JSONObject(response.getText());
+			String project2Location = project2.getString(ProtocolConstants.KEY_LOCATION);
+			JSONObject gitSection2 = project2.getJSONObject(GitConstants.KEY_GIT);
+			String gitRemoteUri2 = gitSection2.getString(GitConstants.KEY_REMOTE);
+			String gitIndexUri2 = gitSection2.getString(GitConstants.KEY_INDEX);
+			String gitHeadUri2 = gitSection2.getString(GitConstants.KEY_HEAD);
+
+			// clone1: change
+			request = getPutFileRequest(project1Location + "/test.txt", "clone1 change");
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// clone1: add
+			request = GitAddTest.getPutGitIndexRequest(gitIndexUri1);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// clone1: commit
+			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri1, "clone1 change commit", false);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// clone1: push
+			ServerStatus pushStatus = push(gitRemoteUri1, 1, 0, Constants.MASTER, Constants.HEAD, false);
+			assertEquals(true, pushStatus.isOK());
+
+			// clone2: change
+			request = getPutFileRequest(project2Location + "/test.txt", "clone2 change");
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// clone2: add
+			request = GitAddTest.getPutGitIndexRequest(gitIndexUri2);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// clone2: commit
+			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri2, "clone2 change commit", false);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// clone2: push
+			pushStatus = push(gitRemoteUri2, 1, 0, Constants.MASTER, Constants.HEAD, false);
+			assertEquals(IStatus.WARNING, pushStatus.getSeverity());
+			Status pushResult = Status.valueOf(pushStatus.getMessage());
+			assertEquals(Status.REJECTED_NONFASTFORWARD, pushResult);
+
+			// clone2: forced push
+			pushStatus = push(gitRemoteUri2, 1, 0, Constants.MASTER, Constants.HEAD, false, true);
+			assertEquals(true, pushStatus.isOK());
+
+			// clone1: fetch master
+			JSONObject details = getRemoteBranch(gitRemoteUri1, 1, 0, Constants.MASTER);
+			String remoteBranchLocation = details.getString(ProtocolConstants.KEY_LOCATION);
+			String oldRefId = details.getString(ProtocolConstants.KEY_ID);
+
+			JSONObject newDetails = fetch(remoteBranchLocation);
+
+			// assert nothing new on 'master'
+			String newRefId = newDetails.getString(ProtocolConstants.KEY_ID);
+			assertEquals(oldRefId, newRefId);
+
+			// clone1: forced fetch master
+			newDetails = fetch(remoteBranchLocation, true);
+
+			// assert that fetch succeed and something new on 'master'
+			newRefId = newDetails.getString(ProtocolConstants.KEY_ID);
+			assertFalse(oldRefId.equals(newRefId));
+		}
+	}
+
+	static WebRequest getPostGitRemoteRequest(String location, boolean fetch, boolean force) throws JSONException, UnsupportedEncodingException {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;
@@ -539,13 +660,14 @@ public class GitFetchTest extends GitTest {
 
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_FETCH, Boolean.toString(fetch));
+		body.put(GitConstants.KEY_FORCE, force);
 		WebRequest request = new PostMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
 	}
 
-	static WebRequest getPostGitRemoteRequest(String location, boolean fetch, String name, String kh, byte[] privk, byte[] pubk, byte[] p) throws JSONException, UnsupportedEncodingException {
+	static WebRequest getPostGitRemoteRequest(String location, boolean fetch, boolean force, String name, String kh, byte[] privk, byte[] pubk, byte[] p) throws JSONException, UnsupportedEncodingException {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;
@@ -564,6 +686,7 @@ public class GitFetchTest extends GitTest {
 			body.put(GitConstants.KEY_PASSPHRASE, new String(p));
 
 		body.put(GitConstants.KEY_FETCH, Boolean.toString(fetch));
+		body.put(GitConstants.KEY_FORCE, force);
 		WebRequest request = new PostMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);

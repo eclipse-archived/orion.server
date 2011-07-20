@@ -44,14 +44,16 @@ public class PushJob extends GitJob {
 	private Path p;
 	private String srcRef;
 	private boolean tags;
+	private boolean force;
 
-	public PushJob(CredentialsProvider credentials, Path path, String srcRef, boolean tags) {
+	public PushJob(CredentialsProvider credentials, Path path, String srcRef, boolean tags, boolean force) {
 		super("Pushing", (GitCredentialsProvider) credentials); //$NON-NLS-1$
 
 		this.p = path;
 		this.srcRef = srcRef;
 		this.tags = tags;
 		this.task = createTask();
+		this.force = force;
 	}
 
 	private TaskInfo createTask() {
@@ -78,6 +80,7 @@ public class PushJob extends GitJob {
 		pushCommand.setRemote(p.segment(0)).setRefSpecs(spec);
 		if (tags)
 			pushCommand.setPushTags();
+		pushCommand.setForce(force);
 		Iterable<PushResult> resultIterable = pushCommand.call();
 		PushResult pushResult = resultIterable.iterator().next();
 		// this set will contain only OK status or UP_TO_DATE status
