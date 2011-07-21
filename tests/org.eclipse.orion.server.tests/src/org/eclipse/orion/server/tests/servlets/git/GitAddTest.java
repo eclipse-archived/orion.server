@@ -16,7 +16,10 @@ import static org.junit.Assert.assertNotNull;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.util.List;
 
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONArray;
@@ -207,7 +210,7 @@ public class GitAddTest extends GitTest {
 	}
 
 	@Test
-	public void testAddInFolder() throws Exception {
+	public void testAddFolder() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
 		String projectName = getMethodName();
@@ -222,29 +225,21 @@ public class GitAddTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
-		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
-		assertNotNull(gitIndexUri);
-		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
-		assertNotNull(gitStatusUri);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
 		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject statusResponse = new JSONObject(response.getText());
-		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-		assertEquals(2, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
-		assertEquals(0, statusArray.length());
+		assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED).length());
+		assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED).length());
+		assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_CONFLICTING).length());
+		assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING).length());
+		assertEquals(2, statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED).length());
+		assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED).length());
+		assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED).length());
 
 		// TODO: don't create URIs out of thin air
 		request = getPutGitIndexRequest(gitIndexUri + "folder/");
@@ -255,18 +250,108 @@ public class GitAddTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		statusResponse = new JSONObject(response.getText());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
-		assertEquals(1, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-		assertEquals(1, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
-		assertEquals(0, statusArray.length());
+		assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED).length());
+		assertEquals(1, statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED).length());
+		assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_CONFLICTING).length());
+		assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING).length());
+		assertEquals(1, statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED).length());
+		assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED).length());
+		assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED).length());
+	}
+
+	@Test
+	public void testAddAllWhenInFolder() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
+
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			JSONObject clone = clone(clonePath);
+			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+			// get project/folder metadata
+			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject folder = new JSONObject(response.getText());
+			String folderChildrenLocation = folder.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
+
+			// test.txt
+			request = getGetFilesRequest(folderChildrenLocation);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));
+			JSONObject testTxt = getChildByName(children, "test.txt");
+			String testTxtLocation = testTxt.getString(ProtocolConstants.KEY_LOCATION);
+
+			// test.txt: modify
+			request = getPutFileRequest(testTxtLocation, "hello");
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// folder/folder.txt
+			JSONObject folder1 = getChildByName(children, "folder");
+			String folder1ChildrenLocation = folder1.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
+			request = getGetFilesRequest(folder1ChildrenLocation);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			children = getDirectoryChildren(new JSONObject(response.getText()));
+			JSONObject folderTxt = getChildByName(children, "folder.txt");
+			String folderTxtLocation = folderTxt.getString(ProtocolConstants.KEY_LOCATION);
+
+			// folder/folder.txt: modify
+			request = getPutFileRequest(folderTxtLocation, "hello");
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// folder
+			JSONObject folder1GitSection = folder1.getJSONObject(GitConstants.KEY_GIT);
+			String folder1GitIndexUri = folder1GitSection.getString(GitConstants.KEY_INDEX);
+			String folder1GitStatusUri = folder1GitSection.getString(GitConstants.KEY_STATUS);
+			String folder1GitCloneUri = folder1GitSection.getString(GitConstants.KEY_CLONE);
+
+			request = GitStatusTest.getGetGitStatusRequest(folder1GitStatusUri);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject statusResponse = new JSONObject(response.getText());
+			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED).length());
+			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED).length());
+			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_CONFLICTING).length());
+			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING).length());
+			assertEquals(2, statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED).length());
+			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED).length());
+			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED).length());
+
+			request = getGetRequest(folder1GitCloneUri);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject clones = new JSONObject(response.getText());
+			JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+			assertEquals(1, clonesArray.length());
+			String gitIndexUri = clonesArray.getJSONObject(0).getString(GitConstants.KEY_INDEX);
+
+			request = getPutGitIndexRequest(gitIndexUri /* add all*/);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			request = GitStatusTest.getGetGitStatusRequest(folder1GitStatusUri);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			statusResponse = new JSONObject(response.getText());
+			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED).length());
+			assertEquals(2, statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED).length());
+			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_CONFLICTING).length());
+			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING).length());
+			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED).length());
+			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED).length());
+			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED).length());
+		}
 	}
 
 	static WebRequest getPutGitIndexRequest(String location) throws UnsupportedEncodingException {
