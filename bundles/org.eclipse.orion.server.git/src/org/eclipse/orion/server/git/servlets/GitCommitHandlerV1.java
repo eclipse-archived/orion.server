@@ -21,6 +21,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.*;
+import org.eclipse.jgit.api.RebaseCommand.Operation;
 import org.eclipse.jgit.api.errors.*;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffEntry.ChangeType;
@@ -362,6 +363,12 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			return merge(request, response, db, commitToMerge);
 		}
 
+		String commitToRebase = requestObject.optString(GitConstants.KEY_REBASE, null);
+		String rebaseOperation = requestObject.optString(GitConstants.KEY_OPERATION, null);
+		if (commitToRebase != null) {
+			return rebase(request, response, db, commitToRebase, rebaseOperation);
+		}
+
 		String commitToCherryPick = requestObject.optString(GitConstants.KEY_CHERRY_PICK, null);
 		if (commitToCherryPick != null) {
 			return cherryPick(request, response, db, commitToCherryPick);
@@ -427,6 +434,49 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		} catch (JGitInternalException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when merging.", e.getCause()));
 		}
+	}
+
+	private boolean rebase(HttpServletRequest request, HttpServletResponse response, Repository db, String commitToRebase, String rebaseOperation) throws ServletException, JSONException, AmbiguousObjectException, IOException {
+		JSONObject result = new JSONObject();
+		try {
+			Git git = new Git(db);
+			RebaseCommand rebase = git.rebase();
+			Operation operation;
+			if (rebaseOperation != null) {
+				operation = Operation.valueOf(rebaseOperation);
+			} else {
+				operation = Operation.BEGIN;
+			}
+			if (commitToRebase != null && !commitToRebase.isEmpty()) {
+				ObjectId objectId = db.resolve(commitToRebase);
+				rebase.setUpstream(objectId);
+			} else if (operation.equals(Operation.BEGIN)) {
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Missing commit refId.", null));
+			}
+			rebase.setOperation(operation);
+			RebaseResult rebaseResult = rebase.call();
+			result.put(GitConstants.KEY_RESULT, rebaseResult.getStatus().name());
+		} catch (UnmergedPathsException e) {
+			// this error should be handled by client, so return a proper status
+			result.put(GitConstants.KEY_RESULT, AdditionalRebaseStatus.FAILED_UNMERGED_PATHS.name());
+		} catch (WrongRepositoryStateException e) {
+			// this error should be handled by client, so return a proper status
+			result.put(GitConstants.KEY_RESULT, AdditionalRebaseStatus.FAILED_WRONG_REPOSITORY_STATE.name());
+		} catch (IllegalArgumentException e) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Invalid rebase operation.", e));
+		} catch (GitAPIException e) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when rebasing.", e));
+		} catch (JGitInternalException e) {
+			// get cause and try to handle 
+			if (e.getCause() instanceof org.eclipse.jgit.errors.CheckoutConflictException) {
+				// this error should be handled by client, so return a proper status
+				result.put(GitConstants.KEY_RESULT, AdditionalRebaseStatus.FAILED_PENDING_CHANGES.name());
+			} else {
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when rebasing.", e));
+			}
+		}
+		OrionServlet.writeJSONResponse(request, response, result);
+		return true;
 	}
 
 	private boolean cherryPick(HttpServletRequest request, HttpServletResponse response, Repository db, String commitToCherryPick) throws ServletException, JSONException {

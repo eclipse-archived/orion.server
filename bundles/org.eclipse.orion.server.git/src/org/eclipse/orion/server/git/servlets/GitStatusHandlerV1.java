@@ -86,6 +86,9 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 			children = toJSONArray(status.getConflicting(), basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
 			result.put(GitConstants.KEY_STATUS_CONFLICTING, children);
 
+			// return repository state
+			result.put(GitConstants.KEY_REPOSITORY_STATE, db.getRepositoryState().name());
+
 			result.put(GitConstants.KEY_INDEX, statusToIndexLocation(baseLocation));
 			result.put(GitConstants.KEY_COMMIT, statusToCommitLocation(baseLocation, Constants.HEAD));
 

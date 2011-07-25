@@ -51,6 +51,8 @@ public class GitConstants {
 
 	public static final String KEY_REPOSITORY_PATH = "RepositoryPath"; //$NON-NLS-1$
 
+	public static final String KEY_REPOSITORY_STATE = "RepositoryState"; //$NON-NLS-1$
+
 	public static final String KEY_DEFAULT_REMOTE_BRANCH = "DefaultRemoteBranchLocation"; //$NON-NLS-1$
 
 	public static final String KEY_TAG = "TagLocation"; //$NON-NLS-1$
@@ -152,6 +154,10 @@ public class GitConstants {
 	public static final String KEY_FETCH = "Fetch"; //$NON-NLS-1$
 
 	public static final String KEY_MERGE = "Merge"; //$NON-NLS-1$
+
+	public static final String KEY_REBASE = "Rebase"; //$NON-NLS-1$
+
+	public static final String KEY_OPERATION = "Operation"; //$NON-NLS-1$
 
 	public static final String KEY_CHERRY_PICK = "Cherry-Pick"; //$NON-NLS-1$
 

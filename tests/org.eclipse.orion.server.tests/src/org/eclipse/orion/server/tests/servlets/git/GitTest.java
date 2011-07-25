@@ -45,6 +45,7 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.core.tests.harness.FileSystemHelper;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.RebaseCommand.Operation;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Constants;
@@ -444,6 +445,24 @@ public abstract class GitTest extends FileSystemTest {
 	protected JSONObject merge(String gitHeadUri, String commit) throws JSONException, IOException, SAXException {
 		assertCommitUri(gitHeadUri);
 		WebRequest request = getPostGitMergeRequest(gitHeadUri, commit);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		return new JSONObject(response.getText());
+	}
+
+	// rebase 
+
+	protected JSONObject rebase(String gitHeadUri, Operation operation) throws IOException, SAXException, JSONException {
+		assertCommitUri(gitHeadUri);
+		WebRequest request = GitRebaseTest.getPostGitRebaseRequest(gitHeadUri, "", operation);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		return new JSONObject(response.getText());
+	}
+
+	protected JSONObject rebase(String gitHeadUri, String commit) throws IOException, SAXException, JSONException {
+		assertCommitUri(gitHeadUri);
+		WebRequest request = GitRebaseTest.getPostGitRebaseRequest(gitHeadUri, commit, null);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		return new JSONObject(response.getText());
