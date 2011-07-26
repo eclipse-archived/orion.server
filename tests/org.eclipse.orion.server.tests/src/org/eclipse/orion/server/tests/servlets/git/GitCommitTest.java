@@ -523,7 +523,193 @@ public class GitCommitTest extends GitTest {
 		}
 	}
 
-	static WebRequest getPostGitCommitRequest(String location, String message, boolean amend) throws JSONException, UnsupportedEncodingException {
+	@Test
+	public void testCommitWithCommiterOverwritten() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
+
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+			// get project metadata
+			WebRequest request = getGetFilesRequest(contentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject project = new JSONObject(response.getText());
+			JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+
+			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
+			String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+
+			// "git add ."
+			request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// commit all
+			final String commiterName = "committer name";
+			final String commiterEmail = "committer email";
+
+			request = getPostGitCommitRequest(gitHeadUri, "Comit message", false, commiterName, commiterEmail, null, null);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// log
+			JSONArray commitsArray = log(gitHeadUri, false);
+			assertEquals(2, commitsArray.length());
+
+			JSONObject commit = commitsArray.getJSONObject(0);
+			assertEquals(commiterName, commit.get(GitConstants.KEY_COMMITTER_NAME));
+			assertEquals(commiterEmail, commit.get(GitConstants.KEY_COMMITTER_EMAIL));
+		}
+	}
+
+	@Test
+	public void testCommitWithAuthorOverwritten() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
+
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+			// get project metadata
+			WebRequest request = getGetFilesRequest(contentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject project = new JSONObject(response.getText());
+			JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+
+			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
+			String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+
+			// "git add ."
+			request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// commit all
+			final String commiterName = "committer name";
+			final String commiterEmail = "committer email";
+
+			request = getPostGitCommitRequest(gitHeadUri, "Comit message", false, commiterName, commiterEmail, null, null);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// log
+			JSONArray commitsArray = log(gitHeadUri, false);
+			assertEquals(2, commitsArray.length());
+
+			JSONObject commit = commitsArray.getJSONObject(0);
+			assertEquals(commiterName, commit.get(GitConstants.KEY_COMMITTER_NAME));
+			assertEquals(commiterEmail, commit.get(GitConstants.KEY_COMMITTER_EMAIL));
+		}
+	}
+
+	@Test
+	public void testCommitterAndAuthorFallback() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
+
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+			// get project metadata
+			WebRequest request = getGetFilesRequest(contentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject project = new JSONObject(response.getText());
+			JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+
+			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
+			String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+			String gitConfigUri = gitSection.getString(GitConstants.KEY_CONFIG);
+
+			// set user.name and user.email
+			final String name = "name";
+			final String email = "email";
+			final String defaultName = "default name";
+			final String defaultEmail = "default email";
+			request = GitConfigTest.getPostGitConfigRequest(gitConfigUri, "user.name", defaultName);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+			request = GitConfigTest.getPostGitConfigRequest(gitConfigUri, "user.email", defaultEmail);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+			// "git add ."
+			request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// commit - author and commiter not specified
+			request = getPostGitCommitRequest(gitHeadUri, "1", false, null, null, null, null);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// log - expect default values
+			JSONArray commitsArray = log(gitHeadUri, false);
+			assertEquals(2, commitsArray.length());
+
+			JSONObject commit = commitsArray.getJSONObject(0);
+			assertEquals(defaultName, commit.get(GitConstants.KEY_COMMITTER_NAME));
+			assertEquals(defaultEmail, commit.get(GitConstants.KEY_COMMITTER_EMAIL));
+			assertEquals(defaultName, commit.get(GitConstants.KEY_AUTHOR_NAME));
+			assertEquals(defaultEmail, commit.get(GitConstants.KEY_AUTHOR_EMAIL));
+
+			// commit - only committer given
+			request = getPostGitCommitRequest(gitHeadUri, "2", true, name, email, null, null);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// log - expect author is the same as committer
+			commitsArray = log(gitHeadUri, false);
+			assertEquals(2, commitsArray.length());
+
+			commit = commitsArray.getJSONObject(0);
+			assertEquals(name, commit.get(GitConstants.KEY_COMMITTER_NAME));
+			assertEquals(email, commit.get(GitConstants.KEY_COMMITTER_EMAIL));
+			assertEquals(name, commit.get(GitConstants.KEY_AUTHOR_NAME));
+			assertEquals(email, commit.get(GitConstants.KEY_AUTHOR_EMAIL));
+
+			// commit - only committer name given
+			request = getPostGitCommitRequest(gitHeadUri, "3", true, name, null, null, null);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// log - expect author is the same as committer and their email is defaultEmail
+			commitsArray = log(gitHeadUri, false);
+			assertEquals(2, commitsArray.length());
+
+			commit = commitsArray.getJSONObject(0);
+			assertEquals(name, commit.get(GitConstants.KEY_COMMITTER_NAME));
+			assertEquals(defaultEmail, commit.get(GitConstants.KEY_COMMITTER_EMAIL));
+			assertEquals(name, commit.get(GitConstants.KEY_AUTHOR_NAME));
+			assertEquals(defaultEmail, commit.get(GitConstants.KEY_AUTHOR_EMAIL));
+		}
+	}
+
+	static WebRequest getPostGitCommitRequest(String location, String message, boolean amend, String committerName, String committerEmail, String authorName, String authorEmail) throws JSONException, UnsupportedEncodingException {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;
@@ -535,10 +721,18 @@ public class GitCommitTest extends GitTest {
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_COMMIT_MESSAGE, message);
 		body.put(GitConstants.KEY_COMMIT_AMEND, Boolean.toString(amend));
+		body.put(GitConstants.KEY_COMMITTER_NAME, committerName);
+		body.put(GitConstants.KEY_COMMITTER_EMAIL, committerEmail);
+		body.put(GitConstants.KEY_AUTHOR_NAME, authorName);
+		body.put(GitConstants.KEY_AUTHOR_EMAIL, authorEmail);
 		WebRequest request = new PostMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
+	}
+
+	static WebRequest getPostGitCommitRequest(String location, String message, boolean amend) throws JSONException, UnsupportedEncodingException {
+		return getPostGitCommitRequest(location, message, amend, null, null, null, null);
 	}
 
 	static WebRequest getGetGitCommitRequest(String location, boolean body) {

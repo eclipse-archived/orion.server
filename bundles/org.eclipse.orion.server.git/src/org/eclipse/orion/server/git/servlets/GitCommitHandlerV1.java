@@ -393,8 +393,27 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 
 		boolean amend = Boolean.parseBoolean(requestObject.optString(GitConstants.KEY_COMMIT_AMEND, null));
 
+		String committerName = requestObject.optString(GitConstants.KEY_COMMITTER_NAME, null);
+		String committerEmail = requestObject.optString(GitConstants.KEY_COMMITTER_EMAIL, null);
+		String authorName = requestObject.optString(GitConstants.KEY_AUTHOR_NAME, null);
+		String authorEmail = requestObject.optString(GitConstants.KEY_AUTHOR_EMAIL, null);
+
 		Git git = new Git(db);
 		CommitCommand commit = git.commit();
+
+		// workaround of a bug in JGit which causes invalid 
+		// support of null values of author/committer name/email 
+		PersonIdent defPersonIdent = new PersonIdent(db);
+		if (committerName == null)
+			committerName = defPersonIdent.getName();
+		if (committerEmail == null)
+			committerEmail = defPersonIdent.getEmailAddress();
+		if (authorName == null)
+			authorName = committerName;
+		if (authorEmail == null)
+			authorEmail = committerEmail;
+		commit.setCommitter(committerName, committerEmail);
+		commit.setAuthor(authorName, authorEmail);
 
 		// support for committing by path: "git commit -o path"
 		boolean isRoot = true;
