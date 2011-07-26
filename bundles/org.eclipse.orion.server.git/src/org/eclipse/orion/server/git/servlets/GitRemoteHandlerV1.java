@@ -170,10 +170,10 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	// remove remote
-	private boolean handleDelete(HttpServletRequest request, HttpServletResponse response, String path) throws CoreException, IOException, URISyntaxException {
+	private boolean handleDelete(HttpServletRequest request, HttpServletResponse response, String path) throws CoreException, IOException, URISyntaxException, JSONException, ServletException {
 		Path p = new Path(path);
 		if (p.segment(1).equals("file")) { //$NON-NLS-1$
-			// expected path: /git/remote/{remote}/file/{path}
+			// expected path: /gitapi/remote/{remote}/file/{path}
 			String remoteName = p.segment(0);
 
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(1));
@@ -217,9 +217,6 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			if (fetch) {
 				return fetch(request, response, cp, path, force);
 			} else if (srcRef != null) {
-				if (srcRef.equals("")) { //$NON-NLS-1$
-					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Pushing with an empty source ref is not allowed. Did you mean DELETE?", null));
-				}
 				return push(request, response, path, cp, srcRef, tags, force);
 			} else {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Only Fetch:true is currently supported.", null));
