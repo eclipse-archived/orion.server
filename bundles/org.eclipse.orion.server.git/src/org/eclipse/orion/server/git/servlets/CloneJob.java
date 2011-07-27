@@ -22,13 +22,10 @@ import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.server.core.ServerStatus;
-import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.osgi.util.NLS;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
 
 /**
  * A job to perform a clone operation in the background
@@ -38,8 +35,6 @@ public class CloneJob extends GitJob {
 	private final WebProject project;
 	private final WebClone clone;
 	private final TaskInfo task;
-	private ITaskService taskService;
-	private ServiceReference<ITaskService> taskServiceRef;
 	private final String user;
 	private final String cloneLocation;
 
@@ -75,7 +70,7 @@ public class CloneJob extends GitJob {
 
 			// Configure the clone, see Bug 337820
 			task.setMessage(NLS.bind("Configuring {0}...", clone.getUrl()));
-			updateTask();
+			updateTask(task);
 			GitCloneHandlerV1.doConfigureClone(git, user);
 			git.getRepository().close();
 		} catch (IOException e) {
@@ -92,21 +87,6 @@ public class CloneJob extends GitJob {
 
 	public TaskInfo getTask() {
 		return task;
-	}
-
-	private ITaskService getTaskService() {
-		if (taskService == null) {
-			BundleContext context = GitActivator.getDefault().getBundleContext();
-			if (taskServiceRef == null) {
-				taskServiceRef = context.getServiceReference(ITaskService.class);
-				if (taskServiceRef == null)
-					throw new IllegalStateException("Task service not available");
-			}
-			taskService = context.getService(taskServiceRef);
-			if (taskService == null)
-				throw new IllegalStateException("Task service not available");
-		}
-		return taskService;
 	}
 
 	@Override
@@ -132,24 +112,11 @@ public class CloneJob extends GitJob {
 				}
 			}
 			task.done(result);
-			updateTask();
+			updateTask(task);
 		} finally {
 			cleanUp();
 		}
 		//return the actual result so errors are logged
 		return result;
 	}
-
-	private void cleanUp() {
-		taskService = null;
-		if (taskServiceRef != null) {
-			GitActivator.getDefault().getBundleContext().ungetService(taskServiceRef);
-			taskServiceRef = null;
-		}
-	}
-
-	private void updateTask() {
-		getTaskService().updateTask(task);
-	}
-
 }

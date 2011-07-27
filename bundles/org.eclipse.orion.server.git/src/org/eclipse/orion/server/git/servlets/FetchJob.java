@@ -21,29 +21,23 @@ import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.lib.RefUpdate.Result;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.*;
-import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.osgi.util.NLS;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
 
 /**
  * A job to perform a fetch operation in the background
  */
 public class FetchJob extends GitJob {
 
-	private final TaskInfo task;
-	private ITaskService taskService;
-	private ServiceReference<ITaskService> taskServiceRef;
+	final TaskInfo task;
 	private IPath path;
 	private String remote;
 	private boolean force;
 
 	public FetchJob(CredentialsProvider credentials, Path path, boolean force) {
 		super("Fetching", (GitCredentialsProvider) credentials); //$NON-NLS-1$
-
 		// path: {remote}[/{branch}]/file/{...}
 		this.path = path;
 		this.remote = path.segment(0);
@@ -122,17 +116,6 @@ public class FetchJob extends GitJob {
 		return task;
 	}
 
-	private ITaskService getTaskService() {
-		BundleContext context = GitActivator.getDefault().getBundleContext();
-		taskServiceRef = context.getServiceReference(ITaskService.class);
-		if (taskServiceRef == null)
-			throw new IllegalStateException("Task service not available"); //$NON-NLS-1$
-		taskService = context.getService(taskServiceRef);
-		if (taskService == null)
-			throw new IllegalStateException("Task service not available"); //$NON-NLS-1$
-		return taskService;
-	}
-
 	@Override
 	protected IStatus run(IProgressMonitor monitor) {
 		IStatus result = Status.OK_STATUS;
@@ -151,13 +134,8 @@ public class FetchJob extends GitJob {
 		}
 		task.done(result);
 		task.setMessage(NLS.bind("Fetching {0} done", remote));
-		updateTask();
-		taskService = null;
-		GitActivator.getDefault().getBundleContext().ungetService(taskServiceRef);
+		updateTask(task);
+		cleanUp();
 		return Status.OK_STATUS;
-	}
-
-	private void updateTask() {
-		getTaskService().updateTask(task);
 	}
 }

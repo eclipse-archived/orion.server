@@ -22,17 +22,51 @@ import org.eclipse.jgit.JGitText;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.errors.TransportException;
 import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.tasks.ITaskService;
+import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.jsch.HostFingerprintException;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
 
 /**
  * Base class for all Git jobs.
  *
  */
 public abstract class GitJob extends Job {
+
+	private ITaskService taskService;
+	private ServiceReference<ITaskService> taskServiceRef;
+
+	ITaskService getTaskService() {
+		if (taskService == null) {
+			BundleContext context = GitActivator.getDefault().getBundleContext();
+			if (taskServiceRef == null) {
+				taskServiceRef = context.getServiceReference(ITaskService.class);
+				if (taskServiceRef == null)
+					throw new IllegalStateException("Task service not available");
+			}
+			taskService = context.getService(taskServiceRef);
+			if (taskService == null)
+				throw new IllegalStateException("Task service not available");
+		}
+		return taskService;
+	}
+
+	void cleanUp() {
+		taskService = null;
+		if (taskServiceRef != null) {
+			GitActivator.getDefault().getBundleContext().ungetService(taskServiceRef);
+			taskServiceRef = null;
+		}
+	}
+
+	protected void updateTask(TaskInfo task) {
+		getTaskService().updateTask(task);
+	}
 
 	private static final String KEY_SCHEME = "Scheme";
 	private static final String KEY_PORT = "Port";

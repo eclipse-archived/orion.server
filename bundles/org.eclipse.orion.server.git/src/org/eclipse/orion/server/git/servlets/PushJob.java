@@ -24,14 +24,11 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.*;
-import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONException;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
 
 /**
  * A job to perform a push operation in the background
@@ -39,17 +36,14 @@ import org.osgi.framework.ServiceReference;
 public class PushJob extends GitJob {
 
 	private final TaskInfo task;
-	private ITaskService taskService;
-	private ServiceReference<ITaskService> taskServiceRef;
-	private Path p;
+	private Path path;
 	private String srcRef;
 	private boolean tags;
 	private boolean force;
 
 	public PushJob(CredentialsProvider credentials, Path path, String srcRef, boolean tags, boolean force) {
-		super("Pushing", (GitCredentialsProvider) credentials); //$NON-NLS-1$
-
-		this.p = path;
+		super("Pushing", (GitCredentialsProvider) credentials);
+		this.path = path;
 		this.srcRef = srcRef;
 		this.tags = tags;
 		this.task = createTask();
@@ -58,26 +52,26 @@ public class PushJob extends GitJob {
 
 	private TaskInfo createTask() {
 		TaskInfo info = getTaskService().createTask();
-		info.setMessage(NLS.bind("Pushing {0}...", p.segment(0)));
+		info.setMessage(NLS.bind("Pushing {0}...", path.segment(0)));
 		getTaskService().updateTask(info);
 		return info;
 	}
 
 	private IStatus doPush() throws IOException, CoreException, JGitInternalException, InvalidRemoteException, URISyntaxException, JSONException {
 		// /git/remote/{remote}/{branch}/file/{path}
-		File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2));
+		File gitDir = GitUtils.getGitDir(path.removeFirstSegments(2));
 		Repository db = new FileRepository(gitDir);
 		Git git = new Git(db);
 
 		PushCommand pushCommand = git.push();
 
-		RemoteConfig remoteConfig = new RemoteConfig(git.getRepository().getConfig(), p.segment(0));
+		RemoteConfig remoteConfig = new RemoteConfig(git.getRepository().getConfig(), path.segment(0));
 		credentials.setUri(remoteConfig.getURIs().get(0));
 		pushCommand.setCredentialsProvider(credentials);
 
 		// ObjectId ref = db.resolve(srcRef);
-		RefSpec spec = new RefSpec(srcRef + ":" + Constants.R_HEADS + p.segment(1)); //$NON-NLS-1$
-		pushCommand.setRemote(p.segment(0)).setRefSpecs(spec);
+		RefSpec spec = new RefSpec(srcRef + ":" + Constants.R_HEADS + path.segment(1)); //$NON-NLS-1$
+		pushCommand.setRemote(path.segment(0)).setRefSpecs(spec);
 		if (tags)
 			pushCommand.setPushTags();
 		pushCommand.setForce(force);
@@ -89,7 +83,7 @@ public class PushJob extends GitJob {
 			final String rm = rru.getRemoteName();
 			// final String sr = rru.isDelete() ? null : rru.getSrcRef();
 			// check status only for branch given in the URL or tags
-			if (p.segment(1).equals(Repository.shortenRefName(rm)) || rm.startsWith(Constants.R_TAGS)) {
+			if (path.segment(1).equals(Repository.shortenRefName(rm)) || rm.startsWith(Constants.R_TAGS)) {
 				RemoteRefUpdate.Status status = rru.getStatus();
 				// any status different from UP_TO_DATE and OK should generate warning
 				if (status != RemoteRefUpdate.Status.OK && status != RemoteRefUpdate.Status.UP_TO_DATE)
@@ -111,42 +105,26 @@ public class PushJob extends GitJob {
 		return task;
 	}
 
-	private ITaskService getTaskService() {
-		BundleContext context = GitActivator.getDefault().getBundleContext();
-		taskServiceRef = context.getServiceReference(ITaskService.class);
-		if (taskServiceRef == null)
-			throw new IllegalStateException("Task service not available"); //$NON-NLS-1$
-		taskService = context.getService(taskServiceRef);
-		if (taskService == null)
-			throw new IllegalStateException("Task service not available"); //$NON-NLS-1$
-		return taskService;
-	}
-
 	@Override
 	protected IStatus run(IProgressMonitor monitor) {
 		IStatus result = Status.OK_STATUS;
 		try {
 			result = doPush();
 		} catch (IOException e) {
-			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error pushing git remote", e); //$NON-NLS-1$
+			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error pushing git remote", e);
 		} catch (CoreException e) {
 			result = e.getStatus();
 		} catch (JGitInternalException e) {
 			result = getJGitInternalExceptionStatus(e, "Error pushing git remote");
 		} catch (InvalidRemoteException e) {
-			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error pushing git remote", e); //$NON-NLS-1$
+			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error pushing git remote", e);
 		} catch (Exception e) {
-			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error pushing git repository", e); //$NON-NLS-1$
+			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error pushing git repository", e);
 		}
 		task.done(result);
-		task.setMessage(NLS.bind("Pushing {0} done", p.segment(0)));
-		updateTask();
-		taskService = null;
-		GitActivator.getDefault().getBundleContext().ungetService(taskServiceRef);
+		task.setMessage(NLS.bind("Pushing {0} done", path.segment(0)));
+		updateTask(task);
+		cleanUp();
 		return Status.OK_STATUS;
-	}
-
-	private void updateTask() {
-		getTaskService().updateTask(task);
 	}
 }

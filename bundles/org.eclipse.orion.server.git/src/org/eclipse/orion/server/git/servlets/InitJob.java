@@ -20,7 +20,6 @@ import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.osgi.util.NLS;
-import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
 /**
@@ -36,7 +35,7 @@ public class InitJob extends GitJob {
 	private final String cloneLocation;
 
 	public InitJob(WebClone clone, String user, String cloneLocation) {
-		super("Init"); //$NON-NLS-1$
+		super("Init");
 		this.clone = clone;
 		this.user = user;
 		this.cloneLocation = cloneLocation;
@@ -77,21 +76,6 @@ public class InitJob extends GitJob {
 		return task;
 	}
 
-	private ITaskService getTaskService() {
-		if (taskService == null) {
-			BundleContext context = GitActivator.getDefault().getBundleContext();
-			if (taskServiceRef == null) {
-				taskServiceRef = context.getServiceReference(ITaskService.class);
-				if (taskServiceRef == null)
-					throw new IllegalStateException("Task service not available");
-			}
-			taskService = context.getService(taskServiceRef);
-			if (taskService == null)
-				throw new IllegalStateException("Task service not available");
-		}
-		return taskService;
-	}
-
 	@Override
 	protected IStatus run(IProgressMonitor monitor) {
 		try {
@@ -104,24 +88,11 @@ public class InitJob extends GitJob {
 				result = new Status(IStatus.OK, GitActivator.PI_GIT, message);
 			}
 			task.done(result);
-			updateTask();
+			updateTask(task);
 			//return the actual result so errors are logged
 			return result;
 		} finally {
 			cleanUp();
 		}
 	}
-
-	private void cleanUp() {
-		taskService = null;
-		if (taskServiceRef != null) {
-			GitActivator.getDefault().getBundleContext().ungetService(taskServiceRef);
-			taskServiceRef = null;
-		}
-	}
-
-	private void updateTask() {
-		getTaskService().updateTask(task);
-	}
-
 }
