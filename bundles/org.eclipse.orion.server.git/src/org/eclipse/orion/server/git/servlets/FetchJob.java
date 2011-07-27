@@ -136,6 +136,6 @@ public class FetchJob extends GitJob {
 		task.setMessage(NLS.bind("Fetching {0} done", remote));
 		updateTask(task);
 		cleanUp();
-		return Status.OK_STATUS;
+		return Status.OK_STATUS; // see bug 353190
 	}
 }

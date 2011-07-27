@@ -116,7 +116,6 @@ public class CloneJob extends GitJob {
 		} finally {
 			cleanUp();
 		}
-		//return the actual result so errors are logged
-		return result;
+		return Status.OK_STATUS; // see bug 353190
 	}
 }

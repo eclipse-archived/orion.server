@@ -89,7 +89,7 @@ public class InitJob extends GitJob {
 			}
 			task.done(result);
 			updateTask(task);
-			//return the actual result so errors are logged
+			//return the actual result so errors are logged, see bug 353190
 			return result;
 		} finally {
 			cleanUp();

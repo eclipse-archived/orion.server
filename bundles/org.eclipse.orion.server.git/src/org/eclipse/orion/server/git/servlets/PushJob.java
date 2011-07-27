@@ -125,6 +125,6 @@ public class PushJob extends GitJob {
 		task.setMessage(NLS.bind("Pushing {0} done", path.segment(0)));
 		updateTask(task);
 		cleanUp();
-		return Status.OK_STATUS;
+		return Status.OK_STATUS; // see bug 353190
 	}
 }
