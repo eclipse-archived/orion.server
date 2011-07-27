@@ -119,6 +119,10 @@ public class GitConstants {
 
 	public static final String KEY_COMMIT_DIFF_CHANGETYPE = "ChangeType"; //$NON-NLS-1$
 
+	public static final String KEY_TAGS = "Tags"; //$NON-NLS-1$
+
+	public static final String KEY_BRANCHES = "Branches"; //$NON-NLS-1$
+
 	public static final String KEY_LOG_TO_REF = "toRef"; //$NON-NLS-1$
 
 	public static final String KEY_LOG_FROM_REF = "fromRef"; //$NON-NLS-1$
