@@ -76,6 +76,10 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 				JSONObject o = new JSONObject();
 				o.put(ProtocolConstants.KEY_NAME, configName);
 				o.put(ProtocolConstants.KEY_TYPE, GitConstants.KEY_REMOTE_NAME);
+				o.put(GitConstants.KEY_URL, db.getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, configName, "url" /*RemoteConfig.KEY_URL*/));
+				String pushUrl = null;
+				if ((pushUrl = db.getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, configName, "pushurl" /*RemoteConfig.KEY_PUSHURL*/)) != null)
+					o.put(GitConstants.KEY_PUSH_URL, pushUrl);
 				o.put(ProtocolConstants.KEY_LOCATION, BaseToRemoteConverter.REMOVE_FIRST_2.baseToRemoteLocation(baseLocation, configName, "" /* no branch name */)); //$NON-NLS-1$
 				children.put(o);
 			}

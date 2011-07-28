@@ -67,6 +67,8 @@ public class GitConstants {
 
 	public static final String KEY_URL = "GitUrl"; //$NON-NLS-1$
 
+	public static final String KEY_PUSH_URL = "PushUrl"; //$NON-NLS-1$
+
 	public static final String KEY_USERNAME = "GitSshUsername"; //$NON-NLS-1$
 
 	public static final String KEY_PASSWORD = "GitSshPassword"; //$NON-NLS-1$
