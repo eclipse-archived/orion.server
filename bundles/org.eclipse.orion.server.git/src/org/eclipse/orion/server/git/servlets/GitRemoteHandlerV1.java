@@ -113,7 +113,8 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 					for (Ref ref : refs) {
 						JSONObject o = new JSONObject();
 						String name = ref.getName();
-						o.put(ProtocolConstants.KEY_NAME, name);
+						o.put(ProtocolConstants.KEY_NAME, name.substring(Constants.R_REMOTES.length()));
+						o.put(ProtocolConstants.KEY_FULL_NAME, name);
 						o.put(ProtocolConstants.KEY_TYPE, GitConstants.REMOTE_TRACKING_BRANCH_TYPE);
 						o.put(ProtocolConstants.KEY_ID, ref.getObjectId().name());
 						// see bug 342602
@@ -146,7 +147,8 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 						String name = ref.getName();
 						if (!ref.isSymbolic() && name.equals(Constants.R_REMOTES + p.uptoSegment(2).removeTrailingSeparator())) {
 							JSONObject result = new JSONObject();
-							result.put(ProtocolConstants.KEY_NAME, name);
+							result.put(ProtocolConstants.KEY_NAME, name.substring(Constants.R_REMOTES.length()));
+							result.put(ProtocolConstants.KEY_FULL_NAME, name);
 							result.put(ProtocolConstants.KEY_TYPE, GitConstants.REMOTE_TRACKING_BRANCH_TYPE);
 							result.put(ProtocolConstants.KEY_ID, ref.getObjectId().name());
 							// see bug 342602

@@ -446,9 +446,9 @@ public class GitPushTest extends GitTest {
 			JSONArray refsArray = remote1.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 			assertEquals(2, refsArray.length());
 			JSONObject ref = refsArray.getJSONObject(0);
-			assertEquals(Constants.R_REMOTES + Constants.DEFAULT_REMOTE_NAME + "/" + newBranchName, ref.getString(ProtocolConstants.KEY_NAME));
+			assertEquals(Constants.R_REMOTES + Constants.DEFAULT_REMOTE_NAME + "/" + newBranchName, ref.getString(ProtocolConstants.KEY_FULL_NAME));
 			ref = refsArray.getJSONObject(1);
-			assertEquals(Constants.R_REMOTES + Constants.DEFAULT_REMOTE_NAME + "/" + Constants.MASTER, ref.getString(ProtocolConstants.KEY_NAME));
+			assertEquals(Constants.R_REMOTES + Constants.DEFAULT_REMOTE_NAME + "/" + Constants.MASTER, ref.getString(ProtocolConstants.KEY_FULL_NAME));
 
 			// clone 2 
 			JSONObject clone2 = clone(clonePath[1]);
@@ -474,9 +474,9 @@ public class GitPushTest extends GitTest {
 			refsArray = remote2.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 			assertEquals(2, refsArray.length());
 			ref = refsArray.getJSONObject(0);
-			assertEquals(Constants.R_REMOTES + Constants.DEFAULT_REMOTE_NAME + "/" + Constants.MASTER, ref.getString(ProtocolConstants.KEY_NAME));
+			assertEquals(Constants.R_REMOTES + Constants.DEFAULT_REMOTE_NAME + "/" + Constants.MASTER, ref.getString(ProtocolConstants.KEY_FULL_NAME));
 			ref = refsArray.getJSONObject(1);
-			assertEquals(Constants.R_REMOTES + Constants.DEFAULT_REMOTE_NAME + "/" + newBranchName, ref.getString(ProtocolConstants.KEY_NAME));
+			assertEquals(Constants.R_REMOTES + Constants.DEFAULT_REMOTE_NAME + "/" + newBranchName, ref.getString(ProtocolConstants.KEY_FULL_NAME));
 			String remoteBranchLocation2 = ref.getString(ProtocolConstants.KEY_LOCATION);
 
 			// clone 2 - checkout branch "a"
@@ -493,7 +493,7 @@ public class GitPushTest extends GitTest {
 			refsArray = remote1.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 			assertEquals(1, refsArray.length());
 			ref = refsArray.getJSONObject(0);
-			assertEquals(Constants.R_REMOTES + Constants.DEFAULT_REMOTE_NAME + "/" + Constants.MASTER, ref.getString(ProtocolConstants.KEY_NAME));
+			assertEquals(Constants.R_REMOTES + Constants.DEFAULT_REMOTE_NAME + "/" + Constants.MASTER, ref.getString(ProtocolConstants.KEY_FULL_NAME));
 
 			// clone 2 - fetch
 			request = GitFetchTest.getPostGitRemoteRequest(remoteBranchLocation2, true, false);

@@ -425,7 +425,7 @@ public abstract class GitTest extends FileSystemTest {
 		JSONArray refsArray = remote.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 		assertEquals(size, refsArray.length());
 		JSONObject ref = refsArray.getJSONObject(i);
-		assertEquals(Constants.R_REMOTES + Constants.DEFAULT_REMOTE_NAME + "/" + name, ref.getString(ProtocolConstants.KEY_NAME));
+		assertEquals(Constants.R_REMOTES + Constants.DEFAULT_REMOTE_NAME + "/" + name, ref.getString(ProtocolConstants.KEY_FULL_NAME));
 		String newRefId = ref.getString(ProtocolConstants.KEY_ID);
 		assertNotNull(newRefId);
 		assertTrue(ObjectId.isId(newRefId));
