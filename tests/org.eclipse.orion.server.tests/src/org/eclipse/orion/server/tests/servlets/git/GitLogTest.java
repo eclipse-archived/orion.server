@@ -335,6 +335,106 @@ public class GitLogTest extends GitTest {
 	}
 
 	@Test
+	public void testLogAllBranches() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
+
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+
+		for (IPath clonePath : clonePaths) {
+			// clone a repo
+			JSONObject clone = clone(clonePath);
+			String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
+			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+			String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
+			String gitCommitUri = clone.getString(GitConstants.KEY_COMMIT);
+
+			// get project metadata
+			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject project = new JSONObject(response.getText());
+			JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+			String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
+
+			// create branch
+			final String newBranchName = "branch";
+			branch(branchesLocation, newBranchName);
+
+			// modify
+			String projectLocation = project.getString(ProtocolConstants.KEY_LOCATION);
+			request = getPutFileRequest(projectLocation + "test.txt", "first change");
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// add
+			request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// commit1
+			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit1", false);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// checkout "branch"
+			checkoutBranch(cloneLocation, newBranchName);
+
+			// modify again
+			request = getPutFileRequest(projectLocation + "test.txt", "second change");
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// add
+			request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// commit2
+			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit2", false);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// get standard log for HEAD - only init and commit2 should be visible
+			JSONArray commitsArray = log(gitHeadUri, false);
+			assertEquals(2, commitsArray.length());
+
+			JSONObject commit = commitsArray.getJSONObject(0);
+			assertEquals("commit2", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
+
+			commit = commitsArray.getJSONObject(1);
+			assertEquals("Initial commit", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
+
+			// get log for all branches - initial commit, commit1 and commit2 should be visible
+			commitsArray = log(gitCommitUri, false);
+			assertEquals(3, commitsArray.length());
+
+			commit = commitsArray.getJSONObject(0);
+			assertEquals("commit2", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
+			JSONArray branchesArray = commit.getJSONArray(GitConstants.KEY_BRANCHES);
+			assertEquals(1, branchesArray.length());
+			assertEquals(Constants.R_HEADS + newBranchName, branchesArray.getJSONObject(0).get(ProtocolConstants.KEY_FULL_NAME));
+
+			commit = commitsArray.getJSONObject(1);
+			assertEquals("commit1", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
+			branchesArray = commit.getJSONArray(GitConstants.KEY_BRANCHES);
+			assertEquals(1, branchesArray.length());
+			assertEquals(Constants.R_HEADS + Constants.MASTER, branchesArray.getJSONObject(0).get(ProtocolConstants.KEY_FULL_NAME));
+
+			commit = commitsArray.getJSONObject(2);
+			assertEquals("Initial commit", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
+			branchesArray = commit.getJSONArray(GitConstants.KEY_BRANCHES);
+			assertEquals(1, branchesArray.length());
+			assertEquals(Constants.R_REMOTES + Constants.DEFAULT_REMOTE_NAME + "/" + Constants.MASTER, branchesArray.getJSONObject(0).get(ProtocolConstants.KEY_FULL_NAME));
+		}
+	}
+
+	@Test
 	public void testLogFolder() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 

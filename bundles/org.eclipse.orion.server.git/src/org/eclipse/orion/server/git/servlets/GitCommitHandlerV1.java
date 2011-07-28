@@ -102,24 +102,39 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws CoreException, IOException, ServletException, JSONException, URISyntaxException {
-		IPath filePath = path.hasTrailingSeparator() ? path.removeFirstSegments(1) : path.removeFirstSegments(1).removeLastSegments(1);
-		Set<Entry<IPath, File>> set = GitUtils.getGitDirs(filePath, Traverse.GO_UP).entrySet();
-		File gitDir = set.iterator().next().getValue();
-		if (gitDir == null)
-			return false; // TODO: or an error response code, 405?
+		if (path.segment(0).equals("file")) { //$NON-NLS-1$
+			// special case for git log --all
+			IPath filePath = path.hasTrailingSeparator() ? path : path.removeLastSegments(1);
+			Set<Entry<IPath, File>> set = GitUtils.getGitDirs(filePath, Traverse.GO_UP).entrySet();
+			File gitDir = set.iterator().next().getValue();
+			if (gitDir == null)
+				return false; // TODO: or an error response code, 405?
 
-		db = new FileRepository(gitDir);
+			db = new FileRepository(gitDir);
 
-		// /{ref}/file/{projectId}...}
-		String parts = request.getParameter("parts"); //$NON-NLS-1$
-		String pattern = GitUtils.getRelativePath(path, set.iterator().next().getKey());
-		if (path.segmentCount() > 3 && "body".equals(parts)) { //$NON-NLS-1$
-			return handleGetCommitBody(request, response, db, path.segment(0), pattern);
+			String pattern = GitUtils.getRelativePath(path, set.iterator().next().getKey());
+			return handleGetCommitLog(request, response, db, null, pattern);
+
+		} else if (path.segment(1).equals("file")) { //$NON-NLS-1$
+			// git log branch_name
+			IPath filePath = path.hasTrailingSeparator() ? path.removeFirstSegments(1) : path.removeFirstSegments(1).removeLastSegments(1);
+			Set<Entry<IPath, File>> set = GitUtils.getGitDirs(filePath, Traverse.GO_UP).entrySet();
+			File gitDir = set.iterator().next().getValue();
+			if (gitDir == null)
+				return false; // TODO: or an error response code, 405?
+
+			db = new FileRepository(gitDir);
+
+			// /{ref}/file/{projectId}...}
+			String parts = request.getParameter("parts"); //$NON-NLS-1$
+			String pattern = GitUtils.getRelativePath(path, set.iterator().next().getKey());
+			if (path.segmentCount() > 3 && "body".equals(parts)) { //$NON-NLS-1$
+				return handleGetCommitBody(request, response, db, path.segment(0), pattern);
+			}
+			if (path.segmentCount() > 2 && (parts == null || "log".equals(parts))) { //$NON-NLS-1$
+				return handleGetCommitLog(request, response, db, path.segment(0), pattern);
+			}
 		}
-		if (path.segmentCount() > 2 && (parts == null || "log".equals(parts))) { //$NON-NLS-1$
-			return handleGetCommitLog(request, response, db, path.segment(0), pattern);
-		}
-
 		return false;
 	}
 
@@ -155,41 +170,53 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		Ref toRefId = null;
 		Ref fromRefId = null;
 
-		if (refIdsRange.contains("..")) { //$NON-NLS-1$
-			String[] commits = refIdsRange.split("\\.\\."); //$NON-NLS-1$
-			if (commits.length != 2) {
-				String msg = NLS.bind("Failed to generate commit log for ref {0}", refIdsRange);
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
-			}
-
-			fromObjectId = db.resolve(commits[0]);
-			fromRefId = db.getRef(commits[0]);
-			if (fromObjectId == null) {
-				String msg = NLS.bind("Failed to generate commit log for ref {0}", commits[0]);
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
-			}
-
-			toObjectId = db.resolve(commits[1]);
-			toRefId = db.getRef(commits[1]);
-			if (toObjectId == null) {
-				String msg = NLS.bind("No ref or commit found: {0}", commits[1]);
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
-			}
-		} else {
-			toObjectId = db.resolve(refIdsRange);
-			toRefId = db.getRef(refIdsRange);
-			if (toObjectId == null) {
-				String msg = NLS.bind("No ref or commit found: {0}", refIdsRange);
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
-			}
-		}
-
 		Git git = new Git(db);
 		LogCommand log = git.log();
-		// set the commit range
-		log.add(toObjectId);
-		if (fromObjectId != null)
-			log.not(fromObjectId);
+
+		if (refIdsRange != null) {
+			// git log <since>..<until>
+			if (refIdsRange.contains("..")) { //$NON-NLS-1$
+				String[] commits = refIdsRange.split("\\.\\."); //$NON-NLS-1$
+				if (commits.length != 2) {
+					String msg = NLS.bind("Failed to generate commit log for ref {0}", refIdsRange);
+					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+				}
+
+				fromObjectId = db.resolve(commits[0]);
+				fromRefId = db.getRef(commits[0]);
+				if (fromObjectId == null) {
+					String msg = NLS.bind("Failed to generate commit log for ref {0}", commits[0]);
+					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+				}
+
+				toObjectId = db.resolve(commits[1]);
+				toRefId = db.getRef(commits[1]);
+				if (toObjectId == null) {
+					String msg = NLS.bind("No ref or commit found: {0}", commits[1]);
+					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
+				}
+			} else {
+				toObjectId = db.resolve(refIdsRange);
+				toRefId = db.getRef(refIdsRange);
+				if (toObjectId == null) {
+					String msg = NLS.bind("No ref or commit found: {0}", refIdsRange);
+					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
+				}
+			}
+
+			// set the commit range
+			log.add(toObjectId);
+
+			if (fromObjectId != null)
+				log.not(fromObjectId);
+		} else {
+			// git log --all
+			// workaround for git log --all - see bug 353310
+			List<Ref> branches = git.branchList().setListMode(ListMode.ALL).call();
+			for (Ref branch : branches) {
+				log.add(branch.getObjectId());
+			}
+		}
 
 		// set the path filter
 		TreeFilter filter = null;
@@ -207,6 +234,10 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			JSONObject result = toJSON(db, OrionServlet.getURI(request), commits, commitToBranchMap, page, pageSize, filter, isRoot);
 
 			result.put(GitConstants.KEY_REPOSITORY_PATH, isRoot ? "" : path); //$NON-NLS-1$
+			if (refIdsRange == null)
+				result.put(GitConstants.KEY_CLONE, BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.COMMIT));
+			else
+				result.put(GitConstants.KEY_CLONE, BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.COMMIT_REFRANGE));
 
 			if (toRefId != null) {
 				result.put(GitConstants.KEY_REMOTE, BaseToRemoteConverter.getRemoteBranchLocation(getURI(request), Repository.shortenRefName(toRefId.getName()), db, BaseToRemoteConverter.REMOVE_FIRST_3));
@@ -224,6 +255,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 					result.put(GitConstants.KEY_LOG_FROM_REF, BranchToJSONConverter.toJSON(fromRefId.getTarget(), db, getURI(request), 3));
 				}
 			}
+
 			OrionServlet.writeJSONResponse(request, response, result);
 			return true;
 		} catch (NoHeadException e) {

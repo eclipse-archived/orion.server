@@ -39,6 +39,8 @@ public abstract class BaseToCloneConverter {
 		};
 	};
 
+	public static final BaseToCloneConverter COMMIT = STATUS;
+
 	public static final BaseToCloneConverter REMOTE = new BaseToCloneConverter() {
 		@Override
 		public IPath getFilePath(URI base) throws URISyntaxException {
@@ -46,12 +48,9 @@ public abstract class BaseToCloneConverter {
 		};
 	};
 
-	public static final BaseToCloneConverter BRANCH = new BaseToCloneConverter() {
-		@Override
-		public IPath getFilePath(URI base) throws URISyntaxException {
-			return new Path(base.getPath()).removeFirstSegments(3).makeRelative();
-		};
-	};
+	public static final BaseToCloneConverter BRANCH = REMOTE;
+
+	public static final BaseToCloneConverter COMMIT_REFRANGE = REMOTE;
 
 	public static final BaseToCloneConverter REMOTE_BRANCH = new BaseToCloneConverter() {
 		@Override

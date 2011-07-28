@@ -807,11 +807,28 @@ public abstract class GitTest extends FileSystemTest {
 	protected static void assertCommitUri(String commitUri) {
 		URI uri = URI.create(commitUri);
 		IPath path = new Path(uri.getPath());
-		// /git/commit/{ref}/file/{path}
-		assertTrue(path.segmentCount() > 4);
-		assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
-		assertEquals(GitConstants.COMMIT_RESOURCE, path.segment(1));
-		assertEquals("file", path.segment(3));
+		AssertionError error = null;
+		// /gitapi/commit/{ref}/file/{path}
+		try {
+			assertTrue(path.segmentCount() > 4);
+			assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
+			assertEquals(GitConstants.COMMIT_RESOURCE, path.segment(1));
+			assertEquals("file", path.segment(3));
+		} catch (AssertionError e) {
+			error = e;
+		}
+
+		// /gitapi/commit/file/{path}
+		try {
+			assertTrue(path.segmentCount() > 3);
+			assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
+			assertEquals(GitConstants.COMMIT_RESOURCE, path.segment(1));
+			assertEquals("file", path.segment(2));
+		} catch (AssertionError e) {
+			if (error != null) {
+				throw error; // rethrow the first exception
+			} // otherwise it's a commit location, ignore this exception
+		}
 	}
 
 	static void assertStatusUri(String statusUri) {

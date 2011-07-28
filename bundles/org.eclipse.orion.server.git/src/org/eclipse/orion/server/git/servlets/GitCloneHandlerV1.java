@@ -500,6 +500,10 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			location = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), np.toString(), baseLocation.getQuery(), baseLocation.getFragment());
 			result.put(GitConstants.KEY_HEAD, location);
 
+			np = new Path(GitServlet.GIT_URI).append(GitConstants.COMMIT_RESOURCE).append("file").append(k); //$NON-NLS-1$
+			location = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), np.toString(), baseLocation.getQuery(), baseLocation.getFragment());
+			result.put(GitConstants.KEY_COMMIT, location);
+
 			np = new Path(GitServlet.GIT_URI).append(GitConstants.BRANCH_RESOURCE).append("file").append(k); //$NON-NLS-1$
 			location = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), np.toString(), baseLocation.getQuery(), baseLocation.getFragment());
 			result.put(GitConstants.KEY_BRANCH, location);
