@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashSet;
@@ -37,13 +36,16 @@ public class PushJob extends GitJob {
 
 	private final TaskInfo task;
 	private Path path;
+	private String remote;
 	private String srcRef;
 	private boolean tags;
 	private boolean force;
 
 	public PushJob(CredentialsProvider credentials, Path path, String srcRef, boolean tags, boolean force) {
 		super("Pushing", (GitCredentialsProvider) credentials);
+		// path: {remote}[/{branch}]/file/{...}
 		this.path = path;
+		this.remote = path.segment(0);
 		this.srcRef = srcRef;
 		this.tags = tags;
 		this.task = createTask();
@@ -58,22 +60,25 @@ public class PushJob extends GitJob {
 	}
 
 	private IStatus doPush() throws IOException, CoreException, JGitInternalException, InvalidRemoteException, URISyntaxException, JSONException {
-		// /git/remote/{remote}/{branch}/file/{path}
-		File gitDir = GitUtils.getGitDir(path.removeFirstSegments(2));
-		Repository db = new FileRepository(gitDir);
-		Git git = new Git(db);
+		// /git/remote/{remote}[/{branch}]/file/{path}
+		Repository db = getRepository();
+		String branch = getRemoteBranch();
 
+		Git git = new Git(db);
 		PushCommand pushCommand = git.push();
 
-		RemoteConfig remoteConfig = new RemoteConfig(git.getRepository().getConfig(), path.segment(0));
+		RemoteConfig remoteConfig = new RemoteConfig(git.getRepository().getConfig(), remote);
 		credentials.setUri(remoteConfig.getURIs().get(0));
-		pushCommand.setCredentialsProvider(credentials);
 
-		// ObjectId ref = db.resolve(srcRef);
-		RefSpec spec = new RefSpec(srcRef + ":" + Constants.R_HEADS + path.segment(1)); //$NON-NLS-1$
-		pushCommand.setRemote(path.segment(0)).setRefSpecs(spec);
-		if (tags)
+		pushCommand.setCredentialsProvider(credentials);
+		pushCommand.setRemote(remote);
+		if (branch != null) {
+			RefSpec spec = new RefSpec(srcRef + ":" + Constants.R_HEADS + path.segment(1)); //$NON-NLS-1$
+			pushCommand.setRefSpecs(spec);
+		}
+		if (tags) {
 			pushCommand.setPushTags();
+		}
 		pushCommand.setForce(force);
 		Iterable<PushResult> resultIterable = pushCommand.call();
 		PushResult pushResult = resultIterable.iterator().next();
@@ -82,8 +87,9 @@ public class PushJob extends GitJob {
 		for (final RemoteRefUpdate rru : pushResult.getRemoteUpdates()) {
 			final String rm = rru.getRemoteName();
 			// final String sr = rru.isDelete() ? null : rru.getSrcRef();
-			// check status only for branch given in the URL or tags
-			if (path.segment(1).equals(Repository.shortenRefName(rm)) || rm.startsWith(Constants.R_TAGS)) {
+			// if branch is specified, check status only for branch given in the URL or tags
+			// if not, check status for all branches
+			if (branch == null || branch.equals(Repository.shortenRefName(rm)) || rm.startsWith(Constants.R_TAGS)) {
 				RemoteRefUpdate.Status status = rru.getStatus();
 				// any status different from UP_TO_DATE and OK should generate warning
 				if (status != RemoteRefUpdate.Status.OK && status != RemoteRefUpdate.Status.UP_TO_DATE)
@@ -99,6 +105,22 @@ public class PushJob extends GitJob {
 		else
 			// if there is no OK status in the set -> only UP_TO_DATE status is possible
 			return new Status(IStatus.WARNING, GitActivator.PI_GIT, RemoteRefUpdate.Status.UP_TO_DATE.name());
+	}
+
+	private Repository getRepository() throws IOException, CoreException {
+		IPath p = null;
+		if (path.segment(1).equals("file")) //$NON-NLS-1$
+			p = path.removeFirstSegments(1);
+		else
+			p = path.removeFirstSegments(2);
+		return new FileRepository(GitUtils.getGitDir(p));
+	}
+
+	private String getRemoteBranch() {
+		if (path.segment(1).equals("file")) //$NON-NLS-1$
+			return null;
+		else
+			return path.segment(1);
 	}
 
 	public TaskInfo getTask() {

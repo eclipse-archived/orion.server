@@ -176,7 +176,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	// remove remote
-	private boolean handleDelete(HttpServletRequest request, HttpServletResponse response, String path) throws CoreException, IOException, URISyntaxException, JSONException, ServletException {
+	private boolean handleDelete(HttpServletRequest request, HttpServletResponse response, String path) throws CoreException, IOException, URISyntaxException {
 		Path p = new Path(path);
 		if (p.segment(1).equals("file")) { //$NON-NLS-1$
 			// expected path: /gitapi/remote/{remote}/file/{path}
@@ -222,10 +222,8 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			// if all went well, continue with fetch or push
 			if (fetch) {
 				return fetch(request, response, cp, path, force);
-			} else if (srcRef != null) {
-				return push(request, response, path, cp, srcRef, tags, force);
 			} else {
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Only Fetch:true is currently supported.", null));
+				return push(request, response, path, cp, srcRef, tags, force);
 			}
 		}
 	}
@@ -298,8 +296,9 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 	private boolean push(HttpServletRequest request, HttpServletResponse response, String path, GitCredentialsProvider cp, String srcRef, boolean tags, boolean force) throws ServletException, CoreException, IOException, JSONException, URISyntaxException {
 		Path p = new Path(path);
 		// FIXME: what if a remote or branch is named "file"?
-		if (p.segment(2).equals("file")) { //$NON-NLS-1$
-			// /git/remote/{remote}/{branch}/file/{path}
+		if (p.segment(1).equals("file") || (p.segment(2).equals("file") && srcRef != null)) { //$NON-NLS-1$
+			// /gitapi/remote/{remote}/file/{path} - specRef would be deduced from the repo config
+			// /gitapi/remote/{remote}/{branch}/file/{path} - srcRef is required
 			PushJob job = new PushJob(cp, p, srcRef, tags, force);
 			job.schedule();
 
@@ -312,7 +311,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			response.setStatus(HttpServletResponse.SC_ACCEPTED);
 			return true;
 		}
-		return false;
+		return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Bad URI or PushSrcRef expected", null));
 	}
 
 	private URI createTaskLocation(URI baseLocation, String taskId) throws URISyntaxException {

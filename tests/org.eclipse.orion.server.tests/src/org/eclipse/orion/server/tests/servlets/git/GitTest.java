@@ -481,9 +481,9 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	/**
-	 * Pushes the changes from the the source ref to the given remote branch.
+	 * Pushes the changes from the the source ref to the given remote or remote branch.
 	 * 
-	 * @param gitRemoteBranchUri remote branch URI
+	 * @param gitRemoteUri remote or remote branch URI
 	 * @param srcRef the source ref to push
 	 * @param tags <code>true</code> to push tags
 	 * @return JSON object representing response
@@ -491,14 +491,14 @@ public abstract class GitTest extends FileSystemTest {
 	 * @throws SAXException
 	 * @throws JSONException
 	 */
-	protected ServerStatus push(String gitRemoteBranchUri, String srcRef, boolean tags) throws IOException, SAXException, JSONException {
-		return push(gitRemoteBranchUri, srcRef, tags, false);
+	protected ServerStatus push(String gitRemoteUri, String srcRef, boolean tags) throws IOException, SAXException, JSONException {
+		return push(gitRemoteUri, srcRef, tags, false);
 	}
 
 	/**
-	 * Pushes the changes from the the source ref to the given remote branch.
+	 * Pushes the changes from the the source ref to the given remote or remote branch.
 	 * 
-	 * @param gitRemoteBranchUri remote branch URI
+	 * @param gitRemoteUri remote or remote branch URI
 	 * @param srcRef the source ref to push
 	 * @param tags <code>true</code> to push tags
 	 * @param force <code>true</code> to force push
@@ -507,9 +507,9 @@ public abstract class GitTest extends FileSystemTest {
 	 * @throws SAXException
 	 * @throws JSONException
 	 */
-	protected ServerStatus push(String gitRemoteBranchUri, String srcRef, boolean tags, boolean force) throws IOException, SAXException, JSONException {
-		assertRemoteOrRemoteBranchLocation(gitRemoteBranchUri);
-		WebRequest request = GitPushTest.getPostGitRemoteRequest(gitRemoteBranchUri, srcRef, tags, force);
+	protected ServerStatus push(String gitRemoteUri, String srcRef, boolean tags, boolean force) throws IOException, SAXException, JSONException {
+		assertRemoteOrRemoteBranchLocation(gitRemoteUri);
+		WebRequest request = GitPushTest.getPostGitRemoteRequest(gitRemoteUri, srcRef, tags, force);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
