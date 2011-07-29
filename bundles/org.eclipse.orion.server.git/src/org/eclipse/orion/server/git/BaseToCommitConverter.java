@@ -23,7 +23,7 @@ public abstract class BaseToCommitConverter {
 		public URI baseToCommitLocation(URI base, String commit) throws URISyntaxException {
 			IPath p = new Path(base.getPath());
 			p = new Path(GitServlet.GIT_URI).append(GitConstants.COMMIT_RESOURCE).append(commit).addTrailingSeparator().append(p);
-			return new URI(base.getScheme(), base.getUserInfo(), base.getHost(), base.getPort(), p.toString(), base.getQuery(), base.getFragment());
+			return new URI(base.getScheme(), base.getUserInfo(), base.getHost(), base.getPort(), p.toString(), getQuery(base.getQuery()), base.getFragment());
 		};
 	};
 
@@ -31,7 +31,7 @@ public abstract class BaseToCommitConverter {
 		public URI baseToCommitLocation(URI base, String commit) throws URISyntaxException {
 			IPath p = new Path(base.getPath());
 			p = p.uptoSegment(1).append(GitConstants.COMMIT_RESOURCE).append(commit).addTrailingSeparator().append(p.removeFirstSegments(2));
-			return new URI(base.getScheme(), base.getUserInfo(), base.getHost(), base.getPort(), p.toString(), base.getQuery(), base.getFragment());
+			return new URI(base.getScheme(), base.getUserInfo(), base.getHost(), base.getPort(), p.toString(), getQuery(base.getQuery()), base.getFragment());
 		};
 	};
 
@@ -39,7 +39,7 @@ public abstract class BaseToCommitConverter {
 		public URI baseToCommitLocation(URI base, String commit) throws URISyntaxException {
 			IPath p = new Path(base.getPath());
 			p = p.uptoSegment(1).append(GitConstants.COMMIT_RESOURCE).append(commit).addTrailingSeparator().append(p.removeFirstSegments(3));
-			return new URI(base.getScheme(), base.getUserInfo(), base.getHost(), base.getPort(), p.toString(), base.getQuery(), base.getFragment());
+			return new URI(base.getScheme(), base.getUserInfo(), base.getHost(), base.getPort(), p.toString(), getQuery(base.getQuery()), base.getFragment());
 		};
 	};
 
@@ -47,7 +47,7 @@ public abstract class BaseToCommitConverter {
 		public URI baseToCommitLocation(URI base, String commit) throws URISyntaxException {
 			IPath p = new Path(base.getPath());
 			p = p.uptoSegment(1).append(GitConstants.COMMIT_RESOURCE).append(commit).addTrailingSeparator().append(p.removeFirstSegments(4));
-			return new URI(base.getScheme(), base.getUserInfo(), base.getHost(), base.getPort(), p.toString(), base.getQuery(), base.getFragment());
+			return new URI(base.getScheme(), base.getUserInfo(), base.getHost(), base.getPort(), p.toString(), getQuery(base.getQuery()), base.getFragment());
 		};
 	};
 
@@ -55,5 +55,19 @@ public abstract class BaseToCommitConverter {
 		return converter.baseToCommitLocation(base, commit);
 	}
 
+	protected String query;
+
 	protected abstract URI baseToCommitLocation(URI base, String commit) throws URISyntaxException;
+
+	public BaseToCommitConverter setQuery(String query) {
+		this.query = query;
+		return this;
+	}
+
+	public String getQuery(String baseQuery) {
+		String result = query != null ? query : baseQuery;
+		// TODO: still not thread-safe, replace statics with a factory
+		this.query = null;
+		return result;
+	}
 }

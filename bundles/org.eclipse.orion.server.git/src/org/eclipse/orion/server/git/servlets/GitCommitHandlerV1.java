@@ -173,7 +173,9 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		Git git = new Git(db);
 		LogCommand log = git.log();
 
+		BaseToCommitConverter converter = null;
 		if (refIdsRange != null) {
+			converter = BaseToCommitConverter.REMOVE_FIRST_3;
 			// git log <since>..<until>
 			if (refIdsRange.contains("..")) { //$NON-NLS-1$
 				String[] commits = refIdsRange.split("\\.\\."); //$NON-NLS-1$
@@ -210,6 +212,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			if (fromObjectId != null)
 				log.not(fromObjectId);
 		} else {
+			converter = BaseToCommitConverter.REMOVE_FIRST_2;
 			// git log --all
 			// workaround for git log --all - see bug 353310
 			List<Ref> branches = git.branchList().setListMode(ListMode.ALL).call();
@@ -231,7 +234,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		try {
 			Iterable<RevCommit> commits = log.call();
 			Map<ObjectId, JSONArray> commitToBranchMap = getCommitToBranchMap(db);
-			JSONObject result = toJSON(db, OrionServlet.getURI(request), commits, commitToBranchMap, page, pageSize, filter, isRoot);
+			JSONObject result = toJSON(db, OrionServlet.getURI(request), commits, commitToBranchMap, page, pageSize, filter, isRoot, converter);
 
 			result.put(GitConstants.KEY_REPOSITORY_PATH, isRoot ? "" : path); //$NON-NLS-1$
 			if (refIdsRange == null)
@@ -267,7 +270,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		}
 	}
 
-	private JSONObject toJSON(Repository db, URI baseLocation, Iterable<RevCommit> commits, Map<ObjectId, JSONArray> commitToBranchMap, int page, int pageSize, TreeFilter filter, boolean isRoot) throws JSONException, URISyntaxException, MissingObjectException, IOException {
+	private JSONObject toJSON(Repository db, URI baseLocation, Iterable<RevCommit> commits, Map<ObjectId, JSONArray> commitToBranchMap, int page, int pageSize, TreeFilter filter, boolean isRoot, BaseToCommitConverter converter) throws JSONException, URISyntaxException, MissingObjectException, IOException {
 		boolean pageable = (page > 0);
 		int startIndex = (page - 1) * pageSize;
 		int index = 0;
@@ -285,16 +288,16 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 
 			index++;
 
-			children.put(toJSON(db, revCommit, commitToBranchMap, baseLocation, filter, isRoot));
+			children.put(toJSON(db, revCommit, commitToBranchMap, baseLocation, filter, isRoot, converter));
 		}
 		result.put(ProtocolConstants.KEY_CHILDREN, children);
 		return result;
 	}
 
-	private JSONObject toJSON(Repository db, RevCommit revCommit, Map<ObjectId, JSONArray> commitToBranchMap, URI baseLocation, TreeFilter filter, boolean isRoot) throws JSONException, URISyntaxException, IOException {
+	private JSONObject toJSON(Repository db, RevCommit revCommit, Map<ObjectId, JSONArray> commitToBranchMap, URI baseLocation, TreeFilter filter, boolean isRoot, BaseToCommitConverter converter) throws JSONException, URISyntaxException, IOException {
 		JSONObject commit = new JSONObject();
-		commit.put(ProtocolConstants.KEY_LOCATION, createCommitLocation(baseLocation, revCommit.getName(), null));
-		commit.put(ProtocolConstants.KEY_CONTENT_LOCATION, createCommitLocation(baseLocation, revCommit.getName(), "parts=body")); //$NON-NLS-1$
+		commit.put(ProtocolConstants.KEY_LOCATION, BaseToCommitConverter.getCommitLocation(baseLocation, revCommit.getName(), converter));
+		commit.put(ProtocolConstants.KEY_CONTENT_LOCATION, BaseToCommitConverter.getCommitLocation(baseLocation, revCommit.getName(), converter.setQuery("parts=body"))); //$NON-NLS-1$
 		commit.put(GitConstants.KEY_DIFF, createDiffLocation(baseLocation, revCommit.getName(), null, null, isRoot));
 		commit.put(ProtocolConstants.KEY_NAME, revCommit.getName());
 		PersonIdent author = revCommit.getAuthorIdent();
@@ -464,7 +467,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			RevCommit lastCommit = commit.setAmend(amend).setMessage(message).call();
 			Map<ObjectId, JSONArray> commitToBranchMap = getCommitToBranchMap(db);
 
-			JSONObject result = toJSON(db, lastCommit, commitToBranchMap, getURI(request), null, isRoot);
+			JSONObject result = toJSON(db, lastCommit, commitToBranchMap, getURI(request), null, isRoot, BaseToCommitConverter.REMOVE_FIRST_3);
 			OrionServlet.writeJSONResponse(request, response, result);
 			return true;
 		} catch (GitAPIException e) {
@@ -581,7 +584,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			GitTagHandlerV1.tag(git, revCommit, tagName);
 			Map<ObjectId, JSONArray> commitToBranchMap = getCommitToBranchMap(db);
 
-			JSONObject result = toJSON(db, revCommit, commitToBranchMap, OrionServlet.getURI(request), null, isRoot);
+			JSONObject result = toJSON(db, revCommit, commitToBranchMap, OrionServlet.getURI(request), null, isRoot, BaseToCommitConverter.REMOVE_FIRST_3);
 			OrionServlet.writeJSONResponse(request, response, result);
 			return true;
 		} catch (IOException e) {
