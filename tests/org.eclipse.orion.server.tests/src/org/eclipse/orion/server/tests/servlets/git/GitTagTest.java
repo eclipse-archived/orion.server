@@ -115,4 +115,75 @@ public class GitTagTest extends GitTest {
 			assertEquals("tag2", tags.getJSONObject(1).get(ProtocolConstants.KEY_NAME));
 		}
 	}
+
+	@Test
+	public void testTagFailed() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
+
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			JSONObject clone = clone(clonePath);
+			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+			// get project/folder metadata
+			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject folder = new JSONObject(response.getText());
+			String folderLocation = folder.getString(ProtocolConstants.KEY_LOCATION);
+
+			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
+			String gitTagUri = gitSection.getString(GitConstants.KEY_TAG);
+			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
+			String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+
+			// tag HEAD with 'tag'
+			JSONObject tag = tag(gitTagUri, "tag", Constants.HEAD);
+			assertEquals("tag", tag.getString(ProtocolConstants.KEY_NAME));
+			new URI(tag.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+
+			// tag HEAD with 'tag' again (TagHandler) - should fail
+			request = getPostGitTagRequest(gitTagUri, "tag", Constants.HEAD);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, response.getResponseCode());
+
+			// tag HEAD with 'tag' again (CommitHandler) - should fail
+			request = getPutGitCommitRequest(gitHeadUri, "tag");
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, response.getResponseCode());
+
+			// modify
+			request = getPutFileRequest(folderLocation + "/test.txt", "test.txt change");
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// add
+			request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "folder/folder.txt");
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// commit
+			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit", false);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// tag next commit with 'tag' again (TagHandler) - should fail
+			request = getPostGitTagRequest(gitTagUri, "tag", Constants.HEAD);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, response.getResponseCode());
+
+			// tag HEAD with 'tag' again (CommitHandler) - should fail
+			request = getPutGitCommitRequest(gitHeadUri, "tag");
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, response.getResponseCode());
+		}
+	}
+
 }

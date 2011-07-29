@@ -570,21 +570,29 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		return false;
 	}
 
-	private boolean tag(HttpServletRequest request, HttpServletResponse response, Repository db, String commitId, String tagName, boolean isRoot) throws AmbiguousObjectException, IOException, JGitInternalException, GitAPIException, JSONException, URISyntaxException {
+	private boolean tag(HttpServletRequest request, HttpServletResponse response, Repository db, String commitId, String tagName, boolean isRoot) throws JSONException, URISyntaxException, ServletException {
 		Git git = new Git(db);
-		ObjectId objectId = db.resolve(commitId);
-
 		RevWalk walk = new RevWalk(db);
-		RevCommit revCommit = walk.lookupCommit(objectId);
-		walk.parseBody(revCommit);
+		try {
+			ObjectId objectId = db.resolve(commitId);
+			RevCommit revCommit = walk.lookupCommit(objectId);
+			walk.parseBody(revCommit);
 
-		GitTagHandlerV1.tag(git, revCommit, tagName);
-		Map<ObjectId, JSONArray> commitToBranchMap = getCommitToBranchMap(db);
+			GitTagHandlerV1.tag(git, revCommit, tagName);
+			Map<ObjectId, JSONArray> commitToBranchMap = getCommitToBranchMap(db);
 
-		JSONObject result = toJSON(db, revCommit, commitToBranchMap, OrionServlet.getURI(request), null, isRoot);
-		OrionServlet.writeJSONResponse(request, response, result);
-		walk.dispose();
-		return true;
+			JSONObject result = toJSON(db, revCommit, commitToBranchMap, OrionServlet.getURI(request), null, isRoot);
+			OrionServlet.writeJSONResponse(request, response, result);
+			return true;
+		} catch (IOException e) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when tagging.", e));
+		} catch (GitAPIException e) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when tagging.", e));
+		} catch (JGitInternalException e) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when tagging.", e));
+		} finally {
+			walk.dispose();
+		}
 	}
 
 	// from https://gist.github.com/839693, credits to zx

@@ -978,7 +978,7 @@ public abstract class GitTest extends FileSystemTest {
 		return request;
 	}
 
-	private static WebRequest getPostGitTagRequest(String location, String tagName, String commitId) throws JSONException, UnsupportedEncodingException {
+	protected static WebRequest getPostGitTagRequest(String location, String tagName, String commitId) throws JSONException, UnsupportedEncodingException {
 		assertTagUri(location);
 		String requestURI;
 		if (location.startsWith("http://"))
@@ -995,7 +995,7 @@ public abstract class GitTest extends FileSystemTest {
 		return request;
 	}
 
-	private static WebRequest getPutGitCommitRequest(String location, String tagName) throws UnsupportedEncodingException, JSONException {
+	protected static WebRequest getPutGitCommitRequest(String location, String tagName) throws UnsupportedEncodingException, JSONException {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;

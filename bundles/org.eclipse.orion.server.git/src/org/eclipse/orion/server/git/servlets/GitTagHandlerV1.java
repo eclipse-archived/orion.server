@@ -77,26 +77,34 @@ public class GitTagHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, String path) throws IOException, JSONException, CoreException, JGitInternalException, GitAPIException {
+	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, String path) throws CoreException, IOException, JSONException, ServletException {
 		IPath p = new Path(path);
 		File gitDir = GitUtils.getGitDir(p);
 		Repository db = new FileRepository(gitDir);
 		Git git = new Git(db);
-		JSONObject toPut = OrionServlet.readJSONRequest(request);
-		String tagName = toPut.getString(ProtocolConstants.KEY_NAME);
-		String commitId = toPut.getString(GitConstants.KEY_TAG_COMMIT);
-		ObjectId objectId = db.resolve(commitId);
-
 		RevWalk walk = new RevWalk(db);
-		RevCommit revCommit = walk.lookupCommit(objectId);
+		try {
+			JSONObject toPut = OrionServlet.readJSONRequest(request);
+			String tagName = toPut.getString(ProtocolConstants.KEY_NAME);
+			String commitId = toPut.getString(GitConstants.KEY_TAG_COMMIT);
+			ObjectId objectId = db.resolve(commitId);
+			RevCommit revCommit = walk.lookupCommit(objectId);
 
-		RevTag revTag = tag(git, revCommit, tagName);
-		JSONObject result = new JSONObject();
-		result.put(ProtocolConstants.KEY_NAME, revTag.getTagName());
-		result.put(ProtocolConstants.KEY_CONTENT_LOCATION, OrionServlet.getURI(request));
-		OrionServlet.writeJSONResponse(request, response, result);
-		walk.dispose();
-		return true;
+			RevTag revTag = tag(git, revCommit, tagName);
+			JSONObject result = new JSONObject();
+			result.put(ProtocolConstants.KEY_NAME, revTag.getTagName());
+			result.put(ProtocolConstants.KEY_CONTENT_LOCATION, OrionServlet.getURI(request));
+			OrionServlet.writeJSONResponse(request, response, result);
+			return true;
+		} catch (IOException e) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when tagging.", e));
+		} catch (GitAPIException e) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when tagging.", e));
+		} catch (JGitInternalException e) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when tagging.", e));
+		} finally {
+			walk.dispose();
+		}
 	}
 
 	static RevTag tag(Git git, RevCommit revCommit, String tagName) throws JGitInternalException, GitAPIException {
