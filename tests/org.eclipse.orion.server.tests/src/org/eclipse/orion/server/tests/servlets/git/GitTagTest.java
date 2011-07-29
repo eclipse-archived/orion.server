@@ -11,6 +11,7 @@
 package org.eclipse.orion.server.tests.servlets.git;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -178,11 +179,21 @@ public class GitTagTest extends GitTest {
 			request = getPostGitTagRequest(gitTagUri, "tag", Constants.HEAD);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, response.getResponseCode());
+			JSONObject result = new JSONObject(response.getText());
+			assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, result.getInt("HttpCode"));
+			assertEquals("Error", result.getString("Severity"));
+			assertEquals("An error occured when tagging.", result.getString("Message"));
+			assertTrue(result.getString("DetailedMessage").endsWith("REJECTED"));
 
 			// tag HEAD with 'tag' again (CommitHandler) - should fail
 			request = getPutGitCommitRequest(gitHeadUri, "tag");
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, response.getResponseCode());
+			result = new JSONObject(response.getText());
+			assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, result.getInt("HttpCode"));
+			assertEquals("Error", result.getString("Severity"));
+			assertEquals("An error occured when tagging.", result.getString("Message"));
+			assertTrue(result.getString("DetailedMessage").endsWith("REJECTED"));
 		}
 	}
 
