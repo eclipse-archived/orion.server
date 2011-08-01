@@ -20,6 +20,8 @@ public class StatusResult {
 	private int missing = 0;
 	private String[] missingNames;
 	private int modified = 0;
+	private String[] modifiedNames;
+	private String[] modifiedPaths;
 	private int removed = 0;
 	private int untracked = 0;
 
@@ -65,12 +67,32 @@ public class StatusResult {
 		return missing;
 	}
 
+	public StatusResult setModifiedNames(String... modifiedNames) {
+		this.modifiedNames = modifiedNames;
+		return this;
+	}
+
+	public String[] getModifiedNames() {
+		return modifiedNames;
+	}
+
+	public StatusResult setModifiedPaths(String... modifiedPaths) {
+		this.modifiedPaths = modifiedPaths;
+		return this;
+	}
+
+	public String[] getModifiedPaths() {
+		return modifiedPaths;
+	}
+
 	public StatusResult setModified(int modified) {
 		this.modified = modified;
 		return this;
 	}
 
 	public int getModified() {
+		if (modifiedNames != null)
+			return modifiedNames.length;
 		return modified;
 	}
 

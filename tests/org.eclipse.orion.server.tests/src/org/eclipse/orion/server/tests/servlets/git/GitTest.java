@@ -1155,6 +1155,16 @@ public abstract class GitTest extends FileSystemTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 	}
 
+	protected void commitFile(JSONObject fileObject, String message, boolean amend) throws JSONException, IOException, SAXException {
+		JSONObject fileGitSection = fileObject.getJSONObject(GitConstants.KEY_GIT);
+		String fileGitHeadUri = fileGitSection.getString(GitConstants.KEY_HEAD);
+
+		WebRequest request = GitCommitTest.getPostGitCommitRequest(fileGitHeadUri, message, amend);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+	}
+
 	protected void assertStatus(StatusResult expected, String statusUri) throws IOException, SAXException, JSONException {
 		assertStatusUri(statusUri);
 		WebRequest request = GitStatusTest.getGetGitStatusRequest(statusUri);
@@ -1171,7 +1181,18 @@ public abstract class GitTest extends FileSystemTest {
 				assertEquals(expected.getMissingNames()[i], statusArray.getJSONObject(i).getString(ProtocolConstants.KEY_NAME));
 			}
 		}
-		assertEquals(expected.getModified(), statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED).length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
+		assertEquals(expected.getModified(), statusArray.length());
+		if (expected.getModifiedNames() != null) {
+			for (int i = 0; i < expected.getModifiedNames().length; i++) {
+				assertEquals(expected.getModifiedNames()[i], statusArray.getJSONObject(i).getString(ProtocolConstants.KEY_NAME));
+			}
+		}
+		if (expected.getModifiedPaths() != null) {
+			for (int i = 0; i < expected.getModifiedPaths().length; i++) {
+				assertEquals(expected.getModifiedPaths()[i], statusArray.getJSONObject(i).getString(ProtocolConstants.KEY_PATH));
+			}
+		}
 		assertEquals(expected.getRemoved(), statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED).length());
 		assertEquals(expected.getUntracked(), statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED).length());
 	}
