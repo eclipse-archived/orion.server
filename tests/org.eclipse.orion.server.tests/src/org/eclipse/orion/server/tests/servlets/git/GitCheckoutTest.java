@@ -52,15 +52,12 @@ public class GitCheckoutTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
 
-		// TODO: don't create URIs out of thin air
-		request = getPutFileRequest(projectId + "/test.txt", "change");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject testTxt = getChild(project, "test.txt");
+		modifyFile(testTxt, "change");
 
-		// TODO: don't create URIs out of thin air
-		request = getPutFileRequest(projectId + "/folder/folder.txt", "change");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject folder1 = getChild(project, "folder");
+		JSONObject folder1Txt = getChild(folder1, "folder.txt");
+		modifyFile(folder1Txt, "change");
 
 		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
@@ -70,11 +67,7 @@ public class GitCheckoutTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject statusResponse = new JSONObject(response.getText());
-		GitStatusTest.assertStatusClean(statusResponse);
+		assertStatus(StatusResult.CLEAN, gitStatusUri);
 	}
 
 	// modified + checkout = clean
@@ -112,11 +105,7 @@ public class GitCheckoutTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject statusResponse = new JSONObject(response.getText());
-		GitStatusTest.assertStatusClean(statusResponse);
+		assertStatus(StatusResult.CLEAN, gitStatusUri);
 	}
 
 	// modified + checkout = clean

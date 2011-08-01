@@ -103,11 +103,7 @@ public class GitMergeTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// assert clean
-		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject statusResponse = new JSONObject(response.getText());
-		GitStatusTest.assertStatusClean(statusResponse);
+		assertStatus(StatusResult.CLEAN, gitStatusUri);
 
 		// checkout 'master'
 		checkoutBranch(cloneLocation, Constants.MASTER);
@@ -134,11 +130,7 @@ public class GitMergeTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// assert clean
-		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		statusResponse = new JSONObject(response.getText());
-		GitStatusTest.assertStatusClean(statusResponse);
+		assertStatus(StatusResult.CLEAN, gitStatusUri);
 
 		// merge: "git merge a"
 		JSONObject merge = merge(gitHeadUri, "a");
@@ -146,11 +138,7 @@ public class GitMergeTest extends GitTest {
 		assertEquals(MergeStatus.MERGED, mergeResult);
 
 		// assert clean
-		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		statusResponse = new JSONObject(response.getText());
-		GitStatusTest.assertStatusClean(statusResponse);
+		assertStatus(StatusResult.CLEAN, gitStatusUri);
 
 		// TODO: don't create URIs out of thin air
 		request = getGetFilesRequest(projectId + "/test.txt");
@@ -286,11 +274,7 @@ public class GitMergeTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// assert clean
-		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject statusResponse = new JSONObject(response.getText());
-		GitStatusTest.assertStatusClean(statusResponse);
+		assertStatus(StatusResult.CLEAN, gitStatusUri);
 
 		// checkout 'master'
 		checkoutBranch(cloneLocation, Constants.MASTER);
@@ -317,11 +301,7 @@ public class GitMergeTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// assert clean
-		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		statusResponse = new JSONObject(response.getText());
-		GitStatusTest.assertStatusClean(statusResponse);
+		assertStatus(StatusResult.CLEAN, gitStatusUri);
 
 		// merge: "git merge a"
 		JSONObject merge = merge(gitHeadUri, "a");
@@ -332,7 +312,7 @@ public class GitMergeTest extends GitTest {
 		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		statusResponse = new JSONObject(response.getText());
+		JSONObject statusResponse = new JSONObject(response.getText());
 		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
 		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);

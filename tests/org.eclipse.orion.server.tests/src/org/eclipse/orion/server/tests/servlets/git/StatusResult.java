@@ -12,6 +12,8 @@ package org.eclipse.orion.server.tests.servlets.git;
 
 public class StatusResult {
 
+	final public static StatusResult CLEAN = new StatusResult();
+
 	private int added = 0;
 	private int changed = 0;
 	private int conflicting = 0;

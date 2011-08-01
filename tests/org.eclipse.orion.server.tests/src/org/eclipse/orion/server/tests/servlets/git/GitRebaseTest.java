@@ -126,11 +126,7 @@ public class GitRebaseTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// assert clean
-			request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			JSONObject statusResponse = new JSONObject(response.getText());
-			GitStatusTest.assertStatusClean(statusResponse);
+			assertStatus(StatusResult.CLEAN, gitStatusUri);
 
 			// checkout 'master'
 			checkoutBranch(cloneLocation, Constants.MASTER);
@@ -156,11 +152,7 @@ public class GitRebaseTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// assert clean
-			request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			statusResponse = new JSONObject(response.getText());
-			GitStatusTest.assertStatusClean(statusResponse);
+			assertStatus(StatusResult.CLEAN, gitStatusUri);
 
 			// rebase: "git rebase a"
 			JSONObject rebase = rebase(gitHeadUri, "a");
@@ -168,11 +160,7 @@ public class GitRebaseTest extends GitTest {
 			assertEquals(RebaseResult.Status.OK, rebaseResult);
 
 			// assert clean
-			request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			statusResponse = new JSONObject(response.getText());
-			GitStatusTest.assertStatusClean(statusResponse);
+			assertStatus(StatusResult.CLEAN, gitStatusUri);
 
 			request = getGetFilesRequest(projectLocation + "/test.txt");
 			response = webConversation.getResponse(request);
@@ -273,11 +261,7 @@ public class GitRebaseTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// assert clean
-			request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			JSONObject statusResponse = new JSONObject(response.getText());
-			GitStatusTest.assertStatusClean(statusResponse);
+			assertStatus(StatusResult.CLEAN, gitStatusUri);
 
 			// rebase: "git rebase master"
 			JSONObject rebase = rebase(gitHeadUri, "master");
@@ -302,11 +286,7 @@ public class GitRebaseTest extends GitTest {
 			assertEquals("1a\n2\n3\n4a", response.getText());
 
 			// assert clean
-			request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			statusResponse = new JSONObject(response.getText());
-			GitStatusTest.assertStatusClean(statusResponse);
+			assertStatus(StatusResult.CLEAN, gitStatusUri);
 		}
 	}
 
@@ -397,11 +377,7 @@ public class GitRebaseTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// assert clean
-			request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			JSONObject statusResponse = new JSONObject(response.getText());
-			GitStatusTest.assertStatusClean(statusResponse);
+			assertStatus(StatusResult.CLEAN, gitStatusUri);
 
 			// rebase: "git rebase master"
 			JSONObject rebase = rebase(gitHeadUri, "master");
@@ -435,11 +411,7 @@ public class GitRebaseTest extends GitTest {
 			assertEquals(RebaseResult.Status.OK, rebaseResult);
 
 			// assert clean
-			request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			statusResponse = new JSONObject(response.getText());
-			GitStatusTest.assertStatusClean(statusResponse);
+			assertStatus(StatusResult.CLEAN, gitStatusUri);
 		}
 	}
 
@@ -530,11 +502,7 @@ public class GitRebaseTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// assert clean
-			request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			JSONObject statusResponse = new JSONObject(response.getText());
-			GitStatusTest.assertStatusClean(statusResponse);
+			assertStatus(StatusResult.CLEAN, gitStatusUri);
 
 			// rebase: "git rebase master"
 			JSONObject rebase = rebase(gitHeadUri, "master");
@@ -564,11 +532,7 @@ public class GitRebaseTest extends GitTest {
 			assertEquals("1master\n2\n3", response.getText());
 
 			// assert clean
-			request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			statusResponse = new JSONObject(response.getText());
-			GitStatusTest.assertStatusClean(statusResponse);
+			assertStatus(StatusResult.CLEAN, gitStatusUri);
 		}
 	}
 

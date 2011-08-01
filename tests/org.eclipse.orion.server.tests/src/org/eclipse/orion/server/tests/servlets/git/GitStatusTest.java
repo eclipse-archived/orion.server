@@ -72,11 +72,7 @@ public class GitStatusTest extends GitTest {
 			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
 			String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
-			request = getGetGitStatusRequest(gitStatusUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			JSONObject statusResponse = new JSONObject(response.getText());
-			assertStatusClean(statusResponse);
+			assertStatus(StatusResult.CLEAN, gitStatusUri);
 		}
 	}
 
@@ -91,11 +87,7 @@ public class GitStatusTest extends GitTest {
 		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
-		WebRequest request = getGetGitStatusRequest(gitStatusUri);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject statusResponse = new JSONObject(response.getText());
-		assertStatusClean(statusResponse);
+		assertStatus(StatusResult.CLEAN, gitStatusUri);
 	}
 
 	// "status -s" > "A  new.txt", staged
@@ -620,11 +612,7 @@ public class GitStatusTest extends GitTest {
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-			request = getGetGitStatusRequest(gitStatusUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			statusResponse = new JSONObject(response.getText());
-			assertStatusClean(statusResponse);
+			assertStatus(StatusResult.CLEAN, gitStatusUri);
 		}
 	}
 
@@ -1282,23 +1270,6 @@ public class GitStatusTest extends GitTest {
 			children.add(array.getJSONObject(i));
 		}
 		return getChildByKey(children, key, value);
-	}
-
-	static void assertStatusClean(JSONObject statusResponse) throws JSONException {
-		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CONFLICTING);
-		assertEquals(0, statusArray.length());
 	}
 
 	/**

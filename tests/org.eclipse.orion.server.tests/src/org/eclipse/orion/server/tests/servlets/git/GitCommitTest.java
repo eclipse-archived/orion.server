@@ -239,11 +239,7 @@ public class GitCommitTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// assert clean
-		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		statusResponse = new JSONObject(response.getText());
-		GitStatusTest.assertStatusClean(statusResponse);
+		assertStatus(StatusResult.CLEAN, gitStatusUri);
 	}
 
 	@Test
@@ -422,11 +418,7 @@ public class GitCommitTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// check status - clean
-			request = GitStatusTest.getGetGitStatusRequest(folderGitStatusUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			JSONObject statusResponse = new JSONObject(response.getText());
-			GitStatusTest.assertStatusClean(statusResponse);
+			assertStatus(StatusResult.CLEAN, folderGitStatusUri);
 
 			// modify all
 			request = getPutFileRequest(testTxtLocation, "change");
@@ -442,17 +434,7 @@ public class GitCommitTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// check status - modified=3
-			request = GitStatusTest.getGetGitStatusRequest(folderGitStatusUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			statusResponse = new JSONObject(response.getText());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_CONFLICTING).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING).length());
-			assertEquals(3, statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED).length());
+			assertStatus(new StatusResult().setModified(3), folderGitStatusUri);
 
 			// add folder/folder.txt
 			request = GitAddTest.getPutGitIndexRequest(folderTxtGitIndexUri);
@@ -464,18 +446,8 @@ public class GitCommitTest extends GitTest {
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-			// check status - modified=2, changed=1
-			request = GitStatusTest.getGetGitStatusRequest(folderGitStatusUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			statusResponse = new JSONObject(response.getText());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED).length());
-			assertEquals(2, statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_CONFLICTING).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING).length());
-			assertEquals(1, statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED).length());
+			// check status - modified=1, changed=2
+			assertStatus(new StatusResult().setModified(1).setChanged(2), folderGitStatusUri);
 
 			// commit all
 			// XXX: using HEAD URI for folder will commit all files in the folder, regardless of index state
@@ -497,7 +469,7 @@ public class GitCommitTest extends GitTest {
 			request = GitStatusTest.getGetGitStatusRequest(folderGitStatusUri);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			statusResponse = new JSONObject(response.getText());
+			JSONObject statusResponse = new JSONObject(response.getText());
 			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED).length());
 			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED).length());
 			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_CONFLICTING).length());

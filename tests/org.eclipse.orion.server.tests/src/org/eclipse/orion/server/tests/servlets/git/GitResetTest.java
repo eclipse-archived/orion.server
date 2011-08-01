@@ -417,11 +417,7 @@ public class GitResetTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// "git status", should be clean, nothing to commit
-		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		statusResponse = new JSONObject(response.getText());
-		GitStatusTest.assertStatusClean(statusResponse);
+		assertStatus(StatusResult.CLEAN, gitStatusUri);
 	}
 
 	@Test
@@ -463,11 +459,7 @@ public class GitResetTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// assert there is nothing to commit
-		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject statusResponse = new JSONObject(response.getText());
-		GitStatusTest.assertStatusClean(statusResponse);
+		assertStatus(StatusResult.CLEAN, gitStatusUri);
 
 		// create new file
 		String fileName = "new.txt";
@@ -496,7 +488,7 @@ public class GitResetTest extends GitTest {
 		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		statusResponse = new JSONObject(response.getText());
+		JSONObject statusResponse = new JSONObject(response.getText());
 		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
 		assertEquals(0, statusArray.length());
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
@@ -561,11 +553,7 @@ public class GitResetTest extends GitTest {
 			String folderGitIndexUri = folderGitSection.getString(GitConstants.KEY_INDEX);
 			String folderGitStatusUri = folderGitSection.getString(GitConstants.KEY_STATUS);
 
-			request = GitStatusTest.getGetGitStatusRequest(folderGitStatusUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			JSONObject statusResponse = new JSONObject(response.getText());
-			GitStatusTest.assertStatusClean(statusResponse);
+			assertStatus(StatusResult.CLEAN, folderGitStatusUri);
 
 			JSONArray commitsArray = log(testTxtGitHeadUri, false);
 			assertEquals(2, commitsArray.length());
@@ -575,11 +563,7 @@ public class GitResetTest extends GitTest {
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-			request = GitStatusTest.getGetGitStatusRequest(folderGitStatusUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			statusResponse = new JSONObject(response.getText());
-			GitStatusTest.assertStatusClean(statusResponse);
+			assertStatus(StatusResult.CLEAN, folderGitStatusUri);
 
 			commitsArray = log(testTxtGitHeadUri, false);
 			assertEquals(1, commitsArray.length());
