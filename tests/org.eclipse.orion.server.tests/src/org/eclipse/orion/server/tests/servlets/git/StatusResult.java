@@ -15,17 +15,24 @@ public class StatusResult {
 	final public static StatusResult CLEAN = new StatusResult();
 
 	private int added = 0;
-	private String[] changedNames;
+	private String[] addedNames;
 	private int changed = 0;
-	private String[] conflictingNames;
+	private String[] changedNames;
+	private String[] changedContents;
+	private String[] changedDiffs;
 	private int conflicting = 0;
+	private String[] conflictingNames;
 	private int missing = 0;
 	private String[] missingNames;
 	private int modified = 0;
 	private String[] modifiedNames;
 	private String[] modifiedPaths;
+	private String[] modifiedContents;
+	private String[] modifiedDiffs;
 	private int removed = 0;
+	private String[] removedNames;
 	private int untracked = 0;
+	private String[] untrackedNames;
 
 	public StatusResult setAdded(int added) {
 		this.added = added;
@@ -33,16 +40,18 @@ public class StatusResult {
 	}
 
 	public int getAdded() {
+		if (addedNames != null)
+			return addedNames.length;
 		return added;
 	}
 
-	public StatusResult setChangedNames(String... changedNames) {
-		this.changedNames = changedNames;
+	public StatusResult setAddedNames(String... addedNames) {
+		this.addedNames = addedNames;
 		return this;
 	}
 
-	public String[] getChangedNames() {
-		return changedNames;
+	public String[] getAddedNames() {
+		return addedNames;
 	}
 
 	public StatusResult setChanged(int changed) {
@@ -56,6 +65,43 @@ public class StatusResult {
 		return changed;
 	}
 
+	public StatusResult setChangedNames(String... changedNames) {
+		this.changedNames = changedNames;
+		return this;
+	}
+
+	public String[] getChangedNames() {
+		return changedNames;
+	}
+
+	public StatusResult setChangedContents(String... changedContents) {
+		if (changedNames == null || changedNames.length != changedContents.length)
+			throw new IllegalStateException("changedNames has to be set first");
+		this.changedContents = changedContents;
+		return this;
+	}
+
+	public String[] getChangedContents() {
+		return changedContents;
+	}
+
+	public StatusResult setChangedDiffs(String... changedDiffs) {
+		if (changedNames == null || changedNames.length != changedDiffs.length)
+			throw new IllegalStateException("changedNames has to be set first");
+		this.changedDiffs = changedDiffs;
+		return this;
+	}
+
+	public String[] getChangedDiffs() {
+		return changedDiffs;
+	}
+
+	public int getConflicting() {
+		if (conflictingNames != null)
+			return conflictingNames.length;
+		return conflicting;
+	}
+
 	public StatusResult setConflictingNames(String... conflictingNames) {
 		this.conflictingNames = conflictingNames;
 		return this;
@@ -65,15 +111,15 @@ public class StatusResult {
 		return conflictingNames;
 	}
 
-	public int getConflicting() {
-		if (conflictingNames != null)
-			return conflictingNames.length;
-		return conflicting;
-	}
-
 	public StatusResult setMissing(int missing) {
 		this.missing = missing;
 		return this;
+	}
+
+	public int getMissing() {
+		if (missingNames != null)
+			return missingNames.length;
+		return missing;
 	}
 
 	public StatusResult setMissingNames(String... missingNames) {
@@ -85,10 +131,15 @@ public class StatusResult {
 		return missingNames;
 	}
 
-	public int getMissing() {
-		if (missingNames != null)
-			return missingNames.length;
-		return missing;
+	public StatusResult setModified(int modified) {
+		this.modified = modified;
+		return this;
+	}
+
+	public int getModified() {
+		if (modifiedNames != null)
+			return modifiedNames.length;
+		return modified;
 	}
 
 	public StatusResult setModifiedNames(String... modifiedNames) {
@@ -109,15 +160,26 @@ public class StatusResult {
 		return modifiedPaths;
 	}
 
-	public StatusResult setModified(int modified) {
-		this.modified = modified;
+	public StatusResult setModifiedContents(String... modifiedContents) {
+		if (modifiedNames == null || modifiedNames.length != modifiedContents.length)
+			throw new IllegalStateException("modifiedNames has to be set first");
+		this.modifiedContents = modifiedContents;
 		return this;
 	}
 
-	public int getModified() {
-		if (modifiedNames != null)
-			return modifiedNames.length;
-		return modified;
+	public String[] getModifiedContents() {
+		return modifiedContents;
+	}
+
+	public StatusResult setModifiedDiffs(String... modifiedDiffs) {
+		if (modifiedNames == null || modifiedNames.length != modifiedDiffs.length)
+			throw new IllegalStateException("modifiedNames has to be set first");
+		this.modifiedDiffs = modifiedDiffs;
+		return this;
+	}
+
+	public String[] getModifiedDiffs() {
+		return modifiedDiffs;
 	}
 
 	public StatusResult setRemoved(int removed) {
@@ -126,7 +188,18 @@ public class StatusResult {
 	}
 
 	public int getRemoved() {
+		if (removedNames != null)
+			return removedNames.length;
 		return removed;
+	}
+
+	public StatusResult setRemovedNames(String... removedNames) {
+		this.removedNames = removedNames;
+		return this;
+	}
+
+	public String[] getRemovedNames() {
+		return removedNames;
 	}
 
 	public StatusResult setUntracked(int untracked) {
@@ -135,6 +208,17 @@ public class StatusResult {
 	}
 
 	public int getUntracked() {
+		if (untrackedNames != null)
+			return untrackedNames.length;
 		return untracked;
+	}
+
+	public StatusResult setUntrackedNames(String... untrackedNames) {
+		this.untrackedNames = untrackedNames;
+		return this;
+	}
+
+	public String[] getUntrackedNames() {
+		return untrackedNames;
 	}
 }

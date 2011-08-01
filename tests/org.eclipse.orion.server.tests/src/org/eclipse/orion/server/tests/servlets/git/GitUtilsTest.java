@@ -120,7 +120,7 @@ public class GitUtilsTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		// then try to get git dir for the removed file
+		// then try to get git directory for the removed file
 		URI uri = URI.create(folderTxtLocation);
 		File gitDirFile = GitUtils.getGitDir(new Path(uri.getPath()));
 		assertNotNull(gitDirFile);

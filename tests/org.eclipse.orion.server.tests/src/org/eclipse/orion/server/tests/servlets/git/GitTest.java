@@ -1164,7 +1164,7 @@ public abstract class GitTest extends FileSystemTest {
 		return response;
 	}
 
-	protected void assertStatus(StatusResult expected, String statusUri) throws IOException, SAXException, JSONException {
+	protected JSONObject assertStatus(StatusResult expected, String statusUri) throws IOException, SAXException, JSONException {
 		assertStatusUri(statusUri);
 		WebRequest request = GitStatusTest.getGetGitStatusRequest(statusUri);
 		WebResponse response = webConversation.getResponse(request);
@@ -1177,9 +1177,27 @@ public abstract class GitTest extends FileSystemTest {
 		assertEquals(expected.getChanged(), statusArray.length());
 		if (expected.getChangedNames() != null) {
 			for (int i = 0; i < expected.getChangedNames().length; i++) {
-				assertEquals(expected.getChangedNames()[i], statusArray.getJSONObject(i).getString(ProtocolConstants.KEY_NAME));
+				JSONObject child = statusArray.getJSONObject(i);
+				assertEquals(expected.getChangedNames()[i], child.getString(ProtocolConstants.KEY_NAME));
+				if (expected.getChangedContents() != null) {
+					String location = child.getString(ProtocolConstants.KEY_LOCATION);
+					assertNotNull(location);
+					request = getGetFilesRequest(location);
+					response = webConversation.getResponse(request);
+					assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+					assertEquals("Invalid file content", expected.getChangedContents()[i], response.getText());
+				}
+				if (expected.getChangedDiffs() != null) {
+					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
+					String gitDiffUri = gitSection.getString(GitConstants.KEY_DIFF);
+					request = GitDiffTest.getGetGitDiffRequest(gitDiffUri);
+					response = webConversation.getResponse(request);
+					assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+					assertEquals("Invalid diff content", expected.getChangedDiffs()[i], GitDiffTest.parseMultiPartResponse(response)[1]);
+				}
 			}
 		}
+
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CONFLICTING);
 		assertEquals(expected.getConflicting(), statusArray.length());
 		if (expected.getConflictingNames() != null) {
@@ -1200,7 +1218,25 @@ public abstract class GitTest extends FileSystemTest {
 		assertEquals(expected.getModified(), statusArray.length());
 		if (expected.getModifiedNames() != null) {
 			for (int i = 0; i < expected.getModifiedNames().length; i++) {
-				assertEquals(expected.getModifiedNames()[i], statusArray.getJSONObject(i).getString(ProtocolConstants.KEY_NAME));
+				JSONObject child = statusArray.getJSONObject(i);
+				assertEquals(expected.getModifiedNames()[i], child.getString(ProtocolConstants.KEY_NAME));
+				if (expected.getModifiedContents() != null) {
+					String location = child.getString(ProtocolConstants.KEY_LOCATION);
+					assertNotNull(location);
+					request = getGetFilesRequest(location);
+					response = webConversation.getResponse(request);
+					assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+					assertEquals("Invalid file content", expected.getModifiedContents()[i], response.getText());
+				}
+				if (expected.getModifiedDiffs() != null) {
+					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
+					String gitDiffUri = gitSection.getString(GitConstants.KEY_DIFF);
+					request = GitDiffTest.getGetGitDiffRequest(gitDiffUri);
+					response = webConversation.getResponse(request);
+					assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+					assertEquals("Invalid diff content", expected.getModifiedDiffs()[i], GitDiffTest.parseMultiPartResponse(response)[1]);
+				}
+
 			}
 		}
 		if (expected.getModifiedPaths() != null) {
@@ -1212,5 +1248,7 @@ public abstract class GitTest extends FileSystemTest {
 		assertEquals(expected.getRemoved(), statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED).length());
 
 		assertEquals(expected.getUntracked(), statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED).length());
+
+		return statusResponse;
 	}
 }
