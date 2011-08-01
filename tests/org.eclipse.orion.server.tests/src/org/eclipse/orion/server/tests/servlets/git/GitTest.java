@@ -1126,7 +1126,6 @@ public abstract class GitTest extends FileSystemTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));
 		JSONObject child = getChildByName(children, childName);
-		assertNotNull(child);
 		return child;
 	}
 

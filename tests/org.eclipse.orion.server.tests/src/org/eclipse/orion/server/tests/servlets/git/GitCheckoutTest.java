@@ -274,7 +274,6 @@ public class GitCheckoutTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder = new JSONObject(response.getText());
 
-			// get test.txt location
 			JSONObject testTxt = getChild(folder, "test.txt");
 			modifyFile(testTxt, "change in file.txt");
 
@@ -392,7 +391,6 @@ public class GitCheckoutTest extends GitTest {
 			JSONObject folder = new JSONObject(response.getText());
 
 			JSONObject testTxt = getChild(folder, "test.txt");
-			String testTxtLocation = testTxt.getString(ProtocolConstants.KEY_LOCATION);
 
 			// create branch
 			JSONObject testTxtGitSection = testTxt.getJSONObject(GitConstants.KEY_GIT);
