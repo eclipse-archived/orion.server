@@ -15,6 +15,7 @@ public class StatusResult {
 	final public static StatusResult CLEAN = new StatusResult();
 
 	private int added = 0;
+	private String[] changedNames;
 	private int changed = 0;
 	private int conflicting = 0;
 	private int missing = 0;
@@ -34,12 +35,23 @@ public class StatusResult {
 		return added;
 	}
 
+	public StatusResult setChangedNames(String... changedNames) {
+		this.changedNames = changedNames;
+		return this;
+	}
+
+	public String[] getChangedNames() {
+		return changedNames;
+	}
+
 	public StatusResult setChanged(int changed) {
 		this.changed = changed;
 		return this;
 	}
 
 	public int getChanged() {
+		if (changedNames != null)
+			return changedNames.length;
 		return changed;
 	}
 
