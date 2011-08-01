@@ -582,6 +582,5 @@ public class GitCommitTest extends GitTest {
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
-
 	}
 }

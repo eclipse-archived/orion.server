@@ -556,7 +556,7 @@ public class GitConfigTest extends GitTest {
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 
-			// try to update unexisting config entry using PUT (not allowed)
+			// try to update non-existing config entry using PUT (not allowed)
 			request = getPutGitConfigRequest(invalidEntryLocation, ENTRY_VALUE);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
