@@ -93,10 +93,8 @@ public class GitRebaseTest extends GitTest {
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
-			String projectLocation = project.getString(ProtocolConstants.KEY_LOCATION);
 
 			JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
-
 			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 			String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 			String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
@@ -111,9 +109,8 @@ public class GitRebaseTest extends GitTest {
 			checkoutBranch(cloneLocation, "a");
 
 			// modify while on 'a'
-			request = getPutFileRequest(projectLocation + "/test.txt", "change in a");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject testTxt = getChild(project, "test.txt");
+			modifyFile(testTxt, "change in a");
 
 			// "git add ."
 			request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
@@ -132,9 +129,9 @@ public class GitRebaseTest extends GitTest {
 			checkoutBranch(cloneLocation, Constants.MASTER);
 
 			// modify a different file on master
-			request = getPutFileRequest(projectLocation + "/folder/folder.txt", "change in master");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject folder = getChild(project, "folder");
+			JSONObject folderTxt = getChild(folder, "folder.txt");
+			modifyFile(folderTxt, "change in master");
 
 			gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 			gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
@@ -162,12 +159,12 @@ public class GitRebaseTest extends GitTest {
 			// assert clean
 			assertStatus(StatusResult.CLEAN, gitStatusUri);
 
-			request = getGetFilesRequest(projectLocation + "/test.txt");
+			request = getGetFilesRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			assertEquals("change in a", response.getText());
 
-			request = getGetFilesRequest(projectLocation + "/folder/folder.txt");
+			request = getGetFilesRequest(folderTxt.getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			assertEquals("change in master", response.getText());
@@ -198,7 +195,6 @@ public class GitRebaseTest extends GitTest {
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
-			String projectLocation = project.getString(ProtocolConstants.KEY_LOCATION);
 
 			JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 
@@ -207,9 +203,8 @@ public class GitRebaseTest extends GitTest {
 			String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
 			// modify file while on 'master'
-			request = getPutFileRequest(projectLocation + "/test.txt", "1\n2\n3");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject testTxt = getChild(project, "test.txt");
+			modifyFile(testTxt, "1\n2\n3");
 
 			// "git add ."
 			request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
@@ -225,9 +220,7 @@ public class GitRebaseTest extends GitTest {
 			branch(branchesLocation, "a");
 
 			// modify file while on 'master'
-			request = getPutFileRequest(projectLocation + "/test.txt", "1master\n2\n3");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			modifyFile(testTxt, "1master\n2\n3");
 
 			// "git add ."
 			request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
@@ -246,9 +239,7 @@ public class GitRebaseTest extends GitTest {
 			checkoutBranch(cloneLocation, "a");
 
 			// modify while on 'a' - conflicting change (first line) and non-conflicting (last line)
-			request = getPutFileRequest(projectLocation + "/test.txt", "1a\n2\n3\n4a");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			modifyFile(testTxt, "1a\n2\n3\n4a");
 
 			// "git add ."
 			request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
@@ -269,7 +260,7 @@ public class GitRebaseTest extends GitTest {
 			assertEquals(RebaseResult.Status.STOPPED, rebaseResult);
 
 			// check conflicting file
-			request = getGetFilesRequest(projectLocation + "/test.txt");
+			request = getGetFilesRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			assertEquals("<<<<<<< OURS\n1master\n=======\n1a\n>>>>>>> THEIRS\n2\n3\n4a\n", response.getText());
@@ -280,7 +271,7 @@ public class GitRebaseTest extends GitTest {
 			assertEquals(RebaseResult.Status.ABORTED, rebaseResult);
 
 			// file should reset to "a" branch
-			request = getGetFilesRequest(projectLocation + "/test.txt");
+			request = getGetFilesRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			assertEquals("1a\n2\n3\n4a", response.getText());
@@ -314,7 +305,6 @@ public class GitRebaseTest extends GitTest {
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
-			String projectLocation = project.getString(ProtocolConstants.KEY_LOCATION);
 
 			JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 
@@ -323,9 +313,8 @@ public class GitRebaseTest extends GitTest {
 			String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
 			// modify file while on 'master'
-			request = getPutFileRequest(projectLocation + "/test.txt", "1\n2\n3");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject testTxt = getChild(project, "test.txt");
+			modifyFile(testTxt, "1\n2\n3");
 
 			// "git add ."
 			request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
@@ -341,9 +330,7 @@ public class GitRebaseTest extends GitTest {
 			branch(branchesLocation, "a");
 
 			// modify file while on 'master'
-			request = getPutFileRequest(projectLocation + "/test.txt", "1master\n2\n3");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			modifyFile(testTxt, "1master\n2\n3");
 
 			// "git add ."
 			request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
@@ -362,9 +349,7 @@ public class GitRebaseTest extends GitTest {
 			checkoutBranch(cloneLocation, "a");
 
 			// modify while on 'a' - conflicting change (first line) and non-conflicting (last line)
-			request = getPutFileRequest(projectLocation + "/test.txt", "1a\n2\n3\n4a");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			modifyFile(testTxt, "1a\n2\n3\n4a");
 
 			// "git add ."
 			request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
@@ -385,7 +370,7 @@ public class GitRebaseTest extends GitTest {
 			assertEquals(RebaseResult.Status.STOPPED, rebaseResult);
 
 			// check conflicting file
-			request = getGetFilesRequest(projectLocation + "/test.txt");
+			request = getGetFilesRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			assertEquals("<<<<<<< OURS\n1master\n=======\n1a\n>>>>>>> THEIRS\n2\n3\n4a\n", response.getText());
@@ -396,9 +381,7 @@ public class GitRebaseTest extends GitTest {
 			assertEquals(AdditionalRebaseStatus.FAILED_UNMERGED_PATHS, errRebaseResult);
 
 			// resolve conflict
-			request = getPutFileRequest(projectLocation + "/test.txt", "1amaster\n2\n3\n4a");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			modifyFile(testTxt, "1amaster\n2\n3\n4a");
 
 			// and add
 			request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
@@ -439,7 +422,6 @@ public class GitRebaseTest extends GitTest {
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
-			String projectLocation = project.getString(ProtocolConstants.KEY_LOCATION);
 
 			JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 
@@ -448,9 +430,8 @@ public class GitRebaseTest extends GitTest {
 			String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
 			// modify file while on 'master'
-			request = getPutFileRequest(projectLocation + "/test.txt", "1\n2\n3");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject testTxt = getChild(project, "test.txt");
+			modifyFile(testTxt, "1\n2\n3");
 
 			// "git add ."
 			request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
@@ -466,9 +447,7 @@ public class GitRebaseTest extends GitTest {
 			branch(branchesLocation, "a");
 
 			// modify file while on 'master'
-			request = getPutFileRequest(projectLocation + "/test.txt", "1master\n2\n3");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			modifyFile(testTxt, "1master\n2\n3");
 
 			// "git add ."
 			request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
@@ -487,9 +466,7 @@ public class GitRebaseTest extends GitTest {
 			checkoutBranch(cloneLocation, "a");
 
 			// modify while on 'a' - conflicting change (first line) and non-conflicting (last line)
-			request = getPutFileRequest(projectLocation + "/test.txt", "1a\n2\n3\n4a");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			modifyFile(testTxt, "1a\n2\n3\n4a");
 
 			// "git add ."
 			request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
@@ -510,7 +487,7 @@ public class GitRebaseTest extends GitTest {
 			assertEquals(RebaseResult.Status.STOPPED, rebaseResult);
 
 			// check conflicting file
-			request = getGetFilesRequest(projectLocation + "/test.txt");
+			request = getGetFilesRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			assertEquals("<<<<<<< OURS\n1master\n=======\n1a\n>>>>>>> THEIRS\n2\n3\n4a\n", response.getText());
@@ -526,7 +503,7 @@ public class GitRebaseTest extends GitTest {
 			assertEquals(RebaseResult.Status.OK, rebaseResult);
 
 			// file should reset to "master" branch
-			request = getGetFilesRequest(projectLocation + "/test.txt");
+			request = getGetFilesRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			assertEquals("1master\n2\n3", response.getText());
@@ -609,7 +586,6 @@ public class GitRebaseTest extends GitTest {
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project1 = new JSONObject(response.getText());
-			String project1Location = project1.getString(ProtocolConstants.KEY_LOCATION);
 			JSONObject gitSection1 = project1.getJSONObject(GitConstants.KEY_GIT);
 			String gitRemoteUri1 = gitSection1.getString(GitConstants.KEY_REMOTE);
 
@@ -621,7 +597,6 @@ public class GitRebaseTest extends GitTest {
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project2 = new JSONObject(response.getText());
-			String project2Location = project2.getString(ProtocolConstants.KEY_LOCATION);
 			JSONObject gitSection2 = project2.getJSONObject(GitConstants.KEY_GIT);
 			String gitRemoteUri2 = gitSection2.getString(GitConstants.KEY_REMOTE);
 			String gitIndexUri2 = gitSection2.getString(GitConstants.KEY_INDEX);
@@ -633,9 +608,8 @@ public class GitRebaseTest extends GitTest {
 			String remoteBranchLocation1 = details.getString(ProtocolConstants.KEY_LOCATION);
 
 			// clone2: change
-			request = getPutFileRequest(project2Location + "/test.txt", "incoming change");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject testTxt2 = getChild(project2, "test.txt");
+			modifyFile(testTxt2, "incoming change");
 
 			// clone2: add
 			request = GitAddTest.getPutGitIndexRequest(gitIndexUri2);
@@ -673,7 +647,8 @@ public class GitRebaseTest extends GitTest {
 			RebaseResult.Status rebaseResult = RebaseResult.Status.valueOf(rebase.getString(GitConstants.KEY_RESULT));
 			assertEquals(RebaseResult.Status.FAST_FORWARD, rebaseResult);
 
-			request = getGetFilesRequest(project1Location + "/test.txt");
+			JSONObject testTxt1 = getChild(project1, "test.txt");
+			request = getGetFilesRequest(testTxt1.getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			assertEquals("incoming change", response.getText());
@@ -696,5 +671,4 @@ public class GitRebaseTest extends GitTest {
 		setAuthentication(request);
 		return request;
 	}
-
 }
