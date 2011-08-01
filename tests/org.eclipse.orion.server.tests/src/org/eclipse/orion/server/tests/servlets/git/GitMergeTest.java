@@ -59,7 +59,6 @@ public class GitMergeTest extends GitTest {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
 		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 		JSONObject clone = clone(clonePath);
 		String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
@@ -82,12 +81,10 @@ public class GitMergeTest extends GitTest {
 		checkoutBranch(cloneLocation, "a");
 
 		// modify while on 'a'
-		request = getPutFileRequest(projectId + "/test.txt", "change in a");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject testTxt = getChild(project, "test.txt");
+		modifyFile(testTxt, "change in a");
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
@@ -109,12 +106,11 @@ public class GitMergeTest extends GitTest {
 		checkoutBranch(cloneLocation, Constants.MASTER);
 
 		// modify a different file on master
-		request = getPutFileRequest(projectId + "/folder/folder.txt", "change in master");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject folder1 = getChild(project, "folder");
+		JSONObject folderTxt = getChild(folder1, "folder.txt");
+		modifyFile(folderTxt, "change in master");
 
-		gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
+		gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 		gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
@@ -140,14 +136,12 @@ public class GitMergeTest extends GitTest {
 		// assert clean
 		assertStatus(StatusResult.CLEAN, gitStatusUri);
 
-		// TODO: don't create URIs out of thin air
-		request = getGetFilesRequest(projectId + "/test.txt");
+		request = getGetFilesRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("change in a", response.getText());
 
-		// TODO: don't create URIs out of thin air
-		request = getGetFilesRequest(projectId + "/folder/folder.txt");
+		request = getGetFilesRequest(folderTxt.getString(ProtocolConstants.KEY_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("change in master", response.getText());
@@ -161,64 +155,29 @@ public class GitMergeTest extends GitTest {
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
-		// TODO: don't create URIs out of thin air
-		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change in master");
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject testTxt = getChild(project, "test.txt");
+		modifyFile(testTxt, "change in master");
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
 		// "git add ."
-		request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
-		response = webConversation.getResponse(request);
+		WebRequest request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject statusResponse = new JSONObject(response.getText());
-		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
-		assertEquals(1, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
-		assertEquals(0, statusArray.length());
+		assertStatus(new StatusResult().setChanged(1), gitStatusUri);
 
 		// "git merge master"
 		JSONObject merge = merge(gitHeadUri, Constants.MASTER);
 		MergeStatus mergeResult = MergeResult.MergeStatus.valueOf(merge.getString(GitConstants.KEY_RESULT));
 		assertEquals(MergeResult.MergeStatus.ALREADY_UP_TO_DATE, mergeResult);
 
-		// assert clean
-		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		statusResponse = new JSONObject(response.getText());
 		// status hasn't changed
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
-		assertEquals(1, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
-		assertEquals(0, statusArray.length());
+		assertStatus(new StatusResult().setChanged(1), gitStatusUri);
 	}
 
 	@Test
@@ -226,7 +185,6 @@ public class GitMergeTest extends GitTest {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
 		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 		JSONObject clone = clone(clonePath);
 		String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
@@ -253,12 +211,10 @@ public class GitMergeTest extends GitTest {
 		checkoutBranch(cloneLocation, "a");
 
 		// modify while on 'a'
-		request = getPutFileRequest(projectId + "/test.txt", "change in a");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject testTxt = getChild(project, "test.txt");
+		modifyFile(testTxt, "change in a");
 
-		gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
+		gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
@@ -280,12 +236,9 @@ public class GitMergeTest extends GitTest {
 		checkoutBranch(cloneLocation, Constants.MASTER);
 
 		// modify a different file on master
-		request = getPutFileRequest(projectId + "/test.txt", "change in master");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		modifyFile(testTxt, "change in master");
 
-		gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
+		gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 		gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
@@ -309,28 +262,9 @@ public class GitMergeTest extends GitTest {
 		assertEquals(MergeStatus.CONFLICTING, mergeResult);
 
 		// check status
-		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject statusResponse = new JSONObject(response.getText());
-		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CONFLICTING);
-		assertEquals(1, statusArray.length());
-		assertNotNull(GitStatusTest.getChildByName(statusArray, "test.txt"));
+		assertStatus(new StatusResult().setConflictingNames("test.txt"), gitStatusUri);
 
-		// TODO: don't create URIs out of thin air
-		request = getGetFilesRequest(projectId + "/test.txt");
+		request = getGetFilesRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		String[] responseLines = response.getText().split("\n");
@@ -351,7 +285,6 @@ public class GitMergeTest extends GitTest {
 
 		// clone1
 		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
-		String projectId1 = project1.getString(ProtocolConstants.KEY_ID);
 		IPath clonePath1 = new Path("file").append(project1.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 		clone(clonePath1);
 
@@ -365,7 +298,6 @@ public class GitMergeTest extends GitTest {
 
 		// clone2
 		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
-		String projectId2 = project2.getString(ProtocolConstants.KEY_ID);
 		IPath clonePath2 = new Path("file").append(project2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 		clone(clonePath2);
 
@@ -385,9 +317,8 @@ public class GitMergeTest extends GitTest {
 		String remoteBranchLocation1 = details.getString(ProtocolConstants.KEY_LOCATION);
 
 		// clone2: change
-		request = getPutFileRequest(projectId2 + "/test.txt", "incoming change");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject testTxt = getChild(project2, "test.txt");
+		modifyFile(testTxt, "incoming change");
 
 		// clone2: add
 		request = GitAddTest.getPutGitIndexRequest(gitIndexUri2);
@@ -422,14 +353,13 @@ public class GitMergeTest extends GitTest {
 		// TODO: should fail when POSTing to the above URI, see bug 342845
 
 		String gitHeadUri = remoteBranch.getString(GitConstants.KEY_HEAD);
-		assertNotNull(gitHeadUri);
 
 		// merge
 		JSONObject merge = merge(gitHeadUri, newRefId1);
 		MergeStatus mergeResult = MergeStatus.valueOf(merge.getString(GitConstants.KEY_RESULT));
 		assertEquals(MergeStatus.FAST_FORWARD, mergeResult);
 
-		request = getGetFilesRequest(projectId1 + "/test.txt");
+		request = getGetFilesRequest(getChild(project1, "test.txt").getString(ProtocolConstants.KEY_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("incoming change", response.getText());
@@ -467,14 +397,15 @@ public class GitMergeTest extends GitTest {
 			request = getPostFilesRequest(folderLocation + "/", getNewDirJSON(folderName).toString(), folderName);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+			JSONObject folder1 = getChild(folder, "folder1");
 
 			String fileName = "file1.txt";
-			request = getPostFilesRequest(folderLocation + folderName + "/", getNewFileJSON(fileName).toString(), fileName);
+			request = getPostFilesRequest(folder1.getString(ProtocolConstants.KEY_LOCATION), getNewFileJSON(fileName).toString(), fileName);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
 			fileName = "file2.txt";
-			request = getPostFilesRequest(folderLocation + folderName + "/", getNewFileJSON(fileName).toString(), fileName);
+			request = getPostFilesRequest(folder1.getString(ProtocolConstants.KEY_LOCATION), getNewFileJSON(fileName).toString(), fileName);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
@@ -482,15 +413,15 @@ public class GitMergeTest extends GitTest {
 			request = getPostFilesRequest(folderLocation + "/", getNewDirJSON(folderName).toString(), folderName);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+			JSONObject folder2 = getChild(folder, "folder2");
 
 			fileName = "file1.txt";
-			request = getPostFilesRequest(folderLocation + folderName + "/", getNewFileJSON(fileName).toString(), fileName);
+			request = getPostFilesRequest(folder2.getString(ProtocolConstants.KEY_LOCATION), getNewFileJSON(fileName).toString(), fileName);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
-			folderName = "folder2";
 			fileName = "file2.txt";
-			request = getPostFilesRequest(folderLocation + folderName + "/", getNewFileJSON(fileName).toString(), fileName);
+			request = getPostFilesRequest(folder2.getString(ProtocolConstants.KEY_LOCATION), getNewFileJSON(fileName).toString(), fileName);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
@@ -502,13 +433,9 @@ public class GitMergeTest extends GitTest {
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-			request = getDeleteFilesRequest(folderLocation + "/folder1/");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			deleteFile(folder1);
 
-			request = getDeleteFilesRequest(folderLocation + "/folder2/");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			deleteFile(folder2);
 
 			request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
 			response = webConversation.getResponse(request);

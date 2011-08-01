@@ -17,6 +17,7 @@ public class StatusResult {
 	private int added = 0;
 	private String[] changedNames;
 	private int changed = 0;
+	private String[] conflictingNames;
 	private int conflicting = 0;
 	private int missing = 0;
 	private String[] missingNames;
@@ -55,7 +56,18 @@ public class StatusResult {
 		return changed;
 	}
 
+	public StatusResult setConflictingNames(String... conflictingNames) {
+		this.conflictingNames = conflictingNames;
+		return this;
+	}
+
+	public String[] getConflictingNames() {
+		return conflictingNames;
+	}
+
 	public int getConflicting() {
+		if (conflictingNames != null)
+			return conflictingNames.length;
 		return conflicting;
 	}
 

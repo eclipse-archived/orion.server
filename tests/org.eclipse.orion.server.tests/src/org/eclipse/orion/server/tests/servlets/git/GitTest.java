@@ -1170,7 +1170,9 @@ public abstract class GitTest extends FileSystemTest {
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject statusResponse = new JSONObject(response.getText());
+
 		assertEquals(expected.getAdded(), statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED).length());
+
 		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
 		assertEquals(expected.getChanged(), statusArray.length());
 		if (expected.getChangedNames() != null) {
@@ -1178,7 +1180,14 @@ public abstract class GitTest extends FileSystemTest {
 				assertEquals(expected.getChangedNames()[i], statusArray.getJSONObject(i).getString(ProtocolConstants.KEY_NAME));
 			}
 		}
-		assertEquals(expected.getConflicting(), statusResponse.getJSONArray(GitConstants.KEY_STATUS_CONFLICTING).length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CONFLICTING);
+		assertEquals(expected.getConflicting(), statusArray.length());
+		if (expected.getConflictingNames() != null) {
+			for (int i = 0; i < expected.getConflictingNames().length; i++) {
+				assertEquals(expected.getConflictingNames()[i], statusArray.getJSONObject(i).getString(ProtocolConstants.KEY_NAME));
+			}
+		}
+
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
 		assertEquals(expected.getMissing(), statusArray.length());
 		if (expected.getMissingNames() != null) {
@@ -1186,6 +1195,7 @@ public abstract class GitTest extends FileSystemTest {
 				assertEquals(expected.getMissingNames()[i], statusArray.getJSONObject(i).getString(ProtocolConstants.KEY_NAME));
 			}
 		}
+
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
 		assertEquals(expected.getModified(), statusArray.length());
 		if (expected.getModifiedNames() != null) {
@@ -1198,7 +1208,9 @@ public abstract class GitTest extends FileSystemTest {
 				assertEquals(expected.getModifiedPaths()[i], statusArray.getJSONObject(i).getString(ProtocolConstants.KEY_PATH));
 			}
 		}
+
 		assertEquals(expected.getRemoved(), statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED).length());
+
 		assertEquals(expected.getUntracked(), statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED).length());
 	}
 }
