@@ -1171,9 +1171,23 @@ public abstract class GitTest extends FileSystemTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject statusResponse = new JSONObject(response.getText());
 
-		assertEquals(expected.getAdded(), statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED).length());
+		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
+		assertEquals(expected.getAdded(), statusArray.length());
+		if (expected.getAddedNames() != null) {
+			for (int i = 0; i < expected.getAddedNames().length; i++) {
+				JSONObject child = statusArray.getJSONObject(i);
+				assertEquals(expected.getAddedNames()[i], child.getString(ProtocolConstants.KEY_NAME));
+				if (expected.getAddedLogLengths() != null) {
+					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
+					gitSection = statusArray.getJSONObject(0).getJSONObject(GitConstants.KEY_GIT);
+					String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+					JSONArray log = log(gitCommitUri, false);
+					assertEquals(expected.getAddedLogLengths()[i], log.length());
+				}
+			}
+		}
 
-		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
 		assertEquals(expected.getChanged(), statusArray.length());
 		if (expected.getChangedNames() != null) {
 			for (int i = 0; i < expected.getChangedNames().length; i++) {
@@ -1195,6 +1209,29 @@ public abstract class GitTest extends FileSystemTest {
 					assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 					assertEquals("Invalid diff content", expected.getChangedDiffs()[i], GitDiffTest.parseMultiPartResponse(response)[1]);
 				}
+				if (expected.getChangedIndexContents() != null) {
+					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
+					String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+					request = GitIndexTest.getGetGitIndexRequest(gitIndexUri);
+					response = webConversation.getResponse(request);
+					assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+					assertEquals("Invalid index content", expected.getChangedIndexContents()[i], response.getText());
+				}
+				if (expected.getChangedHeadContents() != null) {
+					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
+					String commit = gitSection.getString(GitConstants.KEY_COMMIT);
+					request = GitCommitTest.getGetGitCommitRequest(commit, true);
+					response = webConversation.getResponse(request);
+					assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+					assertEquals("Invalid head content", expected.getChangedHeadContents()[i], response.getText());
+				}
+				if (expected.getChangedLogLengths() != null) {
+					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
+					gitSection = statusArray.getJSONObject(0).getJSONObject(GitConstants.KEY_GIT);
+					String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+					JSONArray log = log(gitCommitUri, false);
+					assertEquals(expected.getChangedLogLengths()[i], log.length());
+				}
 			}
 		}
 
@@ -1210,7 +1247,15 @@ public abstract class GitTest extends FileSystemTest {
 		assertEquals(expected.getMissing(), statusArray.length());
 		if (expected.getMissingNames() != null) {
 			for (int i = 0; i < expected.getMissingNames().length; i++) {
-				assertEquals(expected.getMissingNames()[i], statusArray.getJSONObject(i).getString(ProtocolConstants.KEY_NAME));
+				JSONObject child = statusArray.getJSONObject(i);
+				assertEquals(expected.getMissingNames()[i], child.getString(ProtocolConstants.KEY_NAME));
+				if (expected.getMissingLogLengths() != null) {
+					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
+					gitSection = statusArray.getJSONObject(0).getJSONObject(GitConstants.KEY_GIT);
+					String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+					JSONArray log = log(gitCommitUri, false);
+					assertEquals(expected.getMissingLogLengths()[i], log.length());
+				}
 			}
 		}
 
@@ -1236,7 +1281,13 @@ public abstract class GitTest extends FileSystemTest {
 					assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 					assertEquals("Invalid diff content", expected.getModifiedDiffs()[i], GitDiffTest.parseMultiPartResponse(response)[1]);
 				}
-
+				if (expected.getModifiedLogLengths() != null) {
+					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
+					gitSection = statusArray.getJSONObject(0).getJSONObject(GitConstants.KEY_GIT);
+					String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+					JSONArray log = log(gitCommitUri, false);
+					assertEquals(expected.getModifiedLogLengths()[i], log.length());
+				}
 			}
 		}
 		if (expected.getModifiedPaths() != null) {
@@ -1245,9 +1296,37 @@ public abstract class GitTest extends FileSystemTest {
 			}
 		}
 
-		assertEquals(expected.getRemoved(), statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED).length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
+		assertEquals(expected.getRemoved(), statusArray.length());
+		if (expected.getRemovedNames() != null) {
+			for (int i = 0; i < expected.getRemovedNames().length; i++) {
+				JSONObject child = statusArray.getJSONObject(i);
+				assertEquals(expected.getRemovedNames()[i], child.getString(ProtocolConstants.KEY_NAME));
+				if (expected.getRemovedLogLengths() != null) {
+					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
+					gitSection = statusArray.getJSONObject(0).getJSONObject(GitConstants.KEY_GIT);
+					String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+					JSONArray log = log(gitCommitUri, false);
+					assertEquals(expected.getRemovedLogLengths()[i], log.length());
+				}
+			}
+		}
 
-		assertEquals(expected.getUntracked(), statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED).length());
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
+		assertEquals(expected.getUntracked(), statusArray.length());
+		if (expected.getUntrackedNames() != null) {
+			for (int i = 0; i < expected.getUntrackedNames().length; i++) {
+				JSONObject child = statusArray.getJSONObject(i);
+				assertEquals(expected.getUntrackedNames()[i], child.getString(ProtocolConstants.KEY_NAME));
+				if (expected.getUntrackedLogLengths() != null) {
+					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
+					gitSection = statusArray.getJSONObject(0).getJSONObject(GitConstants.KEY_GIT);
+					String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+					JSONArray log = log(gitCommitUri, false);
+					assertEquals(expected.getUntrackedLogLengths()[i], log.length());
+				}
+			}
+		}
 
 		return statusResponse;
 	}

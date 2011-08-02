@@ -10,29 +10,43 @@
  *******************************************************************************/
 package org.eclipse.orion.server.tests.servlets.git;
 
+/**
+ * A builder for expected result of calling "git status" over REST API.
+ */
 public class StatusResult {
 
+	/**
+	 * Result representing a clean working directory. Nothing to commit, nothing to stage.
+	 */
 	final public static StatusResult CLEAN = new StatusResult();
 
 	private int added = 0;
 	private String[] addedNames;
+	private int[] addedLogLengths;
 	private int changed = 0;
 	private String[] changedNames;
 	private String[] changedContents;
 	private String[] changedDiffs;
+	private String[] changedIndexContents;
+	private String[] changedHeadContents;
+	private int[] changedLogLengths;
 	private int conflicting = 0;
 	private String[] conflictingNames;
 	private int missing = 0;
 	private String[] missingNames;
+	private int[] missingLogLengths;
 	private int modified = 0;
 	private String[] modifiedNames;
 	private String[] modifiedPaths;
 	private String[] modifiedContents;
 	private String[] modifiedDiffs;
+	private int[] modifiedLogLengths;
 	private int removed = 0;
 	private String[] removedNames;
+	private int[] removedLogLengths;
 	private int untracked = 0;
 	private String[] untrackedNames;
+	private int[] untrackedLogLengths;
 
 	public StatusResult setAdded(int added) {
 		this.added = added;
@@ -52,6 +66,17 @@ public class StatusResult {
 
 	public String[] getAddedNames() {
 		return addedNames;
+	}
+
+	public StatusResult setAddedLogLengths(int... addedLogLengths) {
+		if (addedNames == null || addedNames.length != addedLogLengths.length)
+			throw new IllegalStateException("addedNames has to be set first");
+		this.addedLogLengths = addedLogLengths;
+		return this;
+	}
+
+	public int[] getAddedLogLengths() {
+		return addedLogLengths;
 	}
 
 	public StatusResult setChanged(int changed) {
@@ -96,6 +121,39 @@ public class StatusResult {
 		return changedDiffs;
 	}
 
+	public StatusResult setChangedIndexContents(String... changedIndexContents) {
+		if (changedNames == null || changedNames.length != changedIndexContents.length)
+			throw new IllegalStateException("changedNames has to be set first");
+		this.changedIndexContents = changedIndexContents;
+		return this;
+	}
+
+	public String[] getChangedIndexContents() {
+		return changedIndexContents;
+	}
+
+	public StatusResult setChangedHeadContents(String... changedHeadContents) {
+		if (changedNames == null || changedNames.length != changedHeadContents.length)
+			throw new IllegalStateException("changedNames has to be set first");
+		this.changedHeadContents = changedHeadContents;
+		return this;
+	}
+
+	public String[] getChangedHeadContents() {
+		return changedHeadContents;
+	}
+
+	public StatusResult setChangedLogLengths(int... changedLogLengths) {
+		if (changedNames == null || changedNames.length != changedLogLengths.length)
+			throw new IllegalStateException("changedNames has to be set first");
+		this.changedLogLengths = changedLogLengths;
+		return this;
+	}
+
+	public int[] getChangedLogLengths() {
+		return changedLogLengths;
+	}
+
 	public int getConflicting() {
 		if (conflictingNames != null)
 			return conflictingNames.length;
@@ -129,6 +187,17 @@ public class StatusResult {
 
 	public String[] getMissingNames() {
 		return missingNames;
+	}
+
+	public StatusResult setMissingLogLengths(int... missingLogLengths) {
+		if (missingNames == null || missingNames.length != missingLogLengths.length)
+			throw new IllegalStateException("missingNames has to be set first");
+		this.missingLogLengths = missingLogLengths;
+		return this;
+	}
+
+	public int[] getMissingLogLengths() {
+		return missingLogLengths;
 	}
 
 	public StatusResult setModified(int modified) {
@@ -182,6 +251,17 @@ public class StatusResult {
 		return modifiedDiffs;
 	}
 
+	public StatusResult setModifiedLogLengths(int... modifiedLogLengths) {
+		if (modifiedNames == null || modifiedNames.length != modifiedLogLengths.length)
+			throw new IllegalStateException("modifiedNames has to be set first");
+		this.modifiedLogLengths = modifiedLogLengths;
+		return this;
+	}
+
+	public int[] getModifiedLogLengths() {
+		return modifiedLogLengths;
+	}
+
 	public StatusResult setRemoved(int removed) {
 		this.removed = removed;
 		return this;
@@ -202,6 +282,17 @@ public class StatusResult {
 		return removedNames;
 	}
 
+	public StatusResult setRemovedLogLengths(int... removedLogLengths) {
+		if (removedNames == null || removedNames.length != removedLogLengths.length)
+			throw new IllegalStateException("removedNames has to be set first");
+		this.removedLogLengths = removedLogLengths;
+		return this;
+	}
+
+	public int[] getRemovedLogLengths() {
+		return removedLogLengths;
+	}
+
 	public StatusResult setUntracked(int untracked) {
 		this.untracked = untracked;
 		return this;
@@ -220,5 +311,16 @@ public class StatusResult {
 
 	public String[] getUntrackedNames() {
 		return untrackedNames;
+	}
+
+	public StatusResult setUntrackedLogLengths(int... untrackedLogLengths) {
+		if (untrackedNames == null || untrackedNames.length != untrackedLogLengths.length)
+			throw new IllegalStateException("untrackedNames has to be set first");
+		this.untrackedLogLengths = untrackedLogLengths;
+		return this;
+	}
+
+	public int[] getUntrackedLogLengths() {
+		return untrackedLogLengths;
 	}
 }
