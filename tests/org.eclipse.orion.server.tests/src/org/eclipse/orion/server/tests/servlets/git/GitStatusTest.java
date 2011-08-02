@@ -11,14 +11,11 @@
 package org.eclipse.orion.server.tests.servlets.git;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -72,11 +69,7 @@ public class GitStatusTest extends GitTest {
 			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
 			String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
-			request = getGetGitStatusRequest(gitStatusUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			JSONObject statusResponse = new JSONObject(response.getText());
-			assertStatusClean(statusResponse);
+			assertStatus(StatusResult.CLEAN, gitStatusUri);
 		}
 	}
 
@@ -91,11 +84,7 @@ public class GitStatusTest extends GitTest {
 		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
-		WebRequest request = getGetGitStatusRequest(gitStatusUri);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject statusResponse = new JSONObject(response.getText());
-		assertStatusClean(statusResponse);
+		assertStatus(StatusResult.CLEAN, gitStatusUri);
 	}
 
 	// "status -s" > "A  new.txt", staged
@@ -120,50 +109,24 @@ public class GitStatusTest extends GitTest {
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder = new JSONObject(response.getText());
-			String folderLocation = folder.getString(ProtocolConstants.KEY_LOCATION);
-			String folderChildrenLocation = folder.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
 
 			String fileName = "new.txt";
-			request = getPostFilesRequest(folderLocation + "/", getNewFileJSON(fileName).toString(), fileName);
+			request = getPostFilesRequest(folder.getString(ProtocolConstants.KEY_LOCATION), getNewFileJSON(fileName).toString(), fileName);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
 			// git section for the new file
-			request = getGetFilesRequest(folderChildrenLocation);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));
-			JSONObject newFile = getChildByName(children, "new.txt");
-			JSONObject gitSection = newFile.getJSONObject(GitConstants.KEY_GIT);
-			String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+			JSONObject newFile = getChild(folder, "new.txt");
 
 			// "git add {path}"
-			request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			addFile(newFile);
 
 			// git section for the folder
-			gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
-			gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
+			gitSection.getString(GitConstants.KEY_INDEX);
 			String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
-			request = getGetGitStatusRequest(gitStatusUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			JSONObject statusResponse = new JSONObject(response.getText());
-			JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
-			assertEquals(1, statusArray.length());
-			assertEquals(fileName, statusArray.getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
-			assertEquals(0, statusArray.length());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
-			assertEquals(0, statusArray.length());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-			assertEquals(0, statusArray.length());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
-			assertEquals(0, statusArray.length());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
-			assertEquals(0, statusArray.length());
+			assertStatus(new StatusResult().setAddedNames(fileName), gitStatusUri);
 		}
 	}
 
@@ -180,38 +143,16 @@ public class GitStatusTest extends GitTest {
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
-		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change");
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject testTxt = getChild(project, "test.txt");
+		modifyFile(testTxt, "change");
 
 		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
-		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
-		// TODO: don't create URIs out of thin air
-		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		addFile(testTxt);
 
-		request = getGetGitStatusRequest(gitStatusUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject statusResponse = new JSONObject(response.getText());
-		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
-		assertEquals(1, statusArray.length());
-		assertEquals("test.txt", statusArray.getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
-		assertEquals(0, statusArray.length());
+		assertStatus(new StatusResult().setChangedNames("test.txt"), gitStatusUri);
 	}
 
 	// "status -s" > "MM test.txt", portions staged for commit
@@ -221,43 +162,18 @@ public class GitStatusTest extends GitTest {
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
-		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change in index");
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject testTxt = getChild(project, "test.txt");
+		modifyFile(testTxt, "change in index");
 
 		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
-		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
-		// TODO: don't create URIs out of thin air
-		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		addFile(testTxt);
 
-		request = getPutFileRequest(projectId + "/test.txt", "second change, in working tree");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		modifyFile(testTxt, "second change, in working tree");
 
-		request = getGetGitStatusRequest(gitStatusUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject statusResponse = new JSONObject(response.getText());
-		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
-		assertEquals(1, statusArray.length());
-		assertEquals("test.txt", statusArray.getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-		assertEquals(1, statusArray.length());
-		assertEquals("test.txt", statusArray.getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
-		assertEquals(0, statusArray.length());
+		assertStatus(new StatusResult().setChangedNames("test.txt").setModifiedNames("test.txt"), gitStatusUri);
 	}
 
 	// "status -s" > " D test.txt", not staged
@@ -267,33 +183,14 @@ public class GitStatusTest extends GitTest {
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
-		WebRequest request = getDeleteFilesRequest(projectId + "/test.txt");
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject testTxt = getChild(project, "test.txt");
+		deleteFile(testTxt);
 
 		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
-		request = getGetGitStatusRequest(gitStatusUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject statusResponse = new JSONObject(response.getText());
-
-		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
-		assertEquals(1, statusArray.length());
-		assertEquals("test.txt", statusArray.getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
-		assertEquals(0, statusArray.length());
+		assertStatus(new StatusResult().setMissingNames("test.txt"), gitStatusUri);
 	}
 
 	// "status -s" > " M test.txt", not staged
@@ -303,32 +200,14 @@ public class GitStatusTest extends GitTest {
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
-		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change");
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject testTxt = getChild(project, "test.txt");
+		modifyFile(testTxt, "change");
 
 		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
-		request = getGetGitStatusRequest(gitStatusUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject statusResponse = new JSONObject(response.getText());
-		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-		assertEquals(1, statusArray.length());
-		assertEquals("test.txt", statusArray.getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
-		assertEquals(0, statusArray.length());
+		assertStatus(new StatusResult().setModifiedNames("test.txt"), gitStatusUri);
 	}
 
 	// "status -s" > "D  test.txt", staged
@@ -338,89 +217,55 @@ public class GitStatusTest extends GitTest {
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
-		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
-		// get 'test.txt' location
-		WebRequest request = getGetFilesRequest(location);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject jsonResponse = new JSONObject(response.getText());
-		request = getGetFilesRequest(jsonResponse.getString(ProtocolConstants.KEY_CHILDREN_LOCATION));
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));
-		JSONObject testTxt = getChildByName(children, "test.txt");
-		String testTxtLocation = testTxt.getString(ProtocolConstants.KEY_LOCATION);
-		JSONObject gitSection = testTxt.getJSONObject(GitConstants.KEY_GIT);
-		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+		JSONObject testTxt = getChild(project, "test.txt");
 
 		// delete the file (required until bug 349299 is fixed)
-		request = getDeleteFilesRequest(testTxtLocation);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		deleteFile(testTxt);
 
 		// stage the deletion: 'git add -u test.txt', should be 'git rm test.txt'
-		request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		addFile(testTxt);
 
 		// check status of the project
-		gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
-		request = getGetGitStatusRequest(gitStatusUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject statusResponse = new JSONObject(response.getText());
-		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
-		assertEquals(1, statusArray.length());
-		assertEquals("test.txt", statusArray.getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
-		assertEquals(0, statusArray.length());
+		assertStatus(new StatusResult().setRemovedNames("test.txt"), gitStatusUri);
 	}
 
 	// "status -s" > "?? new.txt", not staged
 	@Test
 	public void testStatusUntracked() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 
-		String projectName = getMethodName();
-		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
 
-		String fileName = "new.txt";
-		WebRequest request = getPostFilesRequest(projectId + "/", getNewFileJSON(fileName).toString(), fileName);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
 
-		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
-		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			JSONObject clone = clone(clonePath);
+			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
-		request = getGetGitStatusRequest(gitStatusUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject statusResponse = new JSONObject(response.getText());
-		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
-		assertEquals(1, statusArray.length());
-		assertEquals(fileName, statusArray.getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
+			// get project/folder metadata
+			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject folder = new JSONObject(response.getText());
+
+			String fileName = "new.txt";
+			request = getPostFilesRequest(folder.getString(ProtocolConstants.KEY_LOCATION), getNewFileJSON(fileName).toString(), fileName);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
+			String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
+
+			assertStatus(new StatusResult().setUntrackedNames(fileName), gitStatusUri);
+		}
 	}
 
 	@Test
@@ -429,89 +274,30 @@ public class GitStatusTest extends GitTest {
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
-		String contentLocation = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
-		WebRequest request = getGetFilesRequest(contentLocation);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		project = new JSONObject(response.getText());
-		String childrenLocation = project.optString(ProtocolConstants.KEY_CHILDREN_LOCATION, null);
-		assertNotNull(childrenLocation);
+		JSONObject testTxt = getChild(project, "test.txt");
+		modifyFile(testTxt, "file change");
 
-		request = getGetFilesRequest(childrenLocation);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		project = new JSONObject(response.getText());
-		List<JSONObject> children = getDirectoryChildren(project);
-		JSONObject folder = getChildByName(children, "folder");
-
-		// TODO: don't create URIs out of thin air
-		request = getPutFileRequest(projectId + "/test.txt", "file change");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-		// TODO: don't create URIs out of thin air
-		request = getPutFileRequest(projectId + "/folder/folder.txt", "folder change");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject folder = getChild(project, "folder");
+		JSONObject folderTxt = getChild(folder, "folder.txt");
+		modifyFile(folderTxt, "folder change");
 
 		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
 		// GET /git/status/file/{proj}/
-		request = getGetGitStatusRequest(gitStatusUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject statusResponse = new JSONObject(response.getText());
-		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-		assertEquals(2, statusArray.length());
-		assertNotNull(getChildByName(statusArray, "test.txt"));
-		assertNotNull(getChildByKey(statusArray, ProtocolConstants.KEY_PATH, "test.txt"));
-		assertNotNull(getChildByName(statusArray, "folder/folder.txt"));
-		assertNotNull(getChildByKey(statusArray, ProtocolConstants.KEY_PATH, "folder/folder.txt"));
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
-		assertEquals(0, statusArray.length());
+		assertStatus(new StatusResult().setModifiedNames("folder/folder.txt", "test.txt").setModifiedPaths("folder/folder.txt", "test.txt"), gitStatusUri);
 
 		// GET /git/status/file/{proj}/test.txt
-		// TODO: don't create URIs out of thin air
-		request = getGetGitStatusRequest(gitStatusUri + "test.txt");
-		response = webConversation.getResponse(request);
+		WebRequest request = getGetGitStatusRequest(gitStatusUri + "test.txt");
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
 
-		gitSection = folder.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
+		gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
 		gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
 		// GET /git/status/file/{proj}/folder/
-		request = getGetGitStatusRequest(gitStatusUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		statusResponse = new JSONObject(response.getText());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-		assertEquals(2, statusArray.length());
-		assertNotNull(getChildByName(statusArray, "test.txt"));
-		assertNotNull(getChildByKey(statusArray, ProtocolConstants.KEY_PATH, "../test.txt"));
-		assertNotNull(getChildByName(statusArray, "folder/folder.txt"));
-		assertNotNull(getChildByKey(statusArray, ProtocolConstants.KEY_PATH, "folder.txt"));
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
-		assertEquals(0, statusArray.length());
+		assertStatus(new StatusResult().setModifiedNames("folder/folder.txt", "test.txt").setModifiedPaths("folder.txt", "../test.txt"), gitStatusUri);
 	}
 
 	@Test
@@ -535,57 +321,19 @@ public class GitStatusTest extends GitTest {
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder = new JSONObject(response.getText());
-			String folderChildrenLocation = folder.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
 
-			request = getGetFilesRequest(folderChildrenLocation);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));
-			JSONObject testTxt = getChildByName(children, "test.txt");
-			String testTxtLocation = testTxt.getString(ProtocolConstants.KEY_LOCATION);
+			JSONObject testTxt = getChild(folder, "test.txt");
+			modifyFile(testTxt, "file change");
 
-			request = getPutFileRequest(testTxtLocation, "file change");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-			JSONObject folder1 = getChildByName(children, "folder");
-			String folder1ChildrenLocation = folder1.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
-			request = getGetFilesRequest(folder1ChildrenLocation);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			children = getDirectoryChildren(new JSONObject(response.getText()));
-			JSONObject folderTxt = getChildByName(children, "folder.txt");
-			String folderTxtLocation = folderTxt.getString(ProtocolConstants.KEY_LOCATION);
-
-			request = getPutFileRequest(folderTxtLocation, "folder change");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject folder1 = getChild(folder, "folder");
+			JSONObject folderTxt = getChild(folder1, "folder.txt");
+			modifyFile(folderTxt, "folder change");
 
 			// git section for the folder
 			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
 			String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
-			request = getGetGitStatusRequest(gitStatusUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			JSONObject statusResponse = new JSONObject(response.getText());
-			JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
-			assertEquals(0, statusArray.length());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
-			assertEquals(0, statusArray.length());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
-			assertEquals(0, statusArray.length());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-			assertEquals(2, statusArray.length());
-			JSONObject child = getChildByName(statusArray, "test.txt");
-			assertChildLocation(child, "file change");
-			child = getChildByName(statusArray, "folder/folder.txt");
-			assertNotNull(child);
-			assertChildLocation(child, "folder change");
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
-			assertEquals(0, statusArray.length());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
-			assertEquals(0, statusArray.length());
+			JSONObject statusResponse = assertStatus(new StatusResult().setModifiedNames("folder/folder.txt", "test.txt").setModifiedContents("folder change", "file change"), gitStatusUri);
 
 			String stageAll = statusResponse.getString(GitConstants.KEY_INDEX);
 			String commitAll = statusResponse.getString(GitConstants.KEY_COMMIT);
@@ -594,37 +342,13 @@ public class GitStatusTest extends GitTest {
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-			request = getGetGitStatusRequest(gitStatusUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			statusResponse = new JSONObject(response.getText());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
-			assertEquals(0, statusArray.length());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
-			assertEquals(2, statusArray.length());
-			child = getChildByName(statusArray, "test.txt");
-			assertChildLocation(child, "file change");
-			child = getChildByName(statusArray, "folder/folder.txt");
-			assertNotNull(child);
-			assertChildLocation(child, "folder change");
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
-			assertEquals(0, statusArray.length());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-			assertEquals(0, statusArray.length());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
-			assertEquals(0, statusArray.length());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
-			assertEquals(0, statusArray.length());
+			assertStatus(new StatusResult().setChangedNames("folder/folder.txt", "test.txt").setChangedContents("folder change", "file change"), gitStatusUri);
 
 			request = GitCommitTest.getPostGitCommitRequest(commitAll, "committing all changes", false);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-			request = getGetGitStatusRequest(gitStatusUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			statusResponse = new JSONObject(response.getText());
-			assertStatusClean(statusResponse);
+			assertStatus(StatusResult.CLEAN, gitStatusUri);
 		}
 	}
 
@@ -649,75 +373,40 @@ public class GitStatusTest extends GitTest {
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder = new JSONObject(response.getText());
-			String folderChildrenLocation = folder.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
 
-			request = getGetFilesRequest(folderChildrenLocation);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));
-			JSONObject testTxt = getChildByName(children, "test.txt");
-			String testTxtLocation = testTxt.getString(ProtocolConstants.KEY_LOCATION);
+			JSONObject testTxt = getChild(folder, "test.txt");
+			modifyFile(testTxt, "in index");
+			addFile(testTxt);
 
-			request = getPutFileRequest(testTxtLocation, "in index");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-			JSONObject gitSection = testTxt.getJSONObject(GitConstants.KEY_GIT);
-			String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
-
-			// "git add {path}"
-			request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-			request = getPutFileRequest(testTxtLocation, "in working tree");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			modifyFile(testTxt, "in working tree");
 
 			// git section for the folder
-			gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
+			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
 			String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
-			request = getGetGitStatusRequest(gitStatusUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			JSONObject statusResponse = new JSONObject(response.getText());
-			JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
-			assertEquals(0, statusArray.length());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
-			assertEquals(1, statusArray.length());
-			JSONObject child = getChildByName(statusArray, "test.txt");
-			StringBuilder sb = new StringBuilder();
-			sb.append("diff --git a/test.txt b/test.txt").append("\n");
-			sb.append("index 30d74d2..0123892 100644").append("\n");
-			sb.append("--- a/test.txt").append("\n");
-			sb.append("+++ b/test.txt").append("\n");
-			sb.append("@@ -1 +1 @@").append("\n");
-			sb.append("-test").append("\n");
-			sb.append("\\ No newline at end of file").append("\n");
-			sb.append("+in index").append("\n");
-			sb.append("\\ No newline at end of file").append("\n");
-			assertChildDiff(child, sb.toString());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
-			assertEquals(0, statusArray.length());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-			assertEquals(1, statusArray.length());
-			child = getChildByName(statusArray, "test.txt");
-			sb.setLength(0);
-			sb.append("diff --git a/test.txt b/test.txt").append("\n");
-			sb.append("index 0123892..791a2b7 100644").append("\n");
-			sb.append("--- a/test.txt").append("\n");
-			sb.append("+++ b/test.txt").append("\n");
-			sb.append("@@ -1 +1 @@").append("\n");
-			sb.append("-in index").append("\n");
-			sb.append("\\ No newline at end of file").append("\n");
-			sb.append("+in working tree").append("\n");
-			sb.append("\\ No newline at end of file").append("\n");
-			assertChildDiff(child, sb.toString());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
-			assertEquals(0, statusArray.length());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
-			assertEquals(0, statusArray.length());
+			StringBuilder changedDiff = new StringBuilder();
+			changedDiff.append("diff --git a/test.txt b/test.txt").append("\n");
+			changedDiff.append("index 30d74d2..0123892 100644").append("\n");
+			changedDiff.append("--- a/test.txt").append("\n");
+			changedDiff.append("+++ b/test.txt").append("\n");
+			changedDiff.append("@@ -1 +1 @@").append("\n");
+			changedDiff.append("-test").append("\n");
+			changedDiff.append("\\ No newline at end of file").append("\n");
+			changedDiff.append("+in index").append("\n");
+			changedDiff.append("\\ No newline at end of file").append("\n");
+
+			StringBuilder modifiedDiff = new StringBuilder();
+			modifiedDiff.append("diff --git a/test.txt b/test.txt").append("\n");
+			modifiedDiff.append("index 0123892..791a2b7 100644").append("\n");
+			modifiedDiff.append("--- a/test.txt").append("\n");
+			modifiedDiff.append("+++ b/test.txt").append("\n");
+			modifiedDiff.append("@@ -1 +1 @@").append("\n");
+			modifiedDiff.append("-in index").append("\n");
+			modifiedDiff.append("\\ No newline at end of file").append("\n");
+			modifiedDiff.append("+in working tree").append("\n");
+			modifiedDiff.append("\\ No newline at end of file").append("\n");
+
+			assertStatus(new StatusResult().setChangedNames("test.txt").setChangedDiffs(changedDiff.toString()).setModifiedNames("test.txt").setModifiedDiffs(modifiedDiff.toString()), gitStatusUri);
 		}
 	}
 
@@ -742,46 +431,16 @@ public class GitStatusTest extends GitTest {
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder = new JSONObject(response.getText());
-			String folderChildrenLocation = folder.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
-
-			// get subfolder location
-			request = getGetFilesRequest(folderChildrenLocation);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));
-			JSONObject subfolder = getChildByName(children, "folder");
-			String subfolderLocation = subfolder.getString(ProtocolConstants.KEY_LOCATION);
 
 			// modify file
-			JSONObject testTxt = getChildByName(children, "test.txt");
-			String testTxtLocation = testTxt.getString(ProtocolConstants.KEY_LOCATION);
-
-			request = getPutFileRequest(testTxtLocation, "hello");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject testTxt = getChild(folder, "test.txt");
+			modifyFile(testTxt, "hello");
 
 			// git section for the subfolder
-			request = getGetFilesRequest(subfolderLocation);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			subfolder = new JSONObject(response.getText());
+			JSONObject subfolder = getChild(folder, "folder");
 			JSONObject gitSection = subfolder.getJSONObject(GitConstants.KEY_GIT);
 			String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
-			request = getGetGitStatusRequest(gitStatusUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			JSONObject statusResponse = new JSONObject(response.getText());
-			JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
-			assertEquals(0, statusArray.length());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
-			assertEquals(0, statusArray.length());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
-			assertEquals(0, statusArray.length());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-			assertEquals(1, statusArray.length());
-			JSONObject child = getChildByName(statusArray, "test.txt");
-			assertEquals("../test.txt", child.getString(ProtocolConstants.KEY_PATH));
 			StringBuilder sb = new StringBuilder();
 			sb.append("diff --git a/test.txt b/test.txt").append("\n");
 			sb.append("index 30d74d2..b6fc4c6 100644").append("\n");
@@ -792,11 +451,8 @@ public class GitStatusTest extends GitTest {
 			sb.append("\\ No newline at end of file").append("\n");
 			sb.append("+hello").append("\n");
 			sb.append("\\ No newline at end of file").append("\n");
-			assertChildDiff(child, sb.toString());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
-			assertEquals(0, statusArray.length());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
-			assertEquals(0, statusArray.length());
+
+			assertStatus(new StatusResult().setModifiedNames("test.txt").setModifiedDiffs(sb.toString()).setModifiedPaths("../test.txt"), gitStatusUri);
 		}
 	}
 
@@ -821,78 +477,26 @@ public class GitStatusTest extends GitTest {
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder = new JSONObject(response.getText());
-			String folderChildrenLocation = folder.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
 
-			request = getGetFilesRequest(folderChildrenLocation);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));
-			JSONObject testTxt = getChildByName(children, "test.txt");
-			String testTxtLocation = testTxt.getString(ProtocolConstants.KEY_LOCATION);
+			JSONObject testTxt = getChild(folder, "test.txt");
+			modifyFile(testTxt, "index");
 
-			request = getPutFileRequest(testTxtLocation, "index");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			addFile(testTxt);
 
-			JSONObject gitSection = testTxt.getJSONObject(GitConstants.KEY_GIT);
-			String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
-
-			// "git add {path}"
-			request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-			request = getPutFileRequest(testTxtLocation, "working tree");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			modifyFile(testTxt, "working tree");
 
 			// git section for the folder
-			gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
+			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
 			String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
-			request = getGetGitStatusRequest(gitStatusUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			JSONObject statusResponse = new JSONObject(response.getText());
-			JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
-			assertEquals(0, statusArray.length());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
-			assertEquals(1, statusArray.length());
-			JSONObject child = getChildByName(statusArray, "test.txt");
-			assertChildIndex(child, "index");
-			assertChildHead(child, "test");
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
-			assertEquals(0, statusArray.length());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-			assertEquals(1, statusArray.length());
-			// TODO: check content
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
-			assertEquals(0, statusArray.length());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
-			assertEquals(0, statusArray.length());
+			assertStatus(new StatusResult().setChangedNames("test.txt").setChangedIndexContents("index").setChangedHeadContents("test").setModifiedNames("test.txt").setModifiedContents("working tree"), gitStatusUri);
 
 			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "committing all changes", false);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-			request = getGetGitStatusRequest(gitStatusUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			statusResponse = new JSONObject(response.getText());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
-			assertEquals(0, statusArray.length());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
-			assertEquals(0, statusArray.length());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
-			assertEquals(0, statusArray.length());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-			assertEquals(1, statusArray.length());
-			// TODO: check content
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
-			assertEquals(0, statusArray.length());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
-			assertEquals(0, statusArray.length());
+			assertStatus(new StatusResult().setModifiedNames("test.txt").setModifiedContents("working tree"), gitStatusUri);
 		}
 	}
 
@@ -903,7 +507,6 @@ public class GitStatusTest extends GitTest {
 
 		// clone1: create
 		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
-		String projectId1 = project1.getString(ProtocolConstants.KEY_ID);
 		IPath clonePath1 = new Path("file").append(project1.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 		String contentLocation1 = clone(clonePath1).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
@@ -913,13 +516,11 @@ public class GitStatusTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project1 = new JSONObject(response.getText());
 		JSONObject gitSection1 = project1.getJSONObject(GitConstants.KEY_GIT);
-		String gitIndexUri1 = gitSection1.getString(GitConstants.KEY_INDEX);
 		String gitHeadUri1 = gitSection1.getString(GitConstants.KEY_HEAD);
 		String gitRemoteUri1 = gitSection1.getString(GitConstants.KEY_REMOTE);
 
 		// clone2: create
 		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
-		String projectId2 = project2.getString(ProtocolConstants.KEY_ID);
 		IPath clonePath2 = new Path("file").append(project2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 		String contentLocation2 = clone(clonePath2).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
@@ -929,19 +530,15 @@ public class GitStatusTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project2 = new JSONObject(response.getText());
 		JSONObject gitSection2 = project2.getJSONObject(GitConstants.KEY_GIT);
-		String gitIndexUri2 = gitSection2.getString(GitConstants.KEY_INDEX);
 		String gitHeadUri2 = gitSection2.getString(GitConstants.KEY_HEAD);
 		String gitStatusUri2 = gitSection2.getString(GitConstants.KEY_STATUS);
 
 		// clone1: change
-		request = getPutFileRequest(projectId1 + "/test.txt", "change from clone1");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject testTxt1 = getChild(project1, "test.txt");
+		modifyFile(testTxt1, "change from clone1");
 
 		// clone1: add
-		request = GitAddTest.getPutGitIndexRequest(gitIndexUri1);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		addFile(testTxt1);
 
 		// clone1: commit
 		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri1, "change from clone1", false);
@@ -960,14 +557,11 @@ public class GitStatusTest extends GitTest {
 		assertTrue(entry.getStage() == 0);
 
 		// clone2: change
-		request = getPutFileRequest(projectId2 + "/test.txt", "change from clone2");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject testTxt2 = getChild(project2, "test.txt");
+		modifyFile(testTxt2, "change from clone2");
 
 		// clone2: add
-		request = GitAddTest.getPutGitIndexRequest(gitIndexUri2);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		addFile(testTxt2);
 
 		// clone2: commit
 		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri2, "change from clone2", false);
@@ -986,25 +580,7 @@ public class GitStatusTest extends GitTest {
 		entry = cache.getEntry("test.txt");
 		assertTrue(entry.getStage() > 0);
 
-		request = getGetGitStatusRequest(gitStatusUri2);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject statusResponse = new JSONObject(response.getText());
-		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CONFLICTING);
-		assertEquals(1, statusArray.length());
-		assertNotNull(getChildByName(statusArray, "test.txt"));
+		assertStatus(new StatusResult().setConflictingNames("test.txt"), gitStatusUri2);
 	}
 
 	@Test
@@ -1028,52 +604,27 @@ public class GitStatusTest extends GitTest {
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder = new JSONObject(response.getText());
-			String folderLocation = folder.getString(ProtocolConstants.KEY_LOCATION);
-			String folderChildrenLocation = folder.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
 
 			// add new files to the local repository so they can be deleted and removed in the test later on
 			// missing
 			String missingFileName = "missing.txt";
-			request = getPutFileRequest(folderLocation + "/" + missingFileName, "you'll miss me");
+			request = getPutFileRequest(folder.getString(ProtocolConstants.KEY_LOCATION) + missingFileName, "you'll miss me");
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-			// git section for the 'missing' file
-			request = getGetFilesRequest(folderChildrenLocation);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));
-			JSONObject missingFile = getChildByName(children, missingFileName);
-			JSONObject gitSection = missingFile.getJSONObject(GitConstants.KEY_GIT);
-			String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
-
-			// "git add {path}"
-			request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject missingTxt = getChild(folder, missingFileName);
+			addFile(missingTxt);
 
 			String removedFileName = "removed.txt";
-			request = getPutFileRequest(folderLocation + "/" + removedFileName, "I'll be removed");
+			request = getPutFileRequest(folder.getString(ProtocolConstants.KEY_LOCATION) + removedFileName, "I'll be removed");
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-			// refresh children
-			request = getGetFilesRequest(folderChildrenLocation);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			children = getDirectoryChildren(new JSONObject(response.getText()));
-
-			JSONObject removedFile = getChildByName(children, removedFileName);
-			gitSection = removedFile.getJSONObject(GitConstants.KEY_GIT);
-			gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
-
-			// "git add {path}"
-			request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject removedTxt = getChild(folder, removedFileName);
+			addFile(removedTxt);
 
 			// git section for the folder
-			gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
+			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
 			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
 			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "committing all changes", false);
@@ -1081,9 +632,7 @@ public class GitStatusTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// make the file missing
-			request = getDeleteFilesRequest(missingFile.getString(ProtocolConstants.KEY_LOCATION));
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			deleteFile(missingTxt);
 
 			// remove the file
 			Repository repository = getRepositoryForContentLocation(cloneContentLocation);
@@ -1094,90 +643,29 @@ public class GitStatusTest extends GitTest {
 
 			// untracked file
 			String untrackedFileName = "untracked.txt";
-			request = getPostFilesRequest(folderLocation + "/", getNewFileJSON(untrackedFileName).toString(), untrackedFileName);
+			request = getPostFilesRequest(folder.getString(ProtocolConstants.KEY_LOCATION), getNewFileJSON(untrackedFileName).toString(), untrackedFileName);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
 			// added file
 			String addedFileName = "added.txt";
-			request = getPostFilesRequest(folderLocation + "/", getNewFileJSON(addedFileName).toString(), addedFileName);
+			request = getPostFilesRequest(folder.getString(ProtocolConstants.KEY_LOCATION), getNewFileJSON(addedFileName).toString(), addedFileName);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
-			request = getGetFilesRequest(folderChildrenLocation);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			children = getDirectoryChildren(new JSONObject(response.getText()));
-			JSONObject addedFile = getChildByName(children, addedFileName);
-			gitSection = addedFile.getJSONObject(GitConstants.KEY_GIT);
-			gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
-
-			request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject addedTxt = getChild(folder, addedFileName);
+			addFile(addedTxt);
 
 			// changed file
-			JSONObject testTxt = getChildByName(children, "test.txt");
-			request = getPutFileRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION), "change");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-			request = GitAddTest.getPutGitIndexRequest(testTxt.getJSONObject(GitConstants.KEY_GIT).getString(GitConstants.KEY_INDEX));
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject testTxt = getChild(folder, "test.txt");
+			modifyFile(testTxt, "change");
+			addFile(testTxt);
 
 			// modified file
-			request = getPutFileRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION), "second change, in working tree");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			modifyFile(testTxt, "second change, in working tree");
 
 			// get status
-			request = getGetGitStatusRequest(folder.getJSONObject(GitConstants.KEY_GIT).getString(GitConstants.KEY_STATUS));
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			JSONObject statusResponse = new JSONObject(response.getText());
-			JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
-			assertEquals(1, statusArray.length());
-			assertEquals(addedFileName, statusArray.getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
-			gitSection = statusArray.getJSONObject(0).getJSONObject(GitConstants.KEY_GIT);
-			String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
-			JSONArray log = log(gitCommitUri, false);
-			assertEquals(0, log.length());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
-			assertEquals(1, statusArray.length());
-			assertEquals("test.txt", statusArray.getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
-			gitSection = statusArray.getJSONObject(0).getJSONObject(GitConstants.KEY_GIT);
-			gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
-			log = log(gitCommitUri, false);
-			assertEquals(1, log.length());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
-			assertEquals(1, statusArray.length());
-			assertEquals(missingFileName, statusArray.getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
-			gitSection = statusArray.getJSONObject(0).getJSONObject(GitConstants.KEY_GIT);
-			gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
-			log = log(gitCommitUri, false);
-			assertEquals(1, log.length());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-			assertEquals(1, statusArray.length());
-			assertEquals("test.txt", statusArray.getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
-			gitSection = statusArray.getJSONObject(0).getJSONObject(GitConstants.KEY_GIT);
-			gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
-			log = log(gitCommitUri, false);
-			assertEquals(1, log.length());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
-			assertEquals(1, statusArray.length());
-			assertEquals(removedFileName, statusArray.getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
-			gitSection = statusArray.getJSONObject(0).getJSONObject(GitConstants.KEY_GIT);
-			gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
-			log = log(gitCommitUri, false);
-			assertEquals(1, log.length());
-			statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
-			assertEquals(1, statusArray.length());
-			assertEquals(untrackedFileName, statusArray.getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
-			gitSection = statusArray.getJSONObject(0).getJSONObject(GitConstants.KEY_GIT);
-			gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
-			log = log(gitCommitUri, false);
-			assertEquals(0, log.length());
+			assertStatus(new StatusResult().setAddedNames(addedFileName).setAddedLogLengths(0).setChangedNames("test.txt").setChangedLogLengths(1).setMissingNames(missingFileName).setMissingLogLengths(1).setModifiedNames("test.txt").setModifiedLogLengths(1).setRemovedNames(removedFileName).setRemovedLogLengths(1).setUntrackedNames(untrackedFileName).setUntrackedLogLengths(0), folder.getJSONObject(GitConstants.KEY_GIT).getString(GitConstants.KEY_STATUS));
 		}
 	}
 
@@ -1227,78 +715,6 @@ public class GitStatusTest extends GitTest {
 			JSONObject branches = new JSONObject(response.getText());
 			assertEquals(Constants.MASTER, GitBranchTest.getCurrentBranch(branches).getString(ProtocolConstants.KEY_NAME));
 		}
-
-	}
-
-	private void assertChildLocation(JSONObject child, String expectedFileContent) throws JSONException, IOException, SAXException {
-		assertNotNull(child);
-		String location = child.getString(ProtocolConstants.KEY_LOCATION);
-		assertNotNull(location);
-		WebRequest request = getGetFilesRequest(location);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		assertEquals("Invalid file content", expectedFileContent, response.getText());
-	}
-
-	private void assertChildDiff(JSONObject child, String expectedDiff) throws IOException, SAXException, JSONException {
-		assertNotNull(child);
-		JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
-		String gitDiffUri = gitSection.getString(GitConstants.KEY_DIFF);
-		WebRequest request = GitDiffTest.getGetGitDiffRequest(gitDiffUri);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		assertEquals("Invalid file content", expectedDiff, GitDiffTest.parseMultiPartResponse(response)[1]);
-	}
-
-	private void assertChildHead(JSONObject child, String expectedFileContent) throws JSONException, IOException, SAXException {
-		assertNotNull(child);
-		JSONObject gitSection = child.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
-		String commit = gitSection.getString(GitConstants.KEY_COMMIT);
-		assertNotNull(commit);
-		WebRequest request = GitCommitTest.getGetGitCommitRequest(commit, true);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		assertEquals("Invalid file content", expectedFileContent, response.getText());
-	}
-
-	private void assertChildIndex(JSONObject child, String expectedFileContent) throws JSONException, IOException, SAXException {
-		assertNotNull(child);
-		JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
-		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
-		WebRequest request = GitIndexTest.getGetGitIndexRequest(gitIndexUri);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		assertEquals("Invalid file content", expectedFileContent, response.getText());
-	}
-
-	static JSONObject getChildByName(JSONArray array, String value) throws JSONException {
-		return getChildByKey(array, ProtocolConstants.KEY_NAME, value);
-	}
-
-	static JSONObject getChildByKey(JSONArray array, String key, String value) throws JSONException {
-		List<JSONObject> children = new ArrayList<JSONObject>();
-		for (int i = 0; i < array.length(); i++) {
-			children.add(array.getJSONObject(i));
-		}
-		return getChildByKey(children, key, value);
-	}
-
-	static void assertStatusClean(JSONObject statusResponse) throws JSONException {
-		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CONFLICTING);
-		assertEquals(0, statusArray.length());
 	}
 
 	/**

@@ -57,20 +57,12 @@ public class GitLogTest extends GitTest {
 			JSONObject folder = new JSONObject(response.getText());
 
 			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
-			String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
 			// modify
-			String folderLocation = folder.getString(ProtocolConstants.KEY_LOCATION);
-			request = getPutFileRequest(folderLocation + "test.txt", "first change");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-			// TODO: don't create URIs out of thin air
-			// add
-			request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject testTxt = getChild(folder, "test.txt");
+			modifyFile(testTxt, "first change");
+			addFile(testTxt);
 
 			// commit1
 			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit1", false);
@@ -78,14 +70,8 @@ public class GitLogTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// modify again
-			request = getPutFileRequest(folderLocation + "test.txt", "second change");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-			// add
-			request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			modifyFile(testTxt, "second change");
+			addFile(testTxt);
 
 			// commit2
 			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit2", false);
@@ -278,19 +264,12 @@ public class GitLogTest extends GitTest {
 			JSONObject project = new JSONObject(response.getText());
 
 			JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
-			String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
 			// modify
-			String projectLocation = project.getString(ProtocolConstants.KEY_LOCATION);
-			request = getPutFileRequest(projectLocation + "test.txt", "first change");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-			// add
-			request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject testTxt = getChild(project, "test.txt");
+			modifyFile(testTxt, "first change");
+			addFile(testTxt);
 
 			// commit1
 			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit1", false);
@@ -298,14 +277,8 @@ public class GitLogTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// modify again
-			request = getPutFileRequest(projectLocation + "test.txt", "second change");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-			// add
-			request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			modifyFile(testTxt, "second change");
+			addFile(testTxt);
 
 			// commit2
 			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit2", false);
@@ -359,7 +332,6 @@ public class GitLogTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
 			JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
-			String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
 			// create branch
@@ -367,15 +339,9 @@ public class GitLogTest extends GitTest {
 			branch(branchesLocation, newBranchName);
 
 			// modify
-			String projectLocation = project.getString(ProtocolConstants.KEY_LOCATION);
-			request = getPutFileRequest(projectLocation + "test.txt", "first change");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-			// add
-			request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject testTxt = getChild(project, "test.txt");
+			modifyFile(testTxt, "first change");
+			addFile(testTxt);
 
 			// commit1
 			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit1", false);
@@ -386,14 +352,8 @@ public class GitLogTest extends GitTest {
 			checkoutBranch(cloneLocation, newBranchName);
 
 			// modify again
-			request = getPutFileRequest(projectLocation + "test.txt", "second change");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-			// add
-			request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			modifyFile(testTxt, "second change");
+			addFile(testTxt);
 
 			// commit2
 			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit2", false);
@@ -440,37 +400,25 @@ public class GitLogTest extends GitTest {
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
-		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
 		// modify
-		WebRequest request = getPutFileRequest(projectId + "/test.txt", "test.txt change");
+		JSONObject testTxt = getChild(project, "test.txt");
+		modifyFile(testTxt, "test.txt change");
+		addFile(testTxt);
+
+		// commit1
+		WebRequest request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit1", false);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		// TODO: don't create URIs out of thin air
-		// add
-		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-		// commit1
-		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit1", false);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
 		// modify again
-		request = getPutFileRequest(projectId + "/folder/folder.txt", "folder.txt change");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-		// add
-		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "folder/folder.txt");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject folder = getChild(project, "folder");
+		JSONObject folderTxt = getChild(folder, "folder.txt");
+		modifyFile(folderTxt, "folder.txt change");
+		addFile(folderTxt);
 
 		// commit2
 		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit2", false);
@@ -478,7 +426,6 @@ public class GitLogTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// get log for file
-		// TODO: don't create URIs out of thin air
 		request = GitCommitTest.getGetGitCommitRequest(gitHeadUri, false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
@@ -500,7 +447,7 @@ public class GitLogTest extends GitTest {
 		commit = commitsArray.getJSONObject(2);
 		assertEquals("Initial commit", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
 
-		request = GitCommitTest.getGetGitCommitRequest(gitHeadUri + "/folder/", false);
+		request = GitCommitTest.getGetGitCommitRequest(folder.getJSONObject(GitConstants.KEY_GIT).getString(GitConstants.KEY_HEAD), false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		log = new JSONObject(response.getText());
@@ -525,37 +472,25 @@ public class GitLogTest extends GitTest {
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
-		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
 		// modify
-		WebRequest request = getPutFileRequest(projectId + "/test.txt", "test.txt change");
+		JSONObject testTxt = getChild(project, "test.txt");
+		modifyFile(testTxt, "test.txt change");
+		addFile(testTxt);
+
+		// commit1
+		WebRequest request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit1", false);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		// TODO: don't create URIs out of thin air
-		// add
-		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-		// commit1
-		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit1", false);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
 		// modify again
-		request = getPutFileRequest(projectId + "/folder/folder.txt", "folder.txt change");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-		// add
-		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "folder/folder.txt");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject folder = getChild(project, "folder");
+		JSONObject folderTxt = getChild(folder, "folder.txt");
+		modifyFile(folderTxt, "folder.txt change");
+		addFile(folderTxt);
 
 		// commit2
 		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit2", false);
@@ -563,8 +498,7 @@ public class GitLogTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// get log for file
-		// TODO: don't create URIs out of thin air
-		request = GitCommitTest.getGetGitCommitRequest(gitHeadUri + "test.txt", false);
+		request = GitCommitTest.getGetGitCommitRequest(testTxt.getJSONObject(GitConstants.KEY_GIT).getString(GitConstants.KEY_HEAD), false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject log = new JSONObject(response.getText());
@@ -641,19 +575,11 @@ public class GitLogTest extends GitTest {
 
 			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
 			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
-			String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 
 			// modify
-			String folderLocation = folder.getString(ProtocolConstants.KEY_LOCATION);
-			request = getPutFileRequest(folderLocation + "test.txt", "hello");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-			// TODO: don't create URIs out of thin air
-			// add
-			request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject testTxt = getChild(folder, "test.txt");
+			modifyFile(testTxt, "hello");
+			addFile(testTxt);
 
 			// commit1
 			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "2nd commit", false);
@@ -693,7 +619,6 @@ public class GitLogTest extends GitTest {
 			sb.append("+hello").append("\n");
 			sb.append("\\ No newline at end of file").append("\n");
 			assertEquals(sb.toString(), parts[1]);
-
 		}
 	}
 
@@ -805,7 +730,6 @@ public class GitLogTest extends GitTest {
 
 			JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
-			String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 			String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
 
 			// save initial commit name
@@ -815,15 +739,9 @@ public class GitLogTest extends GitTest {
 			String initCommitLocation = initCommit.getString(ProtocolConstants.KEY_LOCATION);
 
 			// modify
-			String projectLocation = project.getString(ProtocolConstants.KEY_LOCATION);
-			request = getPutFileRequest(projectLocation + "test.txt", "test.txt change");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-			// add
-			request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject testTxt = getChild(project, "test.txt");
+			modifyFile(testTxt, "test.txt change");
+			addFile(testTxt);
 
 			// commit
 			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit", false);

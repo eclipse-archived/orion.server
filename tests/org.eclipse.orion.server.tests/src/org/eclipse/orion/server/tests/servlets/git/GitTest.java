@@ -1106,4 +1106,228 @@ public abstract class GitTest extends FileSystemTest {
 		if (uri.getScheme() != null)
 			assertEquals(uri.getScheme(), result.getJSONObject("ErrorData").get("Scheme"));
 	}
+
+	protected JSONObject getChild(JSONObject folderObject, String childName) throws JSONException, IOException, SAXException {
+		String folderChildrenLocation = folderObject.optString(ProtocolConstants.KEY_CHILDREN_LOCATION, null);
+
+		if (folderChildrenLocation == null) {
+			// folderObject is not a folder, but a newly created project
+			folderObject.getString(ProtocolConstants.KEY_ID);
+			String projectContentLocation = folderObject.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+			WebRequest request = getGetFilesRequest(projectContentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject folder = new JSONObject(response.getText());
+			folderChildrenLocation = folder.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
+		}
+
+		WebRequest request = getGetFilesRequest(folderChildrenLocation);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));
+		JSONObject child = getChildByName(children, childName);
+		return child;
+	}
+
+	protected void modifyFile(JSONObject fileObject, String content) throws JSONException, IOException, SAXException {
+		String fileLocation = fileObject.getString(ProtocolConstants.KEY_LOCATION);
+
+		WebRequest request = getPutFileRequest(fileLocation, content);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+	}
+
+	protected void deleteFile(JSONObject fileObject) throws JSONException, IOException, SAXException {
+		String fileLocation = fileObject.getString(ProtocolConstants.KEY_LOCATION);
+
+		WebRequest request = getDeleteFilesRequest(fileLocation);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+	}
+
+	protected void addFile(JSONObject fileObject) throws JSONException, IOException, SAXException {
+		JSONObject fileGitSection = fileObject.getJSONObject(GitConstants.KEY_GIT);
+		String fileGitIndexUri = fileGitSection.getString(GitConstants.KEY_INDEX);
+
+		WebRequest request = GitAddTest.getPutGitIndexRequest(fileGitIndexUri);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+	}
+
+	protected WebResponse commitFile(JSONObject fileObject, String message, boolean amend) throws JSONException, IOException, SAXException {
+		JSONObject fileGitSection = fileObject.getJSONObject(GitConstants.KEY_GIT);
+		String fileGitHeadUri = fileGitSection.getString(GitConstants.KEY_HEAD);
+
+		WebRequest request = GitCommitTest.getPostGitCommitRequest(fileGitHeadUri, message, amend);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		return response;
+	}
+
+	protected JSONObject assertStatus(StatusResult expected, String statusUri) throws IOException, SAXException, JSONException {
+		assertStatusUri(statusUri);
+		WebRequest request = GitStatusTest.getGetGitStatusRequest(statusUri);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject statusResponse = new JSONObject(response.getText());
+
+		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
+		assertEquals(expected.getAdded(), statusArray.length());
+		if (expected.getAddedNames() != null) {
+			for (int i = 0; i < expected.getAddedNames().length; i++) {
+				JSONObject child = statusArray.getJSONObject(i);
+				assertEquals(expected.getAddedNames()[i], child.getString(ProtocolConstants.KEY_NAME));
+				if (expected.getAddedLogLengths() != null) {
+					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
+					gitSection = statusArray.getJSONObject(0).getJSONObject(GitConstants.KEY_GIT);
+					String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+					JSONArray log = log(gitCommitUri, false);
+					assertEquals(expected.getAddedLogLengths()[i], log.length());
+				}
+			}
+		}
+
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
+		assertEquals(expected.getChanged(), statusArray.length());
+		if (expected.getChangedNames() != null) {
+			for (int i = 0; i < expected.getChangedNames().length; i++) {
+				JSONObject child = statusArray.getJSONObject(i);
+				assertEquals(expected.getChangedNames()[i], child.getString(ProtocolConstants.KEY_NAME));
+				if (expected.getChangedContents() != null) {
+					String location = child.getString(ProtocolConstants.KEY_LOCATION);
+					assertNotNull(location);
+					request = getGetFilesRequest(location);
+					response = webConversation.getResponse(request);
+					assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+					assertEquals("Invalid file content", expected.getChangedContents()[i], response.getText());
+				}
+				if (expected.getChangedDiffs() != null) {
+					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
+					String gitDiffUri = gitSection.getString(GitConstants.KEY_DIFF);
+					request = GitDiffTest.getGetGitDiffRequest(gitDiffUri);
+					response = webConversation.getResponse(request);
+					assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+					assertEquals("Invalid diff content", expected.getChangedDiffs()[i], GitDiffTest.parseMultiPartResponse(response)[1]);
+				}
+				if (expected.getChangedIndexContents() != null) {
+					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
+					String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+					request = GitIndexTest.getGetGitIndexRequest(gitIndexUri);
+					response = webConversation.getResponse(request);
+					assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+					assertEquals("Invalid index content", expected.getChangedIndexContents()[i], response.getText());
+				}
+				if (expected.getChangedHeadContents() != null) {
+					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
+					String commit = gitSection.getString(GitConstants.KEY_COMMIT);
+					request = GitCommitTest.getGetGitCommitRequest(commit, true);
+					response = webConversation.getResponse(request);
+					assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+					assertEquals("Invalid head content", expected.getChangedHeadContents()[i], response.getText());
+				}
+				if (expected.getChangedLogLengths() != null) {
+					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
+					gitSection = statusArray.getJSONObject(0).getJSONObject(GitConstants.KEY_GIT);
+					String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+					JSONArray log = log(gitCommitUri, false);
+					assertEquals(expected.getChangedLogLengths()[i], log.length());
+				}
+			}
+		}
+
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CONFLICTING);
+		assertEquals(expected.getConflicting(), statusArray.length());
+		if (expected.getConflictingNames() != null) {
+			for (int i = 0; i < expected.getConflictingNames().length; i++) {
+				assertEquals(expected.getConflictingNames()[i], statusArray.getJSONObject(i).getString(ProtocolConstants.KEY_NAME));
+			}
+		}
+
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
+		assertEquals(expected.getMissing(), statusArray.length());
+		if (expected.getMissingNames() != null) {
+			for (int i = 0; i < expected.getMissingNames().length; i++) {
+				JSONObject child = statusArray.getJSONObject(i);
+				assertEquals(expected.getMissingNames()[i], child.getString(ProtocolConstants.KEY_NAME));
+				if (expected.getMissingLogLengths() != null) {
+					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
+					gitSection = statusArray.getJSONObject(0).getJSONObject(GitConstants.KEY_GIT);
+					String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+					JSONArray log = log(gitCommitUri, false);
+					assertEquals(expected.getMissingLogLengths()[i], log.length());
+				}
+			}
+		}
+
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
+		assertEquals(expected.getModified(), statusArray.length());
+		if (expected.getModifiedNames() != null) {
+			for (int i = 0; i < expected.getModifiedNames().length; i++) {
+				JSONObject child = statusArray.getJSONObject(i);
+				assertEquals(expected.getModifiedNames()[i], child.getString(ProtocolConstants.KEY_NAME));
+				if (expected.getModifiedContents() != null) {
+					String location = child.getString(ProtocolConstants.KEY_LOCATION);
+					assertNotNull(location);
+					request = getGetFilesRequest(location);
+					response = webConversation.getResponse(request);
+					assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+					assertEquals("Invalid file content", expected.getModifiedContents()[i], response.getText());
+				}
+				if (expected.getModifiedDiffs() != null) {
+					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
+					String gitDiffUri = gitSection.getString(GitConstants.KEY_DIFF);
+					request = GitDiffTest.getGetGitDiffRequest(gitDiffUri);
+					response = webConversation.getResponse(request);
+					assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+					assertEquals("Invalid diff content", expected.getModifiedDiffs()[i], GitDiffTest.parseMultiPartResponse(response)[1]);
+				}
+				if (expected.getModifiedLogLengths() != null) {
+					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
+					gitSection = statusArray.getJSONObject(0).getJSONObject(GitConstants.KEY_GIT);
+					String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+					JSONArray log = log(gitCommitUri, false);
+					assertEquals(expected.getModifiedLogLengths()[i], log.length());
+				}
+			}
+		}
+		if (expected.getModifiedPaths() != null) {
+			for (int i = 0; i < expected.getModifiedPaths().length; i++) {
+				assertEquals(expected.getModifiedPaths()[i], statusArray.getJSONObject(i).getString(ProtocolConstants.KEY_PATH));
+			}
+		}
+
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
+		assertEquals(expected.getRemoved(), statusArray.length());
+		if (expected.getRemovedNames() != null) {
+			for (int i = 0; i < expected.getRemovedNames().length; i++) {
+				JSONObject child = statusArray.getJSONObject(i);
+				assertEquals(expected.getRemovedNames()[i], child.getString(ProtocolConstants.KEY_NAME));
+				if (expected.getRemovedLogLengths() != null) {
+					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
+					gitSection = statusArray.getJSONObject(0).getJSONObject(GitConstants.KEY_GIT);
+					String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+					JSONArray log = log(gitCommitUri, false);
+					assertEquals(expected.getRemovedLogLengths()[i], log.length());
+				}
+			}
+		}
+
+		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
+		assertEquals(expected.getUntracked(), statusArray.length());
+		if (expected.getUntrackedNames() != null) {
+			for (int i = 0; i < expected.getUntrackedNames().length; i++) {
+				JSONObject child = statusArray.getJSONObject(i);
+				assertEquals(expected.getUntrackedNames()[i], child.getString(ProtocolConstants.KEY_NAME));
+				if (expected.getUntrackedLogLengths() != null) {
+					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
+					gitSection = statusArray.getJSONObject(0).getJSONObject(GitConstants.KEY_GIT);
+					String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
+					JSONArray log = log(gitCommitUri, false);
+					assertEquals(expected.getUntrackedLogLengths()[i], log.length());
+				}
+			}
+		}
+
+		return statusResponse;
+	}
 }

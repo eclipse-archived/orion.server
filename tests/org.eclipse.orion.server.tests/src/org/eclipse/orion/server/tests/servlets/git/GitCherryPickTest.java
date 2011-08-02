@@ -11,6 +11,7 @@
 package org.eclipse.orion.server.tests.servlets.git;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -62,20 +63,12 @@ public class GitCherryPickTest extends GitTest {
 			String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
-			// modify
-			request = getPutFileRequest(folderLocation + "test.txt", "first line\nsec. line\nthird line\n");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject testTxt = getChild(folder, "test.txt");
+			modifyFile(testTxt, "first line\nsec. line\nthird line\n");
 
-			// add
-			request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			addFile(testTxt);
 
-			// commit
-			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "lines in test.txt", false);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			commitFile(testTxt, "lines in test.txt", false);
 
 			// create new file
 			String fileName = "new.txt";
@@ -94,14 +87,10 @@ public class GitCherryPickTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// modify
-			request = getPutFileRequest(folderLocation + "test.txt", "first line\nsec. line\nthird line\nfourth line\n");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			modifyFile(testTxt, "first line\nsec. line\nthird line\nfourth line\n");
 
 			// add
-			request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			addFile(testTxt);
 
 			// commit
 			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "enlarged test.txt", false);
@@ -109,14 +98,10 @@ public class GitCherryPickTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// modify
-			request = getPutFileRequest(folderLocation + "test.txt", "first line\nsecond line\nthird line\nfourth line\n");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			modifyFile(testTxt, "first line\nsecond line\nthird line\nfourth line\n");
 
 			// add
-			request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			addFile(testTxt);
 
 			// commit
 			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "fixed test.txt", false);
@@ -140,14 +125,10 @@ public class GitCherryPickTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// modify
-			request = getPutFileRequest(folderLocation + "test.txt", "first line\nsec. line\nthird line\nfeature++\n");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			modifyFile(testTxt, "first line\nsec. line\nthird line\nfeature++\n");
 
 			// add
-			request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			addFile(testTxt);
 
 			// commit
 			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "enhanced test.txt", false);
@@ -160,12 +141,11 @@ public class GitCherryPickTest extends GitTest {
 			assertEquals(CherryPickStatus.OK, mergeResult);
 
 			// 'new.txt' should be not there
-			request = getGetFilesRequest(folderLocation + "/new.txt");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
+			JSONObject newTxt = getChild(folder, "new.txt");
+			assertNull(newTxt);
 
 			// check cherry-pick result in the file
-			request = getGetFilesRequest(folderLocation + "/test.txt");
+			request = getGetFilesRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			assertEquals("first line\nsecond line\nthird line\nfeature++\n", response.getText());
@@ -184,7 +164,7 @@ public class GitCherryPickTest extends GitTest {
 		}
 	}
 
-	// TODO: add more tests for cherry-picking that failed
+	// TODO: add more tests for cherry-picking that failed, see bug 351826
 
 	private JSONObject cherryPick(String gitHeadUri, String toCherryPick) throws JSONException, IOException, SAXException {
 		assertCommitUri(gitHeadUri);

@@ -17,12 +17,9 @@ import static org.junit.Assert.assertTrue;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
-import java.util.List;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONArray;
@@ -44,58 +41,24 @@ public class GitCommitTest extends GitTest {
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
-		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
-		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
-		// modify first file and add it to index
-		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change to commit");
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject testTxt = getChild(project, "test.txt");
+		modifyFile(testTxt, "change to commit");
+		addFile(testTxt);
 
-		// TODO: don't create URIs out of thin air
-		// add
-		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject folder1 = getChild(project, "folder");
+		JSONObject folderTxt = getChild(folder1, "folder.txt");
+		modifyFile(folderTxt, "change to commit");
+		addFile(folderTxt);
 
-		// modify second file and add it to index
-		request = getPutFileRequest(projectId + "/folder/folder.txt", "change to commit");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertStatus(new StatusResult().setChanged(2), gitStatusUri);
 
-		// TODO: don't create URIs out of thin air
-		// add
-		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "folder/folder.txt");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject statusResponse = new JSONObject(response.getText());
-		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
-		assertEquals(2, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
-		assertEquals(0, statusArray.length());
-
-		// TODO: don't create URIs out of thin air
 		// "git commit -m 'message' -- test.txt
 		final String commitMessage = "message";
-		request = getPostGitCommitRequest(gitHeadUri + "test.txt", commitMessage, false);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		WebResponse response = commitFile(testTxt, commitMessage, false);
 
 		// check if response contains most important parts and if commit
 		// message is valid
@@ -104,24 +67,8 @@ public class GitCommitTest extends GitTest {
 		assertNotNull(commit.optString(ProtocolConstants.KEY_NAME, null));
 		assertEquals(commitMessage, commit.getString(GitConstants.KEY_COMMIT_MESSAGE));
 
-		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		statusResponse = new JSONObject(response.getText());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
-		assertEquals(1, statusArray.length());
 		// still in index, not committed
-		assertEquals("folder/folder.txt", statusArray.getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
-		assertEquals(0, statusArray.length());
+		assertStatus(new StatusResult().setChangedNames("folder/folder.txt"), gitStatusUri);
 	}
 
 	@Test
@@ -130,27 +77,18 @@ public class GitCommitTest extends GitTest {
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
-		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change to commit");
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject testTxt = getChild(project, "test.txt");
+		modifyFile(testTxt, "change to commit");
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
-		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
-		assertNotNull(gitIndexUri);
-		String gitHeadUri = gitSection.optString(GitConstants.KEY_HEAD, null);
-		assertNotNull(gitHeadUri);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
-		// TODO: don't create URIs out of thin air
-		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		addFile(testTxt);
 
 		// commit with a null message
-		request = getPostGitCommitRequest(gitHeadUri /* all */, null, false);
-		response = webConversation.getResponse(request);
+		WebRequest request = getPostGitCommitRequest(gitHeadUri /* all */, null, false);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
 	}
 
@@ -160,27 +98,18 @@ public class GitCommitTest extends GitTest {
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
-		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change to commit");
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject testTxt = getChild(project, "test.txt");
+		modifyFile(testTxt, "change to commit");
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
-		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
-		assertNotNull(gitIndexUri);
-		String gitHeadUri = gitSection.optString(GitConstants.KEY_HEAD, null);
-		assertNotNull(gitHeadUri);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
-		// TODO: don't create URIs out of thin air
-		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		addFile(testTxt);
 
 		// commit with a null message
-		request = getPostGitCommitRequest(gitHeadUri /* all */, "", false);
-		response = webConversation.getResponse(request);
+		WebRequest request = getPostGitCommitRequest(gitHeadUri /* all */, "", false);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
 	}
 
@@ -190,48 +119,25 @@ public class GitCommitTest extends GitTest {
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
-		// TODO: don't create URIs out of thin air
-		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change to commit");
+		JSONObject testTxt = getChild(project, "test.txt");
+		modifyFile(testTxt, "change to commit");
+
+		JSONObject folder1 = getChild(project, "folder");
+		JSONObject folderTxt = getChild(folder1, "folder.txt");
+		modifyFile(folderTxt, "change to commit");
+
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
+		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
+
+		// "git add ."
+		WebRequest request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		// TODO: don't create URIs out of thin air
-		request = getPutFileRequest(projectId + "/folder/folder.txt", "change to commit");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
-		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
-		assertNotNull(gitIndexUri);
-		String gitStatusUri = gitSection.optString(GitConstants.KEY_STATUS, null);
-		assertNotNull(gitStatusUri);
-		String gitHeadUri = gitSection.optString(GitConstants.KEY_HEAD, null);
-		assertNotNull(gitHeadUri);
-
-		// "git add ."
-		request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject statusResponse = new JSONObject(response.getText());
-		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
-		assertEquals(2, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED);
-		assertEquals(0, statusArray.length());
-		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED);
-		assertEquals(0, statusArray.length());
+		assertStatus(new StatusResult().setChanged(2), gitStatusUri);
 
 		// commit all
 		request = getPostGitCommitRequest(gitHeadUri, "message", false);
@@ -239,11 +145,7 @@ public class GitCommitTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// assert clean
-		request = GitStatusTest.getGetGitStatusRequest(gitStatusUri);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		statusResponse = new JSONObject(response.getText());
-		GitStatusTest.assertStatusClean(statusResponse);
+		assertStatus(StatusResult.CLEAN, gitStatusUri);
 	}
 
 	@Test
@@ -252,23 +154,17 @@ public class GitCommitTest extends GitTest {
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
-		// TODO: don't create URIs out of thin air
-		WebRequest request = getPutFileRequest(projectId + "/test.txt", "change to commit");
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject testTxt = getChild(project, "test.txt");
+		modifyFile(testTxt, "change to commit");
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
-		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
-		assertNotNull(gitIndexUri);
-		String gitHeadUri = gitSection.optString(GitConstants.KEY_HEAD, null);
-		assertNotNull(gitHeadUri);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
 		// "git add ."
-		request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
-		response = webConversation.getResponse(request);
+		WebRequest request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// commit all
@@ -281,28 +177,12 @@ public class GitCommitTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		// TODO: replace with RESTful API for git log when available
-		Git git = new Git(db);
-		Iterable<RevCommit> commits = git.log().call();
-		String expectedMessages[] = new String[] {"Initial commit", "Commit message"};
-		int c = 0;
-		for (RevCommit commit : commits) {
-			assertEquals(expectedMessages[expectedMessages.length - 1 - c], commit.getFullMessage());
-			c++;
-		}
-		assertEquals(expectedMessages.length, c);
-	}
-
-	@Test
-	@Ignore("not yet implemented")
-	public void testCommitLog() {
-		// TODO: implement, see bug 340051
-	}
-
-	@Test
-	@Ignore("not yet implemented")
-	public void testCommitLogWithPath() {
-		// TODO: implement, see bug 340051
+		JSONArray commitsArray = log(gitHeadUri, false);
+		assertEquals(2, commitsArray.length());
+		JSONObject commit = commitsArray.getJSONObject(0);
+		assertEquals("Commit message", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
+		commit = commitsArray.getJSONObject(1);
+		assertEquals("Initial commit", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
 	}
 
 	@Test
@@ -311,33 +191,23 @@ public class GitCommitTest extends GitTest {
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
-		// TODO: don't create URIs out of thin air
-		WebRequest request = getPutFileRequest(projectId + "/test.txt", "in HEAD");
+		JSONObject testTxt = getChild(project, "test.txt");
+		modifyFile(testTxt, "in HEAD");
+
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
+
+		addFile(testTxt);
+
+		// commit all
+		WebRequest request = getPostGitCommitRequest(gitHeadUri, "message", false);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
-		String gitIndexUri = gitSection.optString(GitConstants.KEY_INDEX, null);
-		assertNotNull(gitIndexUri);
-		String gitHeadUri = gitSection.optString(GitConstants.KEY_HEAD, null);
-		assertNotNull(gitHeadUri);
-
-		// TODO: don't create URIs out of thin air
-		request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-		// TODO: don't create URIs out of thin air
-		// commit all
-		request = getPostGitCommitRequest(gitHeadUri, "message", false);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-		// TODO: don't create URIs out of thin air
-		request = getGetGitCommitRequest(gitHeadUri + "test.txt", true);
+		JSONObject testTxtGitSection = testTxt.getJSONObject(GitConstants.KEY_GIT);
+		String testTxtGitHeadUri = testTxtGitSection.getString(GitConstants.KEY_HEAD);
+		request = getGetGitCommitRequest(testTxtGitHeadUri, true);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("in HEAD", response.getText());
@@ -370,46 +240,27 @@ public class GitCommitTest extends GitTest {
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject cloneFolder = new JSONObject(response.getText());
-			String cloneFolderLocation = cloneFolder.getString(ProtocolConstants.KEY_LOCATION);
-			String cloneFolderChildrenLocation = cloneFolder.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
 
 			String fileName = "folder2.txt";
-			request = getPostFilesRequest(cloneFolderLocation + "/folder/", getNewFileJSON(fileName).toString(), fileName);
+			JSONObject folder = getChild(cloneFolder, "folder");
+			request = getPostFilesRequest(folder.getString(ProtocolConstants.KEY_LOCATION), getNewFileJSON(fileName).toString(), fileName);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
-			request = getGetFilesRequest(cloneFolderChildrenLocation);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));
-			JSONObject testTxt = getChildByName(children, "test.txt");
-			String testTxtLocation = testTxt.getString(ProtocolConstants.KEY_LOCATION);
-			JSONObject testTxtGitSection = testTxt.getJSONObject(GitConstants.KEY_GIT);
-			String testTxtGitIndexUri = testTxtGitSection.getString(GitConstants.KEY_INDEX);
+			JSONObject testTxt = getChild(cloneFolder, "test.txt");
 
 			// drill down to 'folder'
-			JSONObject folder = getChildByName(children, "folder");
-			String folderChildrenLocation = folder.getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
 			JSONObject folderGitSection = folder.getJSONObject(GitConstants.KEY_GIT);
 			String folderGitStatusUri = folderGitSection.getString(GitConstants.KEY_STATUS);
 			String folderGitCloneUri = folderGitSection.getString(GitConstants.KEY_CLONE);
 
-			request = getGetFilesRequest(folderChildrenLocation);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			children = getDirectoryChildren(new JSONObject(response.getText()));
-			JSONObject folder2txt = getChildByName(children, "folder2.txt");
-			String folder2TxtLocation = folder2txt.getString(ProtocolConstants.KEY_LOCATION);
-			JSONObject folderTxt = getChildByName(children, "folder.txt");
-			String folderTxtLocation = folderTxt.getString(ProtocolConstants.KEY_LOCATION);
+			JSONObject folder2Txt = getChild(folder, "folder2.txt");
+			JSONObject folderTxt = getChild(folder, "folder.txt");
 
 			// git section for the new file
-			JSONObject folder2TxtGitSection = folder2txt.getJSONObject(GitConstants.KEY_GIT);
+			JSONObject folder2TxtGitSection = folder2Txt.getJSONObject(GitConstants.KEY_GIT);
 			String folder2TxtGitIndexUri = folder2TxtGitSection.getString(GitConstants.KEY_INDEX);
 			String folder2TxtGitHeadUri = folder2TxtGitSection.getString(GitConstants.KEY_HEAD);
-
-			JSONObject folderTxtGitSection = folderTxt.getJSONObject(GitConstants.KEY_GIT);
-			String folderTxtGitIndexUri = folderTxtGitSection.getString(GitConstants.KEY_INDEX);
 
 			// stage the new file
 			request = GitAddTest.getPutGitIndexRequest(folder2TxtGitIndexUri);
@@ -422,60 +273,21 @@ public class GitCommitTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// check status - clean
-			request = GitStatusTest.getGetGitStatusRequest(folderGitStatusUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			JSONObject statusResponse = new JSONObject(response.getText());
-			GitStatusTest.assertStatusClean(statusResponse);
+			assertStatus(StatusResult.CLEAN, folderGitStatusUri);
 
 			// modify all
-			request = getPutFileRequest(testTxtLocation, "change");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-			request = getPutFileRequest(folderTxtLocation, "change");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-			request = getPutFileRequest(folder2TxtLocation, "change");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			modifyFile(testTxt, "change");
+			modifyFile(folderTxt, "change");
+			modifyFile(folder2Txt, "change");
 
 			// check status - modified=3
-			request = GitStatusTest.getGetGitStatusRequest(folderGitStatusUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			statusResponse = new JSONObject(response.getText());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_CONFLICTING).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING).length());
-			assertEquals(3, statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED).length());
+			assertStatus(new StatusResult().setModified(3), folderGitStatusUri);
 
-			// add folder/folder.txt
-			request = GitAddTest.getPutGitIndexRequest(folderTxtGitIndexUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			addFile(folderTxt);
+			addFile(testTxt);
 
-			// add test.txt
-			request = GitAddTest.getPutGitIndexRequest(testTxtGitIndexUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-			// check status - modified=2, changed=1
-			request = GitStatusTest.getGetGitStatusRequest(folderGitStatusUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			statusResponse = new JSONObject(response.getText());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED).length());
-			assertEquals(2, statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_CONFLICTING).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING).length());
-			assertEquals(1, statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED).length());
+			// check status - modified=1, changed=2
+			assertStatus(new StatusResult().setModified(1).setChanged(2), folderGitStatusUri);
 
 			// commit all
 			// XXX: using HEAD URI for folder will commit all files in the folder, regardless of index state
@@ -494,19 +306,7 @@ public class GitCommitTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// check status - changed=1
-			request = GitStatusTest.getGetGitStatusRequest(folderGitStatusUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			statusResponse = new JSONObject(response.getText());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_CONFLICTING).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_MISSING).length());
-			JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
-			assertEquals(1, statusArray.length());
-			assertNotNull(GitStatusTest.getChildByName(statusArray, "folder/folder2.txt"));
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_REMOVED).length());
-			assertEquals(0, statusResponse.getJSONArray(GitConstants.KEY_STATUS_UNTRACKED).length());
+			assertStatus(new StatusResult().setModifiedNames("folder/folder2.txt"), folderGitStatusUri);
 
 			// check the last commit for the repo
 			JSONArray commitsArray = log(cloneFolderGitHeadUri, false);
@@ -662,7 +462,7 @@ public class GitCommitTest extends GitTest {
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-			// commit - author and commiter not specified
+			// commit - author and committer not specified
 			request = getPostGitCommitRequest(gitHeadUri, "1", false, null, null, null, null);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
@@ -782,6 +582,5 @@ public class GitCommitTest extends GitTest {
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
-
 	}
 }

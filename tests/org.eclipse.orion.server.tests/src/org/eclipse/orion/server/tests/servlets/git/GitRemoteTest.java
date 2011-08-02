@@ -193,10 +193,8 @@ public class GitRemoteTest extends GitTest {
 			assertEquals(1, commitsArray.length());
 
 			// change
-			String folderLocation = folder.getString(ProtocolConstants.KEY_LOCATION);
-			request = getPutFileRequest(folderLocation + "test.txt", "change");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject testTxt = getChild(folder, "test.txt");
+			modifyFile(testTxt, "change");
 
 			// add
 			request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
@@ -252,10 +250,8 @@ public class GitRemoteTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
-		String gitRemoteUri = gitSection.optString(GitConstants.KEY_REMOTE, null);
-		assertNotNull(gitRemoteUri);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+		String gitRemoteUri = gitSection.getString(GitConstants.KEY_REMOTE);
 
 		Repository db1 = getRepositoryForContentLocation(cloneContentLocation);
 		Git git = new Git(db1);
@@ -340,7 +336,7 @@ public class GitRemoteTest extends GitTest {
 		IPath path = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 		JSONObject clone = clone(path);
 		String remotesLocation = clone.getString(GitConstants.KEY_REMOTE);
-		String contentLocation = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		// create remote
 		final String remoteName = "remote1";
@@ -348,10 +344,10 @@ public class GitRemoteTest extends GitTest {
 		final String fetchRefSpec = "+refs/heads/*:refs/remotes/%s/*";
 		final String pushUri = "remote2.com";
 		final String pushRefSpec = "refs/heads/*:refs/heads/*";
-		WebResponse response = addRemote(remotesLocation, remoteName, remoteUri, fetchRefSpec, pushUri, pushRefSpec);
+		addRemote(remotesLocation, remoteName, remoteUri, fetchRefSpec, pushUri, pushRefSpec);
 
-		Repository db = new FileRepository(GitUtils.getGitDir(path));
-		StoredConfig config = db.getConfig();
+		Repository db2 = new FileRepository(GitUtils.getGitDir(path));
+		StoredConfig config = db2.getConfig();
 		RemoteConfig rc = new RemoteConfig(config, remoteName);
 
 		assertNotNull(rc);
@@ -419,5 +415,4 @@ public class GitRemoteTest extends GitTest {
 	static void assertOnBranch(Git git, String branch) throws IOException {
 		assertNotNull(git.getRepository().getRef(branch));
 	}
-
 }

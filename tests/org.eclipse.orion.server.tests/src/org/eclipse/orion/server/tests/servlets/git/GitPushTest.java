@@ -62,8 +62,7 @@ public class GitPushTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitRemoteUri = gitSection.getString(GitConstants.KEY_REMOTE);
 
 		// get remote branch location
@@ -82,7 +81,6 @@ public class GitPushTest extends GitTest {
 
 		// clone1
 		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
-		String projectId1 = project1.getString(ProtocolConstants.KEY_ID);
 		IPath clonePath1 = new Path("file").append(project1.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 		clone(clonePath1);
 
@@ -92,15 +90,12 @@ public class GitPushTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project1 = new JSONObject(response.getText());
 
-		JSONObject gitSection1 = project1.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection1);
-		String gitRemoteUri1 = gitSection1.optString(GitConstants.KEY_REMOTE);
-		String gitIndexUri1 = gitSection1.optString(GitConstants.KEY_INDEX);
-		String gitHeadUri1 = gitSection1.optString(GitConstants.KEY_HEAD);
+		JSONObject gitSection1 = project1.getJSONObject(GitConstants.KEY_GIT);
+		String gitRemoteUri1 = gitSection1.getString(GitConstants.KEY_REMOTE);
+		String gitHeadUri1 = gitSection1.getString(GitConstants.KEY_HEAD);
 
 		// clone2
 		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
-		String projectId2 = project2.getString(ProtocolConstants.KEY_ID);
 		IPath clonePath2 = new Path("file").append(project2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 		clone(clonePath2);
 
@@ -109,8 +104,7 @@ public class GitPushTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project2 = new JSONObject(response.getText());
-		JSONObject gitSection2 = project2.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection2);
+		JSONObject gitSection2 = project2.getJSONObject(GitConstants.KEY_GIT);
 		String gitRemoteUri2 = gitSection2.getString(GitConstants.KEY_REMOTE);
 		String gitHeadUri2 = gitSection2.getString(GitConstants.KEY_HEAD);
 
@@ -126,14 +120,10 @@ public class GitPushTest extends GitTest {
 		assertEquals(Constants.DEFAULT_REMOTE_NAME, remote.getString(ProtocolConstants.KEY_NAME));
 
 		// clone1: change
-		request = getPutFileRequest(projectId1 + "/test.txt", "incoming change");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject testTxt1 = getChild(project1, "test.txt");
+		modifyFile(testTxt1, "incoming change");
 
-		// clone1: add
-		request = GitAddTest.getPutGitIndexRequest(gitIndexUri1);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		addFile(testTxt1);
 
 		// clone1: commit
 		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri1, "incoming change commit", false);
@@ -162,7 +152,8 @@ public class GitPushTest extends GitTest {
 		assertEquals(MergeStatus.FAST_FORWARD, mergeResult);
 
 		// clone2: assert change from clone1 is in place
-		request = getGetFilesRequest(projectId2 + "/test.txt");
+		JSONObject testTxt2 = getChild(project2, "test.txt");
+		request = getGetFilesRequest(testTxt2.getString(ProtocolConstants.KEY_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("incoming change", response.getText());
@@ -192,8 +183,7 @@ public class GitPushTest extends GitTest {
 		project1 = new JSONObject(response.getText());
 
 		// clone1: get git links
-		JSONObject gitSection1 = project1.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection1);
+		JSONObject gitSection1 = project1.getJSONObject(GitConstants.KEY_GIT);
 		String gitRemoteUri1 = gitSection1.optString(GitConstants.KEY_REMOTE);
 		String gitIndexUri1 = gitSection1.optString(GitConstants.KEY_INDEX);
 		String gitHeadUri1 = gitSection1.optString(GitConstants.KEY_HEAD);
@@ -212,8 +202,7 @@ public class GitPushTest extends GitTest {
 		project2 = new JSONObject(response.getText());
 
 		// clone2: get git links
-		JSONObject gitSection2 = project2.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection2);
+		JSONObject gitSection2 = project2.getJSONObject(GitConstants.KEY_GIT);
 		String gitRemoteUri2 = gitSection2.getString(GitConstants.KEY_REMOTE);
 		String gitCommitUri2 = gitSection2.getString(GitConstants.KEY_COMMIT);
 
@@ -229,9 +218,8 @@ public class GitPushTest extends GitTest {
 		assertEquals(Constants.DEFAULT_REMOTE_NAME, remote.getString(ProtocolConstants.KEY_NAME));
 
 		// clone1: change
-		request = getPutFileRequest(projectId1 + "/test.txt", "incoming change");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject testTxt1 = getChild(project1, "test.txt");
+		modifyFile(testTxt1, "incoming change");
 
 		// clone1: add
 		request = GitAddTest.getPutGitIndexRequest(gitIndexUri1);
@@ -265,7 +253,8 @@ public class GitPushTest extends GitTest {
 		assertEquals(MergeStatus.FAST_FORWARD, mergeResult);
 
 		// clone2: assert change from clone1 is in place
-		request = getGetFilesRequest(projectId2 + "/test.txt");
+		JSONObject testTxt2 = getChild(project2, "test.txt");
+		request = getGetFilesRequest(testTxt2.getString(ProtocolConstants.KEY_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("incoming change", response.getText());
@@ -277,7 +266,6 @@ public class GitPushTest extends GitTest {
 
 		// clone1: create
 		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
-		String projectId1 = project1.getString(ProtocolConstants.KEY_ID);
 		IPath clonePath1 = new Path("file").append(project1.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 		JSONObject clone1 = clone(clonePath1);
 		String cloneLocation1 = clone1.getString(ProtocolConstants.KEY_LOCATION);
@@ -300,9 +288,8 @@ public class GitPushTest extends GitTest {
 		checkoutBranch(cloneLocation1, "a");
 
 		// clone1: change
-		request = getPutFileRequest(projectId1 + "/test.txt", "branch 'a' change");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject testTxt1 = getChild(project1, "test.txt");
+		modifyFile(testTxt1, "branch 'a' change");
 
 		// clone1: add
 		request = GitAddTest.getPutGitIndexRequest(gitIndexUri1);
@@ -327,7 +314,6 @@ public class GitPushTest extends GitTest {
 
 		// clone2
 		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
-		String projectId2 = project2.getString(ProtocolConstants.KEY_ID);
 		IPath clonePath2 = new Path("file").append(project2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 		JSONObject clone2 = clone(clonePath2);
 		String cloneLocation2 = clone2.getString(ProtocolConstants.KEY_LOCATION);
@@ -347,7 +333,8 @@ public class GitPushTest extends GitTest {
 		response = checkoutBranch(cloneLocation2, "a");
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		request = getGetFilesRequest(projectId2 + "/test.txt");
+		JSONObject testTxt2 = getChild(project2, "test.txt");
+		request = getGetFilesRequest(testTxt2.getString(ProtocolConstants.KEY_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("branch 'a' change", response.getText());
@@ -400,7 +387,6 @@ public class GitPushTest extends GitTest {
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project1 = new JSONObject(response.getText());
-			String projectLocation1 = project1.getString(ProtocolConstants.KEY_LOCATION);
 			JSONObject gitSection1 = project1.getJSONObject(GitConstants.KEY_GIT);
 			String gitRemoteUri1 = gitSection1.getString(GitConstants.KEY_REMOTE);
 			String gitIndexUri1 = gitSection1.getString(GitConstants.KEY_INDEX);
@@ -417,9 +403,8 @@ public class GitPushTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// clone 1 - change
-			request = getPutFileRequest(projectLocation1 + "/test.txt", "clone1 change");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject testTxt1 = getChild(project1, "test.txt");
+			modifyFile(testTxt1, "clone1 change");
 
 			// clone 1 - add
 			request = GitAddTest.getPutGitIndexRequest(gitIndexUri1);
@@ -517,7 +502,6 @@ public class GitPushTest extends GitTest {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
 		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 		clone(clonePath);
 
@@ -540,9 +524,8 @@ public class GitPushTest extends GitTest {
 		assertEquals(1, commitsArray.length());
 
 		// change
-		request = getPutFileRequest(projectId + "/test.txt", "incoming change");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject testTxt = getChild(project, "test.txt");
+		modifyFile(testTxt, "incoming change");
 
 		// add
 		request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
@@ -576,7 +559,6 @@ public class GitPushTest extends GitTest {
 
 		// clone1
 		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
-		String projectId1 = project1.getString(ProtocolConstants.KEY_ID);
 		IPath clonePath1 = new Path("file").append(project1.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 		clone(clonePath1);
 
@@ -593,7 +575,6 @@ public class GitPushTest extends GitTest {
 
 		// clone2
 		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
-		String projectId2 = project2.getString(ProtocolConstants.KEY_ID);
 		IPath clonePath2 = new Path("file").append(project2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 		clone(clonePath2);
 
@@ -609,9 +590,8 @@ public class GitPushTest extends GitTest {
 		String gitHeadUri2 = gitSection2.getString(GitConstants.KEY_HEAD);
 
 		// clone1: change
-		request = getPutFileRequest(projectId1 + "/test.txt", "clone1 change");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject testTxt1 = getChild(project1, "test.txt");
+		modifyFile(testTxt1, "clone1 change");
 
 		// clone1: add
 		request = GitAddTest.getPutGitIndexRequest(gitIndexUri1);
@@ -628,9 +608,8 @@ public class GitPushTest extends GitTest {
 		assertEquals(true, pushStatus.isOK());
 
 		// clone2: change
-		request = getPutFileRequest(projectId2 + "/test.txt", "clone2 change");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject testTxt2 = getChild(project2, "test.txt");
+		modifyFile(testTxt2, "clone2 change");
 
 		// clone2: add
 		request = GitAddTest.getPutGitIndexRequest(gitIndexUri2);
@@ -684,7 +663,6 @@ public class GitPushTest extends GitTest {
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project1 = new JSONObject(response.getText());
-			String project1Location = project1.getString(ProtocolConstants.KEY_LOCATION);
 			JSONObject gitSection1 = project1.getJSONObject(GitConstants.KEY_GIT);
 			String gitRemoteUri1 = gitSection1.getString(GitConstants.KEY_REMOTE);
 			String gitIndexUri1 = gitSection1.getString(GitConstants.KEY_INDEX);
@@ -698,16 +676,14 @@ public class GitPushTest extends GitTest {
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project2 = new JSONObject(response.getText());
-			String project2Location = project2.getString(ProtocolConstants.KEY_LOCATION);
 			JSONObject gitSection2 = project2.getJSONObject(GitConstants.KEY_GIT);
 			String gitRemoteUri2 = gitSection2.getString(GitConstants.KEY_REMOTE);
 			String gitIndexUri2 = gitSection2.getString(GitConstants.KEY_INDEX);
 			String gitHeadUri2 = gitSection2.getString(GitConstants.KEY_HEAD);
 
 			// clone1: change
-			request = getPutFileRequest(project1Location + "/test.txt", "clone1 change");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject testTxt1 = getChild(project1, "test.txt");
+			modifyFile(testTxt1, "clone1 change");
 
 			// clone1: add
 			request = GitAddTest.getPutGitIndexRequest(gitIndexUri1);
@@ -724,9 +700,8 @@ public class GitPushTest extends GitTest {
 			assertEquals(true, pushStatus.isOK());
 
 			// clone2: change
-			request = getPutFileRequest(project2Location + "/test.txt", "clone2 change");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject testTxt2 = getChild(project2, "test.txt");
+			modifyFile(testTxt2, "clone2 change");
 
 			// clone2: add
 			request = GitAddTest.getPutGitIndexRequest(gitIndexUri2);
@@ -781,8 +756,7 @@ public class GitPushTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project2 = new JSONObject(response.getText());
 
-		JSONObject gitSection2 = project2.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection2);
+		JSONObject gitSection2 = project2.getJSONObject(GitConstants.KEY_GIT);
 		String gitRemoteUri2 = gitSection2.getString(GitConstants.KEY_REMOTE);
 		String gitHeadUri2 = gitSection2.getString(GitConstants.KEY_HEAD);
 		String gitTagUri2 = gitSection2.getString(GitConstants.KEY_TAG);
