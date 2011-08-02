@@ -164,91 +164,119 @@ public class GitResetTest extends GitTest {
 	@Test
 	public void testResetMixedAll() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 
-		String projectName = getMethodName();
-		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
 
-		JSONObject testTxt = getChild(project, "test.txt");
-		modifyFile(testTxt, "hello");
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
 
-		String fileName = "new.txt";
-		// TODO: don't create URIs out of thin air
-		WebRequest request = getPostFilesRequest(projectId + "/", getNewFileJSON(fileName).toString(), fileName);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			JSONObject clone = clone(clonePath);
+			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
-		JSONObject folder = getChild(project, "folder");
-		JSONObject folderTxt = getChild(folder, "folder.txt");
-		deleteFile(folderTxt);
+			// get project/folder metadata
+			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject folder = new JSONObject(response.getText());
 
-		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
-		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
-		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
+			JSONObject testTxt = getChild(folder, "test.txt");
+			modifyFile(testTxt, "hello");
 
-		// "git status"
-		assertStatus(new StatusResult().setMissing(1).setModified(1).setUntracked(1), gitStatusUri);
+			String fileName = "new.txt";
+			request = getPostFilesRequest(folder.getString(ProtocolConstants.KEY_LOCATION), getNewFileJSON(fileName).toString(), fileName);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
-		// "git add ."
-		request = GitAddTest.getPutGitIndexRequest(gitIndexUri /* add all */);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject folder1 = getChild(folder, "folder");
+			JSONObject folderTxt = getChild(folder1, "folder.txt");
+			deleteFile(folderTxt);
 
-		// "git status"
-		assertStatus(new StatusResult().setAdded(1).setChanged(1).setRemoved(1), gitStatusUri);
+			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
+			String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+			String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
-		// "git reset --mixed HEAD"
-		request = getPostGitIndexRequest(gitIndexUri /* reset all */, ResetType.MIXED);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			// "git status"
+			assertStatus(new StatusResult().setMissing(1).setModified(1).setUntracked(1), gitStatusUri);
 
-		// "git status", should be the same result as called for the first time
-		assertStatus(new StatusResult().setMissing(1).setModified(1).setUntracked(1), gitStatusUri);
+			// "git add ."
+			request = GitAddTest.getPutGitIndexRequest(gitIndexUri /* add all */);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// "git status"
+			assertStatus(new StatusResult().setAdded(1).setChanged(1).setRemoved(1), gitStatusUri);
+
+			// "git reset --mixed HEAD"
+			request = getPostGitIndexRequest(gitIndexUri /* reset all */, ResetType.MIXED);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// "git status", should be the same result as called for the first time
+			assertStatus(new StatusResult().setMissing(1).setModified(1).setUntracked(1), gitStatusUri);
+		}
 	}
 
 	@Test
 	public void testResetHardAll() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 
-		String projectName = getMethodName();
-		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
 
-		JSONObject testTxt = getChild(project, "test.txt");
-		modifyFile(testTxt, "hello");
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
 
-		String fileName = "new.txt";
-		// TODO: don't create URIs out of thin air
-		WebRequest request = getPostFilesRequest(projectId + "/", getNewFileJSON(fileName).toString(), fileName);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			JSONObject clone = clone(clonePath);
+			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
-		JSONObject folder = getChild(project, "folder");
-		JSONObject folderTxt = getChild(folder, "folder.txt");
-		deleteFile(folderTxt);
+			// get project/folder metadata
+			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject folder = new JSONObject(response.getText());
 
-		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
-		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
-		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
+			JSONObject testTxt = getChild(folder, "test.txt");
+			modifyFile(testTxt, "hello");
 
-		// "git status"
-		assertStatus(new StatusResult().setMissing(1).setModified(1).setUntracked(1), gitStatusUri);
+			String fileName = "new.txt";
+			request = getPostFilesRequest(folder.getString(ProtocolConstants.KEY_LOCATION), getNewFileJSON(fileName).toString(), fileName);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
-		// "git add ."
-		request = GitAddTest.getPutGitIndexRequest(gitIndexUri /* add all */);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject folder1 = getChild(folder, "folder");
+			JSONObject folderTxt = getChild(folder1, "folder.txt");
+			deleteFile(folderTxt);
 
-		// "git status"
-		assertStatus(new StatusResult().setAdded(1).setChanged(1).setRemoved(1), gitStatusUri);
+			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
+			String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
+			String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
-		// "git reset --hard HEAD"
-		request = getPostGitIndexRequest(gitIndexUri /* reset all */, ResetType.HARD);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			// "git status"
+			assertStatus(new StatusResult().setMissing(1).setModified(1).setUntracked(1), gitStatusUri);
 
-		// "git status", should be clean, nothing to commit
-		assertStatus(StatusResult.CLEAN, gitStatusUri);
+			// "git add ."
+			request = GitAddTest.getPutGitIndexRequest(gitIndexUri /* add all */);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// "git status"
+			assertStatus(new StatusResult().setAdded(1).setChanged(1).setRemoved(1), gitStatusUri);
+
+			// "git reset --hard HEAD"
+			request = getPostGitIndexRequest(gitIndexUri /* reset all */, ResetType.HARD);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// "git status", should be clean, nothing to commit
+			assertStatus(StatusResult.CLEAN, gitStatusUri);
+		}
 	}
 
 	@Test
