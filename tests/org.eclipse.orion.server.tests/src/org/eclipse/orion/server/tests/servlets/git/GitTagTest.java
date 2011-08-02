@@ -138,12 +138,10 @@ public class GitTagTest extends GitTest {
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder = new JSONObject(response.getText());
-			String folderLocation = folder.getString(ProtocolConstants.KEY_LOCATION);
 
 			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
 			String gitTagUri = gitSection.getString(GitConstants.KEY_TAG);
 			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
-			String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 
 			// tag HEAD with 'tag'
 			JSONObject tag = tag(gitTagUri, "tag", Constants.HEAD);
@@ -161,14 +159,13 @@ public class GitTagTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, response.getResponseCode());
 
 			// modify
-			request = getPutFileRequest(folderLocation + "/test.txt", "test.txt change");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject testTxt = getChild(folder, "test.txt");
+			modifyFile(testTxt, "test.txt change");
 
 			// add
-			request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "folder/folder.txt");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject folder1 = getChild(folder, "folder");
+			JSONObject folderTxt = getChild(folder1, "folder.txt");
+			addFile(folderTxt);
 
 			// commit
 			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit", false);
