@@ -11,7 +11,6 @@
 package org.eclipse.orion.server.tests.servlets.git;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -32,19 +31,15 @@ public class GitIndexTest extends GitTest {
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
-		WebRequest request = getPutFileRequest(projectId + "/test.txt", "hello");
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject testTxt = getChild(project, "test.txt");
+		modifyFile(testTxt, "hello");
 
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
+		JSONObject gitSection = testTxt.getJSONObject(GitConstants.KEY_GIT);
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 
-		// TODO: don't create uris out of thin air
-		request = getGetGitIndexRequest(gitIndexUri + "test.txt");
-		response = webConversation.getResponse(request);
+		WebRequest request = getGetGitIndexRequest(gitIndexUri);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("test", response.getText());
 	}
