@@ -709,5 +709,4 @@ public class GitDiffTest extends GitTest {
 
 		return parts.toArray(new String[0]);
 	}
-
 }
