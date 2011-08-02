@@ -74,6 +74,10 @@ public interface IAuthenticationService {
 	 * @return String representation of authentication type.
 	 */
 	public String getAuthType();
+	
+	public void setRegistered(boolean registered);
+	
+	public boolean getRegistered();
 
 	public void configure(Properties properties);
 

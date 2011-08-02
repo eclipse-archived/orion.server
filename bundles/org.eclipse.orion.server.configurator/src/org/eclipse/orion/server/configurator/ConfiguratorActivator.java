@@ -85,6 +85,10 @@ public class ConfiguratorActivator implements BundleActivator {
 
 			Dictionary dictionary = new Properties();
 			dictionary.put(PROP_CONFIGURED, "true"); //$NON-NLS-1$
+			if (getService() != null) {
+				getService().setRegistered(false);
+			}
+			authService.setRegistered(true);
 			context.registerService(IAuthenticationService.class.getName(), authService, dictionary);
 			return authService;
 		}

@@ -26,6 +26,7 @@ import javax.servlet.http.HttpServletResponse;
 public class NoneAuthenticationService implements IAuthenticationService {
 
 	public static final String AUTH_TYPE = "None";
+	public boolean registered = false;
 
 	public String authenticateUser(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException {
 		return getAuthenticatedUser(req, resp, properties);
@@ -40,6 +41,14 @@ public class NoneAuthenticationService implements IAuthenticationService {
 	}
 
 	public void configure(Properties properties) {
+	}
+
+	public void setRegistered(boolean registered) {
+		this.registered = registered;
+	}
+
+	public boolean getRegistered() {
+		return registered;
 	}
 
 }

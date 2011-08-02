@@ -226,6 +226,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 	public Set<User> getUsersByProperty(String key, String value, boolean regExp) {
 		Set<User> ret = new HashSet<User>();
 		ISecurePreferences usersPref = storage.node(USERS);
+		Pattern p = regExp ? Pattern.compile(value, Pattern.MULTILINE | Pattern.DOTALL) : null;
 		for (String uid : usersPref.childrenNames()) {
 			ISecurePreferences userNode = usersPref.node(uid);
 			ISecurePreferences propsNode = userNode.node(USER_PROPERTIES);
@@ -238,7 +239,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 					continue;
 				}
 
-				if (regExp ? Pattern.matches(value, propertyValue) : propertyValue.equals(value)) {
+				if (regExp ? p.matcher(propertyValue).matches() : propertyValue.equals(value)) {
 					ret.add(formUser(userNode));
 				}
 
@@ -379,6 +380,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 		node.removeNode();
 		try {
 			node.flush();
+			storage.flush();
 			return true;
 		} catch (IOException e) {
 			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Cannot delete user: " + user.getLogin(), e)); //$NON-NLS-1$

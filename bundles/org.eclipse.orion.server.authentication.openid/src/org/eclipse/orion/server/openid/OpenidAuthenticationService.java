@@ -34,6 +34,8 @@ import org.osgi.service.http.NamespaceException;
 public class OpenidAuthenticationService implements IAuthenticationService {
 
 	private HttpService httpService;
+	
+	private boolean registered;
 
 	public OpenidAuthenticationService() {
 		super();
@@ -113,6 +115,14 @@ public class OpenidAuthenticationService implements IAuthenticationService {
 		httpService.unregister("openidform"); //$NON-NLS-1$
 		httpService.unregister("/openidstatic"); //$NON-NLS-1$
 		this.httpService = null;
+	}
+
+	public void setRegistered(boolean registered) {
+		this.registered = registered;
+	}
+
+	public boolean getRegistered() {
+		return registered;
 	}
 
 }

@@ -31,6 +31,10 @@ public class Activator implements BundleActivator {
 	public BundleContext getContext() {
 		return bundleContext;
 	}
+	
+	public static BundleContext getBundleContext() {
+		return bundleContext;
+	}
 
 	public void start(BundleContext context) throws Exception {
 		singleton = this;

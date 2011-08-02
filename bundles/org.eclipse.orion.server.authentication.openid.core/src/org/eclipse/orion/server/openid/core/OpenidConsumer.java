@@ -12,6 +12,7 @@
 package org.eclipse.orion.server.openid.core;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -89,7 +90,8 @@ public class OpenidConsumer {
 
 		// obtain a AuthRequest message to be sent to the OpenID provider
 		try {
-			authReq = manager.authenticate(discovered, returnToUrl);
+			URL returnURL = new URL(returnToUrl);
+			authReq = manager.authenticate(discovered, returnToUrl, new URL(returnURL.getProtocol(), returnURL.getHost(), returnURL.getPort(), "").toString());
 		} catch (Exception e) {
 			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_OPENID_CORE, 1, "An error occured when authenticating request for " + userSuppliedString, e));
 		}

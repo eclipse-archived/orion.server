@@ -16,6 +16,7 @@ import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import javax.servlet.ServletException;
@@ -236,6 +237,14 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 			user.setName(data.getString(ProtocolConstants.KEY_NAME));
 		if (data.has(UserConstants.KEY_PASSWORD))
 			user.setPassword(data.getString(UserConstants.KEY_PASSWORD));
+		if (data.has(UserConstants.KEY_PROPERTIES)){
+			JSONObject propertiesObject = data.getJSONObject(UserConstants.KEY_PROPERTIES);
+			Iterator<?> propertyIterator = propertiesObject.keys();
+			while(propertyIterator.hasNext()){
+				String propertyKey = (String) propertyIterator.next();
+				user.addProperty(propertyKey, propertiesObject.getString(propertyKey));
+			}
+		}
 		IStatus status = userAdmin.updateUser(userId, user);
 		if (!status.isOK()) {
 			return statusHandler.handleRequest(req, resp, status);

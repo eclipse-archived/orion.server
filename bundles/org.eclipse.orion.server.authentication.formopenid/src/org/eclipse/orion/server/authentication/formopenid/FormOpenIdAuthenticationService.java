@@ -39,6 +39,8 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 	private HttpService httpService;
 	private Properties defaultAuthenticationProperties;
 	public static final String OPENIDS_PROPERTY = "openids"; //$NON-NLS-1$
+	
+	private boolean registered = false;
 
 	public Properties getDefaultAuthenticationProperties() {
 		return defaultAuthenticationProperties;
@@ -116,7 +118,7 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 					new LoginFormServlet(this), null, httpContext);
 			httpService.registerResources("/mixloginstatic", "/web", //$NON-NLS-1$ //$NON-NLS-2$
 					httpContext);
-			httpService.registerResources("/openids", "/openids", httpContext);
+			httpService.registerServlet("/mixlogin/manageopenids", new ManageOpenidsServlet(this), null, httpContext);
 			httpService.registerServlet("/login", new FormOpenIdLoginServlet(this), null, httpContext); //$NON-NLS-1$
 			httpService.registerServlet("/logout", new FormOpenIdLogoutServlet(), null, httpContext); //$NON-NLS-1$
 		} catch (ServletException e) {
@@ -133,8 +135,16 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 			httpService.unregister("/mixloginstatic"); //$NON-NLS-1$
 			httpService.unregister("/login"); //$NON-NLS-1$
 			httpService.unregister("/logout"); //$NON-NLS-1$
-			httpService.unregister("/openids"); //$NON-NLS-1$
 			httpService = null;
 		}
+	}
+
+	public void setRegistered(boolean registered) {
+		this.registered = registered;
+		Activator.getDefault().getResourceDecorator().setDecorate(registered);
+	}
+
+	public boolean getRegistered() {
+		return registered;
 	}
 }

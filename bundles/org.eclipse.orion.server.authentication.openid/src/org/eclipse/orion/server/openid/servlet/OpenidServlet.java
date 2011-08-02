@@ -40,7 +40,7 @@ public class OpenidServlet extends HttpServlet {
 
 		String op_return = req.getParameter(OpenIdHelper.OP_RETURN);
 		if (op_return != null) {
-			OpenIdHelper.handleOpenIdReturn(req, resp, consumer);
+			OpenIdHelper.handleOpenIdReturnAndLogin(req, resp, consumer);
 			return;
 		}
 

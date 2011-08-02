@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -31,12 +30,11 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.authentication.form.core.FormAuthHelper;
 import org.eclipse.orion.server.authentication.formopenid.Activator;
 import org.eclipse.orion.server.authentication.formopenid.FormOpenIdAuthenticationService;
-import org.eclipse.orion.server.authentication.formopenid.internal.OpendIdProviderDescription;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.resources.Base64;
-import org.json.JSONArray;
+import org.eclipse.orion.server.openid.core.OpenIdHelper;
+import org.eclipse.orion.server.openid.core.OpendIdProviderDescription;
 import org.json.JSONException;
-import org.json.JSONObject;
 import org.osgi.framework.Version;
 
 /**
@@ -49,7 +47,6 @@ import org.osgi.framework.Version;
 public class LoginFormServlet extends HttpServlet {
 
 	private static final long serialVersionUID = -1941415021420599704L;
-	private List<OpendIdProviderDescription> defaultOpenids;
 	private FormOpenIdAuthenticationService authenticationService;
 
 	public LoginFormServlet(FormOpenIdAuthenticationService authenticationService) {
@@ -77,52 +74,6 @@ public class LoginFormServlet extends HttpServlet {
 		// handled by service()
 	}
 
-	private OpendIdProviderDescription getOpenidProviderFromJson(JSONObject json) throws JSONException {
-		OpendIdProviderDescription provider = new OpendIdProviderDescription();
-		String url = json.getString("url");
-		provider.setAuthSite(url);
-
-		try {
-			String name = json.getString("name");
-			provider.setName(name);
-		} catch (JSONException e) {
-			// ignore, Name is not mandatory
-		}
-		try {
-			String image = json.getString("image");
-			provider.setImage(image);
-		} catch (JSONException e) {
-			// ignore, Image is not mandatory
-		}
-		return provider;
-	}
-
-	private List<OpendIdProviderDescription> getSupportedOpenIdProviders(String openids) throws JSONException {
-		List<OpendIdProviderDescription> opendIdProviders = new ArrayList<OpendIdProviderDescription>();
-		JSONArray openidArray = new JSONArray(openids);
-		for (int i = 0; i < openidArray.length(); i++) {
-			JSONObject jsonProvider = openidArray.getJSONObject(i);
-			try {
-				opendIdProviders.add(getOpenidProviderFromJson(jsonProvider));
-			} catch (JSONException e) {
-				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, "Cannot load OpenId provider, invalid entry " + jsonProvider + " Attribute \"ulr\" is mandatory", e));
-			}
-		}
-		return opendIdProviders;
-	}
-
-	private List<OpendIdProviderDescription> getDefaultOpenIdProviders() {
-		try {
-			if (defaultOpenids == null) {
-				defaultOpenids = getSupportedOpenIdProviders(getFileContents("/openids/DefaultOpenIdProviders.json")); //$NON-NLS-1$
-			}
-		} catch (Exception e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, "Cannot load default openid list, JSON format expected", e)); //$NON-NLS-1$
-			return new ArrayList<OpendIdProviderDescription>();
-		}
-		return defaultOpenids;
-	}
-
 	private String getConfiguredOpenIds() {
 		return (String) (authenticationService.getDefaultAuthenticationProperties() == null ? null : authenticationService.getDefaultAuthenticationProperties().get(OPENIDS_PROPERTY));
 	}
@@ -134,13 +85,13 @@ public class LoginFormServlet extends HttpServlet {
 			List<OpendIdProviderDescription> openidProviders;
 			String customOpenids = req.getAttribute(OPENIDS_PROPERTY) == null ? getConfiguredOpenIds() : (String) req.getAttribute(OPENIDS_PROPERTY);
 			if (customOpenids == null || customOpenids.trim().length() == 0) {
-				openidProviders = getDefaultOpenIdProviders();
+				openidProviders = OpenIdHelper.getDefaultOpenIdProviders();
 			} else {
 				try {
-					openidProviders = getSupportedOpenIdProviders(customOpenids);
+					openidProviders = OpenIdHelper.getSupportedOpenIdProviders(customOpenids);
 				} catch (JSONException e) {
 					LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, "Cannot load openid list, JSON format expected", e)); //$NON-NLS-1$
-					openidProviders = getDefaultOpenIdProviders();
+					openidProviders = OpenIdHelper.getDefaultOpenIdProviders();
 				}
 			}
 
@@ -227,7 +178,7 @@ public class LoginFormServlet extends HttpServlet {
 		}
 		return sb.toString();
 	}
-	
+
 	private String getFileContentAsJsString(String filename) throws IOException {
 		StringBuilder sb = new StringBuilder();
 		appendFileContentAsJsString(sb, filename);
@@ -324,7 +275,7 @@ public class LoginFormServlet extends HttpServlet {
 		return authSite.replace("<!--form-->", formBegin.toString()).replace( //$NON-NLS-1$
 				"<!--/form-->", "</form>"); //$NON-NLS-1$ //$NON-NLS-2$
 	}
-	
+
 	private String replaceCreateUserForm(String authSite, String redirect) {
 		StringBuilder formBegin = new StringBuilder();
 		formBegin.append("<form name=\"CreateUserForm\" onsubmit=\"return validatePasswords()\" method=post action=\"/users"); //$NON-NLS-1$
@@ -344,9 +295,9 @@ public class LoginFormServlet extends HttpServlet {
 		String newAccountA = javascriptResp ? getFileContentAsJsString("web/createUser.html") : getFileContents("web/createUser.html"); //$NON-NLS-1$
 		Collection<String> stores = FormAuthHelper.getSupportedUserStores();
 		String userStore = FormAuthHelper.getDefaultUserAdmin().getStoreName();
-		newAccountA = newAccountA.replaceAll("<!--userStore-->", stores.size()<2 ? "" : userStore);
+		newAccountA = newAccountA.replaceAll("<!--userStore-->", stores.size() < 2 ? "" : userStore);
 		newAccountA = newAccountA.replaceAll("<!--userStoreValue-->", userStore);
-		if(!javascriptResp){
+		if (!javascriptResp) {
 			newAccountA = replaceCreateUserForm(newAccountA, redirect);
 		}
 		return authSite.replace("<!--NEW_ACCOUNT_LINK-->", newAccountA); //$NON-NLS-1$
@@ -356,7 +307,7 @@ public class LoginFormServlet extends HttpServlet {
 		StringBuilder sb = new StringBuilder();
 		boolean isFirst = true;
 		Collection<String> stores = FormAuthHelper.getSupportedUserStores();
-		if(stores==null || stores.size()<2){
+		if (stores == null || stores.size() < 2) {
 			return authSite;
 		}
 		for (String store : stores) {

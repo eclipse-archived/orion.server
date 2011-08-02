@@ -36,6 +36,8 @@ public class FormAuthenticationService implements IAuthenticationService {
 
 	public static final String CSS_LINK_PROPERTY = "STYLES"; //$NON-NLS-1$
 	private Properties defaultAuthenticationProperties;
+	
+	private boolean registered = false;
 
 	public Properties getDefaultAuthenticationProperties() {
 		return defaultAuthenticationProperties;
@@ -145,6 +147,14 @@ public class FormAuthenticationService implements IAuthenticationService {
 		httpService.unregister("/loginform"); //$NON-NLS-1$
 		httpService.unregister("/loginstatic"); //$NON-NLS-1$
 		httpService = null;
+	}
+
+	public void setRegistered(boolean registered) {
+		this.registered = registered;
+	}
+
+	public boolean getRegistered() {
+		return registered;
 	}
 
 }

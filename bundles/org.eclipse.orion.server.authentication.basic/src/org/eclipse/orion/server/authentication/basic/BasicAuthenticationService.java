@@ -34,6 +34,8 @@ public class BasicAuthenticationService implements IAuthenticationService {
 
 	private static Map<String, IOrionCredentialsService> userStores = new HashMap<String, IOrionCredentialsService>();
 	private static IOrionCredentialsService defaultUserAdmin;
+	
+	private boolean registered;
 
 	public BasicAuthenticationService() {
 		super();
@@ -115,5 +117,13 @@ public class BasicAuthenticationService implements IAuthenticationService {
 					defaultUserAdmin = iterator.next();
 			}
 		}
+	}
+
+	public void setRegistered(boolean registered) {
+		this.registered = registered;
+	}
+
+	public boolean getRegistered() {
+		return registered;
 	}
 }
