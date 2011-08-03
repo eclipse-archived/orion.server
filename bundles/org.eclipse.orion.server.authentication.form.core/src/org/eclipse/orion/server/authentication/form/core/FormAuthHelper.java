@@ -11,7 +11,6 @@
 package org.eclipse.orion.server.authentication.form.core;
 
 import java.io.IOException;
-import java.util.*;
 import javax.servlet.http.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.server.core.*;
@@ -27,11 +26,10 @@ import org.slf4j.LoggerFactory;
  */
 public class FormAuthHelper {
 
-	private static Map<String, IOrionCredentialsService> userStores = new HashMap<String, IOrionCredentialsService>();
-	private static IOrionCredentialsService defaultUserAdmin;
-	
+	private static IOrionCredentialsService userAdmin;
+
 	private static IOrionUserProfileService userProfileService;
-	
+
 	private static boolean allowAnonymousAccountCreation;
 
 	static {
@@ -84,15 +82,15 @@ public class FormAuthHelper {
 	public static boolean performAuthentication(HttpServletRequest req, HttpServletResponse resp) throws IOException, UnsupportedUserStoreException {
 		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.login"); //$NON-NLS-1$
 		String login = req.getParameter("login");//$NON-NLS-1$
-		User user = getUserForCredentials(login, req.getParameter("password"), req.getParameter("store")); //$NON-NLS-1$ //$NON-NLS-2$
-		
+		User user = getUserForCredentials(login, req.getParameter("password")); //$NON-NLS-1$
+
 		if (user != null) {
 			String actualLogin = user.getUid();
 			if (logger.isInfoEnabled())
 				logger.info("Login success: " + actualLogin); //$NON-NLS-1$ 
 			req.getSession().setAttribute("user", actualLogin); //$NON-NLS-1$
-			
-			IOrionUserProfileNode userProfileNode =getUserProfileService().getUserProfileNode(actualLogin, IOrionUserProfileConstants.GENERAL_PROFILE_PART);
+
+			IOrionUserProfileNode userProfileNode = getUserProfileService().getUserProfileNode(actualLogin, IOrionUserProfileConstants.GENERAL_PROFILE_PART);
 			try {
 				// try to store the login timestamp in the user profile
 				userProfileNode.put(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, new Long(System.currentTimeMillis()).toString(), false);
@@ -109,10 +107,9 @@ public class FormAuthHelper {
 		return false;
 	}
 
-	private static User getUserForCredentials(String login, String password, String userStoreId) throws UnsupportedUserStoreException {
-		IOrionCredentialsService userAdmin = (userStoreId == null) ? defaultUserAdmin : userStores.get(userStoreId);
+	private static User getUserForCredentials(String login, String password) throws UnsupportedUserStoreException {
 		if (userAdmin == null) {
-			throw new UnsupportedUserStoreException(userStoreId);
+			throw new UnsupportedUserStoreException();
 		}
 		User user = userAdmin.getUser("login", login); //$NON-NLS-1$
 		if (user != null && user.hasCredential("password", password)) { //$NON-NLS-1$
@@ -128,90 +125,67 @@ public class FormAuthHelper {
 		}
 	}
 
-	public static boolean isSupportedUserStore(String userStoreId) {
-		return getSupportedUserStores().contains(userStoreId);
-	}
-
-	public static Collection<String> getSupportedUserStores() {
-		List<String> list = new ArrayList<String>(userStores.keySet());
-		list.remove(defaultUserAdmin.getStoreName());
-		list.add(0, defaultUserAdmin.getStoreName());
-		return list;
-	}
-
 	/**
 	 * Returns <code>true</code>ue if an unauthorised user can create a new account, 
 	 * and <code>false</code> otherwise.
 	 */
 	public static boolean canAddUsers() {
-		return allowAnonymousAccountCreation ? defaultUserAdmin.canCreateUsers() : false;
+		return allowAnonymousAccountCreation ? userAdmin.canCreateUsers() : false;
 	}
 
 	public static IOrionCredentialsService getDefaultUserAdmin() {
-		return defaultUserAdmin;
+		return userAdmin;
 	}
 
 	public void setUserAdmin(IOrionCredentialsService userAdmin) {
-		if (userAdmin instanceof IOrionCredentialsService) {
-			IOrionCredentialsService eclipseWebUserAdmin = (IOrionCredentialsService) userAdmin;
-			userStores.put(eclipseWebUserAdmin.getStoreName(), eclipseWebUserAdmin);
-			if (defaultUserAdmin == null || UserAdminActivator.eclipseWebUsrAdminName.equals(eclipseWebUserAdmin.getStoreName())) {
-				defaultUserAdmin = eclipseWebUserAdmin;
-			}
-		}
+		FormAuthHelper.userAdmin = userAdmin;
 	}
 
 	public void unsetUserAdmin(IOrionCredentialsService userAdmin) {
-		if (userAdmin instanceof IOrionCredentialsService) {
-			IOrionCredentialsService eclipseWebUserAdmin = (IOrionCredentialsService) userAdmin;
-			userStores.remove(eclipseWebUserAdmin.getStoreName());
-			if (userAdmin.equals(defaultUserAdmin)) {
-				Iterator<IOrionCredentialsService> iterator = userStores.values().iterator();
-				if (iterator.hasNext())
-					defaultUserAdmin = iterator.next();
-			}
+		if (userAdmin.equals(FormAuthHelper.userAdmin)) {
+			FormAuthHelper.userAdmin = null;
 		}
 	}
-	
-	public static JSONObject getUserJson(String uid) throws JSONException{
-		JSONObject obj = new JSONObject();
-			obj.put("login", uid); //$NON-NLS-1$
 
-			try {
-				User user = defaultUserAdmin.getUser(UserConstants.KEY_UID, uid);
-				if(user==null){
-					return null;
-				}
-				// try to add the login timestamp to the user info
-				IOrionUserProfileNode generalUserProfile = FormAuthHelper.getUserProfileService().getUserProfileNode(uid, IOrionUserProfileConstants.GENERAL_PROFILE_PART);
-				obj.put(UserConstants.KEY_UID, uid);
-				obj.put(UserConstants.KEY_LOGIN, user.getLogin());
-				obj.put("Location", user.getLocation());
-				obj.put("Name", user.getName());
-				if(generalUserProfile.get(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, null)!=null){
-					Long lastLogin = Long.parseLong(generalUserProfile.get(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, ""));
-					
-					obj.put(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, lastLogin);
-				}
-			} catch (IllegalArgumentException e) {
-				LogHelper.log(e);
-			} catch (CoreException e) {
-				LogHelper.log(e);
+	public static JSONObject getUserJson(String uid) throws JSONException {
+		JSONObject obj = new JSONObject();
+		obj.put("login", uid); //$NON-NLS-1$
+
+		try {
+			User user = userAdmin.getUser(UserConstants.KEY_UID, uid);
+			if (user == null) {
+				return null;
 			}
-		
+			// try to add the login timestamp to the user info
+			IOrionUserProfileNode generalUserProfile = FormAuthHelper.getUserProfileService().getUserProfileNode(uid, IOrionUserProfileConstants.GENERAL_PROFILE_PART);
+			obj.put(UserConstants.KEY_UID, uid);
+			obj.put(UserConstants.KEY_LOGIN, user.getLogin());
+			obj.put("Location", user.getLocation());
+			obj.put("Name", user.getName());
+			if (generalUserProfile.get(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, null) != null) {
+				Long lastLogin = Long.parseLong(generalUserProfile.get(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, ""));
+
+				obj.put(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, lastLogin);
+			}
+		} catch (IllegalArgumentException e) {
+			LogHelper.log(e);
+		} catch (CoreException e) {
+			LogHelper.log(e);
+		}
+
 		return obj;
-		
+
 	}
-	
+
 	public static IOrionUserProfileService getUserProfileService() {
 		return userProfileService;
 	}
-	
-	public static void bindUserProfileService(IOrionUserProfileService _userProfileService){
+
+	public static void bindUserProfileService(IOrionUserProfileService _userProfileService) {
 		userProfileService = _userProfileService;
 	}
-	
-	public static void unbindUserProfileService(IOrionUserProfileService userProfileService){
+
+	public static void unbindUserProfileService(IOrionUserProfileService userProfileService) {
 		userProfileService = null;
 	}
 }

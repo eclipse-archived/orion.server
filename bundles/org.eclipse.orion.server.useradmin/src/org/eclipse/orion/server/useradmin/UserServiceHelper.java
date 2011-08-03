@@ -21,9 +21,9 @@ public class UserServiceHelper {
 
 	private Map<String, IOrionCredentialsService> userStores = new HashMap<String, IOrionCredentialsService>();
 	private IOrionCredentialsService defaultUserAdmin;
-	
+
 	private IOrionUserProfileService userProfileService;
-	
+
 	private static UserServiceHelper singleton;
 
 	public static UserServiceHelper getDefault() {
@@ -68,26 +68,18 @@ public class UserServiceHelper {
 
 	}
 
-	public IOrionCredentialsService getUserStore(String storeName) throws UnsupportedUserStoreException {
-		IOrionCredentialsService userAdmin = userStores.get(storeName);
-		if(userAdmin==null){
-			throw new UnsupportedUserStoreException(storeName);
-		}
-		return userAdmin;
-	}
-
 	public IOrionCredentialsService getUserStore() {
 		return defaultUserAdmin;
 	}
-	
+
 	public IOrionUserProfileService getUserProfileService() {
 		return userProfileService;
 	}
-	
+
 	public void bindUserProfileService(IOrionUserProfileService userProfileService) {
 		this.userProfileService = userProfileService;
 	}
-	
+
 	public void unbindUserProfileService(IOrionUserProfileService userProfileService) {
 		this.userProfileService = null;
 	}

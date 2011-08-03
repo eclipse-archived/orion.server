@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.util.Collection;
 import java.util.List;
 
 import javax.servlet.ServletException;
@@ -125,9 +124,6 @@ public class LoginFormServlet extends HttpServlet {
 		writer.print("var divg = document.createElement(\"span\");\n"); //$NON-NLS-1$
 		writer.print("divg.innerHTML='"); //$NON-NLS-1$
 		writer.print(loadJSResponse(req, openids));
-		writer.print("setUserStore('");
-		writer.print(FormAuthHelper.getDefaultUserAdmin().getStoreName());
-		writer.print("');");
 		String path = req.getPathInfo();
 		if (path.startsWith("/login")) { //$NON-NLS-1$
 			writer.print("login();"); //$NON-NLS-1$
@@ -156,7 +152,6 @@ public class LoginFormServlet extends HttpServlet {
 		String authSite = replaceNewAccount(authString.toString(), req.getHeader("Referer"), true); //$NON-NLS-1$
 		authSite = replaceError(authSite, ""); //$NON-NLS-1$
 		authSite = replaceOpenidList(authSite, openids, true);
-		authSite = replaceUserStores(authSite, true);
 		sb.append(authSite);
 		sb.append("';\n"); //$NON-NLS-1$
 		sb.append("var scr = '"); //$NON-NLS-1$
@@ -227,9 +222,7 @@ public class LoginFormServlet extends HttpServlet {
 		writer.println(getFileContents("web/js/htmlAuth.js")); //$NON-NLS-1$
 		writer.println("//--></script>"); //$NON-NLS-1$
 		writer.println("</head>"); //$NON-NLS-1$
-		writer.print("<body onLoad=\"javascript:setUserStore('"); //$NON-NLS-1$
-		writer.print(FormAuthHelper.getDefaultUserAdmin().getStoreName());
-		writer.println("');\">"); //$NON-NLS-1$
+		writer.print("<body>"); //$NON-NLS-1$
 
 		String authSite = getFileContents("web/auth.html"); //$NON-NLS-1$
 		authSite = replaceForm(authSite, req.getParameter("redirect")); //$NON-NLS-1$
@@ -237,7 +230,6 @@ public class LoginFormServlet extends HttpServlet {
 				: req.getParameter("redirect")), false); //$NON-NLS-1$
 		authSite = replaceError(authSite, req.getParameter("error")); //$NON-NLS-1$
 		authSite = replaceOpenidList(authSite, openids, false);
-		authSite = replaceUserStores(authSite, false);
 		writer.println(authSite);
 
 		writer.println("</body>"); //$NON-NLS-1$
@@ -293,47 +285,11 @@ public class LoginFormServlet extends HttpServlet {
 			return authSite;
 		}
 		String newAccountA = javascriptResp ? getFileContentAsJsString("web/createUser.html") : getFileContents("web/createUser.html"); //$NON-NLS-1$
-		Collection<String> stores = FormAuthHelper.getSupportedUserStores();
-		String userStore = FormAuthHelper.getDefaultUserAdmin().getStoreName();
-		newAccountA = newAccountA.replaceAll("<!--userStore-->", stores.size() < 2 ? "" : userStore);
-		newAccountA = newAccountA.replaceAll("<!--userStoreValue-->", userStore);
+
 		if (!javascriptResp) {
 			newAccountA = replaceCreateUserForm(newAccountA, redirect);
 		}
 		return authSite.replace("<!--NEW_ACCOUNT_LINK-->", newAccountA); //$NON-NLS-1$
-	}
-
-	private String replaceUserStores(String authSite, boolean isJsResponce) {
-		StringBuilder sb = new StringBuilder();
-		boolean isFirst = true;
-		Collection<String> stores = FormAuthHelper.getSupportedUserStores();
-		if (stores == null || stores.size() < 2) {
-			return authSite;
-		}
-		for (String store : stores) {
-			if (isFirst) {
-				isFirst = false;
-			} else {
-				sb.append(" | ");
-			}
-			if (isJsResponce) {
-				sb.append("<a class=\"loginWindowStores\" href=\"javascript:setUserStore(\\\\'");
-			} else {
-				sb.append("<a class=\"loginWindowStores\" href=\"javascript:setUserStore('");
-			}
-			sb.append(store);
-			if (isJsResponce) {
-				sb.append("\\\\')\" id=\"Login_");
-			} else {
-				sb.append("')\" id=\"Login_");
-			}
-			sb.append(store);
-			sb.append("\">");
-			sb.append(store);
-			sb.append("</a>");
-		}
-
-		return authSite.replaceAll("<!--LOGIN STORES-->", sb.toString());
 	}
 
 	private String replaceOpenidList(String authSite, List<OpendIdProviderDescription> openids, boolean javascriptResp) {

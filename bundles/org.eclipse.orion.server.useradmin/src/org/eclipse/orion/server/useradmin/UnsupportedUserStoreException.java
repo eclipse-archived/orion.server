@@ -10,7 +10,9 @@
  *******************************************************************************/
 package org.eclipse.orion.server.useradmin;
 
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 
 /**
  * Exception thrown when requested {@link IOrionCredentialsService} is not registered.
@@ -18,8 +20,8 @@ import org.eclipse.core.runtime.*;
  */
 public class UnsupportedUserStoreException extends CoreException {
 
-	public UnsupportedUserStoreException(String storeName) {
-		super(new Status(IStatus.ERROR, UserAdminActivator.PI_USERADMIN, "Given user store is not found: " + storeName));
+	public UnsupportedUserStoreException() {
+		super(new Status(IStatus.ERROR, UserAdminActivator.PI_USERADMIN, "Given user store is not found."));
 	}
 
 	/**

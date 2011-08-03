@@ -8,16 +8,6 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-var userStore;
-
-function setUserStore(userStoreToSet){
-	if(userStore){
-		document.getElementById('Login_'+userStore).style.color = '';
-	}
-	userStore = userStoreToSet;
-	document.getElementById('Login_'+userStore).style.color = '#444';
-	document.getElementById('store').value=userStore;
-}
 
 function confirmLogin() {
 	/* handled by submit form */

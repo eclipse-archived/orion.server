@@ -38,7 +38,6 @@ import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
-import org.eclipse.orion.server.useradmin.UnsupportedUserStoreException;
 import org.eclipse.orion.server.useradmin.User;
 import org.eclipse.orion.server.useradmin.UserConstants;
 import org.eclipse.orion.server.useradmin.UserServiceHelper;
@@ -134,19 +133,13 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	private boolean handleUserReset(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
-		String store = req.getParameter(UserConstants.KEY_STORE);
 		String login = req.getParameter(UserConstants.KEY_LOGIN);
 		String password = req.getParameter(UserConstants.KEY_PASSWORD);
 
 		if (login == null || login.length() == 0)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User login not specified.", null));
 
-		IOrionCredentialsService userAdmin;
-		try {
-			userAdmin = (store == null || "".equals(store)) ? getUserAdmin() : getUserAdmin(store);
-		} catch (UnsupportedUserStoreException e) {
-			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User store is not available: " + store, e));
-		}
+		IOrionCredentialsService userAdmin = getUserAdmin();
 
 		User user = (User) userAdmin.getUser(UserConstants.KEY_LOGIN, login);
 
@@ -175,12 +168,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (login == null || login.length() == 0)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User login not specified.", null));
 
-		IOrionCredentialsService userAdmin;
-		try {
-			userAdmin = (store == null || "".equals(store)) ? getUserAdmin() : getUserAdmin(store);
-		} catch (UnsupportedUserStoreException e) {
-			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User store is not available: " + store, e));
-		}
+		IOrionCredentialsService userAdmin = getUserAdmin();
 
 		if (userAdmin.getUser(UserConstants.KEY_LOGIN, login) != null)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + login + " already exists.", null));
@@ -212,12 +200,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 		String store = data.has(UserConstants.KEY_STORE) ? data.getString(UserConstants.KEY_STORE) : null;
 
-		IOrionCredentialsService userAdmin;
-		try {
-			userAdmin = (store == null || "".equals(store)) ? getUserAdmin() : getUserAdmin(store);
-		} catch (UnsupportedUserStoreException e) {
-			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User store is not available: " + store, e));
-		}
+		IOrionCredentialsService userAdmin = getUserAdmin();
 
 		User user = (User) userAdmin.getUser(UserConstants.KEY_UID, userId);
 
@@ -237,10 +220,10 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 			user.setName(data.getString(ProtocolConstants.KEY_NAME));
 		if (data.has(UserConstants.KEY_PASSWORD))
 			user.setPassword(data.getString(UserConstants.KEY_PASSWORD));
-		if (data.has(UserConstants.KEY_PROPERTIES)){
+		if (data.has(UserConstants.KEY_PROPERTIES)) {
 			JSONObject propertiesObject = data.getJSONObject(UserConstants.KEY_PROPERTIES);
 			Iterator<?> propertyIterator = propertiesObject.keys();
-			while(propertyIterator.hasNext()){
+			while (propertyIterator.hasNext()) {
 				String propertyKey = (String) propertyIterator.next();
 				user.addProperty(propertyKey, propertiesObject.getString(propertyKey));
 			}
@@ -279,12 +262,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	private boolean handleUserDelete(HttpServletRequest req, HttpServletResponse resp, String userId) throws ServletException {
 		String store = req.getParameter(UserConstants.KEY_STORE);
 
-		IOrionCredentialsService userAdmin;
-		try {
-			userAdmin = (store == null || "".equals(store)) ? getUserAdmin() : getUserAdmin(store);
-		} catch (UnsupportedUserStoreException e) {
-			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User store is not available: " + store, e));
-		}
+		IOrionCredentialsService userAdmin = getUserAdmin();
 
 		if (userAdmin.deleteUser((User) userAdmin.getUser("uid", userId)) == false) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + userId + " could not be found.", null));
@@ -330,10 +308,6 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		}
 		json.put(UserConstants.KEY_PLUGINS, plugins);
 		return json;
-	}
-
-	private IOrionCredentialsService getUserAdmin(String userStoreId) throws UnsupportedUserStoreException {
-		return UserServiceHelper.getDefault().getUserStore(userStoreId);
 	}
 
 	private IOrionCredentialsService getUserAdmin() {

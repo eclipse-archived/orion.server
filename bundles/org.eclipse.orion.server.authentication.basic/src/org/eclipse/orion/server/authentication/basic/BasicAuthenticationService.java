@@ -11,10 +11,7 @@
 package org.eclipse.orion.server.authentication.basic;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
@@ -26,15 +23,13 @@ import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.authentication.IAuthenticationService;
 import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
-import org.eclipse.orion.server.useradmin.UserAdminActivator;
-import org.osgi.service.useradmin.Authorization;
 import org.eclipse.orion.server.useradmin.User;
+import org.osgi.service.useradmin.Authorization;
 
 public class BasicAuthenticationService implements IAuthenticationService {
 
-	private static Map<String, IOrionCredentialsService> userStores = new HashMap<String, IOrionCredentialsService>();
-	private static IOrionCredentialsService defaultUserAdmin;
-	
+	private static IOrionCredentialsService userAdmin;
+
 	private boolean registered;
 
 	public BasicAuthenticationService() {
@@ -63,7 +58,7 @@ public class BasicAuthenticationService implements IAuthenticationService {
 			String password = authString.substring(authString.indexOf(':') + 1);
 			User user = getUserForCredentials(login, password);
 			if (user != null) {
-				Authorization authorization = defaultUserAdmin.getAuthorization(user);
+				Authorization authorization = userAdmin.getAuthorization(user);
 				// TODO handle authorization
 				return user.getUid();
 			}
@@ -81,7 +76,6 @@ public class BasicAuthenticationService implements IAuthenticationService {
 	}
 
 	private User getUserForCredentials(String login, String password) {
-		IOrionCredentialsService userAdmin = defaultUserAdmin;
 		if (userAdmin == null) {
 			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_SERVER_AUTHENTICATION_BASIC, "User admin server is not available"));
 			return null;
@@ -98,24 +92,12 @@ public class BasicAuthenticationService implements IAuthenticationService {
 	}
 
 	public void bindUserAdmin(IOrionCredentialsService userAdmin) {
-		if (userAdmin instanceof IOrionCredentialsService) {
-			IOrionCredentialsService eclipseWebUserAdmin = (IOrionCredentialsService) userAdmin;
-			userStores.put(eclipseWebUserAdmin.getStoreName(), eclipseWebUserAdmin);
-			if (defaultUserAdmin == null || UserAdminActivator.eclipseWebUsrAdminName.equals(eclipseWebUserAdmin.getStoreName())) {
-				defaultUserAdmin = eclipseWebUserAdmin;
-			}
-		}
+		BasicAuthenticationService.userAdmin = userAdmin;
 	}
 
 	public void unbindUserAdmin(IOrionCredentialsService userAdmin) {
-		if (userAdmin instanceof IOrionCredentialsService) {
-			IOrionCredentialsService eclipseWebUserAdmin = (IOrionCredentialsService) userAdmin;
-			userStores.remove(eclipseWebUserAdmin.getStoreName());
-			if (userAdmin.equals(defaultUserAdmin)) {
-				Iterator<IOrionCredentialsService> iterator = userStores.values().iterator();
-				if (iterator.hasNext())
-					defaultUserAdmin = iterator.next();
-			}
+		if (userAdmin.equals(BasicAuthenticationService.userAdmin)) {
+			BasicAuthenticationService.userAdmin = null;
 		}
 	}
 

@@ -7,7 +7,6 @@
  * Contributors: IBM Corporation - initial API and implementation
  ******************************************************************************/
 var notify = false;
-var userStore;
 
 function login(error) {
 	notify = false;
@@ -24,18 +23,6 @@ function login(error) {
 		document.getElementById("errorWin").style.display = 'none';
 	}
 };
-
-function setUserStore(userStoreToSet) {
-	if (userStore) {
-		if(document.getElementById('Login_' + userStore)){
-			document.getElementById('Login_' + userStore).style.color = '';
-		}
-	}
-	userStore = userStoreToSet;
-	if(document.getElementById('Login_' + userStore)){
-		document.getElementById('Login_' + userStore).style.color = '#444';
-	}
-}
 
 function confirmOpenId(openid) {
 	/* don't wait for the login response, notify anyway */
@@ -108,7 +95,6 @@ function confirmLogin() {
 				content : {
 					login : dojo.byId("login").value,
 					password : dojo.byId("password").value,
-					store : userStore
 				},
 				handleAs : "json",
 				timeout : 15000,
@@ -154,7 +140,7 @@ function handleLoginError(error, ioArgs) {
 	return error;
 }
 
-function userCreated(username, password, store) {
+function userCreated(username, password) {
 	notify = true;
 	dojo.xhrPost({
 		url : "/login/form",
@@ -163,8 +149,7 @@ function userCreated(username, password, store) {
 		},
 		content : {
 			login : username,
-			password : password,
-			store : store
+			password : password
 		},
 		handleAs : "json",
 		timeout : 15000,
@@ -245,7 +230,6 @@ function confirmCreateUser() {
 	var userLogin = dojo.byId("create_login").value;
 	var userPassword = dojo.byId("create_password").value;
 	var userPasswordRetype = dojo.byId("create_passwordRetype").value;
-	var userStore = dojo.byId("create_store").value;
 	if(userLogin===""){
 		login("You must provide a user name.");
 		showCreateUser();
@@ -264,13 +248,12 @@ function confirmCreateUser() {
 		content : {
 			login : userLogin,
 			password : userPassword,
-			store : userStore,
 			passwordConf : userPasswordRetype
 		},
 		handleAs : "text",
 		timeout : 15000,
 		load : function(response, ioArgs) {
-			userCreated(userLogin, userPassword, userStore);
+			userCreated(userLogin, userPassword);
 			return response;
 		},
 		error : function(response, ioArgs) {

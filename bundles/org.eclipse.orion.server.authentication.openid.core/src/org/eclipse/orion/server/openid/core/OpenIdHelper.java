@@ -16,10 +16,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
@@ -38,7 +35,6 @@ import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.User;
-import org.eclipse.orion.server.useradmin.UserAdminActivator;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -59,12 +55,11 @@ public class OpenIdHelper {
 	public static final String REDIRECT = "redirect"; //$NON-NLS-1$
 	static final String OPENID_IDENTIFIER = "openid_identifier"; //$NON-NLS-1$
 	static final String OPENID_DISC = "openid-disc"; //$NON-NLS-1$
-	private static Map<String, IOrionCredentialsService> userStores = new HashMap<String, IOrionCredentialsService>();
-	private static IOrionCredentialsService defaultUserAdmin;
+	private static IOrionCredentialsService userAdmin;
 	private static List<OpendIdProviderDescription> defaultOpenids;
 
 	private static IOrionUserProfileService userProfileService;
-	
+
 	private HttpService httpService;
 
 	private static boolean allowAnonymousAccountCreation;
@@ -169,7 +164,7 @@ public class OpenIdHelper {
 	}
 
 	private static boolean canAddUsers() {
-		return allowAnonymousAccountCreation ? defaultUserAdmin.canCreateUsers() : false;
+		return allowAnonymousAccountCreation ? userAdmin.canCreateUsers() : false;
 	}
 
 	/**
@@ -192,7 +187,7 @@ public class OpenIdHelper {
 				writeOpenIdError("Authentication response is not sufficient", req, resp);
 				return;
 			}
-			Set<User> users = defaultUserAdmin.getUsersByProperty("openid", ".*\\Q" + id.getIdentifier() + "\\E.*", true);
+			Set<User> users = userAdmin.getUsersByProperty("openid", ".*\\Q" + id.getIdentifier() + "\\E.*", true);
 			User user;
 			if (users.size() > 0) {
 				user = users.iterator().next();
@@ -200,7 +195,7 @@ public class OpenIdHelper {
 				User newUser = new User();
 				newUser.setName(id.getIdentifier());
 				newUser.addProperty("openid", id.getIdentifier());
-				user = defaultUserAdmin.createUser(newUser);
+				user = userAdmin.createUser(newUser);
 			} else {
 				writeOpenIdError("Your authentication was successful but you are not authorized to access Orion", req, resp);
 				return;
@@ -235,7 +230,7 @@ public class OpenIdHelper {
 			return;
 		}
 	}
-	
+
 	public static void handleOpenIdReturn(HttpServletRequest req, HttpServletResponse resp, OpenidConsumer consumer) throws IOException {
 		String op_return = req.getParameter(OP_RETURN);
 		if (Boolean.parseBoolean(op_return) && consumer != null) {
@@ -244,7 +239,7 @@ public class OpenIdHelper {
 				writeOpenIdError("Authentication response is not sufficient", req, resp);
 				return;
 			}
-			
+
 			PrintWriter out = resp.getWriter();
 			out.println("<html><head></head>"); //$NON-NLS-1$
 			// TODO: send a message using
@@ -257,7 +252,7 @@ public class OpenIdHelper {
 			out.close();
 			return;
 		}
-		
+
 	}
 
 	private static StringBuffer getRequestServer(HttpServletRequest req) {
@@ -311,28 +306,16 @@ public class OpenIdHelper {
 	}
 
 	public static IOrionCredentialsService getDefaultUserAdmin() {
-		return defaultUserAdmin;
+		return userAdmin;
 	}
 
 	public void setUserAdmin(IOrionCredentialsService userAdmin) {
-		if (userAdmin instanceof IOrionCredentialsService) {
-			IOrionCredentialsService eclipseWebUserAdmin = (IOrionCredentialsService) userAdmin;
-			userStores.put(eclipseWebUserAdmin.getStoreName(), eclipseWebUserAdmin);
-			if (defaultUserAdmin == null || UserAdminActivator.eclipseWebUsrAdminName.equals(eclipseWebUserAdmin.getStoreName())) {
-				defaultUserAdmin = eclipseWebUserAdmin;
-			}
-		}
+		OpenIdHelper.userAdmin = userAdmin;
 	}
 
 	public void unsetUserAdmin(IOrionCredentialsService userAdmin) {
-		if (userAdmin instanceof IOrionCredentialsService) {
-			IOrionCredentialsService eclipseWebUserAdmin = (IOrionCredentialsService) userAdmin;
-			userStores.remove(eclipseWebUserAdmin.getStoreName());
-			if (userAdmin.equals(defaultUserAdmin)) {
-				Iterator<IOrionCredentialsService> iterator = userStores.values().iterator();
-				if (iterator.hasNext())
-					defaultUserAdmin = iterator.next();
-			}
+		if (userAdmin.equals(OpenIdHelper.userAdmin)) {
+			OpenIdHelper.userAdmin = null;
 		}
 	}
 
@@ -347,26 +330,26 @@ public class OpenIdHelper {
 	public static void unbindUserProfileService(IOrionUserProfileService userProfileService) {
 		userProfileService = null;
 	}
-	
+
 	public void setHttpService(HttpService hs) {
 		httpService = hs;
 
 		HttpContext httpContext = new BundleEntryHttpContext(Activator.getBundleContext().getBundle());
-		
+
 		try {
 			httpService.registerResources("/openids", "/openids", httpContext);
 		} catch (NamespaceException e) {
 			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_OPENID_CORE, 1, "A namespace error occured when registering servlets", e));
 		}
 	}
-	
+
 	public void unsetHttpService(HttpService hs) {
 		if (httpService != null) {
 			httpService.unregister("/openids"); //$NON-NLS-1$
 			httpService = null;
 		}
 	}
-	
+
 	private static String getFileContents(String filename) throws IOException {
 		StringBuilder sb = new StringBuilder();
 		InputStream is = Activator.getBundleContext().getBundle().getEntry(filename).openStream();
@@ -377,7 +360,7 @@ public class OpenIdHelper {
 		}
 		return sb.toString();
 	}
-	
+
 	private static OpendIdProviderDescription getOpenidProviderFromJson(JSONObject json) throws JSONException {
 		OpendIdProviderDescription provider = new OpendIdProviderDescription();
 		String url = json.getString("url");
