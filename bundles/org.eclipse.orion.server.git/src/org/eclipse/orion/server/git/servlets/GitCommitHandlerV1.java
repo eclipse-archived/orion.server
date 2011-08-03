@@ -539,12 +539,22 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	private boolean cherryPick(HttpServletRequest request, HttpServletResponse response, Repository db, String commitToCherryPick) throws ServletException, JSONException {
+		RevWalk revWalk = new RevWalk(db);
 		try {
+
+			Ref headRef = db.getRef(Constants.HEAD);
+			if (headRef == null)
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when cherry-picking.", null));
+			RevCommit head = revWalk.parseCommit(headRef.getObjectId());
+
 			ObjectId objectId = db.resolve(commitToCherryPick);
 			Git git = new Git(db);
 			CherryPickResult cherryPickResult = git.cherryPick().include(objectId).call();
+			RevCommit newHead = cherryPickResult.getNewHead();
+
 			JSONObject result = new JSONObject();
 			result.put(GitConstants.KEY_RESULT, cherryPickResult.getStatus().name());
+			result.put(GitConstants.KEY_HEAD_UPDATED, !head.equals(newHead));
 			OrionServlet.writeJSONResponse(request, response, result);
 			return true;
 		} catch (IOException e) {
@@ -553,6 +563,8 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when cherry-picking.", e));
 		} catch (JGitInternalException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when cherry-picking.", e.getCause()));
+		} finally {
+			revWalk.release();
 		}
 	}
 
