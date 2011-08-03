@@ -22,8 +22,7 @@ function confirmOpenId(openid) {
 	/* don't wait for the login response, notify anyway */
 	notify = true;
 	if (openid != "" && openid != null) {
-		window.location = "/login/openid?openid=" + encodeURIComponent(openid)
-				+ "&redirect=" + window.location;
+		window.location = "/login/openid?openid=" + encodeURIComponent(openid) /*+ "&redirect=" + window.location*/ ;
 	}
 };
 
@@ -37,6 +36,7 @@ function setUserStore(userStoreToSet){
 }
 
 function confirmLogin() {
+	window.close();
 	/* handled by submit form */
 }
 
