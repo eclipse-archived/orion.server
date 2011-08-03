@@ -91,21 +91,9 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 	}
 
 	private void setNotAuthenticated(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException {
-
 		resp.setHeader("WWW-Authenticate", HttpServletRequest.FORM_AUTH); //$NON-NLS-1$
-		resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-		RequestDispatcher rd = req.getRequestDispatcher("/mixlogin/login?redirect=" //$NON-NLS-1$
-				+ req.getRequestURI());
-		if (properties != null) {
-			req.setAttribute(OPENIDS_PROPERTY, properties.get(OPENIDS_PROPERTY));
-		}
-		try {
-			rd.forward(req, resp);
-		} catch (ServletException e) {
-			throw new IOException(e.getMessage());
-		} finally {
-			resp.flushBuffer();
-		}
+		resp.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+		// TODO we should send the location of auth UI here
 	}
 
 	public void setHttpService(HttpService hs) {
