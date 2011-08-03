@@ -11,7 +11,9 @@
 package org.eclipse.orion.server.tests.servlets.git;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -139,6 +141,13 @@ public class GitCherryPickTest extends GitTest {
 			JSONObject cherryPick = cherryPick(gitHeadUri, toCherryPick);
 			CherryPickStatus mergeResult = CherryPickStatus.valueOf(cherryPick.getString(GitConstants.KEY_RESULT));
 			assertEquals(CherryPickStatus.OK, mergeResult);
+			assertTrue(cherryPick.getBoolean(GitConstants.KEY_HEAD_UPDATED));
+
+			// try again, should be OK, but nothing changed
+			cherryPick = cherryPick(gitHeadUri, toCherryPick);
+			mergeResult = CherryPickStatus.valueOf(cherryPick.getString(GitConstants.KEY_RESULT));
+			assertEquals(CherryPickStatus.OK, mergeResult);
+			assertFalse(cherryPick.getBoolean(GitConstants.KEY_HEAD_UPDATED));
 
 			// 'new.txt' should be not there
 			JSONObject newTxt = getChild(folder, "new.txt");
