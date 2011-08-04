@@ -36,7 +36,7 @@ function setUserStore(userStoreToSet){
 }
 
 function confirmLogin() {
-	window.close();
+	//window.close();
 	/* handled by submit form */
 }
 
