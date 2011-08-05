@@ -10,10 +10,12 @@
  *******************************************************************************/
 package org.eclipse.orion.server.authentication.formopenid;
 
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.authentication.IAuthenticationService;
 
 import org.eclipse.orion.server.openid.core.OpenIdHelper;
+import org.eclipse.orion.server.servlets.OrionServlet;
 
 import org.eclipse.orion.server.authentication.formopenid.httpcontext.BundleEntryHttpContext;
 import org.eclipse.orion.server.authentication.formopenid.servlets.*;
@@ -30,6 +32,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.osgi.service.http.HttpContext;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.http.NamespaceException;
@@ -92,21 +96,16 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 	}
 
 	private void setNotAuthenticated(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException {
-
 		resp.setHeader("WWW-Authenticate", HttpServletRequest.FORM_AUTH); //$NON-NLS-1$
 		resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-		RequestDispatcher rd = req.getRequestDispatcher("/mixlogin/login?redirect=" //$NON-NLS-1$
-				+ req.getRequestURI());
-		if (properties != null) {
-			req.setAttribute(OPENIDS_PROPERTY, properties.get(OPENIDS_PROPERTY));
-		}
+		resp.setContentType(ProtocolConstants.CONTENT_TYPE_JSON);
+		JSONObject result = new JSONObject();
 		try {
-			rd.forward(req, resp);
-		} catch (ServletException e) {
-			throw new IOException(e.getMessage());
-		} finally {
-			resp.flushBuffer();
+			result.put("SignInLocation", "/mixloginstatic/LoginWindow.html");
+		} catch (JSONException e) {
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, 1, "An error occured during authenitcation", e));
 		}
+		resp.getWriter().print(result.toString());
 	}
 
 	public void setHttpService(HttpService hs) {
