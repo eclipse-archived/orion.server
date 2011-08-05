@@ -72,6 +72,7 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 		try {
 			httpService.registerServlet("/auth2", new AuthInitServlet( //$NON-NLS-1$
 					properties), null, new BundleEntryHttpContext(Activator.getBundleContext().getBundle()));
+			httpService.registerResources("/authenticationPlugin.html", "/web/authenticationPlugin.html", new BundleEntryHttpContext(Activator.getBundleContext().getBundle()));
 		} catch (Exception e) {
 			LogHelper.log(new Status(IStatus.WARNING, Activator.PI_FORMOPENID_SERVLETS, "Reconfiguring FormOpenIdAuthenticationService"));
 
