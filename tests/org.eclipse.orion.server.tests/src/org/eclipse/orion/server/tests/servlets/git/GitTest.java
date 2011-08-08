@@ -709,21 +709,19 @@ public abstract class GitTest extends FileSystemTest {
 	 * Return commits for the given URI.
 	 * 
 	 * @param gitCommitUri commit URI
-	 * @param remote <code>true</code> if remote location is expected
 	 * @return
 	 * @throws IOException
 	 * @throws SAXException
 	 * @throws JSONException
 	 */
-	protected JSONArray log(String gitCommitUri, boolean remote) throws IOException, SAXException, JSONException {
-		return log(gitCommitUri, remote, null, null);
+	protected JSONArray log(String gitCommitUri) throws IOException, SAXException, JSONException {
+		return log(gitCommitUri, null, null);
 	}
 
 	/**
 	 * Return commits for the given URI.
 	 * 
 	 * @param gitCommitUri commit URI
-	 * @param remote <code>true</code> if remote location is expected
 	 * @param page number of page or <code>null</code> if all results
 	 * @param pageSize size of page or <code>null</code> if default
 	 * @return
@@ -731,14 +729,12 @@ public abstract class GitTest extends FileSystemTest {
 	 * @throws SAXException
 	 * @throws JSONException
 	 */
-	protected JSONArray log(String gitCommitUri, boolean remote, Integer page, Integer pageSize) throws IOException, SAXException, JSONException {
+	protected JSONArray log(String gitCommitUri, Integer page, Integer pageSize) throws IOException, SAXException, JSONException {
 		assertCommitUri(gitCommitUri);
 		WebRequest request = GitCommitTest.getGetGitCommitRequest(gitCommitUri, false, page, pageSize);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject log = new JSONObject(response.getText());
-		if (remote) // will fail if the key is not found
-			log.getString(GitConstants.KEY_REMOTE);
 		return log.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 	}
 
@@ -1164,6 +1160,15 @@ public abstract class GitTest extends FileSystemTest {
 		return response;
 	}
 
+	protected String getFileContent(JSONObject fileObject) throws JSONException, IOException, SAXException {
+		String location = fileObject.getString(ProtocolConstants.KEY_LOCATION);
+		assertNotNull(location);
+		WebRequest request = getGetFilesRequest(location);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		return response.getText();
+	}
+
 	protected JSONObject assertStatus(StatusResult expected, String statusUri) throws IOException, SAXException, JSONException {
 		assertStatusUri(statusUri);
 		WebRequest request = GitStatusTest.getGetGitStatusRequest(statusUri);
@@ -1181,7 +1186,7 @@ public abstract class GitTest extends FileSystemTest {
 					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
 					gitSection = statusArray.getJSONObject(0).getJSONObject(GitConstants.KEY_GIT);
 					String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
-					JSONArray log = log(gitCommitUri, false);
+					JSONArray log = log(gitCommitUri);
 					assertEquals(expected.getAddedLogLengths()[i], log.length());
 				}
 			}
@@ -1194,12 +1199,7 @@ public abstract class GitTest extends FileSystemTest {
 				JSONObject child = statusArray.getJSONObject(i);
 				assertEquals(expected.getChangedNames()[i], child.getString(ProtocolConstants.KEY_NAME));
 				if (expected.getChangedContents() != null) {
-					String location = child.getString(ProtocolConstants.KEY_LOCATION);
-					assertNotNull(location);
-					request = getGetFilesRequest(location);
-					response = webConversation.getResponse(request);
-					assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-					assertEquals("Invalid file content", expected.getChangedContents()[i], response.getText());
+					assertEquals("Invalid file content", expected.getChangedContents()[i], getFileContent(child));
 				}
 				if (expected.getChangedDiffs() != null) {
 					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
@@ -1229,7 +1229,7 @@ public abstract class GitTest extends FileSystemTest {
 					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
 					gitSection = statusArray.getJSONObject(0).getJSONObject(GitConstants.KEY_GIT);
 					String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
-					JSONArray log = log(gitCommitUri, false);
+					JSONArray log = log(gitCommitUri);
 					assertEquals(expected.getChangedLogLengths()[i], log.length());
 				}
 			}
@@ -1253,7 +1253,7 @@ public abstract class GitTest extends FileSystemTest {
 					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
 					gitSection = statusArray.getJSONObject(0).getJSONObject(GitConstants.KEY_GIT);
 					String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
-					JSONArray log = log(gitCommitUri, false);
+					JSONArray log = log(gitCommitUri);
 					assertEquals(expected.getMissingLogLengths()[i], log.length());
 				}
 			}
@@ -1266,12 +1266,7 @@ public abstract class GitTest extends FileSystemTest {
 				JSONObject child = statusArray.getJSONObject(i);
 				assertEquals(expected.getModifiedNames()[i], child.getString(ProtocolConstants.KEY_NAME));
 				if (expected.getModifiedContents() != null) {
-					String location = child.getString(ProtocolConstants.KEY_LOCATION);
-					assertNotNull(location);
-					request = getGetFilesRequest(location);
-					response = webConversation.getResponse(request);
-					assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-					assertEquals("Invalid file content", expected.getModifiedContents()[i], response.getText());
+					assertEquals("Invalid file content", expected.getModifiedContents()[i], getFileContent(child));
 				}
 				if (expected.getModifiedDiffs() != null) {
 					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
@@ -1285,7 +1280,7 @@ public abstract class GitTest extends FileSystemTest {
 					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
 					gitSection = statusArray.getJSONObject(0).getJSONObject(GitConstants.KEY_GIT);
 					String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
-					JSONArray log = log(gitCommitUri, false);
+					JSONArray log = log(gitCommitUri);
 					assertEquals(expected.getModifiedLogLengths()[i], log.length());
 				}
 			}
@@ -1306,7 +1301,7 @@ public abstract class GitTest extends FileSystemTest {
 					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
 					gitSection = statusArray.getJSONObject(0).getJSONObject(GitConstants.KEY_GIT);
 					String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
-					JSONArray log = log(gitCommitUri, false);
+					JSONArray log = log(gitCommitUri);
 					assertEquals(expected.getRemovedLogLengths()[i], log.length());
 				}
 			}
@@ -1322,7 +1317,7 @@ public abstract class GitTest extends FileSystemTest {
 					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
 					gitSection = statusArray.getJSONObject(0).getJSONObject(GitConstants.KEY_GIT);
 					String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
-					JSONArray log = log(gitCommitUri, false);
+					JSONArray log = log(gitCommitUri);
 					assertEquals(expected.getUntrackedLogLengths()[i], log.length());
 				}
 			}

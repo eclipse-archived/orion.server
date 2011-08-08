@@ -15,6 +15,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -22,8 +23,11 @@ import java.net.URI;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.RemoteRefUpdate.Status;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -302,7 +306,9 @@ public class GitPushTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone1: push by remote branch
-		String remoteBranchLocation = branch.getString(GitConstants.KEY_REMOTE);
+		JSONArray remoteBranchLocations = branch.getJSONArray(GitConstants.KEY_REMOTE);
+		assertEquals(1, remoteBranchLocations.length());
+		String remoteBranchLocation = remoteBranchLocations.getJSONObject(0).getJSONArray(ProtocolConstants.KEY_CHILDREN).getJSONObject(0).getString(ProtocolConstants.KEY_LOCATION);
 		ServerStatus pushStatus = push(remoteBranchLocation, Constants.HEAD, false);
 		assertTrue(pushStatus.isOK());
 
@@ -395,7 +401,8 @@ public class GitPushTest extends GitTest {
 			// clone 1 - create branch "a"
 			response = branch(branchesLocation1, "a");
 			JSONObject newBranch = new JSONObject(response.getText());
-			String remoteBranchLocation1 = newBranch.getString(GitConstants.KEY_REMOTE);
+			JSONArray remoteBranchLocations1 = newBranch.getJSONArray(GitConstants.KEY_REMOTE);
+			assertEquals(1, remoteBranchLocations1.length());
 
 			// clone 1 - checkout "a"
 			final String newBranchName = "a";
@@ -417,6 +424,7 @@ public class GitPushTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// clone 1 - push "a"
+			String remoteBranchLocation1 = remoteBranchLocations1.getJSONObject(0).getJSONArray(ProtocolConstants.KEY_CHILDREN).getJSONObject(0).getString(ProtocolConstants.KEY_LOCATION);
 			ServerStatus pushStatus = push(remoteBranchLocation1, Constants.HEAD, false);
 			assertEquals(true, pushStatus.isOK());
 
@@ -545,7 +553,10 @@ public class GitPushTest extends GitTest {
 		commitsArray = logResponse.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 		assertEquals(2, commitsArray.length());
 
-		String remoteBranchLocation = logResponse.getString(GitConstants.KEY_REMOTE);
+		JSONObject toRefBranch = logResponse.getJSONObject(GitConstants.KEY_LOG_TO_REF);
+		JSONArray remoteLocations = toRefBranch.getJSONArray(GitConstants.KEY_REMOTE);
+		assertEquals(1, remoteLocations.length());
+		String remoteBranchLocation = remoteLocations.getJSONObject(0).getJSONArray(ProtocolConstants.KEY_CHILDREN).getJSONObject(0).getString(ProtocolConstants.KEY_LOCATION);
 
 		// push
 		request = getPostGitRemoteRequest(remoteBranchLocation, Constants.HEAD, false, false);
@@ -781,6 +792,114 @@ public class GitPushTest extends GitTest {
 		// clone2: list tags again
 		tags = listTags(gitTagUri2);
 		assertEquals(1, tags.length());
+	}
+
+	@Test
+	public void testPushNewBranchToSecondaryRemote() throws Exception {
+		// see bug 353557
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
+
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			JSONObject clone = clone(clonePath);
+			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+			String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
+			String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
+
+			// get project/folder metadata
+			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject folder = new JSONObject(response.getText());
+
+			String remotesLocation = clone.getString(GitConstants.KEY_REMOTE);
+			// expect only origin
+			getRemote(remotesLocation, 1, 0, Constants.DEFAULT_REMOTE_NAME);
+
+			// create secondary repository
+			IPath randomLocation = getRandomLocation();
+			randomLocation = randomLocation.addTrailingSeparator().append(Constants.DOT_GIT);
+			File dotGitDir = randomLocation.toFile().getCanonicalFile();
+			Repository db2 = new FileRepository(dotGitDir);
+			assertFalse(dotGitDir.exists());
+			db2.create(false /* non bare */);
+
+			// dummy commit to start off master branch
+			File dummyFile = new File(dotGitDir.getParentFile(), "test.txt");
+			dummyFile.createNewFile();
+			createFile(dummyFile.toURI(), "dummy");
+			Git git2 = new Git(db2);
+			git2.add().addFilepattern(".").call();
+			git2.commit().setMessage("dummy commit").call();
+
+			// create remote
+			response = addRemote(remotesLocation, "secondary", dotGitDir.getParentFile().toURL().toString());
+			String secondaryRemoteLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+			assertNotNull(secondaryRemoteLocation);
+
+			// list remotes
+			request = getGetRequest(remotesLocation);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject remotes = new JSONObject(response.getText());
+			JSONArray remotesArray = remotes.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+			// expect origin and new remote
+			assertEquals(2, remotesArray.length());
+
+			// create branch, checkout
+			response = branch(branchesLocation, "branch");
+			JSONObject branch = new JSONObject(response.getText());
+			checkoutBranch(cloneLocation, "branch");
+
+			// modify, add, commit
+			JSONObject testTxt = getChild(folder, "test.txt");
+			modifyFile(testTxt, "branch change");
+			addFile(testTxt);
+			commitFile(testTxt, "branch commit", false);
+
+			// push the new branch
+			JSONArray remoteBranchLocations = branch.getJSONArray(GitConstants.KEY_REMOTE);
+			assertEquals(2, remoteBranchLocations.length());
+			String remoteBranchLocation = null;
+			if (remoteBranchLocations.getJSONObject(0).getString(ProtocolConstants.KEY_NAME).equals("secondary")) {
+				remoteBranchLocation = remoteBranchLocations.getJSONObject(0).getJSONArray(ProtocolConstants.KEY_CHILDREN).getJSONObject(0).getString(ProtocolConstants.KEY_LOCATION);
+			} else if (remoteBranchLocations.getJSONObject(1).getString(ProtocolConstants.KEY_NAME).equals("secondary")) {
+				remoteBranchLocation = remoteBranchLocations.getJSONObject(1).getJSONArray(ProtocolConstants.KEY_CHILDREN).getJSONObject(0).getString(ProtocolConstants.KEY_LOCATION);
+			}
+			assertNotNull(remoteBranchLocation);
+			ServerStatus pushStatus = push(remoteBranchLocation, Constants.HEAD, false);
+			assertTrue(pushStatus.isOK());
+
+			// clone the secondary branch and check if the new branch is there
+			JSONObject secondProject = createProjectOrLink(workspaceLocation, getMethodName() + "-second", null);
+			IPath secondClonePath = new Path("file").append(secondProject.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+			URIish uri = new URIish(dotGitDir.getParentFile().toURL());
+			JSONObject clone2 = clone(uri, null, secondClonePath, null, null, null);
+			String cloneLocation2 = clone2.getString(ProtocolConstants.KEY_LOCATION);
+			String branchesLocation2 = clone2.getString(GitConstants.KEY_BRANCH);
+
+			String remotesLocation2 = clone2.getString(GitConstants.KEY_REMOTE);
+			// expecting two branches, second named "branch"
+			JSONObject remoteBranch2 = getRemoteBranch(remotesLocation2, 2, 1, "branch");
+			String remoteBranchName2 = remoteBranch2.getString(ProtocolConstants.KEY_NAME);
+
+			// create tracking branch and check it out
+			response = branch(branchesLocation2, null /* deduct from the remote branch name */, remoteBranchName2);
+			JSONObject branch2 = new JSONObject(response.getText());
+			response = checkoutBranch(cloneLocation2, branch2.getString(ProtocolConstants.KEY_NAME));
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// check file content
+			JSONObject testTxt2 = getChild(clone2, "test.txt");
+			assertEquals("branch change", getFileContent(testTxt2));
+		}
 	}
 
 	static WebRequest getPostGitRemoteRequest(String location, String srcRef, boolean tags, boolean force) throws JSONException, UnsupportedEncodingException {

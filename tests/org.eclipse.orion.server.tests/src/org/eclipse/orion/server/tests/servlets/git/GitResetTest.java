@@ -374,7 +374,7 @@ public class GitResetTest extends GitTest {
 
 			assertStatus(StatusResult.CLEAN, folderGitStatusUri);
 
-			JSONArray commitsArray = log(testTxt.getJSONObject(GitConstants.KEY_GIT).getString(GitConstants.KEY_HEAD), false);
+			JSONArray commitsArray = log(testTxt.getJSONObject(GitConstants.KEY_GIT).getString(GitConstants.KEY_HEAD));
 			assertEquals(2, commitsArray.length());
 
 			// TODO: get "origin/master" from the remote branch 
@@ -384,7 +384,7 @@ public class GitResetTest extends GitTest {
 
 			assertStatus(StatusResult.CLEAN, folderGitStatusUri);
 
-			commitsArray = log(testTxt.getJSONObject(GitConstants.KEY_GIT).getString(GitConstants.KEY_HEAD), false);
+			commitsArray = log(testTxt.getJSONObject(GitConstants.KEY_GIT).getString(GitConstants.KEY_HEAD));
 			assertEquals(1, commitsArray.length());
 		}
 	}

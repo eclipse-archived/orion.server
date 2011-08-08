@@ -28,6 +28,8 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler.Method;
 import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.git.objects.Remote;
+import org.eclipse.orion.server.git.objects.RemoteBranch;
 import org.eclipse.orion.server.git.servlets.GitServlet;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.json.*;
@@ -103,6 +105,7 @@ public class GitFileDecorator implements IWebResourceDecorator {
 
 		File gitDir = GitUtils.getGitDir(targetPath);
 		Repository db = new FileRepository(gitDir);
+		URI cloneLocation = BaseToCloneConverter.getCloneLocation(location, BaseToCloneConverter.FILE);
 
 		// add Git Diff URI
 		IPath path = new Path(GitServlet.GIT_URI + '/' + GitConstants.DIFF_RESOURCE + '/' + GitConstants.KEY_DIFF_DEFAULT).append(targetPath);
@@ -139,8 +142,10 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_CONFIG, link);
 
-		// add Git Default Remote Branch URI
-		gitSection.put(GitConstants.KEY_DEFAULT_REMOTE_BRANCH, BaseToRemoteConverter.getRemoteBranchLocation(location, db.getBranch(), db, BaseToRemoteConverter.FILE));
+		// add Git Default Remote Branch URI 
+		Remote defaultRemote = new Remote(cloneLocation, db, Constants.DEFAULT_REMOTE_NAME);
+		RemoteBranch defaultRemoteBranch = new RemoteBranch(cloneLocation, db, defaultRemote, db.getBranch());
+		gitSection.put(GitConstants.KEY_DEFAULT_REMOTE_BRANCH, defaultRemoteBranch.getLocation());
 
 		// add Git Tag URI
 		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.TAG_RESOURCE).append(targetPath);
@@ -148,7 +153,7 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		gitSection.put(GitConstants.KEY_TAG, link);
 
 		// add Git Clone URI
-		gitSection.put(GitConstants.KEY_CLONE, BaseToCloneConverter.getCloneLocation(location, BaseToCloneConverter.FILE));
+		gitSection.put(GitConstants.KEY_CLONE, cloneLocation);
 
 		representation.put(GitConstants.KEY_GIT, gitSection);
 	}

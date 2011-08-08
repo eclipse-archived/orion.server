@@ -445,7 +445,7 @@ public class GitMergeTest extends GitTest {
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-			JSONArray commitsArray = log(gitHeadUri, false);
+			JSONArray commitsArray = log(gitHeadUri);
 			assertEquals(3, commitsArray.length());
 			JSONObject commit = commitsArray.getJSONObject(0);
 			assertEquals("removing folders", commit.get(GitConstants.KEY_COMMIT_MESSAGE));

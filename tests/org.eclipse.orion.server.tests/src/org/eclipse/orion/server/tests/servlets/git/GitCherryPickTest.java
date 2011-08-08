@@ -111,7 +111,7 @@ public class GitCherryPickTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// remember starting point and commit to cherry-pick
-			JSONArray commitsArray = log(gitHeadUri, false);
+			JSONArray commitsArray = log(gitHeadUri);
 			assertEquals(5, commitsArray.length());
 			JSONObject commit = commitsArray.getJSONObject(0);
 			assertEquals("fixed test.txt", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
@@ -160,7 +160,7 @@ public class GitCherryPickTest extends GitTest {
 			assertEquals("first line\nsecond line\nthird line\nfeature++\n", response.getText());
 
 			// check log
-			commitsArray = log(gitHeadUri, false);
+			commitsArray = log(gitHeadUri);
 			assertEquals(4, commitsArray.length());
 			commit = commitsArray.getJSONObject(0);
 			assertEquals("fixed test.txt", commit.get(GitConstants.KEY_COMMIT_MESSAGE));

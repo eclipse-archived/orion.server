@@ -177,7 +177,7 @@ public class GitCommitTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		JSONArray commitsArray = log(gitHeadUri, false);
+		JSONArray commitsArray = log(gitHeadUri);
 		assertEquals(2, commitsArray.length());
 		JSONObject commit = commitsArray.getJSONObject(0);
 		assertEquals("Commit message", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
@@ -309,7 +309,7 @@ public class GitCommitTest extends GitTest {
 			assertStatus(new StatusResult().setModifiedNames("folder/folder2.txt"), folderGitStatusUri);
 
 			// check the last commit for the repo
-			JSONArray commitsArray = log(cloneFolderGitHeadUri, false);
+			JSONArray commitsArray = log(cloneFolderGitHeadUri);
 			assertEquals(3, commitsArray.length());
 
 			JSONObject commit = commitsArray.getJSONObject(0);
@@ -362,7 +362,7 @@ public class GitCommitTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// log
-			JSONArray commitsArray = log(gitHeadUri, false);
+			JSONArray commitsArray = log(gitHeadUri);
 			assertEquals(2, commitsArray.length());
 
 			JSONObject commit = commitsArray.getJSONObject(0);
@@ -410,7 +410,7 @@ public class GitCommitTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// log
-			JSONArray commitsArray = log(gitHeadUri, false);
+			JSONArray commitsArray = log(gitHeadUri);
 			assertEquals(2, commitsArray.length());
 
 			JSONObject commit = commitsArray.getJSONObject(0);
@@ -468,7 +468,7 @@ public class GitCommitTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// log - expect default values
-			JSONArray commitsArray = log(gitHeadUri, false);
+			JSONArray commitsArray = log(gitHeadUri);
 			assertEquals(2, commitsArray.length());
 
 			JSONObject commit = commitsArray.getJSONObject(0);
@@ -483,7 +483,7 @@ public class GitCommitTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// log - expect author is the same as committer
-			commitsArray = log(gitHeadUri, false);
+			commitsArray = log(gitHeadUri);
 			assertEquals(2, commitsArray.length());
 
 			commit = commitsArray.getJSONObject(0);
@@ -498,7 +498,7 @@ public class GitCommitTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// log - expect author is the same as committer and their email is defaultEmail
-			commitsArray = log(gitHeadUri, false);
+			commitsArray = log(gitHeadUri);
 			assertEquals(2, commitsArray.length());
 
 			commit = commitsArray.getJSONObject(0);

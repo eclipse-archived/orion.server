@@ -10,8 +10,11 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
+import org.eclipse.orion.server.git.objects.Branch;
+
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import javax.servlet.ServletException;
@@ -28,7 +31,7 @@ import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
-import org.eclipse.orion.server.git.BranchToJSONConverter;
+import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
@@ -53,7 +56,7 @@ public class GitBranchHandlerV1 extends ServletResourceHandler<String> {
 					return handleDelete(request, response, path);
 			}
 		} catch (Exception e) {
-			String msg = NLS.bind("Failed to handle /git/branch request for {0}", path); //$NON-NLS-1$
+			String msg = NLS.bind("Failed to handle request for {0}", path);
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
 		}
 		return false;
@@ -70,9 +73,9 @@ public class GitBranchHandlerV1 extends ServletResourceHandler<String> {
 			List<Ref> branches = git.branchList().call();
 			JSONObject result = new JSONObject();
 			JSONArray children = new JSONArray();
+			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.BRANCH_LIST);
 			for (Ref ref : branches) {
-				JSONObject child = BranchToJSONConverter.toJSON(ref, db, getURI(request), 2);
-				children.put(child);
+				children.put(new Branch(cloneLocation, db, ref).toJSON());
 			}
 			result.put(ProtocolConstants.KEY_CHILDREN, children);
 			OrionServlet.writeJSONResponse(request, response, result);
@@ -84,14 +87,15 @@ public class GitBranchHandlerV1 extends ServletResourceHandler<String> {
 			Git git = new Git(db);
 			List<Ref> branches = git.branchList().call();
 			JSONObject result = null;
+			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.BRANCH);
 			for (Ref ref : branches) {
 				if (Repository.shortenRefName(ref.getName()).equals(p.segment(0))) {
-					result = BranchToJSONConverter.toJSON(ref, db, getURI(request), 3);
+					result = new Branch(cloneLocation, db, ref).toJSON();
 					break;
 				}
 			}
 			if (result == null) {
-				String msg = NLS.bind("Branch {0} not found", p.segment(0)); //$NON-NLS-1$
+				String msg = NLS.bind("Branch {0} not found", p.segment(0));
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
 			}
 			OrionServlet.writeJSONResponse(request, response, result);
@@ -134,7 +138,8 @@ public class GitBranchHandlerV1 extends ServletResourceHandler<String> {
 			Ref ref = cc.call();
 
 			// TODO: what if something went wrong, handle exception
-			JSONObject result = BranchToJSONConverter.toJSON(ref, db, getURI(request), 2);
+			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.BRANCH_LIST);
+			JSONObject result = new Branch(cloneLocation, db, ref).toJSON();
 			OrionServlet.writeJSONResponse(request, response, result);
 			response.setHeader(ProtocolConstants.HEADER_LOCATION, result.getString(ProtocolConstants.KEY_LOCATION));
 			response.setStatus(HttpServletResponse.SC_CREATED);

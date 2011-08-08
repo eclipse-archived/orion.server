@@ -41,6 +41,10 @@ public abstract class BaseToCloneConverter {
 
 	public static final BaseToCloneConverter COMMIT = STATUS;
 
+	public static final BaseToCloneConverter REMOTE_LIST = STATUS;
+
+	public static final BaseToCloneConverter BRANCH_LIST = STATUS;
+
 	public static final BaseToCloneConverter REMOTE = new BaseToCloneConverter() {
 		@Override
 		public IPath getFilePath(URI base) throws URISyntaxException {
@@ -64,7 +68,7 @@ public abstract class BaseToCloneConverter {
 		IPath clonePath = findClonePath(filePath);
 		if (clonePath == null)
 			return null;
-		IPath p = new Path(GitServlet.GIT_URI).append(GitConstants.CLONE_RESOURCE).append("file").append(clonePath).addTrailingSeparator();
+		IPath p = new Path(GitServlet.GIT_URI).append(GitConstants.CLONE_RESOURCE).append("file").append(clonePath).addTrailingSeparator(); //$NON-NLS-1$
 		return new URI(base.getScheme(), base.getUserInfo(), base.getHost(), base.getPort(), p.toString(), base.getQuery(), base.getFragment());
 	}
 

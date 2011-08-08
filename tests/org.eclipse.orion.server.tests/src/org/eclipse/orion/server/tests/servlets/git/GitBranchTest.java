@@ -132,9 +132,7 @@ public class GitBranchTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
 
-			String projectLocation = project.getString(ProtocolConstants.KEY_LOCATION);
 			JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
-			String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 			String gitRemoteUri = gitSection.optString(GitConstants.KEY_REMOTE);
 
@@ -144,17 +142,10 @@ public class GitBranchTest extends GitTest {
 
 			branch(branchesLocation, BRANCH_NAME, REMOTE_BRANCH);
 
-			// modify
-			request = getPutFileRequest(projectLocation + "test.txt", "some change");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-			// add
-			request = GitAddTest.getPutGitIndexRequest(gitIndexUri + "test.txt");
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-			// commit
+			// modify, add, commit
+			JSONObject testTxt = getChild(project, "test.txt");
+			modifyFile(testTxt, "some change");
+			addFile(testTxt);
 			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit1", false);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());

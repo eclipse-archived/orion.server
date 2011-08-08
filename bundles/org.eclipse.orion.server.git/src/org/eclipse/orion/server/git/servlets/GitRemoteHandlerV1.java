@@ -14,8 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
-import java.util.Map.Entry;
+import java.util.Set;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -29,6 +28,8 @@ import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.*;
+import org.eclipse.orion.server.git.objects.Remote;
+import org.eclipse.orion.server.git.objects.RemoteBranch;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
@@ -71,17 +72,10 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			Set<String> configNames = db.getConfig().getSubsections(ConfigConstants.CONFIG_REMOTE_SECTION);
 			JSONObject result = new JSONObject();
 			JSONArray children = new JSONArray();
-			URI baseLocation = getURI(request);
+			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.REMOTE_LIST);
 			for (String configName : configNames) {
-				JSONObject o = new JSONObject();
-				o.put(ProtocolConstants.KEY_NAME, configName);
-				o.put(ProtocolConstants.KEY_TYPE, GitConstants.KEY_REMOTE_NAME);
-				o.put(GitConstants.KEY_URL, db.getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, configName, "url" /*RemoteConfig.KEY_URL*/));
-				String pushUrl = null;
-				if ((pushUrl = db.getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, configName, "pushurl" /*RemoteConfig.KEY_PUSHURL*/)) != null)
-					o.put(GitConstants.KEY_PUSH_URL, pushUrl);
-				o.put(ProtocolConstants.KEY_LOCATION, BaseToRemoteConverter.REMOVE_FIRST_2.baseToRemoteLocation(baseLocation, configName, "" /* no branch name */)); //$NON-NLS-1$
-				children.put(o);
+				Remote remote = new Remote(cloneLocation, db, configName);
+				children.put(remote.toJSON(false, null));
 			}
 			result.put(ProtocolConstants.KEY_CHILDREN, children);
 			OrionServlet.writeJSONResponse(request, response, result);
@@ -91,48 +85,11 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(1));
 			Repository db = new FileRepository(gitDir);
 			Set<String> configNames = db.getConfig().getSubsections(ConfigConstants.CONFIG_REMOTE_SECTION);
-			JSONObject result = new JSONObject();
-			URI baseLocation = getURI(request);
-
+			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.REMOTE);
 			for (String configName : configNames) {
 				if (configName.equals(p.segment(0))) {
-					result.put(ProtocolConstants.KEY_NAME, configName);
-					result.put(ProtocolConstants.KEY_TYPE, GitConstants.KEY_REMOTE_NAME);
-					result.put(ProtocolConstants.KEY_LOCATION, BaseToRemoteConverter.REMOVE_FIRST_3.baseToRemoteLocation(baseLocation, p.segment(0), "" /* no branch name */)); //$NON-NLS-1$
-
-					JSONArray children = new JSONArray();
-					List<Ref> refs = new ArrayList<Ref>();
-					for (Entry<String, Ref> refEntry : db.getRefDatabase().getRefs(Constants.R_REMOTES + p.uptoSegment(1)).entrySet()) {
-						if (!refEntry.getValue().isSymbolic()) {
-							Ref ref = refEntry.getValue();
-							String name = ref.getName();
-							name = Repository.shortenRefName(name).substring(Constants.DEFAULT_REMOTE_NAME.length() + 1);
-							if (db.getBranch().equals(name)) {
-								refs.add(0, ref);
-							} else {
-								refs.add(ref);
-							}
-						}
-					}
-					for (Ref ref : refs) {
-						JSONObject o = new JSONObject();
-						String name = ref.getName();
-						o.put(ProtocolConstants.KEY_NAME, name.substring(Constants.R_REMOTES.length()));
-						o.put(ProtocolConstants.KEY_FULL_NAME, name);
-						o.put(ProtocolConstants.KEY_TYPE, GitConstants.REMOTE_TRACKING_BRANCH_TYPE);
-						o.put(ProtocolConstants.KEY_ID, ref.getObjectId().name());
-						// see bug 342602
-						// o.put(GitConstants.KEY_COMMIT, baseToCommitLocation(baseLocation, name));
-						o.put(ProtocolConstants.KEY_LOCATION, BaseToRemoteConverter.REMOVE_FIRST_3.baseToRemoteLocation(baseLocation, "" /*short name is {remote}/{branch}*/, Repository.shortenRefName(name))); //$NON-NLS-1$
-						o.put(GitConstants.KEY_COMMIT, BaseToCommitConverter.getCommitLocation(baseLocation, ref.getObjectId().name(), BaseToCommitConverter.REMOVE_FIRST_3));
-						o.put(GitConstants.KEY_HEAD, BaseToCommitConverter.getCommitLocation(baseLocation, Constants.HEAD, BaseToCommitConverter.REMOVE_FIRST_3));
-						o.put(GitConstants.KEY_CLONE, BaseToCloneConverter.getCloneLocation(baseLocation, BaseToCloneConverter.REMOTE));
-						o.put(GitConstants.KEY_BRANCH, BaseToBranchConverter.getBranchLocation(baseLocation, BaseToBranchConverter.REMOTE));
-						o.put(GitConstants.KEY_INDEX, BaseToIndexConverter.getIndexLocation(baseLocation, BaseToIndexConverter.REMOTE));
-						children.put(o);
-					}
-					result.put(ProtocolConstants.KEY_CHILDREN, children);
-					OrionServlet.writeJSONResponse(request, response, result);
+					Remote remote = new Remote(cloneLocation, db, configName);
+					OrionServlet.writeJSONResponse(request, response, remote.toJSON());
 					return true;
 				}
 			}
@@ -142,33 +99,16 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			// /git/remote/{remote}/{branch}/file/{path}
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2));
 			Repository db = new FileRepository(gitDir);
-			Set<String> configNames = db.getConfig().getSubsections(ConfigConstants.CONFIG_REMOTE_SECTION);
-			URI baseLocation = getURI(request);
-			for (String configName : configNames) {
-				if (configName.equals(p.segment(0))) {
-					for (Entry<String, Ref> refEntry : db.getRefDatabase().getRefs(Constants.R_REMOTES).entrySet()) {
-						Ref ref = refEntry.getValue();
-						String name = ref.getName();
-						if (!ref.isSymbolic() && name.equals(Constants.R_REMOTES + p.uptoSegment(2).removeTrailingSeparator())) {
-							JSONObject result = new JSONObject();
-							result.put(ProtocolConstants.KEY_NAME, name.substring(Constants.R_REMOTES.length()));
-							result.put(ProtocolConstants.KEY_FULL_NAME, name);
-							result.put(ProtocolConstants.KEY_TYPE, GitConstants.REMOTE_TRACKING_BRANCH_TYPE);
-							result.put(ProtocolConstants.KEY_ID, ref.getObjectId().name());
-							// see bug 342602
-							// result.put(GitConstants.KEY_COMMIT, baseToCommitLocation(baseLocation, name));
-							result.put(ProtocolConstants.KEY_LOCATION, BaseToRemoteConverter.REMOVE_FIRST_4.baseToRemoteLocation(baseLocation, "" /*short name is {remote}/{branch}*/, Repository.shortenRefName(name))); //$NON-NLS-1$
-							result.put(GitConstants.KEY_COMMIT, BaseToCommitConverter.getCommitLocation(baseLocation, ref.getObjectId().name(), BaseToCommitConverter.REMOVE_FIRST_4));
-							result.put(GitConstants.KEY_HEAD, BaseToCommitConverter.getCommitLocation(baseLocation, Constants.HEAD, BaseToCommitConverter.REMOVE_FIRST_4));
-							result.put(GitConstants.KEY_CLONE, BaseToCloneConverter.getCloneLocation(baseLocation, BaseToCloneConverter.REMOTE_BRANCH));
-							OrionServlet.writeJSONResponse(request, response, result);
-							return true;
-						}
-					}
-				}
+			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.REMOTE_BRANCH);
+			Remote remote = new Remote(cloneLocation, db, p.segment(0));
+			RemoteBranch remoteBranch = new RemoteBranch(cloneLocation, db, remote, p.segment(1));
+			JSONObject result = remoteBranch.toJSON();
+			if (result != null) {
+				OrionServlet.writeJSONResponse(request, response, result);
+				return true;
 			}
 			JSONObject errorData = new JSONObject();
-			errorData.put(GitConstants.KEY_CLONE, BaseToCloneConverter.getCloneLocation(baseLocation, BaseToCloneConverter.REMOTE_BRANCH));
+			errorData.put(GitConstants.KEY_CLONE, cloneLocation);
 
 			return statusHandler.handleRequest(request, response, new ServerStatus(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "No remote branch found: " + p.uptoSegment(2).removeTrailingSeparator()), HttpServletResponse.SC_NOT_FOUND, errorData));
 		}
@@ -271,8 +211,10 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		rc.update(config);
 		config.save();
 
-		URI baseLocation = getURI(request);
-		JSONObject result = toJSON(remoteName, baseLocation);
+		URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.REMOTE_LIST);
+		Remote remote = new Remote(cloneLocation, db, remoteName);
+		JSONObject result = new JSONObject();
+		result.put(ProtocolConstants.KEY_LOCATION, remote.getLocation());
 		OrionServlet.writeJSONResponse(request, response, result);
 		response.setHeader(ProtocolConstants.HEADER_LOCATION, result.getString(ProtocolConstants.KEY_LOCATION));
 		response.setStatus(HttpServletResponse.SC_CREATED);
@@ -317,11 +259,5 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 
 	private URI createTaskLocation(URI baseLocation, String taskId) throws URISyntaxException {
 		return new URI(baseLocation.getScheme(), baseLocation.getAuthority(), "/task/id/" + taskId, null, null); //$NON-NLS-1$
-	}
-
-	private JSONObject toJSON(String remoteName, URI baseLocation) throws JSONException, URISyntaxException {
-		JSONObject result = new JSONObject();
-		result.put(ProtocolConstants.KEY_LOCATION, BaseToRemoteConverter.REMOVE_FIRST_2.baseToRemoteLocation(baseLocation, Repository.shortenRefName(remoteName), ""));
-		return result;
 	}
 }
