@@ -22,6 +22,7 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.lib.ConfigConstants;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
@@ -369,22 +370,24 @@ public class GitResetTest extends GitTest {
 
 			// git section for the folder
 			JSONObject folderGitSection = folder.getJSONObject(GitConstants.KEY_GIT);
-			String folderGitIndexUri = folderGitSection.getString(GitConstants.KEY_INDEX);
 			String folderGitStatusUri = folderGitSection.getString(GitConstants.KEY_STATUS);
+			String folderGitRemoteUri = folderGitSection.getString(GitConstants.KEY_REMOTE);
 
 			assertStatus(StatusResult.CLEAN, folderGitStatusUri);
 
-			JSONArray commitsArray = log(testTxt.getJSONObject(GitConstants.KEY_GIT).getString(GitConstants.KEY_HEAD), false);
+			JSONArray commitsArray = log(testTxt.getJSONObject(GitConstants.KEY_GIT).getString(GitConstants.KEY_HEAD));
 			assertEquals(2, commitsArray.length());
 
-			// TODO: get "origin/master" from the remote branch 
-			request = getPostGitIndexRequest(folderGitIndexUri, "origin/master", ResetType.HARD);
+			JSONObject remoteBranch = getRemoteBranch(folderGitRemoteUri, 1, 0, Constants.MASTER);
+			String remoteBranchIndexUri = remoteBranch.getString(GitConstants.KEY_INDEX);
+			String remoteBranchName = remoteBranch.getString(ProtocolConstants.KEY_NAME);
+			request = getPostGitIndexRequest(remoteBranchIndexUri, remoteBranchName, ResetType.HARD);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			assertStatus(StatusResult.CLEAN, folderGitStatusUri);
 
-			commitsArray = log(testTxt.getJSONObject(GitConstants.KEY_GIT).getString(GitConstants.KEY_HEAD), false);
+			commitsArray = log(testTxt.getJSONObject(GitConstants.KEY_GIT).getString(GitConstants.KEY_HEAD));
 			assertEquals(1, commitsArray.length());
 		}
 	}

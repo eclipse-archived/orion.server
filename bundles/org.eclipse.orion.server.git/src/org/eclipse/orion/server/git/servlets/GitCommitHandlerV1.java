@@ -39,6 +39,7 @@ import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.users.UserUtilities;
 import org.eclipse.orion.server.git.*;
+import org.eclipse.orion.server.git.objects.Branch;
 import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
@@ -234,28 +235,29 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		try {
 			Iterable<RevCommit> commits = log.call();
 			Map<ObjectId, JSONArray> commitToBranchMap = getCommitToBranchMap(db);
-			JSONObject result = toJSON(db, OrionServlet.getURI(request), commits, commitToBranchMap, page, pageSize, filter, isRoot, converter);
+			URI baseLocation = getURI(request);
+			JSONObject result = toJSON(db, baseLocation, commits, commitToBranchMap, page, pageSize, filter, isRoot, converter);
 
 			result.put(GitConstants.KEY_REPOSITORY_PATH, isRoot ? "" : path); //$NON-NLS-1$
-			if (refIdsRange == null)
-				result.put(GitConstants.KEY_CLONE, BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.COMMIT));
-			else
-				result.put(GitConstants.KEY_CLONE, BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.COMMIT_REFRANGE));
-
+			if (refIdsRange == null) {
+				result.put(GitConstants.KEY_CLONE, BaseToCloneConverter.getCloneLocation(baseLocation, BaseToCloneConverter.COMMIT));
+			} else {
+				result.put(GitConstants.KEY_CLONE, BaseToCloneConverter.getCloneLocation(baseLocation, BaseToCloneConverter.COMMIT_REFRANGE));
+			}
 			if (toRefId != null) {
-				result.put(GitConstants.KEY_REMOTE, BaseToRemoteConverter.getRemoteBranchLocation(getURI(request), Repository.shortenRefName(toRefId.getName()), db, BaseToRemoteConverter.REMOVE_FIRST_3));
-
 				String refTargetName = toRefId.getTarget().getName();
 				if (refTargetName.startsWith(Constants.R_HEADS)) {
 					// this is a branch
-					result.put(GitConstants.KEY_LOG_TO_REF, BranchToJSONConverter.toJSON(toRefId.getTarget(), db, getURI(request), 3));
+					URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.COMMIT_REFRANGE);
+					result.put(GitConstants.KEY_LOG_TO_REF, new Branch(cloneLocation, db, toRefId.getTarget()).toJSON());
 				}
 			}
 			if (fromRefId != null) {
 				String refTargetName = fromRefId.getTarget().getName();
 				if (refTargetName.startsWith(Constants.R_HEADS)) {
 					// this is a branch
-					result.put(GitConstants.KEY_LOG_FROM_REF, BranchToJSONConverter.toJSON(fromRefId.getTarget(), db, getURI(request), 3));
+					URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.COMMIT_REFRANGE);
+					result.put(GitConstants.KEY_LOG_FROM_REF, new Branch(cloneLocation, db, fromRefId.getTarget()).toJSON());
 				}
 			}
 

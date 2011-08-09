@@ -79,7 +79,7 @@ public class GitLogTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// get the full log
-			JSONArray commitsArray = log(gitHeadUri, false);
+			JSONArray commitsArray = log(gitHeadUri);
 			assertEquals(3, commitsArray.length());
 
 			JSONObject commit = commitsArray.getJSONObject(0);
@@ -94,14 +94,14 @@ public class GitLogTest extends GitTest {
 			String initialGitCommitURI = gitHeadUri.replaceAll(Constants.HEAD, initialGitCommitName);
 
 			//get log for given page size
-			commitsArray = log(gitHeadUri, false, 1, 1);
+			commitsArray = log(gitHeadUri, 1, 1);
 			assertEquals(1, commitsArray.length());
 
 			commit = commitsArray.getJSONObject(0);
 			assertEquals("commit2", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
 
 			//get log for second page
-			commitsArray = log(gitHeadUri, false, 2, 1);
+			commitsArray = log(gitHeadUri, 2, 1);
 			assertEquals(1, commitsArray.length());
 
 			commit = commitsArray.getJSONObject(0);
@@ -114,7 +114,7 @@ public class GitLogTest extends GitTest {
 			String newGitCommitUri = response.getHeaderField(ProtocolConstants.KEY_LOCATION);
 
 			// get a scoped log
-			commitsArray = log(newGitCommitUri, false);
+			commitsArray = log(newGitCommitUri);
 			assertEquals(2, commitsArray.length());
 
 			commit = commitsArray.getJSONObject(0);
@@ -151,7 +151,7 @@ public class GitLogTest extends GitTest {
 			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
 			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
-			JSONArray commitsArray = log(gitHeadUri, true);
+			JSONArray commitsArray = log(gitHeadUri);
 			assertEquals(1, commitsArray.length());
 		}
 	}
@@ -181,7 +181,7 @@ public class GitLogTest extends GitTest {
 			JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
-			JSONArray commitsArray = log(gitHeadUri, true);
+			JSONArray commitsArray = log(gitHeadUri);
 			assertEquals(1, commitsArray.length());
 
 			String commitUri = commitsArray.getJSONObject(0).getString(ProtocolConstants.KEY_LOCATION);
@@ -190,7 +190,7 @@ public class GitLogTest extends GitTest {
 			assertEquals(1, tagsArray.length());
 			assertEquals(Constants.R_TAGS + "tag", tagsArray.getJSONObject(0).get(ProtocolConstants.KEY_FULL_NAME));
 
-			commitsArray = log(gitHeadUri, true);
+			commitsArray = log(gitHeadUri);
 			assertEquals(1, commitsArray.length());
 
 			tagsArray = commitsArray.getJSONObject(0).getJSONArray(GitConstants.KEY_TAGS);
@@ -225,12 +225,12 @@ public class GitLogTest extends GitTest {
 			JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 			String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
 
-			JSONArray commitsArray = log(gitCommitUri, true);
+			JSONArray commitsArray = log(gitCommitUri);
 			assertEquals(1, commitsArray.length());
 
 			branch(branchesLocation, "branch");
 
-			commitsArray = log(gitCommitUri, true);
+			commitsArray = log(gitCommitUri);
 			assertEquals(1, commitsArray.length());
 
 			JSONArray branchesArray = commitsArray.getJSONObject(0).getJSONArray(GitConstants.KEY_BRANCHES);
@@ -286,7 +286,7 @@ public class GitLogTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// get the full log
-			JSONArray commitsArray = log(gitHeadUri, false);
+			JSONArray commitsArray = log(gitHeadUri);
 			assertEquals(3, commitsArray.length());
 
 			JSONObject commit = commitsArray.getJSONObject(0);
@@ -361,7 +361,7 @@ public class GitLogTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// get standard log for HEAD - only init and commit2 should be visible
-			JSONArray commitsArray = log(gitHeadUri, false);
+			JSONArray commitsArray = log(gitHeadUri);
 			assertEquals(2, commitsArray.length());
 
 			JSONObject commit = commitsArray.getJSONObject(0);
@@ -371,7 +371,7 @@ public class GitLogTest extends GitTest {
 			assertEquals("Initial commit", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
 
 			// get log for all branches - initial commit, commit1 and commit2 should be visible
-			commitsArray = log(gitCommitUri, false);
+			commitsArray = log(gitCommitUri);
 			assertEquals(3, commitsArray.length());
 
 			commit = commitsArray.getJSONObject(0);
@@ -534,7 +534,7 @@ public class GitLogTest extends GitTest {
 		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
-		JSONArray commitsArray = log(gitHeadUri, true);
+		JSONArray commitsArray = log(gitHeadUri);
 		assertEquals(1, commitsArray.length());
 
 		branch(branchesLocation, "a");
@@ -548,7 +548,7 @@ public class GitLogTest extends GitTest {
 		gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
-		log(gitHeadUri, true /* RemoteLocation should be available */);
+		log(gitHeadUri);
 	}
 
 	@Test
@@ -587,7 +587,7 @@ public class GitLogTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// get the full log
-			JSONArray commits = log(gitHeadUri, false);
+			JSONArray commits = log(gitHeadUri);
 			assertEquals(2, commits.length());
 			JSONObject commit = commits.getJSONObject(0);
 			assertEquals("2nd commit", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
@@ -733,7 +733,7 @@ public class GitLogTest extends GitTest {
 			String gitCommitUri = gitSection.getString(GitConstants.KEY_COMMIT);
 
 			// save initial commit name
-			JSONArray commitsArray = log(gitCommitUri, true);
+			JSONArray commitsArray = log(gitCommitUri);
 			JSONObject initCommit = commitsArray.getJSONObject(0);
 			String initCommitName = initCommit.getString(ProtocolConstants.KEY_NAME);
 			String initCommitLocation = initCommit.getString(ProtocolConstants.KEY_LOCATION);

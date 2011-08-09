@@ -221,7 +221,7 @@ public class GitTagTest extends GitTest {
 			String folderTagUri = gitSection.getString(GitConstants.KEY_TAG);
 
 			// get the full log
-			JSONArray commits = log(cloneCommitUri, false);
+			JSONArray commits = log(cloneCommitUri);
 			assertEquals(1, commits.length());
 			String commitLocation = commits.getJSONObject(0).getString(ProtocolConstants.KEY_LOCATION);
 

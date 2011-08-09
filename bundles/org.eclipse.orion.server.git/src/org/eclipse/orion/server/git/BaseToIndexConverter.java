@@ -25,17 +25,10 @@ import org.eclipse.orion.server.git.servlets.GitServlet;
 
 public abstract class BaseToIndexConverter {
 
-	public static final BaseToIndexConverter FILE = new BaseToIndexConverter() {
+	public static final BaseToIndexConverter CLONE = new BaseToIndexConverter() {
 		@Override
 		public IPath getFilePath(URI base) throws URISyntaxException {
-			return new Path(base.getPath()).makeRelative();
-		};
-	};
-
-	public static final BaseToIndexConverter REMOTE = new BaseToIndexConverter() {
-		@Override
-		public IPath getFilePath(URI base) throws URISyntaxException {
-			return new Path(base.getPath()).removeFirstSegments(3).makeRelative();
+			return new Path(base.getPath()).removeFirstSegments(2).makeRelative();
 		};
 	};
 
@@ -44,7 +37,7 @@ public abstract class BaseToIndexConverter {
 		IPath clonePath = findClonePath(filePath);
 		if (clonePath == null)
 			return null;
-		IPath p = new Path(GitServlet.GIT_URI).append(GitConstants.INDEX_RESOURCE).append("file").append(clonePath).addTrailingSeparator();
+		IPath p = new Path(GitServlet.GIT_URI).append(GitConstants.INDEX_RESOURCE).append("file").append(clonePath).addTrailingSeparator(); //$NON-NLS-1$
 		return new URI(base.getScheme(), base.getUserInfo(), base.getHost(), base.getPort(), p.toString(), base.getQuery(), base.getFragment());
 	}
 
