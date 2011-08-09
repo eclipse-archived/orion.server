@@ -11,8 +11,10 @@
 package org.eclipse.orion.server.tests.servlets.git;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -20,7 +22,9 @@ import java.net.URI;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONArray;
@@ -423,6 +427,113 @@ public class GitCheckoutTest extends GitTest {
 			assertEquals("Error", result.getString("Severity"));
 			assertEquals("Checkout aborted.", result.getString("Message"));
 			assertEquals("Checkout conflict with files: \ntest.txt", result.getString("DetailedMessage"));
+		}
+	}
+
+	@Test
+	public void testCheckoutBranchFromSecondaryRemote() throws Exception {
+
+		// dummy commit to start off a new branch on origin
+		createFile(testFile.toURI(), "origin-test");
+		Git git = new Git(db);
+		git.add().addFilepattern(".").call();
+		git.commit().setMessage("test commit").call();
+		git.branchCreate().setName("test").setStartPoint(Constants.HEAD).call();
+
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
+
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			JSONObject clone = clone(clonePath);
+			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+			String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
+			String remotesLocation = clone.getString(GitConstants.KEY_REMOTE);
+
+			// get project/folder metadata
+			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			// expect only origin
+			getRemote(remotesLocation, 1, 0, Constants.DEFAULT_REMOTE_NAME);
+
+			// create secondary repository
+			IPath randomLocation = getRandomLocation();
+			randomLocation = randomLocation.addTrailingSeparator().append(Constants.DOT_GIT);
+			File dotGitDir = randomLocation.toFile().getCanonicalFile();
+			Repository db2 = new FileRepository(dotGitDir);
+			assertFalse(dotGitDir.exists());
+			db2.create(false /* non bare */);
+
+			Git git2 = new Git(db2);
+			// dummy commit to start off new branch
+			File branchFile = new File(dotGitDir.getParentFile(), "branch.txt");
+			branchFile.createNewFile();
+			createFile(branchFile.toURI(), "secondary-branch");
+			git2.add().addFilepattern(".").call();
+			git2.commit().setMessage("branch commit").call();
+			git2.branchCreate().setName("branch").setStartPoint(Constants.HEAD).call();
+
+			// create remote
+			response = addRemote(remotesLocation, "secondary", dotGitDir.getParentFile().toURL().toString());
+			String secondaryRemoteLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+			assertNotNull(secondaryRemoteLocation);
+
+			// list remotes
+			request = getGetRequest(remotesLocation);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject remotes = new JSONObject(response.getText());
+			JSONArray remotesArray = remotes.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+			// expect origin and new remote
+			assertEquals(2, remotesArray.length());
+
+			// fetch both remotes
+			fetch(remotesArray.getJSONObject(0).getString(ProtocolConstants.KEY_LOCATION));
+			fetch(remotesArray.getJSONObject(1).getString(ProtocolConstants.KEY_LOCATION));
+
+			// secondary
+			request = getGetRequest(remotesArray.getJSONObject(1).getString(ProtocolConstants.KEY_LOCATION));
+			response = webConversation.getResponse(request);
+			JSONObject remote = new JSONObject(response.getText());
+
+			// checkout remote branch: secondary/branch
+			String remoteBranchName = remote.getJSONArray(ProtocolConstants.KEY_CHILDREN).getJSONObject(0).getString(ProtocolConstants.KEY_NAME);
+			if (!remoteBranchName.equals("secondary/branch"))
+				remoteBranchName = remote.getJSONArray(ProtocolConstants.KEY_CHILDREN).getJSONObject(1).getString(ProtocolConstants.KEY_NAME);
+			assertEquals("secondary/branch", remoteBranchName);
+			response = branch(branchesLocation, "branch", remoteBranchName);
+			JSONObject branch = new JSONObject(response.getText());
+			JSONArray remoteBranchLocations = branch.getJSONArray(GitConstants.KEY_REMOTE);
+			assertEquals(1, remoteBranchLocations.length());
+			assertEquals("secondary", remoteBranchLocations.getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
+			assertEquals("secondary/branch", remoteBranchLocations.getJSONObject(0).getJSONArray(ProtocolConstants.KEY_CHILDREN).getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
+
+			// origin
+			request = getGetRequest(remotesArray.getJSONObject(0).getString(ProtocolConstants.KEY_LOCATION));
+			response = webConversation.getResponse(request);
+			remote = new JSONObject(response.getText());
+
+			// checkout remote branch: origin/test
+			JSONArray remoteChildren = remote.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+			assertEquals(2, remoteChildren.length());
+			remoteBranchName = remoteChildren.getJSONObject(0).getString(ProtocolConstants.KEY_NAME);
+			if (!remoteBranchName.equals("origin/test"))
+				remoteBranchName = remoteChildren.getJSONObject(1).getString(ProtocolConstants.KEY_NAME);
+			assertEquals("origin/test", remoteBranchName);
+			response = branch(branchesLocation, "test", remoteBranchName);
+			branch = new JSONObject(response.getText());
+			remoteBranchLocations = branch.getJSONArray(GitConstants.KEY_REMOTE);
+			assertEquals(1, remoteBranchLocations.length());
+			assertEquals("origin", remoteBranchLocations.getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
+			assertEquals("origin/test", remoteBranchLocations.getJSONObject(0).getJSONArray(ProtocolConstants.KEY_CHILDREN).getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
 		}
 	}
 

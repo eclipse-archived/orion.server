@@ -32,6 +32,9 @@ public class Remote extends GitObject {
 		this.name = name;
 	}
 
+	/**
+	 * Returns a JSON representation of this remote.
+	 */
 	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException, CoreException {
 		return toJSON(true, null);
 	}
@@ -52,7 +55,33 @@ public class Remote extends GitObject {
 
 		if (includeChildren) {
 			JSONArray children = new JSONArray();
-			if (newBranch != null && !newBranch.isEmpty()) {
+			boolean branchFound = false;
+			List<Ref> refs = new ArrayList<Ref>();
+			for (Entry<String, Ref> refEntry : db.getRefDatabase().getRefs(Constants.R_REMOTES + name + "/").entrySet()) { //$NON-NLS-1$
+				if (!refEntry.getValue().isSymbolic()) {
+					Ref ref = refEntry.getValue();
+					String name = ref.getName();
+					name = Repository.shortenRefName(name).substring(Constants.DEFAULT_REMOTE_NAME.length() + 1);
+					if (db.getBranch().equals(name)) {
+						refs.add(0, ref);
+					} else {
+						refs.add(ref);
+					}
+				}
+			}
+			for (Ref ref : refs) {
+				String remoteBranchName = Repository.shortenRefName(ref.getName());
+				remoteBranchName = remoteBranchName.substring((this.name + "/").length()); //$NON-NLS-1$
+				RemoteBranch remoteBranch = new RemoteBranch(cloneLocation, db, this, remoteBranchName);
+				children.put(remoteBranch.toJSON());
+				if (newBranch != null && !newBranch.isEmpty() && remoteBranchName.equals(newBranch)) {
+					children = new JSONArray().put(remoteBranch.toJSON());
+					branchFound = true;
+					break;
+				}
+			}
+
+			if (!branchFound && newBranch != null && !newBranch.isEmpty()) {
 				JSONObject o = new JSONObject();
 				String name = Constants.R_REMOTES + getName() + "/" + newBranch; //$NON-NLS-1$
 				o.put(ProtocolConstants.KEY_NAME, name.substring(Constants.R_REMOTES.length()));
@@ -60,27 +89,8 @@ public class Remote extends GitObject {
 				o.put(ProtocolConstants.KEY_TYPE, GitConstants.REMOTE_TRACKING_BRANCH_TYPE);
 				o.put(ProtocolConstants.KEY_LOCATION, BaseToRemoteConverter.REMOVE_FIRST_2.baseToRemoteLocation(cloneLocation, "" /*short name is {remote}/{branch}*/, Repository.shortenRefName(name))); //$NON-NLS-1$
 				children.put(o);
-			} else {
-				List<Ref> refs = new ArrayList<Ref>();
-				for (Entry<String, Ref> refEntry : db.getRefDatabase().getRefs(Constants.R_REMOTES + name + "/").entrySet()) { //$NON-NLS-1$
-					if (!refEntry.getValue().isSymbolic()) {
-						Ref ref = refEntry.getValue();
-						String name = ref.getName();
-						name = Repository.shortenRefName(name).substring(Constants.DEFAULT_REMOTE_NAME.length() + 1);
-						if (db.getBranch().equals(name)) {
-							refs.add(0, ref);
-						} else {
-							refs.add(ref);
-						}
-					}
-				}
-				for (Ref ref : refs) {
-					String remoteBranchName = Repository.shortenRefName(ref.getName());
-					remoteBranchName = remoteBranchName.substring((this.name + "/").length()); //$NON-NLS-1$
-					RemoteBranch remoteBranch = new RemoteBranch(cloneLocation, db, this, remoteBranchName);
-					children.put(remoteBranch.toJSON());
-				}
 			}
+
 			result.put(ProtocolConstants.KEY_CHILDREN, children);
 		}
 		return result;

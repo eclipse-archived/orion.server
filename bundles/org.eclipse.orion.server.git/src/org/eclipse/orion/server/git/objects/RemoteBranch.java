@@ -33,6 +33,9 @@ public class RemoteBranch extends GitObject {
 		this.name = name;
 	}
 
+	/**
+	 * Returns a JSON representation of this remote branch.
+	 */
 	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException, CoreException {
 		Set<String> configNames = db.getConfig().getSubsections(ConfigConstants.CONFIG_REMOTE_SECTION);
 		for (String configName : configNames) {

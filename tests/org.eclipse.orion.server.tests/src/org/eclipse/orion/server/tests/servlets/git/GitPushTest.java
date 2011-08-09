@@ -424,7 +424,14 @@ public class GitPushTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// clone 1 - push "a"
-			String remoteBranchLocation1 = remoteBranchLocations1.getJSONObject(0).getJSONArray(ProtocolConstants.KEY_CHILDREN).getJSONObject(0).getString(ProtocolConstants.KEY_LOCATION);
+			int i = 0;
+			String remoteBranchName = remoteBranchLocations1.getJSONObject(0).getJSONArray(ProtocolConstants.KEY_CHILDREN).getJSONObject(i).getString(ProtocolConstants.KEY_NAME);
+			if (!remoteBranchName.equals("origin/a")) {
+				i = 1;
+				remoteBranchName = remoteBranchLocations1.getJSONObject(0).getJSONArray(ProtocolConstants.KEY_CHILDREN).getJSONObject(i).getString(ProtocolConstants.KEY_NAME);
+			}
+			assertEquals("origin/a", remoteBranchName);
+			String remoteBranchLocation1 = remoteBranchLocations1.getJSONObject(0).getJSONArray(ProtocolConstants.KEY_CHILDREN).getJSONObject(i).getString(ProtocolConstants.KEY_LOCATION);
 			ServerStatus pushStatus = push(remoteBranchLocation1, Constants.HEAD, false);
 			assertEquals(true, pushStatus.isOK());
 
@@ -876,6 +883,17 @@ public class GitPushTest extends GitTest {
 			assertNotNull(remoteBranchLocation);
 			ServerStatus pushStatus = push(remoteBranchLocation, Constants.HEAD, false);
 			assertTrue(pushStatus.isOK());
+
+			// see bug 354144
+			request = getGetRequest(branch.getString(ProtocolConstants.KEY_LOCATION));
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			branch = new JSONObject(response.getText());
+			remoteBranchLocations = branch.getJSONArray(GitConstants.KEY_REMOTE);
+			// now, there should be only one remote branch returned
+			assertEquals(1, remoteBranchLocations.length());
+			assertEquals("secondary", remoteBranchLocations.getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
+			assertEquals("secondary/branch", remoteBranchLocations.getJSONObject(0).getJSONArray(ProtocolConstants.KEY_CHILDREN).getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
 
 			// clone the secondary branch and check if the new branch is there
 			JSONObject secondProject = createProjectOrLink(workspaceLocation, getMethodName() + "-second", null);

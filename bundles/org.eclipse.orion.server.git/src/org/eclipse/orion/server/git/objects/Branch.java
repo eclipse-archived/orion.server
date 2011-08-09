@@ -32,6 +32,9 @@ public class Branch extends GitObject {
 		this.ref = ref;
 	}
 
+	/**
+	 * Returns a JSON representation of this local branch.
+	 */
 	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException, CoreException {
 		JSONObject result = new JSONObject();
 		String shortName = Repository.shortenRefName(ref.getName());
@@ -70,7 +73,12 @@ public class Branch extends GitObject {
 			List<RemoteConfig> remoteConfigs = RemoteConfig.getAllRemoteConfigs(config);
 			for (RemoteConfig remoteConfig : remoteConfigs) {
 				if (!remoteConfig.getFetchRefSpecs().isEmpty()) {
-					result.put(new Remote(cloneLocation, db, remoteConfig.getName()).toJSON(branchName));
+					Remote r = new Remote(cloneLocation, db, remoteConfig.getName());
+					if (db.resolve(Constants.R_REMOTES + remoteConfig.getName() + "/" + branchName) != null) { //$NON-NLS-1$
+						// it's an existing branch, not a new one, use it as filter
+						return new JSONArray().put(r.toJSON(branchName));
+					}
+					result.put(r.toJSON(branchName));
 				}
 			}
 		}
