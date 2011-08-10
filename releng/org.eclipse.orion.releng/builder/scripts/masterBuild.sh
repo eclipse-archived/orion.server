@@ -103,12 +103,15 @@ updateRelengProject () {
 		rm -rf org.eclipse.orion.releng
 	fi
 	
-	echo "[`date +%H\:%M\:%S`] Get org.eclipse.orion.releng"	
-	git archive --format=tar --verbose --remote=/gitroot/orion/org.eclipse.orion.server.git --output orion-releng.tar master releng/org.eclipse.orion.releng
-	tar xf orion-releng.tar
-	mv releng/org.eclipse.orion.releng .
-	rm -rf releng
-
+	if [ "$buildType" == "N" -o -n "$noTag" ]; then 
+		pushd $writableBuildRoot/gitClones/server
+		git pull
+		popd
+	fi
+	
+	echo "[`date +%H\:%M\:%S`] Get org.eclipse.orion.releng"
+	cp -r $writableBuildRoot/gitClones/server/releng/org.eclipse.orion.releng .
+	
 	echo "[`date +%H\:%M\:%S`] Done getting org.eclipse.orion.releng"
 	popd
 }
