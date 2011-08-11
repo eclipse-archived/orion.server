@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+      id="org.eclipse.orion"
+      label="%featureName"
+      version="0.3.0.qualifier"
+      provider-name="%providerName"
+      license-feature="org.eclipse.license"
+      license-feature-version="1.0.0.qualifier">
+
+   <description>
+      %description
+   </description>
+
+   <copyright>
+      %copyright
+   </copyright>
+
+   <license url="%licenseURL">
+      %license
+   </license>
+
+   <includes
+         id="org.eclipse.orion.server.feature"
+         version="0.0.0"/>
+
+   <includes
+         id="org.eclipse.orion.server.search.feature"
+         version="0.0.0"/>
+
+   <includes
+         id="org.eclipse.orion.server.authentication.feature"
+         version="0.0.0"/>
+
+   <includes
+         id="org.eclipse.orion.client.feature"
+         version="0.0.0"/>
+
+</feature>

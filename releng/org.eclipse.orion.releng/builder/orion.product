@@ -34,10 +34,7 @@
    </plugins>
 
    <features>
-      <feature id="org.eclipse.orion.server.feature"/>
-      <feature id="org.eclipse.orion.server.search.feature"/>
-      <feature id="org.eclipse.orion.server.authentication.feature"/>
-      <feature id="org.eclipse.orion.client.feature"/>
+      <feature id="org.eclipse.orion"/>
    </features>
 
    <configurations>
