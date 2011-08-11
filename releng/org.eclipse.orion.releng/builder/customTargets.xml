@@ -255,4 +255,15 @@ lastMapTag=${mapsTagTag}
 		<echo message="${buildLabel}" file="/web/http/build.label" />
 	</target>
 	
+	<target name="gatherLogs">
+		<mkdir dir="${buildDirectory}/${buildLabel}/compilelogs" />
+		<antcall target="allElements">
+			<param name="target" value="gatherLogs" />
+		</antcall>
+
+		<copy todir="${postingDirectory}/${buildLabel}/compilelogs" overwrite="true" failonerror="false">
+			<fileset dir="${buildDirectory}/features/" includes="*/feature.temp.folder" />
+		</copy>
+	</target>
+	
 </project>
