@@ -226,7 +226,7 @@ lastMapTag=${mapsTagTag}
 	</target>
 	
 	<target name="copyResults"  >
-		<zip destFile="${dropLocation}/compileLogs-${buildLabel}.zip" basedir="${buildResultLocation}/compilelogs/plugins" includes="**" />
+		<zip destFile="${dropLocation}/compileLogs-${buildLabel}.zip" basedir="${buildResultLocation}/compilelogs" includes="**" />
 		<copy todir="${dropLocation}" >
 			<fileset dir="${buildResultLocation}" includes="${archiveNamePrefix}*" />
 		</copy>	
