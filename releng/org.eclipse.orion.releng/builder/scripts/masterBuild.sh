@@ -136,32 +136,40 @@ updateBaseBuilder () {
 tagRepositories() {
 	#do this for I builds and if -noTag was not specified
 	if [ "$buildType" == "I" -a -z "$noTag" ]; then 
-		tag=v$date-$time
-		
 		pushd $writableBuildRoot/gitClones
 		
         if [ ! -f git-map.sh ]; then
 	        wget -O git-map.sh http://dev.eclipse.org/viewcvs/viewvc.cgi/e4/releng/org.eclipse.e4.builder/scripts/git-map.sh?view=co&content-type=text/plain
         fi
+        if [ ! -f git-submission.sh ]; then
+	        wget -O git-submission.sh http://dev.eclipse.org/viewcvs/viewvc.cgi/e4/releng/org.eclipse.e4.builder/scripts/git-submission.sh?view=co&content-type=text/plain
+        fi
 		
 		#pull the server first to get the latest map files before updating with new tags
-		cd $writableBuildRoot/gitClones/server
+		cd $writableBuildRoot/gitClones/org.eclipse.orion.server
 		git pull
 	
-		cd $writableBuildRoot/gitClones/client
+		cd $writableBuildRoot/gitClones/org.eclipse.orion.client
 		git pull
-		git tag $tag
-		git push --tags
-		/bin/bash $writableBuildRoot/gitClones/git-map.sh $tag ../server/releng/org.eclipse.orion.releng/maps/orion.map bundles
+
+		cd $writableBuildRoot/gitClones
+		/bin/bash $writableBuildRoot/gitClones/git-map.sh \
+			$writableBuildRoot/gitClones \
+			$writableBuildRoot/gitClones/org.eclipse.orion.server/releng/org.eclipse.orion.releng \
+			git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git \
+			git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git > maps.txt
+			
+		grep -v ^OK maps.txt | grep -v ^Executed >run.txt
+		/bin/bash run.txt
 		
-		cd $writableBuildRoot/gitClones/server
-		git tag $tag
-		for f in *; do
-			/bin/bash $writableBuildRoot/gitClones/git-map.sh $tag releng/org.eclipse.orion.releng/maps/orion.map $f
-		done 
+		mkdir $writableBuildRoot/$buildType$timestamp
+		cp report.txt $writableBuildRoot/$buildType$timestamp
+		
+		cd $writableBuildRoot/gitClones/org.eclipse.orion.server
 		git add releng/org.eclipse.orion.releng/maps/orion.map
 		git commit -m "Releng build tagging for $buildType$timestamp"
-		git tag -f $tag   #move the tag to include the map file change
+		git tag -f $buildType$timestamp   #tag the map file change
+		
 		git push
 		git push --tags
 	
@@ -239,6 +247,7 @@ sendMail () {
 	prereqMsg=""
 	failed=""
 	
+	tagMsg=`cat $buildDirectory/report.txt`
 	testsMsg=$(sed -n '/<!--START-TESTS-->/,/<!--END-TESTS-->/p' $buildDirectory/$buildLabel/drop/index.html > mail.txt)
 	testsMsg=$(cat mail.txt | sed s_href=\"_href=\"http://download.eclipse.org/orion/drops/$buildType$timestamp/_)
 	rm mail.txt
@@ -271,7 +280,7 @@ echo "Subject: Orion Build : $buildLabel $failed"
 echo ""
 echo "<html><head><title>Orion Build $buildLabel</title></head>" 
 echo "<body>Check here for the build results: <a href="http://download.eclipse.org/orion/drops/$buildType$timestamp">$buildLabel</a><br>" 
-echo "$testsMsg<br>$compileMsg<br>$compileProblems<br>$prereqMsg</body></html>" 
+echo "<pre>$tagMsg</pre><br>$testsMsg<br>$compileMsg<br>$compileProblems<br>$prereqMsg</body></html>" 
 ) | /usr/lib/sendmail -t
 
 }
