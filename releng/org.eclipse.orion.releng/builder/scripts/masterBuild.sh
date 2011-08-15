@@ -104,13 +104,13 @@ updateRelengProject () {
 	fi
 	
 	if [ "$buildType" == "N" -o -n "$noTag" ]; then 
-		pushd $writableBuildRoot/gitClones/server
+		pushd $writableBuildRoot/gitClones/org.eclipse.orion.server
 		git pull
 		popd
 	fi
 	
 	echo "[`date +%H\:%M\:%S`] Get org.eclipse.orion.releng"
-	cp -r $writableBuildRoot/gitClones/server/releng/org.eclipse.orion.releng .
+	cp -r $writableBuildRoot/gitClones/org.eclipse.orion.server/releng/org.eclipse.orion.releng .
 	
 	echo "[`date +%H\:%M\:%S`] Done getting org.eclipse.orion.releng"
 	popd
