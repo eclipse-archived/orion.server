@@ -19,6 +19,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
+import org.eclipse.jgit.api.DiffCommand;
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.merge.ResolveMerger;
 import org.eclipse.jgit.merge.ThreeWayMerger;
@@ -95,8 +97,8 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	private boolean handleGetDiff(HttpServletRequest request, HttpServletResponse response, Repository db, String scope, String pattern, OutputStream out) throws Exception {
-		Diff diff = new Diff(out);
-		diff.setRepository(db);
+		Git git = new Git(db);
+		DiffCommand diff = git.diff().setOutputStream(out).setShowNameAndStatusOnly(false);
 		if (scope.contains("..")) { //$NON-NLS-1$
 			String[] commits = scope.split("\\.\\."); //$NON-NLS-1$
 			if (commits.length != 2) {
@@ -116,7 +118,7 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 
 		if (pattern != null)
 			diff.setPathFilter(PathFilter.create(pattern));
-		diff.run();
+		diff.call();
 		return true;
 	}
 
