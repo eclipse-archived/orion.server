@@ -28,6 +28,7 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.objects.Tag;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
@@ -66,18 +67,16 @@ public class GitTagHandlerV1 extends ServletResourceHandler<String> {
 
 		JSONObject result = new JSONObject();
 		JSONArray children = new JSONArray();
-		for (Entry<String, Ref> revTag : db.getTags().entrySet()) {
-			JSONObject tag = new JSONObject();
-			tag.put(ProtocolConstants.KEY_NAME, revTag.getKey());
-			tag.put(ProtocolConstants.KEY_FULL_NAME, revTag.getValue().getName());
-			children.put(tag);
+		for (Entry<String, Ref> refEntry : db.getTags().entrySet()) {
+			Tag tag = new Tag(getURI(request), db, refEntry.getValue());
+			children.put(tag.toJSON());
 		}
 		result.put(ProtocolConstants.KEY_CHILDREN, children);
 		OrionServlet.writeJSONResponse(request, response, result);
 		return true;
 	}
 
-	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, String path) throws CoreException, IOException, JSONException, ServletException {
+	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, String path) throws CoreException, IOException, JSONException, ServletException, URISyntaxException {
 		IPath p = new Path(path);
 		File gitDir = GitUtils.getGitDir(p);
 		Repository db = new FileRepository(gitDir);
@@ -91,10 +90,8 @@ public class GitTagHandlerV1 extends ServletResourceHandler<String> {
 			RevCommit revCommit = walk.lookupCommit(objectId);
 
 			RevTag revTag = tag(git, revCommit, tagName);
-			JSONObject result = new JSONObject();
-			result.put(ProtocolConstants.KEY_NAME, revTag.getTagName());
-			result.put(ProtocolConstants.KEY_CONTENT_LOCATION, OrionServlet.getURI(request));
-			OrionServlet.writeJSONResponse(request, response, result);
+			Tag tag = new Tag(getURI(request), db, revTag);
+			OrionServlet.writeJSONResponse(request, response, tag.toJSON());
 			return true;
 		} catch (IOException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when tagging.", e));

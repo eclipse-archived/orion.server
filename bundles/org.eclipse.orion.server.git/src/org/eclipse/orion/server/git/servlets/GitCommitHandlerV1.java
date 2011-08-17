@@ -24,26 +24,24 @@ import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.ListBranchCommand.ListMode;
 import org.eclipse.jgit.api.RebaseCommand.Operation;
 import org.eclipse.jgit.api.errors.*;
-import org.eclipse.jgit.diff.DiffEntry;
-import org.eclipse.jgit.diff.DiffEntry.ChangeType;
 import org.eclipse.jgit.errors.AmbiguousObjectException;
-import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.*;
-import org.eclipse.jgit.revwalk.*;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepository;
-import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.*;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
-import org.eclipse.orion.server.core.users.UserUtilities;
 import org.eclipse.orion.server.git.*;
-import org.eclipse.orion.server.git.objects.Branch;
+import org.eclipse.orion.server.git.objects.Commit;
+import org.eclipse.orion.server.git.objects.Log;
 import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
-import org.json.*;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * 
@@ -117,7 +115,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			return handleGetCommitLog(request, response, db, null, pattern);
 
 		} else if (path.segment(1).equals("file")) { //$NON-NLS-1$
-			// git log branch_name
+			// git log <ref>
 			IPath filePath = path.hasTrailingSeparator() ? path.removeFirstSegments(1) : path.removeFirstSegments(1).removeLastSegments(1);
 			Set<Entry<IPath, File>> set = GitUtils.getGitDirs(filePath, Traverse.GO_UP).entrySet();
 			File gitDir = set.iterator().next().getValue();
@@ -126,7 +124,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 
 			db = new FileRepository(gitDir);
 
-			// /{ref}/file/{projectId}...}
+			// /{ref}/file/{projectId}...
 			String parts = request.getParameter("parts"); //$NON-NLS-1$
 			String pattern = GitUtils.getRelativePath(path, set.iterator().next().getKey());
 			if (path.segmentCount() > 3 && "body".equals(parts)) { //$NON-NLS-1$
@@ -139,29 +137,28 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		return false;
 	}
 
-	private boolean handleGetCommitBody(HttpServletRequest request, HttpServletResponse response, Repository db, String ref, String pattern) throws AmbiguousObjectException, IOException, ServletException {
+	private boolean handleGetCommitBody(HttpServletRequest request, HttpServletResponse response, Repository db, String ref, String pattern) throws IOException, ServletException, URISyntaxException, CoreException {
 		ObjectId refId = db.resolve(ref);
 		if (refId == null) {
-			String msg = NLS.bind("Failed to generate commit log for ref {0}", ref);
+			String msg = NLS.bind("Failed to get commit body for ref {0}", ref);
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 		}
-
 		RevWalk walk = new RevWalk(db);
 		walk.setTreeFilter(AndTreeFilter.create(PathFilterGroup.createFromStrings(Collections.singleton(pattern)), TreeFilter.ANY_DIFF));
-		RevCommit commit = walk.parseCommit(refId);
-		final TreeWalk w = TreeWalk.forPath(db, pattern, commit.getTree());
-		if (w == null) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, null, null));
-		}
+		RevCommit revCommit = walk.parseCommit(refId);
 
-		ObjectId blobId = w.getObjectId(0);
-		ObjectStream stream = db.open(blobId, Constants.OBJ_BLOB).openStream();
+		Commit commit = new Commit(null /* not needed */, db, revCommit, pattern);
+		ObjectStream stream = commit.toObjectStream();
+		if (stream == null) {
+			String msg = NLS.bind("Commit body for ref {0} not found", ref);
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
+		}
 		IOUtilities.pipe(stream, response.getOutputStream(), true, false);
 
 		return true;
 	}
 
-	private boolean handleGetCommitLog(HttpServletRequest request, HttpServletResponse response, Repository db, String refIdsRange, String path) throws AmbiguousObjectException, IOException, ServletException, JSONException, URISyntaxException, CoreException {
+	private boolean handleGetCommitLog(HttpServletRequest request, HttpServletResponse response, Repository db, String refIdsRange, String pattern) throws AmbiguousObjectException, IOException, ServletException, JSONException, URISyntaxException, CoreException {
 		int page = request.getParameter("page") != null ? new Integer(request.getParameter("page")).intValue() : 0; //$NON-NLS-1$ //$NON-NLS-2$
 		int pageSize = request.getParameter("pageSize") != null ? new Integer(request.getParameter("pageSize")).intValue() : PAGE_SIZE; //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -172,11 +169,9 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		Ref fromRefId = null;
 
 		Git git = new Git(db);
-		LogCommand log = git.log();
+		LogCommand lc = git.log();
 
-		BaseToCommitConverter converter = null;
 		if (refIdsRange != null) {
-			converter = BaseToCommitConverter.REMOVE_FIRST_3;
 			// git log <since>..<until>
 			if (refIdsRange.contains("..")) { //$NON-NLS-1$
 				String[] commits = refIdsRange.split("\\.\\."); //$NON-NLS-1$
@@ -208,58 +203,30 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			}
 
 			// set the commit range
-			log.add(toObjectId);
+			lc.add(toObjectId);
 
 			if (fromObjectId != null)
-				log.not(fromObjectId);
+				lc.not(fromObjectId);
 		} else {
-			converter = BaseToCommitConverter.REMOVE_FIRST_2;
 			// git log --all
 			// workaround for git log --all - see bug 353310
 			List<Ref> branches = git.branchList().setListMode(ListMode.ALL).call();
 			for (Ref branch : branches) {
-				log.add(branch.getObjectId());
+				lc.add(branch.getObjectId());
 			}
 		}
 
-		// set the path filter
-		TreeFilter filter = null;
-
-		boolean isRoot = true;
-		if (path != null && !"".equals(path)) { //$NON-NLS-1$
-			filter = AndTreeFilter.create(PathFilterGroup.createFromStrings(Collections.singleton(path)), TreeFilter.ANY_DIFF);
-			log.addPath(path);
-			isRoot = false;
+		if (pattern != null && !pattern.isEmpty()) {
+			lc.addPath(pattern);
 		}
 
 		try {
-			Iterable<RevCommit> commits = log.call();
-			Map<ObjectId, JSONArray> commitToBranchMap = getCommitToBranchMap(db);
+			Iterable<RevCommit> commits = lc.call();
 			URI baseLocation = getURI(request);
-			JSONObject result = toJSON(db, baseLocation, commits, commitToBranchMap, page, pageSize, filter, isRoot, converter);
+			URI cloneLocation = BaseToCloneConverter.getCloneLocation(baseLocation, refIdsRange == null ? BaseToCloneConverter.COMMIT : BaseToCloneConverter.COMMIT_REFRANGE);
 
-			result.put(GitConstants.KEY_REPOSITORY_PATH, isRoot ? "" : path); //$NON-NLS-1$
-			if (refIdsRange == null) {
-				result.put(GitConstants.KEY_CLONE, BaseToCloneConverter.getCloneLocation(baseLocation, BaseToCloneConverter.COMMIT));
-			} else {
-				result.put(GitConstants.KEY_CLONE, BaseToCloneConverter.getCloneLocation(baseLocation, BaseToCloneConverter.COMMIT_REFRANGE));
-			}
-			if (toRefId != null) {
-				String refTargetName = toRefId.getTarget().getName();
-				if (refTargetName.startsWith(Constants.R_HEADS)) {
-					// this is a branch
-					URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.COMMIT_REFRANGE);
-					result.put(GitConstants.KEY_LOG_TO_REF, new Branch(cloneLocation, db, toRefId.getTarget()).toJSON());
-				}
-			}
-			if (fromRefId != null) {
-				String refTargetName = fromRefId.getTarget().getName();
-				if (refTargetName.startsWith(Constants.R_HEADS)) {
-					// this is a branch
-					URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.COMMIT_REFRANGE);
-					result.put(GitConstants.KEY_LOG_FROM_REF, new Branch(cloneLocation, db, fromRefId.getTarget()).toJSON());
-				}
-			}
+			Log log = new Log(cloneLocation, db, commits, pattern, toRefId, fromRefId);
+			JSONObject result = log.toJSON(page, pageSize);
 
 			OrionServlet.writeJSONResponse(request, response, result);
 			return true;
@@ -270,124 +237,6 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			String msg = NLS.bind("An internal error occured when generating log for ref {0}", refIdsRange);
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
 		}
-	}
-
-	private JSONObject toJSON(Repository db, URI baseLocation, Iterable<RevCommit> commits, Map<ObjectId, JSONArray> commitToBranchMap, int page, int pageSize, TreeFilter filter, boolean isRoot, BaseToCommitConverter converter) throws JSONException, URISyntaxException, MissingObjectException, IOException {
-		boolean pageable = (page > 0);
-		int startIndex = (page - 1) * pageSize;
-		int index = 0;
-
-		JSONObject result = new JSONObject();
-		JSONArray children = new JSONArray();
-		for (RevCommit revCommit : commits) {
-			if (pageable && index < startIndex) {
-				index++;
-				continue;
-			}
-
-			if (pageable && index >= startIndex + pageSize)
-				break;
-
-			index++;
-
-			children.put(toJSON(db, revCommit, commitToBranchMap, baseLocation, filter, isRoot, converter));
-		}
-		result.put(ProtocolConstants.KEY_CHILDREN, children);
-		return result;
-	}
-
-	private JSONObject toJSON(Repository db, RevCommit revCommit, Map<ObjectId, JSONArray> commitToBranchMap, URI baseLocation, TreeFilter filter, boolean isRoot, BaseToCommitConverter converter) throws JSONException, URISyntaxException, IOException {
-		JSONObject commit = new JSONObject();
-		commit.put(ProtocolConstants.KEY_LOCATION, BaseToCommitConverter.getCommitLocation(baseLocation, revCommit.getName(), converter));
-		commit.put(ProtocolConstants.KEY_CONTENT_LOCATION, BaseToCommitConverter.getCommitLocation(baseLocation, revCommit.getName(), converter.setQuery("parts=body"))); //$NON-NLS-1$
-		commit.put(GitConstants.KEY_DIFF, createDiffLocation(baseLocation, revCommit.getName(), null, null, isRoot));
-		commit.put(ProtocolConstants.KEY_NAME, revCommit.getName());
-		PersonIdent author = revCommit.getAuthorIdent();
-		commit.put(GitConstants.KEY_AUTHOR_NAME, author.getName());
-		commit.put(GitConstants.KEY_AUTHOR_EMAIL, author.getEmailAddress());
-		String authorImage = UserUtilities.getImageLink(author.getEmailAddress());
-		if (authorImage != null)
-			commit.put(GitConstants.KEY_AUTHOR_IMAGE, authorImage);
-		PersonIdent committer = revCommit.getCommitterIdent();
-		commit.put(GitConstants.KEY_COMMITTER_NAME, committer.getName());
-		commit.put(GitConstants.KEY_COMMITTER_EMAIL, committer.getEmailAddress());
-		commit.put(GitConstants.KEY_COMMIT_TIME, ((long) revCommit.getCommitTime()) * 1000 /* time in milliseconds */);
-		commit.put(GitConstants.KEY_COMMIT_MESSAGE, revCommit.getFullMessage());
-		commit.put(GitConstants.KEY_TAGS, toJSON(getTagsForCommit(db, revCommit)));
-		commit.put(ProtocolConstants.KEY_TYPE, GitConstants.COMMIT_TYPE);
-		commit.put(GitConstants.KEY_BRANCHES, commitToBranchMap.get(revCommit.getId()));
-		commit.put(ProtocolConstants.KEY_PARENTS, parentsToJSON(revCommit.getParents()));
-
-		if (revCommit.getParentCount() > 0) {
-			JSONArray diffs = new JSONArray();
-
-			final TreeWalk tw = new TreeWalk(db);
-			final RevWalk rw = new RevWalk(db);
-			RevCommit parent = rw.parseCommit(revCommit.getParent(0));
-			tw.reset(parent.getTree(), revCommit.getTree());
-			tw.setRecursive(true);
-
-			if (filter != null)
-				tw.setFilter(filter);
-			else
-				tw.setFilter(TreeFilter.ANY_DIFF);
-
-			List<DiffEntry> l = DiffEntry.scan(tw);
-			for (DiffEntry entr : l) {
-				JSONObject diff = new JSONObject();
-				diff.put(ProtocolConstants.KEY_TYPE, GitConstants.DIFF_TYPE);
-
-				diff.put(GitConstants.KEY_COMMIT_DIFF_NEWPATH, entr.getNewPath());
-				diff.put(GitConstants.KEY_COMMIT_DIFF_OLDPATH, entr.getOldPath());
-				diff.put(GitConstants.KEY_COMMIT_DIFF_CHANGETYPE, entr.getChangeType().toString());
-
-				// add diff location for the commit
-				String path = entr.getChangeType() != ChangeType.DELETE ? entr.getNewPath() : entr.getOldPath();
-				diff.put(GitConstants.KEY_DIFF, createDiffLocation(baseLocation, revCommit.getName(), revCommit.getParent(0).getName(), path, isRoot));
-
-				diffs.put(diff);
-			}
-			tw.release();
-
-			commit.put(GitConstants.KEY_COMMIT_DIFFS, diffs);
-		}
-
-		return commit;
-	}
-
-	private JSONArray toJSON(Map<String, Ref> revTags) throws JSONException {
-		JSONArray children = new JSONArray();
-		for (Entry<String, Ref> revTag : revTags.entrySet()) {
-			JSONObject tag = new JSONObject();
-			tag.put(ProtocolConstants.KEY_NAME, revTag.getKey());
-			tag.put(ProtocolConstants.KEY_FULL_NAME, revTag.getValue().getName());
-			children.put(tag);
-		}
-		return children;
-	}
-
-	private URI createCommitLocation(URI baseLocation, String commitName, String parameters) throws URISyntaxException {
-		return new URI(baseLocation.getScheme(), baseLocation.getAuthority(), GitServlet.GIT_URI + "/" + GitConstants.COMMIT_RESOURCE + "/" + commitName + "/" + new Path(baseLocation.getPath()).removeFirstSegments(3), parameters, null); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-	}
-
-	private URI createDiffLocation(URI baseLocation, String toRefId, String fromRefId, String path, boolean isRoot) throws URISyntaxException {
-		String diffPath = GitServlet.GIT_URI + "/" + GitConstants.DIFF_RESOURCE + "/"; //$NON-NLS-1$ //$NON-NLS-2$
-
-		if (fromRefId != null)
-			diffPath += fromRefId + ".."; //$NON-NLS-1$
-
-		diffPath += toRefId + "/"; //$NON-NLS-1$
-
-		if (path == null) {
-			diffPath += new Path(baseLocation.getPath()).removeFirstSegments(3);
-		} else if (isRoot) {
-			diffPath += new Path(baseLocation.getPath()).removeFirstSegments(3).append(path);
-		} else {
-			IPath p = new Path(baseLocation.getPath());
-			diffPath += p.removeLastSegments(p.segmentCount() - 5).removeFirstSegments(3).append(path);
-		}
-
-		return new URI(baseLocation.getScheme(), baseLocation.getAuthority(), diffPath, null, null);
 	}
 
 	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws ServletException, NoFilepatternException, IOException, JSONException, CoreException, URISyntaxException {
@@ -440,10 +289,10 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		String authorEmail = requestObject.optString(GitConstants.KEY_AUTHOR_EMAIL, null);
 
 		Git git = new Git(db);
-		CommitCommand commit = git.commit();
+		CommitCommand cc = git.commit();
 
 		// workaround of a bug in JGit which causes invalid 
-		// support of null values of author/committer name/email 
+		// support of null values of author/committer name/email, see bug 352984
 		PersonIdent defPersonIdent = new PersonIdent(db);
 		if (committerName == null)
 			committerName = defPersonIdent.getName();
@@ -453,23 +302,22 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			authorName = committerName;
 		if (authorEmail == null)
 			authorEmail = committerEmail;
-		commit.setCommitter(committerName, committerEmail);
-		commit.setAuthor(authorName, authorEmail);
+		cc.setCommitter(committerName, committerEmail);
+		cc.setAuthor(authorName, authorEmail);
 
 		// support for committing by path: "git commit -o path"
-		boolean isRoot = true;
 		String pattern = GitUtils.getRelativePath(path.removeFirstSegments(1), set.iterator().next().getKey());
 		if (!pattern.isEmpty()) {
-			commit.setOnly(pattern);
-			isRoot = false;
+			cc.setOnly(pattern);
 		}
 
 		try {
 			// "git commit [--amend] -m '{message}' [-a|{path}]"
-			RevCommit lastCommit = commit.setAmend(amend).setMessage(message).call();
-			Map<ObjectId, JSONArray> commitToBranchMap = getCommitToBranchMap(db);
+			RevCommit lastCommit = cc.setAmend(amend).setMessage(message).call();
 
-			JSONObject result = toJSON(db, lastCommit, commitToBranchMap, getURI(request), null, isRoot, BaseToCommitConverter.REMOVE_FIRST_3);
+			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.COMMIT_REFRANGE);
+			Commit commit = new Commit(cloneLocation, db, lastCommit, pattern);
+			JSONObject result = commit.toJSON();
 			OrionServlet.writeJSONResponse(request, response, result);
 			return true;
 		} catch (GitAPIException e) {
@@ -596,9 +444,10 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			walk.parseBody(revCommit);
 
 			GitTagHandlerV1.tag(git, revCommit, tagName);
-			Map<ObjectId, JSONArray> commitToBranchMap = getCommitToBranchMap(db);
 
-			JSONObject result = toJSON(db, revCommit, commitToBranchMap, OrionServlet.getURI(request), null, isRoot, BaseToCommitConverter.REMOVE_FIRST_3);
+			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.COMMIT_REFRANGE);
+			Commit commit = new Commit(cloneLocation, db, revCommit, null);
+			JSONObject result = commit.toJSON();
 			OrionServlet.writeJSONResponse(request, response, result);
 			return true;
 		} catch (IOException e) {
@@ -607,61 +456,10 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when tagging.", e));
 		} catch (JGitInternalException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when tagging.", e));
+		} catch (CoreException e) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when tagging.", e));
 		} finally {
 			walk.dispose();
 		}
-	}
-
-	// from https://gist.github.com/839693, credits to zx
-	private static Map<String, Ref> getTagsForCommit(Repository repo, RevCommit commit) throws MissingObjectException, IOException {
-		final Map<String, Ref> revTags = new HashMap<String, Ref>();
-		final RevWalk walk = new RevWalk(repo);
-		walk.reset();
-		for (final Entry<String, Ref> revTag : repo.getTags().entrySet()) {
-			final RevObject obj = walk.parseAny(revTag.getValue().getObjectId());
-			final RevCommit tagCommit;
-			if (obj instanceof RevCommit) {
-				tagCommit = (RevCommit) obj;
-			} else if (obj instanceof RevTag) {
-				tagCommit = walk.parseCommit(((RevTag) obj).getObject());
-			} else {
-				continue;
-			}
-			if (commit.equals(tagCommit) || walk.isMergedInto(commit, tagCommit)) {
-				revTags.put(revTag.getKey(), revTag.getValue());
-			}
-		}
-		return revTags;
-	}
-
-	private static Map<ObjectId, JSONArray> getCommitToBranchMap(Repository db) throws JSONException {
-		HashMap<ObjectId, JSONArray> commitToBranch = new HashMap<ObjectId, JSONArray>();
-		Git git = new Git(db);
-		List<Ref> branchRefs = git.branchList().setListMode(ListMode.ALL).call();
-		for (Ref branchRef : branchRefs) {
-			ObjectId commitId = branchRef.getLeaf().getObjectId();
-			JSONObject branch = new JSONObject();
-			branch.put(ProtocolConstants.KEY_FULL_NAME, branchRef.getName());
-
-			JSONArray branchesArray = commitToBranch.get(commitId);
-			if (branchesArray != null) {
-				branchesArray.put(branch);
-			} else {
-				branchesArray = new JSONArray();
-				branchesArray.put(branch);
-				commitToBranch.put(commitId, branchesArray);
-			}
-		}
-		return commitToBranch;
-	}
-
-	private JSONArray parentsToJSON(RevCommit[] revCommits) throws JSONException {
-		JSONArray parents = new JSONArray();
-		for (RevCommit revCommit : revCommits) {
-			JSONObject parent = new JSONObject();
-			parent.put(ProtocolConstants.KEY_NAME, revCommit.getName());
-			parents.put(parent);
-		}
-		return parents;
 	}
 }

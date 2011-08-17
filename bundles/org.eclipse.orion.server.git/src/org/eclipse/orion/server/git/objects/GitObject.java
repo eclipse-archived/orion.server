@@ -18,9 +18,8 @@ public abstract class GitObject {
 	protected URI cloneLocation;
 	protected Repository db;
 
-	public GitObject(URI cloneLocation, Repository db) {
+	GitObject(URI cloneLocation, Repository db) {
 		this.cloneLocation = cloneLocation;
 		this.db = db;
 	}
-
 }

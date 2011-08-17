@@ -34,6 +34,7 @@ import org.eclipse.jgit.transport.URIish;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.objects.Remote;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
 import org.json.JSONArray;
@@ -372,7 +373,7 @@ public class GitRemoteTest extends GitTest {
 		else if (location.startsWith("/"))
 			requestURI = SERVER_LOCATION + location;
 		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.REMOTE_RESOURCE + location;
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Remote.RESOURCE + location;
 		WebRequest request = new GetMethodWebRequest(requestURI);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
@@ -386,7 +387,7 @@ public class GitRemoteTest extends GitTest {
 		else if (location.startsWith("/"))
 			requestURI = SERVER_LOCATION + location;
 		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.REMOTE_RESOURCE + location;
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Remote.RESOURCE + location;
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_REMOTE_NAME, name);
 		body.put(GitConstants.KEY_REMOTE_URI, uri);
@@ -404,7 +405,7 @@ public class GitRemoteTest extends GitTest {
 		if (location.startsWith("http://")) {
 			requestURI = location;
 		} else {
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.REMOTE_RESOURCE + location;
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Remote.RESOURCE + location;
 		}
 		WebRequest request = new DeleteMethodWebRequest(requestURI);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");

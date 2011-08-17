@@ -64,6 +64,13 @@ import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.objects.Branch;
+import org.eclipse.orion.server.git.objects.Clone;
+import org.eclipse.orion.server.git.objects.Commit;
+import org.eclipse.orion.server.git.objects.ConfigOption;
+import org.eclipse.orion.server.git.objects.Remote;
+import org.eclipse.orion.server.git.objects.Status;
+import org.eclipse.orion.server.git.objects.Tag;
 import org.eclipse.orion.server.git.servlets.GitServlet;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.json.JSONArray;
@@ -768,7 +775,7 @@ public abstract class GitTest extends FileSystemTest {
 			// assertCloneUri(location);
 			requestURI = cloneLocation;
 		} else {
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.CLONE_RESOURCE + cloneLocation;
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Clone.RESOURCE + cloneLocation;
 		}
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_BRANCH_NAME, branchName);
@@ -796,7 +803,7 @@ public abstract class GitTest extends FileSystemTest {
 		// /git/remote/file/{path}
 		assertTrue(path.segmentCount() > 3);
 		assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
-		assertEquals(GitConstants.REMOTE_RESOURCE, path.segment(1));
+		assertEquals(Remote.RESOURCE, path.segment(1));
 		assertEquals("file", path.segment(2));
 	}
 
@@ -808,7 +815,7 @@ public abstract class GitTest extends FileSystemTest {
 		try {
 			assertTrue(path.segmentCount() > 4);
 			assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
-			assertEquals(GitConstants.COMMIT_RESOURCE, path.segment(1));
+			assertEquals(Commit.RESOURCE, path.segment(1));
 			assertEquals("file", path.segment(3));
 		} catch (AssertionError e) {
 			error = e;
@@ -818,7 +825,7 @@ public abstract class GitTest extends FileSystemTest {
 		try {
 			assertTrue(path.segmentCount() > 3);
 			assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
-			assertEquals(GitConstants.COMMIT_RESOURCE, path.segment(1));
+			assertEquals(Commit.RESOURCE, path.segment(1));
 			assertEquals("file", path.segment(2));
 		} catch (AssertionError e) {
 			if (error != null) {
@@ -833,7 +840,7 @@ public abstract class GitTest extends FileSystemTest {
 		// /git/status/file/{path}
 		assertTrue(path.segmentCount() > 3);
 		assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
-		assertEquals(GitConstants.STATUS_RESOURCE, path.segment(1));
+		assertEquals(Status.RESOURCE, path.segment(1));
 		assertEquals("file", path.segment(2));
 	}
 
@@ -845,7 +852,7 @@ public abstract class GitTest extends FileSystemTest {
 		try {
 			assertTrue(path.segmentCount() > 4);
 			assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
-			assertEquals(GitConstants.REMOTE_RESOURCE, path.segment(1));
+			assertEquals(Remote.RESOURCE, path.segment(1));
 			assertEquals("file", path.segment(3));
 		} catch (AssertionError e) {
 			error = e;
@@ -855,7 +862,7 @@ public abstract class GitTest extends FileSystemTest {
 		try {
 			assertTrue(path.segmentCount() > 5);
 			assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
-			assertEquals(GitConstants.REMOTE_RESOURCE, path.segment(1));
+			assertEquals(Remote.RESOURCE, path.segment(1));
 			assertEquals("file", path.segment(4));
 		} catch (AssertionError e) {
 			if (error != null) {
@@ -870,7 +877,7 @@ public abstract class GitTest extends FileSystemTest {
 		// /git/tag/file/{path}
 		assertTrue(path.segmentCount() > 3);
 		assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
-		assertEquals(GitConstants.TAG_RESOURCE, path.segment(1));
+		assertEquals(Tag.RESOURCE, path.segment(1));
 		assertEquals("file", path.segment(2));
 	}
 
@@ -880,7 +887,7 @@ public abstract class GitTest extends FileSystemTest {
 		// /git/clone/workspace/{id} or /git/clone/file/{id}[/{path}]
 		assertTrue(path.segmentCount() > 3);
 		assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
-		assertEquals(GitConstants.CLONE_RESOURCE, path.segment(1));
+		assertEquals(Clone.RESOURCE, path.segment(1));
 		assertTrue("workspace".equals(path.segment(2)) || "file".equals(path.segment(2)));
 		if ("workspace".equals(path.segment(2)))
 			assertEquals(4, path.segmentCount());
@@ -910,7 +917,7 @@ public abstract class GitTest extends FileSystemTest {
 		// /git/branch/[{name}/]file/{path}
 		assertTrue(path.segmentCount() > 3);
 		assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
-		assertEquals(GitConstants.BRANCH_RESOURCE, path.segment(1));
+		assertEquals(Branch.RESOURCE, path.segment(1));
 		assertTrue("file".equals(path.segment(2)) || "file".equals(path.segment(3)));
 	}
 
@@ -920,9 +927,9 @@ public abstract class GitTest extends FileSystemTest {
 		// /gitapi/config/[{key}/]clone/file/{id}
 		assertTrue(path.segmentCount() > 4);
 		assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
-		assertEquals(GitConstants.CONFIG_RESOURCE, path.segment(1));
-		assertTrue(GitConstants.CLONE_RESOURCE.equals(path.segment(2)) || GitConstants.CLONE_RESOURCE.equals(path.segment(3)));
-		if (GitConstants.CLONE_RESOURCE.equals(path.segment(2)))
+		assertEquals(ConfigOption.RESOURCE, path.segment(1));
+		assertTrue(Clone.RESOURCE.equals(path.segment(2)) || Clone.RESOURCE.equals(path.segment(3)));
+		if (Clone.RESOURCE.equals(path.segment(2)))
 			assertTrue("file".equals(path.segment(3)));
 		else
 			assertTrue("file".equals(path.segment(4)));
@@ -964,7 +971,7 @@ public abstract class GitTest extends FileSystemTest {
 		if (location.startsWith("http://"))
 			requestURI = location;
 		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.COMMIT_RESOURCE + location;
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Commit.RESOURCE + location;
 
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_MERGE, commit);
@@ -980,7 +987,7 @@ public abstract class GitTest extends FileSystemTest {
 		if (location.startsWith("http://"))
 			requestURI = location;
 		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.TAG_RESOURCE + location;
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Tag.RESOURCE + location;
 
 		JSONObject body = new JSONObject();
 		body.put(ProtocolConstants.KEY_NAME, tagName);
@@ -996,7 +1003,7 @@ public abstract class GitTest extends FileSystemTest {
 		if (location.startsWith("http://"))
 			requestURI = location;
 		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.COMMIT_RESOURCE + location;
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Commit.RESOURCE + location;
 		JSONObject body = new JSONObject();
 		body.put(ProtocolConstants.KEY_NAME, tagName);
 		WebRequest request = new PutMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "application/json");
@@ -1010,7 +1017,7 @@ public abstract class GitTest extends FileSystemTest {
 		if (location.startsWith("http://"))
 			requestURI = location;
 		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.TAG_RESOURCE + location;
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Tag.RESOURCE + location;
 		WebRequest request = new GetMethodWebRequest(requestURI);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
@@ -1032,7 +1039,7 @@ public abstract class GitTest extends FileSystemTest {
 		if (location.startsWith("http://")) {
 			requestURI = location;
 		} else {
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.BRANCH_RESOURCE + location;
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Branch.RESOURCE + location;
 		}
 		JSONObject body = new JSONObject();
 		body.put(ProtocolConstants.KEY_NAME, branchName);

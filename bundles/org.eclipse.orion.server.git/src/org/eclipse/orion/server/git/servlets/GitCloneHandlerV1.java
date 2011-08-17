@@ -15,17 +15,14 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
-import java.util.Map.Entry;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
-import org.eclipse.jgit.api.*;
-import org.eclipse.jgit.api.CheckoutResult.Status;
-import org.eclipse.jgit.api.CheckoutResult.Status;
+import org.eclipse.jgit.api.CheckoutCommand;
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.*;
 import org.eclipse.jgit.lib.*;
-import org.eclipse.jgit.storage.file.FileBasedConfig;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FileUtils;
@@ -36,6 +33,7 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
+import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
@@ -79,7 +77,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 	private boolean handlePost(HttpServletRequest request, HttpServletResponse response) throws IOException, JSONException, ServletException, URISyntaxException, CoreException, NoHeadException, NoMessageException, ConcurrentRefUpdateException, JGitInternalException, WrongRepositoryStateException {
 		// make sure required fields are set
 		JSONObject toAdd = OrionServlet.readJSONRequest(request);
-		WebClone clone = new WebClone();
+		Clone clone = new Clone();
 		String url = toAdd.optString(GitConstants.KEY_URL, null);
 		// method handles repository clone or just repository init
 		// decision is based on existence of GitUrl argument 
@@ -166,7 +164,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			clone.setContentLocation(webProject.getProjectStore().toURI());
 		}
 		clone.setName(cloneName);
-		JSONObject cloneObject = WebClone.toJSON(clone, getURI(request));
+		JSONObject cloneObject = clone.toJSON(getURI(request));
 		String cloneLocation = cloneObject.getString(ProtocolConstants.KEY_LOCATION);
 
 		if (initOnly) {
@@ -245,8 +243,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 							IPath projectPath = new Path(contentLocation.getPath());
 							Map<IPath, File> gitDirs = GitUtils.getGitDirs(projectPath, Traverse.GO_DOWN);
 							for (Map.Entry<IPath, File> entry : gitDirs.entrySet()) {
-								JSONObject child = toJSON(entry, baseLocation);
-								children.put(child);
+								children.put(new Clone().toJSON(entry, baseLocation));
 							}
 						}
 					} catch (JSONException e) {
@@ -270,8 +267,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 				JSONObject result = new JSONObject();
 				JSONArray children = new JSONArray();
 				for (Map.Entry<IPath, File> entry : gitDirs.entrySet()) {
-					JSONObject child = toJSON(entry, baseLocation);
-					children.put(child);
+					children.put(new Clone().toJSON(entry, baseLocation));
 				}
 				result.put(ProtocolConstants.KEY_CHILDREN, children);
 				OrionServlet.writeJSONResponse(request, response, result);
@@ -321,7 +317,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 						co.setName(branch).call();
 						return true;
 					} catch (JGitInternalException e) {
-						if (Status.CONFLICTS.equals(co.getResult().getStatus())) {
+						if (org.eclipse.jgit.api.CheckoutResult.Status.CONFLICTS.equals(co.getResult().getStatus())) {
 							return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_CONFLICT, "Checkout aborted.", e));
 						}
 						// TODO: handle other exceptions
@@ -470,64 +466,6 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			return false;
 		}
 		return true;
-	}
-
-	private JSONObject toJSON(Entry<IPath, File> entry, URI baseLocation) throws URISyntaxException {
-		IPath k = entry.getKey();
-		JSONObject result = new JSONObject();
-		try {
-			result.put(ProtocolConstants.KEY_ID, k);
-
-			result.put(ProtocolConstants.KEY_NAME, k.segmentCount() == 1 ? WebProject.fromId(k.segment(0)).getName() : k.lastSegment());
-
-			IPath np = new Path(GitServlet.GIT_URI).append(GitConstants.CLONE_RESOURCE).append("file").append(k); //$NON-NLS-1$
-			URI location = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), np.toString(), baseLocation.getQuery(), baseLocation.getFragment());
-			result.put(ProtocolConstants.KEY_LOCATION, location);
-
-			np = new Path("file").append(k).makeAbsolute(); //$NON-NLS-1$
-			location = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), np.toString(), baseLocation.getQuery(), baseLocation.getFragment());
-			result.put(ProtocolConstants.KEY_CONTENT_LOCATION, location);
-
-			np = new Path(GitServlet.GIT_URI).append(GitConstants.REMOTE_RESOURCE).append("file").append(k); //$NON-NLS-1$
-			location = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), np.toString(), baseLocation.getQuery(), baseLocation.getFragment());
-			result.put(GitConstants.KEY_REMOTE, location);
-
-			np = new Path(GitServlet.GIT_URI).append(GitConstants.CONFIG_RESOURCE).append(GitConstants.CLONE_RESOURCE).append("file").append(k); //$NON-NLS-1$
-			location = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), np.toString(), baseLocation.getQuery(), baseLocation.getFragment());
-			result.put(GitConstants.KEY_CONFIG, location);
-
-			np = new Path(GitServlet.GIT_URI).append(GitConstants.COMMIT_RESOURCE).append(Constants.HEAD).append("file").append(k); //$NON-NLS-1$
-			location = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), np.toString(), baseLocation.getQuery(), baseLocation.getFragment());
-			result.put(GitConstants.KEY_HEAD, location);
-
-			np = new Path(GitServlet.GIT_URI).append(GitConstants.COMMIT_RESOURCE).append("file").append(k); //$NON-NLS-1$
-			location = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), np.toString(), baseLocation.getQuery(), baseLocation.getFragment());
-			result.put(GitConstants.KEY_COMMIT, location);
-
-			np = new Path(GitServlet.GIT_URI).append(GitConstants.BRANCH_RESOURCE).append("file").append(k); //$NON-NLS-1$
-			location = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), np.toString(), baseLocation.getQuery(), baseLocation.getFragment());
-			result.put(GitConstants.KEY_BRANCH, location);
-
-			np = new Path(GitServlet.GIT_URI).append(GitConstants.INDEX_RESOURCE).append("file").append(k); //$NON-NLS-1$
-			location = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), np.toString(), baseLocation.getQuery(), baseLocation.getFragment());
-			result.put(GitConstants.KEY_INDEX, location);
-
-			np = new Path(GitServlet.GIT_URI).append(GitConstants.STATUS_RESOURCE).append("file").append(k); //$NON-NLS-1$
-			location = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), np.toString(), baseLocation.getQuery(), baseLocation.getFragment());
-			result.put(GitConstants.KEY_STATUS, location);
-
-			try {
-				FileBasedConfig config = new FileRepository(entry.getValue()).getConfig();
-				String remoteUri = config.getString(ConfigConstants.CONFIG_REMOTE_SECTION, Constants.DEFAULT_REMOTE_NAME, ConfigConstants.CONFIG_KEY_URL);
-				if (remoteUri != null)
-					result.put(GitConstants.KEY_URL, remoteUri);
-			} catch (IOException e) {
-				// ignore and skip Git URL
-			}
-		} catch (JSONException e) {
-			//cannot happen, we know keys and values are valid
-		}
-		return result;
 	}
 
 	/**

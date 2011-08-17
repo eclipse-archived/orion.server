@@ -28,8 +28,8 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler.Method;
 import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.server.core.*;
-import org.eclipse.orion.server.git.objects.Remote;
-import org.eclipse.orion.server.git.objects.RemoteBranch;
+import org.eclipse.orion.server.git.objects.*;
+import org.eclipse.orion.server.git.objects.Status;
 import org.eclipse.orion.server.git.servlets.GitServlet;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.json.*;
@@ -108,37 +108,37 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		URI cloneLocation = BaseToCloneConverter.getCloneLocation(location, BaseToCloneConverter.FILE);
 
 		// add Git Diff URI
-		IPath path = new Path(GitServlet.GIT_URI + '/' + GitConstants.DIFF_RESOURCE + '/' + GitConstants.KEY_DIFF_DEFAULT).append(targetPath);
+		IPath path = new Path(GitServlet.GIT_URI + '/' + Diff.RESOURCE + '/' + GitConstants.KEY_DIFF_DEFAULT).append(targetPath);
 		URI link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_DIFF, link);
 
 		// add Git Status URI
-		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.STATUS_RESOURCE).append(targetPath);
+		path = new Path(GitServlet.GIT_URI + '/' + Status.RESOURCE).append(targetPath);
 		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_STATUS, link);
 
 		// add Git Index URI
-		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.INDEX_RESOURCE).append(targetPath);
+		path = new Path(GitServlet.GIT_URI + '/' + Index.RESOURCE).append(targetPath);
 		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_INDEX, link);
 
 		// add Git HEAD URI
-		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.COMMIT_RESOURCE).append(Constants.HEAD).append(targetPath);
+		path = new Path(GitServlet.GIT_URI + '/' + Commit.RESOURCE).append(Constants.HEAD).append(targetPath);
 		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_HEAD, link);
 
 		// add Git Commit URI
-		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.COMMIT_RESOURCE).append(db.getBranch()).append(targetPath);
+		path = new Path(GitServlet.GIT_URI + '/' + Commit.RESOURCE).append(db.getBranch()).append(targetPath);
 		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_COMMIT, link);
 
 		// add Git Remote URI
-		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.REMOTE_RESOURCE).append(targetPath);
+		path = new Path(GitServlet.GIT_URI + '/' + Remote.RESOURCE).append(targetPath);
 		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_REMOTE, link);
 
 		// add Git Clone Config URI
-		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.CONFIG_RESOURCE + '/' + GitConstants.CLONE_RESOURCE).append(targetPath);
+		path = new Path(GitServlet.GIT_URI + '/' + ConfigOption.RESOURCE + '/' + Clone.RESOURCE).append(targetPath);
 		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_CONFIG, link);
 
@@ -148,7 +148,7 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		gitSection.put(GitConstants.KEY_DEFAULT_REMOTE_BRANCH, defaultRemoteBranch.getLocation());
 
 		// add Git Tag URI
-		path = new Path(GitServlet.GIT_URI + '/' + GitConstants.TAG_RESOURCE).append(targetPath);
+		path = new Path(GitServlet.GIT_URI + '/' + Tag.RESOURCE).append(targetPath);
 		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_TAG, link);
 

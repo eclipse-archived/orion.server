@@ -32,6 +32,7 @@ import org.eclipse.jgit.transport.URIish;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.objects.Remote;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -656,7 +657,7 @@ public class GitFetchTest extends GitTest {
 		if (location.startsWith("http://"))
 			requestURI = location;
 		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.REMOTE_RESOURCE + location;
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Remote.RESOURCE + location;
 
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_FETCH, Boolean.toString(fetch));
@@ -672,7 +673,7 @@ public class GitFetchTest extends GitTest {
 		if (location.startsWith("http://"))
 			requestURI = location;
 		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.REMOTE_RESOURCE + location;
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Remote.RESOURCE + location;
 
 		JSONObject body = new JSONObject();
 		body.put(ProtocolConstants.KEY_NAME, name);

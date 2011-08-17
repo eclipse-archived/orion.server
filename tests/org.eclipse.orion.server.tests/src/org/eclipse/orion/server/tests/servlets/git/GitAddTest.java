@@ -20,6 +20,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.objects.Index;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Test;
@@ -186,7 +187,7 @@ public class GitAddTest extends GitTest {
 		else if (location.startsWith("/"))
 			requestURI = SERVER_LOCATION + location;
 		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.INDEX_RESOURCE + location;
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Index.RESOURCE + location;
 		JSONObject dummy = new JSONObject();
 		WebRequest request = new PutMethodWebRequest(requestURI, getJsonAsStream(dummy.toString()), "application/json");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");

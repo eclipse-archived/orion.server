@@ -44,6 +44,7 @@ import org.eclipse.orion.internal.server.servlets.workspace.authorization.Author
 import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
 import org.json.JSONArray;
@@ -669,12 +670,12 @@ public class GitCloneTest extends GitTest {
 
 		ensureCloneIdDoesntExist(clonesArray, dummyId);
 
-		String requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.CLONE_RESOURCE + "/workspace/" + dummyId;
+		String requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Clone.RESOURCE + "/workspace/" + dummyId;
 		request = getGetRequest(requestURI);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 
-		requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.CLONE_RESOURCE + "/file/" + dummyId;
+		requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Clone.RESOURCE + "/file/" + dummyId;
 		request = getGetRequest(requestURI);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
@@ -807,7 +808,7 @@ public class GitCloneTest extends GitTest {
 	 */
 	private WebRequest listGitClonesRequest(String workspaceId, IPath path) {
 		assertTrue(workspaceId == null && path != null || workspaceId != null && path == null);
-		String requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.CLONE_RESOURCE + '/';
+		String requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Clone.RESOURCE + '/';
 		if (workspaceId != null) {
 			requestURI += "workspace/" + workspaceId;
 		} else {

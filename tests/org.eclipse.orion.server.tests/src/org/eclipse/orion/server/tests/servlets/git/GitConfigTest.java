@@ -14,6 +14,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -21,15 +22,15 @@ import java.net.URI;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.lib.Config;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.ServletStatusHandler;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.git.servlets.GitConfigHandlerV1;
+import org.eclipse.orion.server.git.objects.Clone;
+import org.eclipse.orion.server.git.objects.ConfigOption;
 import org.eclipse.orion.server.tests.ReflectionUtils;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
 import org.json.JSONArray;
@@ -283,7 +284,7 @@ public class GitConfigTest extends GitTest {
 			assertConfigUri(entryLocation);
 
 			// double check
-			Config config = getRepositoryForContentLocation(contentLocation).getConfig();
+			org.eclipse.jgit.lib.Config config = getRepositoryForContentLocation(contentLocation).getConfig();
 			assertEquals(ENTRY_VALUE, config.getString("a", "b", "c"));
 		}
 	}
@@ -549,7 +550,7 @@ public class GitConfigTest extends GitTest {
 			final String ENTRY_KEY = "a.b.c";
 			final String ENTRY_VALUE = "v";
 
-			String invalidEntryLocation = gitConfigUri.replace(GitConstants.CONFIG_RESOURCE, GitConstants.CONFIG_RESOURCE + "/" + ENTRY_KEY);
+			String invalidEntryLocation = gitConfigUri.replace(ConfigOption.RESOURCE, ConfigOption.RESOURCE + "/" + ENTRY_KEY);
 
 			// check if it doesn't exist
 			request = getGetGitConfigRequest(invalidEntryLocation);
@@ -620,38 +621,38 @@ public class GitConfigTest extends GitTest {
 
 	@Test
 	public void testKeyToSegmentsMethod() throws Exception {
-		Object configHandler = ReflectionUtils.callConstructor(GitConfigHandlerV1.class, new Object[] {new ServletStatusHandler()});
+		Object configOption = ReflectionUtils.callConstructor(ConfigOption.class, new Object[] {new URI(""), new FileRepository(new File(""))});
 
-		String[] segments = (String[]) ReflectionUtils.callMethod(configHandler, "keyToSegments", new Object[] {"a.b.c"});
+		String[] segments = (String[]) ReflectionUtils.callMethod(configOption, "keyToSegments", new Object[] {"a.b.c"});
 		assertArrayEquals(new String[] {"a", "b", "c"}, segments);
 
-		segments = (String[]) ReflectionUtils.callMethod(configHandler, "keyToSegments", new Object[] {"a.c"});
+		segments = (String[]) ReflectionUtils.callMethod(configOption, "keyToSegments", new Object[] {"a.c"});
 		assertArrayEquals(new String[] {"a", null, "c"}, segments);
 
-		segments = (String[]) ReflectionUtils.callMethod(configHandler, "keyToSegments", new Object[] {"a.b.c.d"});
+		segments = (String[]) ReflectionUtils.callMethod(configOption, "keyToSegments", new Object[] {"a.b.c.d"});
 		assertArrayEquals(new String[] {"a", "b.c", "d"}, segments);
 
-		segments = (String[]) ReflectionUtils.callMethod(configHandler, "keyToSegments", new Object[] {"a"});
+		segments = (String[]) ReflectionUtils.callMethod(configOption, "keyToSegments", new Object[] {"a"});
 		assertArrayEquals(null, segments);
 	}
 
 	@Test
 	public void testSegmentsToKeyMethod() throws Exception {
-		Object configHandler = ReflectionUtils.callConstructor(GitConfigHandlerV1.class, new Object[] {new ServletStatusHandler()});
+		Object configOption = ReflectionUtils.callConstructor(ConfigOption.class, new Object[] {new URI(""), new FileRepository(new File(""))});
 
-		String key = (String) ReflectionUtils.callMethod(configHandler, "segmentsToKey", new Object[] {new String[] {"a", "b", "c"}});
+		String key = (String) ReflectionUtils.callMethod(configOption, "segmentsToKey", new Object[] {new String[] {"a", "b", "c"}});
 		assertEquals("a.b.c", key);
 
-		key = (String) ReflectionUtils.callMethod(configHandler, "segmentsToKey", new Object[] {new String[] {"a", null, "c"}});
+		key = (String) ReflectionUtils.callMethod(configOption, "segmentsToKey", new Object[] {new String[] {"a", null, "c"}});
 		assertEquals("a.c", key);
 
-		key = (String) ReflectionUtils.callMethod(configHandler, "segmentsToKey", new Object[] {new String[] {"a", "b.c", "d"}});
+		key = (String) ReflectionUtils.callMethod(configOption, "segmentsToKey", new Object[] {new String[] {"a", "b.c", "d"}});
 		assertEquals("a.b.c.d", key);
 
-		key = (String) ReflectionUtils.callMethod(configHandler, "segmentsToKey", new Object[] {new String[] {"a", "b"}});
+		key = (String) ReflectionUtils.callMethod(configOption, "segmentsToKey", new Object[] {new String[] {"a", "b"}});
 		assertEquals(null, key);
 
-		key = (String) ReflectionUtils.callMethod(configHandler, "segmentsToKey", new Object[] {new String[] {"a", "b", "c", "d"}});
+		key = (String) ReflectionUtils.callMethod(configOption, "segmentsToKey", new Object[] {new String[] {"a", "b", "c", "d"}});
 		assertEquals(null, key);
 	}
 
@@ -662,7 +663,7 @@ public class GitConfigTest extends GitTest {
 		else if (location.startsWith("/"))
 			requestURI = SERVER_LOCATION + location;
 		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.CONFIG_RESOURCE + location;
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + ConfigOption.RESOURCE + location;
 		WebRequest request = new DeleteMethodWebRequest(requestURI);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
@@ -690,7 +691,7 @@ public class GitConfigTest extends GitTest {
 		else if (location.startsWith("/"))
 			requestURI = SERVER_LOCATION + location;
 		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.CONFIG_RESOURCE + "/" + GitConstants.CLONE_RESOURCE + location;
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + ConfigOption.RESOURCE + "/" + Clone.RESOURCE + location;
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_CONFIG_ENTRY_KEY, key);
 		body.put(GitConstants.KEY_CONFIG_ENTRY_VALUE, value);
@@ -707,7 +708,7 @@ public class GitConfigTest extends GitTest {
 		else if (location.startsWith("/"))
 			requestURI = SERVER_LOCATION + location;
 		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.CONFIG_RESOURCE + "/" + GitConstants.CLONE_RESOURCE + location;
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + ConfigOption.RESOURCE + "/" + Clone.RESOURCE + location;
 		WebRequest request = new GetMethodWebRequest(requestURI);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);

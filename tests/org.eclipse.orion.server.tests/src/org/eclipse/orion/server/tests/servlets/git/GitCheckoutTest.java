@@ -27,6 +27,7 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.objects.Clone;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -544,7 +545,7 @@ public class GitCheckoutTest extends GitTest {
 			// assertCloneUri(location);
 			requestURI = location;
 		} else {
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.CLONE_RESOURCE + location;
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Clone.RESOURCE + location;
 		}
 		JSONObject body = new JSONObject();
 		JSONArray jsonPaths = new JSONArray();

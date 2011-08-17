@@ -15,7 +15,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.objects.*;
+import org.eclipse.orion.server.git.objects.Diff;
 
 /**
  * A git handler for Orion Git API v 1.0.
@@ -49,23 +50,23 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 
 		String[] infoParts = gitPathInfo.split("\\/", 3); //$NON-NLS-1$
 
-		if (infoParts[1].equals(GitConstants.BRANCH_RESOURCE)) {
+		if (infoParts[1].equals(Branch.RESOURCE)) {
 			return branchHandlerV1.handleRequest(request, response, infoParts[2]);
-		} else if (infoParts[1].equals(GitConstants.CLONE_RESOURCE)) {
+		} else if (infoParts[1].equals(Clone.RESOURCE)) {
 			return cloneHandlerV1.handleRequest(request, response, infoParts[2]);
-		} else if (infoParts[1].equals(GitConstants.COMMIT_RESOURCE)) {
+		} else if (infoParts[1].equals(Commit.RESOURCE)) {
 			return commitHandlerV1.handleRequest(request, response, infoParts[2]);
-		} else if (infoParts[1].equals(GitConstants.CONFIG_RESOURCE)) {
+		} else if (infoParts[1].equals(ConfigOption.RESOURCE)) {
 			return configHandlerV1.handleRequest(request, response, infoParts[2]);
-		} else if (infoParts[1].equals(GitConstants.DIFF_RESOURCE)) {
+		} else if (infoParts[1].equals(Diff.RESOURCE)) {
 			return diffHandlerV1.handleRequest(request, response, infoParts[2]);
-		} else if (infoParts[1].equals(GitConstants.INDEX_RESOURCE)) {
+		} else if (infoParts[1].equals(Index.RESOURCE)) {
 			return indexHandlerV1.handleRequest(request, response, infoParts[2]);
-		} else if (infoParts[1].equals(GitConstants.REMOTE_RESOURCE)) {
+		} else if (infoParts[1].equals(Remote.RESOURCE)) {
 			return remoteHandlerV1.handleRequest(request, response, infoParts[2]);
-		} else if (infoParts[1].equals(GitConstants.STATUS_RESOURCE)) {
+		} else if (infoParts[1].equals(Status.RESOURCE)) {
 			return statusHandlerV1.handleRequest(request, response, infoParts[2]);
-		} else if (infoParts[1].equals(GitConstants.TAG_RESOURCE)) {
+		} else if (infoParts[1].equals(Tag.RESOURCE)) {
 			return tagHandlerV1.handleRequest(request, response, infoParts[2]);
 		}
 		return false;

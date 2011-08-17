@@ -68,13 +68,13 @@ public abstract class GitJob extends Job {
 		getTaskService().updateTask(task);
 	}
 
-	private static final String KEY_SCHEME = "Scheme";
-	private static final String KEY_PORT = "Port";
-	private static final String KEY_PASSWORD = "Password";
-	public static final String KEY_HUMANISH_NAME = "HumanishName";
-	public static final String KEY_URL = "Url";
-	public static final String KEY_USER = "User";
-	public static final String KEY_HOST = "Host";
+	private static final String KEY_SCHEME = "Scheme"; //$NON-NLS-1$
+	private static final String KEY_PORT = "Port"; //$NON-NLS-1$
+	private static final String KEY_PASSWORD = "Password"; //$NON-NLS-1$
+	public static final String KEY_HUMANISH_NAME = "HumanishName"; //$NON-NLS-1$
+	public static final String KEY_URL = "Url"; //$NON-NLS-1$
+	public static final String KEY_USER = "User"; //$NON-NLS-1$
+	public static final String KEY_HOST = "Host"; //$NON-NLS-1$
 	protected GitCredentialsProvider credentials;
 
 	private static JSchException getJSchException(Throwable e) {

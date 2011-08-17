@@ -15,24 +15,6 @@ package org.eclipse.orion.server.git;
  */
 public class GitConstants {
 
-	public static final String DIFF_RESOURCE = "diff"; //$NON-NLS-1$
-
-	public static final String STATUS_RESOURCE = "status"; //$NON-NLS-1$
-
-	public static final String INDEX_RESOURCE = "index"; //$NON-NLS-1$
-
-	public static final String CLONE_RESOURCE = "clone"; //$NON-NLS-1$
-
-	public static final String COMMIT_RESOURCE = "commit"; //$NON-NLS-1$
-
-	public static final String CONFIG_RESOURCE = "config"; //$NON-NLS-1$
-
-	public static final String REMOTE_RESOURCE = "remote"; //$NON-NLS-1$
-
-	public static final String BRANCH_RESOURCE = "branch"; //$NON-NLS-1$
-
-	public static final String TAG_RESOURCE = "tag"; //$NON-NLS-1$
-
 	public static final String KEY_GIT = "Git"; //$NON-NLS-1$
 
 	public static final String KEY_NAME = "GitName"; //$NON-NLS-1$
@@ -178,10 +160,4 @@ public class GitConstants {
 	public static final String KEY_HEAD_UPDATED = "HeadUpdated"; //$NON-NLS-1$
 
 	public static final String KEY_TAG_COMMIT = "Commit"; //$NON-NLS-1$
-
-	public static final String REMOTE_TRACKING_BRANCH_TYPE = "RemoteTrackingBranch"; //$NON-NLS-1$
-
-	public static final String DIFF_TYPE = "Diff"; //$NON-NLS-1$
-
-	public static final String COMMIT_TYPE = "Commit"; //$NON-NLS-1$
 }

@@ -25,6 +25,7 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
+import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.osgi.util.NLS;
 
 /**
@@ -33,12 +34,12 @@ import org.eclipse.osgi.util.NLS;
 public class CloneJob extends GitJob {
 
 	private final WebProject project;
-	private final WebClone clone;
+	private final Clone clone;
 	private final TaskInfo task;
 	private final String user;
 	private final String cloneLocation;
 
-	public CloneJob(WebClone clone, CredentialsProvider credentials, String user, String cloneLocation, WebProject project) {
+	public CloneJob(Clone clone, CredentialsProvider credentials, String user, String cloneLocation, WebProject project) {
 		super("Cloning", (GitCredentialsProvider) credentials); //$NON-NLS-1$
 		this.clone = clone;
 		this.user = user;

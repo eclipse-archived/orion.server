@@ -11,7 +11,6 @@
 package org.eclipse.orion.server.git;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import org.eclipse.core.filesystem.EFS;
@@ -21,6 +20,7 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.RepositoryCache;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
+import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.git.servlets.GitServlet;
 
 public abstract class BaseToCloneConverter {
@@ -45,6 +45,8 @@ public abstract class BaseToCloneConverter {
 
 	public static final BaseToCloneConverter BRANCH_LIST = STATUS;
 
+	public static final BaseToCloneConverter TAG_LIST = STATUS;
+
 	public static final BaseToCloneConverter REMOTE = new BaseToCloneConverter() {
 		@Override
 		public IPath getFilePath(URI base) throws URISyntaxException {
@@ -56,6 +58,10 @@ public abstract class BaseToCloneConverter {
 
 	public static final BaseToCloneConverter COMMIT_REFRANGE = REMOTE;
 
+	public static final BaseToCloneConverter CONFIG = REMOTE;
+
+	public static final BaseToCloneConverter DIFF = REMOTE;
+
 	public static final BaseToCloneConverter REMOTE_BRANCH = new BaseToCloneConverter() {
 		@Override
 		public IPath getFilePath(URI base) throws URISyntaxException {
@@ -63,12 +69,14 @@ public abstract class BaseToCloneConverter {
 		};
 	};
 
-	public static URI getCloneLocation(URI base, BaseToCloneConverter converter) throws IOException, URISyntaxException, CoreException {
+	public static final BaseToCloneConverter CONFIG_OPTION = REMOTE_BRANCH;
+
+	public static URI getCloneLocation(URI base, BaseToCloneConverter converter) throws URISyntaxException, CoreException {
 		IPath filePath = converter.getFilePath(base);
 		IPath clonePath = findClonePath(filePath);
 		if (clonePath == null)
 			return null;
-		IPath p = new Path(GitServlet.GIT_URI).append(GitConstants.CLONE_RESOURCE).append("file").append(clonePath).addTrailingSeparator(); //$NON-NLS-1$
+		IPath p = new Path(GitServlet.GIT_URI).append(Clone.RESOURCE).append("file").append(clonePath).addTrailingSeparator(); //$NON-NLS-1$
 		return new URI(base.getScheme(), base.getUserInfo(), base.getHost(), base.getPort(), p.toString(), base.getQuery(), base.getFragment());
 	}
 

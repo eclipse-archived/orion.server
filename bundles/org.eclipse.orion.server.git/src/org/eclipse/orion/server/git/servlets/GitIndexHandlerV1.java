@@ -21,8 +21,6 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.api.errors.NoFilepatternException;
-import org.eclipse.jgit.dircache.DirCache;
-import org.eclipse.jgit.dircache.DirCacheEntry;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.core.IOUtilities;
@@ -30,6 +28,7 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.objects.Index;
 import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
@@ -84,14 +83,12 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, Repository db, String pattern) throws CoreException, IOException, ServletException {
-		DirCache cache = db.readDirCache();
-		DirCacheEntry entry = cache.getEntry(pattern);
-		if (entry == null) {
+		Index index = new Index(null /* not needed */, db, pattern);
+		ObjectStream stream = index.toObjectStream();
+		if (stream == null) {
 			String msg = NLS.bind("{0} not found in index", pattern); //$NON-NLS-1$
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.OK, HttpServletResponse.SC_NOT_FOUND, msg, null));
 		}
-		ObjectId blobId = entry.getObjectId();
-		ObjectStream stream = db.open(blobId, Constants.OBJ_BLOB).openStream();
 		IOUtilities.pipe(stream, response.getOutputStream(), true, false);
 		return true;
 	}

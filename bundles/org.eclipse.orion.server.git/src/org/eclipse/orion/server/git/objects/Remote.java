@@ -25,6 +25,9 @@ import org.json.*;
 
 public class Remote extends GitObject {
 
+	public static final String RESOURCE = "remote"; //$NON-NLS-1$
+	public static final String TYPE = "Remote"; //$NON-NLS-1$
+
 	private String name;
 
 	public Remote(URI cloneLocation, Repository db, String name) {
@@ -47,7 +50,7 @@ public class Remote extends GitObject {
 		check();
 		JSONObject result = new JSONObject();
 		result.put(ProtocolConstants.KEY_NAME, name);
-		result.put(ProtocolConstants.KEY_TYPE, GitConstants.KEY_REMOTE_NAME);
+		result.put(ProtocolConstants.KEY_TYPE, TYPE);
 		result.put(ProtocolConstants.KEY_LOCATION, getLocation());
 		//		o.put(ProtocolConstants.KEY_LOCATION, BaseToRemoteConverter.REMOVE_FIRST_2.baseToRemoteLocation(baseLocation, configName, "" /* no branch name */)); //$NON-NLS-1$
 		result.put(GitConstants.KEY_URL, db.getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, name, "url" /*RemoteConfig.KEY_URL*/)); //$NON-NLS-1$
@@ -86,7 +89,7 @@ public class Remote extends GitObject {
 				String name = Constants.R_REMOTES + getName() + "/" + newBranch; //$NON-NLS-1$
 				o.put(ProtocolConstants.KEY_NAME, name.substring(Constants.R_REMOTES.length()));
 				o.put(ProtocolConstants.KEY_FULL_NAME, name);
-				o.put(ProtocolConstants.KEY_TYPE, GitConstants.REMOTE_TRACKING_BRANCH_TYPE);
+				o.put(ProtocolConstants.KEY_TYPE, RemoteBranch.TYPE);
 				o.put(ProtocolConstants.KEY_LOCATION, BaseToRemoteConverter.REMOVE_FIRST_2.baseToRemoteLocation(cloneLocation, "" /*short name is {remote}/{branch}*/, Repository.shortenRefName(name))); //$NON-NLS-1$
 				children.put(o);
 			}

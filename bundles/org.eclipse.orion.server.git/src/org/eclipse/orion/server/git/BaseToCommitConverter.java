@@ -15,13 +15,14 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.orion.server.git.objects.Commit;
 
 public abstract class BaseToCommitConverter {
 
 	public static final BaseToCommitConverter REMOVE_FIRST_2 = new BaseToCommitConverter() {
 		public URI baseToCommitLocation(URI base, String commit) throws URISyntaxException {
 			IPath p = new Path(base.getPath());
-			p = p.uptoSegment(1).append(GitConstants.COMMIT_RESOURCE).append(commit).addTrailingSeparator().append(p.removeFirstSegments(2));
+			p = p.uptoSegment(1).append(Commit.RESOURCE).append(commit).addTrailingSeparator().append(p.removeFirstSegments(2));
 			return new URI(base.getScheme(), base.getUserInfo(), base.getHost(), base.getPort(), p.toString(), getQuery(base.getQuery()), base.getFragment());
 		};
 	};
@@ -29,7 +30,7 @@ public abstract class BaseToCommitConverter {
 	public static final BaseToCommitConverter REMOVE_FIRST_3 = new BaseToCommitConverter() {
 		public URI baseToCommitLocation(URI base, String commit) throws URISyntaxException {
 			IPath p = new Path(base.getPath());
-			p = p.uptoSegment(1).append(GitConstants.COMMIT_RESOURCE).append(commit).addTrailingSeparator().append(p.removeFirstSegments(3));
+			p = p.uptoSegment(1).append(Commit.RESOURCE).append(commit).addTrailingSeparator().append(p.removeFirstSegments(3));
 			return new URI(base.getScheme(), base.getUserInfo(), base.getHost(), base.getPort(), p.toString(), getQuery(base.getQuery()), base.getFragment());
 		};
 	};

@@ -19,6 +19,7 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitActivator;
+import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.osgi.util.NLS;
 import org.osgi.framework.ServiceReference;
 
@@ -27,14 +28,14 @@ import org.osgi.framework.ServiceReference;
  */
 public class InitJob extends GitJob {
 
-	private final WebClone clone;
+	private final Clone clone;
 	private final TaskInfo task;
 	private ITaskService taskService;
 	private ServiceReference<ITaskService> taskServiceRef;
 	private final String user;
 	private final String cloneLocation;
 
-	public InitJob(WebClone clone, String user, String cloneLocation) {
+	public InitJob(Clone clone, String user, String cloneLocation) {
 		super("Init");
 		this.clone = clone;
 		this.user = user;

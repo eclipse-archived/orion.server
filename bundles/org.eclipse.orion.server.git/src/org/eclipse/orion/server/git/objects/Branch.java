@@ -25,6 +25,9 @@ import org.json.*;
 
 public class Branch extends GitObject {
 
+	public static final String RESOURCE = "branch"; //$NON-NLS-1$
+	public static final String TYPE = "Branch"; //$NON-NLS-1$
+
 	private Ref ref;
 
 	public Branch(URI cloneLocation, Repository db, Ref ref) {
@@ -39,10 +42,10 @@ public class Branch extends GitObject {
 		JSONObject result = new JSONObject();
 		String shortName = Repository.shortenRefName(ref.getName());
 		result.put(ProtocolConstants.KEY_NAME, shortName);
-		result.put(ProtocolConstants.KEY_TYPE, GitConstants.KEY_BRANCH_NAME);
+		result.put(ProtocolConstants.KEY_TYPE, TYPE);
 
 		IPath basePath = new Path(cloneLocation.getPath());
-		IPath newPath = new Path(GitServlet.GIT_URI).append(GitConstants.BRANCH_RESOURCE).append(shortName).append(basePath.removeFirstSegments(2));
+		IPath newPath = new Path(GitServlet.GIT_URI).append(Branch.RESOURCE).append(shortName).append(basePath.removeFirstSegments(2));
 		URI location = new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), newPath.toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
 		result.put(ProtocolConstants.KEY_LOCATION, location);
 

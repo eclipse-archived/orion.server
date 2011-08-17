@@ -24,6 +24,8 @@ import org.json.JSONObject;
 
 public class RemoteBranch extends GitObject {
 
+	public static final String TYPE = "RemoteTrackingBranch"; //$NON-NLS-1$
+
 	private Remote remote;
 	private String name;
 
@@ -48,7 +50,7 @@ public class RemoteBranch extends GitObject {
 						JSONObject result = new JSONObject();
 						result.put(ProtocolConstants.KEY_NAME, Repository.shortenRefName(fullName));
 						result.put(ProtocolConstants.KEY_FULL_NAME, fullName);
-						result.put(ProtocolConstants.KEY_TYPE, GitConstants.REMOTE_TRACKING_BRANCH_TYPE);
+						result.put(ProtocolConstants.KEY_TYPE, TYPE);
 						result.put(ProtocolConstants.KEY_ID, ref.getObjectId().name());
 						// see bug 342602
 						// result.put(GitConstants.KEY_COMMIT, baseToCommitLocation(baseLocation, name));

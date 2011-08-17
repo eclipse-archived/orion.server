@@ -22,6 +22,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.objects.Commit;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -516,7 +517,7 @@ public class GitCommitTest extends GitTest {
 		else if (location.startsWith("/"))
 			requestURI = SERVER_LOCATION + location;
 		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.COMMIT_RESOURCE + location;
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Commit.RESOURCE + location;
 
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_COMMIT_MESSAGE, message);
@@ -546,7 +547,7 @@ public class GitCommitTest extends GitTest {
 		else if (location.startsWith("/"))
 			requestURI = SERVER_LOCATION + location;
 		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.COMMIT_RESOURCE + '/' + location;
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Commit.RESOURCE + '/' + location;
 		boolean firstParam = true;
 		if (body) {
 			if (firstParam) {

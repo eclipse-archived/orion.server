@@ -25,6 +25,7 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.CherryPickResult.CherryPickStatus;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.objects.Commit;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -188,7 +189,7 @@ public class GitCherryPickTest extends GitTest {
 		if (location.startsWith("http://"))
 			requestURI = location;
 		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.COMMIT_RESOURCE + location;
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Commit.RESOURCE + location;
 
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_CHERRY_PICK, toCherryPick);

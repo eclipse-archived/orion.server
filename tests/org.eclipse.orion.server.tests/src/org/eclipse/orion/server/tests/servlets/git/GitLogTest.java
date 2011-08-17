@@ -23,6 +23,8 @@ import org.eclipse.jgit.diff.DiffEntry.ChangeType;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.objects.Commit;
+import org.eclipse.orion.server.git.objects.Diff;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -598,7 +600,7 @@ public class GitLogTest extends GitTest {
 			JSONObject diff = diffs.getJSONObject(0);
 			assertEquals("test.txt", diff.getString(GitConstants.KEY_COMMIT_DIFF_NEWPATH));
 			assertEquals("test.txt", diff.getString(GitConstants.KEY_COMMIT_DIFF_OLDPATH));
-			assertEquals(GitConstants.DIFF_TYPE, diff.getString(ProtocolConstants.KEY_TYPE));
+			assertEquals(Diff.TYPE, diff.getString(ProtocolConstants.KEY_TYPE));
 			assertEquals(ChangeType.MODIFY, ChangeType.valueOf(diff.getString(GitConstants.KEY_COMMIT_DIFF_CHANGETYPE)));
 			String diffLocation = diff.getString(GitConstants.KEY_DIFF);
 
@@ -769,7 +771,7 @@ public class GitLogTest extends GitTest {
 		if (location.startsWith("http://"))
 			requestURI = location;
 		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + GitConstants.COMMIT_RESOURCE + location;
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Commit.RESOURCE + location;
 
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_COMMIT_NEW, newCommit);

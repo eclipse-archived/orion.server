@@ -21,6 +21,7 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.RepositoryCache;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
+import org.eclipse.orion.server.git.objects.Index;
 import org.eclipse.orion.server.git.servlets.GitServlet;
 
 public abstract class BaseToIndexConverter {
@@ -37,7 +38,7 @@ public abstract class BaseToIndexConverter {
 		IPath clonePath = findClonePath(filePath);
 		if (clonePath == null)
 			return null;
-		IPath p = new Path(GitServlet.GIT_URI).append(GitConstants.INDEX_RESOURCE).append("file").append(clonePath).addTrailingSeparator(); //$NON-NLS-1$
+		IPath p = new Path(GitServlet.GIT_URI).append(Index.RESOURCE).append("file").append(clonePath).addTrailingSeparator(); //$NON-NLS-1$
 		return new URI(base.getScheme(), base.getUserInfo(), base.getHost(), base.getPort(), p.toString(), base.getQuery(), base.getFragment());
 	}
 
