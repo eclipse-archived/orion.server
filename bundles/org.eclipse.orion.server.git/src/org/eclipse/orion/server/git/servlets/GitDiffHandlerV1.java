@@ -123,7 +123,6 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 		List<DiffEntry> entries = diff.call();
 		DiffFormatter diffFmt = new DiffFormatter(new BufferedOutputStream(out));
 		diffFmt.setRepository(db);
-		diffFmt.updateSource(diff.getOldTree(), diff.getNewTree());
 		diffFmt.format(entries);
 		diffFmt.flush();
 		return true;
