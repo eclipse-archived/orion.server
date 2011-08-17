@@ -25,6 +25,7 @@ import org.eclipse.orion.server.authentication.formopenid.httpcontext.BundleEntr
 import org.eclipse.orion.server.authentication.formopenid.servlets.AuthInitServlet;
 import org.eclipse.orion.server.authentication.formopenid.servlets.FormOpenIdLoginServlet;
 import org.eclipse.orion.server.authentication.formopenid.servlets.FormOpenIdLogoutServlet;
+import org.eclipse.orion.server.authentication.formopenid.servlets.ManageOpenidsServlet;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.authentication.IAuthenticationService;
 import org.eclipse.orion.server.openid.core.OpenIdHelper;
@@ -129,6 +130,7 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 		try {
 			httpService.registerResources("/mixloginstatic", "/web", //$NON-NLS-1$ //$NON-NLS-2$
 					httpContext);
+			httpService.registerServlet("/mixlogin/manageopenids", new ManageOpenidsServlet(this), null, httpContext);
 			httpService.registerServlet("/login", new FormOpenIdLoginServlet(this), null, httpContext); //$NON-NLS-1$
 			httpService.registerServlet("/logout", new FormOpenIdLogoutServlet(), null, httpContext); //$NON-NLS-1$
 		} catch (ServletException e) {
