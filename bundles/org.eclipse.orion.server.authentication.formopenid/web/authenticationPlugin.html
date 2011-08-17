@@ -18,6 +18,8 @@
 						handleAs : "json",
 						timeout : 15000,
 						load : function(jsonData, ioArgs) {
+							if(JSON.stringify(jsonData) !== localStorage.getItem("FORMOpenIdUser"))
+								localStorage.setItem("FORMOpenIdUser",  JSON.stringify(jsonData));
 							return jsonData;
 						},
 						error : function(response, ioArgs) {
@@ -38,6 +40,7 @@
 					handleAs : "json",
 					timeout : 15000,
 					load : function(jsonData, ioArgs) {
+						localStorage.removeItem("FORMOpenIdUser");
 						return jsonData;
 					},
 					error : function(response, ioArgs) {
@@ -52,7 +55,12 @@
 			
 			login : function(){
 				window.open(authService.getAuthForm(), 'Login Window', 'width=400, height=200');
+			},
+			
+			getKey : function(){
+				return "FORMOpenIdUser";
 			}
+			
 			};
 			var serviceProps = {
 				name : "FORM+OpenId",

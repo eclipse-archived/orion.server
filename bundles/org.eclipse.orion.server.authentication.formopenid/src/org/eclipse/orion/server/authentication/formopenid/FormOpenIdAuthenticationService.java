@@ -102,6 +102,7 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 		JSONObject result = new JSONObject();
 		try {
 			result.put("SignInLocation", "/mixloginstatic/LoginWindow.html");
+			result.put("SignInKey", "FORMOpenIdUser");
 		} catch (JSONException e) {
 			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, 1, "An error occured during authenitcation", e));
 		}
