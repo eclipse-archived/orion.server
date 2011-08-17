@@ -244,9 +244,9 @@ public class GitDiffTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		String initialCommit = Constants.HEAD + "^^";
-		String commit1 = Constants.HEAD + "^";
-		String commit2 = Constants.HEAD;
+		final String initialCommit = Constants.HEAD + "^^";
+		final String commit1 = Constants.HEAD + "^";
+		final String commit2 = Constants.HEAD;
 		// TODO: don't create URIs out of thin air
 		String enc = URLEncoder.encode(initialCommit + ".." + commit1, "UTF-8");
 		gitDiffUri = gitDiffUri.replaceAll(GitConstants.KEY_DIFF_DEFAULT, enc);
