@@ -8,18 +8,15 @@
 <title>Login Page</title>
 <style type="text/css">
 @import "/mixloginstatic/css/defaultLoginWindowIframe.css";</style>
-<script type="text/javascript" src="js/htmlAuth.js"></script>
+<script type="text/javascript" src="/mixloginstatic/js/htmlAuth.js"></script>
 </head>
-<body onLoad="javascript:setUserStore('Orion');">
+<body>
 <div id="loginWindow" class="loginWindow">
 
 	<div style="clear: left; margin: 8px;">
 		<div id="errorWin" style="display: none"><ul id="loginError"><li id="errorMessage"></li></ul></div>
-		<h2 class="loginWindowStores">
-			<!--LOGIN STORES-->
-		</h2>
-		<table class="loginWindow">
 
+		<table class="loginWindow">
 			<form name="AuthForm" method=post action="/login/form">
 			<tbody>
 				<tr>
@@ -30,7 +27,6 @@
 						id=login tabindex=1><br></td>
 				</tr>
 				<tr>
-
 					<td class="loginWindow"><label class="loginWindow"
 						id=passwordLabel for=password>Password:</label>
 					</td>
@@ -52,7 +48,7 @@
 		</table>
 		<div class="hrloginWindow"></div>
 <h3 id="newUserHeader" class="loginWindow">
-	New to Orion? <a class="loginWindow" href="CreateUserWindow.html">Create
+	New to Orion? <a class="loginWindow" href="/mixloginstatic/CreateUserWindow.html">Create
 		 account</a>
 
 </h3>
