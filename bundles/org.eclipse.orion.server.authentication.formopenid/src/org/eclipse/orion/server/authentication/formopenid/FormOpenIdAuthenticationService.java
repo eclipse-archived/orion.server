@@ -22,7 +22,6 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.authentication.form.core.FormAuthHelper;
 import org.eclipse.orion.server.authentication.formopenid.httpcontext.BundleEntryHttpContext;
-import org.eclipse.orion.server.authentication.formopenid.servlets.AuthInitServlet;
 import org.eclipse.orion.server.authentication.formopenid.servlets.FormOpenIdLoginServlet;
 import org.eclipse.orion.server.authentication.formopenid.servlets.FormOpenIdLogoutServlet;
 import org.eclipse.orion.server.authentication.formopenid.servlets.ManageOpenidsServlet;
@@ -72,22 +71,9 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 	public void configure(Properties properties) {
 		this.defaultAuthenticationProperties = properties;
 		try {
-			httpService.registerServlet("/auth2", new AuthInitServlet( //$NON-NLS-1$
-					properties), null, new BundleEntryHttpContext(Activator.getBundleContext().getBundle()));
 			httpService.registerResources("/authenticationPlugin.html", "/web/authenticationPlugin.html", new BundleEntryHttpContext(Activator.getBundleContext().getBundle()));
 		} catch (Exception e) {
 			LogHelper.log(new Status(IStatus.WARNING, Activator.PI_FORMOPENID_SERVLETS, "Reconfiguring FormOpenIdAuthenticationService"));
-
-			try {
-				httpService.unregister("/auth2");
-				httpService.registerServlet("/auth2", new AuthInitServlet(properties), null, new BundleEntryHttpContext(Activator.getBundleContext().getBundle()));
-			} catch (ServletException e1) {
-				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, 1, "An error occured when registering servlets", e1));
-			} catch (NamespaceException e1) {
-				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, 1, "A namespace error occured when registering servlets", e1));
-			} catch (IllegalArgumentException e1) {
-				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, 1, "FormOpenIdAuthenticationService could not be configured", e1));
-			}
 		}
 	}
 
@@ -138,7 +124,6 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 		} catch (NamespaceException e) {
 			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, 1, "A namespace error occured when registering servlets", e));
 		}
-
 	}
 
 	public void unsetHttpService(HttpService hs) {
