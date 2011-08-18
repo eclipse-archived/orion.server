@@ -13,16 +13,14 @@ package org.eclipse.orion.server.git.servlets;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
 import java.util.Map.Entry;
+import java.util.Set;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.DiffCommand;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.diff.DiffEntry;
-import org.eclipse.jgit.diff.DiffFormatter;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.merge.ResolveMerger;
 import org.eclipse.jgit.merge.ThreeWayMerger;
@@ -120,11 +118,7 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 
 		if (pattern != null)
 			diff.setPathFilter(PathFilter.create(pattern));
-		List<DiffEntry> entries = diff.call();
-		DiffFormatter diffFmt = new DiffFormatter(new BufferedOutputStream(out));
-		diffFmt.setRepository(db);
-		diffFmt.format(entries);
-		diffFmt.flush();
+		diff.setOutputStream(out).call();
 		return true;
 	}
 
