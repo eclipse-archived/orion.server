@@ -32,7 +32,7 @@
 				logout : function() {
 				/* don't wait for the login response, notify anyway */
 				notify = true;
-				dojo.xhrPost({
+				return dojo.xhrPost({
 					url : "/logout",
 					headers : {
 						"Orion-Version" : "1"
@@ -59,6 +59,10 @@
 			
 			getKey : function(){
 				return "FORMOpenIdUser";
+			},
+			
+			getLabel : function(){
+				return "FORM+OpenId";
 			}
 			
 			};
