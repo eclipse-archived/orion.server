@@ -13,7 +13,6 @@ package org.eclipse.orion.server.authentication.form;
 import java.io.IOException;
 import java.util.Properties;
 
-import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -22,12 +21,13 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.authentication.form.core.FormAuthHelper;
 import org.eclipse.orion.server.authentication.form.httpcontext.BundleEntryHttpContext;
-import org.eclipse.orion.server.authentication.form.servlets.AuthInitServlet;
-import org.eclipse.orion.server.authentication.form.servlets.LoginFormServlet;
 import org.eclipse.orion.server.authentication.form.servlets.LoginServlet;
 import org.eclipse.orion.server.authentication.form.servlets.LogoutServlet;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.authentication.IAuthenticationService;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.osgi.framework.Version;
 import org.osgi.service.http.HttpContext;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.http.NamespaceException;
@@ -37,6 +37,8 @@ public class FormAuthenticationService implements IAuthenticationService {
 	public static final String CSS_LINK_PROPERTY = "STYLES"; //$NON-NLS-1$
 	private Properties defaultAuthenticationProperties;
 	
+	private HttpService httpService;
+
 	private boolean registered = false;
 
 	public Properties getDefaultAuthenticationProperties() {
@@ -57,18 +59,8 @@ public class FormAuthenticationService implements IAuthenticationService {
 
 	public String getAuthenticatedUser(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException {
 		String username = FormAuthHelper.getAuthenticatedUser(req);
-		if (username != null) {
+		if (username != null)
 			return username;
-		}
-		/*
-				// let through any calls to Login Servlet
-				if (req.getServletPath().startsWith("/login")) { //$NON-NLS-1$
-					return ""; //$NON-NLS-1$
-				}
-				if (req.getServletPath().startsWith("/loginform")) { //$NON-NLS-1$
-					return ""; //$NON-NLS-1$
-				}
-		*/
 		return null;
 	}
 
@@ -79,44 +71,40 @@ public class FormAuthenticationService implements IAuthenticationService {
 	public void configure(Properties properties) {
 		this.defaultAuthenticationProperties = properties;
 		try {
-
-			httpService.registerServlet("/auth2", new AuthInitServlet( //$NON-NLS-1$
-					properties), null, new BundleEntryHttpContext(Activator.getBundleContext().getBundle()));
+			httpService.registerResources("/authenticationPlugin.html", "/web/authenticationPlugin.html", new BundleEntryHttpContext(Activator.getBundleContext().getBundle()));
 		} catch (Exception e) {
 			LogHelper.log(new Status(IStatus.WARNING, Activator.PI_FORM_SERVLETS, "Reconfiguring FormAutneticationService"));
-
-			try {
-				httpService.unregister("/auth2");
-				httpService.registerServlet("/auth2", new AuthInitServlet(properties), null, new BundleEntryHttpContext(Activator.getBundleContext().getBundle()));
-			} catch (ServletException e1) {
-				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORM_SERVLETS, 1, "An error occured when registering servlets", e1));
-			} catch (NamespaceException e1) {
-				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORM_SERVLETS, 1, "A namespace error occured when registering servlets", e1));
-			} catch (IllegalArgumentException e1) {
-				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORM_SERVLETS, 1, "FormAuthenticationService could not be configured", e1));
-			}
-
 		}
 	}
 
-	private HttpService httpService;
-
 	private void setNotAuthenticated(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException {
-		if (properties == null) {
-			properties = new Properties();
-		}
-		resp.setHeader("WWW-Authenticate", getAuthType()); //$NON-NLS-1$
+		resp.setHeader("WWW-Authenticate", HttpServletRequest.FORM_AUTH); //$NON-NLS-1$
 		resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-		String putStyle = properties.getProperty(CSS_LINK_PROPERTY) == null ? "" //$NON-NLS-1$
-				: "&styles=" + properties.getProperty(CSS_LINK_PROPERTY); //$NON-NLS-1$
-		RequestDispatcher rd = req.getRequestDispatcher("/loginform/login?redirect=" //$NON-NLS-1$
-				+ req.getRequestURI() + putStyle);
-		try {
-			rd.forward(req, resp);
-		} catch (ServletException e) {
-			throw new IOException(e.getMessage());
-		} finally {
-			resp.flushBuffer();
+
+		// redirection from FormAuthenticationService.setNotAuthenticated
+		String versionString = req.getHeader("Orion-Version"); //$NON-NLS-1$
+		Version version = versionString == null ? null : new Version(versionString);
+
+		// TODO: This is a workaround for calls
+		// that does not include the WebEclipse version header
+		String xRequestedWith = req.getHeader("X-Requested-With"); //$NON-NLS-1$
+
+		if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) { //$NON-NLS-1$
+			try {
+				req.getRequestDispatcher("/loginstatic/LoginWindow.html").forward(req, resp);
+			} catch (ServletException e) {
+				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORM_SERVLETS, 1, "An error occured during authenitcation", e));
+			}
+		} else {
+			resp.setContentType("application/json; charset=UTF-8");
+			JSONObject result = new JSONObject();
+			try {
+				result.put("SignInLocation", "/loginstatic/LoginWindow.html");
+				result.put("SignInKey", Activator.FORM_AUTH_SIGNIN_KEY);
+			} catch (JSONException e) {
+				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORM_SERVLETS, 1, "An error occured during authenitcation", e));
+			}
+			resp.getWriter().print(result.toString());
 		}
 	}
 
@@ -130,8 +118,6 @@ public class FormAuthenticationService implements IAuthenticationService {
 					httpContext);
 			httpService.registerServlet("/logout", new LogoutServlet(), null, //$NON-NLS-1$
 					httpContext);
-			httpService.registerServlet("/loginform", new LoginFormServlet(), //$NON-NLS-1$
-					null, httpContext);
 			httpService.registerResources("/loginstatic", "/web", //$NON-NLS-1$ //$NON-NLS-2$
 					httpContext);
 		} catch (ServletException e) {
@@ -144,7 +130,6 @@ public class FormAuthenticationService implements IAuthenticationService {
 	public/* synchronized? */void unsetHttpService(HttpService hs) {
 		httpService.unregister("/login"); //$NON-NLS-1$
 		httpService.unregister("/logout"); //$NON-NLS-1$
-		httpService.unregister("/loginform"); //$NON-NLS-1$
 		httpService.unregister("/loginstatic"); //$NON-NLS-1$
 		httpService = null;
 	}

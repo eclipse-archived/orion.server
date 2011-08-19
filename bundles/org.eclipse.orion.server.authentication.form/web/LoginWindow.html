@@ -1,26 +1,23 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+<head>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2010." >
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="X-UA-Compatible" content="IE=8">
+<title>Login Page</title>
+<style type="text/css">
+@import "/loginstatic/css/loginWindow.css";</style>
+<script type="text/javascript" src="/loginstatic/js/htmlAuth.js"></script>
+</head>
+<body>
 <div id="loginWindow" class="loginWindow">
-	<div class="loginWindowToolbar">
-		<div class="loginWindowHeader">
-			<h2 class="loginWindowHeader">
-				Login
-			</h2>
-		</div>
-		<div class="closeLoginWindow">
-			<p id="closeLoginWindow" class="closeLoginWindow"
-				style="visibility: hidden;">
-				<a title="Close" href="javascript:closeLoginWindow()"
-					class="closeLoginWindow"> <img class="closeLoginWindow"
-					src="/loginstatic/images/close-tab.gif"> </a>
-			</p>
-		</div>
-	</div>
+
 	<div style="clear: left; margin: 8px;">
-		<!--ERROR-->
-		<h2 class="loginWindowStores">
-			<!--LOGIN STORES-->
-		</h2>
+		<div id="errorWin" style="display: none"><ul id="loginError"><li id="errorMessage"></li></ul></div>
+
 		<table class="loginWindow">
-			<!--form-->
+			<form name="AuthForm" method=post action="/login/form">
 			<tbody>
 				<tr>
 					<td class="loginWindow"><label class="loginWindow"
@@ -42,15 +39,21 @@
 					<td class="loginWindow loginWindowButtonTd" colspan=2>
 						<button class="loginWindow" onClick=confirmLogin()
 							dojoType=dijit.form.Button type=submit value=OK tabindex=3>
+
 							Sign in
 						</button></td>
 				</tr>
 			</tbody>
-		<!--/form-->
+		</form>
 		</table>
-		<!--NEW_ACCOUNT_LINK-->
-	</h3>
-	</div>
+		<div class="hrloginWindow"></div>
+<h3 id="newUserHeader" class="loginWindow">
+	New to Orion? <a class="loginWindow" href="/loginstatic/CreateUserWindow.html">Create
+		 account</a>
+
+</h3>
 
 </div>
-<div id="loginWindowMask"></div>
+
+</body>
+</html>

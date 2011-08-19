@@ -19,6 +19,8 @@ public class Activator implements BundleActivator {
 	 * The symbolic id of this bundle.
 	 */
 	public static final String PI_FORM_SERVLETS = "org.eclipse.orion.server.authentication.form"; //$NON-NLS-1$
+	
+	public static final String FORM_AUTH_SIGNIN_KEY = "FormSignInKey"; //$NON-NLS-1$
 
 	private static volatile BundleContext bundleContext;
 
