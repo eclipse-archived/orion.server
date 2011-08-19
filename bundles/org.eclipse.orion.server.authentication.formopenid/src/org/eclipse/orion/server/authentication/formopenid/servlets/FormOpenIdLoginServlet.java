@@ -68,8 +68,6 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 					if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) { //$NON-NLS-1$
 						if (req.getParameter(OpenIdHelper.REDIRECT) != null && !req.getParameter(OpenIdHelper.REDIRECT).equals("")) { //$NON-NLS-1$
 							resp.sendRedirect(req.getParameter(OpenIdHelper.REDIRECT));
-						} else {
-							writeLoginResponse(req, resp);
 						}
 					} else {
 						resp.setStatus(HttpServletResponse.SC_OK);
@@ -128,7 +126,6 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 			String op_return = req.getParameter(OpenIdHelper.OP_RETURN);
 			if (op_return != null) {
 				OpenIdHelper.handleOpenIdReturnAndLogin(req, resp, consumer);
-				writeLoginResponse(req, resp);
 				return;
 			}
 		}
@@ -142,31 +139,6 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 				handleException(resp, "An error occured when creating JSON object for logged in user", e);
 			}
 			return;
-		}
-	}
-
-	private static void writeLoginResponse(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		String uid = (String) req.getSession().getAttribute("user");
-		if (uid == null || "".equals(uid)) {
-			return;
-		}
-		try {
-			JSONObject userJson = FormAuthHelper.getUserJson(uid);
-
-			PrintWriter out = resp.getWriter();
-			out.println("<html><head></head>"); //$NON-NLS-1$
-			out.print("<body onload=\"localStorage.setItem('FORMOpenIdUser',  '");
-			out.print(userJson.toString().replaceAll("\\\"", "&quot;"));
-			out.println("');window.close();\">"); //$NON-NLS-1$
-			out.println("</body>"); //$NON-NLS-1$
-			out.println("</html>"); //$NON-NLS-1$
-
-			out.close();
-		} catch (JSONException e) {
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.login"); //$NON-NLS-1$
-			if (logger.isErrorEnabled()) {
-				logger.error("Cannot form login response for " + uid, e);
-			}
 		}
 	}
 

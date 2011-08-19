@@ -11,9 +11,20 @@ function confirmOpenId(openid) {
 	/* don't wait for the login response, notify anyway */
 	notify = true;
 	if (openid != "" && openid != null) {
-		window.location = "/login/openid?openid=" + encodeURIComponent(openid);
+		var redirect = getRedirect();
+		if(redirect!=null){
+			window.location = "/login/openid?openid=" + encodeURIComponent(openid) + "&redirect=" + getRedirect();
+		}else{
+			window.location = "/login/openid?openid=" + encodeURIComponent(openid);
+		}
 	}
 };
+
+function getRedirect(){
+	 var regex = new RegExp('[\\?&]redirect=([^&#]*)');
+	  var results = regex.exec( window.location.href );
+	  return results == null ? null : results[1];
+}
 
 function confirmLogin() {
 	var mypostrequest = new XMLHttpRequest();
@@ -25,8 +36,13 @@ function confirmLogin() {
 				document.getElementById("errorMessage").innerHTML = responseObject.error;
 				document.getElementById("errorWin").style.display = '';
 			} else {
-				localStorage.setItem('FORMOpenIdUser', mypostrequest.responseText);
-				window.close();
+				var redirect = getRedirect();
+				if(redirect!=null){
+					window.location = redirect;
+				}else{
+					window.close();
+				}
+				
 			}
 		}
 	};
@@ -38,6 +54,24 @@ function confirmLogin() {
 			"application/x-www-form-urlencoded");
 	mypostrequest.setRequestHeader("Orion-Version", "1");
 	mypostrequest.send(parameters);
+}
+
+function goToCreateUser(){
+	var redirect = getRedirect();
+	if(redirect!=null){
+		window.location = "/mixloginstatic/CreateUserWindow.html?redirect="+redirect;
+	}else{
+		window.location = "/mixloginstatic/CreateUserWindow.html";
+	}
+}
+
+function goToLoginWindow(){
+	var redirect = getRedirect();
+	if(redirect!=null){
+		window.location = "/mixloginstatic/LoginWindow.html?redirect="+redirect;
+	}else{
+		window.location = "/mixloginstatic/LoginWindow.html";
+	}
 }
 
 function confirmCreateUser() {
