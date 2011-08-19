@@ -39,7 +39,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Assume;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.meterware.httpunit.PostMethodWebRequest;
@@ -345,15 +344,6 @@ public class GitPushTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("branch 'a' change", response.getText());
-	}
-
-	@Test
-	@Ignore("not implemented yet")
-	public void testPushNoSrc() {
-		// TODO:
-		// clone1
-		// clone2
-		// clone1: add, commit, try to push with empty Src, DELETE should be suggested
 	}
 
 	@Test
