@@ -1,62 +1,67 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="copyright"
+	content="Copyright (c) 2010,2011 IBM Corporation and others.">
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="X-UA-Compatible" content="IE=8">
 <title>Create New Orion User</title>
 <style type="text/css">
-@import "/mixloginstatic/css/loginWindow.css";</style>
-<script type="text/javascript" src="js/htmlAuth.js"></script>
+@import "/mixloginstatic/css/loginWindow.css";
+</style>
+<script type="text/javascript" src="/mixloginstatic/js/htmlAuth.js"></script>
 </head>
 <body>
-<div id="newUserTable">
-	<!-- <form name="CreateUserForm" onsubmit="return validatePasswords()" method=post action="/users" Orion-Version=1> -->
-	<h3 class="loginWindowCreate">
-		Create Orion Account
-	</h3>
-	
-	<div id="errorWin" style="display: none"><ul id="loginError"><li id="errorMessage"></li></ul></div>
-	
-	<table class="loginWindow">
-		<tr>
+	<div id="newUserTable">
+		<h3 class="loginWindowCreate">Create Orion Account</h3>
 
-			<td class="loginWindow"><label class="loginWindow"
-				id=create_loginLabel for=login>Name:</label></td>
-			<td class="loginWindow"><input class="loginWindow" name=login
-				id=login tabindex=4><br>
-			</td>
-		</tr>
-		<tr>
-			<td class="loginWindow"><label class="loginWindow"
-				id=create_passwordLabel for=password>Password:</label></td>
-			<td class="loginWindow"><input class="loginWindow" name=password
-				type=password id=password tabindex=5 onkeyup="validatePassword()"><br></td>
-		</tr>
+		<div id="errorWin" style="display: none">
+			<ul id="loginError">
+				<li id="errorMessage"></li>
+			</ul>
+		</div>
 
-		<tr>
-			<td class="loginWindow"><label class="loginWindow"
-				id=create_passwordLabel for=passwordRetype>Retype password:</label>
-			</td>
-			<td class="loginWindow"><input class="loginWindow"
-				name=passwordRetype type=password id=passwordRetype
-				tabindex=6
-				onkeyup="var event = window.event ? window.event : event ? event : evt; if (event.keyCode === 13) { confirmCreateUser(); } else {validatePassword();}"><br>
-			</td>
-		</tr>
-		<tr>
-			<td class="loginWindow loginWindowButtonTd" colspan=2>
-			<button type='button' class="loginWindow" onClick="javascript:window.location='LoginWindow.html'"
-					dojoType=dijit.form.Button tabindex=7>
-					Cancel
-				</button>
+		<div style="clear: left; margin: 8px;">
+			<table class="loginWindow">
+				<tr>
 
-				<button class="loginWindow" type="submit" onClick=confirmCreateUser()
-					dojoType=dijit.form.Button value=OK tabindex=8>
-					Create
-				</button>
-			</td>
-		</tr>
-	</table>
-	<!-- </form> -->
-</div>
+					<td class="loginWindow"><label class="loginWindow"
+						id=create_loginLabel for=login>Name:</label></td>
+					<td class="loginWindow"><input class="loginWindow" name=login
+						id=login tabindex=4><br>
+					</td>
+				</tr>
+				<tr>
+					<td class="loginWindow"><label class="loginWindow"
+						id=create_passwordLabel for=password>Password:</label></td>
+					<td class="loginWindow"><input class="loginWindow"
+						name=password type=password id=password tabindex=5
+						onkeyup="validatePassword()"><br></td>
+				</tr>
+
+				<tr>
+					<td class="loginWindow"><label class="loginWindow"
+						id=create_passwordLabel for=passwordRetype>Retype
+							password:</label>
+					</td>
+					<td class="loginWindow"><input class="loginWindow"
+						name=passwordRetype type=password id=passwordRetype tabindex=6
+						onkeyup="var event = window.event ? window.event : event ? event : evt; if (event.keyCode === 13) { confirmCreateUser(); } else {validatePassword();}"><br>
+					</td>
+				</tr>
+				<tr>
+					<td class="loginWindow loginWindowButtonTd" colspan=2>
+						<button type='button' class="loginWindow"
+							onClick="javascript:window.location='LoginWindow.html'"
+							tabindex=7>Cancel</button>
+
+						<button class="loginWindow" type="submit"
+							onClick=confirmCreateUser() value=OK tabindex=8>Create</button>
+					</td>
+				</tr>
+			</table>
+		</div>
+	</div>
 </body>
 </html>

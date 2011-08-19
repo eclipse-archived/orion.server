@@ -1,62 +1,77 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
 <html>
 <head>
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2010." >
+<meta name="copyright"
+	content="Copyright (c) 2010,2011 IBM Corporation and others.">
 <meta http-equiv="Content-Language" content="en-us">
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <meta http-equiv="X-UA-Compatible" content="IE=8">
 <title>Login Page</title>
 <style type="text/css">
-@import "/mixloginstatic/css/loginWindow.css";</style>
+@import "/mixloginstatic/css/loginWindow.css";
+</style>
 <script type="text/javascript" src="/mixloginstatic/js/htmlAuth.js"></script>
 </head>
 <body>
-<div id="loginWindow" class="loginWindow">
+	<div id="loginWindow" class="loginWindow">
+		<h3 class="loginWindowCreate">Login to Orion</h3>
 
-	<div style="clear: left; margin: 8px;">
-		<div id="errorWin" style="display: none"><ul id="loginError"><li id="errorMessage"></li></ul></div>
+		<div id="errorWin" style="display: none">
+			<ul id="loginError">
+				<li id="errorMessage"></li>
+			</ul>
+		</div>
 
-		<table class="loginWindow">
-			<!-- <form name="AuthForm""> -->
-			<tbody>
-				<tr>
-					<td class="loginWindow"><label class="loginWindow"
-						id=loginLabel for=login>Name:</label>
-					</td>
-					<td class="loginWindow"><input class="loginWindow" name=login
-						id=login tabindex=1><br></td>
-				</tr>
-				<tr>
-					<td class="loginWindow"><label class="loginWindow"
-						id=passwordLabel for=password>Password:</label>
-					</td>
-					<td class="loginWindow"><input class="loginWindow"
-						name=password type=password id=password tabindex=2
-						onkeypress="var event = window.event ? window.event : event ? event : evt; if (event.keyCode === 13) { confirmLogin(); } else {return true;}"><br>
-					</td>
-				</tr>
-				<tr>
-					<td class="loginWindow loginWindowButtonTd" colspan=2>
-						<button class="loginWindow" onClick=confirmLogin()
-							dojoType=dijit.form.Button value=OK tabindex=3>
+		<div style="clear: left; margin: 8px;">
+			<table class="loginWindow">
+				<tbody>
+					<tr>
+						<td class="loginWindow"><label class="loginWindow"
+							id=loginLabel for=login>Name:</label></td>
+						<td class="loginWindow"><input class="loginWindow" name=login
+							id=login tabindex=1><br>
+						</td>
+					</tr>
+					<tr>
+						<td class="loginWindow"><label class="loginWindow"
+							id=passwordLabel for=password>Password:</label></td>
+						<td class="loginWindow"><input class="loginWindow"
+							name=password type=password id=password tabindex=2
+							onkeypress="var event = window.event ? window.event : event ? event : evt; if (event.keyCode === 13) { confirmLogin(); } else {return true;}"><br>
+						</td>
+					</tr>
+					<tr>
+						<td class="loginWindow loginWindowButtonTd" colspan=2>
+							<button class="loginWindow" onClick=confirmLogin() value=OK
+								tabindex=3>Sign in</button>
+						</td>
+					</tr>
+				</tbody>
+			</table>
 
-							Sign in
-						</button></td>
-				</tr>
-			</tbody>
-		<!-- </form> -->
-		</table>
-		<div class="hrloginWindow"></div>
-<h3 id="newUserHeader" class="loginWindow">
-	New to Orion? <a class="loginWindow" href="/mixloginstatic/CreateUserWindow.html">Create
-		 account</a>
+			<div class="hrloginWindow"></div>
+			<h3 id="newUserHeader" class="loginWindow">
+				New to Orion? <a class="loginWindow"
+					href="/mixloginstatic/CreateUserWindow.html">Create account</a>
+			</h3>
 
-</h3>
-		<div class="hrloginWindow"></div><h3 class="loginWindow">Login with: <a class="loginWindow" href="javascript:confirmOpenId('https://www.google.com/accounts/o8/id')"><img class="loginWindow" src="/openids/google.png" alt="Google" title="Google"></a>&nbsp;<a class="loginWindow" href="javascript:confirmOpenId('http://me.yahoo.com')"><img class="loginWindow" src="/openids/yahoo-logo.png" alt="Yahoo!" title="Yahoo!"></a>&nbsp;<a class="loginWindow" href="javascript:confirmOpenId('http://openid.aol.com/')"><img class="loginWindow" src="/openids/aim-logo.png" alt="AOL" title="AOL"></a>&nbsp;<a class="loginWindow" href="javascript:confirmOpenId('http://myopenid.com')"><img class="loginWindow" src="/openids/myopenid-logo.png" alt="myOpenID" title="myOpenID"></a>&nbsp;</h3></h3>
-
+			<div class="hrloginWindow"></div>
+			<h3 class="loginWindow">
+				Login with: <a class="loginWindow"
+					href="javascript:confirmOpenId('https://www.google.com/accounts/o8/id')"><img
+					class="loginWindow" src="/openids/google.png" alt="Google"
+					title="Google"> </a><a class="loginWindow"
+					href="javascript:confirmOpenId('http://me.yahoo.com')"><img
+					class="loginWindow" src="/openids/yahoo-logo.png" alt="Yahoo!"
+					title="Yahoo!"> </a><a class="loginWindow"
+					href="javascript:confirmOpenId('http://openid.aol.com/')"><img
+					class="loginWindow" src="/openids/aim-logo.png" alt="AOL"
+					title="AOL"> </a><a class="loginWindow"
+					href="javascript:confirmOpenId('http://myopenid.com')"><img
+					class="loginWindow" src="/openids/myopenid-logo.png" alt="myOpenID"
+					title="myOpenID"> </a>
+			</h3>
+		</div>
 	</div>
-
-</div>
-
 </body>
 </html>
