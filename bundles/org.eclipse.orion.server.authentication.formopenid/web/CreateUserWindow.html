@@ -9,34 +9,37 @@
 </head>
 <body>
 <div id="newUserTable">
-	<form name="CreateUserForm" onsubmit="return validatePasswords()" method=post action="/users" Orion-Version=1>
+	<!-- <form name="CreateUserForm" onsubmit="return validatePasswords()" method=post action="/users" Orion-Version=1> -->
 	<h3 class="loginWindowCreate">
 		Create Orion Account
 	</h3>
+	
+	<div id="errorWin" style="display: none"><ul id="loginError"><li id="errorMessage"></li></ul></div>
+	
 	<table class="loginWindow">
 		<tr>
 
 			<td class="loginWindow"><label class="loginWindow"
-				id=create_loginLabel for=create_login>Name:</label></td>
+				id=create_loginLabel for=login>Name:</label></td>
 			<td class="loginWindow"><input class="loginWindow" name=login
-				id=create_login tabindex=4><br>
+				id=login tabindex=4><br>
 			</td>
 		</tr>
 		<tr>
 			<td class="loginWindow"><label class="loginWindow"
-				id=create_passwordLabel for=create_password>Password:</label></td>
+				id=create_passwordLabel for=password>Password:</label></td>
 			<td class="loginWindow"><input class="loginWindow" name=password
-				type=password id=create_password tabindex=5><br></td>
+				type=password id=password tabindex=5 onkeyup="validatePassword()"><br></td>
 		</tr>
 
 		<tr>
 			<td class="loginWindow"><label class="loginWindow"
-				id=create_passwordLabel for=create_password>Retype password:</label>
+				id=create_passwordLabel for=passwordRetype>Retype password:</label>
 			</td>
 			<td class="loginWindow"><input class="loginWindow"
-				name=passwordRetype type=password id=create_passwordRetype
+				name=passwordRetype type=password id=passwordRetype
 				tabindex=6
-				onkeypress="var event = window.event ? window.event : event ? event : evt; if (event.keyCode === 13) { confirmCreateUser(); } else {return true;}"><br>
+				onkeyup="var event = window.event ? window.event : event ? event : evt; if (event.keyCode === 13) { confirmCreateUser(); } else {validatePassword();}"><br>
 			</td>
 		</tr>
 		<tr>
@@ -53,7 +56,7 @@
 			</td>
 		</tr>
 	</table>
-	</form>
+	<!-- </form> -->
 </div>
 </body>
 </html>

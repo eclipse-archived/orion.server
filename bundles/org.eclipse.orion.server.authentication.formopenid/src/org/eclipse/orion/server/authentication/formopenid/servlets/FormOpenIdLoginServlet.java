@@ -55,12 +55,35 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 		if (pathInfo.startsWith("/form")) { //$NON-NLS-1$
 			try {
 				if (FormAuthHelper.performAuthentication(req, resp)) {
-					if (req.getParameter(OpenIdHelper.REDIRECT) != null && !req.getParameter(OpenIdHelper.REDIRECT).equals("")) { //$NON-NLS-1$
-						resp.sendRedirect(req.getParameter(OpenIdHelper.REDIRECT));
+					// redirection from
+					// FormAuthenticationService.setNotAuthenticated
+					String versionString = req.getHeader("Orion-Version"); //$NON-NLS-1$
+					Version version = versionString == null ? null : new Version(versionString);
+
+					// TODO: This is a workaround for calls
+					// that does not include the WebEclipse version header
+					String xRequestedWith = req.getHeader("X-Requested-With"); //$NON-NLS-1$
+					String invalidLoginError = "Invalid user or password";
+
+					if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) { //$NON-NLS-1$
+						if (req.getParameter(OpenIdHelper.REDIRECT) != null && !req.getParameter(OpenIdHelper.REDIRECT).equals("")) { //$NON-NLS-1$
+							resp.sendRedirect(req.getParameter(OpenIdHelper.REDIRECT));
+						} else {
+							writeLoginResponse(req, resp);
+						}
 					} else {
-						writeLoginResponse(req, resp);
-						resp.flushBuffer();
+						resp.setStatus(HttpServletResponse.SC_OK);
+						PrintWriter writer = resp.getWriter();
+						String uid = (String) req.getSession().getAttribute("user");
+						JSONObject userJson;
+						try {
+							userJson = FormAuthHelper.getUserJson(uid);
+							writer.print(userJson);
+							resp.setContentType("application/json"); //$NON-NLS-1$
+						} catch (JSONException e) {/* ignore */
+						}
 					}
+					resp.flushBuffer();
 				} else {
 					// redirection from
 					// FormAuthenticationService.setNotAuthenticated
@@ -70,11 +93,10 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 					// TODO: This is a workaround for calls
 					// that does not include the WebEclipse version header
 					String xRequestedWith = req.getHeader("X-Requested-With"); //$NON-NLS-1$
-
 					String invalidLoginError = "Invalid user or password";
 
 					if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) { //$NON-NLS-1$
-						RequestDispatcher rd = req.getRequestDispatcher("/mixlogin?error=" + new String(Base64.encode(invalidLoginError.getBytes()))); //$NON-NLS-1$
+						RequestDispatcher rd = req.getRequestDispatcher("/mixloginstatic?error=" + new String(Base64.encode(invalidLoginError.getBytes()))); //$NON-NLS-1$
 						rd.include(req, resp);
 					} else {
 						resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -122,31 +144,30 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 			return;
 		}
 	}
-	
-	private static void writeLoginResponse(HttpServletRequest req, HttpServletResponse resp) throws IOException{
+
+	private static void writeLoginResponse(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		String uid = (String) req.getSession().getAttribute("user");
-		if(uid==null || "".equals(uid)){
+		if (uid == null || "".equals(uid)) {
 			return;
 		}
-		try{
-		JSONObject userJson = FormAuthHelper.getUserJson(uid);
-		
-		PrintWriter out = resp.getWriter();
-		out.println("<html><head></head>"); //$NON-NLS-1$
-		out.print("<body onload=\"localStorage.setItem('FORMOpenIdUser',  '");
-		out.print(userJson.toString().replaceAll("\\\"", "&quot;"));
-		out.println("');window.close();\">"); //$NON-NLS-1$
-		out.println("</body>"); //$NON-NLS-1$
-		out.println("</html>"); //$NON-NLS-1$
+		try {
+			JSONObject userJson = FormAuthHelper.getUserJson(uid);
 
-		out.close();
-		}catch (JSONException e) {
+			PrintWriter out = resp.getWriter();
+			out.println("<html><head></head>"); //$NON-NLS-1$
+			out.print("<body onload=\"localStorage.setItem('FORMOpenIdUser',  '");
+			out.print(userJson.toString().replaceAll("\\\"", "&quot;"));
+			out.println("');window.close();\">"); //$NON-NLS-1$
+			out.println("</body>"); //$NON-NLS-1$
+			out.println("</html>"); //$NON-NLS-1$
+
+			out.close();
+		} catch (JSONException e) {
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.login"); //$NON-NLS-1$
-			if(logger.isErrorEnabled()){
+			if (logger.isErrorEnabled()) {
 				logger.error("Cannot form login response for " + uid, e);
 			}
 		}
-		
 	}
 
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
