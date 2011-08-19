@@ -1,8 +1,8 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others. All rights reserved. This
- * program and the accompanying materials are made available under the terms of
- * the Eclipse Public License v1.0 which accompanies this distribution, and is
- * available at http://www.eclipse.org/legal/epl-v10.html
+ * Copyright (c) 2010, 2011 IBM Corporation and others. All rights reserved.
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v1.0 which accompanies this distribution,
+ * and is available at http://www.eclipse.org/legal/epl-v10.html
  * 
  * Contributors: IBM Corporation - initial API and implementation
  ******************************************************************************/
@@ -99,7 +99,8 @@ function confirmCreateUser() {
 }
 
 function validatePassword() {
-	if (document.getElementById("password").value !== document.getElementById("passwordRetype").value) {
+	if (document.getElementById("password").value !== document
+			.getElementById("passwordRetype").value) {
 		document.getElementById("errorWin").style.display = '';
 		document.getElementById("errorMessage").innerHTML = "Passwords don't match!";
 		return false;
