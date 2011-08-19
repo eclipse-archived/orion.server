@@ -17,9 +17,13 @@ function confirmLogin() {
 				document.getElementById("errorMessage").innerHTML = responseObject.error;
 				document.getElementById("errorWin").style.display = '';
 			} else {
-				localStorage.setItem('FORMOpenIdUser',
-						mypostrequest.responseText);
-				window.close();
+				var redirect = getRedirect();
+				if(redirect!=null){
+					window.location = redirect;
+				}else{
+					window.close();
+				}
+				
 			}
 		}
 	};
@@ -31,6 +35,30 @@ function confirmLogin() {
 			"application/x-www-form-urlencoded");
 	mypostrequest.setRequestHeader("Orion-Version", "1");
 	mypostrequest.send(parameters);
+}
+
+function getRedirect(){
+	 var regex = new RegExp('[\\?&]redirect=([^&#]*)');
+	  var results = regex.exec( window.location.href );
+	  return results == null ? null : results[1];
+}
+
+function goToCreateUser(){
+	var redirect = getRedirect();
+	if(redirect!=null){
+		window.location = "/loginstatic/CreateUserWindow.html?redirect="+redirect;
+	}else{
+		window.location = "/loginstatic/CreateUserWindow.html";
+	}
+}
+
+function goToLoginWindow(){
+	var redirect = getRedirect();
+	if(redirect!=null){
+		window.location = "/loginstatic/LoginWindow.html?redirect="+redirect;
+	}else{
+		window.location = "/loginstatic/LoginWindow.html";
+	}
 }
 
 function confirmCreateUser() {

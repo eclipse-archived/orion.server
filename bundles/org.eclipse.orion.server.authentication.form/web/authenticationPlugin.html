@@ -7,6 +7,13 @@
 	<script>
 		window.onload = function() {
 			var provider = new eclipse.PluginProvider();
+			function qualifyURL(url){
+			    var img = document.createElement('img');
+			    img.src = url; // set string url
+			    url = img.src; // get qualified url
+			    img.src = null; // no server request
+			    return url;
+			}
 			var serviceImpl = {
 				getUser : function() {
 					
@@ -18,8 +25,6 @@
 						handleAs : "json",
 						timeout : 15000,
 						load : function(jsonData, ioArgs) {
-							if(JSON.stringify(jsonData) !== localStorage.getItem("FormSignInKey"))
-								localStorage.setItem("FormSignInKey",  JSON.stringify(jsonData));
 							return jsonData;
 						},
 						error : function(response, ioArgs) {
@@ -32,7 +37,7 @@
 				logout : function() {
 				/* don't wait for the login response, notify anyway */
 				notify = true;
-				dojo.xhrPost({
+				return dojo.xhrPost({
 					url : "/logout",
 					headers : {
 						"Orion-Version" : "1"
@@ -40,7 +45,6 @@
 					handleAs : "json",
 					timeout : 15000,
 					load : function(jsonData, ioArgs) {
-						localStorage.removeItem("FormSignInKey");
 						return jsonData;
 					},
 					error : function(response, ioArgs) {
@@ -49,13 +53,11 @@
 				});
 			},
 			
-			getAuthForm : function(){
-				return '/loginstatic/LoginWindow.html';
+			getAuthForm : function(notify){
+				return qualifyURL(notify ? ('/loginstatic/LoginWindow.html?redirect='+notify+'?key=FORMOpenIdUser') : '/mixloginstatic/LoginWindow.html');
 			},
 			
-			login : function(){
-				window.open(authService.getAuthForm(), 'Login Window', 'width=400, height=200');
-			},
+
 			
 			getKey : function(){
 				return "FormSignInKey";
