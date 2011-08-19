@@ -1,41 +1,70 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
-var userStore;
-
-function setUserStore(userStoreToSet){
-	if(userStore){
-		document.getElementById('Login_'+userStore).style.color = '';
-	}
-	userStore = userStoreToSet;
-	document.getElementById('Login_'+userStore).style.color = '#444';
-	document.getElementById('store').value=userStore;
-}
+ * Copyright (c) 2010, 2011 IBM Corporation and others. All rights reserved.
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v1.0 which accompanies this distribution,
+ * and is available at http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors: IBM Corporation - initial API and implementation
+ ******************************************************************************/
 
 function confirmLogin() {
-	/* handled by submit form */
+	var mypostrequest = new XMLHttpRequest();
+	mypostrequest.onreadystatechange = function() {
+		if (mypostrequest.readyState == 4) {
+			if (mypostrequest.status != 200
+					&& window.location.href.indexOf("http") != -1) {
+				responseObject = JSON.parse(mypostrequest.responseText);
+				document.getElementById("errorMessage").innerHTML = responseObject.error;
+				document.getElementById("errorWin").style.display = '';
+			} else {
+				localStorage.setItem('FORMOpenIdUser',
+						mypostrequest.responseText);
+				window.close();
+			}
+		}
+	};
+	var login = encodeURIComponent(document.getElementById("login").value)
+	var password = encodeURIComponent(document.getElementById("password").value)
+	var parameters = "login=" + login + "&password=" + password;
+	mypostrequest.open("POST", "/login/form", true);
+	mypostrequest.setRequestHeader("Content-type",
+			"application/x-www-form-urlencoded");
+	mypostrequest.setRequestHeader("Orion-Version", "1");
+	mypostrequest.send(parameters);
 }
 
-function showCreateUser(){
-	document.getElementById('newUserTable').style.display = '';
-	document.getElementById('newUserHeader').style.display = 'none';
-	setTimeout(function() {
-		document.getElementById('create_login').focus();
-	}, 0);
+function confirmCreateUser() {
+	var mypostrequest = new XMLHttpRequest();
+	mypostrequest.onreadystatechange = function() {
+		if (mypostrequest.readyState == 4) {
+			if (mypostrequest.status != 200
+					&& window.location.href.indexOf("http") != -1) {
+				responseObject = JSON.parse(mypostrequest.responseText);
+				document.getElementById("errorMessage").innerHTML = responseObject.Message;
+				document.getElementById("errorWin").style.display = '';
+			} else {
+				confirmLogin();
+			}
+		}
+	};
+	var login = encodeURIComponent(document.getElementById("login").value)
+	var password = encodeURIComponent(document.getElementById("password").value)
+	var parameters = "login=" + login + "&password=" + password;
+	mypostrequest.open("POST", "/users", true);
+	mypostrequest.setRequestHeader("Content-type",
+			"application/x-www-form-urlencoded");
+	mypostrequest.setRequestHeader("Orion-Version", "1");
+	mypostrequest.send(parameters);
 }
-function validatePasswords(){
-	if(document.forms["CreateUserForm"].password.value!==document.forms["CreateUserForm"].passwordRetype.value){
-		alert("Passwords don't match!");
+
+function validatePassword() {
+	if (document.getElementById("password").value !== document
+			.getElementById("passwordRetype").value) {
 		document.getElementById("errorWin").style.display = '';
 		document.getElementById("errorMessage").innerHTML = "Passwords don't match!";
 		return false;
 	}
+	document.getElementById("errorWin").style.display = 'none';
+	document.getElementById("errorMessage").innerHTML = "";
 	return true;
 }

@@ -22,7 +22,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.orion.server.authentication.form.Activator;
 import org.eclipse.orion.server.authentication.form.core.FormAuthHelper;
 import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.useradmin.UnsupportedUserStoreException;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -45,12 +44,36 @@ public class LoginServlet extends HttpServlet {
 
 		try {
 			if (FormAuthHelper.performAuthentication(req, resp)) {
-				if (req.getParameter("redirect") != null && !req.getParameter("redirect").equals("")) { //$NON-NLS-1$
-					resp.sendRedirect(req.getParameter("redirect"));
+				// redirection from
+				// FormAuthenticationService.setNotAuthenticated
+				String versionString = req.getHeader("Orion-Version"); //$NON-NLS-1$
+				Version version = versionString == null ? null : new Version(versionString);
+
+				// TODO: This is a workaround for calls
+				// that does not include the WebEclipse version header
+				String xRequestedWith = req.getHeader("X-Requested-With"); //$NON-NLS-1$
+				String invalidLoginError = "Invalid user or password";
+
+				if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) { //$NON-NLS-1$
+					if (req.getParameter("redirect") != null && !req.getParameter("redirect").equals("")) { //$NON-NLS-1$
+						resp.sendRedirect(req.getParameter("redirect"));
+					} else {
+						writeLoginResponse(req, resp);
+						resp.flushBuffer();
+					}
 				} else {
-					writeLoginResponse(req, resp);
-					resp.flushBuffer();
+					resp.setStatus(HttpServletResponse.SC_OK);
+					PrintWriter writer = resp.getWriter();
+					String uid = (String) req.getSession().getAttribute("user");
+					JSONObject userJson;
+					try {
+						userJson = FormAuthHelper.getUserJson(uid);
+						writer.print(userJson);
+						resp.setContentType("application/json"); //$NON-NLS-1$
+					} catch (JSONException e) {/* ignore */
+					}
 				}
+				resp.flushBuffer();
 			} else {
 				// redirection from
 				// FormAuthenticationService.setNotAuthenticated
@@ -90,7 +113,7 @@ public class LoginServlet extends HttpServlet {
 		String uid = (String) req.getSession().getAttribute("user");
 		if (uid == null || "".equals(uid))
 			return;
-			
+
 		try {
 			JSONObject userJson = FormAuthHelper.getUserJson(uid);
 
