@@ -17,11 +17,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.configurator.ConfiguratorActivator;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.authentication.IAuthenticationService;
 import org.json.JSONException;
+import org.osgi.framework.Version;
 import org.osgi.service.http.HttpContext;
 
 /**
@@ -62,7 +65,7 @@ public class AuthorizedUserFilter implements Filter {
 					request.setAttribute(HttpContext.REMOTE_USER, userName);
 					request.setAttribute(HttpContext.AUTHENTICATION_TYPE, authenticationService.getAuthType());
 				} else {
-					httpResponse.sendError(HttpServletResponse.SC_FORBIDDEN);
+					setNotAuthorized(httpRequest, httpResponse);
 					return;
 				}
 			} else {
@@ -77,6 +80,25 @@ public class AuthorizedUserFilter implements Filter {
 		}
 
 		chain.doFilter(request, response);
+	}
+
+	private void setNotAuthorized(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		String versionString = req.getHeader("Orion-Version"); //$NON-NLS-1$
+		Version version = versionString == null ? null : new Version(versionString);
+
+		// TODO: This is a workaround for calls
+		// that does not include the WebEclipse version header
+		String xRequestedWith = req.getHeader("X-Requested-With"); //$NON-NLS-1$
+
+		String msg = "You are not authorized to access " + req.getRequestURL();
+		if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) { //$NON-NLS-1$
+			resp.sendError(HttpServletResponse.SC_FORBIDDEN, msg);
+		} else {
+			resp.setContentType(ProtocolConstants.CONTENT_TYPE_JSON);
+			ServerStatus serverStatus = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, msg, null);
+			resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+			resp.getWriter().print(serverStatus.toJSON().toString());
+		}
 	}
 
 	public void destroy() {
