@@ -10,14 +10,11 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.objects;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevTag;
-import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.json.JSONException;
@@ -37,10 +34,6 @@ public class Tag extends GitObject {
 		this.tag = tag;
 	}
 
-	public Tag(URI baseLocation, Repository db, Ref ref) throws URISyntaxException, IOException, CoreException {
-		this(baseLocation, db, getRevTagForRef(db, ref));
-	}
-
 	public JSONObject toJSON() throws JSONException {
 		JSONObject result = new JSONObject();
 		result.put(ProtocolConstants.KEY_NAME, tag.getTagName());
@@ -48,15 +41,4 @@ public class Tag extends GitObject {
 		result.put(ProtocolConstants.KEY_TYPE, TYPE);
 		return result;
 	}
-
-	private static RevTag getRevTagForRef(Repository repo, Ref ref) throws IOException {
-		final RevWalk walk = new RevWalk(repo);
-		walk.reset();
-		try {
-			return walk.parseTag(ref.getObjectId());
-		} finally {
-			walk.release();
-		}
-	}
-
 }
