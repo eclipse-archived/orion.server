@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.util.Locale;
 import java.util.Properties;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -22,15 +23,20 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.authentication.IAuthenticationService;
 import org.eclipse.orion.server.core.resources.Base64;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.User;
+import org.osgi.service.http.HttpContext;
+import org.osgi.service.http.HttpService;
+import org.osgi.service.http.NamespaceException;
 import org.osgi.service.useradmin.Authorization;
 
 public class BasicAuthenticationService implements IAuthenticationService {
 
-	private static IOrionCredentialsService userAdmin;
-
+	protected static IOrionCredentialsService userAdmin;
+	private IOrionUserProfileService userProfileService;
 	private boolean registered;
+	private HttpService httpService;
 
 	public BasicAuthenticationService() {
 		super();
@@ -88,7 +94,16 @@ public class BasicAuthenticationService implements IAuthenticationService {
 	}
 
 	public void configure(Properties properties) {
-		// nothing to do
+		try {
+			httpService.registerResources("/authenticationPlugin.html", "/web/authenticationPlugin.html", new BundleEntryHttpContext(Activator.bundleContext.getBundle()));
+		} catch (Exception e) {
+			try {
+				httpService.unregister("/authenticationPlugin.html");
+				httpService.registerResources("/authenticationPlugin.html", "/web/authenticationPlugin.html", new BundleEntryHttpContext(Activator.bundleContext.getBundle()));
+			} catch (NamespaceException e1) {
+				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_SERVER_AUTHENTICATION_BASIC, 1, "A namespace error occured when registering servlets", e1));
+			}
+		}
 	}
 
 	public void bindUserAdmin(IOrionCredentialsService userAdmin) {
@@ -107,5 +122,39 @@ public class BasicAuthenticationService implements IAuthenticationService {
 
 	public boolean getRegistered() {
 		return registered;
+	}
+
+	public void setHttpService(HttpService hs) {
+		httpService = hs;
+		HttpContext httpContext = new BundleEntryHttpContext(Activator.bundleContext.getBundle());
+
+		try {
+			httpService.registerServlet("/basiclogin", //$NON-NLS-1$
+					new BasicAuthenticationServlet(this), null, httpContext);
+		} catch (ServletException e) {
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_SERVER_AUTHENTICATION_BASIC, 1, "An error occured when registering servlets", e));
+		} catch (NamespaceException e) {
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_SERVER_AUTHENTICATION_BASIC, 1, "A namespace error occured when registering servlets", e));
+		}
+
+	}
+
+	public void unsetHttpService(HttpService hs) {
+		if (httpService != null) {
+			httpService.unregister("/basiclogin"); //$NON-NLS-1$
+			httpService = null;
+		}
+	}
+
+	public void bindUserProfileService(IOrionUserProfileService _userProfileService) {
+		userProfileService = _userProfileService;
+	}
+
+	public void unbindUserProfileService(IOrionUserProfileService userProfileService) {
+		userProfileService = null;
+	}
+
+	public IOrionUserProfileService getUserProfileService() {
+		return userProfileService;
 	}
 }

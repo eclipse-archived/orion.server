@@ -29,6 +29,8 @@ import org.eclipse.orion.server.useradmin.UnsupportedUserStoreException;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.framework.Version;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FormOpenIdLoginServlet extends OrionServlet {
 
@@ -53,11 +55,33 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 		if (pathInfo.startsWith("/form")) { //$NON-NLS-1$
 			try {
 				if (FormAuthHelper.performAuthentication(req, resp)) {
-					if (req.getParameter(OpenIdHelper.REDIRECT) != null && !req.getParameter(OpenIdHelper.REDIRECT).equals("")) { //$NON-NLS-1$
-						resp.sendRedirect(req.getParameter(OpenIdHelper.REDIRECT));
+					// redirection from
+					// FormAuthenticationService.setNotAuthenticated
+					String versionString = req.getHeader("Orion-Version"); //$NON-NLS-1$
+					Version version = versionString == null ? null : new Version(versionString);
+
+					// TODO: This is a workaround for calls
+					// that does not include the WebEclipse version header
+					String xRequestedWith = req.getHeader("X-Requested-With"); //$NON-NLS-1$
+					String invalidLoginError = "Invalid user or password";
+
+					if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) { //$NON-NLS-1$
+						if (req.getParameter(OpenIdHelper.REDIRECT) != null && !req.getParameter(OpenIdHelper.REDIRECT).equals("")) { //$NON-NLS-1$
+							resp.sendRedirect(req.getParameter(OpenIdHelper.REDIRECT));
+						}
 					} else {
-						resp.flushBuffer();
+						resp.setStatus(HttpServletResponse.SC_OK);
+						PrintWriter writer = resp.getWriter();
+						String uid = (String) req.getSession().getAttribute("user");
+						JSONObject userJson;
+						try {
+							userJson = FormAuthHelper.getUserJson(uid);
+							writer.print(userJson);
+							resp.setContentType("application/json"); //$NON-NLS-1$
+						} catch (JSONException e) {/* ignore */
+						}
 					}
+					resp.flushBuffer();
 				} else {
 					// redirection from
 					// FormAuthenticationService.setNotAuthenticated
@@ -67,11 +91,10 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 					// TODO: This is a workaround for calls
 					// that does not include the WebEclipse version header
 					String xRequestedWith = req.getHeader("X-Requested-With"); //$NON-NLS-1$
-
 					String invalidLoginError = "Invalid user or password";
 
 					if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) { //$NON-NLS-1$
-						RequestDispatcher rd = req.getRequestDispatcher("/mixlogin?error=" + new String(Base64.encode(invalidLoginError.getBytes()))); //$NON-NLS-1$
+						RequestDispatcher rd = req.getRequestDispatcher("/mixloginstatic?error=" + new String(Base64.encode(invalidLoginError.getBytes()))); //$NON-NLS-1$
 						rd.include(req, resp);
 					} else {
 						resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

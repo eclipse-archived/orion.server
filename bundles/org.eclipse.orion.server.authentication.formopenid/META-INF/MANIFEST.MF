@@ -7,7 +7,8 @@ Bundle-Vendor: %Bundle-Vendor
 Bundle-Localization: bundle
 Bundle-Activator: org.eclipse.orion.server.authentication.formopenid.Activator
 Import-Package: org.osgi.framework;version="1.3.0",
- org.osgi.util.tracker;version="1.5.0"
+ org.osgi.util.tracker;version="1.5.0",
+ org.slf4j;version="1.5.11"
 Service-Component: OSGI-INF/*.xml
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Require-Bundle: org.eclipse.osgi.services;bundle-version="3.2.100",

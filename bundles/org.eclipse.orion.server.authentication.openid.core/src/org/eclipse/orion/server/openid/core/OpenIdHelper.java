@@ -217,16 +217,7 @@ public class OpenIdHelper {
 				resp.sendRedirect(redirect);
 				return;
 			}
-			PrintWriter out = resp.getWriter();
-			out.println("<html><head></head>"); //$NON-NLS-1$
-			// TODO: send a message using
-			// window.eclipseMessage.postImmediate(otherWindow, message) from
-			// /org.eclipse.e4.webide/web/js/message.js
-			out.println("<body onload=\"window.opener.handleOpenIDResponse((window.location+'').split('?')[1]);window.close();\">"); //$NON-NLS-1$
-			out.println("</body>"); //$NON-NLS-1$
-			out.println("</html>"); //$NON-NLS-1$
 
-			out.close();
 			return;
 		}
 	}

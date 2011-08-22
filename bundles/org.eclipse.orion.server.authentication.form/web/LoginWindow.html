@@ -1,0 +1,60 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+<head>
+<meta name="copyright"
+	content="Copyright (c) 2010,2011 IBM Corporation and others.">
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="X-UA-Compatible" content="IE=8">
+<title>Login Page</title>
+<style type="text/css">
+@import "/loginstatic/css/loginWindow.css";
+</style>
+<script type="text/javascript" src="/loginstatic/js/htmlAuth.js"></script>
+</head>
+<body>
+	<div id="loginWindow" class="loginWindow">
+		<h3 class="loginWindowCreate">Login to Orion</h3>
+
+		<div id="errorWin" style="display: none">
+			<ul id="loginError">
+				<li id="errorMessage"></li>
+			</ul>
+		</div>
+
+		<div style="clear: left; margin: 8px;">
+			<table class="loginWindow">
+				<tbody>
+					<tr>
+						<td class="loginWindow"><label class="loginWindow"
+							id=loginLabel for=login>Name:</label></td>
+						<td class="loginWindow"><input class="loginWindow" name=login
+							id=login tabindex=1><br>
+						</td>
+					</tr>
+					<tr>
+						<td class="loginWindow"><label class="loginWindow"
+							id=passwordLabel for=password>Password:</label></td>
+						<td class="loginWindow"><input class="loginWindow"
+							name=password type=password id=password tabindex=2
+							onkeypress="var event = window.event ? window.event : event ? event : evt; if (event.keyCode === 13) { confirmLogin(); } else {return true;}"><br>
+						</td>
+					</tr>
+					<tr>
+						<td class="loginWindow loginWindowButtonTd" colspan=2>
+							<button class="loginWindow" onClick=confirmLogin() value=OK
+								tabindex=3>Sign in</button>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+
+			<div class="hrloginWindow"></div>
+			<h3 id="newUserHeader" class="loginWindow">
+				New to Orion? <a class="loginWindow"
+					href="javascript:goToCreateUser();">Create account</a>
+			</h3>
+		</div>
+	</div>
+</body>
+</html>

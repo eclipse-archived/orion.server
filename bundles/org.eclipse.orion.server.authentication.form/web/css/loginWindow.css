@@ -1,0 +1,229 @@
+.closeLoginWindow {
+	border: none;
+}
+div.closeLoginWindow {
+	float: right;
+}
+p.closeLoginWindow {
+	text-align: right;
+	margin: 0px;
+}
+
+img.closeLoginWindow {
+	opacity: 0.5;
+}
+
+img.closeLoginWindow:hover {
+	opacity: 1;
+}
+
+div.loginWindowToolbar{
+	clear: both;
+	padding: 8px;
+    background-color: #FFFFFF;
+    background-image: url("/images/titleBar.png");
+    background-position: left top;
+    background-repeat: repeat-x;
+    border-bottom-color: #BFBFBF;
+    border-bottom-style: none;
+    border-bottom-width: 1px;
+    border-left-color-ltr-source: physical;
+    border-left-color-rtl-source: physical;
+    border-left-color-value: #BFBFBF;
+    border-left-style-ltr-source: physical;
+    border-left-style-rtl-source: physical;
+    border-left-style-value: none;
+    border-left-width-ltr-source: physical;
+    border-left-width-rtl-source: physical;
+    border-left-width-value: 1px;
+    border-right-color-ltr-source: physical;
+    border-right-color-rtl-source: physical;
+    border-right-color-value: #BFBFBF;
+    border-right-style-ltr-source: physical;
+    border-right-style-rtl-source: physical;
+    border-right-style-value: none;
+    border-right-width-ltr-source: physical;
+    border-right-width-rtl-source: physical;
+    border-right-width-value: 1px;
+    border-top-color: #BFBFBF;
+    border-top-style: none;
+    border-top-width: 1px;
+    color: #6D6D6D;
+    min-height: 20px;
+}
+
+div.loginWindowHeader{
+	float: left;
+}
+h2.loginWindowHeader{
+	margin-top: 0px;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	color: #888;
+	font-size: 1.2em;
+}
+
+#errorWin {
+	backgroud: #bcd5f0;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#FFFFFF', endColorstr='#bcd5f0'); /* for IE */
+	background: -webkit-gradient(linear, left top, left bottom, from(#FFF), to(#bcd5f0)); /* for webkit browsers */
+	background: -moz-linear-gradient(top, #FFF, #bcd5f0); /* for firefox 3.6+ */
+	border: 1px solid #8ba0bd;
+	margin: 10px;
+	max-width: 30em;
+}
+
+#loginError {
+	background: url("/loginstatic/images/error_tsk.gif") no-repeat left
+		center;
+	color: red;
+	list-style: none;
+	padding-left: 20px;
+	line-height: 20px;
+	font-size: 0.8em;
+	display: block;
+}
+
+#loginWindowMask {
+	position: absolute;
+	background-color: #fff;
+	filter: alpha(opacity =   50);
+	opacity: 0.5;
+	border: 0px;
+	margin: 0px;
+	z-index: 999;
+	width: 100%;
+	height: 100%;
+	top: 0px;
+	left: 0px;
+}
+
+.loginWindow {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	color: #131313;
+}
+
+div.loginWindow {
+	border: 0px;
+	background-color: #fff;
+	padding: 0px;
+	z-index: 1000;
+}
+
+h2.loginWindowStores {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	color: #888;
+	margin-top: 10px;
+	margin-bottom: 10px;
+	font-size: 0.9em;
+	text-decoration: none;
+}
+
+a.loginWindowStores:link, a.loginWindowStores:VISITED {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	color: #888;
+	margin-top: 10px;
+	margin-bottom: 10px;
+	font-size: 0.9em;
+	text-decoration: none;
+}
+
+a.loginWindowStores:hover, a.loginWindowStores:active {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	color: #444;
+	margin-top: 10px;
+	margin-bottom: 10px;
+	font-size: 0.9em;
+	text-decoration: none;
+}
+
+h3.loginWindow {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	color: #888;
+	margin: 0px;
+	font-size: 0.9em;
+	max-width: 30em;
+}
+
+h3.loginWindowCreate {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	color: #888;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-left: 0px;
+	margin-bottom: 8px;
+	font-size: 0.9em;
+	max-width: 30em;
+}
+
+
+button.loginWindow {
+	border: none;
+	padding: 0.1em 0.2em 0.2em 0.2em;
+	background: #EEE;
+	font-size: 12px;
+	text-align: center;
+}
+
+button.loginWindow:hover {
+	border: none;
+	padding: 0.1em 0.2em 0.2em 0.2em;
+	background: #bcd5f0 url("/loginstatic/images/buttonHover.png")
+		repeat-x top left;
+	font-size: 12px;
+	text-align: right;
+}
+
+p.loginWindow {
+	font-size: 1em;
+	line-height: 1.2em;
+}
+
+a.loginWindowCreate {
+	font-style: italic;
+	text-decoration: none;
+	font-weight: normal;
+	color: #444444;
+}
+
+a.loginWindow {
+	font-style: italic;
+	text-decoration: none;
+	font-weight: normal;
+	color: #316ac5;
+}
+
+a.loginWindow:hover, a.loginWindow:ACTIVE {
+	font-style: italic;
+	text-decoration: underline;
+	font-weight: normal;
+	color: #316ac5;
+}
+
+td.loginWindowButtonTd {
+	padding-top: 10px;
+	padding-bottom: 10px;
+	text-align: right;
+}
+
+img.loginWindow{
+	height: 20px;
+	border: 0px;
+}
+
+table.loginWindow {
+	margin-left: 20px;
+}
+
+td.loginWindow {
+	min-width: 10em;
+}
+
+.hrloginWindow {
+	border-top: 1px solid #DDD;
+	background-color: #FFF;
+	height: 1px;
+	border-bottom: none;
+	border-left: none;
+	border-right: none;
+	margin: 10px 0 10px 0;
+}
