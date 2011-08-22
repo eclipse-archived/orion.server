@@ -54,10 +54,8 @@
 			},
 			
 			getAuthForm : function(notify){
-				return qualifyURL(notify ? ('/loginstatic/LoginWindow.html?redirect='+notify+'?key=FORMOpenIdUser') : '/mixloginstatic/LoginWindow.html');
+				return qualifyURL(notify ? ('/loginstatic/LoginWindow.html?redirect='+notify+'?key=FormSignInKey') : '/mixloginstatic/LoginWindow.html');
 			},
-			
-
 			
 			getKey : function(){
 				return "FormSignInKey";
