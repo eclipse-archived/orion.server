@@ -13,13 +13,12 @@ package org.eclipse.orion.server.git.objects;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevTag;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -28,23 +27,22 @@ public class Tag extends GitObject {
 	public static final String RESOURCE = "tag"; //$NON-NLS-1$
 	public static final String TYPE = "Tag"; //$NON-NLS-1$
 
-	private URI baseLocation;
 	private RevTag tag;
+	private URI tagLocation;
 
-	public Tag(URI baseLocation, Repository db, RevTag tag) throws URISyntaxException, CoreException {
-		super(BaseToCloneConverter.getCloneLocation(baseLocation, BaseToCloneConverter.TAG_LIST), db);
-		this.baseLocation = baseLocation;
+	public Tag(URI cloneLocation, Repository db, RevTag tag) throws URISyntaxException, CoreException {
+		super(cloneLocation, db);
 		this.tag = tag;
 	}
 
-	public Tag(URI baseLocation, Repository db, Ref ref) throws URISyntaxException, IOException, CoreException {
-		this(baseLocation, db, getRevTagForRef(db, ref));
+	public Tag(URI cloneLocation, Repository db, Ref ref) throws URISyntaxException, IOException, CoreException {
+		this(cloneLocation, db, getRevTagForRef(db, ref));
 	}
 
-	public JSONObject toJSON() throws JSONException {
+	public JSONObject toJSON() throws JSONException, URISyntaxException {
 		JSONObject result = new JSONObject();
 		result.put(ProtocolConstants.KEY_NAME, tag.getTagName());
-		result.put(ProtocolConstants.KEY_CONTENT_LOCATION, baseLocation);
+		result.put(ProtocolConstants.KEY_CONTENT_LOCATION, getLocation());
 		result.put(ProtocolConstants.KEY_TYPE, TYPE);
 		return result;
 	}
@@ -59,4 +57,12 @@ public class Tag extends GitObject {
 		}
 	}
 
+	private URI getLocation() throws URISyntaxException {
+		if (tagLocation == null) {
+			IPath p = new Path(cloneLocation.getPath());
+			p = p.uptoSegment(1).append(RESOURCE).append(tag.getTagName()).addTrailingSeparator().append(p.removeFirstSegments(2));
+			tagLocation = new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), p.toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
+		}
+		return tagLocation;
+	}
 }

@@ -62,7 +62,7 @@ public class GitTagTest extends GitTest {
 	}
 
 	@Test
-	public void testListTags() throws Exception {
+	public void testListDeleteTags() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
 		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
@@ -114,6 +114,15 @@ public class GitTagTest extends GitTest {
 			tags = listTags(gitTagUri);
 			assertEquals(2, tags.length());
 			assertEquals("tag2", tags.getJSONObject(1).get(ProtocolConstants.KEY_NAME));
+
+			// delete 'tag1'
+			JSONObject tag1 = tags.getJSONObject(0);
+			assertEquals("tag1", tag1.get(ProtocolConstants.KEY_NAME));
+			deleteTag(tag1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+
+			tags = listTags(gitTagUri);
+			assertEquals(1, tags.length());
+			assertEquals("tag2", tags.getJSONObject(0).get(ProtocolConstants.KEY_NAME));
 		}
 	}
 
