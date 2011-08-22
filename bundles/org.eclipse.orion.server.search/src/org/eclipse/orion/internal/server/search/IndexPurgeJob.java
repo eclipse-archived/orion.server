@@ -131,7 +131,8 @@ public class IndexPurgeJob extends Job {
 			}
 			if (logger.isDebugEnabled())
 				logger.debug("\tPurged: " + listIds.size()); //$NON-NLS-1$
-
+		} catch (OperationCanceledException e) {
+			//ignore and fall through
 		} catch (Exception e) {
 			handleIndexingFailure(e);
 		}
