@@ -14,7 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Map.Entry;
+import java.util.List;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -22,7 +22,8 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.*;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -68,12 +69,13 @@ public class GitTagHandlerV1 extends ServletResourceHandler<String> {
 		IPath p = new Path(path);
 		File gitDir = GitUtils.getGitDir(p);
 		Repository db = new FileRepository(gitDir);
-
 		URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.TAG_LIST);
+		Git git = new Git(db);
+		List<RevTag> revTags = git.tagList().call();
 		JSONObject result = new JSONObject();
 		JSONArray children = new JSONArray();
-		for (Entry<String, Ref> refEntry : db.getTags().entrySet()) {
-			Tag tag = new Tag(cloneLocation, db, refEntry.getValue());
+		for (RevTag revTag : revTags) {
+			Tag tag = new Tag(cloneLocation, db, revTag);
 			children.put(tag.toJSON());
 		}
 		result.put(ProtocolConstants.KEY_CHILDREN, children);
