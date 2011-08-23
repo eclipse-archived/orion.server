@@ -36,13 +36,11 @@ public class IndexPurgeJob extends Job {
 
 	private static final long DEFAULT_DELAY = 30000;//3 minutes
 	private static final long PAGE_SIZE = 1000;
-	private SolrQuery findAllQuery = null;
 	private final SolrServer server;
 
 	public IndexPurgeJob(SolrServer server) {
 		super("Purging Index"); //$NON-NLS-1$
 		this.server = server;
-		this.findAllQuery = findAllQuery();
 		setSystem(true);
 	}
 
@@ -63,6 +61,8 @@ public class IndexPurgeJob extends Job {
 	private SolrQuery findAllQuery() {
 		SolrQuery query = new SolrQuery();
 		query.setParam(CommonParams.ROWS, Long.toString(PAGE_SIZE));
+		//we only need to return the id for each match
+		query.setFields(ProtocolConstants.KEY_ID);
 		query.setQuery("*:*"); //$NON-NLS-1$
 		return query;
 	}
@@ -104,7 +104,7 @@ public class IndexPurgeJob extends Job {
 		long start = System.currentTimeMillis();
 		SolrQuery query = findAllQuery();
 		try {
-			QueryResponse solrResponse = this.server.query(findAllQuery);
+			QueryResponse solrResponse = this.server.query(query);
 			SolrDocumentList result = solrResponse.getResults();
 			long numFound = result.getNumFound();
 			long processed = 0;
