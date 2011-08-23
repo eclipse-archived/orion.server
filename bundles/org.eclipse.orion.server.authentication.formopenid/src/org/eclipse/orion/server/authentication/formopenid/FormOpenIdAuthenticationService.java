@@ -128,8 +128,8 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 
 	public void unsetHttpService(HttpService hs) {
 		if (httpService != null) {
-			httpService.unregister("/mixlogin"); //$NON-NLS-1$
 			httpService.unregister("/mixloginstatic"); //$NON-NLS-1$
+			httpService.unregister("/mixlogin/manageopenids"); //$NON-NLS-1$
 			httpService.unregister("/login"); //$NON-NLS-1$
 			httpService.unregister("/logout"); //$NON-NLS-1$
 			httpService = null;
