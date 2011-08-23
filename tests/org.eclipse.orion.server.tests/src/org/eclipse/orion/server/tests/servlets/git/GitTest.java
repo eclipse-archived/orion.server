@@ -73,6 +73,7 @@ import org.eclipse.orion.server.git.objects.Status;
 import org.eclipse.orion.server.git.objects.Tag;
 import org.eclipse.orion.server.git.servlets.GitServlet;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
+import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -678,7 +679,7 @@ public abstract class GitTest extends FileSystemTest {
 	 * @throws URISyntaxException
 	 */
 	protected JSONObject tag(String gitTagUri, String tagName, String commitId) throws JSONException, IOException, SAXException, URISyntaxException {
-		assertTagUri(gitTagUri);
+		assertTagListUri(gitTagUri);
 		WebRequest request = getPostGitTagRequest(gitTagUri, tagName, commitId);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
@@ -704,12 +705,19 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	protected JSONArray listTags(String gitTagUri) throws IOException, SAXException, JSONException {
-		assertTagUri(gitTagUri);
+		assertTagListUri(gitTagUri);
 		WebRequest request = getGetGitTagRequest(gitTagUri);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject tags = new JSONObject(response.getText());
 		return tags.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+	}
+
+	protected void deleteTag(String gitTagUri) throws IOException, SAXException {
+		assertTagUri(gitTagUri);
+		WebRequest request = getDeleteGitTagRequest(gitTagUri);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 	}
 
 	/**
@@ -871,7 +879,7 @@ public abstract class GitTest extends FileSystemTest {
 		}
 	}
 
-	private static void assertTagUri(String tagUri) {
+	private static void assertTagListUri(String tagUri) {
 		URI uri = URI.create(tagUri);
 		IPath path = new Path(uri.getPath());
 		// /git/tag/file/{path}
@@ -879,6 +887,16 @@ public abstract class GitTest extends FileSystemTest {
 		assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
 		assertEquals(Tag.RESOURCE, path.segment(1));
 		assertEquals("file", path.segment(2));
+	}
+
+	private static void assertTagUri(String tagUri) {
+		URI uri = URI.create(tagUri);
+		IPath path = new Path(uri.getPath());
+		// /git/tag/{tag}/file/{path}
+		assertTrue(path.segmentCount() > 4);
+		assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
+		assertEquals(Tag.RESOURCE, path.segment(1));
+		assertEquals("file", path.segment(3));
 	}
 
 	static void assertCloneUri(String cloneUri) throws CoreException, IOException {
@@ -982,7 +1000,7 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	protected static WebRequest getPostGitTagRequest(String location, String tagName, String commitId) throws JSONException, UnsupportedEncodingException {
-		assertTagUri(location);
+		assertTagListUri(location);
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;
@@ -1019,6 +1037,18 @@ public abstract class GitTest extends FileSystemTest {
 		else
 			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Tag.RESOURCE + location;
 		WebRequest request = new GetMethodWebRequest(requestURI);
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		return request;
+	}
+
+	private static WebRequest getDeleteGitTagRequest(String location) {
+		String requestURI;
+		if (location.startsWith("http://"))
+			requestURI = location;
+		else
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Commit.RESOURCE + location;
+		WebRequest request = new DeleteMethodWebRequest(requestURI);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
