@@ -12,6 +12,7 @@ package org.eclipse.orion.server.git.servlets;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map.Entry;
 import javax.servlet.ServletException;
@@ -27,6 +28,7 @@ import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Tag;
 import org.eclipse.orion.server.servlets.OrionServlet;
@@ -52,6 +54,8 @@ public class GitTagHandlerV1 extends ServletResourceHandler<String> {
 					return handleGet(request, response, path);
 				case POST :
 					return handlePost(request, response, path);
+				case DELETE :
+					return handleDelete(request, response, path);
 			}
 		} catch (Exception e) {
 			String msg = NLS.bind("Failed to handle 'tag' request for {0}", path); //$NON-NLS-1$
@@ -65,10 +69,11 @@ public class GitTagHandlerV1 extends ServletResourceHandler<String> {
 		File gitDir = GitUtils.getGitDir(p);
 		Repository db = new FileRepository(gitDir);
 
+		URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.TAG_LIST);
 		JSONObject result = new JSONObject();
 		JSONArray children = new JSONArray();
 		for (Entry<String, Ref> refEntry : db.getTags().entrySet()) {
-			Tag tag = new Tag(getURI(request), db, refEntry.getValue());
+			Tag tag = new Tag(cloneLocation, db, refEntry.getValue());
 			children.put(tag.toJSON());
 		}
 		result.put(ProtocolConstants.KEY_CHILDREN, children);
@@ -90,7 +95,8 @@ public class GitTagHandlerV1 extends ServletResourceHandler<String> {
 			RevCommit revCommit = walk.lookupCommit(objectId);
 
 			RevTag revTag = tag(git, revCommit, tagName);
-			Tag tag = new Tag(getURI(request), db, revTag);
+			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.TAG_LIST);
+			Tag tag = new Tag(cloneLocation, db, revTag);
 			OrionServlet.writeJSONResponse(request, response, tag.toJSON());
 			return true;
 		} catch (IOException e) {
@@ -106,5 +112,18 @@ public class GitTagHandlerV1 extends ServletResourceHandler<String> {
 
 	static RevTag tag(Git git, RevCommit revCommit, String tagName) throws JGitInternalException, GitAPIException {
 		return git.tag().setObjectId(revCommit).setName(tagName).call();
+	}
+
+	private boolean handleDelete(HttpServletRequest request, HttpServletResponse response, String path) throws CoreException, IOException, JSONException, ServletException, URISyntaxException {
+		IPath p = new Path(path);
+		File gitDir = GitUtils.getGitDir(p.removeFirstSegments(1));
+		Repository db = new FileRepository(gitDir);
+		Git git = new Git(db);
+		try {
+			git.tagDelete().setTags(p.segment(0)).call();
+			return true;
+		} catch (JGitInternalException e) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when removing a tag.", e));
+		}
 	}
 }
