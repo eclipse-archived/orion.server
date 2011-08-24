@@ -513,10 +513,56 @@ public class GitLogTest extends GitTest {
 		assertEquals(2, commitsArray.length());
 
 		JSONObject commit = commitsArray.getJSONObject(0);
-		assertEquals("commit1", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
+		assertEquals("commit1", commit.getString(GitConstants.KEY_COMMIT_MESSAGE));
 
+		// check commit content location
+		assertEquals("test.txt change", getCommitContent(commit));
+
+		// check commit diff location
+		request = GitDiffTest.getGetGitDiffRequest(commit.getString(GitConstants.KEY_DIFF));
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		String[] parts = GitDiffTest.parseMultiPartResponse(response);
+
+		assertEquals("", parts[1]); // no diff between the commit and working tree
+
+		// check commit location
+		request = GitCommitTest.getGetGitCommitRequest(commit.getString(ProtocolConstants.KEY_LOCATION), false);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject commitFromLocation = new JSONObject(response.getText());
+		assertEquals(commit, commitFromLocation);
+
+		// check second commit		
 		commit = commitsArray.getJSONObject(1);
-		assertEquals("Initial commit", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
+		assertEquals("Initial commit", commit.getString(GitConstants.KEY_COMMIT_MESSAGE));
+		// check commit content location
+		assertEquals("test", getCommitContent(commit));
+
+		// check commit diff location
+		request = GitDiffTest.getGetGitDiffRequest(commit.getString(GitConstants.KEY_DIFF));
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		parts = GitDiffTest.parseMultiPartResponse(response);
+
+		StringBuilder sb = new StringBuilder();
+		sb.append("diff --git a/test.txt b/test.txt").append("\n");
+		sb.append("index 30d74d2..3146ed5 100644").append("\n");
+		sb.append("--- a/test.txt").append("\n");
+		sb.append("+++ b/test.txt").append("\n");
+		sb.append("@@ -1 +1 @@").append("\n");
+		sb.append("-test").append("\n");
+		sb.append("\\ No newline at end of file").append("\n");
+		sb.append("+test.txt change").append("\n");
+		sb.append("\\ No newline at end of file").append("\n");
+		assertEquals(sb.toString(), parts[1]);
+
+		// check commit location
+		request = GitCommitTest.getGetGitCommitRequest(commit.getString(ProtocolConstants.KEY_LOCATION), false);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		commitFromLocation = new JSONObject(response.getText());
+		assertEquals(commit, commitFromLocation);
 	}
 
 	@Test
@@ -583,7 +629,7 @@ public class GitLogTest extends GitTest {
 			modifyFile(testTxt, "hello");
 			addFile(testTxt);
 
-			// commit1
+			// commit
 			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "2nd commit", false);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());

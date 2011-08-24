@@ -1206,6 +1206,15 @@ public abstract class GitTest extends FileSystemTest {
 		return response.getText();
 	}
 
+	protected String getCommitContent(JSONObject commitObject) throws JSONException, IOException, SAXException {
+		String contentLocation = commitObject.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		assertNotNull(contentLocation);
+		WebRequest request = getGetFilesRequest(contentLocation);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		return response.getText();
+	}
+
 	protected JSONObject assertStatus(StatusResult expected, String statusUri) throws IOException, SAXException, JSONException {
 		assertStatusUri(statusUri);
 		WebRequest request = GitStatusTest.getGetGitStatusRequest(statusUri);

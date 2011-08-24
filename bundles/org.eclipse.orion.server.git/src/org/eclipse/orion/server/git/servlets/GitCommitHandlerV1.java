@@ -58,7 +58,6 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 
 	@Override
 	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String path) throws ServletException {
-
 		Repository db = null;
 		try {
 			Path p = new Path(path);
@@ -70,7 +69,6 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 				case POST :
 					return handlePost(request, response, db, p);
 			}
-
 		} catch (Exception e) {
 			String msg = NLS.bind("Failed to process an operation on commits for {0}", path);
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
