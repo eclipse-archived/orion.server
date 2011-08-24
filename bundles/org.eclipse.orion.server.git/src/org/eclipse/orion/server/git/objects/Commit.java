@@ -73,8 +73,8 @@ public class Commit extends GitObject {
 
 	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException {
 		JSONObject commit = new JSONObject();
-		commit.put(ProtocolConstants.KEY_LOCATION, BaseToCommitConverter.getCommitLocation(cloneLocation, revCommit.getName(), BaseToCommitConverter.REMOVE_FIRST_2));
-		commit.put(ProtocolConstants.KEY_CONTENT_LOCATION, BaseToCommitConverter.getCommitLocation(cloneLocation, revCommit.getName(), BaseToCommitConverter.REMOVE_FIRST_2.setQuery("parts=body"))); //$NON-NLS-1$
+		commit.put(ProtocolConstants.KEY_LOCATION, BaseToCommitConverter.getCommitLocation(cloneLocation, revCommit.getName(), pattern, BaseToCommitConverter.REMOVE_FIRST_2));
+		commit.put(ProtocolConstants.KEY_CONTENT_LOCATION, BaseToCommitConverter.getCommitLocation(cloneLocation, revCommit.getName(), pattern, BaseToCommitConverter.REMOVE_FIRST_2.setQuery("parts=body"))); //$NON-NLS-1$
 		commit.put(GitConstants.KEY_DIFF, createDiffLocation(revCommit.getName(), null, null, isRoot));
 		commit.put(ProtocolConstants.KEY_NAME, revCommit.getName());
 		PersonIdent author = revCommit.getAuthorIdent();

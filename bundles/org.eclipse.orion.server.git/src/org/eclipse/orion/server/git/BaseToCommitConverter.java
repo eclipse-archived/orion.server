@@ -20,28 +20,36 @@ import org.eclipse.orion.server.git.objects.Commit;
 public abstract class BaseToCommitConverter {
 
 	public static final BaseToCommitConverter REMOVE_FIRST_2 = new BaseToCommitConverter() {
-		public URI baseToCommitLocation(URI base, String commit) throws URISyntaxException {
+		public URI baseToCommitLocation(URI base, String commit, String path) throws URISyntaxException {
 			IPath p = new Path(base.getPath());
 			p = p.uptoSegment(1).append(Commit.RESOURCE).append(commit).addTrailingSeparator().append(p.removeFirstSegments(2));
+			if (path != null)
+				p = p.append(path);
 			return new URI(base.getScheme(), base.getUserInfo(), base.getHost(), base.getPort(), p.toString(), getQuery(base.getQuery()), base.getFragment());
 		};
 	};
 
 	public static final BaseToCommitConverter REMOVE_FIRST_3 = new BaseToCommitConverter() {
-		public URI baseToCommitLocation(URI base, String commit) throws URISyntaxException {
+		public URI baseToCommitLocation(URI base, String commit, String path) throws URISyntaxException {
 			IPath p = new Path(base.getPath());
 			p = p.uptoSegment(1).append(Commit.RESOURCE).append(commit).addTrailingSeparator().append(p.removeFirstSegments(3));
+			if (path != null)
+				p = p.append(path);
 			return new URI(base.getScheme(), base.getUserInfo(), base.getHost(), base.getPort(), p.toString(), getQuery(base.getQuery()), base.getFragment());
 		};
 	};
 
 	public static URI getCommitLocation(URI base, String commit, BaseToCommitConverter converter) throws IOException, URISyntaxException {
-		return converter.baseToCommitLocation(base, commit);
+		return getCommitLocation(base, commit, null, converter);
+	}
+
+	public static URI getCommitLocation(URI base, String commit, String path, BaseToCommitConverter converter) throws IOException, URISyntaxException {
+		return converter.baseToCommitLocation(base, commit, path);
 	}
 
 	protected String query;
 
-	protected abstract URI baseToCommitLocation(URI base, String commit) throws URISyntaxException;
+	protected abstract URI baseToCommitLocation(URI base, String commit, String path) throws URISyntaxException;
 
 	public BaseToCommitConverter setQuery(String query) {
 		this.query = query;
