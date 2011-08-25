@@ -10,8 +10,10 @@
  *******************************************************************************/
 package org.eclipse.orion.server.tests.servlets.git;
 
+import static org.eclipse.orion.server.tests.IsJSONArrayEqual.isJSONArrayEqual;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
@@ -530,8 +532,12 @@ public class GitLogTest extends GitTest {
 		request = GitCommitTest.getGetGitCommitRequest(commit.getString(ProtocolConstants.KEY_LOCATION), false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject commitFromLocation = new JSONObject(response.getText());
-		assertEquals(commit, commitFromLocation);
+		JSONObject jsonObject = new JSONObject(response.getText());
+		assertEquals(log.getString(GitConstants.KEY_CLONE), jsonObject.getString(GitConstants.KEY_CLONE));
+		assertEquals(log.getString(GitConstants.KEY_REPOSITORY_PATH), jsonObject.getString(GitConstants.KEY_REPOSITORY_PATH));
+		assertNull(jsonObject.optString(GitConstants.KEY_LOG_TO_REF, null));
+		assertNull(jsonObject.optString(GitConstants.KEY_LOG_FROM_REF, null));
+		assertThat(jsonObject.getJSONArray(ProtocolConstants.KEY_CHILDREN), isJSONArrayEqual(log.getJSONArray(ProtocolConstants.KEY_CHILDREN)));
 
 		// check second commit		
 		commit = commitsArray.getJSONObject(1);
@@ -561,8 +567,15 @@ public class GitLogTest extends GitTest {
 		request = GitCommitTest.getGetGitCommitRequest(commit.getString(ProtocolConstants.KEY_LOCATION), false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		commitFromLocation = new JSONObject(response.getText());
-		assertEquals(commit, commitFromLocation);
+		jsonObject = new JSONObject(response.getText());
+		JSONObject log2 = log;
+		JSONArray commitsArray2 = log2.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		commitsArray2.remove(0);
+		assertEquals(log.getString(GitConstants.KEY_CLONE), jsonObject.getString(GitConstants.KEY_CLONE));
+		assertEquals(log.getString(GitConstants.KEY_REPOSITORY_PATH), jsonObject.getString(GitConstants.KEY_REPOSITORY_PATH));
+		assertNull(jsonObject.optString(GitConstants.KEY_LOG_TO_REF, null));
+		assertNull(jsonObject.optString(GitConstants.KEY_LOG_FROM_REF, null));
+		assertThat(commitsArray2, isJSONArrayEqual(log.getJSONArray(ProtocolConstants.KEY_CHILDREN)));
 	}
 
 	@Test
