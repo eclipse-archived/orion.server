@@ -30,6 +30,7 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.RemoteRefUpdate.Status;
 import org.eclipse.jgit.transport.URIish;
+import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
@@ -635,6 +636,49 @@ public class GitPushTest extends GitTest {
 		assertEquals(IStatus.WARNING, pushStatus.getSeverity());
 		Status pushResult = Status.valueOf(pushStatus.getMessage());
 		assertEquals(Status.REJECTED_NONFASTFORWARD, pushResult);
+	}
+
+	@Test
+	public void testPushRemoteRejected() throws Exception {
+		// clone a repo
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		clone(clonePath);
+
+		// get project metadata
+		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		project = new JSONObject(response.getText());
+
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+		String gitRemoteUri = gitSection.getString(GitConstants.KEY_REMOTE);
+
+		// 1st commit
+		JSONObject testTxt = getChild(project, "test.txt");
+		modifyFile(testTxt, "1st change");
+		addFile(testTxt);
+		commitFile(testTxt, "1st change commit", false);
+
+		// push
+		ServerStatus pushStatus = push(gitRemoteUri, 1, 0, Constants.MASTER, Constants.HEAD, false);
+		assertEquals(IStatus.OK, pushStatus.getSeverity());
+
+		// 2nd commit
+		modifyFile(testTxt, "2nd change");
+		addFile(testTxt);
+		commitFile(testTxt, "2nd change commit", false);
+
+		FileUtils.delete(new File(gitDir, Constants.DOT_GIT + "/objects/pack/"), FileUtils.RECURSIVE);
+
+		pushStatus = push(gitRemoteUri, 1, 0, Constants.MASTER, Constants.HEAD, false);
+		assertEquals(IStatus.WARNING, pushStatus.getSeverity());
+		// Status pushResult = Status.valueOf(pushStatus.getMessage());
+		// assertEquals(Status.REJECTED_OTHER_REASON, pushResult);
+		// assertTrue(pushStatus.getException().getMessage().matches("^object [\\da-f]+ missing$"));
+		// workaround for bug 355931
+		assertTrue(pushStatus.getMessage().matches("^REJECTED_OTHER_REASON: object [\\da-f]+ missing$"));
 	}
 
 	@Test
