@@ -19,11 +19,12 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
+import org.eclipse.jgit.diff.DiffFormatter;
+import org.eclipse.jgit.dircache.DirCacheIterator;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepository;
-import org.eclipse.jgit.treewalk.AbstractTreeIterator;
-import org.eclipse.jgit.treewalk.CanonicalTreeParser;
+import org.eclipse.jgit.treewalk.*;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
@@ -92,8 +93,10 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	private boolean handleGetDiff(HttpServletRequest request, HttpServletResponse response, Repository db, String scope, String pattern, OutputStream out) throws Exception {
-		Diff diff = new Diff(out);
+		DiffFormatter diff = new DiffFormatter(new BufferedOutputStream(out));
 		diff.setRepository(db);
+		AbstractTreeIterator oldTree;
+		AbstractTreeIterator newTree = new FileTreeIterator(db);
 		if (scope.contains("..")) { //$NON-NLS-1$
 			String[] commits = scope.split("\\.\\."); //$NON-NLS-1$
 			if (commits.length != 2) {
@@ -101,19 +104,34 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 			}
 			// TODO: decode
-			diff.setOldTree(getTreeIterator(db, commits[0]));
-			diff.setNewTree(getTreeIterator(db, commits[1]));
+			oldTree = getTreeIterator(db, commits[0]);
+			newTree = getTreeIterator(db, commits[1]);
 		} else if (scope.equals(GitConstants.KEY_DIFF_CACHED)) {
-			diff.setCached(true);
+			ObjectId head = db.resolve(Constants.HEAD + "^{tree}");
+			if (head == null) {
+				String msg = NLS.bind("Failed to generate diff for {0}, no HEAD", scope);
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+			}
+			CanonicalTreeParser p = new CanonicalTreeParser();
+			ObjectReader reader = db.newObjectReader();
+			try {
+				p.reset(reader, head);
+			} finally {
+				reader.release();
+			}
+			oldTree = p;
+			newTree = new DirCacheIterator(db.readDirCache());
 		} else if (scope.equals(GitConstants.KEY_DIFF_DEFAULT)) {
-			diff.setCached(false);
+			oldTree = new DirCacheIterator(db.readDirCache());
 		} else {
-			diff.setOldTree(getTreeIterator(db, scope));
+			oldTree = getTreeIterator(db, scope);
 		}
 
 		if (pattern != null)
 			diff.setPathFilter(PathFilter.create(pattern));
-		diff.run();
+
+		diff.format(oldTree, newTree);
+		diff.flush();
 		return true;
 	}
 
