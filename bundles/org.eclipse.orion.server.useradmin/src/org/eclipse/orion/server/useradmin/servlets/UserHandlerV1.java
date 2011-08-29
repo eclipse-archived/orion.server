@@ -168,6 +168,10 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (login == null || login.length() == 0)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User login not specified.", null));
 
+		if (password == null || password.length() == 0) {
+			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Cannot create user with empty password.", null));
+		}
+
 		IOrionCredentialsService userAdmin = getUserAdmin();
 
 		if (userAdmin.getUser(UserConstants.KEY_LOGIN, login) != null)
@@ -214,6 +218,9 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 			}
 		}
 
+		if (data.has(UserConstants.KEY_OLD_PASSWORD) && (!data.has(UserConstants.KEY_PASSWORD) || data.getString(UserConstants.KEY_PASSWORD).length() == 0)) {
+			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Password cannot be empty", null));
+		}
 		if (data.has(UserConstants.KEY_LOGIN))
 			user.setLogin(data.getString(UserConstants.KEY_LOGIN));
 		if (data.has(ProtocolConstants.KEY_NAME))
