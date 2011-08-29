@@ -625,7 +625,8 @@ public class GitFetchTest extends GitTest {
 			// clone2: push
 			pushStatus = push(gitRemoteUri2, 1, 0, Constants.MASTER, Constants.HEAD, false);
 			assertEquals(IStatus.WARNING, pushStatus.getSeverity());
-			Status pushResult = Status.valueOf(pushStatus.getMessage());
+			// workaround for bug 355931
+			Status pushResult = Status.valueOf(pushStatus.getMessage().split(":")[0]);
 			assertEquals(Status.REJECTED_NONFASTFORWARD, pushResult);
 
 			// clone2: forced push
