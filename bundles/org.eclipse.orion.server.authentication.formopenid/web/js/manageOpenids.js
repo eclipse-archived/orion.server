@@ -23,7 +23,12 @@ handleOpenIDResponse = function(openid) {
 			 return;
 		 }
 	 }
-	jsonData.properties.openid += '\n' + openid;
+	 
+	if(!jsonData.properties.openid){
+		jsonData.properties.openid = openid;
+	}else{
+		jsonData.properties.openid += '\n' + openid;
+	}
 	
 	dojo.xhrPut({
 		url : jsonData.Location,
