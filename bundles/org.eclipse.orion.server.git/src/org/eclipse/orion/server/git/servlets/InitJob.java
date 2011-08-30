@@ -16,12 +16,10 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.InitCommand;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.osgi.util.NLS;
-import org.osgi.framework.ServiceReference;
 
 /**
  * A job to perform an init operation in the background
@@ -30,8 +28,6 @@ public class InitJob extends GitJob {
 
 	private final Clone clone;
 	private final TaskInfo task;
-	private ITaskService taskService;
-	private ServiceReference<ITaskService> taskServiceRef;
 	private final String user;
 	private final String cloneLocation;
 

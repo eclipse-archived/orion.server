@@ -164,7 +164,7 @@ public class PreferenceTest extends AbstractServerTest {
 
 	@Test
 	public void testDeleteSingle() {
-
+		//TODO not implemented
 	}
 
 	@Test

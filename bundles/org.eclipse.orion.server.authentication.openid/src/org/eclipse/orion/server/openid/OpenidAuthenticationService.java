@@ -35,7 +35,6 @@ import org.osgi.service.http.NamespaceException;
 public class OpenidAuthenticationService implements IAuthenticationService {
 
 	private HttpService httpService;
-	private Properties defaultAuthenticationProperties;
 	public static final String OPENIDS_PROPERTY = "openids"; //$NON-NLS-1$
 	
 	private boolean registered;
@@ -84,7 +83,6 @@ public class OpenidAuthenticationService implements IAuthenticationService {
 	}
 
 	public void configure(Properties properties) {
-		this.defaultAuthenticationProperties = properties;
 		try {
 			httpService.registerResources("/authenticationPlugin.html", "/web/authenticationPlugin.html", new BundleEntryHttpContext(Activator.getBundleContext().getBundle()));
 		} catch (Exception e) {

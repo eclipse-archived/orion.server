@@ -63,7 +63,6 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 					// TODO: This is a workaround for calls
 					// that does not include the WebEclipse version header
 					String xRequestedWith = req.getHeader("X-Requested-With"); //$NON-NLS-1$
-					String invalidLoginError = "Invalid user or password";
 
 					if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) { //$NON-NLS-1$
 						if (req.getParameter(OpenIdHelper.REDIRECT) != null && !req.getParameter(OpenIdHelper.REDIRECT).equals("")) { //$NON-NLS-1$

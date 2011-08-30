@@ -64,7 +64,7 @@ public class BasicAuthenticationService implements IAuthenticationService {
 			String password = authString.substring(authString.indexOf(':') + 1);
 			User user = getUserForCredentials(login, password);
 			if (user != null) {
-				Authorization authorization = userAdmin.getAuthorization(user);
+//				Authorization authorization = userAdmin.getAuthorization(user);
 				// TODO handle authorization
 				return user.getUid();
 			}

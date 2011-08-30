@@ -129,8 +129,6 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 	private boolean handlePost(HttpServletRequest req, HttpServletResponse resp, SiteConfiguration site) throws CoreException, IOException, JSONException {
 		if (site != null)
 			throw new IllegalArgumentException("Can't POST to an existing site");
-		String pathInfo = req.getPathInfo();
-		IPath path = new Path(pathInfo == null ? "" : pathInfo); //$NON-NLS-1$
 
 		JSONObject requestJson = getRequestJson(req);
 		try {
@@ -221,7 +219,7 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 	}
 
 	private static JSONObject getRequestJson(HttpServletRequest req) throws IOException, JSONException {
-		WebUser user = WebUser.fromUserName(getUserName(req));
+		//		WebUser user = WebUser.fromUserName(getUserName(req));
 		return OrionServlet.readJSONRequest(req);
 	}
 

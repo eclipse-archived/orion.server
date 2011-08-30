@@ -52,7 +52,6 @@ public class LoginServlet extends HttpServlet {
 				// TODO: This is a workaround for calls
 				// that does not include the WebEclipse version header
 				String xRequestedWith = req.getHeader("X-Requested-With"); //$NON-NLS-1$
-				String invalidLoginError = "Invalid user or password";
 
 				if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) { //$NON-NLS-1$
 					if (req.getParameter("redirect") != null && !req.getParameter("redirect").equals("")) { //$NON-NLS-1$

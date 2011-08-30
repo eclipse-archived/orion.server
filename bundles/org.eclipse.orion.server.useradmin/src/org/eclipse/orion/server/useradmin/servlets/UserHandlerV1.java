@@ -160,7 +160,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	private boolean handleUserCreate(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, JSONException, CoreException {
-		String store = req.getParameter(UserConstants.KEY_STORE);
+//		String store = req.getParameter(UserConstants.KEY_STORE);
 		String login = req.getParameter(UserConstants.KEY_LOGIN);
 		String name = req.getParameter(ProtocolConstants.KEY_NAME);
 		String password = req.getParameter(UserConstants.KEY_PASSWORD);
@@ -201,8 +201,6 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 	private boolean handleUserPut(HttpServletRequest req, HttpServletResponse resp, String userId) throws ServletException, IOException, CoreException, JSONException {
 		JSONObject data = OrionServlet.readJSONRequest(req);
-
-		String store = data.has(UserConstants.KEY_STORE) ? data.getString(UserConstants.KEY_STORE) : null;
 
 		IOrionCredentialsService userAdmin = getUserAdmin();
 
@@ -267,8 +265,6 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	private boolean handleUserDelete(HttpServletRequest req, HttpServletResponse resp, String userId) throws ServletException {
-		String store = req.getParameter(UserConstants.KEY_STORE);
-
 		IOrionCredentialsService userAdmin = getUserAdmin();
 
 		if (userAdmin.deleteUser((User) userAdmin.getUser("uid", userId)) == false) {
