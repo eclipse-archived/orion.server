@@ -17,6 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.params.CommonParams;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.core.SolrCore;
@@ -46,11 +47,13 @@ public class SearchServlet extends OrionServlet {
 
 	private SolrQuery buildSolrQuery(HttpServletRequest req) {
 		SolrQuery query = new SolrQuery();
-		query.setParam(CommonParams.WT, "json");
-		query.setParam(CommonParams.FL, "Id,Name,Length,Directory,LastModified,Location");
-		query.setParam("hl", "true");
-		String queryString = req.getParameter(CommonParams.Q);
-		queryString += " AND " + ProtocolConstants.KEY_USER_NAME + ':' + req.getRemoteUser();
+		query.setParam(CommonParams.WT, "json"); //$NON-NLS-1$
+		query.setParam(CommonParams.FL, "Id,Name,Length,Directory,LastModified,Location"); //$NON-NLS-1$
+		query.setParam("hl", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+		String queryString = ClientUtils.escapeQueryChars(req.getParameter(CommonParams.Q));
+		if (queryString.trim().length() > 0)
+			queryString += " AND "; //$NON-NLS-1$
+		queryString += ProtocolConstants.KEY_USER_NAME + ':' + ClientUtils.escapeQueryChars(req.getRemoteUser());
 		query.setQuery(queryString);
 		return query;
 	}
