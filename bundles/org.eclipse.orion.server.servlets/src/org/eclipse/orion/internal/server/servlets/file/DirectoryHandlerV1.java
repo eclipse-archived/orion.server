@@ -21,6 +21,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
@@ -255,8 +256,13 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 			}
 		} catch (JSONException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Syntax error in request", e));
+		} catch (CoreException e) {
+			//core exception messages are designed for end user consumption, so use message directly
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), e));
 		} catch (Exception e) {
-			throw new ServletException(NLS.bind("Error retrieving file: {0}", dir), e);
+			//the exception message is probably not appropriate for end user consumption
+			LogHelper.log(e);
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An unknown failure occurred. Consult your server log or contact your system administrator.", e));
 		}
 		return false;
 	}
