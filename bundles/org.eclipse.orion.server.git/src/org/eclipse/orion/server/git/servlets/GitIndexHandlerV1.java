@@ -65,10 +65,7 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 				case GET :
 					return handleGet(request, response, db, GitUtils.getRelativePath(p, set.iterator().next().getKey()));
 				case PUT :
-					String pattern = GitUtils.getRelativePath(p, set.iterator().next().getKey());
-					if (pattern.isEmpty())
-						pattern = ADD_ALL_PATTERN;
-					return handlePut(request, response, db, pattern);
+					return handlePut(request, response, db, GitUtils.getRelativePath(p, set.iterator().next().getKey()));
 				case POST :
 					return handlePost(request, response, db, p);
 			}
@@ -93,14 +90,28 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private boolean handlePut(HttpServletRequest request, HttpServletResponse response, Repository db, String pattern) throws ServletException, NoFilepatternException {
+	private boolean handlePut(HttpServletRequest request, HttpServletResponse response, Repository db, String pattern) throws ServletException, NoFilepatternException, IOException, JSONException {
+		JSONObject toAdd = OrionServlet.readJSONRequest(request);
+		JSONArray paths = toAdd.optJSONArray(ProtocolConstants.KEY_PATH);
+		if (paths == null) {
+			paths = new JSONArray().put(pattern.isEmpty() ? ADD_ALL_PATTERN : pattern);
+		}
+
 		Git git = new Git(db);
-		AddCommand add = git.add().addFilepattern(pattern);
+		AddCommand add = git.add();
+		for (int i = 0; i < paths.length(); i++) {
+			add.addFilepattern(paths.getString(i));
+		}
 		// "git add {pattern}"
 		add.call();
+
 		// TODO: we're calling "add" twice, this is inefficient, see bug 349299
 		// "git add -u {pattern}"
-		git.add().setUpdate(true).addFilepattern(pattern).call();
+		add = git.add().setUpdate(true);
+		for (int i = 0; i < paths.length(); i++) {
+			add.addFilepattern(paths.getString(i));
+		}
+		add.call();
 		return true;
 	}
 
