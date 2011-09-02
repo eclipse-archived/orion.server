@@ -197,7 +197,7 @@ public class OpenIdHelper {
 				newUser.addProperty("openid", id.getIdentifier());
 				user = userAdmin.createUser(newUser);
 			} else {
-				writeOpenIdError("Your authentication was successful but you are not authorized to access Orion", req, resp);
+				writeOpenIdError("Your authentication was successful but you are not authorized to access Orion. Contact administrator to create an Orion account.", req, resp);
 				return;
 			}
 
