@@ -15,6 +15,7 @@ import static org.junit.Assert.assertEquals;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.util.Set;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
@@ -22,6 +23,7 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Index;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Test;
 
@@ -36,8 +38,7 @@ public class GitAddTest extends GitTest {
 	public void testAddChanged() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
-		String projectName = getMethodName();
-		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), gitDir.toString());
 
 		JSONObject testTxt = getChild(project, "test.txt");
 		modifyFile(testTxt, "hello");
@@ -97,7 +98,7 @@ public class GitAddTest extends GitTest {
 
 		assertStatus(new StatusResult().setMissing(1).setModified(1).setUntracked(1), gitStatusUri);
 
-		request = getPutGitIndexRequest(gitIndexUri /* add all */);
+		request = getPutGitIndexRequest(gitIndexUri /* add all */, null);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -172,7 +173,7 @@ public class GitAddTest extends GitTest {
 			assertEquals(1, clonesArray.length());
 			String gitIndexUri = clonesArray.getJSONObject(0).getString(GitConstants.KEY_INDEX);
 
-			request = getPutGitIndexRequest(gitIndexUri /* add all*/);
+			request = getPutGitIndexRequest(gitIndexUri /* add all*/, null);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -180,7 +181,47 @@ public class GitAddTest extends GitTest {
 		}
 	}
 
-	static WebRequest getPutGitIndexRequest(String location) throws UnsupportedEncodingException {
+	@Test
+	public void testAddSelected() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), gitDir.toString());
+
+		// get project/folder metadata
+		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		project = new JSONObject(response.getText());
+
+		request = getPostFilesRequest(project.getString(ProtocolConstants.KEY_LOCATION), getNewFileJSON("added.txt").toString(), "added.txt");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		JSONObject addedTxt = getChild(project, "added.txt");
+
+		request = getPostFilesRequest(project.getString(ProtocolConstants.KEY_LOCATION), getNewFileJSON("untracked.txt").toString(), "untracked.txt");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+		JSONObject testTxt = getChild(project, "test.txt");
+		modifyFile(testTxt, "testAddSelected");
+		JSONObject folder = getChild(project, "folder");
+		JSONObject folderTxt = getChild(folder, "folder.txt");
+		modifyFile(folderTxt, "testAddSelected");
+
+		// add 2 of 4
+		addFile(testTxt, addedTxt);
+
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
+
+		assertStatus(new StatusResult().setChangedNames("test.txt").setModifiedNames("folder/folder.txt").setAddedNames("added.txt").setUntrackedNames("untracked.txt"), gitStatusUri);
+	}
+
+	static WebRequest getPutGitIndexRequest(String location) throws UnsupportedEncodingException, JSONException {
+		return getPutGitIndexRequest(location, null);
+	}
+
+	static WebRequest getPutGitIndexRequest(String location, Set<String> patterns) throws UnsupportedEncodingException, JSONException {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;
@@ -188,8 +229,11 @@ public class GitAddTest extends GitTest {
 			requestURI = SERVER_LOCATION + location;
 		else
 			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Index.RESOURCE + location;
-		JSONObject dummy = new JSONObject();
-		WebRequest request = new PutMethodWebRequest(requestURI, getJsonAsStream(dummy.toString()), "application/json");
+		JSONObject body = new JSONObject();
+		if (patterns != null) {
+			body.put(ProtocolConstants.KEY_PATH, patterns);
+		}
+		WebRequest request = new PutMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "application/json");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;

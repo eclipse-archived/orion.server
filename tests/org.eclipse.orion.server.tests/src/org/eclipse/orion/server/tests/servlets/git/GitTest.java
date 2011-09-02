@@ -31,8 +31,10 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import junit.framework.Assert;
 
@@ -1178,11 +1180,33 @@ public abstract class GitTest extends FileSystemTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 	}
 
-	protected void addFile(JSONObject fileObject) throws JSONException, IOException, SAXException {
-		JSONObject fileGitSection = fileObject.getJSONObject(GitConstants.KEY_GIT);
-		String fileGitIndexUri = fileGitSection.getString(GitConstants.KEY_INDEX);
+	protected void addFile(JSONObject... fileObject) throws JSONException, IOException, SAXException {
+		WebRequest request = null;
+		if (fileObject.length == 1) {
+			JSONObject fileGitSection = fileObject[0].getJSONObject(GitConstants.KEY_GIT);
+			String fileGitIndexUri = fileGitSection.getString(GitConstants.KEY_INDEX);
 
-		WebRequest request = GitAddTest.getPutGitIndexRequest(fileGitIndexUri);
+			request = GitAddTest.getPutGitIndexRequest(fileGitIndexUri, null);
+		} else {
+			JSONObject fileGitSection = fileObject[0].getJSONObject(GitConstants.KEY_GIT);
+			String gitCloneUri = fileGitSection.getString(GitConstants.KEY_CLONE);
+			IPath gitCloneFilePath = new Path(URI.create(gitCloneUri).getPath()).removeFirstSegments(2);
+			request = getGetRequest(gitCloneUri);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject clones = new JSONObject(response.getText());
+			JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+			assertEquals(1, clonesArray.length());
+			JSONObject clone = clonesArray.getJSONObject(0);
+			String gitIndexUri = clone.getString(GitConstants.KEY_INDEX);
+			Set<String> patterns = new HashSet<String>(fileObject.length);
+			for (int i = 0; i < fileObject.length; i++) {
+				IPath locationPath = new Path(URI.create(fileObject[i].getString(ProtocolConstants.KEY_LOCATION)).getPath());
+				patterns.add(locationPath.makeRelativeTo(gitCloneFilePath).toString());
+			}
+
+			request = GitAddTest.getPutGitIndexRequest(gitIndexUri, patterns);
+		}
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 	}
