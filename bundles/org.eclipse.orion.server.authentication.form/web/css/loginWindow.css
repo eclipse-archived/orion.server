@@ -63,24 +63,20 @@ h2.loginWindowHeader{
 }
 
 #errorWin {
-	backgroud: #bcd5f0;
-	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#FFFFFF', endColorstr='#bcd5f0'); /* for IE */
-	background: -webkit-gradient(linear, left top, left bottom, from(#FFF), to(#bcd5f0)); /* for webkit browsers */
-	background: -moz-linear-gradient(top, #FFF, #bcd5f0); /* for firefox 3.6+ */
-	border: 1px solid #8ba0bd;
-	margin: 10px;
-	max-width: 30em;
+font-style: italic;
 }
 
 #loginError {
-	background: url("/loginstatic/images/error_tsk.gif") no-repeat left
+	background: url("/mixloginstatic/images/error_tsk.gif") no-repeat left
 		center;
 	color: red;
 	list-style: none;
 	padding-left: 20px;
-	line-height: 20px;
+	float: right;
+	line-height: 12px;
 	font-size: 0.8em;
 	display: block;
+	margin: 3px;
 }
 
 #loginWindowMask {

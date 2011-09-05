@@ -14,13 +14,8 @@
 </head>
 <body>
 	<div id="loginWindow" class="loginWindow">
+	
 		<h3 class="loginWindowCreate">Login to Orion</h3>
-
-		<div id="errorWin" style="display: none">
-			<ul id="loginError">
-				<li id="errorMessage"></li>
-			</ul>
-		</div>
 
 		<div style="clear: left; margin: 8px;">
 			<table class="loginWindow">
@@ -38,6 +33,13 @@
 						<td class="loginWindow"><input class="loginWindow"
 							name=password type=password id=password tabindex=2
 							onkeypress="var event = window.event ? window.event : event ? event : evt; if (event.keyCode === 13) { confirmLogin(); } else {return true;}"><br>
+						</td>
+					</tr>
+					<tr id="errorWin" style="visibility: hidden;">
+						<td colspan=2>
+							<ul id="loginError">
+								<li id="errorMessage">&nbsp;</li>
+							</ul>
 						</td>
 					</tr>
 					<tr>

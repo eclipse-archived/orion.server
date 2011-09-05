@@ -41,7 +41,7 @@ function confirmLogin() {
 					&& window.location.href.indexOf("http") != -1) {
 				responseObject = JSON.parse(mypostrequest.responseText);
 				document.getElementById("errorMessage").innerHTML = responseObject.error;
-				document.getElementById("errorWin").style.display = '';
+				document.getElementById("errorWin").style.visibility = '';
 			} else {
 				var redirect = getRedirect();
 				if(redirect!=null){
@@ -95,7 +95,7 @@ function confirmCreateUser() {
 					&& window.location.href.indexOf("http") != -1) {
 				responseObject = JSON.parse(mypostrequest.responseText);
 				document.getElementById("errorMessage").innerHTML = responseObject.Message;
-				document.getElementById("errorWin").style.display = '';
+				document.getElementById("errorWin").style.visibility = '';
 			} else {
 				confirmLogin();
 			}
@@ -114,11 +114,11 @@ function confirmCreateUser() {
 function validatePassword() {
 	if (document.getElementById("password").value !== document
 			.getElementById("passwordRetype").value) {
-		document.getElementById("errorWin").style.display = '';
+		document.getElementById("errorWin").style.visibility = '';
 		document.getElementById("errorMessage").innerHTML = "Passwords don't match!";
 		return false;
 	}
-	document.getElementById("errorWin").style.display = 'none';
-	document.getElementById("errorMessage").innerHTML = "";
+	document.getElementById("errorWin").style.visibility = 'hidden';
+	document.getElementById("errorMessage").innerHTML = "&nbsp;";
 	return true;
 }
