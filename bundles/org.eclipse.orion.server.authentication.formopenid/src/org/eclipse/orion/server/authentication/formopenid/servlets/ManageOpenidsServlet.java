@@ -26,6 +26,8 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.authentication.formopenid.Activator;
 import org.eclipse.orion.server.authentication.formopenid.FormOpenIdAuthenticationService;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.resources.Base64;
+import org.eclipse.orion.server.openid.core.OpenIdException;
 import org.eclipse.orion.server.openid.core.OpenIdHelper;
 import org.eclipse.orion.server.openid.core.OpendIdProviderDescription;
 import org.eclipse.orion.server.openid.core.OpenidConsumer;
@@ -48,6 +50,45 @@ public class ManageOpenidsServlet extends HttpServlet {
 		return (String) (authenticationService.getDefaultAuthenticationProperties() == null ? null : authenticationService.getDefaultAuthenticationProperties().get(OPENIDS_PROPERTY));
 	}
 
+	private static void writeOpenIdError(String error, HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		if (req.getParameter("redirect") == null) {
+			PrintWriter out = resp.getWriter();
+			out.println("<html><head></head>"); //$NON-NLS-1$
+			// TODO: send a message using
+			// window.eclipseMessage.postImmediate(otherWindow, message) from
+			// /org.eclipse.e4.webide/web/orion/message.js
+			out.print("<body onload=\"window.opener.handleOpenIDResponse((window.location+'').split('?')[1],'");
+			out.print(error);
+			out.println("');window.close();\">"); //$NON-NLS-1$
+			out.println("</body>"); //$NON-NLS-1$
+			out.println("</html>"); //$NON-NLS-1$
+
+			out.close();
+			return;
+		}
+		PrintWriter out = resp.getWriter();
+		out.println("<html><head></head>"); //$NON-NLS-1$
+		// TODO: send a message using
+		// window.eclipseMessage.postImmediate(otherWindow, message) from
+		// /org.eclipse.e4.webide/web/orion/message.js
+
+		String url = req.getParameter("redirect");
+		url = url.replaceAll("/&error(\\=[^&]*)?(?=&|$)|^error(\\=[^&]*)?(&|$)/", ""); // remove
+																						// "error"
+																						// parameter
+		out.print("<body onload=\"window.location.replace('");
+		out.print(url.toString());
+		if (url.contains("?")) {
+			out.print("&error=");
+		} else {
+			out.print("?error=");
+		}
+		out.print(new String(Base64.encode(error.getBytes())));
+		out.println("');\">"); //$NON-NLS-1$
+		out.println("</body>"); //$NON-NLS-1$
+		out.println("</html>"); //$NON-NLS-1$
+	}
+	
 	private List<OpendIdProviderDescription> getSupportedOpenids(HttpServletRequest req) {
 		List<OpendIdProviderDescription> openidProviders;
 		String customOpenids = req.getAttribute(OPENIDS_PROPERTY) == null ? getConfiguredOpenIds() : (String) req.getAttribute(OPENIDS_PROPERTY);
@@ -67,19 +108,23 @@ public class ManageOpenidsServlet extends HttpServlet {
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse response) throws ServletException, IOException {
 		String pathInfo = req.getPathInfo() == null ? "" : req.getPathInfo(); //$NON-NLS-1$
+		try {
+			if (pathInfo.startsWith("/openid")) { //$NON-NLS-1$
+				String openid = req.getParameter(OpenIdHelper.OPENID);
+				if (openid != null) {
+					consumer = OpenIdHelper.redirectToOpenIdProvider(req, response, consumer);
+					return;
+				}
 
-		if (pathInfo.startsWith("/openid")) { //$NON-NLS-1$
-			String openid = req.getParameter(OpenIdHelper.OPENID);
-			if (openid != null) {
-				consumer = OpenIdHelper.redirectToOpenIdProvider(req, response, consumer);
-				return;
+				String op_return = req.getParameter(OpenIdHelper.OP_RETURN);
+				if (op_return != null) {
+					OpenIdHelper.handleOpenIdReturn(req, response, consumer);
+					return;
+				}
 			}
-
-			String op_return = req.getParameter(OpenIdHelper.OP_RETURN);
-			if (op_return != null) {
-				OpenIdHelper.handleOpenIdReturn(req, response, consumer);
-				return;
-			}
+		} catch (OpenIdException e) {
+			writeOpenIdError(e.getMessage(), req, response);
+			return;
 		}
 
 		response.setContentType("text/html"); //$NON-NLS-1$

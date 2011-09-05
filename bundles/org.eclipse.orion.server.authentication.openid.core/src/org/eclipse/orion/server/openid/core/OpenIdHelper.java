@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others 
+ * Copyright (c) 2010 2011 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -29,7 +29,6 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
-import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
@@ -100,8 +99,9 @@ public class OpenIdHelper {
 	 *            created and returned
 	 * @return
 	 * @throws IOException
+	 * @throws OpenIdException 
 	 */
-	public static OpenidConsumer redirectToOpenIdProvider(HttpServletRequest req, HttpServletResponse resp, OpenidConsumer consumer) throws IOException {
+	public static OpenidConsumer redirectToOpenIdProvider(HttpServletRequest req, HttpServletResponse resp, OpenidConsumer consumer) throws IOException, OpenIdException {
 		String redirect = req.getParameter(REDIRECT);
 		try {
 			StringBuffer sb = getRequestServer(req);
@@ -115,52 +115,11 @@ public class OpenIdHelper {
 			consumer.authRequest(req.getParameter(OPENID), req, resp);
 			// redirection takes place in the authRequest method
 		} catch (ConsumerException e) {
-			writeOpenIdError(e.getMessage(), req, resp);
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_OPENID_CORE, "An error occured when creating OpenidConsumer", e));
+			throw new OpenIdException(e);
 		} catch (CoreException e) {
-			writeOpenIdError(e.getMessage(), req, resp);
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_OPENID_CORE, "An error occured when authenticing request", e));
+			throw new OpenIdException(e);
 		}
 		return consumer;
-	}
-
-	private static void writeOpenIdError(String error, HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		if (req.getParameter(REDIRECT) == null) {
-			PrintWriter out = resp.getWriter();
-			out.println("<html><head></head>"); //$NON-NLS-1$
-			// TODO: send a message using
-			// window.eclipseMessage.postImmediate(otherWindow, message) from
-			// /org.eclipse.e4.webide/web/orion/message.js
-			out.print("<body onload=\"window.opener.handleOpenIDResponse((window.location+'').split('?')[1],'");
-			out.print(error);
-			out.println("');window.close();\">"); //$NON-NLS-1$
-			out.println("</body>"); //$NON-NLS-1$
-			out.println("</html>"); //$NON-NLS-1$
-
-			out.close();
-			return;
-		}
-		PrintWriter out = resp.getWriter();
-		out.println("<html><head></head>"); //$NON-NLS-1$
-		// TODO: send a message using
-		// window.eclipseMessage.postImmediate(otherWindow, message) from
-		// /org.eclipse.e4.webide/web/orion/message.js
-
-		String url = req.getParameter(REDIRECT);
-		url = url.replaceAll("/&error(\\=[^&]*)?(?=&|$)|^error(\\=[^&]*)?(&|$)/", ""); // remove
-																						// "error"
-																						// parameter
-		out.print("<body onload=\"window.location.replace('");
-		out.print(url.toString());
-		if (url.contains("?")) {
-			out.print("&error=");
-		} else {
-			out.print("?error=");
-		}
-		out.print(new String(Base64.encode(error.getBytes())));
-		out.println("');\">"); //$NON-NLS-1$
-		out.println("</body>"); //$NON-NLS-1$
-		out.println("</html>"); //$NON-NLS-1$
 	}
 
 	private static boolean canAddUsers() {
@@ -177,15 +136,15 @@ public class OpenIdHelper {
 	 *            same {@link OpenidConsumer} as used in
 	 *            {@link #redirectToOpenIdProvider(HttpServletRequest, HttpServletResponse, OpenidConsumer)}
 	 * @throws IOException
+	 * @throws OpenIdException 
 	 */
-	public static void handleOpenIdReturnAndLogin(HttpServletRequest req, HttpServletResponse resp, OpenidConsumer consumer) throws IOException {
+	public static void handleOpenIdReturnAndLogin(HttpServletRequest req, HttpServletResponse resp, OpenidConsumer consumer) throws IOException, OpenIdException {
 		String redirect = req.getParameter(REDIRECT);
 		String op_return = req.getParameter(OP_RETURN);
 		if (Boolean.parseBoolean(op_return) && consumer != null) {
 			Identifier id = consumer.verifyResponse(req);
 			if (id == null || id.getIdentifier() == null || id.getIdentifier().equals("")) {
-				writeOpenIdError("Authentication response is not sufficient", req, resp);
-				return;
+				throw new OpenIdException("Authentication response is not sufficient");
 			}
 			Set<User> users = userAdmin.getUsersByProperty("openid", ".*\\Q" + id.getIdentifier() + "\\E.*", true);
 			User user;
@@ -197,8 +156,7 @@ public class OpenIdHelper {
 				newUser.addProperty("openid", id.getIdentifier());
 				user = userAdmin.createUser(newUser);
 			} else {
-				writeOpenIdError("Your authentication was successful but you are not authorized to access Orion. Contact administrator to create an Orion account.", req, resp);
-				return;
+				throw new OpenIdException("Your authentication was successful but you are not authorized to access Orion. Contact administrator to create an Orion account.");
 			}
 
 			req.getSession().setAttribute("user", user.getUid()); //$NON-NLS-1$
@@ -222,13 +180,12 @@ public class OpenIdHelper {
 		}
 	}
 
-	public static void handleOpenIdReturn(HttpServletRequest req, HttpServletResponse resp, OpenidConsumer consumer) throws IOException {
+	public static void handleOpenIdReturn(HttpServletRequest req, HttpServletResponse resp, OpenidConsumer consumer) throws IOException, OpenIdException {
 		String op_return = req.getParameter(OP_RETURN);
 		if (Boolean.parseBoolean(op_return) && consumer != null) {
 			Identifier id = consumer.verifyResponse(req);
 			if (id == null || id.getIdentifier() == null || id.getIdentifier().equals("")) {
-				writeOpenIdError("Authentication response is not sufficient", req, resp);
-				return;
+				throw new OpenIdException("Authentication response is not sufficient");
 			}
 
 			PrintWriter out = resp.getWriter();
