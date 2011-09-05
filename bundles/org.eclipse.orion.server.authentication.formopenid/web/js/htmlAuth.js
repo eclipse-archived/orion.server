@@ -7,6 +7,32 @@
  * Contributors: IBM Corporation - initial API and implementation
  ******************************************************************************/
 
+window.onload = function() {
+	
+	var mypostrequest = new XMLHttpRequest();
+	mypostrequest.onreadystatechange = function() {
+		if (mypostrequest.readyState == 4) {
+			if (mypostrequest.status === 200) {
+				var responseObject = JSON.parse(mypostrequest.responseText);
+				
+				if(responseObject.CanAddUsers===false){
+					document.getElementById("newUserHeader").style.display = 'none';
+					document.getElementById("newUserHr").style.display = 'none';
+				}
+				
+			}
+		}
+	};
+	
+	
+	mypostrequest.open("POST", "/login/canaddusers", true);
+	mypostrequest.setRequestHeader("Content-type",
+			"application/x-www-form-urlencoded");
+	mypostrequest.setRequestHeader("Orion-Version", "1");
+	mypostrequest.send();
+	
+}
+
 function confirmOpenId(openid) {
 	/* don't wait for the login response, notify anyway */
 	notify = true;

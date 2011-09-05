@@ -36,6 +36,20 @@ public class LoginServlet extends HttpServlet {
 
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		
+		String pathInfo = req.getPathInfo() == null ? "" : req.getPathInfo(); //$NON-NLS-1$
+		
+		if(pathInfo.startsWith("/canaddusers")){
+			JSONObject jsonResp = new JSONObject();
+			try {
+				jsonResp.put("CanAddUsers", FormAuthHelper.canAddUsers());
+			} catch (JSONException e) {
+			}
+			resp.getWriter().print(jsonResp);
+			resp.setContentType("application/json");
+			return;
+		}
+		
 
 		if (req.getParameter("login") == null && FormAuthHelper.getAuthenticatedUser(req) != null) {
 			FormAuthHelper.writeLoginResponse(FormAuthHelper.getAuthenticatedUser(req), resp);

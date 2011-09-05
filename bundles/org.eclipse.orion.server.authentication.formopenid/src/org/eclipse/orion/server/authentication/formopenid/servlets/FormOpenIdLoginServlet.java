@@ -128,6 +128,17 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 				return;
 			}
 		}
+		
+		if(pathInfo.startsWith("/canaddusers")){
+			JSONObject jsonResp = new JSONObject();
+			try {
+				jsonResp.put("CanAddUsers", FormAuthHelper.canAddUsers());
+			} catch (JSONException e) {
+			}
+			resp.getWriter().print(jsonResp);
+			resp.setContentType("application/json");
+			return;
+		}
 
 		String user;
 		if ((user = authenticationService.getAuthenticatedUser(req, resp, authenticationService.getDefaultAuthenticationProperties())) != null) {
