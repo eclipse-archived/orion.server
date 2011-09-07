@@ -22,10 +22,13 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.ListBranchCommand.ListMode;
+import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.api.RebaseCommand.Operation;
 import org.eclipse.jgit.api.errors.*;
 import org.eclipse.jgit.errors.AmbiguousObjectException;
+import org.eclipse.jgit.errors.CheckoutConflictException;
 import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.merge.ResolveMerger.MergeFailureReason;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepository;
@@ -332,6 +335,8 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			MergeResult mergeResult = git.merge().include(objectId).call();
 			JSONObject result = new JSONObject();
 			result.put(GitConstants.KEY_RESULT, mergeResult.getMergeStatus().name());
+			if (mergeResult.getFailingPaths() != null && !mergeResult.getFailingPaths().isEmpty())
+				result.put(GitConstants.KEY_FAILING_PATHS, mergeResult.getFailingPaths());
 			OrionServlet.writeJSONResponse(request, response, result);
 			return true;
 		} catch (IOException e) {
@@ -339,8 +344,29 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		} catch (GitAPIException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when merging.", e));
 		} catch (JGitInternalException e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when merging.", e.getCause()));
+			return workaroundBug356918(request, response, e);
 		}
+	}
+
+	private boolean workaroundBug356918(HttpServletRequest request, HttpServletResponse response, Exception e) throws ServletException, JSONException {
+		if (e.getCause() instanceof CheckoutConflictException) {
+			JSONObject result = new JSONObject();
+			result.put(GitConstants.KEY_RESULT, MergeStatus.FAILED.name());
+			Map<String, MergeFailureReason> failingPaths = new HashMap<String, MergeFailureReason>();
+			String[] files = e.getMessage().split("\n"); //$NON-NLS-1$
+			for (int i = 1; i < files.length; i++) {
+				// TODO: this is not always true, but it's a temporary workaround
+				failingPaths.put(files[i], MergeFailureReason.DIRTY_WORKTREE);
+			}
+			result.put(GitConstants.KEY_FAILING_PATHS, failingPaths);
+			try {
+				OrionServlet.writeJSONResponse(request, response, result);
+				return true;
+			} catch (IOException e1) {
+				e = e1;
+			}
+		}
+		return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when merging.", e.getCause()));
 	}
 
 	private boolean rebase(HttpServletRequest request, HttpServletResponse response, Repository db, String commitToRebase, String rebaseOperation) throws ServletException, JSONException, AmbiguousObjectException, IOException {

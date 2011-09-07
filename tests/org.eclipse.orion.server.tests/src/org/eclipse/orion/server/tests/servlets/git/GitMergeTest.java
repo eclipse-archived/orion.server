@@ -26,6 +26,7 @@ import org.eclipse.jgit.api.MergeResult;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.merge.ResolveMerger.MergeFailureReason;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
@@ -235,7 +236,7 @@ public class GitMergeTest extends GitTest {
 		// checkout 'master'
 		checkoutBranch(cloneLocation, Constants.MASTER);
 
-		// modify a different file on master
+		// modify the same file on master
 		modifyFile(testTxt, "change in master");
 
 		gitSection = project.getJSONObject(GitConstants.KEY_GIT);
@@ -277,6 +278,121 @@ public class GitMergeTest extends GitTest {
 		// assertEquals(">>>>>>> c5ddb0e22e7e829683bb3b336ca6cb24a1b5bb2e", responseLines[4]);
 
 		// TODO: check commits, bug 340051
+	}
+
+	@Test
+	public void testMergeIntoLocalFailedDirtyWorkTree() throws Exception {
+		// clone a repo
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		clone(clonePath);
+
+		// get project metadata
+		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		project = new JSONObject(response.getText());
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
+		String gitRemoteUri = gitSection.getString(GitConstants.KEY_REMOTE);
+
+		// add a parallel commit in secondary clone and push it to the remote
+		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
+		IPath clonePath2 = new Path("file").append(project2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		clone(clonePath2);
+
+		// get project2 metadata
+		request = getGetFilesRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		project2 = new JSONObject(response.getText());
+		JSONObject gitSection2 = project2.getJSONObject(GitConstants.KEY_GIT);
+		String gitRemoteUri2 = gitSection2.getString(GitConstants.KEY_REMOTE);
+
+		JSONObject testTxt = getChild(project2, "test.txt");
+		modifyFile(testTxt, "change in secondary");
+		addFile(testTxt);
+		commitFile(testTxt, "commit on branch", false);
+
+		ServerStatus pushStatus = push(gitRemoteUri2, 1, 0, Constants.MASTER, Constants.HEAD, false);
+		assertEquals(true, pushStatus.isOK());
+
+		// modify on master and try to merge
+		testTxt = getChild(project, "test.txt");
+		modifyFile(testTxt, "dirty");
+
+		JSONObject masterDetails = getRemoteBranch(gitRemoteUri, 1, 0, Constants.MASTER);
+		String masterLocation = masterDetails.getString(ProtocolConstants.KEY_LOCATION);
+		fetch(masterLocation);
+		JSONObject merge = merge(gitHeadUri, Constants.DEFAULT_REMOTE_NAME + "/" + Constants.MASTER);
+
+		MergeStatus mergeResult = MergeStatus.valueOf(merge.getString(GitConstants.KEY_RESULT));
+		assertEquals(MergeStatus.FAILED, mergeResult);
+		JSONObject failingPaths = merge.getJSONObject(GitConstants.KEY_FAILING_PATHS);
+		assertEquals(1, failingPaths.length());
+		assertEquals(MergeFailureReason.DIRTY_WORKTREE, MergeFailureReason.valueOf(failingPaths.getString("test.txt")));
+	}
+
+	@Test
+	public void testMergeFailedDirtyWorkTree() throws Exception {
+		// clone a repo
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		JSONObject clone = clone(clonePath);
+		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
+		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
+
+		// get project metadata
+		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		project = new JSONObject(response.getText());
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+
+		final String branch = "branch";
+
+		branch(branchesLocation, branch);
+		checkoutBranch(cloneLocation, branch);
+
+		// create commit on branch
+		JSONObject testTxt = getChild(project, "test.txt");
+		modifyFile(testTxt, "change in a");
+		addFile(testTxt);
+		commitFile(testTxt, "commit on branch", false);
+
+		// assert clean
+		gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
+		assertStatus(StatusResult.CLEAN, gitStatusUri);
+
+		// checkout 'master'
+		checkoutBranch(cloneLocation, Constants.MASTER);
+
+		// modify the same file on master
+		modifyFile(testTxt, "change in master");
+
+		gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+		gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
+		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
+
+		addFile(testTxt);
+		commitFile(testTxt, "commit on master", false);
+
+		// modify again
+		modifyFile(testTxt, "change in the working dir");
+
+		// assert clean
+		assertStatus(new StatusResult().setModified(1), gitStatusUri);
+
+		// merge: "git merge branch"
+		JSONObject merge = merge(gitHeadUri, branch);
+		MergeStatus mergeResult = MergeStatus.valueOf(merge.getString(GitConstants.KEY_RESULT));
+		assertEquals(MergeStatus.FAILED, mergeResult);
+		JSONObject failingPaths = merge.getJSONObject(GitConstants.KEY_FAILING_PATHS);
+		assertEquals(1, failingPaths.length());
+		assertEquals(MergeFailureReason.DIRTY_WORKTREE, MergeFailureReason.valueOf(failingPaths.getString("test.txt")));
 	}
 
 	@Test
