@@ -22,4 +22,4 @@ for /F "tokens=2" %%I in ('TASKLIST /NH /FI "Imagename eq orion.exe"') do set OR
 "c:\java\jdk1.6.0_20\jre\bin\java" -Xmx500m -jar %WORKSPACE%/org.eclipse.releng.basebuilder/plugins/org.eclipse.equinox.launcher.jar -Dworkspace=%WORKSPACE% -DbuildZip=%buildZip%  -Djava.home=%java.home% -application org.eclipse.ant.core.antRunner -f %WORKSPACE%/releng/org.eclipse.orion.releng/builder/scripts/runTests.xml hudsonJsTests
 
 
-taskkill /PID /F /T %ORION_PID%
+taskkill /F /T /PID %ORION_PID%
