@@ -17,39 +17,15 @@ img.closeLoginWindow:hover {
 	opacity: 1;
 }
 
-div.loginWindowToolbar{
-	clear: both;
-	padding: 8px;
-    background-color: #FFFFFF;
-    background-image: url("/images/titleBar.png");
-    background-position: left top;
-    background-repeat: repeat-x;
-    border-bottom-color: #BFBFBF;
-    border-bottom-style: none;
-    border-bottom-width: 1px;
-    border-left-color-ltr-source: physical;
-    border-left-color-rtl-source: physical;
-    border-left-color-value: #BFBFBF;
-    border-left-style-ltr-source: physical;
-    border-left-style-rtl-source: physical;
-    border-left-style-value: none;
-    border-left-width-ltr-source: physical;
-    border-left-width-rtl-source: physical;
-    border-left-width-value: 1px;
-    border-right-color-ltr-source: physical;
-    border-right-color-rtl-source: physical;
-    border-right-color-value: #BFBFBF;
-    border-right-style-ltr-source: physical;
-    border-right-style-rtl-source: physical;
-    border-right-style-value: none;
-    border-right-width-ltr-source: physical;
-    border-right-width-rtl-source: physical;
-    border-right-width-value: 1px;
-    border-top-color: #BFBFBF;
-    border-top-style: none;
-    border-top-width: 1px;
-    color: #6D6D6D;
-    min-height: 20px;
+.pageTitle {
+    color: #666666;
+    font-size: 12pt;
+    vertical-align: top;
+}
+
+html, body {
+    font: 9pt Arial,Helvetica,Myriad,Tahoma,clean,sans-serif;
+    background: none repeat scroll 0 0 #EDEDED;
 }
 
 div.loginWindowHeader{
@@ -57,7 +33,6 @@ div.loginWindowHeader{
 }
 h2.loginWindowHeader{
 	margin-top: 0px;
-	font-family: Verdana, Arial, Helvetica, sans-serif;
 	color: #888;
 	font-size: 1.2em;
 }
@@ -81,7 +56,6 @@ h2.loginWindowHeader{
 
 #loginWindowMask {
 	position: absolute;
-	background-color: #fff;
 	filter: alpha(opacity =   50);
 	opacity: 0.5;
 	border: 0px;
@@ -93,20 +67,25 @@ h2.loginWindowHeader{
 	left: 0px;
 }
 
-.loginWindow {
-	font-family: Verdana, Arial, Helvetica, sans-serif;
-	color: #131313;
+input {
+    background: #FFFFFF;
+    border: 1px solid #D3D3D3;
 }
 
+
 div.loginWindow {
-	border: 0px;
-	background-color: #fff;
-	padding: 0px;
+	position: absolute;
+	left: 50%;
+	margin-left: -200px;
+	width: 400px;
+	border: 1px solid #D3D3D3;
+	padding: 20px;
 	z-index: 1000;
+	margin-top: 30px;
+	background-color: #FFF;
 }
 
 h2.loginWindowStores {
-	font-family: Verdana, Arial, Helvetica, sans-serif;
 	color: #888;
 	margin-top: 10px;
 	margin-bottom: 10px;
@@ -115,7 +94,6 @@ h2.loginWindowStores {
 }
 
 a.loginWindowStores:link, a.loginWindowStores:VISITED {
-	font-family: Verdana, Arial, Helvetica, sans-serif;
 	color: #888;
 	margin-top: 10px;
 	margin-bottom: 10px;
@@ -124,7 +102,6 @@ a.loginWindowStores:link, a.loginWindowStores:VISITED {
 }
 
 a.loginWindowStores:hover, a.loginWindowStores:active {
-	font-family: Verdana, Arial, Helvetica, sans-serif;
 	color: #444;
 	margin-top: 10px;
 	margin-bottom: 10px;
@@ -133,15 +110,14 @@ a.loginWindowStores:hover, a.loginWindowStores:active {
 }
 
 h3.loginWindow {
-	font-family: Verdana, Arial, Helvetica, sans-serif;
-	color: #888;
-	margin: 0px;
-	font-size: 0.9em;
-	max-width: 30em;
+	margin-left: 20px;
+    color: #666666;
+    font-size: 1.2em;
+    font-weight: bold;
+    vertical-align: middle;
 }
 
 h3.loginWindowCreate {
-	font-family: Verdana, Arial, Helvetica, sans-serif;
 	color: #888;
 	margin-top: 0px;
 	margin-right: 0px;
@@ -155,16 +131,17 @@ h3.loginWindowCreate {
 button.loginWindow {
 	border: none;
 	padding: 0.1em 0.2em 0.2em 0.2em;
-	background: #EEE;
+	background: none;
 	font-size: 12px;
 	text-align: center;
+	cursor: pointer;
 }
 
 button.loginWindow:hover {
 	border: none;
 	padding: 0.1em 0.2em 0.2em 0.2em;
-	background: #bcd5f0 url("/mixloginstatic/images/buttonHover.png")
-		repeat-x top left;
+	background: none;
+	text-decoration: underline;
 	font-size: 12px;
 	text-align: right;
 }
