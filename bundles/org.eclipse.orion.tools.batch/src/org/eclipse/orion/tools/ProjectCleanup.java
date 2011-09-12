@@ -20,7 +20,6 @@ public class ProjectCleanup {
 	private static final String METADATA_DIR = ".metadata/.plugins/org.eclipse.orion.server.core/.settings/";
 	private static final String PROJECT_PREFS = METADATA_DIR + "Projects.prefs";
 	private static final String WORKSPACE_PREFS = METADATA_DIR + "Workspaces.prefs";
-	private boolean computeSize = false;
 	private boolean help = false;
 	private boolean purge = false;
 
@@ -33,10 +32,19 @@ public class ProjectCleanup {
 	}
 
 	/**
-	 * Returns the recursive size of a project location.
+	 * Returns the recursive size of a file system location.
 	 */
-	private int computeSize(File projectLocation, int i) {
-		return 0;
+	private long computeSize(File file) {
+		long size = 0;
+		if (file.isDirectory()) {
+			File[] children = file.listFiles();
+			if (children != null)
+				for (File child : children)
+					size += computeSize(child);
+		} else {
+			size += file.length();
+		}
+		return size;
 	}
 
 	/**
@@ -44,28 +52,112 @@ public class ProjectCleanup {
 	 * @return <code>true</code> if the files were deleted, and <code>false</code> otherwise.
 	 */
 	private boolean deleteFiles(File location) {
-		return false;
-		//		File[] children = location.listFiles();
-		//		if (children != null)
-		//			for (File child : children)
-		//				deleteFiles(child);
-		//		return location.delete();
+		File[] children = location.listFiles();
+		if (children != null)
+			for (File child : children)
+				deleteFiles(child);
+		//this will fail if any child deletion failed
+		return location.delete();
+	}
 
+	/**
+	 * Remove all metadata for deleted projects from the project metadata properties file.
+	 */
+	private boolean deleteProjectMetadata(Set<String> deletedProjects) throws IOException {
+		Properties projects = new Properties();
+		BufferedInputStream inStream = new BufferedInputStream(new FileInputStream(new File(PROJECT_PREFS)));
+		try {
+			projects.load(inStream);
+		} finally {
+			safeClose(inStream);
+		}
+		for (Iterator<Object> it = projects.keySet().iterator(); it.hasNext();) {
+			//each entry is of the form <projectId>/<attributeKey>
+			String key = (String) it.next();
+			String[] splits = key.split("/");
+			if (splits.length == 2) {
+				String projectId = splits[0];
+				if (deletedProjects.contains(projectId))
+					it.remove();
+			}
+		}
+		BufferedOutputStream outStream = new BufferedOutputStream(new FileOutputStream(PROJECT_PREFS));
+		try {
+			projects.store(outStream, null);
+		} finally {
+			safeClose(outStream);
+		}
+		return true;
 	}
 
 	/**
 	 * Returns a set of all known projects.
 	 */
-	private Set<String> findAllProjects() throws IOException {
-		Set<String> allProjects = new HashSet<String>();
+	private Map<String, ProjectInfo> findAllProjects() throws IOException {
+		Map<String, ProjectInfo> allProjects = findProjectsInMetadata();
+		findProjectsInContentLocation(allProjects);
+		return allProjects;
+	}
+
+	/**
+	 * Finds all projects by scanning the default project content location.
+	 */
+	private void findProjectsInContentLocation(Map<String, ProjectInfo> allProjects) {
+		File root = new File("").getAbsoluteFile();
+		//first level is abbreviated user name
+		File[] shortNames = root.listFiles();
+		if (shortNames == null)
+			return;
+		for (File shortName : shortNames) {
+			if (".metadata".equals(shortName.getName()))
+				continue;
+			//second level is full user name
+			File[] userNames = shortName.listFiles();
+			if (userNames == null)
+				continue;
+			for (File user : userNames) {
+				//third level is project id
+				File[] projects = user.listFiles();
+				if (projects == null)
+					continue;
+				//add an entry for each project using file name as project id
+				for (File project : projects) {
+					String id = project.getName();
+					if (".metadata".equals(id))
+						continue;
+					ProjectInfo info = new ProjectInfo(id);
+					info.setLocation(project);
+					allProjects.put(id, info);
+				}
+			}
+		}
+	}
+
+	private Map<String, ProjectInfo> findProjectsInMetadata() throws IOException, FileNotFoundException {
+		Map<String, ProjectInfo> allProjects = new HashMap<String, ProjectInfo>();
 		Properties projects = new Properties();
 		projects.load(new BufferedInputStream(new FileInputStream(new File(PROJECT_PREFS))));
 		for (Object key : projects.keySet()) {
+			//each entry is of the form <projectId>/<attributeKey>
 			String keyString = (String) key;
 			String[] splits = keyString.split("/");
 			if (splits.length == 2) {
 				String id = splits[0];
-				allProjects.add(id);
+				ProjectInfo info = allProjects.get(id);
+				if (info == null) {
+					info = new ProjectInfo(id);
+					allProjects.put(id, info);
+				}
+				if ("ContentLocation".equals(splits[1])) {
+					File location;
+					String locationString = projects.getProperty(keyString);
+					if (locationString.startsWith("file:")) {
+						location = new File(locationString.substring(5));
+					} else {
+						location = new File(locationString).getAbsoluteFile();
+					}
+					info.setLocation(location);
+				}
 			}
 		}
 		return allProjects;
@@ -98,20 +190,24 @@ public class ProjectCleanup {
 		return markSet;
 	}
 
+	/**
+	 * Parse the project cleanup application command line arguments.
+	 */
 	private void parseArgs(String[] arguments) {
 		for (String arg : arguments) {
 			if ("-purge".equals(arg))
 				purge = true;
-			else if ("-size".equals(arg))
-				computeSize = true;
 			else if ("-help".equals(arg) || "-?".equals(arg))
 				help = true;
 		}
 	}
 
+	/**
+	 * Executes the project cleanup utility.
+	 */
 	public void run() {
 		if (help) {
-			System.out.println("Usage: ProjectCleanup [-help] [-size] [-purge]");
+			System.out.println("Usage: ProjectCleanup [-help] [-purge]");
 			return;
 		}
 		try {
@@ -124,30 +220,51 @@ public class ProjectCleanup {
 	}
 
 	/**
+	 * Close a stream, suppressing any secondary exception.
+	 */
+	private void safeClose(Closeable stream) {
+		try {
+			stream.close();
+		} catch (IOException e) {
+			//ignore
+		}
+	}
+
+	/**
 	 * List and/or delete projects that are not in user workspaces.
 	 */
 	private void sweepProjects(Set<String> markSet) throws IOException {
-		Set<String> allProjects = findAllProjects();
-		System.out.println("Mark set: " + markSet);
+		Map<String, ProjectInfo> allProjects = findAllProjects();
+		System.out.println("Used projects: " + markSet);
 		System.out.println("All projects: " + allProjects);
 		Set<String> deletedProjects = new HashSet<String>();
-		for (String project : allProjects) {
-			if (!markSet.contains(project)) {
-				File projectLocation = new File(project).getAbsoluteFile();
-				System.out.print("Found unused project: " + projectLocation);
-				if (computeSize) {
-					int size = computeSize(projectLocation, 0);
-					System.out.print(" size: " + size + " bytes");
+		long totalSize = 0;
+		for (ProjectInfo project : allProjects.values()) {
+			if (!markSet.contains(project.getId())) {
+				File projectLocation = project.getLocation();
+				System.out.println("Found unused project: " + project.getId() + " Location: " + projectLocation);
+				if (projectLocation == null || !projectLocation.exists()) {
+					System.out.println("\tNot found on disk");
+					deletedProjects.add(project.getId());
+					continue;
 				}
+				long size = computeSize(projectLocation) / 1024L;
+				totalSize += size;
+				System.out.println("\tSize: " + size + "KB");
 				if (purge) {
-					System.out.print(" Deleting... ");
+					System.out.print("\tDeleting files... ");
 					boolean success = deleteFiles(projectLocation);
-					System.out.print(success ? "Failed!" : "Done!");
-					deletedProjects.add(project);
+					System.out.println(success ? "Done!" : "Failed!");
+					if (success)
+						deletedProjects.add(project.getId());
 				}
-				//start a new line for the next project
-				System.out.println();
 			}
 		}
+		if (purge && !deletedProjects.isEmpty()) {
+			System.out.print("Deleting metadata for removed projects...");
+			boolean success = deleteProjectMetadata(deletedProjects);
+			System.out.println(success ? "Done!" : "Failed!");
+		}
+		System.out.println("Total unused projects: " + totalSize + "KB");
 	}
 }
