@@ -125,7 +125,11 @@ function getRedirect(){
 	  return results == null ? null : results[1];
 }
 
-function confirmLogin() {
+function confirmLogin(login, password) {
+	if(!login){
+		login = document.getElementById('login').value;
+		password = document.getElementById('password').value;
+	}
 	var mypostrequest = new XMLHttpRequest();
 	mypostrequest.onreadystatechange = function() {
 		if (mypostrequest.readyState == 4) {
@@ -145,9 +149,8 @@ function confirmLogin() {
 			}
 		}
 	};
-	var login = encodeURIComponent(document.getElementById("login").value)
-	var password = encodeURIComponent(document.getElementById("password").value)
-	var parameters = "login=" + login + "&password=" + password;
+
+	var parameters = "login=" + encodeURIComponent(login) + "&password=" + encodeURIComponent(password);
 	mypostrequest.open("POST", "/login/form", true);
 	mypostrequest.setRequestHeader("Content-type",
 			"application/x-www-form-urlencoded");
@@ -156,40 +159,38 @@ function confirmLogin() {
 }
 
 function goToCreateUser(){
-	var redirect = getRedirect();
-	if(redirect!=null){
-		window.location = "/mixloginstatic/CreateUserWindow.html?redirect="+redirect;
-	}else{
-		window.location = "/mixloginstatic/CreateUserWindow.html";
-	}
+	document.getElementById("createUserForm").style.display="";
+	document.getElementById("newUserHeaderShown").style.display="";
+	document.getElementById("newUserHeader").style.display="none";
+
 }
 
 function goToLoginWindow(){
-	var redirect = getRedirect();
-	if(redirect!=null){
-		window.location = "/mixloginstatic/LoginWindow.html?redirect="+redirect;
-	}else{
-		window.location = "/mixloginstatic/LoginWindow.html";
-	}
+	document.getElementById("createUserForm").style.display="none";
+	document.getElementById("newUserHeaderShown").style.display="none";
+	document.getElementById("newUserHeader").style.display="";
 }
 
 function confirmCreateUser() {
+	if(!validatePassword()){
+		return;
+	}
 	var mypostrequest = new XMLHttpRequest();
+	var login = document.getElementById("create_login").value;
+	var password = document.getElementById("create_password").value;
 	mypostrequest.onreadystatechange = function() {
 		if (mypostrequest.readyState == 4) {
 			if (mypostrequest.status != 200
 					&& window.location.href.indexOf("http") != -1) {
 				responseObject = JSON.parse(mypostrequest.responseText);
-				document.getElementById("errorMessage").innerHTML = responseObject.Message;
-				document.getElementById("errorWin").style.visibility = '';
+				document.getElementById("create_errorMessage").innerHTML = responseObject.Message;
+				document.getElementById("create_errorWin").style.visibility = '';
 			} else {
-				confirmLogin();
+				confirmLogin(login, password);
 			}
 		}
 	};
-	var login = encodeURIComponent(document.getElementById("login").value)
-	var password = encodeURIComponent(document.getElementById("password").value)
-	var parameters = "login=" + login + "&password=" + password;
+	var parameters = "login=" + encodeURIComponent(login) + "&password=" + encodeURIComponent(password);
 	mypostrequest.open("POST", "/users", true);
 	mypostrequest.setRequestHeader("Content-type",
 			"application/x-www-form-urlencoded");
@@ -198,13 +199,13 @@ function confirmCreateUser() {
 }
 
 function validatePassword() {
-	if (document.getElementById("password").value !== document
-			.getElementById("passwordRetype").value) {
-		document.getElementById("errorWin").style.visibility = '';
-		document.getElementById("errorMessage").innerHTML = "Passwords don't match!";
+	if (document.getElementById("create_password").value !== document
+			.getElementById("create_passwordRetype").value) {
+		document.getElementById("create_errorWin").style.visibility = '';
+		document.getElementById("create_errorMessage").innerHTML = "Passwords don't match!";
 		return false;
 	}
-	document.getElementById("errorWin").style.visibility = 'hidden';
-	document.getElementById("errorMessage").innerHTML = "&nbsp;";
+	document.getElementById("create_errorWin").style.visibility = 'hidden';
+	document.getElementById("create_errorMessage").innerHTML = "&nbsp;";
 	return true;
 }

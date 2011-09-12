@@ -289,15 +289,15 @@ publish () {
 	echo "[`date +%H\:%M\:%S`] Publishing to eclipse.org"
 	pushd $buildDirectory/$buildLabel
 
-	scp -r drop $user@dev.eclipse.org:/home/data/httpd/download.eclipse.org/orion/drops/$buildType$timestamp
+	scp -r drop $user@build.eclipse.org:/home/data/httpd/download.eclipse.org/orion/drops/$buildType$timestamp
 	wget -O index.html http://download.eclipse.org/orion/createIndex.php
-	scp index.html $user@dev.eclipse.org:/home/data/httpd/download.eclipse.org/orion
+	scp index.html $user@build.eclipse.org:/home/data/httpd/download.eclipse.org/orion
 	
 	if [ $buildType = I ]; then
-		scp -r $buildDirectory/plugins/org.eclipse.orion.doc.isv/jsdoc $user@dev.eclipse.org:/home/data/httpd/download.eclipse.org/orion
+		scp -r $buildDirectory/plugins/org.eclipse.orion.doc.isv/jsdoc $user@build.eclipse.org:/home/data/httpd/download.eclipse.org/orion
 	fi
 	
-	rsync --recursive --delete $writableBuildRoot/target/0.3-$buildType-builds $user@dev.eclipse.org:/home/data/httpd/download.eclipse.org/orion/updates
+	rsync --recursive --delete $writableBuildRoot/target/0.3-$buildType-builds $user@build.eclipse.org:/home/data/httpd/download.eclipse.org/orion/updates
 }
 
 cd $writableBuildRoot

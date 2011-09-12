@@ -12,11 +12,17 @@
 </style>
 <script type="text/javascript" src="/loginstatic/js/htmlAuth.js"></script>
 </head>
-<body>
+<body style="margin: 0; padding: 0;">
+<table style="border: 2px solid white; margin: 0; padding: 0; border-collapse: collapse; width: 100%;">
+<tbody>
+<tr style="background: none repeat scroll 0 0 #F5F5F5; border: 0 none; margin: 0; padding: 0;">
+<td style="padding-top: 12px; padding-bottom: 12px; padding-left: 8px; width: 148px"><img style="padding-left: 8px;" src="/images/orion.gif"></td>
+<td><span class="pageTitle">Login to Orion</span></td>
+</tr>
+<tr style="background: none repeat scroll 0 0 #404040; height: 2em; font-size: 0.9em;"><td colspan=2 style='font-size: 0.9em;'>&nbsp;</td></tr>
+</tbody>
+</table>
 	<div id="loginWindow" class="loginWindow">
-	
-		<h3 class="loginWindowCreate">Login to Orion</h3>
-
 		<div style="clear: left; margin: 8px;">
 			<table class="loginWindow">
 				<tbody>
@@ -24,7 +30,8 @@
 						<td class="loginWindow"><label class="loginWindow"
 							id=loginLabel for=login>Name:</label></td>
 						<td class="loginWindow"><input class="loginWindow" name=login
-							id=login tabindex=1><br>
+							id=login tabindex=1
+							onkeypress="var event = window.event ? window.event : event ? event : evt; if (event.keyCode === 13) { confirmLogin() } else {return true;}"><br>
 						</td>
 					</tr>
 					<tr>
@@ -32,15 +39,15 @@
 							id=passwordLabel for=password>Password:</label></td>
 						<td class="loginWindow"><input class="loginWindow"
 							name=password type=password id=password tabindex=2
-							onkeypress="var event = window.event ? window.event : event ? event : evt; if (event.keyCode === 13) { confirmLogin(); } else {return true;}"><br>
+							onkeypress="var event = window.event ? window.event : event ? event : evt; if (event.keyCode === 13) { confirmLogin() } else {return true;}"><br>
 						</td>
 					</tr>
 					<tr id="errorWin" style="visibility: hidden;">
-						<td colspan=2>
-							<ul id="loginError">
-								<li id="errorMessage">&nbsp;</li>
-							</ul>
-						</td>
+					<td colspan=2>
+						<ul id="loginError">
+							<li id="errorMessage">&nbsp;</li>
+						</ul>
+					</td>
 					</tr>
 					<tr>
 						<td class="loginWindow loginWindowButtonTd" colspan=2>
@@ -50,12 +57,59 @@
 					</tr>
 				</tbody>
 			</table>
-
 			<div id="newUserHr" class="hrloginWindow"></div>
 			<h3 id="newUserHeader" class="loginWindow">
 				New to Orion? <a class="loginWindow"
 					href="javascript:goToCreateUser();">Create account</a>
 			</h3>
+			<h3 class="loginWindow" id="newUserHeaderShown" style="display: none">Create Orion Account</h3>
+				<table id="createUserForm" class="loginWindow" style="display: none">
+				<tr>
+					<td class="loginWindow"><label class="loginWindow"
+						id=create_loginLabel for=login>Name:</label></td>
+					<td class="loginWindow"><input class="loginWindow" name=login
+						id=create_login
+						onkeyup="var event = window.event ? window.event : event ? event : evt; if (event.keyCode === 13) { confirmCreateUser(); } else {validatePassword();}"
+						tabindex=4><br>
+					</td>
+				</tr>
+				<tr>
+					<td class="loginWindow"><label class="loginWindow"
+						id=create_passwordLabel for=password>Password:</label></td>
+					<td class="loginWindow"><input class="loginWindow"
+						name=password type=password id=create_password
+						onkeyup="var event = window.event ? window.event : event ? event : evt; if (event.keyCode === 13) { confirmCreateUser(); } else {validatePassword();}"
+						tabindex=5><br></td>
+				</tr>
+
+				<tr>
+					<td class="loginWindow"><label class="loginWindow"
+						id=create_passwordLabel for=passwordRetype>Retype
+							password:</label>
+					</td>
+					<td class="loginWindow"><input class="loginWindow"
+						name=passwordRetype type=password id=create_passwordRetype tabindex=6
+						onkeyup="var event = window.event ? window.event : event ? event : evt; if (event.keyCode === 13) { confirmCreateUser(); } else {validatePassword();}"><br>
+					</td>
+				</tr>
+				<tr id="create_errorWin" style="visibility: hidden;">
+					<td colspan=2>
+						<ul id="loginError">
+							<li id="create_errorMessage">&nbsp;</li>
+						</ul>
+					</td>
+				</tr>
+				<tr>
+					<td class="loginWindow loginWindowButtonTd" colspan=2>
+						<button type='button' class="loginWindow"
+							onClick="javascript:goToLoginWindow();"
+							tabindex=7>Cancel</button>
+
+						<button class="loginWindow" type="submit"
+							onClick=confirmCreateUser() value=OK tabindex=8>Create</button>
+					</td>
+				</tr>
+			</table>
 		</div>
 	</div>
 </body>
