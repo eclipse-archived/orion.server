@@ -50,7 +50,7 @@ public class SearchServlet extends OrionServlet {
 		query.setParam(CommonParams.WT, "json"); //$NON-NLS-1$
 		query.setParam(CommonParams.FL, "Id,Name,Length,Directory,LastModified,Location"); //$NON-NLS-1$
 		query.setParam("hl", "true"); //$NON-NLS-1$ //$NON-NLS-2$
-		String queryString = ClientUtils.escapeQueryChars(req.getParameter(CommonParams.Q));
+		String queryString = req.getParameter(CommonParams.Q);
 		if (queryString.trim().length() > 0)
 			queryString += " AND "; //$NON-NLS-1$
 		queryString += ProtocolConstants.KEY_USER_NAME + ':' + ClientUtils.escapeQueryChars(req.getRemoteUser());
