@@ -40,6 +40,8 @@ window.onload = function() {
 	mypostrequest.setRequestHeader("Orion-Version", "1");
 	mypostrequest.send();
 	
+	
+	document.getElementById("login").focus();
 }
 
 function getParam(key){
