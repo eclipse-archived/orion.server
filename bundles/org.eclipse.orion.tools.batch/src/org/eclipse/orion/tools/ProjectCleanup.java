@@ -65,7 +65,8 @@ public class ProjectCleanup {
 	 */
 	private boolean deleteProjectMetadata(Set<String> deletedProjects) throws IOException {
 		Properties projects = new Properties();
-		BufferedInputStream inStream = new BufferedInputStream(new FileInputStream(new File(PROJECT_PREFS)));
+		File prefFile = new File(PROJECT_PREFS).getAbsoluteFile();
+		BufferedInputStream inStream = new BufferedInputStream(new FileInputStream(prefFile));
 		try {
 			projects.load(inStream);
 		} finally {
@@ -81,7 +82,7 @@ public class ProjectCleanup {
 					it.remove();
 			}
 		}
-		BufferedOutputStream outStream = new BufferedOutputStream(new FileOutputStream(PROJECT_PREFS));
+		BufferedOutputStream outStream = new BufferedOutputStream(new FileOutputStream(prefFile));
 		try {
 			projects.store(outStream, null);
 		} finally {
@@ -169,7 +170,8 @@ public class ProjectCleanup {
 	private Set<String> markProjects() throws FileNotFoundException, IOException {
 		Set<String> markSet = new HashSet<String>();
 		Properties props = new Properties();
-		props.load(new BufferedInputStream(new FileInputStream(new File(WORKSPACE_PREFS))));
+		File workspacePrefs = new File(WORKSPACE_PREFS).getAbsoluteFile();
+		props.load(new BufferedInputStream(new FileInputStream(workspacePrefs)));
 		Set<Object> keys = props.keySet();
 		for (Object key : keys) {
 			//keys are of form Id/Attribute
