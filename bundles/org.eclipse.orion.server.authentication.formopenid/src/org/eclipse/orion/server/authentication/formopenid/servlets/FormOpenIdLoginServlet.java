@@ -12,12 +12,10 @@ package org.eclipse.orion.server.authentication.formopenid.servlets;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.authentication.form.core.FormAuthHelper;
@@ -25,9 +23,7 @@ import org.eclipse.orion.server.authentication.formopenid.Activator;
 import org.eclipse.orion.server.authentication.formopenid.FormOpenIdAuthenticationService;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.resources.Base64;
-import org.eclipse.orion.server.openid.core.OpenIdException;
-import org.eclipse.orion.server.openid.core.OpenIdHelper;
-import org.eclipse.orion.server.openid.core.OpenidConsumer;
+import org.eclipse.orion.server.openid.core.*;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.orion.server.useradmin.UnsupportedUserStoreException;
 import org.json.JSONException;
@@ -99,7 +95,7 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 				try {
 					consumer = OpenIdHelper.redirectToOpenIdProvider(req, resp, consumer);
 				} catch (OpenIdException e) {
-					LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, "An error occured redirecting to OpenId provider", e));
+					LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, "An error occurred redirecting to OpenId provider", e));
 					displayError(e.getMessage(), req, resp);
 				}
 				return;
@@ -110,14 +106,13 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 				try {
 					OpenIdHelper.handleOpenIdReturnAndLogin(req, resp, consumer);
 				} catch (OpenIdException e) {
-					e.printStackTrace();//FIXME
 					displayError(e.getMessage(), req, resp);
 				}
 				return;
 			}
 		}
-		
-		if(pathInfo.startsWith("/canaddusers")){
+
+		if (pathInfo.startsWith("/canaddusers")) {
 			JSONObject jsonResp = new JSONObject();
 			try {
 				jsonResp.put("CanAddUsers", FormAuthHelper.canAddUsers());
@@ -139,8 +134,8 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 			return;
 		}
 	}
-	
-	private void displayError(String error, HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException{
+
+	private void displayError(String error, HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		// redirection from
 		// FormAuthenticationService.setNotAuthenticated
 		String versionString = req.getHeader("Orion-Version"); //$NON-NLS-1$
@@ -152,18 +147,18 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 
 		if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) { //$NON-NLS-1$
 			String url = "/mixloginstatic/LoginWindow.html";
-			if(req.getParameter("redirect")!=null){
-				url+="?redirect=" + req.getParameter("redirect");
+			if (req.getParameter("redirect") != null) {
+				url += "?redirect=" + req.getParameter("redirect");
 			}
-			
-			if(error==null){
-				error="Invalid login";				
+
+			if (error == null) {
+				error = "Invalid login";
 			}
-			url+=url.contains("?") ? "&" : "?";
-			url+= "error=" + new String(Base64.encode(error.getBytes()));
-			
+			url += url.contains("?") ? "&" : "?";
+			url += "error=" + new String(Base64.encode(error.getBytes()));
+
 			resp.sendRedirect(url);
-			
+
 		} else {
 			resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 			PrintWriter writer = resp.getWriter();
