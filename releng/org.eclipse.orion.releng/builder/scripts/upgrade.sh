@@ -25,15 +25,22 @@ do
         shift
 done
 
+if [ "$newBuildArchive" ]
+then
+        echo "Upgrading server using $newBuildArchive"
+else
+        echo 'Usage: update.sh -archive <archive-name>'
+        exit
+fi
 
 #take down the running eclipse
 echo Checking for running orion server
-if [ -e "$serverHome/test.pid" ];
+if [ -e "$serverHome/current.pid" ];
 then
-        runningPID=`cat $serverHome/test.pid`
+        runningPID=`cat $serverHome/current.pid`
         echo Killing Orion server instance $runningPID
         kill -15 $runningPID
-        rm $serverHome/test.pid
+        rm $serverHome/current.pid
 fi
 
 #back-up the current server using a folder based on date
@@ -51,15 +58,18 @@ popd
 
 #copy server workspace to new install
 echo Copying server workspace
-cp -r $serverHome/$oldBuildDir/serverworkspace $serverHome/eclipse/serverworkspace
+cp -r $serverHome/$oldBuildDir/serverworkspace $serverHome/eclipse/
 
 #increase heap size in ini
-sed -i 's/384m/1384m/g' $serverHome/eclipse/orion.ini
+sed -i 's/384m/800m/g' $serverHome/eclipse/orion.ini
+
+#copy orion.conf file into server
+cp $serverHome/orion.conf $serverHome/eclipse/orion.conf
 
 #start new server
 pushd $serverHome/eclipse
-#nohup ./orion &
+nohup ./orion &
 
-#pid_eclipse="$!"
-#echo $pid_eclipse > $serverHome/test.pid
+pid_eclipse="$!"
+echo $pid_eclipse > $serverHome/current.pid
 popd
