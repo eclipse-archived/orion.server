@@ -238,7 +238,7 @@ public class ProjectCleanup {
 	private void sweepProjects(Set<String> markSet) throws IOException {
 		Map<String, ProjectInfo> allProjects = findAllProjects();
 		System.out.println("Used projects: " + markSet);
-		System.out.println("All projects: " + allProjects);
+		System.out.println("All projects: " + allProjects.keySet());
 		Set<String> deletedProjects = new HashSet<String>();
 		long totalSize = 0;
 		for (ProjectInfo project : allProjects.values()) {
