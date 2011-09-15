@@ -67,6 +67,7 @@ public class OpenidServlet extends HttpServlet {
 	private static void writeOpenIdError(String error, HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		if (req.getParameter("redirect") == null) {
 			PrintWriter out = resp.getWriter();
+			resp.setContentType("text/html; charset=UTF-8");
 			out.println("<html><head></head>"); //$NON-NLS-1$
 			// TODO: send a message using
 			// window.eclipseMessage.postImmediate(otherWindow, message) from
@@ -80,6 +81,7 @@ public class OpenidServlet extends HttpServlet {
 			out.close();
 			return;
 		}
+		resp.setContentType("text/html; charset=UTF-8");
 		PrintWriter out = resp.getWriter();
 		out.println("<html><head></head>"); //$NON-NLS-1$
 		// TODO: send a message using
