@@ -52,6 +52,7 @@ public class ManageOpenidsServlet extends HttpServlet {
 
 	private static void writeOpenIdError(String error, HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		if (req.getParameter("redirect") == null) {
+			resp.setContentType("text/html; charset=UTF-8");
 			PrintWriter out = resp.getWriter();
 			out.println("<html><head></head>"); //$NON-NLS-1$
 			// TODO: send a message using
