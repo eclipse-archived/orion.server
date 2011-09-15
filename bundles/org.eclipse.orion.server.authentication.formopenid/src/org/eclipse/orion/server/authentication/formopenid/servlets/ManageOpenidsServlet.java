@@ -67,6 +67,7 @@ public class ManageOpenidsServlet extends HttpServlet {
 			out.close();
 			return;
 		}
+		resp.setContentType("text/html; charset=UTF-8");
 		PrintWriter out = resp.getWriter();
 		out.println("<html><head></head>"); //$NON-NLS-1$
 		// TODO: send a message using
