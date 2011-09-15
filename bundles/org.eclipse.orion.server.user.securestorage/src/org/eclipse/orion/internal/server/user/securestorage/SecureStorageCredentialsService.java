@@ -92,23 +92,30 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 	}
 
 	private void initStorage() {
+		
+		//add default roles
+		for (String role : new String[] {"admin", "user", "quest"}) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+			roles.put(role, new Role(role, org.osgi.service.useradmin.Role.ROLE));
+
 		// initialize the admin account
 		String adminDefaultPassword = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_ADMIN_DEFAULT_PASSWORD);
-		if (adminDefaultPassword != null && getUser(USER_UID, ADMIN_LOGIN_VALUE) == null) {
-			createUser(new User(ADMIN_LOGIN_VALUE, ADMIN_LOGIN_VALUE, ADMIN_NAME_VALUE, adminDefaultPassword));
+		User admin = getUser(USER_LOGIN, ADMIN_LOGIN_VALUE);
+		if (admin == null && adminDefaultPassword != null) {
+			admin = createUser(new User(ADMIN_LOGIN_VALUE, ADMIN_LOGIN_VALUE, ADMIN_NAME_VALUE, adminDefaultPassword));
+		}
+
+		if (admin == null) {
+			return;
 		}
 
 		// TODO: see bug 335699, the user storage should not configure authorization rules
 		// it should add Admin role, which will be used during authorization process
 		try {
-			AuthorizationService.addUserRight(ADMIN_LOGIN_VALUE, UserServlet.USERS_URI);
-			AuthorizationService.addUserRight(ADMIN_LOGIN_VALUE, UserServlet.USERS_URI + "/*"); //$NON-NLS-1$
+			AuthorizationService.addUserRight(admin.getUid(), UserServlet.USERS_URI);
+			AuthorizationService.addUserRight(admin.getUid(), UserServlet.USERS_URI + "/*"); //$NON-NLS-1$
 		} catch (CoreException e) {
 			LogHelper.log(e);
 		}
-		//add default roles
-		for (String role : new String[] {"admin", "user", "quest"}) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-			roles.put(role, new Role(role, org.osgi.service.useradmin.Role.ROLE));
 	}
 
 	private void initSecurePreferences() {
@@ -280,7 +287,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 			if (node != null)
 				return null;
 
-			String uid = nextUserId();
+			String uid = user.getUid()==null ? nextUserId() : user.getUid();
 
 			return internalCreateOrUpdateUser(storage.node(USERS + '/' + uid), user);
 
