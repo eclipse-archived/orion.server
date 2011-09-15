@@ -44,17 +44,19 @@
 			<dd>An object specifying what file types this service is applicable to. Currently the only supported attribute is <tt>Name</tt>, specifying a regular expression to match on the file name.</dd>
 		</dl>
 		<h2 id="Example_2">Example</h2>
-		<p>Here is a sample plug-in that contributes a link to a Google search for the selected file's name:</p>
+		<p>Here is a sample plug-in that associates the Orion editor with <code>.md</code> (Markdown) files:</p>
 		<pre>
+ var provider = new eclipse.PluginProvider();
  var serviceImpl = {};
  var serviceProperties = {
    name: "Orion web editor",
    href: "/edit/edit.html#${Location}",
-   validationProperties: {Name: "*.(css|js|htm|html|txt|xml|java)"}
+   validationProperties: {Name: "*.md"}
  };
  provider.registerServiceProvider("orion.navigate.openWith", serviceImpl, serviceProperties);
+ provider.connect();
 </pre>
-		<p>When this plug-in is installed, the user will see <tt>Orion web editor</tt> as an available target in the <b>Open With</b> Navigator menu as follows:</p>
+		<p>When this plug-in is installed, the user will see <tt>Orion web editor</tt> as an available target in the <b>Open With</b> Navigator menu beside <code>.md</code> files:</p>
 		<p>
 			<img border="0" src="images/Orion-file-openWith-example.png"/>
 		</p><hr/>

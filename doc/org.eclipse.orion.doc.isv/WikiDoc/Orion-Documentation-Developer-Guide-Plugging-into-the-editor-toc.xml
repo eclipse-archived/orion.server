@@ -21,5 +21,10 @@
 		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_editor/orion-edit-validator.html#Service_attributes_4" label="Service attributes"></topic>
 		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_editor/orion-edit-validator.html#Examples_4" label="Examples"></topic>
 	</topic>
+	<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_editor/orion-edit-outliner.html" label="orion.edit.outliner">
+		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_editor/orion-edit-outliner.html#Service_methods_5" label="Service methods"></topic>
+		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_editor/orion-edit-outliner.html#Service_attributes_5" label="Service attributes"></topic>
+		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_editor/orion-edit-outliner.html#Examples_5" label="Examples"></topic>
+	</topic>
 	<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_editor/Updating-this-document.html" label="Updating this document"></topic>
 </toc>
