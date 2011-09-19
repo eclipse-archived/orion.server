@@ -87,7 +87,7 @@ public abstract class GitJob extends Job {
 		return null;
 	}
 
-	public JSONObject addRepositoryInfo(JSONObject object) {
+	private JSONObject addRepositoryInfo(JSONObject object) {
 		try {
 			if (credentials != null) {
 				object.put(KEY_URL, credentials.getUri().toString());
@@ -117,7 +117,7 @@ public abstract class GitJob extends Job {
 		return object;
 	}
 
-	public IStatus getJGitInternalExceptionStatus(JGitInternalException e, String message) {
+	IStatus getJGitInternalExceptionStatus(JGitInternalException e, String message) {
 		JSchException jschEx = getJSchException(e);
 		if (jschEx != null && jschEx instanceof HostFingerprintException) {
 			HostFingerprintException cause = (HostFingerprintException) jschEx;
