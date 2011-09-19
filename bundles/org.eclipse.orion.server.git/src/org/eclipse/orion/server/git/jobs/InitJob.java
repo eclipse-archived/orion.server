@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.server.git.servlets;
+package org.eclipse.orion.server.git.jobs;
 
 import java.io.File;
 import org.eclipse.core.runtime.*;
@@ -19,6 +19,7 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.objects.Clone;
+import org.eclipse.orion.server.git.servlets.GitCloneHandlerV1;
 import org.eclipse.osgi.util.NLS;
 
 /**

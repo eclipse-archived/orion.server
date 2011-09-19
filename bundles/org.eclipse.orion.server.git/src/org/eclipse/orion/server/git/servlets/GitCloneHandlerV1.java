@@ -33,6 +33,8 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
+import org.eclipse.orion.server.git.jobs.CloneJob;
+import org.eclipse.orion.server.git.jobs.InitJob;
 import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
 import org.eclipse.orion.server.servlets.OrionServlet;
@@ -210,7 +212,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		}
 	}
 
-	static void doConfigureClone(Git git, String user) throws IOException, CoreException {
+	public static void doConfigureClone(Git git, String user) throws IOException, CoreException {
 		StoredConfig config = git.getRepository().getConfig();
 		IOrionUserProfileNode userNode = UserServiceHelper.getDefault().getUserProfileService().getUserProfileNode(user, true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
 		if (userNode.get(GitConstants.KEY_NAME, null) != null)
@@ -397,7 +399,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 	 * @return ServerStatus <code>OK</code> if the project has been found and successfully removed,
 	 * <code>ERROR</code> if an error occurred or the project couldn't be found
 	 */
-	static ServerStatus removeProject(String userName, WebProject webProject) {
+	public static ServerStatus removeProject(String userName, WebProject webProject) {
 		try {
 			WebUser webUser = WebUser.fromUserName(userName);
 			JSONArray workspacesJSON = webUser.getWorkspacesJSON();
