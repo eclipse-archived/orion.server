@@ -32,7 +32,6 @@ import org.eclipse.osgi.util.NLS;
  */
 public class FetchJob extends GitJob {
 
-	final TaskInfo task;
 	private IPath path;
 	private String remote;
 	private boolean force;
@@ -42,11 +41,11 @@ public class FetchJob extends GitJob {
 		// path: {remote}[/{branch}]/file/{...}
 		this.path = path;
 		this.remote = path.segment(0);
-		this.task = createTask();
 		this.force = force;
+		this.task = createTask();
 	}
 
-	private TaskInfo createTask() {
+	protected TaskInfo createTask() {
 		TaskInfo info = getTaskService().createTask();
 		info.setMessage(NLS.bind("Fetching {0}...", remote));
 		getTaskService().updateTask(info);
@@ -111,10 +110,6 @@ public class FetchJob extends GitJob {
 			return null;
 		else
 			return path.segment(1);
-	}
-
-	public TaskInfo getTask() {
-		return task;
 	}
 
 	@Override

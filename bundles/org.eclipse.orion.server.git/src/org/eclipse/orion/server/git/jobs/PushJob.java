@@ -36,7 +36,6 @@ import org.json.JSONException;
  */
 public class PushJob extends GitJob {
 
-	private final TaskInfo task;
 	private Path path;
 	private String srcRef;
 	private boolean tags;
@@ -47,11 +46,11 @@ public class PushJob extends GitJob {
 		this.path = path;
 		this.srcRef = srcRef;
 		this.tags = tags;
-		this.task = createTask();
 		this.force = force;
+		this.task = createTask();
 	}
 
-	private TaskInfo createTask() {
+	protected TaskInfo createTask() {
 		TaskInfo info = getTaskService().createTask();
 		info.setMessage(NLS.bind("Pushing {0}...", path.segment(0)));
 		getTaskService().updateTask(info);
@@ -102,10 +101,6 @@ public class PushJob extends GitJob {
 		else
 			// if there is no OK status in the set -> only UP_TO_DATE status is possible
 			return new Status(IStatus.WARNING, GitActivator.PI_GIT, RemoteRefUpdate.Status.UP_TO_DATE.name());
-	}
-
-	public TaskInfo getTask() {
-		return task;
 	}
 
 	@Override

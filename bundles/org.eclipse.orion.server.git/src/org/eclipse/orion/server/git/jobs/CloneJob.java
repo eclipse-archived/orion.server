@@ -36,7 +36,6 @@ public class CloneJob extends GitJob {
 
 	private final WebProject project;
 	private final Clone clone;
-	private final TaskInfo task;
 	private final String user;
 	private final String cloneLocation;
 
@@ -45,11 +44,11 @@ public class CloneJob extends GitJob {
 		this.clone = clone;
 		this.user = user;
 		this.cloneLocation = cloneLocation;
-		this.task = createTask();
 		this.project = project;
+		this.task = createTask();
 	}
 
-	private TaskInfo createTask() {
+	protected TaskInfo createTask() {
 		TaskInfo info = getTaskService().createTask();
 		info.setMessage(NLS.bind("Cloning {0}...", clone.getUrl()));
 		getTaskService().updateTask(info);
@@ -85,10 +84,6 @@ public class CloneJob extends GitJob {
 			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error cloning git repository", e);
 		}
 		return Status.OK_STATUS;
-	}
-
-	public TaskInfo getTask() {
-		return task;
 	}
 
 	@Override

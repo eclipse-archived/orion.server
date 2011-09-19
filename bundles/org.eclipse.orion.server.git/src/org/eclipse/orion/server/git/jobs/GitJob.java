@@ -40,6 +40,7 @@ public abstract class GitJob extends Job {
 
 	private ITaskService taskService;
 	private ServiceReference<ITaskService> taskServiceRef;
+	protected TaskInfo task;
 
 	ITaskService getTaskService() {
 		if (taskService == null) {
@@ -62,6 +63,12 @@ public abstract class GitJob extends Job {
 			GitActivator.getDefault().getBundleContext().ungetService(taskServiceRef);
 			taskServiceRef = null;
 		}
+	}
+
+	protected abstract TaskInfo createTask();
+
+	public TaskInfo getTask() {
+		return task;
 	}
 
 	protected void updateTask(TaskInfo task) {
@@ -153,7 +160,7 @@ public abstract class GitJob extends Job {
 	}
 
 	public GitJob(String name) {
-		super(name);
+		this(name, null);
 	}
 
 	/**
