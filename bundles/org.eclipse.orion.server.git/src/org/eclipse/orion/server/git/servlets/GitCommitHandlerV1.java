@@ -37,7 +37,9 @@ import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.*;
+import org.eclipse.orion.server.git.jobs.LogJob;
 import org.eclipse.orion.server.git.objects.Commit;
 import org.eclipse.orion.server.git.objects.Log;
 import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
@@ -221,23 +223,24 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			lc.addPath(pattern);
 		}
 
-		try {
-			Iterable<RevCommit> commits = lc.call();
-			URI baseLocation = getURI(request);
-			URI cloneLocation = BaseToCloneConverter.getCloneLocation(baseLocation, refIdsRange == null ? BaseToCloneConverter.COMMIT : BaseToCloneConverter.COMMIT_REFRANGE);
+		URI baseLocation = getURI(request);
+		URI cloneLocation = BaseToCloneConverter.getCloneLocation(baseLocation, refIdsRange == null ? BaseToCloneConverter.COMMIT : BaseToCloneConverter.COMMIT_REFRANGE);
+		Log log = new Log(cloneLocation, db, null /* collected by the job */, pattern, toRefId, fromRefId);
 
-			Log log = new Log(cloneLocation, db, commits, pattern, toRefId, fromRefId);
-			JSONObject result = log.toJSON(page, pageSize);
+		LogJob job = new LogJob(lc, log, page, pageSize, baseLocation);
+		job.schedule();
+		// TODO: wait for a sec, and if the job is done return the result, not 202
+		TaskInfo task = job.getTask();
+		JSONObject result = task.toJSON();
+		URI taskLocation = createTaskLocation(OrionServlet.getURI(request), task.getTaskId());
+		response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation.toString());
+		OrionServlet.writeJSONResponse(request, response, result);
+		response.setStatus(HttpServletResponse.SC_ACCEPTED);
+		return true;
+	}
 
-			OrionServlet.writeJSONResponse(request, response, result);
-			return true;
-		} catch (NoHeadException e) {
-			String msg = NLS.bind("No HEAD reference found when generating log for ref {0}", refIdsRange);
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
-		} catch (JGitInternalException e) {
-			String msg = NLS.bind("An internal error occured when generating log for ref {0}", refIdsRange);
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
-		}
+	private URI createTaskLocation(URI baseLocation, String taskId) throws URISyntaxException {
+		return new URI(baseLocation.getScheme(), baseLocation.getAuthority(), "/task/id/" + taskId, null, null); //$NON-NLS-1$
 	}
 
 	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws ServletException, NoFilepatternException, IOException, JSONException, CoreException, URISyntaxException {

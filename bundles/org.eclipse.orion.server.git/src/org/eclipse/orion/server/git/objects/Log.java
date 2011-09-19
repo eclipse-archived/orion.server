@@ -38,7 +38,14 @@ public class Log extends GitObject {
 		this.fromRefId = fromRefId;
 	}
 
+	public void setCommits(Iterable<RevCommit> commits) {
+		this.commits = commits;
+	}
+
 	public JSONObject toJSON(int page, int pageSize) throws JSONException, URISyntaxException, IOException, CoreException {
+		if (commits == null)
+			throw new IllegalStateException("'commits' is null");
+
 		Map<ObjectId, JSONArray> commitToBranchMap = getCommitToBranchMap(db);
 
 		JSONObject result = new JSONObject();

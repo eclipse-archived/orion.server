@@ -430,10 +430,7 @@ public class GitLogTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// get log for file
-		request = GitCommitTest.getGetGitCommitRequest(gitHeadUri, false);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject log = new JSONObject(response.getText());
+		JSONObject log = logObject(gitHeadUri);
 
 		String repositoryPath = log.getString(GitConstants.KEY_REPOSITORY_PATH);
 		assertEquals("", repositoryPath);
@@ -451,10 +448,7 @@ public class GitLogTest extends GitTest {
 		commit = commitsArray.getJSONObject(2);
 		assertEquals("Initial commit", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
 
-		request = GitCommitTest.getGetGitCommitRequest(folder.getJSONObject(GitConstants.KEY_GIT).getString(GitConstants.KEY_HEAD), false);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		log = new JSONObject(response.getText());
+		log = logObject(folder.getJSONObject(GitConstants.KEY_GIT).getString(GitConstants.KEY_HEAD));
 
 		repositoryPath = log.getString(GitConstants.KEY_REPOSITORY_PATH);
 		assertEquals("folder/", repositoryPath);
@@ -502,10 +496,7 @@ public class GitLogTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// get log for file
-		request = GitCommitTest.getGetGitCommitRequest(testTxt.getJSONObject(GitConstants.KEY_GIT).getString(GitConstants.KEY_HEAD), false);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject log = new JSONObject(response.getText());
+		JSONObject log = logObject(testTxt.getJSONObject(GitConstants.KEY_GIT).getString(GitConstants.KEY_HEAD));
 
 		String repositoryPath = log.getString(GitConstants.KEY_REPOSITORY_PATH);
 		assertEquals("test.txt", repositoryPath);
@@ -529,10 +520,8 @@ public class GitLogTest extends GitTest {
 		assertEquals("", parts[1]); // no diff between the commit and working tree
 
 		// check commit location
-		request = GitCommitTest.getGetGitCommitRequest(commit.getString(ProtocolConstants.KEY_LOCATION), false);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject jsonObject = new JSONObject(response.getText());
+		JSONObject jsonObject = logObject(commit.getString(ProtocolConstants.KEY_LOCATION));
+
 		assertEquals(log.getString(GitConstants.KEY_CLONE), jsonObject.getString(GitConstants.KEY_CLONE));
 		assertEquals(log.getString(GitConstants.KEY_REPOSITORY_PATH), jsonObject.getString(GitConstants.KEY_REPOSITORY_PATH));
 		assertNull(jsonObject.optString(GitConstants.KEY_LOG_TO_REF, null));
@@ -564,10 +553,7 @@ public class GitLogTest extends GitTest {
 		assertEquals(sb.toString(), parts[1]);
 
 		// check commit location
-		request = GitCommitTest.getGetGitCommitRequest(commit.getString(ProtocolConstants.KEY_LOCATION), false);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		jsonObject = new JSONObject(response.getText());
+		jsonObject = logObject(commit.getString(ProtocolConstants.KEY_LOCATION));
 		JSONObject log2 = log;
 		JSONArray commitsArray2 = log2.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 		commitsArray2.remove(0);
@@ -708,10 +694,7 @@ public class GitLogTest extends GitTest {
 			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
 			// git log for HEAD
-			request = GitCommitTest.getGetGitCommitRequest(gitHeadUri, false);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			JSONObject log = new JSONObject(response.getText());
+			JSONObject log = logObject(gitHeadUri);
 
 			// project contains only initial commit, so HEAD points to master branch
 			// information about master branch is expected
@@ -751,10 +734,7 @@ public class GitLogTest extends GitTest {
 
 			String logUri = gitHeadUri.replace(Constants.HEAD, Constants.HEAD + ".." + Constants.HEAD);
 			// git log for HEAD..HEAD
-			request = GitCommitTest.getGetGitCommitRequest(logUri, false);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			JSONObject log = new JSONObject(response.getText());
+			JSONObject log = logObject(logUri);
 
 			// project contains only initial commit, so HEAD points to master branch
 			// information about master branch is expected
@@ -812,10 +792,7 @@ public class GitLogTest extends GitTest {
 			String logUri = initCommitLocation.replace(initCommitName, initCommitName + ".." + initCommitName);
 			// git log for {initial commit}..{initial commit}
 			// both fromRef and toRef shouldn't exist, as commit ref doesn't point to a branch
-			request = GitCommitTest.getGetGitCommitRequest(logUri, false);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			JSONObject log = new JSONObject(response.getText());
+			JSONObject log = logObject(logUri);
 
 			JSONObject fromRef = log.optJSONObject(GitConstants.KEY_LOG_FROM_REF);
 			JSONObject toRef = log.optJSONObject(GitConstants.KEY_LOG_TO_REF);
