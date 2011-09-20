@@ -11,7 +11,6 @@
 #!/bin/bash
 #
 
-
 serverHome=/home/admin/current
 
 while [ $# -gt 0 ]
@@ -40,8 +39,15 @@ then
         runningPID=`cat $serverHome/current.pid`
         echo Killing Orion server instance $runningPID
         kill -15 $runningPID
+        #orion executable immediately spawns java executable that also needs killing
+        let "runningPID += 1"
+        kill -15 $runningPID
         rm $serverHome/current.pid
 fi
+
+#delete old search index to save space
+echo Deleting old search index
+rm -fr $serverHome/eclipse/serverworkspace/.metadata/.plugins/org.eclipse.orion.server.core.search/
 
 #back-up the current server using a folder based on date
 dateString=`date +%Y%m%d-%H%M`
