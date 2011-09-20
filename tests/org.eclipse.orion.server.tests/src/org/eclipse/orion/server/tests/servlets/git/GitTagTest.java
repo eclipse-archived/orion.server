@@ -91,11 +91,7 @@ public class GitTagTest extends GitTest {
 			assertEquals(0, tags.length());
 
 			// log
-			request = GitCommitTest.getGetGitCommitRequest(gitHeadUri, false);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			JSONObject logResponse = new JSONObject(response.getText());
-			JSONArray commitsArray = logResponse.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+			JSONArray commitsArray = log(gitHeadUri);
 			assertEquals(1, commitsArray.length());
 
 			JSONObject commit = commitsArray.getJSONObject(0);

@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.server.git.servlets;
+package org.eclipse.orion.server.git.jobs;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -24,6 +24,7 @@ import org.eclipse.jgit.transport.*;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
+import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.osgi.util.NLS;
 
 /**
@@ -31,7 +32,6 @@ import org.eclipse.osgi.util.NLS;
  */
 public class FetchJob extends GitJob {
 
-	final TaskInfo task;
 	private IPath path;
 	private String remote;
 	private boolean force;
@@ -41,11 +41,11 @@ public class FetchJob extends GitJob {
 		// path: {remote}[/{branch}]/file/{...}
 		this.path = path;
 		this.remote = path.segment(0);
-		this.task = createTask();
 		this.force = force;
+		this.task = createTask();
 	}
 
-	private TaskInfo createTask() {
+	protected TaskInfo createTask() {
 		TaskInfo info = getTaskService().createTask();
 		info.setMessage(NLS.bind("Fetching {0}...", remote));
 		getTaskService().updateTask(info);
@@ -110,10 +110,6 @@ public class FetchJob extends GitJob {
 			return null;
 		else
 			return path.segment(1);
-	}
-
-	public TaskInfo getTask() {
-		return task;
 	}
 
 	@Override

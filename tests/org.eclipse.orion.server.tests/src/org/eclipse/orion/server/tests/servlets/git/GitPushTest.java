@@ -523,11 +523,7 @@ public class GitPushTest extends GitTest {
 		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
 		// log
-		request = GitCommitTest.getGetGitCommitRequest(gitHeadUri, false);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject logResponse = new JSONObject(response.getText());
-		JSONArray commitsArray = logResponse.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		JSONArray commitsArray = log(gitHeadUri);
 		assertEquals(1, commitsArray.length());
 
 		// change
@@ -545,12 +541,8 @@ public class GitPushTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// log again
-		request = GitCommitTest.getGetGitCommitRequest(gitHeadUri, false);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		logResponse = new JSONObject(response.getText());
-		commitsArray = logResponse.getJSONArray(ProtocolConstants.KEY_CHILDREN);
-		assertEquals(2, commitsArray.length());
+		JSONObject logResponse = logObject(gitHeadUri);
+		assertEquals(2, logResponse.getJSONArray(ProtocolConstants.KEY_CHILDREN).length());
 
 		JSONObject toRefBranch = logResponse.getJSONObject(GitConstants.KEY_LOG_TO_REF);
 		JSONArray remoteLocations = toRefBranch.getJSONArray(GitConstants.KEY_REMOTE);

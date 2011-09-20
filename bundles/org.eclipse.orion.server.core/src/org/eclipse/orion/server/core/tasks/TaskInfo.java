@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.server.core.tasks;
 
+import java.net.URI;
+
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.core.*;
@@ -30,7 +32,7 @@ public class TaskInfo {
 	private String message = ""; //$NON-NLS-1$
 	private int percentComplete = 0;
 	private boolean running = true;
-	private String resultLocation = null;
+	private URI resultLocation = null;
 	private IStatus result;
 
 	/**
@@ -45,7 +47,9 @@ public class TaskInfo {
 			info.setMessage(json.optString(KEY_MESSAGE, "")); //$NON-NLS-1$
 			info.running = json.optBoolean(KEY_RUNNING, true);
 			info.setPercentComplete(json.optInt(KEY_PERCENT_COMPLETE, 0));
-			info.resultLocation = json.optString(KEY_LOCATION);
+			String location = json.optString(KEY_LOCATION, null);
+			if (location != null)
+				info.resultLocation = URI.create(location);
 			String resultString = json.optString(KEY_RESULT, null);
 			if (resultString!= null)
 				info.result = ServerStatus.fromJSON(resultString);
@@ -81,7 +85,7 @@ public class TaskInfo {
 	 * Returns <code>null</code> if the task has not completed, or if it did not complete successfully
 	 * @return The task result location, or <code>null</code>
 	 */
-	public String getResultLocation() {
+	public URI getResultLocation() {
 		return resultLocation;
 	}
 	
@@ -153,6 +157,17 @@ public class TaskInfo {
 	 * @return Returns this task
 	 */
 	public TaskInfo setResultLocation(String location) {
+		this.resultLocation = URI.create(location);
+		return this;
+	}
+
+	/**
+	 * Sets the location of the task result object.
+	 * @param location The location of the result resource for the task, or
+	 * <code>null</code> if not applicable.
+	 * @return Returns this task
+	 */
+	public TaskInfo setResultLocation(URI location) {
 		this.resultLocation = location;
 		return this;
 	}

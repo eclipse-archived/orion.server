@@ -28,6 +28,8 @@ import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.*;
+import org.eclipse.orion.server.git.jobs.FetchJob;
+import org.eclipse.orion.server.git.jobs.PushJob;
 import org.eclipse.orion.server.git.objects.Remote;
 import org.eclipse.orion.server.git.objects.RemoteBranch;
 import org.eclipse.orion.server.servlets.OrionServlet;

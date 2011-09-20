@@ -186,11 +186,7 @@ public class GitRemoteTest extends GitTest {
 			remoteBranch = new JSONObject(response.getText());
 
 			String commitLocation = remoteBranch.getString(GitConstants.KEY_COMMIT);
-			request = GitCommitTest.getGetGitCommitRequest(commitLocation, false);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			JSONObject logResponse = new JSONObject(response.getText());
-			JSONArray commitsArray = logResponse.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+			JSONArray commitsArray = log(commitLocation);
 			assertEquals(1, commitsArray.length());
 
 			// change
@@ -220,11 +216,7 @@ public class GitRemoteTest extends GitTest {
 			remoteBranch = new JSONObject(response.getText());
 
 			commitLocation = remoteBranch.getString(GitConstants.KEY_COMMIT);
-			request = GitCommitTest.getGetGitCommitRequest(commitLocation, false);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			logResponse = new JSONObject(response.getText());
-			commitsArray = logResponse.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+			commitsArray = log(commitLocation);
 			assertEquals(2, commitsArray.length());
 
 			// TODO: test pushing change from another repo and fetch here

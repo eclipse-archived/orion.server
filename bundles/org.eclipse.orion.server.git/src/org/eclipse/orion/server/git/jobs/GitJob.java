@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.server.git.servlets;
+package org.eclipse.orion.server.git.jobs;
 
 import com.jcraft.jsch.JSchException;
 import java.text.MessageFormat;
@@ -38,8 +38,16 @@ import org.osgi.framework.ServiceReference;
  */
 public abstract class GitJob extends Job {
 
+	/**
+	 * A constant used to determine if an operation is short enough to return 
+	 * the result immediately (OK, 200) rather than wait for the task to finish 
+	 * (Accepted, 202).
+	 */
+	public static final long WAIT_TIME = Long.MAX_VALUE; // TODO: replace with 100 when the UI is ready
+
 	private ITaskService taskService;
 	private ServiceReference<ITaskService> taskServiceRef;
+	protected TaskInfo task;
 
 	ITaskService getTaskService() {
 		if (taskService == null) {
@@ -62,6 +70,12 @@ public abstract class GitJob extends Job {
 			GitActivator.getDefault().getBundleContext().ungetService(taskServiceRef);
 			taskServiceRef = null;
 		}
+	}
+
+	protected abstract TaskInfo createTask();
+
+	public TaskInfo getTask() {
+		return task;
 	}
 
 	protected void updateTask(TaskInfo task) {
@@ -87,7 +101,7 @@ public abstract class GitJob extends Job {
 		return null;
 	}
 
-	public JSONObject addRepositoryInfo(JSONObject object) {
+	private JSONObject addRepositoryInfo(JSONObject object) {
 		try {
 			if (credentials != null) {
 				object.put(KEY_URL, credentials.getUri().toString());
@@ -117,7 +131,7 @@ public abstract class GitJob extends Job {
 		return object;
 	}
 
-	public IStatus getJGitInternalExceptionStatus(JGitInternalException e, String message) {
+	IStatus getJGitInternalExceptionStatus(JGitInternalException e, String message) {
 		JSchException jschEx = getJSchException(e);
 		if (jschEx != null && jschEx instanceof HostFingerprintException) {
 			HostFingerprintException cause = (HostFingerprintException) jschEx;
@@ -153,7 +167,7 @@ public abstract class GitJob extends Job {
 	}
 
 	public GitJob(String name) {
-		super(name);
+		this(name, null);
 	}
 
 	/**

@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.server.git.servlets;
+package org.eclipse.orion.server.git.jobs;
 
 import java.io.File;
 import org.eclipse.core.runtime.*;
@@ -19,6 +19,7 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.objects.Clone;
+import org.eclipse.orion.server.git.servlets.GitCloneHandlerV1;
 import org.eclipse.osgi.util.NLS;
 
 /**
@@ -27,7 +28,6 @@ import org.eclipse.osgi.util.NLS;
 public class InitJob extends GitJob {
 
 	private final Clone clone;
-	private final TaskInfo task;
 	private final String user;
 	private final String cloneLocation;
 
@@ -39,7 +39,7 @@ public class InitJob extends GitJob {
 		this.task = createTask();
 	}
 
-	private TaskInfo createTask() {
+	protected TaskInfo createTask() {
 		TaskInfo info = getTaskService().createTask();
 		info.setMessage(NLS.bind("Initializing repository {0}...", clone.getName()));
 		getTaskService().updateTask(info);
@@ -67,10 +67,6 @@ public class InitJob extends GitJob {
 			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error initializing git repository", e);
 		}
 		return Status.OK_STATUS;
-	}
-
-	public TaskInfo getTask() {
-		return task;
 	}
 
 	@Override

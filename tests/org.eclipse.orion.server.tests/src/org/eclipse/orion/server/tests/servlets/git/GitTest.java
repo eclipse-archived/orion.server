@@ -228,10 +228,14 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	/**
-	 * A clone or fetch are long running operations. This method waits until the
+	 * Some git commands are long running operations. This method waits until the
 	 * given task has completed, and then returns the location from the status object.
 	 */
 	protected String waitForTaskCompletion(String taskLocation) throws IOException, SAXException, JSONException {
+		return waitForTaskCompletionObject(taskLocation).getString(ProtocolConstants.KEY_LOCATION);
+	}
+
+	private JSONObject waitForTaskCompletionObject(String taskLocation) throws IOException, SAXException, JSONException {
 		JSONObject status = null;
 		long start = System.currentTimeMillis();
 		while (true) {
@@ -254,7 +258,7 @@ public abstract class GitTest extends FileSystemTest {
 			}
 		}
 		assertNotNull(status);
-		return status.getString(ProtocolConstants.KEY_LOCATION);
+		return status;
 	}
 
 	protected static String getMethodName() {
@@ -746,13 +750,30 @@ public abstract class GitTest extends FileSystemTest {
 	 * @throws SAXException
 	 * @throws JSONException
 	 */
-	protected JSONArray log(String gitCommitUri, Integer page, Integer pageSize) throws IOException, SAXException, JSONException {
+	private JSONObject logObject(String gitCommitUri, Integer page, Integer pageSize) throws IOException, SAXException, JSONException {
 		assertCommitUri(gitCommitUri);
 		WebRequest request = GitCommitTest.getGetGitCommitRequest(gitCommitUri, false, page, pageSize);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject log = new JSONObject(response.getText());
-		return log.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		switch (response.getResponseCode()) {
+			case HttpURLConnection.HTTP_OK :
+				assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+				return new JSONObject(response.getText());
+			case HttpURLConnection.HTTP_ACCEPTED :
+				String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+				assertNotNull(taskLocation);
+				JSONObject logObject = waitForTaskCompletionObject(taskLocation);
+				return new JSONObject(logObject.getString("Message"));
+		}
+		fail("Unexpected response code: " + response.getResponseCode());
+		return null;
+	}
+
+	protected JSONArray log(String gitCommitUri, Integer page, Integer pageSize) throws IOException, SAXException, JSONException {
+		return logObject(gitCommitUri, page, pageSize).getJSONArray(ProtocolConstants.KEY_CHILDREN);
+	}
+
+	protected JSONObject logObject(String gitCommitUri) throws IOException, SAXException, JSONException {
+		return logObject(gitCommitUri, null, null);
 	}
 
 	protected WebResponse branch(String branchesLocation, String branchName) throws JGitInternalException, IOException, JSONException, SAXException {
