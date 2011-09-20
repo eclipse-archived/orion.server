@@ -15,6 +15,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -30,6 +31,7 @@ import org.eclipse.orion.server.git.objects.Diff;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.junit.Assume;
 import org.junit.Test;
 
 import com.meterware.httpunit.PostMethodWebRequest;
@@ -127,6 +129,29 @@ public class GitLogTest extends GitTest {
 			commit = commitsArray.getJSONObject(1);
 			assertEquals("commit1", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
 		}
+	}
+
+	@Test
+	public void testLogBigRepoLinked() throws Exception {
+		File bigRepo = new File("D:\\workspace\\eclipse\\web\\org.eclipse.orion.server");
+		Assume.assumeTrue(bigRepo.exists());
+
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), bigRepo.toURI().toString());
+		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+		// get project/folder metadata
+		WebRequest request = getGetFilesRequest(location);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject folder = new JSONObject(response.getText());
+
+		JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
+		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
+
+		// reading first 50 commits should be enough to start a task
+		JSONArray commitsArray = log(gitHeadUri, 1, 50);
+		assertEquals(50, commitsArray.length());
 	}
 
 	@Test

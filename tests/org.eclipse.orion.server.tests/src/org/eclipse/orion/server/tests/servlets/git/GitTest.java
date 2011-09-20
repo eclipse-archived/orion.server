@@ -754,13 +754,18 @@ public abstract class GitTest extends FileSystemTest {
 		assertCommitUri(gitCommitUri);
 		WebRequest request = GitCommitTest.getGetGitCommitRequest(gitCommitUri, false, page, pageSize);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
-		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(taskLocation);
-
-		JSONObject logObject = waitForTaskCompletionObject(taskLocation);
-
-		return new JSONObject(logObject.getString("Message"));
+		switch (response.getResponseCode()) {
+			case HttpURLConnection.HTTP_OK :
+				assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+				return new JSONObject(response.getText());
+			case HttpURLConnection.HTTP_ACCEPTED :
+				String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+				assertNotNull(taskLocation);
+				JSONObject logObject = waitForTaskCompletionObject(taskLocation);
+				return new JSONObject(logObject.getString("Message"));
+		}
+		fail("Unexpected response code: " + response.getResponseCode());
+		return null;
 	}
 
 	protected JSONArray log(String gitCommitUri, Integer page, Integer pageSize) throws IOException, SAXException, JSONException {

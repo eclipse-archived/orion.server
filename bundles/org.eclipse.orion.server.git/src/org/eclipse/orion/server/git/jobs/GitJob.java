@@ -38,6 +38,13 @@ import org.osgi.framework.ServiceReference;
  */
 public abstract class GitJob extends Job {
 
+	/**
+	 * A constant used to determine if an operation is short enough to return 
+	 * the result immediately (OK, 200) rather than wait for the task to finish 
+	 * (Accepted, 202).
+	 */
+	public static final long WAIT_TIME = Long.MAX_VALUE; // TODO: replace with 100 when the UI is ready
+
 	private ITaskService taskService;
 	private ServiceReference<ITaskService> taskServiceRef;
 	protected TaskInfo task;

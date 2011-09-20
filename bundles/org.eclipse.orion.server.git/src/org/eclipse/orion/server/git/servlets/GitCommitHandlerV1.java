@@ -20,6 +20,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.jobs.*;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.ListBranchCommand.ListMode;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
@@ -39,6 +40,7 @@ import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.*;
+import org.eclipse.orion.server.git.jobs.GitJob;
 import org.eclipse.orion.server.git.jobs.LogJob;
 import org.eclipse.orion.server.git.objects.Commit;
 import org.eclipse.orion.server.git.objects.Log;
@@ -229,13 +231,38 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 
 		LogJob job = new LogJob(lc, log, page, pageSize, baseLocation);
 		job.schedule();
-		// TODO: wait for a sec, and if the job is done return the result, not 202
-		TaskInfo task = job.getTask();
-		JSONObject result = task.toJSON();
-		URI taskLocation = createTaskLocation(OrionServlet.getURI(request), task.getTaskId());
-		response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation.toString());
-		OrionServlet.writeJSONResponse(request, response, result);
-		response.setStatus(HttpServletResponse.SC_ACCEPTED);
+
+		final Object jobIsDone = new Object();
+		final JobChangeAdapter jobListener = new JobChangeAdapter() {
+			public void done(IJobChangeEvent event) {
+				synchronized (jobIsDone) {
+					jobIsDone.notify();
+				}
+			}
+		};
+		job.addJobChangeListener(jobListener);
+
+		try {
+			synchronized (jobIsDone) {
+				if (job.getState() != Job.NONE) {
+					jobIsDone.wait(GitJob.WAIT_TIME);
+				}
+			}
+		} catch (InterruptedException e) {
+		}
+		job.removeJobChangeListener(jobListener);
+
+		final TaskInfo task = job.getTask();
+		if (job.getState() == Job.NONE && !task.isRunning()) {
+			JSONObject result = new JSONObject(task.getResult().getMessage());
+			OrionServlet.writeJSONResponse(request, response, result);
+		} else {
+			JSONObject result = task.toJSON();
+			URI taskLocation = createTaskLocation(OrionServlet.getURI(request), task.getTaskId());
+			response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation.toString());
+			OrionServlet.writeJSONResponse(request, response, result);
+			response.setStatus(HttpServletResponse.SC_ACCEPTED);
+		}
 		return true;
 	}
 
