@@ -182,7 +182,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 	}
 
 	public Role[] getRoles(String filter) throws InvalidSyntaxException {
-		return (Role[]) roles.values().toArray();
+		return roles.values().toArray(new Role[0]);
 	}
 
 	public Collection<User> getUsers() {
@@ -263,7 +263,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 			return null;
 		try {
 
-			User user = new User(node.name(), node.get(USER_LOGIN, node.name()), node.get(USER_NAME, ""), node.get(USER_PASSWORD, null)); //$NON-NLS-1$ //$NON-NLS-2$
+			User user = new User(node.name(), node.get(USER_LOGIN, node.name()), node.get(USER_NAME, ""), node.get(USER_PASSWORD, null)); //$NON-NLS-1$
 			for (String roleName : node.node(USER_ROLES).childrenNames()) {
 				user.addRole(getRole(roleName));
 			}
@@ -314,9 +314,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 				if (login.equalsIgnoreCase(usersPref.node(childrenNames[i]).get(USER_LOGIN, null))) {
 					return usersPref.node(childrenNames[i]);
 				}
-
 			}
-
 		}
 		return null;
 	}
@@ -343,7 +341,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 			ISecurePreferences nodeByLogin = findNodeByLoginIgnoreCase(storage, user.getLogin());
 			if (nodeByLogin != null && !node.name().equals(nodeByLogin.name())) {
 				IStatus status = new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, "User already exists " + user.getLogin());
-				LogHelper.log(status); //$NON-NLS-1$
+				LogHelper.log(status);
 				return status;
 			}
 
@@ -351,7 +349,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 			return new Status(IStatus.OK, Activator.PI_USER_SECURESTORAGE, "User updated " + user.getLogin());
 		} catch (Exception e) {
 			IStatus status = new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Can not update user: " + user.getLogin(), e);
-			LogHelper.log(status); //$NON-NLS-1$
+			LogHelper.log(status);
 			return status;
 		}
 	}
@@ -407,7 +405,6 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 	}
 
 	public String getStoreName() {
-		return "Orion";
+		return "Orion"; //$NON-NLS-1$
 	}
-
 }
