@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2010 IBM Corporation and others.
+ * Copyright (c) 2000, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -100,7 +100,7 @@ public class UniversalUniqueIdentifier implements Serializable, Cloneable {
 		// Seed the secure randomizer with some oft-varying inputs
 		int thread = Thread.currentThread().hashCode();
 		long time = System.currentTimeMillis();
-		int objectId = System.identityHashCode(new String());
+		int objectId = System.identityHashCode(""); //$NON-NLS-1$
 		ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
 		DataOutputStream out = new DataOutputStream(byteOut);
 		byte[] ipAddress = getIPAddress();
@@ -128,7 +128,7 @@ public class UniversalUniqueIdentifier implements Serializable, Cloneable {
 
 	public static UniversalUniqueIdentifier fromBase64String(String value) {
 		//we know the last two characters are always padding
-		return new UniversalUniqueIdentifier(Base64.decode((value + "==").getBytes()));
+		return new UniversalUniqueIdentifier(Base64.decode((value + "==").getBytes())); //$NON-NLS-1$
 	}
 
 	/**
@@ -156,7 +156,7 @@ public class UniversalUniqueIdentifier implements Serializable, Cloneable {
 	private static int nextClockSequence() {
 
 		if (fgClockSequence == -1)
-			fgClockSequence = (int) (fgRandomNumberGenerator.nextDouble() * MAX_CLOCK_SEQUENCE);
+			fgClockSequence = (int) (fgRandomNumberGenerator.nextInt() * MAX_CLOCK_SEQUENCE);
 
 		fgClockSequence = (fgClockSequence + 1) % MAX_CLOCK_SEQUENCE;
 
@@ -328,7 +328,7 @@ public class UniversalUniqueIdentifier implements Serializable, Cloneable {
 	public String toBase64String() {
 		try {
 			//we know the last two characters are always padding
-			return new String(Base64.encode(toBytes()), 0, 22, "UTF8");
+			return new String(Base64.encode(toBytes()), 0, 22, "UTF8"); //$NON-NLS-1$
 		} catch (UnsupportedEncodingException e) {
 			Assert.isTrue(false, "UTF8 is known to be supported");
 			return null;
@@ -355,13 +355,13 @@ public class UniversalUniqueIdentifier implements Serializable, Cloneable {
 	}
 
 	public String toStringAsBytes() {
-		String result = "{"; //$NON-NLS-1$
-
+		StringBuilder sb = new StringBuilder("{"); //$NON-NLS-1$
 		for (int i = 0; i < fBits.length; i++) {
-			result += fBits[i];
+			sb.append(fBits[i]);
 			if (i < fBits.length + 1)
-				result += ","; //$NON-NLS-1$
+				sb.append(","); //$NON-NLS-1$
 		}
-		return result + "}"; //$NON-NLS-1$
+		sb.append("}"); //$NON-NLS-1$
+		return sb.toString(); 
 	}
 }
