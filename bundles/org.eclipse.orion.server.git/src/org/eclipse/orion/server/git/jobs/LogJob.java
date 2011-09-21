@@ -56,7 +56,7 @@ public class LogJob extends GitJob {
 			log.setCommits(commits);
 			JSONObject result = log.toJSON(page, pageSize);
 			// return the commits log as status message
-			return new ServerStatus(IStatus.OK, HttpServletResponse.SC_OK, result.toString(), null);
+			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when generating log for ref {0}", logCommand.getRepository());
 			return new Status(IStatus.ERROR, GitActivator.PI_GIT, msg, e);
@@ -69,9 +69,12 @@ public class LogJob extends GitJob {
 			IStatus result = doLog();
 			if (result.isOK()) {
 				task.setResultLocation(logLocation);
-				result = new Status(IStatus.OK, GitActivator.PI_GIT, result.getMessage());
+				task.done(result);
+				// set the message after updating the task with the result
+				task.setMessage("Generating git log completed.");
+			} else {
+				task.done(result);
 			}
-			task.done(result);
 			updateTask(task);
 			//return the actual result so errors are logged, see bug 353190
 			return result;

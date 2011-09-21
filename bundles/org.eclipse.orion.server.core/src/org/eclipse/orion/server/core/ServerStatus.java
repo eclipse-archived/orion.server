@@ -25,7 +25,7 @@ public class ServerStatus extends Status {
 	 * A property defining an optional status object indicating the cause
 	 * of the exception.
 	 */
-//	private static final String PROP_CAUSE = "Cause"; //$NON-NLS-1$
+	//	private static final String PROP_CAUSE = "Cause"; //$NON-NLS-1$
 	/**
 	 * An integer status code. The value is specific to the component returning
 	 * the exception.
@@ -47,13 +47,13 @@ public class ServerStatus extends Status {
 	/**
 	 * A property containing JSON object with data needed to handle exception
 	 */
-	private static final String ERROR_DATA = "ErrorData"; //$NON-NLS-1$
+	private static final String JSON_DATA = "JsonData"; //$NON-NLS-1$
 	
 	/**
 	 * A property defining a URL of a page with further details about the
 	 * exception and how it can be resolved.
 	 */
-//	private static final String PROP_SEE_ALSO = "SeeAlso"; //$NON-NLS-1$
+	//	private static final String PROP_SEE_ALSO = "SeeAlso"; //$NON-NLS-1$
 	/**
 	 * A string representing the status severity. The value is one of the 
 	 * <code>SEVERITY_*</code> constants defined in this class.
@@ -61,15 +61,12 @@ public class ServerStatus extends Status {
 	private static final String PROP_SEVERITY = "Severity"; //$NON-NLS-1$
 	private static final String SEVERITY_CANCEL = "Cancel"; //$NON-NLS-1$
 	private static final String SEVERITY_ERROR = "Error"; //$NON-NLS-1$
-
 	private static final String SEVERITY_INFO = "Info"; //$NON-NLS-1$
-
 	private static final String SEVERITY_OK = "Ok"; //$NON-NLS-1$
-
 	private static final String SEVERITY_WARNING = "Warning"; //$NON-NLS-1$
 
 	private int httpCode;
-	private JSONObject errorData;
+	private JSONObject jsonData;
 	
 	/**
 	 * Converts a status into a server status.
@@ -105,8 +102,8 @@ public class ServerStatus extends Status {
 		int severity = fromSeverityString(object.getString(PROP_SEVERITY));
 		String detailMessage = object.optString(PROP_DETAILED_MESSAGE, null);
 		Exception cause = detailMessage == null ? null : new Exception(detailMessage);
-		JSONObject errorData = object.optJSONObject(ERROR_DATA);
-		return new ServerStatus(new Status(severity, ServerConstants.PI_SERVER_CORE, code, message, cause), httpCode, errorData);
+		JSONObject jsonData = object.optJSONObject(JSON_DATA);
+		return new ServerStatus(new Status(severity, ServerConstants.PI_SERVER_CORE, code, message, cause), httpCode, jsonData);
 	}
 
 	public ServerStatus(int severity, int httpCode, String message, Throwable exception) {
@@ -114,10 +111,10 @@ public class ServerStatus extends Status {
 		this.httpCode = httpCode;
 	}
 	
-	public ServerStatus(int severity, int httpCode, String message, JSONObject errorData, Throwable exception) {
+	public ServerStatus(int severity, int httpCode, String message, JSONObject jsonData, Throwable exception) {
 		super(severity, ServerConstants.PI_SERVER_CORE, message, exception);
 		this.httpCode = httpCode;
-		this.errorData = errorData;
+		this.jsonData = jsonData;
 	}
 
 	public ServerStatus(IStatus status, int httpCode) {
@@ -125,12 +122,11 @@ public class ServerStatus extends Status {
 		this.httpCode = httpCode;
 	}
 	
-	public ServerStatus(IStatus status, int httpCode, JSONObject errorData) {
+	public ServerStatus(IStatus status, int httpCode, JSONObject jsonData) {
 		super(status.getSeverity(), status.getPlugin(), status.getCode(), status.getMessage(), status.getException());
 		this.httpCode = httpCode;
-		this.errorData = errorData;
+		this.jsonData = jsonData;
 	}
-
 
 	/**
 	 * Returns the HTTP response code associated with this status.
@@ -138,6 +134,15 @@ public class ServerStatus extends Status {
 	 */
 	public int getHttpCode() {
 		return httpCode;
+	}
+
+	/**
+	 * Returns the JSON data associated with this status. May be 
+	 * <code>null</code> if no additional data is available.
+	 * @return the JSON data associated with this status.
+	 */
+	public JSONObject getJsonData() {
+		return jsonData;
 	}
 
 	private String getSeverityString() {
@@ -183,13 +188,12 @@ public class ServerStatus extends Status {
 			result.put(PROP_CODE, getCode());
 			result.put(PROP_MESSAGE, getMessage());
 			result.put(PROP_SEVERITY, getSeverityString());
-			if(errorData!=null){
-				result.put(ERROR_DATA, errorData);
-			}
+			if (jsonData != null)
+				result.put(JSON_DATA, jsonData);
 			Throwable exception = getException();
 			if (exception != null)
 				result.put(PROP_DETAILED_MESSAGE, exception.getMessage());
-			//Could also include "seeAlso" and "errorCause"
+			//Could also include "SeeAlso" and "Cause"
 		} catch (JSONException e) {
 			//can only happen if the key is null
 		}

@@ -254,16 +254,22 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 
 		final TaskInfo task = job.getTask();
 		if (job.getState() == Job.NONE && !task.isRunning()) {
-			JSONObject result = new JSONObject(task.getResult().getMessage());
-			OrionServlet.writeJSONResponse(request, response, result);
+			IStatus result = task.getResult();
+			if (result instanceof ServerStatus) {
+				ServerStatus status = (ServerStatus) result;
+				OrionServlet.writeJSONResponse(request, response, status.getJsonData());
+				return true;
+			}
 		} else {
 			JSONObject result = task.toJSON();
 			URI taskLocation = createTaskLocation(OrionServlet.getURI(request), task.getTaskId());
+			result.put(ProtocolConstants.KEY_LOCATION, taskLocation);
 			response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation.toString());
 			OrionServlet.writeJSONResponse(request, response, result);
 			response.setStatus(HttpServletResponse.SC_ACCEPTED);
+			return true;
 		}
-		return true;
+		return false;
 	}
 
 	private URI createTaskLocation(URI baseLocation, String taskId) throws URISyntaxException {

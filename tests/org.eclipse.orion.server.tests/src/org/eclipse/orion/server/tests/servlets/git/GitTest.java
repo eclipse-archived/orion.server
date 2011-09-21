@@ -761,8 +761,10 @@ public abstract class GitTest extends FileSystemTest {
 			case HttpURLConnection.HTTP_ACCEPTED :
 				String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 				assertNotNull(taskLocation);
+				assertEquals(taskLocation, new JSONObject(response.getText()).getString(ProtocolConstants.KEY_LOCATION));
 				JSONObject logObject = waitForTaskCompletionObject(taskLocation);
-				return new JSONObject(logObject.getString("Message"));
+				assertEquals("Generating git log completed.", logObject.getString("Message"));
+				return logObject.getJSONObject("Result").getJSONObject("JsonData");
 		}
 		fail("Unexpected response code: " + response.getResponseCode());
 		return null;
@@ -1148,19 +1150,19 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	protected void assertRepositoryInfo(URIish uri, JSONObject result) throws JSONException {
-		assertEquals(uri.toString(), result.getJSONObject("ErrorData").get("Url"));
+		assertEquals(uri.toString(), result.getJSONObject("JsonData").get("Url"));
 		if (uri.getUser() != null)
-			assertEquals(uri.getUser(), result.getJSONObject("ErrorData").get("User"));
+			assertEquals(uri.getUser(), result.getJSONObject("JsonData").get("User"));
 		if (uri.getHost() != null)
-			assertEquals(uri.getHost(), result.getJSONObject("ErrorData").get("Host"));
+			assertEquals(uri.getHost(), result.getJSONObject("JsonData").get("Host"));
 		if (uri.getHumanishName() != null)
-			assertEquals(uri.getHumanishName(), result.getJSONObject("ErrorData").get("HumanishName"));
+			assertEquals(uri.getHumanishName(), result.getJSONObject("JsonData").get("HumanishName"));
 		if (uri.getPass() != null)
-			assertEquals(uri.getPass(), result.getJSONObject("ErrorData").get("Password"));
+			assertEquals(uri.getPass(), result.getJSONObject("JsonData").get("Password"));
 		if (uri.getPort() > 0)
-			assertEquals(uri.getPort(), result.getJSONObject("ErrorData").get("Port"));
+			assertEquals(uri.getPort(), result.getJSONObject("JsonData").get("Port"));
 		if (uri.getScheme() != null)
-			assertEquals(uri.getScheme(), result.getJSONObject("ErrorData").get("Scheme"));
+			assertEquals(uri.getScheme(), result.getJSONObject("JsonData").get("Scheme"));
 	}
 
 	protected JSONObject getChild(JSONObject folderObject, String childName) throws JSONException, IOException, SAXException {
