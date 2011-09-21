@@ -24,7 +24,6 @@ import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.*;
@@ -112,7 +111,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			JSONObject errorData = new JSONObject();
 			errorData.put(GitConstants.KEY_CLONE, cloneLocation);
 
-			return statusHandler.handleRequest(request, response, new ServerStatus(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "No remote branch found: " + p.uptoSegment(2).removeTrailingSeparator()), HttpServletResponse.SC_NOT_FOUND, errorData));
+			return statusHandler.handleRequest(request, response, new ServerStatus(new Status(IStatus.ERROR, GitActivator.PI_GIT, "No remote branch found: " + p.uptoSegment(2).removeTrailingSeparator()), HttpServletResponse.SC_NOT_FOUND, errorData));
 		}
 		return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Bad request, \"/git/remote/{remote}/{branch}/file/{path}\" expected", null));
 	}
