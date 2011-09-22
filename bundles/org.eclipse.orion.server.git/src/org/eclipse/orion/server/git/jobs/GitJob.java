@@ -43,7 +43,7 @@ public abstract class GitJob extends Job {
 	 * the result immediately (OK, 200) rather than wait for the task to finish 
 	 * (Accepted, 202).
 	 */
-	public static final long WAIT_TIME = Long.MAX_VALUE; // TODO: replace with 100 when the UI is ready
+	public static final long WAIT_TIME = 100;
 
 	private ITaskService taskService;
 	private ServiceReference<ITaskService> taskServiceRef;
