@@ -160,7 +160,7 @@ public class HostedSiteServlet extends OrionServlet {
 					handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("No mappings matched {0}", path), null));
 				}
 			} else {
-				String msg = NLS.bind("Hosted site {0} not found", hostedHost);
+				String msg = NLS.bind("Hosted site {0} is stopped", hostedHost);
 				handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
 			}
 		} else {

@@ -11,6 +11,7 @@
 package org.eclipse.orion.internal.server.hosting;
 
 import java.util.ConcurrentModificationException;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import org.eclipse.orion.internal.server.servlets.hosting.*;
@@ -117,6 +118,25 @@ public class SiteHostingService implements ISiteHostingService {
 	public boolean isHosted(String host) {
 		// Note this may overlap with a concurrent start()/stop() call that modifies the map
 		return get(host) != null;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService#matchesVirtualHost(java.lang.String)
+	 */
+	@Override
+	public boolean matchesVirtualHost(String host) {
+		List<String> hosts = config.getHosts();
+		for (String h : hosts) {
+			if (h.equals(host)) {
+				return true;
+			} else {
+				String pattern = h.replace("*", ""); //$NON-NLS-1$ //$NON-NLS-2$
+				if (host.indexOf(pattern) != -1)
+					return true;
+			}
+		}
+		return false;
 	}
 
 	/**

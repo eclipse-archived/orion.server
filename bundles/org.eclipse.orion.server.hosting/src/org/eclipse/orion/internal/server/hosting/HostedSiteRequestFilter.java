@@ -38,7 +38,8 @@ public class HostedSiteRequestFilter implements Filter {
 			if (host != null) {
 				String requestUri = httpReq.getRequestURI();
 				String service = httpReq.getServletPath();
-				if (siteHostingService.isHosted(host) && !service.equals(HOSTED_SITE_ALIAS)) {
+				boolean isForSite = siteHostingService.isHosted(host) || siteHostingService.matchesVirtualHost(host);
+				if (isForSite && !service.equals(HOSTED_SITE_ALIAS)) {
 					// Forward to /hosted/<host>
 					RequestDispatcher rd = httpReq.getRequestDispatcher(HOSTED_SITE_ALIAS + "/" + host + requestUri); //$NON-NLS-1$
 					rd.forward(req, resp);

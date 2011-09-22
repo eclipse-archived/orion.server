@@ -43,7 +43,7 @@ public interface ISiteHostingService {
 	public void stop(SiteConfiguration siteConfig, WebUser user) throws SiteHostingException;
 
 	/**
-	 * @param host A host in the form <code>hostname:port</code>.
+	 * @param host A host name.
 	 * @param user 
 	 * @return The hosted site launched by <code>user</code> from <code>siteConfig</code>, or
 	 * <code>null</code> if there is no such hosted site.
@@ -51,9 +51,16 @@ public interface ISiteHostingService {
 	public IHostedSite get(SiteConfiguration siteConfig, WebUser user);
 
 	/**
-	 * @param host A host in the form <code>hostname:port</code>.
+	 * @param host A host name.
 	 * @return <code>true</code> if there is a hosted site running at <code>host</code>.
 	 */
 	public boolean isHosted(String host);
+
+	/**
+	 * @param host A host name.
+	 * @return <code>true</code> if <code>host</code> is a virtual host name that a site could
+	 * be running on.
+	 */
+	public boolean matchesVirtualHost(String host);
 
 }
