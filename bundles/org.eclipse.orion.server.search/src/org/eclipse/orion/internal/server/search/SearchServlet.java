@@ -49,7 +49,6 @@ public class SearchServlet extends OrionServlet {
 		SolrQuery query = new SolrQuery();
 		query.setParam(CommonParams.WT, "json"); //$NON-NLS-1$
 		query.setParam(CommonParams.FL, "Id,Name,Length,Directory,LastModified,Location"); //$NON-NLS-1$
-		query.setParam("hl", "true"); //$NON-NLS-1$ //$NON-NLS-2$
 		String queryString = req.getParameter(CommonParams.Q);
 		if (queryString.trim().length() > 0)
 			queryString += " AND "; //$NON-NLS-1$
