@@ -35,7 +35,15 @@ import org.slf4j.LoggerFactory;
  */
 public class Indexer extends Job {
 
+	/**
+	 * The minimum delay between indexing runs
+	 */
 	private static final long DEFAULT_DELAY = 60000;//one minute
+	/**
+	 * The minimum delay between indexing runs when the server is idle.
+	 */
+	private static final long IDLE_DELAY = 300000;//five minutes
+
 	private static final long MAX_SEARCH_SIZE = 300000;//don't index files larger than 300,000 bytes
 	//private static final List<String> IGNORED_FILE_TYPES = Arrays.asList("png", "jpg", "gif", "bmp", "pdf", "tiff", "class", "so", "zip", "jar", "tar");
 	private final List<String> INDEXED_FILE_TYPES;
@@ -97,7 +105,7 @@ public class Indexer extends Job {
 		LogHelper.log(new Status(IStatus.ERROR, SearchActivator.PI_SEARCH, "Error during search indexing", t)); //$NON-NLS-1$
 	}
 
-	private void indexProject(WebProject project, SubMonitor monitor, List<SolrInputDocument> documents) {
+	private int indexProject(WebProject project, SubMonitor monitor, List<SolrInputDocument> documents) {
 		Logger logger = LoggerFactory.getLogger(Indexer.class);
 		if (logger.isDebugEnabled())
 			logger.debug("Indexing project id: " + project.getId() + " name: " + project.getName()); //$NON-NLS-1$ //$NON-NLS-2$
@@ -108,7 +116,7 @@ public class Indexer extends Job {
 		} catch (CoreException e) {
 			//TODO implement indexing of remote content
 			handleIndexingFailure(e);
-			return;
+			return 0;
 		}
 		//project location is always a directory
 		IPath projectLocation = new Path(Activator.LOCATION_FILE_SERVLET).append(project.getId()).addTrailingSeparator();
@@ -153,6 +161,7 @@ public class Indexer extends Job {
 		}
 		if (logger.isDebugEnabled())
 			logger.debug("\tIndexed: " + indexedCount + " Unchanged:  " + unmodifiedCount); //$NON-NLS-1$ //$NON-NLS-2$
+		return indexedCount;
 	}
 
 	private List<String> findUsers(IPath projectLocation) {
@@ -201,15 +210,19 @@ public class Indexer extends Job {
 		List<WebProject> projects = WebProject.allProjects();
 		SubMonitor progress = SubMonitor.convert(monitor, projects.size());
 		List<SolrInputDocument> documents = new ArrayList<SolrInputDocument>();
+		int indexed = 0;
 		for (WebProject project : projects) {
-			indexProject(project, progress.newChild(1), documents);
+			indexed += indexProject(project, progress.newChild(1), documents);
 		}
 		long duration = System.currentTimeMillis() - start;
 		Logger logger = LoggerFactory.getLogger(Indexer.class);
 		if (logger.isDebugEnabled())
 			logger.debug("Indexed " + projects.size() + " projects in " + duration + "ms"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-		//reschedule the indexing - throttle so the job never runs more than 5% of the time
-		long delay = Math.max(DEFAULT_DELAY, duration * 20);
+		//reschedule the indexing - throttle so the job never runs more than 10% of the time
+		long delay = Math.max(DEFAULT_DELAY, duration * 10);
+		//if there was nothing to index then back off for awhile
+		if (indexed == 0)
+			delay = Math.max(delay, IDLE_DELAY);
 		if (logger.isDebugEnabled())
 			logger.debug("Rescheduling indexing in " + delay + "ms"); //$NON-NLS-1$//$NON-NLS-2$
 		schedule(delay);
