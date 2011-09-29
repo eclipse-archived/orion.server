@@ -130,7 +130,7 @@ public class FormAuthHelper {
 	 * and <code>false</code> otherwise.
 	 */
 	public static boolean canAddUsers() {
-		return allowAnonymousAccountCreation ? userAdmin.canCreateUsers() : false;
+		return allowAnonymousAccountCreation ? (userAdmin==null ? false : userAdmin.canCreateUsers()) : false;
 	}
 
 	public static IOrionCredentialsService getDefaultUserAdmin() {
