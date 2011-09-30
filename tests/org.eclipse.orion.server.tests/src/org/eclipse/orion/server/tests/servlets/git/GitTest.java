@@ -653,6 +653,7 @@ public abstract class GitTest extends FileSystemTest {
 		WebRequest request = GitFetchTest.getPostGitRemoteRequest(remoteLocation, true, force);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
+		assertFetchProgressMessage(remoteLocation, new JSONObject(response.getText()).getString("Message"));
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(taskLocation);
 		String location = waitForTaskCompletion(taskLocation);
@@ -669,6 +670,19 @@ public abstract class GitTest extends FileSystemTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		return new JSONObject(response.getText());
+	}
+
+	private static void assertFetchProgressMessage(String remoteLocation, String actualMessage) {
+		IPath path = new Path(URI.create(remoteLocation).getPath());
+		if (path.segment(1).equals(Remote.RESOURCE) && path.segment(3).equals("file")) {
+			// /git/remote/{remote}/file/{path}
+			assertEquals(String.format("Fetching %s...", path.segment(2)), actualMessage);
+		} else if (path.segment(1).equals(Remote.RESOURCE) && path.segment(4).equals("file")) {
+			// /git/remote/{remote}/{branch}/file/{path}
+			assertEquals(String.format("Fetching %s/%s...", path.segment(2), path.segment(3)), actualMessage);
+		} else {
+			fail("unexpected remoteLocation: " + remoteLocation);
+		}
 	}
 
 	// tag
