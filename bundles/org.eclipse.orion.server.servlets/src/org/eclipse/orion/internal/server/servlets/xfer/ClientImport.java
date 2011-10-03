@@ -99,6 +99,7 @@ class ClientImport {
 		if (success) {
 			resp.setHeader(ProtocolConstants.HEADER_LOCATION, "/file" + getPath()); //$NON-NLS-1$
 			resp.setStatus(HttpServletResponse.SC_CREATED);
+			resp.setContentType(ProtocolConstants.CONTENT_TYPE_HTML);
 			resp.getOutputStream().write(new String("<head></head><body><textarea>{}</textarea></body>").getBytes());
 		}
 	}

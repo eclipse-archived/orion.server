@@ -70,6 +70,9 @@ public class TransferTest extends FileSystemTest {
 		assertEquals(201, postResponse.getResponseCode());
 		String location = postResponse.getHeaderField("Location");
 		assertNotNull(location);
+		String type = postResponse.getHeaderField("Content-Type");
+		assertNotNull(type);
+		assertTrue(type.contains("text/html"));
 
 		//assert the file has been unzipped in the workspace
 		assertTrue(checkFileExists(directoryPath + "/org.eclipse.e4.webide/static/js/navigate-tree/navigate-tree.js"));
