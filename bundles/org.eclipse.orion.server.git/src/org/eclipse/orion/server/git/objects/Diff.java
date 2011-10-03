@@ -18,6 +18,7 @@ import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.merge.ResolveMerger;
 import org.eclipse.jgit.merge.ThreeWayMerger;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitServlet;
@@ -38,14 +39,13 @@ public class Diff extends GitObject {
 
 	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException {
 		IPath path = new Path(baseLocation.getPath()).removeFirstSegments(2);
-		JSONObject o = new JSONObject();
-		JSONObject gitSection = new JSONObject();
-		gitSection.put(GitConstants.KEY_DIFF, baseLocation);
-		gitSection.put(GitConstants.KEY_COMMIT_OLD, getOldLocation(baseLocation, path));
-		gitSection.put(GitConstants.KEY_COMMIT_NEW, getNewLocation(baseLocation, path));
-		gitSection.put(GitConstants.KEY_COMMIT_BASE, getBaseLocation(baseLocation, db, path));
-		o.put(GitConstants.KEY_GIT, gitSection);
-		return o;
+		JSONObject diff = new JSONObject();
+		diff.put(ProtocolConstants.KEY_LOCATION, baseLocation);
+		diff.put(GitConstants.KEY_COMMIT_OLD, getOldLocation(baseLocation, path));
+		diff.put(GitConstants.KEY_COMMIT_NEW, getNewLocation(baseLocation, path));
+		diff.put(GitConstants.KEY_COMMIT_BASE, getBaseLocation(baseLocation, db, path));
+		diff.put(ProtocolConstants.KEY_TYPE, TYPE);
+		return diff;
 	}
 
 	private URI getOldLocation(URI location, IPath path) throws URISyntaxException {
