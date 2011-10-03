@@ -233,6 +233,7 @@
                 enablePositionIncrements="true"
                 />
         <filter class="solr.LowerCaseFilterFactory"/>
+        <filter class="solr.WordDelimiterFilterFactory" generateWordParts="1" generateNumberParts="1" catenateWords="1" catenateAll="0" splitOnCaseChange="1" splitOnNumerics="0" stemEnglishPossessive="0" preserveOriginal="1"/>
       </analyzer>
 
       <analyzer type="query">
@@ -243,6 +244,7 @@
                 words="stopwords.txt"
                 enablePositionIncrements="true"
                 />
+        <filter class="solr.WordDelimiterFilterFactory" generateWordParts="1" generateNumberParts="1" catenateWords="1" catenateAll="0" splitOnCaseChange="0" splitOnNumerics="0" stemEnglishPossessive="0" preserveOriginal="1"/>
         <filter class="solr.LowerCaseFilterFactory"/>
       </analyzer>
     </fieldType>
