@@ -35,26 +35,27 @@ public class FetchJob extends GitJob {
 	private IPath path;
 	private String remote;
 	private boolean force;
+	private String branch; // can be null if fetching the whole branch
 
 	public FetchJob(CredentialsProvider credentials, Path path, boolean force) {
-		super("Fetching", (GitCredentialsProvider) credentials); //$NON-NLS-1$
+		super("Fetching", (GitCredentialsProvider) credentials);
 		// path: {remote}[/{branch}]/file/{...}
 		this.path = path;
 		this.remote = path.segment(0);
 		this.force = force;
+		this.branch = path.segment(1).equals("file") ? null : path.segment(1); //$NON-NLS-1$
 		this.task = createTask();
 	}
 
 	protected TaskInfo createTask() {
 		TaskInfo info = getTaskService().createTask();
-		info.setMessage(NLS.bind("Fetching {0}...", remote));
+		info.setMessage(branch == null ? NLS.bind("Fetching {0}...", remote) : NLS.bind("Fetching {0}/{1}...", new Object[] {remote, branch}));
 		getTaskService().updateTask(info);
 		return info;
 	}
 
 	private IStatus doFetch() throws IOException, CoreException, JGitInternalException, InvalidRemoteException, URISyntaxException {
 		Repository db = getRepository();
-		String branch = getRemoteBranch();
 
 		Git git = new Git(db);
 		FetchCommand fc = git.fetch();
@@ -103,13 +104,6 @@ public class FetchJob extends GitJob {
 		else
 			p = path.removeFirstSegments(2);
 		return new FileRepository(GitUtils.getGitDir(p));
-	}
-
-	private String getRemoteBranch() {
-		if (path.segment(1).equals("file")) //$NON-NLS-1$
-			return null;
-		else
-			return path.segment(1);
 	}
 
 	@Override

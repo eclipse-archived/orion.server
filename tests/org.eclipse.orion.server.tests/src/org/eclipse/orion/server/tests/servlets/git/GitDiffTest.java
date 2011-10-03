@@ -505,25 +505,27 @@ public class GitDiffTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		// assertDiffUris(gitDiffUri, "test", "change", new JSONObject(response.getText()));
-		gitSection = new JSONObject(response.getText()).getJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
-		String fileOldUri = gitSection.getString(GitConstants.KEY_COMMIT_OLD);
-		assertNotNull(fileOldUri);
+		// modified assertDiffUris(...);
+		JSONObject jsonPart = new JSONObject(response.getText());
+		assertEquals(Diff.TYPE, jsonPart.getString(ProtocolConstants.KEY_TYPE));
+
+		String fileOldUri = jsonPart.getString(GitConstants.KEY_COMMIT_OLD);
 		request = getGetFilesRequest(fileOldUri);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
-		// assertEquals(expectedOld, response.getText());
-		String fileNewUri = gitSection.getString(GitConstants.KEY_COMMIT_NEW);
-		assertNotNull(fileNewUri);
+
+		String fileNewUri = jsonPart.getString(GitConstants.KEY_COMMIT_NEW);
 		request = getGetFilesRequest(fileNewUri);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("", response.getText());
 
-		String diffUri = gitSection.getString(GitConstants.KEY_DIFF);
-		assertNotNull(diffUri);
-		assertEquals(gitDiffUri, diffUri);
+		String fileBaseUri = jsonPart.getString(GitConstants.KEY_COMMIT_BASE);
+		request = getGetFilesRequest(fileBaseUri);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
+
+		assertEquals(gitDiffUri, jsonPart.getString(ProtocolConstants.KEY_LOCATION));
 	}
 
 	@Test
@@ -615,33 +617,27 @@ public class GitDiffTest extends GitTest {
 	}
 
 	private void assertDiffUris(String expectedLocation, String[] expectedContent, JSONObject jsonPart) throws JSONException, IOException, SAXException {
-		JSONObject gitSection = jsonPart.getJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
+		assertEquals(Diff.TYPE, jsonPart.getString(ProtocolConstants.KEY_TYPE));
 
-		String fileOldUri = gitSection.getString(GitConstants.KEY_COMMIT_OLD);
-		assertNotNull(fileOldUri);
+		String fileOldUri = jsonPart.getString(GitConstants.KEY_COMMIT_OLD);
 		WebRequest request = getGetFilesRequest(fileOldUri);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals(expectedContent[0], response.getText());
 
-		String fileNewUri = gitSection.getString(GitConstants.KEY_COMMIT_NEW);
-		assertNotNull(fileNewUri);
+		String fileNewUri = jsonPart.getString(GitConstants.KEY_COMMIT_NEW);
 		request = getGetFilesRequest(fileNewUri);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals(expectedContent[1], response.getText());
 
-		String fileBaseUri = gitSection.getString(GitConstants.KEY_COMMIT_BASE);
-		assertNotNull(fileBaseUri);
+		String fileBaseUri = jsonPart.getString(GitConstants.KEY_COMMIT_BASE);
 		request = getGetFilesRequest(fileBaseUri);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals(expectedContent[2], response.getText());
 
-		String diffUri = gitSection.getString(GitConstants.KEY_DIFF);
-		assertNotNull(diffUri);
-		assertEquals(expectedLocation, diffUri);
+		assertEquals(expectedLocation, jsonPart.getString(ProtocolConstants.KEY_LOCATION));
 	}
 
 	/**
