@@ -13,11 +13,9 @@ package org.eclipse.orion.server.authentication.basic;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.Properties;
-
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.core.LogHelper;
@@ -26,10 +24,7 @@ import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.User;
-import org.osgi.service.http.HttpContext;
-import org.osgi.service.http.HttpService;
-import org.osgi.service.http.NamespaceException;
-import org.osgi.service.useradmin.Authorization;
+import org.osgi.service.http.*;
 
 public class BasicAuthenticationService implements IAuthenticationService {
 
@@ -64,7 +59,7 @@ public class BasicAuthenticationService implements IAuthenticationService {
 			String password = authString.substring(authString.indexOf(':') + 1);
 			User user = getUserForCredentials(login, password);
 			if (user != null) {
-//				Authorization authorization = userAdmin.getAuthorization(user);
+				//				Authorization authorization = userAdmin.getAuthorization(user);
 				// TODO handle authorization
 				return user.getUid();
 			}
