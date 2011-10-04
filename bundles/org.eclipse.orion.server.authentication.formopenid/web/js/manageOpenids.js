@@ -1,7 +1,8 @@
 var confirmOpenId; //this is used by openid servlet to return the verified identifier
 var handleOpenIDResponse;
 
-define(['dojo', 'dojo/hash'], function(dojo){
+dojo.requires("dojo.hash");
+
  var lastHash;
  var jsonData;
  
