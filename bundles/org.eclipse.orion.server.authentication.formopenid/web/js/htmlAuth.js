@@ -34,7 +34,7 @@ window.onload = function() {
 	};
 	
 	
-	mypostrequest.open("POST", "/login/canaddusers", true);
+	mypostrequest.open("POST", "../login/canaddusers", true);
 	mypostrequest.setRequestHeader("Content-type",
 			"application/x-www-form-urlencoded");
 	mypostrequest.setRequestHeader("Orion-Version", "1");
@@ -114,9 +114,9 @@ function confirmOpenId(openid) {
 	if (openid != "" && openid != null) {
 		var redirect = getRedirect();
 		if(redirect!=null){
-			window.location = "/login/openid?openid=" + encodeURIComponent(openid) + "&redirect=" + getRedirect();
+			window.location = "../login/openid?openid=" + encodeURIComponent(openid) + "&redirect=" + getRedirect();
 		}else{
-			window.location = "/login/openid?openid=" + encodeURIComponent(openid);
+			window.location = "../login/openid?openid=" + encodeURIComponent(openid);
 		}
 	}
 };
@@ -153,7 +153,7 @@ function confirmLogin(login, password) {
 	};
 
 	var parameters = "login=" + encodeURIComponent(login) + "&password=" + encodeURIComponent(password);
-	mypostrequest.open("POST", "/login/form", true);
+	mypostrequest.open("POST", "../login/form", true);
 	mypostrequest.setRequestHeader("Content-type",
 			"application/x-www-form-urlencoded");
 	mypostrequest.setRequestHeader("Orion-Version", "1");
@@ -193,7 +193,7 @@ function confirmCreateUser() {
 		}
 	};
 	var parameters = "login=" + encodeURIComponent(login) + "&password=" + encodeURIComponent(password);
-	mypostrequest.open("POST", "/users", true);
+	mypostrequest.open("POST", "../users", true);
 	mypostrequest.setRequestHeader("Content-type",
 			"application/x-www-form-urlencoded");
 	mypostrequest.setRequestHeader("Orion-Version", "1");

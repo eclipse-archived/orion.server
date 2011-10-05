@@ -42,7 +42,7 @@ h2.loginWindowHeader{
 }
 
 #loginError {
-	background: url("/mixloginstatic/images/error_tsk.gif") no-repeat left
+	background: url("../images/error_tsk.gif") no-repeat left
 		center;
 	color: red;
 	list-style: none;

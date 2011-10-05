@@ -2,8 +2,8 @@
 <html>
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-	<script type="text/javascript" src="/org.dojotoolkit/dojo/dojo.js.uncompressed.js"></script>
-	<script type="text/javascript" src="/orion/plugin.js"></script>
+	<script type="text/javascript" src="org.dojotoolkit/dojo/dojo.js.uncompressed.js"></script>
+	<script type="text/javascript" src="orion/plugin.js"></script>
 	<script>
 		window.onload = function() {
 			var provider = new eclipse.PluginProvider();
@@ -11,7 +11,7 @@
 				getUser : function() {
 					
 					return dojo.xhrGet({
-						url : "/basiclogin",
+						url : "basiclogin",
 						handleAs : "json",
 						timeout : 15000,
 						load : function(jsonData, ioArgs) {
@@ -27,7 +27,7 @@
 				
 			login: function(notify){
 				return dojo.xhrPost({
-					url : "/basiclogin",
+					url : "basiclogin",
 					handleAs : "json",
 					timeout : 15000,
 					load : function(jsonData, ioArgs) {

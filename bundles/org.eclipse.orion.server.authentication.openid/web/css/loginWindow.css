@@ -21,7 +21,7 @@ div.loginWindowToolbar{
 	clear: both;
 	padding: 8px;
     background-color: #FFFFFF;
-    background-image: url("/images/titleBar.png");
+    background-image: url("../../images/titleBar.png");
     background-position: left top;
     background-repeat: repeat-x;
     border-bottom-color: #BFBFBF;
@@ -73,7 +73,7 @@ h2.loginWindowHeader{
 }
 
 #loginError {
-	background: url("/openidstatic/images/error_tsk.gif") no-repeat left
+	background: url("../images/error_tsk.gif") no-repeat left
 		center;
 	color: red;
 	list-style: none;
@@ -167,7 +167,7 @@ button.loginWindow {
 button.loginWindow:hover {
 	border: none;
 	padding: 0.1em 0.2em 0.2em 0.2em;
-	background: #bcd5f0 url("/openidstatic/images/buttonHover.png")
+	background: #bcd5f0 url("../images/buttonHover.png")
 		repeat-x top left;
 	font-size: 12px;
 	text-align: right;

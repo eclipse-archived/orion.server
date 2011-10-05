@@ -1,7 +1,7 @@
 var confirmOpenId; //this is used by openid servlet to return the verified identifier
 var handleOpenIDResponse;
 
-dojo.requires("dojo.hash");
+dojo.require("dojo.hash");
 
  var lastHash;
  var jsonData;
@@ -51,7 +51,7 @@ handleOpenIDResponse = function(openid) {
 
 confirmOpenId = function(openid){
 	if (openid != "" && openid != null) {
-		win = window.open("/mixlogin/manageopenids/openid?openid=" + encodeURIComponent(openid),
+		win = window.open("../mixlogin/manageopenids/openid?openid=" + encodeURIComponent(openid),
 				"openid_popup", "width=790,height=580");
 	}
 
@@ -173,5 +173,3 @@ confirmOpenId = function(openid){
 		 }
 	 }
  }
- 
-});
