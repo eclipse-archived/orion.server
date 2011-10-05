@@ -297,7 +297,7 @@ publish () {
 		scp -r $buildDirectory/plugins/org.eclipse.orion.doc.isv/jsdoc $user@build.eclipse.org:/home/data/httpd/download.eclipse.org/orion
 	fi
 	
-	rsync --recursive --delete $writableBuildRoot/target/0.3-$buildType-builds $user@build.eclipse.org:/home/data/httpd/download.eclipse.org/orion/updates
+#	rsync --recursive --delete $writableBuildRoot/target/0.3-$buildType-builds $user@build.eclipse.org:/home/data/httpd/download.eclipse.org/orion/updates
 }
 
 cd $writableBuildRoot
