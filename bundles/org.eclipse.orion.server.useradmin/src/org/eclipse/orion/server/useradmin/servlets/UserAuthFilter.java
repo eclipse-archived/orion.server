@@ -80,7 +80,8 @@ public class UserAuthFilter implements Filter {
 		request.setAttribute(HttpContext.AUTHENTICATION_TYPE, authenticationService.getAuthType());
 
 		try {
-			if (!AuthorizationService.checkRights(login, httpRequest.getRequestURI().toString(), httpRequest.getMethod())) {
+			String requestPath = httpRequest.getServletPath() + (httpRequest.getPathInfo() == null ? "" : httpRequest.getPathInfo());
+			if (!AuthorizationService.checkRights(login, requestPath, httpRequest.getMethod())) {
 				httpResponse.sendError(HttpServletResponse.SC_FORBIDDEN);
 				return;
 			}

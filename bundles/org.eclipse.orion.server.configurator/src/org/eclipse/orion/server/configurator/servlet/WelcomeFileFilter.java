@@ -30,10 +30,10 @@ public class WelcomeFileFilter implements Filter {
 
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
 		HttpServletRequest httpRequest = (HttpServletRequest) request;
-		String requestURI = httpRequest.getRequestURI();
+		String requestPath = httpRequest.getServletPath() + (httpRequest.getPathInfo() == null ? "" : httpRequest.getPathInfo());
 		// Only alter directories that aren't part of our servlets
-		if (requestURI.endsWith("/") && !isServletPath(requestURI)) { //$NON-NLS-1$
-			request.getRequestDispatcher(requestURI + WELCOME_FILE_NAME).forward(request, response);
+		if (requestPath.endsWith("/") && !isServletPath(requestPath)) { //$NON-NLS-1$
+			request.getRequestDispatcher(requestPath + WELCOME_FILE_NAME).forward(request, response);
 			return;
 		}
 		chain.doFilter(request, response);

@@ -52,7 +52,7 @@ public class LoginServlet extends HttpServlet {
 		
 
 		if (req.getParameter("login") == null && FormAuthHelper.getAuthenticatedUser(req) != null) {
-			FormAuthHelper.writeLoginResponse(FormAuthHelper.getAuthenticatedUser(req), resp);
+			FormAuthHelper.writeLoginResponse(FormAuthHelper.getAuthenticatedUser(req), req, resp);
 			return;
 		}
 
@@ -80,7 +80,7 @@ public class LoginServlet extends HttpServlet {
 					String uid = (String) req.getSession().getAttribute("user");
 					JSONObject userJson;
 					try {
-						userJson = FormAuthHelper.getUserJson(uid);
+						userJson = FormAuthHelper.getUserJson(uid, req.getContextPath());
 						writer.print(userJson);
 						resp.setContentType("application/json"); //$NON-NLS-1$
 					} catch (JSONException e) {/* ignore */
@@ -128,7 +128,7 @@ public class LoginServlet extends HttpServlet {
 			return;
 
 		try {
-			JSONObject userJson = FormAuthHelper.getUserJson(uid);
+			JSONObject userJson = FormAuthHelper.getUserJson(uid, req.getContextPath());
 
 			PrintWriter out = resp.getWriter();
 			out.println("<html><head></head>"); //$NON-NLS-1$

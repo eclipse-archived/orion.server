@@ -72,7 +72,7 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 						String uid = (String) req.getSession().getAttribute("user");
 						JSONObject userJson;
 						try {
-							userJson = FormAuthHelper.getUserJson(uid);
+							userJson = FormAuthHelper.getUserJson(uid, req.getContextPath());
 							writer.print(userJson);
 							resp.setContentType("application/json"); //$NON-NLS-1$
 						} catch (JSONException e) {/* ignore */
@@ -127,7 +127,7 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 		if ((user = authenticationService.getAuthenticatedUser(req, resp, authenticationService.getDefaultAuthenticationProperties())) != null) {
 			resp.setStatus(HttpServletResponse.SC_OK);
 			try {
-				resp.getWriter().print(FormAuthHelper.getUserJson(user));
+				resp.getWriter().print(FormAuthHelper.getUserJson(user, req.getContextPath()));
 			} catch (JSONException e) {
 				handleException(resp, "An error occured when creating JSON object for logged in user", e);
 			}
