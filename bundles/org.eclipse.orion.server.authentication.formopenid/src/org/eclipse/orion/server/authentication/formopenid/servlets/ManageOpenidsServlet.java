@@ -136,7 +136,7 @@ public class ManageOpenidsServlet extends HttpServlet {
 		writer.println("<head>"); //$NON-NLS-1$
 		writer.println("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">"); //$NON-NLS-1$
 		writer.println("<script type=\"text/javascript\""); //$NON-NLS-1$
-		writer.println("src=\"../org.dojotoolkit/dojo/dojo.js.uncompressed.js\"></script>"); //$NON-NLS-1$
+		writer.println("src=\"../org.dojotoolkit/dojo/dojo.js\"></script>"); //$NON-NLS-1$
 		writer.println("<link rel=\"stylesheet\" type=\"text/css\" href=\"../mixloginstatic/css/manageOpenids.css\" />"); //$NON-NLS-1$
 		writer.println("<script type=\"text/javascript\" src=\"../mixloginstatic/js/manageOpenids.js\"></script>"); //$NON-NLS-1$
 		writer.println("</head>"); //$NON-NLS-1$
