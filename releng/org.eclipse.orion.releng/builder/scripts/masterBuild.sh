@@ -279,7 +279,7 @@ echo "Content-Type: text/html; charset=us-ascii"
 echo "Subject: Orion Build : $buildLabel $failed"
 echo ""
 echo "<html><head><title>Orion Build $buildLabel</title></head>" 
-echo "<body>Check here for the build results: <a href="http://download.eclipse.org/orion/drops/$buildType$timestamp">$buildLabel</a><br>" 
+echo "<body>See here for the build results: <a href="http://download.eclipse.org/orion/drops/$buildType$timestamp">$buildLabel</a><br>" 
 echo "<pre>$tagMsg</pre><br>$testsMsg<br>$compileMsg<br>$compileProblems<br>$prereqMsg</body></html>" 
 ) | /usr/lib/sendmail -t
 
