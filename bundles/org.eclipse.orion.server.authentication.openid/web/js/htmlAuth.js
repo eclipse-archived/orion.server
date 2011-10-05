@@ -20,6 +20,6 @@ function confirmOpenId(openid) {
 	/* don't wait for the login response, notify anyway */
 	notify = true;
 	if (openid != "" && openid != null) {
-		window.location = "/openid?openid=" + encodeURIComponent(openid) /*+ "&redirect=" + window.location*/ ;
+		window.location = "../openid?openid=" + encodeURIComponent(openid) /*+ "&redirect=" + window.location*/ ;
 	}
 };

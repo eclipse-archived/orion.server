@@ -111,7 +111,7 @@ public class OpenidServlet extends HttpServlet {
 			return;
 		}
 		try {
-			JSONObject userJson = FormAuthHelper.getUserJson(uid);
+			JSONObject userJson = FormAuthHelper.getUserJson(uid, req.getContextPath());
 
 			PrintWriter out = resp.getWriter();
 			out.println("<html><head></head>"); //$NON-NLS-1$

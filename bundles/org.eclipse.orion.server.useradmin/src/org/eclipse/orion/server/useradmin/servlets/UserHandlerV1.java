@@ -112,7 +112,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		for (User user : users) {
 			URI userLocation = URIUtil.append(location, user.getUid());
 			userNode = getUserProfileService().getUserProfileNode(user.getUid(), true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
-			userJSONs.add(formJson(user, userNode, userLocation));
+			userJSONs.add(formJson(user, userNode, userLocation, req.getContextPath()));
 		}
 		JSONObject json = new JSONObject();
 		json.put(UserConstants.KEY_USERS, userJSONs);
@@ -128,7 +128,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		IOrionUserProfileNode userNode = getUserProfileService().getUserProfileNode(userId, true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
 
 		URI location = OrionServlet.getURI(req);
-		OrionServlet.writeJSONResponse(req, resp, formJson(user, userNode, location));
+		OrionServlet.writeJSONResponse(req, resp, formJson(user, userNode, location, req.getContextPath()));
 		return true;
 	}
 
@@ -194,7 +194,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		URI userLocation = URIUtil.append(OrionServlet.getURI(req), newUser.getUid());
 		IOrionUserProfileNode userNode = getUserProfileService().getUserProfileNode(newUser.getUid(), true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
 
-		OrionServlet.writeJSONResponse(req, resp, formJson(newUser, userNode, userLocation));
+		OrionServlet.writeJSONResponse(req, resp, formJson(newUser, userNode, userLocation, req.getContextPath()));
 
 		return true;
 	}
@@ -273,7 +273,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private JSONObject formJson(User user, IOrionUserProfileNode userProfile, URI location) throws JSONException, CoreException {
+	private JSONObject formJson(User user, IOrionUserProfileNode userProfile, URI location, String contextPath) throws JSONException, CoreException {
 		JSONObject json = new JSONObject();
 		json.put(UserConstants.KEY_UID, user.getUid());
 		json.put(ProtocolConstants.KEY_LOCATION, location);
@@ -303,7 +303,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		JSONArray plugins = new JSONArray();
 		try {
 			JSONObject plugin = new JSONObject();
-			URI result = user.getPassword() == null ? new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), "/plugins/user/nopasswordProfilePlugin.html", null, null) : new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), "/plugins/user/userProfilePlugin.html", null, null);
+			URI result = user.getPassword() == null ? new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), contextPath + "/plugins/user/nopasswordProfilePlugin.html", null, null) : new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), contextPath + "/plugins/user/userProfilePlugin.html", null, null);
 			plugin.put(UserConstants.KEY_PLUGIN_LOCATION, result);
 			plugins.put(plugin);
 		} catch (URISyntaxException e) {

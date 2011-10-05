@@ -59,10 +59,10 @@ public class FormAuthHelper {
 	 * @throws IOException
 	 * @throws CoreException
 	 */
-	public static void writeLoginResponse(String user, HttpServletResponse resp) throws IOException {
+	public static void writeLoginResponse(String user, HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		resp.setStatus(HttpServletResponse.SC_OK);
 		try {
-			resp.getWriter().print(FormAuthHelper.getUserJson(user));
+			resp.getWriter().print(FormAuthHelper.getUserJson(user, req.getContextPath()));
 		} catch (JSONException e) {
 			//can't fail
 		}
@@ -147,7 +147,7 @@ public class FormAuthHelper {
 		}
 	}
 
-	public static JSONObject getUserJson(String uid) throws JSONException {
+	public static JSONObject getUserJson(String uid, String contextPath) throws JSONException {
 		JSONObject obj = new JSONObject();
 		obj.put("login", uid); //$NON-NLS-1$
 
@@ -160,7 +160,7 @@ public class FormAuthHelper {
 			IOrionUserProfileNode generalUserProfile = FormAuthHelper.getUserProfileService().getUserProfileNode(uid, IOrionUserProfileConstants.GENERAL_PROFILE_PART);
 			obj.put(UserConstants.KEY_UID, uid);
 			obj.put(UserConstants.KEY_LOGIN, user.getLogin());
-			obj.put("Location", user.getLocation());
+			obj.put("Location", contextPath + user.getLocation());
 			obj.put("Name", user.getName());
 			if (generalUserProfile.get(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, null) != null) {
 				Long lastLogin = Long.parseLong(generalUserProfile.get(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, ""));
