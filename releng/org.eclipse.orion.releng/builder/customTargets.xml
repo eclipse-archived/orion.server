@@ -125,10 +125,10 @@ lastMapTag=${mapsTagTag}
 	</macrodef>
 	
 	<target name="updateHTML" >
-		<condition property="builtResult" value="require([&quot;built-${name}&quot;]);" else="require([&quot;${name}&quot;]);" >
+		<condition property="builtResult" value="require([&quot;./built-${name}&quot;]);" else="require([&quot;./${name}&quot;]);" >
 			<length file="${buildFile}" when="greater" length="0" />
 		</condition>
-		<replace file="${buildDirectory}/optimization/${appDir}/${name}.html" token="require([&quot;${name}&quot;]);" value="${builtResult}" />
+		<replace file="${buildDirectory}/optimization/${appDir}/${name}.html" token="require([&quot;./${name}&quot;]);" value="${builtResult}" />
 	</target>
 	
 	<target name="requirejs" if="requirejsHome" >
