@@ -33,9 +33,7 @@ import org.json.JSONException;
 import org.mortbay.servlet.ProxyServlet;
 
 /**
- * Handles requests for URIs that are part of a running hosted site. Requests must 
- * have the desired hosted site's Host as the first segment in the pathInfo, for example: 
- * <code>/<u>127.0.0.2:8080</u>/foo/bar.html</code> or <code>/<u>mysite.foo.net:8080</u>/bar/baz.html</code>.
+ * Handles requests for URIs that are part of a running hosted site.
  */
 public class HostedSiteServlet extends OrionServlet {
 
@@ -146,10 +144,12 @@ public class HostedSiteServlet extends OrionServlet {
 			String hostedHost = pathInfo.segment(0);
 			IHostedSite site = HostingActivator.getDefault().getHostingService().get(hostedHost);
 			if (site != null) {
-				IPath path = pathInfo.removeFirstSegments(1).makeAbsolute();
+				IPath path = pathInfo.removeFirstSegments(1);
+				IPath contextPath = new Path(req.getContextPath());
+				IPath contextlessPath = path.makeRelativeTo(contextPath).makeAbsolute();
 				URI[] mappedPaths;
 				try {
-					mappedPaths = getMapped(site, path, queryString);
+					mappedPaths = getMapped(site, contextlessPath, queryString);
 				} catch (URISyntaxException e) {
 					handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Could not create target URI	", e));
 					return;
