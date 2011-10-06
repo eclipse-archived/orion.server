@@ -54,13 +54,10 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		try {
 			if (isWorkspace && Method.POST.equals(Method.fromString(request.getMethod()))) {
 				String contentLocation = representation.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-				IPath path = new Path(new URI(contentLocation).getPath());
 
 				// initialize a new git repository on project creation if specified by configuration
 				initGitRepository(request, targetPath, representation);
-
-				if (GitUtils.getGitDir(path) != null)
-					addGitLinks(request, new URI(contentLocation), representation);
+				addGitLinks(request, new URI(contentLocation), representation);
 				return;
 			}
 
@@ -70,9 +67,7 @@ public class GitFileDecorator implements IWebResourceDecorator {
 					for (int i = 0; i < children.length(); i++) {
 						JSONObject child = children.getJSONObject(i);
 						String location = child.getString(ProtocolConstants.KEY_LOCATION);
-						IPath path = new Path(new URI(location).getPath());
-						if (GitUtils.getGitDir(path) != null)
-							addGitLinks(request, new URI(location), child);
+						addGitLinks(request, new URI(location), child);
 					}
 				}
 				return;
@@ -80,9 +75,8 @@ public class GitFileDecorator implements IWebResourceDecorator {
 
 			if (!isWorkspace && Method.GET.equals(Method.fromString(request.getMethod()))) {
 				boolean git = false;
-				if (GitUtils.getGitDir(targetPath) != null) {
-					addGitLinks(request, resource, representation);
-				}
+				addGitLinks(request, resource, representation);
+
 				JSONArray children = representation.optJSONArray(ProtocolConstants.KEY_CHILDREN);
 				if (children != null) {
 					for (int i = 0; i < children.length(); i++) {
@@ -112,6 +106,8 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		}
 
 		File gitDir = GitUtils.getGitDir(requestPath);
+		if (gitDir == null)
+			return;
 
 		Repository db = new FileRepository(gitDir);
 		URI cloneLocation = BaseToCloneConverter.getCloneLocation(location, BaseToCloneConverter.FILE);
