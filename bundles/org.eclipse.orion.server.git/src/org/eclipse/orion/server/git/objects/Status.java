@@ -102,32 +102,32 @@ public class Status extends GitObject {
 
 	private URI statusToFileLocation(URI u) throws URISyntaxException {
 		String uriPath = u.getPath();
-		uriPath = uriPath.substring((GitServlet.GIT_URI + "/" + Status.RESOURCE) //$NON-NLS-1$
-				.length());
+		String prefix = uriPath.substring(0, uriPath.indexOf(GitServlet.GIT_URI));
+		uriPath = uriPath.substring(prefix.length() + (GitServlet.GIT_URI + "/" + Status.RESOURCE).length());
 		return new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), uriPath, u.getQuery(), u.getFragment());
 	}
 
 	private URI statusToDiffLocation(URI u, String diffType) throws URISyntaxException {
 		String uriPath = u.getPath();
-		uriPath = uriPath.substring((GitServlet.GIT_URI + "/" + Status.RESOURCE) //$NON-NLS-1$
-				.length());
-		uriPath = GitServlet.GIT_URI + "/" + Diff.RESOURCE + "/" + diffType + uriPath; //$NON-NLS-1$ //$NON-NLS-2$
+		String prefix = uriPath.substring(0, uriPath.indexOf(GitServlet.GIT_URI));
+		uriPath = uriPath.substring(prefix.length() + (GitServlet.GIT_URI + "/" + Status.RESOURCE).length());
+		uriPath = prefix + GitServlet.GIT_URI + "/" + Diff.RESOURCE + "/" + diffType + uriPath; //$NON-NLS-1$ //$NON-NLS-2$
 		return new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), uriPath, u.getQuery(), u.getFragment());
 	}
 
 	private URI statusToCommitLocation(URI u, String ref) throws URISyntaxException {
 		String uriPath = u.getPath();
-		uriPath = uriPath.substring((GitServlet.GIT_URI + "/" + Status.RESOURCE) //$NON-NLS-1$
-				.length());
-		uriPath = GitServlet.GIT_URI + "/" + Commit.RESOURCE + "/" + ref + uriPath; //$NON-NLS-1$ //$NON-NLS-2$
+		String prefix = uriPath.substring(0, uriPath.indexOf(GitServlet.GIT_URI));
+		uriPath = uriPath.substring(prefix.length() + (GitServlet.GIT_URI + "/" + Status.RESOURCE).length());
+		uriPath = prefix + GitServlet.GIT_URI + "/" + Commit.RESOURCE + "/" + ref + uriPath; //$NON-NLS-1$ //$NON-NLS-2$
 		return new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), uriPath, u.getQuery(), u.getFragment());
 	}
 
 	private URI statusToIndexLocation(URI u) throws URISyntaxException {
 		String uriPath = u.getPath();
-		uriPath = uriPath.substring((GitServlet.GIT_URI + "/" + Status.RESOURCE) //$NON-NLS-1$
-				.length());
-		uriPath = GitServlet.GIT_URI + "/" + Index.RESOURCE + uriPath; //$NON-NLS-1$
+		String prefix = uriPath.substring(0, uriPath.indexOf(GitServlet.GIT_URI));
+		uriPath = uriPath.substring(prefix.length() + (GitServlet.GIT_URI + "/" + Status.RESOURCE).length());
+		uriPath = prefix + GitServlet.GIT_URI + "/" + Index.RESOURCE + uriPath; //$NON-NLS-1$
 		return new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), uriPath, u.getQuery(), u.getFragment());
 	}
 }
