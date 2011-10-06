@@ -141,11 +141,11 @@ public class ManageOpenidsServlet extends HttpServlet {
 		writer.println("<script type=\"text/javascript\" src=\"../mixloginstatic/js/manageOpenids.js\"></script>"); //$NON-NLS-1$
 		writer.println("</head>"); //$NON-NLS-1$
 		writer.println("<body>"); //$NON-NLS-1$
-		writer.println("<div id=\"newOpenId\"><h2>Add external account: ");
+		writer.println("<div id=\"newOpenId\"><h2 style=\"margin-top: 10px; margin-bottom: 10px; float: left; margin-right: 5px;\">Add external account: <h2>");
 		for (OpendIdProviderDescription provider : getSupportedOpenids(req)) {
 			writer.print(provider.toJsImage().replaceAll("\\\\'", "'"));
 		}
-		writer.println("<h2></div>");
+		writer.println("</div>");
 		writer.println("<div id=\"openidList\"></div>"); //$NON-NLS-1$
 		writer.println("</body>"); //$NON-NLS-1$
 		writer.println("</html>"); //$NON-NLS-1$
