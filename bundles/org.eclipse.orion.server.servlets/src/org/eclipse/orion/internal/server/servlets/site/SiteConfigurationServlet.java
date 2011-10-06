@@ -131,10 +131,14 @@ public class SiteConfigurationServlet extends OrionServlet {
 	 */
 	private static IPath getPathInfo(HttpServletRequest req) {
 		String pathString = req.getPathInfo();
-		if (pathString == null) {
-			return new Path(""); //$NON-NLS-1$
+		IPath path = pathString == null ? Path.EMPTY : new Path(pathString);
+		if (req.getContextPath().length() != 0) {
+			IPath contextPath = new Path(req.getContextPath());
+			if (contextPath.isPrefixOf(path)) {
+				path = path.removeFirstSegments(contextPath.segmentCount());
+			}
 		}
-		return new Path(pathString);
+		return path;
 	}
 
 	/**

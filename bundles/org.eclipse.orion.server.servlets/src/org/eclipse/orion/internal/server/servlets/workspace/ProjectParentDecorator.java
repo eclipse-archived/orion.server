@@ -35,11 +35,8 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 	 */
 	public void addAtributesFor(HttpServletRequest request, URI resource, JSONObject representation) {
 		IPath resourcePath = new Path(resource.getPath());
-		//we only care about the file service
-		if (resourcePath.segmentCount() < 2)
-			return;
-		String service = resourcePath.segment(0);
-		if (!"file".equals(service)) //$NON-NLS-1$
+
+		if (!"/file".equals(request.getServletPath())) //$NON-NLS-1$
 			return;
 		try {
 			addParents(resource, representation, resourcePath);

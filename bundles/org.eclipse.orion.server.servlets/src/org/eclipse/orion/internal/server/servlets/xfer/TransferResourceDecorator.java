@@ -29,22 +29,20 @@ public class TransferResourceDecorator implements IWebResourceDecorator {
 	 * @see org.eclipse.orion.internal.server.core.IWebResourceDecorator#addAtributesFor(java.net.URI, org.json.JSONObject)
 	 */
 	public void addAtributesFor(HttpServletRequest request, URI resource, JSONObject representation) {
-		IPath targetPath = new Path(resource.getPath());
-		if (targetPath.segmentCount() <= 1)
-			return;
-		String servlet = targetPath.segment(0);
-		if (!"file".equals(servlet) && !"workspace".equals(servlet))
+
+		String servlet = request.getServletPath();
+		if (!"/file".equals(servlet) && !"/workspace".equals(servlet))
 			return;
 		try {
 			//don't add import/export directly on a workspace at this point
-			if ("file".equals(servlet))
-				addTransferLinks(resource, representation);
+			if ("/file".equals(servlet))
+				addTransferLinks(request, resource, representation);
 			JSONArray children = representation.optJSONArray(ProtocolConstants.KEY_CHILDREN);
 			if (children != null) {
 				for (int i = 0; i < children.length(); i++) {
 					JSONObject child = children.getJSONObject(i);
 					if (child.getBoolean(ProtocolConstants.KEY_DIRECTORY)) {
-						addTransferLinks(resource, child);
+						addTransferLinks(request, resource, child);
 					}
 				}
 			}
@@ -54,13 +52,13 @@ public class TransferResourceDecorator implements IWebResourceDecorator {
 		}
 	}
 
-	private void addTransferLinks(URI resource, JSONObject representation) throws URISyntaxException, JSONException {
+	private void addTransferLinks(HttpServletRequest request, URI resource, JSONObject representation) throws URISyntaxException, JSONException {
 		URI location = new URI(representation.getString(ProtocolConstants.KEY_LOCATION));
 		IPath targetPath = new Path(location.getPath()).removeFirstSegments(1).removeTrailingSeparator();
-		IPath path = new Path("/xfer/import").append(targetPath); //$NON-NLS-1$
+		IPath path = new Path(request.getContextPath() + "/xfer/import").append(targetPath); //$NON-NLS-1$
 		URI link = new URI(resource.getScheme(), resource.getAuthority(), path.toString(), null, null);
 		representation.put(ProtocolConstants.KEY_IMPORT_LOCATION, link);
-		path = new Path("/xfer/export").append(targetPath).addFileExtension("zip"); //$NON-NLS-1$ //$NON-NLS-2$
+		path = new Path(request.getContextPath() + "/xfer/export").append(targetPath).addFileExtension("zip"); //$NON-NLS-1$ //$NON-NLS-2$
 		link = new URI(resource.getScheme(), resource.getAuthority(), path.toString(), null, null);
 		representation.put(ProtocolConstants.KEY_EXPORT_LOCATION, link);
 	}

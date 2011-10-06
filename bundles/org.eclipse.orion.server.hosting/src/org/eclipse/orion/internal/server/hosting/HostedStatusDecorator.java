@@ -32,11 +32,10 @@ public class HostedStatusDecorator implements IWebResourceDecorator {
 
 	@Override
 	public void addAtributesFor(HttpServletRequest req, URI resource, JSONObject representation) {
-		IPath resourcePath = new Path(resource.getPath());
-		if (resourcePath.segmentCount() == 0)
-			return;
-		String service = resourcePath.segment(0);
-		if (!(SITE_CONFIGURATION_SERVLET_ALIAS.equals(service)))
+		String requestPath = req.getServletPath() + (req.getPathInfo() == null ? "" : req.getPathInfo());
+		IPath resourcePath = new Path(requestPath);
+		String service = req.getServletPath();
+		if (!(("/" + SITE_CONFIGURATION_SERVLET_ALIAS).equals(service)))
 			return;
 
 		try {

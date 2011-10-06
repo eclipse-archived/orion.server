@@ -56,7 +56,9 @@ public class AuthorizedUserFilter implements Filter {
 			userName = IAuthenticationService.ANONYMOUS_LOGIN_VALUE;
 
 		try {
-			if (!AuthorizationService.checkRights(userName, httpRequest.getRequestURI().toString(), httpRequest.getMethod())) {
+			String requestPath = httpRequest.getServletPath() + (httpRequest.getPathInfo() == null ? "" : httpRequest.getPathInfo());
+
+			if (!AuthorizationService.checkRights(userName, requestPath, httpRequest.getMethod())) {
 				if (IAuthenticationService.ANONYMOUS_LOGIN_VALUE.equals(userName)) {
 					userName = authenticationService.authenticateUser(httpRequest, httpResponse, authProperties);
 					if (userName == null)
