@@ -41,14 +41,15 @@ public class GitFileDecorator implements IWebResourceDecorator {
 
 	@Override
 	public void addAtributesFor(HttpServletRequest request, URI resource, JSONObject representation) {
-		IPath targetPath = new Path(resource.getPath());
+		String requestPath = request.getServletPath() + (request.getPathInfo() == null ? "" : request.getPathInfo());
+		IPath targetPath = new Path(requestPath);
 		if (targetPath.segmentCount() <= 1)
 			return;
-		String servlet = targetPath.segment(0);
-		if (!"file".equals(servlet) && !"workspace".equals(servlet)) //$NON-NLS-1$ //$NON-NLS-2$
+		String servlet = request.getServletPath();
+		if (!"/file".equals(servlet) && !"/workspace".equals(servlet)) //$NON-NLS-1$ //$NON-NLS-2$
 			return;
 
-		boolean isWorkspace = ("workspace".equals(servlet)); //$NON-NLS-1$
+		boolean isWorkspace = ("/workspace".equals(servlet)); //$NON-NLS-1$
 
 		try {
 			if (isWorkspace && Method.POST.equals(Method.fromString(request.getMethod()))) {
@@ -59,7 +60,7 @@ public class GitFileDecorator implements IWebResourceDecorator {
 				initGitRepository(request, targetPath, representation);
 
 				if (GitUtils.getGitDir(path) != null)
-					addGitLinks(new URI(contentLocation), representation);
+					addGitLinks(request, new URI(contentLocation), representation);
 				return;
 			}
 
@@ -71,7 +72,7 @@ public class GitFileDecorator implements IWebResourceDecorator {
 						String location = child.getString(ProtocolConstants.KEY_LOCATION);
 						IPath path = new Path(new URI(location).getPath());
 						if (GitUtils.getGitDir(path) != null)
-							addGitLinks(new URI(location), child);
+							addGitLinks(request, new URI(location), child);
 					}
 				}
 				return;
@@ -80,7 +81,7 @@ public class GitFileDecorator implements IWebResourceDecorator {
 			if (!isWorkspace && Method.GET.equals(Method.fromString(request.getMethod()))) {
 				boolean git = false;
 				if (GitUtils.getGitDir(targetPath) != null) {
-					addGitLinks(resource, representation);
+					addGitLinks(request, resource, representation);
 				}
 				JSONArray children = representation.optJSONArray(ProtocolConstants.KEY_CHILDREN);
 				if (children != null) {
@@ -89,7 +90,7 @@ public class GitFileDecorator implements IWebResourceDecorator {
 						String location = child.getString(ProtocolConstants.KEY_LOCATION);
 						// assumption that Git resources may live only under another Git resource
 						if (git || GitUtils.getGitDir(targetPath.append(child.getString(ProtocolConstants.KEY_NAME))) != null)
-							addGitLinks(new URI(location), child);
+							addGitLinks(request, new URI(location), child);
 					}
 				}
 			}
@@ -99,47 +100,57 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		}
 	}
 
-	private void addGitLinks(URI location, JSONObject representation) throws URISyntaxException, JSONException, CoreException, IOException {
-		JSONObject gitSection = new JSONObject();
+	private void addGitLinks(HttpServletRequest request, URI location, JSONObject representation) throws URISyntaxException, JSONException, CoreException, IOException {
 		IPath targetPath = new Path(location.getPath());
+		IPath requestPath = targetPath;
 
-		File gitDir = GitUtils.getGitDir(targetPath);
+		if (request.getContextPath().length() != 0) {
+			IPath contextPath = new Path(request.getContextPath());
+			if (contextPath.isPrefixOf(targetPath)) {
+				requestPath = targetPath.removeFirstSegments(contextPath.segmentCount());
+			}
+		}
+
+		File gitDir = GitUtils.getGitDir(requestPath);
+
 		Repository db = new FileRepository(gitDir);
 		URI cloneLocation = BaseToCloneConverter.getCloneLocation(location, BaseToCloneConverter.FILE);
 
+		JSONObject gitSection = new JSONObject();
+
 		// add Git Diff URI
 		IPath path = new Path(GitServlet.GIT_URI + '/' + Diff.RESOURCE + '/' + GitConstants.KEY_DIFF_DEFAULT).append(targetPath);
-		URI link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
+		URI link = new URI(location.getScheme(), location.getAuthority(), request.getContextPath() + path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_DIFF, link);
 
 		// add Git Status URI
 		path = new Path(GitServlet.GIT_URI + '/' + Status.RESOURCE).append(targetPath);
-		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
+		link = new URI(location.getScheme(), location.getAuthority(), request.getContextPath() + path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_STATUS, link);
 
 		// add Git Index URI
 		path = new Path(GitServlet.GIT_URI + '/' + Index.RESOURCE).append(targetPath);
-		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
+		link = new URI(location.getScheme(), location.getAuthority(), request.getContextPath() + path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_INDEX, link);
 
 		// add Git HEAD URI
 		path = new Path(GitServlet.GIT_URI + '/' + Commit.RESOURCE).append(Constants.HEAD).append(targetPath);
-		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
+		link = new URI(location.getScheme(), location.getAuthority(), request.getContextPath() + path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_HEAD, link);
 
 		// add Git Commit URI
 		path = new Path(GitServlet.GIT_URI + '/' + Commit.RESOURCE).append(db.getBranch()).append(targetPath);
-		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
+		link = new URI(location.getScheme(), location.getAuthority(), request.getContextPath() + path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_COMMIT, link);
 
 		// add Git Remote URI
 		path = new Path(GitServlet.GIT_URI + '/' + Remote.RESOURCE).append(targetPath);
-		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
+		link = new URI(location.getScheme(), location.getAuthority(), request.getContextPath() + path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_REMOTE, link);
 
 		// add Git Clone Config URI
 		path = new Path(GitServlet.GIT_URI + '/' + ConfigOption.RESOURCE + '/' + Clone.RESOURCE).append(targetPath);
-		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
+		link = new URI(location.getScheme(), location.getAuthority(), request.getContextPath() + path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_CONFIG, link);
 
 		// add Git Default Remote Branch URI 
@@ -149,7 +160,7 @@ public class GitFileDecorator implements IWebResourceDecorator {
 
 		// add Git Tag URI
 		path = new Path(GitServlet.GIT_URI + '/' + Tag.RESOURCE).append(targetPath);
-		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
+		link = new URI(location.getScheme(), location.getAuthority(), request.getContextPath() + path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_TAG, link);
 
 		// add Git Clone URI

@@ -13,10 +13,10 @@ package org.eclipse.orion.server.git.servlets;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.git.objects.*;
-import org.eclipse.orion.server.git.objects.Diff;
+import org.eclipse.orion.server.git.objects.Status;
 
 /**
  * A git handler for Orion Git API v 1.0.
@@ -50,24 +50,33 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 
 		String[] infoParts = gitPathInfo.split("\\/", 3); //$NON-NLS-1$
 
+		String pathString = infoParts[2];
+		if (request.getContextPath().length() != 0) {
+			IPath path = pathString == null ? Path.EMPTY : new Path(pathString);
+			IPath contextPath = new Path(request.getContextPath());
+			if (contextPath.isPrefixOf(path)) {
+				pathString = path.removeFirstSegments(contextPath.segmentCount()).toString();
+			}
+		}
+
 		if (infoParts[1].equals(Branch.RESOURCE)) {
-			return branchHandlerV1.handleRequest(request, response, infoParts[2]);
+			return branchHandlerV1.handleRequest(request, response, pathString);
 		} else if (infoParts[1].equals(Clone.RESOURCE)) {
-			return cloneHandlerV1.handleRequest(request, response, infoParts[2]);
+			return cloneHandlerV1.handleRequest(request, response, pathString);
 		} else if (infoParts[1].equals(Commit.RESOURCE)) {
-			return commitHandlerV1.handleRequest(request, response, infoParts[2]);
+			return commitHandlerV1.handleRequest(request, response, pathString);
 		} else if (infoParts[1].equals(ConfigOption.RESOURCE)) {
-			return configHandlerV1.handleRequest(request, response, infoParts[2]);
+			return configHandlerV1.handleRequest(request, response, pathString);
 		} else if (infoParts[1].equals(Diff.RESOURCE)) {
-			return diffHandlerV1.handleRequest(request, response, infoParts[2]);
+			return diffHandlerV1.handleRequest(request, response, pathString);
 		} else if (infoParts[1].equals(Index.RESOURCE)) {
-			return indexHandlerV1.handleRequest(request, response, infoParts[2]);
+			return indexHandlerV1.handleRequest(request, response, pathString);
 		} else if (infoParts[1].equals(Remote.RESOURCE)) {
-			return remoteHandlerV1.handleRequest(request, response, infoParts[2]);
+			return remoteHandlerV1.handleRequest(request, response, pathString);
 		} else if (infoParts[1].equals(Status.RESOURCE)) {
-			return statusHandlerV1.handleRequest(request, response, infoParts[2]);
+			return statusHandlerV1.handleRequest(request, response, pathString);
 		} else if (infoParts[1].equals(Tag.RESOURCE)) {
-			return tagHandlerV1.handleRequest(request, response, infoParts[2]);
+			return tagHandlerV1.handleRequest(request, response, pathString);
 		}
 		return false;
 	}
