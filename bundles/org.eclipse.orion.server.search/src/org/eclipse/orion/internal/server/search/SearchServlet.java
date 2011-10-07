@@ -18,6 +18,8 @@ import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.util.ClientUtils;
+import org.apache.solr.common.SolrDocument;
+import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.params.CommonParams;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.core.SolrCore;
@@ -69,8 +71,30 @@ public class SearchServlet extends OrionServlet {
 		NamedList<Object> params = (NamedList<Object>) queryResponse.getHeader().get("params"); //$NON-NLS-1$
 		params.remove(CommonParams.Q);
 		params.add(CommonParams.Q, httpRequest.getParameter(CommonParams.Q));
-		solrResponse.setAllValues(queryResponse.getResponse());
+		NamedList<Object> values = queryResponse.getResponse();
+		String contextPath = httpRequest.getContextPath();
+		if (contextPath.length() > 0)
+			setSearchResultContext(values, contextPath);
+		solrResponse.setAllValues(values);
 		QueryResponseWriter writer = core.getQueryResponseWriter("json"); //$NON-NLS-1$
 		writer.write(httpResponse.getWriter(), solrRequest, solrResponse);
+	}
+
+	/**
+	 * Prepend the server context path to the location of search result documents.
+	 */
+	private void setSearchResultContext(NamedList<Object> values, String contextPath) {
+		//find the search result documents in the search response
+		SolrDocumentList documents = (SolrDocumentList) values.get("response");
+		if (documents == null)
+			return;
+		for (SolrDocument doc : documents) {
+			String location = (String) doc.getFieldValue(ProtocolConstants.KEY_LOCATION);
+			if (location != null) {
+				//prepend the context path and update the document
+				location = contextPath + location;
+				doc.setField(ProtocolConstants.KEY_LOCATION, location);
+			}
+		}
 	}
 }
