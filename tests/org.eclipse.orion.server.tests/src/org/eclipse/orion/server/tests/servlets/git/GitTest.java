@@ -740,6 +740,24 @@ public abstract class GitTest extends FileSystemTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 	}
 
+	protected WebResponse checkoutTag(String cloneLocation, String tagName) throws JSONException, IOException, SAXException {
+		String requestURI;
+		if (cloneLocation.startsWith("http://")) {
+			requestURI = cloneLocation;
+		} else {
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Clone.RESOURCE + cloneLocation;
+		}
+		JSONObject body = new JSONObject();
+		body.put(GitConstants.KEY_TAG_NAME, tagName);
+		// checkout the tag into a new local branch
+		// TODO: temporary workaround, JGit fails to checkout a new branch named as the tag
+		body.put(GitConstants.KEY_BRANCH_NAME, "tag_" + tagName);
+		WebRequest request = new PutMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "UTF-8");
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		return webConversation.getResponse(request);
+	}
+
 	/**
 	 * Return commits for the given URI.
 	 * 

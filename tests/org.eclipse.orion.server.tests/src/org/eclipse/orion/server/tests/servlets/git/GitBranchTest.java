@@ -176,6 +176,41 @@ public class GitBranchTest extends GitTest {
 		}
 	}
 
+	@Test
+	public void testCheckoutTagAsBranch() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
+
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			JSONObject clone = clone(clonePath);
+			String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
+			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+			// get project/folder metadata
+			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject folder = new JSONObject(response.getText());
+
+			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
+			String gitTagUri = gitSection.getString(GitConstants.KEY_TAG);
+
+			// tag HEAD with 'tag'
+			tag(gitTagUri, "tag", Constants.HEAD);
+
+			// there's no branch 'tag', this is a bad request, should fail
+			response = checkoutBranch(cloneLocation, "tag");
+			assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
+		}
+	}
+
 	static JSONObject getCurrentBranch(JSONObject branches) throws JSONException {
 		JSONArray branchesArray = branches.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 		for (int i = 0; i < branchesArray.length(); i++) {

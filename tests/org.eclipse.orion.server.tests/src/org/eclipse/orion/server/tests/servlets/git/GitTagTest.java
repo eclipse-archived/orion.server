@@ -239,4 +239,60 @@ public class GitTagTest extends GitTest {
 			assertEquals("tag1", tags.getJSONObject(0).get(ProtocolConstants.KEY_NAME));
 		}
 	}
+
+	@Test
+	public void testCheckoutTag() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
+		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
+		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
+
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+
+		for (IPath clonePath : clonePaths) {
+			// clone a  repo
+			JSONObject clone = clone(clonePath);
+			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+			String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
+
+			// get project/folder metadata
+			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject folder = new JSONObject(response.getText());
+
+			JSONObject testTxt = getChild(folder, "test.txt");
+			modifyFile(testTxt, "tag me");
+			addFile(testTxt);
+			commitFile(testTxt, "tag me", false);
+
+			// tag HEAD with 'tag'
+			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
+			String gitTagUri = gitSection.getString(GitConstants.KEY_TAG);
+			tag(gitTagUri, "tag", Constants.HEAD);
+
+			modifyFile(testTxt, "after tag");
+			addFile(testTxt);
+			commitFile(testTxt, "after tag", false);
+
+			assertEquals("after tag", getFileContent(testTxt));
+
+			response = checkoutTag(cloneLocation, "tag");
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			assertEquals("tag me", getFileContent(testTxt));
+			// check current branch
+			request = getGetRequest(clone.getString(GitConstants.KEY_BRANCH));
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject branches = new JSONObject(response.getText());
+			assertEquals("tag_tag", GitBranchTest.getCurrentBranch(branches).getString(ProtocolConstants.KEY_NAME));
+
+			response = checkoutBranch(cloneLocation, Constants.MASTER);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			assertEquals("after tag", getFileContent(testTxt));
+		}
+	}
 }

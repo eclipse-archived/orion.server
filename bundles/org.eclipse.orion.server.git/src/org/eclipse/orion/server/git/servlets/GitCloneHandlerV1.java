@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.Map;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -299,21 +300,43 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 				// make sure required fields are set
 				JSONObject toCheckout = OrionServlet.readJSONRequest(request);
 				JSONArray paths = toCheckout.optJSONArray(ProtocolConstants.KEY_PATH);
-				String branch = toCheckout.optString(GitConstants.KEY_BRANCH_NAME);
-				if ((paths == null || paths.length() == 0) && (branch == null || branch.isEmpty())) {
-					String msg = NLS.bind("Either '{0}' or '{1}' should be provided: {2}", new Object[] {ProtocolConstants.KEY_PATH, GitConstants.KEY_BRANCH_NAME, toCheckout});
+				String branch = toCheckout.optString(GitConstants.KEY_BRANCH_NAME, null);
+				String tag = toCheckout.optString(GitConstants.KEY_TAG_NAME, null);
+				if ((paths == null || paths.length() == 0) && branch == null && tag == null) {
+					String msg = NLS.bind("Either '{0}' or '{1}' or '{2}' should be provided, got: {3}", new Object[] {ProtocolConstants.KEY_PATH, GitConstants.KEY_BRANCH_NAME, GitConstants.KEY_TAG_NAME, toCheckout});
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 				}
 
 				Git git = new Git(new FileRepository(gitDir));
 				if (paths != null) {
+
 					CheckoutCommand checkout = git.checkout();
 					for (int i = 0; i < paths.length(); i++) {
 						checkout.addPath(paths.getString(i));
 					}
 					checkout.call();
 					return true;
+				} else if (tag != null && branch != null) {
+					CheckoutCommand co = git.checkout();
+					try {
+						co.setName(branch).setStartPoint(tag).setCreateBranch(true).call();
+						return true;
+					} catch (JGitInternalException e) {
+						if (org.eclipse.jgit.api.CheckoutResult.Status.CONFLICTS.equals(co.getResult().getStatus())) {
+							return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_CONFLICT, "Checkout aborted.", e));
+						}
+						// TODO: handle other exceptions
+					} catch (RefNotFoundException e) {
+						String msg = NLS.bind("Tag not found: {0}", tag);
+						return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, e));
+					}
 				} else if (branch != null) {
+
+					if (!isLocalBranch(git, branch)) {
+						String msg = NLS.bind("{0} is not a branch.", branch);
+						return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+					}
+
 					CheckoutCommand co = git.checkout();
 					try {
 						co.setName(branch).call();
@@ -327,7 +350,6 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 						String msg = NLS.bind("Branch name not found: {0}", branch);
 						return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, e));
 					}
-
 				}
 			} else {
 				String msg = NLS.bind("Nothing found for the given ID: {0}", path);
@@ -336,6 +358,15 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		}
 		String msg = NLS.bind("Invalid checkout request {0}", pathString);
 		return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+	}
+
+	private boolean isLocalBranch(Git git, String branch) {
+		List<Ref> branches = git.branchList().call();
+		for (Ref ref : branches) {
+			if (Repository.shortenRefName(ref.getName()).equals(branch))
+				return true;
+		}
+		return false;
 	}
 
 	private boolean handleDelete(HttpServletRequest request, HttpServletResponse response, String pathString) throws IOException, JSONException, ServletException, URISyntaxException, CoreException, JGitInternalException, GitAPIException {
