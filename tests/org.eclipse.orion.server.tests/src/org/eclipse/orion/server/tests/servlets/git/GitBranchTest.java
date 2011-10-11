@@ -177,7 +177,7 @@ public class GitBranchTest extends GitTest {
 	}
 
 	@Test
-	public void testCheckoutTagAsBranch() throws Exception {
+	public void testCheckoutAmbiguousName() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
 		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
@@ -192,6 +192,7 @@ public class GitBranchTest extends GitTest {
 			JSONObject clone = clone(clonePath);
 			String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
 			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+			String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 			// get project/folder metadata
 			WebRequest request = getGetFilesRequest(cloneContentLocation);
@@ -199,15 +200,36 @@ public class GitBranchTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder = new JSONObject(response.getText());
 
-			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
-			String gitTagUri = gitSection.getString(GitConstants.KEY_TAG);
+			JSONObject testTxt = getChild(folder, "test.txt");
+			modifyFile(testTxt, "tagged");
+			addFile(testTxt);
+			commitFile(testTxt, "tagged", false);
 
 			// tag HEAD with 'tag'
+			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
+			String gitTagUri = gitSection.getString(GitConstants.KEY_TAG);
 			tag(gitTagUri, "tag", Constants.HEAD);
 
-			// there's no branch 'tag', this is a bad request, should fail
+			modifyFile(testTxt, "branched");
+			addFile(testTxt);
+			commitFile(testTxt, "branched", false);
+
+			// use the same name for the new branch
+			branch(branchesLocation, "tag");
+
+			modifyFile(testTxt, "head");
+			addFile(testTxt);
+			commitFile(testTxt, "head", false);
+
+			// checkout branch
 			response = checkoutBranch(cloneLocation, "tag");
-			assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			assertEquals("branched", getFileContent(testTxt));
+
+			// checkout tag
+			response = checkoutTag(cloneLocation, "tag");
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			assertEquals("tagged", getFileContent(testTxt));
 		}
 	}
 

@@ -403,7 +403,7 @@ public class GitCheckoutTest extends GitTest {
 
 		// checkout
 		response = checkoutBranch(location, "");
-		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
+		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 	}
 
 	@Test

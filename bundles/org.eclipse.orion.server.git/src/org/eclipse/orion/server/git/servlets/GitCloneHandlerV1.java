@@ -334,12 +334,12 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 
 					if (!isLocalBranch(git, branch)) {
 						String msg = NLS.bind("{0} is not a branch.", branch);
-						return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+						return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
 					}
 
 					CheckoutCommand co = git.checkout();
 					try {
-						co.setName(branch).call();
+						co.setName(Constants.R_HEADS + branch).call();
 						return true;
 					} catch (JGitInternalException e) {
 						if (org.eclipse.jgit.api.CheckoutResult.Status.CONFLICTS.equals(co.getResult().getStatus())) {
