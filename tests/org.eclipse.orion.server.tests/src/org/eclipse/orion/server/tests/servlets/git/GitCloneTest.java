@@ -124,6 +124,7 @@ public class GitCloneTest extends GitTest {
 			assertNotNull(clone.get(ProtocolConstants.KEY_NAME));
 			assertNotNull(clone.get(GitConstants.KEY_URL));
 			assertNotNull(clone.get(GitConstants.KEY_BRANCH));
+			assertNotNull(clone.get(GitConstants.KEY_TAG));
 		}
 	}
 

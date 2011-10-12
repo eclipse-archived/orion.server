@@ -44,6 +44,7 @@ public class GitTagTest extends GitTest {
 			// clone a  repo
 			JSONObject clone = clone(clonePath);
 			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+			String tagLocation = clone.getString(GitConstants.KEY_TAG);
 
 			// get project/folder metadata
 			WebRequest request = getGetFilesRequest(cloneContentLocation);
@@ -53,6 +54,7 @@ public class GitTagTest extends GitTest {
 
 			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
 			String gitTagUri = gitSection.getString(GitConstants.KEY_TAG);
+			assertEquals(tagLocation, gitTagUri);
 
 			// tag HEAD with 'tag'
 			JSONObject tag = tag(gitTagUri, "tag", Constants.HEAD);

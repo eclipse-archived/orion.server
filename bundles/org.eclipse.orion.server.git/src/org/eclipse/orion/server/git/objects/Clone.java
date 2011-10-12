@@ -145,6 +145,10 @@ public class Clone {
 			location = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), np.toString(), baseLocation.getQuery(), baseLocation.getFragment());
 			result.put(GitConstants.KEY_BRANCH, location);
 
+			np = new Path(GitServlet.GIT_URI).append(Tag.RESOURCE).append("file").append(getId()); //$NON-NLS-1$
+			location = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), np.toString(), baseLocation.getQuery(), baseLocation.getFragment());
+			result.put(GitConstants.KEY_TAG, location);
+
 			np = new Path(GitServlet.GIT_URI).append(Index.RESOURCE).append("file").append(getId()); //$NON-NLS-1$
 			location = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), np.toString(), baseLocation.getQuery(), baseLocation.getFragment());
 			result.put(GitConstants.KEY_INDEX, location);
