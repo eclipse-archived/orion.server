@@ -62,6 +62,8 @@ public abstract class BaseToCloneConverter {
 
 	public static final BaseToCloneConverter DIFF = REMOTE;
 
+	public static final BaseToCloneConverter TAG = REMOTE;
+
 	public static final BaseToCloneConverter REMOTE_BRANCH = new BaseToCloneConverter() {
 		@Override
 		public IPath getFilePath(URI base) throws URISyntaxException {

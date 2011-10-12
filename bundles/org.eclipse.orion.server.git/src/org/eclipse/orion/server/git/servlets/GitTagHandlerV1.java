@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Map;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -22,8 +23,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
-import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.*;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -67,20 +67,46 @@ public class GitTagHandlerV1 extends ServletResourceHandler<String> {
 
 	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, String path) throws IOException, JSONException, ServletException, URISyntaxException, CoreException {
 		IPath p = new Path(path);
-		File gitDir = GitUtils.getGitDir(p);
-		Repository db = new FileRepository(gitDir);
-		URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.TAG_LIST);
-		Git git = new Git(db);
-		List<RevTag> revTags = git.tagList().call();
-		JSONObject result = new JSONObject();
-		JSONArray children = new JSONArray();
-		for (RevTag revTag : revTags) {
-			Tag tag = new Tag(cloneLocation, db, revTag);
-			children.put(tag.toJSON());
+		if (p.segment(1).equals("file")) { //$NON-NLS-1$
+			String tagName = p.segment(0);
+			p = p.removeFirstSegments(1);
+			File gitDir = GitUtils.getGitDir(p);
+			Repository db = new FileRepository(gitDir);
+			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.TAG);
+
+			Map<String, Ref> refList = db.getRefDatabase().getRefs(Constants.R_TAGS);
+			Ref ref = refList.get(tagName);
+			if (ref != null) {
+				RevWalk revWalk = new RevWalk(db);
+				try {
+					RevTag revTag = revWalk.parseTag(ref.getObjectId());
+					Tag tag = new Tag(cloneLocation, db, revTag);
+					OrionServlet.writeJSONResponse(request, response, tag.toJSON());
+					return true;
+				} finally {
+					revWalk.release();
+				}
+			} else {
+				String msg = NLS.bind("Tag not found: {0}", tagName);
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
+			}
+		} else {
+			// list all tags
+			File gitDir = GitUtils.getGitDir(p);
+			Repository db = new FileRepository(gitDir);
+			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.TAG_LIST);
+			Git git = new Git(db);
+			List<RevTag> revTags = git.tagList().call();
+			JSONObject result = new JSONObject();
+			JSONArray children = new JSONArray();
+			for (RevTag revTag : revTags) {
+				Tag tag = new Tag(cloneLocation, db, revTag);
+				children.put(tag.toJSON());
+			}
+			result.put(ProtocolConstants.KEY_CHILDREN, children);
+			OrionServlet.writeJSONResponse(request, response, result);
+			return true;
 		}
-		result.put(ProtocolConstants.KEY_CHILDREN, children);
-		OrionServlet.writeJSONResponse(request, response, result);
-		return true;
 	}
 
 	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, String path) throws CoreException, IOException, JSONException, ServletException, URISyntaxException {

@@ -35,7 +35,7 @@ public class Tag extends GitObject {
 	public JSONObject toJSON() throws JSONException, URISyntaxException {
 		JSONObject result = new JSONObject();
 		result.put(ProtocolConstants.KEY_NAME, tag.getTagName());
-		result.put(ProtocolConstants.KEY_CONTENT_LOCATION, getLocation());
+		result.put(ProtocolConstants.KEY_LOCATION, getLocation());
 		result.put(ProtocolConstants.KEY_TYPE, TYPE);
 		return result;
 	}

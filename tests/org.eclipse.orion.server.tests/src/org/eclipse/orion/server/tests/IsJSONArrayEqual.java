@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.tests;
 
-import java.util.Iterator;
-
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
@@ -40,36 +38,8 @@ public class IsJSONArrayEqual extends TypeSafeMatcher<JSONArray> {
 				if (o1 instanceof JSONObject && o2 instanceof JSONObject) {
 					JSONObject jo1 = (JSONObject) o1;
 					JSONObject jo2 = (JSONObject) o2;
-					if (jo1.length() != jo2.length())
+					if (!new IsJSONObjectEqual(jo1).matchesSafely(jo2))
 						return false;
-					for (Iterator<?> it = jo1.keys(); it.hasNext();) {
-						Object k1 = it.next();
-						if (k1 instanceof String) {
-							String s1 = (String) k1;
-							if (!jo2.has(s1))
-								return false;
-							Object v1 = jo1.get(s1);
-							Object v2 = jo2.get(s1);
-							if (v1 instanceof String && v2 instanceof String) {
-								String sv1 = (String) v1;
-								String sv2 = (String) v2;
-								if (!sv1.equals(sv2))
-									return false;
-							} else if (v1 instanceof JSONArray && v2 instanceof JSONArray) {
-								JSONArray ja1 = (JSONArray) v1;
-								JSONArray ja2 = (JSONArray) v2;
-								if (!new IsJSONArrayEqual(ja1).matchesSafely(ja2))
-									return false;
-							} else if (v1 instanceof Long && v2 instanceof Long) {
-								Long l1 = (Long) v1;
-								Long l2 = (Long) v2;
-								if (!l1.equals(l2))
-									return false;
-							} else {
-								return false;
-							}
-						}
-					}
 				} else {
 					return false;
 				}

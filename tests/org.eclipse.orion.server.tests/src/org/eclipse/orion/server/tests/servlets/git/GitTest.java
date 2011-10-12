@@ -1087,7 +1087,7 @@ public abstract class GitTest extends FileSystemTest {
 		return request;
 	}
 
-	private static WebRequest getGetGitTagRequest(String location) {
+	protected static WebRequest getGetGitTagRequest(String location) {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;

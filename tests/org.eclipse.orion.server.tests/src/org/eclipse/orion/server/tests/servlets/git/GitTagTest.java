@@ -10,7 +10,9 @@
  *******************************************************************************/
 package org.eclipse.orion.server.tests.servlets.git;
 
+import static org.eclipse.orion.server.tests.IsJSONObjectEqual.isJSONObjectEqual;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import java.net.HttpURLConnection;
@@ -59,7 +61,14 @@ public class GitTagTest extends GitTest {
 			// tag HEAD with 'tag'
 			JSONObject tag = tag(gitTagUri, "tag", Constants.HEAD);
 			assertEquals("tag", tag.getString(ProtocolConstants.KEY_NAME));
-			new URI(tag.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+			URI tagUri = new URI(tag.getString(ProtocolConstants.KEY_LOCATION));
+
+			// get tag metadata
+			request = getGetGitTagRequest(tagUri.toString());
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject tag1 = new JSONObject(response.getText());
+			assertThat(tag, isJSONObjectEqual(tag1));
 		}
 	}
 
@@ -116,11 +125,17 @@ public class GitTagTest extends GitTest {
 			// delete 'tag1'
 			JSONObject tag1 = tags.getJSONObject(0);
 			assertEquals("tag1", tag1.get(ProtocolConstants.KEY_NAME));
-			deleteTag(tag1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+			String tag1Uri = tag1.getString(ProtocolConstants.KEY_LOCATION);
+			deleteTag(tag1Uri);
 
 			tags = listTags(gitTagUri);
 			assertEquals(1, tags.length());
 			assertEquals("tag2", tags.getJSONObject(0).get(ProtocolConstants.KEY_NAME));
+
+			// check if the deleted tag is gone
+			request = getGetGitTagRequest(tag1Uri);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 		}
 	}
 
@@ -153,7 +168,7 @@ public class GitTagTest extends GitTest {
 			// tag HEAD with 'tag'
 			JSONObject tag = tag(gitTagUri, "tag", Constants.HEAD);
 			assertEquals("tag", tag.getString(ProtocolConstants.KEY_NAME));
-			new URI(tag.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+			new URI(tag.getString(ProtocolConstants.KEY_LOCATION));
 
 			// tag HEAD with 'tag' again (TagHandler) - should fail
 			request = getPostGitTagRequest(gitTagUri, "tag", Constants.HEAD);
