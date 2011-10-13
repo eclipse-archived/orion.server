@@ -119,7 +119,7 @@ public class SiteConfigurationServlet extends OrionServlet {
 			JSONArray siteConfigurations = user.getSiteConfigurationsJSON(ServletResourceHandler.getURI(req));
 			JSONObject jsonResponse = new JSONObject();
 			jsonResponse.put(SiteConfigurationConstants.KEY_SITE_CONFIGURATIONS, siteConfigurations);
-			writeJSONResponse(req, resp, jsonResponse);
+			writeJSONResponse(req, resp, jsonResponse, false);
 		} catch (Exception e) {
 			handleException(resp, "An error occurred while obtaining site configurations", e);
 		}

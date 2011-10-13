@@ -118,7 +118,7 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 		URI baseLocation = location.resolve(""); //$NON-NLS-1$
 
 		JSONObject result = toJSON(site, baseLocation);
-		OrionServlet.writeJSONResponse(req, resp, result);
+		OrionServlet.writeJSONResponse(req, resp, result, false);
 		return true;
 	}
 
@@ -153,7 +153,7 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 
 		URI baseLocation = getURI(req);
 		JSONObject result = toJSON(site, baseLocation);
-		OrionServlet.writeJSONResponse(req, resp, result);
+		OrionServlet.writeJSONResponse(req, resp, result, false);
 
 		resp.setStatus(HttpServletResponse.SC_CREATED);
 		resp.addHeader(ProtocolConstants.HEADER_LOCATION, result.getString(ProtocolConstants.KEY_LOCATION));
@@ -175,7 +175,7 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 		URI baseLocation = location.resolve(""); //$NON-NLS-1$
 
 		JSONObject result = toJSON(site, baseLocation);
-		OrionServlet.writeJSONResponse(req, resp, result);
+		OrionServlet.writeJSONResponse(req, resp, result, false);
 		return true;
 	}
 
