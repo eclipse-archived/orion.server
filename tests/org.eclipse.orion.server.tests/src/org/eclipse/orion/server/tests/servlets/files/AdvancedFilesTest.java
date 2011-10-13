@@ -14,11 +14,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
+import com.meterware.httpunit.*;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.HashMap;
 import java.util.Map;
-
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -27,10 +27,6 @@ import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.xml.sax.SAXException;
-
-import com.meterware.httpunit.WebConversation;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 
 public class AdvancedFilesTest extends FileSystemTest {
 	@Before
@@ -70,7 +66,7 @@ public class AdvancedFilesTest extends FileSystemTest {
 	@Test
 	public void testMetadataHandling() throws JSONException, IOException, SAXException {
 
-		String fileName = "testfile.txt";
+		String fileName = "testMetadataHandling.txt";
 
 		//setup: create a file
 		WebConversation webConversation = new WebConversation();
