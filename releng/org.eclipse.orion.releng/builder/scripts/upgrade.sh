@@ -11,6 +11,7 @@
 #!/bin/bash
 #
 
+
 serverHome=/home/admin/current
 
 while [ $# -gt 0 ]
@@ -62,20 +63,25 @@ echo Unzipping $newBuildArchive
 unzip -q $newBuildArchive
 popd
 
-#copy server workspace to new install
-echo Copying server workspace
-cp -r $serverHome/$oldBuildDir/serverworkspace $serverHome/eclipse/
+#move server workspace to new install
+echo Moving server workspace
+mv $serverHome/$oldBuildDir/serverworkspace $serverHome/eclipse/
 
 #increase heap size in ini
+echo Configuring server
 sed -i 's/384m/800m/g' $serverHome/eclipse/orion.ini
 
 #copy orion.conf file into server
 cp $serverHome/orion.conf $serverHome/eclipse/orion.conf
 
 #start new server
+echo Starting server
 pushd $serverHome/eclipse
-nohup ./orion &
+./orion >> log.txt 2>&1 &
 
 pid_eclipse="$!"
+echo "Server started with pid $pid_eclipse"
 echo $pid_eclipse > $serverHome/current.pid
 popd
+
+echo "Upgrade complete"
