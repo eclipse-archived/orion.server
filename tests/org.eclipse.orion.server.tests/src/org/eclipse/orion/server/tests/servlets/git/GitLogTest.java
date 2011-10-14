@@ -132,12 +132,12 @@ public class GitLogTest extends GitTest {
 	}
 
 	@Test
-	public void testLogBigRepoLinked() throws Exception {
-		File bigRepo = new File("D:\\workspace\\eclipse\\web\\org.eclipse.orion.server");
-		Assume.assumeTrue(bigRepo.exists());
+	public void testLogOrionServerLinked() throws Exception {
+		File orionServer = new File("").getAbsoluteFile().getParentFile(/*org.eclipse.orion.server.tests*/).getParentFile(/*tests*/);
+		Assume.assumeTrue(orionServer.exists());
 
 		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), bigRepo.toURI().toString());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), orionServer.toURI().toString());
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		// get project/folder metadata

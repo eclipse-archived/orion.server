@@ -15,6 +15,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.net.HttpURLConnection;
 import java.net.URI;
 
@@ -25,6 +26,7 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.junit.Assume;
 import org.junit.Test;
 
 import com.meterware.httpunit.WebRequest;
@@ -311,5 +313,27 @@ public class GitTagTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			assertEquals("after tag", getFileContent(testTxt));
 		}
+	}
+
+	@Test
+	public void testListOrionServerTags() throws Exception {
+		File orionServer = new File("").getAbsoluteFile().getParentFile(/*org.eclipse.orion.server.tests*/).getParentFile(/*tests*/);
+		Assume.assumeTrue(orionServer.exists());
+
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), orionServer.toURI().toString());
+		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+		// get project/folder metadata
+		WebRequest request = getGetFilesRequest(location);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject folder = new JSONObject(response.getText());
+
+		JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
+		String gitTagUri = gitSection.getString(GitConstants.KEY_TAG);
+
+		JSONArray tags = listTags(gitTagUri);
+		assertTrue(tags.length() > 0);
 	}
 }

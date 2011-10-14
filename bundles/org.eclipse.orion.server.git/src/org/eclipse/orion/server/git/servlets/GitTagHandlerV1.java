@@ -14,8 +14,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -95,12 +95,13 @@ public class GitTagHandlerV1 extends ServletResourceHandler<String> {
 			File gitDir = GitUtils.getGitDir(p);
 			Repository db = new FileRepository(gitDir);
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.TAG_LIST);
-			Git git = new Git(db);
-			List<RevTag> revTags = git.tagList().call();
+			// TODO: bug 356943 - revert when bug 360650 is fixed
+			// List<RevTag> revTags = git.tagList().call();
+			Map<String, Ref> refs = db.getRefDatabase().getRefs(Constants.R_TAGS);
 			JSONObject result = new JSONObject();
 			JSONArray children = new JSONArray();
-			for (RevTag revTag : revTags) {
-				Tag tag = new Tag(cloneLocation, db, revTag);
+			for (Entry<String, Ref> refEntry : refs.entrySet()) {
+				Tag tag = new Tag(cloneLocation, db, refEntry.getValue());
 				children.put(tag.toJSON());
 			}
 			result.put(ProtocolConstants.KEY_CHILDREN, children);
