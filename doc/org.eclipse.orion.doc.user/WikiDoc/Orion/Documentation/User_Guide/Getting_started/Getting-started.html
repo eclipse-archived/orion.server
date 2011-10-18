@@ -112,9 +112,12 @@
 		</p>
 		<h3 id="JavaScript_development">JavaScript development</h3>
 		<p>If you are working with JavaScript (a *.js file), the editor will syntax highlight your code.  You will also see an outline of the functions in your JavaScript, as well as markers for problem areas in your code.  Integration with existing web tools is an important goal in Orion, so we have implemented a plug-in that runs 
-			<a href="http://www.jslint.com/" target="orion_external">JSLint</a> on JavaScript files in order to produce the outline and problem markers.  The familiar Eclipse problem UI is used to display the problems in the editor.  You'll see problem markers by each line of code in the left hand ruler, and overview problem markers on the right side, which allow you to navigate quickly to a problem in a part of the file that's not currently displayed.   
+			<a href="http://www.jslint.com/" target="orion_external">JSLint</a> on JavaScript files in order to produce the outline and problem markers.  The familiar Eclipse problem UI is used to display the problems in the editor.  You'll see problem markers by each line of code in the left hand ruler, red underlining under the problematic text, and overview problem markers on the right side. These last markers allow you to navigate quickly to a problem in a part of the file that's not currently displayed.   
 		</p>
 		<p>The editor will also match brackets when you click next to a bracket, perform auto indention, and provide source-code oriented key bindings for things like toggling comments and adding/removing block comments.</p>
+		<p>Orion allows multiple kinds of code outline views to be plugged in. For example you can install the 
+			<a href="http://johnjbarton.github.com/outliner/nonymousPlugin.html" target="orion_external">nonymous plugin</a> that provides a hierarchical JavaScript outline view. If you have multiple outline views installed, a drop down menu at the top of the outline pane allows you to switch between them.
+		</p>
 		<p>
 			<img border="0" src="images/Orion-editjs.png"/>
 		</p>
@@ -123,7 +126,9 @@
 			<a href="http://getfirebug.com/wiki/index.php/Editing#Orion_Web_Editor" target="orion_external">the Firebug wiki</a>.
 		</p>
 		<h3 id="CSS_development">CSS development</h3>
-		<p>Syntax highlighting of CSS files is also supported, but no outlining support has been provided yet.  As a proof of concept, Orion implements a very simple form of content assist.  In Orion, our goal is to provide the plug-in points for things like content assist and outlining, allowing plug-in developers to enhance the functionality.  For now, Orion supplies a content assist based on CSS keyword proposals.  We hope to integrate existing source code analysis tools as plug-ins to enhance content assist support, outlining, and problem identification for many kinds of files.  </p>
+		<p>Syntax highlighting of CSS files is also supported, but no outlining support has been provided yet.  A 
+			<a href="http://mamacdon.github.com/0.3/plugins/csslint/csslintPlugin.html" target="orion_external">CSSLint Plugin</a> can be installed to perform syntax validation on CSS files. As a proof of concept, Orion implements a very simple form of content assist.  In Orion, our goal is to provide the plug-in points for things like content assist and outlining, allowing plug-in developers to enhance the functionality.  For now, Orion supplies a content assist based on CSS keyword proposals.  We hope to integrate existing source code analysis tools as plug-ins to enhance content assist support, outlining, and problem identification for many kinds of files.  
+		</p>
 		<p>
 			<img border="0" src="images/Orion-editcss.png"/>
 		</p>
@@ -139,7 +144,7 @@
 		<h3 id="Extending_the_editor_with_a_Plug-in">Extending the editor with a Plug-in</h3>
 		<p>We've also implemented pluggable editor actions which allow third-party developers to extend the behavior of the Orion editor on the fly.  For example, we've developed an Orion plug-in based on 
 			<a href="http://jsbeautifier.org" target="orion_external">the JSBeautifier code formatter</a> so that source code can be easily beautified.  The plug-in is located at 
-			<a href="http://mamacdon.github.com/0.2/plugins/beautify/jsbeautify.html" target="orion_external">http://mamacdon.github.com/0.2/plugins/beautify/jsbeautify.html</a> .  Once the plug-in is installed, it will appear in the list of plug-ins.  More interestingly, when you reload an Orion editor, you should see a new command appear beside rest of the editor commands. 
+			<a href="http://mamacdon.github.com/0.2/plugins/beautify/jsbeautify.html" target="orion_external">http://mamacdon.github.com/0.2/plugins/beautify/jsbeautify.html</a> .  Once the plug-in is installed, reload an Orion editor to see a new command appear beside rest of the editor commands. 
 		</p>
 		<p>
 			<img border="0" src="images/Orion-editorplugin.png"/>
@@ -190,7 +195,7 @@
 		<p>The 
 			<a href="../../../../\Orion\Documentation\User_Guide\Reference\Git_Status_page/Git-Status-page.html" title="Orion/Documentation/User_Guide/Reference/Git_Status_page">Git Status page</a> shows also a list of recent commits on the active branch. You may open the 
 			<a href="../../../../\Orion\Documentation\User_Guide\Reference\Git_Log_page/Git-Log-page.html" title="Orion/Documentation/User_Guide/Reference/Git_Log_page">Git Log page</a> by clicking the 
-			<b>Complete Log</b> button and see the full commits list with details.
+			<b>Complete Log</b> button and see the full list of commits on that branch. Click on a commit in the log page to slide out the <b>Commit details</b> panel to see more information.
 		</p>
 		<p>
 			<img border="0" src="images/Orion-gitlog.png"/>
