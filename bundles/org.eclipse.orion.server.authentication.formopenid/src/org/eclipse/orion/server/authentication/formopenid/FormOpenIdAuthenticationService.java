@@ -90,11 +90,7 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 		String xRequestedWith = req.getHeader("X-Requested-With"); //$NON-NLS-1$
 
 		if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) { //$NON-NLS-1$
-			try {
-				req.getRequestDispatcher("/mixloginstatic/LoginWindow.html").forward(req, resp);
-			} catch (ServletException e) {
-				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, 1, "An error occured during authenitcation", e));
-			}
+			resp.sendRedirect("/mixloginstatic/LoginWindow.html?redirect=" + req.getRequestURI());
 		} else {
 			resp.setContentType(ProtocolConstants.CONTENT_TYPE_JSON);
 			JSONObject result = new JSONObject();

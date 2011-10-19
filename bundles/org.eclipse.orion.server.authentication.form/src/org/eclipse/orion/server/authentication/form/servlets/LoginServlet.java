@@ -101,8 +101,7 @@ public class LoginServlet extends HttpServlet {
 
 				if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) { //$NON-NLS-1$
 					//RequestDispatcher rd = req.getRequestDispatcher("/loginform?error=" + new String(Base64.encode(invalidLoginError.getBytes()))); //$NON-NLS-1$
-					RequestDispatcher rd = req.getRequestDispatcher("/loginstatic/LoginWindow.html");
-					rd.include(req, resp);
+					resp.sendRedirect("/loginstatic/LoginWindow.html");
 				} else {
 					resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 					PrintWriter writer = resp.getWriter();

@@ -90,11 +90,7 @@ public class FormAuthenticationService implements IAuthenticationService {
 		String xRequestedWith = req.getHeader("X-Requested-With"); //$NON-NLS-1$
 
 		if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) { //$NON-NLS-1$
-			try {
-				req.getRequestDispatcher("/loginstatic/LoginWindow.html").forward(req, resp);
-			} catch (ServletException e) {
-				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORM_SERVLETS, 1, "An error occured during authenitcation", e));
-			}
+			resp.sendRedirect("/loginstatic/LoginWindow.html?redirect=" + req.getRequestURL());
 		} else {
 			resp.setContentType("application/json; charset=UTF-8");
 			JSONObject result = new JSONObject();
