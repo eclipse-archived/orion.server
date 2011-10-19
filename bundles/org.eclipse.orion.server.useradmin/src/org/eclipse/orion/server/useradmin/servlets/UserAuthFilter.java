@@ -82,7 +82,7 @@ public class UserAuthFilter implements Filter {
 		try {
 			String requestPath = httpRequest.getServletPath() + (httpRequest.getPathInfo() == null ? "" : httpRequest.getPathInfo());
 			if (!AuthorizationService.checkRights(login, requestPath, httpRequest.getMethod())) {
-				httpResponse.sendError(HttpServletResponse.SC_FORBIDDEN);
+				authenticationService.setUnauthrizedUser(httpRequest, httpResponse, authProperties);
 				return;
 			}
 		} catch (JSONException e) {

@@ -26,7 +26,9 @@ import org.eclipse.orion.server.authentication.formopenid.servlets.FormOpenIdLog
 import org.eclipse.orion.server.authentication.formopenid.servlets.FormOpenIdLogoutServlet;
 import org.eclipse.orion.server.authentication.formopenid.servlets.ManageOpenidsServlet;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.authentication.IAuthenticationService;
+import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.openid.core.OpenIdHelper;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -40,6 +42,8 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 	private HttpService httpService;
 	private Properties defaultAuthenticationProperties;
 	public static final String OPENIDS_PROPERTY = "openids"; //$NON-NLS-1$
+	
+	private static final String CONTENT_TYPE_JSON = "application/json; charset=UTF-8";//$NON-NLS-1$
 
 	private boolean registered = false;
 
@@ -139,5 +143,33 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 
 	public boolean getRegistered() {
 		return registered;
+	}
+
+	public void setUnauthrizedUser(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException {
+		String versionString = req.getHeader("Orion-Version"); //$NON-NLS-1$
+		Version version = versionString == null ? null : new Version(versionString);
+
+		String xRequestedWith = req.getHeader("X-Requested-With"); //$NON-NLS-1$
+
+		String msg = "You are not authorized to access " + req.getRequestURL();
+		if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) { //$NON-NLS-1$
+			String url = "/mixloginstatic/LoginWindow.html";
+			msg+="<br>You can authencatie as different user";
+			if (req.getParameter("redirect") != null) {
+				url += "?redirect=" + req.getParameter("redirect");
+			}
+
+			url += url.contains("?") ? "&" : "?";
+			url += "error=" + new String(Base64.encode(msg.getBytes()));
+
+			resp.sendRedirect(url);
+
+		} else {
+			resp.setContentType(CONTENT_TYPE_JSON);
+			ServerStatus serverStatus = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, msg, null);
+			resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+			resp.getWriter().print(serverStatus.toJSON().toString());
+		}
+		
 	}
 }

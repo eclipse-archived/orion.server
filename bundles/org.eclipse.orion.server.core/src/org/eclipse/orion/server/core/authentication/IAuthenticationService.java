@@ -23,10 +23,10 @@ public interface IAuthenticationService {
 
 	static final String ADMIN_LOGIN_VALUE = "admin"; //$NON-NLS-1$
 	static final String ADMIN_NAME_VALUE = "Administrator"; //$NON-NLS-1$
-	
+
 	static final String ANONYMOUS_LOGIN_VALUE = "anonymous"; //$NON-NLS-1$
 	static final String ANONYMOUS_NAME_VALUE = "Anonymous"; //$NON-NLS-1$
-	
+
 	/**
 	 * This method verifies the user identity send in the
 	 * {@link HttpServletRequest}. This method returns only information and does
@@ -68,15 +68,28 @@ public interface IAuthenticationService {
 	public String authenticateUser(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException;
 
 	/**
+	 * This method is called when user is not authorized to access the resource.
+	 * It should display information about authorization error and propose to login
+	 * as different user, if possible. 
+	 * @param req
+	 * @param resp
+	 * @param properties
+	 * 	          Properties set in <code>configuration.xml</code> file. They
+	 *            may be used to configure the authentication plugin.
+	 * @throws IOException
+	 */
+	public void setUnauthrizedUser(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException;
+
+	/**
 	 * The string representation of authentication type. It is used to set
 	 * {@link HttpServletRequest#getAuthType()}.
 	 * 
 	 * @return String representation of authentication type.
 	 */
 	public String getAuthType();
-	
+
 	public void setRegistered(boolean registered);
-	
+
 	public boolean getRegistered();
 
 	public void configure(Properties properties);
