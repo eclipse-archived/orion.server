@@ -90,7 +90,7 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 		String xRequestedWith = req.getHeader("X-Requested-With"); //$NON-NLS-1$
 
 		if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) { //$NON-NLS-1$
-			resp.sendRedirect("/mixloginstatic/LoginWindow.html?redirect=" + req.getRequestURI());
+			resp.sendRedirect(req.getContextPath() + "/mixloginstatic/LoginWindow.html?redirect=" + req.getRequestURI());
 		} else {
 			resp.setContentType(ProtocolConstants.CONTENT_TYPE_JSON);
 			JSONObject result = new JSONObject();

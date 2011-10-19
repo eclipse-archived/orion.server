@@ -90,7 +90,7 @@ public class FormAuthenticationService implements IAuthenticationService {
 		String xRequestedWith = req.getHeader("X-Requested-With"); //$NON-NLS-1$
 
 		if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) { //$NON-NLS-1$
-			resp.sendRedirect("/loginstatic/LoginWindow.html?redirect=" + req.getRequestURL());
+			resp.sendRedirect(req.getContextPath() + "/loginstatic/LoginWindow.html?redirect=" + req.getRequestURL());
 		} else {
 			resp.setContentType("application/json; charset=UTF-8");
 			JSONObject result = new JSONObject();
