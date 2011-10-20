@@ -13,18 +13,25 @@ package org.eclipse.orion.server.authentication.basic;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.Properties;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.authentication.IAuthenticationService;
 import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.User;
-import org.osgi.service.http.*;
+import org.osgi.framework.Version;
+import org.osgi.service.http.HttpContext;
+import org.osgi.service.http.HttpService;
+import org.osgi.service.http.NamespaceException;
 
 public class BasicAuthenticationService implements IAuthenticationService {
 
@@ -151,5 +158,22 @@ public class BasicAuthenticationService implements IAuthenticationService {
 
 	public IOrionUserProfileService getUserProfileService() {
 		return userProfileService;
+	}
+
+	public void setUnauthrizedUser(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException {
+		String versionString = req.getHeader("Orion-Version"); //$NON-NLS-1$
+		Version version = versionString == null ? null : new Version(versionString);
+		String xRequestedWith = req.getHeader("X-Requested-With"); //$NON-NLS-1$
+
+		String msg = "You are not authorized to access " + req.getRequestURL();
+		if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) { //$NON-NLS-1$
+			resp.sendError(HttpServletResponse.SC_FORBIDDEN, msg);
+		} else {
+			resp.setContentType(ProtocolConstants.CONTENT_TYPE_JSON);
+			ServerStatus serverStatus = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, msg, null);
+			resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+			resp.getWriter().print(serverStatus.toJSON().toString());
+		}
+		
 	}
 }

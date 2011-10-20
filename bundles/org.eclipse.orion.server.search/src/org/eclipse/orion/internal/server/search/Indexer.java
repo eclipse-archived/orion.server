@@ -10,15 +10,32 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.search;
 
-import java.io.*;
-import java.util.*;
-import org.apache.solr.client.solrj.*;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.CommonParams;
-import org.eclipse.core.filesystem.*;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileInfo;
+import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.Activator;
@@ -26,8 +43,6 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.LogHelper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * The indexer is responsible for keeping the solr/lucene index up to date.
@@ -106,9 +121,9 @@ public class Indexer extends Job {
 	}
 
 	private int indexProject(WebProject project, SubMonitor monitor, List<SolrInputDocument> documents) {
-		Logger logger = LoggerFactory.getLogger(Indexer.class);
-		if (logger.isDebugEnabled())
-			logger.debug("Indexing project id: " + project.getId() + " name: " + project.getName()); //$NON-NLS-1$ //$NON-NLS-2$
+		//Logger logger = LoggerFactory.getLogger(Indexer.class);
+		//if (logger.isDebugEnabled())
+		//	logger.debug("Indexing project id: " + project.getId() + " name: " + project.getName()); //$NON-NLS-1$ //$NON-NLS-2$
 		checkCanceled(monitor);
 		IFileStore projectStore;
 		try {
@@ -159,8 +174,8 @@ public class Indexer extends Job {
 		} catch (Exception e) {
 			handleIndexingFailure(e);
 		}
-		if (logger.isDebugEnabled())
-			logger.debug("\tIndexed: " + indexedCount + " Unchanged:  " + unmodifiedCount); //$NON-NLS-1$ //$NON-NLS-2$
+		//		if (logger.isDebugEnabled())
+		//			logger.debug("\tIndexed: " + indexedCount + " Unchanged:  " + unmodifiedCount); //$NON-NLS-1$ //$NON-NLS-2$
 		return indexedCount;
 	}
 
@@ -215,16 +230,16 @@ public class Indexer extends Job {
 			indexed += indexProject(project, progress.newChild(1), documents);
 		}
 		long duration = System.currentTimeMillis() - start;
-		Logger logger = LoggerFactory.getLogger(Indexer.class);
-		if (logger.isDebugEnabled())
-			logger.debug("Indexed " + projects.size() + " projects in " + duration + "ms"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		//		Logger logger = LoggerFactory.getLogger(Indexer.class);
+		//		if (logger.isDebugEnabled())
+		//			logger.debug("Indexed " + projects.size() + " projects in " + duration + "ms"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		//reschedule the indexing - throttle so the job never runs more than 10% of the time
 		long delay = Math.max(DEFAULT_DELAY, duration * 10);
 		//if there was nothing to index then back off for awhile
 		if (indexed == 0)
 			delay = Math.max(delay, IDLE_DELAY);
-		if (logger.isDebugEnabled())
-			logger.debug("Rescheduling indexing in " + delay + "ms"); //$NON-NLS-1$//$NON-NLS-2$
+		//		if (logger.isDebugEnabled())
+		//			logger.debug("Rescheduling indexing in " + delay + "ms"); //$NON-NLS-1$//$NON-NLS-2$
 		schedule(delay);
 		return Status.OK_STATUS;
 	}

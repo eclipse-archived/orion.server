@@ -151,24 +151,27 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 
 		String xRequestedWith = req.getHeader("X-Requested-With"); //$NON-NLS-1$
 
-		String msg = "You are not authorized to access " + req.getRequestURL();
+		String msg = "You are not authorized to access ";
 		if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) { //$NON-NLS-1$
-			String url = "/mixloginstatic/LoginWindow.html";
-			msg+="<br>You can authencatie as different user";
-			if (req.getParameter("redirect") != null) {
-				url += "?redirect=" + req.getParameter("redirect");
-			}
-
-			url += url.contains("?") ? "&" : "?";
-			url += "error=" + new String(Base64.encode(msg.getBytes()));
-
+			String url = req.getContextPath() + "/mixloginstatic/LoginWindow.html";
+			msg+="<a class='global_errorWin' href='"+req.getRequestURL()+"'>" + req.getRequestURL() + "</a>" + " Authenticate as different user.";
+			url += "?redirect=" + req.getRequestURL();
+			url += "&error=" + new String(Base64.encode(msg.getBytes()));
+			url += "&globalError=true";
 			resp.sendRedirect(url);
-
 		} else {
+			msg+=req.getRequestURL();
 			resp.setContentType(CONTENT_TYPE_JSON);
 			ServerStatus serverStatus = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, msg, null);
+			JSONObject statusJson = serverStatus.toJSON();
+			try {
+				statusJson.put("SignInLocation", req.getContextPath() + "/mixloginstatic/LoginWindow.html");
+				statusJson.put("SignInKey", "FORMOpenIdUser");
+			} catch (JSONException e) {
+				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, 1, "An error occured during authorization", e));
+			}
 			resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
-			resp.getWriter().print(serverStatus.toJSON().toString());
+			resp.getWriter().print(statusJson.toString());
 		}
 		
 	}

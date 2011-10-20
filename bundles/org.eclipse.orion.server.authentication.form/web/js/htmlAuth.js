@@ -10,11 +10,16 @@
 window.onload = function() {
 
 	var error = getParam("error");
+	var globalError = getParam("globalError");
 	if(error){
 		var errorMessage = decodeBase64(error);
-		
-		document.getElementById("errorWin").style.visibility = '';
-		document.getElementById("errorMessage").innerHTML = errorMessage;
+		if(globalError){
+			document.getElementById("global_errorWin").style.display = '';
+			document.getElementById("global_errorMessage").innerHTML = errorMessage;
+		}else{
+			document.getElementById("errorWin").style.visibility = '';
+			document.getElementById("errorMessage").innerHTML = errorMessage;
+		}
 	}
 	
 	

@@ -11,21 +11,26 @@
 package org.eclipse.orion.internal.server.search;
 
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.params.CommonParams;
-import org.eclipse.core.filesystem.*;
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.filesystem.URIUtil;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.LogHelper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * The IndexPurgeJob is responsible for cleaning up the indexes that that are
@@ -98,9 +103,9 @@ public class IndexPurgeJob extends Job {
 
 	@Override
 	protected IStatus run(IProgressMonitor monitor) {
-		Logger logger = LoggerFactory.getLogger(Indexer.class);
-		if (logger.isDebugEnabled())
-			logger.debug("Purging indexes"); //$NON-NLS-1$
+		//		Logger logger = LoggerFactory.getLogger(Indexer.class);
+		//		if (logger.isDebugEnabled())
+		//			logger.debug("Purging indexes"); //$NON-NLS-1$
 		long start = System.currentTimeMillis();
 		SolrQuery query = findAllQuery();
 		try {
@@ -129,16 +134,16 @@ public class IndexPurgeJob extends Job {
 				this.server.deleteById(listIds);
 				this.server.commit();
 			}
-			if (logger.isDebugEnabled())
-				logger.debug("\tPurged: " + listIds.size()); //$NON-NLS-1$
+			//			if (logger.isDebugEnabled())
+			//				logger.debug("\tPurged: " + listIds.size()); //$NON-NLS-1$
 		} catch (OperationCanceledException e) {
 			//ignore and fall through
 		} catch (Exception e) {
 			handleIndexingFailure(e);
 		}
 		long duration = System.currentTimeMillis() - start;
-		if (logger.isDebugEnabled())
-			logger.debug("Purge job took " + duration + "ms"); //$NON-NLS-1$ //$NON-NLS-2$
+		//		if (logger.isDebugEnabled())
+		//			logger.debug("Purge job took " + duration + "ms"); //$NON-NLS-1$ //$NON-NLS-2$
 
 		//throttle scheduling frequency so the job never runs more than 5% of the time
 		long delay = Math.max(DEFAULT_DELAY, duration * 20);

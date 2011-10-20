@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.servlets.Activator;
+import org.eclipse.orion.server.configurator.ConfiguratorActivator;
 import org.eclipse.orion.server.core.users.OrionScope;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
@@ -111,8 +112,9 @@ public class PreferencesServlet extends OrionServlet {
 	 * @param resp
 	 * @param create If <code>true</code>, the node will be created if it does not already exist. If
 	 * <code>false</code>, this method sets the response status to 404 and returns null.
+	 * @throws IOException 
 	 */
-	private IEclipsePreferences getNode(HttpServletRequest req, HttpServletResponse resp, boolean create) throws ServletException {
+	private IEclipsePreferences getNode(HttpServletRequest req, HttpServletResponse resp, boolean create) throws ServletException, IOException {
 		if (prefRoot == null) {
 			handleException(resp, "Unable to obtain preference service", null);
 			return null;
@@ -128,7 +130,7 @@ public class PreferencesServlet extends OrionServlet {
 		if ("user".equalsIgnoreCase(scope)) { //$NON-NLS-1$
 			String username = req.getRemoteUser();
 			if (username == null) {
-				resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+				ConfiguratorActivator.getDefault().getAuthService().setUnauthrizedUser(req, resp, null);
 				return null;
 			}
 			nodePath = new Path("Users").append(username);

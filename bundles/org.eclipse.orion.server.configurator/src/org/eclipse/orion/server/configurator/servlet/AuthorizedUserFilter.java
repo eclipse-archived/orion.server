@@ -85,26 +85,7 @@ public class AuthorizedUserFilter implements Filter {
 	}
 
 	private void setNotAuthorized(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-
 		authenticationService.setUnauthrizedUser(req, resp, authProperties);
-		/*
-				String versionString = req.getHeader("Orion-Version"); //$NON-NLS-1$
-				Version version = versionString == null ? null : new Version(versionString);
-
-				// TODO: This is a workaround for calls
-				// that does not include the WebEclipse version header
-				String xRequestedWith = req.getHeader("X-Requested-With"); //$NON-NLS-1$
-
-				String msg = "You are not authorized to access " + req.getRequestURL();
-				if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) { //$NON-NLS-1$
-					resp.sendError(HttpServletResponse.SC_FORBIDDEN, msg);
-				} else {
-					resp.setContentType(ProtocolConstants.CONTENT_TYPE_JSON);
-					ServerStatus serverStatus = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, msg, null);
-					resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
-					resp.getWriter().print(serverStatus.toJSON().toString());
-				}
-				*/
 	}
 
 	public void destroy() {

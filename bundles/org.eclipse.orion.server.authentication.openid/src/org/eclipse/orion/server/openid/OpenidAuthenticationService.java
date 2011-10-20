@@ -20,7 +20,9 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.authentication.IAuthenticationService;
+import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.openid.core.OpenIdHelper;
 import org.eclipse.orion.server.openid.httpcontext.BundleEntryHttpContext;
 import org.eclipse.orion.server.openid.servlet.OpenIdLogoutServlet;
@@ -36,6 +38,8 @@ public class OpenidAuthenticationService implements IAuthenticationService {
 
 	private HttpService httpService;
 	public static final String OPENIDS_PROPERTY = "openids"; //$NON-NLS-1$
+	
+	private static final String CONTENT_TYPE_JSON = "application/json; charset=UTF-8";//$NON-NLS-1$
 	
 	private boolean registered;
 
@@ -125,5 +129,35 @@ public class OpenidAuthenticationService implements IAuthenticationService {
 
 	public boolean getRegistered() {
 		return registered;
+	}
+
+	public void setUnauthrizedUser(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException {
+		String versionString = req.getHeader("Orion-Version"); //$NON-NLS-1$
+		Version version = versionString == null ? null : new Version(versionString);
+
+		String xRequestedWith = req.getHeader("X-Requested-With"); //$NON-NLS-1$
+
+		String msg = "You are not authorized to access ";
+		if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) { //$NON-NLS-1$
+			String url = req.getContextPath() + "/openidstatic/LoginWindow.html";
+			msg+="<a class='errorWin' href='"+req.getRequestURL()+"'>" + req.getRequestURL() + "</a>" + " Authenticate as different user.";
+			url += "?redirect=" + req.getRequestURL();
+			url += "&error=" + new String(Base64.encode(msg.getBytes()));
+			resp.sendRedirect(url);
+		} else {
+			msg+=req.getRequestURL();
+			resp.setContentType(CONTENT_TYPE_JSON);
+			ServerStatus serverStatus = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, msg, null);
+			JSONObject statusJson = serverStatus.toJSON();
+			try {
+				statusJson.put("SignInLocation", req.getContextPath() + "/openidstatic/LoginWindow.html");
+				statusJson.put("SignInKey", "FORMOpenIdUser");
+			} catch (JSONException e) {
+				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_OPENID_SERVLETS, 1, "An error occured during authorization", e));
+			}
+			resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+			resp.getWriter().print(statusJson.toString());
+		}
+		
 	}
 }

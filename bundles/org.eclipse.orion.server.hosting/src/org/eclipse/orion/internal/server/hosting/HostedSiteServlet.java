@@ -25,6 +25,7 @@ import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.file.ServletFileStoreHandler;
 import org.eclipse.orion.internal.server.servlets.hosting.IHostedSite;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
+import org.eclipse.orion.server.configurator.ConfiguratorActivator;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.servlets.OrionServlet;
@@ -226,7 +227,7 @@ public class HostedSiteServlet extends OrionServlet {
 	}
 
 	// returns true if the request has been served, false if not (only if failEarlyOn404 is true)
-	private boolean serveOrionFile(HttpServletRequest req, HttpServletResponse resp, IHostedSite site, IPath path, boolean failEarlyOn404) throws ServletException {
+	private boolean serveOrionFile(HttpServletRequest req, HttpServletResponse resp, IHostedSite site, IPath path, boolean failEarlyOn404) throws ServletException, IOException {
 		String userName = site.getUserName();
 		String workspaceId = site.getWorkspaceId();
 		String workspaceUri = WORKSPACE_SERVLET_ALIAS + "/" + workspaceId; //$NON-NLS-1$
@@ -262,8 +263,7 @@ public class HostedSiteServlet extends OrionServlet {
 				addContentTypeHeader(resp, path);
 			}
 		} else {
-			String msg = NLS.bind("No rights to access {0}", workspaceUri);
-			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, msg, null));
+			ConfiguratorActivator.getDefault().getAuthService().setUnauthrizedUser(req, resp, null);
 		}
 		return true;
 	}

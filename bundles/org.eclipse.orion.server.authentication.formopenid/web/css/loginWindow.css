@@ -54,6 +54,31 @@ h2.loginWindowHeader{
 	margin: 3px;
 }
 
+.global_errorWin{
+		color: red;
+		font-weight: bold;
+		text-decoration: none;
+}
+a.global_errorWin:hover{
+		color: red;
+		font-weight: bold;
+		text-decoration: underline;
+}
+
+ul.global_errorWin {
+	list-style: none;
+	padding-left: 0px;
+	float: left;
+	line-height: 12px;
+	font-size: 0.8em;
+	display: block;
+	margin-left: 3px;
+	margin-right: 3px;
+	margin-top: 3px;
+	margin-bottom: 10 px;
+
+}
+
 #loginWindowMask {
 	position: absolute;
 	filter: alpha(opacity =   50);

@@ -24,7 +24,9 @@ import org.eclipse.orion.server.authentication.form.httpcontext.BundleEntryHttpC
 import org.eclipse.orion.server.authentication.form.servlets.LoginServlet;
 import org.eclipse.orion.server.authentication.form.servlets.LogoutServlet;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.authentication.IAuthenticationService;
+import org.eclipse.orion.server.core.resources.Base64;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.framework.Version;
@@ -36,6 +38,8 @@ public class FormAuthenticationService implements IAuthenticationService {
 
 	public static final String CSS_LINK_PROPERTY = "STYLES"; //$NON-NLS-1$
 	private Properties defaultAuthenticationProperties;
+	
+	private static final String CONTENT_TYPE_JSON = "application/json; charset=UTF-8";//$NON-NLS-1$
 	
 	private HttpService httpService;
 
@@ -136,6 +140,37 @@ public class FormAuthenticationService implements IAuthenticationService {
 
 	public boolean getRegistered() {
 		return registered;
+	}
+
+	public void setUnauthrizedUser(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException {
+		String versionString = req.getHeader("Orion-Version"); //$NON-NLS-1$
+		Version version = versionString == null ? null : new Version(versionString);
+
+		String xRequestedWith = req.getHeader("X-Requested-With"); //$NON-NLS-1$
+
+		String msg = "You are not authorized to access ";
+		if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) { //$NON-NLS-1$
+			String url = req.getContextPath() + "/loginstatic/LoginWindow.html";
+			msg+="<a class='global_errorWin' href='"+req.getRequestURL()+"'>" + req.getRequestURL() + "</a>" + " Authenticate as different user.";
+			url += "?redirect=" + req.getRequestURL();
+			url += "&error=" + new String(Base64.encode(msg.getBytes()));
+			url += "&globalError=true";
+			resp.sendRedirect(url);
+		} else {
+			msg+=req.getRequestURL();
+			resp.setContentType(CONTENT_TYPE_JSON);
+			ServerStatus serverStatus = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, msg, null);
+			JSONObject statusJson = serverStatus.toJSON();
+			try {
+				statusJson.put("SignInLocation", req.getContextPath() + "/loginstatic/LoginWindow.html");
+				statusJson.put("SignInKey", "FORMOpenIdUser");
+			} catch (JSONException e) {
+				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORM_SERVLETS, 1, "An error occured during authorization", e));
+			}
+			resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+			resp.getWriter().print(statusJson.toString());
+		}
+		
 	}
 
 }
