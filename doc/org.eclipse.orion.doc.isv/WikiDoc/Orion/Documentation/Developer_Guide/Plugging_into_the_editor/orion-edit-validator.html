@@ -30,7 +30,7 @@
 			</tr>
 		</table><hr/>
 		<h1 id="orion.edit.validator">orion.edit.validator</h1>
-		<p>An <tt>orion.edit.validator</tt> service provides a function that can check the contents of a file and return a data structure indicating which lines (if any) have errors, along with the reason for the error. The result of this service is used by the Orion UI to create error annotations in the ruler beside each problematic line.</p>
+		<p>An <tt>orion.edit.validator</tt> service provides a function that can check the contents of a file and return a data structure indicating which lines (if any) have problems. The result of this service is used by the Orion UI to create annotations in the ruler beside each problematic line, and also to underline the specific portion of a line where the problem occurs.</p>
 		<h2 id="Service_methods_4">Service methods</h2>
 		<p>Implementations of <tt>orion.edit.validator</tt> must define the following function:</p>
 		<dl>
@@ -42,11 +42,17 @@
 				<b>contents</b> <tt>String</tt> The contents of the file being edited.
 			</dd>
 		</dl>
-		<p>Returns an <tt>Object</tt> giving the validation result. The returned object must have an <tt>errors</tt> property whose value is an array giving the errors found in the file. Each error object must have the properties:</p>
+		<p>Returns an <tt>Object</tt> giving the validation result. The returned object must have an <tt>problems</tt> property whose value is an array giving the problems found in the file. Each problem object must have the properties:</p>
 		<dl>
-			<dd><b>reason</b> <tt>String</tt> A description of the error.</dd>
-			<dd><b>line</b> <tt>Number</tt> Gives the line number where the error was found. (Line numbers begin counting from 1.)</dd>
-			<dd><b>character</b> <tt>Number</tt> Gives the column within the line where the error was found. (Not currently displayed in the Orion UI).</dd>
+			<dd><b>description</b> <tt>String</tt> A description of the problem.</dd>
+			<dd><b>line</b> <tt>Number</tt> Gives the line number where the problem was found. (Line numbers begin counting from 1.)</dd>
+			<dd><b>start</b> <tt>Number</tt> Gives the column within the line where the problem begins.</dd>
+			<dd><b>end</b> <tt>Number</tt> 
+				<i>Optional</i> Gives the column within the line where the problems ends. (If omitted, <tt>start+1</tt> is assumed.)
+			</dd>
+			<dd><b>severity</b> <tt>String</tt> 
+				<i>Optional</i> Gives the severity of this problem. The severity affects how the problem is displayed in the Orion UI. Allowed values are <tt>"warning"</tt> and <tt>"error"</tt>. (If omitted, <tt>"error"</tt> is assumed.)
+			</dd>
 		</dl>
 		<h2 id="Service_attributes_4">Service attributes</h2>
 		<p>Implementations of <tt>orion.edit.validator</tt> must define the following attributes:</p>
@@ -59,16 +65,21 @@
 var serviceProvider = provider.registerServiceProvider("orion.edit.validator",
   {
      checkSyntax: function(title, contents) {
-       var errors = [];
+       var problems = [];
        var lines = contents.split(/\r?\n/);
        for (var i=0; i &lt; lines.length; i++) {
          var line = lines[i];
          var match = /\t \t| \t /.exec(line);
          if (match) {
-           errors.push({ reason: "Mixed spaces and tabs", line: i+1, character: match.index });
+           problems.push({
+             reason: "Mixed spaces and tabs",
+             line: i + 1,
+             character: match.index + 1,
+             end: match.index + match[0].length + 1,
+             severity: "warning" });
          }
        }
-       var result = { errors: errors };
+       var result = { problems: problems };
        return result;
      }
   },
@@ -78,7 +89,10 @@ var serviceProvider = provider.registerServiceProvider("orion.edit.validator",
 service.dispatchEvent = serviceProvider.dispatchEvent;--&gt;
 provider.connect();
 </pre>
-		<p>This example will validate <tt>.txt</tt> and <tt>.js</tt> files. It finds lines containing a sequence of space-tab-space or tab-space-tab and produces an error on every such line.</p><hr/>
+		<p>This example will validate <tt>.txt</tt> and <tt>.js</tt> files. It finds lines containing a sequence of 
+			<i>space-tab-space</i> or 
+			<i>tab-space-tab</i> and produces a warning on every such line. Note that <tt>+1</tt> is necessary because column and line indices in the Orion UI are numbered from 1, not 0.
+		</p><hr/>
 		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
 			<tr>
 				<td style="width: 20%" align="left">

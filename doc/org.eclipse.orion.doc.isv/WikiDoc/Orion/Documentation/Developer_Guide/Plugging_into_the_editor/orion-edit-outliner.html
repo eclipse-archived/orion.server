@@ -59,6 +59,10 @@
 		<dl>
 			<dt>pattern</dt>
 			<dd><tt>String</tt> A regex pattern matching the names of files this outliner can provide an outline for.</dd>
+			<dt>id</dt>
+			<dd><tt>String</tt> A unique identifier for this outline provider.</dd>
+			<dt>name</dt>
+			<dd><tt>String</tt> A user-readable name for this outline provider.</dd>
 		</dl>
 		<h2 id="Examples_5">Examples</h2>
 		<p>This example shows an outline provider that runs on .txt files. It finds Mediawiki-style <tt>=Section Headings=</tt> and generates a flat outline from them. (A more elaborate implementation might also find subsections and include them as children of the top-level sections.)</p>
@@ -80,7 +84,9 @@ provider.registerServiceProvider("orion.edit.outliner", {
     return outline;
   }
 }, {
-  pattern: "\.txt$"
+  pattern: "\.txt$",
+  name: "Headings",
+  id: "orion.outliner.example.headings"
 });
 provider.connect();
 </pre><hr/>
