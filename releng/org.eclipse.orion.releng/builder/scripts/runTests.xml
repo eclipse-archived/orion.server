@@ -73,7 +73,7 @@
 		</p2.director>
 		
 		<!-- change server port to avoid collision with other processes on test machine -->
-		<replace file="${buildDirectory}/test/eclipse/orion.ini" token="8080" value="7070"/>
+		<!--<replace file="${buildDirectory}/test/eclipse/orion.ini" token="8080" value="7070"/> -->
 	</target>
 	
 	<target name="junitTests" depends="installTests">
