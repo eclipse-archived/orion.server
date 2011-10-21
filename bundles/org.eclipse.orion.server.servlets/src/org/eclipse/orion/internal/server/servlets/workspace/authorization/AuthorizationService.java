@@ -48,6 +48,12 @@ public class AuthorizationService {
 		return 0;
 	}
 
+	/**
+	 * Adds the right for the given user to put, post, get, or delete the given URI.
+	 * @param name The user name
+	 * @param uri The URI to grant access to
+	 * @throws CoreException If an error occurred persisting user rights.
+	 */
 	public static void addUserRight(String name, String uri) throws CoreException {
 		try {
 			IEclipsePreferences users = new OrionScope().getNode("Users"); //$NON-NLS-1$
@@ -75,15 +81,26 @@ public class AuthorizationService {
 		}
 	}
 
-	public static void removeUserRight(String name, String uri) throws JSONException, BackingStoreException {
-		IEclipsePreferences users = new OrionScope().getNode("Users"); //$NON-NLS-1$
-		IEclipsePreferences result = (IEclipsePreferences) users.node(name);
-		JSONArray userRightArray = AuthorizationReader.getAuthorizationData(result);
-		for (int i = 0; i < userRightArray.length(); i++) {
-			if (uri.equals(((JSONObject) userRightArray.get(i)).get(ProtocolConstants.KEY_USER_RIGHT_URI)))
-				userRightArray.remove(i);
+	/**
+	 * Removes the right for the given user to put, post, get, or delete the given URI.
+	 * @param name The user name
+	 * @param uri The URI to remove access to
+	 * @throws CoreException If an error occurred persisting user rights.
+	 */
+	public static void removeUserRight(String name, String uri) throws CoreException {
+		try {
+			IEclipsePreferences users = new OrionScope().getNode("Users"); //$NON-NLS-1$
+			IEclipsePreferences result = (IEclipsePreferences) users.node(name);
+			JSONArray userRightArray = AuthorizationReader.getAuthorizationData(result);
+			for (int i = 0; i < userRightArray.length(); i++) {
+				if (uri.equals(((JSONObject) userRightArray.get(i)).get(ProtocolConstants.KEY_USER_RIGHT_URI)))
+					userRightArray.remove(i);
+			}
+			saveRights(result, userRightArray);
+		} catch (Exception e) {
+			String msg = "Error persisting user rights";
+			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
 		}
-		saveRights(result, userRightArray);
 	}
 
 	private static void saveRights(IEclipsePreferences result, JSONArray userRightArray) throws BackingStoreException {
@@ -154,7 +171,8 @@ public class AuthorizationService {
 
 		// allow anonymous read if the corresponding property is set
 		String projectWorldReadable = PreferenceHelper.getString(ServerConstants.CONFIG_FILE_ANONYMOUS_READ, "false"); //$NON-NLS-1$
-		if (getMethod(method) == GET && uri.startsWith("/file/") && "true".equalsIgnoreCase(projectWorldReadable)) {//$NON-NLS-1$ //$NON-NLS-2$
+		int methodMask = getMethod(method);
+		if (methodMask == GET && uri.startsWith("/file/") && "true".equalsIgnoreCase(projectWorldReadable)) {//$NON-NLS-1$ //$NON-NLS-2$
 			// except don't allow access to metadata
 			if ("/file/".equals(uri) || uri.startsWith("/file/.metadata/")) //$NON-NLS-1$//$NON-NLS-2$
 				return false;
@@ -169,7 +187,7 @@ public class AuthorizationService {
 			String uriToMatch = uri.toLowerCase(Locale.ENGLISH);
 			String patternToMatch = userRight.getString(ProtocolConstants.KEY_USER_RIGHT_URI).toLowerCase(Locale.ENGLISH);
 			int methodToMatch = userRight.getInt(ProtocolConstants.KEY_USER_RIGHT_METHOD);
-			if (wildCardMatch(uriToMatch, patternToMatch) && ((getMethod(method) & methodToMatch) == getMethod(method)))
+			if (wildCardMatch(uriToMatch, patternToMatch) && ((methodMask & methodToMatch) == methodMask))
 				return true;
 		}
 
