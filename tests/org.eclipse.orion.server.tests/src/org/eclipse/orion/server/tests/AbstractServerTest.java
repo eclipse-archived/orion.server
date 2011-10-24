@@ -10,20 +10,13 @@
  *******************************************************************************/
 package org.eclipse.orion.server.tests;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-
+import com.meterware.httpunit.WebRequest;
+import java.io.*;
 import junit.framework.Assert;
-
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.resources.Base64;
-import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
-import org.eclipse.orion.server.useradmin.User;
-import org.eclipse.orion.server.useradmin.UserServiceHelper;
-
-import com.meterware.httpunit.WebRequest;
+import org.eclipse.orion.server.useradmin.*;
 
 /**
  * Base class for all Orion server tests. Providers helper methods common
@@ -51,6 +44,17 @@ public class AbstractServerTest {
 		AuthorizationService.addUserRight(testUser.getUid(), "/*");
 	}
 
+	/**
+	 * Returns the user id of the test user.
+	 */
+	protected String getTestUserId() {
+		return createUser(testUserLogin, testUserPassword).getUid();
+	}
+
+	/**
+	 * Returns the user with the given login. If the user doesn't exist,
+	 * one is created with the provided id and password.
+	 */
 	protected User createUser(String login, String password) {
 		IOrionCredentialsService userAdmin = UserServiceHelper.getDefault().getUserStore();
 		if (userAdmin.getUser("login", login) != null)

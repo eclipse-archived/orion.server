@@ -11,10 +11,7 @@
 package org.eclipse.orion.internal.server.user.securestorage;
 
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
-import org.osgi.framework.BundleActivator;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceRegistration;
-import org.osgi.service.useradmin.UserAdmin;
+import org.osgi.framework.*;
 
 public class Activator implements BundleActivator {
 
@@ -23,7 +20,7 @@ public class Activator implements BundleActivator {
 	 * The system property name for the secure storage master password.
 	 */
 	public static final String ORION_STORAGE_PASSWORD = "orion.storage.password"; //$NON-NLS-1$
-	
+
 	static BundleContext bundleContext;
 	private ServiceRegistration<IOrionCredentialsService> registerService;
 

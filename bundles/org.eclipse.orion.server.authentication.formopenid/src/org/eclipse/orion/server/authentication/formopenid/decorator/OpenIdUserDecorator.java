@@ -12,16 +12,10 @@ package org.eclipse.orion.server.authentication.formopenid.decorator;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-
 import javax.servlet.http.HttpServletRequest;
-
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
 import org.eclipse.orion.server.core.LogHelper;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.*;
 
 public class OpenIdUserDecorator implements IWebResourceDecorator {
 

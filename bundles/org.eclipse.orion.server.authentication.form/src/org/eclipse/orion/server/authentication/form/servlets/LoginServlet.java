@@ -12,13 +12,8 @@ package org.eclipse.orion.server.authentication.form.servlets;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-
-import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import javax.servlet.http.*;
 import org.eclipse.orion.server.authentication.form.Activator;
 import org.eclipse.orion.server.authentication.form.core.FormAuthHelper;
 import org.eclipse.orion.server.core.LogHelper;
@@ -36,10 +31,10 @@ public class LoginServlet extends HttpServlet {
 
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		
+
 		String pathInfo = req.getPathInfo() == null ? "" : req.getPathInfo(); //$NON-NLS-1$
-		
-		if(pathInfo.startsWith("/canaddusers")){
+
+		if (pathInfo.startsWith("/canaddusers")) {
 			JSONObject jsonResp = new JSONObject();
 			try {
 				jsonResp.put("CanAddUsers", FormAuthHelper.canAddUsers());
@@ -49,7 +44,6 @@ public class LoginServlet extends HttpServlet {
 			resp.setContentType("application/json");
 			return;
 		}
-		
 
 		if (req.getParameter("login") == null && FormAuthHelper.getAuthenticatedUser(req) != null) {
 			FormAuthHelper.writeLoginResponse(FormAuthHelper.getAuthenticatedUser(req), req, resp);

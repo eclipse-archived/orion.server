@@ -27,7 +27,6 @@ import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
-import org.osgi.service.prefs.BackingStoreException;
 
 /**
  * Handles requests against a single workspace.
@@ -134,6 +133,9 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		this.statusHandler = statusHandler;
 	}
 
+	/**
+	 * Adds the right for the user of the current request to access/modify the given location.
+	 */
 	private void addProjectRights(HttpServletRequest request, HttpServletResponse response, String location) throws ServletException {
 		if (location == null)
 			return;
@@ -147,6 +149,27 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 			else
 				locationPath += "/*"; //$NON-NLS-1$
 			AuthorizationService.addUserRight(request.getRemoteUser(), locationPath);
+		} catch (CoreException e) {
+			statusHandler.handleRequest(request, response, e.getStatus());
+		}
+	}
+
+	/**
+	 * Removes the right for the user of the current request to access/modify the given location.
+	 */
+	private void removeProjectRights(HttpServletRequest request, HttpServletResponse response, String location) throws ServletException {
+		if (location == null)
+			return;
+		try {
+			String locationPath = URI.create(location).getPath();
+			//right to access the location
+			AuthorizationService.removeUserRight(request.getRemoteUser(), locationPath);
+			//right to access all children of the location
+			if (locationPath.endsWith("/")) //$NON-NLS-1$
+				locationPath += "*"; //$NON-NLS-1$
+			else
+				locationPath += "/*"; //$NON-NLS-1$
+			AuthorizationService.removeUserRight(request.getRemoteUser(), locationPath);
 		} catch (CoreException e) {
 			statusHandler.handleRequest(request, response, e.getStatus());
 		}
@@ -277,8 +300,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		}
 		//serialize the new project in the response
 
-		//we need the base location for the workspace servlet. Since this is a POST 
-		//on a single workspace we need to strip off the workspace id from the request URI
+		//the baseLocation should be the workspace location
 		URI baseLocation = getURI(request);
 		JSONObject result = WebProjectResourceHandler.toJSON(project, baseLocation);
 		OrionServlet.writeJSONResponse(request, response, result);
@@ -288,7 +310,6 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		response.setStatus(HttpServletResponse.SC_CREATED);
 
 		// give the project creator access rights to the project
-		addProjectRights(request, response, result.optString(ProtocolConstants.KEY_LOCATION));
 		addProjectRights(request, response, result.optString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		return true;
 	}
@@ -422,17 +443,13 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		}
 		WebProject project = WebProject.fromId(projectId);
 
-		URI baseLocation = getURI(request);
+		//the baseLocation should be the workspace location
+		//since deletion is on the project location we need to remove that suffix
+		URI baseLocation = getURI(request).resolve("../../" + path.segment(0)); //$NON-NLS-1$
 		JSONObject result = WebProjectResourceHandler.toJSON(project, baseLocation);
 
 		// remove user rights for the project
-		try {
-			AuthorizationService.removeUserRight(request.getRemoteUser(), URI.create(result.getString(ProtocolConstants.KEY_LOCATION)).getPath());
-			AuthorizationService.removeUserRight(request.getRemoteUser(), URI.create(result.getString(ProtocolConstants.KEY_LOCATION)).getPath() + "/*");
-		} catch (BackingStoreException e) {
-			String msg = "Error persisting user rights";
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
-		}
+		removeProjectRights(request, response, result.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 
 		//If all went well, remove project from workspace
 		workspace.removeProject(project);
