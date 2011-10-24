@@ -128,15 +128,21 @@ public class ConfiguratorActivator implements BundleActivator {
 			properties.put(JettyConstants.SSL_PROTOCOL, preferences.get(SSL_PROTOCOL, "SSLv3")); //$NON-NLS-1$
 		}
 
+		String port = null;
 		if (!httpsEnabled) {
 			properties.put(JettyConstants.HTTP_ENABLED, true);
-			properties.put(JettyConstants.HTTP_PORT, new Integer(preferences.get(HTTP_PORT, System.getProperty("org.eclipse.equinox.http.jetty.http.port", "8080")))); //$NON-NLS-1$ //$NON-NLS-2$
+			port = preferences.get(HTTP_PORT, System.getProperty("org.eclipse.equinox.http.jetty.http.port", "8080"));//$NON-NLS-1$ //$NON-NLS-2$
+			properties.put(JettyConstants.HTTP_PORT, new Integer(port));
 		}
 
 		//properties to help us filter orion content
 		properties.put("other.info", "org.eclipse.orion"); //$NON-NLS-1$ //$NON-NLS-2$ 
 
-		JettyConfigurator.startServer("MasterJetty", properties); //$NON-NLS-1$
+		try {
+			JettyConfigurator.startServer("MasterJetty", properties); //$NON-NLS-1$
+		} catch (Exception e) {
+			throw new Exception("Error starting Jetty on port: " + port, e);
+		}
 	}
 
 	public void stop(BundleContext context) throws Exception {
