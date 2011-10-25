@@ -134,7 +134,7 @@ public class GitLogTest extends GitTest {
 	@Test
 	public void testLogOrionServerLinked() throws Exception {
 		File orionServer = new File("").getAbsoluteFile().getParentFile(/*org.eclipse.orion.server.tests*/).getParentFile(/*tests*/);
-		Assume.assumeTrue(orionServer.exists());
+		Assume.assumeTrue(new File(orionServer, Constants.DOT_GIT).exists());
 
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), orionServer.toURI().toString());
