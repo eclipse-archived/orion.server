@@ -58,11 +58,7 @@ public abstract class OrionServlet extends HttpServlet {
 		resp.setStatus(HttpServletResponse.SC_OK);
 		resp.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 		if (result instanceof JSONObject) {
-			decorateResponse(req, (JSONObject) result);
-			if (removeHostPort && "XMLHttpRequest".equals(req.getHeader("X-Requested-With"))) {
-				// In JSON that is sent to in-Browser clients, remove scheme/userInfo/port information from URLs.
-				removeOwnProtocolHostPort((JSONObject) result, req.getScheme(), req.getServerName(), req.getServerPort());
-			}
+			decorateResponse(req, (JSONObject) result, removeHostPort);
 		}
 		//TODO look at accept header and chose appropriate response representation
 		resp.setContentType(ProtocolConstants.CONTENT_TYPE_JSON);
@@ -139,6 +135,21 @@ public abstract class OrionServlet extends HttpServlet {
 			}
 		}
 		return simpleURI;
+	}
+
+	/**
+	 * Decorates a JSON response and rewrites URLs found in it.
+	 * @param req
+	 * @param result
+	 * @param removeHostPort <code>true</code> to rewrite URLs in <code>result</code> to remove the hostname and port
+	 * of the server that <code>req</code> was sent to.
+	 */
+	public static void decorateResponse(HttpServletRequest req, JSONObject result, boolean removeHostPort) {
+		decorateResponse(req, result);
+		if (removeHostPort && "XMLHttpRequest".equals(req.getHeader("X-Requested-With"))) {
+			// In JSON that is sent to in-Browser clients, remove scheme/userInfo/port information from URLs.
+			removeOwnProtocolHostPort(result, req.getScheme(), req.getServerName(), req.getServerPort());
+		}
 	}
 
 	/**

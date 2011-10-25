@@ -54,7 +54,7 @@ class FileHandlerV1 extends GenericFileHandler {
 		String etag = generateFileETag(file);
 		result.put(ProtocolConstants.KEY_ETAG, etag);
 		response.setHeader(ProtocolConstants.KEY_ETAG, etag);
-		OrionServlet.decorateResponse(request, result);
+		OrionServlet.decorateResponse(request, result, true);
 		responseWriter.append(result.toString());
 	}
 
