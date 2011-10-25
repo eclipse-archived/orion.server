@@ -311,23 +311,17 @@
 	
 	<target name="processResults" >	
 		<!-- js unit results -->
-		<junitreport todir="${dropLocation}" tofile="Chrome-10.0-testResults.xml">
-			<fileset dir="${jsTestDir}" includes="**/TEST-Chrome_100*.xml" />
-		</junitreport>
-		<junitreport todir="${dropLocation}" tofile="Chrome-11.0-testResults.xml">
-			<fileset dir="${jsTestDir}" includes="**/TEST-Chrome_110*.xml" />
-		</junitreport>
 		<junitreport todir="${dropLocation}" tofile="Chrome-12.0-testResults.xml">
 			<fileset dir="${jsTestDir}" includes="**/TEST-Chrome_120*.xml" />
+		</junitreport>
+		<junitreport todir="${dropLocation}" tofile="Chrome-14.0-testResults.xml">
+			<fileset dir="${jsTestDir}" includes="**/TEST-Chrome_140*.xml" />
 		</junitreport>
 		<junitreport todir="${dropLocation}" tofile="Firefox-6.0-testResults.xml">
 			<fileset dir="${jsTestDir}" includes="**/TEST-Firefox_60*.xml" />
 		</junitreport>
-		<junitreport todir="${dropLocation}" tofile="Firefox-5.0-testResults.xml">
-			<fileset dir="${jsTestDir}" includes="**/TEST-Firefox_50*.xml" />
-		</junitreport>
-		<junitreport todir="${dropLocation}" tofile="Firefox-4.0-testResults.xml">
-			<fileset dir="${jsTestDir}" includes="**/TEST-Firefox_40*.xml" />
+		<junitreport todir="${dropLocation}" tofile="Firefox-7.0-testResults.xml">
+			<fileset dir="${jsTestDir}" includes="**/TEST-Firefox_70*.xml" />
 		</junitreport>
 		<junitreport todir="${dropLocation}" tofile="Performance-testResults.xml">
 			<fileset dir="${jsTestDir}" includes="**/TEST-*.Performance.xml" />
