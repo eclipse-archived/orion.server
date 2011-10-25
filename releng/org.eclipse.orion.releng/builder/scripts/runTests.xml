@@ -18,8 +18,10 @@
 		<antcall target="junitTests" />
 		
 		<antcall target="prepareJsTests"/>
-		<antcall target="triggerHudsonTests"/>
-		<antcall target="jsTests" />
+		<parallel>
+			<antcall target="triggerHudsonTests"/>
+			<antcall target="jsTests" />
+		</parallel>
 		
 		<antcall target="performanceTests" />
 		<antcall target="processResults" />
@@ -115,10 +117,6 @@
 	</target>
 	
 	<target name="triggerHudsonTests" >
-		<zip destfile="${buildDirectory}/test/${buildLabel}.zip" >
-			<fileset dir="${buildDirectory}" includes="plugins/**" />
-			<fileset dir="${base}/tests" includes="JsTestDriver.jar" />
-		</zip>
 		
 		<property environment="env" />
 		
@@ -204,6 +202,11 @@
 		<unzip dest="${buildDirectory}/plugins/org.dojotoolkit">
 			<fileset dir="${buildDirectory}/buildRepo/plugins" includes="org.dojotoolkit_*.jar" />
 		</unzip>
+		<!-- prepare zip file to send to hudson build before it can be touched by other jstests -->
+		<zip destfile="${buildDirectory}/test/${buildLabel}.zip" >
+			<fileset dir="${buildDirectory}" includes="plugins/**" />
+			<fileset dir="${base}/tests" includes="JsTestDriver.jar" />
+		</zip>
 	</target>			
 		
 	<target name="jsTests" >
