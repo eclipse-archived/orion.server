@@ -18,10 +18,8 @@
 		<antcall target="junitTests" />
 		
 		<antcall target="prepareJsTests"/>
-		<parallel>
-			<antcall target="triggerHudsonTests"/>
-			<antcall target="jsTests" />
-		</parallel>
+		<antcall target="triggerHudsonTests"/>
+		<antcall target="jsTests" />
 		
 		<antcall target="performanceTests" />
 		<antcall target="processResults" />
@@ -221,8 +219,11 @@
 			<arg value="-server" />
 			<arg value="${buildDirectory}/test/eclipse" />
 		</exec>
-		
 		<echo message="Test Server process is: ${serverPID}"/>
+
+		<!-- change server port to avoid collision with other processes on test machine -->
+		<replace dir="${buildDirectory}/plugins" includes="**/jsTestDriver.conf" token="8080" value="7070"/>
+
 		<apply executable="bash" parallel="false">
 			<arg value="${builder}/scripts/runTests.sh" />
 			<arg line="-id ${buildLabel}" />
