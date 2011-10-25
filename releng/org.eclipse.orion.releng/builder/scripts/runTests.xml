@@ -342,12 +342,10 @@
 		<xslt style="${builder}/html/JUNIT.XSL" basedir="${buildDirectory}/test/eclipse/results" destdir="${dropLocation}" includes="*.xml" />
 		
 		<!-- update the test status -->
-		<updateTestResult testFile="Chrome-10.0-testResults.html" token="@JS-CHROME10@"/>
-		<updateTestResult testFile="Chrome-11.0-testResults.html" token="@JS-CHROME11@"/>
 		<updateTestResult testFile="Chrome-12.0-testResults.html" token="@JS-CHROME12@"/>
+		<updateTestResult testFile="Chrome-14.0-testResults.html" token="@JS-CHROME14@"/>
+		<updateTestResult testFile="Firefox-7.0-testResults.html" token="@JS-FIREFOX70@"/>
 		<updateTestResult testFile="Firefox-6.0-testResults.html" token="@JS-FIREFOX60@"/>
-		<updateTestResult testFile="Firefox-5.0-testResults.html" token="@JS-FIREFOX50@"/>
-		<updateTestResult testFile="Firefox-4.0-testResults.html" token="@JS-FIREFOX40@"/>
 		<updateTestResult testFile="IE-9.0-testResults.html" token="@JS-IE9@"/>
 		<updateTestResult testFile="Performance-testResults.html" token="@PERFORMANCE@"/>
 		<updateTestResult testFile="org.eclipse.orion.server.tests.AllServerTests.html" token="@SERVER-TESTS@"/>
