@@ -84,9 +84,9 @@ fi
 
 browsers=(\
         firefox-6.0/firefox,firefox-6.0/firefox-bin \
-        firefox-7.0.1/firefox-noremote,firefox-7.0.1/firefox-bin \
+        firefox-7.0.1/firefox,firefox-7.0.1/firefox-bin \
         chrome-12.0.742.60/google-chrome,chrome-12.0.742.60/chrome \
-        chrome-14.0.835.202/google-chrome,chrome-14.0.835.202/chrome )
+        chrome-15.0.874.102/google-chrome,chrome-15.0.874.102/chrome )
 
 export DISPLAY=:63		# set display to use that of the xvfb
 
@@ -103,4 +103,3 @@ for entry in ${browsers[@]}; do
 	$java -Dbrowser.timeout=120 -jar $testDir/../JsTestDriver.jar --config $testConf --port $port --browser /shared/common/${browser[0]} --tests all --testOutput $testDir
 	killBrowser "${browser[1]}"
 done
-
