@@ -65,7 +65,7 @@ public class PreferencesServlet extends OrionServlet {
 			if (key != null) {
 				String value = node.get(key, null);
 				if (value == null) {
-					handleNotFound(req, resp);
+					handleNotFound(req, resp, HttpServletResponse.SC_NOT_FOUND);
 					return;
 				}
 				result = new JSONObject().put(key, value);
@@ -136,6 +136,10 @@ public class PreferencesServlet extends OrionServlet {
 			nodePath = new Path("Workspaces"); //$NON-NLS-1$
 		} else if ("project".equalsIgnoreCase(scope) && segmentCount > 1) { //$NON-NLS-1$
 			nodePath = new Path("Projects"); //$NON-NLS-1$
+		} else {
+			//invalid prefix
+			handleNotFound(req, resp, HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+			return null;
 		}
 		//we allow arbitrary subtrees beneath our three supported roots
 		if (nodePath != null) {
@@ -149,14 +153,14 @@ public class PreferencesServlet extends OrionServlet {
 				return null;
 			}
 		}
-		handleNotFound(req, resp);
+		handleNotFound(req, resp, HttpServletResponse.SC_NOT_FOUND);
 		return null;
 	}
 
-	private void handleNotFound(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
+	private void handleNotFound(HttpServletRequest req, HttpServletResponse resp, int code) throws ServletException {
 		String path = req.getPathInfo() == null ? "/" : req.getPathInfo();
-		String msg = NLS.bind("No preferences found for path {0}", path);
-		handleException(resp, new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, msg), HttpServletResponse.SC_NOT_FOUND);
+		String msg = code == HttpServletResponse.SC_NOT_FOUND ? "No preferences found for path {0}" : "Invalid preference path {0}";
+		handleException(resp, new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, NLS.bind(msg, path)), code);
 	}
 
 	@Override

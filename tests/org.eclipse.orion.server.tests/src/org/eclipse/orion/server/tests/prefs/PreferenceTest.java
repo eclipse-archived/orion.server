@@ -190,6 +190,28 @@ public class PreferenceTest extends AbstractServerTest {
 		assertEquals("Frodo Baggins", result.optString("Name"));
 	}
 
+	/**
+	 * Tests whether a client can access workspace metadata via the preferences servlet.
+	 * @throws IOException 
+	 */
+	@Test
+	public void testAccessingMetadata() throws IOException {
+		List<String> locations = getIllegalPreferenceNodes();
+		for (String location : locations) {
+			//get should return 405
+			WebRequest request = new GetMethodWebRequest(location);
+			setAuthentication(request);
+			WebResponse response = webConversation.getResource(request);
+			assertEquals(HttpURLConnection.HTTP_BAD_METHOD, response.getResponseCode());
+
+			//put a value should be 403
+			request = createSetPreferenceRequest(location, "Name", "Frodo");
+			setAuthentication(request);
+			response = webConversation.getResource(request);
+			assertEquals(HttpURLConnection.HTTP_BAD_METHOD, response.getResponseCode());
+		}
+	}
+
 	@Test
 	public void testGetNode() throws IOException, JSONException {
 		List<String> locations = getTestPreferenceNodes();
@@ -225,4 +247,10 @@ public class PreferenceTest extends AbstractServerTest {
 		return Arrays.asList(ServerTestsActivator.getServerLocation() + "/prefs/user/testprefs", ServerTestsActivator.getServerLocation() + "/prefs/workspace/myworkspace/testprefs", ServerTestsActivator.getServerLocation() + "/prefs/project/myproject/testprefs");
 	}
 
+	/**
+	 * Returns preference nodes the client should not have access to.
+	 */
+	private List<String> getIllegalPreferenceNodes() {
+		return Arrays.asList(ServerTestsActivator.getServerLocation() + "/prefs/Users", ServerTestsActivator.getServerLocation() + "/prefs/Workspaces", ServerTestsActivator.getServerLocation() + "/prefs/Projects");
+	}
 }
