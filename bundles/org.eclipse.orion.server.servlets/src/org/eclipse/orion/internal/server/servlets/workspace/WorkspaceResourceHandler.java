@@ -110,6 +110,11 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 				URI contentLocation = computeProjectContentLocation(baseLocation, project);
 				child.put(ProtocolConstants.KEY_LOCATION, contentLocation);
 				try {
+					child.put(ProtocolConstants.KEY_LOCAL_TIMESTAMP, project.getProjectStore().fetchInfo().getLastModified());
+				} catch (CoreException coreException) {
+					//just omit the timestamp in this case because the project location is unreachable
+				}
+				try {
 					child.put(ProtocolConstants.KEY_CHILDREN_LOCATION, new URI(contentLocation.getScheme(), contentLocation.getUserInfo(), contentLocation.getHost(), contentLocation.getPort(), contentLocation.getPath(), ProtocolConstants.PARM_DEPTH + "=1", contentLocation.getFragment())); //$NON-NLS-1$
 				} catch (URISyntaxException e) {
 					throw new RuntimeException(e);
