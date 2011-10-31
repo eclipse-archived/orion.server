@@ -28,8 +28,13 @@ plugin@org.eclipse.core.runtime=p2IU,id=org.eclipse.core.runtime,repository=ECLI
 plugin@org.eclipse.core.variables=p2IU,id=org.eclipse.core.variables,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.debug.core=p2IU,id=org.eclipse.debug.core,repository=ECLIPSE_PLATFORM_REPO
 
+plugin@org.apache.felix.gogo.command=p2IU,id=org.apache.felix.gogo.command,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.apache.felix.gogo.runtime=p2IU,id=org.apache.felix.gogo.runtime,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.apache.felix.gogo.shell=p2IU,id=org.apache.felix.gogo.shell,repository=ECLIPSE_PLATFORM_REPO
+
 plugin@org.eclipse.equinox.app=p2IU,id=org.eclipse.equinox.app,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.equinox.common=p2IU,id=org.eclipse.equinox.common,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.equinox.console=p2IU,id=org.eclipse.equinox.common,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.equinox.ds=p2IU,id=org.eclipse.equinox.ds,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.equinox.http.registry=p2IU,id=org.eclipse.equinox.http.registry,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.equinox.http.jetty=p2IU,id=org.eclipse.equinox.http.jetty,repository=ECLIPSE_PLATFORM_REPO
