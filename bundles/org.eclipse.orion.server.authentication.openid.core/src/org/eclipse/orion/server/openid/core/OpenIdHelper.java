@@ -10,38 +10,18 @@
  *******************************************************************************/
 package org.eclipse.orion.server.openid.core;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.PreferenceHelper;
-import org.eclipse.orion.server.core.ServerConstants;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
+import java.io.*;
+import java.util.*;
+import javax.servlet.http.*;
+import org.eclipse.core.runtime.*;
+import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.user.profile.*;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.User;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.*;
 import org.openid4java.consumer.ConsumerException;
 import org.openid4java.discovery.Identifier;
-import org.osgi.service.http.HttpContext;
-import org.osgi.service.http.HttpService;
-import org.osgi.service.http.NamespaceException;
+import org.osgi.service.http.*;
 
 /**
  * Groups methods to handle session attributes for OpenID authentication.
@@ -303,9 +283,13 @@ public class OpenIdHelper {
 		StringBuilder sb = new StringBuilder();
 		InputStream is = Activator.getBundleContext().getBundle().getEntry(filename).openStream();
 		BufferedReader br = new BufferedReader(new InputStreamReader(is));
-		String line = ""; //$NON-NLS-1$
-		while ((line = br.readLine()) != null) {
-			sb.append(line).append('\n');
+		try {
+			String line = ""; //$NON-NLS-1$
+			while ((line = br.readLine()) != null) {
+				sb.append(line).append('\n');
+			}
+		} finally {
+			br.close();
 		}
 		return sb.toString();
 	}
