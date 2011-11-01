@@ -11,11 +11,9 @@
 package org.eclipse.orion.internal.server.search;
 
 import java.io.IOException;
-
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -25,10 +23,7 @@ import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.params.CommonParams;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.core.SolrCore;
-import org.apache.solr.request.LocalSolrQueryRequest;
-import org.apache.solr.request.QueryResponseWriter;
-import org.apache.solr.request.SolrQueryRequest;
-import org.apache.solr.request.SolrQueryResponse;
+import org.apache.solr.request.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.servlets.OrionServlet;
@@ -57,8 +52,10 @@ public class SearchServlet extends OrionServlet {
 		query.setParam(CommonParams.WT, "json"); //$NON-NLS-1$
 		query.setParam(CommonParams.FL, "Id,Name,Length,Directory,LastModified,Location"); //$NON-NLS-1$
 		String queryString = req.getParameter(CommonParams.Q);
+		//solr does not lowercase queries containing wildcards
+		//see https://bugs.eclipse.org/bugs/show_bug.cgi?id=359766
 		if (queryString.trim().length() > 0)
-			queryString += " AND "; //$NON-NLS-1$
+			queryString = queryString.toLowerCase() + " AND "; //$NON-NLS-1$
 		queryString += ProtocolConstants.KEY_USER_NAME + ':' + ClientUtils.escapeQueryChars(req.getRemoteUser());
 		query.setQuery(queryString);
 		return query;
