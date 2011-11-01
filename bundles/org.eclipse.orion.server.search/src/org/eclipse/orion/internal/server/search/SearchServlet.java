@@ -51,11 +51,15 @@ public class SearchServlet extends OrionServlet {
 		SolrQuery query = new SolrQuery();
 		query.setParam(CommonParams.WT, "json"); //$NON-NLS-1$
 		query.setParam(CommonParams.FL, "Id,Name,Length,Directory,LastModified,Location"); //$NON-NLS-1$
-		String queryString = req.getParameter(CommonParams.Q);
-		//solr does not lowercase queries containing wildcards
-		//see https://bugs.eclipse.org/bugs/show_bug.cgi?id=359766
-		if (queryString.trim().length() > 0)
-			queryString = queryString.toLowerCase() + " AND "; //$NON-NLS-1$
+		String queryString = req.getParameter(CommonParams.Q).trim();
+		if (queryString.length() > 0) {
+			//solr does not lowercase queries containing wildcards
+			//however Name: searches should always be case-sensitive
+			//see https://bugs.eclipse.org/bugs/show_bug.cgi?id=359766
+			if (!queryString.startsWith("Name:"))
+				queryString = queryString.toLowerCase();
+			queryString += " AND "; //$NON-NLS-1$
+		}
 		queryString += ProtocolConstants.KEY_USER_NAME + ':' + ClientUtils.escapeQueryChars(req.getRemoteUser());
 		query.setQuery(queryString);
 		return query;
