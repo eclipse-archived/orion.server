@@ -34,7 +34,7 @@ plugin@org.apache.felix.gogo.shell=p2IU,id=org.apache.felix.gogo.shell,repositor
 
 plugin@org.eclipse.equinox.app=p2IU,id=org.eclipse.equinox.app,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.equinox.common=p2IU,id=org.eclipse.equinox.common,repository=ECLIPSE_PLATFORM_REPO
-plugin@org.eclipse.equinox.console=p2IU,id=org.eclipse.equinox.common,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.equinox.console=p2IU,id=org.eclipse.equinox.console,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.equinox.ds=p2IU,id=org.eclipse.equinox.ds,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.equinox.http.registry=p2IU,id=org.eclipse.equinox.http.registry,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.equinox.http.jetty=p2IU,id=org.eclipse.equinox.http.jetty,repository=ECLIPSE_PLATFORM_REPO
