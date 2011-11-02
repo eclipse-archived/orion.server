@@ -290,8 +290,6 @@ publish () {
 	pushd $buildDirectory/$buildLabel
 
 	scp -r drop $user@build.eclipse.org:/home/data/httpd/download.eclipse.org/orion/drops/$buildType$timestamp
-	wget -O index.html http://download.eclipse.org/orion/createIndex.php
-	scp index.html $user@build.eclipse.org:/home/data/httpd/download.eclipse.org/orion
 	
 	if [ $buildType = I ]; then
 		scp -r $buildDirectory/plugins/org.eclipse.orion.doc.isv/jsdoc $user@build.eclipse.org:/home/data/httpd/download.eclipse.org/orion
