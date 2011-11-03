@@ -56,13 +56,23 @@ public class SearchServlet extends OrionServlet {
 			//solr does not lowercase queries containing wildcards
 			//however Name: searches should always be case-sensitive
 			//see https://bugs.eclipse.org/bugs/show_bug.cgi?id=359766
-			if (!queryString.startsWith("Name:"))
+			if (!queryString.startsWith("Name:")) //$NON-NLS-1$
 				queryString = queryString.toLowerCase();
 			queryString += " AND "; //$NON-NLS-1$
 		}
 		queryString += ProtocolConstants.KEY_USER_NAME + ':' + ClientUtils.escapeQueryChars(req.getRemoteUser());
 		query.setQuery(queryString);
+		//other common fields
+		setField(req, query, CommonParams.ROWS);
+		setField(req, query, CommonParams.START);
+		setField(req, query, CommonParams.SORT);
 		return query;
+	}
+
+	private void setField(HttpServletRequest req, SolrQuery query, String parameter) {
+		String value = req.getParameter(parameter);
+		if (value != null)
+			query.set(parameter, value);
 	}
 
 	/**
@@ -91,7 +101,7 @@ public class SearchServlet extends OrionServlet {
 	 */
 	private void setSearchResultContext(NamedList<Object> values, String contextPath) {
 		//find the search result documents in the search response
-		SolrDocumentList documents = (SolrDocumentList) values.get("response");
+		SolrDocumentList documents = (SolrDocumentList) values.get("response"); //$NON-NLS-1$
 		if (documents == null)
 			return;
 		for (SolrDocument doc : documents) {
