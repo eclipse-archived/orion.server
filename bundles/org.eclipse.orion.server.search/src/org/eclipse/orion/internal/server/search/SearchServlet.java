@@ -11,6 +11,8 @@
 package org.eclipse.orion.internal.server.search;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -33,6 +35,8 @@ import org.eclipse.orion.server.servlets.OrionServlet;
  */
 public class SearchServlet extends OrionServlet {
 	private static final long serialVersionUID = 1L;
+	private static final String FIELD_NAMES = "Id,Name,Length,Directory,LastModified,Location";
+	private static final List<String> FIELD_LIST = Arrays.asList("Id,Name,Length,Directory,LastModified,Location".split(","));
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -50,15 +54,24 @@ public class SearchServlet extends OrionServlet {
 	private SolrQuery buildSolrQuery(HttpServletRequest req) {
 		SolrQuery query = new SolrQuery();
 		query.setParam(CommonParams.WT, "json"); //$NON-NLS-1$
-		query.setParam(CommonParams.FL, "Id,Name,Length,Directory,LastModified,Location"); //$NON-NLS-1$
+		query.setParam(CommonParams.FL, FIELD_NAMES);
 		String queryString = req.getParameter(CommonParams.Q).trim();
 		if (queryString.length() > 0) {
-			//solr does not lowercase queries containing wildcards
-			//however Name: searches should always be case-sensitive
-			//see https://bugs.eclipse.org/bugs/show_bug.cgi?id=359766
-			if (!queryString.startsWith("Name:")) //$NON-NLS-1$
-				queryString = queryString.toLowerCase();
-			queryString += " AND "; //$NON-NLS-1$
+			String processedQuery = ""; //$NON-NLS-1$
+			//divide into search terms delimited by space character
+			String[] terms = queryString.split(" "); //$NON-NLS-1$
+			for (String term : terms) {
+				if (isSearchField(term)) {
+					//field searches are always case sensitive
+					processedQuery += term;
+				} else {
+					//solr does not lowercase queries containing wildcards
+					//see https://bugs.eclipse.org/bugs/show_bug.cgi?id=359766
+					processedQuery += term.toLowerCase();
+				}
+				processedQuery += " AND "; //$NON-NLS-1$
+			}
+			queryString = processedQuery;
 		}
 		queryString += ProtocolConstants.KEY_USER_NAME + ':' + ClientUtils.escapeQueryChars(req.getRemoteUser());
 		query.setQuery(queryString);
@@ -67,6 +80,18 @@ public class SearchServlet extends OrionServlet {
 		setField(req, query, CommonParams.START);
 		setField(req, query, CommonParams.SORT);
 		return query;
+	}
+
+	/**
+	 * Returns whether the search term is against a particular field rather than the default field
+	 * (search on name, location, etc).
+	 */
+	private boolean isSearchField(String term) {
+		for (String field : FIELD_LIST) {
+			if (term.startsWith(field + ":")) //$NON-NLS-1$
+				return true;
+		}
+		return false;
 	}
 
 	private void setField(HttpServletRequest req, SolrQuery query, String parameter) {
