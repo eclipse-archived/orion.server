@@ -96,7 +96,7 @@ public class CoreFilesTest extends FileSystemTest {
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		JSONObject responseObject = new JSONObject(response.getText());
-		checkFileMetadata(responseObject, destName, null, null, null, null, null, null, null);
+		checkFileMetadata(responseObject, destName, null, null, null, null, null, null, null, null);
 		assertTrue(checkFileExists(sourcePath));
 		assertTrue(checkFileExists(destPath));
 	}
@@ -125,7 +125,7 @@ public class CoreFilesTest extends FileSystemTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject responseObject = new JSONObject(response.getText());
-		checkFileMetadata(responseObject, destName, null, null, null, null, null, null, null);
+		checkFileMetadata(responseObject, destName, null, null, null, null, null, null, null, null);
 		assertTrue(checkFileExists(sourcePath));
 		assertTrue(checkFileExists(destPath));
 	}
@@ -174,7 +174,7 @@ public class CoreFilesTest extends FileSystemTest {
 		assertEquals("Response should contain file metadata in JSON, but was " + response.getText(), "application/json", response.getContentType());
 		JSONObject responseObject = new JSONObject(response.getText());
 		assertNotNull("No file information in response", responseObject);
-		checkFileMetadata(responseObject, fileName, null, null, null, null, null, null, null);
+		checkFileMetadata(responseObject, fileName, null, null, null, null, null, null, null, null);
 
 		//should be able to perform GET on location header to obtain metadata
 		String location = response.getHeaderField("Location");
@@ -184,7 +184,7 @@ public class CoreFilesTest extends FileSystemTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		responseObject = new JSONObject(response.getText());
 		assertNotNull("No direcory information in response", responseObject);
-		checkFileMetadata(responseObject, fileName, null, null, null, null, null, null, null);
+		checkFileMetadata(responseObject, fileName, null, null, null, null, null, null, null, null);
 	}
 
 	@Test
@@ -201,7 +201,7 @@ public class CoreFilesTest extends FileSystemTest {
 		assertEquals("Response should contain file metadata in JSON, but was " + response.getText(), "application/json", response.getContentType());
 		JSONObject responseObject = new JSONObject(response.getText());
 		assertNotNull("No file information in response", responseObject);
-		checkFileMetadata(responseObject, fileName, null, null, null, null, null, null, null);
+		checkFileMetadata(responseObject, fileName, null, null, null, null, null, null, null, null);
 
 		//should be able to perform GET on location header to obtain metadata
 		String location = response.getHeaderField("Location");
@@ -211,7 +211,7 @@ public class CoreFilesTest extends FileSystemTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		responseObject = new JSONObject(response.getText());
 		assertNotNull("No direcory information in response", responseObject);
-		checkFileMetadata(responseObject, fileName, null, null, null, null, null, null, null);
+		checkFileMetadata(responseObject, fileName, null, null, null, null, null, null, null, null);
 	}
 
 	@Test
@@ -404,7 +404,7 @@ public class CoreFilesTest extends FileSystemTest {
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		JSONObject responseObject = new JSONObject(response.getText());
-		checkFileMetadata(responseObject, destName, null, null, null, null, null, null, null);
+		checkFileMetadata(responseObject, destName, null, null, null, null, null, null, null, null);
 		assertFalse(checkFileExists(sourcePath));
 		assertTrue(checkFileExists(destPath));
 	}
@@ -437,7 +437,7 @@ public class CoreFilesTest extends FileSystemTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject responseObject = new JSONObject(response.getText());
-		checkFileMetadata(responseObject, destName, null, null, null, null, null, null, null);
+		checkFileMetadata(responseObject, destName, null, null, null, null, null, null, null, null);
 		assertFalse(checkFileExists(sourcePath));
 		assertTrue(checkFileExists(destPath));
 	}
@@ -480,7 +480,7 @@ public class CoreFilesTest extends FileSystemTest {
 			if (child.getBoolean("Directory")) {
 				checkDirectoryMetadata(child, subDirectory, null, null, null, null, null);
 			} else {
-				checkFileMetadata(child, subFile, null, null, null, null, null, null, null);
+				checkFileMetadata(child, subFile, null, null, null, null, null, null, null, null);
 			}
 		}
 

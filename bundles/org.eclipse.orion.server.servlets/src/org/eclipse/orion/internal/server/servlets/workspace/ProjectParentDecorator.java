@@ -39,6 +39,9 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 		if (!"/file".equals(request.getServletPath())) //$NON-NLS-1$
 			return;
 		try {
+			if (resourcePath.hasTrailingSeparator() && !representation.getBoolean(ProtocolConstants.KEY_DIRECTORY)) {
+				resourcePath = resourcePath.append(representation.getString(ProtocolConstants.KEY_NAME));
+			}
 			addParents(resource, representation, resourcePath);
 			//set the name of the project file to be the project name
 			if (resourcePath.segmentCount() == 2) {
@@ -92,10 +95,10 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 		parent.put(ProtocolConstants.KEY_LOCATION, location);
 		URI childLocation;
 		try {
-			childLocation = new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), location.getPath(), "depth=1", location.getFragment());
+			childLocation = new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), location.getPath(), "depth=1", location.getFragment()); //$NON-NLS-1$
 		} catch (URISyntaxException e) {
 			throw new RuntimeException(e);
-		} //$NON-NLS-1$
+		}
 		parent.put(ProtocolConstants.KEY_CHILDREN_LOCATION, childLocation);
 		parents.put(parent);
 	}

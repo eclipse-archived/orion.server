@@ -146,7 +146,7 @@ public abstract class OrionServlet extends HttpServlet {
 	 */
 	public static void decorateResponse(HttpServletRequest req, JSONObject result, boolean removeHostPort) {
 		decorateResponse(req, result);
-		if (removeHostPort && "XMLHttpRequest".equals(req.getHeader("X-Requested-With"))) {
+		if (removeHostPort && "XMLHttpRequest".equals(req.getHeader("X-Requested-With"))) { //$NON-NLS-1$ //$NON-NLS-2$
 			// In JSON that is sent to in-Browser clients, remove scheme/userInfo/port information from URLs.
 			removeOwnProtocolHostPort(result, req.getScheme(), req.getServerName(), req.getServerPort());
 		}

@@ -202,6 +202,16 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		assertEquals("true", child.optString(ProtocolConstants.KEY_DIRECTORY));
 		String contentLocation = child.optString(ProtocolConstants.KEY_LOCATION);
 		assertNotNull(contentLocation);
+
+		//add a file in the project
+		String fileName = "file.txt";
+		request = getPostFilesRequest(contentLocation, getNewFileJSON(fileName).toString(), fileName);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		assertEquals("Response should contain file metadata in JSON, but was " + response.getText(), "application/json", response.getContentType());
+		JSONObject responseObject = new JSONObject(response.getText());
+		assertNotNull("No file information in response", responseObject);
+		checkFileMetadata(responseObject, fileName, null, null, null, null, null, null, null, projectName);
 	}
 
 	@Test
@@ -274,6 +284,10 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		request = getPostFilesRequest(sourceContentLocation, "{}", fileName);
 		response = webConversation.getResource(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		assertEquals("Response should contain file metadata in JSON, but was " + response.getText(), "application/json", response.getContentType());
+		JSONObject fileResponseObject = new JSONObject(response.getText());
+		assertNotNull("No file information in response", fileResponseObject);
+		checkFileMetadata(fileResponseObject, fileName, null, null, null, null, null, null, null, sourceName);
 
 		// copy the project
 		String destinationName = "Destination Project";

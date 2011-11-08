@@ -81,7 +81,7 @@ public class AdvancedFilesTest extends FileSystemTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject responseObject = new JSONObject(response.getText());
 		assertNotNull("No file information in response", responseObject);
-		checkFileMetadata(responseObject, fileName, new Long(-1), null, null, request.getURL().getRef(), new Long(0), null, null);
+		checkFileMetadata(responseObject, fileName, new Long(-1), null, null, request.getURL().getRef(), new Long(0), null, null, null);
 
 		//modify the metadata
 		request = getPutFilesRequest(fileName + "?parts=meta", getFileMetadataObject(true, true).toString());
@@ -93,7 +93,7 @@ public class AdvancedFilesTest extends FileSystemTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		responseObject = new JSONObject(response.getText());
-		checkFileMetadata(responseObject, fileName, new Long(-1), null, null, request.getURL().getRef(), new Long(0), new Boolean(true), new Boolean(true));
+		checkFileMetadata(responseObject, fileName, new Long(-1), null, null, request.getURL().getRef(), new Long(0), new Boolean(true), new Boolean(true), null);
 
 	}
 

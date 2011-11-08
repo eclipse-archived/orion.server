@@ -163,7 +163,7 @@ public abstract class FileSystemTest extends AbstractServerTest {
 		}
 	}
 
-	protected void checkFileMetadata(JSONObject fileObject, String name, Long localTimestamp, String charset, String contentType, String location, Long length, Boolean isReadonly, Boolean isExecutable) throws JSONException {
+	protected void checkFileMetadata(JSONObject fileObject, String name, Long localTimestamp, String charset, String contentType, String location, Long length, Boolean isReadonly, Boolean isExecutable, String parentName) throws JSONException {
 
 		assertFalse("Expected file but found directory", fileObject.getBoolean(ProtocolConstants.KEY_DIRECTORY));
 
@@ -199,6 +199,14 @@ public abstract class FileSystemTest extends AbstractServerTest {
 			if (isExecutable != null && ((attrs & EFS.ATTRIBUTE_EXECUTABLE) != 0)) {
 				assertEquals("Invalid file executable attribute", isExecutable.booleanValue(), attributes.getBoolean(ProtocolConstants.KEY_ATTRIBUTE_EXECUTABLE));
 			}
+		}
+		if (parentName != null) {
+			JSONArray parents = fileObject.getJSONArray(ProtocolConstants.KEY_PARENTS);
+			assertNotNull("Expected Parents array in file metadata", parents);
+			assertEquals("Expected single parent item", 1, parents.length());
+			JSONObject parent = parents.getJSONObject(0);
+			assertNotNull("Invalid parent item", parent);
+			assertEquals("Invalid file parent name", parentName, parent.get(ProtocolConstants.KEY_NAME));
 		}
 	}
 
