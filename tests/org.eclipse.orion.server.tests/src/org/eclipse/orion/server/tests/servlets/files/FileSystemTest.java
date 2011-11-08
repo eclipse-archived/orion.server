@@ -16,21 +16,35 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.*;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import org.eclipse.core.filesystem.*;
-import org.eclipse.core.runtime.*;
+
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileInfo;
+import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.tests.AbstractServerTest;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.PutMethodWebRequest;
+import com.meterware.httpunit.WebRequest;
 
 /**
  * Common base class for file system tests.
@@ -119,48 +133,48 @@ public abstract class FileSystemTest extends AbstractServerTest {
 
 	protected void checkDirectoryMetadata(JSONObject dirObject, String name, String path, Long localTimestamp, Boolean isReadonly, Boolean isExecutable, String location) throws JSONException {
 
-		assertTrue("Expected directory but found file", dirObject.getBoolean("Directory"));
+		assertTrue("Expected directory but found file", dirObject.getBoolean(ProtocolConstants.KEY_DIRECTORY));
 
 		if (name != null) {
-			assertEquals("Invalid directory name", name, dirObject.getString("Name"));
+			assertEquals("Invalid directory name", name, dirObject.getString(ProtocolConstants.KEY_NAME));
 		}
 		if (path != null) {
-			assertEquals("Invalid directory path", path, dirObject.getString("Path"));
+			assertEquals("Invalid directory path", path, dirObject.getString(ProtocolConstants.KEY_PATH));
 		}
 		if (localTimestamp != null) {
 			if (localTimestamp < 0) {
-				assertNotNull("Directory timestamp should not be null", dirObject.getLong("LocalTimeStamp"));
+				assertNotNull("Directory timestamp should not be null", dirObject.getLong(ProtocolConstants.KEY_LOCAL_TIMESTAMP));
 			} else {
-				assertEquals("Invalid directory timestamp", localTimestamp, new Long(dirObject.getLong("LocalTimeStamp")));
+				assertEquals("Invalid directory timestamp", localTimestamp, new Long(dirObject.getLong(ProtocolConstants.KEY_LOCAL_TIMESTAMP)));
 			}
 		}
 		if (location != null) {
-			assertEquals("Invalid directory location", location, dirObject.getString("Location"));
+			assertEquals("Invalid directory location", location, dirObject.getString(ProtocolConstants.KEY_LOCATION));
 		}
 		if (isReadonly != null && isExecutable != null) {
-			JSONObject attributes = dirObject.getJSONObject("Attributes");
+			JSONObject attributes = dirObject.getJSONObject(ProtocolConstants.KEY_ATTRIBUTES);
 			assertNotNull("Expected Attributes section in directory metadata", attributes);
 			if (isReadonly != null) {
-				assertEquals("Ibvalid directory readonly attribute", isReadonly, attributes.getBoolean("ReadOnly"));
+				assertEquals("Ibvalid directory readonly attribute", isReadonly, attributes.getBoolean(ProtocolConstants.KEY_ATTRIBUTE_READ_ONLY));
 			}
 			if (isExecutable != null) {
-				assertEquals("Invalid directory executable attribute", isExecutable, attributes.getBoolean("Executable"));
+				assertEquals("Invalid directory executable attribute", isExecutable, attributes.getBoolean(ProtocolConstants.KEY_ATTRIBUTE_EXECUTABLE));
 			}
 		}
 	}
 
 	protected void checkFileMetadata(JSONObject fileObject, String name, Long localTimestamp, String charset, String contentType, String location, Long length, Boolean isReadonly, Boolean isExecutable) throws JSONException {
 
-		assertFalse("Expected file but found directory", fileObject.getBoolean("Directory"));
+		assertFalse("Expected file but found directory", fileObject.getBoolean(ProtocolConstants.KEY_DIRECTORY));
 
 		if (name != null) {
-			assertEquals("Invalid file name", name, fileObject.getString("Name"));
+			assertEquals("Invalid file name", name, fileObject.getString(ProtocolConstants.KEY_NAME));
 		}
 		if (localTimestamp != null) {
 			if (localTimestamp < 0) {
-				assertNotNull("File timestamp should not be null", fileObject.getLong("LocalTimeStamp"));
+				assertNotNull("File timestamp should not be null", fileObject.getLong(ProtocolConstants.KEY_LOCAL_TIMESTAMP));
 			} else {
-				assertEquals("Invalid file timestamp", localTimestamp, new Long(fileObject.getLong("LocalTimeStamp")));
+				assertEquals("Invalid file timestamp", localTimestamp, new Long(fileObject.getLong(ProtocolConstants.KEY_LOCAL_TIMESTAMP)));
 			}
 		}
 		if (charset != null) {
@@ -170,20 +184,20 @@ public abstract class FileSystemTest extends AbstractServerTest {
 			assertEquals("Invalid file content type", contentType, fileObject.getString("ContentType"));
 		}
 		if (location != null) {
-			assertEquals("Invalid file location", location, fileObject.getString("Location"));
+			assertEquals("Invalid file location", location, fileObject.getString(ProtocolConstants.KEY_LOCATION));
 		}
 		if (length != null) {
-			assertEquals("Invalid file length", length, new Long(fileObject.getLong("Length")));
+			assertEquals("Invalid file length", length, new Long(fileObject.getLong(ProtocolConstants.KEY_LENGTH)));
 		}
 		if (isReadonly != null || isExecutable != null) {
 			int attrs = EFS.getLocalFileSystem().attributes();
-			JSONObject attributes = fileObject.optJSONObject("Attributes");
+			JSONObject attributes = fileObject.optJSONObject(ProtocolConstants.KEY_ATTRIBUTES);
 			assertNotNull("Expected Attributes section in file metadata", attributes);
 			if (isReadonly != null && ((attrs & EFS.ATTRIBUTE_READ_ONLY) != 0)) {
-				assertEquals("Invalid file readonly attribute", isReadonly.booleanValue(), attributes.getBoolean("ReadOnly"));
+				assertEquals("Invalid file readonly attribute", isReadonly.booleanValue(), attributes.getBoolean(ProtocolConstants.KEY_ATTRIBUTE_READ_ONLY));
 			}
 			if (isExecutable != null && ((attrs & EFS.ATTRIBUTE_EXECUTABLE) != 0)) {
-				assertEquals("Invalid file executable attribute", isExecutable.booleanValue(), attributes.getBoolean("Executable"));
+				assertEquals("Invalid file executable attribute", isExecutable.booleanValue(), attributes.getBoolean(ProtocolConstants.KEY_ATTRIBUTE_EXECUTABLE));
 			}
 		}
 	}
@@ -235,15 +249,15 @@ public abstract class FileSystemTest extends AbstractServerTest {
 
 	protected JSONObject getNewDirJSON(String dirName) throws JSONException {
 		JSONObject json = new JSONObject();
-		json.put("Name", dirName);
-		json.put("Directory", true);
+		json.put(ProtocolConstants.KEY_NAME, dirName);
+		json.put(ProtocolConstants.KEY_DIRECTORY, true);
 		return json;
 	}
 
 	protected JSONObject getNewFileJSON(String dirName) throws JSONException {
 		JSONObject json = new JSONObject();
-		json.put("Name", dirName);
-		json.put("Directory", false);
+		json.put(ProtocolConstants.KEY_NAME, dirName);
+		json.put(ProtocolConstants.KEY_DIRECTORY, false);
 		json.put("Charset", "UTF-8");
 		json.put("ContentType", "text/plain");
 		return json;

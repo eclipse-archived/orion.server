@@ -15,22 +15,33 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.*;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.List;
-import org.eclipse.core.runtime.*;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.server.core.ServerConstants;
-import org.json.*;
-import org.junit.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.osgi.service.prefs.BackingStoreException;
 import org.xml.sax.SAXException;
+
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 /**
  * Basic tests for {@link NewFileServlet}.
@@ -144,7 +155,7 @@ public class CoreFilesTest extends FileSystemTest {
 		assertNotNull(location);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		responseObject = new JSONObject(response.getText());
-		assertNotNull("No direcory information in responce", responseObject);
+		assertNotNull("No direcory information in response", responseObject);
 		checkDirectoryMetadata(responseObject, dirName, null, null, null, null, null);
 
 	}
@@ -162,7 +173,7 @@ public class CoreFilesTest extends FileSystemTest {
 		assertTrue("Create file response was OK, but the file does not exist", checkFileExists(directoryPath + "/" + fileName));
 		assertEquals("Response should contain file metadata in JSON, but was " + response.getText(), "application/json", response.getContentType());
 		JSONObject responseObject = new JSONObject(response.getText());
-		assertNotNull("No file information in responce", responseObject);
+		assertNotNull("No file information in response", responseObject);
 		checkFileMetadata(responseObject, fileName, null, null, null, null, null, null, null);
 
 		//should be able to perform GET on location header to obtain metadata
@@ -172,7 +183,7 @@ public class CoreFilesTest extends FileSystemTest {
 		assertNotNull(location);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		responseObject = new JSONObject(response.getText());
-		assertNotNull("No direcory information in responce", responseObject);
+		assertNotNull("No direcory information in response", responseObject);
 		checkFileMetadata(responseObject, fileName, null, null, null, null, null, null, null);
 	}
 
@@ -189,7 +200,7 @@ public class CoreFilesTest extends FileSystemTest {
 		assertTrue("Create file response was OK, but the file does not exist", checkFileExists(directoryPath + "/" + fileName));
 		assertEquals("Response should contain file metadata in JSON, but was " + response.getText(), "application/json", response.getContentType());
 		JSONObject responseObject = new JSONObject(response.getText());
-		assertNotNull("No file information in responce", responseObject);
+		assertNotNull("No file information in response", responseObject);
 		checkFileMetadata(responseObject, fileName, null, null, null, null, null, null, null);
 
 		//should be able to perform GET on location header to obtain metadata
@@ -199,7 +210,7 @@ public class CoreFilesTest extends FileSystemTest {
 		assertNotNull(location);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		responseObject = new JSONObject(response.getText());
-		assertNotNull("No direcory information in responce", responseObject);
+		assertNotNull("No direcory information in response", responseObject);
 		checkFileMetadata(responseObject, fileName, null, null, null, null, null, null, null);
 	}
 
