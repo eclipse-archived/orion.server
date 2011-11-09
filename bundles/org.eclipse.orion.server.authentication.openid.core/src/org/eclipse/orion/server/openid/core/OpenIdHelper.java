@@ -136,7 +136,8 @@ public class OpenIdHelper {
 				newUser.addProperty("openid", id.getIdentifier());
 				user = userAdmin.createUser(newUser);
 			} else {
-				throw new OpenIdException("Your authentication was successful but you are not authorized to access Orion. Contact administrator to create an Orion account.");
+				throw new OpenIdException("Your authentication was successful, but that account is not associated with any Orion profile." +
+						" External accounts can be added on your profile page after login.<a class='loginWindow' href='http://wiki.eclipse.org/Orion/Documentation/User_Guide/Reference/Login_page'> Learn more.</a>");
 			}
 
 			req.getSession().setAttribute("user", user.getUid()); //$NON-NLS-1$
