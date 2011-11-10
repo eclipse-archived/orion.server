@@ -24,7 +24,7 @@ import org.osgi.service.http.HttpContext;
 
 /**
  * The filter checks whether the request is done by an authenticated user.
- * It does not verify the rules in the autorization service.
+ * It does not verify the rules in the authorization service.
  */
 public class LoggedInUserFilter implements Filter {
 

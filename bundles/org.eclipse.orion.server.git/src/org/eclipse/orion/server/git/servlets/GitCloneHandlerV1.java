@@ -30,6 +30,7 @@ import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.internal.server.servlets.workspace.*;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
+import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitConstants;
@@ -72,7 +73,9 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 
 		} catch (Exception e) {
 			String msg = NLS.bind("Failed to handle /git/clone request for {0}", path);
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+			ServerStatus status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
+			LogHelper.log(status);
+			return statusHandler.handleRequest(request, response, status);
 		}
 		return false;
 	}
