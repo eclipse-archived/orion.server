@@ -74,6 +74,7 @@ public class OpenidAuthenticationService implements IAuthenticationService {
 			JSONObject result = new JSONObject();
 			try {
 				result.put("SignInLocation", "/openidstatic/LoginWindow.html");
+				result.put("label", "Orion workspace server");
 				result.put("SignInKey", Activator.OPENID_AUTH_SIGNIN_KEY);
 			} catch (JSONException e) {
 				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_OPENID_SERVLETS, 1, "An error occured during authenitcation", e));
