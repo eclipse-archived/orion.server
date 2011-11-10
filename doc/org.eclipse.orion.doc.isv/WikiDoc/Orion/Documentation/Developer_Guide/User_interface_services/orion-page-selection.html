@@ -32,11 +32,10 @@
 		<h1 id="orion.page.selection">orion.page.selection</h1>
 		<p>The selection service tracks the selection in the current page. The page determines how selections are shown and made by the user, but typically they are managed in a list, table, or tree.  Clients can use this service to get or set the current selection, or to register a listener that will be notified when the selection changes.</p>
 		<p>Here is an example of adding a listener to track selection changes:</p>
-		<pre> serviceRegistry.getService("orion.page.selection").then(function(service) {
-   service.addEventListener("selectionChanged", function(fileURI) {
-     //do something with the selection
-   });
- });
+		<pre> serviceRegistry.getService("orion.page.selection").addEventListener("selectionChanged", function(fileURI) {
+			     //do something with the selection
+			   });
+
 </pre>
 		<p>See <tt>orion.selection.Selection</tt> in the client API reference for a complete list of functions available on the selection service.</p><hr/>
 		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
