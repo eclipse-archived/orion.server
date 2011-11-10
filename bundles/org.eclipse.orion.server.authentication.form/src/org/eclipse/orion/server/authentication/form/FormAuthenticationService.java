@@ -96,6 +96,7 @@ public class FormAuthenticationService implements IAuthenticationService {
 			JSONObject result = new JSONObject();
 			try {
 				result.put("SignInLocation", "/loginstatic/LoginWindow.html");
+				result.put("label", "Orion workspace server");
 				result.put("SignInKey", Activator.FORM_AUTH_SIGNIN_KEY);
 			} catch (JSONException e) {
 				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORM_SERVLETS, 1, "An error occured during authenitcation", e));
