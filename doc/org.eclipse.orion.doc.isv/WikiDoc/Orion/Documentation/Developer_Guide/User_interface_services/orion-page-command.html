@@ -50,15 +50,12 @@
 		<p>This snippet below registers the edit command and adds it in the "object" scope.</p>
 		<p>For a command to appear on a page, the page must register a "command contribution" in the UI. The contributions are made separately so that, for example, an application could define all the commands that apply to its objects in common code, leaving the individual pages to decide how those commands might be shown.</p>
 		<p>Using the above example, a page that wanted to show object-level editing commands would make a contribution using the command service.</p>
-		<pre>serviceRegistry.getService("orion.page.command").then(function(commandService) {
-  commandService.registerCommandContribution("my.command.id", 1);
-});
-</pre>
+		<pre>serviceRegistry.getService("orion.page.command").registerCommandContribution("my.command.id", 1);</pre>
 		<p>In its simplest form, a command contribution describes the command that should be shown, and a position that can be used relative to other commands. Additional parameters allow the page to specify which dom element a command should appear in (if it is "dom" scope), any nested groups it should be grouped with, and any keybindings that should be registered in order to trigger the command.</p>
 		<p>Once all commands and the UI contributions are defined, something must trigger the rendering of those commands. For the existing Orion pages, the rendering is handled by the various page components. For example, any "global" commands would be rendered in the header near the search bar. The toolbar renders commands that are scoped at the "dom" level and use a dom id of "pageActions." It figures out which items should be passed to the handler, using the selection service. The navigator renders commands that are contributed at the "object" scope and are considered visible for the items rendered by the navigator.</p>
 		<p>Pages can define their own dom elements for rendering commands in order to control precise layout, or to handle commands that are scoped to different parts of the page. In this case, the page must not only contribute the commands, but must also render the commands for the dom elements in question. The code that is rendering commands is responsible for determining which object is used as "this" for the command callbacks (the handler) and what item or items are passed as into the callback.</p>
 		<p>For example, a side by side compare editor might want to render different commands for the left and right compare panes. It must define dom elements where these contributions are shown, and it must render commands into this dom element. The following snippet shows an example of custom dom-based contributions, including a key binding for the "copyToLeft" command:</p>
-		<pre>serviceRegistry.getService("orion.page.command").then(function(commandService) {
+		<pre>var commandService = serviceRegistry.getService("orion.page.command");
   commandService.registerCommandContribution("orion.compare.copyToLeft", 1, rightContainerCommands", 
      /* no parent path */ null, new mKeyBinding.KeyBinding("A", true, true));
   commandService.registerCommandContribution("orion.compare.nextDiff", 2, "rightContainerCommands");
@@ -66,7 +63,6 @@
 </pre>
 		<pre>  // now render the commands into the dom node using "image" style.  There are no items to pass to the handler.
   commandService.renderCommands("rightContainerCommands", "dom", /* no items */ null, myCompareHandler, "image");
-});
 </pre>
 		<p>See orion.commands.CommandService in the client API reference for documentation about commands, contributions, and rendering.</p><hr/>
 		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
