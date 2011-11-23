@@ -43,6 +43,14 @@ public class TaskServlet extends OrionServlet {
 		taskTracker.open();
 	}
 
+	public static final String getUserId(HttpServletRequest req) {
+		if (req.getRemoteUser() != null) {
+			return req.getRemoteUser();
+		} else {
+			return req.getSession(true).getId();
+		}
+	}
+
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		String pathInfo = req.getPathInfo();
@@ -57,7 +65,8 @@ public class TaskServlet extends OrionServlet {
 			return;
 		}
 		String taskId = path.segment(1);
-		TaskInfo task = taskService.getTask(taskId);
+		TaskInfo task = taskService.getTask(getUserId(req), taskId);
+
 		if (task == null) {
 			handleException(resp, "Task not found: " + taskId, null, HttpServletResponse.SC_NOT_FOUND);
 			return;

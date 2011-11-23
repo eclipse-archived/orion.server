@@ -37,8 +37,8 @@ public class FetchJob extends GitJob {
 	private boolean force;
 	private String branch; // can be null if fetching the whole branch
 
-	public FetchJob(CredentialsProvider credentials, Path path, boolean force) {
-		super("Fetching", (GitCredentialsProvider) credentials);
+	public FetchJob(String userRunningTask, CredentialsProvider credentials, Path path, boolean force) {
+		super("Fetching", userRunningTask, (GitCredentialsProvider) credentials);
 		// path: {remote}[/{branch}]/file/{...}
 		this.path = path;
 		this.remote = path.segment(0);
@@ -48,7 +48,7 @@ public class FetchJob extends GitJob {
 	}
 
 	protected TaskInfo createTask() {
-		TaskInfo info = getTaskService().createTask();
+		TaskInfo info = getTaskService().createTask(this.userId);
 		info.setMessage(branch == null ? NLS.bind("Fetching {0}...", remote) : NLS.bind("Fetching {0}/{1}...", new Object[] {remote, branch}));
 		getTaskService().updateTask(info);
 		return info;

@@ -29,14 +29,15 @@ public class AllTaskTests {
 	/**
 	 * Helper method for creating a sample task for testing purposes.
 	 */
-	public static TaskInfo createTestTask() {
-		TaskInfo info = new TaskInfo("mytask");
+	public static TaskInfo createTestTask(String userId) {
+		TaskInfo info = new TaskInfo(userId, "mytask");
 		info.setMessage("THIS#)(&$^@)(ISA%20MESSAGE");
 		info.done(new Status(IStatus.ERROR, "pluginid", "status message"));
 		return info;
 	}
 
 	public static void assertEqualTasks(TaskInfo expected, TaskInfo actual) {
+		assertEquals(expected.getUserId(), actual.getUserId());
 		assertEquals(expected.getTaskId(), actual.getTaskId());
 		assertEquals(expected.getMessage(), actual.getMessage());
 		assertEquals(expected.getPercentComplete(), actual.getPercentComplete());

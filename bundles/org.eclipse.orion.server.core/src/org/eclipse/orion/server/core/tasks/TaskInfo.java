@@ -24,11 +24,13 @@ import org.json.JSONObject;
 public class TaskInfo {
 	private static final String KEY_PERCENT_COMPLETE = "PercentComplete"; //$NON-NLS-1$
 	private static final String KEY_ID = "Id"; //$NON-NLS-1$
+	private static final String KEY_USER = "User"; //$NON-NLS-1$
 	private static final String KEY_MESSAGE = "Message"; //$NON-NLS-1$
 	private static final String KEY_RUNNING = "Running"; //$NON-NLS-1$
 	private static final String KEY_LOCATION = "Location"; //$NON-NLS-1$
 	private static final String KEY_RESULT = "Result"; //$NON-NLS-1$
 	private final String id;
+	private final String userId;
 	private String message = ""; //$NON-NLS-1$
 	private int percentComplete = 0;
 	private boolean running = true;
@@ -43,7 +45,7 @@ public class TaskInfo {
 		TaskInfo info;
 		try {
 			JSONObject json = new JSONObject(taskString);
-			info = new TaskInfo(json.getString(KEY_ID));
+			info = new TaskInfo(json.getString(KEY_USER), json.getString(KEY_ID));
 			info.setMessage(json.optString(KEY_MESSAGE, "")); //$NON-NLS-1$
 			info.running = json.optBoolean(KEY_RUNNING, true);
 			info.setPercentComplete(json.optInt(KEY_PERCENT_COMPLETE, 0));
@@ -60,7 +62,8 @@ public class TaskInfo {
 		}
 	}
 
-	public TaskInfo(String id) {
+	public TaskInfo(String userId, String id) {
+		this.userId = userId;
 		this.id = id;
 	}
 
@@ -100,6 +103,10 @@ public class TaskInfo {
 
 	public String getTaskId() {
 		return id;
+	}
+
+	public String getUserId() {
+		return userId;
 	}
 
 	/**
@@ -181,6 +188,7 @@ public class TaskInfo {
 			resultObject.put(KEY_RUNNING, isRunning());
 			resultObject.put(KEY_MESSAGE, getMessage());
 			resultObject.put(KEY_ID, getTaskId());
+			resultObject.put(KEY_USER, getUserId());
 			resultObject.put(KEY_PERCENT_COMPLETE, getPercentComplete());
 			if (resultLocation != null)
 				resultObject.put(KEY_LOCATION, resultLocation);

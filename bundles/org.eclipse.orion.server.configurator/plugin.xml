@@ -185,6 +185,10 @@
       <serviceSelector
             filter="(other.info=org.eclipse.orion)">
       </serviceSelector>
+      <filter
+            alias="/task"
+            class="org.eclipse.orion.server.configurator.servlet.AuthorizedUserFilter">
+      </filter>
    </extension>
    <extension
          point="org.eclipse.equinox.http.registry.httpcontexts">

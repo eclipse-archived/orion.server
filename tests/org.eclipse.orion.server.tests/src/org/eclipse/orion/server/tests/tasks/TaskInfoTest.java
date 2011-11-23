@@ -11,6 +11,7 @@
 package org.eclipse.orion.server.tests.tasks;
 
 import junit.framework.TestCase;
+
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.junit.Test;
 
@@ -20,7 +21,7 @@ import org.junit.Test;
 public class TaskInfoTest extends TestCase {
 	@Test
 	public void testBadJSON() {
-		TaskInfo task = AllTaskTests.createTestTask();
+		TaskInfo task = AllTaskTests.createTestTask("test");
 		String json = task.toJSON().toString();
 		json = json.replace('}', ')');
 		assertNull(TaskInfo.fromJSON(json));
@@ -35,14 +36,14 @@ public class TaskInfoTest extends TestCase {
 	 */
 	@Test
 	public void testJSONRoundTrip() {
-		TaskInfo info = AllTaskTests.createTestTask();
+		TaskInfo info = AllTaskTests.createTestTask("test");
 		TaskInfo task2 = TaskInfo.fromJSON(info.toJSON().toString());
 		AllTaskTests.assertEqualTasks(info, task2);
 	}
 
 	@Test
 	public void testSetMessage() {
-		TaskInfo info = new TaskInfo("mytask");
+		TaskInfo info = new TaskInfo("test", "mytask");
 		assertEquals("", info.getMessage());
 		info.setMessage("msg");
 		assertEquals("msg", info.getMessage());

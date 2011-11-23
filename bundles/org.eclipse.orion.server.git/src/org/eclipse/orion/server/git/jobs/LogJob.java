@@ -33,8 +33,8 @@ public class LogJob extends GitJob {
 	private final int pageSize;
 	private final URI logLocation;
 
-	public LogJob(LogCommand logCommand, Log log, int page, int pageSize, URI logLocation) {
-		super("Log");
+	public LogJob(String userRunningTask, LogCommand logCommand, Log log, int page, int pageSize, URI logLocation) {
+		super("Log", userRunningTask);
 		this.logCommand = logCommand;
 		this.log = log;
 		this.page = page;
@@ -44,7 +44,7 @@ public class LogJob extends GitJob {
 	}
 
 	protected TaskInfo createTask() {
-		TaskInfo info = getTaskService().createTask();
+		TaskInfo info = getTaskService().createTask(this.userId);
 		info.setMessage(NLS.bind("Generating git log for {0} ...", logCommand.getRepository()));
 		getTaskService().updateTask(info);
 		return info;

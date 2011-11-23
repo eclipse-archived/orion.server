@@ -39,8 +39,8 @@ public class CloneJob extends GitJob {
 	private final String user;
 	private final String cloneLocation;
 
-	public CloneJob(Clone clone, CredentialsProvider credentials, String user, String cloneLocation, WebProject project) {
-		super("Cloning", (GitCredentialsProvider) credentials); //$NON-NLS-1$
+	public CloneJob(Clone clone, String userRunningTask, CredentialsProvider credentials, String user, String cloneLocation, WebProject project) {
+		super("Cloning", userRunningTask, (GitCredentialsProvider) credentials); //$NON-NLS-1$
 		this.clone = clone;
 		this.user = user;
 		this.cloneLocation = cloneLocation;
@@ -49,7 +49,7 @@ public class CloneJob extends GitJob {
 	}
 
 	protected TaskInfo createTask() {
-		TaskInfo info = getTaskService().createTask();
+		TaskInfo info = getTaskService().createTask(this.userId);
 		info.setMessage(NLS.bind("Cloning {0}...", clone.getUrl()));
 		getTaskService().updateTask(info);
 		return info;

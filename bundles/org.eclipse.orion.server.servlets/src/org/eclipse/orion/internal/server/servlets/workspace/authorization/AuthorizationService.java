@@ -160,6 +160,10 @@ public class AuthorizationService {
 		if (uri.equals("/users/" + userName) && !IAuthenticationService.ANONYMOUS_LOGIN_VALUE.equals(userName)) //$NON-NLS-1$
 			return true;
 
+		// any user can access tasks
+		if (uri.startsWith("/task"))
+			return true;
+
 		// import/export rights depend on access to the file content
 		if (uri.startsWith(PREFIX_EXPORT) && uri.endsWith(".zip")) { //$NON-NLS-1$
 			uri = "/file/" + uri.substring(13, uri.length() - 4) + '/'; //$NON-NLS-1$

@@ -11,8 +11,12 @@
 package org.eclipse.orion.internal.server.core.tasks;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.resources.Base64;
 
 /**
  * A facility for reading/writing information about long running tasks. This store
@@ -26,13 +30,40 @@ public class TaskStore {
 	public TaskStore(File root) {
 		this.root = root;
 	}
+	
+	private String getUserDirectory(String userId){
+		return new String(Base64.encode(userId.getBytes()));
+	}
+	
+	public synchronized List<String> readTasks(String userId){
+		List<String> result = new ArrayList<String>();
+		File userDirectory = new File(root, getUserDirectory(userId));
+		if(!userDirectory.exists() || !userDirectory.isDirectory())
+			return result;
+		for(File taskFile : userDirectory.listFiles()){
+			if(taskFile.isFile()){
+				try {
+					FileReader reader = new FileReader(taskFile);
+					StringWriter writer = new StringWriter();
+					IOUtilities.pipe(reader, writer, true, false);
+					result.add(writer.toString());
+				} catch (IOException e) {
+					LogHelper.log(e);
+				}
+			}
+		}
+		return result;
+	}
 
 	/**
 	 * Returns a string representation of the task with the given id, or <code>null</code>
 	 * if no such task exists.
 	 */
-	public synchronized String readTask(String id) {
-		File taskFile = new File(root, id);
+	public synchronized String readTask(String userId, String id) {
+		File userDirectory = new File(root, getUserDirectory(userId));
+		if(!userDirectory.exists())
+			return null;
+		File taskFile = new File(userDirectory, id);
 		if (!taskFile.exists())
 			return null;
 		StringWriter writer;
@@ -47,10 +78,14 @@ public class TaskStore {
 		}
 	}
 
-	public synchronized void writeTask(String id, String representation) {
+	public synchronized void writeTask(String userId, String id, String representation) {
 		root.mkdirs();
 		try {
-			File taskFile = new File(root, id);
+			File userDirectory = new File(root, getUserDirectory(userId));
+			if(!userDirectory.exists()){
+				userDirectory.mkdir();
+			}
+			File taskFile = new File(userDirectory, id);
 			FileWriter writer = new FileWriter(taskFile);
 			StringReader reader = new StringReader(representation);
 			IOUtilities.pipe(reader, writer, true, true);

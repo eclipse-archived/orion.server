@@ -28,6 +28,7 @@ import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.servlets.*;
+import org.eclipse.orion.internal.server.servlets.task.TaskServlet;
 import org.eclipse.orion.internal.server.servlets.workspace.*;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.LogHelper;
@@ -175,7 +176,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 
 		if (initOnly) {
 			// git init
-			InitJob job = new InitJob(clone, request.getRemoteUser(), cloneLocation);
+			InitJob job = new InitJob(clone, TaskServlet.getUserId(request), request.getRemoteUser(), cloneLocation);
 			job.schedule();
 			TaskInfo task = job.getTask();
 			JSONObject result = task.toJSON();
@@ -202,7 +203,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			cp.setPassphrase(passphrase);
 
 			// if all went well, clone
-			CloneJob job = new CloneJob(clone, cp, request.getRemoteUser(), cloneLocation, webProjectExists ? null : webProject /* used for cleaning up, so null when not needed */);
+			CloneJob job = new CloneJob(clone, TaskServlet.getUserId(request), cp, request.getRemoteUser(), cloneLocation, webProjectExists ? null : webProject /* used for cleaning up, so null when not needed */);
 			job.schedule();
 			TaskInfo task = job.getTask();
 			JSONObject result = task.toJSON();

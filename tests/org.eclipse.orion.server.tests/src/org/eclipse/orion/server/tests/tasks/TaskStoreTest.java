@@ -12,10 +12,14 @@ package org.eclipse.orion.server.tests.tasks;
 
 import java.io.File;
 import java.io.IOException;
+
 import junit.framework.TestCase;
+
 import org.eclipse.orion.internal.server.core.tasks.TaskStore;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Tests for {@link TaskStore}.
@@ -26,17 +30,17 @@ public class TaskStoreTest extends TestCase {
 	@Test
 	public void testRead() {
 		TaskStore store = new TaskStore(tempDir);
-		String task = store.readTask("Doesnotexist");
+		String task = store.readTask("Userdoesnotexist", "Doesnotexist");
 		assertNull(task);
 	}
 
 	@Test
 	public void testRoundTrip() {
-		TaskInfo task = AllTaskTests.createTestTask();
+		TaskInfo task = AllTaskTests.createTestTask("test");
 		TaskStore store = new TaskStore(tempDir);
-		store.writeTask(task.getTaskId(), task.toJSON().toString());
+		store.writeTask(task.getUserId(), task.getTaskId(), task.toJSON().toString());
 
-		TaskInfo task2 = TaskInfo.fromJSON(store.readTask(task.getTaskId()));
+		TaskInfo task2 = TaskInfo.fromJSON(store.readTask(task.getUserId(), task.getTaskId()));
 		AllTaskTests.assertEqualTasks(task, task2);
 	}
 
@@ -52,10 +56,15 @@ public class TaskStoreTest extends TestCase {
 		File[] children = tempDir.listFiles();
 		if (children != null) {
 			for (File child : children) {
+				if (child.isDirectory()) {
+					File[] directoryChildren = child.listFiles();
+					for (File grandchild : directoryChildren) {
+						grandchild.delete();
+					}
+				}
 				child.delete();
 			}
 		}
 		tempDir.delete();
 	}
-
 }

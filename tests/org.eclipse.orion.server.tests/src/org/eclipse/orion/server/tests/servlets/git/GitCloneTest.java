@@ -739,7 +739,7 @@ public class GitCloneTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(taskLocation);
-		String cloneLocation = waitForTaskCompletion(taskLocation);
+		String cloneLocation = waitForTaskCompletion(taskLocation, "bob", "bob");
 
 		// validate the clone metadata
 		request = getGetRequest(cloneLocation);

@@ -232,14 +232,19 @@ public abstract class GitTest extends FileSystemTest {
 	 * given task has completed, and then returns the location from the status object.
 	 */
 	protected String waitForTaskCompletion(String taskLocation) throws IOException, SAXException, JSONException {
-		return waitForTaskCompletionObject(taskLocation).getString(ProtocolConstants.KEY_LOCATION);
+		return waitForTaskCompletionObject(taskLocation, testUserLogin, testUserPassword).getString(ProtocolConstants.KEY_LOCATION);
 	}
 
-	private JSONObject waitForTaskCompletionObject(String taskLocation) throws IOException, SAXException, JSONException {
+	protected String waitForTaskCompletion(String taskLocation, String userName, String userPassword) throws IOException, SAXException, JSONException {
+		return waitForTaskCompletionObject(taskLocation, userName, userPassword).getString(ProtocolConstants.KEY_LOCATION);
+	}
+
+	private JSONObject waitForTaskCompletionObject(String taskLocation, String userName, String userPassword) throws IOException, SAXException, JSONException {
 		JSONObject status = null;
 		long start = System.currentTimeMillis();
 		while (true) {
 			WebRequest request = new GetMethodWebRequest(taskLocation);
+			setAuthentication(request, userName, userPassword);
 			WebResponse response = webConversation.getResponse(request);
 			String text = response.getText();
 			status = new JSONObject(text);
@@ -785,6 +790,7 @@ public abstract class GitTest extends FileSystemTest {
 	private JSONObject logObject(String gitCommitUri, Integer page, Integer pageSize) throws IOException, SAXException, JSONException {
 		assertCommitUri(gitCommitUri);
 		WebRequest request = GitCommitTest.getGetGitCommitRequest(gitCommitUri, false, page, pageSize);
+		setAuthentication(request);
 		WebResponse response = webConversation.getResponse(request);
 		switch (response.getResponseCode()) {
 			case HttpURLConnection.HTTP_OK :
@@ -794,7 +800,7 @@ public abstract class GitTest extends FileSystemTest {
 				String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 				assertNotNull(taskLocation);
 				assertEquals(taskLocation, new JSONObject(response.getText()).getString(ProtocolConstants.KEY_LOCATION));
-				JSONObject logObject = waitForTaskCompletionObject(taskLocation);
+				JSONObject logObject = waitForTaskCompletionObject(taskLocation, testUserLogin, testUserPassword);
 				assertEquals("Generating git log completed.", logObject.getString("Message"));
 				return logObject.getJSONObject("Result").getJSONObject("JsonData");
 		}
@@ -1038,7 +1044,9 @@ public abstract class GitTest extends FileSystemTest {
 	 * @throws URISyntaxException 
 	 */
 	protected static WebRequest getPostGitCloneRequest(URIish uri, IPath workspacePath, IPath filePath, String name, String kh, char[] p) throws JSONException, UnsupportedEncodingException {
-		return new PostGitCloneRequest().setURIish(uri).setWorkspacePath(workspacePath).setFilePath(filePath).setName(name).setKnownHosts(kh).setPassword(p).getWebRequest();
+		WebRequest request = new PostGitCloneRequest().setURIish(uri).setWorkspacePath(workspacePath).setFilePath(filePath).setName(name).setKnownHosts(kh).setPassword(p).getWebRequest();
+		setAuthentication(request);
+		return request;
 	}
 
 	private static WebRequest getPostGitMergeRequest(String location, String commit) throws JSONException, UnsupportedEncodingException {

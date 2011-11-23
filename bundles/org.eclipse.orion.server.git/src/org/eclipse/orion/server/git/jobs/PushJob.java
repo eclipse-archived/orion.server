@@ -41,8 +41,8 @@ public class PushJob extends GitJob {
 	private boolean tags;
 	private boolean force;
 
-	public PushJob(CredentialsProvider credentials, Path path, String srcRef, boolean tags, boolean force) {
-		super("Pushing", (GitCredentialsProvider) credentials);
+	public PushJob(String userRunningTask, CredentialsProvider credentials, Path path, String srcRef, boolean tags, boolean force) {
+		super("Pushing", userRunningTask, (GitCredentialsProvider) credentials);
 		this.path = path;
 		this.srcRef = srcRef;
 		this.tags = tags;
@@ -51,7 +51,7 @@ public class PushJob extends GitJob {
 	}
 
 	protected TaskInfo createTask() {
-		TaskInfo info = getTaskService().createTask();
+		TaskInfo info = getTaskService().createTask(this.userId);
 		info.setMessage(NLS.bind("Pushing {0}...", path.segment(0)));
 		getTaskService().updateTask(info);
 		return info;

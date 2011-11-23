@@ -25,8 +25,8 @@ import org.eclipse.osgi.util.NLS;
  */
 public class SFTPImportJob extends SFTPTransferJob {
 
-	public SFTPImportJob(File destination, String host, int port, IPath sourcePath, String user, String passphrase, List<String> options) {
-		super(destination, host, port, sourcePath, user, passphrase, options);
+	public SFTPImportJob(String userRunningTask, File destination, String host, int port, IPath sourcePath, String user, String passphrase, List<String> options) {
+		super(userRunningTask, destination, host, port, sourcePath, user, passphrase, options);
 	}
 
 	protected void doTransferDirectory(ChannelSftp channel, IPath remotePath, SftpATTRS remoteAttributes, File localFile) throws SftpException, IOException {

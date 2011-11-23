@@ -48,6 +48,7 @@ public abstract class GitJob extends Job {
 	private ITaskService taskService;
 	private ServiceReference<ITaskService> taskServiceRef;
 	protected TaskInfo task;
+	protected final String userId;
 
 	ITaskService getTaskService() {
 		if (taskService == null) {
@@ -161,13 +162,14 @@ public abstract class GitJob extends Job {
 		return new Status(IStatus.ERROR, GitActivator.PI_GIT, message, e.getCause() == null ? e : e.getCause());
 	}
 
-	public GitJob(String name, GitCredentialsProvider credentials) {
+	public GitJob(String name, String userRunningTask, GitCredentialsProvider credentials) {
 		super(name);
+		this.userId = userRunningTask;
 		this.credentials = credentials;
 	}
 
-	public GitJob(String name) {
-		this(name, null);
+	public GitJob(String name, String userRunningTask) {
+		this(name, userRunningTask, null);
 	}
 
 	/**

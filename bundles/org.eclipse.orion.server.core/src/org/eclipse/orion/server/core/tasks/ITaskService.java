@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.server.core.tasks;
 
+import java.util.List;
+
 /**
  * A service that server side components use for registering long running
  * operations. This service provides an HTTP resource representing the current
@@ -20,16 +22,20 @@ public interface ITaskService {
 	 * Creates a new task. In its initial state the task is running and 0% complete.
 	 * Further changes to the task will not be reflected in the task service until
 	 * {@link #updateTask(TaskInfo)} is invoked.
+	 * @param userId id of the user starting the task or if not logged in temporary identifier, for instance a session id
 	 * @return A new task
 	 */
-	TaskInfo createTask();
+	TaskInfo createTask(String userId);
 
 	/**
 	 * Returns the task with the given task id, or <code>null</code> if no such task exists.
+	 * @param userId id of the user starting the task or if not logged in temporary identifier, for instance a session id
 	 * @param id The task id
 	 * @return The task, or <code>null</code>
 	 */
-	TaskInfo getTask(String id);
+	TaskInfo getTask(String userId, String id);
+
+	List<TaskInfo> getTasks(String userId);
 
 	/**
 	 * Updates the state of the given task within the task service. Any changes

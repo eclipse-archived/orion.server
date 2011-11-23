@@ -31,8 +31,8 @@ public class InitJob extends GitJob {
 	private final String user;
 	private final String cloneLocation;
 
-	public InitJob(Clone clone, String user, String cloneLocation) {
-		super("Init");
+	public InitJob(Clone clone, String userRunningTask, String user, String cloneLocation) {
+		super("Init", userRunningTask);
 		this.clone = clone;
 		this.user = user;
 		this.cloneLocation = cloneLocation;
@@ -40,7 +40,7 @@ public class InitJob extends GitJob {
 	}
 
 	protected TaskInfo createTask() {
-		TaskInfo info = getTaskService().createTask();
+		TaskInfo info = getTaskService().createTask(this.userId);
 		info.setMessage(NLS.bind("Initializing repository {0}...", clone.getName()));
 		getTaskService().updateTask(info);
 		return info;

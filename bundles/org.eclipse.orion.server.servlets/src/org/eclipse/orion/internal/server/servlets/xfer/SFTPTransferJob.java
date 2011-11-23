@@ -39,7 +39,7 @@ public abstract class SFTPTransferJob extends Job {
 	private ServiceReference<ITaskService> taskServiceRef;
 	protected final String user;
 
-	public SFTPTransferJob(File localFile, String host, int port, IPath remotePath, String user, String passphrase, List<String> options) {
+	public SFTPTransferJob(String userRunningTask, File localFile, String host, int port, IPath remotePath, String user, String passphrase, List<String> options) {
 		super("Transfer over SFTP"); //$NON-NLS-1$
 		this.localRoot = localFile;
 		this.host = host;
@@ -48,7 +48,7 @@ public abstract class SFTPTransferJob extends Job {
 		this.user = user;
 		this.passphrase = passphrase;
 		this.options = options;
-		this.task = createTask();
+		this.task = createTask(userRunningTask);
 	}
 
 	private void cleanUp() {
@@ -59,8 +59,8 @@ public abstract class SFTPTransferJob extends Job {
 		}
 	}
 
-	protected TaskInfo createTask() {
-		TaskInfo info = getTaskService().createTask();
+	protected TaskInfo createTask(String userId) {
+		TaskInfo info = getTaskService().createTask(userId);
 		info.setMessage(NLS.bind("Connecting to {0}...", host));
 		getTaskService().updateTask(info);
 		return info;

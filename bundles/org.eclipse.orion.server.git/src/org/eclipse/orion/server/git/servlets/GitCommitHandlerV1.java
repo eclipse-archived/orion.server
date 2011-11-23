@@ -37,6 +37,7 @@ import org.eclipse.jgit.treewalk.filter.*;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.internal.server.servlets.task.TaskServlet;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.*;
@@ -229,7 +230,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		URI cloneLocation = BaseToCloneConverter.getCloneLocation(baseLocation, refIdsRange == null ? BaseToCloneConverter.COMMIT : BaseToCloneConverter.COMMIT_REFRANGE);
 		Log log = new Log(cloneLocation, db, null /* collected by the job */, pattern, toRefId, fromRefId);
 
-		LogJob job = new LogJob(lc, log, page, pageSize, baseLocation);
+		LogJob job = new LogJob(TaskServlet.getUserId(request), lc, log, page, pageSize, baseLocation);
 		job.schedule();
 
 		final Object jobIsDone = new Object();

@@ -24,6 +24,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
+import org.eclipse.orion.internal.server.servlets.task.TaskServlet;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.servlets.OrionServlet;
@@ -84,9 +85,9 @@ class SFTPTransfer {
 		}
 		SFTPTransferJob job;
 		if (TransferServlet.PREFIX_IMPORT.equals(new Path(request.getPathInfo()).segment(0))) {
-			job = new SFTPImportJob(localFile, host, port, new Path(remotePath), user, passphrase, options);
+			job = new SFTPImportJob(TaskServlet.getUserId(request), localFile, host, port, new Path(remotePath), user, passphrase, options);
 		} else {
-			job = new SFTPExportJob(localFile, host, port, new Path(remotePath), user, passphrase, options);
+			job = new SFTPExportJob(TaskServlet.getUserId(request), localFile, host, port, new Path(remotePath), user, passphrase, options);
 		}
 		job.schedule();
 		TaskInfo task = job.getTask();

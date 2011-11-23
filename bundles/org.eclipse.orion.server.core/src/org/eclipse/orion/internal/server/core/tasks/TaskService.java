@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.core.tasks;
 
+import java.util.List;
+
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.core.tasks.ITaskService;
@@ -25,21 +27,26 @@ public class TaskService implements ITaskService {
 		store = new TaskStore(baseLocation.toFile());
 	}
 
-	public TaskInfo createTask() {
-		TaskInfo task = new TaskInfo(new UniversalUniqueIdentifier().toBase64String());
-		store.writeTask(task.getTaskId(), task.toJSON().toString());
+	public TaskInfo createTask(String userId) {
+		TaskInfo task = new TaskInfo(userId, new UniversalUniqueIdentifier().toBase64String());
+		store.writeTask(userId, task.getTaskId(), task.toJSON().toString());
 		return task;
 	}
 
-	public TaskInfo getTask(String id) {
-		String taskString = store.readTask(id);
+	public TaskInfo getTask(String userId, String id) {
+		String taskString = store.readTask(userId, id);
 		if (taskString == null)
 			return null;
 		return TaskInfo.fromJSON(taskString);
 	}
 
 	public void updateTask(TaskInfo task) {
-		store.writeTask(task.getTaskId(), task.toJSON().toString());
+		store.writeTask(task.getUserId(), task.getTaskId(), task.toJSON().toString());
+	}
+
+	public List<TaskInfo> getTasks(String userId) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

@@ -23,8 +23,8 @@ import org.eclipse.osgi.util.NLS;
  */
 public class SFTPExportJob extends SFTPTransferJob {
 
-	public SFTPExportJob(File localFile, String host, int port, Path remotePath, String user, String passphrase, List<String> options) {
-		super(localFile, host, port, remotePath, user, passphrase, options);
+	public SFTPExportJob(String userRunningTask, File localFile, String host, int port, Path remotePath, String user, String passphrase, List<String> options) {
+		super(userRunningTask, localFile, host, port, remotePath, user, passphrase, options);
 	}
 
 	protected void doTransferFile(ChannelSftp channel, IPath remotePath, File localFile) throws IOException, SftpException {
