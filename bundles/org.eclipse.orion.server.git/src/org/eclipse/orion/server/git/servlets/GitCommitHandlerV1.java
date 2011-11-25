@@ -22,7 +22,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.*;
 import org.eclipse.jgit.api.*;
-import org.eclipse.jgit.api.ListBranchCommand.ListMode;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.api.RebaseCommand.Operation;
 import org.eclipse.jgit.api.errors.*;
@@ -215,11 +214,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 				lc.not(fromObjectId);
 		} else {
 			// git log --all
-			// workaround for git log --all - see bug 353310
-			List<Ref> branches = git.branchList().setListMode(ListMode.ALL).call();
-			for (Ref branch : branches) {
-				lc.add(branch.getObjectId());
-			}
+			lc.all();
 		}
 
 		if (pattern != null && !pattern.isEmpty()) {
