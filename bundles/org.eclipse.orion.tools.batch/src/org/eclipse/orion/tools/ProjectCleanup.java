@@ -12,6 +12,8 @@ package org.eclipse.orion.tools;
 
 import java.io.*;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * A command line tool for cleaning up unused projects
@@ -20,8 +22,10 @@ public class ProjectCleanup {
 	private static final String METADATA_DIR = ".metadata/.plugins/org.eclipse.orion.server.core/.settings/";
 	private static final String PROJECT_PREFS = METADATA_DIR + "Projects.prefs";
 	private static final String WORKSPACE_PREFS = METADATA_DIR + "Workspaces.prefs";
+	private static final String USER_PREFS = METADATA_DIR + "Users.prefs";
 	private boolean help = false;
 	private boolean purge = false;
+	private boolean permissions = false;
 
 	public static void main(String[] arguments) {
 		new ProjectCleanup(arguments).run();
@@ -134,10 +138,50 @@ public class ProjectCleanup {
 		}
 	}
 
+	private Map<String, List<String>> findUsersInMetadata() throws IOException {
+		//map of users to list of workspaces
+		Map<String, List<String>> allUsers = new HashMap<String, List<String>>();
+		Properties userProps = new Properties();
+		BufferedInputStream inStream = new BufferedInputStream(new FileInputStream(new File(USER_PREFS)));
+		try {
+			userProps.load(inStream);
+		} finally {
+			safeClose(inStream);
+		}
+		// workspace list is of the form [{"Id":"<workspaceId>","LastModified":<number>},...]
+		Pattern workspacePattern = Pattern.compile("(\\{\"Id\":\")(\\w)+(\",\"LastModified\":)(\\d)+(\\})");
+		for (Object key : userProps.keySet()) {
+			//each entry is of the form <userId>/<attributeKey>
+			String keyString = (String) key;
+			String[] splits = keyString.split("/");
+			if (splits.length == 2) {
+				String id = splits[0];
+				List<String> workspaces = allUsers.get(id);
+				if (workspaces == null) {
+					workspaces = new ArrayList<String>();
+					allUsers.put(id, workspaces);
+				}
+				if ("Workspaces".equals(splits[1])) {
+					Matcher matcher = workspacePattern.matcher(userProps.getProperty(keyString));
+					String workspaceList = matcher.replaceAll("$2");
+					//remove surrounding square brackets
+					workspaceList = workspaceList.substring(1, workspaceList.length() - 1);
+					workspaces.addAll(Arrays.asList(workspaceList.split(",")));
+				}
+			}
+		}
+		return allUsers;
+	}
+
 	private Map<String, ProjectInfo> findProjectsInMetadata() throws IOException, FileNotFoundException {
 		Map<String, ProjectInfo> allProjects = new HashMap<String, ProjectInfo>();
 		Properties projects = new Properties();
-		projects.load(new BufferedInputStream(new FileInputStream(new File(PROJECT_PREFS))));
+		BufferedInputStream inStream = new BufferedInputStream(new FileInputStream(new File(PROJECT_PREFS)));
+		try {
+			projects.load(inStream);
+		} finally {
+			safeClose(inStream);
+		}
 		for (Object key : projects.keySet()) {
 			//each entry is of the form <projectId>/<attributeKey>
 			String keyString = (String) key;
@@ -165,10 +209,10 @@ public class ProjectCleanup {
 	}
 
 	/**
-	 * Returns a list of projects that are currently in user workspaces.
+	 * Returns a mapping of workspaces to projects as specified in the workspace metadata.
 	 */
-	private Set<String> markProjects() throws FileNotFoundException, IOException {
-		Set<String> markSet = new HashSet<String>();
+	private Map<String, List<String>> findWorkspacesInMetadata() throws FileNotFoundException, IOException {
+		Map<String, List<String>> workspacesToProjects = new HashMap<String, List<String>>();
 		Properties props = new Properties();
 		File workspacePrefs = new File(WORKSPACE_PREFS).getAbsoluteFile();
 		props.load(new BufferedInputStream(new FileInputStream(workspacePrefs)));
@@ -178,18 +222,32 @@ public class ProjectCleanup {
 			String keyString = (String) key;
 			String[] splits = keyString.split("/");
 			if (splits.length == 2 && "Projects".equals(splits[1])) {
-				String projectList = props.getProperty(keyString);
+				String projectArray = props.getProperty(keyString);
 				//break up JSON array into objects
-				String[] projects = projectList.split(",");
+				String[] projects = projectArray.split(",");
+				String workspace = splits[0];
+				List<String> projectList = new ArrayList<String>();
 				for (String each : projects) {
 					//break up JSON object into attributes
 					String[] attrs = each.split("\"");
 					if (attrs.length > 2)
-						markSet.add(attrs[3]);
+						projectList.add(attrs[3]);
 				}
+				workspacesToProjects.put(workspace, projectList);
 			}
 		}
-		return markSet;
+		return workspacesToProjects;
+	}
+
+	/**
+	 * Returns a list of projects that are currently in user workspaces.
+	 */
+	private Set<String> markProjects() throws FileNotFoundException, IOException {
+		Set<String> allProjects = new HashSet<String>();
+		Map<String, List<String>> workspacesToProjects = findWorkspacesInMetadata();
+		for (List<String> projectList : workspacesToProjects.values())
+			allProjects.addAll(projectList);
+		return allProjects;
 	}
 
 	/**
@@ -201,6 +259,9 @@ public class ProjectCleanup {
 				purge = true;
 			else if ("-help".equals(arg) || "-?".equals(arg))
 				help = true;
+			else if ("-perm".equals(arg)) {
+				permissions = true;
+			}
 		}
 	}
 
@@ -209,16 +270,90 @@ public class ProjectCleanup {
 	 */
 	public void run() {
 		if (help) {
-			System.out.println("Usage: ProjectCleanup [-help] [-purge]");
+			System.out.println("Usage: ProjectCleanup [-help] [-purge] [-perm]");
 			return;
 		}
 		try {
 			Set<String> markSet = markProjects();
 			sweepProjects(markSet);
+
+			Map<String, List<String>> usersToPermissions = markPermissions();
+			if (permissions)
+				sweepPermissions(usersToPermissions);
+
 		} catch (IOException e) {
 			System.out.println("Failed to cleanup projects due to I/O exception:");
 			e.printStackTrace();
 		}
+	}
+
+	private void sweepPermissions(Map<String, List<String>> usersToPermissions) throws IOException {
+		Properties userProps = new Properties();
+		BufferedInputStream inStream = new BufferedInputStream(new FileInputStream(new File(USER_PREFS)));
+		try {
+			userProps.load(inStream);
+		} finally {
+			safeClose(inStream);
+		}
+		for (String user : usersToPermissions.keySet()) {
+			List<String> permissions = usersToPermissions.get(user);
+			String permissionJSON = "[";
+			for (String perm : permissions) {
+				permissionJSON += "{\"Method\":15,\"Uri\":\"" + perm + "\"},";
+			}
+			//remove trailing comma
+			permissionJSON = permissionJSON.substring(0, permissionJSON.length() - 1) + "]";
+			userProps.put(user + "/UserRights", permissionJSON);
+		}
+		BufferedOutputStream outStream = new BufferedOutputStream(new FileOutputStream(new File(USER_PREFS)));
+		try {
+			userProps.store(outStream, "Cleaned up properties");
+		} finally {
+			safeClose(outStream);
+		}
+	}
+
+	/**
+	 * Returns a mapping from users to the permissions they should have based
+	 * on their current workspaces and projects.
+	 */
+	private Map<String, List<String>> markPermissions() throws IOException {
+		//map of user name to list of permissions for that user
+		Map<String, List<String>> usersToPermissions = new HashMap<String, List<String>>();
+		Map<String, List<String>> usersToWorkspaces = findUsersInMetadata();
+		Map<String, List<String>> workspacesToProjects = findWorkspacesInMetadata();
+		for (String user : usersToWorkspaces.keySet()) {
+			//don't mess with permissions of administrator
+			if (user.equals("admin"))
+				continue;
+			List<String> newPermissions = new ArrayList<String>();
+			//each user has access to their own profile page
+			newPermissions.add("/users/" + user);
+			//do for each workspace owned by current user
+			List<String> workspaceList = usersToWorkspaces.get(user);
+			if (workspaceList == null)
+				continue;
+			for (String workspace : workspaceList) {
+				//user has access to their own workspace
+				newPermissions.add("/workspace/" + workspace);
+				newPermissions.add("/workspace/" + workspace + "/*");
+				//do for each project in current workspace
+				List<String> projectList = workspacesToProjects.get(workspace);
+				if (projectList == null)
+					continue;
+				for (String project : projectList) {
+					//access to project metadata
+					newPermissions.add("/workspace/" + workspace + "/project/" + project);
+					newPermissions.add("/workspace/" + workspace + "/project/" + project + "/*");
+					//access to project contents
+					newPermissions.add("/file/" + project);
+					newPermissions.add("/file/" + project + "/*");
+				}
+			}
+			usersToPermissions.put(user, newPermissions);
+			System.out.println("New permissions for " + user + ": " + newPermissions);
+		}
+		return usersToPermissions;
 	}
 
 	/**
