@@ -28,8 +28,7 @@ import org.eclipse.orion.internal.server.servlets.task.TaskServlet;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.*;
-import org.eclipse.orion.server.git.jobs.FetchJob;
-import org.eclipse.orion.server.git.jobs.PushJob;
+import org.eclipse.orion.server.git.jobs.*;
 import org.eclipse.orion.server.git.objects.Remote;
 import org.eclipse.orion.server.git.objects.RemoteBranch;
 import org.eclipse.orion.server.servlets.OrionServlet;
@@ -49,8 +48,6 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			switch (getMethod(request)) {
 				case GET :
 					return handleGet(request, response, path);
-					// case PUT :
-					// return handlePut(request, response, path);
 				case POST :
 					return handlePost(request, response, path);
 				case DELETE :
@@ -144,6 +141,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		} else {
 			JSONObject requestObject = OrionServlet.readJSONRequest(request);
 			boolean fetch = Boolean.parseBoolean(requestObject.optString(GitConstants.KEY_FETCH, null));
+			boolean pull = Boolean.parseBoolean(requestObject.optString(GitConstants.KEY_PULL, null));
 			String srcRef = requestObject.optString(GitConstants.KEY_PUSH_SRC_REF, null);
 			boolean tags = requestObject.optBoolean(GitConstants.KEY_PUSH_TAGS, false);
 			boolean force = requestObject.optBoolean(GitConstants.KEY_FORCE, false);
@@ -164,6 +162,8 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			// if all went well, continue with fetch or push
 			if (fetch) {
 				return fetch(request, response, cp, path, force);
+			} else if (pull) {
+				return pull(request, response, cp, path, force);
 			} else if (srcRef != null) {
 				return push(request, response, path, cp, srcRef, tags, force);
 			} else {
@@ -227,6 +227,22 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		// {remote}/{branch}/{file}/{path}
 		Path p = new Path(path);
 		FetchJob job = new FetchJob(TaskServlet.getUserId(request), cp, p, force);
+		job.schedule();
+
+		TaskInfo task = job.getTask();
+		JSONObject result = task.toJSON();
+		URI taskLocation = createTaskLocation(OrionServlet.getURI(request), task.getTaskId());
+		result.put(ProtocolConstants.KEY_LOCATION, taskLocation);
+		response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation.toString());
+		OrionServlet.writeJSONResponse(request, response, result);
+		response.setStatus(HttpServletResponse.SC_ACCEPTED);
+		return true;
+	}
+
+	private boolean pull(HttpServletRequest request, HttpServletResponse response, GitCredentialsProvider cp, String path, boolean force) throws URISyntaxException, JSONException, IOException {
+		// {remote}/{branch}/{file}/{path}
+		Path p = new Path(path);
+		PullJob job = new PullJob(TaskServlet.getUserId(request), cp, p, force);
 		job.schedule();
 
 		TaskInfo task = job.getTask();
