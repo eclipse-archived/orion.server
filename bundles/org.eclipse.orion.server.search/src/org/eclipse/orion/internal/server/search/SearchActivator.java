@@ -10,29 +10,14 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.search;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-
+import java.io.*;
+import java.net.*;
 import javax.servlet.http.HttpServletRequest;
-
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
-import org.apache.solr.core.CoreContainer;
-import org.apache.solr.core.CoreDescriptor;
-import org.apache.solr.core.SolrCore;
+import org.apache.solr.core.*;
 import org.eclipse.core.filesystem.EFS;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.FileLocator;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
@@ -41,9 +26,7 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.LogHelper;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.osgi.framework.BundleActivator;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceRegistration;
+import org.osgi.framework.*;
 
 public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 	private static BundleContext context;
@@ -52,7 +35,7 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 	 * version should be incremented whenever there are breaking changes to the
 	 * indexing schema or format.
 	 */
-	private static final int CURRENT_INDEX_GENERATION = 8;
+	private static final int CURRENT_INDEX_GENERATION = 9;
 
 	private static final String INDEX_GENERATION_FILE = "index.generation";//$NON-NLS-1$
 	private static SearchActivator instance;

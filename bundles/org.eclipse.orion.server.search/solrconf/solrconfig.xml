@@ -487,6 +487,7 @@
        <!--
        <int name="rows">20</int>
        <str name="fl">*</str>
+       <str name="sort">Location asc</str>
        <str name="version">2.1</str>
         -->
      </lst>
