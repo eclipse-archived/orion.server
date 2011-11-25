@@ -340,7 +340,7 @@ public class GitFetchTest extends GitTest {
 		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
 		IPath clonePath2 = new Path("file").append(project2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 		clone(clonePath2);
-		// XXX: checked out 'a'
+		// XXX: checked out 'a', see bug 364853
 
 		// get project2 metadata
 		request = getGetFilesRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
@@ -397,7 +397,7 @@ public class GitFetchTest extends GitTest {
 		assertTrue(pushStatus.isOK());
 
 		// clone2: get remote details
-		// XXX: checked out 'a'
+		// XXX: checked out 'a', see bug 364853
 		JSONObject masterDetails = getRemoteBranch(gitRemoteUri2, 2, 1, Constants.MASTER);
 		String masterOldRefId = masterDetails.getString(ProtocolConstants.KEY_ID);
 		JSONObject aDetails = getRemoteBranch(gitRemoteUri2, 2, 0, "a");
@@ -424,7 +424,6 @@ public class GitFetchTest extends GitTest {
 
 		// clone1: create
 		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
-		String projectId1 = project1.getString(ProtocolConstants.KEY_ID);
 		IPath clonePath1 = new Path("file").append(project1.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 		JSONObject clone1 = clone(clonePath1);
 		String cloneContentLocation1 = clone1.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
@@ -439,8 +438,6 @@ public class GitFetchTest extends GitTest {
 		JSONObject gitSection1 = project1.optJSONObject(GitConstants.KEY_GIT);
 		assertNotNull(gitSection1);
 		String gitRemoteUri1 = gitSection1.getString(GitConstants.KEY_REMOTE);
-		String gitIndexUri1 = gitSection1.getString(GitConstants.KEY_INDEX);
-		String gitHeadUri1 = gitSection1.getString(GitConstants.KEY_HEAD);
 
 		// clone1: branch 'a'
 		Repository db1 = getRepositoryForContentLocation(cloneContentLocation1);
@@ -455,7 +452,7 @@ public class GitFetchTest extends GitTest {
 		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
 		IPath clonePath2 = new Path("file").append(project2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 		clone(clonePath2);
-		// XXX: checked out 'a'
+		// XXX: checked out 'a', see bug 364853
 
 		// get project2 metadata
 		request = getGetFilesRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
@@ -470,20 +467,11 @@ public class GitFetchTest extends GitTest {
 		assertBranchExist(git1, "a");
 		checkoutBranch(cloneLocation1, "a");
 
-		// clone1: change
-		request = getPutFileRequest(projectId1 + "/test.txt", "branch 'a' change");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-		// clone1: add
-		request = GitAddTest.getPutGitIndexRequest(gitIndexUri1);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-		// clone1: commit
-		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri1, "incoming branch 'a' commit", false);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		// clone1: change, add, commit
+		JSONObject testTxt1 = getChild(project1, "test.txt");
+		modifyFile(testTxt1, "branch 'a' change");
+		addFile(testTxt1);
+		commitFile(testTxt1, "incoming branch 'a' commit", false);
 
 		// clone1: push
 		ServerStatus pushStatus = push(gitRemoteUri1, 2, 0, "a", Constants.HEAD, false);
@@ -493,25 +481,16 @@ public class GitFetchTest extends GitTest {
 		checkoutBranch(cloneLocation1, Constants.MASTER);
 
 		// clone1: change
-		request = getPutFileRequest(projectId1 + "/test.txt", "branch 'master' change");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-		// clone1: add
-		request = GitAddTest.getPutGitIndexRequest(gitIndexUri1);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-		// clone1: commit
-		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri1, "incoming branch 'master' commit", false);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		testTxt1 = getChild(project1, "test.txt");
+		modifyFile(testTxt1, "branch 'master' change");
+		addFile(testTxt1);
+		commitFile(testTxt1, "incoming branch 'master' commit", false);
 
 		// clone1: push
 		push(gitRemoteUri1, 2, 0, Constants.MASTER, Constants.HEAD, false);
 
 		// clone2: get remote details
-		// XXX: checked out 'a'
+		// XXX: checked out 'a', see bug 364853
 		JSONObject aDetails = getRemoteBranch(gitRemoteUri2, 2, 0, "a");
 		String aOldRefId = aDetails.getString(ProtocolConstants.KEY_ID);
 		String aBranchLocation = aDetails.getString(ProtocolConstants.KEY_LOCATION);
@@ -530,7 +509,6 @@ public class GitFetchTest extends GitTest {
 		masterDetails = getRemoteBranch(gitRemoteUri2, 2, 1, Constants.MASTER);
 		newRefId = masterDetails.getString(ProtocolConstants.KEY_ID);
 		assertEquals(masterOldRefId, newRefId);
-
 	}
 
 	@Test

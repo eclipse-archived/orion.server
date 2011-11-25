@@ -72,7 +72,10 @@ public class FetchJob extends GitJob {
 			fc.setRefSpecs(spec);
 		}
 		FetchResult fetchResult = fc.call();
+		return handleFetchResult(fetchResult);
+	}
 
+	static IStatus handleFetchResult(FetchResult fetchResult) {
 		// handle result
 		for (TrackingRefUpdate updateRes : fetchResult.getTrackingRefUpdates()) {
 			Result res = updateRes.getResult();

@@ -690,6 +690,47 @@ public abstract class GitTest extends FileSystemTest {
 		}
 	}
 
+	// pull
+	/**
+	 * Pulls objects and refs from the given remote and merges them into the current branch.
+	 * 
+	 * @param remoteLocation remote URI
+	 * @return status object
+	 * @throws JSONException
+	 * @throws IOException
+	 * @throws SAXException
+	 */
+	protected JSONObject pull(String remoteLocation) throws JSONException, IOException, SAXException {
+		assertRemoteOrRemoteBranchLocation(remoteLocation);
+
+		// pull
+		WebRequest request = GitPullTest.getPostGitRemoteRequest(remoteLocation, false);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
+		assertPullProgressMessage(remoteLocation, new JSONObject(response.getText()).getString("Message"));
+		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		assertNotNull(taskLocation);
+		String location = waitForTaskCompletion(taskLocation);
+
+		// validate task completed successfully
+		request = getGetRequest(location);
+		response = webConversation.getResponse(request);
+		JSONObject status = new JSONObject(response.getText());
+		assertFalse(status.getBoolean("Running"));
+		assertEquals(HttpURLConnection.HTTP_OK, status.getJSONObject("Result").getInt("HttpCode"));
+		return status;
+	}
+
+	private static void assertPullProgressMessage(String remoteLocation, String actualMessage) {
+		IPath path = new Path(URI.create(remoteLocation).getPath());
+		if (path.segment(1).equals(Remote.RESOURCE) && path.segment(3).equals("file")) {
+			// /git/remote/{remote}/file/{path}
+			assertEquals(String.format("Pulling %s...", path.segment(2)), actualMessage);
+		} else {
+			fail("unexpected remoteLocation: " + remoteLocation);
+		}
+	}
+
 	// tag
 	/**
 	 * Tag the commit with given tag name 

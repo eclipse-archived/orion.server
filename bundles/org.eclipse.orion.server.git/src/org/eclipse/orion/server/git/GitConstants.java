@@ -143,6 +143,8 @@ public class GitConstants {
 
 	public static final String KEY_FETCH = "Fetch"; //$NON-NLS-1$
 
+	public static final String KEY_PULL = "Pull"; //$NON-NLS-1$
+
 	public static final String KEY_MERGE = "Merge"; //$NON-NLS-1$
 
 	public static final String KEY_REBASE = "Rebase"; //$NON-NLS-1$
