@@ -34,14 +34,13 @@ public class PullJob extends GitJob {
 
 	private IPath path;
 	private String remote;
-	private boolean force;
 
 	public PullJob(String userRunningTask, CredentialsProvider credentials, Path path, boolean force) {
-		super("Pulling", userRunningTask, (GitCredentialsProvider) credentials);
+		super("Pulling", userRunningTask, (GitCredentialsProvider) credentials); //$NON-NLS-1$
 		// path: {remote}/file/{...}
 		this.path = path;
 		this.remote = path.segment(0);
-		this.force = force;
+		//		this.force = force;
 		this.task = createTask();
 	}
 
