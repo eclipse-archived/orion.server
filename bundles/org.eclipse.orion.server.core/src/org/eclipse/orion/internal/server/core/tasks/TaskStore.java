@@ -10,7 +10,12 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.core.tasks;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,38 +35,21 @@ public class TaskStore {
 	public TaskStore(File root) {
 		this.root = root;
 	}
-	
-	private String getUserDirectory(String userId){
+
+	private String getUserDirectory(String userId) {
 		return new String(Base64.encode(userId.getBytes()));
-	}
-	
-	public synchronized List<String> readTasks(String userId){
-		List<String> result = new ArrayList<String>();
-		File userDirectory = new File(root, getUserDirectory(userId));
-		if(!userDirectory.exists() || !userDirectory.isDirectory())
-			return result;
-		for(File taskFile : userDirectory.listFiles()){
-			if(taskFile.isFile()){
-				try {
-					FileReader reader = new FileReader(taskFile);
-					StringWriter writer = new StringWriter();
-					IOUtilities.pipe(reader, writer, true, false);
-					result.add(writer.toString());
-				} catch (IOException e) {
-					LogHelper.log(e);
-				}
-			}
-		}
-		return result;
 	}
 
 	/**
 	 * Returns a string representation of the task with the given id, or <code>null</code>
 	 * if no such task exists.
+	 * 
+	 * @param userId id of a user that is an owner of the task
+	 * @param id id of the task
 	 */
 	public synchronized String readTask(String userId, String id) {
 		File userDirectory = new File(root, getUserDirectory(userId));
-		if(!userDirectory.exists())
+		if (!userDirectory.exists())
 			return null;
 		File taskFile = new File(userDirectory, id);
 		if (!taskFile.exists())
@@ -78,11 +66,18 @@ public class TaskStore {
 		}
 	}
 
+	/**
+	 * Writes task representation
+	 * 
+	 * @param userId id of a user that is an owner of the task
+	 * @param id id of the task
+	 * @param representation string representation ot the task
+	 */
 	public synchronized void writeTask(String userId, String id, String representation) {
 		root.mkdirs();
 		try {
 			File userDirectory = new File(root, getUserDirectory(userId));
-			if(!userDirectory.exists()){
+			if (!userDirectory.exists()) {
 				userDirectory.mkdir();
 			}
 			File taskFile = new File(userDirectory, id);
@@ -92,5 +87,53 @@ public class TaskStore {
 		} catch (IOException e) {
 			LogHelper.log(e);
 		}
+	}
+
+	/**
+	 * Removes given task from the list. This doesn't consider task status, it is caller's
+	 * responsibility to make sure if task tracking can be stopped. This function does not stop the task.
+	 * 
+	 * @param userId id of a user that is an owner of the task
+	 * @param id id of the task
+	 * @return <code>true</code> if task was removed, <code>false</code> otherwise. 
+	 */
+	public synchronized boolean removeTask(String userId, String id) {
+		File userDirectory = new File(root, getUserDirectory(userId));
+		if (!userDirectory.exists())
+			return false;
+		File taskFile = new File(userDirectory, id);
+		if (!taskFile.exists())
+			return false;
+		return taskFile.delete();
+	}
+
+	/**
+	 * Returns all tasks owned by a given user.
+	 * 
+	 * @param userId id of a user that is an owner of tasks
+	 * @return a list of tasks tracked for this user
+	 */
+	public synchronized List<String> readAllTasks(String userId) {
+		List<String> result = new ArrayList<String>();
+		File userDirectory = new File(root, getUserDirectory(userId));
+		if (!userDirectory.exists())
+			return result;
+
+		for (File taskFile : userDirectory.listFiles()) {
+			if (!taskFile.isFile())
+				continue;
+			StringWriter writer;
+			try {
+				FileReader reader = new FileReader(taskFile);
+				writer = new StringWriter();
+				IOUtilities.pipe(reader, writer, true, false);
+				result.add(writer.toString());
+			} catch (IOException e) {
+				LogHelper.log(e);
+				return null;
+			}
+		}
+
+		return result;
 	}
 }

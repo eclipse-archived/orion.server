@@ -15,6 +15,7 @@ import java.io.IOException;
 
 import junit.framework.TestCase;
 
+import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.internal.server.core.tasks.TaskStore;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.junit.After;
@@ -42,6 +43,32 @@ public class TaskStoreTest extends TestCase {
 
 		TaskInfo task2 = TaskInfo.fromJSON(store.readTask(task.getUserId(), task.getTaskId()));
 		AllTaskTests.assertEqualTasks(task, task2);
+	}
+
+	@Test
+	public void testDeleteTask() {
+		TaskInfo task = AllTaskTests.createTestTask("test");
+		task.done(Status.OK_STATUS);
+		TaskStore store = new TaskStore(tempDir);
+		store.writeTask(task.getUserId(), task.getTaskId(), task.toJSON().toString());
+		assertNotNull(store.readTask(task.getUserId(), task.getTaskId()));
+		assertTrue(store.removeTask(task.getUserId(), task.getTaskId()));
+		assertNull(store.readTask(task.getUserId(), task.getTaskId()));
+	}
+
+	@Test
+	public void readAllTasksTest() {
+		TaskInfo task1 = new TaskInfo("test", "taskid1");
+		task1.done(Status.OK_STATUS);
+		TaskInfo task2 = new TaskInfo("test", "taskid2");
+		task2.done(Status.OK_STATUS);
+		TaskStore store = new TaskStore(tempDir);
+		store.writeTask("test", task1.getTaskId(), task1.toJSON().toString());
+		assertEquals(1, store.readAllTasks("test"));
+		store.writeTask("test", task2.getTaskId(), task2.toJSON().toString());
+		assertEquals(2, store.readAllTasks("test"));
+		store.removeTask("test", task1.getTaskId());
+		assertEquals(1, store.readAllTasks("test"));
 	}
 
 	@Before
