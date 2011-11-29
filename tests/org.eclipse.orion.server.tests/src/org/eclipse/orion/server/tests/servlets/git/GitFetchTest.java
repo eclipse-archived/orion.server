@@ -340,7 +340,6 @@ public class GitFetchTest extends GitTest {
 		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
 		IPath clonePath2 = new Path("file").append(project2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 		clone(clonePath2);
-		// XXX: checked out 'a', see bug 364853
 
 		// get project2 metadata
 		request = getGetFilesRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
@@ -397,10 +396,9 @@ public class GitFetchTest extends GitTest {
 		assertTrue(pushStatus.isOK());
 
 		// clone2: get remote details
-		// XXX: checked out 'a', see bug 364853
-		JSONObject masterDetails = getRemoteBranch(gitRemoteUri2, 2, 1, Constants.MASTER);
+		JSONObject masterDetails = getRemoteBranch(gitRemoteUri2, 2, 0, Constants.MASTER);
 		String masterOldRefId = masterDetails.getString(ProtocolConstants.KEY_ID);
-		JSONObject aDetails = getRemoteBranch(gitRemoteUri2, 2, 0, "a");
+		JSONObject aDetails = getRemoteBranch(gitRemoteUri2, 2, 1, "a");
 		String aOldRefId = aDetails.getString(ProtocolConstants.KEY_ID);
 
 		// clone2: fetch all: 'master' and 'a'
@@ -409,11 +407,11 @@ public class GitFetchTest extends GitTest {
 		fetch(remoteLocation);
 
 		// clone2: assert both remote branches have new content
-		masterDetails = getRemoteBranch(gitRemoteUri2, 2, 1, Constants.MASTER);
+		masterDetails = getRemoteBranch(gitRemoteUri2, 2, 0, Constants.MASTER);
 		String newRefId = masterDetails.getString(ProtocolConstants.KEY_ID);
 		assertFalse(masterOldRefId.equals(newRefId));
 
-		aDetails = getRemoteBranch(gitRemoteUri2, 2, 0, "a");
+		aDetails = getRemoteBranch(gitRemoteUri2, 2, 1, "a");
 		newRefId = aDetails.getString(ProtocolConstants.KEY_ID);
 		assertFalse(aOldRefId.equals(newRefId));
 	}
@@ -452,7 +450,6 @@ public class GitFetchTest extends GitTest {
 		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
 		IPath clonePath2 = new Path("file").append(project2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 		clone(clonePath2);
-		// XXX: checked out 'a', see bug 364853
 
 		// get project2 metadata
 		request = getGetFilesRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
@@ -490,23 +487,22 @@ public class GitFetchTest extends GitTest {
 		push(gitRemoteUri1, 2, 0, Constants.MASTER, Constants.HEAD, false);
 
 		// clone2: get remote details
-		// XXX: checked out 'a', see bug 364853
-		JSONObject aDetails = getRemoteBranch(gitRemoteUri2, 2, 0, "a");
+		JSONObject aDetails = getRemoteBranch(gitRemoteUri2, 2, 1, "a");
 		String aOldRefId = aDetails.getString(ProtocolConstants.KEY_ID);
 		String aBranchLocation = aDetails.getString(ProtocolConstants.KEY_LOCATION);
-		JSONObject masterDetails = getRemoteBranch(gitRemoteUri2, 2, 1, Constants.MASTER);
+		JSONObject masterDetails = getRemoteBranch(gitRemoteUri2, 2, 0, Constants.MASTER);
 		String masterOldRefId = masterDetails.getString(ProtocolConstants.KEY_ID);
 
 		// clone2: fetch 'a'
 		fetch(aBranchLocation);
 
 		// clone2: check for new content on 'a'
-		masterDetails = getRemoteBranch(gitRemoteUri2, 2, 0, "a");
+		masterDetails = getRemoteBranch(gitRemoteUri2, 2, 1, "a");
 		String newRefId = masterDetails.getString(ProtocolConstants.KEY_ID);
 		assertFalse(aOldRefId.equals(newRefId));
 
 		// clone2: assert nothing new on 'master'
-		masterDetails = getRemoteBranch(gitRemoteUri2, 2, 1, Constants.MASTER);
+		masterDetails = getRemoteBranch(gitRemoteUri2, 2, 0, Constants.MASTER);
 		newRefId = masterDetails.getString(ProtocolConstants.KEY_ID);
 		assertEquals(masterOldRefId, newRefId);
 	}
