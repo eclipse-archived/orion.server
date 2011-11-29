@@ -414,6 +414,7 @@
    <field name="Directory" type="boolean" indexed="true" stored="true"/>
    <field name="LastModified" type="long" indexed="true" stored="true" />
    <field name="Location" type="string" indexed="true" stored="true" multiValued="false"/>
+   <field name="Path" type="string" indexed="true" stored="true" multiValued="false"/>
 
    <!-- catchall field, containing all other searchable text fields (implemented
         via copyField further on in this schema  -->

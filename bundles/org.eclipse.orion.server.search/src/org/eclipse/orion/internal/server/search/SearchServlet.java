@@ -35,8 +35,8 @@ import org.eclipse.orion.server.servlets.OrionServlet;
  */
 public class SearchServlet extends OrionServlet {
 	private static final long serialVersionUID = 1L;
-	private static final String FIELD_NAMES = "Id,Name,Length,Directory,LastModified,Location";
-	private static final List<String> FIELD_LIST = Arrays.asList("Id,Name,Length,Directory,LastModified,Location".split(","));
+	private static final String FIELD_NAMES = "Id,Name,Length,Directory,LastModified,Location,Path"; //$NON-NLS-1$
+	private static final List<String> FIELD_LIST = Arrays.asList(FIELD_NAMES.split(",")); //$NON-NLS-1$
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {

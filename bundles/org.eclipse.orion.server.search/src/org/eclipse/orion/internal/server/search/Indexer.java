@@ -142,8 +142,10 @@ public class Indexer extends Job {
 			doc.addField(ProtocolConstants.KEY_DIRECTORY, Boolean.toString(fileInfo.isDirectory()));
 			doc.addField(ProtocolConstants.KEY_LAST_MODIFIED, Long.toString(fileInfo.getLastModified()));
 			//we add the server-relative location so the server can be moved without affecting the index
-			IPath fileLocation = projectLocation.append(file.toURI().toString().substring(projectLocationLength));
+			String projectRelativePath = file.toURI().toString().substring(projectLocationLength);
+			IPath fileLocation = projectLocation.append(projectRelativePath);
 			doc.addField(ProtocolConstants.KEY_LOCATION, fileLocation.toString());
+			doc.addField(ProtocolConstants.KEY_PATH, new Path(project.getName()).append(projectRelativePath));
 			doc.addField("Text", getContentsAsString(file)); //$NON-NLS-1$
 			if (users != null)
 				for (String user : users)
