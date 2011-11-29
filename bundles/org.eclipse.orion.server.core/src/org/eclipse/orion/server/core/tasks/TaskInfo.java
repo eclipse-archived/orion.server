@@ -213,6 +213,27 @@ public class TaskInfo {
 	/**
 	 * Returns a JSON representation of this task state.
 	 */
+	public JSONObject toLightJSON() {
+		JSONObject resultObject = new JSONObject();
+		try {
+			resultObject.put(KEY_RUNNING, isRunning());
+			resultObject.put(KEY_MESSAGE, getMessage());
+			resultObject.put(KEY_ID, getTaskId());
+			resultObject.put(KEY_USER, getUserId());
+			resultObject.put(KEY_PERCENT_COMPLETE, getPercentComplete());
+			if(taskCanceler!=null)
+				resultObject.put(KEY_CAN_BE_CANCELED, true);
+		} catch (JSONException e) {
+			//can only happen if key is null
+		}
+		return resultObject;
+	}
+
+	
+
+	/**
+	 * Returns a JSON representation of this task state.
+	 */
 	public JSONObject toJSON() {
 		JSONObject resultObject = new JSONObject();
 		try {

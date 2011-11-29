@@ -108,7 +108,10 @@ public class TaskServlet extends OrionServlet {
 			JSONObject result = new JSONObject();
 			JSONArray tasksList = new JSONArray();
 			for (TaskInfo task : tasks) {
-				tasksList.put(task.toJSON());
+				if ("true".equals(req.getParameter("results")))
+					tasksList.put(task.toJSON());
+				else
+					tasksList.put(task.toLightJSON());
 			}
 			try {
 				result.put("Children", tasksList);
@@ -116,6 +119,7 @@ public class TaskServlet extends OrionServlet {
 				//cannot happen
 			}
 			writeJSONResponse(req, resp, result);
+			return;
 		}
 
 		if (path.segmentCount() != 2 || !"id".equals(path.segment(0))) {//$NON-NLS-1$
