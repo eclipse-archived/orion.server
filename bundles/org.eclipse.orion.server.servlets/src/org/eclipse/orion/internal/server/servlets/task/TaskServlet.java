@@ -11,6 +11,7 @@
 package org.eclipse.orion.internal.server.servlets.task;
 
 import java.io.IOException;
+import java.util.List;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -18,11 +19,9 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.server.core.tasks.ITaskService;
-import org.eclipse.orion.server.core.tasks.TaskInfo;
+import org.eclipse.orion.server.core.tasks.*;
 import org.eclipse.orion.server.servlets.OrionServlet;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.*;
 import org.osgi.util.tracker.ServiceTracker;
 
 /**
@@ -52,7 +51,30 @@ public class TaskServlet extends OrionServlet {
 	}
 
 	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+	protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		String pathInfo = req.getPathInfo();
+		IPath path = pathInfo == null ? Path.EMPTY : new Path(pathInfo);
+		ITaskService taskService = taskTracker.getService();
+		if (path.segmentCount() == 0) {
+			taskService.removeCompletedTasks(getUserId(req));
+		}
+
+		if (path.segmentCount() != 2 || !"id".equals(path.segment(0))) {//$NON-NLS-1$
+			handleException(resp, "Invalid request path: " + path, null, HttpServletResponse.SC_BAD_REQUEST);
+			return;
+		}
+
+		String taskId = path.segment(1);
+		try {
+			taskService.removeTask(getUserId(req), taskId);
+		} catch (TaskOperationException e) {
+			handleException(resp, e.getMessage(), e);
+			return;
+		}
+	}
+
+	@Override
+	protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		String pathInfo = req.getPathInfo();
 		IPath path = pathInfo == null ? Path.EMPTY : new Path(pathInfo);
 		if (path.segmentCount() != 2 || !"id".equals(path.segment(0))) {//$NON-NLS-1$
@@ -60,6 +82,50 @@ public class TaskServlet extends OrionServlet {
 			return;
 		}
 		ITaskService taskService = taskTracker.getService();
+
+		try {
+			JSONObject putData = OrionServlet.readJSONRequest(req);
+			if (putData.getBoolean("Cancel")) {
+				String taskId = path.segment(1);
+				taskService.getTask(getUserId(req), taskId).cancelTask();
+			}
+		} catch (JSONException e) {
+			handleException(resp, "Could not read request", e);
+		} catch (TaskOperationException e) {
+			handleException(resp, "Task does not support canceling", e, HttpServletResponse.SC_BAD_REQUEST);
+		}
+
+	}
+
+	@Override
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		String pathInfo = req.getPathInfo();
+		IPath path = pathInfo == null ? Path.EMPTY : new Path(pathInfo);
+		ITaskService taskService = taskTracker.getService();
+
+		if (path.segmentCount() == 0) {
+			List<TaskInfo> tasks = taskService.getTasks(getUserId(req));
+			JSONObject result = new JSONObject();
+			JSONArray tasksList = new JSONArray();
+			for (TaskInfo task : tasks) {
+				if ("true".equals(req.getParameter("results")))
+					tasksList.put(task.toJSON());
+				else
+					tasksList.put(task.toLightJSON());
+			}
+			try {
+				result.put("Children", tasksList);
+			} catch (JSONException e) {
+				//cannot happen
+			}
+			writeJSONResponse(req, resp, result);
+			return;
+		}
+
+		if (path.segmentCount() != 2 || !"id".equals(path.segment(0))) {//$NON-NLS-1$
+			handleException(resp, "Invalid request path: " + path, null, HttpServletResponse.SC_BAD_REQUEST);
+			return;
+		}
 		if (taskService == null) {
 			handleException(resp, "Task service is unavailable", null);
 			return;

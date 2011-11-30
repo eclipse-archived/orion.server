@@ -168,34 +168,29 @@ public class GitPullTest extends GitTest {
 		push(gitRemoteUri1, 2, 0, Constants.MASTER, Constants.HEAD, false);
 
 		// clone2: get remote details
-		// XXX: checked out 'a', see bug 364853
 		JSONObject origin2 = getRemote(gitRemoteUri2, 1, 0, Constants.DEFAULT_REMOTE_NAME);
 		String originLocation2 = origin2.getString(ProtocolConstants.KEY_LOCATION);
-		JSONObject aDetails = getRemoteBranch(gitRemoteUri2, 2, 0, "a");
+		JSONObject aDetails = getRemoteBranch(gitRemoteUri2, 2, 1, "a");
 		String aOldRefId = aDetails.getString(ProtocolConstants.KEY_ID);
-		JSONObject masterDetails = getRemoteBranch(gitRemoteUri2, 2, 1, Constants.MASTER);
+		JSONObject masterDetails = getRemoteBranch(gitRemoteUri2, 2, 0, Constants.MASTER);
 		String masterOldRefId = masterDetails.getString(ProtocolConstants.KEY_ID);
 
 		// clone2: pull
 		pull(originLocation2);
 
 		// clone2: check for new content on 'a'
-		masterDetails = getRemoteBranch(gitRemoteUri2, 2, 0, "a");
+		masterDetails = getRemoteBranch(gitRemoteUri2, 2, 1, "a");
 		String newRefId = masterDetails.getString(ProtocolConstants.KEY_ID);
 		assertFalse(aOldRefId.equals(newRefId));
 
 		// clone2: assert nothing new on 'master'
-		masterDetails = getRemoteBranch(gitRemoteUri2, 2, 1, Constants.MASTER);
+		masterDetails = getRemoteBranch(gitRemoteUri2, 2, 0, Constants.MASTER);
 		newRefId = masterDetails.getString(ProtocolConstants.KEY_ID);
 		assertFalse(masterOldRefId.equals(newRefId));
 
 		// make sure the change has been pulled into the current branch
 		JSONObject testTxt2 = getChild(project2, "test.txt");
-		assertEquals("branch 'a' change", getFileContent(testTxt2));
-		// XXX: see bug 364853
-		//		response = checkoutBranch(cloneLocation2, Constants.MASTER);
-		//		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		//		assertEquals("branch 'master' change", getFileContent(testTxt2));
+		assertEquals("branch 'master' change", getFileContent(testTxt2));
 	}
 
 	static WebRequest getPostGitRemoteRequest(String location, boolean force) throws JSONException, UnsupportedEncodingException {

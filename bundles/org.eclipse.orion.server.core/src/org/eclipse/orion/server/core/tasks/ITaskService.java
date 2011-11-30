@@ -35,6 +35,11 @@ public interface ITaskService {
 	 */
 	TaskInfo getTask(String userId, String id);
 
+	/**
+	 * Returns a list of tasks tracked for given user.
+	 * @param userId id of the user starting the task or if not logged in temporary identifier, for instance a session id
+	 * @return a list of tasks owned by the user
+	 */
 	List<TaskInfo> getTasks(String userId);
 
 	/**
@@ -44,4 +49,18 @@ public interface ITaskService {
 	 * @param task The task to update
 	 */
 	void updateTask(TaskInfo task);
+
+	/**
+	 * Removed all completed tasks that belong to given user.
+	 * @param userId id of the user starting the task or if not logged in temporary identifier, for instance a session id
+	 */
+	public void removeCompletedTasks(String userId);
+
+	/**
+	 * Remove task from the list. Only completed tasks can be removed.
+	 * @param userId id of the user starting the task or if not logged in temporary identifier, for instance a session id
+	 * @param id The task id
+	 * @throws TaskOperationException thrown when task cannot be removed, for instance task is running 
+	 */
+	public void removeTask(String userId, String id) throws TaskOperationException;
 }

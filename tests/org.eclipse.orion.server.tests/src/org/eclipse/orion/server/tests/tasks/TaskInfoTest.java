@@ -12,7 +12,9 @@ package org.eclipse.orion.server.tests.tasks;
 
 import junit.framework.TestCase;
 
+import org.eclipse.orion.server.core.tasks.ITaskCanceler;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
+import org.eclipse.orion.server.core.tasks.TaskOperationException;
 import org.junit.Test;
 
 /**
@@ -49,5 +51,24 @@ public class TaskInfoTest extends TestCase {
 		assertEquals("msg", info.getMessage());
 		info.setMessage(null);
 		assertEquals("", info.getMessage());
+	}
+
+	@Test
+	public void testCanCancel() {
+		TaskInfo info = new TaskInfo("test", "mytask", new ITaskCanceler() {
+			public void cancelTask() {
+				//any implementation
+			}
+		});
+		assertEquals(true, info.canBeCanceled());
+		info = new TaskInfo("test", "mytask");
+		assertEquals(false, info.canBeCanceled());
+		try {
+			info.cancelTask();
+			fail("Task that does not support cancelling did not throw TaskOperationException on cancelling attempt");
+		} catch (TaskOperationException e) {
+			// should be thrown
+		}
+
 	}
 }

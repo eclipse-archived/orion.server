@@ -29,6 +29,7 @@ public class TaskInfo {
 	private static final String KEY_RUNNING = "Running"; //$NON-NLS-1$
 	private static final String KEY_LOCATION = "Location"; //$NON-NLS-1$
 	private static final String KEY_RESULT = "Result"; //$NON-NLS-1$
+	private static final String KEY_CAN_BE_CANCELED = "CanBeCanceled"; //$NON-NLS-1$
 	private final String id;
 	private final String userId;
 	private String message = ""; //$NON-NLS-1$
@@ -36,16 +37,21 @@ public class TaskInfo {
 	private boolean running = true;
 	private URI resultLocation = null;
 	private IStatus result;
+	private ITaskCanceler taskCanceler;
 
 	/**
 	 * Returns a task object based on its JSON representation. Returns
 	 * null if the given string is not a valid JSON task representation.
 	 */
 	public static TaskInfo fromJSON(String taskString) {
+		return fromJSON(taskString, null);
+	}
+	
+	public static TaskInfo fromJSON(String taskString, ITaskCanceler taskCanceler) {
 		TaskInfo info;
 		try {
 			JSONObject json = new JSONObject(taskString);
-			info = new TaskInfo(json.getString(KEY_USER), json.getString(KEY_ID));
+			info = new TaskInfo(json.getString(KEY_USER), json.getString(KEY_ID), taskCanceler);
 			info.setMessage(json.optString(KEY_MESSAGE, "")); //$NON-NLS-1$
 			info.running = json.optBoolean(KEY_RUNNING, true);
 			info.setPercentComplete(json.optInt(KEY_PERCENT_COMPLETE, 0));
@@ -53,7 +59,7 @@ public class TaskInfo {
 			if (location != null)
 				info.resultLocation = URI.create(location);
 			String resultString = json.optString(KEY_RESULT, null);
-			if (resultString!= null)
+			if (resultString != null)
 				info.result = ServerStatus.fromJSON(resultString);
 			return info;
 		} catch (JSONException e) {
@@ -65,6 +71,31 @@ public class TaskInfo {
 	public TaskInfo(String userId, String id) {
 		this.userId = userId;
 		this.id = id;
+	}
+
+	public TaskInfo(String userId, String id, ITaskCanceler taskCanceler) {
+		this.userId = userId;
+		this.id = id;
+		this.taskCanceler = taskCanceler;
+	}
+
+	/**
+	 * Cancels the task.
+	 * @throws TaskOperationException if task does not support canceling
+	 */
+	public void cancelTask() throws TaskOperationException {
+		if (this.taskCanceler == null) {
+			throw new TaskOperationException("Task does not support canceling.");
+		}
+		taskCanceler.cancelTask();
+	}
+	
+	/**
+	 * Returns information if task canceling is supported.
+	 * @return <code>true</code> if task can be canceled
+	 */
+	public boolean canBeCanceled(){
+		return this.taskCanceler!=null;
 	}
 
 	/**
@@ -91,7 +122,7 @@ public class TaskInfo {
 	public URI getResultLocation() {
 		return resultLocation;
 	}
-	
+
 	/**
 	 * Returns the status describing the result of the operation, or <code>null</code>
 	 * if the operation has not yet completed.
@@ -182,6 +213,27 @@ public class TaskInfo {
 	/**
 	 * Returns a JSON representation of this task state.
 	 */
+	public JSONObject toLightJSON() {
+		JSONObject resultObject = new JSONObject();
+		try {
+			resultObject.put(KEY_RUNNING, isRunning());
+			resultObject.put(KEY_MESSAGE, getMessage());
+			resultObject.put(KEY_ID, getTaskId());
+			resultObject.put(KEY_USER, getUserId());
+			resultObject.put(KEY_PERCENT_COMPLETE, getPercentComplete());
+			if(taskCanceler!=null)
+				resultObject.put(KEY_CAN_BE_CANCELED, true);
+		} catch (JSONException e) {
+			//can only happen if key is null
+		}
+		return resultObject;
+	}
+
+	
+
+	/**
+	 * Returns a JSON representation of this task state.
+	 */
 	public JSONObject toJSON() {
 		JSONObject resultObject = new JSONObject();
 		try {
@@ -190,6 +242,8 @@ public class TaskInfo {
 			resultObject.put(KEY_ID, getTaskId());
 			resultObject.put(KEY_USER, getUserId());
 			resultObject.put(KEY_PERCENT_COMPLETE, getPercentComplete());
+			if(taskCanceler!=null)
+				resultObject.put(KEY_CAN_BE_CANCELED, true);
 			if (resultLocation != null)
 				resultObject.put(KEY_LOCATION, resultLocation);
 			if (result != null) {
