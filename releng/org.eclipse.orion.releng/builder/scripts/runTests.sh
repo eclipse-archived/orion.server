@@ -83,8 +83,8 @@ mkdir $testDir
 fi
 
 browsers=(\
-        firefox-6.0/firefox,firefox-6.0/firefox-bin \
         firefox-7.0.1/firefox,firefox-7.0.1/firefox-bin \
+        firefox-8.0.1/firefox,firefox-8.0.1/firefox-bin \
         chrome-12.0.742.60/google-chrome,chrome-12.0.742.60/chrome \
         chrome-15.0.874.102/google-chrome,chrome-15.0.874.102/chrome )
 
