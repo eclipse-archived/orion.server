@@ -10,20 +10,19 @@
  *******************************************************************************/
 package org.eclipse.orion.server.core.tasks;
 
-/**
- * Thrown when attempted to perform task operation that is not supported by this task. 
- *
- */
-public class TaskOperationException extends Exception {
+import java.util.Date;
 
-	private static final long serialVersionUID = 2207949082734854837L;
-	
-	public TaskOperationException(){
-		super();
-	}
-	
-	public TaskOperationException(String message){
-		super(message);
-	}
+/**
+ * 
+ *This listener can be registered to {@link ITaskService} to notify whenever tasks are changed.
+ */
+public interface TaskModificationListener {
+
+	/**
+	 * Called by {@link ITaskService} when tasks are modified.
+	 * @param userId id of a user which tasks have been modified.
+	 * @param modificationDate the latest task modification date
+	 */
+	public void tasksModified(String userId, Date modificationDate);
 
 }
