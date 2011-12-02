@@ -314,4 +314,14 @@ public class ProtocolConstants {
 	 */
 	public static final String KEY_PATH = "Path"; //$NON-NLS-1$
 
+	/**
+	 * JSON representation key for indicator that request is handled by long-polling
+	 */
+	public static final String KEY_LONGPOLLING = "Longpolling"; //$NON-NLS-1$
+
+	/**
+	 * JSON representation key for long-polling id
+	 */
+	public static final String KEY_LONGPOLLING_ID = "LongpollingId"; //$NON-NLS-1$
+
 }

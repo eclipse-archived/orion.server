@@ -51,7 +51,7 @@ public class PushJob extends GitJob {
 	}
 
 	protected TaskInfo createTask() {
-		TaskInfo info = getTaskService().createTask(this.userId);
+		TaskInfo info = getTaskService().createTask(NLS.bind("Pushing {0}", path.segment(0)), this.userId);
 		info.setMessage(NLS.bind("Pushing {0}...", path.segment(0)));
 		getTaskService().updateTask(info);
 		return info;

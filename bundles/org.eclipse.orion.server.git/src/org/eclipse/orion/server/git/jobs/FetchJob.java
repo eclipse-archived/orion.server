@@ -48,7 +48,7 @@ public class FetchJob extends GitJob {
 	}
 
 	protected TaskInfo createTask() {
-		TaskInfo info = getTaskService().createTask(this.userId);
+		TaskInfo info = getTaskService().createTask((branch == null ? NLS.bind("Fetching {0}", remote) : NLS.bind("Fetching {0}/{1}", new Object[] {remote, branch})), this.userId);
 		info.setMessage(branch == null ? NLS.bind("Fetching {0}...", remote) : NLS.bind("Fetching {0}/{1}...", new Object[] {remote, branch}));
 		getTaskService().updateTask(info);
 		return info;

@@ -11,10 +11,13 @@
 package org.eclipse.orion.server.core.tasks;
 
 import java.net.URI;
+import java.util.Date;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -30,6 +33,8 @@ public class TaskInfo {
 	private static final String KEY_LOCATION = "Location"; //$NON-NLS-1$
 	private static final String KEY_RESULT = "Result"; //$NON-NLS-1$
 	private static final String KEY_CAN_BE_CANCELED = "CanBeCanceled"; //$NON-NLS-1$
+	private static final String KEY_TIMESTAMP_MODIFIED = "Modified"; //$NON-NLS-1$
+	private static final String KEY_NAME = "Name"; //$NON-NLS-1$
 	private final String id;
 	private final String userId;
 	private String message = ""; //$NON-NLS-1$
@@ -37,22 +42,26 @@ public class TaskInfo {
 	private boolean running = true;
 	private URI resultLocation = null;
 	private IStatus result;
-	private ITaskCanceler taskCanceler;
+	private boolean canBeCanceled = false;
+	private Date modified;
+	private String name;
+
 
 	/**
 	 * Returns a task object based on its JSON representation. Returns
 	 * null if the given string is not a valid JSON task representation.
+	 * This function does not set <code>canBeCanceled</code>. The caller
+	 * must find out himself if the task can be canceled and set this flag.
 	 */
 	public static TaskInfo fromJSON(String taskString) {
-		return fromJSON(taskString, null);
-	}
-	
-	public static TaskInfo fromJSON(String taskString, ITaskCanceler taskCanceler) {
 		TaskInfo info;
 		try {
 			JSONObject json = new JSONObject(taskString);
-			info = new TaskInfo(json.getString(KEY_USER), json.getString(KEY_ID), taskCanceler);
+			info = new TaskInfo(json.getString(KEY_USER), json.getString(KEY_ID));
 			info.setMessage(json.optString(KEY_MESSAGE, "")); //$NON-NLS-1$
+			info.setName(json.optString(KEY_NAME, "")); //$NON-NLS-1$
+			if(json.has(KEY_TIMESTAMP_MODIFIED))
+				info.modified = new Date(json.getLong(KEY_TIMESTAMP_MODIFIED));
 			info.running = json.optBoolean(KEY_RUNNING, true);
 			info.setPercentComplete(json.optInt(KEY_PERCENT_COMPLETE, 0));
 			String location = json.optString(KEY_LOCATION, null);
@@ -71,31 +80,27 @@ public class TaskInfo {
 	public TaskInfo(String userId, String id) {
 		this.userId = userId;
 		this.id = id;
+		this.modified = new Date();
 	}
 
-	public TaskInfo(String userId, String id, ITaskCanceler taskCanceler) {
-		this.userId = userId;
-		this.id = id;
-		this.taskCanceler = taskCanceler;
+	public String getName() {
+		return name;
 	}
-
-	/**
-	 * Cancels the task.
-	 * @throws TaskOperationException if task does not support canceling
-	 */
-	public void cancelTask() throws TaskOperationException {
-		if (this.taskCanceler == null) {
-			throw new TaskOperationException("Task does not support canceling.");
-		}
-		taskCanceler.cancelTask();
+	
+	public void setName(String name) {
+		this.name = name;
 	}
 	
 	/**
 	 * Returns information if task canceling is supported.
 	 * @return <code>true</code> if task can be canceled
 	 */
-	public boolean canBeCanceled(){
-		return this.taskCanceler!=null;
+	public boolean canBeCanceled() {
+		return canBeCanceled;
+	}
+	
+	public void setCanBeCanceled(boolean canBeCanceled){
+		this.canBeCanceled = canBeCanceled;
 	}
 
 	/**
@@ -138,6 +143,18 @@ public class TaskInfo {
 
 	public String getUserId() {
 		return userId;
+	}
+
+	/**
+	 * Returns last modification date.
+	 * @return last modification date.
+	 */
+	public Date getModified() {
+		return modified;
+	}
+	
+	public void setModified(Date modified){
+		this.modified = modified;
 	}
 
 	/**
@@ -185,6 +202,7 @@ public class TaskInfo {
 		this.percentComplete = 100;
 		this.result = status;
 		this.message = status.getMessage();
+		this.modified = new Date();
 		return this;
 	}
 
@@ -221,15 +239,14 @@ public class TaskInfo {
 			resultObject.put(KEY_ID, getTaskId());
 			resultObject.put(KEY_USER, getUserId());
 			resultObject.put(KEY_PERCENT_COMPLETE, getPercentComplete());
-			if(taskCanceler!=null)
-				resultObject.put(KEY_CAN_BE_CANCELED, true);
+			resultObject.put(KEY_TIMESTAMP_MODIFIED, modified.getTime());
+			resultObject.put(KEY_CAN_BE_CANCELED, canBeCanceled);
+			resultObject.put(KEY_NAME, name==null ? "" : name);
 		} catch (JSONException e) {
 			//can only happen if key is null
 		}
 		return resultObject;
 	}
-
-	
 
 	/**
 	 * Returns a JSON representation of this task state.
@@ -242,8 +259,9 @@ public class TaskInfo {
 			resultObject.put(KEY_ID, getTaskId());
 			resultObject.put(KEY_USER, getUserId());
 			resultObject.put(KEY_PERCENT_COMPLETE, getPercentComplete());
-			if(taskCanceler!=null)
-				resultObject.put(KEY_CAN_BE_CANCELED, true);
+			resultObject.put(KEY_TIMESTAMP_MODIFIED, modified.getTime());
+			resultObject.put(KEY_CAN_BE_CANCELED, canBeCanceled);
+			resultObject.put(KEY_NAME, name==null ? "" : name);
 			if (resultLocation != null)
 				resultObject.put(KEY_LOCATION, resultLocation);
 			if (result != null) {

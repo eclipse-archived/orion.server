@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.server.core.tasks;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -23,9 +24,21 @@ public interface ITaskService {
 	 * Further changes to the task will not be reflected in the task service until
 	 * {@link #updateTask(TaskInfo)} is invoked.
 	 * @param userId id of the user starting the task or if not logged in temporary identifier, for instance a session id
+	 * @param taskName task name, can be <code>null<code>
 	 * @return A new task
 	 */
-	TaskInfo createTask(String userId);
+	TaskInfo createTask(String taskName, String userId);
+	
+	/**
+	 * Creates a new task. In its initial state the task is running and 0% complete.
+	 * Further changes to the task will not be reflected in the task service until
+	 * {@link #updateTask(TaskInfo)} is invoked.
+	 * @param userId id of the user starting the task or if not logged in temporary identifier, for instance a session id
+	 * @param taskName task name, can be <code>null<code>
+	 * @param taskCanceler an implementation of {@link ITaskCanceler} that handles canceling this task
+	 * @return A new task
+	 */
+	TaskInfo createTask(String taskName, String userId, ITaskCanceler taskCanceler);
 
 	/**
 	 * Returns the task with the given task id, or <code>null</code> if no such task exists.
@@ -41,6 +54,14 @@ public interface ITaskService {
 	 * @return a list of tasks owned by the user
 	 */
 	List<TaskInfo> getTasks(String userId);
+	
+	/**
+	 * Returns a list of tasks tracked for given user that have been modified since <code>modifiedSince</code> date.
+	 * @param userId id of the user starting the task or if not logged in temporary identifier, for instance a session id
+	 * @param modifiedSince a starting date since which modified tasks will be returned
+	 * @return a list of tasks owned by the user
+	 */
+	List<TaskInfo> getTasks(String userId, Date modifiedSince);
 
 	/**
 	 * Updates the state of the given task within the task service. Any changes
@@ -63,4 +84,22 @@ public interface ITaskService {
 	 * @throws TaskOperationException thrown when task cannot be removed, for instance task is running 
 	 */
 	public void removeTask(String userId, String id) throws TaskOperationException;
+	
+	/**
+	 * Cancels the task.
+	 * @throws TaskOperationException if task does not support canceling
+	 */
+	public void cancelTask(TaskInfo task) throws TaskOperationException;
+	
+	/**
+	 * Registers a listener that is notified when task is updated
+	 * @param listener
+	 */
+	public void addTaskModyficationListener(TaskModificationListener listener);
+	
+	/**
+	 * Unregisters a listener that is notified when task is updated
+	 * @param listener
+	 */
+	public void removeTaskModyficationListener(TaskModificationListener listener);
 }
