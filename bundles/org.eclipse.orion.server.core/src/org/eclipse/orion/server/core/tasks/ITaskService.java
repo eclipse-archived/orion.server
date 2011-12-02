@@ -24,9 +24,21 @@ public interface ITaskService {
 	 * Further changes to the task will not be reflected in the task service until
 	 * {@link #updateTask(TaskInfo)} is invoked.
 	 * @param userId id of the user starting the task or if not logged in temporary identifier, for instance a session id
+	 * @param taskName task name, can be <code>null<code>
 	 * @return A new task
 	 */
-	TaskInfo createTask(String userId);
+	TaskInfo createTask(String taskName, String userId);
+	
+	/**
+	 * Creates a new task. In its initial state the task is running and 0% complete.
+	 * Further changes to the task will not be reflected in the task service until
+	 * {@link #updateTask(TaskInfo)} is invoked.
+	 * @param userId id of the user starting the task or if not logged in temporary identifier, for instance a session id
+	 * @param taskName task name, can be <code>null<code>
+	 * @param taskCanceler an implementation of {@link ITaskCanceler} that handles canceling this task
+	 * @return A new task
+	 */
+	TaskInfo createTask(String taskName, String userId, ITaskCanceler taskCanceler);
 
 	/**
 	 * Returns the task with the given task id, or <code>null</code> if no such task exists.

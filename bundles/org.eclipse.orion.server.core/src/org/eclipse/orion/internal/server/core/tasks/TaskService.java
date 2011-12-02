@@ -40,8 +40,8 @@ public class TaskService implements ITaskService {
 		store = new TaskStore(baseLocation.toFile());
 	}
 
-	public TaskInfo createTask(String userId) {
-		return createTask(userId, null);
+	public TaskInfo createTask(String taskName, String userId) {
+		return createTask(taskName, userId, null);
 	}
 
 	public void removeTask(String userId, String id) throws TaskOperationException {
@@ -67,8 +67,9 @@ public class TaskService implements ITaskService {
 		}
 	}
 
-	public TaskInfo createTask(String userId, ITaskCanceler taskCanceler) {
+	public TaskInfo createTask(String taskName, String userId, ITaskCanceler taskCanceler) {
 		TaskInfo task = new TaskInfo(userId, new UniversalUniqueIdentifier().toBase64String());
+		task.setName(taskName);
 		if (taskCanceler != null) {
 			taskCancelers.put(task.getTaskId(), taskCanceler);
 			task.setCanBeCanceled(true);

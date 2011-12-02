@@ -60,7 +60,7 @@ public abstract class SFTPTransferJob extends Job {
 	}
 
 	protected TaskInfo createTask(String userId) {
-		TaskInfo info = getTaskService().createTask(userId);
+		TaskInfo info = getTaskService().createTask(NLS.bind("Secure transfer to {0}", host), userId);
 		info.setMessage(NLS.bind("Connecting to {0}...", host));
 		getTaskService().updateTask(info);
 		return info;

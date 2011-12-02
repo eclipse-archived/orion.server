@@ -34,6 +34,7 @@ public class TaskInfo {
 	private static final String KEY_RESULT = "Result"; //$NON-NLS-1$
 	private static final String KEY_CAN_BE_CANCELED = "CanBeCanceled"; //$NON-NLS-1$
 	private static final String KEY_TIMESTAMP_MODIFIED = "Modified"; //$NON-NLS-1$
+	private static final String KEY_NAME = "Name"; //$NON-NLS-1$
 	private final String id;
 	private final String userId;
 	private String message = ""; //$NON-NLS-1$
@@ -43,6 +44,8 @@ public class TaskInfo {
 	private IStatus result;
 	private boolean canBeCanceled = false;
 	private Date modified;
+	private String name;
+
 
 	/**
 	 * Returns a task object based on its JSON representation. Returns
@@ -56,6 +59,7 @@ public class TaskInfo {
 			JSONObject json = new JSONObject(taskString);
 			info = new TaskInfo(json.getString(KEY_USER), json.getString(KEY_ID));
 			info.setMessage(json.optString(KEY_MESSAGE, "")); //$NON-NLS-1$
+			info.setName(json.optString(KEY_NAME, "")); //$NON-NLS-1$
 			if(json.has(KEY_TIMESTAMP_MODIFIED))
 				info.modified = new Date(json.getLong(KEY_TIMESTAMP_MODIFIED));
 			info.running = json.optBoolean(KEY_RUNNING, true);
@@ -79,6 +83,14 @@ public class TaskInfo {
 		this.modified = new Date();
 	}
 
+	public String getName() {
+		return name;
+	}
+	
+	public void setName(String name) {
+		this.name = name;
+	}
+	
 	/**
 	 * Returns information if task canceling is supported.
 	 * @return <code>true</code> if task can be canceled
@@ -229,6 +241,7 @@ public class TaskInfo {
 			resultObject.put(KEY_PERCENT_COMPLETE, getPercentComplete());
 			resultObject.put(KEY_TIMESTAMP_MODIFIED, modified.getTime());
 			resultObject.put(KEY_CAN_BE_CANCELED, canBeCanceled);
+			resultObject.put(KEY_NAME, name==null ? "" : name);
 		} catch (JSONException e) {
 			//can only happen if key is null
 		}
@@ -248,6 +261,7 @@ public class TaskInfo {
 			resultObject.put(KEY_PERCENT_COMPLETE, getPercentComplete());
 			resultObject.put(KEY_TIMESTAMP_MODIFIED, modified.getTime());
 			resultObject.put(KEY_CAN_BE_CANCELED, canBeCanceled);
+			resultObject.put(KEY_NAME, name==null ? "" : name);
 			if (resultLocation != null)
 				resultObject.put(KEY_LOCATION, resultLocation);
 			if (result != null) {

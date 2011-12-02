@@ -45,7 +45,7 @@ public class PullJob extends GitJob {
 	}
 
 	protected TaskInfo createTask() {
-		TaskInfo info = getTaskService().createTask(this.userId);
+		TaskInfo info = getTaskService().createTask(NLS.bind("Pulling {0}", remote), this.userId);
 		info.setMessage(NLS.bind("Pulling {0}...", remote));
 		getTaskService().updateTask(info);
 		return info;

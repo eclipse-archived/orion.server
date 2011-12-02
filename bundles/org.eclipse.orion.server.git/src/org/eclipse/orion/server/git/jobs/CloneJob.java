@@ -49,7 +49,7 @@ public class CloneJob extends GitJob {
 	}
 
 	protected TaskInfo createTask() {
-		TaskInfo info = getTaskService().createTask(this.userId);
+		TaskInfo info = getTaskService().createTask(NLS.bind("Cloning {0}", clone.getUrl()), this.userId);
 		info.setMessage(NLS.bind("Cloning {0}...", clone.getUrl()));
 		getTaskService().updateTask(info);
 		return info;
