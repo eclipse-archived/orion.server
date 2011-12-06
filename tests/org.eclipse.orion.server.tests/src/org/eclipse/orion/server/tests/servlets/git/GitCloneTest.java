@@ -39,6 +39,7 @@ import org.eclipse.jgit.lib.RepositoryCache;
 import org.eclipse.jgit.lib.RepositoryState;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
+import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.PreferenceHelper;
@@ -718,7 +719,7 @@ public class GitCloneTest extends GitTest {
 
 		// JSONObject bobProject = createProjectOrLink(bobWorkspaceLocation, getMethodName() + "bob", null);
 		JSONObject body = new JSONObject();
-		request = new PostMethodWebRequest(bobWorkspaceLocation.toString(), getJsonAsStream(body.toString()), "UTF-8");
+		request = new PostMethodWebRequest(bobWorkspaceLocation.toString(), IOUtilities.toInputStream(body.toString()), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_SLUG, getMethodName() + "bob");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request, "bob", "bob");
