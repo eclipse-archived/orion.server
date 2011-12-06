@@ -26,6 +26,7 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.treewalk.*;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
+import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -140,18 +141,21 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 		response.setHeader(ProtocolConstants.HEADER_CONTENT_TYPE, "multipart/related; boundary=\"" + boundary + '"'); //$NON-NLS-1$
 		OutputStream outputStream = response.getOutputStream();
 		Writer out = new OutputStreamWriter(outputStream);
-
-		out.write("--" + boundary + EOL); //$NON-NLS-1$
-		out.write(ProtocolConstants.HEADER_CONTENT_TYPE + ": " + ProtocolConstants.CONTENT_TYPE_JSON + EOL + EOL); //$NON-NLS-1$
-		out.flush();
-		JSONObject getURIs = new org.eclipse.orion.server.git.objects.Diff(getURI(request), db).toJSON();
-		out.write(getURIs.toString());
-		out.write(EOL + "--" + boundary + EOL); //$NON-NLS-1$
-		out.write(ProtocolConstants.HEADER_CONTENT_TYPE + ": plain/text" + EOL + EOL); //$NON-NLS-1$
-		out.flush();
-		handleGetDiff(request, response, db, path.segment(0), pattern, outputStream);
-		out.write(EOL);
-		out.flush();
+		try {
+			out.write("--" + boundary + EOL); //$NON-NLS-1$
+			out.write(ProtocolConstants.HEADER_CONTENT_TYPE + ": " + ProtocolConstants.CONTENT_TYPE_JSON + EOL + EOL); //$NON-NLS-1$
+			out.flush();
+			JSONObject getURIs = new org.eclipse.orion.server.git.objects.Diff(getURI(request), db).toJSON();
+			out.write(getURIs.toString());
+			out.write(EOL + "--" + boundary + EOL); //$NON-NLS-1$
+			out.write(ProtocolConstants.HEADER_CONTENT_TYPE + ": plain/text" + EOL + EOL); //$NON-NLS-1$
+			out.flush();
+			handleGetDiff(request, response, db, path.segment(0), pattern, outputStream);
+			out.write(EOL);
+			out.flush();
+		} finally {
+			IOUtilities.safeClose(out);
+		}
 		return true;
 	}
 

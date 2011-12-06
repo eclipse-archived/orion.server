@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2010, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,13 +13,14 @@ package org.eclipse.orion.server.tests.prefs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-import com.meterware.httpunit.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.List;
+
+import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.server.core.users.OrionScope;
 import org.eclipse.orion.server.tests.AbstractServerTest;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
@@ -28,6 +29,12 @@ import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.osgi.service.prefs.BackingStoreException;
+
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PutMethodWebRequest;
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 /**
  * Tests for the preference servlet.
@@ -130,7 +137,7 @@ public class PreferenceTest extends AbstractServerTest {
 			JSONObject prefs = new JSONObject();
 			prefs.put("Name", "Frodo");
 			prefs.put("Address", "Bag End");
-			WebRequest request = new PutMethodWebRequest(location, getJsonAsStream(prefs.toString()), "application/json");
+			WebRequest request = new PutMethodWebRequest(location, IOUtilities.toInputStream(prefs.toString()), "application/json");
 			setAuthentication(request);
 			WebResponse response = webConversation.getResource(request);
 			assertEquals("1." + location, HttpURLConnection.HTTP_NO_CONTENT, response.getResponseCode());
@@ -147,7 +154,7 @@ public class PreferenceTest extends AbstractServerTest {
 			prefs = new JSONObject();
 			prefs.put("Name", "Barliman");
 			prefs.put("Occupation", "Barkeep");
-			request = new PutMethodWebRequest(location, getJsonAsStream(prefs.toString()), "application/json");
+			request = new PutMethodWebRequest(location, IOUtilities.toInputStream(prefs.toString()), "application/json");
 			setAuthentication(request);
 			response = webConversation.getResource(request);
 			assertEquals("4." + location, HttpURLConnection.HTTP_NO_CONTENT, response.getResponseCode());

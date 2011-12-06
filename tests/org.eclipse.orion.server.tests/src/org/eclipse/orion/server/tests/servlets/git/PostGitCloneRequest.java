@@ -17,6 +17,7 @@ import java.io.UnsupportedEncodingException;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jgit.transport.URIish;
+import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Clone;
@@ -95,7 +96,7 @@ public class PostGitCloneRequest {
 	}
 
 	WebRequest getWebRequest() throws UnsupportedEncodingException {
-		WebRequest request = new PostMethodWebRequest(requestURI, AbstractServerTest.getJsonAsStream(body.toString()), "UTF-8");
+		WebRequest request = new PostMethodWebRequest(requestURI, IOUtilities.toInputStream(body.toString()), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		AbstractServerTest.setAuthentication(request);
 		return request;

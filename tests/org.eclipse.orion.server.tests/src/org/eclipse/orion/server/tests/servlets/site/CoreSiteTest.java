@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2011 IBM Corporation and others
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ * IBM Corporation - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.orion.server.tests.servlets.site;
 
 import static org.junit.Assert.assertEquals;
@@ -9,6 +19,7 @@ import java.net.URISyntaxException;
 
 import junit.framework.Assert;
 
+import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
@@ -98,7 +109,7 @@ public abstract class CoreSiteTest extends FileSystemTest {
 				json.put(SiteConfigurationConstants.KEY_MAPPINGS, mappings);
 			if (hostHint != null)
 				json.put(SiteConfigurationConstants.KEY_HOST_HINT, hostHint);
-			WebRequest request = new PostMethodWebRequest(requestURI, getJsonAsStream(json.toString()), "application/json");
+			WebRequest request = new PostMethodWebRequest(requestURI, IOUtilities.toInputStream(json.toString()), "application/json");
 			request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, name); // Put name in Slug
 			setAuthentication(request);
@@ -156,7 +167,7 @@ public abstract class CoreSiteTest extends FileSystemTest {
 			json.putOpt(SiteConfigurationConstants.KEY_MAPPINGS, mappings);
 			json.putOpt(SiteConfigurationConstants.KEY_HOST_HINT, hostHint);
 			json.putOpt(SiteConfigurationConstants.KEY_HOSTING_STATUS, hostingStatus);
-			WebRequest request = new PutMethodWebRequest(makeAbsolute(locationUri), getJsonAsStream(json.toString()), "application/json");
+			WebRequest request = new PutMethodWebRequest(makeAbsolute(locationUri), IOUtilities.toInputStream(json.toString()), "application/json");
 			request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 			setAuthentication(request);
 			return request;

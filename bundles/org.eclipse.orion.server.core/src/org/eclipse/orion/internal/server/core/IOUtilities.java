@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2010, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -69,13 +69,13 @@ public class IOUtilities {
 		if (queryString == null)
 			return null;
 		
-		for (String paramString : queryString.split("&")) { 
+		for (String paramString : queryString.split("&")) {  //$NON-NLS-1$
 			if (paramString.startsWith(name)) {
-				String[] nameAndValue = paramString.split("=", 2);
+				String[] nameAndValue = paramString.split("=", 2); //$NON-NLS-1$
 				if (nameAndValue.length == 2)
 					return nameAndValue[1];
 				else
-					return ""; // parameter has no value
+					return ""; // parameter has no value //$NON-NLS-1$
 			}
 		}
 		// parameter not found
@@ -102,5 +102,9 @@ public class IOUtilities {
 		StringWriter writer = new StringWriter();
 		pipe(new InputStreamReader(is, "UTF-8"), writer, true, false); //$NON-NLS-1$
 		return writer.toString();
+	}
+
+	public static InputStream toInputStream(String s) throws UnsupportedEncodingException {
+		return new ByteArrayInputStream(s.getBytes("UTF-8")); //$NON-NLS-1$^M
 	}
 }

@@ -27,6 +27,7 @@ import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Clone;
@@ -678,7 +679,7 @@ public class GitConfigTest extends GitTest {
 			requestURI = SERVER_LOCATION + location;
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_CONFIG_ENTRY_VALUE, value);
-		WebRequest request = new PutMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "UTF-8");
+		WebRequest request = new PutMethodWebRequest(requestURI, IOUtilities.toInputStream(body.toString()), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
@@ -695,7 +696,7 @@ public class GitConfigTest extends GitTest {
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_CONFIG_ENTRY_KEY, key);
 		body.put(GitConstants.KEY_CONFIG_ENTRY_VALUE, value);
-		WebRequest request = new PostMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "UTF-8");
+		WebRequest request = new PostMethodWebRequest(requestURI, IOUtilities.toInputStream(body.toString()), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
@@ -721,7 +722,7 @@ public class GitConfigTest extends GitTest {
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_NAME, GIT_NAME);
 		body.put(GitConstants.KEY_MAIL, GIT_MAIL);
-		WebRequest request = new PutMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "UTF-8");
+		WebRequest request = new PutMethodWebRequest(requestURI, IOUtilities.toInputStream(body.toString()), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
