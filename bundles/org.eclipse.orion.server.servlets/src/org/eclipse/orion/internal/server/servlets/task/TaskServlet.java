@@ -71,6 +71,7 @@ public class TaskServlet extends OrionServlet {
 		ITaskService taskService = taskTracker.getService();
 		if (path.segmentCount() == 0) {
 			taskService.removeCompletedTasks(getUserId(req));
+			return;
 		}
 
 		if (path.segmentCount() != 2 || !"id".equals(path.segment(0))) {//$NON-NLS-1$
