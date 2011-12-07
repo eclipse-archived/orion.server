@@ -248,8 +248,10 @@ public class TaskInfo {
 			resultObject.put(KEY_CAN_BE_CANCELED, canBeCanceled);
 			resultObject.put(KEY_NAME, name==null ? "" : name);
 			if(result!=null){
-				if(!result.isOK())
+				if(!result.isOK()){
 					resultObject.put(KEY_FAILED, true);
+					resultObject.put(KEY_RESULT, ServerStatus.convert(result).toJSON());
+				}
 				if(result.getSeverity()==IStatus.CANCEL)
 					resultObject.put(KEY_CANCELED, true);
 			}
