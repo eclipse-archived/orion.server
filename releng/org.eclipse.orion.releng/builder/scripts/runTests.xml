@@ -131,7 +131,12 @@
 			<arg value="https://hudson.eclipse.org/hudson/job/orion-jstest-windows/api/json" />
 			<arg line="-o ${buildDirectory}/nextBuildNumber" />
 		</exec>
-		
+        <exec executable="bash" outputproperty="nextHudsonBuild">
+                <arg value="-c"/>
+                <arg value="grep -o 'nextBuildNumber&quot;:[0-9]*' ${buildDirectory}/nextBuildNumber | cut -d ':' -f 2"/>
+        </exec>
+        <echo message="Next hudson build number is ${nextHudsonBuild}."/>
+
 		<loadfile property="nextHudsonBuild" srcFile="${buildDirectory}/nextBuildNumber">
 			<filterchain>
 				<tokenfilter>
