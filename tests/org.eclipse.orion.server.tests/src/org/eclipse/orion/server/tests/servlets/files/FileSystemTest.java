@@ -32,6 +32,7 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.tests.AbstractServerTest;
@@ -273,7 +274,7 @@ public abstract class FileSystemTest extends AbstractServerTest {
 
 	protected WebRequest getPostFilesRequest(String uri, String json, String slug) {
 		try {
-			WebRequest request = new PostMethodWebRequest(makeAbsolute(uri), getJsonAsStream(json), "application/json");
+			WebRequest request = new PostMethodWebRequest(makeAbsolute(uri), IOUtilities.toInputStream(json), "application/json");
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, slug);
 			request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 			setAuthentication(request);
@@ -289,7 +290,7 @@ public abstract class FileSystemTest extends AbstractServerTest {
 
 	protected WebRequest getPutFilesRequest(String uri, String json) {
 		try {
-			WebRequest request = new PutMethodWebRequest(makeAbsolute(uri), getJsonAsStream(json), "application/json");
+			WebRequest request = new PutMethodWebRequest(makeAbsolute(uri), IOUtilities.toInputStream(json), "application/json");
 			request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 			setAuthentication(request);
 			return request;
@@ -304,7 +305,7 @@ public abstract class FileSystemTest extends AbstractServerTest {
 
 	protected WebRequest getPutFileRequest(String uri, String body) {
 		try {
-			WebRequest request = new PutMethodWebRequest(makeAbsolute(uri), getJsonAsStream(body), "application/json");
+			WebRequest request = new PutMethodWebRequest(makeAbsolute(uri), IOUtilities.toInputStream(body), "application/json");
 			request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 			setAuthentication(request);
 			return request;

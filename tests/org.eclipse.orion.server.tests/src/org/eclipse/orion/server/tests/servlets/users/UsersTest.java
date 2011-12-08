@@ -13,6 +13,7 @@ package org.eclipse.orion.server.tests.servlets.users;
 import java.io.UnsupportedEncodingException;
 import java.util.Map;
 
+import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.tests.AbstractServerTest;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
@@ -98,7 +99,7 @@ public abstract class UsersTest extends AbstractServerTest {
 				request = new PostMethodWebRequest(uri);
 				break;
 			case METHOD_PUT :
-				request = new PutMethodWebRequest(uri, getJsonAsStream(body.toString()), "text/plain");
+				request = new PutMethodWebRequest(uri, IOUtilities.toInputStream(body.toString()), "text/plain");
 				break;
 			default :
 				request = new GetMethodWebRequest(uri);

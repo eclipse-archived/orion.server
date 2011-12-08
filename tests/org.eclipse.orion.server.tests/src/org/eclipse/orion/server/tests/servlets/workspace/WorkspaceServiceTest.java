@@ -30,6 +30,7 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
 import org.eclipse.orion.internal.server.servlets.workspace.WorkspaceServlet;
@@ -67,7 +68,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		JSONObject body = new JSONObject();
 		if (projectLocation != null)
 			body.put(ProtocolConstants.KEY_CONTENT_LOCATION, projectLocation);
-		InputStream in = getJsonAsStream(body.toString());
+		InputStream in = IOUtilities.toInputStream(body.toString());
 		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
 		if (projectName != null)
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
@@ -105,7 +106,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 			//should never happen
 			Assert.fail("Invalid source location: " + sourceLocation);
 		}
-		InputStream source = getJsonAsStream(requestObject.toString());
+		InputStream source = IOUtilities.toInputStream(requestObject.toString());
 		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), source, "application/json");
 		if (projectName != null)
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);

@@ -21,7 +21,9 @@ Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-Vendor: %Bundle-Vendor
 Export-Package: org.eclipse.orion.server.git;x-internal:=true,
+ org.eclipse.orion.server.git.jobs;x-internal:=true,
  org.eclipse.orion.server.git.objects;x-internal:=true,
+ org.eclipse.orion.server.git.patch;x-internal:=true,
  org.eclipse.orion.server.git.servlets;x-internal:=true,
  org.eclipse.orion.server.jsch;x-internal:=true
 Bundle-Localization: bundle

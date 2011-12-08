@@ -59,6 +59,7 @@ import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.jgit.util.FileUtils;
+import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
@@ -178,7 +179,7 @@ public abstract class GitTest extends FileSystemTest {
 			body.put(ProtocolConstants.KEY_CONTENT_LOCATION, contentLocation);
 			ServletTestingSupport.allowedPrefixes = contentLocation;
 		}
-		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), getJsonAsStream(body.toString()), "UTF-8");
+		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), IOUtilities.toInputStream(body.toString()), "UTF-8");
 		if (projectName != null)
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
@@ -798,7 +799,7 @@ public abstract class GitTest extends FileSystemTest {
 		// checkout the tag into a new local branch
 		// TODO: temporary workaround, JGit fails to checkout a new branch named as the tag
 		body.put(GitConstants.KEY_BRANCH_NAME, "tag_" + tagName);
-		WebRequest request = new PutMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "UTF-8");
+		WebRequest request = new PutMethodWebRequest(requestURI, IOUtilities.toInputStream(body.toString()), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return webConversation.getResponse(request);
@@ -891,7 +892,7 @@ public abstract class GitTest extends FileSystemTest {
 		}
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_BRANCH_NAME, branchName);
-		WebRequest request = new PutMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "UTF-8");
+		WebRequest request = new PutMethodWebRequest(requestURI, IOUtilities.toInputStream(body.toString()), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return webConversation.getResponse(request);
@@ -1099,7 +1100,7 @@ public abstract class GitTest extends FileSystemTest {
 
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_MERGE, commit);
-		WebRequest request = new PostMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "UTF-8");
+		WebRequest request = new PostMethodWebRequest(requestURI, IOUtilities.toInputStream(body.toString()), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
@@ -1116,7 +1117,7 @@ public abstract class GitTest extends FileSystemTest {
 		JSONObject body = new JSONObject();
 		body.put(ProtocolConstants.KEY_NAME, tagName);
 		body.put(GitConstants.KEY_TAG_COMMIT, commitId);
-		WebRequest request = new PostMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "application/json");
+		WebRequest request = new PostMethodWebRequest(requestURI, IOUtilities.toInputStream(body.toString()), "application/json");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
@@ -1130,7 +1131,7 @@ public abstract class GitTest extends FileSystemTest {
 			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Commit.RESOURCE + location;
 		JSONObject body = new JSONObject();
 		body.put(ProtocolConstants.KEY_NAME, tagName);
-		WebRequest request = new PutMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "application/json");
+		WebRequest request = new PutMethodWebRequest(requestURI, IOUtilities.toInputStream(body.toString()), "application/json");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
@@ -1180,7 +1181,7 @@ public abstract class GitTest extends FileSystemTest {
 		JSONObject body = new JSONObject();
 		body.put(ProtocolConstants.KEY_NAME, branchName);
 		body.put(GitConstants.KEY_BRANCH_NAME, startPoint);
-		WebRequest request = new PostMethodWebRequest(requestURI, getJsonAsStream(body.toString()), "UTF-8");
+		WebRequest request = new PostMethodWebRequest(requestURI, IOUtilities.toInputStream(body.toString()), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;

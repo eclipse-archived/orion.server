@@ -35,6 +35,8 @@ public class TaskInfo {
 	private static final String KEY_CAN_BE_CANCELED = "CanBeCanceled"; //$NON-NLS-1$
 	private static final String KEY_TIMESTAMP_MODIFIED = "Modified"; //$NON-NLS-1$
 	private static final String KEY_NAME = "Name"; //$NON-NLS-1$
+	private static final String KEY_FAILED = "Failed"; //$NON-NLS-1$
+	private static final String KEY_CANCELED = "Canceled"; //$NON-NLS-1$
 	private final String id;
 	private final String userId;
 	private String message = ""; //$NON-NLS-1$
@@ -62,6 +64,9 @@ public class TaskInfo {
 			info.setName(json.optString(KEY_NAME, "")); //$NON-NLS-1$
 			if(json.has(KEY_TIMESTAMP_MODIFIED))
 				info.modified = new Date(json.getLong(KEY_TIMESTAMP_MODIFIED));
+			else
+				info.modified = new Date(0);
+			
 			info.running = json.optBoolean(KEY_RUNNING, true);
 			info.setPercentComplete(json.optInt(KEY_PERCENT_COMPLETE, 0));
 			String location = json.optString(KEY_LOCATION, null);
@@ -242,6 +247,14 @@ public class TaskInfo {
 			resultObject.put(KEY_TIMESTAMP_MODIFIED, modified.getTime());
 			resultObject.put(KEY_CAN_BE_CANCELED, canBeCanceled);
 			resultObject.put(KEY_NAME, name==null ? "" : name);
+			if(result!=null){
+				if(!result.isOK()){
+					resultObject.put(KEY_FAILED, true);
+					resultObject.put(KEY_RESULT, ServerStatus.convert(result).toJSON());
+				}
+				if(result.getSeverity()==IStatus.CANCEL)
+					resultObject.put(KEY_CANCELED, true);
+			}
 		} catch (JSONException e) {
 			//can only happen if key is null
 		}
@@ -266,6 +279,12 @@ public class TaskInfo {
 				resultObject.put(KEY_LOCATION, resultLocation);
 			if (result != null) {
 				resultObject.put(KEY_RESULT, ServerStatus.convert(result).toJSON());
+				if(!result.isOK()){
+					resultObject.put(KEY_FAILED, true);
+				}
+				if(result.getSeverity()==IStatus.CANCEL){
+					resultObject.put(KEY_CANCELED, true);
+				}
 			}
 		} catch (JSONException e) {
 			//can only happen if key is null
