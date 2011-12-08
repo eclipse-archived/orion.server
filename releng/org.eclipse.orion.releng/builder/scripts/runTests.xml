@@ -19,7 +19,7 @@
 		
 		<antcall target="prepareJsTests"/>
 		<parallel>
-			<antcall target="triggerHudsonTests"/>
+<!--			<antcall target="triggerHudsonTests"/> -->
 			<antcall target="jsTests" />
 		</parallel>
 		
