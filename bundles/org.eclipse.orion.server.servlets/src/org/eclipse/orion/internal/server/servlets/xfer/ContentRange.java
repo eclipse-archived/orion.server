@@ -56,6 +56,6 @@ class ContentRange {
 
 	@Override
 	public String toString() {
-		return "ContentRange(" + startByte + '-' + endByte + '/' + length + ')';
+		return "ContentRange(" + startByte + '-' + endByte + '/' + length + ')'; //$NON-NLS-1$
 	}
 }

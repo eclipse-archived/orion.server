@@ -178,7 +178,7 @@ class ClientImport {
 		int headerLength = Integer.valueOf(req.getHeader(ProtocolConstants.HEADER_CONTENT_LENGTH));
 		String rangeString = req.getHeader(ProtocolConstants.HEADER_CONTENT_RANGE);
 		if (rangeString == null)
-			rangeString = "bytes 0-" + (length - 1) + '/' + length;
+			rangeString = "bytes 0-" + (length - 1) + '/' + length; //$NON-NLS-1$
 		ContentRange range = ContentRange.parse(rangeString);
 		if (length != range.getLength()) {
 			fail(req, resp, "Chunk specifies an incorrect document length");
@@ -221,7 +221,7 @@ class ClientImport {
 			return;
 		}
 		resp.setStatus(308);//Resume Incomplete
-		resp.setHeader("Range", "bytes 0-" + range.getEndByte());
+		resp.setHeader("Range", "bytes 0-" + range.getEndByte()); //$NON-NLS-2$
 		setResponseLocationHeader(req, resp);
 	}
 
