@@ -19,6 +19,10 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.core.tasks.ITaskCanceler;
@@ -35,6 +39,29 @@ public class TaskService implements ITaskService {
 	TaskStore store;
 	private Map<String, ITaskCanceler> taskCancelers = new HashMap<String, ITaskCanceler>();
 	private Set<TaskModificationListener> taskListeners = new HashSet<TaskModificationListener>();
+
+	private class TasksNotificationJob extends Job {
+
+		private String userId;
+		private Date modificationDate;
+
+		public TasksNotificationJob(String userId, Date modificationDate) {
+			super("Notyfing task listeners");
+			this.userId = userId;
+			this.modificationDate = modificationDate;
+		}
+
+		@Override
+		protected IStatus run(IProgressMonitor monitor) {
+			synchronized (taskListeners) {
+				for (TaskModificationListener listener : taskListeners) {
+					listener.tasksModified(userId, modificationDate);
+				}
+			}
+			return Status.OK_STATUS;
+		}
+
+	}
 
 	public TaskService(IPath baseLocation) {
 		store = new TaskStore(baseLocation.toFile());
@@ -78,11 +105,9 @@ public class TaskService implements ITaskService {
 		notifyListeners(userId, task.getModified());
 		return task;
 	}
-	
-	private synchronized void notifyListeners(String userId, Date modificationDate){
-		for(TaskModificationListener listener: taskListeners){
-			listener.tasksModified(userId, modificationDate);
-		}
+
+	private void notifyListeners(String userId, Date modificationDate) {
+		new TasksNotificationJob(userId, modificationDate).schedule();
 	}
 
 	public TaskInfo getTask(String userId, String id) {
@@ -130,13 +155,17 @@ public class TaskService implements ITaskService {
 		}
 		return tasks;
 	}
-	
-	public synchronized void addTaskModyficationListener(TaskModificationListener listener){
-		this.taskListeners.add(listener);
+
+	public void addTaskModyficationListener(TaskModificationListener listener) {
+		synchronized (taskListeners) {
+			this.taskListeners.add(listener);
+		}
 	}
-	
-	public synchronized void removeTaskModyficationListener(TaskModificationListener listener){
-		this.taskListeners.remove(listener);
+
+	public synchronized void removeTaskModyficationListener(TaskModificationListener listener) {
+		synchronized (taskListeners) {
+			this.taskListeners.remove(listener);
+		}
 	}
 
 }
