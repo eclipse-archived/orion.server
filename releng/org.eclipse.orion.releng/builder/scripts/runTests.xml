@@ -19,7 +19,7 @@
 		
 		<antcall target="prepareJsTests"/>
 		<parallel>
-<!--			<antcall target="triggerHudsonTests"/> -->
+			<antcall target="triggerHudsonTests"/>
 			<antcall target="jsTests" />
 		</parallel>
 		
@@ -124,9 +124,20 @@
 		<property name="JSON_buildZip" value="{&quot;name&quot;:&quot;buildZip&quot;,&quot;value&quot;:&quot;${baseURL}/${buildType}${timestamp}/test/${buildLabel}.zip&quot;}"/>
 		<property name="JSON_repository" value="{&quot;name&quot;:&quot;repository&quot;,&quot;value&quot;:&quot;${baseURL}/target/0.3-${buildType}-builds/${buildLabel}&quot;}"/>
 		<property name="json" value="{&quot;parameter&quot;: [${JSON_buildZip}, ${JSON_repository}] }"/>
+
+		<!-- fetch the next hudson build number from the hudson job API -->
+		<exec executable="curl">
+			<arg line="-G" />
+			<arg value="https://hudson.eclipse.org/hudson/job/orion-jstest-windows/api/json" />
+			<arg line="-o ${buildDirectory}/nextBuildNumber" />
+		</exec>
 		
-		<loadfile property="nextHudsonBuild" srcFile="/shared/jobs/orion-jstest-windows/nextBuildNumber">
-			<filterchain><striplinebreaks/></filterchain>
+		<loadfile property="nextHudsonBuild" srcFile="${buildDirectory}/nextBuildNumber">
+			<filterchain>
+				<tokenfilter>
+				    <replaceregex pattern="nextBuildNumber&quot;:([0-9]*)" replace="\1"/>
+				</tokenfilter>
+			</filterchain>
 		</loadfile>
 		<echo message="Next hudson build number is ${nextHudsonBuild}."/>
 		<echo message="${json}"/>
