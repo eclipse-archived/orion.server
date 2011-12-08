@@ -12,10 +12,10 @@ package org.eclipse.orion.server.git.servlets;
 
 import java.io.*;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Map.Entry;
 import java.util.Set;
 import javax.servlet.ServletException;
+import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
@@ -32,6 +32,8 @@ import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.patch.ApplyCommand;
+import org.eclipse.orion.server.git.patch.ApplyResult;
 import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
@@ -58,6 +60,7 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String gitPathInfo) throws ServletException {
 		Repository db = null;
 		try {
+			// {scope}/file/{path}
 			Path path = new Path(gitPathInfo);
 			IPath filePath = path.hasTrailingSeparator() ? path : path.removeLastSegments(1);
 			Set<Entry<IPath, File>> set = GitUtils.getGitDirs(filePath.removeFirstSegments(1), Traverse.GO_UP).entrySet();
@@ -163,22 +166,76 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 		return new UniversalUniqueIdentifier().toBase64String();
 	}
 
-	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws IOException, JSONException, URISyntaxException {
-		JSONObject requestObject = OrionServlet.readJSONRequest(request);
-		URI u = getURI(request);
-		IPath p = new Path(u.getPath());
-		IPath np = new Path("/"); //$NON-NLS-1$
-		for (int i = 0; i < p.segmentCount(); i++) {
-			String s = p.segment(i);
-			if (i == 2) {
-				s += ".." + requestObject.getString(GitConstants.KEY_COMMIT_NEW); //$NON-NLS-1$
+	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws Exception {
+		String contentType = request.getHeader(ProtocolConstants.HEADER_CONTENT_TYPE);
+		if (contentType.startsWith("multipart")) {//$NON-NLS-1$
+			String patch = readPatch(request.getInputStream(), contentType);
+			ApplyCommand applyCommand = new ApplyCommand(db);
+			applyCommand.setPatch(IOUtilities.toInputStream(patch));
+			/*ApplyResult applyResult = */applyCommand.call();
+			// OrionServlet.writeJSONResponse(request, response, toJSON(applyResult));
+			response.setStatus(HttpServletResponse.SC_CREATED);
+			response.setContentType(ProtocolConstants.CONTENT_TYPE_HTML);
+			response.getOutputStream().write(new String("<head></head><body><textarea>{}</textarea></body>").getBytes());
+
+		} else {
+			StringWriter writer = new StringWriter();
+			IOUtilities.pipe(request.getReader(), writer, false, false);
+			JSONObject requestObject = new JSONObject(writer.toString());
+			URI u = getURI(request);
+			IPath p = new Path(u.getPath());
+			IPath np = new Path("/"); //$NON-NLS-1$
+			for (int i = 0; i < p.segmentCount(); i++) {
+				String s = p.segment(i);
+				if (i == 2) {
+					s += ".." + requestObject.getString(GitConstants.KEY_COMMIT_NEW); //$NON-NLS-1$
+				}
+				np = np.append(s);
 			}
-			np = np.append(s);
+			URI nu = new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), np.toString(), u.getQuery(), u.getFragment());
+			response.setHeader(ProtocolConstants.HEADER_LOCATION, nu.toString());
+			response.setStatus(HttpServletResponse.SC_OK);
+
 		}
-		URI nu = new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), np.toString(), u.getQuery(), u.getFragment());
-		response.setHeader(ProtocolConstants.HEADER_LOCATION, nu.toString());
-		response.setStatus(HttpServletResponse.SC_OK);
 		return true;
+	}
+
+	private Object toJSON(ApplyResult applyResult) throws JSONException {
+		JSONObject result = new JSONObject();
+		if (applyResult.getApplyErrors().isEmpty() && applyResult.getFormatErrors().isEmpty()) {
+			result.put(GitConstants.KEY_RESULT, "Ok");
+		} else {
+			if (!applyResult.getFormatErrors().isEmpty())
+				result.put("FormatErrors", applyResult.getFormatErrors());
+			if (!applyResult.getApplyErrors().isEmpty())
+				result.put("ApplyErrors", applyResult.getApplyErrors());
+		}
+		return result;
+	}
+
+	private String readPatch(ServletInputStream requestStream, String contentType) throws IOException {
+		//fast forward stream past multi-part header
+		int boundaryOff = contentType.indexOf("boundary="); //$NON-NLS-1$
+		String boundary = contentType.substring(boundaryOff + 9);
+		BufferedReader reader = new BufferedReader(new InputStreamReader(requestStream, "ISO-8859-1")); //$NON-NLS-1$
+		StringBuffer out = new StringBuffer();
+		try {
+			//skip headers up to the first blank line
+			String line = reader.readLine();
+			while (line != null && line.length() > 0)
+				line = reader.readLine();
+			//now process the patch
+			char[] buf = new char[1000];
+			int read;
+			while ((read = reader.read(buf)) > 0) {
+				out.append(buf, 0, read);
+			}
+		} finally {
+			IOUtilities.safeClose(reader);
+		}
+		//remove the boundary from the output (end of input is \r\n--<boundary>--\r\n)
+		out.setLength(out.length() - (boundary.length() + 8));
+		return out.toString();
 	}
 
 	private AbstractTreeIterator getTreeIterator(Repository db, String name) throws IOException {
