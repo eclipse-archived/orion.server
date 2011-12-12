@@ -145,7 +145,13 @@ public class Indexer extends Job {
 			String projectRelativePath = file.toURI().toString().substring(projectLocationLength);
 			IPath fileLocation = projectLocation.append(projectRelativePath);
 			doc.addField(ProtocolConstants.KEY_LOCATION, fileLocation.toString());
-			doc.addField(ProtocolConstants.KEY_PATH, new Path(project.getName()).append(projectRelativePath));
+			String projectName = project.getName();
+			if (projectName == null) {
+				//Projects with no name have occurred but for unknown reason - see bug 366088.
+				handleIndexingFailure(new RuntimeException("Failure indexing project with no name: " + project.getId())); //$NON-NLS-1$
+				projectName = "Unknown Project";
+			}
+			doc.addField(ProtocolConstants.KEY_PATH, new Path(projectName).append(projectRelativePath));
 			doc.addField("Text", getContentsAsString(file)); //$NON-NLS-1$
 			if (users != null)
 				for (String user : users)
