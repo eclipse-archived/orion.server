@@ -223,6 +223,45 @@ public class GitCheckoutTest extends GitTest {
 	}
 
 	@Test
+	public void testCheckoutUntrackedFile() throws Exception {
+		// clone a repo
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		clone(clonePath);
+
+		// get project metadata
+		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		project = new JSONObject(response.getText());
+
+		String fileName = "new.txt";
+		request = getPostFilesRequest(project.getString(ProtocolConstants.KEY_LOCATION), getNewFileJSON(fileName).toString(), fileName);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
+		String gitCloneUri = GitStatusTest.getCloneUri(gitStatusUri);
+
+		// checkout the new file
+		request = getCheckoutRequest(gitCloneUri, new String[] {fileName});
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// nothing has changed, checkout doesn't touch untracked files
+		assertStatus(new StatusResult().setUntrackedNames(fileName), gitStatusUri);
+
+		// discard the new file
+		request = getCheckoutRequest(gitCloneUri, new String[] {fileName}, true);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		assertStatus(StatusResult.CLEAN, gitStatusUri);
+	}
+
+	@Test
 	public void testCheckoutAfterResetByPath() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
@@ -593,6 +632,10 @@ public class GitCheckoutTest extends GitTest {
 	}
 
 	private WebRequest getCheckoutRequest(String location, String[] paths) throws IOException, JSONException {
+		return getCheckoutRequest(location, paths, false);
+	}
+
+	private WebRequest getCheckoutRequest(String location, String[] paths, boolean removeUntracked) throws IOException, JSONException {
 		String requestURI;
 		if (location.startsWith("http://")) {
 			// assume the caller knows what he's doing
@@ -606,6 +649,8 @@ public class GitCheckoutTest extends GitTest {
 		for (String path : paths)
 			jsonPaths.put(path);
 		body.put(ProtocolConstants.KEY_PATH, jsonPaths);
+		if (removeUntracked)
+			body.put(GitConstants.KEY_REMOVE_UNTRACKED, removeUntracked);
 		WebRequest request = new PutMethodWebRequest(requestURI, IOUtilities.toInputStream(body.toString()), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
