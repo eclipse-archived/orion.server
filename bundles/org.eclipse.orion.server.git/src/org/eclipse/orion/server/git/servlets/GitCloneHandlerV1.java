@@ -14,8 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -23,6 +22,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.CheckoutCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.*;
+import org.eclipse.jgit.dircache.DirCache;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.URIish;
@@ -306,6 +306,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 				JSONArray paths = toCheckout.optJSONArray(ProtocolConstants.KEY_PATH);
 				String branch = toCheckout.optString(GitConstants.KEY_BRANCH_NAME, null);
 				String tag = toCheckout.optString(GitConstants.KEY_TAG_NAME, null);
+				boolean removeUntracked = toCheckout.optBoolean(GitConstants.KEY_REMOVE_UNTRACKED, false);
 				if ((paths == null || paths.length() == 0) && branch == null && tag == null) {
 					String msg = NLS.bind("Either '{0}' or '{1}' or '{2}' should be provided, got: {3}", new Object[] {ProtocolConstants.KEY_PATH, GitConstants.KEY_BRANCH_NAME, GitConstants.KEY_TAG_NAME, toCheckout});
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
@@ -313,12 +314,19 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 
 				Git git = new Git(new FileRepository(gitDir));
 				if (paths != null) {
-
+					Set<String> toRemove = new HashSet<String>();
 					CheckoutCommand checkout = git.checkout();
 					for (int i = 0; i < paths.length(); i++) {
-						checkout.addPath(paths.getString(i));
+						String p = paths.getString(i);
+						if (removeUntracked && !isInIndex(git.getRepository(), p))
+							toRemove.add(p);
+						checkout.addPath(p);
 					}
 					checkout.call();
+					for (String p : toRemove) {
+						File f = new File(git.getRepository().getWorkTree(), p);
+						f.delete();
+					}
 					return true;
 				} else if (tag != null && branch != null) {
 					CheckoutCommand co = git.checkout();
@@ -371,6 +379,11 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 				return true;
 		}
 		return false;
+	}
+
+	private boolean isInIndex(Repository db, String path) throws IOException {
+		DirCache dc = DirCache.read(db.getIndexFile(), db.getFS());
+		return dc.getEntry(path) != null;
 	}
 
 	private boolean handleDelete(HttpServletRequest request, HttpServletResponse response, String pathString) throws IOException, JSONException, ServletException, URISyntaxException, CoreException, JGitInternalException, GitAPIException {
