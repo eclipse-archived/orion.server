@@ -122,10 +122,10 @@ public class GitTagTest extends GitTest {
 
 			tags = listTags(gitTagUri);
 			assertEquals(2, tags.length());
-			assertEquals("tag2", tags.getJSONObject(1).get(ProtocolConstants.KEY_NAME));
+			assertEquals("tag2", tags.getJSONObject(0).get(ProtocolConstants.KEY_NAME));
 
 			// delete 'tag1'
-			JSONObject tag1 = tags.getJSONObject(0);
+			JSONObject tag1 = tags.getJSONObject(1);
 			assertEquals("tag1", tag1.get(ProtocolConstants.KEY_NAME));
 			String tag1Uri = tag1.getString(ProtocolConstants.KEY_LOCATION);
 			deleteTag(tag1Uri);
@@ -335,5 +335,12 @@ public class GitTagTest extends GitTest {
 
 		JSONArray tags = listTags(gitTagUri);
 		assertTrue(tags.length() > 0);
+		// assert properly sorted, new first
+		long lastTime = Long.MAX_VALUE;
+		for (int i = 0; i < tags.length(); i++) {
+			long t = tags.getJSONObject(i).getLong(ProtocolConstants.KEY_LOCAL_TIMESTAMP);
+			assertTrue(t <= lastTime);
+			lastTime = t;
+		}
 	}
 }

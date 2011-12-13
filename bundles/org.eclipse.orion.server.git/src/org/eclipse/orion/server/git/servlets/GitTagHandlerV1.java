@@ -14,7 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -99,9 +99,14 @@ public class GitTagHandlerV1 extends ServletResourceHandler<String> {
 			// List<RevTag> revTags = git.tagList().call();
 			Map<String, Ref> refs = db.getRefDatabase().getRefs(Constants.R_TAGS);
 			JSONObject result = new JSONObject();
-			JSONArray children = new JSONArray();
+			List<Tag> tags = new ArrayList<Tag>();
 			for (Entry<String, Ref> refEntry : refs.entrySet()) {
 				Tag tag = new Tag(cloneLocation, db, refEntry.getValue());
+				tags.add(tag);
+			}
+			Collections.sort(tags, Tag.COMPARATOR);
+			JSONArray children = new JSONArray();
+			for (Tag tag : tags) {
 				children.put(tag.toJSON());
 			}
 			result.put(ProtocolConstants.KEY_CHILDREN, children);
