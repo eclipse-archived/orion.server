@@ -10,12 +10,13 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.objects;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Comparator;
 import org.eclipse.core.runtime.*;
-import org.eclipse.jgit.lib.Ref;
-import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.revwalk.RevTag;
+import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.revwalk.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -24,6 +25,11 @@ public class Tag extends GitObject {
 
 	public static final String RESOURCE = "tag"; //$NON-NLS-1$
 	public static final String TYPE = "Tag"; //$NON-NLS-1$
+	public static final Comparator<Tag> COMPARATOR = new Comparator<Tag>() {
+		public int compare(Tag o1, Tag o2) {
+			return o1.getTime() < o2.getTime() ? 1 : (o1.getTime() > o2.getTime() ? -1 : o2.getName().compareTo(o1.getName()));
+		}
+	};
 
 	private RevTag tag;
 	private Ref ref;
@@ -44,6 +50,7 @@ public class Tag extends GitObject {
 		JSONObject result = new JSONObject();
 		result.put(ProtocolConstants.KEY_NAME, getName());
 		result.put(ProtocolConstants.KEY_LOCATION, getLocation());
+		result.put(ProtocolConstants.KEY_LOCAL_TIMESTAMP, (long) getTime() * 1000);
 		result.put(ProtocolConstants.KEY_TYPE, TYPE);
 		return result;
 	}
@@ -63,5 +70,28 @@ public class Tag extends GitObject {
 			tagLocation = new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), p.toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
 		}
 		return tagLocation;
+	}
+
+	public int getTime() {
+		RevCommit c = null;
+		if (tag != null)
+			c = parseCommit(tag.toObjectId());
+		else if (ref != null)
+			c = parseCommit(ref.getObjectId());
+		if (c != null)
+			return c.getCommitTime();
+		return 0;
+	}
+
+	private RevCommit parseCommit(ObjectId oid) {
+		RevWalk walk = new RevWalk(db);
+		try {
+			return walk.parseCommit(oid);
+		} catch (IOException e) {
+			// ignore and return null
+		} finally {
+			walk.release();
+		}
+		return null;
 	}
 }
