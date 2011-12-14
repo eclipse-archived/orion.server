@@ -50,6 +50,7 @@ plugin@org.eclipse.equinox.util=p2IU,id=org.eclipse.equinox.util,repository=ECLI
 #Jetty and its dependencies
 plugin@javax.el=p2IU,id=javax.el,repository=ECLIPSE_PLATFORM_REPO
 plugin@com.sun.el=p2IU,id=com.sun.el,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.jetty.security=p2IU,id=org.eclipse.jetty.security,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.jetty.server=p2IU,id=org.eclipse.jetty.server,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.jetty.servlet=p2IU,id=org.eclipse.jetty.servlet,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.jetty.util=p2IU,id=org.eclipse.jetty.util,repository=ECLIPSE_PLATFORM_REPO
