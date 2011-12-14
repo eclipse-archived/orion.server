@@ -59,6 +59,8 @@ plugin@org.eclipse.jetty.continuation=p2IU,id=org.eclipse.jetty.continuation,rep
 plugin@javax.servlet=p2IU,id=javax.servlet,repository=ECLIPSE_PLATFORM_REPO
 plugin@javax.servlet.jsp=p2IU,id=javax.servlet.jsp,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.apache.jasper.glassfish=p2IU,id=org.apache.jasper.glassfish,repository=ECLIPSE_PLATFORM_REPO
+#Not in the SDK but we need it for GZipFilter
+plugin@org.eclipse.jetty.servlets,8.1.0=p2IU,id=org.eclipse.jetty.servlets,version=8.1.0.RC1,repository=http://download.eclipse.org/jetty/updates/jetty-bundles-8.x/8.1.0.RC1/
 
 #Required by tests
 plugin@org.eclipse.core.resources=p2IU,id=org.eclipse.core.resources,repository=ECLIPSE_PLATFORM_REPO
