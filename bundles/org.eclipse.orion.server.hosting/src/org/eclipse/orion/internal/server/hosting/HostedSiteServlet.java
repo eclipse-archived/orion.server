@@ -19,6 +19,7 @@ import javax.servlet.http.*;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
+import org.eclipse.jetty.servlets.ProxyServlet;
 import org.eclipse.orion.internal.server.core.IAliasRegistry;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
@@ -30,7 +31,6 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONException;
-import org.mortbay.servlet.ProxyServlet;
 
 /**
  * Handles requests for URIs that are part of a running hosted site.
