@@ -50,7 +50,7 @@ plugin@org.eclipse.orion.server.sshconfig.home=GIT,tag=v20110420-1839,repo=git:/
 plugin@org.eclipse.jgit=p2IU,id=org.eclipse.jgit,repository=http://download.eclipse.org/egit/updates-nightly
 
 #features
-feature@org.eclipse.orion.base.feature=GIT,tag=v20111214-2107,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=features/org.eclipse.orion.base-feature
+feature@org.eclipse.orion.base.feature=GIT,tag=v20111214-2125,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=features/org.eclipse.orion.base-feature
 feature@org.eclipse.orion.server.feature=GIT,tag=v20111102-1319,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=features/org.eclipse.orion.server-feature
 feature@org.eclipse.orion.server.search.feature=GIT,tag=v20111102-1320,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=features/org.eclipse.orion.server.search-feature
 feature@org.eclipse.orion.server.authentication.feature=GIT,tag=v20111102-1320,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=features/org.eclipse.orion.server.authentication-feature
