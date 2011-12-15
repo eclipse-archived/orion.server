@@ -17,8 +17,9 @@ import java.util.Enumeration;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.mortbay.servlet.ProxyServlet;
-import org.mortbay.util.IO;
+import org.eclipse.jetty.http.HttpURI;
+import org.eclipse.jetty.servlets.ProxyServlet;
+import org.eclipse.jetty.util.IO;
 
 /**
  * Override the Jetty ProxyServlet implementation. Do this to tolerate some unusual 
@@ -31,16 +32,21 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 		_DontProxyHeaders.add("host");
 	}
 
-	private URL url;
+	private HttpURI url;
 	private final boolean failEarlyOn404;
 
 	public RemoteURLProxyServlet(URL url, boolean failEarlyOn404) {
-		this.url = url;
-		this.failEarlyOn404 = failEarlyOn404;
+		try {
+			this.url = new HttpURI(url.toURI());
+			this.failEarlyOn404 = failEarlyOn404;
+		} catch (URISyntaxException e) {
+			//should be well formed
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
-	protected URL proxyHttpURL(final String scheme, final String serverName, int serverPort, final String uri) throws MalformedURLException {
+	protected HttpURI proxyHttpURI(final String scheme, final String serverName, int serverPort, final String uri) throws MalformedURLException {
 		return url;
 	}
 
@@ -57,9 +63,10 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 			if (request.getQueryString() != null)
 				uri += "?" + request.getQueryString();
 
-			URL url = proxyHttpURL(request.getScheme(), request.getServerName(), request.getServerPort(), uri);
+			HttpURI url = proxyHttpURI(request.getScheme(), request.getServerName(), request.getServerPort(), uri);
 
-			URLConnection connection = url.openConnection();
+			URL rawURL = new URL(url.toString());
+			URLConnection connection = rawURL.openConnection();
 			connection.setAllowUserInteraction(false);
 
 			// Set method
@@ -91,7 +98,7 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 					// Bug 346139: set Host based on the destination URL being proxied
 					int port = url.getPort();
 					String realHost;
-					if (port == -1 || port == url.getDefaultPort())
+					if (port == -1 || port == rawURL.getDefaultPort())
 						realHost = url.getHost();
 					else
 						realHost = url.getHost() + ":" + port;

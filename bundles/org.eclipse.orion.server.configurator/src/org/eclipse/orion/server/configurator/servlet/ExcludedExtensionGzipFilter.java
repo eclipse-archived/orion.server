@@ -19,7 +19,7 @@ import javax.servlet.http.HttpServletRequest;
 /**
  * A filter that gzips all contents except excluded extensions and server-side includes.
  */
-public class ExcludedExtensionGzipFilter extends org.mortbay.servlet.GzipFilter {
+public class ExcludedExtensionGzipFilter extends org.eclipse.jetty.servlets.GzipFilter {
 	static final String INCLUDE_REQUEST_URI_ATTRIBUTE = "javax.servlet.include.request_uri"; //$NON-NLS-1$
 
 	private HashSet<String> excludedExtensions = new HashSet<String>();
