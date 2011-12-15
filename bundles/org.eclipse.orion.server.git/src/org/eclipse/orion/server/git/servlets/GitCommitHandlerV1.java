@@ -26,7 +26,6 @@ import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.api.RebaseCommand.Operation;
 import org.eclipse.jgit.api.errors.*;
 import org.eclipse.jgit.errors.AmbiguousObjectException;
-import org.eclipse.jgit.errors.CheckoutConflictException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.merge.ResolveMerger.MergeFailureReason;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -371,17 +370,17 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 				result.put(GitConstants.KEY_FAILING_PATHS, mergeResult.getFailingPaths());
 			OrionServlet.writeJSONResponse(request, response, result);
 			return true;
+		} catch (CheckoutConflictException e) {
+			return workaroundBug356918(request, response, e);
 		} catch (IOException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when merging.", e));
 		} catch (GitAPIException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when merging.", e));
-		} catch (JGitInternalException e) {
-			return workaroundBug356918(request, response, e);
 		}
 	}
 
 	private boolean workaroundBug356918(HttpServletRequest request, HttpServletResponse response, Exception e) throws ServletException, JSONException {
-		if (e.getCause() instanceof CheckoutConflictException) {
+		if (e instanceof CheckoutConflictException) {
 			JSONObject result = new JSONObject();
 			result.put(GitConstants.KEY_RESULT, MergeStatus.FAILED.name());
 			Map<String, MergeFailureReason> failingPaths = new HashMap<String, MergeFailureReason>();
