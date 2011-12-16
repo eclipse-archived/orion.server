@@ -131,7 +131,7 @@
          </init-param>
          <init-param
                name="includeMatches"
-               value=".*[.](js|html|css|prefs)$">
+               value=".*[.](js|html|css|pref)$">
          </init-param>
          <init-param
                name="excludeMatches"
