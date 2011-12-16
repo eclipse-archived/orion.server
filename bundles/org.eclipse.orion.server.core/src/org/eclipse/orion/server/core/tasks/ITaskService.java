@@ -59,9 +59,10 @@ public interface ITaskService {
 	 * Returns a list of tasks tracked for given user that have been modified since <code>modifiedSince</code> date.
 	 * @param userId id of the user starting the task or if not logged in temporary identifier, for instance a session id
 	 * @param modifiedSince a starting date since which modified tasks will be returned
+	 * @param runningOnly return only running tasks
 	 * @return a list of tasks owned by the user
 	 */
-	List<TaskInfo> getTasks(String userId, Date modifiedSince);
+	List<TaskInfo> getTasks(String userId, Date modifiedSince, boolean runningOnly);
 
 	/**
 	 * Updates the state of the given task within the task service. Any changes

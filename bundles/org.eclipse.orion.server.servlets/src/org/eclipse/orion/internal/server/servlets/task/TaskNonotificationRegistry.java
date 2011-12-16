@@ -92,7 +92,7 @@ public class TaskNonotificationRegistry {
 		public synchronized void tasksModified(String userId, Date modificationDate) {
 			if (!this.userId.equals(userId))
 				return;
-			notify(modificationDate, service.getTasks(userId, lastNodifications.get(getName())));
+			notify(modificationDate, service.getTasks(userId, lastNodifications.get(getName()), false));
 
 		}
 	}
@@ -136,7 +136,7 @@ public class TaskNonotificationRegistry {
 
 		if (notifyNow) {
 			Date timestamp = new Date();
-			List<TaskInfo> tasks = service.getTasks(userId, lastNodifications.get(longpollingId));
+			List<TaskInfo> tasks = service.getTasks(userId, lastNodifications.get(longpollingId), false);
 			if (!tasks.isEmpty()) {
 				listenerJob.notify(timestamp, tasks);
 			}

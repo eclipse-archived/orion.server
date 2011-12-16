@@ -37,6 +37,7 @@ public class TaskServlet extends OrionServlet {
 	private static final long serialVersionUID = 1L;
 
 	public static final int LONGPOLLING_WAIT_TIME = 60000;
+	public static final String KEY_RUNNING_ONLY = "RunningOnly";//$NON-NLS-1$
 
 	ServiceTracker<ITaskService, ITaskService> taskTracker;
 	TaskNonotificationRegistry notificationRegistry;
@@ -146,6 +147,7 @@ public class TaskServlet extends OrionServlet {
 		ITaskService taskService = taskTracker.getService();
 
 		if (path.segmentCount() == 0) {
+			boolean runningOnly = "true".equals(req.getParameter(KEY_RUNNING_ONLY));
 			if ("true".equals(req.getParameter(ProtocolConstants.KEY_LONGPOLLING))) {
 				if (req.getParameter(ProtocolConstants.KEY_LONGPOLLING_ID) == null) {
 
@@ -157,7 +159,7 @@ public class TaskServlet extends OrionServlet {
 						//if we can't get timestamp from request than we return all changes
 					}
 
-					List<TaskInfo> tasks = taskService.getTasks(getUserId(req), modifiedFrom);
+					List<TaskInfo> tasks = taskService.getTasks(getUserId(req), modifiedFrom, runningOnly);
 					try {
 						JSONObject result = getTasksList(tasks, timestamp, req, resp);
 						result.put(ProtocolConstants.KEY_LONGPOLLING_ID, new UniversalUniqueIdentifier().toBase64String());
@@ -214,7 +216,7 @@ public class TaskServlet extends OrionServlet {
 				//if we can't get timestamp from request than we return all changes
 			}
 
-			List<TaskInfo> tasks = taskService.getTasks(getUserId(req), modifiedFrom);
+			List<TaskInfo> tasks = taskService.getTasks(getUserId(req), modifiedFrom, runningOnly);
 			try {
 				writeJSONResponse(req, resp, getTasksList(tasks, timestamp, req, resp));
 			} catch (JSONException e) {
