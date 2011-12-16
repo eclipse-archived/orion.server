@@ -127,7 +127,7 @@ public class TaskService implements ITaskService {
 	}
 
 	public List<TaskInfo> getTasks(String userId) {
-		return getTasks(userId, null);
+		return getTasks(userId, null, false);
 	}
 
 	public void cancelTask(TaskInfo task) throws TaskOperationException {
@@ -138,7 +138,7 @@ public class TaskService implements ITaskService {
 		taskCanceler.cancelTask();
 	}
 
-	public List<TaskInfo> getTasks(String userId, Date modifiedSince) {
+	public List<TaskInfo> getTasks(String userId, Date modifiedSince, boolean running) {
 		List<TaskInfo> tasks = new ArrayList<TaskInfo>();
 		for (String taskString : store.readAllTasks(userId)) {
 			TaskInfo info = TaskInfo.fromJSON(taskString);
@@ -146,6 +146,9 @@ public class TaskService implements ITaskService {
 				if (info.getModified().getTime() < modifiedSince.getTime()) {
 					continue;
 				}
+			}
+			if(running && !info.isRunning()){
+				continue;
 			}
 
 			ITaskCanceler taskCanceler = taskCancelers.get(info.getTaskId());
