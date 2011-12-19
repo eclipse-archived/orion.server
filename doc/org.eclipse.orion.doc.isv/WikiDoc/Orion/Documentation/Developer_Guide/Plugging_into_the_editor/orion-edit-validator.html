@@ -31,7 +31,7 @@
 		</table><hr/>
 		<h1 id="orion.edit.validator">orion.edit.validator</h1>
 		<p>An <tt>orion.edit.validator</tt> service provides a function that can check the contents of a file and return a data structure indicating which lines (if any) have problems. The result of this service is used by the Orion UI to create annotations in the ruler beside each problematic line, and also to underline the specific portion of a line where the problem occurs.</p>
-		<h2 id="Service_methods_4">Service methods</h2>
+		<h2 id="Service_methods_5">Service methods</h2>
 		<p>Implementations of <tt>orion.edit.validator</tt> must define the following function:</p>
 		<dl>
 			<dt>checkSyntax(title, contents)</dt>
@@ -54,13 +54,13 @@
 				<i>Optional</i> Gives the severity of this problem. The severity affects how the problem is displayed in the Orion UI. Allowed values are <tt>"warning"</tt> and <tt>"error"</tt>. (If omitted, <tt>"error"</tt> is assumed.)
 			</dd>
 		</dl>
-		<h2 id="Service_attributes_4">Service attributes</h2>
+		<h2 id="Service_attributes_5">Service attributes</h2>
 		<p>Implementations of <tt>orion.edit.validator</tt> must define the following attributes:</p>
 		<dl>
 			<dt>pattern</dt>
 			<dd><tt>String</tt> A regular expression pattern matching the filenames that this validator is capable of validating.</dd>
 		</dl>
-		<h2 id="Examples_4">Examples</h2>
+		<h2 id="Examples_5">Examples</h2>
 		<pre>var provider = new eclipse.PluginProvider();
 var serviceProvider = provider.registerServiceProvider("orion.edit.validator",
   {

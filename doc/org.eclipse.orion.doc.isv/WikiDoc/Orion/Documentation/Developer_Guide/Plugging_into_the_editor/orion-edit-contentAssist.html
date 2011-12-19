@@ -18,7 +18,7 @@
 				</td>
 				<td style="width: 60%" align="center"></td>
 				<td style="width: 20%" align="right">
-					<a href="orion-edit-highlighter.html" title="orion.edit.highlighter">
+					<a href="orion-edit-editor.html" title="orion.edit.editor">
 						<img alt="Next" border="0" src="../../../../images/next.gif"/>
 					</a>
 				</td>
@@ -26,7 +26,7 @@
 			<tr>
 				<td style="width: 20%" align="left" valign="top">orion.edit.command</td>
 				<td style="width: 60%" align="center"></td>
-				<td style="width: 20%" align="right" valign="top">orion.edit.highlighter</td>
+				<td style="width: 20%" align="right" valign="top">orion.edit.editor</td>
 			</tr>
 		</table><hr/>
 		<h1 id="orion.edit.contentAssist">orion.edit.contentAssist</h1>
@@ -36,7 +36,6 @@
 		<dl>
 			<dt>getKeywords(prefix, buffer, selection)</dt>
 			<dd>When content assist is triggered, the editor calls this function to obtain suggestions from a content assist provider.
-				<br/>Returns <tt>Array</tt> giving possible strings that may be inserted into the editor.
 				<br/>Alternatively, a 
 				<a href="http://dojotoolkit.org/documentation/tutorials/1.6/promises/" target="orion_external">Dojo promise</a> may be returned, which allows the suggestions to be computed asynchronously.
 				<dl>
@@ -52,6 +51,13 @@
 				</dl>
 			</dd>
 		</dl>
+		<p>Returns an <tt>Array</tt> giving possible completions that may be inserted into the editor. Result elements must be either <tt>String</tt> objects with literal string completions, or proposal objects with the following properties:</p>
+		<dl>
+			<dd><b>proposal</b> <tt>String</tt> completion text that will be inserted in the editor if chosen</dd>
+			<dd><b>description</b> An optional <tt>String</tt> describing the completion. If provided, this text will be shown in the content assist popup. If not provided, the <b>proposal</b> will be shown instead.</dd>
+			<dd><b>positions</b> An optional array of positions within the completion proposal that require user input. Supplying this property will cause the editor to enter <i>linked mode</i>, and the user can use the <b>Tab</b> key to iterate through the regions of the proposal that require user input. For example if the completion is a function, the positions could indicate the function arguments that need to be supplied. Entries in this position array must be objects with two integer properties: <b>offset</b>, and <b>length</b> describing the regions requiring user input.</dd>
+			<dd><b>escapePosition</b> An optional integer indicating the offset the cursor should have in the document after the completion is inserted. If this value is not supplied, the cursor will be positioned at the end of the inserted text.</dd>
+		</dl>
 		<h2 id="Service_attributes_2">Service attributes</h2>
 		<p>Implementations of <tt>orion.edit.contentAssist</tt> must define the following attributes:</p>
 		<dl>
@@ -61,6 +67,7 @@
 			<dd><tt>String</tt> A regular expression pattern matching filenames that this provider can provide content assist for. The provider's <tt>getKeywords</tt> function will be called only for files that match this pattern.</dd>
 		</dl>
 		<h2 id="Examples_2">Examples</h2>
+		<p>The example below provides content assist suggestions for files whose name ends in <tt>.js</tt>. It offers JavaScript keywords as suggestions.</p>
 		<pre>var provider = new eclipse.PluginProvider();
 provider.registerServiceProvider("orion.edit.contentAssist",
   {
@@ -76,7 +83,26 @@ provider.registerServiceProvider("orion.edit.contentAssist",
   });
 provider.connect();
 </pre>
-		<p>The above example provides content assist suggestions for files whose name ends in <tt>.js</tt>. It offers JavaScript keywords as suggestions.</p><hr/>
+		<p>The example below will provide completion on the character 'a' that will insert an HTML anchor element. After completion the cursor will be positioned within the <tt>href</tt> attribute.</p>
+		<pre>var provider = new eclipse.PluginProvider();
+provider.registerServiceProvider("orion.edit.contentAssist",
+  {
+    getKeywords: function(prefix, buffer, selection) {
+      var proposals = [];
+      if (prefix === 'a') {
+        proposals.push({
+          proposal: "a href=\"\"&gt;&lt;/a&gt;", 
+          description: "&lt;a&gt;&lt;/a&gt; - HTML anchor element", 
+          escapePosition: selection.offset+7});
+      }
+      return proposals;
+  },
+  {
+    name: "HTML content assist",
+    pattern: "\\.html?$"
+  });
+provider.connect();
+</pre><hr/>
 		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
 			<tr>
 				<td style="width: 20%" align="left">
@@ -90,7 +116,7 @@ provider.connect();
 					</a>
 				</td>
 				<td style="width: 20%" align="right">
-					<a href="orion-edit-highlighter.html" title="orion.edit.highlighter">
+					<a href="orion-edit-editor.html" title="orion.edit.editor">
 						<img alt="Next" border="0" src="../../../../images/next.gif"/>
 					</a>
 				</td>
@@ -98,7 +124,7 @@ provider.connect();
 			<tr>
 				<td style="width: 20%" align="left" valign="top">orion.edit.command</td>
 				<td style="width: 60%" align="center"></td>
-				<td style="width: 20%" align="right" valign="top">orion.edit.highlighter</td>
+				<td style="width: 20%" align="right" valign="top">orion.edit.editor</td>
 			</tr>
 		</table>
 	</body>

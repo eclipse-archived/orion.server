@@ -77,7 +77,7 @@
   };
 &lt;/script&gt;
 </pre>
-		<p>At this point, we've got an honest-to-goodness Orion plugin, albeit one that does nothing. Let's go over the various parts in detail. <!-- TODO maybe mention WHEN this code will be executed by the browser (ie. at load time, at install time) --></p>
+		<p>At this point, we've got an honest-to-goodness Orion plugin, albeit one that does nothing. Let's go over the various parts in detail. </p>
 		<ul>
 			<li><tt>window.onload</tt> — Runs our function after <tt>plugin.js</tt> has been loaded by the browser. This ensures that the <tt>eclipse.PluginProvider</tt> constructor is available.</li>
 			<li><tt>var provider = new eclipse.PluginProvider()</tt> — Creates a new PluginProvider. The PluginProvider may provide one or more services, but right now ours doesn't provide any.
@@ -87,7 +87,7 @@
 		</ul>
 		<h3 id="Registering_the_service">Registering the service</h3>
 		<p>Now we're going to expose a service to Orion. We'll create and register a service with the 
-			<a href="../../../../\Orion\Documentation\Developer_Guide\Plugging_into_the_editor/orion-edit-command.html#orion.edit.command" title="Orion/Documentation/Developer Guide/Plugging into the editor#orion.edit.command">"orion.edit.command"</a> service type.
+			<a href="../../../../\Orion\Documentation\Developer_Guide\Plugging_into_the_editor/orion-edit-command.html#orion.edit.command" title="Orion/Documentation/Developer Guide/Plugging into the editor#orion.edit.command">orion.edit.command</a> service type.
 			Add the additional lines as shown:
 		</p>
 		<pre>window.onload = function() {

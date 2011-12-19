@@ -30,33 +30,35 @@
 			</tr>
 		</table><hr/>
 		<h1 id="orion.navigate.openWith">orion.navigate.openWith</h1>
-		<p>The <tt>orion.navigate.openWith</tt> service is used to contribute the location of an editor for a particular file type. This service is purely declarative, with no implementation methods required.</p>
+		<p>The <tt>orion.navigate.openWith</tt> service is used to associate a registered editor (see 
+			<a href="../../../../\Orion\Documentation\Developer_Guide\Plugging_into_the_editor/orion-edit-editor.html#orion.edit.editor" title="Orion/Documentation/Developer_Guide/Plugging_into_the_editor#orion.edit.editor">orion.edit.editor</a>) with a registered content type (see 
+			<a href="../../../../\Orion\Documentation\Developer_Guide\Core_client_services/orion-file-contenttype.html#orion.file.contenttype" title="Orion/Documentation/Developer_Guide/Core_client_services#orion.file.contenttype">orion.file.contenttype</a>). Once this association has been made, the editor will be presented as a choice in the "Open With" menu beside files of that content type. 
+		</p>
+		<p>By default, the Orion client UI provides an editor with ID <code>orion.editor</code>, to be used for editing source code. You can refer to this editor ID when you want to associate a new content type with the Orion Editor.</p>
 		<h2 id="Service_methods_2">Service methods</h2>
-		<p>None</p>
+		<p>None. This service is purely declarative.</p>
 		<h2 id="Service_attributes_2">Service attributes</h2>
 		<p>Implementations of <tt>orion.navigate.openWith</tt> must define the following attributes:</p>
 		<dl>
-			<dt>name</dt>
-			<dd>The name of the editor that opens with this service</dd>
-			<dt>href</dt>
-			<dd>The location of the editor to be opened. The variable <tt>${Location}</tt> is substituted with the URL of the file being edited.</dd>
-			<dt>validationProperties</dt>
-			<dd>An object specifying what file types this service is applicable to. Currently the only supported attribute is <tt>Name</tt>, specifying a regular expression to match on the file name.</dd>
+			<dt>editor</dt>
+			<dd><code>String</code> The ID of the editor we want to associate. This must match exactly the editor's ID as given in 
+				<a href="../../../../\Orion\Documentation\Developer_Guide\Plugging_into_the_editor/orion-edit-editor.html#orion.edit.editor" title="Orion/Documentation/Developer_Guide/Plugging_into_the_editor#orion.edit.editor">orion.edit.editor</a>.
+			</dd>
+			<dt>contentType</dt>
+			<dd><code>String[]</code> An array of one or more content type IDs that will be associated with the editor.</dd>
 		</dl>
 		<h2 id="Example_2">Example</h2>
-		<p>Here is a sample plug-in that associates the Orion editor with <code>.md</code> (Markdown) files:</p>
-		<pre>
- var provider = new eclipse.PluginProvider();
- var serviceImpl = {};
- var serviceProperties = {
-   name: "Orion web editor",
-   href: "/edit/edit.html#${Location}",
-   validationProperties: {Name: "*.md"}
- };
- provider.registerServiceProvider("orion.navigate.openWith", serviceImpl, serviceProperties);
+		<p>Here is a sample plug-in that associates the Orion Editor with the <code>"text.markdown"</code> content type. This example assumes that the <code>"text.markdown"</code> type has been previously registered with the 
+			<a href="../../../../\Orion\Documentation\Developer_Guide\Core_client_services/orion-file-contenttype.html#orion.file.contenttype" title="Orion/Documentation/Developer_Guide/Core_client_services#orion.file.contenttype">orion.file.contenttype</a> service.
+		</p>
+		<pre> var provider = new eclipse.PluginProvider();
+ provider.registerServiceProvider("orion.navigate.openWith", {},
+   {  id: "orion.editor",
+      contentType: ["text.markdown"]
+   });
  provider.connect();
 </pre>
-		<p>When this plug-in is installed, the user will see <tt>Orion web editor</tt> as an available target in the <b>Open With</b> Navigator menu beside <code>.md</code> files:</p>
+		<p>When this plug-in is installed, the user will see the Orion Editor as an available target in the <b>Open With</b> Navigator menu beside  files of the Markdown content type:</p>
 		<p>
 			<img border="0" src="images/Orion-file-openWith-example.png"/>
 		</p><hr/>

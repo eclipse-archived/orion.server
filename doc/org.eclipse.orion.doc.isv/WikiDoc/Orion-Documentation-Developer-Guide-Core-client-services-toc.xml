@@ -11,5 +11,10 @@
 	<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Core_client_services/orion-core-marker.html" label="orion.core.marker"></topic>
 	<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Core_client_services/orion-core-preference.html" label="orion.core.preference"></topic>
 	<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Core_client_services/orion-core-textlink.html" label="orion.core.textlink"></topic>
+	<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Core_client_services/orion-file-contenttype.html" label="orion.file.contenttype">
+		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Core_client_services/orion-file-contenttype.html#Service_attributes_2" label="Service attributes"></topic>
+		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Core_client_services/orion-file-contenttype.html#Service_methods_2" label="Service methods"></topic>
+		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Core_client_services/orion-file-contenttype.html#Example" label="Example"></topic>
+	</topic>
 	<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Core_client_services/Updating-this-document.html" label="Updating this document"></topic>
 </toc>

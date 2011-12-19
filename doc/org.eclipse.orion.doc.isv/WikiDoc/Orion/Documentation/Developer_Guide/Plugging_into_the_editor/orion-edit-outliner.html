@@ -30,9 +30,9 @@
 			</tr>
 		</table><hr/>
 		<h1 id="orion.edit.outliner">orion.edit.outliner</h1>
-		<p>An <tt>orion.edit.outliner</tt> service provides an overview of a file being edited. The result returned by this service is a tree, which is rendered in the left-hand pane in the Orion editor. Items in the tree can be links that take you to the appropriate point in the file, or to another URL entirely.</p>
-		<h2 id="Service_methods_5">Service methods</h2>
-		<p>Implementations of <tt>orion.edit.outliner</tt> must define the following function:</p>
+		<p>An <tt>orion.edit.outliner</tt> service provides an overview of a file being edited. The overview is given as a tree, which the Orion UI renders in the left-hand pane alongside the file you are editing. Items in the tree can be links that take you to the appropriate position in the file, or to another URL entirely.</p>
+		<h2 id="Service_methods_6">Service methods</h2>
+		<p>Implementations of <tt>orion.edit.outliner</tt> must have a <code>getOutline</code> method that will be called to generate the outline for a resource. Its signature is as follows:</p>
 		<dl>
 			<dt>getOutline(contents, title)</dt>
 			<dd>
@@ -54,7 +54,7 @@
 			</dd>
 			<dd><b>href</b> <tt>String</tt> <i>Optional</i> When <b>line</b> is omitted, the <b>href</b> property provides a URL to use as the link.</dd>
 		</dl>
-		<h2 id="Service_attributes_5">Service attributes</h2>
+		<h2 id="Service_attributes_6">Service attributes</h2>
 		<p>Implementations of <tt>orion.edit.outliner</tt> must define the following attributes:</p>
 		<dl>
 			<dt>pattern</dt>
@@ -64,7 +64,7 @@
 			<dt>name</dt>
 			<dd><tt>String</tt> A user-readable name for this outline provider.</dd>
 		</dl>
-		<h2 id="Examples_5">Examples</h2>
+		<h2 id="Examples_6">Examples</h2>
 		<p>This example shows an outline provider that runs on .txt files. It finds Mediawiki-style <tt>=Section Headings=</tt> and generates a flat outline from them. (A more elaborate implementation might also find subsections and include them as children of the top-level sections.)</p>
 		<pre>var provider = new eclipse.PluginProvider();
 provider.registerServiceProvider("orion.edit.outliner", {
