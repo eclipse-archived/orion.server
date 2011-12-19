@@ -61,13 +61,22 @@ public class SearchServlet extends OrionServlet {
 			//divide into search terms delimited by space character
 			String[] terms = queryString.split("\\s+"); //$NON-NLS-1$
 			for (String term : terms) {
+				if (term.length() == 0)
+					continue;
 				if (isSearchField(term)) {
 					//field searches are always case sensitive
 					processedQuery += term;
 				} else {
 					//solr does not lowercase queries containing wildcards
 					//see https://bugs.eclipse.org/bugs/show_bug.cgi?id=359766
-					processedQuery += term.toLowerCase();
+					String processedTerm = term.toLowerCase();
+					//add leading and trailing wildcards to match word segments
+					if (processedTerm.charAt(0) != '*')
+						processedTerm = '*' + processedTerm;
+					if (processedTerm.charAt(processedTerm.length() - 1) != '*')
+						processedTerm += '*';
+					processedQuery += processedTerm;
+
 				}
 				processedQuery += " AND "; //$NON-NLS-1$
 			}
