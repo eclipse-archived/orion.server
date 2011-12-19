@@ -59,7 +59,7 @@ public class SearchServlet extends OrionServlet {
 		if (queryString.length() > 0) {
 			String processedQuery = ""; //$NON-NLS-1$
 			//divide into search terms delimited by space character
-			String[] terms = queryString.split(" "); //$NON-NLS-1$
+			String[] terms = queryString.split("\\s+"); //$NON-NLS-1$
 			for (String term : terms) {
 				if (isSearchField(term)) {
 					//field searches are always case sensitive
