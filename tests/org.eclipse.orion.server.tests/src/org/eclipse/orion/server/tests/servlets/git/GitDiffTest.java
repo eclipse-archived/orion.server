@@ -182,6 +182,57 @@ public class GitDiffTest extends GitTest {
 	}
 
 	@Test
+	public void testDiffPaths() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+
+		String projectName = getMethodName();
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
+
+		JSONObject testTxt = getChild(project, "test.txt");
+		modifyFile(testTxt, "hi");
+
+		JSONObject folder1 = getChild(project, "folder");
+		JSONObject folderTxt = getChild(folder1, "folder.txt");
+		modifyFile(folderTxt, "folder change");
+
+		WebRequest request = getGetGitDiffRequest(project.getJSONObject(GitConstants.KEY_GIT).getString(GitConstants.KEY_DIFF) + "?parts=diff", new String[] {"folder/folder.txt"});
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		StringBuilder sb1 = new StringBuilder();
+		sb1.append("diff --git a/folder/folder.txt b/folder/folder.txt").append("\n");
+		sb1.append("index 0119635..95c4c65 100644").append("\n");
+		sb1.append("--- a/folder/folder.txt").append("\n");
+		sb1.append("+++ b/folder/folder.txt").append("\n");
+		sb1.append("@@ -1 +1 @@").append("\n");
+		sb1.append("-folder").append("\n");
+		sb1.append("\\ No newline at end of file").append("\n");
+		sb1.append("+folder change").append("\n");
+		sb1.append("\\ No newline at end of file").append("\n");
+		assertEquals(sb1.toString(), response.getText());
+
+		request = getGetGitDiffRequest(project.getJSONObject(GitConstants.KEY_GIT).getString(GitConstants.KEY_DIFF) + "?parts=diff", new String[] {"test.txt"});
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		StringBuilder sb2 = new StringBuilder();
+		sb2.append("diff --git a/test.txt b/test.txt").append("\n");
+		sb2.append("index 30d74d2..32f95c0 100644").append("\n");
+		sb2.append("--- a/test.txt").append("\n");
+		sb2.append("+++ b/test.txt").append("\n");
+		sb2.append("@@ -1 +1 @@").append("\n");
+		sb2.append("-test").append("\n");
+		sb2.append("\\ No newline at end of file").append("\n");
+		sb2.append("+hi").append("\n");
+		sb2.append("\\ No newline at end of file").append("\n");
+		assertEquals(sb2.toString(), response.getText());
+
+		request = getGetGitDiffRequest(project.getJSONObject(GitConstants.KEY_GIT).getString(GitConstants.KEY_DIFF) + "?parts=diff", new String[] {"folder/folder.txt", "test.txt"});
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		sb1.append(sb2);
+		assertEquals(sb1.toString(), response.getText());
+	}
+
+	@Test
 	public void testDiffCached() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
@@ -837,6 +888,10 @@ public class GitDiffTest extends GitTest {
 	 * @param location Either an absolute URI, or a workspace-relative URI
 	 */
 	static WebRequest getGetGitDiffRequest(String location) {
+		return getGetGitDiffRequest(location, new String[] {});
+	}
+
+	static WebRequest getGetGitDiffRequest(String location, String[] paths) {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;
@@ -844,10 +899,19 @@ public class GitDiffTest extends GitTest {
 			requestURI = SERVER_LOCATION + location;
 		else
 			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Diff.RESOURCE + location;
+		for (String path : paths) {
+			requestURI = addParam(requestURI, "Path=" + path);
+		}
 		WebRequest request = new GetMethodWebRequest(requestURI);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
+	}
+
+	private static String addParam(String location, String param) {
+		location += location.indexOf("?") != -1 ? "&" : "?";
+		location += param;
+		return location;
 	}
 
 	private static void patch(final String gitDiffUri, String patch) throws IOException, SAXException, JSONException {

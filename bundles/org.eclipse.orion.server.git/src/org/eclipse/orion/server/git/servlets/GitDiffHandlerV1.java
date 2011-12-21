@@ -12,8 +12,8 @@ package org.eclipse.orion.server.git.servlets;
 
 import java.io.*;
 import java.net.URI;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
@@ -25,7 +25,7 @@ import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.treewalk.*;
-import org.eclipse.jgit.treewalk.filter.PathFilter;
+import org.eclipse.jgit.treewalk.filter.*;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
@@ -131,8 +131,31 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 			oldTree = getTreeIterator(db, scope);
 		}
 
-		if (pattern != null)
-			diff.setPathFilter(PathFilter.create(pattern));
+		String[] paths = request.getParameterValues(ProtocolConstants.KEY_PATH);
+		TreeFilter filter = null;
+		TreeFilter pathFilter = null;
+		if (paths != null) {
+			if (paths.length > 1) {
+				Set<TreeFilter> pathFilters = new HashSet<TreeFilter>(paths.length);
+				for (String path : paths) {
+					pathFilters.add(PathFilter.create(path));
+				}
+				pathFilter = OrTreeFilter.create(pathFilters);
+			} else if (paths.length == 1) {
+				pathFilter = PathFilter.create(paths[0]);
+			}
+		}
+		if (pattern != null) {
+			PathFilter patternFilter = PathFilter.create(pattern);
+			if (pathFilter != null)
+				filter = AndTreeFilter.create(patternFilter, pathFilter);
+			else
+				filter = patternFilter;
+		} else {
+			filter = pathFilter;
+		}
+		if (filter != null)
+			diff.setPathFilter(filter);
 
 		diff.format(oldTree, newTree);
 		diff.flush();
