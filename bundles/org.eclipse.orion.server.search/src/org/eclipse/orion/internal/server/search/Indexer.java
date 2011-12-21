@@ -146,11 +146,9 @@ public class Indexer extends Job {
 			IPath fileLocation = projectLocation.append(projectRelativePath);
 			doc.addField(ProtocolConstants.KEY_LOCATION, fileLocation.toString());
 			String projectName = project.getName();
-			if (projectName == null) {
-				//Projects with no name have occurred but for unknown reason - see bug 366088.
-				handleIndexingFailure(new RuntimeException("Failure indexing project with no name: " + project.getId())); //$NON-NLS-1$
-				projectName = "Unknown Project";
-			}
+			//Projects with no name are due to an old bug where project metadata was not deleted  see bug 367333.
+			if (projectName == null)
+				continue;
 			doc.addField(ProtocolConstants.KEY_PATH, new Path(projectName).append(projectRelativePath));
 			doc.addField("Text", getContentsAsString(file)); //$NON-NLS-1$
 			if (users != null)
