@@ -18,6 +18,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -34,6 +35,7 @@ public class Tag extends GitObject {
 	private RevTag tag;
 	private Ref ref;
 	private URI tagLocation;
+	private URI commitLocation;
 
 	public Tag(URI cloneLocation, Repository db, RevTag tag) throws URISyntaxException, CoreException {
 		super(cloneLocation, db);
@@ -50,6 +52,7 @@ public class Tag extends GitObject {
 		JSONObject result = new JSONObject();
 		result.put(ProtocolConstants.KEY_NAME, getName());
 		result.put(ProtocolConstants.KEY_LOCATION, getLocation());
+		result.put(GitConstants.KEY_COMMIT, getCommitLocation());
 		result.put(ProtocolConstants.KEY_LOCAL_TIMESTAMP, (long) getTime() * 1000);
 		result.put(ProtocolConstants.KEY_TYPE, TYPE);
 		return result;
@@ -72,18 +75,35 @@ public class Tag extends GitObject {
 		return tagLocation;
 	}
 
+	private URI getCommitLocation() throws URISyntaxException {
+		if (commitLocation == null) {
+			IPath p = new Path(cloneLocation.getPath());
+			p = p.uptoSegment(1).append(Commit.RESOURCE).append(parseCommit().getName()).addTrailingSeparator().append(p.removeFirstSegments(2));
+			commitLocation = new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), p.toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
+		}
+		return commitLocation;
+	}
+
 	public int getTime() {
-		RevCommit c = null;
-		if (tag != null)
-			c = parseCommit(tag.toObjectId());
-		else if (ref != null)
-			c = parseCommit(ref.getObjectId());
+		RevCommit c = parseCommit();
 		if (c != null)
 			return c.getCommitTime();
 		return 0;
 	}
 
-	private RevCommit parseCommit(ObjectId oid) {
+	private ObjectId getObjectId() {
+		if (tag != null)
+			return tag.toObjectId();
+		else if (ref != null)
+			return ref.getObjectId();
+		else
+			return null;
+	}
+
+	private RevCommit parseCommit() {
+		ObjectId oid = getObjectId();
+		if (oid == null)
+			return null;
 		RevWalk walk = new RevWalk(db);
 		try {
 			return walk.parseCommit(oid);
