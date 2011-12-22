@@ -34,6 +34,7 @@ public class TaskInfo {
 	private static final String KEY_RESULT = "Result"; //$NON-NLS-1$
 	private static final String KEY_CAN_BE_CANCELED = "CanBeCanceled"; //$NON-NLS-1$
 	private static final String KEY_TIMESTAMP_MODIFIED = "Modified"; //$NON-NLS-1$
+	private static final String KEY_TIMESTAMP_CREATED = "Created"; //$NON-NLS-1$
 	private static final String KEY_NAME = "Name"; //$NON-NLS-1$
 	private static final String KEY_FAILED = "Failed"; //$NON-NLS-1$
 	private static final String KEY_CANCELED = "Canceled"; //$NON-NLS-1$
@@ -46,6 +47,7 @@ public class TaskInfo {
 	private IStatus result;
 	private boolean canBeCanceled = false;
 	private Date modified;
+	private Date created;
 	private String name;
 
 
@@ -67,6 +69,11 @@ public class TaskInfo {
 			else
 				info.modified = new Date(0);
 			
+			if(json.has(KEY_TIMESTAMP_CREATED))
+				info.created = new Date(json.getLong(KEY_TIMESTAMP_CREATED));
+			else
+				info.created = new Date(0);
+			
 			info.running = json.optBoolean(KEY_RUNNING, true);
 			info.setPercentComplete(json.optInt(KEY_PERCENT_COMPLETE, 0));
 			String location = json.optString(KEY_LOCATION, null);
@@ -86,6 +93,7 @@ public class TaskInfo {
 		this.userId = userId;
 		this.id = id;
 		this.modified = new Date();
+		this.created = new Date();
 	}
 
 	public String getName() {
@@ -160,6 +168,10 @@ public class TaskInfo {
 	
 	public void setModified(Date modified){
 		this.modified = modified;
+	}
+	
+	public Date getCreated(){
+		return created;
 	}
 
 	/**
@@ -246,6 +258,7 @@ public class TaskInfo {
 			resultObject.put(KEY_PERCENT_COMPLETE, getPercentComplete());
 			resultObject.put(KEY_TIMESTAMP_MODIFIED, modified.getTime());
 			resultObject.put(KEY_CAN_BE_CANCELED, canBeCanceled);
+			resultObject.put(KEY_TIMESTAMP_CREATED, created.getTime());
 			resultObject.put(KEY_NAME, name==null ? "" : name);
 			if(result!=null){
 				if(!result.isOK()){
@@ -273,6 +286,7 @@ public class TaskInfo {
 			resultObject.put(KEY_USER, getUserId());
 			resultObject.put(KEY_PERCENT_COMPLETE, getPercentComplete());
 			resultObject.put(KEY_TIMESTAMP_MODIFIED, modified.getTime());
+			resultObject.put(KEY_TIMESTAMP_CREATED, created.getTime());
 			resultObject.put(KEY_CAN_BE_CANCELED, canBeCanceled);
 			resultObject.put(KEY_NAME, name==null ? "" : name);
 			if (resultLocation != null)
