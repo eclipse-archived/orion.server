@@ -15,8 +15,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.Map.Entry;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffEntry.ChangeType;
 import org.eclipse.jgit.errors.MissingObjectException;
@@ -62,6 +61,12 @@ public class Commit extends GitObject {
 		return commitToBranchMap;
 	}
 
+	/**
+	 * Return body of the commit
+	 *
+	 * @return body of the commit as an Object Stream
+	 * @throws IOException when reading the object failed
+	 */
 	public ObjectStream toObjectStream() throws IOException {
 		final TreeWalk w = TreeWalk.forPath(db, pattern, revCommit.getTree());
 		if (w == null) {
@@ -71,10 +76,11 @@ public class Commit extends GitObject {
 		return db.open(blobId, Constants.OBJ_BLOB).openStream();
 	}
 
-	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException {
+	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException, CoreException {
 		JSONObject commit = new JSONObject();
 		commit.put(ProtocolConstants.KEY_LOCATION, BaseToCommitConverter.getCommitLocation(cloneLocation, revCommit.getName(), pattern, BaseToCommitConverter.REMOVE_FIRST_2));
-		commit.put(ProtocolConstants.KEY_CONTENT_LOCATION, BaseToCommitConverter.getCommitLocation(cloneLocation, revCommit.getName(), pattern, BaseToCommitConverter.REMOVE_FIRST_2.setQuery("parts=body"))); //$NON-NLS-1$
+		if (!isRoot) // linking to body makes only sense for files
+			commit.put(ProtocolConstants.KEY_CONTENT_LOCATION, BaseToCommitConverter.getCommitLocation(cloneLocation, revCommit.getName(), pattern, BaseToCommitConverter.REMOVE_FIRST_2.setQuery("parts=body"))); //$NON-NLS-1$
 		commit.put(GitConstants.KEY_DIFF, createDiffLocation(revCommit.getName(), null, pattern, isRoot));
 		commit.put(ProtocolConstants.KEY_NAME, revCommit.getName());
 		PersonIdent author = revCommit.getAuthorIdent();
@@ -88,7 +94,7 @@ public class Commit extends GitObject {
 		commit.put(GitConstants.KEY_COMMITTER_EMAIL, committer.getEmailAddress());
 		commit.put(GitConstants.KEY_COMMIT_TIME, ((long) revCommit.getCommitTime()) * 1000 /* time in milliseconds */);
 		commit.put(GitConstants.KEY_COMMIT_MESSAGE, revCommit.getFullMessage());
-		commit.put(GitConstants.KEY_TAGS, toJSON(getTagsForCommit(db, revCommit)));
+		commit.put(GitConstants.KEY_TAGS, toJSON(getTagsForCommit()));
 		commit.put(ProtocolConstants.KEY_TYPE, TYPE);
 		commit.put(GitConstants.KEY_BRANCHES, getCommitToBranchMap().get(revCommit.getId()));
 		commit.put(ProtocolConstants.KEY_PARENTS, parentsToJSON(revCommit.getParents()));
@@ -130,35 +136,37 @@ public class Commit extends GitObject {
 		return commit;
 	}
 
-	private JSONArray toJSON(Map<String, Ref> revTags) throws JSONException {
+	private JSONArray toJSON(Map<String, Ref> revTags) throws JSONException, URISyntaxException, CoreException {
 		JSONArray children = new JSONArray();
 		for (Entry<String, Ref> revTag : revTags.entrySet()) {
-			JSONObject tag = new JSONObject();
-			tag.put(ProtocolConstants.KEY_NAME, revTag.getKey());
-			tag.put(ProtocolConstants.KEY_FULL_NAME, revTag.getValue().getName());
-			children.put(tag);
+			Tag tag = new Tag(cloneLocation, db, revTag.getValue());
+			children.put(tag.toJSON());
 		}
 		return children;
 	}
 
 	// from https://gist.github.com/839693, credits to zx
-	private static Map<String, Ref> getTagsForCommit(Repository repo, RevCommit commit) throws MissingObjectException, IOException {
+	private Map<String, Ref> getTagsForCommit() throws MissingObjectException, IOException {
 		final Map<String, Ref> revTags = new HashMap<String, Ref>();
-		final RevWalk walk = new RevWalk(repo);
-		walk.reset();
-		for (final Entry<String, Ref> revTag : repo.getTags().entrySet()) {
-			final RevObject obj = walk.parseAny(revTag.getValue().getObjectId());
-			final RevCommit tagCommit;
-			if (obj instanceof RevCommit) {
-				tagCommit = (RevCommit) obj;
-			} else if (obj instanceof RevTag) {
-				tagCommit = walk.parseCommit(((RevTag) obj).getObject());
-			} else {
-				continue;
+		final RevWalk walk = new RevWalk(db);
+		try {
+			walk.reset();
+			for (final Entry<String, Ref> revTag : db.getTags().entrySet()) {
+				final RevObject obj = walk.parseAny(revTag.getValue().getObjectId());
+				final RevCommit tagCommit;
+				if (obj instanceof RevCommit) {
+					tagCommit = (RevCommit) obj;
+				} else if (obj instanceof RevTag) {
+					tagCommit = walk.parseCommit(((RevTag) obj).getObject());
+				} else {
+					continue;
+				}
+				if (revCommit.equals(tagCommit) || walk.isMergedInto(revCommit, tagCommit)) {
+					revTags.put(revTag.getKey(), revTag.getValue());
+				}
 			}
-			if (commit.equals(tagCommit) || walk.isMergedInto(commit, tagCommit)) {
-				revTags.put(revTag.getKey(), revTag.getValue());
-			}
+		} finally {
+			walk.dispose();
 		}
 		return revTags;
 	}
