@@ -74,6 +74,17 @@ public class BasicAuthenticationService implements IAuthenticationService {
 	private void setNotAuthenticated(HttpServletResponse resp) throws IOException {
 		resp.setHeader("WWW-Authenticate", getAuthType()); //$NON-NLS-1$
 		resp.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+		//add a sleep to avoid brute force login attack
+		long start = System.currentTimeMillis();
+		long SLEEP_TIME = 1000;
+		do {
+			try {
+				Thread.sleep(SLEEP_TIME);
+				break;
+			} catch (InterruptedException e) {
+				//ignore and keep waiting
+			}
+		} while ((System.currentTimeMillis() - start) < SLEEP_TIME);
 	}
 
 	private User getUserForCredentials(String login, String password) {
@@ -85,6 +96,7 @@ public class BasicAuthenticationService implements IAuthenticationService {
 		if (user != null && user.hasCredential("password", password)) { //$NON-NLS-1$
 			return user;
 		}
+		//add a sleep to avoid brute force attack
 		return null;
 	}
 
