@@ -21,6 +21,9 @@ import org.eclipse.jgit.lib.RepositoryCache;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
+import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.GitCredentialsProvider;
+import org.json.JSONObject;
 
 public class GitUtils {
 
@@ -153,4 +156,18 @@ public class GitUtils {
 		return sb.toString();
 	}
 
+	static GitCredentialsProvider createGitCredentialsProvider(final JSONObject json) {
+		String username = json.optString(GitConstants.KEY_USERNAME, null);
+		char[] password = json.optString(GitConstants.KEY_PASSWORD, "").toCharArray(); //$NON-NLS-1$
+		String knownHosts = json.optString(GitConstants.KEY_KNOWN_HOSTS, null);
+		byte[] privateKey = json.optString(GitConstants.KEY_PRIVATE_KEY, "").getBytes(); //$NON-NLS-1$
+		byte[] publicKey = json.optString(GitConstants.KEY_PUBLIC_KEY, "").getBytes(); //$NON-NLS-1$
+		byte[] passphrase = json.optString(GitConstants.KEY_PASSPHRASE, "").getBytes(); //$NON-NLS-1$
+
+		GitCredentialsProvider cp = new GitCredentialsProvider(null /* set by caller */, username, password, knownHosts);
+		cp.setPrivateKey(privateKey);
+		cp.setPublicKey(publicKey);
+		cp.setPassphrase(passphrase);
+		return cp;
+	}
 }
