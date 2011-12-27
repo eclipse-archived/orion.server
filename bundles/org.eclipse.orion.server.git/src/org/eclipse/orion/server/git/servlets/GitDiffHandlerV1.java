@@ -19,7 +19,8 @@ import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
-import org.eclipse.jgit.diff.DiffFormatter;
+import org.eclipse.jgit.api.DiffCommand;
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.dircache.DirCacheIterator;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevWalk;
@@ -97,8 +98,9 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	private boolean handleGetDiff(HttpServletRequest request, HttpServletResponse response, Repository db, String scope, String pattern, OutputStream out) throws Exception {
-		DiffFormatter diff = new DiffFormatter(new BufferedOutputStream(out));
-		diff.setRepository(db);
+		Git git = new Git(db);
+		DiffCommand diff = git.diff();
+		diff.setOutputStream(new BufferedOutputStream(out));
 		AbstractTreeIterator oldTree;
 		AbstractTreeIterator newTree = new FileTreeIterator(db);
 		if (scope.contains("..")) { //$NON-NLS-1$
@@ -157,8 +159,9 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 		if (filter != null)
 			diff.setPathFilter(filter);
 
-		diff.format(oldTree, newTree);
-		diff.flush();
+		diff.setOldTree(oldTree);
+		diff.setNewTree(newTree);
+		diff.call();
 		return true;
 	}
 
