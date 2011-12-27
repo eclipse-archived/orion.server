@@ -393,12 +393,12 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	protected JSONObject clone(IPath workspacePath, IPath filePath, String name) throws JSONException, IOException, SAXException, CoreException {
-		URIish uri = new URIish(gitDir.toURL());
+		URIish uri = new URIish(gitDir.toURI().toURL());
 		return clone(uri, workspacePath, filePath, name, null, null);
 	}
 
 	protected JSONObject clone(IPath filePath) throws JSONException, IOException, SAXException, CoreException {
-		URIish uri = new URIish(gitDir.toURL());
+		URIish uri = new URIish(gitDir.toURI().toURL());
 		return clone(uri, null, filePath, null, null, null);
 	}
 

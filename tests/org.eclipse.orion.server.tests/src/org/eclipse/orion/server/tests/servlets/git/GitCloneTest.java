@@ -734,7 +734,7 @@ public class GitCloneTest extends GitTest {
 		IPath bobClonePath = new Path("file").append(bobProjectId).makeAbsolute();
 
 		// bob's clone
-		URIish uri = new URIish(gitDir.toURL());
+		URIish uri = new URIish(gitDir.toURI().toURL());
 		request = getPostGitCloneRequest(uri, null, bobClonePath, null, null, null);
 		setAuthentication(request, "bob", "bob");
 		response = webConversation.getResponse(request);
@@ -771,7 +771,7 @@ public class GitCloneTest extends GitTest {
 		clone(clonePath);
 
 		// clone again into the same path
-		WebRequest request = getPostGitCloneRequest(new URIish(gitDir.toURL()).toString(), clonePath);
+		WebRequest request = getPostGitCloneRequest(new URIish(gitDir.toURI().toURL()).toString(), clonePath);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);

@@ -928,7 +928,7 @@ public class GitPushTest extends GitTest {
 			// clone the secondary branch and check if the new branch is there
 			JSONObject secondProject = createProjectOrLink(workspaceLocation, getMethodName() + "-second", null);
 			IPath secondClonePath = new Path("file").append(secondProject.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-			URIish uri = new URIish(dotGitDir.getParentFile().toURL());
+			URIish uri = new URIish(dotGitDir.getParentFile().toURI().toURL());
 			JSONObject clone2 = clone(uri, null, secondClonePath, null, null, null);
 			String cloneLocation2 = clone2.getString(ProtocolConstants.KEY_LOCATION);
 			String branchesLocation2 = clone2.getString(GitConstants.KEY_BRANCH);
