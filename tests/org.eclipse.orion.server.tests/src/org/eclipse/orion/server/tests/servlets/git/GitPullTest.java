@@ -28,7 +28,7 @@ import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.git.objects.Remote;
+import org.eclipse.orion.server.git.objects.Clone;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -46,7 +46,8 @@ public class GitPullTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-		clone(clonePath);
+		JSONObject clone = clone(clonePath);
+		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
 
 		// get project metadata
 		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
@@ -80,7 +81,7 @@ public class GitPullTest extends GitTest {
 		String refId = details.getString(ProtocolConstants.KEY_ID);
 
 		// pull
-		pull(remoteLocation);
+		pull(cloneLocation);
 
 		// get remote details again
 		String newRefId = getRemoteBranch(gitRemoteUri, 1, 0, Constants.MASTER).getString(ProtocolConstants.KEY_ID);
@@ -131,7 +132,6 @@ public class GitPullTest extends GitTest {
 		IPath clonePath2 = new Path("file").append(project2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 		JSONObject clone2 = clone(clonePath2);
 		String cloneLocation2 = clone2.getString(ProtocolConstants.KEY_LOCATION);
-		// XXX: checked out 'a', see bug 364853
 
 		// get project2 metadata
 		request = getGetFilesRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
@@ -169,15 +169,13 @@ public class GitPullTest extends GitTest {
 		push(gitRemoteUri1, 2, 0, Constants.MASTER, Constants.HEAD, false);
 
 		// clone2: get remote details
-		JSONObject origin2 = getRemote(gitRemoteUri2, 1, 0, Constants.DEFAULT_REMOTE_NAME);
-		String originLocation2 = origin2.getString(ProtocolConstants.KEY_LOCATION);
 		JSONObject aDetails = getRemoteBranch(gitRemoteUri2, 2, 1, "a");
 		String aOldRefId = aDetails.getString(ProtocolConstants.KEY_ID);
 		JSONObject masterDetails = getRemoteBranch(gitRemoteUri2, 2, 0, Constants.MASTER);
 		String masterOldRefId = masterDetails.getString(ProtocolConstants.KEY_ID);
 
 		// clone2: pull
-		pull(originLocation2);
+		pull(cloneLocation2);
 
 		// clone2: check for new content on 'a'
 		masterDetails = getRemoteBranch(gitRemoteUri2, 2, 1, "a");
@@ -199,7 +197,7 @@ public class GitPullTest extends GitTest {
 		if (location.startsWith("http://"))
 			requestURI = location;
 		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Remote.RESOURCE + location;
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Clone.RESOURCE + location;
 
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_PULL, Boolean.TRUE.toString());

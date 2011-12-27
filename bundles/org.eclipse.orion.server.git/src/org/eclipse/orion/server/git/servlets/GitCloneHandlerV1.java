@@ -36,8 +36,7 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
-import org.eclipse.orion.server.git.jobs.CloneJob;
-import org.eclipse.orion.server.git.jobs.InitJob;
+import org.eclipse.orion.server.git.jobs.*;
 import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
 import org.eclipse.orion.server.servlets.OrionServlet;
@@ -67,7 +66,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 				case PUT :
 					return handlePut(request, response, path);
 				case POST :
-					return handlePost(request, response);
+					return handlePost(request, response, path);
 				case DELETE :
 					return handleDelete(request, response, path);
 			}
@@ -81,9 +80,16 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		return false;
 	}
 
-	private boolean handlePost(HttpServletRequest request, HttpServletResponse response) throws IOException, JSONException, ServletException, URISyntaxException, CoreException, NoHeadException, NoMessageException, ConcurrentRefUpdateException, JGitInternalException, WrongRepositoryStateException {
+	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, String pathString) throws IOException, JSONException, ServletException, URISyntaxException, CoreException, NoHeadException, NoMessageException, ConcurrentRefUpdateException, JGitInternalException, WrongRepositoryStateException {
 		// make sure required fields are set
 		JSONObject toAdd = OrionServlet.readJSONRequest(request);
+		if (toAdd.optBoolean(GitConstants.KEY_PULL, false)) {
+			GitUtils.createGitCredentialsProvider(toAdd);
+			GitCredentialsProvider cp = GitUtils.createGitCredentialsProvider(toAdd);
+			boolean force = toAdd.optBoolean(GitConstants.KEY_FORCE, false);
+			return pull(request, response, cp, pathString, force);
+		}
+
 		Clone clone = new Clone();
 		String url = toAdd.optString(GitConstants.KEY_URL, null);
 		// method handles repository clone or just repository init
@@ -190,17 +196,8 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		} else {
 			// git clone
 			// prepare creds
-			String username = toAdd.optString(GitConstants.KEY_USERNAME, null);
-			char[] password = toAdd.optString(GitConstants.KEY_PASSWORD, "").toCharArray(); //$NON-NLS-1$
-			String knownHosts = toAdd.optString(GitConstants.KEY_KNOWN_HOSTS, null);
-			byte[] privateKey = toAdd.optString(GitConstants.KEY_PRIVATE_KEY, "").getBytes(); //$NON-NLS-1$
-			byte[] publicKey = toAdd.optString(GitConstants.KEY_PUBLIC_KEY, "").getBytes(); //$NON-NLS-1$
-			byte[] passphrase = toAdd.optString(GitConstants.KEY_PASSPHRASE, "").getBytes(); //$NON-NLS-1$
-
-			GitCredentialsProvider cp = new GitCredentialsProvider(new URIish(clone.getUrl()), username, password, knownHosts);
-			cp.setPrivateKey(privateKey);
-			cp.setPublicKey(publicKey);
-			cp.setPassphrase(passphrase);
+			GitCredentialsProvider cp = GitUtils.createGitCredentialsProvider(toAdd);
+			cp.setUri(new URIish(clone.getUrl()));
 
 			// if all went well, clone
 			CloneJob job = new CloneJob(clone, TaskServlet.getUserId(request), cp, request.getRemoteUser(), cloneLocation, webProjectExists ? null : webProject /* used for cleaning up, so null when not needed */);
@@ -543,5 +540,24 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		} catch (CoreException e) {
 			statusHandler.handleRequest(request, response, e.getStatus());
 		}
+	}
+
+	private boolean pull(HttpServletRequest request, HttpServletResponse response, GitCredentialsProvider cp, String path, boolean force) throws URISyntaxException, JSONException, IOException {
+		Path p = new Path(path); // /{file}/{path}
+		PullJob job = new PullJob(TaskServlet.getUserId(request), cp, p, force);
+		job.schedule();
+
+		TaskInfo task = job.getTask();
+		JSONObject result = task.toJSON();
+		URI taskLocation = createTaskLocation(OrionServlet.getURI(request), task.getTaskId());
+		result.put(ProtocolConstants.KEY_LOCATION, taskLocation);
+		response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation.toString());
+		OrionServlet.writeJSONResponse(request, response, result);
+		response.setStatus(HttpServletResponse.SC_ACCEPTED);
+		return true;
+	}
+
+	private URI createTaskLocation(URI baseLocation, String taskId) throws URISyntaxException {
+		return new URI(baseLocation.getScheme(), baseLocation.getAuthority(), "/task/id/" + taskId, null, null); //$NON-NLS-1$
 	}
 }

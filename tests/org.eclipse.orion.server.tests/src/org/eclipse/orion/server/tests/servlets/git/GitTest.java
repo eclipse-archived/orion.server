@@ -77,6 +77,7 @@ import org.eclipse.orion.server.git.objects.Tag;
 import org.eclipse.orion.server.git.servlets.GitServlet;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
+import org.eclipse.osgi.util.NLS;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -693,22 +694,23 @@ public abstract class GitTest extends FileSystemTest {
 
 	// pull
 	/**
-	 * Pulls objects and refs from the given remote and merges them into the current branch.
+	 * Pulls objects and refs for the given repository and merges them into the current branch.
 	 * 
-	 * @param remoteLocation remote URI
+	 * @param cloneLocation clone URI
 	 * @return status object
 	 * @throws JSONException
 	 * @throws IOException
 	 * @throws SAXException
+	 * @throws CoreException
 	 */
-	protected JSONObject pull(String remoteLocation) throws JSONException, IOException, SAXException {
-		assertRemoteOrRemoteBranchLocation(remoteLocation);
+	protected JSONObject pull(String cloneLocation) throws JSONException, IOException, SAXException, CoreException {
+		assertCloneUri(cloneLocation);
 
 		// pull
-		WebRequest request = GitPullTest.getPostGitRemoteRequest(remoteLocation, false);
+		WebRequest request = GitPullTest.getPostGitRemoteRequest(cloneLocation, false);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
-		assertPullProgressMessage(remoteLocation, new JSONObject(response.getText()).getString("Message"));
+		assertPullProgressMessage(cloneLocation, new JSONObject(response.getText()).getString("Message"));
 		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(taskLocation);
 		String location = waitForTaskCompletion(taskLocation);
@@ -722,14 +724,12 @@ public abstract class GitTest extends FileSystemTest {
 		return status;
 	}
 
-	private static void assertPullProgressMessage(String remoteLocation, String actualMessage) {
-		IPath path = new Path(URI.create(remoteLocation).getPath());
-		if (path.segment(1).equals(Remote.RESOURCE) && path.segment(3).equals("file")) {
-			// /git/remote/{remote}/file/{path}
-			assertEquals(String.format("Pulling %s...", path.segment(2)), actualMessage);
-		} else {
-			fail("unexpected remoteLocation: " + remoteLocation);
-		}
+	private void assertPullProgressMessage(String cloneLocation, String actualMessage) throws IOException, SAXException, JSONException {
+		WebRequest request = getGetRequest(cloneLocation);
+		WebResponse response = webConversation.getResponse(request);
+		JSONObject clone = new JSONObject(response.getText());
+		String name = clone.getJSONArray(ProtocolConstants.KEY_CHILDREN).getJSONObject(0).getString(ProtocolConstants.KEY_NAME);
+		assertEquals(NLS.bind("Pulling {0}...", name), actualMessage);
 	}
 
 	// tag
