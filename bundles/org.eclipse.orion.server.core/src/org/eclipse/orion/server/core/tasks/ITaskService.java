@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.server.core.tasks;
 
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -25,10 +26,11 @@ public interface ITaskService {
 	 * {@link #updateTask(TaskInfo)} is invoked.
 	 * @param userId id of the user starting the task or if not logged in temporary identifier, for instance a session id
 	 * @param taskName task name, can be <code>null<code>
+	 * @param idempotent <code>true</code> if task is a idempotent operation. Clients will use this value to decrease task persistence
 	 * @return A new task
 	 */
-	TaskInfo createTask(String taskName, String userId);
-	
+	TaskInfo createTask(String taskName, String userId, boolean idempotent);
+
 	/**
 	 * Creates a new task. In its initial state the task is running and 0% complete.
 	 * Further changes to the task will not be reflected in the task service until
@@ -36,9 +38,10 @@ public interface ITaskService {
 	 * @param userId id of the user starting the task or if not logged in temporary identifier, for instance a session id
 	 * @param taskName task name, can be <code>null<code>
 	 * @param taskCanceler an implementation of {@link ITaskCanceler} that handles canceling this task
+	 * @param idempotent <code>true</code> if task is a idempotent operation. Clients will use this value to decrease task persistence
 	 * @return A new task
 	 */
-	TaskInfo createTask(String taskName, String userId, ITaskCanceler taskCanceler);
+	TaskInfo createTask(String taskName, String userId, ITaskCanceler taskCanceler, boolean idempotent);
 
 	/**
 	 * Returns the task with the given task id, or <code>null</code> if no such task exists.
@@ -54,7 +57,7 @@ public interface ITaskService {
 	 * @return a list of tasks owned by the user
 	 */
 	List<TaskInfo> getTasks(String userId);
-	
+
 	/**
 	 * Returns a list of tasks tracked for given user that have been modified since <code>modifiedSince</code> date.
 	 * @param userId id of the user starting the task or if not logged in temporary identifier, for instance a session id
@@ -63,6 +66,14 @@ public interface ITaskService {
 	 * @return a list of tasks owned by the user
 	 */
 	List<TaskInfo> getTasks(String userId, Date modifiedSince, boolean runningOnly);
+
+	/**
+	 * Returns all user's tasks deleted since given date.
+	 * @param userId
+	 * @param deletedSince
+	 * @return
+	 */
+	Collection<String> getTasksDeletedSince(String userId, Date deletedSince);
 
 	/**
 	 * Updates the state of the given task within the task service. Any changes
@@ -85,19 +96,19 @@ public interface ITaskService {
 	 * @throws TaskOperationException thrown when task cannot be removed, for instance task is running 
 	 */
 	public void removeTask(String userId, String id) throws TaskOperationException;
-	
+
 	/**
 	 * Cancels the task.
 	 * @throws TaskOperationException if task does not support canceling
 	 */
 	public void cancelTask(TaskInfo task) throws TaskOperationException;
-	
+
 	/**
 	 * Registers a listener that is notified when task is updated
 	 * @param listener
 	 */
 	public void addTaskModyficationListener(TaskModificationListener listener);
-	
+
 	/**
 	 * Unregisters a listener that is notified when task is updated
 	 * @param listener

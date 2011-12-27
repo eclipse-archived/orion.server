@@ -13,8 +13,7 @@ package org.eclipse.orion.internal.server.servlets.task;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -118,7 +117,11 @@ public class TaskServlet extends OrionServlet {
 
 	}
 
-	public JSONObject getTasksList(List<TaskInfo> tasks, Date timestamp, HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, JSONException, URISyntaxException {
+	public JSONObject getTasksList(Collection<TaskInfo> tasks, Date timestamp, HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, JSONException, URISyntaxException {
+		return getTasksList(tasks, new ArrayList<String>(), timestamp, req, resp);
+	}
+
+	public JSONObject getTasksList(Collection<TaskInfo> tasks, Collection<String> deletedTasks, Date timestamp, HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, JSONException, URISyntaxException {
 		JSONObject result = new JSONObject();
 		JSONArray tasksList = new JSONArray();
 		for (TaskInfo task : tasks) {
@@ -133,8 +136,8 @@ public class TaskServlet extends OrionServlet {
 					taskJson.put(ProtocolConstants.KEY_LOCATION, new URI(getURI(req).toString() + "/").resolve("id/" + task.getTaskId()).toString());
 				tasksList.put(taskJson);
 			}
-
 		}
+		result.put(ProtocolConstants.KEY_DELETED_CHILDREN, deletedTasks);
 		result.put(ProtocolConstants.KEY_CHILDREN, tasksList);
 		result.put(ProtocolConstants.KEY_LOCAL_TIMESTAMP, timestamp.getTime());
 		return result;
@@ -165,7 +168,7 @@ public class TaskServlet extends OrionServlet {
 						result.put(ProtocolConstants.KEY_LONGPOLLING_ID, new UniversalUniqueIdentifier().toBase64String());
 						resp.setStatus(HttpServletResponse.SC_ACCEPTED);
 						writeJSONResponse(req, resp, result);
-						notificationRegistry.setLastNotification(result.getString(ProtocolConstants.KEY_LONGPOLLING_ID), timestamp);
+						notificationRegistry.setLastNotification(result.getString(ProtocolConstants.KEY_LONGPOLLING_ID), timestamp, getUserId(req));
 						return;
 					} catch (JSONException e) {
 						handleException(resp, e.getMessage(), e);

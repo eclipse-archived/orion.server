@@ -11,6 +11,7 @@
 package org.eclipse.orion.internal.server.core.tasks;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,6 +40,17 @@ public class TaskService implements ITaskService {
 	TaskStore store;
 	private Map<String, ITaskCanceler> taskCancelers = new HashMap<String, ITaskCanceler>();
 	private Set<TaskModificationListener> taskListeners = new HashSet<TaskModificationListener>();
+	private Map<String, List<TaskDeletion>> taskDeletions = new HashMap<String, List<TaskDeletion>>();
+	
+	private class TaskDeletion{
+		public final Date deletionDate;
+		public final String taskId;
+		public TaskDeletion(Date deletionDate, String taskId) {
+			super();
+			this.deletionDate = deletionDate;
+			this.taskId = taskId;
+		}
+	}
 
 	private class TasksNotificationJob extends Job {
 
@@ -62,16 +74,41 @@ public class TaskService implements ITaskService {
 		}
 
 	}
+	
+	private class DeletedTasksNotificationJob extends Job {
+
+		private String userId;
+		private Date deletionDate;
+		private Collection<String> tasks;
+
+		public DeletedTasksNotificationJob(String userId, Date deletionDate, Collection<String> tasks) {
+			super("Notyfing task listeners");
+			this.userId = userId;
+			this.deletionDate = deletionDate;
+			this.tasks = tasks;
+		}
+
+		@Override
+		protected IStatus run(IProgressMonitor monitor) {
+			synchronized (taskListeners) {
+				for (TaskModificationListener listener : taskListeners) {
+					listener.tasksDeleted(userId, tasks, deletionDate);
+				}
+			}
+			return Status.OK_STATUS;
+		}
+
+	}
 
 	public TaskService(IPath baseLocation) {
 		store = new TaskStore(baseLocation.toFile());
 	}
 
-	public TaskInfo createTask(String taskName, String userId) {
-		return createTask(taskName, userId, null);
+	public TaskInfo createTask(String taskName, String userId, boolean isIdempotent) {
+		return createTask(taskName, userId, null, isIdempotent);
 	}
-
-	public void removeTask(String userId, String id) throws TaskOperationException {
+	
+	private TaskInfo internalRemoveTask(String userId, String id) throws TaskOperationException {
 		TaskInfo task = getTask(userId, id);
 		if (task == null)
 			throw new TaskOperationException("Cannot remove a task that does not exists");
@@ -80,22 +117,37 @@ public class TaskService implements ITaskService {
 		if (!store.removeTask(userId, id))
 			throw new TaskOperationException("Task could not be removed");
 		taskCancelers.remove(id);
+		if(!taskDeletions.containsKey(userId)){
+			taskDeletions.put(userId, new ArrayList<TaskService.TaskDeletion>());
+		}
+		taskDeletions.get(userId).add(new TaskDeletion(new Date(), id));
+		return task;
+	}
+
+	public void removeTask(String userId, String id) throws TaskOperationException {
+		internalRemoveTask(userId, id);
+		Set<String> tasks = new HashSet<String>();
+		tasks.add(id);
+		notifyDeletionListeners(userId, new Date(), tasks);
 	}
 
 	public void removeCompletedTasks(String userId) {
+		Set<String> tasks = new HashSet<String>();
 		for (TaskInfo task : getTasks(userId)) {
 			if (!task.isRunning()) {
 				try {
-					removeTask(userId, task.getTaskId());
+					internalRemoveTask(userId, task.getTaskId());
+					tasks.add(task.getTaskId());
 				} catch (TaskOperationException e) {
 					LogHelper.log(e);
 				}
 			}
 		}
+		notifyDeletionListeners(userId, new Date(), tasks);
 	}
 
-	public TaskInfo createTask(String taskName, String userId, ITaskCanceler taskCanceler) {
-		TaskInfo task = new TaskInfo(userId, new UniversalUniqueIdentifier().toBase64String());
+	public TaskInfo createTask(String taskName, String userId, ITaskCanceler taskCanceler, boolean isIdempotent) {
+		TaskInfo task = new TaskInfo(userId, new UniversalUniqueIdentifier().toBase64String(), isIdempotent);
 		task.setName(taskName);
 		if (taskCanceler != null) {
 			taskCancelers.put(task.getTaskId(), taskCanceler);
@@ -108,6 +160,10 @@ public class TaskService implements ITaskService {
 
 	private void notifyListeners(String userId, Date modificationDate) {
 		new TasksNotificationJob(userId, modificationDate).schedule();
+	}
+	
+	private void notifyDeletionListeners(String userId, Date deletionDate, Collection<String> tasks){
+		new DeletedTasksNotificationJob(userId, deletionDate, tasks).schedule();
 	}
 
 	public TaskInfo getTask(String userId, String id) {
@@ -169,6 +225,21 @@ public class TaskService implements ITaskService {
 		synchronized (taskListeners) {
 			this.taskListeners.remove(listener);
 		}
+	}
+
+	public Collection<String> getTasksDeletedSince(String userId, Date deletedSince) {
+		Set<String> deletedTasks = new HashSet<String>();
+		List<TaskDeletion> taskDeletionsList = taskDeletions.get(userId);
+		if(taskDeletionsList==null){
+			return deletedTasks;
+		}
+		for(int i=taskDeletionsList.size()-1; i>0; i--){
+			if(taskDeletionsList.get(i).deletionDate.before(deletedSince)){
+				return deletedTasks;
+			}
+			deletedTasks.add(taskDeletionsList.get(i).taskId);
+		}
+		return deletedTasks;
 	}
 
 }

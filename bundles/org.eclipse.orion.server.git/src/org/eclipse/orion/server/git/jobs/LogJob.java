@@ -44,7 +44,7 @@ public class LogJob extends GitJob {
 	}
 
 	protected TaskInfo createTask() {
-		TaskInfo info = getTaskService().createTask(NLS.bind("Generating git log for {0}", logCommand.getRepository()), this.userId);
+		TaskInfo info = getTaskService().createTask(NLS.bind("Generating git log for {0}", logCommand.getRepository()), this.userId, true);
 		info.setMessage(NLS.bind("Generating git log for {0} ...", logCommand.getRepository()));
 		getTaskService().updateTask(info);
 		return info;

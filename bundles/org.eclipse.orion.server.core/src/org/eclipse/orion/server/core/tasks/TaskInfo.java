@@ -38,8 +38,10 @@ public class TaskInfo {
 	private static final String KEY_NAME = "Name"; //$NON-NLS-1$
 	private static final String KEY_FAILED = "Failed"; //$NON-NLS-1$
 	private static final String KEY_CANCELED = "Canceled"; //$NON-NLS-1$
+	private static final String KEY_IDEMPOTENT = "Idempotent"; //$NON-NLS-1$
 	private final String id;
 	private final String userId;
+	private boolean idempotent = false;
 	private String message = ""; //$NON-NLS-1$
 	private int percentComplete = 0;
 	private boolean running = true;
@@ -61,7 +63,7 @@ public class TaskInfo {
 		TaskInfo info;
 		try {
 			JSONObject json = new JSONObject(taskString);
-			info = new TaskInfo(json.getString(KEY_USER), json.getString(KEY_ID));
+			info = new TaskInfo(json.getString(KEY_USER), json.getString(KEY_ID), json.optBoolean(KEY_IDEMPOTENT, false));
 			info.setMessage(json.optString(KEY_MESSAGE, "")); //$NON-NLS-1$
 			info.setName(json.optString(KEY_NAME, "")); //$NON-NLS-1$
 			if(json.has(KEY_TIMESTAMP_MODIFIED))
@@ -89,7 +91,8 @@ public class TaskInfo {
 		}
 	}
 
-	public TaskInfo(String userId, String id) {
+	public TaskInfo(String userId, String id, boolean idempotent) {
+		this.idempotent = idempotent;
 		this.userId = userId;
 		this.id = id;
 		this.modified = new Date();
@@ -114,6 +117,11 @@ public class TaskInfo {
 	
 	public void setCanBeCanceled(boolean canBeCanceled){
 		this.canBeCanceled = canBeCanceled;
+	}
+	
+	
+	public boolean isIdempotent() {
+		return idempotent;
 	}
 
 	/**
@@ -259,6 +267,7 @@ public class TaskInfo {
 			resultObject.put(KEY_TIMESTAMP_MODIFIED, modified.getTime());
 			resultObject.put(KEY_CAN_BE_CANCELED, canBeCanceled);
 			resultObject.put(KEY_TIMESTAMP_CREATED, created.getTime());
+			resultObject.put(KEY_IDEMPOTENT, idempotent);
 			resultObject.put(KEY_NAME, name==null ? "" : name);
 			if(result!=null){
 				if(!result.isOK()){
@@ -288,6 +297,7 @@ public class TaskInfo {
 			resultObject.put(KEY_TIMESTAMP_MODIFIED, modified.getTime());
 			resultObject.put(KEY_TIMESTAMP_CREATED, created.getTime());
 			resultObject.put(KEY_CAN_BE_CANCELED, canBeCanceled);
+			resultObject.put(KEY_IDEMPOTENT, idempotent);
 			resultObject.put(KEY_NAME, name==null ? "" : name);
 			if (resultLocation != null)
 				resultObject.put(KEY_LOCATION, resultLocation);

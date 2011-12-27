@@ -58,9 +58,9 @@ public class TaskStoreTest extends TestCase {
 
 	@Test
 	public void readAllTasksTest() {
-		TaskInfo task1 = new TaskInfo("test", "taskid1");
+		TaskInfo task1 = new TaskInfo("test", "taskid1", false);
 		task1.done(Status.OK_STATUS);
-		TaskInfo task2 = new TaskInfo("test", "taskid2");
+		TaskInfo task2 = new TaskInfo("test", "taskid2", false);
 		task2.done(Status.OK_STATUS);
 		TaskStore store = new TaskStore(tempDir);
 		store.writeTask("test", task1.getTaskId(), task1.toJSON().toString());

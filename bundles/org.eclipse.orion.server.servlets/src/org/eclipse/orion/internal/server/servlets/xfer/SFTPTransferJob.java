@@ -48,7 +48,7 @@ public abstract class SFTPTransferJob extends Job {
 		this.user = user;
 		this.passphrase = passphrase;
 		this.options = options;
-		this.task = createTask(userRunningTask);
+		this.task = createTask(userRunningTask, false);
 	}
 
 	private void cleanUp() {
@@ -59,8 +59,8 @@ public abstract class SFTPTransferJob extends Job {
 		}
 	}
 
-	protected TaskInfo createTask(String userId) {
-		TaskInfo info = getTaskService().createTask(NLS.bind("Secure transfer to {0}", host), userId);
+	protected TaskInfo createTask(String userId, boolean isIdempotent) {
+		TaskInfo info = getTaskService().createTask(NLS.bind("Secure transfer to {0}", host), userId, isIdempotent);
 		info.setMessage(NLS.bind("Connecting to {0}...", host));
 		getTaskService().updateTask(info);
 		return info;

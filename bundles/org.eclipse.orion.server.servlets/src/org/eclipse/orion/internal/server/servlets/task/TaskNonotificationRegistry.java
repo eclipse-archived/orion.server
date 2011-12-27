@@ -53,13 +53,13 @@ public class TaskNonotificationRegistry {
 		@Override
 		protected synchronized void canceling() {
 			wasNotified = true;
+			listeners.remove(getName());
 			try {
 				TaskServlet.writeJSONResponse(req, resp, servlet.getTasksList(new ArrayList<TaskInfo>(), new Date(), req, resp));
 			} catch (Exception e) {
 				this.done(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), e));
 				return;
 			}
-			listeners.remove(getName());
 		}
 
 		@Override
@@ -74,13 +74,13 @@ public class TaskNonotificationRegistry {
 			return Status.OK_STATUS;
 		}
 
-		public synchronized void notify(Date timestamp, List<TaskInfo> tasks) {
+		public synchronized void notify(Date timestamp, List<TaskInfo> tasks, Collection<String> deletedTasks) {
 
 			wasNotified = true;
+			listeners.remove(getName());
 			try {
-				TaskServlet.writeJSONResponse(req, resp, servlet.getTasksList(tasks, timestamp, req, resp));
+				TaskServlet.writeJSONResponse(req, resp, servlet.getTasksList(tasks, deletedTasks, timestamp, req, resp));
 				lastNodifications.put(getName(), timestamp);
-				listeners.remove(getName());
 			} catch (Exception e) {
 				this.done(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), e));
 				return;
@@ -90,10 +90,30 @@ public class TaskNonotificationRegistry {
 		}
 
 		public synchronized void tasksModified(String userId, Date modificationDate) {
+			if (wasNotified)
+				return;
 			if (!this.userId.equals(userId))
 				return;
-			notify(modificationDate, service.getTasks(userId, lastNodifications.get(getName()), false));
+			notify(modificationDate, service.getTasks(userId, lastNodifications.get(getName()), false), new HashSet<String>());
 
+		}
+
+		public synchronized void tasksDeleted(String userId, Collection<String> taskIds, Date timestamp) {
+			if (wasNotified)
+				return;
+			if (!this.userId.equals(userId))
+				return;
+			wasNotified = true;
+			listeners.remove(getName());
+			try {
+				TaskServlet.writeJSONResponse(req, resp, servlet.getTasksList(new ArrayList<TaskInfo>(), taskIds, timestamp, req, resp));
+				lastNodifications.put(getName(), timestamp);
+			} catch (Exception e) {
+				this.done(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), e));
+				return;
+			}
+
+			this.done(Status.OK_STATUS);
 		}
 	}
 
@@ -106,10 +126,11 @@ public class TaskNonotificationRegistry {
 	/**
 	 * Changes the last update date for the long-polling action.
 	 * @param longpollingId must be an id of existing long-polling action. Cannot be <code>null</code>.
-	 * @param lastNofication
+	 * @param lastNotification
+	 * @param userId
 	 */
-	public synchronized void setLastNotification(String longpollingId, Date lastNofication) {
-		lastNodifications.put(longpollingId, lastNofication);
+	public synchronized void setLastNotification(String longpollingId, Date lastNotification, String userId) {
+		lastNodifications.put(longpollingId, lastNotification);
 	}
 
 	/**
@@ -136,9 +157,18 @@ public class TaskNonotificationRegistry {
 
 		if (notifyNow) {
 			Date timestamp = new Date();
-			List<TaskInfo> tasks = service.getTasks(userId, lastNodifications.get(longpollingId), false);
+			List<TaskInfo> tasks = service.getTasks(userId, lastNodifications.get(longpollingId) == null ? null : lastNodifications.get(longpollingId), false);
 			if (!tasks.isEmpty()) {
-				listenerJob.notify(timestamp, tasks);
+				listenerJob.notify(timestamp, tasks, new HashSet<String>());
+				listenerJob.schedule();
+				return listenerJob;
+			}
+		}
+
+		if (lastNodifications.get(longpollingId) != null) {
+			Collection<String> tasksDeleted = service.getTasksDeletedSince(userId, lastNodifications.get(longpollingId));
+			if (tasksDeleted.size() > 0) {
+				listenerJob.notify(new Date(), new ArrayList<TaskInfo>(), tasksDeleted);
 			}
 		}
 

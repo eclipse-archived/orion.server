@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.server.core.tasks;
 
+import java.util.Collection;
 import java.util.Date;
 
 /**
@@ -24,5 +25,11 @@ public interface TaskModificationListener {
 	 * @param modificationDate the latest task modification date
 	 */
 	public void tasksModified(String userId, Date modificationDate);
+	
+	/**
+	 * Called {@link ITaskService} when tasks are deleted.
+	 * @param tasks a list of tasks that where deleted
+	 */
+	public void tasksDeleted(String userId, Collection<String> taskIds, Date deletedDate);
 
 }

@@ -107,6 +107,12 @@ public class ProtocolConstants {
 	public static final String KEY_CHILDREN = "Children"; //$NON-NLS-1$
 
 	/**
+	 * JSON representation key for an object's children ids that have been deleted. The value's data
+	 * type is a JSON array of workspace objects.
+	 */
+	public static final String KEY_DELETED_CHILDREN = "DeletedChildren"; //$NON-NLS-1$
+
+	/**
 	 * JSON representation key for the server location of an object's children. Performing
 	 * a GET on this location should return an object containing children objects.
 	 * The value's data type is a String.

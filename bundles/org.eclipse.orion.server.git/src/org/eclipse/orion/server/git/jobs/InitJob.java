@@ -40,7 +40,7 @@ public class InitJob extends GitJob {
 	}
 
 	protected TaskInfo createTask() {
-		TaskInfo info = getTaskService().createTask(NLS.bind("Initializing repository {0}", clone.getName()), this.userId);
+		TaskInfo info = getTaskService().createTask(NLS.bind("Initializing repository {0}", clone.getName()), this.userId, false);
 		info.setMessage(NLS.bind("Initializing repository {0}...", clone.getName()));
 		getTaskService().updateTask(info);
 		return info;

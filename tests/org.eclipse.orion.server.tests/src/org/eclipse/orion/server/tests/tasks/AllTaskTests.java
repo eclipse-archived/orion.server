@@ -30,7 +30,7 @@ public class AllTaskTests {
 	 * Helper method for creating a sample task for testing purposes.
 	 */
 	public static TaskInfo createTestTask(String userId) {
-		TaskInfo info = new TaskInfo(userId, "mytask");
+		TaskInfo info = new TaskInfo(userId, "mytask", false);
 		info.setMessage("THIS#)(&$^@)(ISA%20MESSAGE");
 		info.done(new Status(IStatus.ERROR, "pluginid", "status message"));
 		return info;

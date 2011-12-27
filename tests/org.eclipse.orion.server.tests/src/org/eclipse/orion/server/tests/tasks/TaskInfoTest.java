@@ -43,7 +43,7 @@ public class TaskInfoTest extends TestCase {
 
 	@Test
 	public void testSetMessage() {
-		TaskInfo info = new TaskInfo("test", "mytask");
+		TaskInfo info = new TaskInfo("test", "mytask", false);
 		assertEquals("", info.getMessage());
 		info.setMessage("msg");
 		assertEquals("msg", info.getMessage());
