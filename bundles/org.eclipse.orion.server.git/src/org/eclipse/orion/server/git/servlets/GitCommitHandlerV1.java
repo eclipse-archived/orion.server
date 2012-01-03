@@ -25,7 +25,8 @@ import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.api.RebaseCommand.Operation;
 import org.eclipse.jgit.api.errors.*;
-import org.eclipse.jgit.errors.AmbiguousObjectException;
+import org.eclipse.jgit.api.errors.CheckoutConflictException;
+import org.eclipse.jgit.errors.*;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.merge.ResolveMerger.MergeFailureReason;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -205,7 +206,7 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
 				}
 			}
-
+			toObjectId = getCommitObjectId(db, toObjectId);
 			// set the commit range
 			lc.add(toObjectId);
 
@@ -265,6 +266,15 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 			return true;
 		}
 		return false;
+	}
+
+	private ObjectId getCommitObjectId(Repository db, ObjectId oid) throws MissingObjectException, IncorrectObjectTypeException, IOException {
+		RevWalk walk = new RevWalk(db);
+		try {
+			return walk.parseCommit(oid);
+		} finally {
+			walk.release();
+		}
 	}
 
 	private URI createTaskLocation(URI baseLocation, String taskId) throws URISyntaxException {

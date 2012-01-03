@@ -290,6 +290,7 @@ public class GitTagTest extends GitTest {
 			// tag HEAD with 'tag'
 			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
 			String gitTagUri = gitSection.getString(GitConstants.KEY_TAG);
+			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 			tag(gitTagUri, "tag", Constants.HEAD);
 
 			modifyFile(testTxt, "after tag");
@@ -308,6 +309,13 @@ public class GitTagTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject branches = new JSONObject(response.getText());
 			assertEquals("tag_tag", GitBranchTest.getCurrentBranch(branches).getString(ProtocolConstants.KEY_NAME));
+			// log
+			JSONArray commitsArray = log(gitHeadUri);
+			assertEquals(2, commitsArray.length());
+			JSONObject commit = commitsArray.getJSONObject(0);
+			assertEquals("tag me", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
+			commit = commitsArray.getJSONObject(1);
+			assertEquals("Initial commit", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
 
 			response = checkoutBranch(cloneLocation, Constants.MASTER);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
