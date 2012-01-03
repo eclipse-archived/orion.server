@@ -55,14 +55,23 @@ public class TaskStore {
 		if (!taskFile.exists())
 			return null;
 		StringWriter writer;
+		FileReader reader = null;
 		try {
-			FileReader reader = new FileReader(taskFile);
+			reader = new FileReader(taskFile);
 			writer = new StringWriter();
 			IOUtilities.pipe(reader, writer, true, false);
 			return writer.toString();
 		} catch (IOException e) {
 			LogHelper.log(e);
 			return null;
+		} finally{
+			if(reader!=null)
+				try {
+					reader.close();
+				} catch (IOException e) {
+					LogHelper.log(e);
+					return null;
+				}	
 		}
 	}
 
@@ -123,14 +132,23 @@ public class TaskStore {
 			if (!taskFile.isFile())
 				continue;
 			StringWriter writer;
+			FileReader reader = null;
 			try {
-				FileReader reader = new FileReader(taskFile);
+				reader = new FileReader(taskFile);
 				writer = new StringWriter();
 				IOUtilities.pipe(reader, writer, true, false);
 				result.add(writer.toString());
 			} catch (IOException e) {
 				LogHelper.log(e);
 				return null;
+			} finally{
+				if(reader!=null)
+					try {
+						reader.close();
+					} catch (IOException e) {
+						LogHelper.log(e);
+						return null;
+					}	
 			}
 		}
 
