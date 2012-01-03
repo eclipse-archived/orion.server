@@ -22,6 +22,10 @@ public interface UserConstants {
 
 	public static final String KEY_PASSWORD = "password"; //$NON-NLS-1$
 	
+	public static final String KEY_EMAIL = "email"; //$NON-NLS-1$
+	
+	public static final String KEY_EMAIL_CONFIRMED = "emailConfirmed"; //$NON-NLS-1$
+	
 	public static final String KEY_OLD_PASSWORD = "oldPassword"; //$NON-NLS-1$
 	
 	public static final String KEY_HAS_PASSWORD = "hasPassword"; //$NON-NLS-1$
@@ -39,4 +43,6 @@ public interface UserConstants {
 	public static final String KEY_RESET = "reset"; //$NON-NLS-1$
 	
 	public static final String KEY_LAST_LOGIN_TIMESTAMP = "LastLogInTimestamp"; //$NON-NLS-1$
+	
+	public static final String KEY_CONFIRMATION_ID = "confirmationId"; //$NON-NLS-1$
 }

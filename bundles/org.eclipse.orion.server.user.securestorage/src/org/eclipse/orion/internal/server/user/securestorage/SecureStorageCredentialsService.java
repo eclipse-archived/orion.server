@@ -60,6 +60,8 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 	static final String USER_UID = "uid"; //$NON-NLS-1$
 	static final String USER_NAME = "name"; //$NON-NLS-1$
 	static final String USER_PASSWORD = "password"; //$NON-NLS-1$
+	static final String USER_EMAIL = "email"; //$NON-NLS-1$
+	static final String USER_EMAIL_CONFIRMATION = "email_confirmation"; //$NON-NLS-1$
 	static final String USER_ROLES = "roles"; //$NON-NLS-1$
 	static final String USER_ROLE_NAME = "name"; //$NON-NLS-1$
 	static final String USER_PROPERTIES = "properties"; //$NON-NLS-1$
@@ -197,6 +199,9 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 			ISecurePreferences userPrefs = usersPrefs.node(childName);
 			try {
 				User user = new User(childName, userPrefs.get(USER_LOGIN, childName), userPrefs.get(USER_NAME, ""), userPrefs.get(USER_PASSWORD, null) == null ? null : "" /* don't expose the password */); //$NON-NLS-1$ //$NON-NLS-2$
+				user.setEmail(userPrefs.get(USER_EMAIL, ""));
+				if(userPrefs.get(USER_EMAIL_CONFIRMATION, null)!=null)
+					user.setConfirmationId(userPrefs.get(USER_EMAIL_CONFIRMATION, null));
 
 				for (String property : userPrefs.node(USER_PROPERTIES).keys()) {
 					user.addProperty(property, userPrefs.node(USER_PROPERTIES).get(property, null));
@@ -264,6 +269,10 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 		try {
 
 			User user = new User(node.name(), node.get(USER_LOGIN, node.name()), node.get(USER_NAME, ""), node.get(USER_PASSWORD, null)); //$NON-NLS-1$
+			user.setEmail(node.get(USER_EMAIL, ""));
+			if(node.get(USER_EMAIL_CONFIRMATION, null)!=null)
+				user.setConfirmationId(node.get(USER_EMAIL_CONFIRMATION, null));
+			
 			for (String roleName : node.node(USER_ROLES).childrenNames()) {
 				user.addRole(getRole(roleName));
 			}
@@ -361,6 +370,16 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 			userPrefs.put(USER_NAME, user.getName(), false);
 		if(user.getPassword()!=null)
 			userPrefs.put(USER_PASSWORD, user.getPassword(), true);
+		if(user.getEmail()!=null){
+			if(user.getEmail().length()>0 && !user.getEmail().equals(userPrefs.get(USER_EMAIL, null))){
+				user.setConfirmationId();
+			}
+			userPrefs.put(USER_EMAIL, user.getEmail(), false);
+		}
+		if(user.getConfirmationId()==null)
+			userPrefs.remove(USER_EMAIL_CONFIRMATION);
+		else
+			userPrefs.put(USER_EMAIL_CONFIRMATION, user.getConfirmationId(), false);
 		ISecurePreferences rolesPrefs = userPrefs.node(USER_ROLES);
 		for (String roleName : rolesPrefs.childrenNames())
 			rolesPrefs.node(roleName).removeNode();

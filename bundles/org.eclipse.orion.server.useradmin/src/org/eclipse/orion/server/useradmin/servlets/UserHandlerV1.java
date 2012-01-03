@@ -40,6 +40,7 @@ import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.User;
 import org.eclipse.orion.server.useradmin.UserConstants;
+import org.eclipse.orion.server.useradmin.UserEmailUtil;
 import org.eclipse.orion.server.useradmin.UserServiceHelper;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONArray;
@@ -205,6 +206,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		IOrionCredentialsService userAdmin = getUserAdmin();
 
 		User user = (User) userAdmin.getUser(UserConstants.KEY_UID, userId);
+		String emailConfirmationid = user.getConfirmationId();
 
 		if (user == null)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + userId + " could not be found.", null));
@@ -225,6 +227,10 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 			user.setName(data.getString(ProtocolConstants.KEY_NAME));
 		if (data.has(UserConstants.KEY_PASSWORD))
 			user.setPassword(data.getString(UserConstants.KEY_PASSWORD));
+		if (data.has(UserConstants.KEY_EMAIL)){
+			user.setEmail(data.getString(UserConstants.KEY_EMAIL));
+		}			
+			
 		if (data.has(UserConstants.KEY_PROPERTIES)) {
 			JSONObject propertiesObject = data.getJSONObject(UserConstants.KEY_PROPERTIES);
 			Iterator<?> propertyIterator = propertiesObject.keys();
@@ -237,6 +243,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (!status.isOK()) {
 			return statusHandler.handleRequest(req, resp, status);
 		}
+		
 
 		IOrionUserProfileNode userNode = getUserProfileService().getUserProfileNode(userId, true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
 
@@ -245,6 +252,15 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (data.has("GitName"))
 			userNode.put("GitName", data.getString("GitName"), false);
 		userNode.flush();
+		
+		if(user.getConfirmationId()!=null && !user.getConfirmationId().equals(emailConfirmationid)){
+			try {
+				UserEmailUtil.getUtil().sendEmailConfirmation(getURI(req).resolve("../useremailconfirmation"), user);
+				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.INFO, HttpServletResponse.SC_OK, "Confirmation email has been send to " + user.getEmail(), null));
+			} catch (Exception e) {
+				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Could not send confirmation email to " + user.getEmail(), null));
+			}
+		}
 
 		return true;
 	}
@@ -279,6 +295,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		json.put(ProtocolConstants.KEY_LOCATION, location);
 		json.put(ProtocolConstants.KEY_NAME, user.getName());
 		json.put(UserConstants.KEY_LOGIN, user.getLogin());
+		json.put(UserConstants.KEY_EMAIL, user.getEmail());
+		json.put(UserConstants.KEY_EMAIL_CONFIRMED, user.isEmailConfirmed());
 		json.put(UserConstants.KEY_HAS_PASSWORD, user.getPassword() == null ? false : true);
 
 		JSONObject properties = new JSONObject();

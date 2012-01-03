@@ -79,6 +79,10 @@
       <serviceSelector
             filter="(other.info=org.eclipse.orion)">
       </serviceSelector>
+      <servlet
+            alias="/useremailconfirmation"
+            class="org.eclipse.orion.server.useradmin.servlets.EmailConfirmationServlet">
+      </servlet>
    </extension>
    <extension
          point="org.eclipse.equinox.http.registry.filters">

@@ -27,6 +27,10 @@ public class User implements org.osgi.service.useradmin.User {
 	public static final String LOGIN = "login";
 
 	public static final String UID = "uid";
+	
+	public static final String EMAIL = "email";
+	
+	public static final String EMAIL_CONFIRMATION = "email_confirmation";
 
 	private Set<Role> roles = new HashSet<Role>();
 
@@ -82,6 +86,8 @@ public class User implements org.osgi.service.useradmin.User {
 	public void setLogin(String login) {
 		userCredentials.setProperty(LOGIN, login);
 	}
+	
+	
 
 	public String getName() {
 		return userCredentials.getProperty(NAME);
@@ -129,5 +135,37 @@ public class User implements org.osgi.service.useradmin.User {
 
 	public String getLocation() {
 		return UserServlet.USERS_URI + "/" + getUid();
+	}
+	
+	private static String getUniqueEmailConfirmationId(){
+		return System.currentTimeMillis() + "-" + Math.random();
+	}
+	
+	public void setEmail(String email){
+		userCredentials.setProperty(EMAIL, email);
+	}
+	
+	public String getEmail(){
+		return userCredentials.getProperty(EMAIL);
+	}
+	
+	public String getConfirmationId(){
+		return userCredentials.getProperty(EMAIL_CONFIRMATION);
+	}
+	
+	public void setConfirmationId(String confirmationId){
+		userCredentials.setProperty(EMAIL_CONFIRMATION, confirmationId);
+	}
+	
+	public void confirmEmail(){
+		userCredentials.remove(EMAIL_CONFIRMATION);
+	}
+	
+	public void setConfirmationId(){
+		userCredentials.setProperty(EMAIL_CONFIRMATION, getUniqueEmailConfirmationId());
+	}
+	
+	public boolean isEmailConfirmed(){
+		return userCredentials.getProperty(EMAIL_CONFIRMATION)==null;
 	}
 }

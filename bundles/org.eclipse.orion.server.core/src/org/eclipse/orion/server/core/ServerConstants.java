@@ -64,6 +64,11 @@ public class ServerConstants {
 	 * list of host names.
 	 */
 	public static final String CONFIG_SITE_VIRTUAL_HOSTS= "orion.site.virtualHosts"; //$NON-NLS-1$
+	
+	/**
+	 * The name of configuration property specifying the SMTP host for sending mail
+	 */
+	public static final String CONFIG_MAIL_SMTP_HOST = "mail.smtp.host"; //$NON-NLS-1$
 
 	/**
 	 * The bundle ID of the server core. 
