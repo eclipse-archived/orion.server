@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,13 +10,11 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
-import org.eclipse.orion.server.git.objects.Branch;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
+import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -33,6 +31,7 @@ import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.objects.Branch;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
@@ -70,12 +69,17 @@ public class GitBranchHandlerV1 extends ServletResourceHandler<String> {
 			File gitDir = GitUtils.getGitDir(p);
 			Repository db = new FileRepository(gitDir);
 			Git git = new Git(db);
-			List<Ref> branches = git.branchList().call();
+			List<Ref> branchRefs = git.branchList().call();
+			List<Branch> branches = new ArrayList<Branch>(branchRefs.size());
+			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.BRANCH_LIST);
+			for (Ref ref : branchRefs) {
+				branches.add(new Branch(cloneLocation, db, ref));
+			}
+			Collections.sort(branches, Branch.COMPARATOR);
 			JSONObject result = new JSONObject();
 			JSONArray children = new JSONArray();
-			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.BRANCH_LIST);
-			for (Ref ref : branches) {
-				children.put(new Branch(cloneLocation, db, ref).toJSON());
+			for (Branch branch : branches) {
+				children.put(branch.toJSON());
 			}
 			result.put(ProtocolConstants.KEY_CHILDREN, children);
 			OrionServlet.writeJSONResponse(request, response, result);
