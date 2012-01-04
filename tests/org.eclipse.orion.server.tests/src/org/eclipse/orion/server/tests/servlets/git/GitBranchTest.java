@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others
+ * Copyright (c) 2011, 2012 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -46,20 +46,31 @@ public class GitBranchTest extends GitTest {
 		JSONObject clone = clone(new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute());
 		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
+		branch(branchesLocation, "a");
+		branch(branchesLocation, "z");
+
 		// list branches
 		WebRequest request = getGetRequest(branchesLocation);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject branches = new JSONObject(response.getText());
 		JSONArray branchesArray = branches.getJSONArray(ProtocolConstants.KEY_CHILDREN);
-		assertEquals(1, branchesArray.length());
+		assertEquals(3, branchesArray.length());
 
 		// validate branch metadata
-		JSONObject branch = branchesArray.getJSONObject(0);
+		JSONObject branch = branchesArray.getJSONObject(1);
 		assertEquals(Constants.MASTER, branch.getString(ProtocolConstants.KEY_NAME));
 		assertBranchUri(branch.getString(ProtocolConstants.KEY_LOCATION));
 		assertTrue(branch.optBoolean(GitConstants.KEY_BRANCH_CURRENT, false));
-		// that's it for now
+		branch = branchesArray.getJSONObject(0);
+		assertEquals("z", branch.getString(ProtocolConstants.KEY_NAME));
+		// assert properly sorted, new first
+		long lastTime = Long.MAX_VALUE;
+		for (int i = 0; i < branchesArray.length(); i++) {
+			long t = branchesArray.getJSONObject(i).getLong(ProtocolConstants.KEY_LOCAL_TIMESTAMP);
+			assertTrue(t <= lastTime);
+			lastTime = t;
+		}
 	}
 
 	@Test

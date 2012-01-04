@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,9 +13,12 @@ package org.eclipse.orion.server.git.objects;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Comparator;
 import java.util.List;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.BaseToCommitConverter;
@@ -27,6 +30,11 @@ public class Branch extends GitObject {
 
 	public static final String RESOURCE = "branch"; //$NON-NLS-1$
 	public static final String TYPE = "Branch"; //$NON-NLS-1$
+	public static final Comparator<Branch> COMPARATOR = new Comparator<Branch>() {
+		public int compare(Branch o1, Branch o2) {
+			return o1.getTime() < o2.getTime() ? 1 : (o1.getTime() > o2.getTime() ? -1 : o2.getName().compareTo(o1.getName()));
+		}
+	};
 
 	private Ref ref;
 
@@ -40,7 +48,7 @@ public class Branch extends GitObject {
 	 */
 	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException, CoreException {
 		JSONObject result = new JSONObject();
-		String shortName = Repository.shortenRefName(ref.getName());
+		String shortName = getName();
 		result.put(ProtocolConstants.KEY_NAME, shortName);
 		result.put(ProtocolConstants.KEY_TYPE, TYPE);
 
@@ -58,7 +66,7 @@ public class Branch extends GitObject {
 		result.put(GitConstants.KEY_REMOTE, getRemotes());
 		result.put(GitConstants.KEY_HEAD, BaseToCommitConverter.getCommitLocation(cloneLocation, Constants.HEAD, BaseToCommitConverter.REMOVE_FIRST_2));
 		result.put(GitConstants.KEY_BRANCH_CURRENT, shortName.equals(db.getBranch()));
-
+		result.put(ProtocolConstants.KEY_LOCAL_TIMESTAMP, (long) getTime() * 1000);
 		return result;
 	}
 
@@ -86,6 +94,32 @@ public class Branch extends GitObject {
 			}
 		}
 		return result;
+	}
+
+	private String getName() {
+		return Repository.shortenRefName(ref.getName());
+	}
+
+	public int getTime() {
+		RevCommit c = parseCommit();
+		if (c != null)
+			return c.getCommitTime();
+		return 0;
+	}
+
+	private RevCommit parseCommit() {
+		ObjectId oid = ref.getObjectId();
+		if (oid == null)
+			return null;
+		RevWalk walk = new RevWalk(db);
+		try {
+			return walk.parseCommit(oid);
+		} catch (IOException e) {
+			// ignore and return null
+		} finally {
+			walk.release();
+		}
+		return null;
 	}
 
 	@Override

@@ -258,6 +258,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 				UserEmailUtil.getUtil().sendEmailConfirmation(getURI(req).resolve("../useremailconfirmation"), user);
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.INFO, HttpServletResponse.SC_OK, "Confirmation email has been send to " + user.getEmail(), null));
 			} catch (Exception e) {
+				LogHelper.log(e);
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Could not send confirmation email to " + user.getEmail(), null));
 			}
 		}

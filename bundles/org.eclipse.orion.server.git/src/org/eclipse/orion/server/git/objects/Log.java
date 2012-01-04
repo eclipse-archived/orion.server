@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -20,6 +20,7 @@ import org.eclipse.jgit.api.ListBranchCommand.ListMode;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.git.BaseToCommitConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.*;
 
@@ -55,14 +56,17 @@ public class Log extends GitObject {
 		int index = 0;
 
 		JSONArray children = new JSONArray();
+		boolean hasNextPage = false;
 		for (RevCommit revCommit : commits) {
 			if (pageable && index < startIndex) {
 				index++;
 				continue;
 			}
 
-			if (pageable && index >= startIndex + pageSize)
+			if (pageable && index >= startIndex + pageSize) {
+				hasNextPage = true;
 				break;
+			}
 
 			index++;
 
@@ -87,6 +91,23 @@ public class Log extends GitObject {
 			if (refTargetName.startsWith(Constants.R_HEADS)) {
 				// this is a branch
 				result.put(GitConstants.KEY_LOG_FROM_REF, new Branch(cloneLocation, db, fromRefId.getTarget()).toJSON());
+			}
+		}
+
+		if (pageable) {
+			StringBuilder c = new StringBuilder(""); //$NON-NLS-1$
+			if (fromRefId != null)
+				c.append(fromRefId.getName());
+			if (fromRefId != null && toRefId != null)
+				c.append(".."); //$NON-NLS-1$
+			if (toRefId != null)
+				c.append(toRefId.getName());
+			final String q = "page=%d&pageSize=%d"; //$NON-NLS-1$
+			if (page > 1) {
+				result.put(ProtocolConstants.KEY_PREVIOUS_LOCATION, BaseToCommitConverter.getCommitLocation(cloneLocation, c.toString(), pattern, BaseToCommitConverter.REMOVE_FIRST_2.setQuery(String.format(q, page - 1, pageSize))));
+			}
+			if (hasNextPage) {
+				result.put(ProtocolConstants.KEY_NEXT_LOCATION, BaseToCommitConverter.getCommitLocation(cloneLocation, c.toString(), pattern, BaseToCommitConverter.REMOVE_FIRST_2.setQuery(String.format(q, page + 1, pageSize))));
 			}
 		}
 
