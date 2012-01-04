@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others.
+ * Copyright (c) 2010, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -329,5 +329,17 @@ public class ProtocolConstants {
 	 * JSON representation key for long-polling id
 	 */
 	public static final String KEY_LONGPOLLING_ID = "LongpollingId"; //$NON-NLS-1$
+
+	/**
+	 * JSON representation key for the previous page location of a pageable result.
+	 * The value's data type is a String.
+	 */
+	public static final String KEY_PREVIOUS_LOCATION = "PreviousLocation"; //$NON-NLS-1$
+
+	/**
+	 * JSON representation key for the next page location of a pageable result.
+	 * The value's data type is a String.
+	 */
+	public static final String KEY_NEXT_LOCATION = "NextLocation"; //$NON-NLS-1$
 
 }
