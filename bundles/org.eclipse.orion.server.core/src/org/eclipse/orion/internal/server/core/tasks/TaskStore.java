@@ -115,19 +115,9 @@ public class TaskStore {
 			return false;
 		return taskFile.delete();
 	}
-
-	/**
-	 * Returns all tasks owned by a given user.
-	 * 
-	 * @param userId id of a user that is an owner of tasks
-	 * @return a list of tasks tracked for this user
-	 */
-	public synchronized List<String> readAllTasks(String userId) {
-		List<String> result = new ArrayList<String>();
-		File userDirectory = new File(root, getUserDirectory(userId));
-		if (!userDirectory.exists())
-			return result;
-
+	
+	private List<String> internalReadAllTasks(File userDirectory){
+		List<String> result  = new ArrayList<String>();
 		for (File taskFile : userDirectory.listFiles()) {
 			if (!taskFile.isFile())
 				continue;
@@ -152,6 +142,31 @@ public class TaskStore {
 			}
 		}
 
+		return result;
+		
+	}
+
+	/**
+	 * Returns all tasks owned by a given user.
+	 * 
+	 * @param userId id of a user that is an owner of tasks
+	 * @return a list of tasks tracked for this user
+	 */
+	public synchronized List<String> readAllTasks(String userId) {
+		File userDirectory = new File(root, getUserDirectory(userId));
+		if (!userDirectory.exists())
+			return new ArrayList<String>();
+
+		return internalReadAllTasks(userDirectory);
+	}
+	
+	public synchronized List<String> readAllTasks(){
+		List<String> result  = new ArrayList<String>();
+		for (File userDirectory : root.listFiles()) {
+			if(userDirectory.isDirectory()){
+				result.addAll(internalReadAllTasks(userDirectory));
+			}
+		}
 		return result;
 	}
 }

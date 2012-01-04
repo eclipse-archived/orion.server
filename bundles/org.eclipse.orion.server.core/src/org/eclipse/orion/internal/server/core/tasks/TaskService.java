@@ -11,6 +11,7 @@
 package org.eclipse.orion.internal.server.core.tasks;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -19,12 +20,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.core.tasks.ITaskCanceler;
 import org.eclipse.orion.server.core.tasks.ITaskService;
@@ -41,10 +45,11 @@ public class TaskService implements ITaskService {
 	private Map<String, ITaskCanceler> taskCancelers = new HashMap<String, ITaskCanceler>();
 	private Set<TaskModificationListener> taskListeners = new HashSet<TaskModificationListener>();
 	private Map<String, List<TaskDeletion>> taskDeletions = new HashMap<String, List<TaskDeletion>>();
-	
-	private class TaskDeletion{
+
+	private class TaskDeletion {
 		public final Date deletionDate;
 		public final String taskId;
+
 		public TaskDeletion(Date deletionDate, String taskId) {
 			super();
 			this.deletionDate = deletionDate;
@@ -74,7 +79,7 @@ public class TaskService implements ITaskService {
 		}
 
 	}
-	
+
 	private class DeletedTasksNotificationJob extends Job {
 
 		private String userId;
@@ -97,17 +102,40 @@ public class TaskService implements ITaskService {
 			}
 			return Status.OK_STATUS;
 		}
-
 	}
 
 	public TaskService(IPath baseLocation) {
 		store = new TaskStore(baseLocation.toFile());
+		cleanUpTasks();
+	}
+
+	private void cleanUpTasks() {
+		List<String> allTasks = store.readAllTasks();
+		Calendar monthAgo = Calendar.getInstance();
+		monthAgo.add(Calendar.MONTH, -1);
+		for (String taskString : allTasks) {
+			TaskInfo task = TaskInfo.fromJSON(taskString);
+			if(task==null){
+				continue;
+			}
+			if (task.isRunning()) {//mark all running tasks as failed due to server restart
+				task.done(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Task could not be completed due to server restart", null));
+				updateTask(task);
+			}
+			if(task.getModified().before(monthAgo.getTime())){ //remove tasks older than a month
+				try {
+					removeTask(task.getUserId(), task.getTaskId());
+				} catch (TaskOperationException e) {
+					LogHelper.log(e); //should never happen. All running tasks where already stopped. 
+				}
+			}
+		}
 	}
 
 	public TaskInfo createTask(String taskName, String userId, boolean isIdempotent) {
 		return createTask(taskName, userId, null, isIdempotent);
 	}
-	
+
 	private TaskInfo internalRemoveTask(String userId, String id) throws TaskOperationException {
 		TaskInfo task = getTask(userId, id);
 		if (task == null)
@@ -117,7 +145,7 @@ public class TaskService implements ITaskService {
 		if (!store.removeTask(userId, id))
 			throw new TaskOperationException("Task could not be removed");
 		taskCancelers.remove(id);
-		if(!taskDeletions.containsKey(userId)){
+		if (!taskDeletions.containsKey(userId)) {
 			taskDeletions.put(userId, new ArrayList<TaskService.TaskDeletion>());
 		}
 		taskDeletions.get(userId).add(new TaskDeletion(new Date(), id));
@@ -161,8 +189,8 @@ public class TaskService implements ITaskService {
 	private void notifyListeners(String userId, Date modificationDate) {
 		new TasksNotificationJob(userId, modificationDate).schedule();
 	}
-	
-	private void notifyDeletionListeners(String userId, Date deletionDate, Collection<String> tasks){
+
+	private void notifyDeletionListeners(String userId, Date deletionDate, Collection<String> tasks) {
 		new DeletedTasksNotificationJob(userId, deletionDate, tasks).schedule();
 	}
 
@@ -203,7 +231,7 @@ public class TaskService implements ITaskService {
 					continue;
 				}
 			}
-			if(running && !info.isRunning()){
+			if (running && !info.isRunning()) {
 				continue;
 			}
 
@@ -230,11 +258,11 @@ public class TaskService implements ITaskService {
 	public Collection<String> getTasksDeletedSince(String userId, Date deletedSince) {
 		Set<String> deletedTasks = new HashSet<String>();
 		List<TaskDeletion> taskDeletionsList = taskDeletions.get(userId);
-		if(taskDeletionsList==null){
+		if (taskDeletionsList == null) {
 			return deletedTasks;
 		}
-		for(int i=taskDeletionsList.size()-1; i>0; i--){
-			if(taskDeletionsList.get(i).deletionDate.before(deletedSince)){
+		for (int i = taskDeletionsList.size() - 1; i > 0; i--) {
+			if (taskDeletionsList.get(i).deletionDate.before(deletedSince)) {
 				return deletedTasks;
 			}
 			deletedTasks.add(taskDeletionsList.get(i).taskId);
