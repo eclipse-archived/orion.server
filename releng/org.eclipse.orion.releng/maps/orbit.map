@@ -72,3 +72,6 @@ plugin@org.slf4j.api,1.6.1=p2IU,id=org.slf4j.api,version=1.6.1.v20100831-0715,re
 plugin@org.slf4j.api.source,1.6.1=p2IU,id=org.slf4j.api.source,version=1.6.1.v20100831-0715,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20110523182458/repository
 plugin@org.slf4j.jcl,1.6.1=p2IU,id=org.slf4j.jcl,version=1.6.1.v20100831-0715,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20110523182458/repository
 plugin@org.slf4j.jcl.source,1.6.1=p2IU,id=org.slf4j.jcl.source,version=1.6.1.v20100831-0715,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20110523182458/repository
+
+plugin@javax.mail.glassfish,1.4.1=p2IU,id=javax.mail.glassfish,version=1.4.1.v201005082020,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20110523182458/repository
+plugin@javax.activation,1.1.0=p2IU,id=javax.activation,version=1.1.0.v201105071233,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20110523182458/repository
