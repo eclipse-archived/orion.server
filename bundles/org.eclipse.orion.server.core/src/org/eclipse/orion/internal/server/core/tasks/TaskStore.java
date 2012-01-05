@@ -34,6 +34,7 @@ public class TaskStore {
 
 	public TaskStore(File root) {
 		this.root = root;
+		this.root.mkdirs();
 	}
 
 	private String getUserDirectory(String userId) {
@@ -83,7 +84,6 @@ public class TaskStore {
 	 * @param representation string representation ot the task
 	 */
 	public synchronized void writeTask(String userId, String id, String representation) {
-		root.mkdirs();
 		try {
 			File userDirectory = new File(root, getUserDirectory(userId));
 			if (!userDirectory.exists()) {
