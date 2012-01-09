@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -18,6 +18,9 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.DiffCommand;
 import org.eclipse.jgit.api.Git;
@@ -52,6 +55,8 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 	private static final String EOL = "\r\n"; //$NON-NLS-1$
 
 	private ServletResourceHandler<IStatus> statusHandler;
+
+	private HttpClient httpClient;
 
 	GitDiffHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
 		this.statusHandler = statusHandler;
@@ -242,26 +247,28 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 	private String readPatch(ServletInputStream requestStream, String contentType) throws IOException {
 		//fast forward stream past multi-part header
 		int boundaryOff = contentType.indexOf("boundary="); //$NON-NLS-1$
-		String boundary = contentType.substring(boundaryOff + 9);
-		BufferedReader reader = new BufferedReader(new InputStreamReader(requestStream, "ISO-8859-1")); //$NON-NLS-1$
-		StringBuffer out = new StringBuffer();
-		try {
-			//skip headers up to the first blank line
-			String line = reader.readLine();
-			while (line != null && line.length() > 0)
-				line = reader.readLine();
-			//now process the patch
-			char[] buf = new char[1000];
-			int read;
-			while ((read = reader.read(buf)) > 0) {
-				out.append(buf, 0, read);
-			}
-		} finally {
-			IOUtilities.safeClose(reader);
+		String boundary = contentType.substring(boundaryOff + "boundary=".length(), contentType.length()); //$NON-NLS-1$
+		Map<String, String> parts = IOUtilities.parseMultiPart(requestStream, boundary);
+		if ("fileRadio".equals(parts.get("radio")))
+			return parts.get("uploadedfile");
+		if ("urlRadio".equals(parts.get("radio")))
+			return fetchPatchContentFromUrl(parts.get("url"));
+		return null;
+	}
+
+	private String fetchPatchContentFromUrl(final String url) throws IOException {
+		GetMethod m = new GetMethod(url);
+		getHttpClient().executeMethod(m);
+		if (m.getStatusCode() == HttpStatus.SC_OK) {
+			return IOUtilities.toString(m.getResponseBodyAsStream());
 		}
-		//remove the boundary from the output (end of input is \r\n--<boundary>--\r\n)
-		out.setLength(out.length() - (boundary.length() + 8));
-		return out.toString();
+		return null;
+	}
+
+	private HttpClient getHttpClient() {
+		if (this.httpClient == null)
+			this.httpClient = new HttpClient();
+		return this.httpClient;
 	}
 
 	private AbstractTreeIterator getTreeIterator(Repository db, String name) throws IOException {

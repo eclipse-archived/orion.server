@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others.
+ * Copyright (c) 2010, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,7 +10,20 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.core;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
+import java.io.Writer;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -106,5 +119,44 @@ public class IOUtilities {
 
 	public static InputStream toInputStream(String s) throws UnsupportedEncodingException {
 		return new ByteArrayInputStream(s.getBytes("UTF-8")); //$NON-NLS-1$^M
+	}
+
+	public static Map<String, String> parseMultiPart(final InputStream requestStream, final String boundary) throws IOException {
+		String string = IOUtilities.toString(requestStream);
+		BufferedReader reader = new BufferedReader(new StringReader(string));
+		StringBuilder buf = new StringBuilder();
+		Map<String, String> parts = new HashMap<String, String>();
+		String name = null;
+		try {
+			String line;
+			while ((line = reader.readLine()) != null) {
+				if (line.equals("--" + boundary)) { //$NON-NLS-1$
+					if (buf.length() > 0) {
+						parts.put(name, buf.toString());
+						buf.setLength(0);
+					}
+					line = reader.readLine(); // Content-Disposition: form-data; name="{name}"...
+					int i = line.indexOf("name=\""); //$NON-NLS-1$
+					String s = line.substring(i + "name=\"".length()); //$NON-NLS-1$
+					name = s.substring(0, s.indexOf('"'));
+					reader.readLine(); // an empty line
+					if (name.equals("uploadedfile")) { //$NON-NLS-1$
+						reader.readLine(); // "Content-Type: application/octet-stream"
+					}
+				} else if (line.equals("--" + boundary + "--")) { //$NON-NLS-1$ //$NON-NLS-2$
+					parts.put(name, buf.toString());
+				} else {
+					if ("uploadedfile".equals(name) && "".equals(line)) { //$NON-NLS-1$ //$NON-NLS-2$
+						continue; // skip empty lines
+					}
+					if (buf.length() > 0)
+						buf.append("\n"); //$NON-NLS-1$
+					buf.append(line);
+				}
+			}
+		} finally {
+			IOUtilities.safeClose(reader);
+		}
+		return parts;
 	}
 }

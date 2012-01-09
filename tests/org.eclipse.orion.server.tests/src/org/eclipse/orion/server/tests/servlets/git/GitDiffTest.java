@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others
+ * Copyright (c) 2011, 2012 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -918,7 +918,8 @@ public class GitDiffTest extends GitTest {
 		WebRequest request = getPostGitDiffRequest(gitDiffUri, patch, true);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		//		return new JSONObject(response.getText());
+		// TODO: see bug 366008
+		// return new JSONObject(response.getText());
 	}
 
 	private static final String EOL = "\r\n"; //$NON-NLS-1$
@@ -940,6 +941,11 @@ public class GitDiffTest extends GitTest {
 		} else {
 			StringBuilder sb = new StringBuilder();
 			sb.append("--" + boundary + EOL);
+			sb.append("Content-Disposition: form-data; name=\"radio\"" + EOL);
+			sb.append(EOL);
+			sb.append("fileRadio" + EOL);
+			sb.append("--" + boundary + EOL);
+			sb.append("Content-Disposition: form-data; name=\"uploadedfile\"; filename=\"\"" + EOL);
 			sb.append(ProtocolConstants.HEADER_CONTENT_TYPE + ": plain/text" + EOL + EOL); //$NON-NLS-1$
 			sb.append(str);
 			sb.append(EOL);
@@ -951,7 +957,7 @@ public class GitDiffTest extends GitTest {
 		WebRequest request = new PostMethodWebRequest(requestURI, IOUtilities.toInputStream(str), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		if (patch) {
-			request.setHeaderField(ProtocolConstants.HEADER_CONTENT_TYPE, "multipart/related; boundary=\"" + boundary + '"'); //$NON-NLS-1$
+			request.setHeaderField(ProtocolConstants.HEADER_CONTENT_TYPE, "multipart/related; boundary=" + boundary); //$NON-NLS-1$
 		}
 		setAuthentication(request);
 		return request;
