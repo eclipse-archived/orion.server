@@ -51,31 +51,20 @@ public class Log extends GitObject {
 
 		JSONObject result = new JSONObject();
 
-		boolean pageable = (page > 0);
-		int startIndex = (page - 1) * pageSize;
-		int index = 0;
-
 		JSONArray children = new JSONArray();
-		boolean hasNextPage = false;
-		for (RevCommit revCommit : commits) {
-			if (pageable && index < startIndex) {
-				index++;
-				continue;
-			}
-
-			if (pageable && index >= startIndex + pageSize) {
-				hasNextPage = true;
-				break;
-			}
-
-			index++;
-
+		int i = 0;
+		Iterator<RevCommit> iterator = commits.iterator();
+		while (iterator.hasNext()) {
+			RevCommit revCommit = (RevCommit) iterator.next();
 			Commit commit = new Commit(cloneLocation, db, revCommit, pattern);
 			commit.setCommitToBranchMap(commitToBranchMap);
 			children.put(commit.toJSON());
+			if (i++ == pageSize - 1)
+				break;
 		}
-		result.put(ProtocolConstants.KEY_CHILDREN, children);
+		boolean hasNextPage = iterator.hasNext();
 
+		result.put(ProtocolConstants.KEY_CHILDREN, children);
 		result.put(GitConstants.KEY_REPOSITORY_PATH, pattern == null ? "" : pattern); //$NON-NLS-1$
 		result.put(GitConstants.KEY_CLONE, cloneLocation);
 
@@ -94,7 +83,7 @@ public class Log extends GitObject {
 			}
 		}
 
-		if (pageable) {
+		if (page > 0) {
 			StringBuilder c = new StringBuilder(""); //$NON-NLS-1$
 			if (fromRefId != null)
 				c.append(fromRefId.getName());

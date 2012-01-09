@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others 
+ * Copyright (c) 2011, 2012 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -815,7 +815,7 @@ public abstract class GitTest extends FileSystemTest {
 	 * @throws JSONException
 	 */
 	protected JSONArray log(String gitCommitUri) throws IOException, SAXException, JSONException {
-		return log(gitCommitUri, null, null);
+		return log(gitCommitUri, null, null, false, false);
 	}
 
 	/**
@@ -850,8 +850,11 @@ public abstract class GitTest extends FileSystemTest {
 		return null;
 	}
 
-	protected JSONArray log(String gitCommitUri, Integer page, Integer pageSize) throws IOException, SAXException, JSONException {
-		return logObject(gitCommitUri, page, pageSize).getJSONArray(ProtocolConstants.KEY_CHILDREN);
+	protected JSONArray log(String gitCommitUri, Integer page, Integer pageSize, boolean prevPage, boolean nextPage) throws IOException, SAXException, JSONException {
+		JSONObject logObject = logObject(gitCommitUri, page, pageSize);
+		assertEquals(prevPage, logObject.has(ProtocolConstants.KEY_PREVIOUS_LOCATION));
+		assertEquals(nextPage, logObject.has(ProtocolConstants.KEY_NEXT_LOCATION));
+		return logObject.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 	}
 
 	protected JSONObject logObject(String gitCommitUri) throws IOException, SAXException, JSONException {
