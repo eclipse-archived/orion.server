@@ -137,7 +137,7 @@ public class User implements org.osgi.service.useradmin.User {
 		return UserServlet.USERS_URI + "/" + getUid();
 	}
 	
-	private static String getUniqueEmailConfirmationId(){
+	public static String getUniqueEmailConfirmationId(){
 		return System.currentTimeMillis() + "-" + Math.random();
 	}
 	

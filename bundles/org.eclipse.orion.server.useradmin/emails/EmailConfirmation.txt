@@ -2,4 +2,4 @@ Confirm your email for Orion
 NOTE: This is a machine generated memo. Please do not respond to this note.
 
 This email address has been registered for Orion user. To confirm please visit:
-<EMAIL_URL>
+<URL>

@@ -40,11 +40,12 @@
 						<td class="loginWindow"><input class="loginWindow"
 							name=password type=password id=password tabindex=2
 							onkeypress="var event = window.event ? window.event : event ? event : evt; if (event.keyCode === 13) { confirmLogin() } else {return true;}"><br>
+							<a id="resetUserLink" class="loginWindow" style="font-size: 0.85em;" href="javascript:showResetUser();">Forgot your password?</a>
 						</td>
 					</tr>
 					<tr id="errorWin" style="visibility: hidden;">
 					<td colspan=2>
-						<ul id="loginError">
+						<ul class="loginError">
 							<li id="errorMessage">&nbsp;</li>
 						</ul>
 					</td>
@@ -57,6 +58,36 @@
 					</tr>
 				</tbody>
 			</table>
+			<span id="resetUser" style="display: none">
+			<div id="resetUserHr" class="hrloginWindow"></div>
+				<h3 class="loginWindow" id="newResetUserHeaderShown">Reset Orion Account</h3>
+				<table class="loginWindow">
+					<tr>
+						<td class="loginWindow">
+							<label class="loginWindow" id="resetLabel" for="resetEmail">Account name: </label>
+						</td>
+						<td class="loginWindow">
+							<input class="loginWindow" id="reset">
+						</td>
+					</tr>
+					<tr id="reset_errorWin" style="display: none;">
+						<td colspan=2>
+							<ul id="reset_errorList">
+								<li id="reset_errorMessage">&nbsp;</li>
+							</ul>
+						</td>
+					</tr>
+					<tr>
+						<td class="loginWindow loginWindowButtonTd" colspan=2>
+							<button type='button' class="loginWindow"
+								onClick="javascript:hideResetUser();"
+								tabindex=7>Cancel</button>
+							<button class="loginWindow" type="submit"
+								onClick=confirmResetUser() value=OK>Reset</button>
+						</td>
+					</tr>
+				</table>
+			</span>
 			<div id="newUserHr" class="hrloginWindow"></div>
 			<h3 id="newUserHeader" class="loginWindow">
 				New to Orion? <a class="loginWindow"
@@ -94,7 +125,7 @@
 				</tr>
 				<tr id="create_errorWin" style="visibility: hidden;">
 					<td colspan=2>
-						<ul id="loginError">
+						<ul class="loginError">
 							<li id="create_errorMessage">&nbsp;</li>
 						</ul>
 					</td>

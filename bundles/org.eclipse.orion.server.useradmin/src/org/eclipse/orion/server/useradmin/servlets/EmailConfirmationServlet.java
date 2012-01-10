@@ -18,12 +18,17 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.servlets.OrionServlet;
+import org.eclipse.orion.server.user.profile.RandomPasswordGenerator;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.User;
 import org.eclipse.orion.server.useradmin.UserConstants;
+import org.eclipse.orion.server.useradmin.UserEmailUtil;
 import org.eclipse.orion.server.useradmin.UserServiceHelper;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class EmailConfirmationServlet extends OrionServlet {
 
@@ -48,6 +53,53 @@ public class EmailConfirmationServlet extends OrionServlet {
 			return;
 		}
 
+		if (req.getParameter(UserConstants.KEY_PASSWORD_RESET_CONFIRMATION_ID) != null) {
+			resetPassword(user, req, resp);
+		} else {
+			confirmEmail(user, req, resp);
+		}
+
+	}
+
+	private void resetPassword(User user, HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		if (user.getProperty(UserConstants.KEY_PASSWORD_RESET_CONFIRMATION_ID) == null || "".equals(user.getProperty(UserConstants.KEY_PASSWORD_RESET_CONFIRMATION_ID))) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "You have not requested to reset your password");
+			return;
+		}
+
+		if (!user.getProperty(UserConstants.KEY_PASSWORD_RESET_CONFIRMATION_ID).equals(req.getParameter(UserConstants.KEY_PASSWORD_RESET_CONFIRMATION_ID))) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "This password reset request is out of date");
+			return;
+		}
+
+		String newPass = RandomPasswordGenerator.getRanromPassword();
+
+		user.setPassword(newPass);
+
+		try {
+			UserEmailUtil.getUtil().setPasswordResetEmail(user);
+		} catch (Exception e) {
+			LogHelper.log(e);
+			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Your password could not be changed, because confirmation email could not be send. To reset you password cotact your administrator.D");
+			return;
+		}
+
+		IStatus status = getUserAdmin().updateUser(user.getUid(), user);
+		if (!status.isOK()) {
+			if (status instanceof ServerStatus) {
+				resp.sendError(((ServerStatus) status).getHttpCode(), status.getMessage());
+				return;
+			}
+			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, status.getMessage());
+			return;
+		}
+		resp.setContentType(ProtocolConstants.CONTENT_TYPE_HTML);
+		resp.getWriter().write("<html><body><p>You password has been reset. New password has been send to <b>" + user.getEmail() + "</b></p></body></html>");
+		return;
+
+	}
+
+	private void confirmEmail(User user, HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		if (user.getConfirmationId() == null) {
 			resp.setContentType(ProtocolConstants.CONTENT_TYPE_HTML);
 			resp.getWriter().write("<html><body><p>Email address <b>" + user.getEmail() + "</b> has already been confirmed. Thank you!</p></body></html>");
@@ -61,7 +113,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 
 		user.confirmEmail();
 
-		IStatus status = userAdmin.updateUser(userId, user);
+		IStatus status = getUserAdmin().updateUser(user.getUid(), user);
 
 		if (!status.isOK()) {
 			if (status instanceof ServerStatus) {
@@ -75,4 +127,68 @@ public class EmailConfirmationServlet extends OrionServlet {
 		resp.getWriter().write("<html><body><p>Email address <b>" + user.getEmail() + "</b> has been confirmed. Thank you!</p></body></html>");
 		return;
 	}
+
+	@Override
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+		String[] userPathInfoParts = req.getPathInfo() == null ? new String[0] : req.getPathInfo().split("\\/", 2);
+		if (userPathInfoParts.length > 1 && userPathInfoParts[1] != null && "cansendemails".equalsIgnoreCase(userPathInfoParts[1])) {
+			JSONObject jsonResp = new JSONObject();
+			try {
+				jsonResp.put("emailConfigured", UserEmailUtil.getUtil().isEmailConfigured());
+				writeJSONResponse(req, resp, jsonResp);
+			} catch (JSONException e) {
+				//this should never happen
+				resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+			}
+			return;
+		}
+
+		String userLogin;
+
+		try {
+			JSONObject data = OrionServlet.readJSONRequest(req);
+			userLogin = data.getString(UserConstants.KEY_LOGIN);
+		} catch (JSONException e) {
+			getStatusHandler().handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Could not parse json request", e));
+			return;
+		}
+
+		IOrionCredentialsService userAdmin = getUserAdmin();
+		User user = userAdmin.getUser("login", userLogin);
+
+		if (user == null) {
+			resp.sendError(HttpServletResponse.SC_NOT_FOUND, "User " + userLogin + " not found.");
+			return;
+		}
+
+		if (user.getEmail() == null || user.getEmail().length() == 0 || !user.isEmailConfirmed()) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User " + userLogin + " doesn't have its email set. Contact administrator to reset your password.");
+			return;
+		}
+
+		user.addProperty(UserConstants.KEY_PASSWORD_RESET_CONFIRMATION_ID, User.getUniqueEmailConfirmationId());
+		IStatus status = userAdmin.updateUser(user.getUid(), user);
+
+		if (!status.isOK()) {
+			if (status instanceof ServerStatus) {
+				resp.sendError(((ServerStatus) status).getHttpCode(), status.getMessage());
+				return;
+			}
+			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, status.getMessage());
+			return;
+		}
+
+		try {
+			UserEmailUtil.getUtil().sendResetPasswordConfirmation(getURI(req), user);
+			getStatusHandler().handleRequest(req, resp, new ServerStatus(IStatus.INFO, HttpServletResponse.SC_OK, "Confirmation email has been send to " + user.getEmail(), null));
+			return;
+		} catch (Exception e) {
+			LogHelper.log(e);
+			getStatusHandler().handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Could not send confirmation email to " + user.getEmail(), null));
+			return;
+		}
+
+	}
+
 }

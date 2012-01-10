@@ -10,112 +10,175 @@
 window.onload = function() {
 
 	var error = getParam("error");
-	if(error){
+	if (error) {
 		var errorMessage = decodeBase64(error);
-		
+
 		document.getElementById("errorWin").style.visibility = '';
 		document.getElementById("errorMessage").innerHTML = errorMessage;
 	}
-	
-	
-	var mypostrequest = new XMLHttpRequest();
-	mypostrequest.onreadystatechange = function() {
-		if (mypostrequest.readyState == 4) {
-			if (mypostrequest.status === 200) {
-				var responseObject = JSON.parse(mypostrequest.responseText);
-				
-				if(responseObject.CanAddUsers===false){
+
+	var checkusersrequest = new XMLHttpRequest();
+	checkusersrequest.onreadystatechange = function() {
+		if (checkusersrequest.readyState == 4) {
+			if (checkusersrequest.status === 200) {
+				var responseObject = JSON.parse(checkusersrequest.responseText);
+
+				if (responseObject.CanAddUsers === false) {
 					document.getElementById("newUserHeader").style.display = 'none';
 					document.getElementById("newUserHr").style.display = 'none';
 				}
-				
+
 			}
 		}
 	};
-	
-	
-	mypostrequest.open("POST", "../login/canaddusers", true);
-	mypostrequest.setRequestHeader("Content-type",
+
+	checkusersrequest.open("POST", "../login/canaddusers", true);
+	checkusersrequest.setRequestHeader("Content-type",
 			"application/x-www-form-urlencoded");
-	mypostrequest.setRequestHeader("Orion-Version", "1");
-	mypostrequest.send();
-	
+	checkusersrequest.setRequestHeader("Orion-Version", "1");
+	checkusersrequest.send();
+
+	var checkemailrequest = new XMLHttpRequest();
+	checkemailrequest.onreadystatechange = function() {
+		if (checkemailrequest.readyState == 4) {
+			if (checkemailrequest.status === 200) {
+				var responseObject = JSON.parse(checkemailrequest.responseText);
+				if (responseObject.emailConfigured === false) {
+					document.getElementById("resetUserLink").style.display = 'none';
+				}
+
+			}
+		}
+	};
+
+	checkemailrequest.open("POST", "../useremailconfirmation/cansendemails",
+			true);
+	checkemailrequest.setRequestHeader("Content-type",
+			"application/x-www-form-urlencoded");
+	checkemailrequest.setRequestHeader("Orion-Version", "1");
+	checkemailrequest.send();
+
 	document.getElementById("login").focus();
 }
 
-function getParam(key){
-	var regex = new RegExp('[\\?&]'+key+'=([^&#]*)');
+function getParam(key) {
+	var regex = new RegExp('[\\?&]' + key + '=([^&#]*)');
 	var results = regex.exec(window.location.href);
 	if (results == null)
 		return;
 	return results[1];
 }
 
- function decodeBase64(input) {
-	 
-	 var _keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
-	    var output = "";
-	    var chr1, chr2, chr3;
-	    var enc1, enc2, enc3, enc4;
-	    var i = 0;
+function decodeBase64(input) {
 
-	    input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
+	var _keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
+	var output = "";
+	var chr1, chr2, chr3;
+	var enc1, enc2, enc3, enc4;
+	var i = 0;
 
-	    while (i < input.length) {
+	input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
 
-	        enc1 = _keyStr.indexOf(input.charAt(i++));
-	        enc2 = _keyStr.indexOf(input.charAt(i++));
-	        enc3 = _keyStr.indexOf(input.charAt(i++));
-	        enc4 = _keyStr.indexOf(input.charAt(i++));
+	while (i < input.length) {
 
-	        chr1 = (enc1 << 2) | (enc2 >> 4);
-	        chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
-	        chr3 = ((enc3 & 3) << 6) | enc4;
+		enc1 = _keyStr.indexOf(input.charAt(i++));
+		enc2 = _keyStr.indexOf(input.charAt(i++));
+		enc3 = _keyStr.indexOf(input.charAt(i++));
+		enc4 = _keyStr.indexOf(input.charAt(i++));
 
-	        output = output + String.fromCharCode(chr1);
+		chr1 = (enc1 << 2) | (enc2 >> 4);
+		chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+		chr3 = ((enc3 & 3) << 6) | enc4;
 
-	        if (enc3 != 64) {
-	            output = output + String.fromCharCode(chr2);
-	        }
-	        if (enc4 != 64) {
-	            output = output + String.fromCharCode(chr3);
-	        }
+		output = output + String.fromCharCode(chr1);
 
-	    }
-	    output = output.replace(/\r\n/g,"\n");
-	    var utftext = "";
+		if (enc3 != 64) {
+			output = output + String.fromCharCode(chr2);
+		}
+		if (enc4 != 64) {
+			output = output + String.fromCharCode(chr3);
+		}
 
-	    for (var n = 0; n < output.length; n++) {
+	}
+	output = output.replace(/\r\n/g, "\n");
+	var utftext = "";
 
-	        var c = output.charCodeAt(n);
+	for ( var n = 0; n < output.length; n++) {
 
-	        if (c < 128) {
-	            utftext += String.fromCharCode(c);
-	        }
-	        else if((c > 127) && (c < 2048)) {
-	            utftext += String.fromCharCode((c >> 6) | 192);
-	            utftext += String.fromCharCode((c & 63) | 128);
-	        }
-	        else {
-	            utftext += String.fromCharCode((c >> 12) | 224);
-	            utftext += String.fromCharCode(((c >> 6) & 63) | 128);
-	            utftext += String.fromCharCode((c & 63) | 128);
-	        }
+		var c = output.charCodeAt(n);
 
-	    }
+		if (c < 128) {
+			utftext += String.fromCharCode(c);
+		} else if ((c > 127) && (c < 2048)) {
+			utftext += String.fromCharCode((c >> 6) | 192);
+			utftext += String.fromCharCode((c & 63) | 128);
+		} else {
+			utftext += String.fromCharCode((c >> 12) | 224);
+			utftext += String.fromCharCode(((c >> 6) & 63) | 128);
+			utftext += String.fromCharCode((c & 63) | 128);
+		}
 
-	    return utftext;
- }
+	}
 
+	return utftext;
+}
 
-function getRedirect(){
-	 var regex = new RegExp('[\\?&]redirect=([^&#]*)');
-	  var results = regex.exec( window.location.href );
-	  return results == null ? null : results[1];
+function setResetMessage(isError, message) {
+	document.getElementById("reset_errorMessage").innerHTML = message;
+	document.getElementById("reset_errorList").className = isError ? "loginError"
+			: "loginInfo";
+	document.getElementById("reset_errorWin").style.display = '';
+}
+
+function confirmResetUser() {
+	if (document.getElementById("reset").value == "") {
+		setResetMessage(true, "Provide user to reset.");
+		return;
+	}
+	var mypostrequest = new XMLHttpRequest();
+	mypostrequest.onreadystatechange = function() {
+		document.getElementById("reset_errorWin").style.display = 'none';
+		if (mypostrequest.readyState == 4) {
+			if (mypostrequest.status === 200) {
+				var responseObject = JSON.parse(mypostrequest.responseText);
+				if (responseObject.Message) {
+					setResetMessage(false, responseObject.Message);
+				} else {
+					document.getElementById("reset_errorWin").style.display = 'none';
+				}
+			} else {
+				try {
+					var responseObject = JSON.parse(mypostrequest.responseText);
+					if (responseObject.Message) {
+						setResetMessage(true, responseObject.Message);
+						return;
+					}
+				} catch (e) {
+					// not json
+				}
+				setResetMessage(true, mypostrequest.statusText);
+			}
+		}
+	};
+
+	mypostrequest.open("POST", "../useremailconfirmation", true);
+	mypostrequest.setRequestHeader("Content-type",
+			"application/x-www-form-urlencoded");
+	mypostrequest.setRequestHeader("Orion-Version", "1");
+	mypostrequest
+			.send("{login=" + document.getElementById("reset").value + "}");
+
+	setResetMessage(false, "Sending password reset confirmation...");
+}
+
+function getRedirect() {
+	var regex = new RegExp('[\\?&]redirect=([^&#]*)');
+	var results = regex.exec(window.location.href);
+	return results == null ? null : results[1];
 }
 
 function confirmLogin(login, password) {
-	if(!login){
+	if (!login) {
 		login = document.getElementById('login').value;
 		password = document.getElementById('password').value;
 	}
@@ -129,17 +192,18 @@ function confirmLogin(login, password) {
 				document.getElementById("errorWin").style.visibility = '';
 			} else {
 				var redirect = getRedirect();
-				if(redirect!=null){
+				if (redirect != null) {
 					window.location = redirect;
-				}else{
+				} else {
 					window.close();
 				}
-				
+
 			}
 		}
 	};
 
-	var parameters = "login=" + encodeURIComponent(login) + "&password=" + encodeURIComponent(password);
+	var parameters = "login=" + encodeURIComponent(login) + "&password="
+			+ encodeURIComponent(password);
 	mypostrequest.open("POST", "../login/form", true);
 	mypostrequest.setRequestHeader("Content-type",
 			"application/x-www-form-urlencoded");
@@ -147,21 +211,21 @@ function confirmLogin(login, password) {
 	mypostrequest.send(parameters);
 }
 
-function goToCreateUser(){
-	document.getElementById("createUserForm").style.display="";
-	document.getElementById("newUserHeaderShown").style.display="";
-	document.getElementById("newUserHeader").style.display="none";
+function goToCreateUser() {
+	document.getElementById("createUserForm").style.display = "";
+	document.getElementById("newUserHeaderShown").style.display = "";
+	document.getElementById("newUserHeader").style.display = "none";
 
 }
 
-function goToLoginWindow(){
-	document.getElementById("createUserForm").style.display="none";
-	document.getElementById("newUserHeaderShown").style.display="none";
-	document.getElementById("newUserHeader").style.display="";
+function goToLoginWindow() {
+	document.getElementById("createUserForm").style.display = "none";
+	document.getElementById("newUserHeaderShown").style.display = "none";
+	document.getElementById("newUserHeader").style.display = "";
 }
 
 function confirmCreateUser() {
-	if(!validatePassword()){
+	if (!validatePassword()) {
 		return;
 	}
 	var mypostrequest = new XMLHttpRequest();
@@ -179,7 +243,8 @@ function confirmCreateUser() {
 			}
 		}
 	};
-	var parameters = "login=" + encodeURIComponent(login) + "&password=" + encodeURIComponent(password);
+	var parameters = "login=" + encodeURIComponent(login) + "&password="
+			+ encodeURIComponent(password);
 	mypostrequest.open("POST", "../users", true);
 	mypostrequest.setRequestHeader("Content-type",
 			"application/x-www-form-urlencoded");
@@ -199,3 +264,11 @@ function validatePassword() {
 	return true;
 }
 
+function showResetUser() {
+	document.getElementById('resetUser').style.display = '';
+}
+
+function hideResetUser() {
+	document.getElementById('resetUser').style.display = 'none';
+	document.getElementById("reset_errorWin").style.display = 'none';
+}

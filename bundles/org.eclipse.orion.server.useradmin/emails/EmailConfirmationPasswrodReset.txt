@@ -1,0 +1,5 @@
+Confirm your password reset for Orion
+NOTE: This is a machine generated memo. Please do not respond to this note.
+
+You have requested a password reset for user <USER>. To generate new password visit: 
+<URL>

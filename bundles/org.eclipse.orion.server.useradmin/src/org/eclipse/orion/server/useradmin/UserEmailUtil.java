@@ -29,14 +29,55 @@ import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
 
+/**
+ * Handles sending emails to users
+ *
+ */
 public class UserEmailUtil {
 
 	private static UserEmailUtil util = null;
 	private static final String EMAIL_CONFIRMATION_FILE = "emails/EmailConfirmation.txt";
-	private static final String EMAIL_URL_LINK = "<EMAIL_URL>";
+	private static final String EMAIL_CONFIRMATION_RESET_PASS_FILE = "emails/EmailConfirmationPasswrodReset.txt";
+	private static final String EMAIL_PASSWORD_RESET = "emails/PasswordReset.txt";
+	private static final String EMAIL_URL_LINK = "<URL>";
+	private static final String EMAIL_USER_LINK = "<USER>";
+	private static final String EMAIL_PASSWORD_LINK = "<PASSWORD>";
 	private Properties properties;
-	private String confirmationEmail;
-	private String confirmationEmailTitle; //first line of the file
+	private EmailContent confirmationEmail;
+	private EmailContent confirmationResetPassEmail;
+	private EmailContent passwordResetEmail;
+
+	private class EmailContent {
+		private String title;
+		private String content;
+
+		public String getTitle() {
+			return title;
+		}
+
+		public String getContent() {
+			return content;
+		}
+
+		public EmailContent(String fileName) throws URISyntaxException, IOException {
+			File emailFile = new File(FileLocator.resolve(UserAdminActivator.getDefault().getBundleContext().getBundle().getEntry(fileName)).toURI());
+			BufferedReader reader = new BufferedReader(new FileReader(emailFile));
+			String line = null;
+			try {
+				title = reader.readLine();
+				StringBuilder stringBuilder = new StringBuilder();
+				String ls = System.getProperty("line.separator");
+				while ((line = reader.readLine()) != null) {
+					stringBuilder.append(line);
+					stringBuilder.append(ls);
+				}
+				content = stringBuilder.toString();
+			} finally {
+				reader.close();
+			}
+		}
+
+	};
 
 	public UserEmailUtil() {
 		properties = System.getProperties();
@@ -64,27 +105,13 @@ public class UserEmailUtil {
 		return util;
 	}
 
-	private void initConfirmationEmail() throws URISyntaxException, IOException {
-		File emailFile = new File(FileLocator.resolve(UserAdminActivator.getDefault().getBundleContext().getBundle().getEntry(EMAIL_CONFIRMATION_FILE)).toURI());
-		BufferedReader reader = new BufferedReader(new FileReader(emailFile));
-		String line = null;
-		try {
-			confirmationEmailTitle = reader.readLine();
-			StringBuilder stringBuilder = new StringBuilder();
-			String ls = System.getProperty("line.separator");
-			while ((line = reader.readLine()) != null) {
-				stringBuilder.append(line);
-				stringBuilder.append(ls);
-			}
-			confirmationEmail = stringBuilder.toString();
-		} finally {
-			reader.close();
-		}
+	public boolean isEmailConfigured() {
+		return PreferenceHelper.getString("mail.from", null) != null;
 	}
 
 	private void sendEmail(String subject, String messageText, String emailAddress) throws URISyntaxException, IOException, MessagingException {
 		Session session = Session.getInstance(properties, null);
-		InternetAddress from = new InternetAddress(PreferenceHelper.getString("mail.from", "Orion Admin"));
+		InternetAddress from = new InternetAddress(PreferenceHelper.getString("mail.from", "OrionAdmin"));
 		InternetAddress to = new InternetAddress(emailAddress);
 
 		MimeMessage message = new MimeMessage(session);
@@ -102,12 +129,28 @@ public class UserEmailUtil {
 
 	public void sendEmailConfirmation(URI baseURI, User user) throws URISyntaxException, IOException, MessagingException {
 		if (confirmationEmail == null) {
-			initConfirmationEmail();
+			confirmationEmail = new EmailContent(EMAIL_CONFIRMATION_FILE);
 		}
 		String confirmURL = baseURI.toURL().toString();
 		confirmURL += "/" + user.getUid();
 		confirmURL += "?" + UserConstants.KEY_CONFIRMATION_ID + "=" + user.getConfirmationId();
-		sendEmail(confirmationEmailTitle, confirmationEmail.replace(EMAIL_URL_LINK, confirmURL), user.getEmail());
+		sendEmail(confirmationEmail.getTitle(), confirmationEmail.getContent().replaceAll(EMAIL_USER_LINK, user.getLogin()).replaceAll(EMAIL_URL_LINK, confirmURL), user.getEmail());
 	}
 
+	public void sendResetPasswordConfirmation(URI baseURI, User user) throws URISyntaxException, IOException, MessagingException {
+		if (confirmationResetPassEmail == null) {
+			confirmationResetPassEmail = new EmailContent(EMAIL_CONFIRMATION_RESET_PASS_FILE);
+		}
+		String confirmURL = baseURI.toURL().toString();
+		confirmURL += "/" + user.getUid();
+		confirmURL += "?" + UserConstants.KEY_PASSWORD_RESET_CONFIRMATION_ID + "=" + user.getProperty(UserConstants.KEY_PASSWORD_RESET_CONFIRMATION_ID);
+		sendEmail(confirmationResetPassEmail.getTitle(), confirmationResetPassEmail.getContent().replaceAll(EMAIL_URL_LINK, confirmURL).replaceAll(EMAIL_USER_LINK, user.getLogin()), user.getEmail());
+	}
+
+	public void setPasswordResetEmail(User user) throws URISyntaxException, IOException, MessagingException {
+		if (passwordResetEmail == null) {
+			passwordResetEmail = new EmailContent(EMAIL_PASSWORD_RESET);
+		}
+		sendEmail(passwordResetEmail.getTitle(), passwordResetEmail.getContent().replaceAll(EMAIL_USER_LINK, user.getLogin()).replaceAll(EMAIL_PASSWORD_LINK, user.getPassword()), user.getEmail());
+	}
 }

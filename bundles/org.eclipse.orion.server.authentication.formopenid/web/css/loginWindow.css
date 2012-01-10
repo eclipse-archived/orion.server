@@ -41,17 +41,30 @@ h2.loginWindowHeader{
 	font-style: italic;
 }
 
-#loginError {
+.loginError {
 	background: url("../images/error_tsk.gif") no-repeat left
 		center;
 	color: red;
 	list-style: none;
 	padding-left: 20px;
-	float: right;
 	line-height: 12px;
 	font-size: 0.8em;
 	display: block;
 	margin: 3px;
+	font-style: italic;
+}
+
+.loginInfo {
+	background: url("../images/info_tsk.gif") no-repeat left
+		center;
+	color: navy;
+	list-style: none;
+	padding-left: 20px;
+	line-height: 12px;
+	font-size: 0.8em;
+	display: block;
+	margin: 3px;
+	font-style: italic;
 }
 
 #loginWindowMask {
