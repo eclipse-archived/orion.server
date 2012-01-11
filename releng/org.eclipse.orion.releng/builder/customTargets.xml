@@ -106,7 +106,6 @@ lastMapTag=${mapsTagTag}
 				<arg value="name=@{name}" />
 				<arg value="out=@{appDir}/built-@{name}.js"/>
 				<arg value="appDir=@{appDir}" />
-				<arg value="baseUrl=." />
 				<arg value="dir=." />
 			</java>
 						
