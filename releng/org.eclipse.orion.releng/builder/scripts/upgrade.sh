@@ -1,5 +1,5 @@
 #******************************************************************************
-# Copyright (c) 2010, 2011 IBM Corporation and others.
+# Copyright (c) 2010, 2012 IBM Corporation and others.
 # All rights reserved. This program and the accompanying materials
 # are made available under the terms of the Eclipse Public License v1.0
 # which accompanies this distribution, and is available at
@@ -10,7 +10,6 @@
 #*******************************************************************************
 #!/bin/bash
 #
-
 
 serverHome=/home/admin/current
 
@@ -49,6 +48,8 @@ fi
 #delete old search index to save space
 echo Deleting old search index
 rm -fr $serverHome/eclipse/serverworkspace/.metadata/.plugins/org.eclipse.orion.server.core.search/
+echo Deleting old tasks
+rm -fr $serverHome/eclipse/serverworkspace/.metadata/.plugins/org.eclipse.orion.server.core/tasks/
 
 #back-up the current server using a folder based on date
 dateString=`date +%Y%m%d-%H%M`
@@ -70,6 +71,9 @@ mv $serverHome/$oldBuildDir/serverworkspace $serverHome/eclipse/
 #increase heap size in ini
 echo Configuring server
 sed -i 's/384m/800m/g' $serverHome/eclipse/orion.ini
+#remove console
+sed -i '/^-console$/ d' $serverHome/eclipse/orion.ini
+
 
 #copy orion.conf file into server
 cp $serverHome/orion.conf $serverHome/eclipse/orion.conf

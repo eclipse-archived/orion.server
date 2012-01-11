@@ -1,5 +1,5 @@
 #******************************************************************************
-# Copyright (c) 2011 IBM Corporation and others.
+# Copyright (c) 2010, 2012 IBM Corporation and others.
 # All rights reserved. This program and the accompanying materials
 # are made available under the terms of the Eclipse Public License v1.0
 # which accompanies this distribution, and is available at
@@ -48,5 +48,8 @@ then
         exit
 fi
 archiveFile=`basename $archive`
-echo "Invoking upgrade script with $archiveFile"
-ssh -l admin orion.eclipse.org /home/admin/current/upgrade.sh -archive $archiveFile
+echo "Invoking upgrade script on $host with archive file $archiveFile"
+ssh -l admin $host /home/admin/current/upgrade.sh -archive $archiveFile
+echo "Deploy complete"
+echo "------------------------------------------"
+
