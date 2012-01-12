@@ -12,6 +12,7 @@ package org.eclipse.orion.server.git.jobs;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.CloneCommand;
@@ -22,7 +23,6 @@ import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.server.core.ServerStatus;
-import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.git.objects.Clone;
@@ -40,19 +40,13 @@ public class CloneJob extends GitJob {
 	private final String cloneLocation;
 
 	public CloneJob(Clone clone, String userRunningTask, CredentialsProvider credentials, String user, String cloneLocation, WebProject project) {
-		super("Cloning", userRunningTask, (GitCredentialsProvider) credentials); //$NON-NLS-1$
+		super(NLS.bind("Cloning {0}", clone.getUrl()), userRunningTask, NLS.bind("Cloning {0}...", clone.getUrl()), false, false, (GitCredentialsProvider) credentials); //$NON-NLS-1$
 		this.clone = clone;
 		this.user = user;
 		this.cloneLocation = cloneLocation;
 		this.project = project;
-		this.task = createTask();
-	}
-
-	protected TaskInfo createTask() {
-		TaskInfo info = getTaskService().createTask(NLS.bind("Cloning {0}", clone.getUrl()), this.userId, false);
-		info.setMessage(NLS.bind("Cloning {0}...", clone.getUrl()));
-		getTaskService().updateTask(info);
-		return info;
+		setFinalLocation(URI.create(cloneLocation));
+		setFinalMessage("Clone complete.");
 	}
 
 	private IStatus doClone() {
@@ -70,8 +64,7 @@ public class CloneJob extends GitJob {
 			Git git = cc.call();
 
 			// Configure the clone, see Bug 337820
-			task.setMessage(NLS.bind("Configuring {0}...", clone.getUrl()));
-			updateTask(task);
+			setMessage(NLS.bind("Configuring {0}...", clone.getUrl()));
 			GitCloneHandlerV1.doConfigureClone(git, user);
 			git.getRepository().close();
 		} catch (IOException e) {
@@ -87,32 +80,21 @@ public class CloneJob extends GitJob {
 	}
 
 	@Override
-	protected IStatus run(IProgressMonitor monitor) {
-		IStatus result = Status.OK_STATUS;
-		try {
-			result = doClone();
-			// save the clone metadata
-			if (result.isOK()) {
-				task.setResultLocation(cloneLocation);
-				String message = "Clone complete.";
-				task.setMessage(message);
-				result = new Status(IStatus.OK, GitActivator.PI_GIT, message);
-			} else {
-				try {
-					if (project != null)
-						GitCloneHandlerV1.removeProject(user, project);
-					else
-						FileUtils.delete(URIUtil.toFile(clone.getContentLocation()), FileUtils.RECURSIVE);
-				} catch (IOException e) {
-					String msg = "An error occured when cleaning up after a clone failure";
-					result = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
-				}
+	protected IStatus performJob() {
+		IStatus result = doClone();
+		if (result.isOK()) {
+			return result;
+		} else {
+			try {
+				if (project != null)
+					GitCloneHandlerV1.removeProject(user, project);
+				else
+					FileUtils.delete(URIUtil.toFile(clone.getContentLocation()), FileUtils.RECURSIVE);
+			} catch (IOException e) {
+				String msg = "An error occured when cleaning up after a clone failure";
+				result = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 			}
-			task.done(result);
-			updateTask(task);
-		} finally {
-			cleanUp();
+			return result;
 		}
-		return Status.OK_STATUS; // see bug 353190
 	}
 }

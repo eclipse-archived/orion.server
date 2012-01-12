@@ -22,7 +22,6 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.*;
 import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
-import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.git.servlets.GitUtils;
@@ -34,22 +33,17 @@ import org.eclipse.osgi.util.NLS;
 public class PullJob extends GitJob {
 
 	private IPath path;
-	private String name;
+	private String projectName;
 
 	public PullJob(String userRunningTask, CredentialsProvider credentials, Path path, boolean force) {
-		super("Pulling", userRunningTask, (GitCredentialsProvider) credentials); //$NON-NLS-1$
+		super("Pulling", userRunningTask, "Pulling...", false, false, (GitCredentialsProvider) credentials); //$NON-NLS-1$
 		// path: file/{...}
 		this.path = path;
-		this.name = path.segmentCount() == 2 ? WebProject.fromId(path.segment(1)).getName() : path.lastSegment();
+		this.projectName = path.segmentCount() == 2 ? WebProject.fromId(path.segment(1)).getName() : path.lastSegment();
 		// this.force = force; // TODO: enable when JGit starts to support this option
-		this.task = createTask();
-	}
-
-	protected TaskInfo createTask() {
-		TaskInfo info = getTaskService().createTask(NLS.bind("Pulling {0}", name), this.userId, false);
-		info.setMessage(NLS.bind("Pulling {0}...", name));
-		getTaskService().updateTask(info);
-		return info;
+		setName(NLS.bind("Pulling {0}", projectName));
+		setMessage(NLS.bind("Pulling {0}...", projectName));
+		setFinalMessage(NLS.bind("Pulling {0} done", projectName));
 	}
 
 	private IStatus doPull() throws IOException, CoreException, JGitInternalException, URISyntaxException, GitAPIException {
@@ -88,7 +82,7 @@ public class PullJob extends GitJob {
 	}
 
 	@Override
-	protected IStatus run(IProgressMonitor monitor) {
+	protected IStatus performJob() {
 		IStatus result = Status.OK_STATUS;
 		try {
 			result = doPull();
@@ -103,10 +97,6 @@ public class PullJob extends GitJob {
 		} catch (Exception e) {
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Pulling error", e);
 		}
-		task.done(result);
-		task.setMessage(NLS.bind("Pulling {0} done", name));
-		updateTask(task);
-		cleanUp();
-		return Status.OK_STATUS; // see bug 353190
+		return result;
 	}
 }

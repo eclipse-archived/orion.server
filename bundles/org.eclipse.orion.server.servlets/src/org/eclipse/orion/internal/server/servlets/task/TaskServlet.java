@@ -51,14 +51,6 @@ public class TaskServlet extends OrionServlet {
 		notificationRegistry = new TaskNonotificationRegistry(this, taskTracker.getService());
 	}
 
-	public static final String getUserId(HttpServletRequest req) {
-		if (req.getRemoteUser() != null) {
-			return req.getRemoteUser();
-		} else {
-			return req.getSession(true).getId();
-		}
-	}
-
 	@Override
 	protected void handleException(HttpServletResponse resp, String msg, Exception e) throws ServletException {
 		super.handleException(resp, msg, e);
@@ -70,7 +62,7 @@ public class TaskServlet extends OrionServlet {
 		IPath path = pathInfo == null ? Path.EMPTY : new Path(pathInfo);
 		ITaskService taskService = taskTracker.getService();
 		if (path.segmentCount() == 0) {
-			taskService.removeCompletedTasks(getUserId(req));
+			taskService.removeCompletedTasks(TaskJobHandler.getUserId(req));
 			return;
 		}
 
@@ -81,7 +73,7 @@ public class TaskServlet extends OrionServlet {
 
 		String taskId = path.segment(1);
 		try {
-			taskService.removeTask(getUserId(req), taskId);
+			taskService.removeTask(TaskJobHandler.getUserId(req), taskId);
 		} catch (TaskOperationException e) {
 			handleException(resp, e.getMessage(), e);
 			return;
@@ -102,7 +94,7 @@ public class TaskServlet extends OrionServlet {
 			JSONObject putData = OrionServlet.readJSONRequest(req);
 			if (putData.getBoolean("Cancel")) {
 				String taskId = path.segment(1);
-				TaskInfo task = taskService.getTask(getUserId(req), taskId);
+				TaskInfo task = taskService.getTask(TaskJobHandler.getUserId(req), taskId);
 				if (task == null) {
 					handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Task " + taskId + " does not exist", null));
 					return;
@@ -162,13 +154,13 @@ public class TaskServlet extends OrionServlet {
 						//if we can't get timestamp from request than we return all changes
 					}
 
-					List<TaskInfo> tasks = taskService.getTasks(getUserId(req), modifiedFrom, runningOnly);
+					List<TaskInfo> tasks = taskService.getTasks(TaskJobHandler.getUserId(req), modifiedFrom, runningOnly);
 					try {
 						JSONObject result = getTasksList(tasks, timestamp, req, resp);
 						result.put(ProtocolConstants.KEY_LONGPOLLING_ID, new UniversalUniqueIdentifier().toBase64String());
 						resp.setStatus(HttpServletResponse.SC_ACCEPTED);
 						writeJSONResponse(req, resp, result);
-						notificationRegistry.setLastNotification(result.getString(ProtocolConstants.KEY_LONGPOLLING_ID), timestamp, getUserId(req));
+						notificationRegistry.setLastNotification(result.getString(ProtocolConstants.KEY_LONGPOLLING_ID), timestamp, TaskJobHandler.getUserId(req));
 						return;
 					} catch (JSONException e) {
 						handleException(resp, e.getMessage(), e);
@@ -179,7 +171,7 @@ public class TaskServlet extends OrionServlet {
 					}
 				}
 				String longpollingId = req.getParameter(ProtocolConstants.KEY_LONGPOLLING_ID);
-				Job job = notificationRegistry.addListener(longpollingId, req, resp, getUserId(req));
+				Job job = notificationRegistry.addListener(longpollingId, req, resp, TaskJobHandler.getUserId(req));
 
 				final Object jobIsDone = new Object();
 				final JobChangeAdapter jobListener = new JobChangeAdapter() {
@@ -219,7 +211,7 @@ public class TaskServlet extends OrionServlet {
 				//if we can't get timestamp from request than we return all changes
 			}
 
-			List<TaskInfo> tasks = taskService.getTasks(getUserId(req), modifiedFrom, runningOnly);
+			List<TaskInfo> tasks = taskService.getTasks(TaskJobHandler.getUserId(req), modifiedFrom, runningOnly);
 			try {
 				writeJSONResponse(req, resp, getTasksList(tasks, timestamp, req, resp));
 			} catch (JSONException e) {
@@ -242,7 +234,7 @@ public class TaskServlet extends OrionServlet {
 			return;
 		}
 		String taskId = path.segment(1);
-		TaskInfo task = taskService.getTask(getUserId(req), taskId);
+		TaskInfo task = taskService.getTask(TaskJobHandler.getUserId(req), taskId);
 
 		if (task == null) {
 			handleException(resp, "Task not found: " + taskId, null, HttpServletResponse.SC_NOT_FOUND);

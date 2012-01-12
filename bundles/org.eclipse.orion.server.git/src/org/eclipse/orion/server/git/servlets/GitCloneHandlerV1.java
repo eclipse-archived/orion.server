@@ -28,7 +28,7 @@ import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.servlets.*;
-import org.eclipse.orion.internal.server.servlets.task.TaskServlet;
+import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;
 import org.eclipse.orion.internal.server.servlets.workspace.*;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.LogHelper;
@@ -182,9 +182,9 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 
 		if (initOnly) {
 			// git init
-			InitJob job = new InitJob(clone, TaskServlet.getUserId(request), request.getRemoteUser(), cloneLocation);
+			InitJob job = new InitJob(clone, TaskJobHandler.getUserId(request), request.getRemoteUser(), cloneLocation);
 			job.schedule();
-			TaskInfo task = job.getTask();
+			TaskInfo task = job.startTask();
 			JSONObject result = task.toJSON();
 			// Not nice that the git service knows the location of the task servlet, but task service doesn't know this either
 			String taskLocation = getURI(request).resolve("../../task/id/" + task.getTaskId()).toString(); //$NON-NLS-1$
@@ -200,9 +200,9 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			cp.setUri(new URIish(clone.getUrl()));
 
 			// if all went well, clone
-			CloneJob job = new CloneJob(clone, TaskServlet.getUserId(request), cp, request.getRemoteUser(), cloneLocation, webProjectExists ? null : webProject /* used for cleaning up, so null when not needed */);
+			CloneJob job = new CloneJob(clone, TaskJobHandler.getUserId(request), cp, request.getRemoteUser(), cloneLocation, webProjectExists ? null : webProject /* used for cleaning up, so null when not needed */);
 			job.schedule();
-			TaskInfo task = job.getTask();
+			TaskInfo task = job.startTask();
 			JSONObject result = task.toJSON();
 			// Not nice that the git service knows the location of the task servlet, but task service doesn't know this either
 			String taskLocation = getURI(request).resolve("../../task/id/" + task.getTaskId()).toString(); //$NON-NLS-1$
@@ -544,10 +544,10 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 
 	private boolean pull(HttpServletRequest request, HttpServletResponse response, GitCredentialsProvider cp, String path, boolean force) throws URISyntaxException, JSONException, IOException {
 		Path p = new Path(path); // /{file}/{path}
-		PullJob job = new PullJob(TaskServlet.getUserId(request), cp, p, force);
+		PullJob job = new PullJob(TaskJobHandler.getUserId(request), cp, p, force);
 		job.schedule();
 
-		TaskInfo task = job.getTask();
+		TaskInfo task = job.startTask();
 		JSONObject result = task.toJSON();
 		URI taskLocation = createTaskLocation(OrionServlet.getURI(request), task.getTaskId());
 		result.put(ProtocolConstants.KEY_LOCATION, taskLocation);

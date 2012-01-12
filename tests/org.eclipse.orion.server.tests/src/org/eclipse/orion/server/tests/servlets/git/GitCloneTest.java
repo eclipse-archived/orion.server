@@ -246,26 +246,24 @@ public class GitCloneTest extends GitTest {
 		IPath randomLocation = getRandomLocation();
 		assertNull(GitUtils.getGitDir(randomLocation.toFile()));
 		WebRequest request = getPostGitCloneRequest(randomLocation.toString(), clonePath);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
-		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(taskLocation);
-		String completedTaskLocation = waitForTaskCompletion(taskLocation);
+		WebResponse response = waitForTaskCompletionObjectResponse(webConversation.getResponse(request));
 
 		// task completed, but cloning failed
-		request = new GetMethodWebRequest(completedTaskLocation);
-		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		setAuthentication(request);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject completedTask = new JSONObject(response.getText());
-		assertEquals(false, completedTask.getBoolean("Running"));
-		assertEquals(100, completedTask.getInt("PercentComplete"));
-		JSONObject result = completedTask.getJSONObject("Result");
-		assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, result.getInt("HttpCode"));
-		assertEquals("Error", result.getString("Severity"));
-		assertEquals("An internal git error cloning git repository", result.getString("Message"));
-		assertEquals("Invalid remote: origin", result.getString("DetailedMessage"));
+		if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
+			JSONObject completedTask = new JSONObject(response.getText());
+			assertEquals(false, completedTask.getBoolean("Running"));
+			assertEquals(100, completedTask.getInt("PercentComplete"));
+			JSONObject result = completedTask.getJSONObject("Result");
+			assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, result.getInt("HttpCode"));
+			assertEquals("Error", result.getString("Severity"));
+			assertEquals("An internal git error cloning git repository", result.getString("Message"));
+			assertEquals("Invalid remote: origin", result.getString("DetailedMessage"));
+		} else {
+			assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, response.getResponseCode());
+			JSONObject result = new JSONObject(response.getText());
+			assertEquals("An internal git error cloning git repository", result.getString("Message"));
+			assertEquals("Invalid remote: origin", result.getString("DetailedMessage"));
+		}
 
 		// we don't know ID of the clone that failed to be created, so we're checking if none has been added
 		request = listGitClonesRequest(workspaceId, null);

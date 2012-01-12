@@ -268,6 +268,54 @@ public abstract class GitTest extends FileSystemTest {
 		return status;
 	}
 
+	protected WebResponse waitForTaskCompletionObjectResponse(WebResponse response) throws IOException, SAXException, JSONException {
+		return waitForTaskCompletionObjectResponse(response, testUserLogin, testUserPassword);
+	}
+
+	protected WebResponse waitForTaskCompletionObjectResponse(WebResponse response, String userName, String userPassword) throws IOException, SAXException, JSONException {
+		if (response.getResponseCode() == HttpURLConnection.HTTP_ACCEPTED) {
+			JSONObject status = null;
+			long start = System.currentTimeMillis();
+			while (true) {
+				String text = response.getText();
+				status = new JSONObject(text);
+				if (status.isNull("Running"))
+					Assert.fail("Unexpected task format: " + text);
+				boolean running = status.getBoolean("Running");
+				if (!running)
+					break;
+				//timeout after reasonable time to avoid hanging tests
+				if (System.currentTimeMillis() - start > 10000)
+					assertTrue("The operation took too long", false);
+				try {
+					Thread.sleep(200);
+				} catch (InterruptedException e) {
+					//ignore
+				}
+				WebRequest request = new GetMethodWebRequest(status.getString("Location"));
+				setAuthentication(request, userName, userPassword);
+				response = webConversation.getResponse(request);
+			}
+			return response;
+		}
+		return response;
+	}
+
+	protected JSONObject waitForTaskCompletion(WebResponse response) throws IOException, JSONException, SAXException {
+		if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
+			String text = response.getText();
+			return new JSONObject(text);
+		} else if (response.getResponseCode() == HttpURLConnection.HTTP_ACCEPTED) {
+			JSONObject taskResp = new JSONObject(response.getText());
+			JSONObject status = waitForTaskCompletionObject(taskResp.getString(ProtocolConstants.KEY_LOCATION), testUserLogin, testUserPassword);
+			assertFalse(status.has("Failed") && status.getBoolean("Failed"));
+			assertTrue(status.has("Result"));
+			return status.getJSONObject("Result");
+		}
+		fail("Task failed with code " + response.getResponseCode() + ", result: " + response.getText());
+		return null;
+	}
+
 	protected static String getMethodName() {
 		final StackTraceElement[] ste = Thread.currentThread().getStackTrace();
 		return ste[3].getMethodName();
@@ -334,11 +382,11 @@ public abstract class GitTest extends FileSystemTest {
 	protected JSONObject clone(URIish uri, IPath workspacePath, IPath filePath, String name, String kh, char[] p) throws JSONException, IOException, SAXException, CoreException {
 		// clone
 		WebRequest request = getPostGitCloneRequest(uri, workspacePath, filePath, name, kh, p);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
-		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(taskLocation);
-		String cloneLocation = waitForTaskCompletion(taskLocation);
+		WebResponse response = waitForTaskCompletionObjectResponse(webConversation.getResponse(request));
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject jsonResp = new JSONObject(response.getText());
+		assertTrue(jsonResp.has(ProtocolConstants.KEY_LOCATION));
+		String cloneLocation = jsonResp.getString(ProtocolConstants.KEY_LOCATION);
 
 		// validate the clone metadata
 		response = webConversation.getResponse(getGetRequest(cloneLocation));
