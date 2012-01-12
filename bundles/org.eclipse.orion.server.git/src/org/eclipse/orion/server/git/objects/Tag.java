@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -56,6 +56,10 @@ public class Tag extends GitObject {
 		result.put(ProtocolConstants.KEY_LOCAL_TIMESTAMP, (long) getTime() * 1000);
 		result.put(ProtocolConstants.KEY_TYPE, TYPE);
 		result.put(ProtocolConstants.KEY_FULL_NAME, getName(true));
+
+		// add Git Clone URI
+		result.put(GitConstants.KEY_CLONE, cloneLocation);
+
 		return result;
 	}
 
