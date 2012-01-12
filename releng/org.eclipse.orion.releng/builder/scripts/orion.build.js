@@ -14,7 +14,7 @@
     locale: 'en-us',
     inlineText: true,
 
-    baseUrl: '..',
+    baseUrl: '.',
 
     // set the paths to our library packages
     packages: [{
