@@ -132,7 +132,6 @@ lastMapTag=${mapsTagTag}
 	<target name="requirejs" if="requirejsHome" >
 		<delete dir="${buildDirectory}/optimization" />
 		<copy file="${builder}/scripts/orion.build.js" tofile="${buildDirectory}/optimization/orion.build.js" overwrite="true"/>
-		<copy file="${builder}/scripts/orion.index.js" tofile="${buildDirectory}/optimization/orion.index.js" overwrite="true"/>
 
 		<!-- Stage files for optimization -->
 		<pathconvert property="dojoJar" >
