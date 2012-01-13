@@ -21,7 +21,6 @@ import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.lib.RefUpdate.Result;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.*;
-import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.git.servlets.GitUtils;
@@ -38,20 +37,15 @@ public class FetchJob extends GitJob {
 	private String branch; // can be null if fetching the whole branch
 
 	public FetchJob(String userRunningTask, CredentialsProvider credentials, Path path, boolean force) {
-		super("Fetching", userRunningTask, (GitCredentialsProvider) credentials);
+		super("Fetching", userRunningTask, "Fetching...", false, false, (GitCredentialsProvider) credentials);
 		// path: {remote}[/{branch}]/file/{...}
 		this.path = path;
 		this.remote = path.segment(0);
 		this.force = force;
 		this.branch = path.segment(1).equals("file") ? null : path.segment(1); //$NON-NLS-1$
-		this.task = createTask();
-	}
-
-	protected TaskInfo createTask() {
-		TaskInfo info = getTaskService().createTask((branch == null ? NLS.bind("Fetching {0}", remote) : NLS.bind("Fetching {0}/{1}", new Object[] {remote, branch})), this.userId, false);
-		info.setMessage(branch == null ? NLS.bind("Fetching {0}...", remote) : NLS.bind("Fetching {0}/{1}...", new Object[] {remote, branch}));
-		getTaskService().updateTask(info);
-		return info;
+		setName(branch == null ? NLS.bind("Fetching {0}", remote) : NLS.bind("Fetching {0}/{1}", new Object[] {remote, branch}));
+		setMessage(branch == null ? NLS.bind("Fetching {0}...", remote) : NLS.bind("Fetching {0}/{1}...", new Object[] {remote, branch}));
+		setFinalMessage(NLS.bind("Fetching {0} done", remote));
 	}
 
 	private IStatus doFetch() throws IOException, CoreException, JGitInternalException, InvalidRemoteException, URISyntaxException {
@@ -110,7 +104,7 @@ public class FetchJob extends GitJob {
 	}
 
 	@Override
-	protected IStatus run(IProgressMonitor monitor) {
+	protected IStatus performJob() {
 		IStatus result = Status.OK_STATUS;
 		try {
 			result = doFetch();
@@ -125,10 +119,6 @@ public class FetchJob extends GitJob {
 		} catch (Exception e) {
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error fetching git remote", e);
 		}
-		task.done(result);
-		task.setMessage(NLS.bind("Fetching {0} done", remote));
-		updateTask(task);
-		cleanUp();
-		return Status.OK_STATUS; // see bug 353190
+		return result;
 	}
 }

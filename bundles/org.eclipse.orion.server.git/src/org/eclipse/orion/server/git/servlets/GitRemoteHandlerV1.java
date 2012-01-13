@@ -24,7 +24,7 @@ import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-import org.eclipse.orion.internal.server.servlets.task.TaskServlet;
+import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.*;
@@ -214,10 +214,10 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 	private boolean fetch(HttpServletRequest request, HttpServletResponse response, GitCredentialsProvider cp, String path, boolean force) throws URISyntaxException, JSONException, IOException {
 		// {remote}/{branch}/{file}/{path}
 		Path p = new Path(path);
-		FetchJob job = new FetchJob(TaskServlet.getUserId(request), cp, p, force);
+		FetchJob job = new FetchJob(TaskJobHandler.getUserId(request), cp, p, force);
 		job.schedule();
 
-		TaskInfo task = job.getTask();
+		TaskInfo task = job.startTask();
 		JSONObject result = task.toJSON();
 		URI taskLocation = createTaskLocation(OrionServlet.getURI(request), task.getTaskId());
 		result.put(ProtocolConstants.KEY_LOCATION, taskLocation);
@@ -232,10 +232,10 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		// FIXME: what if a remote or branch is named "file"?
 		if (p.segment(2).equals("file")) { //$NON-NLS-1$
 			// /git/remote/{remote}/{branch}/file/{path}
-			PushJob job = new PushJob(TaskServlet.getUserId(request), cp, p, srcRef, tags, force);
+			PushJob job = new PushJob(TaskJobHandler.getUserId(request), cp, p, srcRef, tags, force);
 			job.schedule();
 
-			TaskInfo task = job.getTask();
+			TaskInfo task = job.startTask();
 			JSONObject result = task.toJSON();
 			URI taskLocation = createTaskLocation(OrionServlet.getURI(request), task.getTaskId());
 			result.put(ProtocolConstants.KEY_LOCATION, taskLocation);

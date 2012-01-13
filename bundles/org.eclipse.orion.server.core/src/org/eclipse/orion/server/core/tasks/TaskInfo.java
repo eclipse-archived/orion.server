@@ -25,20 +25,20 @@ import org.json.JSONObject;
  * Represents a snapshot of the state of a long running task.
  */
 public class TaskInfo {
-	private static final String KEY_PERCENT_COMPLETE = "PercentComplete"; //$NON-NLS-1$
-	private static final String KEY_ID = "Id"; //$NON-NLS-1$
-	private static final String KEY_USER = "User"; //$NON-NLS-1$
-	private static final String KEY_MESSAGE = "Message"; //$NON-NLS-1$
-	private static final String KEY_RUNNING = "Running"; //$NON-NLS-1$
-	private static final String KEY_LOCATION = "Location"; //$NON-NLS-1$
-	private static final String KEY_RESULT = "Result"; //$NON-NLS-1$
-	private static final String KEY_CAN_BE_CANCELED = "CanBeCanceled"; //$NON-NLS-1$
-	private static final String KEY_TIMESTAMP_MODIFIED = "Modified"; //$NON-NLS-1$
-	private static final String KEY_TIMESTAMP_CREATED = "Created"; //$NON-NLS-1$
-	private static final String KEY_NAME = "Name"; //$NON-NLS-1$
-	private static final String KEY_FAILED = "Failed"; //$NON-NLS-1$
-	private static final String KEY_CANCELED = "Canceled"; //$NON-NLS-1$
-	private static final String KEY_IDEMPOTENT = "Idempotent"; //$NON-NLS-1$
+	public static final String KEY_PERCENT_COMPLETE = "PercentComplete"; //$NON-NLS-1$
+	public static final String KEY_ID = "Id"; //$NON-NLS-1$
+	public static final String KEY_USER = "User"; //$NON-NLS-1$
+	public static final String KEY_MESSAGE = "Message"; //$NON-NLS-1$
+	public static final String KEY_RUNNING = "Running"; //$NON-NLS-1$
+	public static final String KEY_LOCATION = "Location"; //$NON-NLS-1$
+	public static final String KEY_RESULT = "Result"; //$NON-NLS-1$
+	public static final String KEY_CAN_BE_CANCELED = "CanBeCanceled"; //$NON-NLS-1$
+	public static final String KEY_TIMESTAMP_MODIFIED = "Modified"; //$NON-NLS-1$
+	public static final String KEY_TIMESTAMP_CREATED = "Created"; //$NON-NLS-1$
+	public static final String KEY_NAME = "Name"; //$NON-NLS-1$
+	public static final String KEY_FAILED = "Failed"; //$NON-NLS-1$
+	public static final String KEY_CANCELED = "Canceled"; //$NON-NLS-1$
+	public static final String KEY_IDEMPOTENT = "Idempotent"; //$NON-NLS-1$
 	private final String id;
 	private final String userId;
 	private boolean idempotent = false;

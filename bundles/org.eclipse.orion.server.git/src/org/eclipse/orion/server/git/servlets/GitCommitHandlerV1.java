@@ -20,7 +20,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
-import org.eclipse.core.runtime.jobs.*;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.api.RebaseCommand.Operation;
@@ -36,11 +35,9 @@ import org.eclipse.jgit.treewalk.filter.*;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-import org.eclipse.orion.internal.server.servlets.task.TaskServlet;
+import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;
 import org.eclipse.orion.server.core.ServerStatus;
-import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.*;
-import org.eclipse.orion.server.git.jobs.GitJob;
 import org.eclipse.orion.server.git.jobs.LogJob;
 import org.eclipse.orion.server.git.objects.Commit;
 import org.eclipse.orion.server.git.objects.Log;
@@ -230,47 +227,8 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		URI cloneLocation = BaseToCloneConverter.getCloneLocation(baseLocation, refIdsRange == null ? BaseToCloneConverter.COMMIT : BaseToCloneConverter.COMMIT_REFRANGE);
 		Log log = new Log(cloneLocation, db, null /* collected by the job */, pattern, toRefId, fromRefId);
 
-		LogJob job = new LogJob(TaskServlet.getUserId(request), lc, log, page, pageSize, baseLocation);
-		job.schedule();
-
-		final Object jobIsDone = new Object();
-		final JobChangeAdapter jobListener = new JobChangeAdapter() {
-			public void done(IJobChangeEvent event) {
-				synchronized (jobIsDone) {
-					jobIsDone.notify();
-				}
-			}
-		};
-		job.addJobChangeListener(jobListener);
-
-		try {
-			synchronized (jobIsDone) {
-				if (job.getState() != Job.NONE) {
-					jobIsDone.wait(GitJob.WAIT_TIME);
-				}
-			}
-		} catch (InterruptedException e) {
-		}
-		job.removeJobChangeListener(jobListener);
-
-		final TaskInfo task = job.getTask();
-		if (job.getState() == Job.NONE && !task.isRunning()) {
-			IStatus result = task.getResult();
-			if (result instanceof ServerStatus) {
-				ServerStatus status = (ServerStatus) result;
-				OrionServlet.writeJSONResponse(request, response, status.getJsonData());
-				return true;
-			}
-		} else {
-			JSONObject result = task.toJSON();
-			URI taskLocation = createTaskLocation(OrionServlet.getURI(request), task.getTaskId());
-			result.put(ProtocolConstants.KEY_LOCATION, taskLocation);
-			response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation.toString());
-			OrionServlet.writeJSONResponse(request, response, result);
-			response.setStatus(HttpServletResponse.SC_ACCEPTED);
-			return true;
-		}
-		return false;
+		LogJob job = new LogJob(TaskJobHandler.getUserId(request), lc, log, page, pageSize, baseLocation);
+		return TaskJobHandler.handleTaskJob(request, response, job, statusHandler);
 	}
 
 	private ObjectId getCommitObjectId(Repository db, ObjectId oid) throws MissingObjectException, IncorrectObjectTypeException, IOException {
@@ -280,10 +238,6 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		} finally {
 			walk.release();
 		}
-	}
-
-	private URI createTaskLocation(URI baseLocation, String taskId) throws URISyntaxException {
-		return new URI(baseLocation.getScheme(), baseLocation.getAuthority(), "/task/id/" + taskId, null, null); //$NON-NLS-1$
 	}
 
 	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws ServletException, NoFilepatternException, IOException, JSONException, CoreException, URISyntaxException {

@@ -14,8 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
-import java.util.Map.Entry;
+import java.util.Map;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -28,13 +27,16 @@ import org.eclipse.jgit.revwalk.*;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.jobs.ListTagsJob;
 import org.eclipse.orion.server.git.objects.Tag;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
-import org.json.*;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * A handler for Git Tag operation.
@@ -42,6 +44,7 @@ import org.json.*;
 public class GitTagHandlerV1 extends ServletResourceHandler<String> {
 
 	private ServletResourceHandler<IStatus> statusHandler;
+	private static int PAGE_SIZE = 50;
 
 	GitTagHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
 		this.statusHandler = statusHandler;
@@ -91,27 +94,18 @@ public class GitTagHandlerV1 extends ServletResourceHandler<String> {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
 			}
 		} else {
-			// list all tags
-			File gitDir = GitUtils.getGitDir(p);
-			Repository db = new FileRepository(gitDir);
-			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.TAG_LIST);
-			// TODO: bug 356943 - revert when bug 360650 is fixed
-			// List<RevTag> revTags = git.tagList().call();
-			Map<String, Ref> refs = db.getRefDatabase().getRefs(Constants.R_TAGS);
-			JSONObject result = new JSONObject();
-			List<Tag> tags = new ArrayList<Tag>();
-			for (Entry<String, Ref> refEntry : refs.entrySet()) {
-				Tag tag = new Tag(cloneLocation, db, refEntry.getValue());
-				tags.add(tag);
+			ListTagsJob job;
+			String commits = request.getParameter(GitConstants.KEY_TAG_COMMITS);
+			int commitsNumber = commits == null ? 0 : Integer.parseInt(commits);
+			String page = request.getParameter("page");
+			if (page != null) {
+				int pageNo = Integer.parseInt(page);
+				int pageSize = request.getParameter("pageSize") == null ? PAGE_SIZE : Integer.parseInt(request.getParameter("pageSize"));
+				job = new ListTagsJob(TaskJobHandler.getUserId(request), p, BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.TAG_LIST), commitsNumber, pageNo, pageSize, request.getRequestURI());
+			} else {
+				job = new ListTagsJob(TaskJobHandler.getUserId(request), p, BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.TAG_LIST), commitsNumber);
 			}
-			Collections.sort(tags, Tag.COMPARATOR);
-			JSONArray children = new JSONArray();
-			for (Tag tag : tags) {
-				children.put(tag.toJSON());
-			}
-			result.put(ProtocolConstants.KEY_CHILDREN, children);
-			OrionServlet.writeJSONResponse(request, response, result);
-			return true;
+			return TaskJobHandler.handleTaskJob(request, response, job, statusHandler);
 		}
 	}
 

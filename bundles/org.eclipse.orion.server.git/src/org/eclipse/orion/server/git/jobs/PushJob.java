@@ -24,7 +24,6 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.*;
-import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.git.servlets.GitUtils;
@@ -42,19 +41,12 @@ public class PushJob extends GitJob {
 	private boolean force;
 
 	public PushJob(String userRunningTask, CredentialsProvider credentials, Path path, String srcRef, boolean tags, boolean force) {
-		super("Pushing", userRunningTask, (GitCredentialsProvider) credentials);
+		super(NLS.bind("Pushing {0}", path.segment(0)), userRunningTask, NLS.bind("Pushing {0}...", path.segment(0)), false, false, (GitCredentialsProvider) credentials);
 		this.path = path;
 		this.srcRef = srcRef;
 		this.tags = tags;
 		this.force = force;
-		this.task = createTask();
-	}
-
-	protected TaskInfo createTask() {
-		TaskInfo info = getTaskService().createTask(NLS.bind("Pushing {0}", path.segment(0)), this.userId, false);
-		info.setMessage(NLS.bind("Pushing {0}...", path.segment(0)));
-		getTaskService().updateTask(info);
-		return info;
+		setFinalMessage(NLS.bind("Pushing {0} done", path.segment(0)));
 	}
 
 	private IStatus doPush() throws IOException, CoreException, JGitInternalException, InvalidRemoteException, URISyntaxException, JSONException {
@@ -104,7 +96,7 @@ public class PushJob extends GitJob {
 	}
 
 	@Override
-	protected IStatus run(IProgressMonitor monitor) {
+	protected IStatus performJob() {
 		IStatus result = Status.OK_STATUS;
 		try {
 			result = doPush();
@@ -119,10 +111,6 @@ public class PushJob extends GitJob {
 		} catch (Exception e) {
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error pushing git repository", e);
 		}
-		task.done(result);
-		task.setMessage(NLS.bind("Pushing {0} done", path.segment(0)));
-		updateTask(task);
-		cleanUp();
-		return Status.OK_STATUS; // see bug 353190
+		return result;
 	}
 }

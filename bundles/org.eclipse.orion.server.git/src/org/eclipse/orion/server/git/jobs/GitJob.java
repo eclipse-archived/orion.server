@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.jobs;
 
+import org.eclipse.orion.server.core.tasks.TaskJob;
+
 import com.jcraft.jsch.JSchException;
 import java.text.MessageFormat;
 import java.util.Locale;
@@ -17,71 +19,21 @@ import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jgit.JGitText;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.errors.TransportException;
 import org.eclipse.orion.server.core.ServerStatus;
-import org.eclipse.orion.server.core.tasks.ITaskService;
-import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.jsch.HostFingerprintException;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
 
 /**
  * Base class for all Git jobs.
  *
  */
-public abstract class GitJob extends Job {
-
-	/**
-	 * A constant used to determine if an operation is short enough to return 
-	 * the result immediately (OK, 200) rather than wait for the task to finish 
-	 * (Accepted, 202).
-	 */
-	public static final long WAIT_TIME = 100;
-
-	private ITaskService taskService;
-	private ServiceReference<ITaskService> taskServiceRef;
-	protected TaskInfo task;
-	protected final String userId;
-
-	ITaskService getTaskService() {
-		if (taskService == null) {
-			BundleContext context = GitActivator.getDefault().getBundleContext();
-			if (taskServiceRef == null) {
-				taskServiceRef = context.getServiceReference(ITaskService.class);
-				if (taskServiceRef == null)
-					throw new IllegalStateException("Task service not available");
-			}
-			taskService = context.getService(taskServiceRef);
-			if (taskService == null)
-				throw new IllegalStateException("Task service not available");
-		}
-		return taskService;
-	}
-
-	void cleanUp() {
-		taskService = null;
-		if (taskServiceRef != null) {
-			GitActivator.getDefault().getBundleContext().ungetService(taskServiceRef);
-			taskServiceRef = null;
-		}
-	}
-
-	protected abstract TaskInfo createTask();
-
-	public TaskInfo getTask() {
-		return task;
-	}
-
-	protected void updateTask(TaskInfo task) {
-		getTaskService().updateTask(task);
-	}
+public abstract class GitJob extends TaskJob {
 
 	private static final String KEY_SCHEME = "Scheme"; //$NON-NLS-1$
 	private static final String KEY_PORT = "Port"; //$NON-NLS-1$
@@ -162,14 +114,13 @@ public abstract class GitJob extends Job {
 		return new Status(IStatus.ERROR, GitActivator.PI_GIT, message, e.getCause() == null ? e : e.getCause());
 	}
 
-	public GitJob(String name, String userRunningTask, GitCredentialsProvider credentials) {
-		super(name);
-		this.userId = userRunningTask;
+	public GitJob(String name, String userRunningTask, String initialMessage, boolean isIdempotent, boolean canCancel, GitCredentialsProvider credentials) {
+		super(name, userRunningTask, initialMessage, isIdempotent, canCancel);
 		this.credentials = credentials;
 	}
 
-	public GitJob(String name, String userRunningTask) {
-		this(name, userRunningTask, null);
+	public GitJob(String name, String userRunningTask, String initialMessage, boolean isIdempotent, boolean canCancel) {
+		this(name, userRunningTask, initialMessage, isIdempotent, canCancel, null);
 	}
 
 	/**
