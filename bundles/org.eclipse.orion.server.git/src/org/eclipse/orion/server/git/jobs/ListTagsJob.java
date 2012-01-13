@@ -11,6 +11,7 @@
 package org.eclipse.orion.server.git.jobs;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.util.*;
 import java.util.Map.Entry;
@@ -18,8 +19,11 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.LogCommand;
+import org.eclipse.jgit.errors.IncorrectObjectTypeException;
+import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -87,6 +91,15 @@ public class ListTagsJob extends GitJob {
 		this(userRunningTask, repositoryPath, cloneLocation, 0);
 	}
 
+	private ObjectId getCommitObjectId(Repository db, ObjectId oid) throws MissingObjectException, IncorrectObjectTypeException, IOException {
+		RevWalk walk = new RevWalk(db);
+		try {
+			return walk.parseCommit(oid);
+		} finally {
+			walk.release();
+		}
+	}
+
 	@Override
 	protected IStatus performJob() {
 		try {
@@ -127,13 +140,14 @@ public class ListTagsJob extends GitJob {
 					children.put(tag.toJSON());
 				} else {
 					LogCommand lc = git.log();
-					String fromCommitName = tag.getRevCommitName();
-					ObjectId fromCommitId = db.resolve(fromCommitName);
-					Ref fromCommitRef = db.getRef(fromCommitName);
-					lc.not(fromCommitId);
+					String toCommitName = tag.getRevCommitName();
+					ObjectId toCommitId = db.resolve(toCommitName);
+					Ref toCommitRef = db.getRef(toCommitName);
+					toCommitId = getCommitObjectId(db, toCommitId);
+					lc.add(toCommitId);
 					lc.setMaxCount(this.commitsSize);
 					Iterable<RevCommit> commits = lc.call();
-					Log log = new Log(cloneLocation, db, commits, null, null, fromCommitRef);
+					Log log = new Log(cloneLocation, db, commits, null, null, toCommitRef);
 					children.put(tag.toJSON(log.toJSON(1, commitsSize)));
 				}
 			}
