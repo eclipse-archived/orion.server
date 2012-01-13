@@ -45,7 +45,7 @@
 		<ul>
 			<li>Start the server again</li>
 		</ul>
-		<pre>#!/bin/bash
+		<pre class="source-bash">#!/bin/bash
 
 BASE_PATH=/home/admin
 ECLIPSE_PATH=eclipse-orion-0.2M6
@@ -67,7 +67,7 @@ $BASE_PATH/start_orion
 </pre>
 		<h2 id="Automating_account_creation_with_curl">Automating account creation with curl</h2>
 		<p>To automate account creation with curl, you need to issue one curl command to log into the Orion server and capture the returned cookie.  Subsequent curl calls must include the authentication cookie, and a POST payload, to create an account.</p>
-		<pre>#!/bin/bash
+		<pre class="source-bash">#!/bin/bash
 
 # Create accounts on Orion server
 CURL=/usr/bin/curl
