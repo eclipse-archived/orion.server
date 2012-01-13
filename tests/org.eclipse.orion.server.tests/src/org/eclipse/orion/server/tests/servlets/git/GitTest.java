@@ -310,7 +310,8 @@ public abstract class GitTest extends FileSystemTest {
 			JSONObject status = waitForTaskCompletionObject(taskResp.getString(ProtocolConstants.KEY_LOCATION), testUserLogin, testUserPassword);
 			assertFalse(status.has("Failed") && status.getBoolean("Failed"));
 			assertTrue(status.has("Result"));
-			return status.getJSONObject("Result");
+			JSONObject result = status.getJSONObject("Result");
+			return result.has("JsonData") ? result.getJSONObject("JsonData") : result;
 		}
 		fail("Task failed with code " + response.getResponseCode() + ", result: " + response.getText());
 		return null;
@@ -823,8 +824,7 @@ public abstract class GitTest extends FileSystemTest {
 		assertTagListUri(gitTagUri);
 		WebRequest request = getGetGitTagRequest(gitTagUri);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject tags = new JSONObject(response.getText());
+		JSONObject tags = waitForTaskCompletion(response);
 		return tags.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 	}
 

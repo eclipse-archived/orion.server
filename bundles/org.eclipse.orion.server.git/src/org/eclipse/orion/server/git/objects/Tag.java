@@ -63,6 +63,12 @@ public class Tag extends GitObject {
 		return result;
 	}
 
+	public JSONObject toJSON(JSONObject log) throws JSONException, URISyntaxException {
+		JSONObject tagJSON = this.toJSON();
+		tagJSON.put(GitConstants.KEY_TAG_COMMIT, log);
+		return tagJSON;
+	}
+
 	private String getName(boolean fullName) {
 		if (tag != null)
 			return tag.getTagName();
@@ -118,5 +124,9 @@ public class Tag extends GitObject {
 			walk.release();
 		}
 		return null;
+	}
+
+	public String getRevCommitName() {
+		return parseCommit().getName();
 	}
 }

@@ -168,4 +168,6 @@ public class GitConstants {
 	public static final String KEY_TAG_COMMIT = "Commit"; //$NON-NLS-1$
 
 	public static final String KEY_REMOVE_UNTRACKED = "RemoveUntracked"; //$NON-NLS-1$
+
+	public static final String KEY_TAG_COMMITS = "commits"; //$NON-NLS-1$
 }
