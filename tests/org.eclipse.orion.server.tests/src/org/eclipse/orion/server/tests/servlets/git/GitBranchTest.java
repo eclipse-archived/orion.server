@@ -52,8 +52,7 @@ public class GitBranchTest extends GitTest {
 		// list branches
 		WebRequest request = getGetRequest(branchesLocation);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject branches = new JSONObject(response.getText());
+		JSONObject branches = waitForTaskCompletion(response);
 		JSONArray branchesArray = branches.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 		assertEquals(3, branchesArray.length());
 

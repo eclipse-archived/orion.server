@@ -70,6 +70,12 @@ public class Branch extends GitObject {
 		return result;
 	}
 
+	public JSONObject toJSON(JSONObject log) throws JSONException, URISyntaxException, IOException, CoreException {
+		JSONObject result = this.toJSON();
+		result.put(GitConstants.KEY_TAG_COMMIT, log);
+		return result;
+	}
+
 	private JSONArray getRemotes() throws URISyntaxException, JSONException, IOException, CoreException {
 		String branchName = Repository.shortenRefName(ref.getName());
 		JSONArray result = new JSONArray();
@@ -96,7 +102,7 @@ public class Branch extends GitObject {
 		return result;
 	}
 
-	private String getName() {
+	public String getName() {
 		return Repository.shortenRefName(ref.getName());
 	}
 
