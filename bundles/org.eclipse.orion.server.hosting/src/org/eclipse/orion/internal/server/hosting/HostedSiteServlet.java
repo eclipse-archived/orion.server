@@ -109,9 +109,14 @@ public class HostedSiteServlet extends OrionServlet {
 	private IAliasRegistry aliasRegistry;
 
 	public HostedSiteServlet() {
-		aliasRegistry = Activator.getDefault();
 		rootStoreURI = Activator.getDefault().getRootLocationURI();
-		fileSerializer = new ServletFileStoreHandler(rootStoreURI, getStatusHandler());
+		aliasRegistry = Activator.getDefault();
+	}
+
+	@Override
+	public void init() throws ServletException {
+		super.init();
+		fileSerializer = new ServletFileStoreHandler(rootStoreURI, getStatusHandler(), getServletContext());
 	}
 
 	@Override

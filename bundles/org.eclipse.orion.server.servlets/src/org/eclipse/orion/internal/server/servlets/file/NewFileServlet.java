@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others.
+ * Copyright (c) 2010, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -40,7 +40,12 @@ public class NewFileServlet extends OrionServlet {
 
 	public NewFileServlet() {
 		rootStoreURI = Activator.getDefault().getRootLocationURI();
-		fileSerializer = new ServletFileStoreHandler(rootStoreURI, getStatusHandler());
+	}
+
+	@Override
+	public void init() throws ServletException {
+		super.init();
+		fileSerializer = new ServletFileStoreHandler(rootStoreURI, getStatusHandler(), getServletContext());
 	}
 
 	@Override

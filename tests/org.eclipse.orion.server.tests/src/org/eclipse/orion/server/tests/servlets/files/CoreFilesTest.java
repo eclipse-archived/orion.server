@@ -15,33 +15,22 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import com.meterware.httpunit.*;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.List;
-
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.server.core.ServerConstants;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import org.json.*;
+import org.junit.*;
 import org.junit.Test;
 import org.osgi.service.prefs.BackingStoreException;
 import org.xml.sax.SAXException;
-
-import com.meterware.httpunit.GetMethodWebRequest;
-import com.meterware.httpunit.WebConversation;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 
 /**
  * Basic tests for {@link NewFileServlet}.
@@ -349,6 +338,25 @@ public class CoreFilesTest extends FileSystemTest {
 		WebRequest request = getGetFilesRequest(basePath);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+	}
+
+	/**
+	 * Tests generic file handler.
+	 */
+	@Test
+	public void testGenericFileHandler() throws CoreException, IOException {
+		String dirPath = "sample/directory/path";
+		String fileName = "testGenericFileHandler-" + System.currentTimeMillis() + ".txt";
+		String filePath = dirPath + "/" + fileName;
+
+		createDirectory(dirPath);
+		createFile(filePath, "Sample file content");
+		String requestURI = SERVER_LOCATION + FILE_SERVLET_LOCATION + filePath;
+		WebRequest get = new GetMethodWebRequest(requestURI);
+		setAuthentication(get);
+		WebResponse response = webConversation.getResource(get);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals("text/plain", response.getHeaderField("Content-Type"));
 	}
 
 	/**

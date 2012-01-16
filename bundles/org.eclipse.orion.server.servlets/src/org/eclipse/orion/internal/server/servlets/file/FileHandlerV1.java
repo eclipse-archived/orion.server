@@ -14,6 +14,7 @@ import java.io.*;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -38,7 +39,8 @@ import org.json.JSONObject;
 class FileHandlerV1 extends GenericFileHandler {
 	final ServletResourceHandler<IStatus> statusHandler;
 
-	FileHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
+	FileHandlerV1(ServletResourceHandler<IStatus> statusHandler, ServletContext context) {
+		super(context);
 		this.statusHandler = statusHandler;
 	}
 

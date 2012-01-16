@@ -12,6 +12,7 @@ package org.eclipse.orion.internal.server.servlets.file;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -29,6 +30,12 @@ import org.eclipse.osgi.util.NLS;
  * such as a web browser.
  */
 class GenericFileHandler extends ServletResourceHandler<IFileStore> {
+	private final ServletContext context;
+
+	public GenericFileHandler(ServletContext context) {
+		this.context = context;
+	}
+
 	protected void handleFileContents(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws CoreException, IOException, NoSuchAlgorithmException {
 		String receivedETag = request.getHeader("If-Match");
 		if (receivedETag != null && !receivedETag.equals(generateFileETag(file))) {
@@ -38,6 +45,7 @@ class GenericFileHandler extends ServletResourceHandler<IFileStore> {
 		switch (getMethod(request)) {
 			case GET :
 				IOUtilities.pipe(file.openInputStream(EFS.NONE, null), response.getOutputStream(), true, false);
+				response.setHeader(ProtocolConstants.HEADER_CONTENT_TYPE, context.getMimeType(file.getName()));
 				break;
 			case PUT :
 				IOUtilities.pipe(request.getInputStream(), file.openOutputStream(EFS.NONE, null), false, true);

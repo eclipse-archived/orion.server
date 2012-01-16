@@ -13,6 +13,7 @@ package org.eclipse.orion.internal.server.servlets.file;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -114,10 +115,10 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 		return attributes;
 	}
 
-	public ServletFileStoreHandler(URI rootStoreURI, ServletResourceHandler<IStatus> statusHandler) {
+	public ServletFileStoreHandler(URI rootStoreURI, ServletResourceHandler<IStatus> statusHandler, ServletContext context) {
 		this.statusHandler = statusHandler;
-		fileSerializerV1 = new FileHandlerV1(statusHandler);
-		genericFileSerializer = new GenericFileHandler();
+		fileSerializerV1 = new FileHandlerV1(statusHandler, context);
+		genericFileSerializer = new GenericFileHandler(context);
 		directorySerializerV1 = new DirectoryHandlerV1(rootStoreURI, statusHandler);
 		genericDirectorySerializer = new GenericDirectoryHandler();
 	}
