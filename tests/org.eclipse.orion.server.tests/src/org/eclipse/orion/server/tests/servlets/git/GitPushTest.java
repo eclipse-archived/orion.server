@@ -434,8 +434,7 @@ public class GitPushTest extends GitTest {
 
 			request = GitRemoteTest.getGetGitRemoteRequest(remoteLocation1);
 			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			remote1 = new JSONObject(response.getText());
+			remote1 = waitForTaskCompletion(response);
 			JSONArray refsArray = remote1.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 			assertEquals(2, refsArray.length());
 			JSONObject ref = refsArray.getJSONObject(0);

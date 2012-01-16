@@ -306,8 +306,7 @@ public class GitTagTest extends GitTest {
 			// check current branch
 			request = getGetRequest(clone.getString(GitConstants.KEY_BRANCH));
 			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			JSONObject branches = new JSONObject(response.getText());
+			JSONObject branches = waitForTaskCompletion(response);
 			assertEquals("tag_tag", GitBranchTest.getCurrentBranch(branches).getString(ProtocolConstants.KEY_NAME));
 			// log
 			JSONArray commitsArray = log(gitHeadUri);

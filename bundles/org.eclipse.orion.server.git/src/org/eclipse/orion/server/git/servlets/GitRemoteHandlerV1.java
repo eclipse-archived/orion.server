@@ -28,8 +28,7 @@ import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.*;
-import org.eclipse.orion.server.git.jobs.FetchJob;
-import org.eclipse.orion.server.git.jobs.PushJob;
+import org.eclipse.orion.server.git.jobs.*;
 import org.eclipse.orion.server.git.objects.Remote;
 import org.eclipse.orion.server.git.objects.RemoteBranch;
 import org.eclipse.orion.server.servlets.OrionServlet;
@@ -38,6 +37,7 @@ import org.json.*;
 
 public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 	private ServletResourceHandler<IStatus> statusHandler;
+	public static int PAGE_SIZE = 50;
 
 	GitRemoteHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
 		this.statusHandler = statusHandler;
@@ -82,19 +82,18 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			return true;
 		} else if (p.segment(1).equals("file")) { //$NON-NLS-1$
 			// /git/remote/{remote}/file/{path}
-			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(1));
-			Repository db = new FileRepository(gitDir);
-			Set<String> configNames = db.getConfig().getSubsections(ConfigConstants.CONFIG_REMOTE_SECTION);
-			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.REMOTE);
-			for (String configName : configNames) {
-				if (configName.equals(p.segment(0))) {
-					Remote remote = new Remote(cloneLocation, db, configName);
-					OrionServlet.writeJSONResponse(request, response, remote.toJSON());
-					return true;
-				}
+			RemoteDetailsJob job;
+			String commits = request.getParameter(GitConstants.KEY_TAG_COMMITS);
+			int commitsNumber = commits == null ? 0 : Integer.parseInt(commits);
+			String page = request.getParameter("page");
+			if (page != null) {
+				int pageNo = Integer.parseInt(page);
+				int pageSize = request.getParameter("pageSize") == null ? PAGE_SIZE : Integer.parseInt(request.getParameter("pageSize"));
+				job = new RemoteDetailsJob(TaskJobHandler.getUserId(request), p.segment(0), p.removeFirstSegments(1), BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.REMOTE), commitsNumber, pageNo, pageSize, request.getRequestURI());
+			} else {
+				job = new RemoteDetailsJob(TaskJobHandler.getUserId(request), p.segment(0), p.removeFirstSegments(1), BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.REMOTE), commitsNumber);
 			}
-			String msg = NLS.bind("Couldn't find remote : {0}", p.segment(0));
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
+			return TaskJobHandler.handleTaskJob(request, response, job, statusHandler);
 		} else if (p.segment(2).equals("file")) { //$NON-NLS-1$
 			// /git/remote/{remote}/{branch}/file/{path}
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2));
