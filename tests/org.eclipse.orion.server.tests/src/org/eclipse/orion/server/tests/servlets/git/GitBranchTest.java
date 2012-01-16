@@ -52,8 +52,7 @@ public class GitBranchTest extends GitTest {
 		// list branches
 		WebRequest request = getGetRequest(branchesLocation);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject branches = new JSONObject(response.getText());
+		JSONObject branches = waitForTaskCompletion(response);
 		JSONArray branchesArray = branches.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 		assertEquals(3, branchesArray.length());
 
@@ -93,8 +92,7 @@ public class GitBranchTest extends GitTest {
 		// list branches
 		request = getGetRequest(branchesLocation);
 		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject branches = new JSONObject(response.getText());
+		JSONObject branches = waitForTaskCompletion(response);
 		JSONArray branchesArray = branches.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 		assertEquals(2, branchesArray.length());
 		JSONObject branch0 = branchesArray.getJSONObject(0);
@@ -107,13 +105,12 @@ public class GitBranchTest extends GitTest {
 		// remove branch
 		request = getDeleteGitBranchRequest(branchLocation);
 		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertTrue(HttpURLConnection.HTTP_OK == response.getResponseCode() || HttpURLConnection.HTTP_ACCEPTED == response.getResponseCode());
 
 		// list branches again, make sure it's gone
 		request = getGetRequest(branchesLocation);
 		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		branches = new JSONObject(response.getText());
+		branches = waitForTaskCompletion(response);
 		branchesArray = branches.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 		assertEquals(1, branchesArray.length());
 		JSONObject branch = branchesArray.getJSONObject(0);

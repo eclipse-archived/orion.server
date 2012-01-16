@@ -308,8 +308,8 @@ public abstract class GitTest extends FileSystemTest {
 		} else if (response.getResponseCode() == HttpURLConnection.HTTP_ACCEPTED) {
 			JSONObject taskResp = new JSONObject(response.getText());
 			JSONObject status = waitForTaskCompletionObject(taskResp.getString(ProtocolConstants.KEY_LOCATION), testUserLogin, testUserPassword);
-			assertFalse(status.has("Failed") && status.getBoolean("Failed"));
 			assertTrue(status.has("Result"));
+			assertFalse(status.getString("Result"), status.has("Failed") && status.getBoolean("Failed"));
 			JSONObject result = status.getJSONObject("Result");
 			return result.has("JsonData") ? result.getJSONObject("JsonData") : result;
 		}
@@ -487,8 +487,7 @@ public abstract class GitTest extends FileSystemTest {
 
 		WebRequest request = GitRemoteTest.getGetGitRemoteRequest(remoteLocation);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		remote = new JSONObject(response.getText());
+		remote = waitForTaskCompletion(response);
 		assertNotNull(remote);
 		assertEquals(Constants.DEFAULT_REMOTE_NAME, remote.getString(ProtocolConstants.KEY_NAME));
 		assertNotNull(remote.getString(ProtocolConstants.KEY_LOCATION));
@@ -504,8 +503,7 @@ public abstract class GitTest extends FileSystemTest {
 
 		request = GitRemoteTest.getGetGitRemoteRequest(remoteBranchLocation);
 		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject remoteBranch = new JSONObject(response.getText());
+		JSONObject remoteBranch = waitForTaskCompletion(response);
 		remoteBranch.getString(GitConstants.KEY_COMMIT);
 		remoteBranch.getString(GitConstants.KEY_HEAD);
 
@@ -724,8 +722,7 @@ public abstract class GitTest extends FileSystemTest {
 		// get remote (branch) details again
 		request = GitRemoteTest.getGetGitRemoteRequest(remoteLocation);
 		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		return new JSONObject(response.getText());
+		return waitForTaskCompletion(response);
 	}
 
 	private static void assertFetchProgressMessage(String remoteLocation, String actualMessage) {

@@ -596,7 +596,7 @@ public class GitCheckoutTest extends GitTest {
 			// secondary
 			request = getGetRequest(remotesArray.getJSONObject(1).getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
-			JSONObject remote = new JSONObject(response.getText());
+			JSONObject remote = waitForTaskCompletion(response);
 
 			// checkout remote branch: secondary/branch
 			String remoteBranchName = remote.getJSONArray(ProtocolConstants.KEY_CHILDREN).getJSONObject(0).getString(ProtocolConstants.KEY_NAME);
@@ -613,7 +613,7 @@ public class GitCheckoutTest extends GitTest {
 			// origin
 			request = getGetRequest(remotesArray.getJSONObject(0).getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
-			remote = new JSONObject(response.getText());
+			remote = waitForTaskCompletion(response);
 
 			// checkout remote branch: origin/test
 			JSONArray remoteChildren = remote.getJSONArray(ProtocolConstants.KEY_CHILDREN);

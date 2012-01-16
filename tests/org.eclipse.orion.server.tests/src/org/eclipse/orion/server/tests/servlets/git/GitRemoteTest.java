@@ -12,6 +12,7 @@ package org.eclipse.orion.server.tests.servlets.git;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -140,7 +141,14 @@ public class GitRemoteTest extends GitTest {
 
 		request = getGetGitRemoteRequest(nu.toString());
 		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
+		response = waitForTaskCompletionObjectResponse(response);
+		if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
+			JSONObject responseObject = new JSONObject(response.getText());
+			assertTrue(responseObject.has("Result"));
+			assertEquals(HttpURLConnection.HTTP_NOT_FOUND, responseObject.getJSONObject("Result").getInt("HttpCode"));
+		} else {
+			assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
+		}
 
 		p = new Path(u.getPath());
 		p = p.uptoSegment(3).append("xxx").append(p.removeFirstSegments(3));
@@ -295,13 +303,12 @@ public class GitRemoteTest extends GitTest {
 		// check details
 		WebRequest request = getGetRequest(remoteLocation);
 		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		waitForTaskCompletion(response);
 
 		// list remotes
 		request = getGetRequest(remotesLocation);
 		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject remotes = new JSONObject(response.getText());
+		JSONObject remotes = waitForTaskCompletion(response);
 		JSONArray remotesArray = remotes.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 		// expect origin and new remote
 		assertEquals(2, remotesArray.length());
@@ -314,8 +321,7 @@ public class GitRemoteTest extends GitTest {
 		// list remotes again, make sure it's gone
 		request = getGetRequest(remotesLocation);
 		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		remotes = new JSONObject(response.getText());
+		remotes = waitForTaskCompletion(response);
 		remotesArray = remotes.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 		// expect origin only
 		assertEquals(1, remotesArray.length());

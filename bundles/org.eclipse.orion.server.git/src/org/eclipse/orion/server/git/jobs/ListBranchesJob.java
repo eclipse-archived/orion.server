@@ -14,7 +14,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.*;
-import java.util.Map.Entry;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.Git;
@@ -29,18 +28,18 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.objects.Branch;
 import org.eclipse.orion.server.git.objects.Log;
-import org.eclipse.orion.server.git.objects.Tag;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
- * This job handles generating tag list
+ * Job listing all local branches in the.
  *
  */
-public class ListTagsJob extends GitJob {
+public class ListBranchesJob extends GitJob {
 
 	private IPath path;
 	private URI cloneLocation;
@@ -50,7 +49,7 @@ public class ListTagsJob extends GitJob {
 	private String baseLocation;
 
 	/**
-	 * Creates job with given page range and adding <code>commitsSize</code> commits to every tag.
+	 * Creates job with given page range and adding <code>commitsSize</code> commits to every branch.
 	 * @param userRunningTask
 	 * @param repositoryPath
 	 * @param cloneLocation
@@ -59,36 +58,36 @@ public class ListTagsJob extends GitJob {
 	 * @param pageSize use negative to indicate that all commits need to be returned
 	 * @param baseLocation URI used as a base for generating next and previous page links. Should not contain any parameters.
 	 */
-	public ListTagsJob(String userRunningTask, IPath repositoryPath, URI cloneLocation, int commitsSize, int pageNo, int pageSize, String baseLocation) {
-		super(NLS.bind("Generating tags list for {0}", repositoryPath), userRunningTask, NLS.bind("Generating tags list for {0}...", repositoryPath), true, false);
+	public ListBranchesJob(String userRunningTask, IPath repositoryPath, URI cloneLocation, int commitsSize, int pageNo, int pageSize, String baseLocation) {
+		super(NLS.bind("Getting branches for {0}", repositoryPath), userRunningTask, NLS.bind("Getting branches for {0}...", repositoryPath), true, false);
 		this.path = repositoryPath;
 		this.cloneLocation = cloneLocation;
 		this.commitsSize = commitsSize;
 		this.pageNo = pageNo;
 		this.pageSize = pageSize;
 		this.baseLocation = baseLocation;
-		setFinalMessage("Generating tags list completed");
+		setFinalMessage("Branches list generated");
 	}
 
 	/**
-	 * Creates job returning list of all tags adding <code>commitsSize</code> commits to every tag.
+	 * Creates job returning list of all branches.
+	 * @param userRunningTask
+	 * @param repositoryPath
+	 * @param cloneLocation
+	 */
+	public ListBranchesJob(String userRunningTask, IPath repositoryPath, URI cloneLocation) {
+		this(userRunningTask, repositoryPath, cloneLocation, 0, 0, -1, null);
+	}
+
+	/**
+	 * Creates job returning list of all branches adding <code>commitsSize</code> commits to every branch.
 	 * @param userRunningTask
 	 * @param repositoryPath
 	 * @param cloneLocation
 	 * @param commitsSize
 	 */
-	public ListTagsJob(String userRunningTask, IPath repositoryPath, URI cloneLocation, int commitsSize) {
-		this(userRunningTask, repositoryPath, cloneLocation, commitsSize, 1, -1, null);
-	}
-
-	/**
-	 * Creates job returning list of all tags.
-	 * @param userRunningTask
-	 * @param repositoryPath
-	 * @param cloneLocation
-	 */
-	public ListTagsJob(String userRunningTask, IPath repositoryPath, URI cloneLocation) {
-		this(userRunningTask, repositoryPath, cloneLocation, 0);
+	public ListBranchesJob(String userRunningTask, IPath repositoryPath, URI cloneLocation, int commitsSize) {
+		this(userRunningTask, repositoryPath, cloneLocation, commitsSize, 0, -1, null);
 	}
 
 	private ObjectId getCommitObjectId(Repository db, ObjectId oid) throws MissingObjectException, IncorrectObjectTypeException, IOException {
@@ -103,24 +102,20 @@ public class ListTagsJob extends GitJob {
 	@Override
 	protected IStatus performJob() {
 		try {
-			// list all tags
 			File gitDir = GitUtils.getGitDir(path);
 			Repository db = new FileRepository(gitDir);
-			// TODO: bug 356943 - revert when bug 360650 is fixed
-			// List<RevTag> revTags = git.tagList().call();
-			Map<String, Ref> refs = db.getRefDatabase().getRefs(Constants.R_TAGS);
-			JSONObject result = new JSONObject();
-			List<Tag> tags = new ArrayList<Tag>();
-			for (Entry<String, Ref> refEntry : refs.entrySet()) {
-				Tag tag = new Tag(cloneLocation, db, refEntry.getValue());
-				tags.add(tag);
-			}
-			Collections.sort(tags, Tag.COMPARATOR);
-			JSONArray children = new JSONArray();
 			Git git = new Git(db);
-			int firstTag = pageSize > 0 ? pageSize * (pageNo - 1) : 0;
-			int lastTag = pageSize > 0 ? firstTag + pageSize - 1 : tags.size() - 1;
-			lastTag = lastTag > tags.size() - 1 ? tags.size() - 1 : lastTag;
+			List<Ref> branchRefs = git.branchList().call();
+			List<Branch> branches = new ArrayList<Branch>(branchRefs.size());
+			for (Ref ref : branchRefs) {
+				branches.add(new Branch(cloneLocation, db, ref));
+			}
+			Collections.sort(branches, Branch.COMPARATOR);
+			JSONObject result = new JSONObject();
+			JSONArray children = new JSONArray();
+			int firstBranch = pageSize > 0 ? pageSize * (pageNo - 1) : 0;
+			int lastBranch = pageSize > 0 ? firstBranch + pageSize - 1 : branches.size() - 1;
+			lastBranch = lastBranch > branches.size() - 1 ? branches.size() - 1 : lastBranch;
 			if (pageNo > 1 && baseLocation != null) {
 				String prev = baseLocation + "?page=" + (pageNo - 1) + "&pageSize=" + pageSize;
 				if (commitsSize > 0) {
@@ -128,35 +123,41 @@ public class ListTagsJob extends GitJob {
 				}
 				result.put(ProtocolConstants.KEY_PREVIOUS_LOCATION, prev);
 			}
-			if (lastTag < tags.size() - 1) {
+			if (lastBranch < branches.size() - 1) {
 				String next = baseLocation + "?page=" + (pageNo + 1) + "&pageSize=" + pageSize;
 				if (commitsSize > 0) {
 					next += "&" + GitConstants.KEY_TAG_COMMITS + "=" + commitsSize;
 				}
 				result.put(ProtocolConstants.KEY_NEXT_LOCATION, next);
 			}
-			for (int i = firstTag; i <= lastTag; i++) {
-				Tag tag = tags.get(i);
-				if (this.commitsSize == 0) {
-					children.put(tag.toJSON());
+			for (int i = firstBranch; i <= lastBranch; i++) {
+				Branch branch = branches.get(i);
+				if (commitsSize == 0) {
+					children.put(branch.toJSON());
 				} else {
 					LogCommand lc = git.log();
-					String toCommitName = tag.getRevCommitName();
-					ObjectId toCommitId = db.resolve(toCommitName);
-					Ref toCommitRef = db.getRef(toCommitName);
-					toCommitId = getCommitObjectId(db, toCommitId);
-					lc.add(toCommitId);
+					String branchName = branch.getName();
+					ObjectId toObjectId = db.resolve(branchName);
+					Ref toRefId = db.getRef(branchName);
+					if (toObjectId == null) {
+						String msg = NLS.bind("No ref or commit found: {0}", branchName);
+						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null);
+					}
+					toObjectId = getCommitObjectId(db, toObjectId);
+					// set the commit range
+					lc.add(toObjectId);
 					lc.setMaxCount(this.commitsSize);
 					Iterable<RevCommit> commits = lc.call();
-					Log log = new Log(cloneLocation, db, commits, null, null, toCommitRef);
-					children.put(tag.toJSON(log.toJSON(1, commitsSize)));
+					Log log = new Log(cloneLocation, db, commits, null, null, toRefId);
+					children.put(branch.toJSON(log.toJSON(1, commitsSize)));
 				}
 			}
 			result.put(ProtocolConstants.KEY_CHILDREN, children);
 			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
 		} catch (Exception e) {
-			String msg = NLS.bind("An error occured when listing tags for {0}", path);
+			String msg = NLS.bind("An error occured when listing branches for {0}", path);
 			return new Status(IStatus.ERROR, GitActivator.PI_GIT, msg, e);
 		}
 	}
+
 }

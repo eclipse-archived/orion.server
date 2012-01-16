@@ -14,7 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.List;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -28,16 +28,21 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.jobs.ListBranchesJob;
 import org.eclipse.orion.server.git.objects.Branch;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
-import org.json.*;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class GitBranchHandlerV1 extends ServletResourceHandler<String> {
 	private ServletResourceHandler<IStatus> statusHandler;
+
+	public static int PAGE_SIZE = 50;
 
 	GitBranchHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
 		this.statusHandler = statusHandler;
@@ -66,24 +71,19 @@ public class GitBranchHandlerV1 extends ServletResourceHandler<String> {
 		Path p = new Path(path);
 		if (p.segment(0).equals("file")) { //$NON-NLS-1$
 			// branch list: expected path /git/branch/file/{path}
-			File gitDir = GitUtils.getGitDir(p);
-			Repository db = new FileRepository(gitDir);
-			Git git = new Git(db);
-			List<Ref> branchRefs = git.branchList().call();
-			List<Branch> branches = new ArrayList<Branch>(branchRefs.size());
-			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.BRANCH_LIST);
-			for (Ref ref : branchRefs) {
-				branches.add(new Branch(cloneLocation, db, ref));
+			ListBranchesJob job;
+			String commits = request.getParameter(GitConstants.KEY_TAG_COMMITS);
+			int commitsNumber = commits == null ? 0 : Integer.parseInt(commits);
+			String page = request.getParameter("page");
+			if (page != null) {
+				int pageNo = Integer.parseInt(page);
+				int pageSize = request.getParameter("pageSize") == null ? PAGE_SIZE : Integer.parseInt(request.getParameter("pageSize"));
+				job = new ListBranchesJob(TaskJobHandler.getUserId(request), p, BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.BRANCH_LIST), commitsNumber, pageNo, pageSize, request.getRequestURI());
+			} else {
+				job = new ListBranchesJob(TaskJobHandler.getUserId(request), p, BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.BRANCH_LIST), commitsNumber);
 			}
-			Collections.sort(branches, Branch.COMPARATOR);
-			JSONObject result = new JSONObject();
-			JSONArray children = new JSONArray();
-			for (Branch branch : branches) {
-				children.put(branch.toJSON());
-			}
-			result.put(ProtocolConstants.KEY_CHILDREN, children);
-			OrionServlet.writeJSONResponse(request, response, result);
-			return true;
+			return TaskJobHandler.handleTaskJob(request, response, job, statusHandler);
+
 		} else if (p.segment(1).equals("file")) { //$NON-NLS-1$
 			// branch details: expected path /git/branch/{name}/file/{path}
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(1));

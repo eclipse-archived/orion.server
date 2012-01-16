@@ -91,8 +91,7 @@ public class GitPullTest extends GitTest {
 		// get the current branch
 		request = getGetRequest(gitHeadUri);
 		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject newHead = new JSONObject(response.getText());
+		JSONObject newHead = waitForTaskCompletion(response);
 		String newHeadSha1 = newHead.getJSONArray(ProtocolConstants.KEY_CHILDREN).getJSONObject(0).getString(ProtocolConstants.KEY_NAME);
 		assertEquals(headSha1, newHeadSha1);
 	}
