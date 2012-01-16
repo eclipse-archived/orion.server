@@ -120,6 +120,7 @@ public class ListTagsJob extends GitJob {
 			Git git = new Git(db);
 			int firstTag = pageSize > 0 ? pageSize * (pageNo - 1) : 0;
 			int lastTag = pageSize > 0 ? firstTag + pageSize - 1 : tags.size() - 1;
+			lastTag = lastTag > tags.size() - 1 ? tags.size() - 1 : lastTag;
 			if (pageNo > 1 && baseLocation != null) {
 				String prev = baseLocation + "?page=" + (pageNo - 1) + "&pageSize=" + pageSize;
 				if (commitsSize > 0) {
