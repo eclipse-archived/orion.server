@@ -29,13 +29,11 @@ public class InitJob extends GitJob {
 
 	private final Clone clone;
 	private final String user;
-	private final String cloneLocation;
 
 	public InitJob(Clone clone, String userRunningTask, String user, String cloneLocation) {
 		super(NLS.bind("Initializing repository {0}", clone.getName()), userRunningTask, NLS.bind("Initializing repository {0}...", clone.getName()), false, false);
 		this.clone = clone;
 		this.user = user;
-		this.cloneLocation = cloneLocation;
 		setFinalLocation(URI.create(cloneLocation));
 		setFinalMessage("Init complete.");
 	}

@@ -37,13 +37,11 @@ public class CloneJob extends GitJob {
 	private final WebProject project;
 	private final Clone clone;
 	private final String user;
-	private final String cloneLocation;
 
 	public CloneJob(Clone clone, String userRunningTask, CredentialsProvider credentials, String user, String cloneLocation, WebProject project) {
 		super(NLS.bind("Cloning {0}", clone.getUrl()), userRunningTask, NLS.bind("Cloning {0}...", clone.getUrl()), false, false, (GitCredentialsProvider) credentials); //$NON-NLS-1$
 		this.clone = clone;
 		this.user = user;
-		this.cloneLocation = cloneLocation;
 		this.project = project;
 		setFinalLocation(URI.create(cloneLocation));
 		setFinalMessage("Clone complete.");

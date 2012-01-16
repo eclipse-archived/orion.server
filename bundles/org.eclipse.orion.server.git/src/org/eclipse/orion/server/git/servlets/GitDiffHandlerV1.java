@@ -37,11 +37,9 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.patch.ApplyCommand;
-import org.eclipse.orion.server.git.patch.ApplyResult;
 import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -231,18 +229,18 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private Object toJSON(ApplyResult applyResult) throws JSONException {
-		JSONObject result = new JSONObject();
-		if (applyResult.getApplyErrors().isEmpty() && applyResult.getFormatErrors().isEmpty()) {
-			result.put(GitConstants.KEY_RESULT, "Ok");
-		} else {
-			if (!applyResult.getFormatErrors().isEmpty())
-				result.put("FormatErrors", applyResult.getFormatErrors());
-			if (!applyResult.getApplyErrors().isEmpty())
-				result.put("ApplyErrors", applyResult.getApplyErrors());
-		}
-		return result;
-	}
+	//	private Object toJSON(ApplyResult applyResult) throws JSONException {
+	//		JSONObject result = new JSONObject();
+	//		if (applyResult.getApplyErrors().isEmpty() && applyResult.getFormatErrors().isEmpty()) {
+	//			result.put(GitConstants.KEY_RESULT, "Ok");
+	//		} else {
+	//			if (!applyResult.getFormatErrors().isEmpty())
+	//				result.put("FormatErrors", applyResult.getFormatErrors());
+	//			if (!applyResult.getApplyErrors().isEmpty())
+	//				result.put("ApplyErrors", applyResult.getApplyErrors());
+	//		}
+	//		return result;
+	//	}
 
 	private String readPatch(ServletInputStream requestStream, String contentType) throws IOException {
 		//fast forward stream past multi-part header
