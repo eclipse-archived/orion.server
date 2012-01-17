@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others 
+ * Copyright (c) 2010, 2012 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,6 +7,7 @@
  * 
  * Contributors:
  * IBM Corporation - initial API and implementation
+ * Red Hat - Fix for bug 368061
  *******************************************************************************/
 package org.eclipse.orion.server.configurator;
 
@@ -126,6 +127,11 @@ public class ConfiguratorActivator implements BundleActivator {
 			properties.put(JettyConstants.SSL_PASSWORD, preferences.get(SSL_PASSWORD, "password")); //$NON-NLS-1$
 			properties.put(JettyConstants.SSL_KEYPASSWORD, preferences.get(SSL_KEYPASSWORD, "password")); //$NON-NLS-1$
 			properties.put(JettyConstants.SSL_PROTOCOL, preferences.get(SSL_PROTOCOL, "SSLv3")); //$NON-NLS-1$
+
+			String httpsHost = System.getProperty("org.eclipse.equinox.http.jetty.https.host"); //$NON-NLS-1$
+			if (httpsHost != null) {
+				properties.put(JettyConstants.HTTPS_HOST, httpsHost);
+			}
 		}
 
 		String port = null;
@@ -133,6 +139,11 @@ public class ConfiguratorActivator implements BundleActivator {
 			properties.put(JettyConstants.HTTP_ENABLED, true);
 			port = preferences.get(HTTP_PORT, System.getProperty("org.eclipse.equinox.http.jetty.http.port", "8080"));//$NON-NLS-1$ //$NON-NLS-2$
 			properties.put(JettyConstants.HTTP_PORT, new Integer(port));
+
+			String httpHost = System.getProperty("org.eclipse.equinox.http.jetty.http.host"); //$NON-NLS-1$
+			if (httpHost != null) {
+				properties.put(JettyConstants.HTTP_HOST, httpHost);
+			}
 		}
 
 		//properties to help us filter orion content
