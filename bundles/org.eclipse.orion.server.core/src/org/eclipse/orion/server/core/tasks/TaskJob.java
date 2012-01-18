@@ -34,6 +34,7 @@ public abstract class TaskJob extends Job implements ITaskCanceler {
 	private TaskInfo task;
 	private ITaskService taskService;
 	private ServiceReference<ITaskService> taskServiceRef;
+	private IStatus realResult;
 
 	public TaskJob(String taskName, String userRunningTask, String initialMessage, boolean isIdempotent, boolean canCancel) {
 		super(taskName);
@@ -55,6 +56,10 @@ public abstract class TaskJob extends Job implements ITaskCanceler {
 		this.finalMessage = message;
 	}
 
+	public URI getFinalLocation() {
+		return finalLocation;
+	}
+
 	protected void setFinalLocation(URI location) {
 		this.finalLocation = location;
 	}
@@ -66,6 +71,10 @@ public abstract class TaskJob extends Job implements ITaskCanceler {
 		}
 		finalResult.put(TaskInfo.KEY_MESSAGE, finalMessage == null ? message : finalMessage);
 		return finalResult;
+	}
+
+	public IStatus getRealResult() {
+		return realResult;
 	}
 
 	ITaskService getTaskService() {
@@ -85,8 +94,7 @@ public abstract class TaskJob extends Job implements ITaskCanceler {
 
 	private synchronized void cleanUp() {
 		if (task != null && task.isRunning() == true) {
-			task.done(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "Task finished with unknown status."));
-			getTaskService().updateTask(task);
+			setTaskResult(getRealResult() == null ? new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "Task finished with unknown status.") : getRealResult());
 		}
 		taskService = null;
 		if (taskServiceRef != null) {
@@ -113,28 +121,35 @@ public abstract class TaskJob extends Job implements ITaskCanceler {
 			task.setMessage(message);
 			getTaskService().updateTask(task);
 		}
+		if (getRealResult() != null) {
+			setTaskResult(getRealResult());
+		}
 		return task;
 	}
 
 	protected abstract IStatus performJob();
 
+	private synchronized void setTaskResult(IStatus result) {
+		if (result.isOK()) {
+			if (finalLocation != null)
+				task.setResultLocation(finalLocation);
+			task.done(result);
+			// set the message after updating the task with the result
+			task.setMessage(finalMessage);
+		} else {
+			task.done(result);
+		}
+		getTaskService().updateTask(task);
+	}
+
 	@Override
 	protected IStatus run(IProgressMonitor progressMonitor) {
 		try {
-			IStatus result = performJob();
+			realResult = performJob();
 			if (task == null) {
-				return result;
+				return Status.OK_STATUS; // see bug 353190;;
 			}
-			if (result.isOK()) {
-				if (finalLocation != null)
-					task.setResultLocation(finalLocation);
-				task.done(result);
-				// set the message after updating the task with the result
-				task.setMessage(finalMessage);
-			} else {
-				task.done(result);
-			}
-			getTaskService().updateTask(task);
+			setTaskResult(realResult);
 			//return the actual result so errors are logged, see bug 353190
 			return Status.OK_STATUS; // see bug 353190;
 		} finally {

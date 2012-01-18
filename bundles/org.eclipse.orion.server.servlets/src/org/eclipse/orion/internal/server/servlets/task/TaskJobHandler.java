@@ -93,9 +93,12 @@ public class TaskJobHandler {
 		job.removeJobChangeListener(jobListener);
 
 		if (job.getState() == Job.NONE) {
-			IStatus result = job.getResult();
+			IStatus result = job.getRealResult();
 			if (!result.isOK()) {
 				return statusHandler.handleRequest(request, response, result);
+			}
+			if (job.getFinalLocation() != null) {
+				response.setHeader(ProtocolConstants.HEADER_LOCATION, job.getFinalLocation().toString());
 			}
 			if (result instanceof ServerStatus) {
 				ServerStatus status = (ServerStatus) result;

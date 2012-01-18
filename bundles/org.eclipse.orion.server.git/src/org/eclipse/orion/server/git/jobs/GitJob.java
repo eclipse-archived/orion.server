@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,8 +9,6 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package org.eclipse.orion.server.git.jobs;
-
-import org.eclipse.orion.server.core.tasks.TaskJob;
 
 import com.jcraft.jsch.JSchException;
 import java.text.MessageFormat;
@@ -23,6 +21,7 @@ import org.eclipse.jgit.JGitText;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.errors.TransportException;
 import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.tasks.TaskJob;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.jsch.HostFingerprintException;
@@ -88,7 +87,7 @@ public abstract class GitJob extends TaskJob {
 		JSchException jschEx = getJSchException(e);
 		if (jschEx != null && jschEx instanceof HostFingerprintException) {
 			HostFingerprintException cause = (HostFingerprintException) jschEx;
-			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, cause.getMessage(), addRepositoryInfo(cause.formJson()), cause);
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, cause.getMessage(), addRepositoryInfo(cause.formJson()), cause);
 		}
 		//JSch handles auth fail by exception message
 		if (jschEx != null && jschEx.getMessage() != null && jschEx.getMessage().toLowerCase(Locale.ENGLISH).contains("auth fail")) { //$NON-NLS-1$

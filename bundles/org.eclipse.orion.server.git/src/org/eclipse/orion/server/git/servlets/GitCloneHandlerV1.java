@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -201,16 +201,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 
 			// if all went well, clone
 			CloneJob job = new CloneJob(clone, TaskJobHandler.getUserId(request), cp, request.getRemoteUser(), cloneLocation, webProjectExists ? null : webProject /* used for cleaning up, so null when not needed */);
-			job.schedule();
-			TaskInfo task = job.startTask();
-			JSONObject result = task.toJSON();
-			// Not nice that the git service knows the location of the task servlet, but task service doesn't know this either
-			String taskLocation = getURI(request).resolve("../../task/id/" + task.getTaskId()).toString(); //$NON-NLS-1$
-			result.put(ProtocolConstants.KEY_LOCATION, taskLocation);
-			response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation);
-			OrionServlet.writeJSONResponse(request, response, result);
-			response.setStatus(HttpServletResponse.SC_ACCEPTED);
-			return true;
+			return TaskJobHandler.handleTaskJob(request, response, job, statusHandler);
 		}
 	}
 

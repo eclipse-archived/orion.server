@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others
+ * Copyright (c) 2011, 2012 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -736,10 +736,14 @@ public class GitCloneTest extends GitTest {
 		request = getPostGitCloneRequest(uri, null, bobClonePath, null, null, null);
 		setAuthentication(request, "bob", "bob");
 		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
-		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(taskLocation);
-		String cloneLocation = waitForTaskCompletion(taskLocation, "bob", "bob");
+		response = waitForTaskCompletionObjectResponse(response, "bob", "bob");
+		String cloneLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		if (cloneLocation == null) {
+			JSONObject taskResp = new JSONObject(response.getText());
+			assertTrue(taskResp.has(ProtocolConstants.KEY_LOCATION));
+			cloneLocation = taskResp.getString(ProtocolConstants.KEY_LOCATION);
+		}
+		assertNotNull(cloneLocation);
 
 		// validate the clone metadata
 		request = getGetRequest(cloneLocation);
@@ -771,21 +775,21 @@ public class GitCloneTest extends GitTest {
 		// clone again into the same path
 		WebRequest request = getPostGitCloneRequest(new URIish(gitDir.toURI().toURL()).toString(), clonePath);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
-		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(taskLocation);
-		String completedTaskLocation = waitForTaskCompletion(taskLocation);
 
-		// task completed, but cloning failed
-		request = new GetMethodWebRequest(completedTaskLocation);
-		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		setAuthentication(request);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject completedTask = new JSONObject(response.getText());
-		assertEquals(false, completedTask.getBoolean("Running"));
-		assertEquals(100, completedTask.getInt("PercentComplete"));
-		JSONObject result = completedTask.getJSONObject("Result");
+		response = waitForTaskCompletionObjectResponse(response);
+		JSONObject result;
+
+		if (HttpURLConnection.HTTP_OK == response.getResponseCode()) {
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject completedTask = new JSONObject(response.getText());
+			assertEquals(false, completedTask.getBoolean("Running"));
+			assertEquals(100, completedTask.getInt("PercentComplete"));
+			result = completedTask.getJSONObject("Result");
+		} else {
+			assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, response.getResponseCode());
+			result = new JSONObject(response.getText());
+		}
+
 		assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, result.getInt("HttpCode"));
 		assertEquals("Error", result.getString("Severity"));
 		assertEquals("An internal git error cloning git repository", result.getString("Message"));

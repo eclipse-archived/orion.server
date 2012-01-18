@@ -66,6 +66,7 @@ import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSuppor
 import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Branch;
 import org.eclipse.orion.server.git.objects.Clone;
@@ -384,15 +385,20 @@ public abstract class GitTest extends FileSystemTest {
 		// clone
 		WebRequest request = getPostGitCloneRequest(uri, workspacePath, filePath, name, kh, p);
 		WebResponse response = waitForTaskCompletionObjectResponse(webConversation.getResponse(request));
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject jsonResp = new JSONObject(response.getText());
-		assertTrue(jsonResp.has(ProtocolConstants.KEY_LOCATION));
-		String cloneLocation = jsonResp.getString(ProtocolConstants.KEY_LOCATION);
+		String cloneLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		if (cloneLocation == null) {
+			JSONObject taskResp = new JSONObject(response.getText());
+			assertTrue(taskResp.has(ProtocolConstants.KEY_LOCATION));
+			assertFalse(taskResp.getString(TaskInfo.KEY_RESULT), taskResp.has(TaskInfo.KEY_FAILED) && taskResp.getBoolean(TaskInfo.KEY_FAILED));
+			cloneLocation = taskResp.getString(ProtocolConstants.KEY_LOCATION);
+		}
+		assertNotNull(cloneLocation);
 
 		// validate the clone metadata
 		response = webConversation.getResponse(getGetRequest(cloneLocation));
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject clones = new JSONObject(response.getText());
+		assertTrue("Clone doesn't have children at " + cloneLocation, clones.has(ProtocolConstants.KEY_CHILDREN));
 		JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 		assertEquals(1, clonesArray.length());
 		JSONObject clone = clonesArray.getJSONObject(0);
