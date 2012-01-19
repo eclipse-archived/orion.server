@@ -10,22 +10,12 @@
  *******************************************************************************/
 package org.eclipse.orion.server.useradmin;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.io.*;
+import java.net.*;
 import java.util.Properties;
-
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.Session;
-import javax.mail.Transport;
+import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
-
-import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
 
@@ -36,12 +26,12 @@ import org.eclipse.orion.server.core.ServerConstants;
 public class UserEmailUtil {
 
 	private static UserEmailUtil util = null;
-	private static final String EMAIL_CONFIRMATION_FILE = "/emails/EmailConfirmation.txt";
-	private static final String EMAIL_CONFIRMATION_RESET_PASS_FILE = "/emails/EmailConfirmationPasswrodReset.txt";
-	private static final String EMAIL_PASSWORD_RESET = "/emails/PasswordReset.txt";
-	private static final String EMAIL_URL_LINK = "<URL>";
-	private static final String EMAIL_USER_LINK = "<USER>";
-	private static final String EMAIL_PASSWORD_LINK = "<PASSWORD>";
+	private static final String EMAIL_CONFIRMATION_FILE = "/emails/EmailConfirmation.txt"; //$NON-NLS-1$
+	private static final String EMAIL_CONFIRMATION_RESET_PASS_FILE = "/emails/EmailConfirmationPasswordReset.txt"; //$NON-NLS-1$
+	private static final String EMAIL_PASSWORD_RESET = "/emails/PasswordReset.txt"; //$NON-NLS-1$
+	private static final String EMAIL_URL_LINK = "<URL>"; //$NON-NLS-1$
+	private static final String EMAIL_USER_LINK = "<USER>"; //$NON-NLS-1$
+	private static final String EMAIL_PASSWORD_LINK = "<PASSWORD>"; //$NON-NLS-1$
 	private Properties properties;
 	private EmailContent confirmationEmail;
 	private EmailContent confirmationResetPassEmail;
@@ -60,8 +50,10 @@ public class UserEmailUtil {
 		}
 
 		public EmailContent(String fileName) throws URISyntaxException, IOException {
-			File emailFile = new File(FileLocator.resolve(UserAdminActivator.getDefault().getBundleContext().getBundle().getEntry(fileName)).toURI());
-			BufferedReader reader = new BufferedReader(new FileReader(emailFile));
+			URL entry = UserAdminActivator.getDefault().getBundleContext().getBundle().getEntry(fileName);
+			if (entry == null)
+				throw new IOException("File not found: " + fileName);
+			BufferedReader reader = new BufferedReader(new InputStreamReader(entry.openStream()));
 			String line = null;
 			try {
 				title = reader.readLine();
