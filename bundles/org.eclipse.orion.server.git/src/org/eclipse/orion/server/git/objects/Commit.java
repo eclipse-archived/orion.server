@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -193,11 +193,12 @@ public class Commit extends GitObject {
 		return new URI(cloneLocation.getScheme(), cloneLocation.getAuthority(), diffPath, null, null);
 	}
 
-	private JSONArray parentsToJSON(RevCommit[] revCommits) throws JSONException {
+	private JSONArray parentsToJSON(RevCommit[] revCommits) throws JSONException, IOException, URISyntaxException {
 		JSONArray parents = new JSONArray();
 		for (RevCommit revCommit : revCommits) {
 			JSONObject parent = new JSONObject();
 			parent.put(ProtocolConstants.KEY_NAME, revCommit.getName());
+			parent.put(ProtocolConstants.KEY_LOCATION, BaseToCommitConverter.getCommitLocation(cloneLocation, revCommit.getName(), pattern, BaseToCommitConverter.REMOVE_FIRST_2));
 			parents.put(parent);
 		}
 		return parents;
