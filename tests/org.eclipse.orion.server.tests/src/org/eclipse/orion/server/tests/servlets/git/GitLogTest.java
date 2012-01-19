@@ -374,6 +374,7 @@ public class GitLogTest extends GitTest {
 			addFile(testTxt);
 
 			// commit1
+			Thread.sleep(1); //make sure commits don't have the same commit time
 			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit1", false);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
@@ -386,6 +387,7 @@ public class GitLogTest extends GitTest {
 			addFile(testTxt);
 
 			// commit2
+			Thread.sleep(1); //make sure commits don't have the same commit time
 			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit2", false);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
