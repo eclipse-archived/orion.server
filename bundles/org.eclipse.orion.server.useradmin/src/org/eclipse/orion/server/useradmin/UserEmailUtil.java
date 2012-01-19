@@ -36,9 +36,9 @@ import org.eclipse.orion.server.core.ServerConstants;
 public class UserEmailUtil {
 
 	private static UserEmailUtil util = null;
-	private static final String EMAIL_CONFIRMATION_FILE = "emails/EmailConfirmation.txt";
-	private static final String EMAIL_CONFIRMATION_RESET_PASS_FILE = "emails/EmailConfirmationPasswrodReset.txt";
-	private static final String EMAIL_PASSWORD_RESET = "emails/PasswordReset.txt";
+	private static final String EMAIL_CONFIRMATION_FILE = "/emails/EmailConfirmation.txt";
+	private static final String EMAIL_CONFIRMATION_RESET_PASS_FILE = "/emails/EmailConfirmationPasswrodReset.txt";
+	private static final String EMAIL_PASSWORD_RESET = "/emails/PasswordReset.txt";
 	private static final String EMAIL_URL_LINK = "<URL>";
 	private static final String EMAIL_USER_LINK = "<USER>";
 	private static final String EMAIL_PASSWORD_LINK = "<PASSWORD>";
