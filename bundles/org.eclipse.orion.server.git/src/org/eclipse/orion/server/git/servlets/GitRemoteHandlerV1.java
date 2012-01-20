@@ -26,7 +26,6 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;
 import org.eclipse.orion.server.core.ServerStatus;
-import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.*;
 import org.eclipse.orion.server.git.jobs.*;
 import org.eclipse.orion.server.git.objects.Remote;
@@ -224,16 +223,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		if (p.segment(2).equals("file")) { //$NON-NLS-1$
 			// /git/remote/{remote}/{branch}/file/{path}
 			PushJob job = new PushJob(TaskJobHandler.getUserId(request), cp, p, srcRef, tags, force);
-			job.schedule();
-
-			TaskInfo task = job.startTask();
-			JSONObject result = task.toJSON();
-			URI taskLocation = createTaskLocation(OrionServlet.getURI(request), task.getTaskId());
-			result.put(ProtocolConstants.KEY_LOCATION, taskLocation);
-			response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation.toString());
-			OrionServlet.writeJSONResponse(request, response, result);
-			response.setStatus(HttpServletResponse.SC_ACCEPTED);
-			return true;
+			return TaskJobHandler.handleTaskJob(request, response, job, statusHandler);
 		}
 		return false;
 	}

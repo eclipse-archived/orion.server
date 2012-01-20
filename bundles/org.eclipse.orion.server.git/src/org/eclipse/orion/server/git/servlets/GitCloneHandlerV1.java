@@ -33,7 +33,6 @@ import org.eclipse.orion.internal.server.servlets.workspace.*;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
-import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.git.jobs.*;
@@ -524,19 +523,10 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		}
 	}
 
-	private boolean pull(HttpServletRequest request, HttpServletResponse response, GitCredentialsProvider cp, String path, boolean force) throws URISyntaxException, JSONException, IOException {
+	private boolean pull(HttpServletRequest request, HttpServletResponse response, GitCredentialsProvider cp, String path, boolean force) throws URISyntaxException, JSONException, IOException, ServletException {
 		Path p = new Path(path); // /{file}/{path}
 		PullJob job = new PullJob(TaskJobHandler.getUserId(request), cp, p, force);
-		job.schedule();
-
-		TaskInfo task = job.startTask();
-		JSONObject result = task.toJSON();
-		URI taskLocation = createTaskLocation(OrionServlet.getURI(request), task.getTaskId());
-		result.put(ProtocolConstants.KEY_LOCATION, taskLocation);
-		response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation.toString());
-		OrionServlet.writeJSONResponse(request, response, result);
-		response.setStatus(HttpServletResponse.SC_ACCEPTED);
-		return true;
+		return TaskJobHandler.handleTaskJob(request, response, job, statusHandler);
 	}
 
 	private URI createTaskLocation(URI baseLocation, String taskId) throws URISyntaxException {

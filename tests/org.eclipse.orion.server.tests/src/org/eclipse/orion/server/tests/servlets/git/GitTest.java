@@ -42,6 +42,7 @@ import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
@@ -78,7 +79,6 @@ import org.eclipse.orion.server.git.objects.Tag;
 import org.eclipse.orion.server.git.servlets.GitServlet;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
-import org.eclipse.osgi.util.NLS;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -591,19 +591,41 @@ public abstract class GitTest extends FileSystemTest {
 		assertRemoteOrRemoteBranchLocation(gitRemoteBranchUri);
 		WebRequest request = GitPushTest.getPostGitRemoteRequest(gitRemoteBranchUri, srcRef, tags, force);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
-		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(taskLocation);
-		waitForTaskCompletion(taskLocation);
+		if (HttpURLConnection.HTTP_ACCEPTED == response.getResponseCode()) {
+			assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
+			String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+			assertNotNull(taskLocation);
+			waitForTaskCompletion(taskLocation);
 
-		// get task details again
-		request = new GetMethodWebRequest(taskLocation);
-		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		setAuthentication(request);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			// get task details again
+			request = new GetMethodWebRequest(taskLocation);
+			request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+			setAuthentication(request);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			return ServerStatus.fromJSON(new JSONObject(response.getText()).optJSONObject("Result"/*TaskInfo.KEY_RESULT*/).toString());
+		}
+		JSONObject jsonResp = new JSONObject(response.getText());
+		int status = jsonResp.has("Severity") ? parseSeverity(jsonResp) : (response.getResponseCode() == HttpURLConnection.HTTP_OK ? IStatus.OK : IStatus.ERROR);
+		String messsage = jsonResp.has("Message") ? jsonResp.getString("Message") : null;
+		JSONObject jsonData = jsonResp.has("JsonData") ? jsonResp.getJSONObject("JsonData") : jsonResp;
+		return new ServerStatus(status, response.getResponseCode(), messsage, jsonData, null);
+	}
 
-		return ServerStatus.fromJSON(new JSONObject(response.getText()).optJSONObject("Result"/*TaskInfo.KEY_RESULT*/).toString());
+	private int parseSeverity(JSONObject status) throws JSONException {
+		if (!status.has("Severity")) {
+			return IStatus.OK;
+		}
+		if ("Error".equals(status.getString("Severity"))) {
+			return IStatus.ERROR;
+		}
+		if ("Warning".equals(status.getString("Severity"))) {
+			return IStatus.WARNING;
+		}
+		if ("Info".equals(status.getString("Severity"))) {
+			return IStatus.INFO;
+		}
+		return IStatus.OK;
 	}
 
 	protected ServerStatus push(String gitRemoteUri, int size, int i, String name, String srcRef, boolean tags, String userName, String kh, byte[] privk, byte[] pubk, byte[] p, boolean shouldBeOK) throws IOException, SAXException, JSONException {
@@ -740,28 +762,7 @@ public abstract class GitTest extends FileSystemTest {
 
 		// pull
 		WebRequest request = GitPullTest.getPostGitRemoteRequest(cloneLocation, false);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
-		assertPullProgressMessage(cloneLocation, new JSONObject(response.getText()).getString("Message"));
-		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(taskLocation);
-		String location = waitForTaskCompletion(taskLocation);
-
-		// validate task completed successfully
-		request = getGetRequest(location);
-		response = webConversation.getResponse(request);
-		JSONObject status = new JSONObject(response.getText());
-		assertFalse(status.getBoolean("Running"));
-		assertEquals(HttpURLConnection.HTTP_OK, status.getJSONObject("Result").getInt("HttpCode"));
-		return status;
-	}
-
-	private void assertPullProgressMessage(String cloneLocation, String actualMessage) throws IOException, SAXException, JSONException {
-		WebRequest request = getGetRequest(cloneLocation);
-		WebResponse response = webConversation.getResponse(request);
-		JSONObject clone = new JSONObject(response.getText());
-		String name = clone.getJSONArray(ProtocolConstants.KEY_CHILDREN).getJSONObject(0).getString(ProtocolConstants.KEY_NAME);
-		assertEquals(NLS.bind("Pulling {0}...", name), actualMessage);
+		return waitForTaskCompletion(webConversation.getResponse(request));
 	}
 
 	// tag

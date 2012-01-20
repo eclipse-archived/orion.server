@@ -545,8 +545,7 @@ public class GitPushTest extends GitTest {
 
 		// push
 		request = getPostGitRemoteRequest(remoteBranchLocation, Constants.HEAD, false, false);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
+		waitForTaskCompletion(webConversation.getResponse(request));
 	}
 
 	@Test
