@@ -13,39 +13,20 @@ package org.eclipse.orion.server.useradmin.servlets;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-
+import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.PreferenceHelper;
-import org.eclipse.orion.server.core.ServerConstants;
-import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.servlets.OrionServlet;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
-import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
-import org.eclipse.orion.server.useradmin.User;
-import org.eclipse.orion.server.useradmin.UserConstants;
-import org.eclipse.orion.server.useradmin.UserEmailUtil;
-import org.eclipse.orion.server.useradmin.UserServiceHelper;
+import org.eclipse.orion.server.user.profile.*;
+import org.eclipse.orion.server.useradmin.*;
 import org.eclipse.osgi.util.NLS;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.*;
 
 /**
  * A user handler for Orion User API v 1.0.
@@ -161,7 +142,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	private boolean handleUserCreate(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, JSONException, CoreException {
-//		String store = req.getParameter(UserConstants.KEY_STORE);
+		//		String store = req.getParameter(UserConstants.KEY_STORE);
 		String login = req.getParameter(UserConstants.KEY_LOGIN);
 		String name = req.getParameter(ProtocolConstants.KEY_NAME);
 		String password = req.getParameter(UserConstants.KEY_PASSWORD);
@@ -227,10 +208,10 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 			user.setName(data.getString(ProtocolConstants.KEY_NAME));
 		if (data.has(UserConstants.KEY_PASSWORD))
 			user.setPassword(data.getString(UserConstants.KEY_PASSWORD));
-		if (data.has(UserConstants.KEY_EMAIL)){
+		if (data.has(UserConstants.KEY_EMAIL)) {
 			user.setEmail(data.getString(UserConstants.KEY_EMAIL));
-		}			
-			
+		}
+
 		if (data.has(UserConstants.KEY_PROPERTIES)) {
 			JSONObject propertiesObject = data.getJSONObject(UserConstants.KEY_PROPERTIES);
 			Iterator<?> propertyIterator = propertiesObject.keys();
@@ -243,7 +224,6 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (!status.isOK()) {
 			return statusHandler.handleRequest(req, resp, status);
 		}
-		
 
 		IOrionUserProfileNode userNode = getUserProfileService().getUserProfileNode(userId, true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
 
@@ -252,11 +232,11 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (data.has("GitName"))
 			userNode.put("GitName", data.getString("GitName"), false);
 		userNode.flush();
-		
-		if(user.getConfirmationId()!=null && !user.getConfirmationId().equals(emailConfirmationid)){
+
+		if (user.getConfirmationId() != null && !user.getConfirmationId().equals(emailConfirmationid)) {
 			try {
 				UserEmailUtil.getUtil().sendEmailConfirmation(getURI(req).resolve("../useremailconfirmation"), user);
-				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.INFO, HttpServletResponse.SC_OK, "Confirmation email has been send to " + user.getEmail(), null));
+				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.INFO, HttpServletResponse.SC_OK, "Confirmation email has been sent to " + user.getEmail(), null));
 			} catch (Exception e) {
 				LogHelper.log(e);
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Could not send confirmation email to " + user.getEmail(), null));
