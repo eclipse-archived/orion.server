@@ -269,6 +269,8 @@ public class TaskInfo {
 			resultObject.put(KEY_TIMESTAMP_CREATED, created.getTime());
 			resultObject.put(KEY_IDEMPOTENT, idempotent);
 			resultObject.put(KEY_NAME, name==null ? "" : name);
+			if (resultLocation != null)
+				resultObject.put(KEY_LOCATION, resultLocation);
 			if(result!=null){
 				if(!result.isOK()){
 					resultObject.put(KEY_FAILED, true);

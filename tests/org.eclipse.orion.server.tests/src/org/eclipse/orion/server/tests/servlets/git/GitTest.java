@@ -711,40 +711,14 @@ public abstract class GitTest extends FileSystemTest {
 
 		// fetch
 		WebRequest request = GitFetchTest.getPostGitRemoteRequest(remoteLocation, true, force);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
-		assertFetchProgressMessage(remoteLocation, new JSONObject(response.getText()).getString("Message"));
-		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(taskLocation);
-		String location = waitForTaskCompletion(taskLocation);
-
-		// validate task completed successfully
-		request = getGetRequest(location);
-		response = webConversation.getResponse(request);
-		JSONObject status = new JSONObject(response.getText());
-		assertFalse(status.getBoolean("Running"));
-		assertEquals(HttpURLConnection.HTTP_OK, status.getJSONObject("Result").getInt("HttpCode"));
+		waitForTaskCompletion(webConversation.getResponse(request));
 
 		// get remote (branch) details again
 		request = GitRemoteTest.getGetGitRemoteRequest(remoteLocation);
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		return waitForTaskCompletion(response);
 	}
 
-	private static void assertFetchProgressMessage(String remoteLocation, String actualMessage) {
-		IPath path = new Path(URI.create(remoteLocation).getPath());
-		if (path.segment(1).equals(Remote.RESOURCE) && path.segment(3).equals("file")) {
-			// /git/remote/{remote}/file/{path}
-			assertEquals(String.format("Fetching %s...", path.segment(2)), actualMessage);
-		} else if (path.segment(1).equals(Remote.RESOURCE) && path.segment(4).equals("file")) {
-			// /git/remote/{remote}/{branch}/file/{path}
-			assertEquals(String.format("Fetching %s/%s...", path.segment(2), path.segment(3)), actualMessage);
-		} else {
-			fail("unexpected remoteLocation: " + remoteLocation);
-		}
-	}
-
-	// pull
 	/**
 	 * Pulls objects and refs for the given repository and merges them into the current branch.
 	 * 

@@ -613,7 +613,14 @@ public class GitFetchTest extends GitTest {
 			String remoteBranchLocation = details.getString(ProtocolConstants.KEY_LOCATION);
 			String oldRefId = details.getString(ProtocolConstants.KEY_ID);
 
-			JSONObject newDetails = fetch(remoteBranchLocation);
+			//JSONObject newDetails = fetch(remoteBranchLocation);
+			request = GitFetchTest.getPostGitRemoteRequest(remoteBranchLocation, true, false);
+			waitForTaskCompletionObjectResponse(webConversation.getResponse(request));
+
+			// get remote (branch) details again
+			request = GitRemoteTest.getGetGitRemoteRequest(remoteBranchLocation);
+			response = webConversation.getResponse(request);
+			JSONObject newDetails = waitForTaskCompletion(response);
 
 			// assert nothing new on 'master'
 			String newRefId = newDetails.getString(ProtocolConstants.KEY_ID);

@@ -111,7 +111,7 @@ public class TaskJobHandler {
 		} else {
 			TaskInfo task = job.startTask();
 			JSONObject result = task.toJSON();
-			URI taskLocation = createTaskLocation(OrionServlet.getURI(request), task.getTaskId());
+			String taskLocation = result.has(ProtocolConstants.KEY_LOCATION) ? result.getString(ProtocolConstants.KEY_LOCATION) : createTaskLocation(OrionServlet.getURI(request), task.getTaskId()).toString();
 			result.put(ProtocolConstants.KEY_LOCATION, taskLocation);
 			response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation.toString());
 			OrionServlet.writeJSONResponse(request, response, result);

@@ -489,18 +489,12 @@ public class GitPushTest extends GitTest {
 
 			// clone 2 - fetch
 			request = GitFetchTest.getPostGitRemoteRequest(remoteBranchLocation2, true, false);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
-			String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-			assertNotNull(taskLocation);
-			String location = waitForTaskCompletion(taskLocation);
+			response = waitForTaskCompletionObjectResponse(webConversation.getResponse(request));
 
 			// clone 2 - fetch task should fail
-			request = getGetRequest(location);
-			response = webConversation.getResponse(request);
 			JSONObject status = new JSONObject(response.getText());
-			assertFalse(status.getBoolean("Running"));
-			assertEquals("Error", status.getJSONObject("Result").getString("Severity"));
+			JSONObject result = status.has("Result") ? status.getJSONObject("Result") : status;
+			assertEquals("Error", result.getString("Severity"));
 		}
 	}
 
@@ -821,7 +815,7 @@ public class GitPushTest extends GitTest {
 		// clone2: fetch + merge
 		JSONObject remoteBranch = getRemoteBranch(gitRemoteUri2, 1, 0, Constants.MASTER);
 		String remoteBranchLocation2 = remoteBranch.getString(ProtocolConstants.KEY_LOCATION);
-		remoteBranch = fetch(remoteBranchLocation2);
+		fetch(remoteBranchLocation2);
 		String id = remoteBranch.getString(ProtocolConstants.KEY_ID);
 		merge(gitHeadUri2, id);
 

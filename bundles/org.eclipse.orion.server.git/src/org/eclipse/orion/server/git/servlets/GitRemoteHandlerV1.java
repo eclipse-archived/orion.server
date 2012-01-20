@@ -210,20 +210,12 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private boolean fetch(HttpServletRequest request, HttpServletResponse response, GitCredentialsProvider cp, String path, boolean force) throws URISyntaxException, JSONException, IOException {
+	private boolean fetch(HttpServletRequest request, HttpServletResponse response, GitCredentialsProvider cp, String path, boolean force) throws URISyntaxException, JSONException, IOException, ServletException {
 		// {remote}/{branch}/{file}/{path}
 		Path p = new Path(path);
 		FetchJob job = new FetchJob(TaskJobHandler.getUserId(request), cp, p, force);
-		job.schedule();
 
-		TaskInfo task = job.startTask();
-		JSONObject result = task.toJSON();
-		URI taskLocation = createTaskLocation(OrionServlet.getURI(request), task.getTaskId());
-		result.put(ProtocolConstants.KEY_LOCATION, taskLocation);
-		response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation.toString());
-		OrionServlet.writeJSONResponse(request, response, result);
-		response.setStatus(HttpServletResponse.SC_ACCEPTED);
-		return true;
+		return TaskJobHandler.handleTaskJob(request, response, job, statusHandler);
 	}
 
 	private boolean push(HttpServletRequest request, HttpServletResponse response, String path, GitCredentialsProvider cp, String srcRef, boolean tags, boolean force) throws ServletException, CoreException, IOException, JSONException, URISyntaxException {
