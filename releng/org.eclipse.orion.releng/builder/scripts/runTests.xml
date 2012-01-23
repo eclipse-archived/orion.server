@@ -322,14 +322,11 @@
 		<junitreport todir="${dropLocation}" tofile="Chrome-12.0-testResults.xml">
 			<fileset dir="${jsTestDir}" includes="**/TEST-Chrome_120*.xml" />
 		</junitreport>
-		<junitreport todir="${dropLocation}" tofile="Chrome-15.0-testResults.xml">
-			<fileset dir="${jsTestDir}" includes="**/TEST-Chrome_150*.xml" />
-		</junitreport>
-		<junitreport todir="${dropLocation}" tofile="Firefox-7.0-testResults.xml">
-			<fileset dir="${jsTestDir}" includes="**/TEST-Firefox_70*.xml" />
-		</junitreport>
 		<junitreport todir="${dropLocation}" tofile="Firefox-8.0-testResults.xml">
 			<fileset dir="${jsTestDir}" includes="**/TEST-Firefox_80*.xml" />
+		</junitreport>
+		<junitreport todir="${dropLocation}" tofile="Firefox-9.0-testResults.xml">
+			<fileset dir="${jsTestDir}" includes="**/TEST-Firefox_90*.xml" />
 		</junitreport>
 		<junitreport todir="${dropLocation}" tofile="Performance-testResults.xml">
 			<fileset dir="${jsTestDir}" includes="**/TEST-*.Performance.xml" />
@@ -345,9 +342,8 @@
 		
 		<!-- update the test status -->
 		<updateTestResult testFile="Chrome-12.0-testResults.html" token="@JS-CHROME12@"/>
-		<updateTestResult testFile="Chrome-15.0-testResults.html" token="@JS-CHROME15@"/>
-		<updateTestResult testFile="Firefox-7.0-testResults.html" token="@JS-FIREFOX70@"/>
 		<updateTestResult testFile="Firefox-8.0-testResults.html" token="@JS-FIREFOX80@"/>
+		<updateTestResult testFile="Firefox-9.0-testResults.html" token="@JS-FIREFOX90@"/>
 		<updateTestResult testFile="IE-9.0-testResults.html" token="@JS-IE9@"/>
 		<updateTestResult testFile="Performance-testResults.html" token="@PERFORMANCE@"/>
 		<updateTestResult testFile="org.eclipse.orion.server.tests.AllServerTests.html" token="@SERVER-TESTS@"/>
