@@ -63,8 +63,8 @@ plugin@org.apache.jasper.glassfish=p2IU,id=org.apache.jasper.glassfish,repositor
 plugin@org.eclipse.jdt.core.compiler.batch=p2IU,id=org.eclipse.jdt.core.compiler.batch,repository=ECLIPSE_PLATFORM_REPO
 
 #Not in the SDK but we need it for GZipFilter
-plugin@org.eclipse.jetty.servlets,8.1.0=p2IU,id=org.eclipse.jetty.servlets,version=8.1.0.RC1,repository=http://download.eclipse.org/jetty/updates/jetty-bundles-8.x/8.1.0.RC1/
-plugin@org.eclipse.jetty.client,8.1.0=p2IU,id=org.eclipse.jetty.client,version=8.1.0.RC1,repository=http://download.eclipse.org/jetty/updates/jetty-bundles-8.x/8.1.0.RC1/
+plugin@org.eclipse.jetty.servlets,8.1.0=p2IU,id=org.eclipse.jetty.servlets,version=8.1.0.RC4,repository=http://download.eclipse.org/jetty/updates/jetty-bundles-8.x/8.1.0.RC4
+plugin@org.eclipse.jetty.client,8.1.0=p2IU,id=org.eclipse.jetty.client,version=8.1.0.RC4,repository=http://download.eclipse.org/jetty/updates/jetty-bundles-8.x/8.1.0.RC4
 
 #Required by tests
 plugin@org.eclipse.core.resources=p2IU,id=org.eclipse.core.resources,repository=ECLIPSE_PLATFORM_REPO
