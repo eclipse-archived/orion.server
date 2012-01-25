@@ -228,20 +228,18 @@ td.loginWindow {
 
 
 .titleArea {
-    -moz-border-bottom-colors: none;
-    -moz-border-image: none;
-    -moz-border-left-colors: none;
-    -moz-border-right-colors: none;
-    -moz-border-top-colors: none;
-    background: -moz-linear-gradient(center top , #F5F5F5, #EEEEEE) repeat scroll 0 0 transparent;
-    border-color: -moz-use-text-color -moz-use-text-color #D5D5D5;
-    border-style: none none solid none;
-    border-width: 0 0 1px 0;
-    margin: 0;
+	margin: 0;
+	border: 0;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fdfdfd', endColorstr='#eeeeee'); /* IE */
+	background: -webkit-gradient(linear, left top, left bottom, from(#fdfdfd), to(#eeeeee)); 
+	background: -moz-linear-gradient(top,  #fdfdfd,  #eeeeee); 
+	border-bottom: 1px solid #d5d5d5;
 }
 
 .paneHeading {
-    background: -moz-linear-gradient(center top , #EEEEEE, #DFDFDF) repeat scroll 0 0 transparent;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#eeeeee', endColorstr='#dfdfdf'); /* IE */
+	background: -webkit-gradient(linear, left top, left bottom, from(#eeeeee), to(#dfdfdf)); 
+	background: -moz-linear-gradient(top,  #eeeeee,  #dfdfdf); 
     color: #666666;
     font-size: 9pt;
     font-weight: bold;
