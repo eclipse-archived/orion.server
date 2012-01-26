@@ -90,7 +90,7 @@ public class Log extends GitObject {
 			if (fromRefId != null && toRefId != null)
 				c.append(".."); //$NON-NLS-1$
 			if (toRefId != null)
-				c.append(toRefId.getName());
+				c.append(Repository.shortenRefName(toRefId.getName()));
 			final String q = "page=%d&pageSize=%d"; //$NON-NLS-1$
 			if (page > 1) {
 				result.put(ProtocolConstants.KEY_PREVIOUS_LOCATION, BaseToCommitConverter.getCommitLocation(cloneLocation, c.toString(), pattern, BaseToCommitConverter.REMOVE_FIRST_2.setQuery(String.format(q, page - 1, pageSize))));
