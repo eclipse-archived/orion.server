@@ -110,10 +110,7 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 				if (connectionHdr != null && connectionHdr.indexOf(lhdr) >= 0)
 					continue;
 
-				// NOTE: Dojo appears to sometimes send GETs with a Content-Type header, which
-				// is bad HTTP practice, and causes the proxied request to become a POST.
-				// Tolerate these GETs by keeping hasContent == false
-				if ("content-type".equals(lhdr) && !"GET".equals(request.getMethod()))
+				if ("content-type".equals(lhdr))
 					hasContent = true;
 
 				Enumeration vals = request.getHeaders(hdr);
@@ -161,7 +158,7 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 
 				// do input thang!
 				InputStream in = request.getInputStream();
-				if (hasContent) {
+				if (hasContent && isOutputSupported(request)) {
 					connection.setDoOutput(true);
 					IO.copy(in, connection.getOutputStream());
 				}
@@ -219,5 +216,10 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 			if (proxy_in != null)
 				IO.copy(proxy_in, response.getOutputStream());
 		}
+	}
+
+	private static boolean isOutputSupported(HttpServletRequest req) {
+		String method = req.getMethod();
+		return "POST".equals(method) || "PUT".equals(method);
 	}
 }
