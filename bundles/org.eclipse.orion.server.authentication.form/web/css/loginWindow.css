@@ -24,7 +24,9 @@ img.closeLoginWindow:hover {
 }
 
 html, body {
-    font: 9pt Arial,Helvetica,Myriad,Tahoma,clean,sans-serif;
+    margin: 0;
+	padding: 0;
+	font: 9pt Verdana,Arial,Helvetica,Myriad,Tahoma,clean,sans-serif; 
     background: none repeat scroll 0 0 #EDEDED;
 }
 
@@ -214,6 +216,23 @@ td.loginWindow {
 	margin: 10px 0 10px 0;
 }
 
+.topRowBanner {
+	margin: 0;
+	border: 0;
+	background-color: #2e2e2e;
+	height: 22px;
+}
+
+.titleArea {
+	margin: 0;
+	border: 0;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#f7f7f7'); /* IE */
+	background: -webkit-gradient(linear, left top, left bottom, from(#fffff), to(#f7f7f7)); 
+	background: -moz-linear-gradient(top,  #fffff,  #f7f7f7); 
+	border-bottom: 1px solid #d5d5d5;
+	background-color: #FDFDFD;
+}
+
 .layoutBlock {
 	clear: both;
 	margin: 0;
@@ -224,26 +243,10 @@ td.loginWindow {
 	vertical-align: baseline;
 }
 
-
-.titleArea {
-	margin: 0;
-	border: 0;
-	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fdfdfd', endColorstr='#eeeeee'); /* IE */
-	background: -webkit-gradient(linear, left top, left bottom, from(#fdfdfd), to(#eeeeee)); 
-	background: -moz-linear-gradient(top,  #fdfdfd,  #eeeeee); 
-	border-bottom: 1px solid #d5d5d5;
-}
-
-.paneHeading {
-    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#eeeeee', endColorstr='#dfdfdf'); /* IE */
-	background: -webkit-gradient(linear, left top, left bottom, from(#eeeeee), to(#dfdfdf)); 
-	background: -moz-linear-gradient(top,  #eeeeee,  #dfdfdf); 
-    color: #666666;
-    font-size: 9pt;
-    font-weight: bold;
-    min-height: 24px;
-    padding-left: 8px;
-    padding-right: 8px;
-    vertical-align: middle;
-    width: 100%;
+.toolbar {
+	vertical-align: middle;
+	min-height: 30px;
+	width: 100%;
+	color: #808080;
+	background-color: #FDFDFD;
 }
