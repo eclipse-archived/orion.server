@@ -183,8 +183,8 @@ public class HostedSiteServlet extends OrionServlet {
 	}
 
 	/**
-	 * Returns a path constructed by rewriting pathInfo using the most specific rule from the hosted
-	 * site's mappings.
+	 * Returns paths constructed by rewriting pathInfo using rules from the hosted site's mappings.
+	 * Paths are ordered from most to least specific match.
 	 * @param site The hosted site.
 	 * @param pathInfo Path to be rewritten.
 	 * @param queryString 
@@ -192,50 +192,52 @@ public class HostedSiteServlet extends OrionServlet {
 	 * <li>A path to a file in the Orion workspace, eg. <code>/ProjectA/foo/bar.txt</code></li>
 	 * <li>An absolute URL pointing to another site, eg. <code>http://foo.com/bar.txt</code></li>
 	 * </ul>
+	 * @return The rewritten paths. 
 	 * @throws URISyntaxException 
 	 */
 	private URI[] getMapped(IHostedSite site, IPath pathInfo, String queryString) throws URISyntaxException {
 		final Map<String, List<String>> map = site.getMappings();
 		final IPath originalPath = pathInfo;
 		IPath path = originalPath.removeTrailingSeparator();
-		List<String> base = null;
+
+		List<URI> uris = new ArrayList<URI>();
 		String rest = null;
 		final int count = path.segmentCount();
 		for (int i = 0; i <= count; i++) {
-			base = map.get(path.toString());
+			List<String> base = map.get(path.toString());
 			if (base != null) {
 				rest = originalPath.removeFirstSegments(count - i).toString();
-				break;
+				for (int j = 0; j < base.size(); j++) {
+					URI uri = rest.equals("") ? new URI(base.get(j)) : URIUtil.append(new URI(base.get(j)), rest);
+					uris.add(new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost(), uri.getPort(), uri.getPath(), queryString, uri.getFragment()));
+				}
 			}
 			path = path.removeLastSegments(1);
 		}
-
-		if (base != null) {
-			URI[] result = new URI[base.size()];
-			for (int i = 0; i < result.length; i++) {
-				URI uri = rest.equals("") ? new URI(base.get(i)) : URIUtil.append(new URI(base.get(i)), rest);
-				result[i] = new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost(), uri.getPort(), uri.getPath(), queryString, uri.getFragment());
-			}
-			return result;
-		}
-		// No mapping for /
-		return null;
+		if (uris.size() == 0)
+			// No mapping for /
+			return null;
+		else
+			return uris.toArray(new URI[uris.size()]);
 	}
 
-	private void serve(HttpServletRequest req, HttpServletResponse resp, IHostedSite site, URI[] mappedPaths) throws ServletException, IOException {
-		if (mappedPaths[0].getScheme() == null) {
-			if ("GET".equals(req.getMethod())) { //$NON-NLS-1$
-				for (int i = 0; i < mappedPaths.length; i++) {
-					boolean failEarlyOn404 = i + 1 < mappedPaths.length;
-					if (serveOrionFile(req, resp, site, new Path(mappedPaths[i].getPath()), failEarlyOn404))
+	private void serve(HttpServletRequest req, HttpServletResponse resp, IHostedSite site, URI[] mappedURIs) throws ServletException, IOException {
+		for (int i = 0; i < mappedURIs.length; i++) {
+			URI uri = mappedURIs[i];
+			// Bypass a 404 if any workspace or remote paths remain to be checked.
+			boolean failEarlyOn404 = i + 1 < mappedURIs.length;
+			if (uri.getScheme() == null) {
+				if ("GET".equals(req.getMethod())) { //$NON-NLS-1$
+					if (serveOrionFile(req, resp, site, new Path(uri.getPath()), failEarlyOn404))
 						return;
+				} else {
+					String message = "Only GET method is supported for workspace paths";
+					handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_METHOD_NOT_ALLOWED, NLS.bind(message, mappedURIs), null));
 				}
 			} else {
-				String message = "Only GET method is supported for workspace paths";
-				handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_METHOD_NOT_ALLOWED, NLS.bind(message, mappedPaths), null));
+				if (proxyRemotePath(req, new LocationHeaderServletResponseWrapper(req, resp, site), uri, failEarlyOn404))
+					return;
 			}
-		} else {
-			proxyRemotePath(req, new LocationHeaderServletResponseWrapper(req, resp, site), mappedPaths);
 		}
 	}
 
@@ -317,42 +319,45 @@ public class HostedSiteServlet extends OrionServlet {
 		return null;
 	}
 
-	private void proxyRemotePath(HttpServletRequest req, HttpServletResponse resp, URI[] mappedPaths) throws IOException, ServletException, UnknownHostException {
+	/**
+	 * @return true if the request was served.
+	 */
+	private boolean proxyRemotePath(HttpServletRequest req, HttpServletResponse resp, URI remoteURI, boolean failEarlyOn404) throws IOException, ServletException, UnknownHostException {
 		try {
-			URL[] mappedURLs = new URL[mappedPaths.length];
-			for (int i = 0; i < mappedPaths.length; i++) {
-				mappedURLs[i] = new URL(mappedPaths[i].toString());
-			}
-			proxyRemoteUrl(req, resp, mappedURLs);
+			return proxyRemoteUrl(req, resp, new URL(remoteURI.toString()), failEarlyOn404);
 		} catch (MalformedURLException e) {
-			String message = NLS.bind("Malformed remote URL: {0}", mappedPaths.toString());
+			String message = NLS.bind("Malformed remote URL: {0}", remoteURI.toString());
 			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, message, e));
-			return;
 		} catch (UnknownHostException e) {
 			String message = NLS.bind("Unknown host {0}", e.getMessage());
 			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, message, e));
 		} catch (Exception e) {
-			String message = NLS.bind("An error occurred while retrieving {0}", mappedPaths.toString());
+			String message = NLS.bind("An error occurred while retrieving {0}", remoteURI.toString());
 			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, e));
 		}
+		return true;
 	}
 
-	private void proxyRemoteUrl(HttpServletRequest req, HttpServletResponse resp, final URL[] mappedURLs) throws IOException, ServletException, UnknownHostException {
-		for (int i = 0; i < mappedURLs.length; i++) {
-			boolean failEarlyOn404 = i + 1 < mappedURLs.length;
-			ProxyServlet proxy = new RemoteURLProxyServlet(mappedURLs[i], failEarlyOn404);
-			proxy.init(getServletConfig());
+	/**
+	 * @return true if the request was served.
+	 */
+	private boolean proxyRemoteUrl(HttpServletRequest req, HttpServletResponse resp, final URL mappedURL, boolean failEarlyOn404) throws IOException, ServletException, UnknownHostException {
+		ProxyServlet proxy = new RemoteURLProxyServlet(mappedURL, failEarlyOn404);
+		proxy.init(getServletConfig());
+		try {
+			// TODO: May want to avoid console noise from 4xx response codes?
+			traceRequest(req);
 			try {
-				// TODO: May want to avoid console noise from 4xx response codes?
-				traceRequest(req);
-				try {
-					proxy.service(req, resp);
-				} catch (NotFoundException ex) {
-					// ignore - this exception is only thrown in the "fail early on 404" case.
-				}
-			} finally {
-				proxy.destroy();
+				proxy.service(req, resp);
+			} catch (NotFoundException ex) {
+				// This exception is only thrown in the "fail early on 404" case, in which case
+				// no output was written and we didn't serve the request.
+				return false;
 			}
+		} finally {
+			proxy.destroy();
 		}
+		// We served this request
+		return true;
 	}
 }
