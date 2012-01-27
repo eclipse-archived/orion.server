@@ -143,10 +143,11 @@ public class HostedSiteServlet extends OrionServlet {
 	protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
 		String pathInfoString = req.getPathInfo();
-		String queryString;
+		String queryString = req.getQueryString();
 		try {
 			// Decode the query string
-			queryString = new URI("?" + req.getQueryString()).getQuery(); //$NON-NLS-1$
+			if (queryString != null)
+				queryString = new URI("?" + queryString).getQuery(); //$NON-NLS-1$
 		} catch (URISyntaxException uriException) {
 			// Should never happen since we start with a valid URL
 			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Bogus query {0}", req.getQueryString()), uriException));
