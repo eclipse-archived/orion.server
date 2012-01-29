@@ -166,7 +166,8 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 				// Connect                
 				connection.connect();
 			} catch (Exception e) {
-				_context.log("proxy", e);
+				if (!(e instanceof UnknownHostException))
+					_context.log("proxy", e);
 			}
 
 			InputStream proxy_in = null;
@@ -188,7 +189,8 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 				try {
 					proxy_in = connection.getInputStream();
 				} catch (Exception e) {
-					_context.log("stream", e);
+					if (!(e instanceof IOException))
+						_context.log("stream", e);
 					proxy_in = http.getErrorStream();
 				}
 			}
