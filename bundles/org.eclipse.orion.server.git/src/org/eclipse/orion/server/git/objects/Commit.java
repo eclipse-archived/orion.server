@@ -136,7 +136,7 @@ public class Commit extends GitObject {
 		return commit;
 	}
 
-	private JSONArray toJSON(Map<String, Ref> revTags) throws JSONException, URISyntaxException, CoreException {
+	private JSONArray toJSON(Map<String, Ref> revTags) throws JSONException, URISyntaxException, CoreException, IOException {
 		JSONArray children = new JSONArray();
 		for (Entry<String, Ref> revTag : revTags.entrySet()) {
 			Tag tag = new Tag(cloneLocation, db, revTag.getValue());

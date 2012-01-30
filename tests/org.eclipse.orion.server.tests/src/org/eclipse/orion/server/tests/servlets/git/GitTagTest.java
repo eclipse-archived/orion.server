@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others 
+ * Copyright (c) 2011, 2012 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -342,12 +342,19 @@ public class GitTagTest extends GitTest {
 
 		JSONArray tags = listTags(gitTagUri);
 		assertTrue(tags.length() > 0);
-		// assert properly sorted, new first
 		long lastTime = Long.MAX_VALUE;
 		for (int i = 0; i < tags.length(); i++) {
-			long t = tags.getJSONObject(i).getLong(ProtocolConstants.KEY_LOCAL_TIMESTAMP);
+			JSONObject tag = tags.getJSONObject(i);
+
+			// assert properly sorted, new first
+			long t = tag.getLong(ProtocolConstants.KEY_LOCAL_TIMESTAMP);
 			assertTrue(t <= lastTime);
 			lastTime = t;
+
+			// get 'tag' metadata
+			request = getGetGitTagRequest(tag.getString(ProtocolConstants.KEY_LOCATION).toString());
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		}
 	}
 }
