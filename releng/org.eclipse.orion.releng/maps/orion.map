@@ -1,5 +1,5 @@
 #client
-plugin@org.eclipse.orion.client.core=GIT,tag=v20120128-1958,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.core
+plugin@org.eclipse.orion.client.core=GIT,tag=v20120130-0110,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.core
 plugin@org.eclipse.orion.client.editor=GIT,tag=v20120126-2124,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.editor
 plugin@org.eclipse.orion.client.users.ui=GIT,tag=v20120127-0026,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.users.ui
 plugin@org.eclipse.orion.client.git=GIT,tag=v20120128-0353,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.git
@@ -24,7 +24,7 @@ plugin@org.eclipse.orion.server.useradmin=GIT,tag=v20120120-1948,repo=git://git.
 plugin@org.eclipse.orion.server.useradmin.xml=GIT,tag=v20110412-0931,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.useradmin.xml
 plugin@org.eclipse.orion.server.search=GIT,tag=v20111221-1526,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.search
 fragment@org.eclipse.orion.server.logback.config=GIT,tag=v20111007-1713,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.logback.config
-plugin@org.eclipse.orion.server.hosting=GIT,tag=v20120128-0055,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.hosting
+plugin@org.eclipse.orion.server.hosting=GIT,tag=v20120129-2205,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.hosting
 
 #ui
 plugin@org.eclipse.orion.server.ui=GIT,tag=v20110606-1500,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.ui
