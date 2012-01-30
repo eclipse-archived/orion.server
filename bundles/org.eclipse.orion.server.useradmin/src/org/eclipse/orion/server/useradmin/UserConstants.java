@@ -46,5 +46,5 @@ public interface UserConstants {
 	
 	public static final String KEY_CONFIRMATION_ID = "confirmationId"; //$NON-NLS-1$
 	
-	public static final String KEY_PASSWORD_RESET_CONFIRMATION_ID = "passwrodResetId"; //$NON-NLS-1$
+	public static final String KEY_PASSWORD_RESET_CONFIRMATION_ID = "passwordResetId"; //$NON-NLS-1$
 }
