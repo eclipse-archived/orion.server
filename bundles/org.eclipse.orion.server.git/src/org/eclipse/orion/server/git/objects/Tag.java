@@ -24,6 +24,18 @@ import org.json.JSONObject;
 
 public class Tag extends GitObject {
 
+	private enum TagType {
+		LIGHTWEIGHT, ANNOTATED;
+
+		public static TagType valueOf(Tag t) {
+			if (t.tag != null)
+				return ANNOTATED;
+			else if (t.ref != null)
+				return LIGHTWEIGHT;
+			throw new IllegalArgumentException("Illegal tag type: " + t);
+		}
+	}
+
 	public static final String RESOURCE = "tag"; //$NON-NLS-1$
 	public static final String TYPE = "Tag"; //$NON-NLS-1$
 	public static final Comparator<Tag> COMPARATOR = new Comparator<Tag>() {
@@ -37,15 +49,21 @@ public class Tag extends GitObject {
 	private URI tagLocation;
 	private URI commitLocation;
 
-	public Tag(URI cloneLocation, Repository db, RevTag tag) throws URISyntaxException, CoreException {
-		super(cloneLocation, db);
-		this.tag = tag;
-	}
-
 	// TODO: bug 356943 - revert when bug 360650 is fixed
-	public Tag(URI cloneLocation, Repository db, Ref ref) throws URISyntaxException, CoreException {
+	public Tag(URI cloneLocation, Repository db, Ref ref) throws IOException, CoreException {
 		super(cloneLocation, db);
-		this.ref = ref;
+
+		RevWalk rw = new RevWalk(db);
+		RevObject any;
+		try {
+			any = rw.parseAny(db.resolve(ref.getName()));
+		} finally {
+			rw.dispose();
+		}
+		if (any instanceof RevTag)
+			this.tag = (RevTag) any;
+		else
+			this.ref = ref;
 	}
 
 	public JSONObject toJSON() throws JSONException, URISyntaxException {
@@ -55,6 +73,7 @@ public class Tag extends GitObject {
 		result.put(GitConstants.KEY_COMMIT, getCommitLocation());
 		result.put(ProtocolConstants.KEY_LOCAL_TIMESTAMP, (long) getTime() * 1000);
 		result.put(ProtocolConstants.KEY_TYPE, TYPE);
+		result.put(GitConstants.KEY_TAG_TYPE, TagType.valueOf(this));
 		result.put(ProtocolConstants.KEY_FULL_NAME, getName(true));
 
 		// add Git Clone URI
@@ -71,7 +90,7 @@ public class Tag extends GitObject {
 
 	private String getName(boolean fullName) {
 		if (tag != null)
-			return tag.getTagName();
+			return fullName ? Constants.R_TAGS + tag.getTagName() : tag.getTagName();
 		if (ref != null)
 			return fullName ? ref.getName() : Repository.shortenRefName(ref.getName());
 		return null;
@@ -95,7 +114,7 @@ public class Tag extends GitObject {
 		return commitLocation;
 	}
 
-	public int getTime() {
+	private int getTime() {
 		RevCommit c = parseCommit();
 		if (c != null)
 			return c.getCommitTime();

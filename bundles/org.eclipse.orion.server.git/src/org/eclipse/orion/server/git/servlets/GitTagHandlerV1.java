@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -80,15 +80,9 @@ public class GitTagHandlerV1 extends ServletResourceHandler<String> {
 			Map<String, Ref> refList = db.getRefDatabase().getRefs(Constants.R_TAGS);
 			Ref ref = refList.get(tagName);
 			if (ref != null) {
-				RevWalk revWalk = new RevWalk(db);
-				try {
-					RevTag revTag = revWalk.parseTag(ref.getObjectId());
-					Tag tag = new Tag(cloneLocation, db, revTag);
-					OrionServlet.writeJSONResponse(request, response, tag.toJSON());
-					return true;
-				} finally {
-					revWalk.release();
-				}
+				Tag tag = new Tag(cloneLocation, db, ref);
+				OrionServlet.writeJSONResponse(request, response, tag.toJSON());
+				return true;
 			} else {
 				String msg = NLS.bind("Tag not found: {0}", tagName);
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
@@ -123,8 +117,9 @@ public class GitTagHandlerV1 extends ServletResourceHandler<String> {
 			RevCommit revCommit = walk.lookupCommit(objectId);
 
 			RevTag revTag = tag(git, revCommit, tagName);
+			Ref ref = db.getRefDatabase().getRef(revTag.getTagName());
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.TAG_LIST);
-			Tag tag = new Tag(cloneLocation, db, revTag);
+			Tag tag = new Tag(cloneLocation, db, ref);
 			OrionServlet.writeJSONResponse(request, response, tag.toJSON());
 			return true;
 		} catch (IOException e) {
