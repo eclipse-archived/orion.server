@@ -703,7 +703,15 @@ public class GitCloneTest extends GitTest {
 		request = getGetRequest(requestURI);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
+	}
 
+	@Test
+	public void testGetEmptyPath() throws Exception {
+		// see bug 369909
+		String requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Clone.RESOURCE + "/";
+		WebRequest request = getGetRequest(requestURI);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
 	}
 
 	@Test

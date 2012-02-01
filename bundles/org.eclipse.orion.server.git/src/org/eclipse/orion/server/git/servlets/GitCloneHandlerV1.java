@@ -211,7 +211,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		URI baseLocation = getURI(request);
 		String user = request.getRemoteUser();
 		// expected path format is 'workspace/{workspaceId}' or 'file/{projectId}[/{path}]'
-		if (path.segment(0).equals("workspace") && path.segmentCount() == 2) { //$NON-NLS-1$
+		if ("workspace".equals(path.segment(0)) && path.segmentCount() == 2) { //$NON-NLS-1$
 			// all clones in the workspace
 			if (WebWorkspace.exists(path.segment(1))) {
 				WebWorkspace workspace = WebWorkspace.fromId(path.segment(1));
@@ -242,7 +242,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 				String msg = NLS.bind("Nothing found for the given ID: {0}", path);
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
 			}
-		} else if (path.segment(0).equals("file") && path.segmentCount() > 1) { //$NON-NLS-1$
+		} else if ("file".equals(path.segment(0)) && path.segmentCount() > 1) { //$NON-NLS-1$
 			// clones under given path
 			WebProject webProject = WebProject.fromId(path.segment(1));
 			if (isAccessAllowed(user, webProject) && webProject.getProjectStore().getFileStore(path.removeFirstSegments(2)).fetchInfo().exists()) {
