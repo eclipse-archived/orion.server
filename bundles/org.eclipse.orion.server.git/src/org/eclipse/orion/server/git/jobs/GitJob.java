@@ -98,13 +98,16 @@ public abstract class GitJob extends TaskJob {
 		if (e.getCause() instanceof TransportException) {
 			TransportException cause = (TransportException) e.getCause();
 			if (matchMessage(JGitText.get().serviceNotPermitted, cause.getMessage())) {
-				//Http connection problems are distinguished by exception message
+				//HTTP connection problems are distinguished by exception message
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, cause.getMessage(), addRepositoryInfo(new JSONObject()), cause);
 			} else if (matchMessage(JGitText.get().notAuthorized, cause.getMessage())) {
-				//Http connection problems are distinguished by exception message
+				//HTTP connection problems are distinguished by exception message
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_UNAUTHORIZED, cause.getMessage(), addRepositoryInfo(new JSONObject()), cause);
+			} else if (cause.getMessage().endsWith("username must not be null.") || cause.getMessage().endsWith("host must not be null.")) { //$NON-NLS-1$ //$NON-NLS-2$
+				// see com.jcraft.jsch.JSch#getSession(String, String, int)
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, cause.getMessage(), addRepositoryInfo(new JSONObject()), cause);
 			} else {
-				//Other http connection problems reported directly
+				//Other HTTP connection problems reported directly
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, cause.getMessage() == null ? message : cause.getMessage(), addRepositoryInfo(new JSONObject()), cause);
 			}
 

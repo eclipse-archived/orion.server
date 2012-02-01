@@ -236,6 +236,29 @@ public class GitCloneTest extends GitTest {
 	}
 
 	@Test
+	public void testCloneMissingUserInfo() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+
+		// see bug 369282
+		WebRequest request = new PostGitCloneRequest().setURIish("ssh://git.eclipse.org/gitroot/platform/eclipse.platform.news.git").setFilePath(clonePath).getWebRequest();
+		setAuthentication(request);
+		WebResponse response = waitForTaskCompletionObjectResponse(webConversation.getResponse(request));
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		JSONObject completedTask = new JSONObject(response.getText());
+		assertEquals(false, completedTask.getBoolean("Running"));
+		assertEquals(100, completedTask.getInt("PercentComplete"));
+		JSONObject result = completedTask.getJSONObject("Result");
+
+		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, result.getInt("HttpCode"));
+		assertEquals("Error", result.getString("Severity"));
+		assertEquals("ssh://git.eclipse.org/gitroot/platform/eclipse.platform.news.git: username must not be null.", result.getString("Message"));
+		assertTrue(result.getString("DetailedMessage").contains("username must not be null"));
+	}
+
+	@Test
 	public void testCloneNotGitRepository() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		String workspaceId = getWorkspaceId(workspaceLocation);
