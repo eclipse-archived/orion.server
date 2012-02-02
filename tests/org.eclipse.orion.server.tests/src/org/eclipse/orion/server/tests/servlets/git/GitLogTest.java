@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -101,14 +101,14 @@ public class GitLogTest extends GitTest {
 			String initialGitCommitURI = gitHeadUri.replaceAll(Constants.HEAD, initialGitCommitName);
 
 			//get log for given page size
-			commitsArray = log(gitHeadUri, 1, 1, false, true);
+			commitsArray = log(gitHeadUri, 1, 1);
 			assertEquals(1, commitsArray.length());
 
 			commit = commitsArray.getJSONObject(0);
 			assertEquals("commit2", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
 
 			//get log for second page
-			commitsArray = log(gitHeadUri, 2, 1, true, true);
+			commitsArray = log(gitHeadUri, 2, 1);
 			assertEquals(1, commitsArray.length());
 
 			commit = commitsArray.getJSONObject(0);
@@ -151,7 +151,7 @@ public class GitLogTest extends GitTest {
 		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
 		// reading first 50 commits should be enough to start a task
-		JSONArray commitsArray = log(gitHeadUri, 1, 50, false, true);
+		JSONArray commitsArray = log(gitHeadUri, 1, 50);
 		assertEquals(50, commitsArray.length());
 	}
 
