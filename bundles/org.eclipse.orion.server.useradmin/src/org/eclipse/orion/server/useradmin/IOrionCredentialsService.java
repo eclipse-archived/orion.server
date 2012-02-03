@@ -158,7 +158,8 @@ public interface IOrionCredentialsService {
 	 * @param key The property key
 	 * @param value The property value or regular expression to match
 	 * @param regExp <code>true</code> if <code>value</code> should be matched as regural expression.
+	 * @param ignoreCase
 	 * @return set of users matching criteria
 	 */
-	public Set<User> getUsersByProperty(String key, String value, boolean regExp);
+	public Set<User> getUsersByProperty(String key, String value, boolean regExp, boolean ignoreCase);
 }

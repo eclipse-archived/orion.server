@@ -55,13 +55,22 @@
 			<span id="resetUser" style="display: none">
 			<div id="resetUserHr" class="hrloginWindow"></div>
 				<h3 class="loginWindow" id="newResetUserHeaderShown">Reset Orion Account</h3>
+				<p  class="loginWindow" style="margin-left: 20px; margin-right: 20px;">You can reset your password providing your email OR your account name.</p>
 				<table class="loginWindow">
 					<tr>
 						<td class="loginWindow">
-							<label class="loginWindow" id="resetLabel" for="resetEmail">Account name: </label>
+							<label class="loginWindow" id="resetLabel" for="reset">Account name: </label>
 						</td>
 						<td class="loginWindow">
 							<input class="loginWindow" id="reset">
+						</td>
+					</tr>
+					<tr>
+						<td class="loginWindow">
+							<label class="loginWindow" id="emailLabel" for="resetEmail">Email: </label>
+						</td>
+						<td class="loginWindow">
+							<input class="loginWindow" id="resetEmail">
 						</td>
 					</tr>
 					<tr id="reset_errorWin" style="display: none;">

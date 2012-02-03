@@ -231,11 +231,13 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 		} else if (key.equals(USER_UID)) {
 			ISecurePreferences node = findNode(storage, value);
 			return formUser(node);
+		} else if (key.equals(USER_EMAIL)){
+			
 		}
 		return null;
 	}
 
-	public Set<User> getUsersByProperty(String key, String value, boolean regExp) {
+	public Set<User> getUsersByProperty(String key, String value, boolean regExp, boolean ignoreCase) {
 		Set<User> ret = new HashSet<User>();
 		ISecurePreferences usersPref = storage.node(USERS);
 		Pattern p = regExp ? Pattern.compile(value, Pattern.MULTILINE | Pattern.DOTALL) : null;
@@ -251,7 +253,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 					continue;
 				}
 
-				if (regExp ? p.matcher(propertyValue).matches() : propertyValue.equals(value)) {
+				if (regExp ? p.matcher(propertyValue).matches() : (ignoreCase ? propertyValue.equalsIgnoreCase(value) : propertyValue.equals(value))) {
 					ret.add(formUser(userNode));
 				}
 
@@ -326,6 +328,21 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 			}
 		}
 		return null;
+	}
+	
+	private Set<ISecurePreferences> findNodesByValueIgnoreCase(ISecurePreferences storage, String key, String value) throws StorageException{
+		if (value == null)
+			return null;
+		Set<ISecurePreferences> matchingNodes = new HashSet<ISecurePreferences>();
+		ISecurePreferences usersPref = storage.node(USERS);
+		String[] childrenNames = usersPref.childrenNames();
+		for (int i = 0; i < childrenNames.length; i++) {
+			if (value.equalsIgnoreCase(usersPref.node(childrenNames[i]).get(key, null))) {
+				matchingNodes.add(usersPref.node(childrenNames[i]));
+			}
+			
+		}
+		return matchingNodes;
 	}
 
 	private ISecurePreferences findNode(ISecurePreferences storage, String uid) {

@@ -131,8 +131,8 @@ function setResetMessage(isError, message) {
 }
 
 function confirmResetUser() {
-	if (document.getElementById("reset").value == "") {
-		setResetMessage(true, "Provide user to reset.");
+	if (document.getElementById("reset").value == "" && document.getElementById("resetEmail").value == "") {
+		setResetMessage(true, "Provide user or email to reset.");
 		return;
 	}
 	var mypostrequest = new XMLHttpRequest();
@@ -166,7 +166,7 @@ function confirmResetUser() {
 			"application/x-www-form-urlencoded");
 	mypostrequest.setRequestHeader("Orion-Version", "1");
 	mypostrequest
-			.send("{login=" + document.getElementById("reset").value + "}");
+			.send("{login='" + document.getElementById("reset").value + "', email='" + document.getElementById("resetEmail").value + "'}");
 
 	setResetMessage(false, "Sending password reset confirmation...");
 }

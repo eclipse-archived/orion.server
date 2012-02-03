@@ -126,7 +126,7 @@ public class OpenIdHelper {
 			if (id == null || id.getIdentifier() == null || id.getIdentifier().equals("")) {
 				throw new OpenIdException("Authentication response is not sufficient");
 			}
-			Set<User> users = userAdmin.getUsersByProperty("openid", ".*\\Q" + id.getIdentifier() + "\\E.*", true);
+			Set<User> users = userAdmin.getUsersByProperty("openid", ".*\\Q" + id.getIdentifier() + "\\E.*", true, false);
 			User user;
 			if (users.size() > 0) {
 				user = users.iterator().next();

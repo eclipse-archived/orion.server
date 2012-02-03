@@ -359,7 +359,7 @@ public class BasicUsersTest extends UsersTest {
 
 		assertEquals("The property was not set", propertyValue, updatedUser.getProperty(propertyName));
 
-		Set<User> foundUsers = userAdmin.getUsersByProperty(propertyName, propertyValue, false);
+		Set<User> foundUsers = userAdmin.getUsersByProperty(propertyName, propertyValue, false, false);
 
 		assertEquals("Invalid number of users found", 1, foundUsers.size());
 
@@ -371,7 +371,7 @@ public class BasicUsersTest extends UsersTest {
 
 		String valuePattern = ".*" + propertyValue.substring(3, propertyValue.length() - 1) + ".";
 
-		foundUsers = userAdmin.getUsersByProperty(propertyName, valuePattern, true);
+		foundUsers = userAdmin.getUsersByProperty(propertyName, valuePattern, true, false);
 
 		assertEquals("Invalid number of users found", 1, foundUsers.size());
 

@@ -11,14 +11,20 @@
 package org.eclipse.orion.server.useradmin.servlets;
 
 import java.io.IOException;
+import java.net.URI;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.orion.server.user.profile.RandomPasswordGenerator;
@@ -144,51 +150,90 @@ public class EmailConfirmationServlet extends OrionServlet {
 			return;
 		}
 
+		String userEmail;
 		String userLogin;
-
 		try {
 			JSONObject data = OrionServlet.readJSONRequest(req);
+			userEmail = data.getString(UserConstants.KEY_EMAIL);
 			userLogin = data.getString(UserConstants.KEY_LOGIN);
 		} catch (JSONException e) {
 			getStatusHandler().handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Could not parse json request", e));
 			return;
 		}
+		IOrionCredentialsService userAdmin = getUserAdmin();
+		
+		Set<User> users = new HashSet<User>();
+		
+		if(userLogin!=null && userLogin.trim().length()>0){
+			User user = userAdmin.getUser("login", userLogin.trim());
+			if (user == null) {
+				resp.sendError(HttpServletResponse.SC_NOT_FOUND, "User " + userLogin + " not found.");
+				return;
+			}
+			if(userEmail!=null && userEmail.trim().length()>0){
+				if(!user.isEmailConfirmed() || !userEmail.equals(user.getEmail())){
+					resp.sendError(HttpServletResponse.SC_NOT_FOUND, "User " + userLogin + " with email " + userEmail + " does not exist.");
+					return;
+				}
+			}
+			users.add(user);
+		} else if(userEmail!=null && userEmail.trim().length()>0){			
+			users.addAll(userAdmin.getUsersByProperty(UserConstants.KEY_EMAIL, userEmail, false, true));
+			for (Iterator<User> iter = users.iterator(); iter.hasNext();) {
+				User user = iter.next();
+				if (!user.isEmailConfirmed()) {
+					iter.remove();
+				}
+			}
+			
+			if (users.size() == 0) {
+				resp.sendError(HttpServletResponse.SC_NOT_FOUND, "User with email " + userEmail + " not found.");
+				return;
+			}
+		}
+
+
+		MultiStatus multiStatus = new MultiStatus(ServerConstants.PI_SERVER_CORE, IStatus.OK, null, null);
+
+		for (User user : users) {
+			multiStatus.add(sendPasswordResetConfirmation(user, getURI(req)));
+		}
+
+		if (!multiStatus.isOK()) {
+			for (int i = 0; i < multiStatus.getChildren().length; i++) {
+				IStatus status = multiStatus.getChildren()[i];
+				if (status.isOK()) {
+					continue;
+				}
+				getStatusHandler().handleRequest(req, resp, status);
+				return;
+			}
+		}
+		getStatusHandler().handleRequest(req, resp, new ServerStatus(IStatus.INFO, HttpServletResponse.SC_OK, "Confirmation email has been send to " + userEmail, null));
+
+	}
+
+	private IStatus sendPasswordResetConfirmation(User user, URI baseUri) {
+		if (user.getEmail() == null || user.getEmail().length() == 0 || !user.isEmailConfirmed()) {
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + user.getLogin() + " doesn't have its email set. Contact administrator to reset your password.", null);
+		}
 
 		IOrionCredentialsService userAdmin = getUserAdmin();
-		User user = userAdmin.getUser("login", userLogin);
-
-		if (user == null) {
-			resp.sendError(HttpServletResponse.SC_NOT_FOUND, "User " + userLogin + " not found.");
-			return;
-		}
-
-		if (user.getEmail() == null || user.getEmail().length() == 0 || !user.isEmailConfirmed()) {
-			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User " + userLogin + " doesn't have its email set. Contact administrator to reset your password.");
-			return;
-		}
 
 		user.addProperty(UserConstants.KEY_PASSWORD_RESET_CONFIRMATION_ID, User.getUniqueEmailConfirmationId());
 		IStatus status = userAdmin.updateUser(user.getUid(), user);
 
 		if (!status.isOK()) {
-			if (status instanceof ServerStatus) {
-				resp.sendError(((ServerStatus) status).getHttpCode(), status.getMessage());
-				return;
-			}
-			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, status.getMessage());
-			return;
+			return status;
 		}
 
 		try {
-			UserEmailUtil.getUtil().sendResetPasswordConfirmation(getURI(req), user);
-			getStatusHandler().handleRequest(req, resp, new ServerStatus(IStatus.INFO, HttpServletResponse.SC_OK, "Confirmation email has been send to " + user.getEmail(), null));
-			return;
+			UserEmailUtil.getUtil().sendResetPasswordConfirmation(baseUri, user);
+			return new ServerStatus(IStatus.INFO, HttpServletResponse.SC_OK, "Confirmation email has been send.", null);
 		} catch (Exception e) {
 			LogHelper.log(e);
-			getStatusHandler().handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Could not send confirmation email to " + user.getEmail(), null));
-			return;
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Could not send confirmation email.", null);
 		}
-
 	}
 
 }
