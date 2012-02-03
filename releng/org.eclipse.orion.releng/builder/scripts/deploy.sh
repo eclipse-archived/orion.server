@@ -40,7 +40,7 @@ else
         exit
 fi
 
-echo "Copying build to $host" >> deploy.log
+echo "Copying build to $host"
 scp $archive admin@$host:$serverHome
 if [ $? -gt 0 ]
 then
@@ -52,4 +52,3 @@ echo "Invoking upgrade script on $host with archive file $archiveFile"
 ssh -l admin $host /home/admin/current/upgrade.sh -archive $archiveFile
 echo "Deploy complete"
 echo "------------------------------------------"
-
