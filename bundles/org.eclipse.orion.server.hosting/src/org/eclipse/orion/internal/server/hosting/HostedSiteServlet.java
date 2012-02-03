@@ -11,6 +11,7 @@
 package org.eclipse.orion.internal.server.hosting;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.*;
 import java.util.*;
 import java.util.Map.Entry;
@@ -143,16 +144,7 @@ public class HostedSiteServlet extends OrionServlet {
 	protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
 		String pathInfoString = req.getPathInfo();
-		String queryString = req.getQueryString();
-		try {
-			// Decode the query string
-			if (queryString != null)
-				queryString = new URI("?" + queryString).getQuery(); //$NON-NLS-1$
-		} catch (URISyntaxException uriException) {
-			// Should never happen since we start with a valid URL
-			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Bogus query {0}", req.getQueryString()), uriException));
-			return;
-		}
+		String queryString = getQueryString(req);
 		IPath pathInfo = new Path(null /*don't parse host:port as device*/, pathInfoString == null ? "" : pathInfoString); //$NON-NLS-1$
 		if (pathInfo.segmentCount() > 0) {
 			String hostedHost = pathInfo.segment(0);
@@ -359,5 +351,25 @@ public class HostedSiteServlet extends OrionServlet {
 		}
 		// We served this request
 		return true;
+	}
+
+	/**
+	 * @param req The request.
+	 * @return The query string of the request in its raw (not URL-encoded) form. This is suitable for passing as the 
+	 * 'query' parameter to one of the multi-argument {@link URI} constructors.
+	 */
+	private static String getQueryString(HttpServletRequest req) {
+		String query = req.getQueryString();
+		if (query == null || "".equals(query)) //$NON-NLS-1$
+			return query;
+		String encoding = req.getCharacterEncoding();
+		if (encoding == null)
+			encoding = "UTF-8"; //$NON-NLS-1$
+		try {
+			return URLDecoder.decode(query, encoding);
+		} catch (UnsupportedEncodingException e) {
+			LogHelper.log(new Status(IStatus.WARNING, HostingActivator.PI_SERVER_HOSTING, "Cannot decode query string", e));
+			return query;
+		}
 	}
 }
