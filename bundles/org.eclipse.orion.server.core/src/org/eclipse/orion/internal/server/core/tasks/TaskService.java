@@ -32,6 +32,7 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.core.tasks.ITaskCanceler;
 import org.eclipse.orion.server.core.tasks.ITaskService;
+import org.eclipse.orion.server.core.tasks.TaskDoesNotExistException;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.core.tasks.TaskModificationListener;
 import org.eclipse.orion.server.core.tasks.TaskOperationException;
@@ -139,7 +140,7 @@ public class TaskService implements ITaskService {
 	private TaskInfo internalRemoveTask(String userId, String id) throws TaskOperationException {
 		TaskInfo task = getTask(userId, id);
 		if (task == null)
-			throw new TaskOperationException("Cannot remove a task that does not exists");
+			throw new TaskDoesNotExistException(id);
 		if (task.isRunning())
 			throw new TaskOperationException("Cannot remove a task that is running. Try to cancel first");
 		if (!store.removeTask(userId, id))

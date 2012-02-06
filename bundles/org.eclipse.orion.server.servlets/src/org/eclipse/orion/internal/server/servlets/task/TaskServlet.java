@@ -74,6 +74,9 @@ public class TaskServlet extends OrionServlet {
 		String taskId = path.segment(1);
 		try {
 			taskService.removeTask(TaskJobHandler.getUserId(req), taskId);
+		} catch (TaskDoesNotExistException e) {
+			handleException(resp, "Could not remove task that does not exist: " + e.getTaskId(), e, HttpServletResponse.SC_NOT_FOUND);
+			return;
 		} catch (TaskOperationException e) {
 			handleException(resp, e.getMessage(), e);
 			return;
