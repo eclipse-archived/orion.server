@@ -374,6 +374,7 @@ public class GitLogTest extends GitTest {
 			addFile(testTxt);
 
 			// commit1
+			Thread.sleep(1000); // TODO: see https://bugs.eclipse.org/bugs/show_bug.cgi?id=370696#c1
 			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit1", false);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
@@ -386,6 +387,7 @@ public class GitLogTest extends GitTest {
 			addFile(testTxt);
 
 			// commit2
+			Thread.sleep(1000); // TODO: see https://bugs.eclipse.org/bugs/show_bug.cgi?id=370696#c1
 			request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, "commit2", false);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
@@ -400,7 +402,7 @@ public class GitLogTest extends GitTest {
 			commit = commitsArray.getJSONObject(1);
 			assertEquals("Initial commit", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
 
-			// get log for all branches - initial commit, commit1 and commit2 should be visible
+			// get log for all branches - all 3 commits should be listed
 			commitsArray = log(gitCommitUri);
 			assertEquals(3, commitsArray.length());
 
