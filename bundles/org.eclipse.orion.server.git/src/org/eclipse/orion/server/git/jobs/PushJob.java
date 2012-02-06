@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -61,8 +61,7 @@ public class PushJob extends GitJob {
 		credentials.setUri(remoteConfig.getURIs().get(0));
 		pushCommand.setCredentialsProvider(credentials);
 
-		// ObjectId ref = db.resolve(srcRef);
-		RefSpec spec = new RefSpec(srcRef + ":" + Constants.R_HEADS + path.segment(1)); //$NON-NLS-1$
+		RefSpec spec = new RefSpec(srcRef + ':' + Constants.R_HEADS + path.segment(1));
 		pushCommand.setRemote(path.segment(0)).setRefSpecs(spec);
 		if (tags)
 			pushCommand.setPushTags();
@@ -73,19 +72,18 @@ public class PushJob extends GitJob {
 		Set<RemoteRefUpdate.Status> statusSet = new HashSet<RemoteRefUpdate.Status>();
 		for (final RemoteRefUpdate rru : pushResult.getRemoteUpdates()) {
 			final String rm = rru.getRemoteName();
-			// final String sr = rru.isDelete() ? null : rru.getSrcRef();
 			// check status only for branch given in the URL or tags
 			if (path.segment(1).equals(Repository.shortenRefName(rm)) || rm.startsWith(Constants.R_TAGS)) {
 				RemoteRefUpdate.Status status = rru.getStatus();
 				// any status different from UP_TO_DATE and OK should generate warning
 				if (status != RemoteRefUpdate.Status.OK && status != RemoteRefUpdate.Status.UP_TO_DATE)
 					// return new Status(IStatus.WARNING, GitActivator.PI_GIT, status.name(), new Throwable(rru.getMessage()));
-					// workaround for bug 355931
+					// TODO: workaround for bug 355931
 					return new Status(IStatus.WARNING, GitActivator.PI_GIT, status.name() + ": " + rru.getMessage()); //$NON-NLS-1$
 				// add OK or UP_TO_DATE status to the set
 				statusSet.add(status);
 			}
-			// TODO: return results for all updated branches once push is available for remote, see bug 342727, comment 1
+			// TODO: return results for all updated branches once push is available for remote, see bug 352202
 		}
 		if (statusSet.contains(RemoteRefUpdate.Status.OK))
 			// if there is OK status in the set -> something was updated
