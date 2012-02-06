@@ -269,6 +269,13 @@ public abstract class GitTest extends FileSystemTest {
 		return status;
 	}
 
+	protected JSONObject getResult(WebResponse response) throws JSONException, IOException {
+		JSONObject jsonResponse = new JSONObject(response.getText());
+		if (jsonResponse.has("Result"))
+			return jsonResponse.getJSONObject("Result");
+		return jsonResponse;
+	}
+
 	protected WebResponse waitForTaskCompletionObjectResponse(WebResponse response) throws IOException, SAXException, JSONException {
 		return waitForTaskCompletionObjectResponse(response, testUserLogin, testUserPassword);
 	}

@@ -245,12 +245,7 @@ public class GitCloneTest extends GitTest {
 		WebRequest request = new PostGitCloneRequest().setURIish("ssh://git.eclipse.org/gitroot/platform/eclipse.platform.news.git").setFilePath(clonePath).getWebRequest();
 		setAuthentication(request);
 		WebResponse response = waitForTaskCompletionObjectResponse(webConversation.getResponse(request));
-		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-		JSONObject completedTask = new JSONObject(response.getText());
-		assertEquals(false, completedTask.getBoolean("Running"));
-		assertEquals(100, completedTask.getInt("PercentComplete"));
-		JSONObject result = completedTask.getJSONObject("Result");
+		JSONObject result = getResult(response);
 
 		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, result.getInt("HttpCode"));
 		assertEquals("Error", result.getString("Severity"));
