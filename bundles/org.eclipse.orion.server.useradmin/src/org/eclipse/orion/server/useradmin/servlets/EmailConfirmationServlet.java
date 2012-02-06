@@ -12,27 +12,17 @@ package org.eclipse.orion.server.useradmin.servlets;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-
+import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.ServerConstants;
-import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.orion.server.user.profile.RandomPasswordGenerator;
-import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
-import org.eclipse.orion.server.useradmin.User;
-import org.eclipse.orion.server.useradmin.UserConstants;
-import org.eclipse.orion.server.useradmin.UserEmailUtil;
-import org.eclipse.orion.server.useradmin.UserServiceHelper;
+import org.eclipse.orion.server.useradmin.*;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -86,7 +76,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 			UserEmailUtil.getUtil().setPasswordResetEmail(user);
 		} catch (Exception e) {
 			LogHelper.log(e);
-			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Your password could not be changed, because confirmation email could not be send. To reset you password cotact your administrator.D");
+			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Your password could not be changed, because confirmation email could not be sent. To reset your password contact your administrator.");
 			return;
 		}
 
@@ -100,7 +90,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 			return;
 		}
 		resp.setContentType(ProtocolConstants.CONTENT_TYPE_HTML);
-		resp.getWriter().write("<html><body><p>You password has been reset. New password has been send to <b>" + user.getEmail() + "</b></p></body></html>");
+		resp.getWriter().write("<html><body><p>Your password has been reset. New password has been sent to the email address associated with your account.</p></body></html>");
 		return;
 
 	}
@@ -161,23 +151,23 @@ public class EmailConfirmationServlet extends OrionServlet {
 			return;
 		}
 		IOrionCredentialsService userAdmin = getUserAdmin();
-		
+
 		Set<User> users = new HashSet<User>();
-		
-		if(userLogin!=null && userLogin.trim().length()>0){
+
+		if (userLogin != null && userLogin.trim().length() > 0) {
 			User user = userAdmin.getUser("login", userLogin.trim());
 			if (user == null) {
 				resp.sendError(HttpServletResponse.SC_NOT_FOUND, "User " + userLogin + " not found.");
 				return;
 			}
-			if(userEmail!=null && userEmail.trim().length()>0){
-				if(!user.isEmailConfirmed() || !userEmail.equals(user.getEmail())){
+			if (userEmail != null && userEmail.trim().length() > 0) {
+				if (!user.isEmailConfirmed() || !userEmail.equals(user.getEmail())) {
 					resp.sendError(HttpServletResponse.SC_NOT_FOUND, "User " + userLogin + " with email " + userEmail + " does not exist.");
 					return;
 				}
 			}
 			users.add(user);
-		} else if(userEmail!=null && userEmail.trim().length()>0){			
+		} else if (userEmail != null && userEmail.trim().length() > 0) {
 			users.addAll(userAdmin.getUsersByProperty(UserConstants.KEY_EMAIL, userEmail, false, true));
 			for (Iterator<User> iter = users.iterator(); iter.hasNext();) {
 				User user = iter.next();
@@ -185,13 +175,12 @@ public class EmailConfirmationServlet extends OrionServlet {
 					iter.remove();
 				}
 			}
-			
+
 			if (users.size() == 0) {
 				resp.sendError(HttpServletResponse.SC_NOT_FOUND, "User with email " + userEmail + " not found.");
 				return;
 			}
 		}
-
 
 		MultiStatus multiStatus = new MultiStatus(ServerConstants.PI_SERVER_CORE, IStatus.OK, null, null);
 
@@ -209,7 +198,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 				return;
 			}
 		}
-		getStatusHandler().handleRequest(req, resp, new ServerStatus(IStatus.INFO, HttpServletResponse.SC_OK, "Confirmation email has been send to " + userEmail, null));
+		getStatusHandler().handleRequest(req, resp, new ServerStatus(IStatus.INFO, HttpServletResponse.SC_OK, "Confirmation email has been sent to " + userEmail, null));
 
 	}
 
@@ -229,7 +218,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 
 		try {
 			UserEmailUtil.getUtil().sendResetPasswordConfirmation(baseUri, user);
-			return new ServerStatus(IStatus.INFO, HttpServletResponse.SC_OK, "Confirmation email has been send.", null);
+			return new ServerStatus(IStatus.INFO, HttpServletResponse.SC_OK, "Confirmation email has been sent.", null);
 		} catch (Exception e) {
 			LogHelper.log(e);
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Could not send confirmation email.", null);
