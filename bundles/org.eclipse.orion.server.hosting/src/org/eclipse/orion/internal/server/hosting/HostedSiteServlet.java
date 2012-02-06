@@ -11,7 +11,6 @@
 package org.eclipse.orion.internal.server.hosting;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.*;
 import java.util.*;
 import java.util.Map.Entry;
@@ -144,7 +143,16 @@ public class HostedSiteServlet extends OrionServlet {
 	protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
 		String pathInfoString = req.getPathInfo();
-		String queryString = getQueryString(req);
+		String queryString = req.getQueryString();
+		try {
+			// Decode the query string
+			if (queryString != null)
+				queryString = new URI("?" + queryString).getQuery(); //$NON-NLS-1$
+		} catch (URISyntaxException uriException) {
+			// Should never happen since we start with a valid URL
+			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Bogus query {0}", req.getQueryString()), uriException));
+			return;
+		}
 		IPath pathInfo = new Path(null /*don't parse host:port as device*/, pathInfoString == null ? "" : pathInfoString); //$NON-NLS-1$
 		if (pathInfo.segmentCount() > 0) {
 			String hostedHost = pathInfo.segment(0);
@@ -337,6 +345,7 @@ public class HostedSiteServlet extends OrionServlet {
 		ProxyServlet proxy = new RemoteURLProxyServlet(mappedURL, failEarlyOn404);
 		proxy.init(getServletConfig());
 		try {
+			// TODO: May want to avoid console noise from 4xx response codes?
 			traceRequest(req);
 			try {
 				proxy.service(req, resp);
@@ -350,29 +359,5 @@ public class HostedSiteServlet extends OrionServlet {
 		}
 		// We served this request
 		return true;
-	}
-
-	/**
-	 * @param req The request.
-	 * @return The query string of the request in its raw (not URI-encoded) form. This is suitable for passing as the 
-	 * 'query' parameter to one of the multi-argument {@link URI} constructors.
-	 */
-	private static String getQueryString(HttpServletRequest req) throws UnsupportedEncodingException {
-		StringBuilder buf = new StringBuilder();
-		Map<String, String[]> params = req.getParameterMap();
-		if (params.size() == 0)
-			return null;
-		for (Entry<String, String[]> entry : params.entrySet()) {
-			String name = entry.getKey();
-			String[] values = entry.getValue();
-			if (values.length == 0) {
-				buf.append("&").append(name);
-			} else {
-				for (String value : values) {
-					buf.append("&").append(name).append("=").append(value);
-				}
-			}
-		}
-		return buf.substring(1);
 	}
 }
