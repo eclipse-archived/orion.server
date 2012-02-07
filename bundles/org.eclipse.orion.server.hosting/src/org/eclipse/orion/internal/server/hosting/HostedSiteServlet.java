@@ -66,7 +66,9 @@ public class HostedSiteServlet extends OrionServlet {
 				}
 			}
 			if (prefix != null) {
-				String reverseMappedPath = prefix + location.substring(bestMatch.length());
+				String suffix = location.substring(bestMatch.length());
+				String separator = suffix.length() > 0 && !prefix.endsWith("/") && !suffix.startsWith("/") ? "/" : "";
+				String reverseMappedPath = prefix + separator + suffix;
 				try {
 					URI pathlessRequestURI = new URI(request.getScheme(), null, request.getServerName(), request.getServerPort(), null, null, null);
 					return pathlessRequestURI.toString() + reverseMappedPath;

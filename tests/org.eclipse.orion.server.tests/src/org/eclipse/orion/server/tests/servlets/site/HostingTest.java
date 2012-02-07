@@ -2,9 +2,11 @@ package org.eclipse.orion.server.tests.servlets.site;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -18,6 +20,7 @@ import org.junit.Test;
 import org.xml.sax.SAXException;
 
 import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PutMethodWebRequest;
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
@@ -107,13 +110,12 @@ public class HostingTest extends CoreSiteTest {
 		final String fileContent = "<html><body>This is a test file</body></html>";
 		createFileOnServer(filename, fileContent);
 
-		// Create a site that exposes the workspace file, and also a remote URL
+		// Create a site that exposes the workspace file
 		final String siteName = "My hosted site";
 		final String filePath = "/" + filename;
-		final String mountAt1 = "/file.html";
-		final String mountAt2 = "/web";
-		final String remoteURL = SERVER_LOCATION + "/navigate-table.html";
-		final JSONArray mappings = makeMappings(new String[][] { {mountAt1, filePath}, {mountAt2, remoteURL}});
+		final String mountAt = "/file.html";
+
+		final JSONArray mappings = makeMappings(new String[][] {{mountAt, filePath}});
 		WebRequest createSiteReq = getCreateSiteRequest(siteName, workspaceId, mappings, null);
 		WebResponse createSiteResp = webConversation.getResponse(createSiteReq);
 		assertEquals(HttpURLConnection.HTTP_CREATED, createSiteResp.getResponseCode());
@@ -123,32 +125,76 @@ public class HostingTest extends CoreSiteTest {
 		final String siteLocation = siteObject.getString(ProtocolConstants.KEY_LOCATION);//createSiteResp.getHeaderField("Location");
 		siteObject = startSite(siteLocation);
 
-		// Access the workspace file through the site
 		final JSONObject hostingStatus = siteObject.getJSONObject(SiteConfigurationConstants.KEY_HOSTING_STATUS);
 		final String hostedURL = hostingStatus.getString(SiteConfigurationConstants.KEY_HOSTING_STATUS_URL);
-		WebRequest getFileReq = new GetMethodWebRequest(hostedURL + mountAt1);
+
+		// Access the workspace file through the site
+		WebRequest getFileReq = new GetMethodWebRequest(hostedURL + mountAt);
 		WebResponse getFileResp = webConversation.getResponse(getFileReq);
 		assertEquals(fileContent, getFileResp.getText());
-
-		// Access the remote URL through the site
-		// TODO: Find a URL that we can safely fetch from the test environment, then uncomment this
-		//		WebRequest getRemoteUrlReq = new GetMethodWebRequest(hostedURL + mountAt2);
-		//		// just fetch content, don't try to parse
-		//		WebResponse getRemoteUrlResp = webConversation.getResource(getRemoteUrlReq);
-		//		assertEquals("GET " + getRemoteUrlReq.getURL() + " succeeds", HttpURLConnection.HTTP_OK, getRemoteUrlResp.getResponseCode());
-		//		final String content = getRemoteUrlResp.getText();
-		//		assertTrue("Looks like Orion nav page", content.contains("Orion") && content.contains(".js") && content.contains("<script") && content.toLowerCase().contains("navigator"));
 
 		// Stop the site
 		stopSite(siteLocation);
 
 		// Check that the workspace file can't be accessed anymore
-		WebRequest getFile404Req = new GetMethodWebRequest(hostedURL + mountAt1);
+		WebRequest getFile404Req = new GetMethodWebRequest(hostedURL + mountAt);
 		WebResponse getFile404Resp = webConversation.getResponse(getFile404Req);
 		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, getFile404Resp.getResponseCode());
+	}
+
+	@Test
+	public void testRemoteProxyRequest() throws SAXException, IOException, JSONException, URISyntaxException {
+		// Create a site that just points back to the Orion server being tested (mini self-host)
+		final String siteName = "My remote hosting site";
+		final String remoteRoot = "/remoteWeb", remoteFilePath = "/remoteFile", remotePrefPath = "/remotePref";
+		final JSONArray mappings = makeMappings(new String[][] { {remoteRoot, SERVER_LOCATION}, {remoteFilePath, SERVER_LOCATION + FILE_SERVLET_LOCATION}, {remotePrefPath, SERVER_LOCATION + "/prefs"}});
+		WebRequest createSiteReq = getCreateSiteRequest(siteName, workspaceId, mappings, null);
+		WebResponse createSiteResp = webConversation.getResponse(createSiteReq);
+		assertEquals(HttpURLConnection.HTTP_CREATED, createSiteResp.getResponseCode());
+		JSONObject siteObject = new JSONObject(createSiteResp.getText());
+
+		// Start the site
+		final String siteLocation = siteObject.getString(ProtocolConstants.KEY_LOCATION);//createSiteResp.getHeaderField("Location");
+		siteObject = startSite(siteLocation);
+
+		final JSONObject hostingStatus = siteObject.getJSONObject(SiteConfigurationConstants.KEY_HOSTING_STATUS);
+		final String hostedURL = hostingStatus.getString(SiteConfigurationConstants.KEY_HOSTING_STATUS_URL);
+
+		// Access the remote URL through the site
+		WebRequest getRemoteUrlReq = new GetMethodWebRequest(hostedURL + remoteRoot);
+		WebResponse getRemoteUrlResp = webConversation.getResource(getRemoteUrlReq);
+		assertEquals("GET " + getRemoteUrlReq.getURL() + " succeeds", HttpURLConnection.HTTP_OK, getRemoteUrlResp.getResponseCode());
+		final String content = getRemoteUrlResp.getText();
+		assertEquals("Looks like Orion", true, content.contains("Orion") && content.contains("<script"));
+
+		// Test that we can invoke the Orion file API through the site, to create a file
+		final String fileName = "fizz.txt";
+		final String fileContent = "Created through a site";
+		createFileOnServer(hostedURL + remoteFilePath, fileName, fileContent);
+
+		// Bugs 369813, 366098, 369811: ensure query parameters are passed through the site unmangled
+		// For this we'll call the 'prefs' API which uses query parameters
+		String prefKey = "foo[-]bar";
+		String prefValue = "pref value";
+		String remotePrefUrl = hostedURL + remotePrefPath + "/user";
+		WebRequest putPrefReq = createSetPreferenceRequest(remotePrefUrl, prefKey, prefValue);
+		setAuthentication(putPrefReq);
+		WebResponse putPrefResp = webConversation.getResponse(putPrefReq);
+		assertEquals(HttpURLConnection.HTTP_NO_CONTENT, putPrefResp.getResponseCode());
+
+		// Check pref value
+		WebRequest getPrefReq = new GetMethodWebRequest(remotePrefUrl + "?key=" + URLEncoder.encode(prefKey));
+		setAuthentication(getPrefReq);
+		WebResponse getPrefResp = webConversation.getResponse(getPrefReq);
+		assertEquals(HttpURLConnection.HTTP_OK, getPrefResp.getResponseCode());
+		JSONObject prefObject = new JSONObject(getPrefResp.getText());
+		assertEquals("Pref obtained through site has correct value", prefObject.optString(prefKey), prefValue);
+
+		// Stop the site
+		stopSite(siteLocation);
 
 		// Check that remote URL can't be accessed anymore
-		WebRequest getRemoteUrl404Req = new GetMethodWebRequest(hostedURL + mountAt2);
+		WebRequest getRemoteUrl404Req = new GetMethodWebRequest(hostedURL + remoteRoot);
 		WebResponse getRemoteUrl404Resp = webConversation.getResponse(getRemoteUrl404Req);
 		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, getRemoteUrl404Resp.getResponseCode());
 	}
@@ -191,17 +237,25 @@ public class HostingTest extends CoreSiteTest {
 
 	/**
 	 * Creates a file using the file POST API, then sets its contents with PUT.
-	 * @param path
 	 * @param filename
 	 * @param fileContent
 	 */
-	private void createFileOnServer(String filename, String fileContent) throws SAXException, IOException, JSONException {
+	private void createFileOnServer(String filename, String fileContent) throws SAXException, IOException, JSONException, URISyntaxException {
+		createFileOnServer("/", filename, fileContent);
+	}
+
+	private void createFileOnServer(String fileServletLocation, String filename, String fileContent) throws SAXException, IOException, JSONException, URISyntaxException {
 		webConversation.setExceptionsThrownOnErrorStatus(false);
-		WebRequest createFileReq = getPostFilesRequest("/", getNewFileJSON(filename).toString(), filename);
+		WebRequest createFileReq = getPostFilesRequest(fileServletLocation, getNewFileJSON(filename).toString(), filename);
 		WebResponse createFileResp = webConversation.getResponse(createFileReq);
 		assertEquals(HttpURLConnection.HTTP_CREATED, createFileResp.getResponseCode());
 		createFileReq = getPutFileRequest(createFileResp.getHeaderField("Location"), fileContent);
 		createFileResp = webConversation.getResponse(createFileReq);
 		assertEquals(HttpURLConnection.HTTP_OK, createFileResp.getResponseCode());
+	}
+
+	private WebRequest createSetPreferenceRequest(String location, String key, String value) {
+		String body = "key=" + URLEncoder.encode(key) + "&value=" + URLEncoder.encode(value);
+		return new PutMethodWebRequest(location, new ByteArrayInputStream(body.getBytes()), "application/x-www-form-urlencoded");
 	}
 }
