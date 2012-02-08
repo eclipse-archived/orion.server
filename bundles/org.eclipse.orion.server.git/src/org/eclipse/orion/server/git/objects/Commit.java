@@ -81,7 +81,7 @@ public class Commit extends GitObject {
 		commit.put(ProtocolConstants.KEY_LOCATION, BaseToCommitConverter.getCommitLocation(cloneLocation, revCommit.getName(), pattern, BaseToCommitConverter.REMOVE_FIRST_2));
 		if (!isRoot) // linking to body makes only sense for files
 			commit.put(ProtocolConstants.KEY_CONTENT_LOCATION, BaseToCommitConverter.getCommitLocation(cloneLocation, revCommit.getName(), pattern, BaseToCommitConverter.REMOVE_FIRST_2.setQuery("parts=body"))); //$NON-NLS-1$
-		commit.put(GitConstants.KEY_DIFF, createDiffLocation(revCommit.getName(), null, pattern, isRoot));
+		commit.put(GitConstants.KEY_DIFF, createDiffLocation(revCommit.getName(), null, pattern));
 		commit.put(ProtocolConstants.KEY_NAME, revCommit.getName());
 		PersonIdent author = revCommit.getAuthorIdent();
 		commit.put(GitConstants.KEY_AUTHOR_NAME, author.getName());
@@ -117,14 +117,14 @@ public class Commit extends GitObject {
 			for (DiffEntry entr : l) {
 				JSONObject diff = new JSONObject();
 				diff.put(ProtocolConstants.KEY_TYPE, org.eclipse.orion.server.git.objects.Diff.TYPE);
-
 				diff.put(GitConstants.KEY_COMMIT_DIFF_NEWPATH, entr.getNewPath());
 				diff.put(GitConstants.KEY_COMMIT_DIFF_OLDPATH, entr.getOldPath());
 				diff.put(GitConstants.KEY_COMMIT_DIFF_CHANGETYPE, entr.getChangeType().toString());
 
 				// add diff location for the commit
 				String path = entr.getChangeType() != ChangeType.DELETE ? entr.getNewPath() : entr.getOldPath();
-				diff.put(GitConstants.KEY_DIFF, createDiffLocation(revCommit.getName(), revCommit.getParent(0).getName(), path, isRoot));
+				diff.put(GitConstants.KEY_DIFF, createDiffLocation(revCommit.getName(), revCommit.getParent(0).getName(), path));
+				diff.put(ProtocolConstants.KEY_CONTENT_LOCATION, createContentLocation(entr, path));
 
 				diffs.put(diff);
 			}
@@ -171,7 +171,7 @@ public class Commit extends GitObject {
 		return revTags;
 	}
 
-	private URI createDiffLocation(String toRefId, String fromRefId, String path, boolean isRoot) throws URISyntaxException {
+	private URI createDiffLocation(String toRefId, String fromRefId, String path) throws URISyntaxException {
 		// TODO: use IPath, not String
 		String diffPath = GitServlet.GIT_URI + "/" + Diff.RESOURCE + "/"; //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -191,6 +191,20 @@ public class Commit extends GitObject {
 		}
 
 		return new URI(cloneLocation.getScheme(), cloneLocation.getAuthority(), diffPath, null, null);
+	}
+
+	private URI createContentLocation(final DiffEntry entr, String path) throws URISyntaxException {
+		IPath p = new Path(cloneLocation.getPath());
+		IPath result;
+		if (path == null) {
+			result = p.removeFirstSegments(2);
+		} else if (isRoot) {
+			result = p.removeFirstSegments(2).append(path);
+		} else {
+			// TODO: not sure if this is right, but it's fine with tests
+			result = p.removeLastSegments(p.segmentCount() - 4).removeFirstSegments(2).append(path);
+		}
+		return new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), result.makeAbsolute().toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
 	}
 
 	private JSONArray parentsToJSON(RevCommit[] revCommits) throws JSONException, IOException, URISyntaxException {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -675,6 +675,9 @@ public class GitLogTest extends GitTest {
 			assertEquals("test.txt", diff.getString(GitConstants.KEY_COMMIT_DIFF_OLDPATH));
 			assertEquals(Diff.TYPE, diff.getString(ProtocolConstants.KEY_TYPE));
 			assertEquals(ChangeType.MODIFY, ChangeType.valueOf(diff.getString(GitConstants.KEY_COMMIT_DIFF_CHANGETYPE)));
+			String contentLocation = diff.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+			String fileContent = getFileContent(new JSONObject().put(ProtocolConstants.KEY_LOCATION, contentLocation));
+			assertEquals("hello", fileContent);
 			String diffLocation = diff.getString(GitConstants.KEY_DIFF);
 
 			// check diff location
