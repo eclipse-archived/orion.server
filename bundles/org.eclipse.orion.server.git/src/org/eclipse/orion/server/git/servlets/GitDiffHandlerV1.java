@@ -36,6 +36,7 @@ import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.objects.Diff;
 import org.eclipse.orion.server.git.patch.ApplyCommand;
 import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
 import org.eclipse.orion.server.servlets.OrionServlet;
@@ -81,7 +82,7 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 					if (parts == null || "uris,diff".equals(parts) || "diff,uris".equals(parts)) //$NON-NLS-1$ //$NON-NLS-2$
 						return handleMultiPartGet(request, response, db, path, pattern);
 					if ("uris".equals(parts)) { //$NON-NLS-1$
-						OrionServlet.writeJSONResponse(request, response, new org.eclipse.orion.server.git.objects.Diff(getURI(request), db).toJSON());
+						OrionServlet.writeJSONResponse(request, response, new Diff(getURI(request), db).toJSON());
 						return true;
 					}
 					if ("diff".equals(parts)) //$NON-NLS-1$
@@ -116,7 +117,7 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 			oldTree = getTreeIterator(db, commits[0]);
 			newTree = getTreeIterator(db, commits[1]);
 		} else if (scope.equals(GitConstants.KEY_DIFF_CACHED)) {
-			ObjectId head = db.resolve(Constants.HEAD + "^{tree}");
+			ObjectId head = db.resolve(Constants.HEAD + "^{tree}"); //$NON-NLS-1$
 			if (head == null) {
 				String msg = NLS.bind("Failed to generate diff for {0}, no HEAD", scope);
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
@@ -177,7 +178,7 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 			out.write("--" + boundary + EOL); //$NON-NLS-1$
 			out.write(ProtocolConstants.HEADER_CONTENT_TYPE + ": " + ProtocolConstants.CONTENT_TYPE_JSON + EOL + EOL); //$NON-NLS-1$
 			out.flush();
-			JSONObject getURIs = new org.eclipse.orion.server.git.objects.Diff(getURI(request), db).toJSON();
+			JSONObject getURIs = new Diff(getURI(request), db).toJSON();
 			out.write(getURIs.toString());
 			out.write(EOL + "--" + boundary + EOL); //$NON-NLS-1$
 			out.write(ProtocolConstants.HEADER_CONTENT_TYPE + ": plain/text" + EOL + EOL); //$NON-NLS-1$
@@ -205,7 +206,7 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 			// OrionServlet.writeJSONResponse(request, response, toJSON(applyResult));
 			response.setStatus(HttpServletResponse.SC_CREATED);
 			response.setContentType(ProtocolConstants.CONTENT_TYPE_HTML);
-			response.getOutputStream().write(new String("<head></head><body><textarea>{}</textarea></body>").getBytes());
+			response.getOutputStream().write(new String("<head></head><body><textarea>{}</textarea></body>").getBytes()); //$NON-NLS-1$
 
 		} else {
 			StringWriter writer = new StringWriter();
@@ -247,10 +248,10 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 		int boundaryOff = contentType.indexOf("boundary="); //$NON-NLS-1$
 		String boundary = contentType.substring(boundaryOff + "boundary=".length(), contentType.length()); //$NON-NLS-1$
 		Map<String, String> parts = IOUtilities.parseMultiPart(requestStream, boundary);
-		if ("fileRadio".equals(parts.get("radio")))
-			return parts.get("uploadedfile");
-		if ("urlRadio".equals(parts.get("radio")))
-			return fetchPatchContentFromUrl(parts.get("url"));
+		if ("fileRadio".equals(parts.get("radio"))) //$NON-NLS-1$ //$NON-NLS-2$
+			return parts.get("uploadedfile"); //$NON-NLS-1$
+		if ("urlRadio".equals(parts.get("radio"))) //$NON-NLS-1$ //$NON-NLS-2$
+			return fetchPatchContentFromUrl(parts.get("url")); //$NON-NLS-1$
 		return null;
 	}
 

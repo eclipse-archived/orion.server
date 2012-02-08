@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -22,6 +22,7 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitServlet;
+import org.eclipse.osgi.util.NLS;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -53,10 +54,8 @@ public class Diff extends GitObject {
 		if (scope.contains("..")) { //$NON-NLS-1$
 			String[] commits = scope.split("\\.\\."); //$NON-NLS-1$
 			if (commits.length != 2) {
-				// TODO:
-				throw new IllegalArgumentException();
+				throw new IllegalArgumentException(NLS.bind("Illegal scope format, expected {old}..{new}, was {0}", scope));
 			}
-			// TODO: decode commits[0]
 			IPath p = new Path(GitServlet.GIT_URI + '/' + Commit.RESOURCE).append(commits[0]).append(path.removeFirstSegments(1));
 			return new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), p.toString(), "parts=body", null); //$NON-NLS-1$
 		} else if (scope.equals(GitConstants.KEY_DIFF_CACHED)) {
@@ -76,10 +75,8 @@ public class Diff extends GitObject {
 		if (scope.contains("..")) { //$NON-NLS-1$
 			String[] commits = scope.split("\\.\\."); //$NON-NLS-1$
 			if (commits.length != 2) {
-				// TODO:
-				throw new IllegalArgumentException();
+				throw new IllegalArgumentException(NLS.bind("Illegal scope format, expected {old}..{new}, was {0}", scope));
 			}
-			// TODO: decode commits[1]
 			IPath p = new Path(GitServlet.GIT_URI + '/' + Commit.RESOURCE).append(commits[1]).append(path.removeFirstSegments(1));
 			return new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), p.toString(), "parts=body", null); //$NON-NLS-1$
 		} else if (scope.equals(GitConstants.KEY_DIFF_CACHED)) {
@@ -96,11 +93,8 @@ public class Diff extends GitObject {
 		if (scope.contains("..")) { //$NON-NLS-1$
 			String[] commits = scope.split("\\.\\."); //$NON-NLS-1$
 			if (commits.length != 2) {
-				// TODO:
-				throw new IllegalArgumentException();
+				throw new IllegalArgumentException(NLS.bind("Illegal scope format, expected {old}..{new}, was {0}", scope));
 			}
-			// TODO: decode commits[]
-
 			ThreeWayMerger merger = new ResolveMerger(db) {
 				protected boolean mergeImpl() throws IOException {
 					// do nothing
