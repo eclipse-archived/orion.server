@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -53,19 +53,20 @@ public class Remote extends GitObject {
 		result.put(ProtocolConstants.KEY_TYPE, TYPE);
 		result.put(ProtocolConstants.KEY_LOCATION, getLocation());
 		//		o.put(ProtocolConstants.KEY_LOCATION, BaseToRemoteConverter.REMOVE_FIRST_2.baseToRemoteLocation(baseLocation, configName, "" /* no branch name */)); //$NON-NLS-1$
-		result.put(GitConstants.KEY_URL, db.getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, name, "url" /*RemoteConfig.KEY_URL*/)); //$NON-NLS-1$
-		result.put(GitConstants.KEY_PUSH_URL, db.getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, name, "pushurl" /*RemoteConfig.KEY_PUSHURL*/)); //$NON-NLS-1$
+		result.put(GitConstants.KEY_URL, getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, name, "url" /*RemoteConfig.KEY_URL*/)); //$NON-NLS-1$
+		result.put(GitConstants.KEY_PUSH_URL, getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, name, "pushurl" /*RemoteConfig.KEY_PUSHURL*/)); //$NON-NLS-1$
 
 		if (includeChildren) {
 			JSONArray children = new JSONArray();
 			boolean branchFound = false;
 			List<Ref> refs = new ArrayList<Ref>();
+			String currentBranch = db.getBranch();
 			for (Entry<String, Ref> refEntry : db.getRefDatabase().getRefs(Constants.R_REMOTES + name + "/").entrySet()) { //$NON-NLS-1$
 				if (!refEntry.getValue().isSymbolic()) {
 					Ref ref = refEntry.getValue();
 					String name = ref.getName();
 					name = Repository.shortenRefName(name).substring(Constants.DEFAULT_REMOTE_NAME.length() + 1);
-					if (db.getBranch().equals(name)) {
+					if (currentBranch.equals(name)) {
 						refs.add(0, ref);
 					} else {
 						refs.add(ref);
@@ -104,7 +105,7 @@ public class Remote extends GitObject {
 	}
 
 	private void check() {
-		if (!db.getConfig().getSubsections(ConfigConstants.CONFIG_REMOTE_SECTION).contains(name))
+		if (!getConfig().getSubsections(ConfigConstants.CONFIG_REMOTE_SECTION).contains(name))
 			throw new IllegalArgumentException(NLS.bind("Remote {0} not found.", name));
 	}
 

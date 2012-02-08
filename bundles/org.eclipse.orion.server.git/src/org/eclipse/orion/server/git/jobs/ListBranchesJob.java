@@ -135,7 +135,6 @@ public class ListBranchesJob extends GitJob {
 				if (commitsSize == 0) {
 					children.put(branch.toJSON());
 				} else {
-					LogCommand lc = git.log();
 					String branchName = branch.getName();
 					ObjectId toObjectId = db.resolve(branchName);
 					Ref toRefId = db.getRef(branchName);
@@ -144,11 +143,19 @@ public class ListBranchesJob extends GitJob {
 						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null);
 					}
 					toObjectId = getCommitObjectId(db, toObjectId);
-					// set the commit range
-					lc.add(toObjectId);
-					lc.setMaxCount(this.commitsSize);
-					Iterable<RevCommit> commits = lc.call();
-					Log log = new Log(cloneLocation, db, commits, null, null, toRefId);
+
+					Log log = null;
+					// single commit is requested and we already know it, no need for LogCommand 
+					if (commitsSize == 1 && toObjectId instanceof RevCommit) {
+						log = new Log(cloneLocation, db, Collections.singleton((RevCommit) toObjectId), null, null, toRefId);
+					} else {
+						LogCommand lc = git.log();
+						// set the commit range
+						lc.add(toObjectId);
+						lc.setMaxCount(this.commitsSize);
+						Iterable<RevCommit> commits = lc.call();
+						log = new Log(cloneLocation, db, commits, null, null, toRefId);
+					}
 					children.put(branch.toJSON(log.toJSON(1, commitsSize)));
 				}
 			}

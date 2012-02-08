@@ -79,15 +79,14 @@ public class Branch extends GitObject {
 	private JSONArray getRemotes() throws URISyntaxException, JSONException, IOException, CoreException {
 		String branchName = Repository.shortenRefName(ref.getName());
 		JSONArray result = new JSONArray();
-		Config config = db.getConfig();
-		String remote = config.getString(ConfigConstants.CONFIG_BRANCH_SECTION, branchName, ConfigConstants.CONFIG_KEY_REMOTE);
+		String remote = getConfig().getString(ConfigConstants.CONFIG_BRANCH_SECTION, branchName, ConfigConstants.CONFIG_KEY_REMOTE);
 		if (remote != null) {
-			RemoteConfig remoteConfig = new RemoteConfig(config, remote);
+			RemoteConfig remoteConfig = new RemoteConfig(getConfig(), remote);
 			if (!remoteConfig.getFetchRefSpecs().isEmpty()) {
 				result.put(new Remote(cloneLocation, db, remote).toJSON(branchName));
 			}
 		} else {
-			List<RemoteConfig> remoteConfigs = RemoteConfig.getAllRemoteConfigs(config);
+			List<RemoteConfig> remoteConfigs = RemoteConfig.getAllRemoteConfigs(getConfig());
 			for (RemoteConfig remoteConfig : remoteConfigs) {
 				if (!remoteConfig.getFetchRefSpecs().isEmpty()) {
 					Remote r = new Remote(cloneLocation, db, remoteConfig.getName());
