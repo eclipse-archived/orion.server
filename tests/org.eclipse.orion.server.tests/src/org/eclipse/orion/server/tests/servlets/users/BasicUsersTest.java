@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others 
+ * Copyright (c) 2010, 2012 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.User;
@@ -31,7 +32,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
-import org.osgi.service.prefs.BackingStoreException;
 import org.xml.sax.SAXException;
 
 import com.meterware.httpunit.WebConversation;
@@ -85,8 +85,7 @@ public class BasicUsersTest extends UsersTest {
 		} catch (JSONException e) {
 			wasJson = false;
 		}
-		assertFalse("Returned a jsonObject in reponce where FORBIDDEN should be returned", wasJson);
-
+		assertFalse("Returned a jsonObject in reponse where FORBIDDEN should be returned", wasJson);
 	}
 
 	@Test
@@ -108,10 +107,10 @@ public class BasicUsersTest extends UsersTest {
 
 		JSONObject responseObject = new JSONObject(response.getText());
 
-		assertTrue("Response should contian user location", responseObject.has("Location"));
+		assertTrue("Response should contian user location", responseObject.has(ProtocolConstants.KEY_LOCATION));
 
 		// check user details
-		request = getAuthenticatedRequest(responseObject.getString("Location"), METHOD_GET, true);
+		request = getAuthenticatedRequest(responseObject.getString(ProtocolConstants.KEY_LOCATION), METHOD_GET, true);
 		response = webConversation.getResponse(request);
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 		responseObject = new JSONObject(response.getText());
@@ -125,15 +124,14 @@ public class BasicUsersTest extends UsersTest {
 		request = getGetUsersRequest("", true);
 
 		// delete user
-		request = getAuthenticatedRequest(responseObject.getString("Location"), METHOD_DELETE, true);
+		request = getAuthenticatedRequest(responseObject.getString(ProtocolConstants.KEY_LOCATION), METHOD_DELETE, true);
 		setAuthentication(request, params.get("login"), params.get("password"));
 		response = webConversation.getResponse(request);
 		assertEquals("User could not delete his own account, response: " + response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
-
 	}
 
 	@Test
-	public void testCreateDeleteRights() throws IOException, SAXException, CoreException, JSONException, BackingStoreException {
+	public void testCreateDeleteRights() throws IOException, SAXException, CoreException, JSONException {
 		WebConversation webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 
@@ -185,7 +183,6 @@ public class BasicUsersTest extends UsersTest {
 		request = getDeleteUsersRequest(uid, true);
 		response = webConversation.getResponse(request);
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
-
 	}
 
 	@Test
@@ -208,9 +205,9 @@ public class BasicUsersTest extends UsersTest {
 
 		JSONObject responseObject = new JSONObject(response.getText());
 
-		assertTrue("Response should contian user location", responseObject.has("Location"));
+		assertTrue("Response should contian user location", responseObject.has(ProtocolConstants.KEY_LOCATION));
 
-		String location = responseObject.getString("Location");
+		String location = responseObject.getString(ProtocolConstants.KEY_LOCATION);
 
 		// update user
 		JSONObject updateBody = new JSONObject();
@@ -270,9 +267,9 @@ public class BasicUsersTest extends UsersTest {
 
 		JSONObject responseObject = new JSONObject(response.getText());
 
-		assertTrue("Response should contian user location", responseObject.has("Location"));
+		assertTrue("Response should contian user location", responseObject.has(ProtocolConstants.KEY_LOCATION));
 
-		String location = responseObject.getString("Location");
+		String location = responseObject.getString(ProtocolConstants.KEY_LOCATION);
 
 		//reset password
 		String newPass = "passUpdate_" + System.currentTimeMillis();
@@ -314,9 +311,9 @@ public class BasicUsersTest extends UsersTest {
 
 		JSONObject responseObject = new JSONObject(response.getText());
 
-		assertTrue("Response should contian user location", responseObject.has("Location"));
+		assertTrue("Response should contian user location", responseObject.has(ProtocolConstants.KEY_LOCATION));
 
-		String location = responseObject.getString("Location");
+		String location = responseObject.getString(ProtocolConstants.KEY_LOCATION);
 
 		String login2 = "login_2" + System.currentTimeMillis();
 		JSONObject updateBody = new JSONObject();
@@ -333,7 +330,6 @@ public class BasicUsersTest extends UsersTest {
 
 		responseObject = new JSONObject(response.getText());
 		assertEquals("New login wasn't returned in user details", login2, responseObject.get("login"));
-
 	}
 
 	@Test
@@ -350,36 +346,20 @@ public class BasicUsersTest extends UsersTest {
 
 		String propertyName = "property" + System.currentTimeMillis();
 		String propertyValue = "value" + System.currentTimeMillis();
-
 		user.addProperty(propertyName, propertyValue);
-
 		userAdmin.updateUser(user.getUid(), user);
-
 		User updatedUser = userAdmin.getUser("uid", user.getUid());
-
 		assertEquals("The property was not set", propertyValue, updatedUser.getProperty(propertyName));
-
 		Set<User> foundUsers = userAdmin.getUsersByProperty(propertyName, propertyValue, false, false);
-
 		assertEquals("Invalid number of users found", 1, foundUsers.size());
-
 		User foundUser = foundUsers.iterator().next();
-
 		assertEquals("Invalid user found", user.getUid(), foundUser.getUid());
-
 		assertEquals("Found user doesn't have the property expected", propertyValue, foundUser.getProperty(propertyName));
-
 		String valuePattern = ".*" + propertyValue.substring(3, propertyValue.length() - 1) + ".";
-
 		foundUsers = userAdmin.getUsersByProperty(propertyName, valuePattern, true, false);
-
 		assertEquals("Invalid number of users found", 1, foundUsers.size());
-
 		foundUser = foundUsers.iterator().next();
-
 		assertEquals("Invalid user found", user.getUid(), foundUser.getUid());
-
 		assertEquals("Found user doesn't have the property expected", propertyValue, foundUser.getProperty(propertyName));
-
 	}
 }

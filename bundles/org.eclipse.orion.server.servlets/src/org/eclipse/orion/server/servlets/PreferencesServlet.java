@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others.
+ * Copyright (c) 2010, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -44,7 +44,7 @@ public class PreferencesServlet extends OrionServlet {
 	@Override
 	public void init() throws ServletException {
 		super.init();
-		prefRoot = new OrionScope().getNode("");
+		prefRoot = new OrionScope().getNode(""); //$NON-NLS-1$
 	}
 
 	@Override
@@ -131,7 +131,7 @@ public class PreferencesServlet extends OrionServlet {
 				resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
 				return null;
 			}
-			nodePath = new Path("Users").append(username);
+			nodePath = new Path("Users").append(username); //$NON-NLS-1$
 		} else if ("workspace".equalsIgnoreCase(scope) && segmentCount > 1) { //$NON-NLS-1$
 			nodePath = new Path("Workspaces"); //$NON-NLS-1$
 		} else if ("project".equalsIgnoreCase(scope) && segmentCount > 1) { //$NON-NLS-1$
