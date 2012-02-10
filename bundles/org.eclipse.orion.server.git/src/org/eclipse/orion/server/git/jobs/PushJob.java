@@ -77,9 +77,7 @@ public class PushJob extends GitJob {
 				RemoteRefUpdate.Status status = rru.getStatus();
 				// any status different from UP_TO_DATE and OK should generate warning
 				if (status != RemoteRefUpdate.Status.OK && status != RemoteRefUpdate.Status.UP_TO_DATE)
-					// return new Status(IStatus.WARNING, GitActivator.PI_GIT, status.name(), new Throwable(rru.getMessage()));
-					// TODO: workaround for bug 355931
-					return new Status(IStatus.WARNING, GitActivator.PI_GIT, status.name() + ": " + rru.getMessage()); //$NON-NLS-1$
+					return new Status(IStatus.WARNING, GitActivator.PI_GIT, status.name(), new Throwable(rru.getMessage()));
 				// add OK or UP_TO_DATE status to the set
 				statusSet.add(status);
 			}

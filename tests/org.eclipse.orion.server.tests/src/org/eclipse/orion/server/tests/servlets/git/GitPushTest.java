@@ -619,8 +619,8 @@ public class GitPushTest extends GitTest {
 		// clone2: push
 		pushStatus = push(gitRemoteUri2, 1, 0, Constants.MASTER, Constants.HEAD, false);
 		assertEquals(IStatus.WARNING, pushStatus.getSeverity());
-		// workaround for bug 355931
-		Status pushResult = Status.valueOf(pushStatus.getMessage().split(":")[0]);
+
+		Status pushResult = Status.valueOf(pushStatus.getMessage());
 		assertEquals(Status.REJECTED_NONFASTFORWARD, pushResult);
 	}
 
@@ -660,11 +660,14 @@ public class GitPushTest extends GitTest {
 
 		pushStatus = push(gitRemoteUri, 1, 0, Constants.MASTER, Constants.HEAD, false);
 		assertEquals(IStatus.WARNING, pushStatus.getSeverity());
-		// Status pushResult = Status.valueOf(pushStatus.getMessage());
-		// assertEquals(Status.REJECTED_OTHER_REASON, pushResult);
-		// assertTrue(pushStatus.getException().getMessage().matches("^object [\\da-f]+ missing$"));
-		// workaround for bug 355931
-		assertTrue(pushStatus.getMessage().matches("^REJECTED_OTHER_REASON: object [\\da-f]+ missing$"));
+		Status pushResult = Status.valueOf(pushStatus.getMessage());
+		assertEquals(Status.REJECTED_OTHER_REASON, pushResult);
+		JSONObject jsonResult = pushStatus.toJSON();
+		if (jsonResult.has("JsonData")) {
+			jsonResult = jsonResult.getJSONObject("JsonData");
+		}
+		assertTrue(jsonResult.toString(), jsonResult.has("DetailedMessage"));
+		assertTrue(jsonResult.getString("DetailedMessage"), jsonResult.getString("DetailedMessage").matches("^object [\\da-f]+ missing$"));
 	}
 
 	@Test
@@ -755,8 +758,7 @@ public class GitPushTest extends GitTest {
 			// clone2: push
 			pushStatus = push(gitRemoteUri2, 1, 0, Constants.MASTER, Constants.HEAD, false);
 			assertEquals(IStatus.WARNING, pushStatus.getSeverity());
-			// workaround for bug 355931
-			Status pushResult = Status.valueOf(pushStatus.getMessage().split(":")[0]);
+			Status pushResult = Status.valueOf(pushStatus.getMessage());
 			assertEquals(Status.REJECTED_NONFASTFORWARD, pushResult);
 
 			// clone2: forced push
