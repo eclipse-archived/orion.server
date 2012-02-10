@@ -8,7 +8,6 @@
  * Contributors:
  * IBM Corporation - initial API and implementation
  *******************************************************************************/
-
 package org.eclipse.orion.server.useradmin;
 
 import org.osgi.service.useradmin.Authorization;
@@ -20,7 +19,7 @@ import org.osgi.service.useradmin.Authorization;
 public class EmptyAuthorization implements Authorization {
 
 	public String getName() {
-		return "";
+		return ""; //$NON-NLS-1$
 	}
 
 	public boolean hasRole(String name) {
@@ -30,5 +29,4 @@ public class EmptyAuthorization implements Authorization {
 	public String[] getRoles() {
 		return new String[0];
 	}
-
 }

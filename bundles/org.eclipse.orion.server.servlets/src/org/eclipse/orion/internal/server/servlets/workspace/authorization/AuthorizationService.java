@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others.
+ * Copyright (c) 2010, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -98,8 +98,7 @@ public class AuthorizationService {
 			}
 			saveRights(result, userRightArray);
 		} catch (Exception e) {
-			String msg = "Error persisting user rights";
-			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error persisting user rights", e));
 		}
 	}
 
@@ -161,7 +160,7 @@ public class AuthorizationService {
 			return true;
 
 		// any user can access tasks
-		if (uri.startsWith("/task"))
+		if (uri.startsWith("/task")) //$NON-NLS-1$
 			return true;
 
 		// import/export rights depend on access to the file content

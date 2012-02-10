@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others 
+ * Copyright (c) 2011, 2012 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -199,7 +199,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 			ISecurePreferences userPrefs = usersPrefs.node(childName);
 			try {
 				User user = new User(childName, userPrefs.get(USER_LOGIN, childName), userPrefs.get(USER_NAME, ""), userPrefs.get(USER_PASSWORD, null) == null ? null : "" /* don't expose the password */); //$NON-NLS-1$ //$NON-NLS-2$
-				user.setEmail(userPrefs.get(USER_EMAIL, ""));
+				user.setEmail(userPrefs.get(USER_EMAIL, "")); //$NON-NLS-1$
 				if(userPrefs.get(USER_EMAIL_CONFIRMATION, null)!=null)
 					user.setConfirmationId(userPrefs.get(USER_EMAIL_CONFIRMATION, null));
 
@@ -271,7 +271,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 		try {
 
 			User user = new User(node.name(), node.get(USER_LOGIN, node.name()), node.get(USER_NAME, ""), node.get(USER_PASSWORD, null)); //$NON-NLS-1$
-			user.setEmail(node.get(USER_EMAIL, ""));
+			user.setEmail(node.get(USER_EMAIL, "")); //$NON-NLS-1$
 			if(node.get(USER_EMAIL_CONFIRMATION, null)!=null)
 				user.setConfirmationId(node.get(USER_EMAIL_CONFIRMATION, null));
 			
@@ -381,19 +381,19 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 	}
 
 	private User internalCreateOrUpdateUser(ISecurePreferences userPrefs, User user) throws StorageException, IOException {
-		if(user.getLogin()!=null)
+		if (user.getLogin() != null)
 			userPrefs.put(USER_LOGIN, user.getLogin(), false);
-		if(user.getName()!=null)
+		if (user.getName() != null)
 			userPrefs.put(USER_NAME, user.getName(), false);
-		if(user.getPassword()!=null)
+		if (user.getPassword() != null)
 			userPrefs.put(USER_PASSWORD, user.getPassword(), true);
-		if(user.getEmail()!=null){
-			if(user.getEmail().length()>0 && !user.getEmail().equals(userPrefs.get(USER_EMAIL, null))){
+		if (user.getEmail() != null) {
+			if (user.getEmail().length() > 0 && !user.getEmail().equals(userPrefs.get(USER_EMAIL, null))) {
 				user.setConfirmationId();
 			}
 			userPrefs.put(USER_EMAIL, user.getEmail(), false);
 		}
-		if(user.getConfirmationId()==null)
+		if (user.getConfirmationId() == null)
 			userPrefs.remove(USER_EMAIL_CONFIRMATION);
 		else
 			userPrefs.put(USER_EMAIL_CONFIRMATION, user.getConfirmationId(), false);
@@ -414,6 +414,8 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 	}
 
 	public boolean deleteUser(User user) {
+		if (user == null)
+			return false;
 		ISecurePreferences node = findNode(storage, user.getUid());
 		if (node == null)
 			return false;

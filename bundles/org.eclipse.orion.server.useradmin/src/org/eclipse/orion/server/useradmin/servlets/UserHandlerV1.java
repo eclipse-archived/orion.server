@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.servlets.OrionServlet;
@@ -263,9 +264,15 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 	private boolean handleUserDelete(HttpServletRequest req, HttpServletResponse resp, String userId) throws ServletException {
 		IOrionCredentialsService userAdmin = getUserAdmin();
-
-		if (userAdmin.deleteUser((User) userAdmin.getUser("uid", userId)) == false) {
+		User user = (User) userAdmin.getUser(UserConstants.KEY_UID, userId);
+		WebUser webUser = WebUser.fromUserName(user.getUid());
+		if (!userAdmin.deleteUser(user)) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + userId + " could not be found.", null));
+		}
+		try {
+			webUser.delete();
+		} catch (CoreException e) {
+			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Removing " + userId + " failed.", e));
 		}
 		return true;
 	}
