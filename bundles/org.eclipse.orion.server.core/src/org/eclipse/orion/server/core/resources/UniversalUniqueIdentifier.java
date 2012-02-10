@@ -187,7 +187,7 @@ public class UniversalUniqueIdentifier implements Serializable, Cloneable {
 		return timestamp;
 	}
 
-	private static BigInteger timestamp() {
+	private static synchronized BigInteger timestamp() {
 		BigInteger timestamp;
 
 		if (fgPreviousClockValue == null) {

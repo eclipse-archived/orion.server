@@ -12,11 +12,19 @@ package org.eclipse.orion.server.tests.tasks;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import junit.framework.TestCase;
 
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.orion.internal.server.core.tasks.TaskService;
 import org.eclipse.orion.internal.server.core.tasks.TaskStore;
+import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.junit.After;
 import org.junit.Before;
@@ -93,5 +101,48 @@ public class TaskStoreTest extends TestCase {
 			}
 		}
 		tempDir.delete();
+	}
+
+	private class TaskStoreTestJob extends Job {
+
+		private ITaskService taskService;
+		private TaskInfo[] taskInfoTable;
+		private int jobNum;
+
+		public TaskStoreTestJob(ITaskService taskService, TaskInfo[] taskInfoTable, int jobNum) {
+			super("Test task job number " + jobNum);
+			this.taskService = taskService;
+			this.taskInfoTable = taskInfoTable;
+			this.jobNum = jobNum;
+		}
+
+		@Override
+		protected IStatus run(IProgressMonitor monitor) {
+			taskInfoTable[jobNum] = taskService.createTask("TestTaskName " + jobNum, "test", true);
+			return Status.OK_STATUS;
+		}
+	}
+
+	@Test
+	public void testUniqueTaskInfo() throws InterruptedException { //see Bug 370729
+		final ITaskService taskService = new TaskService(new Path(tempDir.getAbsolutePath()));
+		int numberOfChecks = 100;
+		Job[] jobs = new Job[numberOfChecks];
+		final TaskInfo[] taskInfos = new TaskInfo[numberOfChecks];
+		for (int i = 0; i < numberOfChecks; i++) {
+			jobs[i] = new TaskStoreTestJob(taskService, taskInfos, i);
+		}
+		for (int i = 0; i < numberOfChecks; i++) {
+			jobs[i].schedule(); //start jobs fast, so they run parallelly
+		}
+		for (int i = 0; i < numberOfChecks; i++) {
+			jobs[i].join(); //wait for all jobs to finish
+		}
+		Set<String> values = new HashSet<String>();
+		for (int i = 0; i < numberOfChecks; i++) { //check if task ids are unique 
+			String taskInfoId = taskInfos[i].getTaskId();
+			assertFalse("Bad value number " + i + " value: " + taskInfoId, values.contains(taskInfoId));
+			values.add(taskInfoId);
+		}
 	}
 }
