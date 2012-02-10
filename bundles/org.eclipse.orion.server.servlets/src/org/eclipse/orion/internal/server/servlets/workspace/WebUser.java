@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2010, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -196,4 +196,18 @@ public class WebUser extends WebElement {
 		return (IEclipsePreferences) this.store.node(SiteConfigurationConstants.KEY_SITE_CONFIGURATIONS);
 	}
 
+	/**
+	 * Removes the user from the backing store.
+	 */
+	public void delete() throws CoreException {
+		try {
+			IEclipsePreferences parent = (IEclipsePreferences) store.parent();
+			store.clear();
+			store.removeNode();
+			// TODO: consider removing user's Workspaces, Projects, Clones, SiteConfigs if no one else is using them
+			parent.flush();
+		} catch (BackingStoreException e) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "Error removing user", e));
+		}
+	}
 }
