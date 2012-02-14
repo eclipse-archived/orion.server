@@ -10,9 +10,16 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.objects;
 
+import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.StoredConfig;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.git.GitConstants;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public abstract class GitObject {
 
@@ -30,5 +37,17 @@ public abstract class GitObject {
 			this.cfg = db.getConfig();
 		}
 		return this.cfg;
+	}
+
+	abstract protected String getType();
+
+	abstract protected URI getLocation() throws URISyntaxException;
+
+	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException, CoreException {
+		JSONObject result = new JSONObject();
+		result.put(ProtocolConstants.KEY_TYPE, getType());
+		result.put(ProtocolConstants.KEY_LOCATION, getLocation());
+		result.put(GitConstants.KEY_CLONE, cloneLocation);
+		return result;
 	}
 }

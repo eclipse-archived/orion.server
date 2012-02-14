@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,6 +13,7 @@ package org.eclipse.orion.server.git.objects;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jgit.errors.ConfigInvalidException;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileBasedConfig;
@@ -26,31 +27,33 @@ import org.json.*;
 public class ConfigOption extends GitObject {
 
 	public static final String RESOURCE = "config"; //$NON-NLS-1$
+	public static final String TYPE = "Config"; //$NON-NLS-1$
 
 	private static final String EMPTY_VALUE = ""; //$NON-NLS-1$
 
 	private FileBasedConfig config;
 	private String[] keySegments;
 
-	public ConfigOption(URI cloneLocation, Repository db) throws IOException, ConfigInvalidException {
+	public ConfigOption(URI cloneLocation, Repository db) throws IOException {
 		super(cloneLocation, db);
 		this.config = getLocalConfig();
 	}
 
-	public ConfigOption(URI cloneLocation, Repository db, String key) throws IOException, ConfigInvalidException {
+	public ConfigOption(URI cloneLocation, Repository db, String key) throws IOException {
 		this(cloneLocation, db);
 		this.keySegments = keyToSegments(key);
 		if (this.keySegments == null)
 			throw new IllegalArgumentException("Config entry key must be provided in the following form: section[.subsection].name");
 	}
 
-	private ConfigOption(URI cloneLocation, Repository db, String[] keySegments) throws IOException, ConfigInvalidException {
+	private ConfigOption(URI cloneLocation, Repository db, String[] keySegments) throws IOException {
 		this(cloneLocation, db);
 		this.keySegments = keySegments;
 	}
 
-	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException, ConfigInvalidException {
-		JSONObject result = new JSONObject();
+	@Override
+	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException, CoreException {
+		JSONObject result = super.toJSON();
 		if (keySegments == null) {
 			JSONArray children = new JSONArray();
 			for (String section : config.getSections()) {
@@ -70,19 +73,28 @@ public class ConfigOption extends GitObject {
 			String key = segmentsToKey(keySegments);
 			result.put(GitConstants.KEY_CONFIG_ENTRY_KEY, key);
 			result.put(GitConstants.KEY_CONFIG_ENTRY_VALUE, value);
-			result.put(ProtocolConstants.KEY_LOCATION, BaseToConfigEntryConverter.CLONE.baseToConfigEntryLocation(cloneLocation, key));
 		}
 		return result;
+	}
+
+	@Override
+	protected URI getLocation() throws URISyntaxException {
+		String key = keySegments != null ? segmentsToKey(keySegments) : ""; //$NON-NLS-1$
+		return BaseToConfigEntryConverter.CLONE.baseToConfigEntryLocation(cloneLocation, key);
 	}
 
 	/**
 	 * Retrieves local config without any base config.
 	 */
-	private FileBasedConfig getLocalConfig() throws IOException, ConfigInvalidException {
+	private FileBasedConfig getLocalConfig() throws IOException {
 		if (db instanceof FileRepository) {
 			FileRepository fr = (FileRepository) db;
 			FileBasedConfig config = new FileBasedConfig(fr.getConfig().getFile(), FS.detect());
-			config.load();
+			try {
+				config.load();
+			} catch (ConfigInvalidException e) {
+				throw new IOException(e);
+			}
 			return config;
 		} else {
 			throw new IllegalArgumentException("Repository is not file based.");
@@ -150,5 +162,10 @@ public class ConfigOption extends GitObject {
 
 	public String getName() {
 		return keySegments[2];
+	}
+
+	@Override
+	protected String getType() {
+		return TYPE;
 	}
 }

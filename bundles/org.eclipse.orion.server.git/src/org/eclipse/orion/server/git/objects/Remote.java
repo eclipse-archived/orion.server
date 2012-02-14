@@ -38,6 +38,7 @@ public class Remote extends GitObject {
 	/**
 	 * Returns a JSON representation of this remote.
 	 */
+	@Override
 	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException, CoreException {
 		return toJSON(true, null);
 	}
@@ -48,11 +49,8 @@ public class Remote extends GitObject {
 
 	public JSONObject toJSON(boolean includeChildren, final String newBranch) throws JSONException, URISyntaxException, IOException, CoreException {
 		check();
-		JSONObject result = new JSONObject();
+		JSONObject result = super.toJSON();
 		result.put(ProtocolConstants.KEY_NAME, name);
-		result.put(ProtocolConstants.KEY_TYPE, TYPE);
-		result.put(ProtocolConstants.KEY_LOCATION, getLocation());
-		//		o.put(ProtocolConstants.KEY_LOCATION, BaseToRemoteConverter.REMOVE_FIRST_2.baseToRemoteLocation(baseLocation, configName, "" /* no branch name */)); //$NON-NLS-1$
 		result.put(GitConstants.KEY_URL, getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, name, "url" /*RemoteConfig.KEY_URL*/)); //$NON-NLS-1$
 		result.put(GitConstants.KEY_PUSH_URL, getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, name, "pushurl" /*RemoteConfig.KEY_PUSHURL*/)); //$NON-NLS-1$
 
@@ -87,6 +85,7 @@ public class Remote extends GitObject {
 
 			if (!branchFound && newBranch != null && !newBranch.isEmpty()) {
 				JSONObject o = new JSONObject();
+				// TODO: this should be a RemoteBranch
 				String name = Constants.R_REMOTES + getName() + "/" + newBranch; //$NON-NLS-1$
 				o.put(ProtocolConstants.KEY_NAME, name.substring(Constants.R_REMOTES.length()));
 				o.put(ProtocolConstants.KEY_FULL_NAME, name);
@@ -116,5 +115,10 @@ public class Remote extends GitObject {
 	@Override
 	public String toString() {
 		return "Remote [name=" + name + "]"; //$NON-NLS-1$ //$NON-NLS-2$
+	}
+
+	@Override
+	protected String getType() {
+		return TYPE;
 	}
 }

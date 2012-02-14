@@ -37,6 +37,7 @@ public class RemoteBranch extends GitObject {
 	/**
 	 * Returns a JSON representation of this remote branch.
 	 */
+	@Override
 	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException, CoreException {
 		Set<String> configNames = getConfig().getSubsections(ConfigConstants.CONFIG_REMOTE_SECTION);
 		for (String configName : configNames) {
@@ -44,17 +45,14 @@ public class RemoteBranch extends GitObject {
 				final String fullName = Constants.R_REMOTES + remote.getName() + "/" + name; //$NON-NLS-1$
 				Ref ref = db.getRefDatabase().getRef(fullName);
 				if (ref != null && !ref.isSymbolic()) {
-					JSONObject result = new JSONObject();
+					JSONObject result = super.toJSON();
 					result.put(ProtocolConstants.KEY_NAME, Repository.shortenRefName(fullName));
 					result.put(ProtocolConstants.KEY_FULL_NAME, fullName);
-					result.put(ProtocolConstants.KEY_TYPE, TYPE);
 					result.put(ProtocolConstants.KEY_ID, ref.getObjectId().name());
 					// see bug 342602
 					// result.put(GitConstants.KEY_COMMIT, baseToCommitLocation(baseLocation, name));
-					result.put(ProtocolConstants.KEY_LOCATION, getLocation());
 					result.put(GitConstants.KEY_COMMIT, BaseToCommitConverter.getCommitLocation(cloneLocation, ref.getObjectId().name(), BaseToCommitConverter.REMOVE_FIRST_2));
 					result.put(GitConstants.KEY_HEAD, BaseToCommitConverter.getCommitLocation(cloneLocation, Constants.HEAD, BaseToCommitConverter.REMOVE_FIRST_2));
-					result.put(GitConstants.KEY_CLONE, cloneLocation);
 					// result.put(GitConstants.KEY_BRANCH, BaseToBranchConverter.getBranchLocation(cloneLocation, BaseToBranchConverter.REMOTE));
 					result.put(GitConstants.KEY_INDEX, BaseToIndexConverter.getIndexLocation(cloneLocation, BaseToIndexConverter.CLONE));
 					return result;
@@ -73,5 +71,10 @@ public class RemoteBranch extends GitObject {
 	@Override
 	public String toString() {
 		return "RemoteBranch [remote=" + remote + ", name=" + name + "]"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+	}
+
+	@Override
+	protected String getType() {
+		return TYPE;
 	}
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others
+ * Copyright (c) 2011, 2012 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -15,10 +15,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
@@ -217,7 +219,10 @@ public class GitConfigTest extends GitTest {
 
 			for (int i = 0; i < configEntries.length(); i++) {
 				JSONObject configEntry = configEntries.getJSONObject(i);
+				assertNotNull(configEntry.optString(GitConstants.KEY_CONFIG_ENTRY_KEY, null));
+				assertNotNull(configEntry.optString(GitConstants.KEY_CONFIG_ENTRY_VALUE, null));
 				assertConfigUri(configEntry.getString(ProtocolConstants.KEY_LOCATION));
+				assertCloneUri(configEntry.getString(GitConstants.KEY_CLONE));
 			}
 		}
 	}
@@ -277,12 +282,10 @@ public class GitConfigTest extends GitTest {
 			for (int i = 0; i < configEntries.length(); i++) {
 				JSONObject configEntry = configEntries.getJSONObject(i);
 				if (ENTRY_KEY.equals(configEntry.getString(GitConstants.KEY_CONFIG_ENTRY_KEY))) {
-					assertEquals(ENTRY_VALUE, configEntry.getString(GitConstants.KEY_CONFIG_ENTRY_VALUE));
-					entryLocation = configEntry.getString(ProtocolConstants.KEY_LOCATION);
+					assertConfigOption(configEntry, ENTRY_KEY, ENTRY_VALUE);
 					break;
 				}
 			}
-			assertConfigUri(entryLocation);
 
 			// double check
 			org.eclipse.jgit.lib.Config config = getRepositoryForContentLocation(contentLocation).getConfig();
@@ -327,10 +330,7 @@ public class GitConfigTest extends GitTest {
 			request = getGetGitConfigRequest(entryLocation);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			configResponse = new JSONObject(response.getText());
-			assertEquals(ENTRY_KEY, configResponse.getString(GitConstants.KEY_CONFIG_ENTRY_KEY));
-			assertEquals(ENTRY_VALUE, configResponse.getString(GitConstants.KEY_CONFIG_ENTRY_VALUE));
-			assertConfigUri(configResponse.getString(ProtocolConstants.KEY_LOCATION));
+			assertConfigOption(new JSONObject(response.getText()), ENTRY_KEY, ENTRY_VALUE);
 		}
 	}
 
@@ -379,9 +379,7 @@ public class GitConfigTest extends GitTest {
 			request = getGetGitConfigRequest(entryLocation);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			configResponse = new JSONObject(response.getText());
-			assertEquals(ENTRY_KEY, configResponse.getString(GitConstants.KEY_CONFIG_ENTRY_KEY));
-			assertEquals(NEW_ENTRY_VALUE, configResponse.getString(GitConstants.KEY_CONFIG_ENTRY_VALUE));
+			assertConfigOption(new JSONObject(response.getText()), ENTRY_KEY, NEW_ENTRY_VALUE);
 		}
 	}
 
@@ -430,9 +428,7 @@ public class GitConfigTest extends GitTest {
 			request = getGetGitConfigRequest(entryLocation);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			configResponse = new JSONObject(response.getText());
-			assertEquals(ENTRY_KEY, configResponse.getString(GitConstants.KEY_CONFIG_ENTRY_KEY));
-			assertEquals(NEW_ENTRY_VALUE, configResponse.getString(GitConstants.KEY_CONFIG_ENTRY_VALUE));
+			assertConfigOption(new JSONObject(response.getText()), ENTRY_KEY, NEW_ENTRY_VALUE);
 		}
 	}
 
@@ -726,5 +722,12 @@ public class GitConfigTest extends GitTest {
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
+	}
+
+	private void assertConfigOption(final JSONObject cfg, final String k, final String v) throws JSONException, CoreException, IOException {
+		assertEquals(k, cfg.getString(GitConstants.KEY_CONFIG_ENTRY_KEY));
+		assertEquals(v, cfg.getString(GitConstants.KEY_CONFIG_ENTRY_VALUE));
+		assertConfigUri(cfg.getString(ProtocolConstants.KEY_LOCATION));
+		assertCloneUri(cfg.getString(GitConstants.KEY_CLONE));
 	}
 }

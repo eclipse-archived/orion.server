@@ -66,23 +66,18 @@ public class Tag extends GitObject {
 			this.ref = ref;
 	}
 
-	public JSONObject toJSON() throws JSONException, URISyntaxException {
-		JSONObject result = new JSONObject();
+	@Override
+	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException, CoreException {
+		JSONObject result = super.toJSON();
 		result.put(ProtocolConstants.KEY_NAME, getName(false));
-		result.put(ProtocolConstants.KEY_LOCATION, getLocation());
 		result.put(GitConstants.KEY_COMMIT, getCommitLocation());
 		result.put(ProtocolConstants.KEY_LOCAL_TIMESTAMP, (long) getTime() * 1000);
-		result.put(ProtocolConstants.KEY_TYPE, TYPE);
 		result.put(GitConstants.KEY_TAG_TYPE, TagType.valueOf(this));
 		result.put(ProtocolConstants.KEY_FULL_NAME, getName(true));
-
-		// add Git Clone URI
-		result.put(GitConstants.KEY_CLONE, cloneLocation);
-
 		return result;
 	}
 
-	public JSONObject toJSON(JSONObject log) throws JSONException, URISyntaxException {
+	public JSONObject toJSON(JSONObject log) throws JSONException, URISyntaxException, IOException, CoreException {
 		JSONObject tagJSON = this.toJSON();
 		tagJSON.put(GitConstants.KEY_TAG_COMMIT, log);
 		return tagJSON;
@@ -96,7 +91,7 @@ public class Tag extends GitObject {
 		return null;
 	}
 
-	private URI getLocation() throws URISyntaxException {
+	protected URI getLocation() throws URISyntaxException {
 		if (tagLocation == null) {
 			IPath p = new Path(cloneLocation.getPath());
 			p = p.uptoSegment(1).append(RESOURCE).append(getName(false)).addTrailingSeparator().append(p.removeFirstSegments(2));
@@ -147,5 +142,10 @@ public class Tag extends GitObject {
 
 	public String getRevCommitName() {
 		return parseCommit().getName();
+	}
+
+	@Override
+	protected String getType() {
+		return TYPE;
 	}
 }

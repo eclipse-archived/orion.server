@@ -46,19 +46,11 @@ public class Branch extends GitObject {
 	/**
 	 * Returns a JSON representation of this local branch.
 	 */
+	@Override
 	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException, CoreException {
-		JSONObject result = new JSONObject();
+		JSONObject result = super.toJSON();
 		String shortName = getName();
 		result.put(ProtocolConstants.KEY_NAME, shortName);
-		result.put(ProtocolConstants.KEY_TYPE, TYPE);
-
-		IPath basePath = new Path(cloneLocation.getPath());
-		IPath newPath = new Path(GitServlet.GIT_URI).append(Branch.RESOURCE).append(shortName).append(basePath.removeFirstSegments(2));
-		URI location = new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), newPath.toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
-		result.put(ProtocolConstants.KEY_LOCATION, location);
-
-		// add Git Clone URI
-		result.put(GitConstants.KEY_CLONE, cloneLocation);
 
 		// add Git Commit URI
 		result.put(GitConstants.KEY_COMMIT, BaseToCommitConverter.getCommitLocation(cloneLocation, shortName, BaseToCommitConverter.REMOVE_FIRST_2));
@@ -68,6 +60,15 @@ public class Branch extends GitObject {
 		result.put(GitConstants.KEY_BRANCH_CURRENT, shortName.equals(db.getBranch()));
 		result.put(ProtocolConstants.KEY_LOCAL_TIMESTAMP, (long) getTime() * 1000);
 		return result;
+	}
+
+	@Override
+	protected URI getLocation() throws URISyntaxException {
+		String shortName = getName();
+		IPath basePath = new Path(cloneLocation.getPath());
+		IPath newPath = new Path(GitServlet.GIT_URI).append(Branch.RESOURCE).append(shortName).append(basePath.removeFirstSegments(2));
+		URI location = new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), newPath.toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
+		return location;
 	}
 
 	public JSONObject toJSON(JSONObject log) throws JSONException, URISyntaxException, IOException, CoreException {
@@ -130,5 +131,10 @@ public class Branch extends GitObject {
 	@Override
 	public String toString() {
 		return "Branch [ref=" + ref + "]"; //$NON-NLS-1$ //$NON-NLS-2$
+	}
+
+	@Override
+	protected String getType() {
+		return TYPE;
 	}
 }

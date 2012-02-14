@@ -76,9 +76,9 @@ public class Commit extends GitObject {
 		return db.open(blobId, Constants.OBJ_BLOB).openStream();
 	}
 
+	@Override
 	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException, CoreException {
-		JSONObject commit = new JSONObject();
-		commit.put(ProtocolConstants.KEY_LOCATION, BaseToCommitConverter.getCommitLocation(cloneLocation, revCommit.getName(), pattern, BaseToCommitConverter.REMOVE_FIRST_2));
+		JSONObject commit = super.toJSON();
 		if (!isRoot) // linking to body makes only sense for files
 			commit.put(ProtocolConstants.KEY_CONTENT_LOCATION, BaseToCommitConverter.getCommitLocation(cloneLocation, revCommit.getName(), pattern, BaseToCommitConverter.REMOVE_FIRST_2.setQuery("parts=body"))); //$NON-NLS-1$
 		commit.put(GitConstants.KEY_DIFF, createDiffLocation(revCommit.getName(), null, pattern));
@@ -95,7 +95,6 @@ public class Commit extends GitObject {
 		commit.put(GitConstants.KEY_COMMIT_TIME, ((long) revCommit.getCommitTime()) * 1000 /* time in milliseconds */);
 		commit.put(GitConstants.KEY_COMMIT_MESSAGE, revCommit.getFullMessage());
 		commit.put(GitConstants.KEY_TAGS, toJSON(getTagsForCommit()));
-		commit.put(ProtocolConstants.KEY_TYPE, TYPE);
 		commit.put(GitConstants.KEY_BRANCHES, getCommitToBranchMap().get(revCommit.getId()));
 		commit.put(ProtocolConstants.KEY_PARENTS, parentsToJSON(revCommit.getParents()));
 
@@ -143,6 +142,11 @@ public class Commit extends GitObject {
 			children.put(tag.toJSON());
 		}
 		return children;
+	}
+
+	@Override
+	protected URI getLocation() throws URISyntaxException {
+		return BaseToCommitConverter.getCommitLocation(cloneLocation, revCommit.getName(), pattern, BaseToCommitConverter.REMOVE_FIRST_2);
 	}
 
 	// from https://gist.github.com/839693, credits to zx
@@ -216,5 +220,10 @@ public class Commit extends GitObject {
 			parents.put(parent);
 		}
 		return parents;
+	}
+
+	@Override
+	protected String getType() {
+		return TYPE;
 	}
 }

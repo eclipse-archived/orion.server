@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -43,7 +43,7 @@ public abstract class BaseToCommitConverter {
 		return getCommitLocation(base, commit, null, converter);
 	}
 
-	public static URI getCommitLocation(URI base, String commit, String path, BaseToCommitConverter converter) throws IOException, URISyntaxException {
+	public static URI getCommitLocation(URI base, String commit, String path, BaseToCommitConverter converter) throws URISyntaxException {
 		return converter.baseToCommitLocation(base, commit, path);
 	}
 

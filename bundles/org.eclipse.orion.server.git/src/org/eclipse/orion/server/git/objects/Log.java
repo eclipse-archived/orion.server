@@ -24,6 +24,10 @@ import org.eclipse.orion.server.git.BaseToCommitConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.*;
 
+/**
+ * A compound object for {@link Commit}s.
+ *
+ */
 public class Log extends GitObject {
 
 	private Iterable<RevCommit> commits;
@@ -46,11 +50,8 @@ public class Log extends GitObject {
 	public JSONObject toJSON(int page, int pageSize) throws JSONException, URISyntaxException, IOException, CoreException {
 		if (commits == null)
 			throw new IllegalStateException("'commits' is null");
-
 		Map<ObjectId, JSONArray> commitToBranchMap = getCommitToBranchMap(db);
-
-		JSONObject result = new JSONObject();
-
+		JSONObject result = super.toJSON();
 		boolean pageable = (page > 0);
 		int startIndex = (page - 1) * pageSize;
 		int index = 0;
@@ -77,7 +78,6 @@ public class Log extends GitObject {
 		result.put(ProtocolConstants.KEY_CHILDREN, children);
 
 		result.put(GitConstants.KEY_REPOSITORY_PATH, pattern == null ? "" : pattern); //$NON-NLS-1$
-		result.put(GitConstants.KEY_CLONE, cloneLocation);
 
 		if (toRefId != null) {
 			String refTargetName = toRefId.getTarget().getName();
@@ -95,7 +95,7 @@ public class Log extends GitObject {
 		}
 
 		if (pageable) {
-			StringBuilder c = new StringBuilder(""); //$NON-NLS-1$
+			StringBuilder c = new StringBuilder();
 			if (fromRefId != null)
 				c.append(fromRefId.getName());
 			if (fromRefId != null && toRefId != null)
@@ -112,6 +112,19 @@ public class Log extends GitObject {
 		}
 
 		return result;
+	}
+
+	@Override
+	protected URI getLocation() throws URISyntaxException {
+		StringBuilder c = new StringBuilder();
+		if (fromRefId != null)
+			c.append(fromRefId.getName());
+		if (fromRefId != null && toRefId != null)
+			c.append(".."); //$NON-NLS-1$
+		if (toRefId != null)
+			c.append(Repository.shortenRefName(toRefId.getName()));
+		// TODO: lost paging info
+		return BaseToCommitConverter.getCommitLocation(cloneLocation, c.toString(), pattern, BaseToCommitConverter.REMOVE_FIRST_2);
 	}
 
 	static Map<ObjectId, JSONArray> getCommitToBranchMap(Repository db) throws JSONException {
@@ -133,5 +146,10 @@ public class Log extends GitObject {
 			}
 		}
 		return commitToBranch;
+	}
+
+	@Override
+	protected String getType() {
+		return Commit.TYPE;
 	}
 }
