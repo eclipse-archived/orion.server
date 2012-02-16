@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,50 +10,32 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.patch;
 
-import java.util.*;
-import org.eclipse.jgit.patch.FormatError;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Encapsulates the result of a {@link ApplyCommand}
  */
 public class ApplyResult {
 
-	private List<FormatError> formatErrors = Collections.emptyList();
-
-	private List<ApplyError> applyErrors = new ArrayList<ApplyError>();
+	private List<File> updatedFiles = new ArrayList<File>();
 
 	/**
-	 * @param formatErrors
-	 *            formatting errors
-	 * @return this instance
-	 */
-	public ApplyResult setFormatErrors(List<FormatError> formatErrors) {
-		this.formatErrors = formatErrors;
+	* @param f
+	*            an updated file
+	* @return this instance
+	*/
+	public ApplyResult addUpdatedFile(File f) {
+		updatedFiles.add(f);
 		return this;
+
 	}
 
 	/**
-	 * @return collection of formatting errors, if any.
-	 */
-	public List<FormatError> getFormatErrors() {
-		return formatErrors;
+	 * @return updated files
+	  */
+	public List<File> getUpdatedFiles() {
+		return updatedFiles;
 	}
-
-	/**
-	 * @param applyError
-	 *            an error that occurred when applying a patch
-	 * @return this instance
-	 */
-	public ApplyResult addApplyError(ApplyError applyError) {
-		applyErrors.add(applyError);
-		return this;
-	}
-
-	/**
-	 * @return collection of applying errors, if any.
-	 */
-	public List<ApplyError> getApplyErrors() {
-		return applyErrors;
-	}
-
 }

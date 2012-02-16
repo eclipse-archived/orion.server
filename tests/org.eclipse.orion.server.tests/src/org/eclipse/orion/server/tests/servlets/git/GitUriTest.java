@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others
+ * Copyright (c) 2011, 2012 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -99,7 +99,7 @@ public class GitUriTest extends GitTest {
 	public void testGitUrisForEmptyDir() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
-		File emptyDir = getRandomLocation().toFile();
+		File emptyDir = AllGitTests.getRandomLocation().toFile();
 		emptyDir.mkdir();
 		ServletTestingSupport.allowedPrefixes = emptyDir.toString();
 
@@ -128,7 +128,7 @@ public class GitUriTest extends GitTest {
 	public void testGitUrisForFile() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
-		File dir = getRandomLocation().toFile();
+		File dir = AllGitTests.getRandomLocation().toFile();
 		dir.mkdir();
 		File file = new File(dir, "test.txt");
 		file.createNewFile();

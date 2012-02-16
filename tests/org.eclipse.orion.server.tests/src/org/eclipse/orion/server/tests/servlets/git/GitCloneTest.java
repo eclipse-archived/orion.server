@@ -261,7 +261,7 @@ public class GitCloneTest extends GitTest {
 		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 
 		// clone
-		IPath randomLocation = getRandomLocation();
+		IPath randomLocation = AllGitTests.getRandomLocation();
 		assertNull(GitUtils.getGitDir(randomLocation.toFile()));
 		WebRequest request = getPostGitCloneRequest(randomLocation.toString(), clonePath);
 		WebResponse response = waitForTaskCompletionObjectResponse(webConversation.getResponse(request));

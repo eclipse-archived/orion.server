@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others 
+ * Copyright (c) 2011, 2012 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -855,7 +855,7 @@ public class GitPushTest extends GitTest {
 			getRemote(remotesLocation, 1, 0, Constants.DEFAULT_REMOTE_NAME);
 
 			// create secondary repository
-			IPath randomLocation = getRandomLocation();
+			IPath randomLocation = AllGitTests.getRandomLocation();
 			randomLocation = randomLocation.addTrailingSeparator().append(Constants.DOT_GIT);
 			File dotGitDir = randomLocation.toFile().getCanonicalFile();
 			Repository db2 = new FileRepository(dotGitDir);

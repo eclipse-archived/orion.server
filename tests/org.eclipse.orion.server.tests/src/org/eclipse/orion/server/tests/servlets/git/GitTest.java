@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others 
+ * Copyright (c) 2011, 2012 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -46,7 +46,6 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
-import org.eclipse.core.tests.harness.FileSystemHelper;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.RebaseCommand.Operation;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -204,7 +203,7 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	protected void createRepository() throws IOException, GitAPIException, CoreException {
-		IPath randomLocation = getRandomLocation();
+		IPath randomLocation = AllGitTests.getRandomLocation();
 		gitDir = randomLocation.toFile();
 		randomLocation = randomLocation.addTrailingSeparator().append(Constants.DOT_GIT);
 		File dotGitDir = randomLocation.toFile().getCanonicalFile();
@@ -224,10 +223,6 @@ public abstract class GitTest extends FileSystemTest {
 		Git git = new Git(db);
 		git.add().addFilepattern(".").call();
 		git.commit().setMessage("Initial commit").call();
-	}
-
-	protected IPath getRandomLocation() {
-		return FileSystemHelper.getRandomLocation(FileSystemHelper.getTempDir());
 	}
 
 	/**
