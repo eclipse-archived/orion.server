@@ -605,7 +605,7 @@ public class GitFetchTest extends GitTest {
 
 			// clone2: forced push
 			pushStatus = push(gitRemoteUri2, 1, 0, Constants.MASTER, Constants.HEAD, false, true);
-			assertEquals(true, pushStatus.isOK());
+			assertTrue(pushStatus.toJSON().toString(), pushStatus.isOK());
 
 			// clone1: fetch master
 			JSONObject details = getRemoteBranch(gitRemoteUri1, 1, 0, Constants.MASTER);
