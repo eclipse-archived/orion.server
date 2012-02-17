@@ -37,7 +37,7 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Diff;
-import org.eclipse.orion.server.git.patch.ApplyCommand;
+import org.eclipse.orion.server.git.patch.*;
 import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
@@ -202,8 +202,13 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 			String patch = readPatch(request.getInputStream(), contentType);
 			ApplyCommand applyCommand = new ApplyCommand(db);
 			applyCommand.setPatch(IOUtilities.toInputStream(patch));
-			/*ApplyResult applyResult = */applyCommand.call();
-			// OrionServlet.writeJSONResponse(request, response, toJSON(applyResult));
+			// TODO: ignore all errors for now, see bug 366008
+			try {
+				/*ApplyResult applyResult = */applyCommand.call();
+				// OrionServlet.writeJSONResponse(request, response, toJSON(applyResult));
+			} catch (PatchFormatException e) {
+			} catch (PatchApplyException e) {
+			}
 			response.setStatus(HttpServletResponse.SC_CREATED);
 			response.setContentType(ProtocolConstants.CONTENT_TYPE_HTML);
 			response.getOutputStream().write(new String("<head></head><body><textarea>{}</textarea></body>").getBytes()); //$NON-NLS-1$
