@@ -61,7 +61,7 @@
     		<path name="${orion.user.guide}/Reference/Navigator_page" title="Navigator page" generateToc="true"/>
     		<path name="${orion.user.guide}/Reference/Coding_page" title="Coding page" generateToc="false"/>
     		<path name="${orion.user.guide}/Reference/Search_Results_page" title="Search Results page" generateToc="false"/>
-    		<path name="${orion.user.guide}/Reference/Plugins_page" title="Plugins page" generateToc="false"/>
+    		<path name="${orion.user.guide}/Reference/Settings_page" title="Settings page" generateToc="false"/>
     		<path name="${orion.user.guide}/Reference/Profile_page" title="Profile page" generateToc="false"/>
     		<path name="${orion.user.guide}/Reference/Site_Configurations_page" title="Site Configurations page" generateToc="false"/>
     		<path name="${orion.user.guide}/Reference/Edit_Site_page" title="Edit Site page" generateToc="false"/>
