@@ -6,5 +6,6 @@
 	<topic href="WikiDoc/Orion/Documentation/Developer_Guide/User_interface_services/orion-page-dialog.html" label="orion.page.dialog"></topic>
 	<topic href="WikiDoc/Orion/Documentation/Developer_Guide/User_interface_services/orion-page-message.html" label="orion.page.message"></topic>
 	<topic href="WikiDoc/Orion/Documentation/Developer_Guide/User_interface_services/orion-page-link.html" label="orion.page.link"></topic>
+	<topic href="WikiDoc/Orion/Documentation/Developer_Guide/User_interface_services/orion-page-link-related.html" label="orion.page.link.related"></topic>
 	<topic href="WikiDoc/Orion/Documentation/Developer_Guide/User_interface_services/Updating-this-document.html" label="Updating this document"></topic>
 </toc>
