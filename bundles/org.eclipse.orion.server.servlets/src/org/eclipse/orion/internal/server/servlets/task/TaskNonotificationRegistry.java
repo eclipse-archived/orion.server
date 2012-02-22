@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -94,26 +94,17 @@ public class TaskNonotificationRegistry {
 				return;
 			if (!this.userId.equals(userId))
 				return;
-			notify(modificationDate, service.getTasks(userId, lastNodifications.get(getName()), false), new HashSet<String>());
+			Date lastNotification = lastNodifications.get(getName());
+			notify(modificationDate, service.getTasks(userId, lastNotification, false), service.getTasksDeletedSince(userId, lastNotification));
 
 		}
 
-		public synchronized void tasksDeleted(String userId, Collection<String> taskIds, Date timestamp) {
+		public synchronized void tasksDeleted(String userId, Date timestamp) {
 			if (wasNotified)
 				return;
 			if (!this.userId.equals(userId))
 				return;
-			wasNotified = true;
-			listeners.remove(getName());
-			try {
-				TaskServlet.writeJSONResponse(req, resp, servlet.getTasksList(new ArrayList<TaskInfo>(), taskIds, timestamp, req, resp));
-				lastNodifications.put(getName(), timestamp);
-			} catch (Exception e) {
-				this.done(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), e));
-				return;
-			}
-
-			this.done(Status.OK_STATUS);
+			notify(timestamp, new ArrayList<TaskInfo>(), service.getTasksDeletedSince(userId, lastNodifications.get(getName())));
 		}
 	}
 
@@ -158,17 +149,11 @@ public class TaskNonotificationRegistry {
 		if (notifyNow) {
 			Date timestamp = new Date();
 			List<TaskInfo> tasks = service.getTasks(userId, lastNodifications.get(longpollingId) == null ? null : lastNodifications.get(longpollingId), false);
-			if (!tasks.isEmpty()) {
-				listenerJob.notify(timestamp, tasks, new HashSet<String>());
+			Collection<String> tasksDeleted = service.getTasksDeletedSince(userId, lastNodifications.get(longpollingId));
+			if (!tasks.isEmpty() || !tasksDeleted.isEmpty()) {
+				listenerJob.notify(timestamp, tasks, tasksDeleted);
 				listenerJob.schedule();
 				return listenerJob;
-			}
-		}
-
-		if (lastNodifications.get(longpollingId) != null) {
-			Collection<String> tasksDeleted = service.getTasksDeletedSince(userId, lastNodifications.get(longpollingId));
-			if (tasksDeleted.size() > 0) {
-				listenerJob.notify(new Date(), new ArrayList<TaskInfo>(), tasksDeleted);
 			}
 		}
 

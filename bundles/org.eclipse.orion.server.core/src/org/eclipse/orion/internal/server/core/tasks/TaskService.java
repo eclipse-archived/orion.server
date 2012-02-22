@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -85,20 +85,18 @@ public class TaskService implements ITaskService {
 
 		private String userId;
 		private Date deletionDate;
-		private Collection<String> tasks;
 
-		public DeletedTasksNotificationJob(String userId, Date deletionDate, Collection<String> tasks) {
+		public DeletedTasksNotificationJob(String userId, Date deletionDate) {
 			super("Notyfing task listeners");
 			this.userId = userId;
 			this.deletionDate = deletionDate;
-			this.tasks = tasks;
 		}
 
 		@Override
 		protected IStatus run(IProgressMonitor monitor) {
 			synchronized (taskListeners) {
 				for (TaskModificationListener listener : taskListeners) {
-					listener.tasksDeleted(userId, tasks, deletionDate);
+					listener.tasksDeleted(userId, deletionDate);
 				}
 			}
 			return Status.OK_STATUS;
@@ -137,7 +135,7 @@ public class TaskService implements ITaskService {
 		return createTask(taskName, userId, null, isIdempotent);
 	}
 
-	private TaskInfo internalRemoveTask(String userId, String id) throws TaskOperationException {
+	private TaskInfo internalRemoveTask(String userId, String id, Date dateRemoved) throws TaskOperationException {
 		TaskInfo task = getTask(userId, id);
 		if (task == null)
 			throw new TaskDoesNotExistException(id);
@@ -149,30 +147,32 @@ public class TaskService implements ITaskService {
 		if (!taskDeletions.containsKey(userId)) {
 			taskDeletions.put(userId, new ArrayList<TaskService.TaskDeletion>());
 		}
-		taskDeletions.get(userId).add(new TaskDeletion(new Date(), id));
+		int i = taskDeletions.get(userId).size();
+		while(i>0 && taskDeletions.get(userId).get(i-1).deletionDate.after(dateRemoved)){
+			i--;
+		}
+		taskDeletions.get(userId).add(i, new TaskDeletion(dateRemoved, id));
 		return task;
 	}
 
 	public void removeTask(String userId, String id) throws TaskOperationException {
-		internalRemoveTask(userId, id);
-		Set<String> tasks = new HashSet<String>();
-		tasks.add(id);
-		notifyDeletionListeners(userId, new Date(), tasks);
+		Date date = new Date();
+		internalRemoveTask(userId, id, date);
+		notifyDeletionListeners(userId, date);
 	}
 
 	public void removeCompletedTasks(String userId) {
-		Set<String> tasks = new HashSet<String>();
+		Date date = new Date();
 		for (TaskInfo task : getTasks(userId)) {
 			if (!task.isRunning()) {
 				try {
-					internalRemoveTask(userId, task.getTaskId());
-					tasks.add(task.getTaskId());
+					internalRemoveTask(userId, task.getTaskId(), date);
 				} catch (TaskOperationException e) {
 					LogHelper.log(e);
 				}
 			}
 		}
-		notifyDeletionListeners(userId, new Date(), tasks);
+		notifyDeletionListeners(userId, date);
 	}
 
 	public TaskInfo createTask(String taskName, String userId, ITaskCanceler taskCanceler, boolean isIdempotent) {
@@ -191,8 +191,8 @@ public class TaskService implements ITaskService {
 		new TasksNotificationJob(userId, modificationDate).schedule();
 	}
 
-	private void notifyDeletionListeners(String userId, Date deletionDate, Collection<String> tasks) {
-		new DeletedTasksNotificationJob(userId, deletionDate, tasks).schedule();
+	private void notifyDeletionListeners(String userId, Date deletionDate) {
+		new DeletedTasksNotificationJob(userId, deletionDate).schedule();
 	}
 
 	public TaskInfo getTask(String userId, String id) {
@@ -256,10 +256,10 @@ public class TaskService implements ITaskService {
 		}
 	}
 
-	public Collection<String> getTasksDeletedSince(String userId, Date deletedSince) {
+	public synchronized Collection<String> getTasksDeletedSince(String userId, Date deletedSince) {
 		Set<String> deletedTasks = new HashSet<String>();
 		List<TaskDeletion> taskDeletionsList = taskDeletions.get(userId);
-		if (taskDeletionsList == null) {
+		if (taskDeletionsList == null || deletedSince==null) {
 			return deletedTasks;
 		}
 		for (int i = taskDeletionsList.size() - 1; i > 0; i--) {

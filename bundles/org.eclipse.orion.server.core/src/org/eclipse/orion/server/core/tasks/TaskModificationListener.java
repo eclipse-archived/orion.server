@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.core.tasks;
 
-import java.util.Collection;
 import java.util.Date;
 
 /**
@@ -30,6 +29,6 @@ public interface TaskModificationListener {
 	 * Called {@link ITaskService} when tasks are deleted.
 	 * @param tasks a list of tasks that where deleted
 	 */
-	public void tasksDeleted(String userId, Collection<String> taskIds, Date deletedDate);
+	public void tasksDeleted(String userId, Date deletedDate);
 
 }
