@@ -55,6 +55,7 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.RepositoryCache;
+import org.eclipse.jgit.storage.file.FileBasedConfig;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
@@ -223,6 +224,12 @@ public abstract class GitTest extends FileSystemTest {
 		Git git = new Git(db);
 		git.add().addFilepattern(".").call();
 		git.commit().setMessage("Initial commit").call();
+
+		// The system settings on eclipse.org was changed to receive.denyNonFastForward=true, see bug 343150.
+		// Imitate the same setup when running tests locally, see bug 371881.
+		FileBasedConfig cfg = db.getConfig();
+		cfg.setBoolean("receive", null, "denyNonFastforwards", true);
+		cfg.save();
 	}
 
 	/**

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others
+ * Copyright (c) 2011, 2012 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -27,6 +27,7 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.storage.file.FileBasedConfig;
 import org.eclipse.jgit.transport.RemoteRefUpdate.Status;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.orion.internal.server.core.IOUtilities;
@@ -510,6 +511,11 @@ public class GitFetchTest extends GitTest {
 
 	@Test
 	public void testForcedFetch() throws Exception {
+		// overwrite system settings, allow forced pushes, see bug 371881
+		FileBasedConfig cfg = db.getConfig();
+		cfg.setBoolean("receive", null, "denyNonFastforwards", false);
+		cfg.save();
+
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject projectTop1 = createProjectOrLink(workspaceLocation, getMethodName() + "-top1", null);
 		IPath clonePathTop1 = new Path("file").append(projectTop1.getString(ProtocolConstants.KEY_ID)).makeAbsolute();

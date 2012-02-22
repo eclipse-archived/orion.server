@@ -27,6 +27,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.storage.file.FileBasedConfig;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.RemoteRefUpdate.Status;
 import org.eclipse.jgit.transport.URIish;
@@ -672,6 +673,11 @@ public class GitPushTest extends GitTest {
 
 	@Test
 	public void testForcedPush() throws Exception {
+		// overwrite system settings, allow forced pushes, see bug 371881
+		FileBasedConfig cfg = db.getConfig();
+		cfg.setBoolean("receive", null, "denyNonFastforwards", false);
+		cfg.save();
+
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject projectTop1 = createProjectOrLink(workspaceLocation, getMethodName() + "-top1", null);
 		IPath clonePathTop1 = new Path("file").append(projectTop1.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
