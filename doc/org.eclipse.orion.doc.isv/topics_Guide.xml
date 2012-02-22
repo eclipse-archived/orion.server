@@ -19,6 +19,9 @@
    <topic label="User interface services">
 		<link toc="WikiDoc/Orion-Documentation-Developer-Guide-User-interface-services-toc.xml" />
    </topic>
+   <topic label="Plugging into Orion pages">
+		<link toc="WikiDoc/Orion-Documentation-Developer-Guide-Plugging-into-Orion-pages-toc.xml" />
+   </topic>
    <topic label="Plugging into the editor">
 		<link toc="WikiDoc/Orion-Documentation-Developer-Guide-Plugging-into-the-editor-toc.xml" />
    </topic>

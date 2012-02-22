@@ -22,6 +22,7 @@
        <toc file="WikiDoc/Orion-Documentation-Developer-Guide-Simple-plugin-example-toc.xml" />
        <toc file="WikiDoc/Orion-Documentation-Developer-Guide-Core-client-services-toc.xml" />
        <toc file="WikiDoc/Orion-Documentation-Developer-Guide-User-interface-services-toc.xml" />
+       <toc file="WikiDoc/Orion-Documentation-Developer-Guide-Plugging-into-Orion-pages-toc.xml" />
        <toc file="WikiDoc/Orion-Documentation-Developer-Guide-Plugging-into-the-editor-toc.xml" />
        <toc file="WikiDoc/Orion-Documentation-Developer-Guide-Plugging-into-the-navigator-toc.xml" />
        <toc file="WikiDoc/Orion-Server-admin-guide-toc.xml" />
