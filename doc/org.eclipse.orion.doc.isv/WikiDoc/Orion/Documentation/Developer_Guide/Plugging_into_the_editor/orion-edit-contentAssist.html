@@ -63,8 +63,10 @@
 		<dl>
 			<dt>name</dt>
 			<dd><tt>String</tt> Name for the content assist provider.</dd>
-			<dt>pattern</dt>
-			<dd><tt>String</tt> A regular expression pattern matching filenames that this provider can provide content assist for. The provider's <tt>computeProposals</tt> function will be called only for files that match this pattern.</dd>
+			<dt>contentType</dt>
+			<dd><tt>Array</tt> An array of 
+				<a href="../../../../\Orion\Documentation\Developer_Guide\Core_client_services/orion-file-contenttype.html#orion.file.contenttype" title="Orion/Documentation/Developer Guide/Core client services#orion.file.contenttype">Content Type IDs</a> that this provider can provide content assist for. The provider's <tt>computeProposals</tt> function will be called only for files having one of these content types.
+			</dd>
 		</dl>
 		<h2 id="Examples_2">Examples</h2>
 		<p>The example below provides content assist suggestions for files whose name ends in <tt>.js</tt>. It offers JavaScript keywords as suggestions.</p>
@@ -79,7 +81,7 @@ provider.registerServiceProvider("orion.edit.contentAssist",
   },
   {
     name: "JavaScript content assist",
-    pattern: "\\.js$"
+    contentType: ["text.javascript"]
   });
 provider.connect();
 </pre>
@@ -99,7 +101,7 @@ provider.registerServiceProvider("orion.edit.contentAssist",
   },
   {
     name: "HTML content assist",
-    pattern: "\\.html?$"
+    contentType: ["text.html"]
   });
 provider.connect();
 </pre><hr/>
