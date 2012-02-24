@@ -33,10 +33,12 @@ import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.api.PullResult;
+import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.RepositoryCache;
 import org.eclipse.jgit.lib.RepositoryState;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.core.IOUtilities;
@@ -667,8 +669,15 @@ public class GitCloneTest extends GitTest {
 		JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 		assertEquals(1, clonesArray.length());
 
-		Git git = new Git(getRepositoryForContentLocation(contentLocation));
+		Repository r = getRepositoryForContentLocation(contentLocation);
+
+		// overwrite user settings, do not rebase when pulling, see bug 372489
+		StoredConfig cfg = r.getConfig();
+		cfg.setBoolean(ConfigConstants.CONFIG_BRANCH_SECTION, Constants.MASTER, ConfigConstants.CONFIG_KEY_REBASE, false);
+		cfg.save();
+
 		// TODO: replace with RESTful API when ready, see bug 339114
+		Git git = new Git(r);
 		PullResult pullResult = git.pull().call();
 		assertEquals(pullResult.getMergeResult().getMergeStatus(), MergeStatus.ALREADY_UP_TO_DATE);
 		assertEquals(RepositoryState.SAFE, git.getRepository().getRepositoryState());

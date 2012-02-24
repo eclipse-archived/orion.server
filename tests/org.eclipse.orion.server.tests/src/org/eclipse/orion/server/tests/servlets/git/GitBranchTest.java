@@ -23,7 +23,9 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.api.PullResult;
+import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
@@ -134,6 +136,11 @@ public class GitBranchTest extends GitTest {
 			String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
 			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 			String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
+
+			// overwrite user settings, do not rebase when pulling, see bug 372489
+			StoredConfig cfg = getRepositoryForContentLocation(cloneContentLocation).getConfig();
+			cfg.setBoolean(ConfigConstants.CONFIG_BRANCH_SECTION, Constants.MASTER, ConfigConstants.CONFIG_KEY_REBASE, false);
+			cfg.save();
 
 			// get project/folder metadata
 			WebRequest request = getGetFilesRequest(cloneContentLocation);
