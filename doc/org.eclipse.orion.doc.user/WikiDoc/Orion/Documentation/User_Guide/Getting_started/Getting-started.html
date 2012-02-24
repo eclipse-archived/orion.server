@@ -20,7 +20,9 @@
 			<a href="../../../../\Orion\Documentation\User_Guide\Reference\Navigator_page/Navigator-page.html" title="Orion/Documentation/User_Guide/Reference/Navigator_page">Navigator page</a> is used to browse and modify your files.
 		</p>
 		<h3 id="Creating_folders_and_files">Creating folders and files</h3>
-		<p>Once you've successfully logged into Orion, you'll see the navigator page. This is where your files and folders will be shown. Because you haven't created any files or folders yet, the navigator is initially empty.</p>
+		<p>Once you've successfully logged into Orion, go to the 
+			<a href="../../../../\Orion\Documentation\User_Guide\Reference\Navigator_page/Navigator-page.html" title="Orion/Documentation/User_Guide/Reference/Navigator_page">Navigator page</a> by clicking <b>Navigator</b> in the banner at the top of any page. This is where your files and folders will be shown. Because you haven't created any files or folders yet, the navigator is initially empty.
+		</p>
 		<p>
 			<img border="0" src="images/Orion-navinitial.png"/>
 		</p>
@@ -34,27 +36,23 @@
 		<p>
 			<img border="0" src="images/Orion-navbreadcrumb.png"/>
 		</p>
-		<h3 id="Using_commands">Using commands</h3>
-		<p>Global commands for Orion (such as search, user profile, and help) appear at the top right of the page. Links to other pages appear beside the global commands.
-			Commands that operate on the navigator (such as <tt>New File</tt>, <tt>New Folder</tt>) are located on the left side of the dark bar in the banner.</p>
+		<h3 id="Using_the_common_banner">Using the common banner</h3>
+		<p>The banner provides access to common operations in Orion.  The main navigation links appear at the top left of the page banner, next to the Orion logo.  The right side of the banner provides links to the user profile and an options menu containing settings, help, and other commonly used actions.  Underneath, the page header describes the title of the page, the breadcrumb, and the name of the resource being manipulated.  On the right of the page header are items that let you quickly find and mark pages that you commonly use.  The star icon allows you to mark the current page as a favorite.  The search box and <tt>Related pages</tt> menu allow you to quickly navigate to a new page.  </p>
+		<p>Below the banner, the content of the page appears.  Commands that operate on the content itself (such as <tt>New File</tt>, <tt>New Folder</tt> in the navigator) are located in the toolbar above the content.</p>
 		<p>
 			<img border="0" src="images/Orion-topbanner.png"/>
 		</p>
-		<p>Commands that apply to an individual file or folder are located in the 
-			<b>Actions</b> column next to the item.
-		</p>
+		<p>Commands that apply to an individual file or folder are located in an actions menu next to the item in the navigator.</p>
 		<p>
 			<img border="0" src="images/Orion-navactions.png"/>
 		</p>
-		<p>Files and folders may be selected by clicking the checkbox beside their name. Commands that operate on the selected items (such as move, copy, and delete) will appear on the dark bar in the banner when a selection has been made.</p>
+		<p>Files and folders may be selected by clicking the checkbox beside their name. Commands that operate on the selected items (such as move, copy, and delete) will appear on the navigator toolbar when a selection has been made.</p>
 		<h3 id="Importing_folders_and_files">Importing folders and files</h3>
-		<p>You can upload zip files from your local machine to the server using the import menu.  </p>
+		<p>There are many ways to import your files into Orion. You can upload a zip file, import via SFTP, or clone a Git repository.</p>
 		<p>
 			<img border="0" src="images/Orion-navimport.png"/>
 		</p>
-		<p>To import projects from Eclipse (or any other IDE, or your local file system) into Orion, you must first zip up the files you wish to import.   Choose this zip file in the file selection prompt offered in the import dialog available when moving the cursor to a folder line and clicking More.  (Choosing a non-zip file may break the import dialog on some browsers, see 
-			<a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=335890" target="orion_external">Bug 335890</a>).
-		</p>
+		<p>To import files from your local file system into Orion, you must first zip up the files you wish to import.   Choose this zip file in the file selection prompt offered in the import dialog available in the menu next to each folder.</p>
 		<p>
 			<img border="0" src="images/Orion-navimportdialog.png"/>
 		</p>
@@ -73,7 +71,7 @@
 		</p>
 		<h3 id="Creating_favorites">Creating favorites</h3>
 		<p>You can use the 
-			<b>Favorites</b> icon to bookmark a folder or file in your navigator. A link to this folder or file will appear in your favorites list and can be used to navigate quickly to that file or folder. 
+			<b>Favorites</b> icon in the page header or the favorites menu item to bookmark a folder or file in your navigator. A link to this folder or file will appear in your favorites list and can be used to navigate quickly to that file or folder. 
 		</p>
 		<p>
 			<img border="0" src="images/Orion-favorites.png"/>
@@ -81,6 +79,12 @@
 		<p>Favorites are also suggested as move/copy targets.</p>
 		<p>
 			<img border="0" src="images/Orion-copymove.png"/>
+		</p>
+		<p>They also appear in the 
+			<b>Find File</b> dialog.
+		</p>
+		<p>
+			<img border="0" src="images/Orion-findfile.png"/>
 		</p>
 		<h3 id="Extending_the_navigator">Extending the navigator</h3>
 		<p>We've implemented an extension point that allows a plug-in to add commands to the navigator's toolbar and local item actions.  To see what plug-ins are installed in your Orion system, open the 
