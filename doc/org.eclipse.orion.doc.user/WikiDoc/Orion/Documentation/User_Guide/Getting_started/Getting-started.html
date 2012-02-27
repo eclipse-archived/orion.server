@@ -156,14 +156,14 @@
 		<p>Once you are actively using Orion, you'll find that you want to move quickly between different resources.  There are several ways to go about this.  We've integrated Apache Lucene search with the Orion server and exposed it in the Orion client in several ways.</p>
 		<h3 id="Global_search">Global search</h3>
 		<p>The search box in the Orion navigator will perform a global search on everything in your user workspace. Results are shown in a 
-			<a href="../../../../\Orion\Documentation\User_Guide\Reference\Search_Results_page/Search-Results-page.html" title="Orion/Documentation/User_Guide/Reference/Search_Results_page">Search Results page</a>.
+			<a href="../../../../\Orion\Documentation\User_Guide\Reference\Search_Results_page/Search-Results-page.html" title="Orion/Documentation/User_Guide/Reference/Search_Results_page">Search Results page</a>. From this page you can sort and filter the results, and initiate a global replace operation.
 		</p>
 		<p>
 			<img border="0" src="images/Orion-globalsearch.png"/>
 		</p>
 		<p>The 
 			<b>Find File Named</b> dialog can be opened by pressing 
-			<b>T</b> on your keyboard.  This dialog lets you search for a file by name.  Simple wildcard characters are supported.
+			<b>Ctrl+Shift+F</b> on your keyboard.  This dialog lets you search for a file by name.  Simple wildcard characters are supported. Matching files in your favorites list are shown first in the results list.
 		</p>
 		<p>
 			<img border="0" src="images/Orion-openresource.png"/>
@@ -179,7 +179,7 @@
 			<img border="0" src="images/Orion-browserbar.png"/>
 		</p>
 		<h2 id="Working_with_git">Working with git</h2>
-		<p>We intend to provide many different kinds of plug-ins for integrating Orion into open source and proprietary version control systems.  Our first experiments in this area are to provide a UI for working with 
+		<p>We intend to provide many different kinds of plug-ins for integrating Orion into open source and proprietary version control systems.  Our first example in this area is a UI for working with 
 			<a href="http://git-scm.com/" target="orion_external">Git</a> repositories.  For files and folders that are managed in a Git repository, you will see a menu for navigating to the Git status of the repository containing your file.
 		</p>
 		<p>
@@ -189,19 +189,21 @@
 			<b>Git Status</b> page shows you all the files in your git repository that have changed, and allows you to stage, unstage, and commit changes.  You can also compare the content of the files.
 		</p>
 		<p>
-			<img border="0" src="images/Orion-gitstatus.png"/>
+			<img border="0" src="images/Orion-status-page-overview.png"/>
 		</p>
-		<p>A side-by-side compare view is also provided.  This will evolve into a merge view over time.</p>
+		<p>A side-by-side compare view is also provided.</p>
 		<p>
 			<img border="0" src="images/Orion-gitsidebyside.png"/>
 		</p>
 		<p>The 
 			<a href="../../../../\Orion\Documentation\User_Guide\Reference\Git_Status_page/Git-Status-page.html" title="Orion/Documentation/User_Guide/Reference/Git_Status_page">Git Status page</a> shows also a list of recent commits on the active branch. You may open the 
 			<a href="../../../../\Orion\Documentation\User_Guide\Reference\Git_Log_page/Git-Log-page.html" title="Orion/Documentation/User_Guide/Reference/Git_Log_page">Git Log page</a> by clicking the 
-			<b>Complete Log</b> button and see the full list of commits on that branch. Click on a commit in the log page to slide out the <b>Commit details</b> panel to see more information.
+			<b>Complete Log</b> button and see the full list of commits on that branch. Click on a commit in the log page to open the 
+			<a href="http://wiki.eclipse.org/Orion/Documentation/User_Guide/Reference/Git_Commit_page" title="Orion/Documentation/User_Guide/Reference/Git_Commit_page" target="orion_external">Git Commit page</a>
+			for complete information about that commit.
 		</p>
 		<p>
-			<img border="0" src="images/Orion-gitlog.png"/>
+			<img border="0" src="images/Orion-git-log-overview.png"/>
 		</p>
 		<p>You can also open the 
 			<a href="../../../../\Orion\Documentation\User_Guide\Reference\Compare_page/Compare-page.html" title="Orion/Documentation/User_Guide/Reference/Compare_page">Compare page</a> for each change in the selected commit.

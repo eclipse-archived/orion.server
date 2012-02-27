@@ -9,7 +9,7 @@
 	<link toc="WikiDoc/Orion-Documentation-User-Guide-Reference-Navigator-page-toc.xml" />
 	<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Coding_page/Coding-page.html" label="Coding page"></topic>
 	<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Search_Results_page/Search-Results-page.html" label="Search Results page"></topic>
-	<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Settings_page/Settings-page.html" label="Plugins page"></topic>
+	<link toc="WikiDoc/Orion-Documentation-User-Guide-Reference-Settings-page-toc.xml" />
 	<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Profile_page/Profile-page.html" label="Profile page"></topic>
 	<topic label="Deploying and managing test sites">
 		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Site_Configurations_page/Site-Configurations-page.html" label="Site Configurations page"></topic>

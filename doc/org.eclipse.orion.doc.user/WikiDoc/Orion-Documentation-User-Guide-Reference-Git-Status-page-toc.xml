@@ -5,6 +5,7 @@
 		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Git_Status_page/Git-Status-page.html#Comparing_changes" label="Comparing changes"></topic>
 		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Git_Status_page/Git-Status-page.html#Staging_changes" label="Staging changes"></topic>
 		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Git_Status_page/Git-Status-page.html#Reverting_an_unstaged_change" label="Reverting an unstaged change"></topic>
+		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Git_Status_page/Git-Status-page.html#Reverting_a_group_of_unstaged_changes" label="Reverting a group of unstaged changes"></topic>
 		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Git_Status_page/Git-Status-page.html#Resetting_all_changes_from_the_index" label="Resetting all changes from the index"></topic>
 		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Git_Status_page/Git-Status-page.html#Unstaging_changes" label="Unstaging changes"></topic>
 		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Git_Status_page/Git-Status-page.html#Committing_changes" label="Committing changes"></topic>

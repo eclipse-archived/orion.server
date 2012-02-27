@@ -19,12 +19,12 @@
 			<img border="0" src="images/Orion-navigator-key-assist.png"/>
 		</p>
 		<h2 id="Basic_file_manipulation">Basic file manipulation</h2>
-		<p>To create new files and folders in the current folder, click <b>Create File</b> or <b>Create Folder</b> in the tool bar. To create files within another folder use the <b>More</b> menu in the <b>Actions</b> column. </p>
-		<p>Delete files by selecting <b>Delete</b> from the <b>More</b> menu of the <b>Actions</b> column. To delete several files at once, select them using the check boxes and click <b>Delete</b> in the <b>More</b> menu in the toolbar:</p>
+		<p>To create new files and folders in the current folder, click <b>Create File</b> or <b>Create Folder</b> in the tool bar. To create files within another folder use the drop-down menu next to that folder in the list.</p>
+		<p>Delete files by selecting <b>Delete</b> from the menu next to a file or folder. To delete several files at once, select them using the check boxes and click <b>Delete</b> in the <b>More</b> menu in the toolbar:</p>
 		<p>
 			<img border="0" src="images/Orion-navigator-delete.png"/>
 		</p>
-		<p>To rename a file, click the Rename icon in the <b>Actions</b> column. If you change your mind you can hit the Esc key to cancel the rename.</p>
+		<p>To rename a file, select <b>Rename</b> in the resource drop-down menu. If you change your mind you can hit the Esc key to cancel the rename.</p>
 		<h2 id="Copying_and_moving_folders_and_files">Copying and moving folders and files</h2>
 		<p>There are two methods available for copying files in Orion. The first method uses the clipboard:</p>
 		<ol>
@@ -44,7 +44,7 @@
 		<ol>
 			<li>Package the files to be imported into a zip file. </li>
 			<li>Create and navigate to a folder in Orion that you want to import into</li>
-			<li>Click <b>Import from zip...</b> in the <b>Actions</b> column.</li>
+			<li>Click <b>Import from zip...</b> in the folder's drop-down menu</li>
 			<li>Browse to the local zip file to be imported, </li>
 		</ol>
 		<p>You can also import files from another networked computer using the 
@@ -52,7 +52,7 @@
 		</p>
 		<ol>
 			<li>Create and navigate to a folder in Orion that you want to import into</li>
-			<li>Click <b>SFTP from...</b> in the <b>Actions</b> column.</li>
+			<li>Click <b>SFTP from...</b> in the folder's drop-down menu</li>
 			<li>Fill in or select the host and path to import files from.</li>
 			<li>Click <b>Start Transfer</b> to begin importing. Progress will be shown in the title area until the import completes.</li>
 		</ol>
@@ -60,26 +60,29 @@
 			<img border="0" src="images/Orion-navigator-sftp-import.png"/>
 		</p>
 		<h2 id="Exporting_folders_and_files">Exporting folders and files</h2>
-		<p>To export files to your local computer, simply click <b>Export as zip</b> in the <b>Actions</b> column next to any folder. The contents of that folder will be exported to your local computer as a zip file.</p>
+		<p>To export files to your local computer, simply click <b>Export as zip</b> in the drop-down menu next to any folder. The contents of that folder will be exported to your local computer as a zip file.</p>
 		<p>You can also export files to another networked computer using the 
 			<a href="http://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol" target="orion_external">SSH File Transfer Protocol</a> (SFTP):
 		</p>
 		<ol>
 			<li>Navigate to a folder in Orion that you want to export</li>
-			<li>Click <b>SFTP to...</b> in the <b>Actions</b> column.</li>
+			<li>Click <b>SFTP to...</b> in the folder's drop-down menu</li>
 			<li>Fill in or select the host and path to export files to</li>
 			<li>Click <b>Start Transfer</b> to begin exporting. Progress will be shown in the title area until the import completes.</li>
 		</ol>
 		<h2 id="Searching_from_the_Navigator">Searching from the Navigator</h2>
 		<p>There are a couple of different ways to search using the <b>Navigator</b> page:</p>
 		<ul>
-			<li>Type 't' to search for a file with a given name. Clicking a match will open the 
+			<li>Type Ctrl+Shift+F to search for a file with a given name. Clicking a match will open the 
 				<a href="../../../../../\Orion\Documentation\User_Guide\Reference\Coding_page/Coding-page.html" title="Orion/Documentation/User_Guide/Reference/Coding_page">Coding page</a> on that file. If there is only a single match, simply press 'Enter' to open that file.
 			</li>
-			<li>Typing search terms in the search box in the upper right corner of the title area will search for the terms across all files, and display matches in the 
+			<li>Typing search terms in the search box in the upper right corner of the title area will search for the terms across all files in the folder you are viewing. Matches will be displayed in the 
 				<a href="../../../../../\Orion\Documentation\User_Guide\Reference\Search_Results_page/Search-Results-page.html" title="Orion/Documentation/User_Guide/Reference/Search_Results_page">Search Results page</a>.
 			</li>
 		</ul>
+		<p>A global search and replace can be performed by first running a search from the search box, and then starting a replace operation from the 
+			<a href="../../../../../\Orion\Documentation\User_Guide\Reference\Search_Results_page/Search-Results-page.html" title="Orion/Documentation/User_Guide/Reference/Search_Results_page">Search Results page</a>.
+		</p>
 		<h2 id="Working_with_Favorites">Working with Favorites</h2>
 		<p>The left hand side of the <b>Navigator</b> page shows a panel listing bookmarked links, referred to as <i>Favorites</i> in Orion. Click <b>Make Favorite</b> in the <b>Actions</b> column to add any file or folder as a favorite. You can also save any web site address as a favorite by clicking the <b>Add Favorite</b> icon within the Favorites panel. Search results can also be marked as favorites from the 
 			<a href="../../../../../\Orion\Documentation\User_Guide\Reference\Search_Results_page/Search-Results-page.html" title="Orion/Documentation/User_Guide/Reference/Search_Results_page">Search Results page</a>. Current favorites can be renamed and deleted by clicking the command icons that appear when hovering over any favorite in your list. 
@@ -90,11 +93,11 @@
 		<h2 id="Keyboard_navigation">Keyboard navigation</h2>
 		<p>You can navigate through the listed files in the <b>Navigator</b> using your keyboard:</p>
 		<ul>
-			<li>To move the current row, use up and down arrow keys. You can also change the current row by mouse: just click on the Date column of any row.</li>
-			<li>To expand/collapse the current row, use right and left arrow keys.</li>
+			<li>To move the current row, use up and down arrow keys. You can also change the current row by clicking on the Date column of any row.</li>
+			<li>To expand or collapse the current row, use right and left arrow keys.</li>
 			<li>To toggle the check box of the current row, use the space key.</li>
 			<li>To select multiple rows, use shift+up/down keys.</li>
-			<li>To open a file or go to a folder in the same page, use Enterkey.</li>
+			<li>To open a file or go to a folder in the same page, use Enter key.</li>
 			<li>To open a file or go to a folder in a new tab, use Ctrl+Enter key.</li>
 		</ul>
 		<h2 id="Updating_this_document">Updating this document</h2>
