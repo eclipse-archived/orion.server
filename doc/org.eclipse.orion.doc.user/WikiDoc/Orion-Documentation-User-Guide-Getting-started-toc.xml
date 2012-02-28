@@ -7,7 +7,6 @@
 		<topic href="WikiDoc/Orion/Documentation/User_Guide/Getting_started/Getting-started.html#Importing_folders_and_files" label="Importing folders and files"></topic>
 		<topic href="WikiDoc/Orion/Documentation/User_Guide/Getting_started/Getting-started.html#Exporting_folders_and_files" label="Exporting folders and files"></topic>
 		<topic href="WikiDoc/Orion/Documentation/User_Guide/Getting_started/Getting-started.html#Creating_favorites" label="Creating favorites"></topic>
-		<topic href="WikiDoc/Orion/Documentation/User_Guide/Getting_started/Getting-started.html#Extending_the_navigator" label="Extending the navigator"></topic>
 	</topic>
 	<topic href="WikiDoc/Orion/Documentation/User_Guide/Getting_started/Getting-started.html#Editing_code" label="Editing code">
 		<topic href="WikiDoc/Orion/Documentation/User_Guide/Getting_started/Getting-started.html#JavaScript_development" label="JavaScript development"></topic>
@@ -17,10 +16,16 @@
 		<topic href="WikiDoc/Orion/Documentation/User_Guide/Getting_started/Getting-started.html#Java_development" label="Java development"></topic>
 		<topic href="WikiDoc/Orion/Documentation/User_Guide/Getting_started/Getting-started.html#Extending_the_editor_with_a_Plug-in" label="Extending the editor with a Plug-in"></topic>
 	</topic>
-	<topic href="WikiDoc/Orion/Documentation/User_Guide/Getting_started/Getting-started.html#Search_support" label="Search support">
-		<topic href="WikiDoc/Orion/Documentation/User_Guide/Getting_started/Getting-started.html#Global_search" label="Global search"></topic>
+	<topic href="WikiDoc/Orion/Documentation/User_Guide/Getting_started/Getting-started.html#Searching" label="Searching">
+		<topic href="WikiDoc/Orion/Documentation/User_Guide/Getting_started/Getting-started.html#Searching_for_file_content" label="Searching for file content"></topic>
+		<topic href="WikiDoc/Orion/Documentation/User_Guide/Getting_started/Getting-started.html#Finding_a_file_by_name" label="Finding a file by name"></topic>
+		<topic href="WikiDoc/Orion/Documentation/User_Guide/Getting_started/Getting-started.html#Searching_inside_the_editor" label="Searching inside the editor"></topic>
 	</topic>
 	<topic href="WikiDoc/Orion/Documentation/User_Guide/Getting_started/Getting-started.html#Working_with_git" label="Working with git"></topic>
 	<topic href="WikiDoc/Orion/Documentation/User_Guide/Getting_started/Getting-started.html#Launching_your_project_as_a_website" label="Launching your project as a website"></topic>
+	<topic href="WikiDoc/Orion/Documentation/User_Guide/Getting_started/Getting-started.html#Extending_Orion" label="Extending Orion">
+		<topic href="WikiDoc/Orion/Documentation/User_Guide/Getting_started/Getting-started.html#Extending_the_Navigator" label="Extending the Navigator"></topic>
+		<topic href="WikiDoc/Orion/Documentation/User_Guide/Getting_started/Getting-started.html#Learning_more" label="Learning more"></topic>
+	</topic>
 	<topic href="WikiDoc/Orion/Documentation/User_Guide/Getting_started/Getting-started.html#Updating_this_document" label="Updating this document"></topic>
 </toc>

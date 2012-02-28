@@ -60,9 +60,10 @@
     		<path name="${orion.user.guide}/Reference/Login_page" title="Login page" generateToc="false"/>
     		<path name="${orion.user.guide}/Reference/Navigator_page" title="Navigator page" generateToc="true"/>
     		<path name="${orion.user.guide}/Reference/Coding_page" title="Coding page" generateToc="false"/>
-    		<path name="${orion.user.guide}/Reference/Search_Results_page" title="Search Results page" generateToc="false"/>
+    		<path name="${orion.user.guide}/Reference/Search_Results_page" title="Global Search and Replace" generateToc="true"/>
     		<path name="${orion.user.guide}/Reference/Settings_page" title="Settings page" generateToc="true"/>
     		<path name="${orion.user.guide}/Reference/Profile_page" title="Profile page" generateToc="false"/>
+    		<path name="${orion.user.guide}/Reference/Operations_page" title="Operations page" generateToc="false"/>
     		<path name="${orion.user.guide}/Reference/Site_Configurations_page" title="Site Configurations page" generateToc="false"/>
     		<path name="${orion.user.guide}/Reference/Edit_Site_page" title="Edit Site page" generateToc="false"/>
     		<path name="${orion.user.guide}/Reference/Repositories_page" title="Repositories page" generateToc="true"/>
