@@ -26,6 +26,7 @@
        <toc file="WikiDoc/Orion-Documentation-User-Guide-Reference-Settings-page-toc.xml" />
        <toc file="WikiDoc/Orion-Documentation-User-Guide-Reference-Git-Status-page-toc.xml" />
        <toc file="WikiDoc/Orion-Documentation-User-Guide-Reference-Git-Log-page-toc.xml" />
+       <toc file="WikiDoc/Orion-Documentation-User-Guide-Reference-Git-Commit-page-toc.xml" />
    </extension>
    
 </plugin>

@@ -69,6 +69,7 @@
     		<path name="${orion.user.guide}/Reference/Repositories_page" title="Repositories page" generateToc="true"/>
        		<path name="${orion.user.guide}/Reference/Git_Status_page" title="Git Status page" generateToc="true"/>
        		<path name="${orion.user.guide}/Reference/Git_Log_page" title="Git Log page" generateToc="true"/>
+       		<path name="${orion.user.guide}/Reference/Git_Commit_page" title="Git Commit page" generateToc="true"/>
        		<path name="${orion.user.guide}/Reference/Compare_page" title="Compare page" generateToc="false"/>
 			<stylesheet url="book.css"/>
     		<pageAppendum>
