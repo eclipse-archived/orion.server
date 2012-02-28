@@ -35,7 +35,7 @@
 </pre>
 		<pre>   var editCommand = new mCommands.Command({
      name: "Make Favorite",
-     image: "/images/makeFavorite.gif",
+     imageClass: "core-sprite-favorite",
      id: "my.command.id",
      visibleWhen: function(item) {
        //return true if this command should be visible for 'item'
@@ -46,7 +46,7 @@
    });
  });
 </pre>
-		<p>The image associated with a command can be defined as a single downloadable image, or as a CSS class to be used as the background for the image (so that image sprites can be used.)</p>
+		<p>The image associated with a command can be defined as a single downloadable image, or as a CSS class to be used as the background for the image (so that CSS data URI's and image sprites can be used.)</p>
 		<p>The command's callback is executed when the user clicks on the command.  The callback implementation may do the work directly, or it may need to collect some parameters from the user first.  If the latter, it is useful to determine which parameters are required in order for the command to accomplish its work, and which are optional.  Required parameters may be specified in the command.  If they are specified, then the command service will generate a UI for collecting the parameters before the callback is ever called.  For example, the following command specifies that a "name" parameter should be collected before calling the callback:</p>
 		<pre> var newArtifactCommand = new mCommands.Command({
    name: "New Artifact",
@@ -62,12 +62,16 @@
      }
    },
    visibleWhen: function(item) {
-     item.artifactHolder;
+     return item.artifactHolder;
    }});
 </pre>
 		<p>Once a command is defined, it needs to be registered in the command service. A scope for the command is specified when the command is added. Commands contributed in the "global" scope are intended to be used on any page, and typically do not depend on an "item" in the handler data. Commands in the "dom" scope are intended to be shown in a particular dom element that is defined when the command is contributed by a page. The "item" in question is typically associated with the page or the selection service. Commands in the "object" scope are intended to be shown for individual objects (items) that appear in tables, lists, or trees. The item in the handler typically corresponds to the object by which it is presented.</p>
 		<p>This snippet below registers the edit command and adds it in the "object" scope.</p>
-		<p>At this point, we've defined a generic edit command, its behavior, and its scope.  Nothing will appear in the UI until we decide to show it on a particular page.  To add a command to a page, the page must register a "command contribution" in the UI. The contributions are made separately so that, for example, an application could define all the commands that apply to its objects in common code, leaving the individual pages to decide how those commands might be shown.</p>
+		<pre> serviceRegistry.getService("orion.page.command").addCommand(editCommand, "object");
+</pre>
+		<p>At this point, we've defined a generic edit command, its behavior, and its scope.  Nothing will appear in the UI until we decide to show it on a particular page.  To add a command to a page, the page must register a 
+			<b>command contribution</b> in the UI. The contributions are made separately so that, for example, an application could define all the commands that apply to its objects in common code, leaving the individual pages to decide how those commands might be shown.
+		</p>
 		<p>Using the above example, a page that wanted to show object-level editing commands would make a contribution using the command service.</p>
 		<pre>serviceRegistry.getService("orion.page.command").registerCommandContribution("my.command.id", 1);
 </pre>
@@ -84,7 +88,7 @@ commandService.registerCommandContribution("orion.compare.prevDiff", 3, "rightCo
 // now render the commands into the dom node using "tool" style.  There are no items to pass to the handler.
 commandService.renderCommands("rightContainerCommands", "dom", /* no items */ null, myCompareHandler, "tool");
 </pre>
-		<p>See orion.commands.CommandService in the client API reference for documentation about commands, parameters, contributions, and rendering.</p><hr/>
+		<p>See orion.commands.CommandService in the client API reference for documentation about commands, parameters, URL bindings, contributions, and rendering.</p><hr/>
 		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
 			<tr>
 				<td style="width: 20%" align="left">

@@ -34,9 +34,10 @@
 		<ul>
 			<li>Favorites are persisted on the server, so the user can switch to another client computer or browser and access their familiar bookmarks</li>
 			<li>Favorites are associated with a specific Orion application and user, so favorites from different users or applications are not all mixed into a single place.</li>
+			<li>Favorites are used to suggest file and folder based parameters for other actions in Orion, such as moving and copying files to a location, or finding specific files.</li>
 		</ul>
 		<p>Here is an example usage of the favorites service:</p>
-		<pre>serviceRegistry.getService("orion.core.favorite").makeFavorites(item);
+		<pre>serviceRegistry.getService("orion.core.favorite").makeFavorites(itemOrArray);
 </pre>
 		<p>See <tt>orion.favorites.FavoritesService</tt> in the Orion client API reference for a complete list of functions available on the favorite service.</p><hr/>
 		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
