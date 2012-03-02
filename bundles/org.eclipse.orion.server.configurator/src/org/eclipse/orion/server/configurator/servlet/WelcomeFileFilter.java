@@ -10,6 +10,14 @@
  *******************************************************************************/
 package org.eclipse.orion.server.configurator.servlet;
 
+import java.util.List;
+
+import java.util.ArrayList;
+
+import java.util.StringTokenizer;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+
 import java.io.IOException;
 import javax.servlet.*;
 import javax.servlet.http.*;
@@ -20,16 +28,34 @@ import javax.servlet.http.*;
 public class WelcomeFileFilter implements Filter {
 
 	private static final String WELCOME_FILE_NAME = "index.html";//$NON-NLS-1$
+	private final List<String> includes = new ArrayList<String>();
+	private final List<String> excludes = new ArrayList<String>();
 
 	public void init(FilterConfig filterConfig) throws ServletException {
-		//nothing to do
+		String includesParameter = filterConfig.getInitParameter("includes");
+		if (includesParameter != null) {
+			StringTokenizer tokenizer = new StringTokenizer(includesParameter, ",", false);
+			while (tokenizer.hasMoreTokens()) {
+				String token = tokenizer.nextToken().trim();
+				includes.add(token);
+			}
+		}
+
+		String excludesParameter = filterConfig.getInitParameter("excludes");
+		if (excludesParameter != null) {
+			StringTokenizer tokenizer = new StringTokenizer(excludesParameter, ",", false);
+			while (tokenizer.hasMoreTokens()) {
+				String token = tokenizer.nextToken().trim();
+				excludes.add(token);
+			}
+		}
 	}
 
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
 		final HttpServletRequest httpRequest = (HttpServletRequest) request;
 		final String requestPath = httpRequest.getServletPath() + (httpRequest.getPathInfo() == null ? "" : httpRequest.getPathInfo());
 		// Only alter directories that aren't part of our servlets
-		if (requestPath.endsWith("/")) {
+		if (requestPath.endsWith("/") && isIncluded(requestPath) && !isExcluded(requestPath)) {
 			response = new HttpServletResponseWrapper((HttpServletResponse) response) {
 
 				private boolean handleWelcomeFile(int sc) {
@@ -71,6 +97,14 @@ public class WelcomeFileFilter implements Filter {
 			};
 		}
 		chain.doFilter(request, response);
+	}
+
+	private boolean isIncluded(String requestPath) {
+		return includes.isEmpty() || includes.contains(requestPath);
+	}
+
+	private boolean isExcluded(String requestPath) {
+		return excludes.contains(requestPath);
 	}
 
 	public void destroy() {

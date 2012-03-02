@@ -145,6 +145,10 @@
       <filter
             alias="/"
             class="org.eclipse.orion.server.configurator.servlet.WelcomeFileFilter">
+         <init-param
+               name="includes"
+               value="/">
+         </init-param>
       </filter>
       <filter
             alias="/"
