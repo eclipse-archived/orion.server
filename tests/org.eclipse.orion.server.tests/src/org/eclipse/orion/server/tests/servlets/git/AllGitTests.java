@@ -12,7 +12,6 @@ package org.eclipse.orion.server.tests.servlets.git;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.tests.harness.FileSystemHelper;
-import org.eclipse.orion.server.tests.patch.ApplyCommandTest;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
@@ -43,8 +42,7 @@ import org.junit.runners.Suite.SuiteClasses;
 		GitBranchTest.class, //
 		GitCherryPickTest.class, //
 		GitPullTest.class, //
-		GitApplyPatchTest.class, //
-		ApplyCommandTest.class})
+		GitApplyPatchTest.class})
 public class AllGitTests {
 	public static IPath getRandomLocation() {
 		return FileSystemHelper.getRandomLocation(FileSystemHelper.getTempDir());

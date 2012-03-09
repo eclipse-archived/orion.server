@@ -22,8 +22,9 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.*;
-import org.eclipse.jgit.api.DiffCommand;
-import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.*;
+import org.eclipse.jgit.api.errors.PatchApplyException;
+import org.eclipse.jgit.api.errors.PatchFormatException;
 import org.eclipse.jgit.dircache.DirCacheIterator;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevWalk;
@@ -37,7 +38,6 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Diff;
-import org.eclipse.orion.server.git.patch.*;
 import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
@@ -200,7 +200,8 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 		String contentType = request.getHeader(ProtocolConstants.HEADER_CONTENT_TYPE);
 		if (contentType.startsWith("multipart")) {//$NON-NLS-1$
 			String patch = readPatch(request.getInputStream(), contentType);
-			ApplyCommand applyCommand = new ApplyCommand(db);
+			Git git = new Git(db);
+			ApplyCommand applyCommand = git.apply();
 			applyCommand.setPatch(IOUtilities.toInputStream(patch));
 			// TODO: ignore all errors for now, see bug 366008
 			try {
