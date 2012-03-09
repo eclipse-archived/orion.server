@@ -331,15 +331,12 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 					try {
 						co.setName(Constants.R_HEADS + branch).call();
 						return true;
-					} catch (JGitInternalException e) {
-						if (org.eclipse.jgit.api.CheckoutResult.Status.CONFLICTS.equals(co.getResult().getStatus())) {
-							return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_CONFLICT, "Checkout aborted.", e));
-						}
-						// TODO: handle other exceptions
+					} catch (CheckoutConflictException e) {
+						return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_CONFLICT, "Checkout aborted.", e));
 					} catch (RefNotFoundException e) {
 						String msg = NLS.bind("Branch name not found: {0}", branch);
 						return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, e));
-					}
+					} // TODO: handle other exceptions
 				}
 			} else {
 				String msg = NLS.bind("Nothing found for the given ID: {0}", path);
