@@ -87,7 +87,7 @@
 		</ul>
 		<h3 id="Registering_the_service">Registering the service</h3>
 		<p>Now we're going to expose a service to Orion. We'll create and register a service with the 
-			<a href="../../../../\Orion\Documentation\Developer_Guide\Plugging_into_the_editor/orion-edit-command.html#orion.edit.command" title="Orion/Documentation/Developer Guide/Plugging into the editor#orion.edit.command">orion.edit.command</a> service type.
+			<a href="../../../../Orion/Documentation/Developer_Guide/Plugging_into_the_editor/orion-edit-command.html#orion.edit.command" title="Orion/Documentation/Developer Guide/Plugging into the editor#orion.edit.command">orion.edit.command</a> service type.
 			Add the additional lines as shown:
 		</p>
 		<pre>window.onload = function() {
@@ -106,7 +106,7 @@
 				<br/>Properties are often used to filter out service providers that are irrelevant to a particular task. For example, if you're writing a service provider for content assist, you'd specify what file types your provider applies to in its properties. The content assist loader then only loads plugins that provide content assist for the particular file type being edited.  This is important because plugin load can be an expensive operation, so we want to avoid doing it if possible. since these can be queried without loading the plugin itself. --> If you're familiar with Eclipse desktop, you can think of service properties as analogous to the extensions declared in a plugin.xml file.
 			</li>
 			<li><tt>provider.registerServiceProvider("orion.edit.command", serviceImpl, serviceProperties);</tt>: This call registers our service implementation and properties with the service type 
-				<a href="../../../../\Orion\Documentation\Developer_Guide\Plugging_into_the_editor/orion-edit-command.html#orion.edit.command" title="Orion/Documentation/Developer_Guide/Plugging_into_the_editor#orion.edit.command">"orion.edit.command"</a>. At this point, if we tried installing our plugin into Orion, we'd have enough to make the Orion editor see our contribution. However, our contribution still does nothing. Let's fix that.
+				<a href="../../../../Orion/Documentation/Developer_Guide/Plugging_into_the_editor/orion-edit-command.html#orion.edit.command" title="Orion/Documentation/Developer_Guide/Plugging_into_the_editor#orion.edit.command">"orion.edit.command"</a>. At this point, if we tried installing our plugin into Orion, we'd have enough to make the Orion editor see our contribution. However, our contribution still does nothing. Let's fix that.
 			</li>
 		</ul>
 		<h3 id="Implementing_the_service">Implementing the service</h3>
@@ -119,7 +119,7 @@
 };
 </pre>
 		<p>Note that the functions defined in the service will depend on what service type you're contributing to. In our case, we're contributing to 
-			<a href="../../../../\Orion\Documentation\Developer_Guide\Plugging_into_the_editor/orion-edit-command.html#orion.edit.command" title="Orion/Documentation/Developer_Guide/Plugging_into_the_editor#orion.edit.command">"orion.edit.command"</a>, which expects a <tt>run()</tt> function. (See the 
+			<a href="../../../../Orion/Documentation/Developer_Guide/Plugging_into_the_editor/orion-edit-command.html#orion.edit.command" title="Orion/Documentation/Developer_Guide/Plugging_into_the_editor#orion.edit.command">"orion.edit.command"</a>, which expects a <tt>run()</tt> function. (See the 
 			<a href="http://wiki.eclipse.org/Orion/Documentation/Developer_Guide" title="Orion/Documentation/Developer_Guide" target="orion_external">Developer Guide</a> for a list of extension points and their API.)
 		</p>
 		<p>Change the serviceProperties object to look like this:</p>

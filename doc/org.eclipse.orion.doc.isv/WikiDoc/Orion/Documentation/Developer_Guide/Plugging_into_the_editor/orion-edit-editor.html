@@ -34,10 +34,10 @@
 		<p>Contributions to this service do not directly affect the Orion UI. Instead, this service is typically used in conjunction with two other services, which allow new file types to be defined and associated with editors. See:</p>
 		<ul>
 			<li>
-				<a href="../../../../\Orion\Documentation\Developer_Guide\Plugging_into_the_navigator/orion-file-contenttype.html#orion.file.contenttype" title="Orion/Documentation/Developer Guide/Plugging into the navigator#orion.file.contenttype">orion.file.contenttype</a>: Registers a new content type for files.
+				<a href="../../../../Orion/Documentation/Developer_Guide/Plugging_into_the_navigator/orion-core-contenttype.html#orion.core.contenttype" title="Orion/Documentation/Developer Guide/Plugging into the navigator#orion.core.contenttype">orion.core.contenttype</a>: Registers a new content type for files.
 			</li>
 			<li>
-				<a href="../../../../\Orion\Documentation\Developer_Guide\Plugging_into_the_navigator/orion-navigate-openWith.html#orion.navigate.openWith" title="Orion/Documentation/Developer_Guide/Plugging_into_the_navigator#orion.navigate.openWith">orion.navigate.openWith</a>: Associates a content type (registered via <code>orion.file.contenttype</code>) to an editor (registered via <code>orion.edit.editor</code>).
+				<a href="../../../../Orion/Documentation/Developer_Guide/Plugging_into_the_navigator/orion-navigate-openWith.html#orion.navigate.openWith" title="Orion/Documentation/Developer_Guide/Plugging_into_the_navigator#orion.navigate.openWith">orion.navigate.openWith</a>: Associates a content type (registered via <code>orion.core.contenttype</code>) to an editor (registered via <code>orion.edit.editor</code>).
 			</li>
 		</ul>
 		<h2 id="Service_methods_3">Service methods</h2>
@@ -71,7 +71,7 @@
      uriTemplate: "http://mysite.com/myGreatEditor.php?fileToEdit={Location}"
    });
 </pre>
-		<p>The code below shows a complete example of how to use the <code>orion.editor</code>, <code>orion.file.contenttype</code>, and <code>orion.navigate.openWith</code> services in conjunction to declare a new editor, declare new file types, and associate them together. The example is adapted from Orion's own source code.</p>
+		<p>The code below shows a complete example of how to use the <code>orion.editor</code>, <code>orion.core.contenttype</code>, and <code>orion.navigate.openWith</code> services in conjunction to declare a new editor, declare new file types, and associate them together. The example is adapted from Orion's own source code.</p>
 		<pre> // Declare an editor
  provider.registerServiceProvider("orion.edit.editor", {}, {
    id: "orion.editor",
@@ -80,7 +80,7 @@
    orionTemplate: "../edit/edit.html#{,Location,params*}"});
 </pre>
 		<pre> // Declare content types
- provider.registerServiceProvider("orion.file.contenttype", {}, {
+ provider.registerServiceProvider("orion.core.contenttype", {}, {
    contentTypes:
      [{ id: "text.plain",
         name: "Text",

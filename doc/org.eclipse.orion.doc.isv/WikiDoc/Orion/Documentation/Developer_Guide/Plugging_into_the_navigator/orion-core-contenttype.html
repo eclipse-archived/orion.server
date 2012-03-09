@@ -2,13 +2,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-		<title>Plugging into the navigator - orion.file.contenttype</title>
+		<title>Plugging into the navigator - orion.core.contenttype</title>
 		<link type="text/css" rel="stylesheet" href="../../../../book.css"/>
 	</head>
 	<body>
 		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
 			<tr>
-				<th style="width: 100%" align="center" colspan="3">orion.file.contenttype</th>
+				<th style="width: 100%" align="center" colspan="3">orion.core.contenttype</th>
 			</tr>
 			<tr>
 				<td style="width: 20%" align="left">
@@ -29,7 +29,7 @@
 				<td style="width: 20%" align="right" valign="top">Updating this document</td>
 			</tr>
 		</table><hr/>
-		<h1 id="orion.file.contenttype">orion.file.contenttype</h1>
+		<h1 id="orion.core.contenttype">orion.core.contenttype</h1>
 		<p>The content type service tells Orion about a new kind of file. The content types contributed to this service don't have any direct effect on the Orion UI, but they can be referred to by other services that need to associate themselves with a particular kind of file. For an example, see 
 			<a href="orion.navigate.openWith" title="Orion/Documentation/Developer_Guide/Plugging_into_the_navigator#orion.navigate.openWith">orion.navigate.openWith</a>.
 		</p>
@@ -49,13 +49,17 @@
 							<dd><tt>String[]</tt> 
 								<i>Optional.</i> Array of file extensions characterizing this content type. (Extensions are given without the leading "." character).
 							</dd>
-							<dt>extension</dt>
+							<dt>filename</dt>
 							<dd><tt>String[]</tt> 
 								<i>Optional.</i> Array of filenames characterizing this content type. Use this when a type does not have a characteristic file extension, but rather a filename. (For example, "Makefile", "README", "passwd").
 							</dd>
 							<dt>extends</dt>
 							<dd><tt>String</tt> 
 								<i>Optional.</i> If this content type is a subtype of another, this gives the parent content type's ID.
+							</dd>
+							<dt>image</dt>
+							<dd><tt>String</tt> 
+								<i>Optional.</i> URL of an image to display beside files of this type (for example, in the Orion navigator).
 							</dd>
 						</dl>
 					</dt>
@@ -66,7 +70,7 @@
 		<p>None. This service is purely declarative.</p>
 		<h2 id="Example_3">Example</h2>
 		<p>This example code contributes contributes a new content type for Perl files. A Perl file extends from <code>"text.plain"</code> and has the extension <code>.pl</code>.</p>
-		<pre> provider.registerServiceProvider("orion.file.contenttype", {}, {
+		<pre> provider.registerServiceProvider("orion.core.contenttype", {}, {
    contentTypes: [{  id: "text.perl",
                      name: "Perl",
                      extension: ["pl"],
@@ -75,7 +79,7 @@
  provider.connect();
 </pre>
 		<p>The example code below contributes a new content type for Ant build files. An Ant build file is a special kind of XML file that always has the name "build.xml".</p>
-		<pre> provider.registerServiceProvider("orion.file.contenttype", {}, {
+		<pre> provider.registerServiceProvider("orion.core.contenttype", {}, {
    contentTypes: [{  id: "text.ant",
                      name: "Ant build file",
                      filename: ["build.xml"],
