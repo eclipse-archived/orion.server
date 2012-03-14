@@ -109,19 +109,19 @@ public class TaskService implements ITaskService {
 	}
 
 	private void cleanUpTasks() {
-		List<String> allTasks = store.readAllTasks();
+		List<TaskDescription> allTasks = store.readAllTasks();
 		Calendar monthAgo = Calendar.getInstance();
 		monthAgo.add(Calendar.MONTH, -1);
-		for (String taskString : allTasks) {
-			TaskInfo task = TaskInfo.fromJSON(taskString);
-			if(task==null){
+		for (TaskDescription taskDescription : allTasks) {
+			TaskInfo task = TaskInfo.fromJSON(store.readTask(taskDescription));
+			if (task == null) {
 				continue;
 			}
 			if (task.isRunning()) {//mark all running tasks as failed due to server restart
 				task.done(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Task could not be completed due to server restart", null));
 				updateTask(task);
 			}
-			if(task.getModified().before(monthAgo.getTime())){ //remove tasks older than a month
+			if (task.getModified().before(monthAgo.getTime())) { //remove tasks older than a month
 				try {
 					removeTask(task.getUserId(), task.getTaskId());
 				} catch (TaskOperationException e) {
@@ -141,14 +141,14 @@ public class TaskService implements ITaskService {
 			throw new TaskDoesNotExistException(id);
 		if (task.isRunning())
 			throw new TaskOperationException("Cannot remove a task that is running. Try to cancel first");
-		if (!store.removeTask(userId, id))
+		if (!store.removeTask(new TaskDescription(userId, id)))
 			throw new TaskOperationException("Task could not be removed");
 		taskCancelers.remove(id);
 		if (!taskDeletions.containsKey(userId)) {
 			taskDeletions.put(userId, new ArrayList<TaskService.TaskDeletion>());
 		}
 		int i = taskDeletions.get(userId).size();
-		while(i>0 && taskDeletions.get(userId).get(i-1).deletionDate.after(dateRemoved)){
+		while (i > 0 && taskDeletions.get(userId).get(i - 1).deletionDate.after(dateRemoved)) {
 			i--;
 		}
 		taskDeletions.get(userId).add(i, new TaskDeletion(dateRemoved, id));
@@ -182,7 +182,7 @@ public class TaskService implements ITaskService {
 			taskCancelers.put(task.getTaskId(), taskCanceler);
 			task.setCanBeCanceled(true);
 		}
-		store.writeTask(userId, task.getTaskId(), task.toJSON().toString());
+		store.writeTask(new TaskDescription(userId, task.getTaskId()), task.toJSON().toString());
 		notifyListeners(userId, task.getModified());
 		return task;
 	}
@@ -196,7 +196,7 @@ public class TaskService implements ITaskService {
 	}
 
 	public TaskInfo getTask(String userId, String id) {
-		String taskString = store.readTask(userId, id);
+		String taskString = store.readTask(new TaskDescription(userId, id));
 		if (taskString == null)
 			return null;
 		TaskInfo info = TaskInfo.fromJSON(taskString);
@@ -207,7 +207,7 @@ public class TaskService implements ITaskService {
 
 	public void updateTask(TaskInfo task) {
 		task.setModified(new Date());
-		store.writeTask(task.getUserId(), task.getTaskId(), task.toJSON().toString());
+		store.writeTask(new TaskDescription(task.getUserId(), task.getTaskId()), task.toJSON().toString());
 		notifyListeners(task.getUserId(), task.getModified());
 	}
 
@@ -259,7 +259,7 @@ public class TaskService implements ITaskService {
 	public synchronized Collection<String> getTasksDeletedSince(String userId, Date deletedSince) {
 		Set<String> deletedTasks = new HashSet<String>();
 		List<TaskDeletion> taskDeletionsList = taskDeletions.get(userId);
-		if (taskDeletionsList == null || deletedSince==null) {
+		if (taskDeletionsList == null || deletedSince == null) {
 			return deletedTasks;
 		}
 		for (int i = taskDeletionsList.size() - 1; i > 0; i--) {

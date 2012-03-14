@@ -41,6 +41,14 @@ public class TaskStore {
 		return new String(Base64.encode(userId.getBytes()));
 	}
 
+	private String getUserName(String userDirectoryName) {
+		try {
+			return new String(Base64.decode(userDirectoryName.getBytes()));
+		} catch (Exception e) {
+			return null; //if this is not encoded user name than return null
+		}
+	}
+
 	/**
 	 * Returns a string representation of the task with the given id, or <code>null</code>
 	 * if no such task exists.
@@ -48,11 +56,11 @@ public class TaskStore {
 	 * @param userId id of a user that is an owner of the task
 	 * @param id id of the task
 	 */
-	public synchronized String readTask(String userId, String id) {
-		File userDirectory = new File(root, getUserDirectory(userId));
+	public synchronized String readTask(TaskDescription td) {
+		File userDirectory = new File(root, getUserDirectory(td.getUserId()));
 		if (!userDirectory.exists())
 			return null;
-		File taskFile = new File(userDirectory, id);
+		File taskFile = new File(userDirectory, td.getTaskId());
 		if (!taskFile.exists())
 			return null;
 		StringWriter writer;
@@ -65,14 +73,14 @@ public class TaskStore {
 		} catch (IOException e) {
 			LogHelper.log(e);
 			return null;
-		} finally{
-			if(reader!=null)
+		} finally {
+			if (reader != null)
 				try {
 					reader.close();
 				} catch (IOException e) {
 					LogHelper.log(e);
 					return null;
-				}	
+				}
 		}
 	}
 
@@ -81,15 +89,15 @@ public class TaskStore {
 	 * 
 	 * @param userId id of a user that is an owner of the task
 	 * @param id id of the task
-	 * @param representation string representation ot the task
+	 * @param representation string representation or the task
 	 */
-	public synchronized void writeTask(String userId, String id, String representation) {
+	public synchronized void writeTask(TaskDescription td, String representation) {
 		try {
-			File userDirectory = new File(root, getUserDirectory(userId));
+			File userDirectory = new File(root, getUserDirectory(td.getUserId()));
 			if (!userDirectory.exists()) {
 				userDirectory.mkdir();
 			}
-			File taskFile = new File(userDirectory, id);
+			File taskFile = new File(userDirectory, td.getTaskId());
 			FileWriter writer = new FileWriter(taskFile);
 			StringReader reader = new StringReader(representation);
 			IOUtilities.pipe(reader, writer, true, true);
@@ -106,18 +114,18 @@ public class TaskStore {
 	 * @param id id of the task
 	 * @return <code>true</code> if task was removed, <code>false</code> otherwise. 
 	 */
-	public synchronized boolean removeTask(String userId, String id) {
-		File userDirectory = new File(root, getUserDirectory(userId));
+	public synchronized boolean removeTask(TaskDescription td) {
+		File userDirectory = new File(root, getUserDirectory(td.getUserId()));
 		if (!userDirectory.exists())
 			return false;
-		File taskFile = new File(userDirectory, id);
+		File taskFile = new File(userDirectory, td.getTaskId());
 		if (!taskFile.exists())
 			return false;
 		return taskFile.delete();
 	}
-	
-	private List<String> internalReadAllTasks(File userDirectory){
-		List<String> result  = new ArrayList<String>();
+
+	private List<String> internalReadAllTasks(File userDirectory) {
+		List<String> result = new ArrayList<String>();
 		for (File taskFile : userDirectory.listFiles()) {
 			if (!taskFile.isFile())
 				continue;
@@ -131,19 +139,31 @@ public class TaskStore {
 			} catch (IOException e) {
 				LogHelper.log(e);
 				return null;
-			} finally{
-				if(reader!=null)
+			} finally {
+				if (reader != null)
 					try {
 						reader.close();
 					} catch (IOException e) {
 						LogHelper.log(e);
 						return null;
-					}	
+					}
 			}
 		}
-
 		return result;
-		
+	}
+
+	private List<TaskDescription> internalReadAllTasksDescriptions(File userDirectory) {
+		List<TaskDescription> result = new ArrayList<TaskDescription>();
+		String userId = getUserName(userDirectory.getName());
+		if (userId == null) {
+			return result; // this is not a user directory
+		}
+		for (File taskFile : userDirectory.listFiles()) {
+			if (!taskFile.isFile())
+				continue;
+			result.add(new TaskDescription(userId, taskFile.getName()));
+		}
+		return result;
 	}
 
 	/**
@@ -159,12 +179,12 @@ public class TaskStore {
 
 		return internalReadAllTasks(userDirectory);
 	}
-	
-	public synchronized List<String> readAllTasks(){
-		List<String> result  = new ArrayList<String>();
+
+	public synchronized List<TaskDescription> readAllTasks() {
+		List<TaskDescription> result = new ArrayList<TaskDescription>();
 		for (File userDirectory : root.listFiles()) {
-			if(userDirectory.isDirectory()){
-				result.addAll(internalReadAllTasks(userDirectory));
+			if (userDirectory.isDirectory()) {
+				result.addAll(internalReadAllTasksDescriptions(userDirectory));
 			}
 		}
 		return result;
