@@ -251,6 +251,12 @@ public class ProtocolConstants {
 	public static final String PARM_DEPTH = "depth"; //$NON-NLS-1$
 
 	/**
+	 * Query parameter on HTTP requests for files, indicating the source
+	 * of the content to be written.
+	 */
+	public static final String PARM_SOURCE = "source"; //$NON-NLS-1$
+
+	/**
 	 * JSON representation key for a file's attributes. The value's data
 	 * type is a JSON object of String/Boolean pairs.
 	 */

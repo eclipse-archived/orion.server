@@ -11,6 +11,7 @@
 package org.eclipse.orion.internal.server.servlets.file;
 
 import java.io.*;
+import java.net.URL;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
@@ -82,6 +83,11 @@ class FileHandlerV1 extends GenericFileHandler {
 	}
 
 	private void handlePutContents(HttpServletRequest request, BufferedReader requestReader, HttpServletResponse response, IFileStore file) throws IOException, CoreException, NoSuchAlgorithmException, JSONException {
+		String source = request.getParameter(ProtocolConstants.PARM_SOURCE);
+		if (source != null) {
+			//if source is specified, read contents from different URL rather than from this request stream
+			requestReader = new BufferedReader(new InputStreamReader(new URL(source).openStream()));
+		}
 		Writer fileWriter = new BufferedWriter(new OutputStreamWriter(file.openOutputStream(EFS.NONE, null)));
 		IOUtilities.pipe(requestReader, fileWriter, false, true);
 
