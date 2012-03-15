@@ -84,7 +84,7 @@ public class AdvancedFilesTest extends FileSystemTest {
 		checkFileMetadata(responseObject, fileName, new Long(-1), null, null, request.getURL().getRef(), new Long(0), null, null, null);
 
 		//modify the metadata
-		request = getPutFilesRequest(fileName + "?parts=meta", getFileMetadataObject(true, true).toString());
+		request = getPutFileRequest(fileName + "?parts=meta", getFileMetadataObject(true, true).toString());
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_NO_CONTENT, response.getResponseCode());
 
