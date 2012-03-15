@@ -22,6 +22,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.orion.internal.server.core.tasks.TaskDescription;
 import org.eclipse.orion.internal.server.core.tasks.TaskService;
 import org.eclipse.orion.internal.server.core.tasks.TaskStore;
 import org.eclipse.orion.server.core.tasks.ITaskService;
@@ -39,7 +40,7 @@ public class TaskStoreTest extends TestCase {
 	@Test
 	public void testRead() {
 		TaskStore store = new TaskStore(tempDir);
-		String task = store.readTask("Userdoesnotexist", "Doesnotexist");
+		String task = store.readTask(new TaskDescription("Userdoesnotexist", "Doesnotexist"));
 		assertNull(task);
 	}
 
@@ -47,9 +48,9 @@ public class TaskStoreTest extends TestCase {
 	public void testRoundTrip() {
 		TaskInfo task = AllTaskTests.createTestTask("test");
 		TaskStore store = new TaskStore(tempDir);
-		store.writeTask(task.getUserId(), task.getTaskId(), task.toJSON().toString());
+		store.writeTask(new TaskDescription(task.getUserId(), task.getTaskId()), task.toJSON().toString());
 
-		TaskInfo task2 = TaskInfo.fromJSON(store.readTask(task.getUserId(), task.getTaskId()));
+		TaskInfo task2 = TaskInfo.fromJSON(store.readTask(new TaskDescription(task.getUserId(), task.getTaskId())));
 		AllTaskTests.assertEqualTasks(task, task2);
 	}
 
@@ -58,10 +59,10 @@ public class TaskStoreTest extends TestCase {
 		TaskInfo task = AllTaskTests.createTestTask("test");
 		task.done(Status.OK_STATUS);
 		TaskStore store = new TaskStore(tempDir);
-		store.writeTask(task.getUserId(), task.getTaskId(), task.toJSON().toString());
-		assertNotNull(store.readTask(task.getUserId(), task.getTaskId()));
-		assertTrue(store.removeTask(task.getUserId(), task.getTaskId()));
-		assertNull(store.readTask(task.getUserId(), task.getTaskId()));
+		store.writeTask(new TaskDescription(task.getUserId(), task.getTaskId()), task.toJSON().toString());
+		assertNotNull(store.readTask(new TaskDescription(task.getUserId(), task.getTaskId())));
+		assertTrue(store.removeTask(new TaskDescription(task.getUserId(), task.getTaskId())));
+		assertNull(store.readTask(new TaskDescription(task.getUserId(), task.getTaskId())));
 	}
 
 	@Test
@@ -71,11 +72,11 @@ public class TaskStoreTest extends TestCase {
 		TaskInfo task2 = new TaskInfo("test", "taskid2", false);
 		task2.done(Status.OK_STATUS);
 		TaskStore store = new TaskStore(tempDir);
-		store.writeTask("test", task1.getTaskId(), task1.toJSON().toString());
+		store.writeTask(new TaskDescription("test", task1.getTaskId()), task1.toJSON().toString());
 		assertEquals(1, store.readAllTasks("test"));
-		store.writeTask("test", task2.getTaskId(), task2.toJSON().toString());
+		store.writeTask(new TaskDescription("test", task2.getTaskId()), task2.toJSON().toString());
 		assertEquals(2, store.readAllTasks("test"));
-		store.removeTask("test", task1.getTaskId());
+		store.removeTask(new TaskDescription("test", task1.getTaskId()));
 		assertEquals(1, store.readAllTasks("test"));
 	}
 
