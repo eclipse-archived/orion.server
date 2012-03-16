@@ -357,7 +357,7 @@ public class GitConfigTest extends GitTest {
 
 			request = getPostGitConfigRequest(gitConfigUri, ENTRY_KEY, NEW_ENTRY_VALUE);
 			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			assertEquals(HttpURLConnection.HTTP_CONFLICT, response.getResponseCode());
 
 			JSONObject configResponse = new JSONObject(response.getText());
 			String entryLocation = configResponse.getString(ProtocolConstants.KEY_LOCATION);
@@ -366,7 +366,8 @@ public class GitConfigTest extends GitTest {
 			request = getGetGitConfigRequest(entryLocation);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			assertConfigOption(new JSONObject(response.getText()), ENTRY_KEY, NEW_ENTRY_VALUE);
+			// assert unchanged
+			assertConfigOption(new JSONObject(response.getText()), ENTRY_KEY, ENTRY_VALUE);
 		}
 	}
 

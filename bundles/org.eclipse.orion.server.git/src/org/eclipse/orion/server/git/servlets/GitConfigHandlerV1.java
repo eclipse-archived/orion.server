@@ -109,16 +109,14 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Confign entry value must be provided", null));
 			try {
 				ConfigOption configOption = new ConfigOption(cloneLocation, db, key);
-
 				boolean present = configOption.exists();
-
-				save(configOption, value);
+				if (!present)
+					save(configOption, value);
 
 				JSONObject result = configOption.toJSON();
 				OrionServlet.writeJSONResponse(request, response, result);
 				response.setHeader(ProtocolConstants.HEADER_LOCATION, result.getString(ProtocolConstants.KEY_LOCATION));
-				if (!present)
-					response.setStatus(HttpServletResponse.SC_CREATED);
+				response.setStatus(present ? HttpServletResponse.SC_CONFLICT : HttpServletResponse.SC_CREATED);
 				return true;
 			} catch (IllegalArgumentException e) {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), e));
