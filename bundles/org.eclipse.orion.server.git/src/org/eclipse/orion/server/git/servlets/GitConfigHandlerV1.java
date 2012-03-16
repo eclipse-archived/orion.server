@@ -103,20 +103,21 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 			JSONObject toPost = OrionServlet.readJSONRequest(request);
 			String key = toPost.optString(GitConstants.KEY_CONFIG_ENTRY_KEY, null);
 			if (key == null || key.isEmpty())
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Confign entry key must be provided", null));
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Config entry key must be provided", null));
 			String value = toPost.optString(GitConstants.KEY_CONFIG_ENTRY_VALUE, null);
 			if (value == null || value.isEmpty())
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Confign entry value must be provided", null));
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Config entry value must be provided", null));
 			try {
 				ConfigOption configOption = new ConfigOption(cloneLocation, db, key);
 				boolean present = configOption.exists();
-				if (!present)
-					save(configOption, value);
+				if (present)
+					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_CONFLICT, NLS.bind("Config entry for {0} already exists", key), null));
+				save(configOption, value);
 
 				JSONObject result = configOption.toJSON();
 				OrionServlet.writeJSONResponse(request, response, result);
 				response.setHeader(ProtocolConstants.HEADER_LOCATION, result.getString(ProtocolConstants.KEY_LOCATION));
-				response.setStatus(present ? HttpServletResponse.SC_CONFLICT : HttpServletResponse.SC_CREATED);
+				response.setStatus(HttpServletResponse.SC_CREATED);
 				return true;
 			} catch (IllegalArgumentException e) {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), e));
@@ -138,7 +139,7 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 				JSONObject toPut = OrionServlet.readJSONRequest(request);
 				String value = toPut.optString(GitConstants.KEY_CONFIG_ENTRY_VALUE, null);
 				if (value == null || value.isEmpty())
-					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Confign entry value must be provided", null));
+					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Config entry value must be provided", null));
 
 				// PUT allows only to modify existing config entries
 				if (!configOption.exists()) {
