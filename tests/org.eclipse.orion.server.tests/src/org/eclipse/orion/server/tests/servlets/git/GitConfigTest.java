@@ -25,9 +25,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.ConfigConstants;
-import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.StoredConfig;
-import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -83,8 +81,7 @@ public class GitConfigTest extends GitTest {
 		assertNotNull(childrenLocation);
 
 		// check if Git locations are in place
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
@@ -105,19 +102,14 @@ public class GitConfigTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// log
-		// TODO: replace with RESTful API for git log when available
-		Iterable<RevCommit> commits = git.log().call();
-		PersonIdent testIdent = new PersonIdent(GIT_NAME, GIT_MAIL);
-		PersonIdent[] expectedIdents = new PersonIdent[] {testIdent};
-		int c = 0;
-		for (RevCommit commit : commits) {
-			if (commit.getFullMessage().equals(GIT_COMMIT_MESSAGE)) {
-				assertEquals(expectedIdents[expectedIdents.length - 1 - c].getName(), commit.getCommitterIdent().getName());
-				assertEquals(expectedIdents[expectedIdents.length - 1 - c].getEmailAddress(), commit.getCommitterIdent().getEmailAddress());
+		JSONArray commitsArray = log(gitHeadUri);
+		assertEquals(2, commitsArray.length());
+		for (int i = 0; i < commitsArray.length(); i++) {
+			if (commitsArray.getJSONObject(i).getString(GitConstants.KEY_COMMIT_MESSAGE).equals(GIT_COMMIT_MESSAGE)) {
+				assertEquals(GIT_NAME, commitsArray.getJSONObject(i).getString(GitConstants.KEY_AUTHOR_NAME));
+				assertEquals(GIT_MAIL, commitsArray.getJSONObject(i).getString(GitConstants.KEY_AUTHOR_EMAIL));
 			}
-			c++;
 		}
-		assertEquals(2, c);
 	}
 
 	@Test
@@ -172,19 +164,14 @@ public class GitConfigTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// log
-		// TODO: replace with RESTful API for git log when available
-		Iterable<RevCommit> commits = git.log().call();
-		PersonIdent testIdent = new PersonIdent(GIT_NAME, GIT_MAIL);
-		PersonIdent[] expectedIdents = new PersonIdent[] {testIdent};
-		int c = 0;
-		for (RevCommit commit : commits) {
-			if (commit.getFullMessage().equals(GIT_COMMIT_MESSAGE)) {
-				assertEquals(expectedIdents[expectedIdents.length - 1 - c].getName(), commit.getCommitterIdent().getName());
-				assertEquals(expectedIdents[expectedIdents.length - 1 - c].getEmailAddress(), commit.getCommitterIdent().getEmailAddress());
+		JSONArray commitsArray = log(gitHeadUri);
+		assertEquals(2, commitsArray.length());
+		for (int i = 0; i < commitsArray.length(); i++) {
+			if (commitsArray.getJSONObject(i).getString(GitConstants.KEY_COMMIT_MESSAGE).equals(GIT_COMMIT_MESSAGE)) {
+				assertEquals(GIT_NAME, commitsArray.getJSONObject(i).getString(GitConstants.KEY_AUTHOR_NAME));
+				assertEquals(GIT_MAIL, commitsArray.getJSONObject(i).getString(GitConstants.KEY_AUTHOR_EMAIL));
 			}
-			c++;
 		}
-		assertEquals(2, c);
 	}
 
 	@Test
