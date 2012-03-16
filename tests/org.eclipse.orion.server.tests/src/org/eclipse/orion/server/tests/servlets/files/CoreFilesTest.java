@@ -274,6 +274,30 @@ public class CoreFilesTest extends FileSystemTest {
 	}
 
 	@Test
+	public void testWriteImageFromURL() throws CoreException, IOException, SAXException, JSONException {
+		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+		createDirectory(directoryPath);
+		String fileName = "testfile.gif";
+
+		WebRequest request = getPostFilesRequest(directoryPath, getNewFileJSON(fileName).toString(), fileName);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+		//put to file location should succeed
+		String location = response.getHeaderField("Location");
+		//just need some stable file here
+		request = getPutFileRequest(location + "?source=http://eclipse.org/eclipse/development/images/Adarrow.gif", "");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		//get should return new contents
+		request = getGetFilesRequest(location);
+		response = webConversation.getResponse(request);
+		assertEquals("image/gif", response.getHeaderField("CONTENT-TYPE"));
+		assertEquals("857", response.getHeaderField("CONTENT-LENGTH"));
+	}
+
+	@Test
 	public void testDeleteEmptyDir() throws CoreException, IOException, SAXException {
 		String dirPath = "sample/directory/path/sample" + System.currentTimeMillis();
 		createDirectory(dirPath);

@@ -86,10 +86,12 @@ class FileHandlerV1 extends GenericFileHandler {
 		String source = request.getParameter(ProtocolConstants.PARM_SOURCE);
 		if (source != null) {
 			//if source is specified, read contents from different URL rather than from this request stream
-			requestReader = new BufferedReader(new InputStreamReader(new URL(source).openStream()));
+			IOUtilities.pipe(new URL(source).openStream(), file.openOutputStream(EFS.NONE, null), true, true);
+		} else {
+			//read from the request stream
+			Writer fileWriter = new BufferedWriter(new OutputStreamWriter(file.openOutputStream(EFS.NONE, null)));
+			IOUtilities.pipe(requestReader, fileWriter, false, true);
 		}
-		Writer fileWriter = new BufferedWriter(new OutputStreamWriter(file.openOutputStream(EFS.NONE, null)));
-		IOUtilities.pipe(requestReader, fileWriter, false, true);
 
 		// return metadata with the new Etag
 		handleGetMetadata(request, response, response.getWriter(), file);
