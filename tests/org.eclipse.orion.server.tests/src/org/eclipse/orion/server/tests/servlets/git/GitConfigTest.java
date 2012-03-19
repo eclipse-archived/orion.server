@@ -510,7 +510,7 @@ public class GitConfigTest extends GitTest {
 	}
 
 	@Test
-	public void testUpdateUnexistingConfigEntryUsingPUT() throws Exception {
+	public void testUpdateNonExistingConfigEntryUsingPUT() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
 		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
@@ -602,6 +602,27 @@ public class GitConfigTest extends GitTest {
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
 		}
+	}
+
+	@Test
+	public void testGetConfigEntryForNonExistingRepository() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = getWorkspaceId(workspaceLocation);
+
+		WebRequest request = GitCloneTest.listGitClonesRequest(workspaceId, null);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject clones = new JSONObject(response.getText());
+		JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+
+		String dummyId = "dummyId";
+		GitCloneTest.ensureCloneIdDoesntExist(clonesArray, dummyId);
+		String entryLocation = SERVER_LOCATION + GIT_SERVLET_LOCATION + ConfigOption.RESOURCE + "/dummyKey/" + Clone.RESOURCE + "/file/" + dummyId;
+
+		// get value of config entry
+		request = getGetGitConfigRequest(entryLocation);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 	}
 
 	@Test

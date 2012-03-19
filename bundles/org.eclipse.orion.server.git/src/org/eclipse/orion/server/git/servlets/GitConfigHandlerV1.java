@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -70,6 +70,8 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 		if (p.segment(0).equals(Clone.RESOURCE) && p.segment(1).equals("file")) { //$NON-NLS-1$
 			// expected path /gitapi/config/clone/file/{path}
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(1));
+			if (gitDir == null)
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("No repository found under {0}", p.removeFirstSegments(1)), null));
 			Repository db = new FileRepository(gitDir);
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(baseLocation, BaseToCloneConverter.CONFIG);
 			ConfigOption configOption = new ConfigOption(cloneLocation, db);
@@ -78,6 +80,8 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 		} else if (p.segment(1).equals(Clone.RESOURCE) && p.segment(2).equals("file")) { //$NON-NLS-1$
 			// expected path /gitapi/config/{key}/clone/file/{path}
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2));
+			if (gitDir == null)
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("No repository found under {0}", p.removeFirstSegments(2)), null));
 			Repository db = new FileRepository(gitDir);
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(baseLocation, BaseToCloneConverter.CONFIG_OPTION);
 			try {
@@ -98,6 +102,8 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 		if (p.segment(0).equals(Clone.RESOURCE) && p.segment(1).equals("file")) { //$NON-NLS-1$
 			// expected path /gitapi/config/clone/file/{path}
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(1));
+			if (gitDir == null)
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("No repository found under {0}", p.removeFirstSegments(1)), null));
 			Repository db = new FileRepository(gitDir);
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.CONFIG);
 			JSONObject toPost = OrionServlet.readJSONRequest(request);
@@ -131,6 +137,8 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 		if (p.segment(1).equals(Clone.RESOURCE) && p.segment(2).equals("file")) { //$NON-NLS-1$
 			// expected path /gitapi/config/{key}/clone/file/{path}
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2));
+			if (gitDir == null)
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("No repository found under {0}", p.removeFirstSegments(2)), null));
 			Repository db = new FileRepository(gitDir);
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.CONFIG_OPTION);
 			try {
@@ -165,6 +173,8 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 		if (p.segment(1).equals(Clone.RESOURCE) && p.segment(2).equals("file")) { //$NON-NLS-1$
 			// expected path /gitapi/config/{key}/clone/file/{path}
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2));
+			if (gitDir == null)
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("No repository found under {0}", p.removeFirstSegments(2)), null));
 			Repository db = new FileRepository(gitDir);
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.CONFIG_OPTION);
 			try {

@@ -683,7 +683,7 @@ public class GitCloneTest extends GitTest {
 	}
 
 	@Test
-	public void testGetNonexistingClone() throws Exception {
+	public void testGetNonExistingClone() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		String workspaceId = getWorkspaceId(workspaceLocation);
 
@@ -845,7 +845,7 @@ public class GitCloneTest extends GitTest {
 	 * @param path path under the workspace starting with project ID. Must be null if workspaceId is provided.
 	 * @return the request
 	 */
-	private WebRequest listGitClonesRequest(String workspaceId, IPath path) {
+	static WebRequest listGitClonesRequest(String workspaceId, IPath path) {
 		assertTrue(workspaceId == null && path != null || workspaceId != null && path == null);
 		String requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Clone.RESOURCE + '/';
 		if (workspaceId != null) {
@@ -873,7 +873,7 @@ public class GitCloneTest extends GitTest {
 		return request;
 	}
 
-	private void ensureCloneIdDoesntExist(JSONArray clonesArray, String id) throws JSONException {
+	static void ensureCloneIdDoesntExist(JSONArray clonesArray, String id) throws JSONException {
 		for (int i = 0; i < clonesArray.length(); i++) {
 			JSONObject clone = clonesArray.getJSONObject(i);
 			assertFalse(id.equals(clone.get(ProtocolConstants.KEY_ID)));
