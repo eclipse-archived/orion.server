@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -47,7 +47,7 @@ public class Clone {
 		this.id = id;
 	}
 
-	public String getId() {
+	private String getId() {
 		return this.id;
 	}
 
@@ -113,7 +113,6 @@ public class Clone {
 	public JSONObject toJSON(URI baseLocation) throws JSONException, URISyntaxException {
 		JSONObject result = new JSONObject();
 		try {
-			result.put(ProtocolConstants.KEY_ID, getId());
 			result.put(ProtocolConstants.KEY_NAME, getName());
 			result.put(ProtocolConstants.KEY_TYPE, TYPE);
 

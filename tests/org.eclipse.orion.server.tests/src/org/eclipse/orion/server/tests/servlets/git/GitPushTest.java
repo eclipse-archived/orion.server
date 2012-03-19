@@ -945,7 +945,12 @@ public class GitPushTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// check file content
-			JSONObject testTxt2 = getChild(clone2, "test.txt");
+			String cloneContentLocation2 = clone2.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+			request = getGetFilesRequest(cloneContentLocation2);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject folder2 = new JSONObject(response.getText());
+			JSONObject testTxt2 = getChild(folder2, "test.txt");
 			assertEquals("branch change", getFileContent(testTxt2));
 		}
 	}
