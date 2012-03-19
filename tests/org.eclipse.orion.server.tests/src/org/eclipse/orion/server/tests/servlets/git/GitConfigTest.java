@@ -352,15 +352,15 @@ public class GitConfigTest extends GitTest {
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
+			JSONObject configResponse = new JSONObject(response.getText());
+			String entryLocation = configResponse.getString(ProtocolConstants.KEY_LOCATION);
+
 			// update config entry using POST
 			final String NEW_ENTRY_VALUE = "valueABC";
 
 			request = getPostGitConfigRequest(gitConfigUri, ENTRY_KEY, NEW_ENTRY_VALUE);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_CONFLICT, response.getResponseCode());
-
-			JSONObject configResponse = new JSONObject(response.getText());
-			String entryLocation = configResponse.getString(ProtocolConstants.KEY_LOCATION);
 
 			// get value of config entry
 			request = getGetGitConfigRequest(entryLocation);
