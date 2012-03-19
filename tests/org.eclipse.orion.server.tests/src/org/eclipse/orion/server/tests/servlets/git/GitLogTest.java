@@ -12,6 +12,7 @@ package org.eclipse.orion.server.tests.servlets.git;
 
 import static org.eclipse.orion.server.tests.IsJSONArrayEqual.isJSONArrayEqual;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 
@@ -831,6 +832,33 @@ public class GitLogTest extends GitTest {
 			assertNull(fromRef);
 			assertNull(toRef);
 		}
+	}
+
+	@Test
+	public void testGetNonExistingCommit() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		String projectName = getMethodName();
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
+		JSONObject testTxt = getChild(project, "test.txt");
+
+		// get log for file
+		JSONObject log = logObject(testTxt.getJSONObject(GitConstants.KEY_GIT).getString(GitConstants.KEY_HEAD));
+		JSONArray commitsArray = log.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		assertEquals(1, commitsArray.length());
+
+		JSONObject commit = commitsArray.getJSONObject(0);
+		assertEquals("Initial commit", commit.getString(GitConstants.KEY_COMMIT_MESSAGE));
+		String commitName = commit.getString(ProtocolConstants.KEY_NAME);
+		String dummyName = "dummyName";
+		assertFalse(dummyName.equals(commitName));
+		String commitLocation = commit.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+		// prepare the dummy commit location
+		commitLocation = commitLocation.replace(commitName, dummyName).replace("?parts=body", "?page=1&pageSize=1");
+
+		WebRequest request = getGetRequest(commitLocation);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 	}
 
 	private static WebRequest getPostForScopedLogRequest(String location, String newCommit) throws JSONException, UnsupportedEncodingException {
