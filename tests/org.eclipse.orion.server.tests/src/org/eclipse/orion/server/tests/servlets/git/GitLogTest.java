@@ -102,14 +102,14 @@ public class GitLogTest extends GitTest {
 			String initialGitCommitURI = gitHeadUri.replaceAll(Constants.HEAD, initialGitCommitName);
 
 			//get log for given page size
-			commitsArray = log(gitHeadUri, 1, 1);
+			commitsArray = log(gitHeadUri, 1, 1, false, true);
 			assertEquals(1, commitsArray.length());
 
 			commit = commitsArray.getJSONObject(0);
 			assertEquals("commit2", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
 
 			//get log for second page
-			commitsArray = log(gitHeadUri, 2, 1);
+			commitsArray = log(gitHeadUri, 2, 1, true, true);
 			assertEquals(1, commitsArray.length());
 
 			commit = commitsArray.getJSONObject(0);
@@ -152,7 +152,7 @@ public class GitLogTest extends GitTest {
 		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
 
 		// reading first 50 commits should be enough to start a task
-		JSONArray commitsArray = log(gitHeadUri, 1, 50);
+		JSONArray commitsArray = log(gitHeadUri, 1, 50, false, true);
 		assertEquals(50, commitsArray.length());
 	}
 
