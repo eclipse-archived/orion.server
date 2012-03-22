@@ -52,7 +52,7 @@ public class Log extends GitObject {
 			throw new IllegalStateException("'commits' is null");
 		Map<ObjectId, JSONArray> commitToBranchMap = getCommitToBranchMap(db);
 
-		JSONObject result = new JSONObject();
+		JSONObject result = super.toJSON();
 		JSONArray children = new JSONArray();
 		int i = 0;
 		Iterator<RevCommit> iterator = commits.iterator();
