@@ -7,6 +7,8 @@
  * Contributors: IBM Corporation - initial API and implementation
  ******************************************************************************/
 
+/*global document window XMLHttpRequest */
+
 window.onload = function() {
 
 	var error = getParam("error");
@@ -224,10 +226,26 @@ function goToLoginWindow() {
 	document.getElementById("newUserHeader").style.display = "";
 }
 
+function validatePassword() {
+	if (document.getElementById("create_password").value !== document
+			.getElementById("create_passwordRetype").value) {
+		document.getElementById("create_errorWin").style.visibility = '';
+		document.getElementById("create_errorMessage").innerHTML = "Passwords don't match!";
+		return false;
+	}
+	document.getElementById("create_errorWin").style.visibility = 'hidden';
+	document.getElementById("create_errorMessage").innerHTML = "&nbsp;";
+	return true;
+}
+
 function confirmCreateUser() {
 	if (!validatePassword()) {
+		document.getElementById("create_password").setAttribute("aria-invalid", "true");
+		document.getElementById("create_passwordRetype").setAttribute("aria-invalid", "true");
 		return;
 	}
+	document.getElementById("create_password").setAttribute("aria-invalid", "false");
+	document.getElementById("create_passwordRetype").setAttribute("aria-invalid", "false");
 	var mypostrequest = new XMLHttpRequest();
 	var login = document.getElementById("create_login").value;
 	var password = document.getElementById("create_password").value;
@@ -250,18 +268,6 @@ function confirmCreateUser() {
 			"application/x-www-form-urlencoded");
 	mypostrequest.setRequestHeader("Orion-Version", "1");
 	mypostrequest.send(parameters);
-}
-
-function validatePassword() {
-	if (document.getElementById("create_password").value !== document
-			.getElementById("create_passwordRetype").value) {
-		document.getElementById("create_errorWin").style.visibility = '';
-		document.getElementById("create_errorMessage").innerHTML = "Passwords don't match!";
-		return false;
-	}
-	document.getElementById("create_errorWin").style.visibility = 'hidden';
-	document.getElementById("create_errorMessage").innerHTML = "&nbsp;";
-	return true;
 }
 
 function showResetUser() {
