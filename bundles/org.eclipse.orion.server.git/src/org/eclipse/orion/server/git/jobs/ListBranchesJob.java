@@ -160,6 +160,7 @@ public class ListBranchesJob extends GitJob {
 				}
 			}
 			result.put(ProtocolConstants.KEY_CHILDREN, children);
+			result.put(ProtocolConstants.KEY_TYPE, Branch.TYPE);
 			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when listing branches for {0}", path);

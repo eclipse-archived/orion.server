@@ -15,6 +15,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 
@@ -35,6 +36,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Test;
+import org.xml.sax.SAXException;
 
 import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
@@ -51,10 +53,7 @@ public class GitBranchTest extends GitTest {
 		branch(branchesLocation, "a");
 		branch(branchesLocation, "z");
 
-		// list branches
-		WebRequest request = getGetRequest(branchesLocation);
-		WebResponse response = webConversation.getResponse(request);
-		JSONObject branches = waitForTaskCompletion(response);
+		JSONObject branches = listBranches(branchesLocation);
 		JSONArray branchesArray = branches.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 		assertEquals(3, branchesArray.length());
 
@@ -91,10 +90,7 @@ public class GitBranchTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		// list branches
-		request = getGetRequest(branchesLocation);
-		response = webConversation.getResponse(request);
-		JSONObject branches = waitForTaskCompletion(response);
+		JSONObject branches = listBranches(branchesLocation);
 		JSONArray branchesArray = branches.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 		assertEquals(2, branchesArray.length());
 		JSONObject branch0 = branchesArray.getJSONObject(0);
@@ -271,4 +267,11 @@ public class GitBranchTest extends GitTest {
 		return request;
 	}
 
+	private JSONObject listBranches(final String branchesLocation) throws IOException, SAXException, JSONException {
+		WebRequest request = getGetRequest(branchesLocation);
+		WebResponse response = webConversation.getResponse(request);
+		JSONObject branches = waitForTaskCompletion(response);
+		assertEquals(Branch.TYPE, branches.getString(ProtocolConstants.KEY_TYPE));
+		return branches;
+	}
 }

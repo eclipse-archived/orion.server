@@ -235,6 +235,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 						//ignore malformed children
 					}
 				}
+				result.put(ProtocolConstants.KEY_TYPE, Clone.TYPE);
 				result.put(ProtocolConstants.KEY_CHILDREN, children);
 				OrionServlet.writeJSONResponse(request, response, result);
 				return true;
@@ -254,6 +255,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 				for (Map.Entry<IPath, File> entry : gitDirs.entrySet()) {
 					children.put(new Clone().toJSON(entry, baseLocation));
 				}
+				result.put(ProtocolConstants.KEY_TYPE, Clone.TYPE);
 				result.put(ProtocolConstants.KEY_CHILDREN, children);
 				OrionServlet.writeJSONResponse(request, response, result);
 				return true;

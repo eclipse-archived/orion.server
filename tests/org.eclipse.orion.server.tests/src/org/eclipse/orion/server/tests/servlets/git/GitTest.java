@@ -74,6 +74,7 @@ import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.git.objects.Commit;
 import org.eclipse.orion.server.git.objects.ConfigOption;
 import org.eclipse.orion.server.git.objects.Remote;
+import org.eclipse.orion.server.git.objects.RemoteBranch;
 import org.eclipse.orion.server.git.objects.Status;
 import org.eclipse.orion.server.git.objects.Tag;
 import org.eclipse.orion.server.git.servlets.GitServlet;
@@ -479,6 +480,7 @@ public abstract class GitTest extends FileSystemTest {
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject remotes = new JSONObject(response.getText());
+		assertEquals(Remote.TYPE, remotes.getString(ProtocolConstants.KEY_TYPE));
 		JSONArray remotesArray = remotes.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 		assertEquals(size, remotesArray.length());
 		JSONObject remote = remotesArray.getJSONObject(i);
@@ -512,12 +514,12 @@ public abstract class GitTest extends FileSystemTest {
 		assertNotNull(remote);
 		assertEquals(Constants.DEFAULT_REMOTE_NAME, remote.getString(ProtocolConstants.KEY_NAME));
 		assertNotNull(remote.getString(ProtocolConstants.KEY_LOCATION));
+		assertEquals(Remote.TYPE, remote.getString(ProtocolConstants.KEY_TYPE));
 		JSONArray refsArray = remote.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 		assertEquals(size, refsArray.length());
 		JSONObject ref = refsArray.getJSONObject(i);
 		assertEquals(Constants.R_REMOTES + Constants.DEFAULT_REMOTE_NAME + "/" + name, ref.getString(ProtocolConstants.KEY_FULL_NAME));
 		String newRefId = ref.getString(ProtocolConstants.KEY_ID);
-		assertNotNull(newRefId);
 		assertTrue(ObjectId.isId(newRefId));
 		String remoteBranchLocation = ref.getString(ProtocolConstants.KEY_LOCATION);
 		ref.getString(GitConstants.KEY_COMMIT);
@@ -525,6 +527,7 @@ public abstract class GitTest extends FileSystemTest {
 		request = GitRemoteTest.getGetGitRemoteRequest(remoteBranchLocation);
 		response = webConversation.getResponse(request);
 		JSONObject remoteBranch = waitForTaskCompletion(response);
+		assertEquals(RemoteBranch.TYPE, remoteBranch.getString(ProtocolConstants.KEY_TYPE));
 		remoteBranch.getString(GitConstants.KEY_COMMIT);
 		remoteBranch.getString(GitConstants.KEY_HEAD);
 
@@ -818,6 +821,7 @@ public abstract class GitTest extends FileSystemTest {
 		WebRequest request = getGetGitTagRequest(gitTagUri);
 		WebResponse response = webConversation.getResponse(request);
 		JSONObject tags = waitForTaskCompletion(response);
+		assertEquals(Tag.TYPE, tags.getString(ProtocolConstants.KEY_TYPE));
 		return tags.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 	}
 
@@ -895,6 +899,8 @@ public abstract class GitTest extends FileSystemTest {
 		JSONObject logObject = logObject(gitCommitUri, page, pageSize);
 		assertEquals(prevPage, logObject.has(ProtocolConstants.KEY_PREVIOUS_LOCATION));
 		assertEquals(nextPage, logObject.has(ProtocolConstants.KEY_NEXT_LOCATION));
+		// see org.eclipse.orion.server.git.objects.Log.getType()
+		assertEquals(Commit.TYPE, logObject.getString(ProtocolConstants.KEY_TYPE));
 		return logObject.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 	}
 
@@ -1543,5 +1549,14 @@ public abstract class GitTest extends FileSystemTest {
 		}
 
 		return statusResponse;
+	}
+
+	protected JSONArray listClones(String workspaceId, IPath path) throws JSONException, IOException, SAXException {
+		WebRequest request = GitCloneTest.listGitClonesRequest(workspaceId, null);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject clones = new JSONObject(response.getText());
+		assertEquals(Clone.TYPE, clones.getString(ProtocolConstants.KEY_TYPE));
+		return clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 	}
 }

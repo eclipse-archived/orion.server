@@ -38,6 +38,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Test;
+import org.xml.sax.SAXException;
 
 import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.PostMethodWebRequest;
@@ -197,11 +198,7 @@ public class GitConfigTest extends GitTest {
 			JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 			String gitConfigUri = gitSection.getString(GitConstants.KEY_CONFIG);
 
-			// get list of config entries
-			request = getGetGitConfigRequest(gitConfigUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			JSONObject configResponse = new JSONObject(response.getText());
+			JSONObject configResponse = listConfigEntries(gitConfigUri);
 			JSONArray configEntries = configResponse.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 
 			for (int i = 0; i < configEntries.length(); i++) {
@@ -210,6 +207,7 @@ public class GitConfigTest extends GitTest {
 				assertNotNull(configEntry.optString(GitConstants.KEY_CONFIG_ENTRY_VALUE, null));
 				assertConfigUri(configEntry.getString(ProtocolConstants.KEY_LOCATION));
 				assertCloneUri(configEntry.getString(GitConstants.KEY_CLONE));
+				assertEquals(ConfigOption.TYPE, configEntry.getString(ProtocolConstants.KEY_TYPE));
 			}
 		}
 	}
@@ -237,11 +235,7 @@ public class GitConfigTest extends GitTest {
 			JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 			String gitConfigUri = gitSection.getString(GitConstants.KEY_CONFIG);
 
-			// get list of config entries
-			request = getGetGitConfigRequest(gitConfigUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			JSONObject configResponse = new JSONObject(response.getText());
+			JSONObject configResponse = listConfigEntries(gitConfigUri);
 			JSONArray configEntries = configResponse.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 			// initial number of config entries
 			int initialConfigEntriesCount = configEntries.length();
@@ -258,10 +252,7 @@ public class GitConfigTest extends GitTest {
 			assertConfigUri(entryLocation);
 
 			// get list of config entries again
-			request = getGetGitConfigRequest(gitConfigUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			configResponse = new JSONObject(response.getText());
+			configResponse = listConfigEntries(gitConfigUri);
 			configEntries = configResponse.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 			assertEquals(initialConfigEntriesCount + 1, configEntries.length());
 
@@ -313,11 +304,8 @@ public class GitConfigTest extends GitTest {
 			JSONObject configResponse = new JSONObject(response.getText());
 			String entryLocation = configResponse.getString(ProtocolConstants.KEY_LOCATION);
 
-			// get value of config entry
-			request = getGetGitConfigRequest(entryLocation);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			assertConfigOption(new JSONObject(response.getText()), ENTRY_KEY, ENTRY_VALUE);
+			JSONObject configEntry = listConfigEntries(entryLocation);
+			assertConfigOption(configEntry, ENTRY_KEY, ENTRY_VALUE);
 		}
 	}
 
@@ -363,11 +351,9 @@ public class GitConfigTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_CONFLICT, response.getResponseCode());
 
 			// get value of config entry
-			request = getGetGitConfigRequest(entryLocation);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject configEntry = listConfigEntries(entryLocation);
 			// assert unchanged
-			assertConfigOption(new JSONObject(response.getText()), ENTRY_KEY, ENTRY_VALUE);
+			assertConfigOption(configEntry, ENTRY_KEY, ENTRY_VALUE);
 		}
 	}
 
@@ -412,11 +398,8 @@ public class GitConfigTest extends GitTest {
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-			// get value of config entry
-			request = getGetGitConfigRequest(entryLocation);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			assertConfigOption(new JSONObject(response.getText()), ENTRY_KEY, NEW_ENTRY_VALUE);
+			JSONObject configEntry = listConfigEntries(entryLocation);
+			assertConfigOption(configEntry, ENTRY_KEY, NEW_ENTRY_VALUE);
 		}
 	}
 
@@ -609,19 +592,15 @@ public class GitConfigTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		String workspaceId = getWorkspaceId(workspaceLocation);
 
-		WebRequest request = GitCloneTest.listGitClonesRequest(workspaceId, null);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject clones = new JSONObject(response.getText());
-		JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		JSONArray clonesArray = listClones(workspaceId, null);
 
 		String dummyId = "dummyId";
 		GitCloneTest.ensureCloneIdDoesntExist(clonesArray, dummyId);
 		String entryLocation = SERVER_LOCATION + GIT_SERVLET_LOCATION + ConfigOption.RESOURCE + "/dummyKey/" + Clone.RESOURCE + "/file/" + dummyId;
 
 		// get value of config entry
-		request = getGetGitConfigRequest(entryLocation);
-		response = webConversation.getResponse(request);
+		WebRequest request = getGetGitConfigRequest(entryLocation);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 	}
 
@@ -705,6 +684,15 @@ public class GitConfigTest extends GitTest {
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
+	}
+
+	private JSONObject listConfigEntries(final String gitConfigUri) throws IOException, SAXException, JSONException {
+		WebRequest request = getGetGitConfigRequest(gitConfigUri);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject configResponse = new JSONObject(response.getText());
+		assertEquals(ConfigOption.TYPE, configResponse.getString(ProtocolConstants.KEY_TYPE));
+		return configResponse;
 	}
 
 	static WebRequest getGetGitConfigRequest(String location) {

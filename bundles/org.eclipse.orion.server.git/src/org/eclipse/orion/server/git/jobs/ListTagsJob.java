@@ -153,6 +153,7 @@ public class ListTagsJob extends GitJob {
 				}
 			}
 			result.put(ProtocolConstants.KEY_CHILDREN, children);
+			result.put(ProtocolConstants.KEY_TYPE, Tag.TYPE);
 			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when listing tags for {0}", path);
