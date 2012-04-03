@@ -197,7 +197,7 @@ lastMapTag=${mapsTagTag}
 	</target>
 
 	<target name="preGenerate">
-		<replace file="${buildDirectory}/features/org.eclipse.pde.build.container.feature/feature.xml" token="1.0.0" value="0.3.0.qualifier" />
+		<replace file="${buildDirectory}/features/org.eclipse.pde.build.container.feature/feature.xml" token="1.0.0" value="0.5.0.qualifier" />
 	</target>
 
 	<target name="postBuild" >
