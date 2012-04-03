@@ -61,10 +61,11 @@ lastMapTag=${mapsTagTag}
 			<replacefilter token="HEAD" value="${buildLabel}" />
 			<replacefilter token="origin/master" value="${buildLabel}" />
 		</replace>
-		<!-- Add build id to orion.product so it gets added to properties in config.ini -->
+		<!-- Add build id to orion.product so it gets added to properties in config.ini 
 		<replace dir="${buildDirectory}/features/org.eclipse.pde.build.container.feature/product/" includes="orion.product"  >
 			<replacefilter token="@qualifier@" value="${buildLabel}" />
 		</replace>
+		-->
 
 		<available property="jsdocHome" value="${base}/jsdoc-toolkit" file="${base}/jsdoc-toolkit" />
 		<available property="requirejsHome" value="${base}/requirejs" file="${base}/requirejs" />
