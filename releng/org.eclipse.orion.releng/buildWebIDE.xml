@@ -5,6 +5,9 @@
 		<property name="timestamp" value="${DSTAMP}${TSTAMP}" />
 		<property name="cvsuser" value=":ext:aniefer" />		
 		<property name="builder" value="${basedir}/builder" />
+
+		<!-- Add build id to orion.product before invoking product build -->
+		<replace token="@qualifier@" file="${builder}/orion.product" value="${buildLabel}" />
 		
 		<mkdir dir="${base}"/>
 		
