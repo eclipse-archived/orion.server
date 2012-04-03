@@ -206,7 +206,6 @@ lastMapTag=${mapsTagTag}
 		<mkdir dir="${dropLocation}" />
 
 		<antcall target="gatherLogs" />
-		<antcall target="launchWebIDE" />
 		<antcall target="copyResults" />
 
 		<mkdir dir="${buildDirectory}/formatRepo" />
@@ -244,15 +243,6 @@ lastMapTag=${mapsTagTag}
 
 	<target name="copyLog" if="logExists" >
 		<copy file="${base}/logs/current.log" tofile="${dropLocation}/buildLog-${buildLabel}.txt" />
-	</target>
-
-	<target name="launchWebIDE" if="launchWebIDE" >
-		<exec executable="bash" >
-			<arg value="${builder}/scripts/launchWebIDE.sh" />
-			<arg value="-archive" />
-			<arg value="${buildDirectory}/${buildLabel}/${archiveNamePrefix}-linux.gtk.x86.zip"/>
-		</exec>
-		<echo message="${buildLabel}" file="/web/http/build.label" />
 	</target>
 
 	<target name="gatherLogs">
