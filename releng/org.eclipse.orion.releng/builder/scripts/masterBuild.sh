@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #*******************************************************************************
-# Copyright (c) 2010, 2011 IBM Corporation and others.
+# Copyright (c) 2010, 2012 IBM Corporation and others.
 # All rights reserved. This program and the accompanying materials
 # are made available under the terms of the Eclipse Public License v1.0
 # which accompanies this distribution, and is available at
@@ -16,7 +16,7 @@ export PATH
 
 #default values, overridden by command line
 writableBuildRoot=/shared/eclipse/e4/orion
-supportDir=/shared/eclipse/e4/build/e4
+supportDir=$writableBuildRoot/support
 builderDir=$supportDir/org.eclipse.orion.releng
 basebuilderBranch=R3_7
 publish=""
