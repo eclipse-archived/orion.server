@@ -14,7 +14,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Map;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -77,8 +76,7 @@ public class GitTagHandlerV1 extends ServletResourceHandler<String> {
 			Repository db = new FileRepository(gitDir);
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.TAG);
 
-			Map<String, Ref> refList = db.getRefDatabase().getRefs(Constants.R_TAGS);
-			Ref ref = refList.get(tagName);
+			Ref ref = db.getRefDatabase().getRef(Constants.R_TAGS + tagName);
 			if (ref != null) {
 				Tag tag = new Tag(cloneLocation, db, ref);
 				OrionServlet.writeJSONResponse(request, response, tag.toJSON());
