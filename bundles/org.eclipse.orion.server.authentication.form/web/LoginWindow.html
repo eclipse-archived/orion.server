@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="copyright"
-	content="Copyright (c) 2010,2011 IBM Corporation and others.">
+	content="Copyright (c) 2010,2012 IBM Corporation and others.">
 <meta http-equiv="Content-Language" content="en-us">
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <meta http-equiv="X-UA-Compatible" content="IE=8">
@@ -22,17 +22,16 @@
 				<tbody>
 					<tr>
 						<td class="loginWindow"><label class="loginWindow"
-							id=loginLabel for=login>Name:</label></td>
-						<td class="loginWindow"><input class="loginWindow" name=login
-							id=login 
+							id="loginLabel" for="login">Name:</label></td>
+						<td class="loginWindow"><input class="loginWindow" name="login" id="login" 
 							onkeypress="var event = window.event ? window.event : event ? event : evt; if (event.keyCode === 13) { confirmLogin() } else {return true;}"><br>
 						</td>
 					</tr>
 					<tr>
 						<td class="loginWindow"><label class="loginWindow"
-							id=passwordLabel for=password>Password:</label></td>
+							id="passwordLabel" for="password">Password:</label></td>
 						<td class="loginWindow"><input class="loginWindow"
-							name=password type=password id=password 
+							name="password" type="password" id="password" 
 							onkeypress="var event = window.event ? window.event : event ? event : evt; if (event.keyCode === 13) { confirmLogin() } else {return true;}"><br>
 							<a id="resetUserLink" class="loginWindow" style="font-size: 0.85em;" href="javascript:showResetUser();">Forgot your password?</a>
 						</td>
@@ -98,27 +97,27 @@
 				<table id="createUserForm" class="loginWindow" style="display: none" role="presentation">
 				<tr>
 					<td class="loginWindow"><label class="loginWindow"
-						id=create_loginLabel for=login>Name:</label></td>
-					<td class="loginWindow"><input class="loginWindow" name=login
-						id=create_login aria-required="true"
+						id="create_loginLabel" for="create_login">Name:</label></td>
+					<td class="loginWindow"><input class="loginWindow" name="login"
+						id="create_login" aria-required="true"
 						onkeyup="var event = window.event ? window.event : event ? event : evt; if (event.keyCode === 13) { confirmCreateUser(); } else {validatePassword();}"><br>
 					</td>
 				</tr>
 				<tr>
 					<td class="loginWindow"><label class="loginWindow"
-						id=create_passwordLabel for=password>Password:</label></td>
+						id="create_passwordLabel" for="create_password">Password:</label></td>
 					<td class="loginWindow"><input class="loginWindow"
-						name=password type=password id=create_password aria-required="true"
+						name="password" type="password" id="create_password" aria-required="true"
 						onkeyup="var event = window.event ? window.event : event ? event : evt; if (event.keyCode === 13) { confirmCreateUser(); } else {validatePassword();}"><br></td>
 				</tr>
 
 				<tr>
 					<td class="loginWindow"><label class="loginWindow"
-						id=create_passwordLabel for=passwordRetype>Retype
+						id="create_passwordLabel" for="create_passwordRetype">Retype
 							password:</label>
 					</td>
 					<td class="loginWindow"><input class="loginWindow"
-						name=passwordRetype type=password id=create_passwordRetype aria-required="true"
+						name="passwordRetype" type="password" id="create_passwordRetype" aria-required="true"
 						onkeyup="var event = window.event ? window.event : event ? event : evt; if (event.keyCode === 13) { confirmCreateUser(); } else {validatePassword();}"><br>
 					</td>
 				</tr>
