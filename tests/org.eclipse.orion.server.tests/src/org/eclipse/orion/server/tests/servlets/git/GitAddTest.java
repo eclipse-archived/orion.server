@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others
+ * Copyright (c) 2011, 2012 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -23,7 +23,6 @@ import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Index;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Test;
@@ -162,17 +161,11 @@ public class GitAddTest extends GitTest {
 			// in folder
 			JSONObject folder1GitSection = folder1.getJSONObject(GitConstants.KEY_GIT);
 			String folder1GitStatusUri = folder1GitSection.getString(GitConstants.KEY_STATUS);
-			String folder1GitCloneUri = folder1GitSection.getString(GitConstants.KEY_CLONE);
 
 			assertStatus(new StatusResult().setModified(2), folder1GitStatusUri);
 
-			request = getGetRequest(folder1GitCloneUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			JSONObject clones = new JSONObject(response.getText());
-			JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
-			assertEquals(1, clonesArray.length());
-			String gitIndexUri = clonesArray.getJSONObject(0).getString(GitConstants.KEY_INDEX);
+			clone = getCloneForGitResource(folder1);
+			String gitIndexUri = clone.getString(GitConstants.KEY_INDEX);
 
 			request = getPutGitIndexRequest(gitIndexUri /* add all*/, null);
 			response = webConversation.getResponse(request);

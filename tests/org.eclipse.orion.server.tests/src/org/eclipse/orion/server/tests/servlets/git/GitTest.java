@@ -473,6 +473,26 @@ public abstract class GitTest extends FileSystemTest {
 		return clone(uri, null, filePath, null, null, null);
 	}
 
+	/**
+	 * Returns <code>JSONObject</code> representing clone. Assume there is single clone for the given <code>gitResource</code>.
+	 *
+	 * @param gitResource a project, folder or file with {@link GitConstants.KEY_GIT} property
+	 * @return
+	 * @throws JSONException
+	 * @throws IOException
+	 * @throws SAXException
+	 */
+	protected JSONObject getCloneForGitResource(JSONObject gitResource) throws JSONException, IOException, SAXException {
+		String cloneLocation = gitResource.getJSONObject(GitConstants.KEY_GIT).getString(GitConstants.KEY_CLONE);
+		WebRequest request = getGetRequest(cloneLocation);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject clones = new JSONObject(response.getText());
+		JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		assertEquals(1, clonesArray.length());
+		return clonesArray.getJSONObject(0);
+	}
+
 	// remotes
 	protected JSONObject getRemote(String gitRemoteUri, int size, int i, String name) throws IOException, SAXException, JSONException {
 		assertRemoteUri(gitRemoteUri);
@@ -948,6 +968,14 @@ public abstract class GitTest extends FileSystemTest {
 		return webConversation.getResponse(request);
 	}
 
+	JSONObject listBranches(final String branchesLocation) throws IOException, SAXException, JSONException {
+		WebRequest request = getGetRequest(branchesLocation);
+		WebResponse response = webConversation.getResponse(request);
+		JSONObject branches = waitForTaskCompletion(response);
+		assertEquals(Branch.TYPE, branches.getString(ProtocolConstants.KEY_TYPE));
+		return branches;
+	}
+
 	protected String getWorkspaceId(URI uri) throws IOException, SAXException, JSONException {
 		assertWorkspaceUri(uri);
 		WebRequest request = new GetMethodWebRequest(uri.toString());
@@ -1346,13 +1374,7 @@ public abstract class GitTest extends FileSystemTest {
 			JSONObject fileGitSection = fileObject[0].getJSONObject(GitConstants.KEY_GIT);
 			String gitCloneUri = fileGitSection.getString(GitConstants.KEY_CLONE);
 			IPath gitCloneFilePath = new Path(URI.create(gitCloneUri).getPath()).removeFirstSegments(2);
-			request = getGetRequest(gitCloneUri);
-			WebResponse response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			JSONObject clones = new JSONObject(response.getText());
-			JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
-			assertEquals(1, clonesArray.length());
-			JSONObject clone = clonesArray.getJSONObject(0);
+			JSONObject clone = getCloneForGitResource(fileObject[0]);
 			String gitIndexUri = clone.getString(GitConstants.KEY_INDEX);
 			Set<String> patterns = new HashSet<String>(fileObject.length);
 			for (int i = 0; i < fileObject.length; i++) {
@@ -1364,6 +1386,11 @@ public abstract class GitTest extends FileSystemTest {
 		}
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+	}
+
+	protected JSONObject commitFile(JSONObject fileObject, String message) throws JSONException, IOException, SAXException {
+		WebResponse response = commitFile(fileObject, message, false);
+		return new JSONObject(response.getText());
 	}
 
 	protected WebResponse commitFile(JSONObject fileObject, String message, boolean amend) throws JSONException, IOException, SAXException {
@@ -1429,10 +1456,8 @@ public abstract class GitTest extends FileSystemTest {
 				if (expected.getChangedDiffs() != null) {
 					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
 					String gitDiffUri = gitSection.getString(GitConstants.KEY_DIFF);
-					request = GitDiffTest.getGetGitDiffRequest(gitDiffUri);
-					response = webConversation.getResponse(request);
-					assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-					assertEquals("Invalid diff content", expected.getChangedDiffs()[i], GitDiffTest.parseMultiPartResponse(response)[1]);
+					String[] parts = GitDiffTest.getDiff(gitDiffUri);
+					assertEquals("Invalid diff content", expected.getChangedDiffs()[i], parts[1]);
 				}
 				if (expected.getChangedIndexContents() != null) {
 					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
@@ -1496,10 +1521,8 @@ public abstract class GitTest extends FileSystemTest {
 				if (expected.getModifiedDiffs() != null) {
 					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
 					String gitDiffUri = gitSection.getString(GitConstants.KEY_DIFF);
-					request = GitDiffTest.getGetGitDiffRequest(gitDiffUri);
-					response = webConversation.getResponse(request);
-					assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-					assertEquals("Invalid diff content", expected.getModifiedDiffs()[i], GitDiffTest.parseMultiPartResponse(response)[1]);
+					String[] parts = GitDiffTest.getDiff(gitDiffUri);
+					assertEquals("Invalid diff content", expected.getModifiedDiffs()[i], parts[1]);
 				}
 				if (expected.getModifiedLogLengths() != null) {
 					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);

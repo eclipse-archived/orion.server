@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -60,11 +60,10 @@ public class GitCommitTest extends GitTest {
 
 		// "git commit -m 'message' -- test.txt
 		final String commitMessage = "message";
-		WebResponse response = commitFile(testTxt, commitMessage, false);
+		JSONObject commit = commitFile(testTxt, commitMessage);
 
 		// check if response contains most important parts and if commit
 		// message is valid
-		JSONObject commit = new JSONObject(response.getText());
 		assertNotNull(commit.optString(ProtocolConstants.KEY_LOCATION, null));
 		assertNotNull(commit.optString(ProtocolConstants.KEY_NAME, null));
 		assertEquals(commitMessage, commit.getString(GitConstants.KEY_COMMIT_MESSAGE));
@@ -295,13 +294,8 @@ public class GitCommitTest extends GitTest {
 			// XXX: using HEAD URI for folder will commit all files in the folder, regardless of index state
 			// request = getPostGitCommitRequest(folderGitHeadUri, "test.txt and folder/folder.txt changed", false);
 			// the UI should use HEAD URI for the clone/root to commit all staged files
-			request = getGetRequest(folderGitCloneUri);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			JSONObject clones = new JSONObject(response.getText());
-			JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
-			assertEquals(1, clonesArray.length());
-			String cloneFolderGitHeadUri = clonesArray.getJSONObject(0).getString(GitConstants.KEY_HEAD);
+			JSONObject clone = getCloneForGitResource(folder);
+			String cloneFolderGitHeadUri = clone.getString(GitConstants.KEY_HEAD);
 
 			request = getPostGitCommitRequest(cloneFolderGitHeadUri, "test.txt and folder/folder.txt changed", false);
 			response = webConversation.getResponse(request);

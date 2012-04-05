@@ -541,10 +541,7 @@ public class GitLogTest extends GitTest {
 		assertEquals("test.txt change", getCommitContent(commit));
 
 		// check commit diff location
-		request = GitDiffTest.getGetGitDiffRequest(commit.getString(GitConstants.KEY_DIFF));
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		String[] parts = GitDiffTest.parseMultiPartResponse(response);
+		String[] parts = GitDiffTest.getDiff(commit.getString(GitConstants.KEY_DIFF));
 
 		assertEquals("", parts[1]); // no diff between the commit and working tree
 
@@ -564,10 +561,7 @@ public class GitLogTest extends GitTest {
 		assertEquals("test", getCommitContent(commit));
 
 		// check commit diff location
-		request = GitDiffTest.getGetGitDiffRequest(commit.getString(GitConstants.KEY_DIFF));
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		parts = GitDiffTest.parseMultiPartResponse(response);
+		parts = GitDiffTest.getDiff(commit.getString(GitConstants.KEY_DIFF));
 
 		StringBuilder sb = new StringBuilder();
 		sb.append("diff --git a/test.txt b/test.txt").append("\n");
@@ -682,10 +676,7 @@ public class GitLogTest extends GitTest {
 			String diffLocation = diff.getString(GitConstants.KEY_DIFF);
 
 			// check diff location
-			request = GitDiffTest.getGetGitDiffRequest(diffLocation);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			String[] parts = GitDiffTest.parseMultiPartResponse(response);
+			String[] parts = GitDiffTest.getDiff(diffLocation);
 
 			StringBuilder sb = new StringBuilder();
 			sb.append("diff --git a/test.txt b/test.txt").append("\n");

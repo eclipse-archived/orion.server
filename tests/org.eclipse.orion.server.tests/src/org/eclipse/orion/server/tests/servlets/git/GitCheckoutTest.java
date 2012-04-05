@@ -491,16 +491,7 @@ public class GitCheckoutTest extends GitTest {
 			JSONObject testTxt = getChild(folder, "test.txt");
 
 			// create branch
-			JSONObject testTxtGitSection = testTxt.getJSONObject(GitConstants.KEY_GIT);
-			String cloneLocation = testTxtGitSection.getString(GitConstants.KEY_CLONE);
-			request = getGetRequest(cloneLocation);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			JSONObject clones = new JSONObject(response.getText());
-			JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
-			assertEquals(1, clonesArray.length());
-			clone = clonesArray.getJSONObject(0);
-
+			clone = getCloneForGitResource(testTxt);
 			response = branch(clone.getString(GitConstants.KEY_BRANCH), "branch");
 
 			// change on the branch

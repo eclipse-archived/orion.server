@@ -51,10 +51,8 @@ public class Branch extends GitObject {
 		JSONObject result = super.toJSON();
 		String shortName = getName();
 		result.put(ProtocolConstants.KEY_NAME, shortName);
-
-		// add Git Commit URI
 		result.put(GitConstants.KEY_COMMIT, BaseToCommitConverter.getCommitLocation(cloneLocation, shortName, BaseToCommitConverter.REMOVE_FIRST_2));
-
+		result.put(GitConstants.KEY_DIFF, createLocation(Diff.RESOURCE));
 		result.put(GitConstants.KEY_REMOTE, getRemotes());
 		result.put(GitConstants.KEY_HEAD, BaseToCommitConverter.getCommitLocation(cloneLocation, Constants.HEAD, BaseToCommitConverter.REMOVE_FIRST_2));
 		result.put(GitConstants.KEY_BRANCH_CURRENT, shortName.equals(db.getBranch()));
@@ -64,11 +62,14 @@ public class Branch extends GitObject {
 
 	@Override
 	protected URI getLocation() throws URISyntaxException {
+		return createLocation(Branch.RESOURCE);
+	}
+
+	private URI createLocation(String resource) throws URISyntaxException {
 		String shortName = getName();
 		IPath basePath = new Path(cloneLocation.getPath());
-		IPath newPath = new Path(GitServlet.GIT_URI).append(Branch.RESOURCE).append(shortName).append(basePath.removeFirstSegments(2));
-		URI location = new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), newPath.toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
-		return location;
+		IPath newPath = new Path(GitServlet.GIT_URI).append(resource).append(shortName).append(basePath.removeFirstSegments(2));
+		return new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), newPath.toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
 	}
 
 	public JSONObject toJSON(JSONObject log) throws JSONException, URISyntaxException, IOException, CoreException {
