@@ -19,10 +19,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.TagCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.*;
-import org.eclipse.jgit.revwalk.*;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
@@ -114,8 +116,8 @@ public class GitTagHandlerV1 extends ServletResourceHandler<String> {
 			ObjectId objectId = db.resolve(commitId);
 			RevCommit revCommit = walk.lookupCommit(objectId);
 
-			RevTag revTag = tag(git, revCommit, tagName);
-			Ref ref = db.getRefDatabase().getRef(revTag.getTagName());
+			Ref ref = tag(git, revCommit, tagName);
+			//			Ref ref = db.getRefDatabase().getRef(revTag.getTagName());
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.TAG_LIST);
 			Tag tag = new Tag(cloneLocation, db, ref);
 			OrionServlet.writeJSONResponse(request, response, tag.toJSON());
@@ -131,8 +133,9 @@ public class GitTagHandlerV1 extends ServletResourceHandler<String> {
 		}
 	}
 
-	static RevTag tag(Git git, RevCommit revCommit, String tagName) throws JGitInternalException, GitAPIException {
-		return git.tag().setObjectId(revCommit).setName(tagName).call();
+	static Ref tag(Git git, RevCommit revCommit, String tagName) throws JGitInternalException, GitAPIException {
+		TagCommand tag = git.tag();
+		return tag.setObjectId(revCommit).setName(tagName).call();
 	}
 
 	private boolean handleDelete(HttpServletRequest request, HttpServletResponse response, String path) throws CoreException, IOException, JSONException, ServletException, URISyntaxException {
