@@ -164,8 +164,8 @@
 		<get ignoreerrors="true" src="${hudsonResultRootURL}/TEST-IE-9.0.Performance.xml" dest="${jsTestDir}/TEST-IE-9.0.Performance.xml" />
 	</target>
 	
+	<!-- This target runs on the Hudson Windows Slave -->
 	<target name="hudsonJsTests" >
-		<!-- This target runs on the Hudson Windows Slave -->
 		<property environment="env" />
 		<property name="workingDir" value="${env.WORKSPACE}/${env.BUILD_NUMBER}" />
 		
@@ -174,6 +174,7 @@
 		<get src="${buildZip}" dest="${workingDir}/build.zip" />
 		<unzip src="${workingDir}/build.zip" dest="${workingDir}" />
 		
+		<!-- Internet Explorer 9 Tests -->
 		<apply executable="${java.home}/bin/java" parallel="false" >
 			<arg line="-Dhttp.proxyHost=proxy.eclipse.org -Dhttp.proxyPort=9898 -Dhttp.nonProxyHosts=*.eclipse.org" />
 			<arg line="-Dhttps.proxyHost=proxy.eclipse.org -Dhttps.proxyPort=9898 -Dhttps.nonProxyHosts=*.eclipse.org" />
@@ -200,7 +201,35 @@
 			<globmapper from="TEST-Microsoft_Internet_Explorer_90_Windows*" to="TEST-IE-9.0*" />
 		</copy>
 		<xslt style="${basedir}/../html/JUNIT.XSL" basedir="${env.WORKSPACE}" destdir="${env.WORKSPACE}" includes="IE-9.0-testResults.xml" />
+
+		<!-- Chrome Windows Tests-->
+		<apply executable="${java.home}/bin/java" parallel="false" >
+			<arg line="-Dhttp.proxyHost=proxy.eclipse.org -Dhttp.proxyPort=9898 -Dhttp.nonProxyHosts=*.eclipse.org" />
+			<arg line="-Dhttps.proxyHost=proxy.eclipse.org -Dhttps.proxyPort=9898 -Dhttps.nonProxyHosts=*.eclipse.org" />
+			<arg line="-Dftp.proxyHost=proxy.eclipse.org -Dftp.proxyPort=9898 -Dftp.nonProxyHosts=*.eclipse.org" />
+			<arg line="-jar ${workingDir}/JsTestDriver.jar" />
+			<arg line="--port 42442" />
+			<arg line="--tests all" />
+			<arg line="--testOutput ${workingDir}/results" />
+			<arg value="--browser" />
+			<arg value="C:\\Users\\kmoir\\AppData\\Local\\Google\\Chrome\\Application\\chrome.exe" />
+			<arg value="--config" />
+			<fileset dir="${workingDir}" includes="**/jsTestDriver.conf" />	
+		</apply>
 		
+		<delete>
+			<fileset dir="${env.WORKSPACE}" includes="*.xml" />
+		</delete>
+		
+		<junitreport todir="${env.WORKSPACE}" tofile="Chrome-testResults.xml">
+			<fileset dir="${workingDir}/results" includes="**/TEST-*.xml" />
+		</junitreport>
+		<copy todir="${env.WORKSPACE}" >
+			<fileset dir="${workingDir}/results" includes="TEST-*.Performance.xml"/>
+			<globmapper from="TEST-Chrome_Windows*" to="TEST-Chrome*" />
+		</copy>
+		<xslt style="${basedir}/../html/JUNIT.XSL" basedir="${env.WORKSPACE}" destdir="${env.WORKSPACE}" includes="Chrome-testResults.xml" />
+
 		<delete dir="${workingDir}" />
 	</target>
 			
