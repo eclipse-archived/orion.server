@@ -35,6 +35,7 @@
     }],
     paths: {
         text: 'requirejs/text',
-        i18n: 'requirejs/i18n'
+        i18n: 'requirejs/i18n',
+	    domReady: 'requirejs/domReady'
     }
 })
