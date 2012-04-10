@@ -59,7 +59,7 @@ lastMapTag=${mapsTagTag}
 	<target name="postFetch">
 		<replace dir="${buildDirectory}" includes="pluginVersions.properties,featureVersions.properties"  >
 			<replacefilter token="HEAD" value="${buildLabel}" />
-			<replacefilter token="origin/master" value="${buildLabel}" />
+			<replacefilter token="origin/mls -alaster" value="${buildLabel}" />
 		</replace>
 
 		<available property="jsdocHome" value="${base}/jsdoc-toolkit" file="${base}/jsdoc-toolkit" />
@@ -95,12 +95,12 @@ lastMapTag=${mapsTagTag}
 					<pathelement location="${requirejsHome}/lib/closure/compiler.jar" />
 				</classpath>
 				<arg value="${requirejsHome}/dist/r.js"/>
+				<arg value="-o" />
 				<arg value="./orion.build.js"/>
 				<arg value="optimize=closure" />
 				<arg value="name=@{pageDir}/@{name}" />
 				<arg value="out=@{pageDir}/built-@{name}.js"/>
-				<arg value="appDir=." />
-				<arg value="dir=." />
+				<arg value="dir=" />
 			</java>
 
 			<antcall target="updateHTML">
@@ -174,6 +174,7 @@ lastMapTag=${mapsTagTag}
 				<pathelement location="${closureJar}" />
 			</classpath>
 			<arg value="${requirejsHome}/dist/r.js"/>
+			<arg value="-o" />
 			<arg value="${builder}/scripts/orion.build.js"/>
 			<arg value="optimize=none" />
 			<arg value="appDir=${buildDirectory}/optimization" />
