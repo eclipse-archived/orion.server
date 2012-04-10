@@ -91,11 +91,10 @@ lastMapTag=${mapsTagTag}
 			<java classname="org.mozilla.javascript.tools.shell.Main" fork="true" 
 				  dir="${buildDirectory}/optimization">
 				<classpath>
-					<pathelement location="${requirejsHome}/build/lib/rhino/js.jar" />
-					<pathelement location="${requirejsHome}/build/lib/closure/compiler.jar" />
+					<pathelement location="${requirejsHome}/lib/rhino/js.jar" />
+					<pathelement location="${requirejsHome}/lib/closure/compiler.jar" />
 				</classpath>
-				<arg value="${requirejsHome}/bin/x.js"/>
-				<arg value="${requirejsHome}/bin"/>
+				<arg value="${requirejsHome}/dist/r.js"/>
 				<arg value="${requirejsHome}/build/build.js"/>
 				<arg value="./orion.build.js"/>
 				<arg value="optimize=closure" />
@@ -172,11 +171,10 @@ lastMapTag=${mapsTagTag}
 
 		<java classname="org.mozilla.javascript.tools.shell.Main">
 			<classpath>
-				<pathelement location="${requirejsHome}/build/lib/rhino/js.jar" />
+				<pathelement location="${requirejsHome}/lib/rhino/js.jar" />
 				<pathelement location="${closureJar}" />
 			</classpath>
-			<arg value="${requirejsHome}/bin/x.js"/>
-			<arg value="${requirejsHome}/bin"/>
+			<arg value="${requirejsHome}/dist/r.js"/>
 			<arg value="${requirejsHome}/build/build.js"/>
 			<arg value="${builder}/scripts/orion.build.js"/>
 			<arg value="optimize=none" />
