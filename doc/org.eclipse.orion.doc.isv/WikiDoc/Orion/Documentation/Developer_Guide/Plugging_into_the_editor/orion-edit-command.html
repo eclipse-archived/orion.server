@@ -44,12 +44,22 @@
 			<dd><tt>String</tt> The command text to show to the user.</dd>
 			<dt>id</dt>
 			<dd><tt>String</tt> The id of the command contribution.</dd>
+			<dt>tooltip</dt>
+		</dl>
+		<p><tt>String</tt> Optional.  A tooltip describing the command.</p>
+		<dl>
 			<dt>img</dt>
-			<dd><tt>String</tt> The URL of an icon to associate with the command.  The icon may not appear in all situations.  For example, the main toolbar may not show the icon, but a menu item might show the icon.</dd>
+			<dd><tt>String</tt> Optional.  The URL of an icon to associate with the command.  The icon may not appear in all situations.  For example, the main toolbar may not show the icon, but a menu item might show the icon.</dd>
 			<dt>key</dt>
-			<dd><tt>Array</tt> An optional key binding for the command. The structure of this array matches the arguments of the <tt>orion.textview.KeyBinding</tt> constructor. See its entry in the Client API reference for details.</dd>
+			<dd><tt>Array</tt> Optional.  A key binding for the command. The structure of this array matches the arguments of the <tt>orion.textview.KeyBinding</tt> constructor. See its entry in the Client API reference for details.</dd>
 			<dt>validationProperties</dt>
-			<dd>A JSON object containing key value pairs applied to the resource being edited that determines whether the command is valid.  For example, the expression <tt>{"Name":"*.css"}</tt> means that the command is valid for resources whose <tt>Name</tt> property ends in <tt>".css"</tt>.</dd>
+			<dd><tt>Array</tt> Optional.  An array 
+				<a href="../../../../Orion/Documentation/Developer_Guide/Plugging_into_Orion_pages/Plugging-into-Orion-pages.html#Validation_Properties" title="Orion/Documentation/Developer Guide/Plugging into Orion pages#Validation Properties">Validation Properties</a> that must match the editor's file in order for the command to appear.
+			</dd>
+			<dt>contentType</dt>
+			<dd><tt>Array</tt> Optional.  An array of 
+				<a href="../../../../Orion/Documentation/Developer_Guide/Plugging_into_the_navigator/orion-core-contenttype.html#orion.core.contenttype" title="Orion/Documentation/Developer Guide/Plugging into the navigator#orion.core.contenttype">Content Type IDs</a> for which this command is valid.
+			</dd>
 		</dl>
 		<h2 id="Examples">Examples</h2>
 		<p>The following simple example just converts the selected text to upper case. In this example the function return value is a simple string, so this is interpreted by the editor as replacement for the original editor selection. In the service properties, we see the command provides a key binding of Ctrl+U (or Cmd+U on Mac).</p>
@@ -66,8 +76,9 @@
  });
  provider.connect();
 </pre>
-		<p>Here is an example of a slightly more complex run function that takes the selection and wraps it in C-style block comments. In this example the function returns a complex object with both <tt>text</tt> and <tt>selection</tt> fields. These are interpreted by the editor as the new editor buffer contents, and the new editor selection.</p>
+		<p>Here is an example of a slightly more complex run function that takes the selection and wraps it in C-style block comments. In this example the function returns a complex object with both <tt>text</tt> and <tt>selection</tt> fields. These are interpreted by the editor as the new editor buffer contents, and the new editor selection. A content type is used so that this command is only available for javascript files.</p>
 		<pre>
+ contentType: ["application/javascript"],
  run : function(selectedText, text, selection) {
    return {text: text.substring(0,selection.start) + "/*" + 
      text.substring(selection.start,selection.end) + "*/" + 

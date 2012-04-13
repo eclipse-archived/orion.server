@@ -30,36 +30,38 @@
 			</tr>
 		</table><hr/>
 		<h1 id="orion.page.link">orion.page.link</h1>
-		<p>The link service provides a mechanism for plugins to add links that should appear in the main header of Orion pages.  Clients supply the link name and URL.  The header code will look for implementors of this service when generating page headers for Orion.  </p>
-		<h2 id="Service_methods_3">Service methods</h2>
-		<p>None.</p>
-		<h2 id="Service_attributes_3">Service attributes</h2>
+		<p>The link service provides a mechanism for plugins to add links that should appear in the main header of Orion pages.  Clients supply the link name and URL.  The header code will look for implementers of this service when generating page headers for Orion.  </p>
+		<h2 id="Service_methods_2">Service methods</h2>
+		<p>None. This service is purely declarative.</p>
+		<h2 id="Service_attributes_2">Service attributes</h2>
 		<p>Implementations of <tt>orion.page.link</tt> must define the following attributes:</p>
 		<dl>
 			<dt>name</dt>
 			<dd>A human readable link name, typically used as an HTML anchor element body, or in a tooltip.</dd>
 			<dt>id</dt>
 			<dd>A symbolic id for referencing this link.</dd>
-			<dt>href</dt>
-			<dd>The anchor's hypertext reference. This should be an absolute URL because the service implementation won't know anything about the position of the pages that may choose to insert this link.</dd>
+			<dt>uriTemplate</dt>
+			<dd>A 
+				<a href="URI_Templates" title="Orion/Documentation/Developer Guide/Plugging into Orion pages#URI Templates">URI Template</a> that defines the link.  This template may use the standard Orion URI template variables.
+			</dd>
 		</dl>
-		<h2 id="Examples_3">Examples</h2>
-		<p>The following snippet defines the main links that are shown in a default Orion installation.</p>
+		<h2 id="Examples_2">Examples</h2>
+		<p>The following snippet defines the some of the main links that are shown in a default Orion installation.</p>
 		<pre>  var serviceImpl = {};//no service methods required
   provider.registerServiceProvider("orion.page.link", serviceImpl, {
      name: "Navigator",
      id: "orion.navigator",
-     href: "/navigate/table.html#"
+     uriTemplate: "{OrionHome}/navigate/table.html#"
   });
   provider.registerServiceProvider("orion.page.link", serviceImpl, {
      name: "Sites",
      id: "orion.sites",
-     href: "/sites/sites.html"
+     uriTemplate: "{OrionHome}/sites/sites.html"
   });
   provider.registerServiceProvider("orion.page.link", serviceImpl, {
      name: "Repositories",
      id: "orion.repositories",
-     href: "/git/git-repository.html#"
+     uriTemplate: "{OrionHome}/git/git-repository.html#"
   });
 </pre><hr/>
 		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
