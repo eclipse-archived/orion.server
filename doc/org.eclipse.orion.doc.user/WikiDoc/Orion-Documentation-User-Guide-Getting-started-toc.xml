@@ -1,6 +1,7 @@
 <?xml version='1.0' encoding='utf-8' ?>
 <toc topic="WikiDoc/Orion/Documentation/User_Guide/Getting_started/Getting-started.html" label="Getting started">
-	<topic href="WikiDoc/Orion/Documentation/User_Guide/Getting_started/Getting-started.html" label="Logging into Orion"></topic>
+	<topic href="WikiDoc/Orion/Documentation/User_Guide/Getting_started/Getting-started.html" label="Getting Orion"></topic>
+	<topic href="WikiDoc/Orion/Documentation/User_Guide/Getting_started/Getting-started.html#Logging_into_Orion" label="Logging into Orion"></topic>
 	<topic href="WikiDoc/Orion/Documentation/User_Guide/Getting_started/Getting-started.html#Working_with_folders_and_files" label="Working with folders and files">
 		<topic href="WikiDoc/Orion/Documentation/User_Guide/Getting_started/Getting-started.html#Creating_folders_and_files" label="Creating folders and files"></topic>
 		<topic href="WikiDoc/Orion/Documentation/User_Guide/Getting_started/Getting-started.html#Using_the_common_banner" label="Using the common banner"></topic>
