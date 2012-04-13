@@ -30,7 +30,7 @@
 			</tr>
 		</table><hr/>
 		<h1 id="orion.navigate.command">orion.navigate.command</h1>
-		<p>The <tt>orion.navigate.command</tt> service is used to contribute commands to the drop-down menu next to each file and folder. When the service is executed, the currently selected item in the Navigator is passed to the service's <tt>run</tt> method. The command can perform some operation on the provided selection, and optionally return an URL that the user will navigate to when clicking the command.</p>
+		<p>The <tt>orion.navigate.command</tt> service is used to contribute commands to the drop-down menu next to each file and folder. When the service is executed, a file object or array of file objects is passed to the service's <tt>run</tt> method. The command can perform some operation on the provided files, and optionally return an URL that the user will navigate to when clicking the command.</p>
 		<h2 id="Service_methods">Service methods</h2>
 		<p>Implementations of <tt>orion.navigate.command</tt> must define the following function:</p>
 		<dl>
@@ -52,6 +52,8 @@
 			<dd>A boolean attribute indicating whether the command returns a link. If this attribute is specified and true, the command will render as a hyperlink and the user will navigate to the URL provided by the run method's return value.</dd>
 			<dt>tooltip</dt>
 			<dd>Tooltip text shown to the user when they hover on the command</dd>
+			<dt>validationProperties</dt>
+			<dd>A JSON object containing key value pairs used to validate the item to which the command should be applied.  For example, the expression <tt>{"Git":"*", "Directory":"true"}</tt> means that the command is valid for items that have a <tt>Git</tt> property and that have a <tt>Directory</tt> property whose value is <tt>true</tt>.</dd>
 		</dl>
 		<h2 id="Example">Example</h2>
 		<p>Here is a sample plug-in that contributes a link to a Google search for the selected file's name:</p>

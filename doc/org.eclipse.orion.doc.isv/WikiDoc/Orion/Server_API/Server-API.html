@@ -101,8 +101,8 @@
 			Long running operations that cannot complete within a single request will instead return the location of a resource for tracking progress on that operation. The typical client work flow is:</p>
 		<ol>
 			<li>Client sends request to start operation. The <tt>Location</tt> header in the response indicates the location of a progress resource. The response code is 202 Accepted, which helps the client distinguish long running operations from operations that complete within a single method invocation.</li>
-			<li>Client periodically checks state of progress resource.</li>
-			<li>When long running task completes, progress resource includes a link to a resource representing the completed operation.</li>
+			<li>Client periodically checks state of progress resource. The response code will be 200 ok, but the Result (see below) will be undefined.</li>
+			<li>When long running task completes, progress resource includes a link to a resource representing the completed operation. Or maybe the Result is just what you want in the first place and the Location is somewhat related to something.</li>
 		</ol>
 		<p>A progress resource has the following attributes:</p>
 		<table style="text-align: center; width:90%" border="1">
@@ -138,9 +138,7 @@
 			</tr>
 			<tr>
 				<td>Result</td>
-				<td>Once the operation has completed, this is a status object describing the operation result. The status format is described in 
-					<a href="Exception_Handling" title="Orion/Server_API#Exception_Handling">Orion/Server_API#Exception_Handling</a>. While the operation is running, this property is undefined
-				</td>
+				<td>Once the operation has completed, this is a status object describing the operation result. Looks like Result.JsonData is what the original GET would have supplied if the task was not needed. While the operation is running, this property is undefined</td>
 				<td>No</td>
 			</tr>
 		</table>

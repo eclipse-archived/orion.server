@@ -40,23 +40,34 @@
 				<a href="http://dojotoolkit.org/documentation/tutorials/1.6/promises/" target="orion_external">Dojo promise</a> may be returned, which allows the suggestions to be computed asynchronously.
 				<dl>
 					<dd>
-						<b>prefix</b> <tt>String</tt> The substring extending from the first non-word character preceding the editing caret up to the editing caret. This may give a clue about what the user intended to type, and can be used to narrow down the results to be returned. The content assist engine will discard any proposals that don't start with this prefix.
-					</dd>
-					<dd>
 						<b>buffer</b> <tt>String</tt> The entire buffer being edited.
 					</dd>
 					<dd>
-						<b>selection</b> <tt>orion.textview.Selection</tt> The current selection in the editor.
+						<b>offset</b> <tt>Number</tt> Offset in the text buffer at which content assist is being invoked.
+					</dd>
+					<dd>
+						<b>context</b> <tt>Object</tt> Additional contextual information about the content assist invocation. This object has the following properties:
+						<dl>
+							<dd>
+								<b>line</b> <tt>String</tt> Text of the entire line that the editing caret is on.
+							</dd>
+							<dd>
+								<b>prefix</b> <tt>String</tt> The substring extending from the first non-word character preceding the editing caret up to the editing caret. This may give a clue about what the user intended to type, and can be used to narrow down the results to be returned. The prefix may not be appropriate for all languages, depending on their syntax rules.
+							</dd>
+							<dd>
+								<b>selection</b> <tt>orion.textview.Selection</tt> The current selection in the editor.
+							</dd>
+						</dl>
 					</dd>
 				</dl>
 			</dd>
 		</dl>
-		<p>Returns an <tt>Array</tt> giving possible completions that may be inserted into the editor. Result elements must be either <tt>String</tt> objects with literal string completions, or proposal objects with the following properties:</p>
+		<p>Returns an <tt>Array</tt> giving possible completions that may be inserted into the editor. Result elements must be "proposal" objects having the following properties:</p>
 		<dl>
-			<dd><b>proposal</b> <tt>String</tt> completion text that will be inserted in the editor if chosen. The prefix, if any, will be removed from this text automatically by the Orion code completion engine.</dd>
-			<dd><b>description</b> An optional <tt>String</tt> describing the completion. If provided, this text will be shown in the content assist popup. If not provided, the <b>proposal</b> will be shown instead.</dd>
-			<dd><b>positions</b> An optional array of positions within the completion proposal that require user input. Supplying this property will cause the editor to enter <i>linked mode</i>, and the user can use the <b>Tab</b> key to iterate through the regions of the proposal that require user input. For example if the completion is a function, the positions could indicate the function arguments that need to be supplied. Entries in this position array must be objects with two integer properties: <b>offset</b>, and <b>length</b> describing the regions requiring user input.</dd>
-			<dd><b>escapePosition</b> An optional integer indicating the offset the cursor should have in the document after the completion is inserted. If this value is not supplied, the cursor will be positioned at the end of the inserted text.</dd>
+			<dd><b>proposal</b> <tt>String</tt> completion text that will be inserted in the editor if chosen. The text is inserted at the <b>offset</b>.</dd>
+			<dd><b>description</b> A <tt>String</tt> describing the completion. This text will be shown in the content assist popup.</dd>
+			<dd><b>positions</b> An optional <tt>Array</tt> of positions within the completion proposal that require user input. Supplying this property will cause the editor to enter <i>linked mode</i>, and the user can use the <b>Tab</b> key to iterate through the regions of the proposal that require user input. For example if the completion is a function, the positions could indicate the function arguments that need to be supplied. Entries in this position array must be objects with two integer properties: <b>offset</b>, and <b>length</b> describing the regions requiring user input.</dd>
+			<dd><b>escapePosition</b> An optional <tt>Number</tt> indicating the offset the cursor should have in the document after the completion is inserted. If this value is not supplied, the cursor will be positioned at the end of the inserted text.</dd>
 		</dl>
 		<h2 id="Service_attributes_2">Service attributes</h2>
 		<p>Implementations of <tt>orion.edit.contentAssist</tt> must define the following attributes:</p>
@@ -69,14 +80,25 @@
 			</dd>
 		</dl>
 		<h2 id="Examples_2">Examples</h2>
-		<p>The example below provides content assist suggestions for files whose name ends in <tt>.js</tt>. It offers JavaScript keywords as suggestions.</p>
+		<p>The example below provides content assist suggestions for files whose name ends in <tt>.js</tt>. It offers JavaScript keywords as suggestions, by checking them against the prefix provided by the content assist engine.</p>
 		<pre>var provider = new eclipse.PluginProvider();
 provider.registerServiceProvider("orion.edit.contentAssist",
   {
-     computeProposals: function(prefix, buffer, selection) {
-       return [ "break", "case", "catch", "continue", "debugger", "default", "delete", "do", "else",
-                "finally", "for", "function", "if", "in", "instanceof", "new", "return", "switch", "this",
-                "throw", "try", "typeof", "var", "void", "while", "with" ];
+     computeProposals: function(buffer, offset, context) {
+       var keywords = [ "break", "case", "catch", "continue", "debugger", "default", "delete", "do", "else",
+                        "finally", "for", "function", "if", "in", "instanceof", "new", "return", "switch",
+                        "this", "throw", "try", "typeof", "var", "void", "while", "with" ];
+       var proposals = [];
+       for (var i=0; i &lt; keywords.length; i++) {
+           var keyword = keywords[i];
+           if (keyword.indexOf(context.prefix) === 0) {
+               proposals.push({
+                   proposal: keyword.substring(context.prefix.length),
+                   description: keyword
+               });
+           }
+        }
+       return proposals;
      }
   },
   {
@@ -87,21 +109,21 @@ provider.connect();
 </pre>
 		<p>The example below will provide completion on the character 'a' that will insert an HTML anchor element. After completion the cursor will be positioned within the <tt>href</tt> attribute.</p>
 		<pre>var provider = new eclipse.PluginProvider();
-provider.registerServiceProvider("orion.edit.contentAssist",
+provider.registerServiceProvider('orion.edit.contentAssist',
   {
-    computeProposals: function(prefix, buffer, selection) {
+    computeProposals: function(buffer, offset, context) {
       var proposals = [];
-      if (prefix === 'a') {
+      if (context.prefix === 'a') {
         proposals.push({
-          proposal: "a href=\"\"&gt;&lt;/a&gt;", 
-          description: "&lt;a&gt;&lt;/a&gt; - HTML anchor element", 
-          escapePosition: selection.offset+7});
+          proposal: ' href=""&gt;&lt;/a&gt;',
+          description: '&lt;a&gt;&lt;/a&gt; - HTML anchor element', 
+          escapePosition: offset+7});
       }
       return proposals;
   },
   {
-    name: "HTML content assist",
-    contentType: ["text.html"]
+    name: 'HTML content assist',
+    contentType: ['text.html']
   });
 provider.connect();
 </pre><hr/>

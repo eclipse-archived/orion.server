@@ -30,22 +30,26 @@
 			</tr>
 		</table><hr/>
 		<h1 id="orion.edit.command">orion.edit.command</h1>
-		<p>The <tt>orion.edit.command</tt> service is the simplest kind of editor extension. A command service simply provides a function that takes some text as input, performs some operation or transformation on the text, and returns a new text value. The command can also optionally receive and return selection information for changing the editor selection.</p>
+		<p>The <tt>orion.edit.command</tt> service is the simplest kind of editor extension. An editor command simply provides a function that takes some editor text as input, performs some operation or transformation on the text, and returns a new text value. The command can also optionally receive and return selection information for changing the editor selection.</p>
 		<h2 id="Service_methods">Service methods</h2>
 		<p>Implementations of <tt>orion.edit.command</tt> must define the following function:</p>
 		<dl>
-			<dt>run(selectedText, text, selection)</dt>
-			<dd>selectedText is a string containing the text that is currently selected in the editor. The <tt>text</tt> argument provides the entire editor buffer. The <tt>selection</tt> argument is a selection object with <tt>start</tt> and <tt>end</tt> fields.</dd>
+			<dt>run(selectedText, text, selection, resource)</dt>
+			<dd>selectedText is a string containing the text that is currently selected in the editor. The <tt>text</tt> argument provides the entire editor buffer. The <tt>selection</tt> argument is a selection object with <tt>start</tt> and <tt>end</tt> fields. The <tt>resource</tt> argument describes the full path name of the text being edited.  The return value is either a string which will replace the current editor selection, or an object. The object must have a <tt>text</tt> property which will be the replacement string for the entire editor buffer, and may optionally have a <tt>selection</tt> object indicating the new selection value.</dd>
 		</dl>
 		<h2 id="Service_attributes">Service attributes</h2>
 		<p>Implementations of <tt>orion.edit.command</tt> may define the following attributes:</p>
 		<dl>
-			<dt>img</dt>
-			<dd><tt>String</tt> The URL of an icon to associate with the command.</dd>
 			<dt>name</dt>
-			<dd><tt>String</tt> The command text show to the user.</dd>
+			<dd><tt>String</tt> The command text to show to the user.</dd>
+			<dt>id</dt>
+			<dd><tt>String</tt> The id of the command contribution.</dd>
+			<dt>img</dt>
+			<dd><tt>String</tt> The URL of an icon to associate with the command.  The icon may not appear in all situations.  For example, the main toolbar may not show the icon, but a menu item might show the icon.</dd>
 			<dt>key</dt>
 			<dd><tt>Array</tt> An optional key binding for the command. The structure of this array matches the arguments of the <tt>orion.textview.KeyBinding</tt> constructor. See its entry in the Client API reference for details.</dd>
+			<dt>validationProperties</dt>
+			<dd>A JSON object containing key value pairs applied to the resource being edited that determines whether the command is valid.  For example, the expression <tt>{"Name":"*.css"}</tt> means that the command is valid for resources whose <tt>Name</tt> property ends in <tt>".css"</tt>.</dd>
 		</dl>
 		<h2 id="Examples">Examples</h2>
 		<p>The following simple example just converts the selected text to upper case. In this example the function return value is a simple string, so this is interpreted by the editor as replacement for the original editor selection. In the service properties, we see the command provides a key binding of Ctrl+U (or Cmd+U on Mac).</p>

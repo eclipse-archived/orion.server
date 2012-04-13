@@ -12,7 +12,7 @@
 			</tr>
 			<tr>
 				<td style="width: 20%" align="left">
-					<a href="Plugging-into-Orion-pages.html" title="Plugging into Orion pages">
+					<a href="orion-page-content.html" title="orion.page.content">
 						<img alt="Previous" border="0" src="../../../../images/prev.gif"/>
 					</a>
 				</td>
@@ -24,17 +24,17 @@
 				</td>
 			</tr>
 			<tr>
-				<td style="width: 20%" align="left" valign="top">Plugging into Orion pages</td>
+				<td style="width: 20%" align="left" valign="top">orion.page.content</td>
 				<td style="width: 60%" align="center"></td>
 				<td style="width: 20%" align="right" valign="top">orion.page.link.related</td>
 			</tr>
 		</table><hr/>
 		<h1 id="orion.page.link">orion.page.link</h1>
 		<p>The link service provides a mechanism for plugins to add links that should appear in the main header of Orion pages.  Clients supply the link name and URL.  The header code will look for implementors of this service when generating page headers for Orion.  </p>
-		<h2 id="Service_methods">Service methods</h2>
+		<h2 id="Service_methods_3">Service methods</h2>
 		<p>None.</p>
-		<h2 id="Service_attributes">Service attributes</h2>
-		<p>Implementations of <tt>orion.core.linkScanner</tt> must define the following attributes:</p>
+		<h2 id="Service_attributes_3">Service attributes</h2>
+		<p>Implementations of <tt>orion.page.link</tt> must define the following attributes:</p>
 		<dl>
 			<dt>name</dt>
 			<dd>A human readable link name, typically used as an HTML anchor element body, or in a tooltip.</dd>
@@ -43,7 +43,7 @@
 			<dt>href</dt>
 			<dd>The anchor's hypertext reference. This should be an absolute URL because the service implementation won't know anything about the position of the pages that may choose to insert this link.</dd>
 		</dl>
-		<h2 id="Examples">Examples</h2>
+		<h2 id="Examples_3">Examples</h2>
 		<p>The following snippet defines the main links that are shown in a default Orion installation.</p>
 		<pre>  var serviceImpl = {};//no service methods required
   provider.registerServiceProvider("orion.page.link", serviceImpl, {
@@ -65,7 +65,7 @@
 		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
 			<tr>
 				<td style="width: 20%" align="left">
-					<a href="Plugging-into-Orion-pages.html" title="Plugging into Orion pages">
+					<a href="orion-page-content.html" title="orion.page.content">
 						<img alt="Previous" border="0" src="../../../../images/prev.gif"/>
 					</a>
 				</td>
@@ -81,7 +81,7 @@
 				</td>
 			</tr>
 			<tr>
-				<td style="width: 20%" align="left" valign="top">Plugging into Orion pages</td>
+				<td style="width: 20%" align="left" valign="top">orion.page.content</td>
 				<td style="width: 60%" align="center"></td>
 				<td style="width: 20%" align="right" valign="top">orion.page.link.related</td>
 			</tr>
