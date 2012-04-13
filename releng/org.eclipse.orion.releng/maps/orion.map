@@ -1,8 +1,8 @@
 #client
-plugin@org.eclipse.orion.client.core=GIT,tag=v20120411-2330,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.core
-plugin@org.eclipse.orion.client.editor=GIT,tag=v20120411-2030,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.editor
+plugin@org.eclipse.orion.client.core=GIT,tag=v20120412-2146,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.core
+plugin@org.eclipse.orion.client.editor=GIT,tag=v20120412-2022,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.editor
 plugin@org.eclipse.orion.client.users.ui=GIT,tag=v20120410-0527,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.users.ui
-plugin@org.eclipse.orion.client.git=GIT,tag=v20120411-2330,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.git
+plugin@org.eclipse.orion.client.git=GIT,tag=v20120412-1655,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.git
 plugin@org.eclipse.orion.dojo=GIT,tag=v20110509-1730,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.dojo
 
 #server
