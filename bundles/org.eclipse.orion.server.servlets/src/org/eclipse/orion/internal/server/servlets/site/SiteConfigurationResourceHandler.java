@@ -21,6 +21,7 @@ import org.eclipse.orion.internal.server.servlets.hosting.*;
 import org.eclipse.orion.internal.server.servlets.workspace.WebElementResourceHandler;
 import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
 import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
@@ -118,7 +119,7 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 		URI baseLocation = location.resolve(""); //$NON-NLS-1$
 
 		JSONObject result = toJSON(site, baseLocation);
-		OrionServlet.writeJSONResponse(req, resp, result, false);
+		OrionServlet.writeJSONResponse(req, resp, result, JsonURIUnqualificationStrategy.LOCATION_ONLY);
 		return true;
 	}
 
@@ -153,7 +154,7 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 
 		URI baseLocation = getURI(req);
 		JSONObject result = toJSON(site, baseLocation);
-		OrionServlet.writeJSONResponse(req, resp, result, false);
+		OrionServlet.writeJSONResponse(req, resp, result, JsonURIUnqualificationStrategy.LOCATION_ONLY);
 
 		resp.setStatus(HttpServletResponse.SC_CREATED);
 		resp.addHeader(ProtocolConstants.HEADER_LOCATION, result.getString(ProtocolConstants.KEY_LOCATION));
@@ -175,7 +176,7 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 		URI baseLocation = location.resolve(""); //$NON-NLS-1$
 
 		JSONObject result = toJSON(site, baseLocation);
-		OrionServlet.writeJSONResponse(req, resp, result, false);
+		OrionServlet.writeJSONResponse(req, resp, result, JsonURIUnqualificationStrategy.LOCATION_ONLY);
 		return true;
 	}
 

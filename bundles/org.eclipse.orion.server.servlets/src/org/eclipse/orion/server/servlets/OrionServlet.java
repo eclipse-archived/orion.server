@@ -50,16 +50,16 @@ public abstract class OrionServlet extends HttpServlet {
 	}
 
 	public static void writeJSONResponse(HttpServletRequest req, HttpServletResponse resp, Object result) throws IOException {
-		writeJSONResponse(req, resp, result, true);
+		writeJSONResponse(req, resp, result, JsonURIUnqualificationStrategy.ALL);
 	}
 
-	public static void writeJSONResponse(HttpServletRequest req, HttpServletResponse resp, Object result, boolean removeHostPort) throws IOException {
+	public static void writeJSONResponse(HttpServletRequest req, HttpServletResponse resp, Object result, JsonURIUnqualificationStrategy strategy) throws IOException {
 		Assert.isLegal(result instanceof JSONObject || result instanceof JSONArray);
 		resp.setStatus(HttpServletResponse.SC_OK);
 		resp.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 		resp.setHeader("Cache-Control", "no-store"); //$NON-NLS-1$ //$NON-NLS-2$
 		if (result instanceof JSONObject) {
-			decorateResponse(req, (JSONObject) result, removeHostPort);
+			decorateResponse(req, (JSONObject) result, strategy);
 		}
 		//TODO look at accept header and chose appropriate response representation
 		resp.setContentType(ProtocolConstants.CONTENT_TYPE_JSON);
@@ -68,88 +68,17 @@ public abstract class OrionServlet extends HttpServlet {
 		LoggerFactory.getLogger(OrionServlet.class).debug(response);
 	}
 
-	private static void removeOwnProtocolHostPort(JSONObject json, String scheme, String hostname, int port) {
-		String[] names = JSONObject.getNames(json);
-		if (names == null)
-			return;
-		for (String name : names) {
-			Object o = json.opt(name);
-			if (o instanceof URI) {
-				try {
-					json.put(name, simplified((URI) o, scheme, hostname, port));
-				} catch (JSONException e) {
-				}
-			} else if (o instanceof String) {
-				String string = (String) o;
-				if (string.startsWith(scheme)) {
-					try {
-						json.put(name, simplified(new URI(string), scheme, hostname, port));
-					} catch (JSONException e) {
-					} catch (URISyntaxException e) {
-					}
-				}
-			} else {
-				removeProtocolHostPort(o, scheme, hostname, port);
-			}
-		}
-	}
-
-	private static void removeProtocolHostPort(Object o, String scheme, String hostname, int port) {
-		if (o instanceof JSONObject) {
-			removeOwnProtocolHostPort((JSONObject) o, scheme, hostname, port);
-		} else if (o instanceof JSONArray) {
-			JSONArray a = (JSONArray) o;
-			for (int i = 0; i < a.length(); i++) {
-				Object v = a.opt(i);
-				if (v instanceof URI) {
-					try {
-						a.put(i, simplified((URI) v, scheme, hostname, port));
-					} catch (JSONException e) {
-					}
-				} else if (v instanceof String) {
-					String string = (String) v;
-					if (string.startsWith(scheme)) {
-						try {
-							a.put(i, simplified(new URI(string), scheme, hostname, port));
-						} catch (JSONException e) {
-						} catch (URISyntaxException e) {
-						}
-					}
-				} else {
-					removeProtocolHostPort(v, scheme, hostname, port);
-				}
-			}
-		}
-	}
-
-	private static URI simplified(URI uri, String scheme, String hostname, int port) {
-		URI simpleURI = uri;
-		int uriPort = uri.getPort();
-		if (uriPort == -1) {
-			uriPort = 80;
-		}
-		if (scheme.equals(uri.getScheme()) && hostname.equals(uri.getHost()) && port == uriPort) {
-			try {
-				simpleURI = new URI(null, null, null, -1, uri.getPath(), uri.getQuery(), uri.getFragment());
-			} catch (URISyntaxException e) {
-				simpleURI = uri;
-			}
-		}
-		return simpleURI;
-	}
-
 	/**
 	 * Decorates a JSON response and rewrites URLs found in it.
 	 * @param req
 	 * @param result
-	 * @param removeHostPort <code>true</code> to rewrite URLs in <code>result</code> to remove the hostname and port
-	 * of the server that <code>req</code> was sent to.
+	 * @param strategy
 	 */
-	public static void decorateResponse(HttpServletRequest req, JSONObject result, boolean removeHostPort) {
+	public static void decorateResponse(HttpServletRequest req, JSONObject result, JsonURIUnqualificationStrategy strategy) {
 		decorateResponse(req, result);
-		if (removeHostPort && "XMLHttpRequest".equals(req.getHeader("X-Requested-With"))) { //$NON-NLS-1$ //$NON-NLS-2$
+		if ("XMLHttpRequest".equals(req.getHeader("X-Requested-With"))) { //$NON-NLS-1$ //$NON-NLS-2$
 			// In JSON that is sent to in-Browser clients, remove scheme/userInfo/port information from URLs.
-			removeOwnProtocolHostPort(result, req.getScheme(), req.getServerName(), req.getServerPort());
+			strategy.run(req, result);
 		}
 	}
 

@@ -29,6 +29,7 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
+import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONException;
@@ -57,7 +58,7 @@ class FileHandlerV1 extends GenericFileHandler {
 		String etag = generateFileETag(file);
 		result.put(ProtocolConstants.KEY_ETAG, etag);
 		response.setHeader(ProtocolConstants.KEY_ETAG, etag);
-		OrionServlet.decorateResponse(request, result, true);
+		OrionServlet.decorateResponse(request, result, JsonURIUnqualificationStrategy.ALL);
 		responseWriter.append(result.toString());
 	}
 

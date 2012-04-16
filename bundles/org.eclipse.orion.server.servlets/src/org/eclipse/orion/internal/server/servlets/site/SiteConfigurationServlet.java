@@ -18,6 +18,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
 import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -119,7 +120,7 @@ public class SiteConfigurationServlet extends OrionServlet {
 			JSONArray siteConfigurations = user.getSiteConfigurationsJSON(ServletResourceHandler.getURI(req));
 			JSONObject jsonResponse = new JSONObject();
 			jsonResponse.put(SiteConfigurationConstants.KEY_SITE_CONFIGURATIONS, siteConfigurations);
-			writeJSONResponse(req, resp, jsonResponse, false);
+			writeJSONResponse(req, resp, jsonResponse, JsonURIUnqualificationStrategy.LOCATION_ONLY);
 		} catch (Exception e) {
 			handleException(resp, "An error occurred while obtaining site configurations", e);
 		}
