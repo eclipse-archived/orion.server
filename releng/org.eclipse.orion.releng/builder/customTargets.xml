@@ -79,7 +79,7 @@ lastMapTag=${mapsTagTag}
 			<arg value="${buildDirectory}/plugins/org.eclipse.orion.client.core/web/orion/" />
 			<arg value="${buildDirectory}/plugins/org.eclipse.orion.client.editor/web/orion/" />
 			<arg value="${buildDirectory}/plugins/org.eclipse.orion.client.git/web/orion/" />
-			<arg value="${buildDirectory}/plugins/org.eclipse.orion.client.users.ui/web/orion/" />
+			<arg value="${buildDirectory}/plugins/org.eclipse.orion.client.users/web/orion/" />
 		</java>
 	</target>
 
@@ -144,7 +144,7 @@ lastMapTag=${mapsTagTag}
 			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.core/web" includes="**"/>
 			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.editor/web" includes="**"/>
 			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.git/web" includes="**"/>
-			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.users.ui/web" includes="**"/>
+			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.users/web" includes="**"/>
 		</copy>
 		<copy todir="${dojoFolder}" >
 			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.core/web" includes="dojo/**" />
@@ -165,8 +165,8 @@ lastMapTag=${mapsTagTag}
 		<optimize pageDir="git" name="git-status" bundle="org.eclipse.orion.client.git" />
 		<optimize pageDir="git" name="git-repository" bundle="org.eclipse.orion.client.git" />
 		<optimize pageDir="git" name="git-commit" bundle="org.eclipse.orion.client.git" />
-		<optimize pageDir="profile" name="user-list" bundle="org.eclipse.orion.client.users.ui" />
-		<optimize pageDir="profile" name="user-profile" bundle="org.eclipse.orion.client.users.ui" />
+		<optimize pageDir="profile" name="user-list" bundle="org.eclipse.orion.client.users" />
+		<optimize pageDir="profile" name="user-profile" bundle="org.eclipse.orion.client.users" />
 
 		<java classname="org.mozilla.javascript.tools.shell.Main">
 			<classpath>
@@ -188,7 +188,7 @@ lastMapTag=${mapsTagTag}
 		<copy todir="${buildDirectory}/plugins/org.eclipse.orion.client.git/web" >
 			<fileset dir="${buildDirectory}/optimization" includes="git/**/*.css" />
 		</copy>
-		<copy todir="${buildDirectory}/plugins/org.eclipse.orion.client.users.ui/web" >
+		<copy todir="${buildDirectory}/plugins/org.eclipse.orion.client.users/web" >
 			<fileset dir="${buildDirectory}/optimization" includes="profile/**/*.css" />
 		</copy>
 	</target>

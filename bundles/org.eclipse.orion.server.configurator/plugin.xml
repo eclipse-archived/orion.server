@@ -320,14 +320,14 @@
       <httpcontext
             id="org.eclipse.orion.server.configurator.httpcontext.userprofile">
          <resource-mapping
-               bundle="org.eclipse.orion.client.users.ui"
+               bundle="org.eclipse.orion.client.users"
                path="/web/profile">
          </resource-mapping>
       </httpcontext>
       <httpcontext
             id="org.eclipse.orion.server.configurator.httpcontext.userprofile.components">
          <resource-mapping
-               bundle="org.eclipse.orion.client.users.ui"
+               bundle="org.eclipse.orion.client.users"
                path="/web/orion/profile">
          </resource-mapping>
       </httpcontext>      
