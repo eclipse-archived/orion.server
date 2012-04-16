@@ -14,7 +14,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.*;
-import java.util.Map.Entry;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.Git;
@@ -106,18 +105,16 @@ public class ListTagsJob extends GitJob {
 			// list all tags
 			File gitDir = GitUtils.getGitDir(path);
 			Repository db = new FileRepository(gitDir);
-			// TODO: bug 356943 - revert when bug 360650 is fixed
-			// List<RevTag> revTags = git.tagList().call();
-			Map<String, Ref> refs = db.getRefDatabase().getRefs(Constants.R_TAGS);
+			Git git = new Git(db);
+			List<Ref> refs = git.tagList().call();
 			JSONObject result = new JSONObject();
 			List<Tag> tags = new ArrayList<Tag>();
-			for (Entry<String, Ref> refEntry : refs.entrySet()) {
-				Tag tag = new Tag(cloneLocation, db, refEntry.getValue());
+			for (Ref ref : refs) {
+				Tag tag = new Tag(cloneLocation, db, ref);
 				tags.add(tag);
 			}
 			Collections.sort(tags, Tag.COMPARATOR);
 			JSONArray children = new JSONArray();
-			Git git = new Git(db);
 			int firstTag = pageSize > 0 ? pageSize * (pageNo - 1) : 0;
 			int lastTag = pageSize > 0 ? firstTag + pageSize - 1 : tags.size() - 1;
 			lastTag = lastTag > tags.size() - 1 ? tags.size() - 1 : lastTag;
@@ -140,6 +137,7 @@ public class ListTagsJob extends GitJob {
 				if (this.commitsSize == 0) {
 					children.put(tag.toJSON());
 				} else {
+					// add info about commits if requested
 					LogCommand lc = git.log();
 					String toCommitName = tag.getRevCommitName();
 					ObjectId toCommitId = db.resolve(toCommitName);

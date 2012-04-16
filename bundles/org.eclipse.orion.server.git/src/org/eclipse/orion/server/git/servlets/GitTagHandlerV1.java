@@ -117,7 +117,6 @@ public class GitTagHandlerV1 extends ServletResourceHandler<String> {
 			RevCommit revCommit = walk.lookupCommit(objectId);
 
 			Ref ref = tag(git, revCommit, tagName);
-			//			Ref ref = db.getRefDatabase().getRef(revTag.getTagName());
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.TAG_LIST);
 			Tag tag = new Tag(cloneLocation, db, ref);
 			OrionServlet.writeJSONResponse(request, response, tag.toJSON());

@@ -49,7 +49,6 @@ public class Tag extends GitObject {
 	private URI tagLocation;
 	private URI commitLocation;
 
-	// TODO: bug 356943 - revert when bug 360650 is fixed
 	public Tag(URI cloneLocation, Repository db, Ref ref) throws IOException, CoreException {
 		super(cloneLocation, db);
 
