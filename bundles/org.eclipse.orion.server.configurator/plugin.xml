@@ -56,7 +56,8 @@
       </servlet>
       <servlet
             alias="/hosted"
-            class="org.eclipse.orion.internal.server.hosting.HostedSiteServlet">
+            class="org.eclipse.orion.internal.server.hosting.HostedSiteServlet"
+            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.site">
       </servlet>
       <servlet
             alias="/task"
@@ -206,6 +207,10 @@
                bundle="org.eclipse.orion.client.core"
                path="/web">
          </resource-mapping>
+         <mime-mapping
+               extension="webapp"
+               mime-type="application/x-web-app-manifest+json">
+         </mime-mapping>
       </httpcontext>
       <httpcontext
             id="org.eclipse.orion.server.configurator.httpcontext.git">
@@ -330,6 +335,13 @@
                bundle="org.eclipse.orion.client.users"
                path="/web/orion/profile">
          </resource-mapping>
+      </httpcontext>
+      <httpcontext
+            id="org.eclipse.orion.server.configurator.httpcontext.site">
+         <mime-mapping
+               extension="webapp"
+               mime-type="application/x-web-app-manifest+json">
+         </mime-mapping>
       </httpcontext>      
    </extension>
    <extension
