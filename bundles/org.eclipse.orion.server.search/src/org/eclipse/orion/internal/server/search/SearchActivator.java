@@ -31,11 +31,11 @@ import org.osgi.framework.*;
 public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 	private static BundleContext context;
 	/**
-	 * Indicates the version number of the eclipse web search index. This
+	 * Indicates the version number of the Orion search index. This
 	 * version should be incremented whenever there are breaking changes to the
 	 * indexing schema or format.
 	 */
-	private static final int CURRENT_INDEX_GENERATION = 10;
+	private static final int CURRENT_INDEX_GENERATION = 11;
 
 	private static final String INDEX_GENERATION_FILE = "index.generation";//$NON-NLS-1$
 	private static SearchActivator instance;

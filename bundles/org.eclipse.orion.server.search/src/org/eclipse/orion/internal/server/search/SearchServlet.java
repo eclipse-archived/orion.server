@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -35,7 +35,7 @@ import org.eclipse.orion.server.servlets.OrionServlet;
  */
 public class SearchServlet extends OrionServlet {
 	private static final long serialVersionUID = 1L;
-	private static final String FIELD_NAMES = "Id,Name,Length,Directory,LastModified,Location,Path"; //$NON-NLS-1$
+	private static final String FIELD_NAMES = "Id,Name,NameLower,Length,Directory,LastModified,Location,Path"; //$NON-NLS-1$
 	private static final List<String> FIELD_LIST = Arrays.asList(FIELD_NAMES.split(",")); //$NON-NLS-1$
 
 	@Override

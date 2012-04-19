@@ -409,6 +409,7 @@
 
    <field name="Id" type="string" indexed="true" stored="true" required="true" /> 
    <field name="Name" type="string" indexed="true" stored="true"/>
+   <field name="NameLower" type="lowercase" indexed="true" stored="false"/>
    <field name="UserName" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="Length" type="long" indexed="true" stored="true" />
    <field name="Directory" type="boolean" indexed="true" stored="true"/>

@@ -178,17 +178,22 @@ public class ProtocolConstants {
 	public static final String KEY_LOCATION = "Location"; //$NON-NLS-1$
 
 	/**
-	 * JSON representation key for an object's name. The value's data type is a String
+	 * JSON representation key for an object's name. The value's data type is a String.
 	 */
 	public static final String KEY_NAME = "Name"; //$NON-NLS-1$
 
 	/**
-	 * JSON representation key for an object's full name. The value's data type is a String
+	 * JSON representation key for an object's name in lower case. The value's data type is a String.
+	 */
+	public static final String KEY_NAME_LOWERCASE = "NameLower"; //$NON-NLS-1$
+
+	/**
+	 * JSON representation key for an object's full name. The value's data type is a String.
 	 */
 	public static final String KEY_FULL_NAME = "FullName"; //$NON-NLS-1$
 
 	/**
-	 * JSON representation key for an object's type. The value's data type is a String
+	 * JSON representation key for an object's type. The value's data type is a String.
 	 */
 	public static final String KEY_TYPE = "Type"; //$NON-NLS-1$
 

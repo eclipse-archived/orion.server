@@ -138,6 +138,7 @@ public class Indexer extends Job {
 			SolrInputDocument doc = new SolrInputDocument();
 			doc.addField(ProtocolConstants.KEY_ID, file.toURI().toString());
 			doc.addField(ProtocolConstants.KEY_NAME, fileInfo.getName());
+			doc.addField(ProtocolConstants.KEY_NAME_LOWERCASE, fileInfo.getName());//Lucene will do lower-casing
 			doc.addField(ProtocolConstants.KEY_LENGTH, Long.toString(fileInfo.getLength()));
 			doc.addField(ProtocolConstants.KEY_DIRECTORY, Boolean.toString(fileInfo.isDirectory()));
 			doc.addField(ProtocolConstants.KEY_LAST_MODIFIED, Long.toString(fileInfo.getLastModified()));
