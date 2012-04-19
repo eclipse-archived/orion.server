@@ -157,8 +157,7 @@ public class GitLogTest extends GitTest {
 	}
 
 	@Test
-	public void testLogWithRemote() throws Exception {
-
+	public void testLogRemoteBranch() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
 		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
@@ -180,9 +179,11 @@ public class GitLogTest extends GitTest {
 			JSONObject folder = new JSONObject(response.getText());
 
 			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
-			String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
+			String gitRemoteUri = gitSection.getString(GitConstants.KEY_REMOTE);
+			JSONObject originMasterDetails = getRemoteBranch(gitRemoteUri, 1, 0, Constants.MASTER);
+			String originMasterCommitUri = originMasterDetails.getString(GitConstants.KEY_COMMIT);
 
-			JSONArray commitsArray = log(gitHeadUri);
+			JSONArray commitsArray = log(originMasterCommitUri);
 			assertEquals(1, commitsArray.length());
 		}
 	}

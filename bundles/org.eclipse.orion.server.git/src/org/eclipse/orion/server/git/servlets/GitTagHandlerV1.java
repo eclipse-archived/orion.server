@@ -10,14 +10,12 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
-import java.io.File;
-import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.TagCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -25,7 +23,6 @@ import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;
@@ -36,81 +33,68 @@ import org.eclipse.orion.server.git.jobs.ListTagsJob;
 import org.eclipse.orion.server.git.objects.Tag;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
  * A handler for Git Tag operation.
  */
-public class GitTagHandlerV1 extends ServletResourceHandler<String> {
+public class GitTagHandlerV1 extends AbstractGitHandler {
 
-	private ServletResourceHandler<IStatus> statusHandler;
 	private static int PAGE_SIZE = 50;
 
 	GitTagHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
-		this.statusHandler = statusHandler;
+		super(statusHandler);
 	}
 
 	@Override
-	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String path) throws ServletException {
+	protected boolean handleGet(RequestInfo requestInfo) throws ServletException {
+		String gitSegment = requestInfo.gitSegment;
+		HttpServletRequest request = requestInfo.request;
+		HttpServletResponse response = requestInfo.response;
+		Repository db = requestInfo.db;
+		IPath filePath = requestInfo.filePath;
 		try {
-			switch (getMethod(request)) {
-				case GET :
-					return handleGet(request, response, path);
-				case POST :
-					return handlePost(request, response, path);
-				case DELETE :
-					return handleDelete(request, response, path);
+			if (gitSegment != null) {
+				String tagName = gitSegment;
+				URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.TAG);
+
+				Ref ref = db.getRefDatabase().getRef(Constants.R_TAGS + tagName);
+				if (ref != null) {
+					Tag tag = new Tag(cloneLocation, db, ref);
+					OrionServlet.writeJSONResponse(request, response, tag.toJSON());
+					return true;
+				} else {
+					String msg = NLS.bind("Tag not found: {0}", tagName);
+					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
+				}
+			} else {
+				ListTagsJob job;
+				String commits = request.getParameter(GitConstants.KEY_TAG_COMMITS);
+				int commitsNumber = commits == null ? 0 : Integer.parseInt(commits);
+				String page = request.getParameter("page"); //$NON-NLS-1$
+				if (page != null) {
+					int pageNo = Integer.parseInt(page);
+					int pageSize = request.getParameter("pageSize") == null ? PAGE_SIZE : Integer.parseInt(request.getParameter("pageSize")); //$NON-NLS-1$ //$NON-NLS-2$
+					job = new ListTagsJob(TaskJobHandler.getUserId(request), filePath, BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.TAG_LIST), commitsNumber, pageNo, pageSize, request.getRequestURI());
+				} else {
+					job = new ListTagsJob(TaskJobHandler.getUserId(request), filePath, BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.TAG_LIST), commitsNumber);
+				}
+				return TaskJobHandler.handleTaskJob(request, response, job, statusHandler);
 			}
 		} catch (Exception e) {
-			String msg = NLS.bind("Failed to handle 'tag' request for {0}", path); //$NON-NLS-1$
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
-		}
-		return false;
-	}
-
-	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, String path) throws IOException, JSONException, ServletException, URISyntaxException, CoreException {
-		IPath p = new Path(path);
-		if (p.segment(1).equals("file")) { //$NON-NLS-1$
-			String tagName = p.segment(0);
-			p = p.removeFirstSegments(1);
-			File gitDir = GitUtils.getGitDir(p);
-			Repository db = new FileRepository(gitDir);
-			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.TAG);
-
-			Ref ref = db.getRefDatabase().getRef(Constants.R_TAGS + tagName);
-			if (ref != null) {
-				Tag tag = new Tag(cloneLocation, db, ref);
-				OrionServlet.writeJSONResponse(request, response, tag.toJSON());
-				return true;
-			} else {
-				String msg = NLS.bind("Tag not found: {0}", tagName);
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
-			}
-		} else {
-			ListTagsJob job;
-			String commits = request.getParameter(GitConstants.KEY_TAG_COMMITS);
-			int commitsNumber = commits == null ? 0 : Integer.parseInt(commits);
-			String page = request.getParameter("page");
-			if (page != null) {
-				int pageNo = Integer.parseInt(page);
-				int pageSize = request.getParameter("pageSize") == null ? PAGE_SIZE : Integer.parseInt(request.getParameter("pageSize"));
-				job = new ListTagsJob(TaskJobHandler.getUserId(request), p, BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.TAG_LIST), commitsNumber, pageNo, pageSize, request.getRequestURI());
-			} else {
-				job = new ListTagsJob(TaskJobHandler.getUserId(request), p, BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.TAG_LIST), commitsNumber);
-			}
-			return TaskJobHandler.handleTaskJob(request, response, job, statusHandler);
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when looking for a tag.", e));
 		}
 	}
 
-	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, String path) throws CoreException, IOException, JSONException, ServletException, URISyntaxException {
-		IPath p = new Path(path);
-		File gitDir = GitUtils.getGitDir(p);
-		Repository db = new FileRepository(gitDir);
-		Git git = new Git(db);
+	@Override
+	protected boolean handlePost(RequestInfo requestInfo) throws ServletException {
+		HttpServletRequest request = requestInfo.request;
+		HttpServletResponse response = requestInfo.response;
+		Repository db = requestInfo.db;
+		Git git = requestInfo.git;
+		JSONObject toPut = requestInfo.getJSONRequest();
 		RevWalk walk = new RevWalk(db);
 		try {
-			JSONObject toPut = OrionServlet.readJSONRequest(request);
 			String tagName = toPut.getString(ProtocolConstants.KEY_NAME);
 			String commitId = toPut.getString(GitConstants.KEY_TAG_COMMIT);
 			ObjectId objectId = db.resolve(commitId);
@@ -121,11 +105,7 @@ public class GitTagHandlerV1 extends ServletResourceHandler<String> {
 			Tag tag = new Tag(cloneLocation, db, ref);
 			OrionServlet.writeJSONResponse(request, response, tag.toJSON());
 			return true;
-		} catch (IOException e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when tagging.", e));
-		} catch (GitAPIException e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when tagging.", e));
-		} catch (JGitInternalException e) {
+		} catch (Exception e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when tagging.", e));
 		} finally {
 			walk.dispose();
@@ -137,16 +117,21 @@ public class GitTagHandlerV1 extends ServletResourceHandler<String> {
 		return tag.setObjectId(revCommit).setName(tagName).call();
 	}
 
-	private boolean handleDelete(HttpServletRequest request, HttpServletResponse response, String path) throws CoreException, IOException, JSONException, ServletException, URISyntaxException {
-		IPath p = new Path(path);
-		File gitDir = GitUtils.getGitDir(p.removeFirstSegments(1));
-		Repository db = new FileRepository(gitDir);
-		Git git = new Git(db);
-		try {
-			git.tagDelete().setTags(p.segment(0)).call();
-			return true;
-		} catch (JGitInternalException e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when removing a tag.", e));
+	@Override
+	protected boolean handleDelete(RequestInfo requestInfo) throws ServletException {
+		String gitSegment = requestInfo.gitSegment;
+		HttpServletRequest request = requestInfo.request;
+		HttpServletResponse response = requestInfo.response;
+		Git git = requestInfo.git;
+		if (gitSegment != null) {
+			try {
+				git.tagDelete().setTags(gitSegment).call();
+				return true;
+			} catch (JGitInternalException e) {
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when removing a tag.", e));
+			}
+		} else {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Tag deletion aborted: no tag name provided.", null));
 		}
 	}
 }

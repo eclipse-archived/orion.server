@@ -60,17 +60,20 @@ public class GitTagTest extends GitTest {
 			String gitTagUri = gitSection.getString(GitConstants.KEY_TAG);
 			assertEquals(tagLocation, gitTagUri);
 
-			// tag HEAD with 'tag'
-			JSONObject tag = tag(gitTagUri, "tag", Constants.HEAD);
-			assertEquals("tag", tag.getString(ProtocolConstants.KEY_NAME));
-			URI tagUri = new URI(tag.getString(ProtocolConstants.KEY_LOCATION));
+			String[] tagNames = {"tag", "t/a/g"};
+			for (String tagName : tagNames) {
+				// tag HEAD with the tagName
+				JSONObject tag = tag(gitTagUri, tagName, Constants.HEAD);
+				assertEquals(tagName, tag.getString(ProtocolConstants.KEY_NAME));
+				URI tagUri = new URI(tag.getString(ProtocolConstants.KEY_LOCATION));
 
-			// get tag metadata
-			request = getGetGitTagRequest(tagUri.toString());
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			JSONObject tag1 = new JSONObject(response.getText());
-			assertThat(tag, isJSONObjectEqual(tag1));
+				// check tag metadata
+				request = getGetGitTagRequest(tagUri.toString());
+				response = webConversation.getResponse(request);
+				assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+				JSONObject tag1 = new JSONObject(response.getText());
+				assertThat(tag1, isJSONObjectEqual(tag));
+			}
 		}
 	}
 

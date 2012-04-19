@@ -79,38 +79,41 @@ public class GitBranchTest extends GitTest {
 		JSONObject clone = clone(new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute());
 		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
-		// create branch
-		WebResponse response = branch(branchesLocation, "a");
-		String branchLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		String[] branchNames = {"dev", "change/1/1", "working@bug1"};
+		for (String branchName : branchNames) {
+			// create branch
+			WebResponse response = branch(branchesLocation, branchName);
+			String branchLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 
-		// check details
-		WebRequest request = getGetRequest(branchLocation);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			// check details
+			WebRequest request = getGetRequest(branchLocation);
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		JSONObject branches = listBranches(branchesLocation);
-		JSONArray branchesArray = branches.getJSONArray(ProtocolConstants.KEY_CHILDREN);
-		assertEquals(2, branchesArray.length());
-		JSONObject branch0 = branchesArray.getJSONObject(0);
-		JSONObject branch1 = branchesArray.getJSONObject(1);
-		if (branch0.optBoolean(GitConstants.KEY_BRANCH_CURRENT, false))
-			assertFalse(branch1.optBoolean(GitConstants.KEY_BRANCH_CURRENT, false));
-		else
-			assertTrue(branch1.optBoolean(GitConstants.KEY_BRANCH_CURRENT, false));
+			JSONObject branches = listBranches(branchesLocation);
+			JSONArray branchesArray = branches.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+			assertEquals(2, branchesArray.length());
+			JSONObject branch0 = branchesArray.getJSONObject(0);
+			JSONObject branch1 = branchesArray.getJSONObject(1);
+			if (branch0.optBoolean(GitConstants.KEY_BRANCH_CURRENT, false))
+				assertFalse(branch1.optBoolean(GitConstants.KEY_BRANCH_CURRENT, false));
+			else
+				assertTrue(branch1.optBoolean(GitConstants.KEY_BRANCH_CURRENT, false));
 
-		// remove branch
-		request = getDeleteGitBranchRequest(branchLocation);
-		response = webConversation.getResponse(request);
-		assertTrue(HttpURLConnection.HTTP_OK == response.getResponseCode() || HttpURLConnection.HTTP_ACCEPTED == response.getResponseCode());
+			// remove branch
+			request = getDeleteGitBranchRequest(branchLocation);
+			response = webConversation.getResponse(request);
+			assertTrue(HttpURLConnection.HTTP_OK == response.getResponseCode() || HttpURLConnection.HTTP_ACCEPTED == response.getResponseCode());
 
-		// list branches again, make sure it's gone
-		request = getGetRequest(branchesLocation);
-		response = webConversation.getResponse(request);
-		branches = waitForTaskCompletion(response);
-		branchesArray = branches.getJSONArray(ProtocolConstants.KEY_CHILDREN);
-		assertEquals(1, branchesArray.length());
-		JSONObject branch = branchesArray.getJSONObject(0);
-		assertTrue(branch.optBoolean(GitConstants.KEY_BRANCH_CURRENT, false));
+			// list branches again, make sure it's gone
+			request = getGetRequest(branchesLocation);
+			response = webConversation.getResponse(request);
+			branches = waitForTaskCompletion(response);
+			branchesArray = branches.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+			assertEquals(1, branchesArray.length());
+			JSONObject branch = branchesArray.getJSONObject(0);
+			assertTrue(branch.optBoolean(GitConstants.KEY_BRANCH_CURRENT, false));
+		}
 	}
 
 	@Test

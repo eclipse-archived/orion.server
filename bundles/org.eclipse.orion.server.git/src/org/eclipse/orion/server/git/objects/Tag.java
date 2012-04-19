@@ -19,6 +19,7 @@ import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -40,7 +41,7 @@ public class Tag extends GitObject {
 	public static final String TYPE = "Tag"; //$NON-NLS-1$
 	public static final Comparator<Tag> COMPARATOR = new Comparator<Tag>() {
 		public int compare(Tag o1, Tag o2) {
-			return o1.getTime() < o2.getTime() ? 1 : (o1.getTime() > o2.getTime() ? -1 : o2.getName(false).compareTo(o1.getName(false)));
+			return o1.getTime() < o2.getTime() ? 1 : (o1.getTime() > o2.getTime() ? -1 : o2.getName(false, false).compareTo(o1.getName(false, false)));
 		}
 	};
 
@@ -68,11 +69,11 @@ public class Tag extends GitObject {
 	@Override
 	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException, CoreException {
 		JSONObject result = super.toJSON();
-		result.put(ProtocolConstants.KEY_NAME, getName(false));
+		result.put(ProtocolConstants.KEY_NAME, getName(false, false));
 		result.put(GitConstants.KEY_COMMIT, getCommitLocation());
 		result.put(ProtocolConstants.KEY_LOCAL_TIMESTAMP, (long) getTime() * 1000);
 		result.put(GitConstants.KEY_TAG_TYPE, TagType.valueOf(this));
-		result.put(ProtocolConstants.KEY_FULL_NAME, getName(true));
+		result.put(ProtocolConstants.KEY_FULL_NAME, getName(true, false));
 		return result;
 	}
 
@@ -82,18 +83,23 @@ public class Tag extends GitObject {
 		return tagJSON;
 	}
 
-	private String getName(boolean fullName) {
+	private String getName(boolean fullName, boolean encode) {
+		String name = null;
 		if (tag != null)
-			return fullName ? Constants.R_TAGS + tag.getTagName() : tag.getTagName();
+			name = fullName ? Constants.R_TAGS + tag.getTagName() : tag.getTagName();
 		if (ref != null)
-			return fullName ? ref.getName() : Repository.shortenRefName(ref.getName());
-		return null;
+			name = fullName ? ref.getName() : Repository.shortenRefName(ref.getName());
+		if (name == null)
+			return null;
+		if (encode)
+			name = GitUtils.encode(name);
+		return name;
 	}
 
 	protected URI getLocation() throws URISyntaxException {
 		if (tagLocation == null) {
 			IPath p = new Path(cloneLocation.getPath());
-			p = p.uptoSegment(1).append(RESOURCE).append(getName(false)).addTrailingSeparator().append(p.removeFirstSegments(2));
+			p = p.uptoSegment(1).append(RESOURCE).append(getName(false, true)).addTrailingSeparator().append(p.removeFirstSegments(2));
 			tagLocation = new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), p.toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
 		}
 		return tagLocation;

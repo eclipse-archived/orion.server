@@ -548,9 +548,9 @@ public abstract class GitTest extends FileSystemTest {
 		response = webConversation.getResponse(request);
 		JSONObject remoteBranch = waitForTaskCompletion(response);
 		assertEquals(RemoteBranch.TYPE, remoteBranch.getString(ProtocolConstants.KEY_TYPE));
-		remoteBranch.getString(GitConstants.KEY_COMMIT);
-		remoteBranch.getString(GitConstants.KEY_HEAD);
-
+		assertNotNull(remoteBranch.optString(GitConstants.KEY_COMMIT));
+		assertNotNull(remoteBranch.optString(GitConstants.KEY_HEAD));
+		assertNotNull(remoteBranch.optString(GitConstants.KEY_DIFF));
 		return remoteBranch;
 	}
 

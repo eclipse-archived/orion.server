@@ -21,6 +21,7 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitServlet;
+import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -105,7 +106,9 @@ public class Diff extends GitObject {
 				}
 			};
 			// use #merge to set sourceObjects
-			merger.merge(new ObjectId[] {db.resolve(commits[0]), db.resolve(commits[1])});
+			String tip0 = GitUtils.decode(commits[0]);
+			String tip1 = GitUtils.decode(commits[1]);
+			merger.merge(new ObjectId[] {db.resolve(tip0), db.resolve(tip1)});
 			RevCommit baseCommit = merger.getBaseCommit(0, 1);
 
 			IPath p = new Path(GitServlet.GIT_URI + '/' + Commit.RESOURCE).append(baseCommit.getId().getName()).append(path.removeFirstSegments(1));

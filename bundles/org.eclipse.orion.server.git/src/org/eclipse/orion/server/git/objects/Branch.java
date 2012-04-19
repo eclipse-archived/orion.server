@@ -24,6 +24,7 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.BaseToCommitConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitServlet;
+import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.json.*;
 
 public class Branch extends GitObject {
@@ -32,7 +33,7 @@ public class Branch extends GitObject {
 	public static final String TYPE = "Branch"; //$NON-NLS-1$
 	public static final Comparator<Branch> COMPARATOR = new Comparator<Branch>() {
 		public int compare(Branch o1, Branch o2) {
-			return o1.getTime() < o2.getTime() ? 1 : (o1.getTime() > o2.getTime() ? -1 : o2.getName().compareTo(o1.getName()));
+			return o1.getTime() < o2.getTime() ? 1 : (o1.getTime() > o2.getTime() ? -1 : o2.getName(false).compareTo(o1.getName(false)));
 		}
 	};
 
@@ -49,7 +50,7 @@ public class Branch extends GitObject {
 	@Override
 	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException, CoreException {
 		JSONObject result = super.toJSON();
-		String shortName = getName();
+		String shortName = getName(false);
 		result.put(ProtocolConstants.KEY_NAME, shortName);
 		result.put(GitConstants.KEY_COMMIT, BaseToCommitConverter.getCommitLocation(cloneLocation, shortName, BaseToCommitConverter.REMOVE_FIRST_2));
 		result.put(GitConstants.KEY_DIFF, createLocation(Diff.RESOURCE));
@@ -66,7 +67,7 @@ public class Branch extends GitObject {
 	}
 
 	private URI createLocation(String resource) throws URISyntaxException {
-		String shortName = getName();
+		String shortName = getName(true);
 		IPath basePath = new Path(cloneLocation.getPath());
 		IPath newPath = new Path(GitServlet.GIT_URI).append(resource).append(shortName).append(basePath.removeFirstSegments(2));
 		return new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), newPath.toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
@@ -103,8 +104,11 @@ public class Branch extends GitObject {
 		return result;
 	}
 
-	public String getName() {
-		return Repository.shortenRefName(ref.getName());
+	public String getName(boolean encode) {
+		String name = Repository.shortenRefName(ref.getName());
+		if (encode)
+			name = GitUtils.encode(name);
+		return name;
 	}
 
 	public int getTime() {

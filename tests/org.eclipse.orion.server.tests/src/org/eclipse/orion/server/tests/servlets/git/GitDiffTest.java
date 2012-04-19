@@ -11,7 +11,6 @@
 package org.eclipse.orion.server.tests.servlets.git;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -532,8 +531,6 @@ public class GitDiffTest extends GitTest {
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
-		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
-		assertNotNull(gitSection);
 
 		String branchName = "dev";
 		response = branch(branchesLocation, branchName);
@@ -545,7 +542,7 @@ public class GitDiffTest extends GitTest {
 		JSONObject testTxt = getChild(project, "test.txt");
 		modifyFile(testTxt, "change in dev");
 
-		gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
 		String gitIndexUri = gitSection.getString(GitConstants.KEY_INDEX);
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
@@ -592,7 +589,7 @@ public class GitDiffTest extends GitTest {
 		String masterDiffLocation = findDiffLocationForBranchByName(branchesLocation, Constants.MASTER);
 		String location = getDiffLocation(masterDiffLocation, branchName);
 		// TODO: don't create URIs out of thin air
-		location += "/test.txt";
+		location += "test.txt";
 
 		request = getGetFilesRequest(location + "?parts=uris,diff");
 		response = webConversation.getResponse(request);
@@ -600,6 +597,62 @@ public class GitDiffTest extends GitTest {
 		String[] parts = parseMultiPartResponse(response);
 
 		assertDiffUris(location, new String[] {"change in master", "change in dev", "test"}, new JSONObject(parts[0]));
+	}
+
+	@Test
+	public void testDiffForBranches() throws Exception {
+		// clone
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		JSONObject clone = clone(clonePath);
+		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
+		String remotesLocation = clone.getString(GitConstants.KEY_REMOTE);
+
+		// get project metadata
+		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		project = new JSONObject(response.getText());
+
+		// modify file on master
+		JSONObject testTxt = getChild(project, "test.txt");
+		modifyFile(testTxt, "change in master");
+		addFile(testTxt);
+		commitFile(testTxt, "commit in master", false);
+
+		String masterDiffLocation = findDiffLocationForBranchByName(branchesLocation, Constants.MASTER);
+		JSONObject originMasterRemoteBranch = getRemoteBranch(remotesLocation, 1, 0, Constants.MASTER);
+
+		// compare master vs origin/master
+		String diffLocation = getDiffLocation(masterDiffLocation, originMasterRemoteBranch.getString(ProtocolConstants.KEY_NAME));
+		String[] parts = getDiff(diffLocation);
+		StringBuilder sb = new StringBuilder();
+		sb.append("diff --git a/test.txt b/test.txt").append("\n");
+		sb.append("index 597c638..30d74d2 100644").append("\n");
+		sb.append("--- a/test.txt").append("\n");
+		sb.append("+++ b/test.txt").append("\n");
+		sb.append("@@ -1 +1 @@").append("\n");
+		sb.append("-change in master").append("\n");
+		sb.append("\\ No newline at end of file").append("\n");
+		sb.append("+test").append("\n");
+		sb.append("\\ No newline at end of file").append("\n");
+		assertEquals(sb.toString(), parts[1]);
+
+		// compare origin/master vs master
+		diffLocation = getDiffLocation(originMasterRemoteBranch.getString(GitConstants.KEY_DIFF), Constants.MASTER);
+		parts = getDiff(diffLocation);
+		sb.setLength(0);
+		sb.append("diff --git a/test.txt b/test.txt").append("\n");
+		sb.append("index 30d74d2..597c638 100644").append("\n");
+		sb.append("--- a/test.txt").append("\n");
+		sb.append("+++ b/test.txt").append("\n");
+		sb.append("@@ -1 +1 @@").append("\n");
+		sb.append("-test").append("\n");
+		sb.append("\\ No newline at end of file").append("\n");
+		sb.append("+change in master").append("\n");
+		sb.append("\\ No newline at end of file").append("\n");
+		assertEquals(sb.toString(), parts[1]);
 	}
 
 	private String findDiffLocationForBranchByName(String gitBranchUri, String branchName) throws IOException, SAXException, JSONException {

@@ -13,7 +13,6 @@ package org.eclipse.orion.server.git.servlets;
 import java.io.*;
 import java.net.URI;
 import java.util.*;
-import java.util.Map.Entry;
 import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
@@ -28,7 +27,6 @@ import org.eclipse.jgit.api.errors.PatchFormatException;
 import org.eclipse.jgit.dircache.DirCacheIterator;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.treewalk.*;
 import org.eclipse.jgit.treewalk.filter.*;
 import org.eclipse.orion.internal.server.core.IOUtilities;
@@ -38,7 +36,6 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Diff;
-import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONObject;
@@ -46,7 +43,7 @@ import org.json.JSONObject;
 /**
  * A handler for Git Diff operation.
  */
-public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
+public class GitDiffHandlerV1 extends AbstractGitHandler {
 
 	/**
 	 * The end of line sequence expected by HTTP.
@@ -58,47 +55,32 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 	private HttpClient httpClient;
 
 	GitDiffHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
-		this.statusHandler = statusHandler;
+		super(statusHandler);
 	}
 
 	@Override
-	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String gitPathInfo) throws ServletException {
-		Repository db = null;
+	protected boolean handleGet(RequestInfo requestInfo) throws ServletException {
+		String gitSegment = requestInfo.gitSegment;
+		HttpServletRequest request = requestInfo.request;
+		HttpServletResponse response = requestInfo.response;
+		Repository db = requestInfo.db;
+		String relativePath = requestInfo.relativePath;
 		try {
-			// {scope}/file/{path}
-			Path path = new Path(gitPathInfo);
-			IPath filePath = path.hasTrailingSeparator() ? path : path.removeLastSegments(1);
-			Set<Entry<IPath, File>> set = GitUtils.getGitDirs(filePath.removeFirstSegments(1), Traverse.GO_UP).entrySet();
-			File gitDir = set.iterator().next().getValue();
-			if (gitDir == null)
-				return false; // TODO: or an error response code, 405?
-			db = new FileRepository(gitDir);
-
-			switch (getMethod(request)) {
-				case GET :
-					String parts = request.getParameter("parts"); //$NON-NLS-1$
-					String pattern = GitUtils.getRelativePath(path.removeFirstSegments(1), set.iterator().next().getKey());
-					pattern = pattern.isEmpty() ? null : pattern;
-					if (parts == null || "uris,diff".equals(parts) || "diff,uris".equals(parts)) //$NON-NLS-1$ //$NON-NLS-2$
-						return handleMultiPartGet(request, response, db, path, pattern);
-					if ("uris".equals(parts)) { //$NON-NLS-1$
-						OrionServlet.writeJSONResponse(request, response, new Diff(getURI(request), db).toJSON());
-						return true;
-					}
-					if ("diff".equals(parts)) //$NON-NLS-1$
-						return handleGetDiff(request, response, db, path.segment(0), pattern, response.getOutputStream());
-				case POST :
-					return handlePost(request, response, db, path);
+			String parts = request.getParameter("parts"); //$NON-NLS-1$
+			String pattern = relativePath;
+			pattern = pattern.isEmpty() ? null : pattern;
+			if (parts == null || "uris,diff".equals(parts) || "diff,uris".equals(parts)) //$NON-NLS-1$ //$NON-NLS-2$
+				return handleMultiPartGet(request, response, db, gitSegment, pattern);
+			if ("uris".equals(parts)) { //$NON-NLS-1$
+				OrionServlet.writeJSONResponse(request, response, new Diff(getURI(request), db).toJSON());
+				return true;
 			}
-
+			if ("diff".equals(parts)) //$NON-NLS-1$
+				return handleGetDiff(request, response, db, gitSegment, pattern, response.getOutputStream());
+			return false; // unknown part
 		} catch (Exception e) {
-			String msg = NLS.bind("Failed to generate diff for {0}", gitPathInfo);
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
-		} finally {
-			if (db != null)
-				db.close();
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured while getting a diff.", e));
 		}
-		return false;
 	}
 
 	private boolean handleGetDiff(HttpServletRequest request, HttpServletResponse response, Repository db, String scope, String pattern, OutputStream out) throws Exception {
@@ -113,7 +95,6 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 				String msg = NLS.bind("Failed to generate diff for {0}", scope);
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 			}
-			// TODO: decode
 			oldTree = getTreeIterator(db, commits[0]);
 			newTree = getTreeIterator(db, commits[1]);
 		} else if (scope.equals(GitConstants.KEY_DIFF_CACHED)) {
@@ -169,7 +150,7 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private boolean handleMultiPartGet(HttpServletRequest request, HttpServletResponse response, Repository db, Path path, String pattern) throws Exception {
+	private boolean handleMultiPartGet(HttpServletRequest request, HttpServletResponse response, Repository db, String scope, String pattern) throws Exception {
 		String boundary = createBoundaryString();
 		response.setHeader(ProtocolConstants.HEADER_CONTENT_TYPE, "multipart/related; boundary=\"" + boundary + '"'); //$NON-NLS-1$
 		OutputStream outputStream = response.getOutputStream();
@@ -183,7 +164,7 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 			out.write(EOL + "--" + boundary + EOL); //$NON-NLS-1$
 			out.write(ProtocolConstants.HEADER_CONTENT_TYPE + ": plain/text" + EOL + EOL); //$NON-NLS-1$
 			out.flush();
-			handleGetDiff(request, response, db, path.segment(0), pattern, outputStream);
+			handleGetDiff(request, response, db, scope, pattern, outputStream);
 			out.write(EOL);
 			out.flush();
 		} finally {
@@ -192,13 +173,25 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	String createBoundaryString() {
+	private String createBoundaryString() {
 		return new UniversalUniqueIdentifier().toBase64String();
 	}
 
-	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws Exception {
+	@Override
+	protected boolean handlePost(RequestInfo requestInfo) throws ServletException {
+		HttpServletRequest request = requestInfo.request;
+		HttpServletResponse response = requestInfo.response;
+		Repository db = requestInfo.db;
 		String contentType = request.getHeader(ProtocolConstants.HEADER_CONTENT_TYPE);
 		if (contentType.startsWith("multipart")) {//$NON-NLS-1$
+			return applyPatch(request, response, db, contentType);
+		} else {
+			return createDiffLocation(request, response);
+		}
+	}
+
+	private boolean applyPatch(HttpServletRequest request, HttpServletResponse response, Repository db, String contentType) throws ServletException {
+		try {
 			String patch = readPatch(request.getInputStream(), contentType);
 			Git git = new Git(db);
 			ApplyCommand applyCommand = git.apply();
@@ -213,8 +206,14 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 			response.setStatus(HttpServletResponse.SC_CREATED);
 			response.setContentType(ProtocolConstants.CONTENT_TYPE_HTML);
 			response.getOutputStream().write(new String("<head></head><body><textarea>{}</textarea></body>").getBytes()); //$NON-NLS-1$
+			return true;
+		} catch (Exception e) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when applying a patch.", e));
+		}
+	}
 
-		} else {
+	private boolean createDiffLocation(HttpServletRequest request, HttpServletResponse response) throws ServletException {
+		try {
 			StringWriter writer = new StringWriter();
 			IOUtilities.pipe(request.getReader(), writer, false, false);
 			JSONObject requestObject = new JSONObject(writer.toString());
@@ -224,16 +223,20 @@ public class GitDiffHandlerV1 extends ServletResourceHandler<String> {
 			for (int i = 0; i < p.segmentCount(); i++) {
 				String s = p.segment(i);
 				if (i == 2) {
-					s += ".." + requestObject.getString(GitConstants.KEY_COMMIT_NEW); //$NON-NLS-1$
+					s += ".."; //$NON-NLS-1$
+					s += GitUtils.encode(requestObject.getString(GitConstants.KEY_COMMIT_NEW));
 				}
 				np = np.append(s);
 			}
+			if (p.hasTrailingSeparator())
+				np = np.addTrailingSeparator();
 			URI nu = new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), np.toString(), u.getQuery(), u.getFragment());
 			response.setHeader(ProtocolConstants.HEADER_LOCATION, nu.toString());
 			response.setStatus(HttpServletResponse.SC_OK);
-
+			return true;
+		} catch (Exception e) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when creating a Diff Location.", e));
 		}
-		return true;
 	}
 
 	//	private Object toJSON(ApplyResult applyResult) throws JSONException {

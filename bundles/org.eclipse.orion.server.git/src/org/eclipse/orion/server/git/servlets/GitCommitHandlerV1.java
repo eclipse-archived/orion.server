@@ -10,12 +10,10 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
-import java.util.Map.Entry;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -30,7 +28,6 @@ import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.merge.ResolveMerger.MergeFailureReason;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.treewalk.filter.*;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -41,7 +38,6 @@ import org.eclipse.orion.server.git.*;
 import org.eclipse.orion.server.git.jobs.LogJob;
 import org.eclipse.orion.server.git.objects.Commit;
 import org.eclipse.orion.server.git.objects.Log;
-import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONException;
@@ -50,37 +46,12 @@ import org.json.JSONObject;
 /**
  * 
  */
-public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
+public class GitCommitHandlerV1 extends AbstractGitHandler {
 
 	private final static int PAGE_SIZE = 50;
 
-	private ServletResourceHandler<IStatus> statusHandler;
-
 	GitCommitHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
-		this.statusHandler = statusHandler;
-	}
-
-	@Override
-	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String path) throws ServletException {
-		Repository db = null;
-		try {
-			Path p = new Path(path);
-			switch (getMethod(request)) {
-				case GET :
-					return handleGet(request, response, db, p);
-				case PUT :
-					return handlePut(request, response, db, p);
-				case POST :
-					return handlePost(request, response, db, p);
-			}
-		} catch (Exception e) {
-			String msg = NLS.bind("Failed to process an operation on commits for {0}", path);
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
-		} finally {
-			if (db != null)
-				db.close();
-		}
-		return false;
+		super(statusHandler);
 	}
 
 	private boolean createCommitLocation(HttpServletRequest request, HttpServletResponse response, Repository db, String newCommitToCreatelocation) throws IOException, JSONException, URISyntaxException {
@@ -102,44 +73,34 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws CoreException, IOException, ServletException, JSONException, URISyntaxException {
-		if (path.segment(0).equals("file")) { //$NON-NLS-1$
-			// special case for git log --all
-			IPath filePath = path.hasTrailingSeparator() ? path : path.removeLastSegments(1);
-			Set<Entry<IPath, File>> set = GitUtils.getGitDirs(filePath, Traverse.GO_UP).entrySet();
-			File gitDir = set.iterator().next().getValue();
-			if (gitDir == null)
-				return false; // TODO: or an error response code, 405?
+	@Override
+	protected boolean handleGet(RequestInfo requestInfo) throws ServletException {
+		String gitSegment = requestInfo.gitSegment;
+		HttpServletRequest request = requestInfo.request;
+		HttpServletResponse response = requestInfo.response;
+		Repository db = requestInfo.db;
+		String pattern = requestInfo.relativePath;
+		try {
+			if (gitSegment == null) {
+				// special case for git log --all
+				return handleGetCommitLog(request, response, db, null, pattern);
+			} else {
+				// git log <ref>
+				String parts = request.getParameter("parts"); //$NON-NLS-1$
 
-			db = new FileRepository(gitDir);
-
-			String pattern = GitUtils.getRelativePath(path, set.iterator().next().getKey());
-			return handleGetCommitLog(request, response, db, null, pattern);
-
-		} else if (path.segment(1).equals("file")) { //$NON-NLS-1$
-			// git log <ref>
-			IPath filePath = path.hasTrailingSeparator() ? path.removeFirstSegments(1) : path.removeFirstSegments(1).removeLastSegments(1);
-			Set<Entry<IPath, File>> set = GitUtils.getGitDirs(filePath, Traverse.GO_UP).entrySet();
-			File gitDir = set.iterator().next().getValue();
-			if (gitDir == null)
-				return false; // TODO: or an error response code, 405?
-
-			db = new FileRepository(gitDir);
-
-			// /{ref}/file/{projectId}...
-			String parts = request.getParameter("parts"); //$NON-NLS-1$
-			String pattern = GitUtils.getRelativePath(path, set.iterator().next().getKey());
-			if (path.segmentCount() > 3 && "body".equals(parts)) { //$NON-NLS-1$
-				return handleGetCommitBody(request, response, db, path.segment(0), pattern);
+				if ("body".equals(parts)) { //$NON-NLS-1$
+					return handleGetCommitBody(request, response, db, gitSegment, pattern);
+				} else if (parts == null || "log".equals(parts)) { //$NON-NLS-1$
+					return handleGetCommitLog(request, response, db, gitSegment, pattern);
+				}
 			}
-			if (path.segmentCount() > 2 && (parts == null || "log".equals(parts))) { //$NON-NLS-1$
-				return handleGetCommitLog(request, response, db, path.segment(0), pattern);
-			}
+			return false;
+		} catch (Exception e) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when requesting a commit info.", e));
 		}
-		return false;
 	}
 
-	private boolean handleGetCommitBody(HttpServletRequest request, HttpServletResponse response, Repository db, String ref, String pattern) throws IOException, ServletException, URISyntaxException, CoreException {
+	private boolean handleGetCommitBody(HttpServletRequest request, HttpServletResponse response, Repository db, String ref, String pattern) throws IOException, ServletException, CoreException {
 		ObjectId refId = db.resolve(ref);
 		if (refId == null) {
 			String msg = NLS.bind("Failed to get commit body for ref {0}", ref);
@@ -240,91 +201,95 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		}
 	}
 
-	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws ServletException, NoFilepatternException, IOException, JSONException, CoreException, URISyntaxException {
-		IPath filePath = path.hasTrailingSeparator() ? path.removeFirstSegments(1) : path.removeFirstSegments(1).removeLastSegments(1);
-		Set<Entry<IPath, File>> set = GitUtils.getGitDirs(filePath, Traverse.GO_UP).entrySet();
-		File gitDir = set.iterator().next().getValue();
-		if (gitDir == null)
-			return false; // TODO: or an error response code, 405?
-		db = new FileRepository(gitDir);
-
-		JSONObject requestObject = OrionServlet.readJSONRequest(request);
-		String commitToMerge = requestObject.optString(GitConstants.KEY_MERGE, null);
-		if (commitToMerge != null) {
-			return merge(request, response, db, commitToMerge);
-		}
-
-		String commitToRebase = requestObject.optString(GitConstants.KEY_REBASE, null);
-		String rebaseOperation = requestObject.optString(GitConstants.KEY_OPERATION, null);
-		if (commitToRebase != null) {
-			return rebase(request, response, db, commitToRebase, rebaseOperation);
-		}
-
-		String commitToCherryPick = requestObject.optString(GitConstants.KEY_CHERRY_PICK, null);
-		if (commitToCherryPick != null) {
-			return cherryPick(request, response, db, commitToCherryPick);
-		}
-
-		// continue with creating new commit location
-
-		String newCommitToCreatelocation = requestObject.optString(GitConstants.KEY_COMMIT_NEW, null);
-		if (newCommitToCreatelocation != null)
-			return createCommitLocation(request, response, db, newCommitToCreatelocation);
-
-		ObjectId refId = db.resolve(path.segment(0));
-		if (refId == null || !Constants.HEAD.equals(path.segment(0))) {
-			String msg = NLS.bind("Commit failed. Ref must be HEAD and is {0}", path.segment(0));
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
-		}
-
-		String message = requestObject.optString(GitConstants.KEY_COMMIT_MESSAGE, null);
-		if (message == null || message.isEmpty()) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Missing commit message.", null));
-		}
-
-		boolean amend = Boolean.parseBoolean(requestObject.optString(GitConstants.KEY_COMMIT_AMEND, null));
-
-		String committerName = requestObject.optString(GitConstants.KEY_COMMITTER_NAME, null);
-		String committerEmail = requestObject.optString(GitConstants.KEY_COMMITTER_EMAIL, null);
-		String authorName = requestObject.optString(GitConstants.KEY_AUTHOR_NAME, null);
-		String authorEmail = requestObject.optString(GitConstants.KEY_AUTHOR_EMAIL, null);
-
-		Git git = new Git(db);
-		CommitCommand cc = git.commit();
-
-		// workaround of a bug in JGit which causes invalid 
-		// support of null values of author/committer name/email, see bug 352984
-		PersonIdent defPersonIdent = new PersonIdent(db);
-		if (committerName == null)
-			committerName = defPersonIdent.getName();
-		if (committerEmail == null)
-			committerEmail = defPersonIdent.getEmailAddress();
-		if (authorName == null)
-			authorName = committerName;
-		if (authorEmail == null)
-			authorEmail = committerEmail;
-		cc.setCommitter(committerName, committerEmail);
-		cc.setAuthor(authorName, authorEmail);
-
-		// support for committing by path: "git commit -o path"
-		String pattern = GitUtils.getRelativePath(path.removeFirstSegments(1), set.iterator().next().getKey());
-		if (!pattern.isEmpty()) {
-			cc.setOnly(pattern);
-		}
-
+	@Override
+	protected boolean handlePost(RequestInfo requestInfo) throws ServletException {
+		String gitSegment = requestInfo.gitSegment;
+		HttpServletRequest request = requestInfo.request;
+		HttpServletResponse response = requestInfo.response;
+		Repository db = requestInfo.db;
+		String pattern = requestInfo.relativePath;
+		JSONObject requestObject = requestInfo.getJSONRequest();
 		try {
-			// "git commit [--amend] -m '{message}' [-a|{path}]"
-			RevCommit lastCommit = cc.setAmend(amend).setMessage(message).call();
+			String commitToMerge = requestObject.optString(GitConstants.KEY_MERGE, null);
+			if (commitToMerge != null) {
+				return merge(request, response, db, commitToMerge);
+			}
 
-			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.COMMIT_REFRANGE);
-			Commit commit = new Commit(cloneLocation, db, lastCommit, pattern);
-			JSONObject result = commit.toJSON();
-			OrionServlet.writeJSONResponse(request, response, result);
-			return true;
-		} catch (GitAPIException e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "An error occured when commiting.", e));
-		} catch (JGitInternalException e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An internal error occured when commiting.", e));
+			String commitToRebase = requestObject.optString(GitConstants.KEY_REBASE, null);
+			String rebaseOperation = requestObject.optString(GitConstants.KEY_OPERATION, null);
+			if (commitToRebase != null) {
+				return rebase(request, response, db, commitToRebase, rebaseOperation);
+			}
+
+			String commitToCherryPick = requestObject.optString(GitConstants.KEY_CHERRY_PICK, null);
+			if (commitToCherryPick != null) {
+				return cherryPick(request, response, db, commitToCherryPick);
+			}
+
+			// continue with creating new commit location
+
+			String newCommitToCreatelocation = requestObject.optString(GitConstants.KEY_COMMIT_NEW, null);
+			if (newCommitToCreatelocation != null)
+				return createCommitLocation(request, response, db, newCommitToCreatelocation);
+
+			ObjectId refId = db.resolve(gitSegment);
+			if (refId == null || !Constants.HEAD.equals(gitSegment)) {
+				String msg = NLS.bind("Commit failed. Ref must be HEAD and is {0}", gitSegment);
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+			}
+
+			String message = requestObject.optString(GitConstants.KEY_COMMIT_MESSAGE, null);
+			if (message == null || message.isEmpty()) {
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Missing commit message.", null));
+			}
+
+			boolean amend = Boolean.parseBoolean(requestObject.optString(GitConstants.KEY_COMMIT_AMEND, null));
+
+			String committerName = requestObject.optString(GitConstants.KEY_COMMITTER_NAME, null);
+			String committerEmail = requestObject.optString(GitConstants.KEY_COMMITTER_EMAIL, null);
+			String authorName = requestObject.optString(GitConstants.KEY_AUTHOR_NAME, null);
+			String authorEmail = requestObject.optString(GitConstants.KEY_AUTHOR_EMAIL, null);
+
+			Git git = new Git(db);
+			CommitCommand cc = git.commit();
+
+			// workaround of a bug in JGit which causes invalid 
+			// support of null values of author/committer name/email, see bug 352984
+			PersonIdent defPersonIdent = new PersonIdent(db);
+			if (committerName == null)
+				committerName = defPersonIdent.getName();
+			if (committerEmail == null)
+				committerEmail = defPersonIdent.getEmailAddress();
+			if (authorName == null)
+				authorName = committerName;
+			if (authorEmail == null)
+				authorEmail = committerEmail;
+			cc.setCommitter(committerName, committerEmail);
+			cc.setAuthor(authorName, authorEmail);
+
+			// support for committing by path: "git commit -o path"
+			if (!pattern.isEmpty()) {
+				cc.setOnly(pattern);
+			}
+
+			try {
+				// "git commit [--amend] -m '{message}' [-a|{path}]"
+				RevCommit lastCommit = cc.setAmend(amend).setMessage(message).call();
+
+				URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.COMMIT_REFRANGE);
+				Commit commit = new Commit(cloneLocation, db, lastCommit, pattern);
+				JSONObject result = commit.toJSON();
+				OrionServlet.writeJSONResponse(request, response, result);
+				return true;
+			} catch (GitAPIException e) {
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "An error occured when commiting.", e));
+			} catch (JGitInternalException e) {
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An internal error occured when commiting.", e));
+			} catch (UnmergedPathException e) {
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An internal error occured when commiting.", e));
+			}
+		} catch (Exception e) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when requesting a commit info.", e));
 		}
 	}
 
@@ -442,21 +407,24 @@ public class GitCommitHandlerV1 extends ServletResourceHandler<String> {
 		}
 	}
 
-	private boolean handlePut(HttpServletRequest request, HttpServletResponse response, Repository db, Path path) throws ServletException, IOException, JSONException, CoreException, URISyntaxException, JGitInternalException, GitAPIException {
-		IPath filePath = path.removeFirstSegments(1);
-		Set<Entry<IPath, File>> set = GitUtils.getGitDirs(filePath, Traverse.GO_UP).entrySet();
-		File gitDir = set.iterator().next().getValue();
-
-		if (gitDir == null)
-			return false; // TODO: or an error response code, 405?
-		db = new FileRepository(gitDir);
-		boolean isRoot = "".equals(GitUtils.getRelativePath(path, set.iterator().next().getKey())); //$NON-NLS-1$
-		JSONObject toPut = OrionServlet.readJSONRequest(request);
-		String tagName = toPut.getString(ProtocolConstants.KEY_NAME);
-		if (tagName != null) {
-			return tag(request, response, db, path.segment(0), tagName, isRoot);
+	@Override
+	protected boolean handlePut(RequestInfo requestInfo) throws ServletException {
+		String gitSegment = requestInfo.gitSegment;
+		HttpServletRequest request = requestInfo.request;
+		HttpServletResponse response = requestInfo.response;
+		Repository db = requestInfo.db;
+		String filePath = requestInfo.relativePath;
+		JSONObject toPut = requestInfo.getJSONRequest();
+		try {
+			boolean isRoot = "".equals(filePath); //$NON-NLS-1$
+			String tagName = toPut.getString(ProtocolConstants.KEY_NAME);
+			if (tagName != null) {
+				return tag(request, response, db, gitSegment, tagName, isRoot);
+			}
+			return false;
+		} catch (Exception e) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when tagging.", e));
 		}
-		return false;
 	}
 
 	private boolean tag(HttpServletRequest request, HttpServletResponse response, Repository db, String commitId, String tagName, boolean isRoot) throws JSONException, URISyntaxException, ServletException {

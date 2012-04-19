@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -200,11 +200,11 @@ public class GitUtilsTest extends GitTest {
 
 	@Test
 	public void testGetRelativePath() throws Exception {
-		assertEquals(Path.EMPTY.toString(), GitUtils.getRelativePath(new Path("/file").append("a/"), Path.EMPTY));
-		assertEquals(Path.EMPTY.toString(), GitUtils.getRelativePath(new Path("/file").append("a").append("b/"), Path.EMPTY));
-		assertEquals("b/", GitUtils.getRelativePath(new Path("/file").append("a").append("b/"), new Path("../")));
-		assertEquals("b/c/", GitUtils.getRelativePath(new Path("/file").append("a").append("b").append("c/"), new Path("../../")));
-		assertEquals("c/", GitUtils.getRelativePath(new Path("/file").append("a").append("b").append("c/"), new Path("../")));
-		assertEquals("b/c", GitUtils.getRelativePath(new Path("/file").append("a").append("b").append("c"), new Path("../")));
+		assertEquals(Path.EMPTY.toString(), GitUtils.getRelativePath(new Path("/file/a/"), Path.EMPTY));
+		assertEquals(Path.EMPTY.toString(), GitUtils.getRelativePath(new Path("/file/a/b/"), Path.EMPTY));
+		assertEquals("b/", GitUtils.getRelativePath(new Path("/file/a/b/"), new Path("../")));
+		assertEquals("b/c/", GitUtils.getRelativePath(new Path("/file/a/b/c/"), new Path("../../")));
+		assertEquals("c/", GitUtils.getRelativePath(new Path("/file/a/b/c/"), new Path("../")));
+		assertEquals("b/c", GitUtils.getRelativePath(new Path("/file/a/b/c"), new Path("../")));
 	}
 }

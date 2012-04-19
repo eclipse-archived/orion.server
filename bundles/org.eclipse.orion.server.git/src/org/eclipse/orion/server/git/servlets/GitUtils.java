@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,8 +10,9 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
-import java.io.File;
-import java.io.FileFilter;
+import java.io.*;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.*;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
@@ -169,5 +170,23 @@ public class GitUtils {
 		cp.setPublicKey(publicKey);
 		cp.setPassphrase(passphrase);
 		return cp;
+	}
+
+	public static String encode(String s) {
+		try {
+			return URLEncoder.encode(s, "UTF-8"); //$NON-NLS-1$
+		} catch (UnsupportedEncodingException e) {
+			// should never happen since "UTF-8" is used
+		}
+		return s;
+	}
+
+	public static String decode(String s) {
+		try {
+			return URLDecoder.decode(s, "UTF-8"); //$NON-NLS-1$
+		} catch (UnsupportedEncodingException e) {
+			// should never happen since "UTF-8" is used
+		}
+		return s;
 	}
 }

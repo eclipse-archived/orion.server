@@ -14,10 +14,12 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Set;
-import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.*;
+import org.eclipse.orion.server.git.servlets.GitServlet;
+import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -42,19 +44,18 @@ public class RemoteBranch extends GitObject {
 		Set<String> configNames = getConfig().getSubsections(ConfigConstants.CONFIG_REMOTE_SECTION);
 		for (String configName : configNames) {
 			if (configName.equals(remote.getName())) {
-				final String fullName = Constants.R_REMOTES + remote.getName() + "/" + name; //$NON-NLS-1$
+				final String fullName = getName(true, false);
 				Ref ref = db.getRefDatabase().getRef(fullName);
 				if (ref != null && !ref.isSymbolic()) {
 					JSONObject result = super.toJSON();
-					result.put(ProtocolConstants.KEY_NAME, Repository.shortenRefName(fullName));
+					result.put(ProtocolConstants.KEY_NAME, getName(false, false));
 					result.put(ProtocolConstants.KEY_FULL_NAME, fullName);
 					result.put(ProtocolConstants.KEY_ID, ref.getObjectId().name());
-					// see bug 342602
-					// result.put(GitConstants.KEY_COMMIT, baseToCommitLocation(baseLocation, name));
-					result.put(GitConstants.KEY_COMMIT, BaseToCommitConverter.getCommitLocation(cloneLocation, ref.getObjectId().name(), BaseToCommitConverter.REMOVE_FIRST_2));
+					result.put(GitConstants.KEY_COMMIT, BaseToCommitConverter.getCommitLocation(cloneLocation, getName(true, true), BaseToCommitConverter.REMOVE_FIRST_2));
 					result.put(GitConstants.KEY_HEAD, BaseToCommitConverter.getCommitLocation(cloneLocation, Constants.HEAD, BaseToCommitConverter.REMOVE_FIRST_2));
 					// result.put(GitConstants.KEY_BRANCH, BaseToBranchConverter.getBranchLocation(cloneLocation, BaseToBranchConverter.REMOTE));
 					result.put(GitConstants.KEY_INDEX, BaseToIndexConverter.getIndexLocation(cloneLocation, BaseToIndexConverter.CLONE));
+					result.put(GitConstants.KEY_DIFF, createDiffLocation());
 					return result;
 				}
 			}
@@ -62,9 +63,27 @@ public class RemoteBranch extends GitObject {
 		return null;
 	}
 
+	private URI createDiffLocation() throws URISyntaxException {
+		Assert.isNotNull(cloneLocation);
+		IPath basePath = new Path(cloneLocation.getPath());
+		IPath p = new Path(GitServlet.GIT_URI).append(Diff.RESOURCE).append(getName(false, true)).append(basePath.removeFirstSegments(2));
+		return new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), p.toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
+	}
+
+	private String getName(boolean fullName, boolean encode) {
+		String name = Constants.R_REMOTES + remote.getName() + "/" + this.name; //$NON-NLS-1$
+		if (!fullName)
+			name = Repository.shortenRefName(name);
+		if (encode)
+			name = GitUtils.encode(name);
+		return name;
+	}
+
 	public URI getLocation() throws URISyntaxException {
+		// TODO bug 377090
+		// Assert.isNotNull(cloneLocation);
 		if (cloneLocation == null)
-			return null; // TODO: throw IllegalArgumentException
+			return null;
 		return BaseToRemoteConverter.REMOVE_FIRST_2.baseToRemoteLocation(cloneLocation, remote.getName(), name);
 	}
 
