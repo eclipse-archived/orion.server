@@ -398,7 +398,7 @@ public abstract class GitTest extends FileSystemTest {
 		String cloneLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		if (cloneLocation == null) {
 			JSONObject taskResp = new JSONObject(response.getText());
-			assertTrue(taskResp.has(ProtocolConstants.KEY_LOCATION));
+			assertTrue(taskResp.toString(), taskResp.has(ProtocolConstants.KEY_LOCATION));
 			assertFalse(taskResp.getString(TaskInfo.KEY_RESULT), taskResp.has(TaskInfo.KEY_FAILED) && taskResp.getBoolean(TaskInfo.KEY_FAILED));
 			cloneLocation = taskResp.getString(ProtocolConstants.KEY_LOCATION);
 		}

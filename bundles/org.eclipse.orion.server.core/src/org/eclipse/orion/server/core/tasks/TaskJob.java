@@ -17,6 +17,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.orion.internal.server.core.Activator;
+import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -125,6 +126,16 @@ public abstract class TaskJob extends Job implements ITaskCanceler {
 			setTaskResult(getRealResult());
 		}
 		return task;
+	}
+	
+	public synchronized void removeTask(){
+		if(task!=null){
+			try {
+				getTaskService().removeTask(task.getUserId(), task.getTaskId());
+			} catch (TaskOperationException e) {
+				LogHelper.log(e);
+			}
+		}
 	}
 
 	protected abstract IStatus performJob();

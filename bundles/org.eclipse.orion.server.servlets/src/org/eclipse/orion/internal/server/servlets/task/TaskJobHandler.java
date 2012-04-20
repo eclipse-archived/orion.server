@@ -92,30 +92,38 @@ public class TaskJobHandler {
 		}
 		job.removeJobChangeListener(jobListener);
 
-		if (job.getState() == Job.NONE) {
-			IStatus result = job.getRealResult();
-			if (!result.isOK()) {
-				return statusHandler.handleRequest(request, response, result);
-			}
-			if (job.getFinalLocation() != null) {
-				response.setHeader(ProtocolConstants.HEADER_LOCATION, job.getFinalLocation().toString());
-			}
-			if (result instanceof ServerStatus) {
-				ServerStatus status = (ServerStatus) result;
-				OrionServlet.writeJSONResponse(request, response, status.getJsonData());
-				return true;
-			} else {
-				OrionServlet.writeJSONResponse(request, response, job.getFinalResult());
-				return true;
-			}
+		if (job.getState() == Job.NONE || job.getRealResult() != null) {
+			return writeResult(request, response, job, statusHandler);
 		} else {
 			TaskInfo task = job.startTask();
 			JSONObject result = task.toJSON();
 			String taskLocation = result.has(ProtocolConstants.KEY_LOCATION) ? result.getString(ProtocolConstants.KEY_LOCATION) : createTaskLocation(OrionServlet.getURI(request), task.getTaskId()).toString();
 			result.put(ProtocolConstants.KEY_LOCATION, taskLocation);
+			if (!task.isRunning()) {
+				job.removeTask(); // Task is not used, we may remove it
+				return writeResult(request, response, job, statusHandler);
+			}
 			response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation.toString());
 			OrionServlet.writeJSONResponse(request, response, result);
 			response.setStatus(HttpServletResponse.SC_ACCEPTED);
+			return true;
+		}
+	}
+
+	private static boolean writeResult(HttpServletRequest request, HttpServletResponse response, TaskJob job, ServletResourceHandler<IStatus> statusHandler) throws ServletException, IOException, JSONException {
+		IStatus result = job.getRealResult();
+		if (!result.isOK()) {
+			return statusHandler.handleRequest(request, response, result);
+		}
+		if (job.getFinalLocation() != null) {
+			response.setHeader(ProtocolConstants.HEADER_LOCATION, job.getFinalLocation().toString());
+		}
+		if (result instanceof ServerStatus) {
+			ServerStatus status = (ServerStatus) result;
+			OrionServlet.writeJSONResponse(request, response, status.getJsonData());
+			return true;
+		} else {
+			OrionServlet.writeJSONResponse(request, response, job.getFinalResult());
 			return true;
 		}
 	}
