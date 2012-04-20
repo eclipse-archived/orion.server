@@ -64,8 +64,14 @@ public class SearchServlet extends OrionServlet {
 				if (term.length() == 0)
 					continue;
 				if (isSearchField(term)) {
-					//field searches are always case sensitive
-					processedQuery += term;
+					//solr does not lowercase queries containing wildcards
+					//https://issues.apache.org/jira/browse/SOLR-219
+					if (term.startsWith("NameLower:")) {
+						processedQuery += "NameLower:" + term.substring(10).toLowerCase();
+					} else {
+						//all other field searches are case sensitive
+						processedQuery += term;
+					}
 				} else {
 					//solr does not lowercase queries containing wildcards
 					//see https://bugs.eclipse.org/bugs/show_bug.cgi?id=359766
