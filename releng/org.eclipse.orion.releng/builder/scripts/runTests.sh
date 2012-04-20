@@ -98,6 +98,6 @@ for entry in ${browsers[@]}; do
 	IFS="$OLD_IFS"
 	
 	echo Running $testConf on port $port
-	$java -Dbrowser.timeout=120 -jar $testDir/../JsTestDriver.jar --runnerMode DEBUG --config $testConf --port $port --browser /shared/common/${browser[0]} --tests all --testOutput $testDir
+	$java -Dbrowser.timeout=120 -jar $testDir/../JsTestDriver.jar --config $testConf --port $port --browser /shared/common/${browser[0]} --tests all --testOutput $testDir
 	killBrowser "${browser[1]}"
 done
