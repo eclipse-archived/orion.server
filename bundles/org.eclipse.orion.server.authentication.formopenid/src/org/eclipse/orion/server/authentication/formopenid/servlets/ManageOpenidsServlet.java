@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others 
+ * Copyright (c) 2011, 2012 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -141,7 +141,7 @@ public class ManageOpenidsServlet extends HttpServlet {
 		writer.println("<script type=\"text/javascript\" src=\"../mixloginstatic/js/manageOpenids.js\"></script>"); //$NON-NLS-1$
 		writer.println("</head>"); //$NON-NLS-1$
 		writer.println("<body>"); //$NON-NLS-1$
-		writer.println("<div id=\"newOpenId\"><h2 style=\"margin-top: 10px; margin-bottom: 10px; float: left; margin-right: 5px;\">Add external account: <h2>");
+		writer.println("<div id=\"newOpenId\"><h2 style=\"margin-top: 10px; margin-bottom: 10px; float: left; margin-right: 5px;\" id=\"addExternalAccount\">Add external account: <h2>");
 		for (OpendIdProviderDescription provider : getSupportedOpenids(req)) {
 			writer.print(provider.toJsImage().replaceAll("\\\\'", "'"));
 		}

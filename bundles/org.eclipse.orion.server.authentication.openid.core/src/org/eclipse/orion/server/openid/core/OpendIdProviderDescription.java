@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others 
+ * Copyright (c) 2010, 2012 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -63,10 +63,17 @@ public class OpendIdProviderDescription {
 		StringBuilder sb = new StringBuilder();
 		sb.append("<a class=\"loginWindow\" href=\"javascript:confirmOpenId(\\'");
 		sb.append(authSite);
-		sb.append("\\')\">");
+		sb.append("\\')\" aria-labelledby=\"addExternalAccount");
+		if (image != null) {
+			sb.append(" ");
+			sb.append(name == null ? authSite : name);
+		}
+		sb.append("\">");
 		if (image != null) {
 			sb.append("<img class=\"loginWindow\" src=\"");
 			sb.append(image);
+			sb.append("\" id=\"");
+			sb.append(name == null ? authSite : name);
 			sb.append("\" alt=\"");
 			sb.append(name == null ? authSite : name);
 			sb.append("\" title=\"");
@@ -84,10 +91,17 @@ public class OpendIdProviderDescription {
 		StringBuilder sb = new StringBuilder();
 		sb.append("<a class=\"loginWindow\" href=\"javascript:confirmOpenId('");
 		sb.append(authSite);
-		sb.append("')\">");
+		sb.append("')\" aria-labelledby=\"addExternalAccount");
+		if (image != null) {
+			sb.append(" ");
+			sb.append(name == null ? authSite : name);
+		}
+		sb.append("\">");
 		if (image != null) {
 			sb.append("<img class=\"loginWindow\" src=\"");
 			sb.append(image);
+			sb.append("\" id=\"");
+			sb.append(name == null ? authSite : name);
 			sb.append("\" alt=\"");
 			sb.append(name == null ? authSite : name);
 			sb.append("\" title=\"");
