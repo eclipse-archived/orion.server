@@ -33,14 +33,6 @@ plugin@org.eclipse.orion.server.ui=GIT,tag=v20110606-1500,repo=git://git.eclipse
 plugin@org.eclipse.orion.doc.isv=GIT,tag=v20120417-1521,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=doc/org.eclipse.orion.doc.isv
 plugin@org.eclipse.orion.doc.user=GIT,tag=v20120413-2008,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=doc/org.eclipse.orion.doc.user
 
-
-plugin@org.eclipse.e4.languages.javascript.framework=CVS,tag=v20101028-1345,cvsRoot=:pserver:anonymous@dev.eclipse.org:/cvsroot/eclipse,path=e4/org.eclipse.e4.languages/bundles/org.eclipse.e4.languages.javascript.framework
-plugin@org.eclipse.e4.languages.javascript.junit=CVS,tag=v20101028-1345,cvsRoot=:pserver:anonymous@dev.eclipse.org:/cvsroot/eclipse,path=e4/org.eclipse.e4.languages/bundles/org.eclipse.e4.languages.javascript.junit
-
-plugin@org.dojotoolkit,1.6.1=p2IU,id=org.dojotoolkit,version=1.6.1.v201105210659,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20110523182458/repository
-
-plugin@org.openid4java,0.9.5=p2IU,id=org.openid4java,version=0.9.5.v201105210655,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20110523182458/repository
-
 #tests
 plugin@org.eclipse.orion.server.tests=GIT,tag=v20120420-1335,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=tests/org.eclipse.orion.server.tests
 plugin@org.eclipse.orion.server.sshconfig.home=GIT,tag=v20110420-1839,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.sshconfig.home
