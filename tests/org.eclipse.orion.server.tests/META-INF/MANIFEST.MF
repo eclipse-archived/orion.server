@@ -4,7 +4,7 @@ Bundle-Name: Server Tests
 Bundle-SymbolicName: org.eclipse.orion.server.tests
 Bundle-Version: 0.2.0.qualifier
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
-Require-Bundle: org.junit;bundle-version="4.3.1",
+Require-Bundle: org.junit;bundle-version="4.8.2",
  org.json;bundle-version="1.0.0",
  org.eclipse.equinox.common;bundle-version="3.6.0",
  org.eclipse.core.jobs;bundle-version="3.5.0",
