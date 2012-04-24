@@ -135,7 +135,7 @@ public class ListBranchesJob extends GitJob {
 				if (commitsSize == 0) {
 					children.put(branch.toJSON());
 				} else {
-					String branchName = branch.getName(false);
+					String branchName = branch.getName(true, false);
 					ObjectId toObjectId = db.resolve(branchName);
 					Ref toRefId = db.getRef(branchName);
 					if (toObjectId == null) {

@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ListBranchCommand.ListMode;
@@ -48,9 +49,8 @@ public class Log extends GitObject {
 	}
 
 	public JSONObject toJSON(int page, int pageSize) throws JSONException, URISyntaxException, IOException, CoreException {
-		if (commits == null)
-			throw new IllegalStateException("'commits' is null");
-		Map<ObjectId, JSONArray> commitToBranchMap = getCommitToBranchMap(db);
+		Assert.isNotNull(commits, "'commits' is null");
+		Map<ObjectId, JSONArray> commitToBranchMap = getCommitToBranchMap(cloneLocation, db);
 
 		JSONObject result = super.toJSON();
 		JSONArray children = new JSONArray();
@@ -117,21 +117,19 @@ public class Log extends GitObject {
 		return BaseToCommitConverter.getCommitLocation(cloneLocation, c.toString(), pattern, BaseToCommitConverter.REMOVE_FIRST_2);
 	}
 
-	static Map<ObjectId, JSONArray> getCommitToBranchMap(Repository db) throws JSONException {
+	static Map<ObjectId, JSONArray> getCommitToBranchMap(URI cloneLocation, Repository db) throws JSONException, URISyntaxException, IOException, CoreException {
 		HashMap<ObjectId, JSONArray> commitToBranch = new HashMap<ObjectId, JSONArray>();
 		Git git = new Git(db);
 		List<Ref> branchRefs = git.branchList().setListMode(ListMode.ALL).call();
 		for (Ref branchRef : branchRefs) {
 			ObjectId commitId = branchRef.getLeaf().getObjectId();
-			JSONObject branch = new JSONObject();
-			branch.put(ProtocolConstants.KEY_FULL_NAME, branchRef.getName());
-
+			Branch branch = new Branch(cloneLocation, db, branchRef);
 			JSONArray branchesArray = commitToBranch.get(commitId);
 			if (branchesArray != null) {
-				branchesArray.put(branch);
+				branchesArray.put(branch.toJSON());
 			} else {
 				branchesArray = new JSONArray();
-				branchesArray.put(branch);
+				branchesArray.put(branch.toJSON());
 				commitToBranch.put(commitId, branchesArray);
 			}
 		}

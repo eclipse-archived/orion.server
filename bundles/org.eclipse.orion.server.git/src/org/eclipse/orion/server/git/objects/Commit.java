@@ -55,9 +55,9 @@ public class Commit extends GitObject {
 		this.commitToBranchMap = map;
 	}
 
-	public Map<ObjectId, JSONArray> getCommitToBranchMap() throws JSONException {
+	public Map<ObjectId, JSONArray> getCommitToBranchMap() throws JSONException, URISyntaxException, IOException, CoreException {
 		if (commitToBranchMap == null)
-			commitToBranchMap = Log.getCommitToBranchMap(db);
+			commitToBranchMap = Log.getCommitToBranchMap(cloneLocation, db);
 		return commitToBranchMap;
 	}
 
