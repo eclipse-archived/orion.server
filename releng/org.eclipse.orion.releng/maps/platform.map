@@ -122,7 +122,7 @@ plugin@org.eclipse.jface.databinding=p2IU,id=org.eclipse.jface.databinding,repos
 plugin@org.eclipse.e4.core.services=p2IU,id=org.eclipse.e4.core.services,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.e4.core.commands=p2IU,id=org.eclipse.e4.core.commands,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.e4.core.contexts=p2IU,id=org.eclipse.e4.core.contexts,repository=ECLIPSE_PLATFORM_REPO
-plugin@org.eclipse.e4.core.di=p2IU,id=org.eclipse.e4.core.di=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.e4.core.di=p2IU,id=org.eclipse.e4.core.di,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.e4.ui.bindings=p2IU,id=org.eclipse.e4.ui.bindings,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.e4.ui.css.swt.theme=p2IU,id=org.eclipse.e4.ui.css.swt.theme,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.e4.ui.css.core=p2IU,id=org.eclipse.e4.ui.css.core,repository=ECLIPSE_PLATFORM_REPO
