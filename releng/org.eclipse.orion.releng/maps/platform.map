@@ -95,8 +95,8 @@ plugin@org.apache.commons.logging=p2IU,id=org.apache.commons.logging,repository=
 plugin@org.apache.commons.el=p2IU,id=org.apache.commons.el,repository=ECLIPSE_PLATFORM_REPO
 
 #UI bits for orion server UI
-feature@org.eclipse.rcp=p2IU,id=org.eclipse.rcp,repository=ECLIPSE_PLATFORM_REPO
-feature@org.eclipse.e4.rcp=p2IU,id=org.eclipse.e4.rcp,repository=ECLIPSE_PLATFORM_REPO
+feature@org.eclipse.rcp=p2IU,id=org.eclipse.rcp.feature.jar,repository=ECLIPSE_PLATFORM_REPO
+feature@org.eclipse.e4.rcp=p2IU,id=org.eclipse.e4.rcp.feature.jar,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.ui=p2IU,id=org.eclipse.ui,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.ui.workbench=p2IU,id=org.eclipse.ui.workbench,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.core.databinding=p2IU,id=org.eclipse.core.databinding,repository=ECLIPSE_PLATFORM_REPO
