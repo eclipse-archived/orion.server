@@ -1,4 +1,4 @@
-feature@org.eclipse.license=v20110208,:pserver:anonymous@dev.eclipse.org:/cvsroot/eclipse,,org.eclipse.sdk-feature/features/org.eclipse.license
+feature@org.eclipse.license=GIT,tag=v20110208,repo=git://git.eclipse.org/gitroot/platform/eclipse.platform.releng.git,path=features/org.eclipse.license
 
 plugin@org.eclipse.core.contenttype=p2IU,id=org.eclipse.core.contenttype,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.core.expressions=p2IU,id=org.eclipse.core.expressions,repository=ECLIPSE_PLATFORM_REPO
@@ -117,4 +117,26 @@ plugin@org.eclipse.compare.core=p2IU,id=org.eclipse.compare.core,repository=ECLI
 plugin@org.eclipse.text=p2IU,id=org.eclipse.text,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.jface.databinding=p2IU,id=org.eclipse.jface.databinding,repository=ECLIPSE_PLATFORM_REPO
 
+plugin@org.eclipse.e4.core.services=p2IU,id=org.eclipse.e4.core.services,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.e4.core.commands=p2IU,id=org.eclipse.e4.core.commands,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.e4.core.contexts=p2IU,id=org.eclipse.e4.core.contexts,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.e4.core.di=p2IU,id=org.eclipse.e4.core.di=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.e4.ui.bindings=p2IU,id=org.eclipse.e4.ui.bindings,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.e4.ui.css.swt.theme=p2IU,id=org.eclipse.e4.ui.css.swt.theme,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.e4.ui.css.core=p2IU,id=org.eclipse.e4.ui.css.core,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.e4.ui.css.swt=p2IU,id=org.eclipse.e4.ui.css.swt,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.e4.ui.di=p2IU,id=org.eclipse.e4.ui.di,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.e4.ui.model.workbench=p2IU,id=org.eclipse.e4.ui.model.workbench,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.e4.ui.services=p2IU,id=org.eclipse.e4.ui.services,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.e4.ui.widgets=p2IU,id=org.eclipse.e4.ui.widgets,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.e4.ui.workbench3=p2IU,id=org.eclipse.e4.ui.workbench3,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.e4.ui.workbench=p2IU,id=org.eclipse.e4.ui.workbench,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.e4.ui.workbench.renderers.swt=p2IU,id=org.eclipse.e4.ui.workbench.renderers.swt,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.e4.ui.workbench.swt=p2IU,id=org.eclipse.e4.ui.workbench.swt,repository=ECLIPSE_PLATFORM_REPO
+
+plugin@org.eclipse.emf.common=p2IU,id=org.eclipse.emf.common,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.emf.ecore=p2IU,id=org.eclipse.emf.ecore=ECLIPSE_PLATFORM_REPO
+
+plugin@javax.annotation"/>
+plugin@javax.inject"/>
 

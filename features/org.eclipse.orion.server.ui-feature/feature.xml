@@ -19,6 +19,10 @@
       %license
    </license>
 
+   <includes
+         id="org.eclipse.rcp"
+         version="0.0.0"/>
+
    <plugin
          id="org.eclipse.orion.server.ui"
          download-size="0"
@@ -53,20 +57,20 @@
          install-size="0"
          version="0.0.0"
          unpack="false"/>
-         
+
    <plugin
          id="org.eclipse.jface.text"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
-         
-    <plugin
+
+   <plugin
          id="org.eclipse.text"
          download-size="0"
          install-size="0"
          version="0.0.0"
-         unpack="false"/>         
+         unpack="false"/>
 
    <plugin
          id="org.eclipse.swt"
@@ -129,8 +133,8 @@
          version="0.0.0"
          fragment="true"
          unpack="false"/>
-         
-	<plugin
+
+   <plugin
          id="org.eclipse.swt.cocoa.macosx.x86_64"
          os="macosx"
          ws="cocoa"
@@ -147,13 +151,13 @@
          install-size="0"
          version="0.0.0"
          unpack="false"/>
-         
+
    <plugin
          id="org.eclipse.core.variables"
          download-size="0"
          install-size="0"
          version="0.0.0"
-         unpack="false"/>         
+         unpack="false"/>
 
    <plugin
          id="org.eclipse.ui.workbench"
@@ -189,7 +193,7 @@
          install-size="0"
          version="0.0.0"
          unpack="false"/>
-         
+
    <plugin
          id="org.eclipse.compare.core"
          download-size="0"
