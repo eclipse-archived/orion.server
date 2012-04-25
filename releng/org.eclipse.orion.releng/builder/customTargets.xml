@@ -76,7 +76,7 @@ lastMapTag=${mapsTagTag}
 
 		<!-- mirror Eclipse RCP feature and all prerequisites -->
 		<p2.mirror destination="file:${localRepoLocation}" ignoreerrors="true">
-			<source location="${emfRepoURL}" />
+			<source location="${eclipsePlatformRepo}" />
 			<slicingOptions includeOptional="false" includeNonGreedy="false" latestVersionOnly="true" followStrict="true" />
 			<iu id="org.eclipse.rcp" version="0.0.0" />
 		</p2.mirror>
