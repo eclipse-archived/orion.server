@@ -14,15 +14,17 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
-import org.eclipse.core.runtime.Assert;
-import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ListBranchCommand.ListMode;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.BaseToCommitConverter;
 import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.servlets.GitUtils;
+import org.eclipse.osgi.util.NLS;
 import org.json.*;
 
 /**
@@ -69,20 +71,10 @@ public class Log extends GitObject {
 		result.put(ProtocolConstants.KEY_CHILDREN, children);
 		result.put(GitConstants.KEY_REPOSITORY_PATH, pattern == null ? "" : pattern); //$NON-NLS-1$
 
-		if (toRefId != null) {
-			String refTargetName = toRefId.getTarget().getName();
-			if (refTargetName.startsWith(Constants.R_HEADS)) {
-				// this is a branch
-				result.put(GitConstants.KEY_LOG_TO_REF, new Branch(cloneLocation, db, toRefId.getTarget()).toJSON());
-			}
-		}
-		if (fromRefId != null) {
-			String refTargetName = fromRefId.getTarget().getName();
-			if (refTargetName.startsWith(Constants.R_HEADS)) {
-				// this is a branch
-				result.put(GitConstants.KEY_LOG_FROM_REF, new Branch(cloneLocation, db, fromRefId.getTarget()).toJSON());
-			}
-		}
+		if (toRefId != null)
+			result.put(GitConstants.KEY_LOG_TO_REF, createJSONObjectForRef(toRefId.getTarget()));
+		if (fromRefId != null)
+			result.put(GitConstants.KEY_LOG_FROM_REF, createJSONObjectForRef(fromRefId.getTarget()));
 
 		if (page > 0) {
 			StringBuilder c = new StringBuilder(""); //$NON-NLS-1$
@@ -104,6 +96,40 @@ public class Log extends GitObject {
 		return result;
 	}
 
+	private JSONObject createJSONObjectForRef(Ref targetRef) throws JSONException, URISyntaxException, IOException, CoreException {
+		JSONObject result = null;
+		String name = targetRef.getName();
+		if (name.startsWith(Constants.R_HEADS)) {
+			result = new Branch(cloneLocation, db, targetRef).toJSON();
+		} else if (name.startsWith(Constants.R_REMOTES)) {
+			Remote remote = findRemote(name);
+			String remoteBranchName = computeRemoteBranchName(name, remote);
+			result = new RemoteBranch(cloneLocation, db, remote, remoteBranchName).toJSON();
+		}
+		Assert.isNotNull(result, NLS.bind("Unexpected target Ref: {0}", name));
+		return result;
+	}
+
+	private Remote findRemote(String refName) throws URISyntaxException {
+		Assert.isLegal(refName.startsWith(Constants.R_REMOTES), NLS.bind("Expected Ref starting with {0} was {1}", Constants.R_REMOTES, refName));
+		IPath remoteNameCandidate = new Path(refName).removeFirstSegments(2);
+		List<RemoteConfig> remoteConfigs = RemoteConfig.getAllRemoteConfigs(getConfig());
+		for (int i = 1; i < remoteNameCandidate.segmentCount(); i++) {
+			for (RemoteConfig remoteConfig : remoteConfigs) {
+				IPath uptoSegment = remoteNameCandidate.uptoSegment(i);
+				if (remoteConfig.getName().equals(uptoSegment.toString()))
+					return new Remote(cloneLocation, db, remoteConfig.getName());
+			}
+		}
+		Assert.isTrue(false, NLS.bind("Could not find Remote for {0}", refName));
+		return null;
+	}
+
+	private String computeRemoteBranchName(String targetRefName, Remote remote) {
+		String prefix = Constants.R_REMOTES + remote.getName() + "/"; //$NON-NLS-1$
+		return targetRefName.substring(prefix.length());
+	}
+
 	@Override
 	protected URI getLocation() throws URISyntaxException {
 		StringBuilder c = new StringBuilder();
@@ -112,9 +138,9 @@ public class Log extends GitObject {
 		if (fromRefId != null && toRefId != null)
 			c.append(".."); //$NON-NLS-1$
 		if (toRefId != null)
-			c.append(Repository.shortenRefName(toRefId.getName()));
+			c.append(toRefId.getName());
 		// TODO: lost paging info
-		return BaseToCommitConverter.getCommitLocation(cloneLocation, c.toString(), pattern, BaseToCommitConverter.REMOVE_FIRST_2);
+		return BaseToCommitConverter.getCommitLocation(cloneLocation, GitUtils.encode(c.toString()), pattern, BaseToCommitConverter.REMOVE_FIRST_2);
 	}
 
 	static Map<ObjectId, JSONArray> getCommitToBranchMap(URI cloneLocation, Repository db) throws JSONException, URISyntaxException, IOException, CoreException {
