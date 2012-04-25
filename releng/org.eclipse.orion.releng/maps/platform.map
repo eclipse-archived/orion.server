@@ -135,6 +135,7 @@ plugin@org.eclipse.e4.ui.widgets=p2IU,id=org.eclipse.e4.ui.widgets,repository=EC
 plugin@org.eclipse.e4.ui.workbench3=p2IU,id=org.eclipse.e4.ui.workbench3,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.e4.ui.workbench=p2IU,id=org.eclipse.e4.ui.workbench,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.e4.ui.workbench.renderers.swt=p2IU,id=org.eclipse.e4.ui.workbench.renderers.swt,repository=ECLIPSE_PLATFORM_REPO
+plugin@org.eclipse.e4.ui.workbench.renderers.swt.cocoa=p2IU,id=org.eclipse.e4.ui.workbench.renderers.swt.cocoa,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.e4.ui.workbench.swt=p2IU,id=org.eclipse.e4.ui.workbench.swt,repository=ECLIPSE_PLATFORM_REPO
 
 plugin@javax.annotation"/>

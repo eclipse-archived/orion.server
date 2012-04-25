@@ -74,6 +74,14 @@ lastMapTag=${mapsTagTag}
 			<iu id="org.eclipse.emf.common.source.feature.group" version="0.0.0" />
 		</p2.mirror>
 
+		<!-- mirror Eclipse RCP feature and all prerequisites -->
+		<p2.mirror destination="file:${localRepoLocation}" ignoreerrors="true">
+			<source location="${emfRepoURL}" />
+			<slicingOptions includeOptional="false" includeNonGreedy="false" latestVersionOnly="true" followStrict="true" />
+			<iu id="org.eclipse.rcp" version="0.0.0" />
+		</p2.mirror>
+		
+		<!-- convert to runnable form -->
         <echo message="creating runnable in preSetup" />
         <echo message="basedir: ${basedir}" />
 		<echo message="buildDirectory: ${buildDirectory}" />	    
