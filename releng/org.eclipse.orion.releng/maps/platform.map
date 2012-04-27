@@ -63,8 +63,8 @@ plugin@org.apache.jasper.glassfish=p2IU,id=org.apache.jasper.glassfish,repositor
 plugin@org.eclipse.jdt.core.compiler.batch=p2IU,id=org.eclipse.jdt.core.compiler.batch,repository=ECLIPSE_PLATFORM_REPO
 
 #Not in the SDK but we need it for GZipFilter
-plugin@org.eclipse.jetty.servlets,8.1.0=p2IU,id=org.eclipse.jetty.servlets,version=8.1.0.RC4,repository=http://download.eclipse.org/jetty/updates/jetty-bundles-8.x/8.1.0.RC4
-plugin@org.eclipse.jetty.client,8.1.0=p2IU,id=org.eclipse.jetty.client,version=8.1.0.RC4,repository=http://download.eclipse.org/jetty/updates/jetty-bundles-8.x/8.1.0.RC4
+plugin@org.eclipse.jetty.servlets,8.1.0=p2IU,id=org.eclipse.jetty.servlets,version=8.1.0.RC4,repository=http://download.eclipse.org/jetty/updates/jetty-bundles-8.x/8.1.3.v20120416/
+plugin@org.eclipse.jetty.client,8.1.0=p2IU,id=org.eclipse.jetty.client,version=8.1.0.RC4,repository=http://download.eclipse.org/jetty/updates/jetty-bundles-8.x/8.1.3.v20120416/
 
 #Required by tests
 plugin@org.eclipse.core.resources=p2IU,id=org.eclipse.core.resources,repository=ECLIPSE_PLATFORM_REPO
@@ -74,7 +74,6 @@ plugin@org.eclipse.debug.core=p2IU,id=org.eclipse.debug.core,repository=ECLIPSE_
 plugin@org.eclipse.team.core=p2IU,id=org.eclipse.team.core,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.jsch.core=p2IU,id=org.eclipse.jsch.core,repository=ECLIPSE_PLATFORM_REPO
 
-plugin@org.eclipse.wst.jsdt.debug.rhino.debugger=p2IU,id=org.eclipse.wst.jsdt.debug.rhino.debugger,repository=http://download.eclipse.org/releases/helios
 plugin@org.eclipse.test.performance=p2IU,id=org.eclipse.test.performance,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.core.tests.harness=p2IU,id=org.eclipse.core.tests.harness,repository=ECLIPSE_PLATFORM_REPO
 plugin@org.eclipse.core.tests.resources=p2IU,id=org.eclipse.core.tests.resources,repository=ECLIPSE_PLATFORM_REPO
