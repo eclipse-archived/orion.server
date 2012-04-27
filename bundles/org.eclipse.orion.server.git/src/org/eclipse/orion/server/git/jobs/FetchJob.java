@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -21,6 +21,7 @@ import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.lib.RefUpdate.Result;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.*;
+import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.git.servlets.GitUtils;
@@ -43,9 +44,36 @@ public class FetchJob extends GitJob {
 		this.remote = path.segment(0);
 		this.force = force;
 		this.branch = path.segment(1).equals("file") ? null : path.segment(1); //$NON-NLS-1$
-		setName(branch == null ? NLS.bind("Fetching {0}", remote) : NLS.bind("Fetching {0}/{1}", new Object[] {remote, branch}));
-		setMessage(branch == null ? NLS.bind("Fetching {0}...", remote) : NLS.bind("Fetching {0}/{1}...", new Object[] {remote, branch}));
-		setFinalMessage(NLS.bind("Fetching {0} done", remote));
+		builtMessages();
+	}
+
+	private void builtMessages() {
+		String cloneName = computeCloneName();
+		if (branch == null) {
+			Object[] bindings = new String[] {remote, cloneName};
+			setName(NLS.bind("Fetching {0} for {1}", bindings));
+			setMessage(NLS.bind("Fetching {0} for {1} ...", bindings));
+			setFinalMessage(NLS.bind("Fetching {0} for {1} done.", bindings));
+		} else {
+			Object[] bindings = new String[] {remote, branch, cloneName};
+			setName(NLS.bind("Fetching {0}/{1} for {2}", bindings));
+			setMessage(NLS.bind("Fetching {0}/{1} for {2} ...", bindings));
+			setFinalMessage(NLS.bind("Fetching {0}/{1} for {2} done.", bindings));
+		}
+	}
+
+	private String computeCloneName() {
+		// path: {remote}/file/{projectId}
+		if (path.segment(1).equals("file") && path.segmentCount() == 3) {
+			WebProject webProject = WebProject.fromId(path.segment(2));
+			return webProject.getName();
+		}
+		// path: {remote}/{branch}/file/{projectId}
+		if (path.segment(2).equals("file") && path.segmentCount() == 4) {
+			WebProject webProject = WebProject.fromId(path.segment(3));
+			return webProject.getName();
+		}
+		return path.lastSegment();
 	}
 
 	private IStatus doFetch() throws IOException, CoreException, JGitInternalException, InvalidRemoteException, URISyntaxException {
@@ -73,7 +101,6 @@ public class FetchJob extends GitJob {
 		// handle result
 		for (TrackingRefUpdate updateRes : fetchResult.getTrackingRefUpdates()) {
 			Result res = updateRes.getResult();
-			// handle status for given ref
 			switch (res) {
 				case NOT_ATTEMPTED :
 				case NO_CHANGE :
@@ -84,9 +111,9 @@ public class FetchJob extends GitJob {
 					// do nothing, as these statuses are OK
 					break;
 				case REJECTED :
+					return new Status(IStatus.WARNING, GitActivator.PI_GIT, "Fetch rejected, not a fast-forward.");
 				case REJECTED_CURRENT_BRANCH :
-					// show warning, as only force fetch can finish successfully 
-					return new Status(IStatus.WARNING, GitActivator.PI_GIT, res.name());
+					return new Status(IStatus.WARNING, GitActivator.PI_GIT, "Rejected because trying to delete the current branch.");
 				default :
 					return new Status(IStatus.ERROR, GitActivator.PI_GIT, res.name());
 			}
