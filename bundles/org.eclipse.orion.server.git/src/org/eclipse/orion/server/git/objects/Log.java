@@ -149,13 +149,15 @@ public class Log extends GitObject {
 		List<Ref> branchRefs = git.branchList().setListMode(ListMode.ALL).call();
 		for (Ref branchRef : branchRefs) {
 			ObjectId commitId = branchRef.getLeaf().getObjectId();
-			Branch branch = new Branch(cloneLocation, db, branchRef);
+			JSONObject branch = new JSONObject();
+			branch.put(ProtocolConstants.KEY_FULL_NAME, branchRef.getName());
+
 			JSONArray branchesArray = commitToBranch.get(commitId);
 			if (branchesArray != null) {
-				branchesArray.put(branch.toJSON());
+				branchesArray.put(branch);
 			} else {
 				branchesArray = new JSONArray();
-				branchesArray.put(branch.toJSON());
+				branchesArray.put(branch);
 				commitToBranch.put(commitId, branchesArray);
 			}
 		}
