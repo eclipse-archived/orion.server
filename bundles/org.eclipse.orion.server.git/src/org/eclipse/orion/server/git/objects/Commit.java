@@ -20,7 +20,8 @@ import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffEntry.ChangeType;
 import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.*;
-import org.eclipse.jgit.revwalk.*;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -149,30 +150,18 @@ public class Commit extends GitObject {
 		return BaseToCommitConverter.getCommitLocation(cloneLocation, revCommit.getName(), pattern, BaseToCommitConverter.REMOVE_FIRST_2);
 	}
 
-	// from https://gist.github.com/839693, credits to zx
 	private Map<String, Ref> getTagsForCommit() throws MissingObjectException, IOException {
-		final Map<String, Ref> revTags = new HashMap<String, Ref>();
-		final RevWalk walk = new RevWalk(db);
-		try {
-			walk.reset();
-			for (final Entry<String, Ref> revTag : db.getTags().entrySet()) {
-				final RevObject obj = walk.parseAny(revTag.getValue().getObjectId());
-				final RevCommit tagCommit;
-				if (obj instanceof RevCommit) {
-					tagCommit = (RevCommit) obj;
-				} else if (obj instanceof RevTag) {
-					tagCommit = walk.parseCommit(((RevTag) obj).getObject());
-				} else {
-					continue;
-				}
-				if (revCommit.equals(tagCommit) || walk.isMergedInto(revCommit, tagCommit)) {
-					revTags.put(revTag.getKey(), revTag.getValue());
-				}
-			}
-		} finally {
-			walk.dispose();
+		final Map<String, Ref> tags = new HashMap<String, Ref>();
+		for (final Entry<String, Ref> tag : db.getTags().entrySet()) {
+			Ref ref = db.peel(tag.getValue());
+			ObjectId refId = ref.getPeeledObjectId();
+			if (refId == null)
+				refId = ref.getObjectId();
+			if (!AnyObjectId.equals(refId, revCommit))
+				continue;
+			tags.put(tag.getKey(), tag.getValue());
 		}
-		return revTags;
+		return tags;
 	}
 
 	private URI createDiffLocation(String toRefId, String fromRefId, String path) throws URISyntaxException {
