@@ -12,6 +12,7 @@
 -application org.eclipse.orion.server.ui.consoleApp</programArgsMac>
       <vmArgs>-Dorg.eclipse.equinox.http.jetty.http.port=8080
 -Dorg.eclipse.equinox.http.jetty.autostart=false
+-Dhelp.lucene.tokenizer=standard
 -Xms40m
 -Xmx384m</vmArgs>
       <vmArgsMac>-XstartOnFirstThread -Dorg.eclipse.swt.internal.carbon.smallFonts</vmArgsMac>

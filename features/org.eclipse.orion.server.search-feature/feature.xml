@@ -2,7 +2,7 @@
 <feature
       id="org.eclipse.orion.server.search.feature"
       label="%featureName"
-      version="0.4.0.qualifier"
+      version="0.5.0.qualifier"
       provider-name="%providerName"
       license-feature="org.eclipse.license"
       license-feature-version="1.0.0.qualifier">
@@ -38,35 +38,7 @@
          unpack="false"/>
 
    <plugin
-         id="org.apache.solr.client.solrj.embedded"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.apache.solr.common"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="org.apache.solr.core"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.apache.solr.servlet"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.apache.lucene"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -115,13 +87,6 @@
          unpack="false"/>
 
    <plugin
-         id="org.apache.lucene.snowball"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="org.apache.lucene.spellchecker"
          download-size="0"
          install-size="0"
@@ -130,6 +95,20 @@
 
    <plugin
          id="org.apache.commons.fileupload"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.apache.lucene.grouping"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.apache.lucene.spatial"
          download-size="0"
          install-size="0"
          version="0.0.0"

@@ -32,6 +32,14 @@
      -->
   <abortOnConfigurationError>${solr.abortOnConfigurationError:true}</abortOnConfigurationError>
 
+  <!-- Controls what version of Lucene various components of Solr
+	   adhere to.  Generally, you want to use the latest version to
+	   get all bug fixes and improvements. It is highly recommended
+	   that you fully re-index after changing this setting as it can
+	   affect both how text is indexed and queried.
+	-->
+  <luceneMatchVersion>LUCENE_35</luceneMatchVersion>
+
   <!-- lib directives can be used to instruct Solr to load an Jars identified
        and use them to resolve any "plugins" specified in your solrconfig.xml or
        schema.xml (ie: Analyzers, Request Handlers, etc...).
@@ -668,6 +676,8 @@
     </lst>
     -->
   </searchComponent>
+  
+  <queryConverter name="queryConverter" class="org.apache.solr.spelling.SpellingQueryConverter"/>
 
   <!-- A request handler utilizing the spellcheck component.  
   #############################################################################
@@ -924,35 +934,37 @@
     </lst>
   </requestHandler>
 
-  <highlighting>
-   <!-- Configure the standard fragmenter -->
-   <!-- This could most likely be commented out in the "default" case -->
-   <fragmenter name="gap" class="org.apache.solr.highlight.GapFragmenter" default="true">
-    <lst name="defaults">
-     <int name="hl.fragsize">100</int>
-    </lst>
-   </fragmenter>
+  <searchComponent class="org.apache.solr.handler.component.HighlightComponent" name="highlight">
+    <highlighting>
+      <!-- Configure the standard fragmenter -->
+      <!-- This could most likely be commented out in the "default" case -->
+      <fragmenter name="gap" class="org.apache.solr.highlight.GapFragmenter" default="true">
+        <lst name="defaults">
+          <int name="hl.fragsize">100</int>
+        </lst>
+      </fragmenter>
 
-   <!-- A regular-expression-based fragmenter (f.i., for sentence extraction) -->
-   <fragmenter name="regex" class="org.apache.solr.highlight.RegexFragmenter">
-    <lst name="defaults">
-      <!-- slightly smaller fragsizes work better because of slop -->
-      <int name="hl.fragsize">70</int>
-      <!-- allow 50% slop on fragment sizes -->
-      <float name="hl.regex.slop">0.5</float>
-      <!-- a basic sentence pattern -->
-      <str name="hl.regex.pattern">[-\w ,/\n\"']{20,200}</str>
-    </lst>
-   </fragmenter>
+      <!-- A regular-expression-based fragmenter (f.i., for sentence extraction) -->
+      <fragmenter name="regex" class="org.apache.solr.highlight.RegexFragmenter">
+        <lst name="defaults">
+        <!-- slightly smaller fragsizes work better because of slop -->
+        <int name="hl.fragsize">70</int>
+          <!-- allow 50% slop on fragment sizes -->
+          <float name="hl.regex.slop">0.5</float>
+            <!-- a basic sentence pattern -->
+            <str name="hl.regex.pattern">[-\w ,/\n\"']{20,200}</str>
+        </lst>
+      </fragmenter>
 
-   <!-- Configure the standard formatter -->
-   <formatter name="html" class="org.apache.solr.highlight.HtmlFormatter" default="true">
-    <lst name="defaults">
-     <str name="hl.simple.pre"><![CDATA[##match]]></str>
-     <str name="hl.simple.post"><![CDATA[match##]]></str>
-    </lst>
-   </formatter>
-  </highlighting>
+      <!-- Configure the standard formatter -->
+      <formatter name="html" class="org.apache.solr.highlight.HtmlFormatter" default="true">
+        <lst name="defaults">
+          <str name="hl.simple.pre"><![CDATA[##match]]></str>
+          <str name="hl.simple.post"><![CDATA[match##]]></str>
+        </lst>
+      </formatter>
+    </highlighting>
+  </searchComponent>
 
   <!-- An example dedup update processor that creates the "id" field on the fly
        based on the hash code of some other fields.  This example has overwriteDupes
@@ -988,12 +1000,12 @@
     in the request. XMLResponseWriter will be used if nothing is specified here.
     The json, python, and ruby writers are also available by default.
 
-    <queryResponseWriter name="xml" class="org.apache.solr.request.XMLResponseWriter" default="true"/>
-    <queryResponseWriter name="json" class="org.apache.solr.request.JSONResponseWriter"/>
-    <queryResponseWriter name="python" class="org.apache.solr.request.PythonResponseWriter"/>
-    <queryResponseWriter name="ruby" class="org.apache.solr.request.RubyResponseWriter"/>
-    <queryResponseWriter name="php" class="org.apache.solr.request.PHPResponseWriter"/>
-    <queryResponseWriter name="phps" class="org.apache.solr.request.PHPSerializedResponseWriter"/>
+    <queryResponseWriter name="xml" class="org.apache.solr.response.XMLResponseWriter" default="true"/>
+    <queryResponseWriter name="json" class="org.apache.solr.response.JSONResponseWriter"/>
+    <queryResponseWriter name="python" class="org.apache.solr.response.PythonResponseWriter"/>
+    <queryResponseWriter name="ruby" class="org.apache.solr.response.RubyResponseWriter"/>
+    <queryResponseWriter name="php" class="org.apache.solr.response.PHPResponseWriter"/>
+    <queryResponseWriter name="phps" class="org.apache.solr.response.PHPSerializedResponseWriter"/>
 
     <queryResponseWriter name="custom" class="com.example.MyResponseWriter"/>
   -->
@@ -1002,7 +1014,7 @@
        in Solr's conf/xslt directory.  Changes to xslt files are checked for
        every xsltCacheLifetimeSeconds.  
    -->
-  <queryResponseWriter name="xslt" class="org.apache.solr.request.XSLTResponseWriter">
+  <queryResponseWriter name="xslt" class="org.apache.solr.response.XSLTResponseWriter">
     <int name="xsltCacheLifetimeSeconds">5</int>
   </queryResponseWriter>
 
