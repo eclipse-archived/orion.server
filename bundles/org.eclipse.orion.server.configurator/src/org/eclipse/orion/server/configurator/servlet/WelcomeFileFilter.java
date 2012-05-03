@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others.
+ * Copyright (c) 2010, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,15 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.server.configurator.servlet;
 
-import java.util.List;
-
-import java.util.ArrayList;
-
-import java.util.StringTokenizer;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-
 import java.io.IOException;
+import java.util.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
 
@@ -32,18 +25,18 @@ public class WelcomeFileFilter implements Filter {
 	private final List<String> excludes = new ArrayList<String>();
 
 	public void init(FilterConfig filterConfig) throws ServletException {
-		String includesParameter = filterConfig.getInitParameter("includes");
+		String includesParameter = filterConfig.getInitParameter("includes"); //$NON-NLS-1$
 		if (includesParameter != null) {
-			StringTokenizer tokenizer = new StringTokenizer(includesParameter, ",", false);
+			StringTokenizer tokenizer = new StringTokenizer(includesParameter, ",", false); //$NON-NLS-1$
 			while (tokenizer.hasMoreTokens()) {
 				String token = tokenizer.nextToken().trim();
 				includes.add(token);
 			}
 		}
 
-		String excludesParameter = filterConfig.getInitParameter("excludes");
+		String excludesParameter = filterConfig.getInitParameter("excludes"); //$NON-NLS-1$
 		if (excludesParameter != null) {
-			StringTokenizer tokenizer = new StringTokenizer(excludesParameter, ",", false);
+			StringTokenizer tokenizer = new StringTokenizer(excludesParameter, ",", false); //$NON-NLS-1$
 			while (tokenizer.hasMoreTokens()) {
 				String token = tokenizer.nextToken().trim();
 				excludes.add(token);
@@ -53,9 +46,9 @@ public class WelcomeFileFilter implements Filter {
 
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
 		final HttpServletRequest httpRequest = (HttpServletRequest) request;
-		final String requestPath = httpRequest.getServletPath() + (httpRequest.getPathInfo() == null ? "" : httpRequest.getPathInfo());
+		final String requestPath = httpRequest.getServletPath() + (httpRequest.getPathInfo() == null ? "" : httpRequest.getPathInfo()); //$NON-NLS-1$
 		// Only alter directories that aren't part of our servlets
-		if (requestPath.endsWith("/") && isIncluded(requestPath) && !isExcluded(requestPath)) {
+		if (requestPath.endsWith("/") && isIncluded(requestPath) && !isExcluded(requestPath)) { //$NON-NLS-1$
 			response = new HttpServletResponseWrapper((HttpServletResponse) response) {
 
 				private boolean handleWelcomeFile(int sc) {
