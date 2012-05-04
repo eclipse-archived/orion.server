@@ -186,7 +186,7 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 		if (contentType.startsWith("multipart")) {//$NON-NLS-1$
 			return applyPatch(request, response, db, contentType);
 		} else {
-			return createDiffLocation(request, response);
+			return identifyNewDiffResource(request, response);
 		}
 	}
 
@@ -212,7 +212,7 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 		}
 	}
 
-	private boolean createDiffLocation(HttpServletRequest request, HttpServletResponse response) throws ServletException {
+	private boolean identifyNewDiffResource(HttpServletRequest request, HttpServletResponse response) throws ServletException {
 		try {
 			StringWriter writer = new StringWriter();
 			IOUtilities.pipe(request.getReader(), writer, false, false);
@@ -231,11 +231,13 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 			if (p.hasTrailingSeparator())
 				np = np.addTrailingSeparator();
 			URI nu = new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), np.toString(), u.getQuery(), u.getFragment());
+			JSONObject result = new JSONObject();
+			result.put(ProtocolConstants.KEY_LOCATION, nu.toString());
+			OrionServlet.writeJSONResponse(request, response, result);
 			response.setHeader(ProtocolConstants.HEADER_LOCATION, nu.toString());
-			response.setStatus(HttpServletResponse.SC_OK);
 			return true;
 		} catch (Exception e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when creating a Diff Location.", e));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when identifying a new Diff resource.", e));
 		}
 	}
 

@@ -120,6 +120,7 @@ public class GitLogTest extends GitTest {
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			String newGitCommitUri = response.getHeaderField(ProtocolConstants.KEY_LOCATION);
+			assertEquals(newGitCommitUri, new JSONObject(response.getText()).getString(ProtocolConstants.KEY_LOCATION));
 
 			// get a scoped log
 			commitsArray = log(newGitCommitUri);

@@ -730,7 +730,9 @@ public class GitDiffTest extends GitTest {
 		WebRequest request = getPostGitDiffRequest(oldCommitDiffLocation, newCommitName);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		return response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		String location = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		assertEquals(location, new JSONObject(response.getText()).getString(ProtocolConstants.KEY_LOCATION));
+		return location;
 	}
 
 	private JSONObject findCommitByMessage(String gitHeadUri, String commitMessage) throws IOException, SAXException, JSONException {

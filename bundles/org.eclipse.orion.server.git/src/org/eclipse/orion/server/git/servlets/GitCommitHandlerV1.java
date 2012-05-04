@@ -54,23 +54,29 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 		super(statusHandler);
 	}
 
-	private boolean createCommitLocation(HttpServletRequest request, HttpServletResponse response, Repository db, String newCommitToCreatelocation) throws IOException, JSONException, URISyntaxException {
-		URI u = getURI(request);
-		IPath p = new Path(u.getPath());
-		IPath np = new Path("/"); //$NON-NLS-1$
-		for (int i = 0; i < p.segmentCount(); i++) {
-			String s = p.segment(i);
-			if (i == 2) {
-				s += ".." + newCommitToCreatelocation; //$NON-NLS-1$
+	private boolean identifyNewCommitResource(HttpServletRequest request, HttpServletResponse response, Repository db, String newCommit) throws ServletException {
+		try {
+			URI u = getURI(request);
+			IPath p = new Path(u.getPath());
+			IPath np = new Path("/"); //$NON-NLS-1$
+			for (int i = 0; i < p.segmentCount(); i++) {
+				String s = p.segment(i);
+				if (i == 2) {
+					s += ".." + newCommit; //$NON-NLS-1$
+				}
+				np = np.append(s);
 			}
-			np = np.append(s);
+			if (p.hasTrailingSeparator())
+				np = np.addTrailingSeparator();
+			URI nu = new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), np.toString(), u.getQuery(), u.getFragment());
+			JSONObject result = new JSONObject();
+			result.put(ProtocolConstants.KEY_LOCATION, nu.toString());
+			OrionServlet.writeJSONResponse(request, response, result);
+			response.setHeader(ProtocolConstants.HEADER_LOCATION, nu.toString());
+			return true;
+		} catch (Exception e) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when identifying a new Commit resource.", e));
 		}
-		if (p.hasTrailingSeparator())
-			np = np.addTrailingSeparator();
-		URI nu = new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), np.toString(), u.getQuery(), u.getFragment());
-		response.setHeader(ProtocolConstants.HEADER_LOCATION, nu.toString());
-		response.setStatus(HttpServletResponse.SC_OK);
-		return true;
 	}
 
 	@Override
@@ -226,11 +232,9 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 				return cherryPick(request, response, db, commitToCherryPick);
 			}
 
-			// continue with creating new commit location
-
-			String newCommitToCreatelocation = requestObject.optString(GitConstants.KEY_COMMIT_NEW, null);
-			if (newCommitToCreatelocation != null)
-				return createCommitLocation(request, response, db, newCommitToCreatelocation);
+			String newCommit = requestObject.optString(GitConstants.KEY_COMMIT_NEW, null);
+			if (newCommit != null)
+				return identifyNewCommitResource(request, response, db, newCommit);
 
 			ObjectId refId = db.resolve(gitSegment);
 			if (refId == null || !Constants.HEAD.equals(gitSegment)) {
