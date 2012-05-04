@@ -16,6 +16,7 @@ plugin@org.apache.commons.httpclient,3.1.0=p2IU,id=org.apache.commons.httpclient
 plugin@org.apache.commons.io,2.0.1=p2IU,id=org.apache.commons.io,version=2.0.1.v201105210651,repository=http://download.eclipse.org/tools/orbit/downloads/drops/S20120428190502/repository
 plugin@org.apache.commons.logging,1.1.1=p2IU,id=org.apache.commons.logging,version=1.1.1.v201101211721,repository=http://download.eclipse.org/tools/orbit/downloads/drops/S20120428190502/repository
 
+plugin@org.apache.lucene,3.5.0=p2IU,id=org.apache.lucene,version=3.5.0.v20120319-2345,repository=http://download.eclipse.org/tools/orbit/downloads/drops/S20120428190502/repository
 plugin@org.apache.lucene.analysis,3.5.0=p2IU,id=org.apache.lucene.analysis,version=3.5.0.v20120319-2345,repository=http://download.eclipse.org/tools/orbit/downloads/drops/S20120428190502/repository
 plugin@org.apache.lucene.core,3.5.0=p2IU,id=org.apache.lucene.core,version=3.5.0.v20120319-2345,repository=http://download.eclipse.org/tools/orbit/downloads/drops/S20120428190502/repository
 plugin@org.apache.lucene.grouping,3.5.0=p2IU,id=org.apache.lucene.grouping,version=3.5.0.v20120319-2345,repository=http://download.eclipse.org/tools/orbit/downloads/drops/S20120428190502/repository
