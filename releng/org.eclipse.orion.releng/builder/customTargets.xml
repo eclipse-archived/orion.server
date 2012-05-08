@@ -132,6 +132,9 @@ lastMapTag=${mapsTagTag}
 					<pathelement location="${requirejsHome}/lib/rhino/js.jar" />
 					<pathelement location="${requirejsHome}/lib/closure/compiler.jar" />
 				</classpath>
+				<!-- JavaScript language version -->
+				<arg value="-version" />
+				<arg value="180" />
 				<arg value="${requirejsHome}/dist/r.js"/>
 				<arg value="-o" />
 				<arg value="./orion.build.js"/>
