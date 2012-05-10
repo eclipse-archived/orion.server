@@ -163,6 +163,7 @@ lastMapTag=${mapsTagTag}
 			<length file="${minifiedScript}" when="greater" length="0" />
 		</condition>
 		<replace file="${buildDirectory}/optimization/${pageDir}/${name}.html" token="require([&quot;${name}.js&quot;]);" value="${builtResult}" />
+		<replace file="${buildDirectory}/optimization/${pageDir}/${name}.html" token="require([&apos;${name}.js&apos;]);" value="${builtResult}" />
 	</target>
 
 	<target name="requirejs" if="requirejsHome" >
