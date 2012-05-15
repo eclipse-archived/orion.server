@@ -16,8 +16,10 @@ import java.net.URISyntaxException;
 import org.eclipse.jgit.dircache.DirCache;
 import org.eclipse.jgit.dircache.DirCacheEntry;
 import org.eclipse.jgit.lib.*;
+import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.eclipse.orion.server.git.BaseToIndexConverter;
 
+@ResourceDescription(type = "Index")
 public class Index extends GitObject {
 
 	public static final String RESOURCE = "index"; //$NON-NLS-1$

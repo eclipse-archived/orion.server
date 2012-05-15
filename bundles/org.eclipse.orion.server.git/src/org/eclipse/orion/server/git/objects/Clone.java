@@ -24,6 +24,7 @@ import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
+import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitServlet;
 import org.json.JSONException;
@@ -32,6 +33,7 @@ import org.json.JSONObject;
 /**
  * A git clone created in Orion.
  */
+@ResourceDescription(type = "Clone")
 public class Clone {
 
 	public static final String RESOURCE = "clone"; //$NON-NLS-1$

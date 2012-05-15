@@ -17,12 +17,14 @@ import java.util.Set;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.eclipse.orion.server.git.*;
 import org.eclipse.orion.server.git.servlets.GitServlet;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+@ResourceDescription(type = "RemoteTrackingBranch")
 public class RemoteBranch extends GitObject {
 
 	public static final String TYPE = "RemoteTrackingBranch"; //$NON-NLS-1$

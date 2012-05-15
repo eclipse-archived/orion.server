@@ -21,12 +21,14 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.eclipse.orion.server.git.BaseToCommitConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitServlet;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.json.*;
 
+@ResourceDescription(type = "Branch")
 public class Branch extends GitObject {
 
 	public static final String RESOURCE = "branch"; //$NON-NLS-1$

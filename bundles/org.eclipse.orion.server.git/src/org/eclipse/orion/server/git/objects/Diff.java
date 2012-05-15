@@ -18,6 +18,7 @@ import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.merge.ResolveMerger;
 import org.eclipse.jgit.merge.ThreeWayMerger;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitServlet;
@@ -26,6 +27,7 @@ import org.eclipse.osgi.util.NLS;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+@ResourceDescription(type = "Diff")
 public class Diff extends GitObject {
 
 	public static final String RESOURCE = "diff"; //$NON-NLS-1$

@@ -18,11 +18,13 @@ import java.util.Map.Entry;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.eclipse.orion.server.git.BaseToRemoteConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
 
+@ResourceDescription(type = "Remote")
 public class Remote extends GitObject {
 
 	public static final String RESOURCE = "remote"; //$NON-NLS-1$

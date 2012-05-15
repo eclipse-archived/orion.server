@@ -18,11 +18,13 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+@ResourceDescription(type = "Tag")
 public class Tag extends GitObject {
 
 	private enum TagType {

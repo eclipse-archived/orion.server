@@ -17,17 +17,33 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.resources.*;
+import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
+import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 public abstract class GitObject {
+	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
+
+	{
+		Property[] defaultProperties = new Property[] {/*new Property(ProtocolConstants.KEY_TYPE),*/new Property(ProtocolConstants.KEY_LOCATION), new Property(GitConstants.KEY_CLONE)};
+		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
+	}
+
+	protected Serializer<JSONObject> jsonSerializer;
 
 	protected URI cloneLocation;
 	protected Repository db;
 	private StoredConfig cfg;
 
+	private GitObject() {
+		this.jsonSerializer = new JSONSerializer();
+	}
+
 	GitObject(URI cloneLocation, Repository db) {
+		this();
 		this.cloneLocation = cloneLocation;
 		this.db = db;
 	}
@@ -39,15 +55,24 @@ public abstract class GitObject {
 		return this.cfg;
 	}
 
+	/**
+	 * Returns a type of the current resource.
+	 *
+	 * @return the type
+	 * @deprecated use {@link ResourceDescription#type()} instead
+	 */
+	@PropertyDescription(name = ProtocolConstants.KEY_TYPE)
 	abstract protected String getType();
 
+	@PropertyDescription(name = ProtocolConstants.KEY_LOCATION)
 	abstract protected URI getLocation() throws URISyntaxException;
 
+	@PropertyDescription(name = GitConstants.KEY_CLONE)
+	public URI getCloneLocation() {
+		return cloneLocation;
+	}
+
 	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException, CoreException {
-		JSONObject result = new JSONObject();
-		result.put(ProtocolConstants.KEY_TYPE, getType());
-		result.put(ProtocolConstants.KEY_LOCATION, getLocation());
-		result.put(GitConstants.KEY_CLONE, cloneLocation);
-		return result;
+		return jsonSerializer.serialize(this, DEFAULT_RESOURCE_SHAPE);
 	}
 }

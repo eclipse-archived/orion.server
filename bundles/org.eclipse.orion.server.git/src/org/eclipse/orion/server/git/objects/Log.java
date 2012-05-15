@@ -21,6 +21,7 @@ import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.eclipse.orion.server.git.BaseToCommitConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitUtils;
@@ -31,6 +32,7 @@ import org.json.*;
  * A compound object for {@link Commit}s.
  *
  */
+@ResourceDescription(type = "Commit")
 public class Log extends GitObject {
 
 	private Iterable<RevCommit> commits;

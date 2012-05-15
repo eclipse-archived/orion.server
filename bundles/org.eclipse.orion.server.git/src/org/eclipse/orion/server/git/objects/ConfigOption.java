@@ -20,10 +20,12 @@ import org.eclipse.jgit.storage.file.FileBasedConfig;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.eclipse.orion.server.git.BaseToConfigEntryConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.*;
 
+@ResourceDescription(type = "Config")
 public class ConfigOption extends GitObject {
 
 	public static final String RESOURCE = "config"; //$NON-NLS-1$

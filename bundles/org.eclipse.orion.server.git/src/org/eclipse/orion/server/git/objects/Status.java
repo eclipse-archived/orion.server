@@ -18,11 +18,13 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitServlet;
 import org.json.*;
 
+@ResourceDescription(type = "Status")
 public class Status extends GitObject {
 
 	public static final String RESOURCE = "status"; //$NON-NLS-1$
