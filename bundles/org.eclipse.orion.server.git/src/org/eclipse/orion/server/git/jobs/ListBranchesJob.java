@@ -156,7 +156,8 @@ public class ListBranchesJob extends GitJob {
 						Iterable<RevCommit> commits = lc.call();
 						log = new Log(cloneLocation, db, commits, null, null, toRefId);
 					}
-					children.put(branch.toJSON(log.toJSON(1, commitsSize)));
+					log.setPaging(1, commitsSize);
+					children.put(branch.toJSON(log.toJSON()));
 				}
 			}
 			result.put(ProtocolConstants.KEY_CHILDREN, children);

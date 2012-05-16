@@ -19,7 +19,7 @@ import org.eclipse.jgit.lib.*;
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.eclipse.orion.server.git.BaseToIndexConverter;
 
-@ResourceDescription(type = "Index")
+@ResourceDescription(type = Index.TYPE)
 public class Index extends GitObject {
 
 	public static final String RESOURCE = "index"; //$NON-NLS-1$
@@ -45,10 +45,5 @@ public class Index extends GitObject {
 	@Override
 	protected URI getLocation() throws URISyntaxException {
 		return BaseToIndexConverter.getIndexLocation(cloneLocation, BaseToIndexConverter.CLONE);
-	}
-
-	@Override
-	protected String getType() {
-		return TYPE;
 	}
 }

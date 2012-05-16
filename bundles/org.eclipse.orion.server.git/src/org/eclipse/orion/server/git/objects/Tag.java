@@ -18,13 +18,16 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.resources.Property;
+import org.eclipse.orion.server.core.resources.ResourceShape;
+import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-@ResourceDescription(type = "Tag")
+@ResourceDescription(type = Tag.TYPE)
 public class Tag extends GitObject {
 
 	private enum TagType {
@@ -46,6 +49,19 @@ public class Tag extends GitObject {
 			return o1.getTime() < o2.getTime() ? 1 : (o1.getTime() > o2.getTime() ? -1 : o2.getName(false, false).compareTo(o1.getName(false, false)));
 		}
 	};
+
+	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
+	{
+		Property[] defaultProperties = new Property[] { //
+		new Property(ProtocolConstants.KEY_LOCATION), // super
+				new Property(GitConstants.KEY_CLONE), // super
+				new Property(ProtocolConstants.KEY_NAME), //
+				new Property(GitConstants.KEY_COMMIT), //
+				new Property(ProtocolConstants.KEY_LOCAL_TIMESTAMP), //
+				new Property(GitConstants.KEY_TAG_TYPE), //
+				new Property(ProtocolConstants.KEY_FULL_NAME)};
+		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
+	}
 
 	private RevTag tag;
 	private Ref ref;
@@ -70,13 +86,22 @@ public class Tag extends GitObject {
 
 	@Override
 	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException, CoreException {
-		JSONObject result = super.toJSON();
-		result.put(ProtocolConstants.KEY_NAME, getName(false, false));
-		result.put(GitConstants.KEY_COMMIT, getCommitLocation());
-		result.put(ProtocolConstants.KEY_LOCAL_TIMESTAMP, (long) getTime() * 1000);
-		result.put(GitConstants.KEY_TAG_TYPE, TagType.valueOf(this));
-		result.put(ProtocolConstants.KEY_FULL_NAME, getName(true, false));
-		return result;
+		return jsonSerializer.serialize(this, DEFAULT_RESOURCE_SHAPE);
+	}
+
+	@PropertyDescription(name = ProtocolConstants.KEY_NAME)
+	private String getName() {
+		return getName(false, false);
+	}
+
+	@PropertyDescription(name = GitConstants.KEY_TAG_TYPE)
+	private TagType getTagType() {
+		return TagType.valueOf(this);
+	}
+
+	@PropertyDescription(name = ProtocolConstants.KEY_FULL_NAME)
+	private String getFullName() {
+		return getName(true, false);
 	}
 
 	public JSONObject toJSON(JSONObject log) throws JSONException, URISyntaxException, IOException, CoreException {
@@ -107,6 +132,7 @@ public class Tag extends GitObject {
 		return tagLocation;
 	}
 
+	@PropertyDescription(name = GitConstants.KEY_COMMIT)
 	private URI getCommitLocation() throws URISyntaxException {
 		if (commitLocation == null) {
 			IPath p = new Path(cloneLocation.getPath());
@@ -116,10 +142,11 @@ public class Tag extends GitObject {
 		return commitLocation;
 	}
 
-	private int getTime() {
+	@PropertyDescription(name = ProtocolConstants.KEY_LOCAL_TIMESTAMP)
+	private long getTime() {
 		RevCommit c = parseCommit();
 		if (c != null)
-			return c.getCommitTime();
+			return (long) c.getCommitTime() * 1000;
 		return 0;
 	}
 
@@ -149,10 +176,5 @@ public class Tag extends GitObject {
 
 	public String getRevCommitName() {
 		return parseCommit().getName();
-	}
-
-	@Override
-	protected String getType() {
-		return TYPE;
 	}
 }

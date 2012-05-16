@@ -138,7 +138,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 		Ref fromRefId = null;
 
 		Git git = new Git(db);
-		LogCommand lc = git.log();
+		LogCommand logCommand = git.log();
 
 		if (refIdsRange != null) {
 			// git log <since>..<until>
@@ -172,29 +172,30 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			}
 			toObjectId = getCommitObjectId(db, toObjectId);
 			// set the commit range
-			lc.add(toObjectId);
+			logCommand.add(toObjectId);
 
 			if (fromObjectId != null)
-				lc.not(fromObjectId);
+				logCommand.not(fromObjectId);
 		} else {
 			// git log --all
-			lc.all();
+			logCommand.all();
 		}
 
 		if (page > 0) {
-			lc.setSkip((page - 1) * pageSize);
-			lc.setMaxCount(pageSize + 1); // to check if next page link is needed
+			logCommand.setSkip((page - 1) * pageSize);
+			logCommand.setMaxCount(pageSize + 1); // to check if next page link is needed
 		}
 
 		if (pattern != null && !pattern.isEmpty()) {
-			lc.addPath(pattern);
+			logCommand.addPath(pattern);
 		}
 
 		URI baseLocation = getURI(request);
 		URI cloneLocation = BaseToCloneConverter.getCloneLocation(baseLocation, refIdsRange == null ? BaseToCloneConverter.COMMIT : BaseToCloneConverter.COMMIT_REFRANGE);
 		Log log = new Log(cloneLocation, db, null /* collected by the job */, pattern, toRefId, fromRefId);
+		log.setPaging(page, pageSize);
 
-		LogJob job = new LogJob(TaskJobHandler.getUserId(request), lc, log, page, pageSize, baseLocation);
+		LogJob job = new LogJob(TaskJobHandler.getUserId(request), logCommand, log, baseLocation);
 		return TaskJobHandler.handleTaskJob(request, response, job, statusHandler);
 	}
 

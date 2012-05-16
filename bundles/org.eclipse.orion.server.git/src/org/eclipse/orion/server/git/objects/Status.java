@@ -18,17 +18,39 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.resources.Property;
+import org.eclipse.orion.server.core.resources.ResourceShape;
+import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitServlet;
 import org.json.*;
 
-@ResourceDescription(type = "Status")
+@ResourceDescription(type = Status.TYPE)
 public class Status extends GitObject {
 
 	public static final String RESOURCE = "status"; //$NON-NLS-1$
 	public static final String TYPE = "Status"; //$NON-NLS-1$
+
+	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
+	{
+		Property[] defaultProperties = new Property[] { //
+		new Property(ProtocolConstants.KEY_LOCATION), // super
+				new Property(GitConstants.KEY_CLONE), // super
+				new Property(GitConstants.KEY_STATUS_ADDED), //
+				// TODO: assume unchanged, bug 338913
+				new Property(GitConstants.KEY_STATUS_CHANGED), //
+				new Property(GitConstants.KEY_STATUS_MISSING), //
+				new Property(GitConstants.KEY_STATUS_MODIFIED), //
+				new Property(GitConstants.KEY_STATUS_REMOVED), //
+				new Property(GitConstants.KEY_STATUS_UNTRACKED), //
+				new Property(GitConstants.KEY_STATUS_CONFLICTING), //
+				new Property(GitConstants.KEY_REPOSITORY_STATE), //
+				new Property(GitConstants.KEY_INDEX), //
+				new Property(GitConstants.KEY_COMMIT)};
+		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
+	}
 
 	private URI baseLocation;
 	private org.eclipse.jgit.api.Status status;
@@ -43,33 +65,57 @@ public class Status extends GitObject {
 
 	@Override
 	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException, CoreException {
-		JSONObject result = super.toJSON();
+		return jsonSerializer.serialize(this, DEFAULT_RESOURCE_SHAPE);
+	}
 
-		JSONArray children = toJSONArray(status.getAdded(), basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
-		result.put(GitConstants.KEY_STATUS_ADDED, children);
-		// TODO: bug 338913
-		// children = toJSONArray(diff.getAssumeUnchanged(), baseLocation, ?);
-		// result.put(GitConstants.KEY_STATUS_ASSUME_UNCHANGED, children);
-		children = toJSONArray(status.getChanged(), basePath, baseLocation, GitConstants.KEY_DIFF_CACHED);
-		result.put(GitConstants.KEY_STATUS_CHANGED, children);
-		children = toJSONArray(status.getMissing(), basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
-		result.put(GitConstants.KEY_STATUS_MISSING, children);
-		children = toJSONArray(status.getModified(), basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
-		result.put(GitConstants.KEY_STATUS_MODIFIED, children);
-		children = toJSONArray(status.getRemoved(), basePath, baseLocation, GitConstants.KEY_DIFF_CACHED);
-		result.put(GitConstants.KEY_STATUS_REMOVED, children);
-		children = toJSONArray(status.getUntracked(), basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
-		result.put(GitConstants.KEY_STATUS_UNTRACKED, children);
-		children = toJSONArray(status.getConflicting(), basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
-		result.put(GitConstants.KEY_STATUS_CONFLICTING, children);
+	@PropertyDescription(name = GitConstants.KEY_STATUS_ADDED)
+	private JSONArray getAdded() throws JSONException, URISyntaxException {
+		return toJSONArray(status.getAdded(), basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
+	}
 
-		// return repository state
-		result.put(GitConstants.KEY_REPOSITORY_STATE, db.getRepositoryState().name());
+	@PropertyDescription(name = GitConstants.KEY_STATUS_CHANGED)
+	private JSONArray getChanged() throws JSONException, URISyntaxException {
+		return toJSONArray(status.getChanged(), basePath, baseLocation, GitConstants.KEY_DIFF_CACHED);
+	}
 
-		result.put(GitConstants.KEY_INDEX, statusToIndexLocation(baseLocation));
-		result.put(GitConstants.KEY_COMMIT, statusToCommitLocation(baseLocation, Constants.HEAD));
+	@PropertyDescription(name = GitConstants.KEY_STATUS_MISSING)
+	private JSONArray getMissing() throws JSONException, URISyntaxException {
+		return toJSONArray(status.getMissing(), basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
+	}
 
-		return result;
+	@PropertyDescription(name = GitConstants.KEY_STATUS_MODIFIED)
+	private JSONArray getModified() throws JSONException, URISyntaxException {
+		return toJSONArray(status.getModified(), basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
+	}
+
+	@PropertyDescription(name = GitConstants.KEY_STATUS_REMOVED)
+	private JSONArray getRemoved() throws JSONException, URISyntaxException {
+		return toJSONArray(status.getRemoved(), basePath, baseLocation, GitConstants.KEY_DIFF_CACHED);
+	}
+
+	@PropertyDescription(name = GitConstants.KEY_STATUS_UNTRACKED)
+	private JSONArray getUntracked() throws JSONException, URISyntaxException {
+		return toJSONArray(status.getUntracked(), basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
+	}
+
+	@PropertyDescription(name = GitConstants.KEY_STATUS_CONFLICTING)
+	private JSONArray getConflicting() throws JSONException, URISyntaxException {
+		return toJSONArray(status.getConflicting(), basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
+	}
+
+	@PropertyDescription(name = GitConstants.KEY_REPOSITORY_STATE)
+	private String getRepositoryState() {
+		return db.getRepositoryState().name();
+	}
+
+	@PropertyDescription(name = GitConstants.KEY_INDEX)
+	private URI getIndexLocation() throws URISyntaxException {
+		return statusToIndexLocation(baseLocation);
+	}
+
+	@PropertyDescription(name = GitConstants.KEY_COMMIT)
+	private URI getCommitLocation() throws URISyntaxException {
+		return statusToCommitLocation(baseLocation, Constants.HEAD);
 	}
 
 	@Override
@@ -135,10 +181,5 @@ public class Status extends GitObject {
 		uriPath = uriPath.substring(prefix.length() + (GitServlet.GIT_URI + '/' + Status.RESOURCE).length());
 		uriPath = prefix + GitServlet.GIT_URI + '/' + Index.RESOURCE + uriPath;
 		return new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), uriPath, u.getQuery(), u.getFragment());
-	}
-
-	@Override
-	protected String getType() {
-		return TYPE;
 	}
 }

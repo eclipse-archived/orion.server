@@ -21,7 +21,7 @@ public @interface PropertyDescription {
 	/**
 	 * Name of the property.
 	 */
-	String name() default "";
+	String name();
 
 	/**
 	 * Indicates if the property is expandable.

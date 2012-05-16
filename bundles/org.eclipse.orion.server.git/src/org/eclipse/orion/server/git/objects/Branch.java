@@ -21,6 +21,9 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.resources.Property;
+import org.eclipse.orion.server.core.resources.ResourceShape;
+import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.eclipse.orion.server.git.BaseToCommitConverter;
 import org.eclipse.orion.server.git.GitConstants;
@@ -28,7 +31,7 @@ import org.eclipse.orion.server.git.servlets.GitServlet;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.json.*;
 
-@ResourceDescription(type = "Branch")
+@ResourceDescription(type = Branch.TYPE)
 public class Branch extends GitObject {
 
 	public static final String RESOURCE = "branch"; //$NON-NLS-1$
@@ -38,6 +41,23 @@ public class Branch extends GitObject {
 			return o1.getTime() < o2.getTime() ? 1 : (o1.getTime() > o2.getTime() ? -1 : o2.getName(true, false).compareTo(o1.getName(true, false)));
 		}
 	};
+
+	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
+	{
+		Property[] defaultProperties = new Property[] { //
+		new Property(ProtocolConstants.KEY_LOCATION), // super
+				new Property(GitConstants.KEY_CLONE), // super
+				new Property(ProtocolConstants.KEY_NAME), //
+				new Property(ProtocolConstants.KEY_LOCATION), //
+				new Property(ProtocolConstants.KEY_FULL_NAME), //
+				new Property(GitConstants.KEY_COMMIT), //
+				new Property(GitConstants.KEY_DIFF), //
+				new Property(GitConstants.KEY_REMOTE), //
+				new Property(GitConstants.KEY_HEAD), //
+				new Property(GitConstants.KEY_BRANCH_CURRENT), //
+				new Property(ProtocolConstants.KEY_LOCAL_TIMESTAMP)};
+		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
+	}
 
 	private Ref ref;
 
@@ -51,18 +71,10 @@ public class Branch extends GitObject {
 	 */
 	@Override
 	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException, CoreException {
-		JSONObject result = super.toJSON();
-		result.put(ProtocolConstants.KEY_NAME, getName(false, false));
-		result.put(ProtocolConstants.KEY_FULL_NAME, getName(true, false));
-		result.put(GitConstants.KEY_COMMIT, BaseToCommitConverter.getCommitLocation(cloneLocation, getName(true, true), BaseToCommitConverter.REMOVE_FIRST_2));
-		result.put(GitConstants.KEY_DIFF, createLocation(Diff.RESOURCE));
-		result.put(GitConstants.KEY_REMOTE, getRemotes());
-		result.put(GitConstants.KEY_HEAD, BaseToCommitConverter.getCommitLocation(cloneLocation, Constants.HEAD, BaseToCommitConverter.REMOVE_FIRST_2));
-		result.put(GitConstants.KEY_BRANCH_CURRENT, isCurrent());
-		result.put(ProtocolConstants.KEY_LOCAL_TIMESTAMP, (long) getTime() * 1000);
-		return result;
+		return jsonSerializer.serialize(this, DEFAULT_RESOURCE_SHAPE);
 	}
 
+	@PropertyDescription(name = GitConstants.KEY_BRANCH_CURRENT)
 	private boolean isCurrent() throws IOException {
 		return getName(false, false).equals(db.getBranch());
 	}
@@ -79,35 +91,68 @@ public class Branch extends GitObject {
 		return new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), newPath.toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
 	}
 
+	// TODO: expandable
 	public JSONObject toJSON(JSONObject log) throws JSONException, URISyntaxException, IOException, CoreException {
 		JSONObject result = this.toJSON();
 		result.put(GitConstants.KEY_TAG_COMMIT, log);
 		return result;
 	}
 
+	// TODO: expandable
+	@PropertyDescription(name = GitConstants.KEY_REMOTE)
 	private JSONArray getRemotes() throws URISyntaxException, JSONException, IOException, CoreException {
 		String branchName = Repository.shortenRefName(ref.getName());
 		JSONArray result = new JSONArray();
-		String remote = getConfig().getString(ConfigConstants.CONFIG_BRANCH_SECTION, branchName, ConfigConstants.CONFIG_KEY_REMOTE);
-		if (remote != null) {
-			RemoteConfig remoteConfig = new RemoteConfig(getConfig(), remote);
+		String remoteName = getConfig().getString(ConfigConstants.CONFIG_BRANCH_SECTION, branchName, ConfigConstants.CONFIG_KEY_REMOTE);
+		if (remoteName != null) {
+			RemoteConfig remoteConfig = new RemoteConfig(getConfig(), remoteName);
 			if (!remoteConfig.getFetchRefSpecs().isEmpty()) {
-				result.put(new Remote(cloneLocation, db, remote).toJSON(branchName));
+				Remote remote = new Remote(cloneLocation, db, remoteName);
+				remote.setNewBranch(branchName);
+				result.put(remote.toJSON());
 			}
 		} else {
 			List<RemoteConfig> remoteConfigs = RemoteConfig.getAllRemoteConfigs(getConfig());
 			for (RemoteConfig remoteConfig : remoteConfigs) {
 				if (!remoteConfig.getFetchRefSpecs().isEmpty()) {
 					Remote r = new Remote(cloneLocation, db, remoteConfig.getName());
+					r.setNewBranch(branchName);
 					if (db.resolve(Constants.R_REMOTES + remoteConfig.getName() + "/" + branchName) != null) { //$NON-NLS-1$
 						// it's an existing branch, not a new one, use it as filter
-						return new JSONArray().put(r.toJSON(branchName));
+						return new JSONArray().put(r.toJSON());
 					}
-					result.put(r.toJSON(branchName));
+					result.put(r.toJSON());
 				}
 			}
 		}
 		return result;
+	}
+
+	@PropertyDescription(name = ProtocolConstants.KEY_NAME)
+	private String getName() {
+		return getName(false, false);
+	}
+
+	@PropertyDescription(name = ProtocolConstants.KEY_FULL_NAME)
+	private String getFullName() {
+		return getName(true, false);
+	}
+
+	// TODO: expandable
+	@PropertyDescription(name = GitConstants.KEY_COMMIT)
+	private URI getCommitLocation() throws IOException, URISyntaxException {
+		return BaseToCommitConverter.getCommitLocation(cloneLocation, getName(true, true), BaseToCommitConverter.REMOVE_FIRST_2);
+	}
+
+	@PropertyDescription(name = GitConstants.KEY_DIFF)
+	private URI getDiffLocation() throws IOException, URISyntaxException {
+		return createLocation(Diff.RESOURCE);
+	}
+
+	// TODO: expandable
+	@PropertyDescription(name = GitConstants.KEY_HEAD)
+	private URI getHeadLocation() throws IOException, URISyntaxException {
+		return BaseToCommitConverter.getCommitLocation(cloneLocation, Constants.HEAD, BaseToCommitConverter.REMOVE_FIRST_2);
 	}
 
 	public String getName(boolean fullName, boolean encode) {
@@ -117,6 +162,11 @@ public class Branch extends GitObject {
 		if (encode)
 			name = GitUtils.encode(name);
 		return name;
+	}
+
+	@PropertyDescription(name = ProtocolConstants.KEY_LOCAL_TIMESTAMP)
+	private long getLocalTimestamp() {
+		return (long) getTime() * 1000;
 	}
 
 	public int getTime() {
@@ -144,10 +194,5 @@ public class Branch extends GitObject {
 	@Override
 	public String toString() {
 		return "Branch [ref=" + ref + "]"; //$NON-NLS-1$ //$NON-NLS-2$
-	}
-
-	@Override
-	protected String getType() {
-		return TYPE;
 	}
 }

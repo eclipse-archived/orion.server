@@ -74,7 +74,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.REMOTE_LIST);
 			for (String configName : configNames) {
 				Remote remote = new Remote(cloneLocation, db, configName);
-				children.put(remote.toJSON(false, null));
+				children.put(remote.toJSON(false));
 			}
 			result.put(ProtocolConstants.KEY_CHILDREN, children);
 			result.put(ProtocolConstants.KEY_TYPE, Remote.TYPE);
@@ -101,14 +101,13 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.REMOTE_BRANCH);
 			Remote remote = new Remote(cloneLocation, db, p.segment(0));
 			RemoteBranch remoteBranch = new RemoteBranch(cloneLocation, db, remote, p.segment(1));
-			JSONObject result = remoteBranch.toJSON();
-			if (result != null) {
+			if (remoteBranch.exists()) {
+				JSONObject result = remoteBranch.toJSON();
 				OrionServlet.writeJSONResponse(request, response, result);
 				return true;
 			}
 			JSONObject errorData = new JSONObject();
 			errorData.put(GitConstants.KEY_CLONE, cloneLocation);
-
 			return statusHandler.handleRequest(request, response, new ServerStatus(new Status(IStatus.ERROR, GitActivator.PI_GIT, "No remote branch found: " + p.uptoSegment(2).removeTrailingSeparator()), HttpServletResponse.SC_NOT_FOUND, errorData));
 		}
 		return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Bad request, \"/git/remote/{remote}/{branch}/file/{path}\" expected", null));

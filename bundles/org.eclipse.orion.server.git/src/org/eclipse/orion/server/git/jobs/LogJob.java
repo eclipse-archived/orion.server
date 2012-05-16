@@ -29,17 +29,13 @@ public class LogJob extends GitJob {
 
 	private final LogCommand logCommand;
 	private final Log log;
-	private final int page;
-	private final int pageSize;
 
-	public LogJob(String userRunningTask, LogCommand logCommand, Log log, int page, int pageSize, URI logLocation) {
+	public LogJob(String userRunningTask, LogCommand logCommand, Log log, URI logLocation) {
 		super(NLS.bind("Generating git log for {0}", logCommand.getRepository()), userRunningTask, NLS.bind("Generating git log for {0} ...", logCommand.getRepository()), true, false);
 		setFinalLocation(logLocation);
 		setFinalMessage("Generating git log completed.");
 		this.logCommand = logCommand;
 		this.log = log;
-		this.page = page;
-		this.pageSize = pageSize;
 	}
 
 	@Override
@@ -47,7 +43,7 @@ public class LogJob extends GitJob {
 		try {
 			Iterable<RevCommit> commits = logCommand.call();
 			log.setCommits(commits);
-			JSONObject result = log.toJSON(page, pageSize);
+			JSONObject result = log.toJSON();
 			// return the commits log as status message
 			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
 		} catch (Exception e) {

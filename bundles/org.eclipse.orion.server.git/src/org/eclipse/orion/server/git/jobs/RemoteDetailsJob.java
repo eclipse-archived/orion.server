@@ -155,7 +155,8 @@ public class RemoteDetailsJob extends GitJob {
 							lc.setMaxCount(this.commitsSize);
 							Iterable<RevCommit> commits = lc.call();
 							Log log = new Log(cloneLocation, db, commits, null, null, toRefId);
-							branch.put(GitConstants.KEY_TAG_COMMIT, log.toJSON(1, commitsSize));
+							log.setPaging(1, commitsSize);
+							branch.put(GitConstants.KEY_TAG_COMMIT, log.toJSON());
 							newChildren.put(branch);
 						}
 					}

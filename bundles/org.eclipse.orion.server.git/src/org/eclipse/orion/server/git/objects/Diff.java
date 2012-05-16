@@ -18,6 +18,10 @@ import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.merge.ResolveMerger;
 import org.eclipse.jgit.merge.ThreeWayMerger;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.resources.Property;
+import org.eclipse.orion.server.core.resources.ResourceShape;
+import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.eclipse.orion.server.git.GitConstants;
@@ -27,11 +31,22 @@ import org.eclipse.osgi.util.NLS;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-@ResourceDescription(type = "Diff")
+@ResourceDescription(type = Diff.TYPE)
 public class Diff extends GitObject {
 
 	public static final String RESOURCE = "diff"; //$NON-NLS-1$
 	public static final String TYPE = "Diff"; //$NON-NLS-1$
+
+	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
+	{
+		Property[] defaultProperties = new Property[] { //
+		new Property(ProtocolConstants.KEY_LOCATION), // super
+				new Property(GitConstants.KEY_CLONE), // super
+				new Property(GitConstants.KEY_COMMIT_OLD), //
+				new Property(GitConstants.KEY_COMMIT_NEW), //
+				new Property(GitConstants.KEY_COMMIT_BASE)};
+		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
+	}
 
 	private URI baseLocation;
 
@@ -42,17 +57,18 @@ public class Diff extends GitObject {
 
 	@Override
 	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException, CoreException {
-		IPath path = new Path(baseLocation.getPath()).removeFirstSegments(2);
-		JSONObject diff = super.toJSON();
-		diff.put(GitConstants.KEY_COMMIT_OLD, getOldLocation(baseLocation, path));
-		diff.put(GitConstants.KEY_COMMIT_NEW, getNewLocation(baseLocation, path));
-		diff.put(GitConstants.KEY_COMMIT_BASE, getBaseLocation(baseLocation, db, path));
-		return diff;
+		return jsonSerializer.serialize(this, DEFAULT_RESOURCE_SHAPE);
 	}
 
 	@Override
 	protected URI getLocation() throws URISyntaxException {
 		return baseLocation;
+	}
+
+	@PropertyDescription(name = GitConstants.KEY_COMMIT_OLD)
+	private URI getOldLocation() throws URISyntaxException {
+		IPath path = new Path(baseLocation.getPath()).removeFirstSegments(2);
+		return getOldLocation(baseLocation, path);
 	}
 
 	private URI getOldLocation(URI location, IPath path) throws URISyntaxException {
@@ -76,6 +92,12 @@ public class Diff extends GitObject {
 		}
 	}
 
+	@PropertyDescription(name = GitConstants.KEY_COMMIT_NEW)
+	private URI getNewLocation() throws URISyntaxException {
+		IPath path = new Path(baseLocation.getPath()).removeFirstSegments(2);
+		return getNewLocation(baseLocation, path);
+	}
+
 	private URI getNewLocation(URI location, IPath path) throws URISyntaxException {
 		String scope = path.segment(0);
 		if (scope.contains("..")) { //$NON-NLS-1$
@@ -92,6 +114,12 @@ public class Diff extends GitObject {
 			/* including scope.equals(GitConstants.KEY_DIFF_DEFAULT */
 			return new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), path.removeFirstSegments(1).makeAbsolute().toString(), null, null);
 		}
+	}
+
+	@PropertyDescription(name = GitConstants.KEY_COMMIT_BASE)
+	private URI getBaseLocation() throws URISyntaxException, IOException {
+		IPath path = new Path(baseLocation.getPath()).removeFirstSegments(2);
+		return getBaseLocation(baseLocation, db, path);
 	}
 
 	private URI getBaseLocation(URI location, Repository db, IPath path) throws URISyntaxException, IOException {
@@ -124,10 +152,5 @@ public class Diff extends GitObject {
 			IPath p = new Path(GitServlet.GIT_URI + '/' + Index.RESOURCE).append(path.removeFirstSegments(1));
 			return new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), p.toString(), null, null);
 		}
-	}
-
-	@Override
-	protected String getType() {
-		return TYPE;
 	}
 }

@@ -176,7 +176,8 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			clone.setContentLocation(webProject.getProjectStore().toURI());
 		}
 		clone.setName(cloneName);
-		JSONObject cloneObject = clone.toJSON(getURI(request));
+		clone.setBaseLocation(getURI(request));
+		JSONObject cloneObject = clone.toJSON();
 		String cloneLocation = cloneObject.getString(ProtocolConstants.KEY_LOCATION);
 
 		if (initOnly) {

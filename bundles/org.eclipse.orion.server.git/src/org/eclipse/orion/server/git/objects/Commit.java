@@ -18,6 +18,7 @@ import java.util.Map.Entry;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffEntry.ChangeType;
+import org.eclipse.jgit.errors.IncorrectObjectTypeException;
 import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -25,6 +26,9 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.resources.Property;
+import org.eclipse.orion.server.core.resources.ResourceShape;
+import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.eclipse.orion.server.core.users.UserUtilities;
 import org.eclipse.orion.server.git.BaseToCommitConverter;
@@ -32,11 +36,33 @@ import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitServlet;
 import org.json.*;
 
-@ResourceDescription(type = "Commit")
+@ResourceDescription(type = Commit.TYPE)
 public class Commit extends GitObject {
 
 	public static final String RESOURCE = "commit"; //$NON-NLS-1$
 	public static final String TYPE = "Commit"; //$NON-NLS-1$
+
+	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
+	{
+		Property[] defaultProperties = new Property[] { //
+		new Property(ProtocolConstants.KEY_LOCATION), // super
+				new Property(GitConstants.KEY_CLONE), // super
+				new Property(ProtocolConstants.KEY_CONTENT_LOCATION), //
+				new Property(GitConstants.KEY_DIFF), //
+				new Property(ProtocolConstants.KEY_NAME), //
+				new Property(GitConstants.KEY_AUTHOR_NAME), //
+				new Property(GitConstants.KEY_AUTHOR_EMAIL), //
+				new Property(GitConstants.KEY_AUTHOR_IMAGE), //
+				new Property(GitConstants.KEY_COMMITTER_NAME), //
+				new Property(GitConstants.KEY_COMMITTER_EMAIL), //
+				new Property(GitConstants.KEY_COMMIT_TIME), //
+				new Property(GitConstants.KEY_COMMIT_MESSAGE), //
+				new Property(GitConstants.KEY_TAGS), //
+				new Property(GitConstants.KEY_BRANCHES), //
+				new Property(ProtocolConstants.KEY_PARENTS), //
+				new Property(GitConstants.KEY_COMMIT_DIFFS)};
+		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
+	}
 
 	private RevCommit revCommit;
 	private String pattern;
@@ -81,26 +107,88 @@ public class Commit extends GitObject {
 
 	@Override
 	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException, CoreException {
-		JSONObject commit = super.toJSON();
-		if (!isRoot) // linking to body makes only sense for files
-			commit.put(ProtocolConstants.KEY_CONTENT_LOCATION, BaseToCommitConverter.getCommitLocation(cloneLocation, revCommit.getName(), pattern, BaseToCommitConverter.REMOVE_FIRST_2.setQuery("parts=body"))); //$NON-NLS-1$
-		commit.put(GitConstants.KEY_DIFF, createDiffLocation(revCommit.getName(), null, pattern));
-		commit.put(ProtocolConstants.KEY_NAME, revCommit.getName());
-		PersonIdent author = revCommit.getAuthorIdent();
-		commit.put(GitConstants.KEY_AUTHOR_NAME, author.getName());
-		commit.put(GitConstants.KEY_AUTHOR_EMAIL, author.getEmailAddress());
-		String authorImage = UserUtilities.getImageLink(author.getEmailAddress());
-		if (authorImage != null)
-			commit.put(GitConstants.KEY_AUTHOR_IMAGE, authorImage);
-		PersonIdent committer = revCommit.getCommitterIdent();
-		commit.put(GitConstants.KEY_COMMITTER_NAME, committer.getName());
-		commit.put(GitConstants.KEY_COMMITTER_EMAIL, committer.getEmailAddress());
-		commit.put(GitConstants.KEY_COMMIT_TIME, ((long) revCommit.getCommitTime()) * 1000 /* time in milliseconds */);
-		commit.put(GitConstants.KEY_COMMIT_MESSAGE, revCommit.getFullMessage());
-		commit.put(GitConstants.KEY_TAGS, toJSON(getTagsForCommit()));
-		commit.put(GitConstants.KEY_BRANCHES, getCommitToBranchMap().get(revCommit.getId()));
-		commit.put(ProtocolConstants.KEY_PARENTS, parentsToJSON(revCommit.getParents()));
+		return jsonSerializer.serialize(this, DEFAULT_RESOURCE_SHAPE);
+	}
 
+	@PropertyDescription(name = ProtocolConstants.KEY_CONTENT_LOCATION)
+	private URI getContentLocation() throws URISyntaxException {
+		if (!isRoot) // linking to body makes only sense for files
+			return BaseToCommitConverter.getCommitLocation(cloneLocation, revCommit.getName(), pattern, BaseToCommitConverter.REMOVE_FIRST_2.setQuery("parts=body")); //$NON-NLS-1$		
+		return null; // in the eventuality of null, the property won't be added
+	}
+
+	// TODO: expandable
+	@PropertyDescription(name = GitConstants.KEY_DIFF)
+	private URI getDiffLocation() throws URISyntaxException {
+		return createDiffLocation(revCommit.getName(), null, pattern);
+	}
+
+	@PropertyDescription(name = ProtocolConstants.KEY_NAME)
+	private String getName() {
+		return revCommit.getName();
+	}
+
+	@PropertyDescription(name = GitConstants.KEY_AUTHOR_NAME)
+	private String getAuthorName() {
+		PersonIdent author = revCommit.getAuthorIdent();
+		return author.getName();
+	}
+
+	@PropertyDescription(name = GitConstants.KEY_AUTHOR_EMAIL)
+	private String getAuthorEmail() {
+		PersonIdent author = revCommit.getAuthorIdent();
+		return author.getEmailAddress();
+	}
+
+	@PropertyDescription(name = GitConstants.KEY_AUTHOR_IMAGE)
+	private String getAuthorImage() {
+		PersonIdent author = revCommit.getAuthorIdent();
+		return UserUtilities.getImageLink(author.getEmailAddress()); // can be null
+	}
+
+	@PropertyDescription(name = GitConstants.KEY_COMMITTER_NAME)
+	private String getCommitterName() {
+		PersonIdent committer = revCommit.getCommitterIdent();
+		return committer.getName();
+	}
+
+	@PropertyDescription(name = GitConstants.KEY_COMMITTER_EMAIL)
+	private String getCommitterEmail() {
+		PersonIdent committer = revCommit.getCommitterIdent();
+		return committer.getEmailAddress();
+	}
+
+	@PropertyDescription(name = GitConstants.KEY_COMMIT_TIME)
+	private long getCommitTime() {
+		return ((long) revCommit.getCommitTime()) * 1000 /* time in milliseconds */;
+	}
+
+	@PropertyDescription(name = GitConstants.KEY_COMMIT_MESSAGE)
+	private String getCommitMessiage() {
+		return revCommit.getFullMessage();
+	}
+
+	// TODO: expandable
+	@PropertyDescription(name = GitConstants.KEY_TAGS)
+	private JSONArray getTags() throws MissingObjectException, JSONException, URISyntaxException, CoreException, IOException {
+		return toJSON(getTagsForCommit());
+	}
+
+	// TODO: expandable
+	@PropertyDescription(name = GitConstants.KEY_BRANCHES)
+	private JSONArray getBranches() throws JSONException, URISyntaxException, IOException, CoreException {
+		return getCommitToBranchMap().get(revCommit.getId());
+	}
+
+	// TODO: expandable?
+	@PropertyDescription(name = ProtocolConstants.KEY_PARENTS)
+	private JSONArray getParents() throws JSONException, URISyntaxException, IOException, CoreException {
+		return parentsToJSON(revCommit.getParents());
+	}
+
+	// TODO: expandable
+	@PropertyDescription(name = GitConstants.KEY_COMMIT_DIFFS)
+	private JSONArray getDiffs() throws JSONException, URISyntaxException, MissingObjectException, IncorrectObjectTypeException, IOException {
 		if (revCommit.getParentCount() > 0) {
 			JSONArray diffs = new JSONArray();
 
@@ -132,10 +220,9 @@ public class Commit extends GitObject {
 			}
 			tw.release();
 
-			commit.put(GitConstants.KEY_COMMIT_DIFFS, diffs);
+			return diffs;
 		}
-
-		return commit;
+		return null;
 	}
 
 	private JSONArray toJSON(Map<String, Ref> revTags) throws JSONException, URISyntaxException, CoreException, IOException {
@@ -211,10 +298,5 @@ public class Commit extends GitObject {
 			parents.put(parent);
 		}
 		return parents;
-	}
-
-	@Override
-	protected String getType() {
-		return TYPE;
 	}
 }

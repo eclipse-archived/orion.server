@@ -19,16 +19,14 @@ import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.*;
 import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
-import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 public abstract class GitObject {
 	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
-
 	{
-		Property[] defaultProperties = new Property[] {/*new Property(ProtocolConstants.KEY_TYPE),*/new Property(ProtocolConstants.KEY_LOCATION), new Property(GitConstants.KEY_CLONE)};
+		Property[] defaultProperties = new Property[] {new Property(ProtocolConstants.KEY_LOCATION), new Property(GitConstants.KEY_CLONE)};
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
 
@@ -54,15 +52,6 @@ public abstract class GitObject {
 		}
 		return this.cfg;
 	}
-
-	/**
-	 * Returns a type of the current resource.
-	 *
-	 * @return the type
-	 * @deprecated use {@link ResourceDescription#type()} instead
-	 */
-	@PropertyDescription(name = ProtocolConstants.KEY_TYPE)
-	abstract protected String getType();
 
 	@PropertyDescription(name = ProtocolConstants.KEY_LOCATION)
 	abstract protected URI getLocation() throws URISyntaxException;

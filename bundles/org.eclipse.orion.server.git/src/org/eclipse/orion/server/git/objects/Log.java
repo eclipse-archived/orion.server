@@ -21,6 +21,9 @@ import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.resources.Property;
+import org.eclipse.orion.server.core.resources.ResourceShape;
+import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.eclipse.orion.server.git.BaseToCommitConverter;
 import org.eclipse.orion.server.git.GitConstants;
@@ -32,52 +35,95 @@ import org.json.*;
  * A compound object for {@link Commit}s.
  *
  */
-@ResourceDescription(type = "Commit")
+@ResourceDescription(type = Commit.TYPE)
 public class Log extends GitObject {
 
-	private Iterable<RevCommit> commits;
+	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
+	{
+		Property[] defaultProperties = new Property[] { //
+		new Property(ProtocolConstants.KEY_LOCATION), // super
+				new Property(GitConstants.KEY_CLONE), // super
+				new Property(ProtocolConstants.KEY_CHILDREN), //
+				new Property(GitConstants.KEY_REPOSITORY_PATH), //
+				new Property(GitConstants.KEY_LOG_TO_REF), //
+				new Property(GitConstants.KEY_LOG_FROM_REF), //
+				new Property(ProtocolConstants.KEY_PREVIOUS_LOCATION), //
+				new Property(ProtocolConstants.KEY_NEXT_LOCATION)};
+		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
+	}
+
+	private List<RevCommit> commits;
 	private String pattern;
 	private Ref toRefId;
 	private Ref fromRefId;
+	private int page;
+	private int pageSize;
 
 	public Log(URI cloneLocation, Repository db, Iterable<RevCommit> commits, String pattern, Ref toRefId, Ref fromRefId) {
 		super(cloneLocation, db);
-		this.commits = commits;
+		this.commits = commits != null ? toList(commits) : Collections.<RevCommit> emptyList();
 		this.pattern = pattern;
 		this.toRefId = toRefId;
 		this.fromRefId = fromRefId;
 	}
 
 	public void setCommits(Iterable<RevCommit> commits) {
-		this.commits = commits;
+		this.commits = toList(commits);
 	}
 
-	public JSONObject toJSON(int page, int pageSize) throws JSONException, URISyntaxException, IOException, CoreException {
-		Assert.isNotNull(commits, "'commits' is null");
-		Map<ObjectId, JSONArray> commitToBranchMap = getCommitToBranchMap(cloneLocation, db);
+	private static <E> List<E> toList(Iterable<E> iterable) {
+		List<E> list = new ArrayList<E>();
+		for (E item : iterable)
+			list.add(item);
+		return list;
+	}
 
-		JSONObject result = super.toJSON();
+	public void setPaging(int page, int pageSize) {
+		this.page = page;
+		this.pageSize = pageSize;
+	}
+
+	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException, CoreException {
+		Assert.isNotNull(commits, "'commits' is null");
+		return jsonSerializer.serialize(this, DEFAULT_RESOURCE_SHAPE);
+	}
+
+	@PropertyDescription(name = ProtocolConstants.KEY_CHILDREN)
+	private JSONArray getChildren() throws JSONException, URISyntaxException, IOException, CoreException {
+		Map<ObjectId, JSONArray> commitToBranchMap = getCommitToBranchMap(cloneLocation, db);
 		JSONArray children = new JSONArray();
 		int i = 0;
-		Iterator<RevCommit> iterator = commits.iterator();
-		while (iterator.hasNext()) {
-			RevCommit revCommit = (RevCommit) iterator.next();
+		for (RevCommit revCommit : commits) {
 			Commit commit = new Commit(cloneLocation, db, revCommit, pattern);
 			commit.setCommitToBranchMap(commitToBranchMap);
 			children.put(commit.toJSON());
 			if (i++ == pageSize - 1)
 				break;
 		}
-		boolean hasNextPage = iterator.hasNext();
+		return children;
+	}
 
-		result.put(ProtocolConstants.KEY_CHILDREN, children);
-		result.put(GitConstants.KEY_REPOSITORY_PATH, pattern == null ? "" : pattern); //$NON-NLS-1$
+	@PropertyDescription(name = GitConstants.KEY_REPOSITORY_PATH)
+	private String getRepositoryPath() {
+		return pattern == null ? "" : pattern; //$NON-NLS-1$
+	}
 
+	@PropertyDescription(name = GitConstants.KEY_LOG_TO_REF)
+	private JSONObject getToRef() throws JSONException, URISyntaxException, IOException, CoreException {
 		if (toRefId != null)
-			result.put(GitConstants.KEY_LOG_TO_REF, createJSONObjectForRef(toRefId.getTarget()));
-		if (fromRefId != null)
-			result.put(GitConstants.KEY_LOG_FROM_REF, createJSONObjectForRef(fromRefId.getTarget()));
+			return createJSONObjectForRef(toRefId.getTarget());
+		return null;
+	}
 
+	@PropertyDescription(name = GitConstants.KEY_LOG_FROM_REF)
+	private JSONObject getFromRef() throws JSONException, URISyntaxException, IOException, CoreException {
+		if (fromRefId != null)
+			return createJSONObjectForRef(fromRefId.getTarget());
+		return null;
+	}
+
+	@PropertyDescription(name = ProtocolConstants.KEY_PREVIOUS_LOCATION)
+	private URI getPreviousPageLocation() throws URISyntaxException {
 		if (page > 0) {
 			StringBuilder c = new StringBuilder(""); //$NON-NLS-1$
 			if (fromRefId != null)
@@ -88,14 +134,30 @@ public class Log extends GitObject {
 				c.append(Repository.shortenRefName(toRefId.getName()));
 			final String q = "page=%d&pageSize=%d"; //$NON-NLS-1$
 			if (page > 1) {
-				result.put(ProtocolConstants.KEY_PREVIOUS_LOCATION, BaseToCommitConverter.getCommitLocation(cloneLocation, c.toString(), pattern, BaseToCommitConverter.REMOVE_FIRST_2.setQuery(String.format(q, page - 1, pageSize))));
-			}
-			if (hasNextPage) {
-				result.put(ProtocolConstants.KEY_NEXT_LOCATION, BaseToCommitConverter.getCommitLocation(cloneLocation, c.toString(), pattern, BaseToCommitConverter.REMOVE_FIRST_2.setQuery(String.format(q, page + 1, pageSize))));
+				return BaseToCommitConverter.getCommitLocation(cloneLocation, c.toString(), pattern, BaseToCommitConverter.REMOVE_FIRST_2.setQuery(String.format(q, page - 1, pageSize)));
 			}
 		}
+		return null;
+	}
 
-		return result;
+	@PropertyDescription(name = ProtocolConstants.KEY_NEXT_LOCATION)
+	private URI getNextPageLocation() throws URISyntaxException {
+		if (hasNextPage()) {
+			StringBuilder c = new StringBuilder(""); //$NON-NLS-1$
+			if (fromRefId != null)
+				c.append(fromRefId.getName());
+			if (fromRefId != null && toRefId != null)
+				c.append(".."); //$NON-NLS-1$
+			if (toRefId != null)
+				c.append(Repository.shortenRefName(toRefId.getName()));
+			final String q = "page=%d&pageSize=%d"; //$NON-NLS-1$
+			return BaseToCommitConverter.getCommitLocation(cloneLocation, c.toString(), pattern, BaseToCommitConverter.REMOVE_FIRST_2.setQuery(String.format(q, page + 1, pageSize)));
+		}
+		return null;
+	}
+
+	private boolean hasNextPage() {
+		return commits.size() > pageSize;
 	}
 
 	private JSONObject createJSONObjectForRef(Ref targetRef) throws JSONException, URISyntaxException, IOException, CoreException {
@@ -164,10 +226,5 @@ public class Log extends GitObject {
 			}
 		}
 		return commitToBranch;
-	}
-
-	@Override
-	protected String getType() {
-		return Commit.TYPE;
 	}
 }

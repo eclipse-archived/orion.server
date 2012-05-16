@@ -13,6 +13,7 @@ package org.eclipse.orion.server.git.objects;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jgit.errors.ConfigInvalidException;
 import org.eclipse.jgit.lib.Repository;
@@ -20,18 +21,40 @@ import org.eclipse.jgit.storage.file.FileBasedConfig;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.resources.Property;
+import org.eclipse.orion.server.core.resources.ResourceShape;
+import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.eclipse.orion.server.git.BaseToConfigEntryConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.*;
 
-@ResourceDescription(type = "Config")
+@ResourceDescription(type = ConfigOption.TYPE)
 public class ConfigOption extends GitObject {
 
 	public static final String RESOURCE = "config"; //$NON-NLS-1$
 	public static final String TYPE = "Config"; //$NON-NLS-1$
 
 	private static final String EMPTY_VALUE = ""; //$NON-NLS-1$
+
+	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
+	private static final ResourceShape DEFAULT_RESOURCE_SHAPE_COLLECTION = new ResourceShape();
+	{
+		Property[] defaultProperties = new Property[] { //
+		new Property(ProtocolConstants.KEY_LOCATION), // super
+				new Property(GitConstants.KEY_CLONE), // super
+				new Property(GitConstants.KEY_CONFIG_ENTRY_KEY), //
+				new Property(GitConstants.KEY_CONFIG_ENTRY_VALUE)};
+		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
+
+		Property childrenProperty = new Property(ProtocolConstants.KEY_CHILDREN);
+		childrenProperty.setResourceShape(DEFAULT_RESOURCE_SHAPE);
+		Property[] collectionProperties = new Property[] { //
+		new Property(ProtocolConstants.KEY_LOCATION), // super
+				new Property(GitConstants.KEY_CLONE), // super
+				childrenProperty};
+		DEFAULT_RESOURCE_SHAPE_COLLECTION.setProperties(collectionProperties);
+	}
 
 	private FileBasedConfig config;
 	private String[] keySegments;
@@ -44,8 +67,7 @@ public class ConfigOption extends GitObject {
 	public ConfigOption(URI cloneLocation, Repository db, String key) throws IOException {
 		this(cloneLocation, db);
 		this.keySegments = keyToSegments(key);
-		if (this.keySegments == null)
-			throw new IllegalArgumentException("Config entry key must be provided in the following form: section[.subsection].name");
+		Assert.isLegal(this.keySegments != null, "Config entry key must be provided in the following form: section[.subsection].name");
 	}
 
 	private ConfigOption(URI cloneLocation, Repository db, String[] keySegments) throws IOException {
@@ -55,28 +77,38 @@ public class ConfigOption extends GitObject {
 
 	@Override
 	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException, CoreException {
-		JSONObject result = super.toJSON();
-		if (keySegments == null) {
-			JSONArray children = new JSONArray();
-			for (String section : config.getSections()) {
-				// proceed configuration entries: section.name
-				for (String name : config.getNames(section))
-					children.put(new ConfigOption(cloneLocation, db, new String[] {section, null, name}).toJSON());
-				// proceed configuration entries: section.subsection.name
-				for (String subsection : config.getSubsections(section))
-					for (String name : config.getNames(section, subsection))
-						children.put(new ConfigOption(cloneLocation, db, new String[] {section, subsection, name}).toJSON());
-			}
-			result.put(ProtocolConstants.KEY_CHILDREN, children);
-		} else {
-			String value = config.getString(keySegments[0], keySegments[1], keySegments[2]);
-			if (value == null)
-				value = EMPTY_VALUE;
-			String key = segmentsToKey(keySegments);
-			result.put(GitConstants.KEY_CONFIG_ENTRY_KEY, key);
-			result.put(GitConstants.KEY_CONFIG_ENTRY_VALUE, value);
+		if (keySegments == null)
+			return jsonSerializer.serialize(this, DEFAULT_RESOURCE_SHAPE_COLLECTION);
+		else
+			return jsonSerializer.serialize(this, DEFAULT_RESOURCE_SHAPE);
+	}
+
+	@PropertyDescription(name = ProtocolConstants.KEY_CHILDREN)
+	private JSONArray getChildren() throws JSONException, URISyntaxException, IOException, CoreException {
+		JSONArray children = new JSONArray();
+		for (String section : config.getSections()) {
+			// proceed configuration entries: section.name
+			for (String name : config.getNames(section))
+				children.put(new ConfigOption(cloneLocation, db, new String[] {section, null, name}).toJSON());
+			// proceed configuration entries: section.subsection.name
+			for (String subsection : config.getSubsections(section))
+				for (String name : config.getNames(section, subsection))
+					children.put(new ConfigOption(cloneLocation, db, new String[] {section, subsection, name}).toJSON());
 		}
-		return result;
+		return children;
+	}
+
+	@PropertyDescription(name = GitConstants.KEY_CONFIG_ENTRY_KEY)
+	private String getKey() {
+		return segmentsToKey(keySegments);
+	}
+
+	@PropertyDescription(name = GitConstants.KEY_CONFIG_ENTRY_VALUE)
+	private String getValue() {
+		String value = config.getString(keySegments[0], keySegments[1], keySegments[2]);
+		if (value == null)
+			value = EMPTY_VALUE;
+		return value;
 	}
 
 	@Override
@@ -164,10 +196,5 @@ public class ConfigOption extends GitObject {
 
 	public String getName() {
 		return keySegments[2];
-	}
-
-	@Override
-	protected String getType() {
-		return TYPE;
 	}
 }

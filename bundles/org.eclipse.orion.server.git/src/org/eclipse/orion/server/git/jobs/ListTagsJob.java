@@ -147,7 +147,8 @@ public class ListTagsJob extends GitJob {
 					lc.setMaxCount(this.commitsSize);
 					Iterable<RevCommit> commits = lc.call();
 					Log log = new Log(cloneLocation, db, commits, null, null, toCommitRef);
-					children.put(tag.toJSON(log.toJSON(1, commitsSize)));
+					log.setPaging(1, commitsSize);
+					children.put(tag.toJSON(log.toJSON()));
 				}
 			}
 			result.put(ProtocolConstants.KEY_CHILDREN, children);
