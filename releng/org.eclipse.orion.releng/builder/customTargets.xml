@@ -144,11 +144,13 @@ lastMapTag=${mapsTagTag}
 				<arg value="dir=" />
 			</java>
 
+			<!--
 			<antcall target="updateHTML">
 				<param name="minifiedScript" value="${buildDirectory}/optimization/@{pageDir}/built-@{name}.js" />
 				<param name="pageDir" value="@{pageDir}" />
 				<param name="name" value="@{name}" />
 			</antcall>
+			-->
 
 			<copy todir="${buildDirectory}/plugins/@{bundle}/web/@{pageDir}" >
 				<fileset dir="${buildDirectory}/optimization/@{pageDir}" includes="built-@{name}.js, @{name}.html" >
