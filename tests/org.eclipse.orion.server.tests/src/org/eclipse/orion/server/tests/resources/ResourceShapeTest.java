@@ -11,12 +11,9 @@
 package org.eclipse.orion.server.tests.resources;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 
-import org.eclipse.orion.server.core.resources.Property;
-import org.eclipse.orion.server.core.resources.ResourceShape;
-import org.eclipse.orion.server.core.resources.ResourceShapeFactory;
-import org.hamcrest.collection.IsArrayContaining;
+import junit.framework.Assert;
+import org.eclipse.orion.server.core.resources.*;
 import org.junit.Test;
 
 /**
@@ -45,11 +42,23 @@ public class ResourceShapeTest {
 
 	private void assertAllPropertiesExists(Property[] properties) {
 		assertEquals(5, properties.length);
-		assertThat(properties, IsArrayContaining.hasItemInArray(PropertyMatcher.isPropertyNameEqual(TestResource.STRING_PROPERTY)));
-		assertThat(properties, IsArrayContaining.hasItemInArray(PropertyMatcher.isPropertyNameEqual(TestResource.INT_PROPERTY)));
-		assertThat(properties, IsArrayContaining.hasItemInArray(PropertyMatcher.isPropertyNameEqual(TestResource.BOOLEAN_PROPERTY)));
-		assertThat(properties, IsArrayContaining.hasItemInArray(PropertyMatcher.isPropertyNameEqual(TestResource.LOCATION_PROPERTY)));
-		assertThat(properties, IsArrayContaining.hasItemInArray(PropertyMatcher.isPropertyNameEqual(TestResource.RESOURCE_PROPERTY)));
+		assertHasProperty(properties, TestResource.STRING_PROPERTY);
+		assertHasProperty(properties, TestResource.INT_PROPERTY);
+		assertHasProperty(properties, TestResource.BOOLEAN_PROPERTY);
+		assertHasProperty(properties, TestResource.LOCATION_PROPERTY);
+		assertHasProperty(properties, TestResource.RESOURCE_PROPERTY);
+	}
+
+	/**
+	 * Asserts that a property array contains a property with name matching the given property.
+	 */
+	private void assertHasProperty(Property[] properties, Property toContain) {
+		for (Property testProp : properties) {
+			if (toContain.getName().equals(testProp.getName()))
+				return;
+		}
+		Assert.fail("Missing expected property: " + toContain.getName());
+
 	}
 
 	@Test
@@ -60,7 +69,7 @@ public class ResourceShapeTest {
 		// then
 		Property[] properties = resourceShape.getProperties();
 		assertEquals(1, properties.length);
-		assertThat(properties, IsArrayContaining.hasItemInArray(PropertyMatcher.isPropertyNameEqual(TestResource.STRING_PROPERTY)));
+		assertHasProperty(properties, TestResource.STRING_PROPERTY);
 	}
 
 	@Test
@@ -71,8 +80,8 @@ public class ResourceShapeTest {
 		// then
 		Property[] properties = resourceShape.getProperties();
 		assertEquals(2, properties.length);
-		assertThat(properties, IsArrayContaining.hasItemInArray(PropertyMatcher.isPropertyNameEqual(TestResource.STRING_PROPERTY)));
-		assertThat(properties, IsArrayContaining.hasItemInArray(PropertyMatcher.isPropertyNameEqual(TestResource.BOOLEAN_PROPERTY)));
+		assertHasProperty(properties, TestResource.STRING_PROPERTY);
+		assertHasProperty(properties, TestResource.BOOLEAN_PROPERTY);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
@@ -94,7 +103,7 @@ public class ResourceShapeTest {
 		// then
 		Property[] nestedProperties = nestedResourceShape.getProperties();
 		assertEquals(1, nestedProperties.length);
-		assertThat(nestedProperties, IsArrayContaining.hasItemInArray(PropertyMatcher.isPropertyNameEqual(TestResource.LOCATION_PROPERTY)));
+		assertHasProperty(nestedProperties, TestResource.LOCATION_PROPERTY);
 	}
 
 	@Test
@@ -110,8 +119,8 @@ public class ResourceShapeTest {
 		// then
 		Property[] nestedProperties = nestedResourceShape.getProperties();
 		assertEquals(2, nestedProperties.length);
-		assertThat(nestedProperties, IsArrayContaining.hasItemInArray(PropertyMatcher.isPropertyNameEqual(TestResource.STRING_PROPERTY)));
-		assertThat(nestedProperties, IsArrayContaining.hasItemInArray(PropertyMatcher.isPropertyNameEqual(TestResource.INT_PROPERTY)));
+		assertHasProperty(nestedProperties, TestResource.STRING_PROPERTY);
+		assertHasProperty(nestedProperties, TestResource.INT_PROPERTY);
 	}
 
 	@Test
