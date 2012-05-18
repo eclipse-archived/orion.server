@@ -104,7 +104,7 @@ lastMapTag=${mapsTagTag}
 		<property name="closureJar" value="/shared/common/closure/compiler.jar" />
 
 		<antcall target="jsdocs" />
-        <record name="optimizer-log.txt" action="start"/>
+        <record name="optimizer-log.txt" loglevel="debug" action="start"/>
 		<antcall target="requirejs" />
         <record name="optimizer-log.txt" action="stop"/>
 	</target>
