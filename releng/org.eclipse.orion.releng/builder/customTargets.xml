@@ -93,7 +93,6 @@ lastMapTag=${mapsTagTag}
 		
 	</target>
 
-	
 	<target name="postFetch">
 		<replace dir="${buildDirectory}" includes="pluginVersions.properties,featureVersions.properties"  >
 			<replacefilter token="HEAD" value="${buildLabel}" />
@@ -105,7 +104,9 @@ lastMapTag=${mapsTagTag}
 		<property name="closureJar" value="/shared/common/closure/compiler.jar" />
 
 		<antcall target="jsdocs" />
+        <record name="optimizer-log.txt" action="start"/>
 		<antcall target="requirejs" />
+        <record name="optimizer-log.txt" action="stop"/>
 	</target>
 
 	<target name="jsdocs" if="jsdocHome" >
@@ -126,14 +127,13 @@ lastMapTag=${mapsTagTag}
 		<attribute name="pageDir" default = "." />
 		<attribute name="bundle"  />
 		<sequential>
-			<!--
 			<java classname="org.mozilla.javascript.tools.shell.Main" fork="true" 
 				  dir="${buildDirectory}/optimization">
 				<classpath>
 					<pathelement location="${requirejsHome}/lib/rhino/js.jar" />
 					<pathelement location="${requirejsHome}/lib/closure/compiler.jar" />
 				</classpath>
-				
+				<!-- JavaScript language version -->
 				<arg value="-version" />
 				<arg value="180" />
 				<arg value="${requirejsHome}/dist/r.js"/>
@@ -156,7 +156,6 @@ lastMapTag=${mapsTagTag}
 					<size when="more" value="0" />
 				</fileset>
 			</copy>
-			-->
 		</sequential>
 	</macrodef>
 
