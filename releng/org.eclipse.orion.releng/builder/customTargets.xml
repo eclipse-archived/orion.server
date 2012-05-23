@@ -209,6 +209,7 @@ lastMapTag=${mapsTagTag}
 		<optimize pageDir="console" name="consolePage" bundle="org.eclipse.orion.client.core" />
 		<optimize pageDir="git" name="git-log" bundle="org.eclipse.orion.client.git" />
 		<optimize pageDir="git" name="git-status" bundle="org.eclipse.orion.client.git" />
+		<optimize pageDir="git" name="git-status2" bundle="org.eclipse.orion.client.git" />
 		<optimize pageDir="git" name="git-repository" bundle="org.eclipse.orion.client.git" />
 		<optimize pageDir="git" name="git-commit" bundle="org.eclipse.orion.client.git" />
 		<optimize pageDir="profile" name="user-list" bundle="org.eclipse.orion.client.users" />
