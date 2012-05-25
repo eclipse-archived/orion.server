@@ -11,7 +11,6 @@
 package org.eclipse.orion.server.authentication.formopenid;
 
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
-import org.eclipse.orion.server.authentication.formopenid.decorator.OpenIdUserDecorator;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 

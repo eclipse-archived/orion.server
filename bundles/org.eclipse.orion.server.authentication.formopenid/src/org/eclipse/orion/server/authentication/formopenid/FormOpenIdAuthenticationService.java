@@ -21,10 +21,6 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.authentication.form.core.FormAuthHelper;
-import org.eclipse.orion.server.authentication.formopenid.httpcontext.BundleEntryHttpContext;
-import org.eclipse.orion.server.authentication.formopenid.servlets.FormOpenIdLoginServlet;
-import org.eclipse.orion.server.authentication.formopenid.servlets.FormOpenIdLogoutServlet;
-import org.eclipse.orion.server.authentication.formopenid.servlets.ManageOpenidsServlet;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.authentication.IAuthenticationService;
 import org.eclipse.orion.server.openid.core.OpenIdHelper;
@@ -37,7 +33,6 @@ import org.osgi.service.http.NamespaceException;
 
 public class FormOpenIdAuthenticationService implements IAuthenticationService {
 
-	private HttpService httpService;
 	private Properties defaultAuthenticationProperties;
 	public static final String OPENIDS_PROPERTY = "openids"; //$NON-NLS-1$
 
@@ -70,11 +65,6 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 
 	public void configure(Properties properties) {
 		this.defaultAuthenticationProperties = properties;
-		try {
-			httpService.registerResources("/authenticationPlugin.html", "/web/authenticationPlugin.html", new BundleEntryHttpContext(Activator.getBundleContext().getBundle()));
-		} catch (Exception e) {
-			LogHelper.log(new Status(IStatus.WARNING, Activator.PI_FORMOPENID_SERVLETS, "Reconfiguring FormOpenIdAuthenticationService"));
-		}
 	}
 
 	private void setNotAuthenticated(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException {
@@ -105,17 +95,11 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 		}
 	}
 
-	public void setHttpService(HttpService hs) {
-		httpService = hs;
-
-		HttpContext httpContext = new BundleEntryHttpContext(Activator.getBundleContext().getBundle());
-
+	public void setHttpService(HttpService httpService) {
 		try {
-			httpService.registerResources("/mixloginstatic", "/web", //$NON-NLS-1$ //$NON-NLS-2$
-					httpContext);
-			httpService.registerServlet("/mixlogin/manageopenids", new ManageOpenidsServlet(this), null, httpContext);
-			httpService.registerServlet("/login", new FormOpenIdLoginServlet(this), null, httpContext); //$NON-NLS-1$
-			httpService.registerServlet("/logout", new FormOpenIdLogoutServlet(), null, httpContext); //$NON-NLS-1$
+			httpService.registerServlet("/mixlogin/manageopenids", new ManageOpenidsServlet(this), null, null);
+			httpService.registerServlet("/login", new FormOpenIdLoginServlet(this), null, null); //$NON-NLS-1$
+			httpService.registerServlet("/logout", new FormOpenIdLogoutServlet(), null, null); //$NON-NLS-1$
 		} catch (ServletException e) {
 			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, 1, "An error occured when registering servlets", e));
 		} catch (NamespaceException e) {
@@ -123,9 +107,8 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 		}
 	}
 
-	public void unsetHttpService(HttpService hs) {
+	public void unsetHttpService(HttpService httpService) {
 		if (httpService != null) {
-			httpService.unregister("/mixloginstatic"); //$NON-NLS-1$
 			httpService.unregister("/mixlogin/manageopenids"); //$NON-NLS-1$
 			httpService.unregister("/login"); //$NON-NLS-1$
 			httpService.unregister("/logout"); //$NON-NLS-1$

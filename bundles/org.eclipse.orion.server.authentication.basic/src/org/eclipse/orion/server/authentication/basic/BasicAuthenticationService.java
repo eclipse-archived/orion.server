@@ -31,7 +31,6 @@ public class BasicAuthenticationService implements IAuthenticationService {
 	protected static IOrionCredentialsService userAdmin;
 	private IOrionUserProfileService userProfileService;
 	private boolean registered;
-	private HttpService httpService;
 
 	public BasicAuthenticationService() {
 		super();
@@ -101,16 +100,6 @@ public class BasicAuthenticationService implements IAuthenticationService {
 	}
 
 	public void configure(Properties properties) {
-		try {
-			httpService.registerResources("/authenticationPlugin.html", "/web/authenticationPlugin.html", new BundleEntryHttpContext(Activator.bundleContext.getBundle()));
-		} catch (Exception e) {
-			try {
-				httpService.unregister("/authenticationPlugin.html");
-				httpService.registerResources("/authenticationPlugin.html", "/web/authenticationPlugin.html", new BundleEntryHttpContext(Activator.bundleContext.getBundle()));
-			} catch (NamespaceException e1) {
-				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_SERVER_AUTHENTICATION_BASIC, 1, "A namespace error occured when registering servlets", e1));
-			}
-		}
 	}
 
 	public void bindUserAdmin(IOrionCredentialsService userAdmin) {
@@ -131,13 +120,10 @@ public class BasicAuthenticationService implements IAuthenticationService {
 		return registered;
 	}
 
-	public void setHttpService(HttpService hs) {
-		httpService = hs;
-		HttpContext httpContext = new BundleEntryHttpContext(Activator.bundleContext.getBundle());
-
+	public void setHttpService(HttpService httpService) {
 		try {
 			httpService.registerServlet("/basiclogin", //$NON-NLS-1$
-					new BasicAuthenticationServlet(this), null, httpContext);
+					new BasicAuthenticationServlet(this), null, null);
 		} catch (ServletException e) {
 			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_SERVER_AUTHENTICATION_BASIC, 1, "An error occured when registering servlets", e));
 		} catch (NamespaceException e) {
@@ -146,11 +132,8 @@ public class BasicAuthenticationService implements IAuthenticationService {
 
 	}
 
-	public void unsetHttpService(HttpService hs) {
-		if (httpService != null) {
-			httpService.unregister("/basiclogin"); //$NON-NLS-1$
-			httpService = null;
-		}
+	public void unsetHttpService(HttpService httpService) {
+		httpService.unregister("/basiclogin"); //$NON-NLS-1$
 	}
 
 	public void bindUserProfileService(IOrionUserProfileService _userProfileService) {

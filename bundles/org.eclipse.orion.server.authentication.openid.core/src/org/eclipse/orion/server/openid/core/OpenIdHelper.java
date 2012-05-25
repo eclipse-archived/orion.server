@@ -11,6 +11,7 @@
 package org.eclipse.orion.server.openid.core;
 
 import java.io.*;
+import java.net.URLEncoder;
 import java.util.*;
 import javax.servlet.http.*;
 import org.eclipse.core.runtime.*;
@@ -89,7 +90,12 @@ public class OpenIdHelper {
 			sb.append("?").append(OP_RETURN).append("=true"); //$NON-NLS-1$ //$NON-NLS-2$
 			if (redirect != null && redirect.length() > 0) {
 				sb.append("&").append(REDIRECT).append("="); //$NON-NLS-1$ //$NON-NLS-2$
-				sb.append(redirect);
+				
+				// need to urlencode redirect (URLEncoder form encodes rest of the replaces handle differences when on a browser address bar)
+				sb.append(URLEncoder.encode(redirect, "UTF-8")
+					.replaceAll("\\+", "%20").replaceAll("\\%21", "!")
+					.replaceAll("\\%27", "'").replaceAll("\\%28", "(")
+					.replaceAll("\\%29", ")").replaceAll("\\%7E", "~"));
 			}
 			consumer = new OpenidConsumer(sb.toString());
 			consumer.authRequest(req.getParameter(OPENID), req, resp);

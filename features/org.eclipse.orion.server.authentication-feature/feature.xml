@@ -24,13 +24,6 @@
    </requires>
 
    <plugin
-         id="org.eclipse.orion.server.authentication.form"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="org.eclipse.orion.server.authentication.form.core"
          download-size="0"
          install-size="0"
@@ -39,13 +32,6 @@
 
    <plugin
          id="org.eclipse.orion.server.authentication.formopenid"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.eclipse.orion.server.authentication.openid"
          download-size="0"
          install-size="0"
          version="0.0.0"
