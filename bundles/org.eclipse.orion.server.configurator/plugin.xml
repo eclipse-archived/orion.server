@@ -132,7 +132,7 @@
             class="org.eclipse.orion.server.configurator.servlet.CacheFilter">
          <init-param
                name="directives"
-               value="max-age=0, must-revalidate">
+               value="max-age=900, must-revalidate">
          </init-param>
          <init-param
                name="includeMatches"
@@ -150,10 +150,6 @@
                name="includes"
                value="/">
          </init-param>
-      </filter>
-      <filter
-            alias="/"
-            class="org.eclipse.orion.internal.server.servlets.file.EditSupportFilter">
       </filter>
       <filter
             alias="/"
@@ -191,13 +187,13 @@
             alias="/xfer"
             class="org.eclipse.orion.server.configurator.servlet.AuthorizedUserFilter">
       </filter>
-      <serviceSelector
-            filter="(other.info=org.eclipse.orion)">
-      </serviceSelector>
       <filter
             alias="/task"
             class="org.eclipse.orion.server.configurator.servlet.AuthorizedUserFilter">
       </filter>
+      <serviceSelector
+            filter="(other.info=org.eclipse.orion)">
+      </serviceSelector>
    </extension>
    <extension
          point="org.eclipse.equinox.http.registry.httpcontexts">
