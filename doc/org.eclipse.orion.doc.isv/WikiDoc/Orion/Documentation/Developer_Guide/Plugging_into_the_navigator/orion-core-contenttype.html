@@ -69,21 +69,21 @@
 		<h2 id="Service_methods_3">Service methods</h2>
 		<p>None. This service is purely declarative.</p>
 		<h2 id="Example_3">Example</h2>
-		<p>This example code contributes contributes a new content type for Perl files. A Perl file extends from <code>"text.plain"</code> and has the extension <code>.pl</code>.</p>
+		<p>This example code contributes contributes a new content type for Perl files. A Perl file extends from <code>"text/plain"</code> and has the extension <code>.pl</code>.</p>
 		<pre> provider.registerServiceProvider("orion.core.contenttype", {}, {
-   contentTypes: [{  id: "text.perl",
+   contentTypes: [{  id: "application/perl",
                      name: "Perl",
                      extension: ["pl"],
-                     "extends": "text.plain"
+                     "extends": "text/plain"
                   }] });
  provider.connect();
 </pre>
 		<p>The example code below contributes a new content type for Ant build files. An Ant build file is a special kind of XML file that always has the name "build.xml".</p>
 		<pre> provider.registerServiceProvider("orion.core.contenttype", {}, {
-   contentTypes: [{  id: "text.ant",
+   contentTypes: [{  id: "text/ant",
                      name: "Ant build file",
                      filename: ["build.xml"],
-                     "extends": "text.xml"
+                     "extends": "application/xml"
                   }] });
  provider.connect();
 </pre><hr/>

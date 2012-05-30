@@ -34,10 +34,8 @@
 		<h2 id="Service_methods_2">Service methods</h2>
 		<p>Implementations of <tt>orion.edit.contentAssist</tt> must define the following function:</p>
 		<dl>
-			<dt>computeProposals(prefix, buffer, selection)</dt>
+			<dt>computeProposals(buffer, offset, context)</dt>
 			<dd>When content assist is triggered, the editor calls this function to obtain suggestions from a content assist provider.
-				<br/>Alternatively, a 
-				<a href="http://dojotoolkit.org/documentation/tutorials/1.6/promises/" target="orion_external">Dojo promise</a> may be returned, which allows the suggestions to be computed asynchronously.
 				<dl>
 					<dd>
 						<b>buffer</b> <tt>String</tt> The entire buffer being edited.
@@ -52,7 +50,7 @@
 								<b>line</b> <tt>String</tt> Text of the entire line that the editing caret is on.
 							</dd>
 							<dd>
-								<b>prefix</b> <tt>String</tt> The substring extending from the first non-word character preceding the editing caret up to the editing caret. This may give a clue about what the user intended to type, and can be used to narrow down the results to be returned. The prefix may not be appropriate for all languages, depending on their syntax rules.
+								<b>prefix</b> <tt>String</tt> The substring extending from the first non-word character preceding the editing caret up to the editing caret. This may give a clue about what the user intended to type, and can be used to narrow down the results to be returned. The prefix may not be appropriate for all types of document, depending on their syntax rules.
 							</dd>
 							<dd>
 								<b>selection</b> <tt>orion.textview.Selection</tt> The current selection in the editor.
@@ -69,6 +67,9 @@
 			<dd><b>positions</b> An optional <tt>Array</tt> of positions within the completion proposal that require user input. Supplying this property will cause the editor to enter <i>linked mode</i>, and the user can use the <b>Tab</b> key to iterate through the regions of the proposal that require user input. For example if the completion is a function, the positions could indicate the function arguments that need to be supplied. Entries in this position array must be objects with two integer properties: <b>offset</b>, and <b>length</b> describing the regions requiring user input.</dd>
 			<dd><b>escapePosition</b> An optional <tt>Number</tt> indicating the offset the cursor should have in the document after the completion is inserted. If this value is not supplied, the cursor will be positioned at the end of the inserted text.</dd>
 		</dl>
+		<p>Alternatively, a 
+			<a href="http://dojotoolkit.org/documentation/tutorials/1.6/promises/" target="orion_external">promise</a> may be returned, which allows the suggestions to be computed asynchronously.
+		</p>
 		<h2 id="Service_attributes_2">Service attributes</h2>
 		<p>Implementations of <tt>orion.edit.contentAssist</tt> must define the following attributes:</p>
 		<dl>
@@ -103,7 +104,7 @@ provider.registerServiceProvider("orion.edit.contentAssist",
   },
   {
     name: "JavaScript content assist",
-    contentType: ["text.javascript"]
+    contentType: ["application/javascript"]
   });
 provider.connect();
 </pre>
@@ -123,7 +124,7 @@ provider.registerServiceProvider('orion.edit.contentAssist',
   },
   {
     name: 'HTML content assist',
-    contentType: ['text.html']
+    contentType: ['text/html']
   });
 provider.connect();
 </pre><hr/>

@@ -82,12 +82,12 @@
 		<pre> // Declare content types
  provider.registerServiceProvider("orion.core.contenttype", {}, {
    contentTypes:
-     [{ id: "text.plain",
+     [{ id: "text/plain",
         name: "Text",
         extension: ["txt"]
      },
-     {  id: "text.html",
-        "extends": "text.plain",
+     {  id: "text/html",
+        "extends": "text/plain",
         name: "HTML",
         extension: ["html", "htm"]
      }]
@@ -96,7 +96,7 @@
 		<pre> // Associate editor with content types
  provider.registerServiceProvider("orion.navigate.openWith", {}, {
      editor: "orion.editor",
-     contentType: ["text.plain", "text.html"]});
+     contentType: ["text/plain", "text/html"]});
 </pre>
 		<pre> provider.connect();
 </pre>
