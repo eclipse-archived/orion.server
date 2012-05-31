@@ -529,7 +529,4 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		return TaskJobHandler.handleTaskJob(request, response, job, statusHandler);
 	}
 
-	private URI createTaskLocation(URI baseLocation, String taskId) throws URISyntaxException {
-		return new URI(baseLocation.getScheme(), baseLocation.getAuthority(), "/task/id/" + taskId, null, null); //$NON-NLS-1$
-	}
 }

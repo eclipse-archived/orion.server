@@ -12,11 +12,9 @@ package org.eclipse.orion.server.authentication.formopenid;
 
 import java.io.IOException;
 import java.util.Properties;
-
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -27,7 +25,6 @@ import org.eclipse.orion.server.openid.core.OpenIdHelper;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.framework.Version;
-import org.osgi.service.http.HttpContext;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.http.NamespaceException;
 
