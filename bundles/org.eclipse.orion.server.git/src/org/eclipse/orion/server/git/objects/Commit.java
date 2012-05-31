@@ -16,6 +16,7 @@ import java.net.URISyntaxException;
 import java.util.*;
 import java.util.Map.Entry;
 import org.eclipse.core.runtime.*;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffEntry.ChangeType;
 import org.eclipse.jgit.errors.IncorrectObjectTypeException;
@@ -84,7 +85,7 @@ public class Commit extends GitObject {
 		this.commitToBranchMap = map;
 	}
 
-	public Map<ObjectId, JSONArray> getCommitToBranchMap() throws JSONException, URISyntaxException, IOException, CoreException {
+	public Map<ObjectId, JSONArray> getCommitToBranchMap() throws JSONException, URISyntaxException, IOException, CoreException, GitAPIException {
 		if (commitToBranchMap == null)
 			commitToBranchMap = Log.getCommitToBranchMap(cloneLocation, db);
 		return commitToBranchMap;
@@ -176,7 +177,7 @@ public class Commit extends GitObject {
 
 	// TODO: expandable
 	@PropertyDescription(name = GitConstants.KEY_BRANCHES)
-	private JSONArray getBranches() throws JSONException, URISyntaxException, IOException, CoreException {
+	private JSONArray getBranches() throws JSONException, URISyntaxException, IOException, CoreException, GitAPIException {
 		return getCommitToBranchMap().get(revCommit.getId());
 	}
 

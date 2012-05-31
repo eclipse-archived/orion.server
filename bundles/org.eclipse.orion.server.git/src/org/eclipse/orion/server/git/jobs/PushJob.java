@@ -18,8 +18,7 @@ import java.util.Set;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PushCommand;
-import org.eclipse.jgit.api.errors.InvalidRemoteException;
-import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.api.errors.*;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepository;
@@ -49,7 +48,7 @@ public class PushJob extends GitJob {
 		setFinalMessage(NLS.bind("Pushing {0} done", path.segment(0)));
 	}
 
-	private IStatus doPush() throws IOException, CoreException, JGitInternalException, InvalidRemoteException, URISyntaxException, JSONException {
+	private IStatus doPush() throws IOException, CoreException, JGitInternalException, URISyntaxException, JSONException, GitAPIException {
 		// /git/remote/{remote}/{branch}/file/{path}
 		File gitDir = GitUtils.getGitDir(path.removeFirstSegments(2));
 		Repository db = new FileRepository(gitDir);
@@ -100,10 +99,10 @@ public class PushJob extends GitJob {
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error pushing git remote", e);
 		} catch (CoreException e) {
 			result = e.getStatus();
-		} catch (JGitInternalException e) {
-			result = getJGitInternalExceptionStatus(e, "Error pushing git remote");
 		} catch (InvalidRemoteException e) {
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error pushing git remote", e);
+		} catch (GitAPIException e) {
+			result = getJGitAPIExceptionStatus(e, "Error pushing git remote");
 		} catch (Exception e) {
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error pushing git repository", e);
 		}

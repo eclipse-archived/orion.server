@@ -941,7 +941,7 @@ public abstract class GitTest extends FileSystemTest {
 		return response;
 	}
 
-	static void assertBranchExist(Git git, String branch) {
+	static void assertBranchExist(Git git, String branch) throws GitAPIException {
 		List<Ref> list = git.branchList().call();
 		for (Ref ref : list) {
 			if (ref.getName().equals(Constants.R_HEADS + branch)) {

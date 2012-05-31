@@ -17,7 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.util.FileUtils;
@@ -69,8 +69,8 @@ public class CloneJob extends GitJob {
 			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error cloning git repository", e);
 		} catch (CoreException e) {
 			return e.getStatus();
-		} catch (JGitInternalException e) {
-			return getJGitInternalExceptionStatus(e, "An internal git error cloning git repository");
+		} catch (GitAPIException e) {
+			return getJGitAPIExceptionStatus(e, "An internal git error cloning git repository");
 		} catch (Exception e) {
 			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error cloning git repository", e);
 		}

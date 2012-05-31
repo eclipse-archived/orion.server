@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoFilepatternException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileRepository;
@@ -90,7 +91,7 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private boolean handlePut(HttpServletRequest request, HttpServletResponse response, Repository db, String pattern) throws ServletException, NoFilepatternException, IOException, JSONException {
+	private boolean handlePut(HttpServletRequest request, HttpServletResponse response, Repository db, String pattern) throws ServletException, IOException, JSONException, GitAPIException {
 		JSONObject toAdd = OrionServlet.readJSONRequest(request);
 		JSONArray paths = toAdd.optJSONArray(ProtocolConstants.KEY_PATH);
 		if (paths == null) {
@@ -132,7 +133,11 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 					case HARD :
 						Git git = new Git(db);
 						// "git reset --{type} HEAD ."
-						git.reset().setMode(type).setRef(ref).call();
+						try {
+							git.reset().setMode(type).setRef(ref).call();
+						} catch (GitAPIException e) {
+							statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), e));
+						}
 						return true;
 					case KEEP :
 					case MERGE :
@@ -165,7 +170,11 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 				}
 				reset.addPath(p);
 			}
-			reset.call();
+			try {
+				reset.call();
+			} catch (GitAPIException e) {
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), e));
+			}
 			return true;
 		}
 		return false;

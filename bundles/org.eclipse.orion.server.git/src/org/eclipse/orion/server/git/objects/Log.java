@@ -17,6 +17,7 @@ import java.util.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ListBranchCommand.ListMode;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.RemoteConfig;
@@ -89,7 +90,7 @@ public class Log extends GitObject {
 	}
 
 	@PropertyDescription(name = ProtocolConstants.KEY_CHILDREN)
-	private JSONArray getChildren() throws JSONException, URISyntaxException, IOException, CoreException {
+	private JSONArray getChildren() throws JSONException, URISyntaxException, IOException, CoreException, GitAPIException {
 		Map<ObjectId, JSONArray> commitToBranchMap = getCommitToBranchMap(cloneLocation, db);
 		JSONArray children = new JSONArray();
 		int i = 0;
@@ -207,7 +208,7 @@ public class Log extends GitObject {
 		return BaseToCommitConverter.getCommitLocation(cloneLocation, GitUtils.encode(c.toString()), pattern, BaseToCommitConverter.REMOVE_FIRST_2);
 	}
 
-	static Map<ObjectId, JSONArray> getCommitToBranchMap(URI cloneLocation, Repository db) throws JSONException, URISyntaxException, IOException, CoreException {
+	static Map<ObjectId, JSONArray> getCommitToBranchMap(URI cloneLocation, Repository db) throws JSONException, URISyntaxException, IOException, CoreException, GitAPIException {
 		HashMap<ObjectId, JSONArray> commitToBranch = new HashMap<ObjectId, JSONArray>();
 		Git git = new Git(db);
 		List<Ref> branchRefs = git.branchList().setListMode(ListMode.ALL).call();

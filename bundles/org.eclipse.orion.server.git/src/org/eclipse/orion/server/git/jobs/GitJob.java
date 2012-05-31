@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.TransportException;
 import org.eclipse.jgit.internal.JGitText;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -83,7 +83,7 @@ public abstract class GitJob extends TaskJob {
 		return object;
 	}
 
-	IStatus getJGitInternalExceptionStatus(JGitInternalException e, String message) {
+	IStatus getJGitAPIExceptionStatus(GitAPIException e, String message) {
 		JSchException jschEx = getJSchException(e);
 		if (jschEx != null && jschEx instanceof HostFingerprintException) {
 			HostFingerprintException cause = (HostFingerprintException) jschEx;

@@ -129,6 +129,8 @@ public class GitTagHandlerV1 extends AbstractGitHandler {
 				return true;
 			} catch (JGitInternalException e) {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when removing a tag.", e));
+			} catch (GitAPIException e) {
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when removing a tag.", e));
 			}
 		} else {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Tag deletion aborted: no tag name provided.", null));

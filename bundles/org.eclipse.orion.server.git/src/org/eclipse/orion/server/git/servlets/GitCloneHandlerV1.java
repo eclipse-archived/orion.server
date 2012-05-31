@@ -350,7 +350,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 	}
 
-	private boolean isLocalBranch(Git git, String branch) {
+	private boolean isLocalBranch(Git git, String branch) throws GitAPIException {
 		List<Ref> branches = git.branchList().call();
 		for (Ref ref : branches) {
 			if (Repository.shortenRefName(ref.getName()).equals(branch))

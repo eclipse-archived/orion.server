@@ -239,7 +239,7 @@ public class GitCloneTest extends GitTest {
 		WebResponse response = waitForTaskCompletionObjectResponse(webConversation.getResponse(request));
 		JSONObject result = getResult(response);
 
-		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, result.getInt("HttpCode"));
+		assertEquals(result.toString(), HttpURLConnection.HTTP_BAD_REQUEST, result.getInt("HttpCode"));
 		assertEquals("Error", result.getString("Severity"));
 		assertEquals("ssh://git.eclipse.org/gitroot/platform/eclipse.platform.news.git: username must not be null.", result.getString("Message"));
 		assertTrue(result.getString("DetailedMessage").contains("username must not be null"));
@@ -271,7 +271,7 @@ public class GitCloneTest extends GitTest {
 		} else {
 			assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, response.getResponseCode());
 			JSONObject result = new JSONObject(response.getText());
-			assertEquals("An internal git error cloning git repository", result.getString("Message"));
+			assertEquals("Error cloning git repository", result.getString("Message"));
 			assertEquals("Invalid remote: origin", result.getString("DetailedMessage"));
 		}
 
@@ -796,7 +796,7 @@ public class GitCloneTest extends GitTest {
 
 		assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, result.getInt("HttpCode"));
 		assertEquals("Error", result.getString("Severity"));
-		assertEquals("An internal git error cloning git repository", result.getString("Message"));
+		assertEquals("Error cloning git repository", result.getString("Message"));
 		assertTrue(result.getString("DetailedMessage").contains("not an empty directory"));
 
 		// no project should be created
