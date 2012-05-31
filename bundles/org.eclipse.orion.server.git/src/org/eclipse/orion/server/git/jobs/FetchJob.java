@@ -15,7 +15,8 @@ import java.net.URISyntaxException;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.*;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.lib.RefUpdate.Result;
 import org.eclipse.jgit.storage.file.FileRepository;
@@ -75,7 +76,7 @@ public class FetchJob extends GitJob {
 		return path.lastSegment();
 	}
 
-	private IStatus doFetch() throws IOException, CoreException, JGitInternalException, URISyntaxException, TransportException, GitAPIException {
+	private IStatus doFetch() throws IOException, CoreException, URISyntaxException, GitAPIException {
 		Repository db = getRepository();
 
 		Git git = new Git(db);

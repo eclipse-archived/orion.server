@@ -91,7 +91,7 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private boolean handlePut(HttpServletRequest request, HttpServletResponse response, Repository db, String pattern) throws ServletException, IOException, JSONException, GitAPIException {
+	private boolean handlePut(HttpServletRequest request, HttpServletResponse response, Repository db, String pattern) throws GitAPIException, JSONException, IOException {
 		JSONObject toAdd = OrionServlet.readJSONRequest(request);
 		JSONArray paths = toAdd.optJSONArray(ProtocolConstants.KEY_PATH);
 		if (paths == null) {

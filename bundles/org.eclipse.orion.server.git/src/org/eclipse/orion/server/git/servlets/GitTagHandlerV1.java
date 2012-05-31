@@ -19,7 +19,6 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.TagCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
@@ -112,7 +111,7 @@ public class GitTagHandlerV1 extends AbstractGitHandler {
 		}
 	}
 
-	static Ref tag(Git git, RevCommit revCommit, String tagName) throws JGitInternalException, GitAPIException {
+	static Ref tag(Git git, RevCommit revCommit, String tagName) throws GitAPIException {
 		TagCommand tag = git.tag();
 		return tag.setObjectId(revCommit).setName(tagName).call();
 	}
@@ -127,8 +126,6 @@ public class GitTagHandlerV1 extends AbstractGitHandler {
 			try {
 				git.tagDelete().setTags(gitSegment).call();
 				return true;
-			} catch (JGitInternalException e) {
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when removing a tag.", e));
 			} catch (GitAPIException e) {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when removing a tag.", e));
 			}

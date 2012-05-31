@@ -11,7 +11,6 @@
 package org.eclipse.orion.server.git.jobs;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jgit.api.*;
@@ -45,7 +44,7 @@ public class PullJob extends GitJob {
 		setFinalMessage(NLS.bind("Pulling {0} done", projectName));
 	}
 
-	private IStatus doPull() throws IOException, CoreException, URISyntaxException, GitAPIException {
+	private IStatus doPull() throws IOException, GitAPIException, CoreException {
 		Repository db = new FileRepository(GitUtils.getGitDir(path));
 
 		Git git = new Git(db);

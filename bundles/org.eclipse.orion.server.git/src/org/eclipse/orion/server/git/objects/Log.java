@@ -90,7 +90,7 @@ public class Log extends GitObject {
 	}
 
 	@PropertyDescription(name = ProtocolConstants.KEY_CHILDREN)
-	private JSONArray getChildren() throws JSONException, URISyntaxException, IOException, CoreException, GitAPIException {
+	private JSONArray getChildren() throws GitAPIException, JSONException, URISyntaxException, IOException, CoreException {
 		Map<ObjectId, JSONArray> commitToBranchMap = getCommitToBranchMap(cloneLocation, db);
 		JSONArray children = new JSONArray();
 		int i = 0;
@@ -208,7 +208,7 @@ public class Log extends GitObject {
 		return BaseToCommitConverter.getCommitLocation(cloneLocation, GitUtils.encode(c.toString()), pattern, BaseToCommitConverter.REMOVE_FIRST_2);
 	}
 
-	static Map<ObjectId, JSONArray> getCommitToBranchMap(URI cloneLocation, Repository db) throws JSONException, URISyntaxException, IOException, CoreException, GitAPIException {
+	static Map<ObjectId, JSONArray> getCommitToBranchMap(URI cloneLocation, Repository db) throws GitAPIException, JSONException {
 		HashMap<ObjectId, JSONArray> commitToBranch = new HashMap<ObjectId, JSONArray>();
 		Git git = new Git(db);
 		List<Ref> branchRefs = git.branchList().setListMode(ListMode.ALL).call();

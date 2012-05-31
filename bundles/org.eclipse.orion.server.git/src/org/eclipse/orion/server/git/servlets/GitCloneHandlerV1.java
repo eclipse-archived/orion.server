@@ -79,7 +79,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		return false;
 	}
 
-	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, String pathString) throws IOException, JSONException, ServletException, URISyntaxException, CoreException, NoHeadException, NoMessageException, ConcurrentRefUpdateException, JGitInternalException, WrongRepositoryStateException {
+	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, String pathString) throws IOException, JSONException, ServletException, URISyntaxException, CoreException, NoHeadException, NoMessageException, ConcurrentRefUpdateException, WrongRepositoryStateException {
 		// make sure required fields are set
 		JSONObject toAdd = OrionServlet.readJSONRequest(request);
 		if (toAdd.optBoolean(GitConstants.KEY_PULL, false)) {
@@ -270,7 +270,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 	}
 
-	private boolean handlePut(HttpServletRequest request, HttpServletResponse response, String pathString) throws IOException, JSONException, ServletException, URISyntaxException, CoreException, JGitInternalException, GitAPIException {
+	private boolean handlePut(HttpServletRequest request, HttpServletResponse response, String pathString) throws GitAPIException, CoreException, IOException, JSONException, ServletException {
 		IPath path = pathString == null ? Path.EMPTY : new Path(pathString);
 		if (path.segment(0).equals("file") && path.segmentCount() > 1) { //$NON-NLS-1$
 
@@ -314,14 +314,14 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 					try {
 						co.setName(branch).setStartPoint(tag).setCreateBranch(true).call();
 						return true;
-					} catch (JGitInternalException e) {
+					} catch (RefNotFoundException e) {
+						String msg = NLS.bind("Tag not found: {0}", tag);
+						return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, e));
+					} catch (GitAPIException e) {
 						if (org.eclipse.jgit.api.CheckoutResult.Status.CONFLICTS.equals(co.getResult().getStatus())) {
 							return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_CONFLICT, "Checkout aborted.", e));
 						}
 						// TODO: handle other exceptions
-					} catch (RefNotFoundException e) {
-						String msg = NLS.bind("Tag not found: {0}", tag);
-						return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, e));
 					}
 				} else if (branch != null) {
 
@@ -364,7 +364,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		return dc.getEntry(path) != null;
 	}
 
-	private boolean handleDelete(HttpServletRequest request, HttpServletResponse response, String pathString) throws IOException, JSONException, ServletException, URISyntaxException, CoreException, JGitInternalException, GitAPIException {
+	private boolean handleDelete(HttpServletRequest request, HttpServletResponse response, String pathString) throws GitAPIException, CoreException, IOException, ServletException {
 		IPath path = pathString == null ? Path.EMPTY : new Path(pathString);
 		if (path.segment(0).equals("file") && path.segmentCount() > 1) { //$NON-NLS-1$
 

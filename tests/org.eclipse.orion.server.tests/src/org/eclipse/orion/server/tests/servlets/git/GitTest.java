@@ -49,7 +49,6 @@ import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.RebaseCommand.Operation;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
@@ -928,12 +927,12 @@ public abstract class GitTest extends FileSystemTest {
 		return logObject(gitCommitUri, null, null);
 	}
 
-	protected WebResponse branch(String branchesLocation, String branchName) throws JGitInternalException, IOException, JSONException, SAXException {
+	protected WebResponse branch(String branchesLocation, String branchName) throws IOException, JSONException, SAXException {
 		return branch(branchesLocation, branchName, null);
 	}
 
 	// branch
-	protected WebResponse branch(String branchesLocation, String branchName, String startPoint) throws JGitInternalException, IOException, JSONException, SAXException {
+	protected WebResponse branch(String branchesLocation, String branchName, String startPoint) throws IOException, JSONException, SAXException {
 		assertBranchUri(branchesLocation);
 		WebRequest request = getPostGitBranchRequest(branchesLocation, branchName, startPoint);
 		WebResponse response = webConversation.getResponse(request);

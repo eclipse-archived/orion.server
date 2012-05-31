@@ -18,7 +18,8 @@ import java.util.Set;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PushCommand;
-import org.eclipse.jgit.api.errors.*;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepository;
@@ -27,7 +28,6 @@ import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.osgi.util.NLS;
-import org.json.JSONException;
 
 /**
  * A job to perform a push operation in the background
@@ -48,7 +48,7 @@ public class PushJob extends GitJob {
 		setFinalMessage(NLS.bind("Pushing {0} done", path.segment(0)));
 	}
 
-	private IStatus doPush() throws IOException, CoreException, JGitInternalException, URISyntaxException, JSONException, GitAPIException {
+	private IStatus doPush() throws IOException, CoreException, URISyntaxException, GitAPIException {
 		// /git/remote/{remote}/{branch}/file/{path}
 		File gitDir = GitUtils.getGitDir(path.removeFirstSegments(2));
 		Repository db = new FileRepository(gitDir);

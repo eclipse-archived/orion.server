@@ -85,7 +85,7 @@ public class Commit extends GitObject {
 		this.commitToBranchMap = map;
 	}
 
-	public Map<ObjectId, JSONArray> getCommitToBranchMap() throws JSONException, URISyntaxException, IOException, CoreException, GitAPIException {
+	public Map<ObjectId, JSONArray> getCommitToBranchMap() throws GitAPIException, JSONException, URISyntaxException, IOException, CoreException {
 		if (commitToBranchMap == null)
 			commitToBranchMap = Log.getCommitToBranchMap(cloneLocation, db);
 		return commitToBranchMap;
@@ -177,7 +177,7 @@ public class Commit extends GitObject {
 
 	// TODO: expandable
 	@PropertyDescription(name = GitConstants.KEY_BRANCHES)
-	private JSONArray getBranches() throws JSONException, URISyntaxException, IOException, CoreException, GitAPIException {
+	private JSONArray getBranches() throws JSONException, GitAPIException, URISyntaxException, IOException, CoreException {
 		return getCommitToBranchMap().get(revCommit.getId());
 	}
 
