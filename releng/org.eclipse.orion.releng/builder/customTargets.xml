@@ -204,6 +204,7 @@ lastMapTag=${mapsTagTag}
 		<optimize pageDir="settings" name="settings" bundle="org.eclipse.orion.client.core" />
 		<optimize pageDir="plugins/site" name="sitePlugin" bundle="org.eclipse.orion.client.core" />
 		<optimize pageDir="plugins" name="authenticationPlugin" bundle="org.eclipse.orion.client.core" />
+		<optimize pageDir="plugins" name="fileClientPlugin" bundle="org.eclipse.orion.client.core" />
 		<optimize pageDir="sites" name="site" bundle="org.eclipse.orion.client.core" />
 		<optimize pageDir="sites" name="sites" bundle="org.eclipse.orion.client.core" />
 		<optimize pageDir="sites" name="view" bundle="org.eclipse.orion.client.core" />
