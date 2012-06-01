@@ -16,6 +16,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.*;
@@ -89,7 +90,9 @@ public class PullJob extends GitJob {
 		} catch (CoreException e) {
 			result = e.getStatus();
 		} catch (GitAPIException e) {
-			result = getJGitAPIExceptionStatus(e, "An internal pulling error");
+			result = getGitAPIExceptionStatus(e, "Pulling error");
+		} catch (JGitInternalException e) {
+			return getJGitInternalExceptionStatus(e, "Pulling error");
 		} catch (Exception e) {
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Pulling error", e);
 		}

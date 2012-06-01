@@ -15,8 +15,7 @@ import java.net.URISyntaxException;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.InvalidRemoteException;
+import org.eclipse.jgit.api.errors.*;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.lib.RefUpdate.Result;
 import org.eclipse.jgit.storage.file.FileRepository;
@@ -142,7 +141,9 @@ public class FetchJob extends GitJob {
 		} catch (InvalidRemoteException e) {
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error fetching git remote", e);
 		} catch (GitAPIException e) {
-			result = getJGitAPIExceptionStatus(e, "An internal git error fetching git remote");
+			result = getGitAPIExceptionStatus(e, "Error fetching git remote");
+		} catch (JGitInternalException e) {
+			result = getJGitInternalExceptionStatus(e, "Error fetching git remote");
 		} catch (Exception e) {
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error fetching git remote", e);
 		}

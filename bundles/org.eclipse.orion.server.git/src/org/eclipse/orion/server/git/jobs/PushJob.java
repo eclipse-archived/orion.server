@@ -18,8 +18,7 @@ import java.util.Set;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PushCommand;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.InvalidRemoteException;
+import org.eclipse.jgit.api.errors.*;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepository;
@@ -102,7 +101,9 @@ public class PushJob extends GitJob {
 		} catch (InvalidRemoteException e) {
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error pushing git remote", e);
 		} catch (GitAPIException e) {
-			result = getJGitAPIExceptionStatus(e, "Error pushing git remote");
+			result = getGitAPIExceptionStatus(e, "Error pushing git remote");
+		} catch (JGitInternalException e) {
+			result = getJGitInternalExceptionStatus(e, "Error pushing git remote");
 		} catch (Exception e) {
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error pushing git repository", e);
 		}

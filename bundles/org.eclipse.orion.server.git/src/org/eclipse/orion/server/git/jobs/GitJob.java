@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.errors.TransportException;
 import org.eclipse.jgit.internal.JGitText;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -83,7 +84,7 @@ public abstract class GitJob extends TaskJob {
 		return object;
 	}
 
-	IStatus getJGitAPIExceptionStatus(GitAPIException e, String message) {
+	IStatus getExceptionStatus(Exception e, String message) {
 		JSchException jschEx = getJSchException(e);
 		if (jschEx != null && jschEx instanceof HostFingerprintException) {
 			HostFingerprintException cause = (HostFingerprintException) jschEx;
@@ -114,6 +115,19 @@ public abstract class GitJob extends TaskJob {
 		}
 
 		return new Status(IStatus.ERROR, GitActivator.PI_GIT, message, e.getCause() == null ? e : e.getCause());
+	}
+
+	IStatus getGitAPIExceptionStatus(GitAPIException e, String message) {
+		return getExceptionStatus(e, message);
+	}
+
+	IStatus getJGitInternalExceptionStatus(JGitInternalException e, String message) {
+		IStatus status = getExceptionStatus(e, message);
+		//TODO uncomment this when fix in jgit is merged
+		//		if (status instanceof ServerStatus) {
+		//			LogHelper.log(new Status(IStatus.WARNING, GitActivator.PI_GIT, "JGitInternalException should not be thrown for authentication errors. See https://git.eclipse.org/r/#/c/6207/", e));
+		//		}
+		return status;
 	}
 
 	public GitJob(String name, String userRunningTask, String initialMessage, boolean isIdempotent, boolean canCancel, GitCredentialsProvider credentials) {

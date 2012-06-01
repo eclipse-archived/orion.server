@@ -16,6 +16,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.InitCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.objects.Clone;
@@ -54,7 +55,9 @@ public class InitJob extends GitJob {
 		} catch (CoreException e) {
 			return e.getStatus();
 		} catch (GitAPIException e) {
-			return getJGitAPIExceptionStatus(e, "An internal git error initializing git repository.");
+			return getGitAPIExceptionStatus(e, "Error initializing git repository");
+		} catch (JGitInternalException e) {
+			return getJGitInternalExceptionStatus(e, "Error initializing git repository");
 		} catch (Exception e) {
 			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error initializing git repository", e);
 		}
