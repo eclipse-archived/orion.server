@@ -99,7 +99,7 @@ lastMapTag=${mapsTagTag}
 			<replacefilter token="origin/mls -alaster" value="${buildLabel}" />
 		</replace>
 		<!-- Build Id in Orion page footer -->
-		<replace dir="${buildDirectory}" includes="**/commonHTMLFragments.js"  >
+		<replace dir="${buildDirectory}" includes="**/web/orion/nls/root/messages.js"  >
 			<replacefilter token="@buildLabel@" value="${buildLabel}" />
 		</replace>
 		<available property="jsdocHome" value="${base}/jsdoc-toolkit" file="${base}/jsdoc-toolkit" />
