@@ -11,9 +11,11 @@
 package org.eclipse.orion.server.tests.resources;
 
 import static org.junit.Assert.assertEquals;
-
 import junit.framework.Assert;
-import org.eclipse.orion.server.core.resources.*;
+
+import org.eclipse.orion.server.core.resources.Property;
+import org.eclipse.orion.server.core.resources.ResourceShape;
+import org.eclipse.orion.server.core.resources.ResourceShapeFactory;
 import org.junit.Test;
 
 /**
@@ -24,16 +26,6 @@ public class ResourceShapeTest {
 	public void testDefaultResourceShape() throws Exception {
 		// when
 		ResourceShape resourceShape = ResourceShapeFactory.createResourceShape(TestResource.class, null);
-
-		// then
-		Property[] properties = resourceShape.getProperties();
-		assertAllPropertiesExists(properties);
-	}
-
-	@Test
-	public void testAllProperties() throws Exception {
-		// when
-		ResourceShape resourceShape = ResourceShapeFactory.createResourceShape(TestResource.class, Property.ALL_PROPERTIES.getName());
 
 		// then
 		Property[] properties = resourceShape.getProperties();
@@ -58,34 +50,10 @@ public class ResourceShapeTest {
 				return;
 		}
 		Assert.fail("Missing expected property: " + toContain.getName());
-
-	}
-
-	@Test
-	public void testSingleProperty() throws Exception {
-		// when
-		ResourceShape resourceShape = ResourceShapeFactory.createResourceShape(TestResource.class, TestResource.STRING_PROPERTY_NAME);
-
-		// then
-		Property[] properties = resourceShape.getProperties();
-		assertEquals(1, properties.length);
-		assertHasProperty(properties, TestResource.STRING_PROPERTY);
-	}
-
-	@Test
-	public void testCommaSeparatedProperties() throws Exception {
-		// when
-		ResourceShape resourceShape = ResourceShapeFactory.createResourceShape(TestResource.class, TestResource.STRING_PROPERTY_NAME + "," + TestResource.BOOLEAN_PROPERTY_NAME);
-
-		// then
-		Property[] properties = resourceShape.getProperties();
-		assertEquals(2, properties.length);
-		assertHasProperty(properties, TestResource.STRING_PROPERTY);
-		assertHasProperty(properties, TestResource.BOOLEAN_PROPERTY);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
-	public void testInvalidProperty() throws Exception {
+	public void testInvalidRepositoryShapeType() throws Exception {
 		// when
 		ResourceShapeFactory.createResourceShape(TestResource.class, "invalid");
 	}
@@ -104,38 +72,6 @@ public class ResourceShapeTest {
 		Property[] nestedProperties = nestedResourceShape.getProperties();
 		assertEquals(1, nestedProperties.length);
 		assertHasProperty(nestedProperties, TestResource.LOCATION_PROPERTY);
-	}
-
-	@Test
-	public void testModifiedResourceShapeForNestedResource() throws Exception {
-		// given
-		ResourceShape resourceShape = ResourceShapeFactory.createResourceShape(TestResource.class, TestResource.RESOURCE_PROPERTY_NAME + "{" + TestResource.STRING_PROPERTY_NAME + ResourceShape.SEPARATOR + TestResource.INT_PROPERTY_NAME + "}");
-		Property[] properties = resourceShape.getProperties();
-		Property resourceProperty = getPropertyWithName(properties, TestResource.RESOURCE_PROPERTY_NAME);
-
-		// when
-		ResourceShape nestedResourceShape = resourceProperty.getResourceShape();
-
-		// then
-		Property[] nestedProperties = nestedResourceShape.getProperties();
-		assertEquals(2, nestedProperties.length);
-		assertHasProperty(nestedProperties, TestResource.STRING_PROPERTY);
-		assertHasProperty(nestedProperties, TestResource.INT_PROPERTY);
-	}
-
-	@Test
-	public void testAllPropertiesForNestedResource() throws Exception {
-		// given
-		ResourceShape resourceShape = ResourceShapeFactory.createResourceShape(TestResource.class, TestResource.RESOURCE_PROPERTY_NAME + "{" + ResourceShape.WILDCARD + "}");
-		Property[] properties = resourceShape.getProperties();
-		Property resourceProperty = getPropertyWithName(properties, TestResource.RESOURCE_PROPERTY_NAME);
-
-		// when
-		ResourceShape nestedResourceShape = resourceProperty.getResourceShape();
-
-		// then
-		Property[] nestedProperties = nestedResourceShape.getProperties();
-		assertAllPropertiesExists(nestedProperties);
 	}
 
 	private Property getPropertyWithName(Property[] properties, String name) {

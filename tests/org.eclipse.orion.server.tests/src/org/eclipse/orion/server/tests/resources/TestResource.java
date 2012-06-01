@@ -33,13 +33,16 @@ public class TestResource {
 	static final Property LOCATION_PROPERTY = new Property(TestResource.LOCATION_PROPERTY_NAME);
 	static final Property RESOURCE_PROPERTY = new Property(TestResource.RESOURCE_PROPERTY_NAME);
 
-	{
+	static final Property[] ALL_PROPERTIES = new Property[] {STRING_PROPERTY, INT_PROPERTY, BOOLEAN_PROPERTY, LOCATION_PROPERTY, RESOURCE_PROPERTY};
+
+	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
+	static {
 		ResourceShape nestedResourceShape = new ResourceShape();
 		nestedResourceShape.addProperty(LOCATION_PROPERTY);
 		RESOURCE_PROPERTY.setResourceShape(nestedResourceShape);
-	}
 
-	static final Property[] ALL_PROPERTIES = new Property[] {STRING_PROPERTY, INT_PROPERTY, BOOLEAN_PROPERTY, LOCATION_PROPERTY, RESOURCE_PROPERTY};
+		DEFAULT_RESOURCE_SHAPE.setProperties(ALL_PROPERTIES);
+	}
 
 	private String name;
 	private int id;

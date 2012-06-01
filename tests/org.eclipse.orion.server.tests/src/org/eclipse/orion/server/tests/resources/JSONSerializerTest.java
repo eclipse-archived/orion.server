@@ -11,7 +11,6 @@
 package org.eclipse.orion.server.tests.resources;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 
 import java.net.URI;
@@ -89,7 +88,7 @@ public class JSONSerializerTest {
 		// given
 		ExtendedTestResource testResource = new ExtendedTestResource();
 		Serializer<JSONObject> jsonSerializer = new JSONSerializer();
-		ResourceShape resourceShape = ResourceShapeFactory.createResourceShape(ExtendedTestResource.class, Property.ALL_PROPERTIES.getName());
+		ResourceShape resourceShape = ResourceShapeFactory.createResourceShape(ExtendedTestResource.class, null);
 
 		// when
 		JSONObject jsonObject = jsonSerializer.serialize(testResource, resourceShape);
@@ -103,29 +102,6 @@ public class JSONSerializerTest {
 		assertEquals(testResource.getLocationProperty().toString(), jsonObject.getString(TestResource.LOCATION_PROPERTY_NAME));
 		JSONObject childJson = jsonObject.getJSONObject(TestResource.RESOURCE_PROPERTY_NAME);
 		assertEquals(testResource.getChild().getLocationProperty(), URI.create(childJson.getString(TestResource.LOCATION_PROPERTY_NAME)));
-		assertEquals(testResource.getTime(), jsonObject.getLong(ExtendedTestResource.LONG_PROPERTY_NAME));
-		// TODO: org.eclipse.orion.internal.server.servlets.ProtocolConstants.KEY_TYPE
-		assertEquals(ExtendedTestResource.EXTENDED_TEST_TYPE, jsonObject.getString("Type"));
-	}
-
-	@Test
-	public void testSerializeSinglePropertyFromExtendedTestResource() throws Exception {
-		// given
-		ExtendedTestResource testResource = new ExtendedTestResource();
-		Serializer<JSONObject> jsonSerializer = new JSONSerializer();
-		ResourceShape resourceShape = ResourceShapeFactory.createResourceShape(ExtendedTestResource.class, ExtendedTestResource.LONG_PROPERTY_NAME);
-
-		// when
-		JSONObject jsonObject = jsonSerializer.serialize(testResource, resourceShape);
-		String jsonString = jsonObject.toString();
-		jsonObject = new JSONObject(jsonString);
-
-		// then
-		assertNull(jsonObject.optString(TestResource.STRING_PROPERTY_NAME, null));
-		assertEquals(0, jsonObject.optInt(TestResource.INT_PROPERTY_NAME));
-		assertFalse(jsonObject.optBoolean(TestResource.BOOLEAN_PROPERTY_NAME));
-		assertNull(jsonObject.optString(TestResource.LOCATION_PROPERTY_NAME, null));
-		assertNull(jsonObject.optJSONObject(TestResource.RESOURCE_PROPERTY_NAME));
 		assertEquals(testResource.getTime(), jsonObject.getLong(ExtendedTestResource.LONG_PROPERTY_NAME));
 		// TODO: org.eclipse.orion.internal.server.servlets.ProtocolConstants.KEY_TYPE
 		assertEquals(ExtendedTestResource.EXTENDED_TEST_TYPE, jsonObject.getString("Type"));

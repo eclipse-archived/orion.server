@@ -11,9 +11,8 @@
 package org.eclipse.orion.server.core.resources;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.HashSet;
-import java.util.Set;
 
 import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.osgi.util.NLS;
@@ -45,23 +44,6 @@ public class ReflectionHelper {
 		throw new IllegalArgumentException(NLS.bind("Could not find property named {0} in {1}", new Object[] {propertyName, resourceClass}));
 	}
 
-	public static Method[] findAllGetters(Class<?> resourceClass) {
-		Set<Method> result = new HashSet<Method>();
-		for (final Method method : resourceClass.getMethods()) {
-			if (method.getParameterTypes().length == 0) {
-				final String methodName = method.getName();
-				final int methodNameLength = methodName.length();
-				if (((methodName.startsWith(METHOD_NAME_GET)) && (methodNameLength > METHOD_NAME_GET.length())) || ((methodName.startsWith(METHOD_NAME_IS)) && (methodNameLength > METHOD_NAME_IS.length()))) {
-					final PropertyDescription propertyDescriptionAnnotation = ReflectionHelper.getAnnotation(method, PropertyDescription.class);
-					if (propertyDescriptionAnnotation != null) {
-						result.add(method);
-					}
-				}
-			}
-		}
-		return result.toArray(new Method[result.size()]);
-	}
-
 	public static Object callGetter(Object object, Method method) {
 		try {
 			method.setAccessible(true);
@@ -88,6 +70,29 @@ public class ReflectionHelper {
 				// Ignore and exit here
 				return null;
 			}
+		}
+		return null;
+	}
+
+	public static Field findFieldForName(Class<?> resourceClass, String resourceShapeFieldName) {
+		Class<?> currentResourceClass = resourceClass;
+		do {
+			try {
+				return currentResourceClass.getDeclaredField(resourceShapeFieldName);
+			} catch (NoSuchFieldException e) {
+				// ignore and continue with superclass
+			}
+			currentResourceClass = currentResourceClass.getSuperclass();
+		} while (currentResourceClass != null);
+		throw new IllegalArgumentException(NLS.bind("Could not field named {0}", resourceShapeFieldName));
+	}
+
+	public static <T> T getValue(Field field) {
+		try {
+			field.setAccessible(true);
+			return (T) field.get(null);
+		} catch (Exception e) {
+			// Ignore and return null
 		}
 		return null;
 	}
