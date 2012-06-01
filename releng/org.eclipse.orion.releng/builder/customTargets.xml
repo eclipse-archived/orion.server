@@ -98,7 +98,10 @@ lastMapTag=${mapsTagTag}
 			<replacefilter token="HEAD" value="${buildLabel}" />
 			<replacefilter token="origin/mls -alaster" value="${buildLabel}" />
 		</replace>
-
+		<!-- Build Id in Orion page footer -->
+		<replace dir="${buildDirectory}" includes="**/commonHTMLFragments.js"  >
+			<replacefilter token="@buildLabel@" value="${buildLabel}" />
+		</replace>
 		<available property="jsdocHome" value="${base}/jsdoc-toolkit" file="${base}/jsdoc-toolkit" />
 		<available property="requirejsHome" value="${base}/requirejs" file="${base}/requirejs" />
 		<property name="closureJar" value="/shared/common/closure/compiler.jar" />
