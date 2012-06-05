@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others.
+ * Copyright (c) 2010, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -84,13 +84,14 @@ class FileHandlerV1 extends GenericFileHandler {
 	}
 
 	private void handlePutContents(HttpServletRequest request, BufferedReader requestReader, HttpServletResponse response, IFileStore file) throws IOException, CoreException, NoSuchAlgorithmException, JSONException {
+		response.setCharacterEncoding("UTF-8");
 		String source = request.getParameter(ProtocolConstants.PARM_SOURCE);
 		if (source != null) {
 			//if source is specified, read contents from different URL rather than from this request stream
 			IOUtilities.pipe(new URL(source).openStream(), file.openOutputStream(EFS.NONE, null), true, true);
 		} else {
 			//read from the request stream
-			Writer fileWriter = new BufferedWriter(new OutputStreamWriter(file.openOutputStream(EFS.NONE, null)));
+			Writer fileWriter = new BufferedWriter(new OutputStreamWriter(file.openOutputStream(EFS.NONE, null), "UTF-8"));
 			IOUtilities.pipe(requestReader, fileWriter, false, true);
 		}
 
@@ -135,6 +136,7 @@ class FileHandlerV1 extends GenericFileHandler {
 				return true;
 			}
 			String parts = IOUtilities.getQueryParameter(request, "parts");
+			response.setCharacterEncoding("UTF-8");
 			if (parts == null || "body".equals(parts)) { //$NON-NLS-1$
 				switch (getMethod(request)) {
 					case DELETE :

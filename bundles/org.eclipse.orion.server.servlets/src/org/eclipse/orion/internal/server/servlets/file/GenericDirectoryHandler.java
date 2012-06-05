@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others.
+ * Copyright (c) 2010, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -29,6 +29,7 @@ public class GenericDirectoryHandler extends ServletResourceHandler<IFileStore> 
 		if (getMethod(request) != Method.GET)
 			return false;
 		try {
+			response.setCharacterEncoding("UTF-8");
 			response.setContentType(ProtocolConstants.CONTENT_TYPE_HTML);
 			String path = request.getPathInfo();
 			IFileStore[] children = dir.childStores(EFS.NONE, null);

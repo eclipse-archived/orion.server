@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others 
+ * Copyright (c) 2011, 2012 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -69,6 +69,7 @@ public class BasicAuthenticationServlet extends OrionServlet {
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		resp.setStatus(HttpServletResponse.SC_OK);
+		resp.setCharacterEncoding("UTF-8");
 		try {
 			resp.getWriter().print(getUserJson(authService.getAuthenticatedUser(req, resp, null)));
 		} catch (JSONException e) {

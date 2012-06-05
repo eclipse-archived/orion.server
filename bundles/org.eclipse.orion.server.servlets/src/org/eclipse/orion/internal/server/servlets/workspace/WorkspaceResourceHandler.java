@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others.
+ * Copyright (c) 2010, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -338,7 +338,17 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		int options = getCreateOptions(request);
 		if (!validateOptions(request, response, options))
 			return true;
+
+		//get the slug first
 		String destinationName = request.getHeader(ProtocolConstants.HEADER_SLUG);
+		//If the data has a name then it must be used due to UTF-8 issues with names Bug 376671
+		try {
+			if (data != null && data.has("Name")) {
+				destinationName = data.getString("Name");
+			}
+		} catch (JSONException e) {
+		}
+
 		if (!validateProjectName(destinationName, request, response))
 			return true;
 		WebProject sourceProject = WebProject.fromId(sourceId);
