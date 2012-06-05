@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others.
+ * Copyright (c) 2010, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -176,8 +176,15 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 	 * an empty string if the name was not specified.
 	 */
 	private String computeName(HttpServletRequest request, JSONObject requestObject) {
-		//slug takes precedence
+		//get the slug first
 		String name = request.getHeader(ProtocolConstants.HEADER_SLUG);
+		//If the requestObject has a name then it must be used due to UTF-8 issues with names Bug 376671
+		if (requestObject != null && requestObject.has("Name")) {
+			try {
+				name = requestObject.getString("Name");
+			} catch (JSONException e) {
+			}
+		}
 		//next comes the source location for a copy/move
 		if (name == null || name.length() == 0) {
 			String location = requestObject.optString(ProtocolConstants.KEY_LOCATION);
