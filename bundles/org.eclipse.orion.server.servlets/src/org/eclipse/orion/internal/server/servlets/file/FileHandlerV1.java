@@ -84,7 +84,6 @@ class FileHandlerV1 extends GenericFileHandler {
 	}
 
 	private void handlePutContents(HttpServletRequest request, BufferedReader requestReader, HttpServletResponse response, IFileStore file) throws IOException, CoreException, NoSuchAlgorithmException, JSONException {
-		response.setCharacterEncoding("UTF-8");
 		String source = request.getParameter(ProtocolConstants.PARM_SOURCE);
 		if (source != null) {
 			//if source is specified, read contents from different URL rather than from this request stream
@@ -136,7 +135,6 @@ class FileHandlerV1 extends GenericFileHandler {
 				return true;
 			}
 			String parts = IOUtilities.getQueryParameter(request, "parts");
-			response.setCharacterEncoding("UTF-8");
 			if (parts == null || "body".equals(parts)) { //$NON-NLS-1$
 				switch (getMethod(request)) {
 					case DELETE :
@@ -146,6 +144,7 @@ class FileHandlerV1 extends GenericFileHandler {
 						handlePutContents(request, request.getReader(), response, file);
 						break;
 					default :
+						response.setCharacterEncoding("UTF-8");
 						handleFileContents(request, response, file);
 				}
 				return true;
@@ -153,6 +152,7 @@ class FileHandlerV1 extends GenericFileHandler {
 			if ("meta".equals(parts)) { //$NON-NLS-1$
 				switch (getMethod(request)) {
 					case GET :
+						response.setCharacterEncoding("UTF-8");
 						handleGetMetadata(request, response, response.getWriter(), file);
 						return true;
 					case PUT :
@@ -165,6 +165,7 @@ class FileHandlerV1 extends GenericFileHandler {
 			if ("meta,body".equals(parts) || "body,meta".equals(parts)) { //$NON-NLS-1$ //$NON-NLS-2$
 				switch (getMethod(request)) {
 					case GET :
+						response.setCharacterEncoding("UTF-8");
 						handleMultiPartGet(request, response, file);
 						return true;
 					case PUT :
