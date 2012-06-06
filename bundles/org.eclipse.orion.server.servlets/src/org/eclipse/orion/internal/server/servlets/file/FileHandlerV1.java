@@ -144,7 +144,6 @@ class FileHandlerV1 extends GenericFileHandler {
 						handlePutContents(request, request.getReader(), response, file);
 						break;
 					default :
-						response.setCharacterEncoding("UTF-8");
 						handleFileContents(request, response, file);
 				}
 				return true;
@@ -165,7 +164,6 @@ class FileHandlerV1 extends GenericFileHandler {
 			if ("meta,body".equals(parts) || "body,meta".equals(parts)) { //$NON-NLS-1$ //$NON-NLS-2$
 				switch (getMethod(request)) {
 					case GET :
-						response.setCharacterEncoding("UTF-8");
 						handleMultiPartGet(request, response, file);
 						return true;
 					case PUT :
