@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others.
+ * Copyright (c) 2010, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -26,6 +26,7 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.osgi.util.NLS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,7 +79,7 @@ public class Indexer extends Job {
 				}
 			}
 		} catch (CoreException e) {
-			handleIndexingFailure(e);
+			handleIndexingFailure(e, dir);
 		}
 	}
 
@@ -91,9 +92,9 @@ public class Indexer extends Job {
 		try {
 			IOUtilities.pipe(new InputStreamReader(file.openInputStream(EFS.NONE, null)), writer, true, false);
 		} catch (IOException e) {
-			handleIndexingFailure(e);
+			handleIndexingFailure(e, file);
 		} catch (CoreException e) {
-			handleIndexingFailure(e);
+			handleIndexingFailure(e, file);
 		}
 		return writer.toString();
 	}
@@ -101,8 +102,15 @@ public class Indexer extends Job {
 	/**
 	 * Helper method for handling failures that occur while indexing.
 	 */
-	private void handleIndexingFailure(Throwable t) {
-		LogHelper.log(new Status(IStatus.ERROR, SearchActivator.PI_SEARCH, "Error during search indexing", t)); //$NON-NLS-1$
+	private void handleIndexingFailure(Throwable t, IFileStore file) {
+		String message;
+		if (file != null) {
+			message = NLS.bind("Error during searching indexing on file: {0}", file.toString());
+		} else {
+			message = "Error during searching indexing";
+
+		}
+		LogHelper.log(new Status(IStatus.ERROR, SearchActivator.PI_SEARCH, message, t)); //$NON-NLS-1$
 	}
 
 	private int indexProject(WebProject project, SubMonitor monitor, List<SolrInputDocument> documents) {
@@ -115,7 +123,7 @@ public class Indexer extends Job {
 			projectStore = project.getProjectStore();
 		} catch (CoreException e) {
 			//TODO implement indexing of remote content
-			handleIndexingFailure(e);
+			handleIndexingFailure(e, null);
 			return 0;
 		}
 		//project location is always a directory
@@ -158,13 +166,13 @@ public class Indexer extends Job {
 			try {
 				server.add(doc);
 			} catch (Exception e) {
-				handleIndexingFailure(e);
+				handleIndexingFailure(e, file);
 			}
 		}
 		try {
 			server.commit();
 		} catch (Exception e) {
-			handleIndexingFailure(e);
+			handleIndexingFailure(e, null);
 		}
 		if (logger.isDebugEnabled())
 			logger.debug("\tIndexed: " + indexedCount + " Unchanged:  " + unmodifiedCount); //$NON-NLS-1$ //$NON-NLS-2$
@@ -200,7 +208,7 @@ public class Indexer extends Job {
 			QueryResponse response = server.query(query);
 			return response.getResults().getNumFound() == 0;
 		} catch (SolrServerException e) {
-			handleIndexingFailure(e);
+			handleIndexingFailure(e, file);
 			//attempt to re-index
 			return true;
 		}
