@@ -109,7 +109,7 @@ public abstract class GitJob extends TaskJob {
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, cause.getMessage(), addRepositoryInfo(new JSONObject()), cause);
 			} else {
 				//Other HTTP connection problems reported directly
-				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, cause.getMessage() == null ? message : cause.getMessage(), addRepositoryInfo(new JSONObject()), cause);
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, addRepositoryInfo(new JSONObject()), cause);
 			}
 
 		}
