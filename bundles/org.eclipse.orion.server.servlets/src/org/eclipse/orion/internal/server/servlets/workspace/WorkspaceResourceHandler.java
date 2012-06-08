@@ -140,44 +140,26 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 
 	/**
 	 * Adds the right for the user of the current request to access/modify the given location.
+	 * @throws CoreException 
 	 */
-	private void addProjectRights(HttpServletRequest request, HttpServletResponse response, String location) throws ServletException {
-		if (location == null)
-			return;
-		try {
-			String locationPath = URI.create(location).getPath();
-			//right to access the location
-			AuthorizationService.addUserRight(request.getRemoteUser(), locationPath);
-			//right to access all children of the location
-			if (locationPath.endsWith("/")) //$NON-NLS-1$
-				locationPath += "*"; //$NON-NLS-1$
-			else
-				locationPath += "/*"; //$NON-NLS-1$
-			AuthorizationService.addUserRight(request.getRemoteUser(), locationPath);
-		} catch (CoreException e) {
-			statusHandler.handleRequest(request, response, e.getStatus());
-		}
+	private static void addProjectRights(String user, WebProject project) throws CoreException {
+		String location = Activator.LOCATION_FILE_SERVLET + '/' + project.getId();
+		//right to access the location
+		AuthorizationService.addUserRight(user, location);
+		//right to access all children of the location
+		AuthorizationService.addUserRight(user, location + "/*"); //$NON-NLS-1$
 	}
 
 	/**
 	 * Removes the right for the user of the current request to access/modify the given location.
+	 * @throws CoreException 
 	 */
-	private void removeProjectRights(HttpServletRequest request, HttpServletResponse response, String location) throws ServletException {
-		if (location == null)
-			return;
-		try {
-			String locationPath = URI.create(location).getPath();
-			//right to access the location
-			AuthorizationService.removeUserRight(request.getRemoteUser(), locationPath);
-			//right to access all children of the location
-			if (locationPath.endsWith("/")) //$NON-NLS-1$
-				locationPath += "*"; //$NON-NLS-1$
-			else
-				locationPath += "/*"; //$NON-NLS-1$
-			AuthorizationService.removeUserRight(request.getRemoteUser(), locationPath);
-		} catch (CoreException e) {
-			statusHandler.handleRequest(request, response, e.getStatus());
-		}
+	private static void removeProjectRights(String user, WebProject project) throws CoreException {
+		String location = Activator.LOCATION_FILE_SERVLET + '/' + project.getId();
+		//right to access the location
+		AuthorizationService.removeUserRight(user, location);
+		//right to access all children of the location
+		AuthorizationService.removeUserRight(user, location + "/*"); //$NON-NLS-1$
 	}
 
 	public static void computeProjectLocation(WebProject project, String location, String user, boolean init) throws URISyntaxException, CoreException {
@@ -295,8 +277,10 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		//If all went well, add project to workspace
 		workspace.addProject(project);
 
-		//save the workspace and project metadata
 		try {
+			// give the project creator access rights to the project
+			addProjectRights(request.getRemoteUser(), project);
+			//save the workspace and project metadata
 			project.save();
 			workspace.save();
 		} catch (CoreException e) {
@@ -314,8 +298,6 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		response.setHeader(ProtocolConstants.HEADER_LOCATION, result.optString(ProtocolConstants.KEY_LOCATION));
 		response.setStatus(HttpServletResponse.SC_CREATED);
 
-		// give the project creator access rights to the project
-		addProjectRights(request, response, result.optString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		return true;
 	}
 
@@ -458,33 +440,12 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		}
 		WebProject project = WebProject.fromId(projectId);
 
-		//the baseLocation should be the workspace location
-		//since deletion is on the project location we need to remove that suffix
-		URI baseLocation = getURI(request).resolve("../../" + path.segment(0)); //$NON-NLS-1$
-		JSONObject result = WebProjectResourceHandler.toJSON(project, baseLocation);
-
-		// remove user rights for the project
-		removeProjectRights(request, response, result.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
-
-		//If all went well, remove project from workspace
-		workspace.removeProject(project);
-
-		// remove the project folder
 		try {
-			removeProject(project, request.getRemoteUser());
+			removeProject(request.getRemoteUser(), workspace, project);
 		} catch (CoreException e) {
-			//we are unable to write in the platform location!
-			String msg = NLS.bind("Server content location could not be written: {0}", Activator.getDefault().getRootLocationURI());
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
-		}
-
-		//save the workspace and project metadata
-		try {
-			project.save();
-			workspace.save();
-		} catch (CoreException e) {
-			String msg = "Error persisting project state";
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+			ServerStatus error = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error removing project", e);
+			LogHelper.log(error);
+			return statusHandler.handleRequest(request, response, error);
 		}
 
 		return true;
@@ -583,7 +544,18 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		return null;
 	}
 
-	public static void removeProject(WebProject project, String authority) throws CoreException {
+	public static void addProject(String user, WebWorkspace workspace, WebProject project) throws CoreException {
+		//add project to workspace
+		workspace.addProject(project);
+		// give the project creator access rights to the project
+		addProjectRights(user, project);
+		//save the workspace and project metadata
+		project.save();
+		workspace.save();
+	}
+
+	public static void removeProject(String user, WebWorkspace workspace, WebProject project) throws CoreException {
+		// remove the project folder
 		URI contentURI = project.getContentLocation();
 
 		// don't remove linked projects
@@ -596,7 +568,19 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 			}
 		}
 
+		// remove user rights for the project
+		removeProjectRights(user, project);
+
+		//If all went well, remove project from workspace
+		workspace.removeProject(project);
+
+		//remove project metadata
 		project.remove();
+
+		//save the workspace and project metadata
+		project.save();
+		workspace.save();
+
 	}
 
 	/**

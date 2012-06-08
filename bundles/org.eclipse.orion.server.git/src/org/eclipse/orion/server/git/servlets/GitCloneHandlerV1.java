@@ -30,7 +30,6 @@ import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;
 import org.eclipse.orion.internal.server.servlets.workspace.*;
-import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
@@ -154,24 +153,16 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 				// should not happen, we do not allow linking at this point
 			}
 			WebWorkspace workspace = WebWorkspace.fromId(path.segment(1));
-			//If all went well, add project to workspace
-			workspace.addProject(webProject);
 
-			//save the workspace and project metadata
 			try {
-				webProject.save();
-				workspace.save();
+				//If all went well, add project to workspace
+				WorkspaceResourceHandler.addProject(request.getRemoteUser(), workspace, webProject);
 			} catch (CoreException e) {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error persisting project state", e));
 			}
 
 			URI baseLocation = getURI(request);
 			baseLocation = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), workspacePath, baseLocation.getQuery(), baseLocation.getFragment());
-			JSONObject jsonProject = WebProjectResourceHandler.toJSON(webProject, baseLocation);
-			// give the clone creator access rights to the new project
-			addProjectRights(request, response, jsonProject.optString(ProtocolConstants.KEY_LOCATION));
-			addProjectRights(request, response, jsonProject.optString(ProtocolConstants.KEY_CONTENT_LOCATION));
-
 			clone.setId(webProject.getId());
 			clone.setContentLocation(webProject.getProjectStore().toURI());
 		}
@@ -438,25 +429,12 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 					JSONObject project = projectsJSON.getJSONObject(j);
 					String projectId = project.getString(ProtocolConstants.KEY_ID);
 					if (projectId.equals(webProject.getId())) {
-
 						//If found, remove project from workspace
-						webWorkspace.removeProject(webProject);
-
-						// remove the project folder
 						try {
-							WorkspaceResourceHandler.removeProject(webProject, userName);
+							WorkspaceResourceHandler.removeProject(userName, webWorkspace, webProject);
 						} catch (CoreException e) {
 							//we are unable to write in the platform location!
 							String msg = NLS.bind("Server content location could not be written: {0}", Activator.getDefault().getRootLocationURI());
-							return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
-						}
-
-						//save the workspace and project metadata
-						try {
-							webProject.save();
-							webWorkspace.save();
-						} catch (CoreException e) {
-							String msg = "Error persisting project state";
 							return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 						}
 
@@ -494,33 +472,6 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			return false;
 		}
 		return true;
-	}
-
-	/**
-	 * It's a copy @see WorkspaceResourceHandler#addProjectRights().
-	 * TODO: We can do better than that.
-	 *
-	 * @param request
-	 * @param response
-	 * @param location
-	 * @throws ServletException
-	 */
-	private void addProjectRights(HttpServletRequest request, HttpServletResponse response, String location) throws ServletException {
-		if (location == null)
-			return;
-		try {
-			String locationPath = URI.create(location).getPath();
-			//right to access the location
-			AuthorizationService.addUserRight(request.getRemoteUser(), locationPath);
-			//right to access all children of the location
-			if (locationPath.endsWith("/")) //$NON-NLS-1$
-				locationPath += "*"; //$NON-NLS-1$
-			else
-				locationPath += "/*"; //$NON-NLS-1$
-			AuthorizationService.addUserRight(request.getRemoteUser(), locationPath);
-		} catch (CoreException e) {
-			statusHandler.handleRequest(request, response, e.getStatus());
-		}
 	}
 
 	private boolean pull(HttpServletRequest request, HttpServletResponse response, GitCredentialsProvider cp, String path, boolean force) throws URISyntaxException, JSONException, IOException, ServletException {
