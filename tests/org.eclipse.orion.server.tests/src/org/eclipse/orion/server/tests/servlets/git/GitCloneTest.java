@@ -16,17 +16,29 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.*;
-import java.io.*;
-import java.net.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import org.eclipse.core.runtime.*;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
-import org.eclipse.jgit.api.*;
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.api.PullResult;
+import org.eclipse.jgit.lib.ConfigConstants;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.RepositoryCache;
+import org.eclipse.jgit.lib.RepositoryState;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.core.IOUtilities;
@@ -38,9 +50,17 @@ import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
-import org.json.*;
-import org.junit.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.Assume;
+import org.junit.BeforeClass;
 import org.junit.Test;
+
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 public class GitCloneTest extends GitTest {
 
@@ -252,6 +272,7 @@ public class GitCloneTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, response.getResponseCode());
 			JSONObject result = new JSONObject(response.getText());
 			assertEquals("Error cloning git repository", result.getString("Message"));
+			assertEquals(result.toString(), "Invalid remote: origin", result.getString("DetailedMessage"));
 		}
 
 		// we don't know ID of the clone that failed to be created, so we're checking if none has been added

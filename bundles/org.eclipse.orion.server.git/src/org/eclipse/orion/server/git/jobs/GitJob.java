@@ -107,6 +107,9 @@ public abstract class GitJob extends TaskJob {
 			} else if (cause.getMessage().endsWith("username must not be null.") || cause.getMessage().endsWith("host must not be null.")) { //$NON-NLS-1$ //$NON-NLS-2$
 				// see com.jcraft.jsch.JSch#getSession(String, String, int)
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, cause.getMessage(), addRepositoryInfo(new JSONObject()), cause);
+			} else if (e instanceof GitAPIException) {
+				//Other HTTP connection problems reported directly
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, addRepositoryInfo(new JSONObject()), e);
 			} else {
 				//Other HTTP connection problems reported directly
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, addRepositoryInfo(new JSONObject()), cause);
