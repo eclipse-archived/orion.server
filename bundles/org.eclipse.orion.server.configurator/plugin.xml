@@ -108,7 +108,7 @@
          </init-param>
          <init-param
                name="excludeMatches"
-               value="^/(file|hosted)/.*">
+               value="^/(file|hosted|gitapi)/.*">
          </init-param>
       </filter>
       <filter
@@ -140,7 +140,7 @@
          </init-param>
          <init-param
                name="excludeMatches"
-               value="^/(file|hosted|requirejs|org.dojotoolkit)/.*">
+               value="^/(file|hosted|gitapi|requirejs|org.dojotoolkit)/.*">
          </init-param>
       </filter>
       <filter
