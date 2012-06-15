@@ -7,11 +7,16 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.net.URLEncoder;
 
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
+import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
+import org.eclipse.orion.server.useradmin.User;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -187,6 +192,55 @@ public class HostingTest extends CoreSiteTest {
 	}
 
 	@Test
+	// Test for https://bugs.eclipse.org/bugs/show_bug.cgi?id=382760 
+	public void testDisallowedSiteAccess() throws SAXException, IOException, JSONException, URISyntaxException, CoreException {
+		User userBObject = createUser("userB", "userB");
+		String userB = userBObject.getLogin();
+
+		// User "test": create file in test's workspace
+		final String filename = "foo.html";
+		final String fileContent = "<html><body>This is a test file</body></html>";
+		WebResponse createdFile = createFileOnServer(filename, fileContent);
+		URL fileLocation = createdFile.getURL();
+		IPath filepath = new Path(fileLocation.getPath());
+		filepath = filepath.removeFirstSegments(new Path(FILE_SERVLET_LOCATION).segmentCount()); // chop off leading /file/
+		filepath = filepath.removeLastSegments(1); // chop off trailing /foo.html
+		filepath = filepath.makeAbsolute();
+		filepath = filepath.addTrailingSeparator();
+		String parentFolder = filepath.toString();
+
+		// User B: Create a workspace that User B has access to
+		WebResponse createWorkspaceResp = basicCreateWorkspace("userB");
+		String bWorkspaceId = new JSONObject(createWorkspaceResp.getText()).getString(ProtocolConstants.KEY_ID);
+		AuthorizationService.addUserRight(userBObject.getUid(), createWorkspaceResp.getURL().getPath());
+		AuthorizationService.addUserRight(userBObject.getUid(), createWorkspaceResp.getURL().getPath() + "/*");
+
+		// User B: create a site against B's workspace that exposes a file in test's workspace
+		final String siteName = "My hosted site";
+		final String filePath = parentFolder; //"/" + filename;
+		final String mountAt = "/"; //"/file.html";
+		final JSONArray mappings = makeMappings(new String[][] {{mountAt, filePath}});
+
+		WebRequest createSiteReq = getCreateSiteRequest(siteName, bWorkspaceId, mappings, null);
+		setAuthentication(createSiteReq, userB, userB);
+		WebResponse createSiteResp = webConversation.getResponse(createSiteReq);
+		assertEquals(HttpURLConnection.HTTP_CREATED, createSiteResp.getResponseCode());
+		JSONObject siteObject = new JSONObject(createSiteResp.getText());
+
+		// User B: Start the site
+		final String siteLocation = siteObject.getString(ProtocolConstants.KEY_LOCATION);//createSiteResp.getHeaderField("Location");
+		siteObject = startSite(siteLocation, userB, userB);
+
+		final JSONObject hostingStatus = siteObject.getJSONObject(SiteConfigurationConstants.KEY_HOSTING_STATUS);
+		final String hostedURL = hostingStatus.getString(SiteConfigurationConstants.KEY_HOSTING_STATUS_URL);
+
+		// Attempt to access file on user B's site, should fail
+		WebRequest getFileReq = new GetMethodWebRequest(hostedURL + mountAt);
+		WebResponse getFileResp = webConversation.getResponse(getFileReq);
+		assertEquals(HttpURLConnection.HTTP_FORBIDDEN, getFileResp.getResponseCode());
+	}
+
+	@Test
 	public void testRemoteProxyRequest() throws SAXException, IOException, JSONException, URISyntaxException {
 		final String siteName = "My remote hosting site";
 		final String remoteRoot = "/remoteWeb", remotePrefPath = "/remotePref", remoteFilePath = "/remoteFile";
@@ -248,10 +302,12 @@ public class HostingTest extends CoreSiteTest {
 	 * @throws URISyntaxException 
 	 * @returns The JSON representation of the started site.
 	 */
-	private JSONObject startSite(String siteLocation) throws JSONException, IOException, SAXException, URISyntaxException {
+	private JSONObject startSite(String siteLocation, String user, String password) throws JSONException, IOException, SAXException, URISyntaxException {
 		JSONObject hostingStatus = new JSONObject();
 		hostingStatus.put(SiteConfigurationConstants.KEY_HOSTING_STATUS_STATUS, "started");
 		WebRequest launchSiteReq = getUpdateSiteRequest(siteLocation, null, null, null, null, hostingStatus);
+		if (user != null && password != null)
+			setAuthentication(launchSiteReq, user, password);
 		WebResponse launchSiteResp = webConversation.getResponse(launchSiteReq);
 		assertEquals(launchSiteResp.getText(), HttpURLConnection.HTTP_OK, launchSiteResp.getResponseCode());
 
@@ -260,6 +316,10 @@ public class HostingTest extends CoreSiteTest {
 		hostingStatus = siteObject.getJSONObject(SiteConfigurationConstants.KEY_HOSTING_STATUS);
 		assertEquals("started", hostingStatus.getString(SiteConfigurationConstants.KEY_HOSTING_STATUS_STATUS));
 		return siteObject;
+	}
+
+	private JSONObject startSite(String siteLocation) throws JSONException, IOException, SAXException, URISyntaxException {
+		return startSite(siteLocation, null, null);
 	}
 
 	/**
@@ -284,8 +344,8 @@ public class HostingTest extends CoreSiteTest {
 	 * @param filename
 	 * @param fileContent
 	 */
-	private void createFileOnServer(String filename, String fileContent) throws SAXException, IOException, JSONException, URISyntaxException {
-		createFileOnServer("/", filename, fileContent);
+	private WebResponse createFileOnServer(String filename, String fileContent) throws SAXException, IOException, JSONException, URISyntaxException {
+		return createFileOnServer("/", filename, fileContent);
 	}
 
 	private void createDirectoryOnServer(String dirname) throws SAXException, IOException, JSONException {
@@ -295,7 +355,7 @@ public class HostingTest extends CoreSiteTest {
 		assertEquals(HttpURLConnection.HTTP_CREATED, createDirResp.getResponseCode());
 	}
 
-	private void createFileOnServer(String fileServletLocation, String filename, String fileContent) throws SAXException, IOException, JSONException, URISyntaxException {
+	private WebResponse createFileOnServer(String fileServletLocation, String filename, String fileContent) throws SAXException, IOException, JSONException, URISyntaxException {
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 		WebRequest createFileReq = getPostFilesRequest(fileServletLocation, getNewFileJSON(filename).toString(), filename);
 		WebResponse createFileResp = webConversation.getResponse(createFileReq);
@@ -303,6 +363,7 @@ public class HostingTest extends CoreSiteTest {
 		createFileReq = getPutFileRequest(createFileResp.getHeaderField("Location"), fileContent);
 		createFileResp = webConversation.getResponse(createFileReq);
 		assertEquals(HttpURLConnection.HTTP_OK, createFileResp.getResponseCode());
+		return createFileResp;
 	}
 
 	private WebRequest createSetPreferenceRequest(String location, String key, String value) {

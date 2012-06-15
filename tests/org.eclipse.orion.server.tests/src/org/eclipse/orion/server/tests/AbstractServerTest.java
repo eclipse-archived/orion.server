@@ -10,13 +10,18 @@
  *******************************************************************************/
 package org.eclipse.orion.server.tests;
 
-import com.meterware.httpunit.WebRequest;
 import java.io.UnsupportedEncodingException;
+
 import junit.framework.Assert;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.resources.Base64;
-import org.eclipse.orion.server.useradmin.*;
+import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
+import org.eclipse.orion.server.useradmin.User;
+import org.eclipse.orion.server.useradmin.UserServiceHelper;
+
+import com.meterware.httpunit.WebRequest;
 
 /**
  * Base class for all Orion server tests. Providers helper methods common
