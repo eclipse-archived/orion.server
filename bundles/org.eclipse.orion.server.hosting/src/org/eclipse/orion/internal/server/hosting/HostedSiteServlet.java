@@ -202,7 +202,7 @@ public class HostedSiteServlet extends OrionServlet {
 			if (base != null) {
 				rest = originalPath.removeFirstSegments(count - i).toString();
 				for (int j = 0; j < base.size(); j++) {
-					URI uri = rest.equals("") ? new URI(base.get(j)) : URIUtil.append(new URI(base.get(j)), rest);
+					URI uri = (rest.equals("") || rest.equals("/")) ? new URI(base.get(j)) : URIUtil.append(new URI(base.get(j)), rest);
 					uris.add(new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost(), uri.getPort(), uri.getPath(), queryString, uri.getFragment()));
 				}
 			}
@@ -284,9 +284,12 @@ public class HostedSiteServlet extends OrionServlet {
 	}
 
 	private void addContentTypeHeader(HttpServletResponse resp, IPath path) {
-		String mimeType = getServletContext().getMimeType(path.lastSegment());
-		if (mimeType != null)
-			resp.addHeader("Content-Type", mimeType);
+		String last = path.lastSegment();
+		if (last != null) {
+			String mimeType = getServletContext().getMimeType(last);
+			if (mimeType != null)
+				resp.addHeader("Content-Type", mimeType);
+		}
 	}
 
 	// temp code for grabbing files from filesystem
