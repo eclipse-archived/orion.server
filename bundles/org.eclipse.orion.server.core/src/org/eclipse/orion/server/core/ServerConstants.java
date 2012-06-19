@@ -34,6 +34,13 @@ public class ServerConstants {
 	public static final String CONFIG_AUTH_ADMIN_DEFAULT_PASSWORD = "orion.auth.admin.default.password"; //$NON-NLS-1$
 
 	/**
+	 * The name of a configuration property specifying an alternate URI to handle registrations for accounts.
+	 * If this variable is set AND the site does not allow for direct registrations the
+	 * Register Button will be visible and this URI will be opened taking the user off site.
+	 */
+	public static final String CONFIG_AUTH_REGISTRATION_URI = "orion.auth.registration.uri"; //$NON-NLS-1$
+
+	/**
 	 * The name of a configuration property specifying the default source configuration management
 	 * system to use for newly created top level folders.
 	 */

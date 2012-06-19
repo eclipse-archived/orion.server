@@ -114,6 +114,7 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 			JSONObject jsonResp = new JSONObject();
 			try {
 				jsonResp.put("CanAddUsers", FormAuthHelper.canAddUsers());
+				jsonResp.put("RegistrationURI", FormAuthHelper.registrationURI());
 			} catch (JSONException e) {
 			}
 			resp.getWriter().print(jsonResp);

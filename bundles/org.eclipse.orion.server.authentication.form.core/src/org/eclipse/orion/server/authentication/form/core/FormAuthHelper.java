@@ -31,10 +31,15 @@ public class FormAuthHelper {
 	private static IOrionUserProfileService userProfileService;
 
 	private static boolean allowAnonymousAccountCreation;
+	
+	private static String registrationURI;
 
 	static {
 		//if there is no list of users authorised to create accounts, it means everyone can create accounts
 		allowAnonymousAccountCreation = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION, null) == null; //$NON-NLS-1$
+		
+		//if there is an alternate URI to handle registrations retrieve it.
+		registrationURI = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_REGISTRATION_URI, null);
 	}
 
 	/**
@@ -131,6 +136,14 @@ public class FormAuthHelper {
 	 */
 	public static boolean canAddUsers() {
 		return allowAnonymousAccountCreation ? (userAdmin==null ? false : userAdmin.canCreateUsers()) : false;
+	}
+	
+	/**
+	 * Returns a URI to use for account registrations or null if none.
+	 * @return String a URI to open when adding user accounts.
+	 */
+	public static String registrationURI() {
+		return registrationURI;
 	}
 
 	public static IOrionCredentialsService getDefaultUserAdmin() {
