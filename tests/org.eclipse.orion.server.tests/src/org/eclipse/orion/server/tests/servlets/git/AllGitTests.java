@@ -33,6 +33,7 @@ import org.junit.runners.Suite.SuiteClasses;
 		GitRemoteTest.class, //
 		GitFetchTest.class, //
 		GitMergeTest.class, //
+		GitMergeSquashTest.class, //
 		GitRebaseTest.class, //
 		GitPushTest.class, //
 		GitLogTest.class, //

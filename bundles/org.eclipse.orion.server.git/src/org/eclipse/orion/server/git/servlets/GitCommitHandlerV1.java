@@ -219,7 +219,8 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 		try {
 			String commitToMerge = requestObject.optString(GitConstants.KEY_MERGE, null);
 			if (commitToMerge != null) {
-				return merge(request, response, db, commitToMerge);
+				boolean squash = requestObject.optBoolean(GitConstants.KEY_SQUASH, false);
+				return merge(request, response, db, commitToMerge, squash);
 			}
 
 			String commitToRebase = requestObject.optString(GitConstants.KEY_REBASE, null);
@@ -296,11 +297,11 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 		}
 	}
 
-	private boolean merge(HttpServletRequest request, HttpServletResponse response, Repository db, String commitToMerge) throws ServletException, JSONException {
+	private boolean merge(HttpServletRequest request, HttpServletResponse response, Repository db, String commitToMerge, boolean squash) throws ServletException, JSONException {
 		try {
 			ObjectId objectId = db.resolve(commitToMerge);
 			Git git = new Git(db);
-			MergeResult mergeResult = git.merge().include(objectId).call();
+			MergeResult mergeResult = git.merge().setSquash(squash).include(objectId).call();
 			JSONObject result = new JSONObject();
 			result.put(GitConstants.KEY_RESULT, mergeResult.getMergeStatus().name());
 			if (mergeResult.getFailingPaths() != null && !mergeResult.getFailingPaths().isEmpty())

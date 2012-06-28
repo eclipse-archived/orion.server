@@ -553,12 +553,16 @@ public abstract class GitTest extends FileSystemTest {
 		return remoteBranch;
 	}
 
-	protected JSONObject merge(String gitHeadUri, String commit) throws JSONException, IOException, SAXException {
+	protected JSONObject merge(String gitHeadUri, String commit, boolean squash) throws JSONException, IOException, SAXException {
 		assertCommitUri(gitHeadUri);
-		WebRequest request = getPostGitMergeRequest(gitHeadUri, commit);
+		WebRequest request = getPostGitMergeRequest(gitHeadUri, commit, squash);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		return new JSONObject(response.getText());
+	}
+
+	protected JSONObject merge(String gitHeadUri, String commit) throws JSONException, IOException, SAXException {
+		return merge(gitHeadUri, commit, false);
 	}
 
 	// rebase 
@@ -1168,7 +1172,7 @@ public abstract class GitTest extends FileSystemTest {
 		return request;
 	}
 
-	private static WebRequest getPostGitMergeRequest(String location, String commit) throws JSONException, UnsupportedEncodingException {
+	private static WebRequest getPostGitMergeRequest(String location, String commit, boolean squash) throws JSONException, UnsupportedEncodingException {
 		String requestURI;
 		if (location.startsWith("http://"))
 			requestURI = location;
@@ -1177,6 +1181,7 @@ public abstract class GitTest extends FileSystemTest {
 
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_MERGE, commit);
+		body.put(GitConstants.KEY_SQUASH, squash);
 		WebRequest request = new PostMethodWebRequest(requestURI, IOUtilities.toInputStream(body.toString()), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
