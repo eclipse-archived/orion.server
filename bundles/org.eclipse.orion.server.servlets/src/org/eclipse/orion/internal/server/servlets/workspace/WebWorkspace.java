@@ -46,19 +46,13 @@ public class WebWorkspace extends WebElement {
 	 * Adds a project to the list of projects that belong to this workspace.
 	 */
 	public void addProject(WebProject project) {
-		String existingProjects = store.get(ProtocolConstants.KEY_PROJECTS, "[]");
-		JSONArray allProjects;
-		try {
-			allProjects = new JSONArray(existingProjects);
-		} catch (JSONException e) {
-			//someone messed with the backing store and inserted something invalid- just wipe it out
-			allProjects = new JSONArray();
-		}
+		JSONArray allProjects = getProjectsJSON();
 		//make sure we don't already have it
 		String newProjectId = project.getId();
 		for (int i = 0; i < allProjects.length(); i++) {
 			try {
-				if (newProjectId.equals(allProjects.get(i)))
+				JSONObject existing = (JSONObject) allProjects.get(i);
+				if (newProjectId.equals(existing.get(ProtocolConstants.KEY_ID)))
 					return;
 			} catch (JSONException e) {
 				//ignore empty slots
@@ -74,6 +68,26 @@ public class WebWorkspace extends WebElement {
 		}
 		allProjects.put(storedProject);
 		store.put(ProtocolConstants.KEY_PROJECTS, allProjects.toString());
+	}
+
+	/**
+	 * Returns the project in this workspace with the given name, or <code>null</code>
+	 * if there is no such project.
+	 */
+	public WebProject getProjectByName(String name) {
+		JSONArray projects = getProjectsJSON();
+		for (int i = 0; i < projects.length(); i++) {
+			try {
+				JSONObject projectJSON = (JSONObject) projects.get(i);
+				WebProject project = WebProject.fromId(projectJSON.optString(ProtocolConstants.KEY_ID, ""));
+				if (name.equals(project.getName()))
+					return project;
+			} catch (JSONException e) {
+				//ignore and keep looking
+			}
+		}
+		return null;
+
 	}
 
 	/**

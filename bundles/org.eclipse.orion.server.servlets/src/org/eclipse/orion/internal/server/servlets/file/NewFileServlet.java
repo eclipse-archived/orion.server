@@ -15,11 +15,12 @@ import java.net.URI;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
+import org.eclipse.orion.internal.server.servlets.workspace.WebWorkspace;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.servlets.OrionServlet;
@@ -89,26 +90,19 @@ public class NewFileServlet extends OrionServlet {
 	 * request or <code>null</code> if an error occurred.
 	 */
 	public static IFileStore getFileStore(IPath path) {
-		//first check if we have an alias registered
-		if (path.segmentCount() > 0) {
-			URI alias = Activator.getDefault().lookupAlias(path.segment(0));
-			if (alias != null)
-				try {
-					return EFS.getStore(alias).getFileStore(path.removeFirstSegments(1));
-				} catch (CoreException e) {
-					LogHelper.log(new Status(IStatus.WARNING, Activator.PI_SERVER_SERVLETS, 1, "An error occured when getting file store for path '" + path + "' and alias '" + alias + "'", e));
-					// fallback is to try the same path relatively to the root
-				}
-		}
-		//assume it is relative to the root
-		URI rootStoreURI = Activator.getDefault().getRootLocationURI();
+		//path format is /workspaceId/projectName/[suffix]
+		if (path.segmentCount() <= 1)
+			return null;
+		WebWorkspace workspace = WebWorkspace.fromId(path.segment(0));
+		WebProject project = workspace.getProjectByName(path.segment(1));
+		if (project == null)
+			return null;
 		try {
-			return EFS.getStore(rootStoreURI).getFileStore(path);
+			return project.getProjectStore().getFileStore(path.removeFirstSegments(2));
 		} catch (CoreException e) {
-			LogHelper.log(new Status(IStatus.WARNING, Activator.PI_SERVER_SERVLETS, 1, "An error occured when getting file store for path '" + path + "' and root '" + rootStoreURI + "'", e));
+			LogHelper.log(new Status(IStatus.WARNING, Activator.PI_SERVER_SERVLETS, 1, NLS.bind("An error occurred when getting file store for path {0}", path), e));
 			// fallback and return null
 		}
-
 		return null;
 	}
 }

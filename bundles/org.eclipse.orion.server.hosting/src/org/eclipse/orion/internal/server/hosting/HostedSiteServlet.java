@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -17,15 +17,15 @@ import java.util.*;
 import java.util.Map.Entry;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
-import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jetty.servlets.ProxyServlet;
-import org.eclipse.orion.internal.server.core.IAliasRegistry;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.file.ServletFileStoreHandler;
 import org.eclipse.orion.internal.server.servlets.hosting.IHostedSite;
+import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
+import org.eclipse.orion.internal.server.servlets.workspace.WebWorkspace;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -109,11 +109,9 @@ public class HostedSiteServlet extends OrionServlet {
 	// FIXME these variables are copied from fileservlet
 	private ServletResourceHandler<IFileStore> fileSerializer;
 	private final URI rootStoreURI;
-	private IAliasRegistry aliasRegistry;
 
 	public HostedSiteServlet() {
 		rootStoreURI = Activator.getDefault().getRootLocationURI();
-		aliasRegistry = Activator.getDefault();
 	}
 
 	@Override
@@ -294,25 +292,19 @@ public class HostedSiteServlet extends OrionServlet {
 
 	// temp code for grabbing files from filesystem
 	protected IFileStore tempGetFileStore(IPath path) {
-		//first check if we have an alias registered
-		if (path.segmentCount() > 0) {
-			URI alias = aliasRegistry.lookupAlias(path.segment(0));
-			if (alias != null)
-				try {
-					return EFS.getStore(alias).getFileStore(path.removeFirstSegments(1));
-				} catch (CoreException e) {
-					LogHelper.log(new Status(IStatus.WARNING, HostingActivator.PI_SERVER_HOSTING, 1, "An error occured when getting file store for path '" + path + "' and alias '" + alias + '\'', e)); //$NON-NLS-1$ //$NON-NLS-2$
-					// fallback is to try the same path relatively to the root
-				}
-		}
-		//assume it is relative to the root
+		//path format is /workspaceId/projectName/[suffix]
+		if (path.segmentCount() <= 1)
+			return null;
+		WebWorkspace workspace = WebWorkspace.fromId(path.segment(0));
+		WebProject project = workspace.getProjectByName(path.segment(1));
+		if (project == null)
+			return null;
 		try {
-			return EFS.getStore(rootStoreURI).getFileStore(path);
+			return project.getProjectStore().getFileStore(path.removeFirstSegments(2));
 		} catch (CoreException e) {
-			LogHelper.log(new Status(IStatus.WARNING, HostingActivator.PI_SERVER_HOSTING, 1, "An error occured when getting file store for path '" + path + "' and root '" + rootStoreURI + '\'', e)); //$NON-NLS-1$ //$NON-NLS-2$
+			LogHelper.log(new Status(IStatus.WARNING, Activator.PI_SERVER_SERVLETS, 1, NLS.bind("An error occurred when getting file store for path {0}", path), e));
 			// fallback and return null
 		}
-
 		return null;
 	}
 

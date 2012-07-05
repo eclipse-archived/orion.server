@@ -16,11 +16,9 @@ import java.util.*;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
-import org.eclipse.orion.internal.server.core.IAliasRegistry;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
 import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
 import org.eclipse.orion.internal.server.servlets.workspace.ProjectParentDecorator;
-import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.internal.server.servlets.xfer.TransferResourceDecorator;
 import org.eclipse.osgi.service.datalocation.Location;
 import org.osgi.framework.*;
@@ -30,7 +28,7 @@ import org.osgi.util.tracker.ServiceTracker;
  * Activator for the server servlet bundle. Responsible for tracking the HTTP
  * service and registering/unregistering servlets.
  */
-public class Activator implements BundleActivator, IAliasRegistry {
+public class Activator implements BundleActivator {
 
 	public static volatile BundleContext bundleContext;
 
@@ -145,28 +143,6 @@ public class Activator implements BundleActivator, IAliasRegistry {
 		}
 	}
 
-	public URI lookupAlias(String alias) {
-		return aliases.get(alias);
-	}
-
-	public void registerAlias(String alias, URI location) {
-		aliases.put(alias, location);
-	}
-
-	/**
-	 * Registers the location of a project with the alias registry
-	 * @param project
-	 */
-	public void registerProjectLocation(WebProject project) {
-		URI contentURI = project.getContentLocation();
-		// if the location is relative to this server, we need to register an alias so the file service can find it
-		if (!contentURI.isAbsolute() || "file".equals(contentURI.getScheme())) { //$NON-NLS-1$
-			IPath contentPath = new Path(contentURI.getSchemeSpecificPart());
-			if (contentPath.isAbsolute())
-				registerAlias(project.getId(), contentURI);
-		}
-	}
-
 	/**
 	 * Registers decorators supplied by servlets in this bundle
 	 */
@@ -181,13 +157,7 @@ public class Activator implements BundleActivator, IAliasRegistry {
 		singleton = this;
 		bundleContext = context;
 		initializeFileSystem();
-		initializeProjects();
 		registerDecorators();
-	}
-
-	private void initializeProjects() {
-		for (WebProject project : WebProject.allProjects())
-			registerProjectLocation(project);
 	}
 
 	public void stop(BundleContext context) throws Exception {
