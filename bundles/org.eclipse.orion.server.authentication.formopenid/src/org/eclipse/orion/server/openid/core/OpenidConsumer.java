@@ -22,6 +22,7 @@ import javax.servlet.http.HttpSession;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.orion.server.authentication.formopenid.Activator;
 import org.openid4java.OpenIDException;
 import org.openid4java.consumer.ConsumerException;
 import org.openid4java.consumer.ConsumerManager;
@@ -78,7 +79,7 @@ public class OpenidConsumer {
 		try {
 			discoveries = manager.discover(userSuppliedString);
 		} catch (DiscoveryException e) {
-			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_OPENID_CORE, 1, "Could not discover: " + userSuppliedString, e));
+			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, 1, "Could not discover: " + userSuppliedString, e));
 		}
 
 		// attempt to associate with the OpenID provider
@@ -93,7 +94,7 @@ public class OpenidConsumer {
 			URL returnURL = new URL(returnToUrl);
 			authReq = manager.authenticate(discovered, returnToUrl, new URL(returnURL.getProtocol(), returnURL.getHost(), returnURL.getPort(), "").toString());
 		} catch (Exception e) {
-			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_OPENID_CORE, 1, "An error occured when authenticating request for " + userSuppliedString, e));
+			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, 1, "An error occured when authenticating request for " + userSuppliedString, e));
 		}
 
 		// redirect location in the OpenID popup window
@@ -101,7 +102,7 @@ public class OpenidConsumer {
 			httpResp.sendRedirect(authReq.getDestinationUrl(true));
 			httpResp.flushBuffer();
 		} catch (IOException e) {
-			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_OPENID_CORE, 1, "An error occured when trying to redirect to " + authReq.getDestinationUrl(true), e));
+			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, 1, "An error occured when trying to redirect to " + authReq.getDestinationUrl(true), e));
 		}
 
 		return null;

@@ -10,19 +10,40 @@
  *******************************************************************************/
 package org.eclipse.orion.server.openid.core;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.URLEncoder;
-import java.util.*;
-import javax.servlet.http.*;
-import org.eclipse.core.runtime.*;
-import org.eclipse.orion.server.core.*;
-import org.eclipse.orion.server.user.profile.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.orion.server.authentication.formopenid.Activator;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.User;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.openid4java.consumer.ConsumerException;
 import org.openid4java.discovery.Identifier;
-import org.osgi.service.http.*;
+import org.osgi.service.http.HttpContext;
+import org.osgi.service.http.HttpService;
+import org.osgi.service.http.NamespaceException;
 
 /**
  * Groups methods to handle session attributes for OpenID authentication.
@@ -233,7 +254,7 @@ public class OpenIdHelper {
 			array.put("login", login); //$NON-NLS-1$
 			resp.getWriter().print(array.toString());
 		} catch (JSONException e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_OPENID_CORE, "An error occured when creating JSON object for logged in user", e));
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, "An error occured when creating JSON object for logged in user", e));
 		}
 	}
 
@@ -275,7 +296,7 @@ public class OpenIdHelper {
 		try {
 			httpService.registerResources("/openids", "/openids", httpContext);
 		} catch (NamespaceException e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_OPENID_CORE, 1, "A namespace error occured when registering servlets", e));
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, 1, "A namespace error occured when registering servlets", e));
 		}
 	}
 
@@ -329,7 +350,7 @@ public class OpenIdHelper {
 			try {
 				opendIdProviders.add(getOpenidProviderFromJson(jsonProvider));
 			} catch (JSONException e) {
-				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_OPENID_CORE, "Cannot load OpenId provider, invalid entry " + jsonProvider + " Attribute \"ulr\" is mandatory", e));
+				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, "Cannot load OpenId provider, invalid entry " + jsonProvider + " Attribute \"ulr\" is mandatory", e));
 			}
 		}
 		return opendIdProviders;
@@ -341,7 +362,7 @@ public class OpenIdHelper {
 				defaultOpenids = getSupportedOpenIdProviders(getFileContents("/openids/DefaultOpenIdProviders.json")); //$NON-NLS-1$
 			}
 		} catch (Exception e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_OPENID_CORE, "Cannot load default openid list, JSON format expected", e)); //$NON-NLS-1$
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, "Cannot load default openid list, JSON format expected", e)); //$NON-NLS-1$
 			return new ArrayList<OpendIdProviderDescription>();
 		}
 		return defaultOpenids;
