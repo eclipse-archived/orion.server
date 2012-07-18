@@ -12,16 +12,17 @@ package org.eclipse.orion.server.authentication.formopenid;
 
 import java.io.IOException;
 import java.util.Properties;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.server.authentication.form.core.FormAuthHelper;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.authentication.IAuthenticationService;
-import org.eclipse.orion.server.openid.core.OpenIdHelper;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.framework.Version;
@@ -48,11 +49,11 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 	}
 
 	public String getAuthenticatedUser(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException {
-		String formUser = FormAuthHelper.getAuthenticatedUser(req);
-		if (formUser != null) {
-			return formUser;
+		HttpSession s = req.getSession(true);
+		if (s.getAttribute("user") != null) { //$NON-NLS-1$
+			return (String) s.getAttribute("user"); //$NON-NLS-1$
 		}
-		return OpenIdHelper.getAuthenticatedUser(req);
+		return null;
 	}
 
 	public String getAuthType() {
@@ -115,7 +116,6 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 
 	public void setRegistered(boolean registered) {
 		this.registered = registered;
-		Activator.getDefault().getResourceDecorator().setDecorate(registered);
 	}
 
 	public boolean getRegistered() {

@@ -9,7 +9,7 @@
  *     Sxip Identity Corporation - Original SampleConsumer.java class
  *     IBM Corporation - sample modified to integrate with Eclipse
  *******************************************************************************/
-package org.eclipse.orion.server.openid.core;
+package org.eclipse.orion.server.authentication.openid;
 
 import java.io.IOException;
 import java.net.URL;

@@ -8,7 +8,7 @@
  * Contributors:
  * IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.server.openid.core;
+package org.eclipse.orion.server.authentication.openid;
 
 public class OpenIdException extends Exception {
 

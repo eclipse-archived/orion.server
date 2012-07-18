@@ -8,7 +8,7 @@
  * Contributors:
  * IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.server.openid.core;
+package org.eclipse.orion.server.authentication.openid;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -22,7 +22,6 @@ import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
@@ -68,22 +67,6 @@ public class OpenIdHelper {
 	static {
 		//if there is no list of users authorised to create accounts, it means everyone can create accounts
 		allowAnonymousAccountCreation = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION, null) == null; //$NON-NLS-1$
-	}
-
-	/**
-	 * Checks session attributes to retrieve authenticated user identifier.
-	 * 
-	 * @param req
-	 * @return OpenID identifier of authenticated user of <code>null</code> if
-	 *         user is not authenticated
-	 * @throws IOException
-	 */
-	public static String getAuthenticatedUser(HttpServletRequest req) throws IOException {
-		HttpSession s = req.getSession(true);
-		if (s.getAttribute("user") != null) { //$NON-NLS-1$
-			return (String) s.getAttribute("user"); //$NON-NLS-1$
-		}
-		return null;
 	}
 
 	/**
@@ -226,36 +209,6 @@ public class OpenIdHelper {
 			url.append(req.getServerPort());
 		}
 		return url;
-	}
-
-	/**
-	 * Destroys the session attributes that identify the user.
-	 * 
-	 * @param req
-	 */
-	public static void performLogout(HttpServletRequest req) {
-		HttpSession s = req.getSession(true);
-		if (s.getAttribute("user") != null) { //$NON-NLS-1$
-			s.removeAttribute("user"); //$NON-NLS-1$
-		}
-	}
-
-	/**
-	 * Writes a response in JSON that contains user login.
-	 * 
-	 * @param login
-	 * @param resp
-	 * @throws IOException
-	 */
-	public static void writeLoginResponse(String login, HttpServletResponse resp) throws IOException {
-		resp.setStatus(HttpServletResponse.SC_OK);
-		try {
-			JSONObject array = new JSONObject();
-			array.put("login", login); //$NON-NLS-1$
-			resp.getWriter().print(array.toString());
-		} catch (JSONException e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, "An error occured when creating JSON object for logged in user", e));
-		}
 	}
 
 	public static String getAuthType() {

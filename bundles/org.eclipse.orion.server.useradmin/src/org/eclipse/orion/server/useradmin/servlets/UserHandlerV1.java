@@ -299,22 +299,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 		json.put("GitMail", userProfile.get("GitMail", null));
 		json.put("GitName", userProfile.get("GitName", null));
-
-		//		Set<String> roles = new HashSet<String>();
-		//			for (Role role : user.getRoles()) {
-		//				roles.add(role.getName());
-		//			}
-		//			json.put("roles", roles);
-
+		
 		JSONArray plugins = new JSONArray();
-		try {
-			JSONObject plugin = new JSONObject();
-			URI result = user.getPassword() == null ? new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), contextPath + "/plugins/user/nopasswordProfilePlugin.html", null, null) : new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), contextPath + "/plugins/user/userProfilePlugin.html", null, null);
-			plugin.put(UserConstants.KEY_PLUGIN_LOCATION, result);
-			plugins.put(plugin);
-		} catch (URISyntaxException e) {
-			LogHelper.log(e);
-		}
 		json.put(UserConstants.KEY_PLUGINS, plugins);
 		return json;
 	}

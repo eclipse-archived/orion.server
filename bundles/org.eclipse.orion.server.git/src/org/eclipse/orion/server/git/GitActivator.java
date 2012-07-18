@@ -49,7 +49,6 @@ public class GitActivator implements BundleActivator {
 		plugin = this;
 		this.bundleContext = context;
 		context.registerService(IWebResourceDecorator.class, new GitFileDecorator(), null);
-		context.registerService(IWebResourceDecorator.class, new GitUserDecorator(), null);
 		SshSessionFactory.setInstance(new GitSshSessionFactory());
 
 		prefServiceTracker = new ServiceTracker<IPreferencesService, IPreferencesService>(context, IPreferencesService.class, null);

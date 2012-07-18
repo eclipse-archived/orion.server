@@ -23,12 +23,12 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.orion.server.authentication.openid.OpenIdException;
+import org.eclipse.orion.server.authentication.openid.OpenIdHelper;
+import org.eclipse.orion.server.authentication.openid.OpendIdProviderDescription;
+import org.eclipse.orion.server.authentication.openid.OpenidConsumer;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.resources.Base64;
-import org.eclipse.orion.server.openid.core.OpenIdException;
-import org.eclipse.orion.server.openid.core.OpenIdHelper;
-import org.eclipse.orion.server.openid.core.OpendIdProviderDescription;
-import org.eclipse.orion.server.openid.core.OpenidConsumer;
 import org.json.JSONException;
 
 public class ManageOpenidsServlet extends HttpServlet {

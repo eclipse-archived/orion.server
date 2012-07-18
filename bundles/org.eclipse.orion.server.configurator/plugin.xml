@@ -312,13 +312,6 @@
          </resource-mapping>
       </httpcontext>
       <httpcontext
-            id="org.eclipse.orion.server.configurator.httpcontext.useradmin">
-         <resource-mapping
-               bundle="org.eclipse.orion.server.useradmin"
-               path="/web">
-         </resource-mapping>
-      </httpcontext>
-      <httpcontext
             id="org.eclipse.orion.server.configurator.httpcontext.userprofile">
          <resource-mapping
                bundle="org.eclipse.orion.client.users"
@@ -385,10 +378,6 @@
       <resource
             alias="/org.dojotoolkit/dojox"
             httpcontextId="org.eclipse.orion.server.configurator.httpcontext.orion.dojox">
-      </resource>
-      <resource
-            alias="/usersstatic"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.useradmin">
       </resource>
       <resource
             alias="/profile"

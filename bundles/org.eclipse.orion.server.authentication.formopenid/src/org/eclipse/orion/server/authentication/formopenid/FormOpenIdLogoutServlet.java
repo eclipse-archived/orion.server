@@ -10,16 +10,13 @@
  *******************************************************************************/
 package org.eclipse.orion.server.authentication.formopenid;
 
-import org.eclipse.orion.server.openid.core.OpenIdHelper;
-
-import org.eclipse.orion.server.authentication.form.core.FormAuthHelper;
-
 import java.io.IOException;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 
 public class FormOpenIdLogoutServlet extends HttpServlet {
@@ -31,7 +28,9 @@ public class FormOpenIdLogoutServlet extends HttpServlet {
 
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		FormAuthHelper.performLogout(req);
-		OpenIdHelper.performLogout(req);
+		HttpSession s = req.getSession(true);
+		if (s.getAttribute("user") != null) { //$NON-NLS-1$
+			s.removeAttribute("user"); //$NON-NLS-1$
+		}
 	}
 }

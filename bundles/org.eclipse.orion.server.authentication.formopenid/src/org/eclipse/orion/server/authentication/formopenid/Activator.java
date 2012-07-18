@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.authentication.formopenid;
 
-import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
@@ -22,7 +21,6 @@ public class Activator implements BundleActivator {
 
 	private static volatile BundleContext bundleContext;
 
-	private OpenIdUserDecorator resourceDecorator;
 
 	public static Activator singleton;
 
@@ -36,18 +34,10 @@ public class Activator implements BundleActivator {
 
 	public void start(BundleContext context) throws Exception {
 		singleton = this;
-		resourceDecorator = new OpenIdUserDecorator();
-		context.registerService(IWebResourceDecorator.class, resourceDecorator, null);
 		bundleContext = context;
 	}
 
 	public void stop(BundleContext context) throws Exception {
 		bundleContext = null;
-		resourceDecorator = null;
 	}
-
-	public OpenIdUserDecorator getResourceDecorator() {
-		return resourceDecorator;
-	}
-
 }

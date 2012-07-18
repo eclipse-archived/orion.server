@@ -11,11 +11,21 @@
 package org.eclipse.orion.server.authentication.form.core;
 
 import java.io.IOException;
-import javax.servlet.http.*;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.orion.server.core.*;
-import org.eclipse.orion.server.user.profile.*;
-import org.eclipse.orion.server.useradmin.*;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
+import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
+import org.eclipse.orion.server.useradmin.UnsupportedUserStoreException;
+import org.eclipse.orion.server.useradmin.User;
+import org.eclipse.orion.server.useradmin.UserConstants;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -40,37 +50,6 @@ public class FormAuthHelper {
 		
 		//if there is an alternate URI to handle registrations retrieve it.
 		registrationURI = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_REGISTRATION_URI, null);
-	}
-
-	/**
-	 * Returns the name of the user stored in session.
-	 * 
-	 * @param req
-	 * @return authenticated user name or <code>null</code> if user is not
-	 *         authenticated.
-	 */
-	public static String getAuthenticatedUser(HttpServletRequest req) {
-		HttpSession s = req.getSession(true);
-		if (s.getAttribute("user") != null) { //$NON-NLS-1$
-			return (String) s.getAttribute("user"); //$NON-NLS-1$
-		}
-
-		return null;
-	}
-
-	/**
-	 * @param user
-	 * @param resp
-	 * @throws IOException
-	 * @throws CoreException
-	 */
-	public static void writeLoginResponse(String user, HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		resp.setStatus(HttpServletResponse.SC_OK);
-		try {
-			resp.getWriter().print(FormAuthHelper.getUserJson(user, req.getContextPath()));
-		} catch (JSONException e) {
-			//can't fail
-		}
 	}
 
 	/**
@@ -121,13 +100,6 @@ public class FormAuthHelper {
 			return user;
 		}
 		return null;
-	}
-
-	public static void performLogout(HttpServletRequest req) {
-		HttpSession s = req.getSession(true);
-		if (s.getAttribute("user") != null) { //$NON-NLS-1$
-			s.removeAttribute("user"); //$NON-NLS-1$
-		}
 	}
 
 	/**
@@ -190,7 +162,7 @@ public class FormAuthHelper {
 
 	}
 
-	public static IOrionUserProfileService getUserProfileService() {
+	private static IOrionUserProfileService getUserProfileService() {
 		return userProfileService;
 	}
 
