@@ -249,7 +249,7 @@ public class OpenIdHelper {
 		try {
 			httpService.registerResources("/openids", "/openids", httpContext);
 		} catch (NamespaceException e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, 1, "A namespace error occured when registering servlets", e));
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_AUTHENTICATION_SERVLETS, 1, "A namespace error occured when registering servlets", e));
 		}
 	}
 
@@ -303,7 +303,7 @@ public class OpenIdHelper {
 			try {
 				opendIdProviders.add(getOpenidProviderFromJson(jsonProvider));
 			} catch (JSONException e) {
-				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, "Cannot load OpenId provider, invalid entry " + jsonProvider + " Attribute \"ulr\" is mandatory", e));
+				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_AUTHENTICATION_SERVLETS, "Cannot load OpenId provider, invalid entry " + jsonProvider + " Attribute \"ulr\" is mandatory", e));
 			}
 		}
 		return opendIdProviders;
@@ -315,7 +315,7 @@ public class OpenIdHelper {
 				defaultOpenids = getSupportedOpenIdProviders(getFileContents("/openids/DefaultOpenIdProviders.json")); //$NON-NLS-1$
 			}
 		} catch (Exception e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, "Cannot load default openid list, JSON format expected", e)); //$NON-NLS-1$
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_AUTHENTICATION_SERVLETS, "Cannot load default openid list, JSON format expected", e)); //$NON-NLS-1$
 			return new ArrayList<OpendIdProviderDescription>();
 		}
 		return defaultOpenids;

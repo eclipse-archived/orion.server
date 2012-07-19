@@ -98,7 +98,7 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 				try {
 					consumer = OpenIdHelper.redirectToOpenIdProvider(req, resp, consumer);
 				} catch (OpenIdException e) {
-					LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, "An error occurred redirecting to OpenId provider", e));
+					LogHelper.log(new Status(IStatus.ERROR, Activator.PI_AUTHENTICATION_SERVLETS, "An error occurred redirecting to OpenId provider", e));
 					displayError(e.getMessage(), req, resp);
 				}
 				return;

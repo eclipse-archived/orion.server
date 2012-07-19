@@ -21,5 +21,4 @@ Require-Bundle: org.eclipse.osgi.services;bundle-version="3.2.100",
  org.openid4java;bundle-version="0.9.5"
 Bundle-ActivationPolicy: lazy
 Export-Package: org.eclipse.orion.server.authentication,
- org.eclipse.orion.server.authentication.basic,
  org.eclipse.orion.server.authentication.formopenid

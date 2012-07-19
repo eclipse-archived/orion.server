@@ -88,7 +88,7 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 				result.put("label", "Orion workspace server");
 				result.put("SignInKey", "FORMOpenIdUser");
 			} catch (JSONException e) {
-				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, 1, "An error occured during authenitcation", e));
+				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_AUTHENTICATION_SERVLETS, 1, "An error occured during authenitcation", e));
 			}
 			resp.getWriter().print(result.toString());
 		}
@@ -100,9 +100,9 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 			httpService.registerServlet("/login", new FormOpenIdLoginServlet(this), null, null); //$NON-NLS-1$
 			httpService.registerServlet("/logout", new FormOpenIdLogoutServlet(), null, null); //$NON-NLS-1$
 		} catch (ServletException e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, 1, "An error occured when registering servlets", e));
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_AUTHENTICATION_SERVLETS, 1, "An error occured when registering servlets", e));
 		} catch (NamespaceException e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, 1, "A namespace error occured when registering servlets", e));
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_AUTHENTICATION_SERVLETS, 1, "A namespace error occured when registering servlets", e));
 		}
 	}
 

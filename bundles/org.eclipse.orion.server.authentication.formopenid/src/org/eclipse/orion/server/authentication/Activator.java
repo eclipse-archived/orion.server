@@ -17,7 +17,7 @@ public class Activator implements BundleActivator {
 	/**
 	 * The symbolic id of this bundle.
 	 */
-	public static final String PI_FORMOPENID_SERVLETS = "org.eclipse.orion.server.authentication.formopenid"; //$NON-NLS-1$
+	public static final String PI_AUTHENTICATION_SERVLETS = "org.eclipse.orion.server.authentication"; //$NON-NLS-1$
 
 	private static volatile BundleContext bundleContext;
 

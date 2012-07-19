@@ -99,7 +99,7 @@ public class ManageOpenidsServlet extends HttpServlet {
 			try {
 				openidProviders = OpenIdHelper.getSupportedOpenIdProviders(customOpenids);
 			} catch (JSONException e) {
-				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, "Cannot load openid list, JSON format expected", e)); //$NON-NLS-1$
+				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_AUTHENTICATION_SERVLETS, "Cannot load openid list, JSON format expected", e)); //$NON-NLS-1$
 				openidProviders = OpenIdHelper.getDefaultOpenIdProviders();
 			}
 		}
