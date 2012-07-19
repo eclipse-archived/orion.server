@@ -13,18 +13,22 @@ package org.eclipse.orion.server.authentication.basic;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.Properties;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.orion.server.authentication.Activator;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.authentication.IAuthenticationService;
 import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.User;
-import org.osgi.service.http.*;
+import org.osgi.service.http.HttpService;
+import org.osgi.service.http.NamespaceException;
 
 public class BasicAuthenticationService implements IAuthenticationService {
 
@@ -88,7 +92,7 @@ public class BasicAuthenticationService implements IAuthenticationService {
 
 	private User getUserForCredentials(String login, String password) {
 		if (userAdmin == null) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_SERVER_AUTHENTICATION_BASIC, "User admin server is not available"));
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, "User admin server is not available"));
 			return null;
 		}
 		User user = userAdmin.getUser("login", login); //$NON-NLS-1$
@@ -125,9 +129,9 @@ public class BasicAuthenticationService implements IAuthenticationService {
 			httpService.registerServlet("/basiclogin", //$NON-NLS-1$
 					new BasicAuthenticationServlet(this), null, null);
 		} catch (ServletException e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_SERVER_AUTHENTICATION_BASIC, 1, "An error occured when registering servlets", e));
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, 1, "An error occured when registering servlets", e));
 		} catch (NamespaceException e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_SERVER_AUTHENTICATION_BASIC, 1, "A namespace error occured when registering servlets", e));
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_FORMOPENID_SERVLETS, 1, "A namespace error occured when registering servlets", e));
 		}
 
 	}

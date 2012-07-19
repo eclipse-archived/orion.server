@@ -12,7 +12,11 @@ package org.eclipse.orion.server.tests;
 
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.server.configurator.ConfiguratorActivator;
-import org.osgi.framework.*;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.BundleException;
+import org.osgi.framework.ServiceReference;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.packageadmin.PackageAdmin;
 import org.osgi.util.tracker.ServiceTracker;
@@ -41,7 +45,7 @@ public class ServerTestsActivator implements BundleActivator {
 				ensureBundleStarted(EQUINOX_HTTP_JETTY);
 				ensureBundleStarted(EQUINOX_HTTP_REGISTRY);
 				//get the webide bundle started via lazy activation.
-				org.eclipse.orion.server.authentication.basic.Activator.getDefault();
+				org.eclipse.orion.server.authentication.Activator.getDefault();
 				Activator.getDefault();
 				ConfiguratorActivator.getDefault();
 			} catch (Exception e) {

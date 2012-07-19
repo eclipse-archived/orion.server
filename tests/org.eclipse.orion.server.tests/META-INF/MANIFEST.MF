@@ -14,13 +14,13 @@ Require-Bundle: org.junit;bundle-version="4.8.2",
  org.eclipse.orion.server.servlets;bundle-version="0.1.0",
  org.eclipse.core.filesystem;bundle-version="1.3.100",
  org.eclipse.orion.server.useradmin;bundle-version="0.1.0",
- org.eclipse.orion.server.authentication.basic;bundle-version="0.1.0",
  org.eclipse.test.performance;bundle-version="3.7.0",
  org.eclipse.core.tests.harness;bundle-version="3.7.0",
  org.eclipse.equinox.preferences;bundle-version="3.4.0",
  org.eclipse.osgi;bundle-version="3.7.0",
  org.eclipse.jgit;bundle-version="2.0.0",
- org.eclipse.orion.server.git;bundle-version="0.2.0"
+ org.eclipse.orion.server.git;bundle-version="0.2.0",
+ org.eclipse.orion.server.authentication;bundle-version="0.3.0"
 Bundle-ActivationPolicy: lazy
 Bundle-Activator: org.eclipse.orion.server.tests.ServerTestsActivator
 Import-Package: org.eclipse.equinox.http.jetty;version="1.1.0",

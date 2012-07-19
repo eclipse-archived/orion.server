@@ -8,7 +8,7 @@
  * Contributors:
  * IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.server.authentication.form.core;
+package org.eclipse.orion.server.authentication.form;
 
 import java.io.IOException;
 

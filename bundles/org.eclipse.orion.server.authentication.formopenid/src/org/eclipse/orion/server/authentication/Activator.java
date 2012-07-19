@@ -8,7 +8,7 @@
  * Contributors:
  * IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.server.authentication.formopenid;
+package org.eclipse.orion.server.authentication;
 
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;

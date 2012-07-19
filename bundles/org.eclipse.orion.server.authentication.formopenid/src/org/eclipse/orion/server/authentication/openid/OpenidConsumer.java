@@ -22,7 +22,7 @@ import javax.servlet.http.HttpSession;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.orion.server.authentication.formopenid.Activator;
+import org.eclipse.orion.server.authentication.Activator;
 import org.openid4java.OpenIDException;
 import org.openid4java.consumer.ConsumerException;
 import org.openid4java.consumer.ConsumerManager;

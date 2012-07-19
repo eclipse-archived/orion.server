@@ -42,7 +42,7 @@ public class BasicAuthenticationServlet extends OrionServlet {
 		obj.put("login", uid); //$NON-NLS-1$
 
 		try {
-			User user = authService.userAdmin.getUser(UserConstants.KEY_UID, uid);
+			User user = BasicAuthenticationService.userAdmin.getUser(UserConstants.KEY_UID, uid);
 			if (user == null) {
 				return null;
 			}
