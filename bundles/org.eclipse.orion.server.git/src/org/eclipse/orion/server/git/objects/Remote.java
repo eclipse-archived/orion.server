@@ -36,7 +36,7 @@ public class Remote extends GitObject {
 
 	private static final ResourceShape DEFAULT_RESOURCE_SHAPE_WITHOUT_CHILDREN = new ResourceShape();
 	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
-	{
+	static {
 		Property[] defaultProperties = new Property[] { //
 		new Property(ProtocolConstants.KEY_LOCATION), // super
 				new Property(GitConstants.KEY_CLONE), // super
