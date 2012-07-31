@@ -96,7 +96,7 @@ public abstract class OrionServlet extends HttpServlet {
 
 	/**
 	 * Returns the JSON object that is serialized in the request stream. Returns an
-	 * empty JSON object if the request body is empty.
+	 * empty JSON object if the request body is empty. Never returns null.
 	 */
 	public static JSONObject readJSONRequest(HttpServletRequest request) throws IOException, JSONException {
 		StringWriter writer = new StringWriter();
