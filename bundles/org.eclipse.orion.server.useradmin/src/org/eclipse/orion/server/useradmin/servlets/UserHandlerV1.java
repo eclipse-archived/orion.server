@@ -12,7 +12,6 @@ package org.eclipse.orion.server.useradmin.servlets;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -299,7 +298,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 		json.put("GitMail", userProfile.get("GitMail", null));
 		json.put("GitName", userProfile.get("GitName", null));
-		
+
 		JSONArray plugins = new JSONArray();
 		json.put(UserConstants.KEY_PLUGINS, plugins);
 		return json;

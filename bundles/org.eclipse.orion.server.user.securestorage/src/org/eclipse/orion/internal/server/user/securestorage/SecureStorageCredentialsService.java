@@ -12,40 +12,19 @@ package org.eclipse.orion.internal.server.user.securestorage;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
-
 import javax.crypto.spec.PBEKeySpec;
-
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.equinox.security.storage.ISecurePreferences;
-import org.eclipse.equinox.security.storage.SecurePreferencesFactory;
-import org.eclipse.equinox.security.storage.StorageException;
+import org.eclipse.core.runtime.*;
+import org.eclipse.equinox.security.storage.*;
 import org.eclipse.equinox.security.storage.provider.IProviderHints;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.PreferenceHelper;
-import org.eclipse.orion.server.core.ServerConstants;
-import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.core.resources.Base64Counter;
-import org.eclipse.orion.server.useradmin.EmptyAuthorization;
-import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
-import org.eclipse.orion.server.useradmin.Role;
-import org.eclipse.orion.server.useradmin.User;
-import org.eclipse.orion.server.useradmin.WebIdeAuthorization;
+import org.eclipse.orion.server.useradmin.*;
 import org.eclipse.orion.server.useradmin.servlets.UserServlet;
 import org.eclipse.osgi.service.datalocation.Location;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.InvalidSyntaxException;
-import org.osgi.framework.ServiceReference;
+import org.osgi.framework.*;
 import org.osgi.service.useradmin.Authorization;
 
 /**
@@ -94,7 +73,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 	}
 
 	private void initStorage() {
-		
+
 		//add default roles
 		for (String role : new String[] {"admin", "user", "quest"}) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 			roles.put(role, new Role(role, org.osgi.service.useradmin.Role.ROLE));
@@ -200,7 +179,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 			try {
 				User user = new User(childName, userPrefs.get(USER_LOGIN, childName), userPrefs.get(USER_NAME, ""), userPrefs.get(USER_PASSWORD, null) == null ? null : "" /* don't expose the password */); //$NON-NLS-1$ //$NON-NLS-2$
 				user.setEmail(userPrefs.get(USER_EMAIL, "")); //$NON-NLS-1$
-				if(userPrefs.get(USER_EMAIL_CONFIRMATION, null)!=null)
+				if (userPrefs.get(USER_EMAIL_CONFIRMATION, null) != null)
 					user.setConfirmationId(userPrefs.get(USER_EMAIL_CONFIRMATION, null));
 
 				for (String property : userPrefs.node(USER_PROPERTIES).keys()) {
@@ -231,8 +210,8 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 		} else if (key.equals(USER_UID)) {
 			ISecurePreferences node = findNode(storage, value);
 			return formUser(node);
-		} else if (key.equals(USER_EMAIL)){
-			
+		} else if (key.equals(USER_EMAIL)) {
+
 		}
 		return null;
 	}
@@ -272,9 +251,9 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 
 			User user = new User(node.name(), node.get(USER_LOGIN, node.name()), node.get(USER_NAME, ""), node.get(USER_PASSWORD, null)); //$NON-NLS-1$
 			user.setEmail(node.get(USER_EMAIL, "")); //$NON-NLS-1$
-			if(node.get(USER_EMAIL_CONFIRMATION, null)!=null)
+			if (node.get(USER_EMAIL_CONFIRMATION, null) != null)
 				user.setConfirmationId(node.get(USER_EMAIL_CONFIRMATION, null));
-			
+
 			for (String roleName : node.node(USER_ROLES).childrenNames()) {
 				user.addRole(getRole(roleName));
 			}
@@ -298,7 +277,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 			if (node != null)
 				return null;
 
-			String uid = user.getUid()==null ? nextUserId() : user.getUid();
+			String uid = user.getUid() == null ? nextUserId() : user.getUid();
 
 			return internalCreateOrUpdateUser(storage.node(USERS + '/' + uid), user);
 
@@ -328,21 +307,6 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 			}
 		}
 		return null;
-	}
-	
-	private Set<ISecurePreferences> findNodesByValueIgnoreCase(ISecurePreferences storage, String key, String value) throws StorageException{
-		if (value == null)
-			return null;
-		Set<ISecurePreferences> matchingNodes = new HashSet<ISecurePreferences>();
-		ISecurePreferences usersPref = storage.node(USERS);
-		String[] childrenNames = usersPref.childrenNames();
-		for (int i = 0; i < childrenNames.length; i++) {
-			if (value.equalsIgnoreCase(usersPref.node(childrenNames[i]).get(key, null))) {
-				matchingNodes.add(usersPref.node(childrenNames[i]));
-			}
-			
-		}
-		return matchingNodes;
 	}
 
 	private ISecurePreferences findNode(ISecurePreferences storage, String uid) {
