@@ -191,7 +191,8 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 				} catch (Exception e) {
 					if (!(e instanceof IOException))
 						_context.log("stream", e);
-					proxy_in = http.getErrorStream();
+					if (http != null)
+						proxy_in = http.getErrorStream();
 				}
 			}
 
