@@ -2,28 +2,17 @@ package org.eclipse.orion.server.tests.servlets.site;
 
 import static org.junit.Assert.assertEquals;
 
+import com.meterware.httpunit.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URISyntaxException;
-import java.net.URLEncoder;
-
+import java.net.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import org.json.*;
+import org.junit.*;
 import org.junit.Test;
 import org.xml.sax.SAXException;
-
-import com.meterware.httpunit.GetMethodWebRequest;
-import com.meterware.httpunit.PutMethodWebRequest;
-import com.meterware.httpunit.WebConversation;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 
 /**
  * Basic tests:
@@ -63,7 +52,7 @@ public class HostingTest extends CoreSiteTest {
 		webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 		setUpAuthorization();
-		workspaceResponse = createWorkspace(this.getClass().getName());
+		workspaceResponse = basicCreateWorkspace(this.getClass().getName());
 		workspaceObject = new JSONObject(workspaceResponse.getText());
 		workspaceId = workspaceObject.getString(ProtocolConstants.KEY_ID);
 	}

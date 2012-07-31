@@ -32,8 +32,6 @@ import org.xml.sax.SAXException;
  * 
  */
 public class TransferTest extends FileSystemTest {
-	WebConversation webConversation;
-
 	@BeforeClass
 	public static void setupWorkspace() {
 		initializeWorkspaceLocation();

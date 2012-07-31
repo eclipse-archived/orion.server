@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others 
+ * Copyright (c) 2010, 2012 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -17,8 +17,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.meterware.httpunit.*;
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URI;
+import java.net.*;
 import java.util.List;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
@@ -36,23 +35,71 @@ import org.xml.sax.SAXException;
  * Basic tests for {@link NewFileServlet}.
  */
 public class CoreFilesTest extends FileSystemTest {
-	WebConversation webConversation;
+
+	/**
+	 * Location of the test project within the file servlet namespace.
+	 */
+	private String testProjectBaseLocation;
+
+	/**
+	 * The local file system location of the test project.
+	 */
+	private String testProjectLocalFileLocation;
 
 	@BeforeClass
 	public static void setupWorkspace() {
 		initializeWorkspaceLocation();
 	}
 
-	@After
-	public void removeTempDir() throws CoreException {
-		remove("sample");
-	}
-
 	@Before
-	public void setUp() throws CoreException {
+	public void setUp() throws Exception {
 		webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 		setUpAuthorization();
+		createTestProject();
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		clearWorkspace();
+		remove("sample");
+	}
+
+	/**
+	 * Override to make all URLs relative to the default test project for this class.
+	 */
+	@Override
+	protected String makeAbsolute(String uriString) throws URISyntaxException {
+		return super.makeAbsolute(testProjectBaseLocation + uriString);
+	}
+
+	/**
+	 * Override to make path relative to test project location.
+	 */
+	@Override
+	protected String getTestBaseFileSystemLocation() {
+		return testProjectLocalFileLocation;
+	}
+
+	/**
+	 * Creates a test project with the given name.
+	 * @throws SAXException 
+	 * @throws IOException 
+	 */
+	private void createTestProject() throws Exception {
+		//create workspace
+		String workspaceName = getClass().getName() + "#testProject";
+		URI workspaceLocation = createWorkspace(workspaceName);
+
+		//create a project
+		String projectName = "TestProject";
+		WebRequest request = getCreateProjectRequest(workspaceLocation, projectName, null);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		String workspaceId = new Path(workspaceLocation.getPath()).segment(1);
+		testProjectBaseLocation = "/" + workspaceId + '/' + projectName;
+		JSONObject project = new JSONObject(response.getText());
+		testProjectLocalFileLocation = "/" + project.optString(ProtocolConstants.KEY_ID, null);
 	}
 
 	@Test
@@ -79,7 +126,7 @@ public class CoreFilesTest extends FileSystemTest {
 		createDirectory(directoryPath);
 		createFile(sourcePath, "This is the contents");
 		JSONObject requestObject = new JSONObject();
-		addSourceLocation(requestObject, sourcePath);
+		addSourceLocation(requestObject, testProjectBaseLocation + sourcePath);
 		WebRequest request = getPostFilesRequest(directoryPath, requestObject.toString(), "destination.txt");
 		request.setHeaderField("X-Create-Options", "copy");
 		WebResponse response = webConversation.getResponse(request);

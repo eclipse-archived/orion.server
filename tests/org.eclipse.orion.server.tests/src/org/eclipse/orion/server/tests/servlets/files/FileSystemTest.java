@@ -18,10 +18,10 @@ import static org.junit.Assert.assertTrue;
 
 import com.meterware.httpunit.*;
 import java.io.*;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
+import junit.framework.Assert;
 import org.eclipse.core.filesystem.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.URIUtil;
@@ -32,6 +32,7 @@ import org.eclipse.orion.server.tests.AbstractServerTest;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
 import org.json.*;
+import org.xml.sax.SAXException;
 
 /**
  * Common base class for file system tests.
@@ -44,14 +45,15 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	private static final String RUNTIME_WORKSPACE = "";
 
 	public static final String SERVER_LOCATION = ServerTestsActivator.getServerLocation();
+	protected WebConversation webConversation;
 
-	protected static boolean checkDirectoryExists(String path) throws CoreException {
-		IFileStore dir = EFS.getStore(URI.create(FILESTORE_PREFIX + path));
+	protected boolean checkDirectoryExists(String path) throws CoreException {
+		IFileStore dir = EFS.getStore(URI.create(FILESTORE_PREFIX + getTestBaseFileSystemLocation() + path));
 		return (dir.fetchInfo().exists() && dir.fetchInfo().isDirectory());
 	}
 
-	protected static boolean checkFileExists(String path) throws CoreException {
-		IFileStore file = EFS.getStore(URI.create(FILESTORE_PREFIX + path));
+	protected boolean checkFileExists(String path) throws CoreException {
+		IFileStore file = EFS.getStore(URI.create(FILESTORE_PREFIX + getTestBaseFileSystemLocation() + path));
 		return (file.fetchInfo().exists() && !file.fetchInfo().isDirectory());
 	}
 
@@ -68,10 +70,23 @@ public abstract class FileSystemTest extends AbstractServerTest {
 		workspaceDir.mkdir(EFS.NONE, null);
 	}
 
-	protected static void createDirectory(String path) throws CoreException {
+	/**
+	 * Allows a subclass test to insert a different base location for the file system contents
+	 * of that test. The return value should be an empty string, or a path with leading
+	 * slash and no trailing slash.
+	 */
+	protected String getTestBaseFileSystemLocation() {
+		return "";
+	}
+
+	/**
+	 * Creates a new directory in the server's local file system at the root location for the file servlet.
+	 */
+	protected void createDirectory(String path) throws CoreException {
 		IFileInfo info = null;
 		try {
-			IFileStore dir = EFS.getStore(URIUtil.fromString(FILESTORE_PREFIX + path));
+			String location = FILESTORE_PREFIX + getTestBaseFileSystemLocation() + path;
+			IFileStore dir = EFS.getStore(URIUtil.fromString(location));
 			dir.mkdir(EFS.NONE, null);
 			info = dir.fetchInfo();
 		} catch (URISyntaxException e) {
@@ -89,8 +104,9 @@ public abstract class FileSystemTest extends AbstractServerTest {
 		assertTrue("Coudn't create file " + uri, info.exists() && !info.isDirectory());
 	}
 
-	protected static void createFile(String path, String fileContent) throws CoreException {
-		createFile(URI.create(FILESTORE_PREFIX + path), fileContent);
+	protected void createFile(String path, String fileContent) throws CoreException {
+		String location = FILESTORE_PREFIX + getTestBaseFileSystemLocation() + path;
+		createFile(URI.create(location), fileContent);
 	}
 
 	protected static void initializeWorkspaceLocation() {
@@ -313,6 +329,65 @@ public abstract class FileSystemTest extends AbstractServerTest {
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
+	}
+
+	protected WebRequest getCreateProjectRequest(URI workspaceLocation, String projectName, String projectLocation) throws JSONException, IOException {
+		workspaceLocation = addSchemeHostPort(workspaceLocation);
+		JSONObject body = new JSONObject();
+		if (projectLocation != null)
+			body.put(ProtocolConstants.KEY_CONTENT_LOCATION, projectLocation);
+		InputStream in = IOUtilities.toInputStream(body.toString());
+		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
+		if (projectName != null)
+			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		return request;
+	}
+
+	protected URI addSchemeHostPort(URI uri) {
+		String scheme = uri.getScheme();
+		String host = uri.getHost();
+		int port = uri.getPort();
+		if (scheme == null) {
+			scheme = "http";
+		}
+		if (host == null) {
+			host = "localhost";
+		}
+		if (port == -1) {
+			port = 8080;
+		}
+		try {
+			return new URI(scheme, uri.getUserInfo(), host, port, uri.getPath(), uri.getQuery(), uri.getFragment());
+		} catch (URISyntaxException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * Creates a new workspace, and returns the raw response object.
+	 */
+	protected WebResponse basicCreateWorkspace(String workspaceName) throws IOException, SAXException {
+		WebRequest request = getCreateWorkspaceRequest(workspaceName);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		return response;
+
+	}
+
+	/**
+	 * Creates a new workspace, and returns the URI of the resulting resource.
+	 */
+	protected URI createWorkspace(String workspaceName) throws IOException, SAXException {
+		try {
+			WebResponse response = basicCreateWorkspace(workspaceName);
+			return new URI(response.getHeaderField(ProtocolConstants.HEADER_LOCATION));
+		} catch (URISyntaxException e) {
+			//shouldn't happen
+			Assert.fail("Unexpected URI syntax exception");
+			return null;
+		}
 	}
 
 }

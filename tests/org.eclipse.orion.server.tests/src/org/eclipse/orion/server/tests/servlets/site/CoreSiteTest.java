@@ -33,7 +33,6 @@ import org.xml.sax.SAXException;
 import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.PostMethodWebRequest;
 import com.meterware.httpunit.PutMethodWebRequest;
-import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
 
@@ -44,8 +43,6 @@ public abstract class CoreSiteTest extends FileSystemTest {
 
 	public static final String SITE_SERVLET_LOCATION = "/site" + '/';
 	public static final String SERVER_LOCATION = ServerTestsActivator.getServerLocation();
-
-	WebConversation webConversation;
 
 	/**
 	 * Turns a Java array-of-arrays {{"/foo","/A"},{"/bar","/B"}} into a mappings array 
@@ -80,16 +77,6 @@ public abstract class CoreSiteTest extends FileSystemTest {
 			setAuthentication(request, user, user);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		return response;
-	}
-
-	/**
-	 * Creates workspace and asserts that it was created.
-	 */
-	WebResponse createWorkspace(String workspaceName) throws IOException, SAXException {
-		WebRequest request = getCreateWorkspaceRequest(workspaceName);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		return response;
 	}
 

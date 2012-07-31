@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others 
+ * Copyright (c) 2010, 2012 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -30,13 +30,13 @@ import org.xml.sax.SAXException;
 
 public class AdvancedFilesTest extends FileSystemTest {
 	@Before
-	public void prepereEmptyEnviroment() throws CoreException {
+	public void prepareEmptyEnviroment() throws CoreException {
 		clearWorkspace();
 	}
 
 	@Test
 	public void testGetNonExistingFile() throws IOException, SAXException {
-		WebConversation webConversation = new WebConversation();
+		webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 
 		WebRequest request = getGetFilesRequest("does/not/exists/directory");
@@ -69,7 +69,7 @@ public class AdvancedFilesTest extends FileSystemTest {
 		String fileName = "testMetadataHandling.txt";
 
 		//setup: create a file
-		WebConversation webConversation = new WebConversation();
+		webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 		WebRequest request = getPostFilesRequest("/", getNewFileJSON(fileName).toString(), fileName);
 		WebResponse response = webConversation.getResponse(request);
@@ -102,7 +102,7 @@ public class AdvancedFilesTest extends FileSystemTest {
 		String fileName = "testfile.txt";
 
 		//setup: create a file
-		WebConversation webConversation = new WebConversation();
+		webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 		WebRequest request = getPostFilesRequest("/", getNewFileJSON(fileName).toString(), fileName);
 		WebResponse response = webConversation.getResponse(request);

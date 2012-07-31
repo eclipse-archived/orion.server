@@ -13,37 +13,24 @@ package org.eclipse.orion.server.tests.servlets.git;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 import java.net.HttpURLConnection;
 import java.net.URI;
-
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
-import org.eclipse.jgit.api.PullResult;
-import org.eclipse.jgit.api.RmCommand;
 import org.eclipse.jgit.dircache.DirCache;
 import org.eclipse.jgit.dircache.DirCacheEntry;
-import org.eclipse.jgit.lib.ConfigConstants;
-import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.lib.StoredConfig;
+import org.eclipse.jgit.lib.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.git.objects.Status;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.xml.sax.SAXException;
-
-import com.meterware.httpunit.GetMethodWebRequest;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 
 public class GitStatusTest extends GitTest {
 
@@ -724,32 +711,4 @@ public class GitStatusTest extends GitTest {
 		}
 	}
 
-	/**
-	 * Creates a request to get the status result for the given location.
-	 * @param location Either an absolute URI, or a workspace-relative URI
-	 */
-	static WebRequest getGetGitStatusRequest(String location) {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else if (location.startsWith("/"))
-			requestURI = SERVER_LOCATION + location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Status.RESOURCE + location;
-		WebRequest request = new GetMethodWebRequest(requestURI);
-		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		setAuthentication(request);
-		return request;
-	}
-
-	public static String getCloneUri(String statusUri) throws JSONException, IOException, SAXException, CoreException {
-		assertStatusUri(statusUri);
-		WebRequest request = getGetGitStatusRequest(statusUri);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject status = new JSONObject(response.getText());
-		String cloneUri = status.getString(GitConstants.KEY_CLONE);
-		assertCloneUri(cloneUri);
-		return cloneUri;
-	}
 }
