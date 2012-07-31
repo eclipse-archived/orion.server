@@ -231,8 +231,13 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 				if (propertyValue == null) {
 					continue;
 				}
-
-				if (regExp ? p.matcher(propertyValue).matches() : (ignoreCase ? propertyValue.equalsIgnoreCase(value) : propertyValue.equals(value))) {
+				boolean hasMatch;
+				if (p != null) {
+					hasMatch = p.matcher(propertyValue).matches();
+				} else {
+					hasMatch = ignoreCase ? propertyValue.equalsIgnoreCase(value) : propertyValue.equals(value);
+				}
+				if (hasMatch) {
 					ret.add(formUser(userNode));
 				}
 
