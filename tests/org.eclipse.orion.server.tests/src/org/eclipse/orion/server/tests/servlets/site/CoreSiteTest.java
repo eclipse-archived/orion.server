@@ -115,7 +115,7 @@ public abstract class CoreSiteTest extends FileSystemTest {
 	 * @throws URISyntaxException 
 	 */
 	protected WebRequest getDeleteSiteRequest(String locationUri) throws URISyntaxException {
-		WebRequest request = new DeleteMethodWebRequest(makeAbsolute(locationUri));
+		WebRequest request = new DeleteMethodWebRequest(makeResourceURIAbsolute(locationUri));
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
@@ -128,7 +128,7 @@ public abstract class CoreSiteTest extends FileSystemTest {
 	 * @throws URISyntaxException 
 	 */
 	protected WebRequest getRetrieveSiteRequest(String locationUri, String user) throws URISyntaxException {
-		WebRequest request = new GetMethodWebRequest(makeAbsolute(locationUri));
+		WebRequest request = new GetMethodWebRequest(makeResourceURIAbsolute(locationUri));
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		if (user == null)
 			setAuthentication(request);
@@ -154,7 +154,7 @@ public abstract class CoreSiteTest extends FileSystemTest {
 			json.putOpt(SiteConfigurationConstants.KEY_MAPPINGS, mappings);
 			json.putOpt(SiteConfigurationConstants.KEY_HOST_HINT, hostHint);
 			json.putOpt(SiteConfigurationConstants.KEY_HOSTING_STATUS, hostingStatus);
-			WebRequest request = new PutMethodWebRequest(makeAbsolute(locationUri), IOUtilities.toInputStream(json.toString()), "application/json");
+			WebRequest request = new PutMethodWebRequest(makeResourceURIAbsolute(locationUri), IOUtilities.toInputStream(json.toString()), "application/json");
 			request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 			setAuthentication(request);
 			return request;

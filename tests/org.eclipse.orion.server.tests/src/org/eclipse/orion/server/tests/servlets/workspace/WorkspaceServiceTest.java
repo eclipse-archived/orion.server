@@ -430,7 +430,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		String projectLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 
 		//delete project
-		request = new DeleteMethodWebRequest(makeAbsolute(projectLocation));
+		request = new DeleteMethodWebRequest(makeResourceURIAbsolute(projectLocation));
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		response = webConversation.getResponse(request);

@@ -17,7 +17,8 @@ import static org.junit.Assert.assertTrue;
 
 import com.meterware.httpunit.*;
 import java.io.IOException;
-import java.net.*;
+import java.net.HttpURLConnection;
+import java.net.URI;
 import java.util.List;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
@@ -66,19 +67,19 @@ public class CoreFilesTest extends FileSystemTest {
 	}
 
 	/**
-	 * Override to make all URLs relative to the default test project for this class.
+	 * Override to make path relative to test project location.
 	 */
 	@Override
-	protected String makeAbsolute(String uriString) throws URISyntaxException {
-		return super.makeAbsolute(testProjectBaseLocation + uriString);
+	protected String getTestBaseFileSystemLocation() {
+		return testProjectLocalFileLocation;
 	}
 
 	/**
 	 * Override to make path relative to test project location.
 	 */
 	@Override
-	protected String getTestBaseFileSystemLocation() {
-		return testProjectLocalFileLocation;
+	protected String getTestBaseResourceURILocation() {
+		return testProjectBaseLocation;
 	}
 
 	/**
@@ -149,7 +150,7 @@ public class CoreFilesTest extends FileSystemTest {
 
 		//with no-overwrite, copy should fail
 		JSONObject requestObject = new JSONObject();
-		addSourceLocation(requestObject, sourcePath);
+		addSourceLocation(requestObject, testProjectBaseLocation + sourcePath);
 		WebRequest request = getPostFilesRequest(directoryPath, requestObject.toString(), "destination.txt");
 		request.setHeaderField("X-Create-Options", "copy,no-overwrite");
 		WebResponse response = webConversation.getResponse(request);
