@@ -23,8 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 import junit.framework.Assert;
 import org.eclipse.core.filesystem.*;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -41,8 +41,6 @@ public abstract class FileSystemTest extends AbstractServerTest {
 
 	public static final String FILE_SERVLET_LOCATION = Activator.LOCATION_FILE_SERVLET + '/';
 	private static String FILESTORE_PREFIX;
-	//workspace or any files prefix, please follow with '/' if not empty.
-	private static final String RUNTIME_WORKSPACE = "";
 
 	public static final String SERVER_LOCATION = ServerTestsActivator.getServerLocation();
 	protected WebConversation webConversation;
@@ -115,7 +113,12 @@ public abstract class FileSystemTest extends AbstractServerTest {
 
 	protected URI makeLocalPathAbsolute(String path) {
 		String absolutePath = new Path(FILESTORE_PREFIX).append(getTestBaseFileSystemLocation()).append(path).toString();
-		return URI.create(absolutePath);
+		try {
+			return URIUtil.fromString(absolutePath);
+		} catch (URISyntaxException e) {
+			fail(e.getMessage());
+			return null;
+		}
 	}
 
 	protected static void initializeWorkspaceLocation() {
@@ -223,16 +226,10 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	}
 
 	protected WebRequest getDeleteFilesRequest(String uri) {
-		try {
-			WebRequest request = new DeleteMethodWebRequest(makeResourceURIAbsolute(uri));
-			request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-			setAuthentication(request);
-			return request;
-		} catch (URISyntaxException e) {
-			fail(e.getMessage());
-		}
-		//can never get here
-		return null;
+		WebRequest request = new DeleteMethodWebRequest(makeResourceURIAbsolute(uri));
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		return request;
 	}
 
 	protected List<JSONObject> getDirectoryChildren(JSONObject dirObject) throws JSONException {
@@ -254,13 +251,7 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	 * @param location Either an absolute URI, or a workspace-relative URI
 	 */
 	protected WebRequest getGetFilesRequest(String location) {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else if (location.startsWith("/"))
-			requestURI = SERVER_LOCATION + location;
-		else
-			requestURI = SERVER_LOCATION + FILE_SERVLET_LOCATION + RUNTIME_WORKSPACE + location;
+		String requestURI = makeResourceURIAbsolute(location);
 		WebRequest request = new GetMethodWebRequest(requestURI);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
@@ -292,8 +283,6 @@ public abstract class FileSystemTest extends AbstractServerTest {
 			return request;
 		} catch (UnsupportedEncodingException e) {
 			fail(e.getMessage());
-		} catch (URISyntaxException e) {
-			fail(e.getMessage());
 		}
 		//can never get here
 		return null;
@@ -307,8 +296,6 @@ public abstract class FileSystemTest extends AbstractServerTest {
 			return request;
 		} catch (UnsupportedEncodingException e) {
 			fail(e.getMessage());
-		} catch (URISyntaxException e) {
-			fail(e.getMessage());
 		}
 		//can never get here
 		return null;
@@ -317,19 +304,27 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	/**
 	 * Makes a URI absolute. If the provided URI is relative, it is assumed to be relative to the workspace location (file servlet location).
 	 * If the provided URI is already absolute it is returned as-is
-	 * @throws URISyntaxException 
 	 */
-	protected String makeResourceURIAbsolute(String uriString) throws URISyntaxException {
-		URI uri = new URI(uriString);
-		if (uri.isAbsolute())
-			return uriString;
-		if (uriString.startsWith(FILE_SERVLET_LOCATION))
-			return new URI(SERVER_LOCATION + uriString).toString();
-		//avoid double slash
-		if (uriString.startsWith("/"))
-			uriString = uriString.substring(1);
-		String path = new Path(FILE_SERVLET_LOCATION).append(getTestBaseResourceURILocation()).append(uriString).toString();
-		return new URI(SERVER_LOCATION + path).toString();
+	protected String makeResourceURIAbsolute(String uriString) {
+		try {
+			URI uri = new URI(uriString);
+			if (uri.isAbsolute())
+				return uriString;
+		} catch (URISyntaxException e) {
+			//unencoded string - fall through
+		}
+		try {
+			if (uriString.startsWith(FILE_SERVLET_LOCATION))
+				return URIUtil.fromString(SERVER_LOCATION + uriString).toString();
+			//avoid double slash
+			if (uriString.startsWith("/"))
+				uriString = uriString.substring(1);
+			String path = new Path(FILE_SERVLET_LOCATION).append(getTestBaseResourceURILocation()).append(uriString).toString();
+			return URIUtil.fromString(SERVER_LOCATION + path).toString();
+		} catch (URISyntaxException e) {
+			fail(e.getMessage());
+			return null;
+		}
 	}
 
 	protected WebRequest getCreateWorkspaceRequest(String workspaceName) {

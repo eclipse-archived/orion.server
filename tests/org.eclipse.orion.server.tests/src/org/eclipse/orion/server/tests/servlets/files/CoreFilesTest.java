@@ -127,7 +127,7 @@ public class CoreFilesTest extends FileSystemTest {
 		createDirectory(directoryPath);
 		createFile(sourcePath, "This is the contents");
 		JSONObject requestObject = new JSONObject();
-		addSourceLocation(requestObject, testProjectBaseLocation + sourcePath);
+		addSourceLocation(requestObject, sourcePath);
 		WebRequest request = getPostFilesRequest(directoryPath, requestObject.toString(), "destination.txt");
 		request.setHeaderField("X-Create-Options", "copy");
 		WebResponse response = webConversation.getResponse(request);
@@ -150,7 +150,7 @@ public class CoreFilesTest extends FileSystemTest {
 
 		//with no-overwrite, copy should fail
 		JSONObject requestObject = new JSONObject();
-		addSourceLocation(requestObject, testProjectBaseLocation + sourcePath);
+		addSourceLocation(requestObject, sourcePath);
 		WebRequest request = getPostFilesRequest(directoryPath, requestObject.toString(), "destination.txt");
 		request.setHeaderField("X-Create-Options", "copy,no-overwrite");
 		WebResponse response = webConversation.getResponse(request);
@@ -471,7 +471,7 @@ public class CoreFilesTest extends FileSystemTest {
 
 		createDirectory(dirPath);
 		createFile(filePath, "Sample file content");
-		String requestURI = SERVER_LOCATION + FILE_SERVLET_LOCATION + filePath;
+		String requestURI = makeResourceURIAbsolute(filePath);
 		WebRequest get = new GetMethodWebRequest(requestURI);
 		setAuthentication(get);
 		WebResponse response = webConversation.getResource(get);
@@ -538,7 +538,7 @@ public class CoreFilesTest extends FileSystemTest {
 	}
 
 	private void addSourceLocation(JSONObject requestObject, String sourcePath) throws JSONException {
-		requestObject.put("Location", new Path(FileSystemTest.FILE_SERVLET_LOCATION).append(sourcePath));
+		requestObject.put("Location", makeResourceURIAbsolute(sourcePath));
 	}
 
 	@Test
@@ -631,7 +631,7 @@ public class CoreFilesTest extends FileSystemTest {
 
 		JSONArray parents = result.optJSONArray(ProtocolConstants.KEY_PARENTS);
 		assertNotNull(parents);
-		assertEquals(3, parents.length());
+		assertEquals(4, parents.length());
 		IPath parentPath = new Path(directoryPath);
 		//immediate parent
 		JSONObject parent = parents.getJSONObject(0);
