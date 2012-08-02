@@ -74,7 +74,7 @@ public class Indexer extends Job {
 					IFileInfo info = child.fetchInfo();
 					if (info.isDirectory())
 						collectFiles(child, files);
-					else if (!skip(info))
+					else
 						files.add(child);
 				}
 			}
@@ -159,7 +159,9 @@ public class Indexer extends Job {
 			if (projectName == null)
 				continue;
 			doc.addField(ProtocolConstants.KEY_PATH, new Path(projectName).append(projectRelativePath));
-			doc.addField("Text", getContentsAsString(file)); //$NON-NLS-1$
+			//don't index body of non-text files
+			if (!skip(fileInfo))
+				doc.addField("Text", getContentsAsString(file)); //$NON-NLS-1$
 			if (users != null)
 				for (String user : users)
 					doc.addField(ProtocolConstants.KEY_USER_NAME, user);
