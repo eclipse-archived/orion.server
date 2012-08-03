@@ -43,7 +43,39 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	private static String FILESTORE_PREFIX;
 
 	public static final String SERVER_LOCATION = ServerTestsActivator.getServerLocation();
+
+	/**
+	 * Location of the test project within the file servlet namespace.
+	 */
+	private String testProjectBaseLocation = "";
+
+	/**
+	 * The local file system location of the test project.
+	 */
+	private String testProjectLocalFileLocation = "";
+
 	protected WebConversation webConversation;
+
+	/**
+	 * Creates a test project with the given name.
+	 * @throws SAXException 
+	 * @throws IOException 
+	 */
+	protected void createTestProject(String name) throws Exception {
+		//create workspace
+		String workspaceName = getClass().getName() + "#" + name;
+		URI workspaceLocation = createWorkspace(workspaceName);
+
+		//create a project
+		String projectName = name + "Project";
+		WebRequest request = getCreateProjectRequest(workspaceLocation, projectName, null);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		String workspaceId = new Path(workspaceLocation.getPath()).segment(1);
+		testProjectBaseLocation = "/" + workspaceId + '/' + projectName;
+		JSONObject project = new JSONObject(response.getText());
+		testProjectLocalFileLocation = "/" + project.optString(ProtocolConstants.KEY_ID, null);
+	}
 
 	protected boolean checkDirectoryExists(String path) throws CoreException {
 		IFileStore dir = EFS.getStore(makeLocalPathAbsolute(path));
@@ -74,7 +106,7 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	 * slash and no trailing slash.
 	 */
 	protected String getTestBaseFileSystemLocation() {
-		return "";
+		return testProjectLocalFileLocation;
 	}
 
 	/**
@@ -83,7 +115,7 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	 * slash and no trailing slash.
 	 */
 	protected String getTestBaseResourceURILocation() {
-		return "";
+		return testProjectBaseLocation;
 	}
 
 	/**
