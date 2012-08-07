@@ -10,9 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.io.*;
+import java.net.*;
 import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -39,6 +38,7 @@ import org.eclipse.orion.server.git.jobs.LogJob;
 import org.eclipse.orion.server.git.objects.Commit;
 import org.eclipse.orion.server.git.objects.Log;
 import org.eclipse.orion.server.servlets.OrionServlet;
+import org.eclipse.orion.server.useradmin.*;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -48,7 +48,47 @@ import org.json.JSONObject;
  */
 public class GitCommitHandlerV1 extends AbstractGitHandler {
 
+	private final static String EMAIL_PULL_REQUEST_FILE = "/emails/EmailPullRequestNotification.txt"; //$NON-NLS-1$
+	private final static String EMAIL_COMMITER_NAME = "<COMMITER_NAME>";
+	private final static String EMAIL_COMMIT_MESSAGE = "<COMMIT_MESSAGE>";
+	private static final String EMAIL_URL_LINK = "<URL>"; //$NON-NLS-1$
+
 	private final static int PAGE_SIZE = 50;
+
+	private EmailContent pullRequestEmail;
+
+	public class EmailContent {
+		private String title;
+		private String content;
+
+		public String getTitle() {
+			return title;
+		}
+
+		public String getContent() {
+			return content;
+		}
+
+		public EmailContent(String fileName) throws URISyntaxException, IOException {
+			URL entry = GitActivator.getDefault().getBundleContext().getBundle().getEntry(fileName);
+			if (entry == null)
+				throw new IOException("File not found: " + fileName);
+			BufferedReader reader = new BufferedReader(new InputStreamReader(entry.openStream()));
+			String line = null;
+			try {
+				title = reader.readLine();
+				StringBuilder stringBuilder = new StringBuilder();
+				String ls = System.getProperty("line.separator");
+				while ((line = reader.readLine()) != null) {
+					stringBuilder.append(line);
+					stringBuilder.append(ls);
+				}
+				content = stringBuilder.toString();
+			} finally {
+				reader.close();
+			}
+		}
+	};
 
 	GitCommitHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
 		super(statusHandler);
@@ -238,6 +278,15 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			if (newCommit != null)
 				return identifyNewCommitResource(request, response, db, newCommit);
 
+			String pullReqLogin = requestObject.optString(GitConstants.KEY_PULL_REQ_NOTIFY_LOGIN);
+			if (pullReqLogin != null && pullReqLogin.length() != 0) {
+				String pullReqUrl = requestObject.optString(GitConstants.KEY_PULL_REQ_URL);
+				String pullReqCommit = requestObject.optString(GitConstants.KEY_PULL_REQ_COMMIT);
+				String pullReqAuthorName = requestObject.optString(GitConstants.KEY_PULL_REQ_AUTHOR_NAME);
+				String pullReqMessage = requestObject.optString(GitConstants.KEY_PULL_REQ_MESSAGE);
+				return sendNotification(request, response, db, pullReqLogin, pullReqCommit, pullReqUrl, pullReqAuthorName, pullReqMessage);
+			}
+
 			ObjectId refId = db.resolve(gitSegment);
 			if (refId == null || !Constants.HEAD.equals(gitSegment)) {
 				String msg = NLS.bind("Commit failed. Ref must be HEAD and is {0}", gitSegment);
@@ -406,6 +455,32 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			revWalk.release();
 		}
 	}
+
+	@SuppressWarnings({"restriction"})
+	private boolean sendNotification(HttpServletRequest request, HttpServletResponse response, Repository db, String login, String commit, String url, String authorName, String message) throws ServletException, URISyntaxException, IOException, JSONException, CoreException, Exception {
+		UserEmailUtil util = UserEmailUtil.getUtil();
+		if (!util.isEmailConfigured()) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Smpt server not configured", null));
+		}
+		IOrionCredentialsService userAdmin = UserServiceHelper.getDefault().getUserStore();
+		User user = (User) userAdmin.getUser(UserConstants.KEY_LOGIN, login);
+		try {
+			if (pullRequestEmail == null) {
+				pullRequestEmail = new EmailContent(EMAIL_PULL_REQUEST_FILE);
+			}
+
+			String emailAdress = user.getEmail();
+
+			util.sendEmail(pullRequestEmail.getTitle(), pullRequestEmail.getContent().replaceAll(EMAIL_COMMITER_NAME, authorName).replaceAll(EMAIL_URL_LINK, url).replaceAll(EMAIL_COMMIT_MESSAGE, message), emailAdress);
+
+			JSONObject result = new JSONObject();
+			result.put(GitConstants.KEY_RESULT, "Email sent");
+			OrionServlet.writeJSONResponse(request, response, result);
+			return true;
+		} catch (Exception e) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "User doesn't exist", null));
+		}
+	};
 
 	@Override
 	protected boolean handlePut(RequestInfo requestInfo) throws ServletException {
