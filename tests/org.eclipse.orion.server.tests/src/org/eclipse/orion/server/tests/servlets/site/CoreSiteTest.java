@@ -44,6 +44,7 @@ public abstract class CoreSiteTest extends FileSystemTest {
 
 	public static final String SITE_SERVLET_LOCATION = "/site" + '/';
 	public static final String SERVER_LOCATION = ServerTestsActivator.getServerLocation();
+	public static final String SITE_CONFIG_PREF_NODE = "SiteConfigurations";
 
 	WebConversation webConversation;
 

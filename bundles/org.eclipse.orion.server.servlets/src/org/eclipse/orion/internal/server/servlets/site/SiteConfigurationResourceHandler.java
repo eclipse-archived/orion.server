@@ -138,16 +138,9 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 		} catch (CoreException e) {
 			// If starting it failed, try to clean up
 			if (site != null) {
-				// Remove site config from user's list
+				// Remove site config
 				WebUser user = WebUser.fromUserName(getUserName(req));
 				user.removeSiteConfiguration(site);
-
-				// Also delete the site configuration itself since it can never be used
-				try {
-					site.delete();
-				} catch (CoreException deleteException) {
-					// Ignore
-				}
 			}
 			throw e;
 		}
