@@ -196,6 +196,15 @@ public class SiteTest extends CoreSiteTest {
 
 		assertEquals(false, sites.nodeExists(siteId));
 		assertEquals(false, userSites.nodeExists(siteId));
+
+		// GET all sites should not include the deleted site
+		WebRequest getAllReq = getRetrieveAllSitesRequest(null);
+		WebResponse getAllResp = webConversation.getResponse(getAllReq);
+		JSONObject allSitesJson = new JSONObject(getAllResp.getText());
+		JSONArray allSites = allSitesJson.getJSONArray(SiteConfigurationConstants.KEY_SITE_CONFIGURATIONS);
+		for (int i = 0; i < allSites.length(); i++) {
+			assertEquals(false, allSites.getJSONObject(i).getString(ProtocolConstants.KEY_ID).equals(siteId));
+		}
 	}
 
 	@Test

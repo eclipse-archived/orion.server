@@ -151,6 +151,16 @@ public abstract class CoreSiteTest extends FileSystemTest {
 		return request;
 	}
 
+	protected WebRequest getRetrieveAllSitesRequest(String user) throws URISyntaxException {
+		WebRequest request = new GetMethodWebRequest(makeAbsolute(SERVER_LOCATION + SITE_SERVLET_LOCATION));
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		if (user == null)
+			setAuthentication(request);
+		else
+			setAuthentication(request, user, user);
+		return request;
+	}
+
 	/**
 	 * Returns a request that can update a site.
 	 * @param name
