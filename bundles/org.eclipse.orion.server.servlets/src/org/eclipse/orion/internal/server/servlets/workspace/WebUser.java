@@ -148,8 +148,10 @@ public class WebUser extends WebElement {
 			for (String id : siteConfigIds) {
 				// Get the actual site configuration this points to
 				SiteConfiguration siteConfig = getExistingSiteConfiguration(id);
-				JSONObject siteConfigJson = SiteConfigurationResourceHandler.toJSON(siteConfig, baseLocation);
-				jsonArray.put(siteConfigJson);
+				if (siteConfig != null) {
+					JSONObject siteConfigJson = SiteConfigurationResourceHandler.toJSON(siteConfig, baseLocation);
+					jsonArray.put(siteConfigJson);
+				}
 			}
 			return jsonArray;
 		} catch (BackingStoreException e) {
