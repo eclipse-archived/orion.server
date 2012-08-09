@@ -43,7 +43,8 @@ public class GitUtilsTest extends GitTest {
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		URI uri = URI.create(location);
-		assertNull(GitUtils.getGitDir(new Path(uri.getPath())));
+		File dir = GitUtils.getGitDir(new Path(uri.getPath()));
+		assertNull(dir == null ? "N/A" : dir.toURL().toString(), dir);
 	}
 
 	@Test
@@ -75,7 +76,8 @@ public class GitUtilsTest extends GitTest {
 
 	@Test
 	public void testGitDirEmptyPath() throws Exception {
-		assertNull(GitUtils.getGitDir(new Path("")));
+		File emptyPathFile = GitUtils.getGitDir(new Path(""));
+		assertNull(emptyPathFile == null ? "N/A" : emptyPathFile.toURL().toString(), emptyPathFile);
 	}
 
 	@Test
