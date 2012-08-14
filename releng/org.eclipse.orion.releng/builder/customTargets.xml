@@ -223,6 +223,7 @@ lastMapTag=${mapsTagTag}
 		<optimize pageDir="git" name="git-commit" bundle="org.eclipse.orion.client.git" />
 		<optimize pageDir="profile" name="user-list" bundle="org.eclipse.orion.client.users" />
 		<optimize pageDir="profile" name="user-profile" bundle="org.eclipse.orion.client.users" />
+		<optimize pageDir="profile" name="userservicePlugin" bundle="org.eclipse.orion.client.users" />
 
 		<java classname="org.mozilla.javascript.tools.shell.Main">
 			<classpath>
