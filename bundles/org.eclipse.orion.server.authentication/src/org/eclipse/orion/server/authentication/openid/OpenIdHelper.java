@@ -26,7 +26,9 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.authentication.Activator;
+import org.eclipse.orion.server.authentication.formopenid.OpenIdConstants;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
@@ -277,17 +279,17 @@ public class OpenIdHelper {
 
 	private static OpendIdProviderDescription getOpenidProviderFromJson(JSONObject json) throws JSONException {
 		OpendIdProviderDescription provider = new OpendIdProviderDescription();
-		String url = json.getString("url");
+		String url = json.getString(OpenIdConstants.KEY_URL);
 		provider.setAuthSite(url);
 
 		try {
-			String name = json.getString("name");
+			String name = json.getString(ProtocolConstants.KEY_NAME);
 			provider.setName(name);
 		} catch (JSONException e) {
 			// ignore, Name is not mandatory
 		}
 		try {
-			String image = json.getString("image");
+			String image = json.getString(OpenIdConstants.KEY_IMAGE);
 			provider.setImage(image);
 		} catch (JSONException e) {
 			// ignore, Image is not mandatory

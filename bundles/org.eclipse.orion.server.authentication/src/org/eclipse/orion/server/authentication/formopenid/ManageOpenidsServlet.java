@@ -23,6 +23,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.authentication.Activator;
 import org.eclipse.orion.server.authentication.openid.OpenIdException;
 import org.eclipse.orion.server.authentication.openid.OpenIdHelper;
@@ -30,7 +31,9 @@ import org.eclipse.orion.server.authentication.openid.OpendIdProviderDescription
 import org.eclipse.orion.server.authentication.openid.OpenidConsumer;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.resources.Base64;
+import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 public class ManageOpenidsServlet extends HttpServlet {
 
@@ -128,27 +131,22 @@ public class ManageOpenidsServlet extends HttpServlet {
 			return;
 		}
 
-		response.setContentType("text/html"); //$NON-NLS-1$
-		PrintWriter writer = response.getWriter();
-		writer.println("<!DOCTYPE html>"); //$NON-NLS-1$
-		writer.println("<html>"); //$NON-NLS-1$
-		writer.println("<head>"); //$NON-NLS-1$
-		writer.println("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">"); //$NON-NLS-1$
-		writer.println("<script type=\"text/javascript\""); //$NON-NLS-1$
-		writer.println("src=\"../org.dojotoolkit/dojo/dojo.js\"></script>"); //$NON-NLS-1$
-		writer.println("<link rel=\"stylesheet\" type=\"text/css\" href=\"../mixloginstatic/css/manageOpenids.css\" />"); //$NON-NLS-1$
-		writer.println("<script type=\"text/javascript\" src=\"../mixloginstatic/js/manageOpenids.js\"></script>"); //$NON-NLS-1$
-		writer.println("</head>"); //$NON-NLS-1$
-		writer.println("<body>"); //$NON-NLS-1$
-		writer.println("<div id=\"newOpenId\"><h2 style=\"margin-top: 10px; margin-bottom: 10px; float: left; margin-right: 5px;\" id=\"addExternalAccount\">Add external account: <h2>");
+		JSONArray providersJson = new JSONArray();
 		for (OpendIdProviderDescription provider : getSupportedOpenids(req)) {
-			writer.print(provider.toJsImage().replaceAll("\\\\'", "'"));
+			JSONObject providerJson = new JSONObject();
+			try {
+				providerJson.put(ProtocolConstants.KEY_NAME, provider.getName());
+				providerJson.put(OpenIdConstants.KEY_IMAGE, provider.getImage());
+				providerJson.put(OpenIdConstants.KEY_URL, provider.getAuthSite());
+				providersJson.put(providerJson);
+			} catch (JSONException e) {
+				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_AUTHENTICATION_SERVLETS, "Exception writing OpenId provider " + provider.getName(), e)); //$NON-NLS-1$
+			}
 		}
-		writer.println("</div>");
-		writer.println("<div id=\"openidList\"></div>"); //$NON-NLS-1$
-		writer.println("</body>"); //$NON-NLS-1$
-		writer.println("</html>"); //$NON-NLS-1$
 
+		response.setContentType("application/json"); //$NON-NLS-1$
+		PrintWriter writer = response.getWriter();
+		writer.append(providersJson.toString());
 		writer.flush();
 	}
 
