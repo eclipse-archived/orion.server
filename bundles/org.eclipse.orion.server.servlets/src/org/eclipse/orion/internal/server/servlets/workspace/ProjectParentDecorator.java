@@ -77,8 +77,8 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 		if (resourcePath.segmentCount() == 3) {
 			WebWorkspace workspace = WebWorkspace.fromId(resourcePath.segment(1));
 			WebProject project = workspace.getProjectByName(resourcePath.segment(2));
-			URI uri = resource.resolve(resourcePath.toString());
 			try {
+				URI uri = resource.resolve(new URI(null, resourcePath.toString(), null));
 				addParent(parents, project.getName(), new URI(null, null, null, -1, uri.getPath(), uri.getQuery(), uri.getFragment()));
 			} catch (URISyntaxException e) {
 				//ignore this project
