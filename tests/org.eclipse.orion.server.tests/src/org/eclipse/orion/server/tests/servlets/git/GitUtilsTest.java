@@ -26,6 +26,8 @@ import java.util.Set;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.jgit.api.InitCommand;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
@@ -43,7 +45,8 @@ public class GitUtilsTest extends GitTest {
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		URI uri = URI.create(location);
-		assertNull(GitUtils.getGitDir(new Path(uri.getPath())));
+		File dir = GitUtils.getGitDir(new Path(uri.getPath()));
+		assertNull(dir == null ? "N/A" : dir.toURL().toString(), dir);
 	}
 
 	@Test
@@ -75,7 +78,40 @@ public class GitUtilsTest extends GitTest {
 
 	@Test
 	public void testGitDirEmptyPath() throws Exception {
-		assertNull(GitUtils.getGitDir(new Path("")));
+		File emptyPathFile = GitUtils.getGitDir(new Path(""));
+		assertNull(emptyPathFile == null ? "N/A" : emptyPathFile.toURL().toString(), emptyPathFile);
+	}
+
+	private boolean deleteDir(File dir) {
+		if (dir.isDirectory()) {
+			String[] children = dir.list();
+			for (int i = 0; i < children.length; i++) {
+				boolean success = deleteDir(new File(dir, children[i]));
+				if (!success) {
+					return false;
+				}
+			}
+		}
+
+		// The directory is now empty so delete it
+		return dir.delete();
+	}
+
+	@Test
+	public void testGetGitDirWorkspaceIsInRepo() throws Exception {
+		InitCommand command = new InitCommand();
+		File workspace = getWorkspaceRoot();
+		File parent = workspace.getParentFile();
+		command.setDirectory(parent);
+		Repository repository = command.call().getRepository();
+		assertNotNull(repository);
+		testGitDirPathNoGit();
+		File[] parentChildren = parent.listFiles();
+		for (int i = 0; i < parentChildren.length; i++) {
+			if (parentChildren[i].getName().equals(".git")) {
+				assertTrue(deleteDir(parentChildren[i]));
+			}
+		}
 	}
 
 	@Test

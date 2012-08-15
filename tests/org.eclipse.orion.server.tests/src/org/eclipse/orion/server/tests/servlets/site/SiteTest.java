@@ -7,11 +7,14 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
+import org.eclipse.orion.server.core.users.OrionScope;
 import org.json.*;
 import org.junit.*;
 import org.junit.Test;
+import org.osgi.service.prefs.BackingStoreException;
 import org.xml.sax.SAXException;
 
 /**
@@ -158,13 +161,21 @@ public class SiteTest extends CoreSiteTest {
 	/**
 	 * Create a site, then delete it and make sure it's gone.
 	 */
-	public void testDeleteSite() throws SAXException, JSONException, IOException, URISyntaxException {
+	public void testDeleteSite() throws SAXException, JSONException, IOException, URISyntaxException, BackingStoreException {
 		// Create site
 		final String name = "A site to delete";
 		final String workspaceId = workspaceObject.getString(ProtocolConstants.KEY_ID);
 		WebResponse createResp = createSite(name, workspaceId, null, null, null);
 		JSONObject site = new JSONObject(createResp.getText());
+		final String siteId = site.getString(ProtocolConstants.KEY_ID);
 		final String location = site.getString(ProtocolConstants.HEADER_LOCATION);
+
+		OrionScope prefs = new OrionScope();
+		IEclipsePreferences userSites = prefs.getNode("Users" + "/" + testUserId + "/" + SITE_CONFIG_PREF_NODE);
+		IEclipsePreferences sites = prefs.getNode(SITE_CONFIG_PREF_NODE);
+
+		assertEquals(true, sites.nodeExists(siteId));
+		assertEquals(true, userSites.nodeExists(siteId));
 
 		// Delete site
 		WebRequest deleteReq = getDeleteSiteRequest(location);
@@ -175,6 +186,18 @@ public class SiteTest extends CoreSiteTest {
 		WebRequest getReq = getRetrieveSiteRequest(location, null);
 		WebResponse getResp = webConversation.getResponse(getReq);
 		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, getResp.getResponseCode());
+
+		assertEquals(false, sites.nodeExists(siteId));
+		assertEquals(false, userSites.nodeExists(siteId));
+
+		// GET all sites should not include the deleted site
+		WebRequest getAllReq = getRetrieveAllSitesRequest(null);
+		WebResponse getAllResp = webConversation.getResponse(getAllReq);
+		JSONObject allSitesJson = new JSONObject(getAllResp.getText());
+		JSONArray allSites = allSitesJson.getJSONArray(SiteConfigurationConstants.KEY_SITE_CONFIGURATIONS);
+		for (int i = 0; i < allSites.length(); i++) {
+			assertEquals(false, allSites.getJSONObject(i).getString(ProtocolConstants.KEY_ID).equals(siteId));
+		}
 	}
 
 	@Test

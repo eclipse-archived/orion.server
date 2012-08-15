@@ -90,7 +90,8 @@ public class GitUtils {
 
 	private static void getGitDirsInParents(File file, Map<IPath, File> gitDirs) {
 		int levelUp = 0;
-		while (file != null) {
+		File workspaceRoot = org.eclipse.orion.internal.server.servlets.Activator.getDefault().getPlatformLocation().toFile();
+		while (file != null && !file.getAbsolutePath().equals(workspaceRoot.getAbsolutePath())) {
 			if (file.exists()) {
 				if (RepositoryCache.FileKey.isGitRepository(file, FS.DETECTED)) {
 					gitDirs.put(getPathForLevelUp(levelUp), file);

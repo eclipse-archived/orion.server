@@ -72,10 +72,9 @@ public class SiteConfiguration extends WebElement {
 	}
 
 	/**
-	 * Removes this site configuration from the backing store. Should only be used when this 
-	 * site configuration will never be used (for example, in response to errors during creation).
+	 * Removes this site configuration from the backing store.
 	 */
-	void delete() throws CoreException {
+	public void delete() throws CoreException {
 		try {
 			IEclipsePreferences parent = (IEclipsePreferences) store.parent();
 			store.removeNode();

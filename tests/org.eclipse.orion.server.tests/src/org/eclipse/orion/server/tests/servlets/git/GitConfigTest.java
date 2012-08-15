@@ -601,7 +601,7 @@ public class GitConfigTest extends GitTest {
 		// get value of config entry
 		WebRequest request = getGetGitConfigRequest(entryLocation);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
+		assertEquals(response.getResponseMessage(), HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 	}
 
 	@Test

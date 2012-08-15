@@ -118,6 +118,10 @@ public abstract class FileSystemTest extends AbstractServerTest {
 		return testProjectBaseLocation;
 	}
 
+	protected static File getWorkspaceRoot() throws CoreException {
+		return EFS.getStore(URI.create(FILESTORE_PREFIX)).toLocalFile(EFS.NONE, null);
+	}
+
 	/**
 	 * Creates a new directory in the server's local file system at the root location for the file servlet.
 	 */

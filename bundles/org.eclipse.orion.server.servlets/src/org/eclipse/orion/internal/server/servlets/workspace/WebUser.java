@@ -127,8 +127,10 @@ public class WebUser extends WebElement {
 
 	public void removeSiteConfiguration(SiteConfiguration siteConfig) throws CoreException {
 		try {
-			// Remove this user's record of the site configuration.
+			// Remove this user's pointer to the site configuration.
 			getSiteConfigurationsNode().node(siteConfig.getId()).removeNode();
+			// Delete the site configuration from the backing store
+			siteConfig.delete();
 		} catch (BackingStoreException e) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "Error removing site configuration", e));
 		}
@@ -146,8 +148,10 @@ public class WebUser extends WebElement {
 			for (String id : siteConfigIds) {
 				// Get the actual site configuration this points to
 				SiteConfiguration siteConfig = getExistingSiteConfiguration(id);
-				JSONObject siteConfigJson = SiteConfigurationResourceHandler.toJSON(siteConfig, baseLocation);
-				jsonArray.put(siteConfigJson);
+				if (siteConfig != null) {
+					JSONObject siteConfigJson = SiteConfigurationResourceHandler.toJSON(siteConfig, baseLocation);
+					jsonArray.put(siteConfigJson);
+				}
 			}
 			return jsonArray;
 		} catch (BackingStoreException e) {

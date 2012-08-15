@@ -1,5 +1,5 @@
 [
-{name: "Google", url: "https://www.google.com/accounts/o8/id", image: "../openids/google.png"},
-{name: "Yahoo!", url: "http://me.yahoo.com", image: "../openids/yahoo-logo.png"},
-{name: "myOpenID", url: "http://myopenid.com", image: "../openids/myopenid-logo.png"}
+{Name: "Google", Url: "https://www.google.com/accounts/o8/id", Image: "../openids/google.png"},
+{Name: "Yahoo!", Url: "http://me.yahoo.com", Image: "../openids/yahoo-logo.png"},
+{Name: "myOpenID", Url: "http://myopenid.com", Image: "../openids/myopenid-logo.png"}
 ]
