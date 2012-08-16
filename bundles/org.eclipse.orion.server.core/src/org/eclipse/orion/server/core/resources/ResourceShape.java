@@ -19,20 +19,19 @@ public final class ResourceShape {
 	public static final String SEPARATOR = ","; //$NON-NLS-1$
 	public static final String WILDCARD = "*"; //$NON-NLS-1$
 
-	private final Set<Property> properties = new HashSet<Property>();
+	private Property[] properties = new Property[0];
 
 	public Property[] getProperties() {
-		return properties.toArray(new Property[properties.size()]);
+		return properties;
 	}
 
-	public void setProperties(final Property[] properties) {
-		this.properties.clear();
-		if (properties != null) {
-			this.properties.addAll(Arrays.asList(properties));
-		}
+	public synchronized void setProperties(final Property[] properties) {
+		this.properties = properties;
 	}
 
-	public void addProperty(final Property property) {
-		this.properties.add(property);
+	public synchronized void addProperty(final Property property) {
+		Set<Property> propertiesSet = new HashSet<Property>(Arrays.asList(properties));
+		propertiesSet.add(property);
+		this.properties = propertiesSet.toArray(new Property[propertiesSet.size()]);
 	}
 }

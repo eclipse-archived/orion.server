@@ -14,6 +14,10 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.osgi.util.NLS;
 
@@ -49,7 +53,7 @@ public class ReflectionHelper {
 			method.setAccessible(true);
 			return method.invoke(object);
 		} catch (Exception e) {
-			// Ignore and return null
+			LogHelper.log(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, e.getMessage(), e));
 		}
 		return null;
 	}
