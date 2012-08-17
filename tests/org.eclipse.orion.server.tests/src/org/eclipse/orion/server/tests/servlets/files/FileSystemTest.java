@@ -47,12 +47,12 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	/**
 	 * Location of the test project within the file servlet namespace.
 	 */
-	private String testProjectBaseLocation = "";
+	protected String testProjectBaseLocation = "";
 
 	/**
 	 * The local file system location of the test project.
 	 */
-	private String testProjectLocalFileLocation = "";
+	protected String testProjectLocalFileLocation = "";
 
 	protected WebConversation webConversation;
 

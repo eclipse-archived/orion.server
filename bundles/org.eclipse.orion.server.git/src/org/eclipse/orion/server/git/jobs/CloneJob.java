@@ -83,19 +83,17 @@ public class CloneJob extends GitJob {
 	@Override
 	protected IStatus performJob() {
 		IStatus result = doClone();
-		if (result.isOK()) {
+		if (result.isOK())
 			return result;
-		} else {
-			try {
-				if (project != null)
-					GitCloneHandlerV1.removeProject(user, project);
-				else
-					FileUtils.delete(URIUtil.toFile(clone.getContentLocation()), FileUtils.RECURSIVE);
-			} catch (IOException e) {
-				String msg = "An error occured when cleaning up after a clone failure";
-				result = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
-			}
-			return result;
+		try {
+			if (project != null)
+				GitCloneHandlerV1.removeProject(user, project);
+			else
+				FileUtils.delete(URIUtil.toFile(clone.getContentLocation()), FileUtils.RECURSIVE);
+		} catch (IOException e) {
+			String msg = "An error occured when cleaning up after a clone failure";
+			result = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 		}
+		return result;
 	}
 }

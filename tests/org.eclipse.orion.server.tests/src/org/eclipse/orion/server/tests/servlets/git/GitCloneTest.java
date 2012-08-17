@@ -16,29 +16,17 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URISyntaxException;
+import com.meterware.httpunit.*;
+import java.io.*;
+import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
-import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
-import org.eclipse.jgit.api.PullResult;
-import org.eclipse.jgit.lib.ConfigConstants;
-import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.lib.RepositoryCache;
-import org.eclipse.jgit.lib.RepositoryState;
-import org.eclipse.jgit.lib.StoredConfig;
+import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.core.IOUtilities;
@@ -50,17 +38,9 @@ import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.junit.Assume;
-import org.junit.BeforeClass;
+import org.json.*;
+import org.junit.*;
 import org.junit.Test;
-
-import com.meterware.httpunit.GetMethodWebRequest;
-import com.meterware.httpunit.PostMethodWebRequest;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 
 public class GitCloneTest extends GitTest {
 
@@ -68,7 +48,8 @@ public class GitCloneTest extends GitTest {
 	public void testClone() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		String workspaceId = new Path(workspaceLocation.getPath()).segment(1);
+		IPath clonePath = new Path("file").append(workspaceId).append(project.getString(ProtocolConstants.KEY_NAME)).makeAbsolute();
 		String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		Repository repository = getRepositoryForContentLocation(contentLocation);

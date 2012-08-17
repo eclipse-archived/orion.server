@@ -21,7 +21,6 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.RepositoryCache;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
-import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.json.JSONObject;
@@ -38,7 +37,7 @@ public class GitUtils {
 	 * is not a Git repository or an error occurred while transforming the given
 	 * path into a store <code>null</code> is returned.
 	 *
-	 * @param path expected format /file/{projectId}[/{path}]
+	 * @param path expected format /file/{Workspace}/{projectName}[/{path}]
 	 * @return the .git folder if found or <code>null</code> the give path
 	 * cannot be resolved to a file or it's not under control of a git repository
 	 * @throws CoreException
@@ -62,6 +61,15 @@ public class GitUtils {
 		return null;
 	}
 
+	/**
+	 * Returns the existing git repositories for the given file path, following
+	 * the given traversal rule.
+	 * 
+	 * @param path expected format /file/{Workspace}/{projectName}[/{path}]
+	 * @return a map of all git repositories found, or <code>null</code>
+	 * if the provided path format doesn't match the expected format.
+	 * @throws CoreException
+	 */
 	public static Map<IPath, File> getGitDirs(IPath path, Traverse traverse) throws CoreException {
 		IPath p = path.removeFirstSegments(1);
 		IFileStore fileStore = NewFileServlet.getFileStore(p);
@@ -82,7 +90,7 @@ public class GitUtils {
 				getGitDirsInParents(file, result);
 				break;
 			case GO_DOWN :
-				getGitDirsInChildren(path, result);
+				getGitDirsInChildren(file, p, result);
 				break;
 		}
 		return result;
@@ -115,29 +123,27 @@ public class GitUtils {
 		return new Path(sb.toString());
 	}
 
-	private static void getGitDirsInChildren(IPath path, Map<IPath, File> gitDirs) throws CoreException {
-		if (WebProject.exists(path.segment(0))) {
-			WebProject webProject = WebProject.fromId(path.segment(0));
-			IFileStore store = webProject.getProjectStore().getFileStore(path.removeFirstSegments(1));
-			File file = store.toLocalFile(EFS.NONE, null);
-			if (file.exists() && file.isDirectory()) {
-				if (RepositoryCache.FileKey.isGitRepository(file, FS.DETECTED)) {
-					gitDirs.put(path.addTrailingSeparator(), file);
-					return;
-				} else if (RepositoryCache.FileKey.isGitRepository(new File(file, Constants.DOT_GIT), FS.DETECTED)) {
-					gitDirs.put(path.addTrailingSeparator(), new File(file, Constants.DOT_GIT));
-					return;
-				}
-				File[] folders = file.listFiles(new FileFilter() {
-					public boolean accept(File file) {
-						return file.isDirectory() && !file.getName().equals(Constants.DOT_GIT);
-					}
-				});
-				for (File folder : folders) {
-					getGitDirsInChildren(path.append(folder.getName()), gitDirs);
-				}
+	/**
+	 * Recursively walks down a directory tree and collects the paths of all git repositories.
+	 */
+	private static void getGitDirsInChildren(File localFile, IPath path, Map<IPath, File> gitDirs) throws CoreException {
+		if (localFile.exists() && localFile.isDirectory()) {
+			if (RepositoryCache.FileKey.isGitRepository(localFile, FS.DETECTED)) {
+				gitDirs.put(path.addTrailingSeparator(), localFile);
+				return;
+			} else if (RepositoryCache.FileKey.isGitRepository(new File(localFile, Constants.DOT_GIT), FS.DETECTED)) {
+				gitDirs.put(path.addTrailingSeparator(), new File(localFile, Constants.DOT_GIT));
 				return;
 			}
+			File[] folders = localFile.listFiles(new FileFilter() {
+				public boolean accept(File file) {
+					return file.isDirectory() && !file.getName().equals(Constants.DOT_GIT);
+				}
+			});
+			for (File folder : folders) {
+				getGitDirsInChildren(folder, path.append(folder.getName()), gitDirs);
+			}
+			return;
 		}
 	}
 

@@ -23,7 +23,6 @@ import org.eclipse.jgit.storage.file.FileBasedConfig;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.server.core.resources.*;
 import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
@@ -237,7 +236,7 @@ public class Clone {
 
 	public JSONObject toJSON(Entry<IPath, File> entry, URI baseLocation) throws JSONException, IOException, URISyntaxException {
 		id = entry.getKey().toString();
-		name = entry.getKey().segmentCount() == 1 ? WebProject.fromId(entry.getKey().segment(0)).getName() : entry.getKey().lastSegment();
+		name = entry.getKey().lastSegment();
 		db = new FileRepository(entry.getValue());
 		this.baseLocation = baseLocation;
 		return toJSON();
