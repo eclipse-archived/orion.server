@@ -88,8 +88,9 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	private boolean handleUsersGet(HttpServletRequest req, HttpServletResponse resp) throws IOException, JSONException, CoreException {
+		// For Bug 372270 - changing the admin getUsers() to return a sorted list.
 		Collection<User> users = getUserAdmin().getUsers();
-		Set<JSONObject> userJSONs = new HashSet<JSONObject>();
+		ArrayList<JSONObject> userJSONs = new ArrayList<JSONObject>();
 		URI location = OrionServlet.getURI(req);
 		IOrionUserProfileNode userNode = null;
 		for (User user : users) {
