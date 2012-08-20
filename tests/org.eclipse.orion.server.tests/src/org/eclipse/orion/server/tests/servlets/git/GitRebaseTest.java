@@ -13,10 +13,12 @@ package org.eclipse.orion.server.tests.servlets.git;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.util.regex.Pattern;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
@@ -265,7 +267,7 @@ public class GitRebaseTest extends GitTest {
 			request = getGetFilesRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			assertEquals("<<<<<<< OURS\n1master\n=======\n1a\n>>>>>>> THEIRS\n2\n3\n4a\n", response.getText());
+			assertTrue(response.getText(), Pattern.matches("<<<<<<< Upstream, based on .*\n1master\n=======\n1a\n>>>>>>> .* first commit on a\n2\n3\n4a\n", response.getText()));
 
 			// abort rebase
 			rebase = rebase(gitHeadUri, Operation.ABORT);
@@ -375,7 +377,7 @@ public class GitRebaseTest extends GitTest {
 			request = getGetFilesRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			assertEquals("<<<<<<< OURS\n1master\n=======\n1a\n>>>>>>> THEIRS\n2\n3\n4a\n", response.getText());
+			assertTrue(response.getText(), Pattern.matches("<<<<<<< Upstream, based on .*\n1master\n=======\n1a\n>>>>>>> .* first commit on a\n2\n3\n4a\n", response.getText()));
 
 			// continue rebase without conflict resolving
 			rebase = rebase(gitHeadUri, Operation.CONTINUE);
@@ -492,7 +494,7 @@ public class GitRebaseTest extends GitTest {
 			request = getGetFilesRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			assertEquals("<<<<<<< OURS\n1master\n=======\n1a\n>>>>>>> THEIRS\n2\n3\n4a\n", response.getText());
+			assertTrue(response.getText(), Pattern.matches("<<<<<<< Upstream, based on .*\n1master\n=======\n1a\n>>>>>>> .* first commit on a\n2\n3\n4a\n", response.getText()));
 
 			// continue rebase without conflict resolving - error expected
 			rebase = rebase(gitHeadUri, Operation.CONTINUE);
