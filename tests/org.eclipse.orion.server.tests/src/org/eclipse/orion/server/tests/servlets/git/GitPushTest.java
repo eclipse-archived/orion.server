@@ -15,14 +15,12 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import com.meterware.httpunit.*;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
-
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.lib.Constants;
@@ -37,16 +35,9 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Remote;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.junit.Assume;
-import org.junit.BeforeClass;
+import org.json.*;
+import org.junit.*;
 import org.junit.Test;
-
-import com.meterware.httpunit.PostMethodWebRequest;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 
 public class GitPushTest extends GitTest {
 
@@ -174,12 +165,13 @@ public class GitPushTest extends GitTest {
 		Assume.assumeTrue(passphrase != null);
 
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		URIish uri = new URIish(sshRepo2);
 
 		// clone1: create
 		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
-		String projectId1 = project1.getString(ProtocolConstants.KEY_ID);
-		IPath clonePath = new Path("file").append(projectId1).makeAbsolute();
+		IPath clonePath = getClonePath(workspaceId, project1);
+
 		WebRequest request = new PostGitCloneRequest().setURIish(uri).setFilePath(clonePath).setKnownHosts(knownHosts2).setPrivateKey(privateKey).setPublicKey(publicKey).setPassphrase(passphrase).getWebRequest();
 		String cloneContentLocation1 = clone(request);
 
@@ -197,8 +189,7 @@ public class GitPushTest extends GitTest {
 
 		// clone2: create
 		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
-		String projectId2 = project2.getString(ProtocolConstants.KEY_ID);
-		clonePath = new Path("file").append(projectId2).makeAbsolute();
+		clonePath = getClonePath(workspaceId, project2);
 		request = new PostGitCloneRequest().setURIish(uri).setFilePath(clonePath).setKnownHosts(knownHosts2).setPrivateKey(privateKey).setPublicKey(publicKey).setPassphrase(passphrase).getWebRequest();
 		String cloneContentLocation2 = clone(request);
 

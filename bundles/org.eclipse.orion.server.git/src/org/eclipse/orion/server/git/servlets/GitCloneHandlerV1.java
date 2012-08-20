@@ -67,6 +67,9 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 					return handlePost(request, response, path);
 				case DELETE :
 					return handleDelete(request, response, path);
+				default :
+					//we don't know how to handle this request
+					return false;
 			}
 
 		} catch (Exception e) {
@@ -75,7 +78,6 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			LogHelper.log(status);
 			return statusHandler.handleRequest(request, response, status);
 		}
-		return false;
 	}
 
 	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, String pathString) throws IOException, JSONException, ServletException, URISyntaxException, CoreException, NoHeadException, NoMessageException, ConcurrentRefUpdateException, WrongRepositoryStateException {
@@ -129,8 +131,8 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		boolean webProjectExists = false;
 		if (filePath != null) {
 			//path format is /file/{workspaceId}/{projectName}/[filePath]
-			clone.setId(filePath.removeFirstSegments(1).toString());
-			webProject = projectFromPath(filePath);
+			clone.setId(filePath.toString());
+			webProject = GitUtils.projectFromPath(filePath);
 			//workspace path format needs to be used if project does not exist
 			if (webProject == null) {
 				String msg = NLS.bind("Specified project does not exist: {0}", filePath.segment(2));
@@ -171,7 +173,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 
 			URI baseLocation = getURI(request);
 			baseLocation = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), workspacePath, baseLocation.getQuery(), baseLocation.getFragment());
-			clone.setId(webProject.getId());
+			clone.setId(GitUtils.pathFromProject(workspace, webProject).toString());
 			clone.setContentLocation(webProject.getProjectStore().toURI());
 		}
 		clone.setName(cloneName);
@@ -192,22 +194,6 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		// if all went well, clone
 		CloneJob job = new CloneJob(clone, TaskJobHandler.getUserId(request), cp, request.getRemoteUser(), cloneLocation, webProjectExists ? null : webProject /* used for cleaning up, so null when not needed */);
 		return TaskJobHandler.handleTaskJob(request, response, job, statusHandler);
-	}
-
-	/**
-	 * Returns the existing WebProject corresponding to the provided path, 
-	 * or <code>null</code> if no such project exists.
-	 * @param path path in the form /file/{workspaceId}/{projectName}/[filePath]
-	 * @return the web project, or <code>null</code>
-	 */
-	private WebProject projectFromPath(IPath path) {
-		if (path == null || path.segmentCount() < 3)
-			return null;
-		String workspaceId = path.segment(1);
-		if (!WebWorkspace.exists(workspaceId))
-			return null;
-		WebWorkspace workspace = WebWorkspace.fromId(workspaceId);
-		return workspace.getProjectByName(path.segment(2));
 	}
 
 	public static void doConfigureClone(Git git, String user) throws IOException, CoreException {
@@ -239,8 +225,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 						//this is the location of the project metadata
 						WebProject webProject = WebProject.fromId(project.getString(ProtocolConstants.KEY_ID));
 						if (isAccessAllowed(user, webProject)) {
-							URI contentLocation = URI.create(webProject.getId());
-							IPath projectPath = new Path(contentLocation.getPath());
+							IPath projectPath = GitUtils.pathFromProject(workspace, webProject);
 							Map<IPath, File> gitDirs = GitUtils.getGitDirs(projectPath, Traverse.GO_DOWN);
 							for (Map.Entry<IPath, File> entry : gitDirs.entrySet()) {
 								children.put(new Clone().toJSON(entry, baseLocation));
@@ -259,7 +244,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
 		} else if ("file".equals(path.segment(0)) && path.segmentCount() > 1) { //$NON-NLS-1$
 			// clones under given path
-			WebProject webProject = projectFromPath(path);
+			WebProject webProject = GitUtils.projectFromPath(path);
 			IPath projectRelativePath = path.removeFirstSegments(3);
 			if (webProject != null && isAccessAllowed(user, webProject) && webProject.getProjectStore().getFileStore(projectRelativePath).fetchInfo().exists()) {
 				Map<IPath, File> gitDirs = GitUtils.getGitDirs(path, Traverse.GO_DOWN);
@@ -286,12 +271,9 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		if (path.segment(0).equals("file") && path.segmentCount() > 1) { //$NON-NLS-1$
 
 			// make sure a clone is addressed
-			WebProject webProject = WebProject.fromId(path.segment(1));
+			WebProject webProject = GitUtils.projectFromPath(path);
 			if (isAccessAllowed(request.getRemoteUser(), webProject)) {
-				URI contentLocation = URI.create(webProject.getId());
-				IPath projectPath = new Path(contentLocation.getPath()).append(path.removeFirstSegments(2));
-				projectPath = path.hasTrailingSeparator() ? projectPath : projectPath.removeLastSegments(1);
-				File gitDir = GitUtils.getGitDirs(new Path("file").append(projectPath), Traverse.CURRENT).values().iterator().next(); //$NON-NLS-1$
+				File gitDir = GitUtils.getGitDirs(path, Traverse.CURRENT).values().iterator().next();
 
 				// make sure required fields are set
 				JSONObject toCheckout = OrionServlet.readJSONRequest(request);
@@ -377,25 +359,22 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 
 	private boolean handleDelete(HttpServletRequest request, HttpServletResponse response, String pathString) throws GitAPIException, CoreException, IOException, ServletException {
 		IPath path = pathString == null ? Path.EMPTY : new Path(pathString);
-		if (path.segment(0).equals("file") && path.segmentCount() > 1) { //$NON-NLS-1$
+		//expected path format is /file/{workspaceId}/{projectId}[/{directoryPath}]
+		if (path.segment(0).equals("file") && path.segmentCount() > 2) { //$NON-NLS-1$
 
 			// make sure a clone is addressed
-			WebProject webProject = WebProject.fromId(path.segment(1));
-			if (isAccessAllowed(request.getRemoteUser(), webProject)) {
-				URI contentLocation = URI.create(webProject.getId());
-				IPath projectPath = new Path(contentLocation.getPath()).append(path.removeFirstSegments(2));
-				File gitDir = GitUtils.getGitDirs(new Path("file").append(projectPath), Traverse.CURRENT).values().iterator().next();
-
+			WebProject webProject = GitUtils.projectFromPath(path);
+			if (webProject != null && isAccessAllowed(request.getRemoteUser(), webProject)) {
+				File gitDir = GitUtils.getGitDirs(path, Traverse.CURRENT).values().iterator().next();
 				Repository repo = new FileRepository(gitDir);
 				repo.close();
 				FileUtils.delete(repo.getWorkTree(), FileUtils.RECURSIVE | FileUtils.RETRY);
-				if (path.segmentCount() == 2)
+				if (path.segmentCount() == 3)
 					return statusHandler.handleRequest(request, response, removeProject(request.getRemoteUser(), webProject));
 				return true;
-			} else {
-				String msg = NLS.bind("Nothing found for the given ID: {0}", path);
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
 			}
+			String msg = NLS.bind("Nothing found for the given ID: {0}", path);
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
 		}
 		String msg = NLS.bind("Invalid delete request {0}", pathString);
 		return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));

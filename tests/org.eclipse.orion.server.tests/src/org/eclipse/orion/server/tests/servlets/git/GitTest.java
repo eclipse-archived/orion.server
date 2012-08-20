@@ -299,7 +299,7 @@ public abstract class GitTest extends FileSystemTest {
 
 	protected static String getMethodName() {
 		final StackTraceElement[] ste = Thread.currentThread().getStackTrace();
-		return ste[3].getMethodName();
+		return ste[2].getMethodName();
 	}
 
 	protected static JSONObject getChildByKey(List<JSONObject> children, String key, String value) throws JSONException {
@@ -450,9 +450,27 @@ public abstract class GitTest extends FileSystemTest {
 		return clone(uri, workspacePath, filePath, name, null, null);
 	}
 
-	protected JSONObject clone(IPath filePath) throws JSONException, IOException, SAXException, CoreException {
+	protected JSONObject clone(IPath clonePath) throws JSONException, IOException, SAXException, CoreException {
 		URIish uri = new URIish(gitDir.toURI().toURL());
-		return clone(uri, null, filePath, null, null, null);
+		return clone(uri, null, clonePath, null, null, null);
+	}
+
+	/**
+	 * Returns the HTTP resource location for the given workspace and project.
+	 * @param workspaceId
+	 * @param project
+	 */
+	protected IPath getClonePath(String workspaceId, JSONObject project) {
+		String projectName = project.optString(ProtocolConstants.KEY_NAME, null);
+		assertNotNull(projectName);
+		return new Path("file").append(workspaceId).append(projectName).makeAbsolute();
+	}
+
+	/**
+	 * Creates a clone in the given workspace and projectc.
+	 */
+	protected JSONObject clone(String workspaceId, JSONObject project) throws JSONException, IOException, SAXException, CoreException {
+		return clone(getClonePath(workspaceId, project));
 	}
 
 	/**
@@ -1568,5 +1586,9 @@ public abstract class GitTest extends FileSystemTest {
 		JSONObject clones = new JSONObject(response.getText());
 		assertEquals(Clone.TYPE, clones.getString(ProtocolConstants.KEY_TYPE));
 		return clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+	}
+
+	protected String workspaceIdFromLocation(URI workspaceLocation) {
+		return new Path(workspaceLocation.getPath()).segment(1);
 	}
 }

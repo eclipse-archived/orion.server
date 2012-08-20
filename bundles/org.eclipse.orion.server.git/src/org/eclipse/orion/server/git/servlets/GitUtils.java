@@ -20,7 +20,10 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.RepositoryCache;
 import org.eclipse.jgit.util.FS;
+import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
+import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
+import org.eclipse.orion.internal.server.servlets.workspace.WebWorkspace;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.json.JSONObject;
@@ -76,7 +79,6 @@ public class GitUtils {
 		if (fileStore == null)
 			return null;
 		File file = fileStore.toLocalFile(EFS.NONE, null);
-
 		Map<IPath, File> result = new HashMap<IPath, File>();
 		switch (traverse) {
 			case CURRENT :
@@ -195,5 +197,32 @@ public class GitUtils {
 			// should never happen since "UTF-8" is used
 		}
 		return s;
+	}
+
+	/**
+	 * Returns the existing WebProject corresponding to the provided path, 
+	 * or <code>null</code> if no such project exists.
+	 * @param path path in the form /file/{workspaceId}/{projectName}/[filePath]
+	 * @return the web project, or <code>null</code>
+	 */
+	public static WebProject projectFromPath(IPath path) {
+		if (path == null || path.segmentCount() < 3)
+			return null;
+		String workspaceId = path.segment(1);
+		if (!WebWorkspace.exists(workspaceId))
+			return null;
+		WebWorkspace workspace = WebWorkspace.fromId(workspaceId);
+		return workspace.getProjectByName(path.segment(2));
+	}
+
+	/**
+	 * Returns the HTTP path for the content resource of the given project.
+	 * @param workspace The web workspace
+	 * @param project The web project 
+	 * @return the HTTP path of the project content resource
+	 */
+	public static IPath pathFromProject(WebWorkspace workspace, WebProject project) {
+		return new Path(Activator.LOCATION_FILE_SERVLET).append(workspace.getId()).append(project.getName());
+
 	}
 }
