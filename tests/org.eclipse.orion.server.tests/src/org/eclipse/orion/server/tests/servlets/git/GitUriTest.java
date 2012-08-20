@@ -15,11 +15,12 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 import java.io.File;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.List;
-
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.lib.Constants;
@@ -29,9 +30,6 @@ import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSuppor
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONObject;
 import org.junit.Test;
-
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 
 public class GitUriTest extends GitTest {
 	@Test
@@ -159,9 +157,8 @@ public class GitUriTest extends GitTest {
 	public void testGitUrisForRepositoryClonedIntoSubfolder() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
 		String folderName = "subfolder";
-		WebRequest request = getPostFilesRequest(projectId + "/", getNewDirJSON(folderName).toString(), folderName);
+		WebRequest request = getPostFilesRequest("", getNewDirJSON(folderName).toString(), folderName);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).append(folderName).makeAbsolute();

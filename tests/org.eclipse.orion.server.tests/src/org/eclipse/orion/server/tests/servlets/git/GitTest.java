@@ -1591,4 +1591,61 @@ public abstract class GitTest extends FileSystemTest {
 	protected String workspaceIdFromLocation(URI workspaceLocation) {
 		return new Path(workspaceLocation.getPath()).segment(1);
 	}
+
+	/**
+	 * Helper method to create two test projects for Git clone tests. One
+	 * project will have the clone location at the root, and the other project
+	 * has a clone location in a folder below the root. This method creates
+	 * the projects and returns the path for creating the clones, but does
+	 * not actually create the git clones.
+	 */
+	protected IPath[] createTestProjects(URI workspaceLocation) throws JSONException, IOException, SAXException {
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
+		WebWorkspace workspace = WebWorkspace.fromId(workspaceId);
+		assertNotNull(workspace);
+		String name = workspace.getName();
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, name + "-top", null);
+		IPath clonePathTop = getClonePath(workspaceId, projectTop);
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, name + "-folder", null);
+		IPath clonePathFolder = getClonePath(workspaceId, projectFolder).append("folder").makeAbsolute();
+
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		return clonePaths;
+	}
+
+	/**
+	 * Creates three pairs of test projects for clone tests. The pairs are as follows:
+	 *  - In first pair, both clones are at the project root
+	 *  - In second pair, both clones are in folders below the project root
+	 *  - In third pair, one clone is at the root and the other clone is within a child folder
+	 */
+	protected IPath[][] createTestClonePairs(URI workspaceLocation) throws IOException, SAXException, JSONException {
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
+		WebWorkspace workspace = WebWorkspace.fromId(workspaceId);
+		assertNotNull(workspace);
+		String name = workspace.getName();
+		JSONObject projectTop1 = createProjectOrLink(workspaceLocation, name + "-top1", null);
+		IPath clonePathTop1 = getClonePath(workspaceId, projectTop1);
+
+		JSONObject projectTop2 = createProjectOrLink(workspaceLocation, name + "-top2", null);
+		IPath clonePathTop2 = getClonePath(workspaceId, projectTop2);
+
+		JSONObject projectFolder1 = createProjectOrLink(workspaceLocation, name + "-folder1", null);
+		IPath clonePathFolder1 = getClonePath(workspaceId, projectFolder1).append("folder1").makeAbsolute();
+
+		JSONObject projectFolder2 = createProjectOrLink(workspaceLocation, name + "-folder2", null);
+		IPath clonePathFolder2 = getClonePath(workspaceId, projectFolder2).append("folder2").makeAbsolute();
+
+		JSONObject projectTop3 = createProjectOrLink(workspaceLocation, name + "-top3", null);
+		IPath clonePathTop3 = getClonePath(workspaceId, projectTop3);
+
+		JSONObject projectFolder3 = createProjectOrLink(workspaceLocation, name + "-folder3", null);
+		IPath clonePathFolder3 = getClonePath(workspaceId, projectFolder3).append("folder1").makeAbsolute();
+
+		IPath[] clonePathsTop = new IPath[] {clonePathTop1, clonePathTop2};
+		IPath[] clonePathsFolder = new IPath[] {clonePathFolder1, clonePathFolder2};
+		IPath[] clonePathsMixed = new IPath[] {clonePathTop3, clonePathFolder3};
+		IPath[][] clonePaths = new IPath[][] {clonePathsTop, clonePathsFolder, clonePathsMixed};
+		return clonePaths;
+	}
 }

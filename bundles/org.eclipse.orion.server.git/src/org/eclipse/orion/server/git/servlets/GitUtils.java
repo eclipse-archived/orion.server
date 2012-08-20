@@ -47,7 +47,9 @@ public class GitUtils {
 	 */
 	public static File getGitDir(IPath path) throws CoreException {
 		Collection<File> values = GitUtils.getGitDirs(path, Traverse.GO_UP).values();
-		return values.isEmpty() ? null : values.toArray(new File[] {})[0];
+		if (values == null || values.isEmpty())
+			return null;
+		return values.toArray(new File[] {})[0];
 	}
 
 	public static File getGitDir(File file) {

@@ -19,7 +19,8 @@ import com.meterware.httpunit.*;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -46,8 +47,9 @@ public class GitFetchTest extends GitTest {
 	public void testFetchRemoteBranchUpToDate() throws Exception {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 
 		// get project metadata
@@ -90,8 +92,9 @@ public class GitFetchTest extends GitTest {
 	public void testFetchRemoteUpToDate() throws Exception {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 
 		// get project metadata
@@ -124,10 +127,11 @@ public class GitFetchTest extends GitTest {
 	@Test
 	public void testPushCommitAndFetch() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 
 		// clone1
 		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
-		IPath clonePath1 = new Path("file").append(project1.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath1 = getClonePath(workspaceId, project1);
 		String contentLocation1 = clone(clonePath1).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		// get project1 metadata
@@ -142,7 +146,7 @@ public class GitFetchTest extends GitTest {
 		// clone2
 		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
 		String projectId2 = project2.getString(ProtocolConstants.KEY_ID);
-		IPath clonePath2 = new Path("file").append(project2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath2 = getClonePath(workspaceId, project2);
 		clone(clonePath2);
 
 		// get project2 metadata
@@ -298,11 +302,12 @@ public class GitFetchTest extends GitTest {
 	@Test
 	public void testFetchRemote() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 
 		// clone1: create
 		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
 		String projectId1 = project1.getString(ProtocolConstants.KEY_ID);
-		IPath clonePath1 = new Path("file").append(project1.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath1 = getClonePath(workspaceId, project1);
 		JSONObject clone1 = clone(clonePath1);
 		String cloneContentLocation1 = clone1.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		String cloneLocation1 = clone1.getString(ProtocolConstants.KEY_LOCATION);
@@ -330,7 +335,7 @@ public class GitFetchTest extends GitTest {
 
 		// clone2
 		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
-		IPath clonePath2 = new Path("file").append(project2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath2 = getClonePath(workspaceId, project2);
 		clone(clonePath2);
 
 		// get project2 metadata
@@ -411,10 +416,11 @@ public class GitFetchTest extends GitTest {
 	@Test
 	public void testFetchRemoteBranch() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 
 		// clone1: create
 		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
-		IPath clonePath1 = new Path("file").append(project1.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath1 = getClonePath(workspaceId, project1);
 		JSONObject clone1 = clone(clonePath1);
 		String cloneContentLocation1 = clone1.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		String cloneLocation1 = clone1.getString(ProtocolConstants.KEY_LOCATION);
@@ -440,7 +446,7 @@ public class GitFetchTest extends GitTest {
 
 		// clone2
 		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
-		IPath clonePath2 = new Path("file").append(project2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath2 = getClonePath(workspaceId, project2);
 		clone(clonePath2);
 
 		// get project2 metadata
@@ -507,28 +513,7 @@ public class GitFetchTest extends GitTest {
 		cfg.save();
 
 		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop1 = createProjectOrLink(workspaceLocation, getMethodName() + "-top1", null);
-		IPath clonePathTop1 = new Path("file").append(projectTop1.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectTop2 = createProjectOrLink(workspaceLocation, getMethodName() + "-top2", null);
-		IPath clonePathTop2 = new Path("file").append(projectTop2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder1 = createProjectOrLink(workspaceLocation, getMethodName() + "-folder1", null);
-		IPath clonePathFolder1 = new Path("file").append(projectFolder1.getString(ProtocolConstants.KEY_ID)).append("folder1").makeAbsolute();
-
-		JSONObject projectFolder2 = createProjectOrLink(workspaceLocation, getMethodName() + "-folder2", null);
-		IPath clonePathFolder2 = new Path("file").append(projectFolder2.getString(ProtocolConstants.KEY_ID)).append("folder2").makeAbsolute();
-
-		JSONObject projectTop3 = createProjectOrLink(workspaceLocation, getMethodName() + "-top3", null);
-		IPath clonePathTop3 = new Path("file").append(projectTop3.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder3 = createProjectOrLink(workspaceLocation, getMethodName() + "-folder3", null);
-		IPath clonePathFolder3 = new Path("file").append(projectFolder3.getString(ProtocolConstants.KEY_ID)).append("folder1").makeAbsolute();
-
-		IPath[] clonePathsTop = new IPath[] {clonePathTop1, clonePathTop2};
-		IPath[] clonePathsFolder = new IPath[] {clonePathFolder1, clonePathFolder2};
-		IPath[] clonePathsMixed = new IPath[] {clonePathTop3, clonePathFolder3};
-		IPath[][] clonePaths = new IPath[][] {clonePathsTop, clonePathsFolder, clonePathsMixed};
+		IPath[][] clonePaths = createTestClonePairs(workspaceLocation);
 
 		for (IPath[] clonePath : clonePaths) {
 			// clone1

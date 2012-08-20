@@ -16,14 +16,13 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 import java.io.File;
 import java.net.HttpURLConnection;
 import java.net.URI;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.InitCommand;
@@ -34,9 +33,6 @@ import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
 import org.json.JSONObject;
 import org.junit.Ignore;
 import org.junit.Test;
-
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 
 public class GitUtilsTest extends GitTest {
 	@Test
@@ -178,8 +174,9 @@ public class GitUtilsTest extends GitTest {
 	@Test
 	public void testGitDirsCloned() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		URI uri = URI.create(location);
@@ -191,6 +188,7 @@ public class GitUtilsTest extends GitTest {
 	@Test
 	public void testGitDirsClonedIntoSubfolder() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
@@ -200,7 +198,7 @@ public class GitUtilsTest extends GitTest {
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		JSONObject cloneFolder1 = new JSONObject(response.getText());
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).append(folderName).makeAbsolute();
+		IPath clonePath = getClonePath(workspaceId, project).append(folderName).makeAbsolute();
 		clone(clonePath);
 
 		// create folder2
@@ -209,7 +207,7 @@ public class GitUtilsTest extends GitTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		JSONObject cloneFolder2 = new JSONObject(response.getText());
-		clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).append(folderName).makeAbsolute();
+		clonePath = getClonePath(workspaceId, project).append(folderName).makeAbsolute();
 		clone(clonePath);
 
 		String cloneLocation = cloneFolder1.getString(ProtocolConstants.KEY_LOCATION);

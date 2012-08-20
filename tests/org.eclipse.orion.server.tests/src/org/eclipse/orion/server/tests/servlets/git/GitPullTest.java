@@ -15,12 +15,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import com.meterware.httpunit.*;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
-
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
@@ -29,14 +28,8 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Clone;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.*;
 import org.junit.Test;
-
-import com.meterware.httpunit.PostMethodWebRequest;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 
 public class GitPullTest extends GitTest {
 
@@ -44,8 +37,9 @@ public class GitPullTest extends GitTest {
 	public void testPullRemoteUpToDate() throws Exception {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath = getClonePath(workspaceId, project);
 		JSONObject clone = clone(clonePath);
 		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
 
@@ -99,10 +93,11 @@ public class GitPullTest extends GitTest {
 	@Test
 	public void testPullRemote() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 
 		// clone1: create
 		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
-		IPath clonePath1 = new Path("file").append(project1.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath1 = getClonePath(workspaceId, project1);
 		JSONObject clone1 = clone(clonePath1);
 		String cloneContentLocation1 = clone1.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		String cloneLocation1 = clone1.getString(ProtocolConstants.KEY_LOCATION);
@@ -128,7 +123,7 @@ public class GitPullTest extends GitTest {
 
 		// clone2
 		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
-		IPath clonePath2 = new Path("file").append(project2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath2 = getClonePath(workspaceId, project2);
 		JSONObject clone2 = clone(clonePath2);
 		String cloneLocation2 = clone2.getString(ProtocolConstants.KEY_LOCATION);
 

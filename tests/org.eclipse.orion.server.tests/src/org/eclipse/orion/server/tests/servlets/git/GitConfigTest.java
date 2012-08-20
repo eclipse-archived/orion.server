@@ -14,15 +14,12 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import com.meterware.httpunit.*;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
-
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.StoredConfig;
@@ -34,17 +31,9 @@ import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.git.objects.ConfigOption;
 import org.eclipse.orion.server.tests.ReflectionUtils;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.*;
 import org.junit.Test;
 import org.xml.sax.SAXException;
-
-import com.meterware.httpunit.GetMethodWebRequest;
-import com.meterware.httpunit.PostMethodWebRequest;
-import com.meterware.httpunit.PutMethodWebRequest;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 
 public class GitConfigTest extends GitTest {
 
@@ -61,8 +50,9 @@ public class GitConfigTest extends GitTest {
 
 		// clone a  repo
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath = getClonePath(workspaceId, project);
 
 		String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
@@ -122,8 +112,9 @@ public class GitConfigTest extends GitTest {
 
 		// init a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath initPath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath initPath = getClonePath(workspaceId, project);
 
 		String contentLocation = init(null, initPath, null).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
@@ -178,13 +169,7 @@ public class GitConfigTest extends GitTest {
 	@Test
 	public void testGetListOfConfigEntries() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
@@ -215,13 +200,7 @@ public class GitConfigTest extends GitTest {
 	@Test
 	public void testAddConfigEntry() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
@@ -274,13 +253,7 @@ public class GitConfigTest extends GitTest {
 	@Test
 	public void testGetSingleConfigEntry() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
@@ -312,13 +285,7 @@ public class GitConfigTest extends GitTest {
 	@Test
 	public void testUpdateConfigEntryUsingPOST() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
@@ -360,13 +327,7 @@ public class GitConfigTest extends GitTest {
 	@Test
 	public void testUpdateConfigEntryUsingPUT() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
@@ -406,13 +367,7 @@ public class GitConfigTest extends GitTest {
 	@Test
 	public void testDeleteConfigEntry() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
@@ -462,13 +417,7 @@ public class GitConfigTest extends GitTest {
 	@Test
 	public void testCreateInvalidConfigEntry() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
@@ -495,13 +444,7 @@ public class GitConfigTest extends GitTest {
 	@Test
 	public void testUpdateNonExistingConfigEntryUsingPUT() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
@@ -535,13 +478,7 @@ public class GitConfigTest extends GitTest {
 	@Test
 	public void testRequestWithMissingArguments() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo

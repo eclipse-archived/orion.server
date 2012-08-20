@@ -40,8 +40,9 @@ public class GitCheckoutTest extends GitTest {
 	public void testCheckoutAllPaths() throws Exception {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 
 		// get project metadata
@@ -107,8 +108,9 @@ public class GitCheckoutTest extends GitTest {
 	public void testCheckoutFolderPath() throws Exception {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 
 		// get project metadata
@@ -140,8 +142,9 @@ public class GitCheckoutTest extends GitTest {
 	public void testCheckoutEmptyPaths() throws Exception {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 
 		// get project metadata
@@ -163,8 +166,9 @@ public class GitCheckoutTest extends GitTest {
 	public void testCheckoutPathInUri() throws Exception {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 
 		// get project metadata
@@ -190,8 +194,9 @@ public class GitCheckoutTest extends GitTest {
 	public void testCheckoutWrongPath() throws Exception {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 
 		// get project metadata
@@ -220,8 +225,9 @@ public class GitCheckoutTest extends GitTest {
 	public void testCheckoutUntrackedFile() throws Exception {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 
 		// get project metadata
@@ -258,12 +264,7 @@ public class GitCheckoutTest extends GitTest {
 	@Test
 	public void testCheckoutAfterResetByPath() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a repo
@@ -313,8 +314,9 @@ public class GitCheckoutTest extends GitTest {
 	public void testCheckoutInFolder() throws Exception {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 
 		// get project metadata
@@ -347,13 +349,7 @@ public class GitCheckoutTest extends GitTest {
 	public void testCheckoutFileOutsideCurrentFolder() throws Exception {
 		// see bug 347847
 		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
@@ -396,8 +392,9 @@ public class GitCheckoutTest extends GitTest {
 	public void testCheckoutBranch() throws Exception {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath = getClonePath(workspaceId, project);
 		JSONObject clone = clone(clonePath);
 		String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
@@ -424,8 +421,9 @@ public class GitCheckoutTest extends GitTest {
 	public void testCheckoutEmptyBranchName() throws Exception {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath = getClonePath(workspaceId, project);
 		JSONObject clone = clone(clonePath);
 		String location = clone.getString(ProtocolConstants.KEY_LOCATION);
 
@@ -444,8 +442,9 @@ public class GitCheckoutTest extends GitTest {
 	public void testCheckoutInvalidBranchName() throws Exception {
 		// clone a repo
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath = getClonePath(workspaceId, project);
 		JSONObject clone = clone(clonePath);
 		String location = clone.getString(ProtocolConstants.KEY_LOCATION);
 
@@ -463,13 +462,7 @@ public class GitCheckoutTest extends GitTest {
 	@Test
 	public void testCheckoutAborted() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
@@ -520,13 +513,7 @@ public class GitCheckoutTest extends GitTest {
 		git.branchCreate().setName("test").setStartPoint(Constants.HEAD).call();
 
 		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo

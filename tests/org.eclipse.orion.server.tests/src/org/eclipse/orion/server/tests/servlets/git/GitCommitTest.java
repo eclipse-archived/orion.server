@@ -14,26 +14,18 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import com.meterware.httpunit.*;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
-
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Commit;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.*;
 import org.junit.Ignore;
 import org.junit.Test;
-
-import com.meterware.httpunit.GetMethodWebRequest;
-import com.meterware.httpunit.PostMethodWebRequest;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 
 public class GitCommitTest extends GitTest {
 
@@ -224,13 +216,7 @@ public class GitCommitTest extends GitTest {
 	public void testCommitAllInFolder() throws Exception {
 		// see bug 349480
 		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
@@ -322,13 +308,7 @@ public class GitCommitTest extends GitTest {
 	@Test
 	public void testCommitWithCommiterOverwritten() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
@@ -370,13 +350,7 @@ public class GitCommitTest extends GitTest {
 	@Test
 	public void testCommitWithAuthorOverwritten() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
@@ -418,13 +392,7 @@ public class GitCommitTest extends GitTest {
 	@Test
 	public void testCommitterAndAuthorFallback() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo

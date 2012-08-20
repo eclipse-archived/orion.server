@@ -15,37 +15,31 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 import java.net.HttpURLConnection;
 import java.net.URI;
-
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
-import org.eclipse.jgit.api.PullResult;
-import org.eclipse.jgit.lib.ConfigConstants;
-import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.StoredConfig;
+import org.eclipse.jgit.lib.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Branch;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.*;
 import org.junit.Test;
-
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 
 public class GitBranchTest extends GitTest {
 	@Test
 	public void testListBranches() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
-
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		JSONObject clone = clone(new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute());
+		IPath clonePath = getClonePath(workspaceId, project);
+		JSONObject clone = clone(clonePath);
 		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 		branch(branchesLocation, "a");
@@ -74,9 +68,10 @@ public class GitBranchTest extends GitTest {
 	@Test
 	public void testAddRemoveBranch() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
-
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		JSONObject clone = clone(new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute());
+		IPath clonePath = getClonePath(workspaceId, project);
+		JSONObject clone = clone(clonePath);
 		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 		String[] branchNames = {"dev", "change/1/1", "working@bug1"};
@@ -119,13 +114,7 @@ public class GitBranchTest extends GitTest {
 	@Test
 	public void testCreateTrackingBranch() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
@@ -191,13 +180,7 @@ public class GitBranchTest extends GitTest {
 	@Test
 	public void testCheckoutAmbiguousName() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo

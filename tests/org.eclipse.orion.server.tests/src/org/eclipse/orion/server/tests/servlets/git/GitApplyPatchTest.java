@@ -38,8 +38,9 @@ public class GitApplyPatchTest extends GitTest {
 	public void testApplyPatch_addFile() throws Exception {
 		// clone: create
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 
 		// get project metadata
@@ -76,8 +77,9 @@ public class GitApplyPatchTest extends GitTest {
 	public void testApplyPatch_deleteFile() throws Exception {
 		// clone: create
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 
 		// get project metadata
@@ -111,8 +113,9 @@ public class GitApplyPatchTest extends GitTest {
 	public void testApplyPatch_modifyFile() throws Exception {
 		// clone: create
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 
 		// get project metadata
@@ -186,8 +189,9 @@ public class GitApplyPatchTest extends GitTest {
 	public void testApplyPatch_modifyFileApplyError() throws Exception {
 		// clone: create
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 
 		// get project metadata
