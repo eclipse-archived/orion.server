@@ -1,4 +1,4 @@
-Pull Request from Orion
+Review Request from Orion
 NOTE: This is a machine generated memo. Please do not respond to this note.
 
 <COMMITER_NAME> has asked you to review his/her commit <COMMIT_MESSAGE>

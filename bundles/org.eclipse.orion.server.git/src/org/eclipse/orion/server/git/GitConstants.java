@@ -175,13 +175,13 @@ public class GitConstants {
 
 	public static final String KEY_TAG_TYPE = "TagType"; //$NON-NLS-1$
 
-	public static final String KEY_PULL_REQ_URL = "PullReqUrl"; //$NON-NLS-1$
+	public static final String KEY_REVIEW_REQ_URL = "ReviewReqUrl"; //$NON-NLS-1$
 
-	public static final String KEY_PULL_REQ_NOTIFY_LOGIN = "PullReqNotifyLogin"; //$NON-NLS-1$
+	public static final String KEY_REVIEW_REQ_NOTIFY_LOGIN = "ReviewReqNotifyLogin"; //$NON-NLS-1$
 
-	public static final String KEY_PULL_REQ_COMMIT = "PullReqCommit"; //$NON-NLS-1$
+	public static final String KEY_REVIEW_REQ_COMMIT = "ReviewReqCommit"; //$NON-NLS-1$
 
-	public static final String KEY_PULL_REQ_AUTHOR_NAME = "PullReqAuthorName"; //$NON-NLS-1$
+	public static final String KEY_REVIEW_REQ_AUTHOR_NAME = "ReviewReqAuthorName"; //$NON-NLS-1$
 
-	public static final String KEY_PULL_REQ_MESSAGE = "PullReqMessage"; //$NON-NLS-1$
+	public static final String KEY_REVIEW_REQ_MESSAGE = "ReviewMessage"; //$NON-NLS-1$
 }

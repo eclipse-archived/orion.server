@@ -48,14 +48,14 @@ import org.json.JSONObject;
  */
 public class GitCommitHandlerV1 extends AbstractGitHandler {
 
-	private final static String EMAIL_PULL_REQUEST_FILE = "/emails/EmailPullRequestNotification.txt"; //$NON-NLS-1$
+	private final static String EMAIL_REVIEW_REQUEST_FILE = "/emails/EmailReviewRequestNotification.txt"; //$NON-NLS-1$
 	private final static String EMAIL_COMMITER_NAME = "<COMMITER_NAME>";
 	private final static String EMAIL_COMMIT_MESSAGE = "<COMMIT_MESSAGE>";
 	private static final String EMAIL_URL_LINK = "<URL>"; //$NON-NLS-1$
 
 	private final static int PAGE_SIZE = 50;
 
-	private EmailContent pullRequestEmail;
+	private EmailContent reviewRequestEmail;
 
 	public class EmailContent {
 		private String title;
@@ -278,13 +278,13 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			if (newCommit != null)
 				return identifyNewCommitResource(request, response, db, newCommit);
 
-			String pullReqLogin = requestObject.optString(GitConstants.KEY_PULL_REQ_NOTIFY_LOGIN);
-			if (pullReqLogin != null && pullReqLogin.length() != 0) {
-				String pullReqUrl = requestObject.optString(GitConstants.KEY_PULL_REQ_URL);
-				String pullReqCommit = requestObject.optString(GitConstants.KEY_PULL_REQ_COMMIT);
-				String pullReqAuthorName = requestObject.optString(GitConstants.KEY_PULL_REQ_AUTHOR_NAME);
-				String pullReqMessage = requestObject.optString(GitConstants.KEY_PULL_REQ_MESSAGE);
-				return sendNotification(request, response, db, pullReqLogin, pullReqCommit, pullReqUrl, pullReqAuthorName, pullReqMessage);
+			String reviewReqLogin = requestObject.optString(GitConstants.KEY_REVIEW_REQ_NOTIFY_LOGIN);
+			if (reviewReqLogin != null && reviewReqLogin.length() != 0) {
+				String reviewReqUrl = requestObject.optString(GitConstants.KEY_REVIEW_REQ_URL);
+				String ReviewReqCommit = requestObject.optString(GitConstants.KEY_REVIEW_REQ_COMMIT);
+				String ReviewReqAuthorName = requestObject.optString(GitConstants.KEY_REVIEW_REQ_AUTHOR_NAME);
+				String ReviewMessage = requestObject.optString(GitConstants.KEY_REVIEW_REQ_MESSAGE);
+				return sendNotification(request, response, db, reviewReqLogin, ReviewReqCommit, reviewReqUrl, ReviewReqAuthorName, ReviewMessage);
 			}
 
 			ObjectId refId = db.resolve(gitSegment);
@@ -465,13 +465,13 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 		IOrionCredentialsService userAdmin = UserServiceHelper.getDefault().getUserStore();
 		User user = (User) userAdmin.getUser(UserConstants.KEY_LOGIN, login);
 		try {
-			if (pullRequestEmail == null) {
-				pullRequestEmail = new EmailContent(EMAIL_PULL_REQUEST_FILE);
+			if (reviewRequestEmail == null) {
+				reviewRequestEmail = new EmailContent(EMAIL_REVIEW_REQUEST_FILE);
 			}
 
 			String emailAdress = user.getEmail();
 
-			util.sendEmail(pullRequestEmail.getTitle(), pullRequestEmail.getContent().replaceAll(EMAIL_COMMITER_NAME, authorName).replaceAll(EMAIL_URL_LINK, url).replaceAll(EMAIL_COMMIT_MESSAGE, message), emailAdress);
+			util.sendEmail(reviewRequestEmail.getTitle(), reviewRequestEmail.getContent().replaceAll(EMAIL_COMMITER_NAME, authorName).replaceAll(EMAIL_URL_LINK, url).replaceAll(EMAIL_COMMIT_MESSAGE, message), emailAdress);
 
 			JSONObject result = new JSONObject();
 			result.put(GitConstants.KEY_RESULT, "Email sent");
