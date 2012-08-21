@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -215,6 +217,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_USER_SECURESTORAGE, IStatus.ERROR, "Error loading user: " + childName, e)); //$NON-NLS-1$
 			}
 		}
+		Collections.sort((ArrayList<User>) users, new UserComparator());
 		return users;
 	}
 
@@ -449,5 +452,11 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 
 	public String getStoreName() {
 		return "Orion"; //$NON-NLS-1$
+	}
+
+	public class UserComparator implements Comparator<User> {
+	    public int compare(User u1, User u2) {
+	        return u1.getLogin().compareTo(u2.getLogin());
+	    }
 	}
 }
