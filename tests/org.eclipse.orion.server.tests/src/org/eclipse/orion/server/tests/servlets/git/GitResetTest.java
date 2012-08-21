@@ -36,8 +36,7 @@ public class GitResetTest extends GitTest {
 	public void testResetChanged() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
 
-		String projectName = getMethodName();
-		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), gitDir.toString());
 
 		JSONObject testTxt = getChild(project, "test.txt");
 		modifyFile(testTxt, "hello");

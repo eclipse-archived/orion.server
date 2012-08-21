@@ -20,7 +20,8 @@ import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.lib.Constants;
@@ -792,8 +793,10 @@ public class GitPushTest extends GitTest {
 		// see bug 353557
 		URI workspaceLocation = createWorkspace(getMethodName());
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 
-		for (IPath clonePath : clonePaths) {
+		for (int i = 0; i < clonePaths.length; i++) {
+			IPath clonePath = clonePaths[i];
 			// clone a  repo
 			JSONObject clone = clone(clonePath);
 			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
@@ -876,8 +879,8 @@ public class GitPushTest extends GitTest {
 			assertEquals("secondary/branch", remoteBranchLocations.getJSONObject(0).getJSONArray(ProtocolConstants.KEY_CHILDREN).getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
 
 			// clone the secondary branch and check if the new branch is there
-			JSONObject secondProject = createProjectOrLink(workspaceLocation, getMethodName() + "-second", null);
-			IPath secondClonePath = new Path("file").append(secondProject.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+			JSONObject secondProject = createProjectOrLink(workspaceLocation, getMethodName() + "-second-" + i, null);
+			IPath secondClonePath = getClonePath(workspaceId, secondProject);
 			URIish uri = new URIish(dotGitDir.getParentFile().toURI().toURL());
 			JSONObject clone2 = clone(uri, null, secondClonePath, null, null, null);
 			String cloneLocation2 = clone2.getString(ProtocolConstants.KEY_LOCATION);

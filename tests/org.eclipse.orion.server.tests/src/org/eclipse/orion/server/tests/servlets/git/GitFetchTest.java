@@ -161,7 +161,7 @@ public class GitFetchTest extends GitTest {
 		String gitHeadUri2 = gitSection2.getString(GitConstants.KEY_HEAD);
 
 		// clone2: change
-		request = getPutFileRequest(projectId2 + "/test.txt", "incoming change");
+		request = getPutFileRequest(clonePath2 + "/test.txt", "incoming change");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -352,7 +352,7 @@ public class GitFetchTest extends GitTest {
 		checkoutBranch(cloneLocation1, "a");
 
 		// clone1: change
-		request = getPutFileRequest(projectId1 + "/test.txt", "branch 'a' change");
+		request = getPutFileRequest(clonePath1 + "/test.txt", "branch 'a' change");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -374,7 +374,7 @@ public class GitFetchTest extends GitTest {
 		checkoutBranch(cloneLocation1, Constants.MASTER);
 
 		// clone1: change
-		request = getPutFileRequest(projectId1 + "/test.txt", "branch 'master' change");
+		request = getPutFileRequest(clonePath1 + "/test.txt", "branch 'master' change");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 

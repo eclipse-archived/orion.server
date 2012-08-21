@@ -299,7 +299,6 @@ public class GitCloneTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 		String contentLocation = clone(workspaceId, project).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		File folder = new File(getRepositoryForContentLocation(contentLocation).getDirectory().getParentFile(), "folder");
@@ -762,7 +761,7 @@ public class GitCloneTest extends GitTest {
 		clone(workspaceId, project);
 
 		// clone again into the same path
-		IPath clonePath = new Path("file").append(workspaceId).append(project.getString(ProtocolConstants.KEY_NAME)).makeAbsolute();
+		IPath clonePath = getClonePath(workspaceId, project);
 		WebRequest request = getPostGitCloneRequest(new URIish(gitDir.toURI().toURL()).toString(), clonePath);
 		WebResponse response = webConversation.getResponse(request);
 

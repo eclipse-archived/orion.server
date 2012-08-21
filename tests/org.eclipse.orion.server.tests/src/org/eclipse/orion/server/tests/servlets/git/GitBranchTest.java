@@ -20,7 +20,6 @@ import com.meterware.httpunit.WebResponse;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.lib.*;

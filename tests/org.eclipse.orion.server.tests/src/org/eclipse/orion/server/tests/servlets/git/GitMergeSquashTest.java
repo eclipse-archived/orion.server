@@ -21,7 +21,6 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.List;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.lib.Constants;
@@ -299,7 +298,7 @@ public class GitMergeSquashTest extends GitTest {
 
 		// add a parallel commit in secondary clone and push it to the remote
 		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
-		IPath clonePath2 = new Path("file").append(project2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath2 = getClonePath(workspaceId, project2);
 		clone(clonePath2);
 
 		// get project2 metadata

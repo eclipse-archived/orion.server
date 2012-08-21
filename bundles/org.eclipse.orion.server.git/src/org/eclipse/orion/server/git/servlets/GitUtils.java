@@ -46,8 +46,11 @@ public class GitUtils {
 	 * @throws CoreException
 	 */
 	public static File getGitDir(IPath path) throws CoreException {
-		Collection<File> values = GitUtils.getGitDirs(path, Traverse.GO_UP).values();
-		if (values == null || values.isEmpty())
+		Map<IPath, File> gitDirs = GitUtils.getGitDirs(path, Traverse.GO_UP);
+		if (gitDirs == null)
+			return null;
+		Collection<File> values = gitDirs.values();
+		if (values.isEmpty())
 			return null;
 		return values.toArray(new File[] {})[0];
 	}

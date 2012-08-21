@@ -396,7 +396,7 @@ public abstract class GitTest extends FileSystemTest {
 		JSONObject clone = clonesArray.getJSONObject(0);
 		String n = clone.getString(ProtocolConstants.KEY_NAME);
 		if (filePath != null)
-			assertTrue(filePath.segmentCount() == 2 && n.equals(WebProject.fromId(filePath.segment(1)).getName()) || n.equals(filePath.lastSegment()));
+			assertTrue(n.equals(filePath.lastSegment()));
 		if (workspacePath != null)
 			if (name != null)
 				assertEquals(name, n);
@@ -467,7 +467,7 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	/**
-	 * Creates a clone in the given workspace and projectc.
+	 * Creates a clone in the given workspace and project.
 	 */
 	protected JSONObject clone(String workspaceId, JSONObject project) throws JSONException, IOException, SAXException, CoreException {
 		return clone(getClonePath(workspaceId, project));
@@ -1165,7 +1165,6 @@ public abstract class GitTest extends FileSystemTest {
 	 * @return the request
 	 * @throws JSONException
 	 * @throws UnsupportedEncodingException 
-	 * @throws URISyntaxException 
 	 */
 	protected static WebRequest getPostGitCloneRequest(URIish uri, IPath workspacePath, IPath filePath, String name, String kh, char[] p) throws JSONException, UnsupportedEncodingException {
 		WebRequest request = new PostGitCloneRequest().setURIish(uri).setWorkspacePath(workspacePath).setFilePath(filePath).setName(name).setKnownHosts(kh).setPassword(p).getWebRequest();

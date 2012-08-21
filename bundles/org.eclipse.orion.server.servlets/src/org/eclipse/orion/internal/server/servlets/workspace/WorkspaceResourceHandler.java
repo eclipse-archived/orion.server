@@ -227,14 +227,14 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		//make sure required fields are set
 		JSONObject toAdd = data;
 		String id = toAdd.optString(ProtocolConstants.KEY_ID, null);
-		if (id == null)
-			id = WebProject.nextProjectId();
-		WebProject project = WebProject.fromId(id);
 		String name = toAdd.optString(ProtocolConstants.KEY_NAME, null);
 		if (name == null)
 			name = request.getHeader(ProtocolConstants.HEADER_SLUG);
-		if (!validateProjectName(name, request, response))
+		if (!validateProjectName(workspace, name, request, response))
 			return true;
+		if (id == null)
+			id = WebProject.nextProjectId();
+		WebProject project = WebProject.fromId(id);
 		project.setName(name);
 		String content = toAdd.optString(ProtocolConstants.KEY_CONTENT_LOCATION, null);
 		if (!isAllowedLinkDestination(content, request.getRemoteUser())) {
@@ -308,7 +308,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		} catch (JSONException e) {
 		}
 
-		if (!validateProjectName(destinationName, request, response))
+		if (!validateProjectName(workspace, destinationName, request, response))
 			return true;
 		WebProject sourceProject = WebProject.fromId(sourceId);
 		if ((options & CREATE_MOVE) != 0) {
@@ -579,13 +579,17 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 	 * project name is valid, and <code>false</code> otherwise. This method takes care of
 	 * setting the error response when the project name is not valid.
 	 */
-	private boolean validateProjectName(String name, HttpServletRequest request, HttpServletResponse response) throws ServletException {
+	private boolean validateProjectName(WebWorkspace workspace, String name, HttpServletRequest request, HttpServletResponse response) throws ServletException {
 		if (name == null || name.trim().length() == 0) {
 			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Project name cannot be empty", null));
 			return false;
 		}
 		if (name.contains("/")) { //$NON-NLS-1$
 			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Invalid project name: {0}", name), null));
+			return false;
+		}
+		if (workspace.getProjectByName(name) != null) {
+			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Duplicate project name: {0}", name), null));
 			return false;
 		}
 		return true;

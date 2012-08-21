@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -163,12 +163,13 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 					reset.addPath(paths.getString(i));
 				}
 			} else {
-				String p = path.removeFirstSegments(2).toString();
-				if (p.isEmpty()) {
+				//path format is /file/{workspaceId}/{projectName}[/{path}]
+				String projectRelativePath = path.removeFirstSegments(3).toString();
+				if (projectRelativePath.isEmpty()) {
 					String msg = "Path cannot be empty.";
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 				}
-				reset.addPath(p);
+				reset.addPath(projectRelativePath);
 			}
 			try {
 				reset.call();
