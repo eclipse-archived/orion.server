@@ -68,6 +68,10 @@ public class Commit extends GitObject {
 	private RevCommit revCommit;
 	private String pattern;
 	private TreeFilter filter;
+	/**
+	 * Whether this is a commit at the root of the repository, or only a
+	 * particular path (git commit -o {path}).
+	 */
 	private boolean isRoot = true;
 	private Map<ObjectId, JSONArray> commitToBranchMap;
 
@@ -255,25 +259,26 @@ public class Commit extends GitObject {
 	}
 
 	private URI createDiffLocation(String toRefId, String fromRefId, String path) throws URISyntaxException {
-		// TODO: use IPath, not String
-		String diffPath = GitServlet.GIT_URI + "/" + Diff.RESOURCE + "/"; //$NON-NLS-1$ //$NON-NLS-2$
+		IPath diffPath = new Path(GitServlet.GIT_URI).append(Diff.RESOURCE);
 
 		if (fromRefId != null)
-			diffPath += fromRefId + ".."; //$NON-NLS-1$
+			diffPath = diffPath.append(fromRefId + ".."); //$NON-NLS-1$
+		diffPath = diffPath.append(toRefId);
 
-		diffPath += toRefId + "/"; //$NON-NLS-1$
-
+		//clone location is of the form /gitapi/clone/file/{workspaceId}/{projectName}[/{path}]
+		IPath clonePath = new Path(cloneLocation.getPath()).removeFirstSegments(2);
 		if (path == null) {
-			diffPath += new Path(cloneLocation.getPath()).removeFirstSegments(2);
+			diffPath = diffPath.append(clonePath);
 		} else if (isRoot) {
-			diffPath += new Path(cloneLocation.getPath()).removeFirstSegments(2).append(path);
+			diffPath = diffPath.append(clonePath).append(path);
 		} else {
-			IPath p = new Path(cloneLocation.getPath());
-			// TODO: not sure if this is right, but it's fine with tests
-			diffPath += p.removeLastSegments(p.segmentCount() - 4).removeFirstSegments(2).append(path);
+			//need to start from the project root
+			//project path is of the form /file/{workspaceId}/{projectName}
+			IPath projectRoot = clonePath.uptoSegment(3);
+			diffPath = diffPath.append(projectRoot).append(path);
 		}
 
-		return new URI(cloneLocation.getScheme(), cloneLocation.getAuthority(), diffPath, null, null);
+		return new URI(cloneLocation.getScheme(), cloneLocation.getAuthority(), diffPath.toString(), null, null);
 	}
 
 	private URI createContentLocation(final DiffEntry entr, String path) throws URISyntaxException {

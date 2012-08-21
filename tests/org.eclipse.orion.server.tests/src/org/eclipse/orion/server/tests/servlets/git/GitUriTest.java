@@ -22,7 +22,6 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.List;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -156,12 +155,13 @@ public class GitUriTest extends GitTest {
 	@Test
 	public void testGitUrisForRepositoryClonedIntoSubfolder() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		String folderName = "subfolder";
 		WebRequest request = getPostFilesRequest("", getNewDirJSON(folderName).toString(), folderName);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).append(folderName).makeAbsolute();
+		IPath clonePath = getClonePath(workspaceId, project).append(folderName).makeAbsolute();
 		clone(clonePath);
 
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
