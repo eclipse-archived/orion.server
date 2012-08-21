@@ -456,7 +456,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 
 	public class UserComparator implements Comparator<User> {
 	    public int compare(User u1, User u2) {
-	        return u1.getLogin().compareTo(u2.getLogin());
+	        return u1.getLogin().toLowerCase().compareTo(u2.getLogin().toLowerCase());
 	    }
 	}
 }
