@@ -180,7 +180,7 @@ public class GitUtilsTest extends GitTest {
 		clone(clonePath);
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		URI uri = URI.create(location);
-		IPath projectPath = new Path(uri.getPath()).removeFirstSegments(1); // remove /file
+		IPath projectPath = new Path(uri.getPath());
 		Map<IPath, File> gitDirs = GitUtils.getGitDirs(projectPath, Traverse.GO_DOWN);
 		assertFalse(gitDirs.isEmpty());
 	}
@@ -190,11 +190,10 @@ public class GitUtilsTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		// create folder1
 		String folderName = "clone1";
-		WebRequest request = getPostFilesRequest(projectId + "/", getNewDirJSON(folderName).toString(), folderName);
+		WebRequest request = getPostFilesRequest("", getNewDirJSON(folderName).toString(), folderName);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		JSONObject cloneFolder1 = new JSONObject(response.getText());
@@ -203,7 +202,7 @@ public class GitUtilsTest extends GitTest {
 
 		// create folder2
 		folderName = "clone2";
-		request = getPostFilesRequest(projectId + "/", getNewDirJSON(folderName).toString(), folderName);
+		request = getPostFilesRequest("", getNewDirJSON(folderName).toString(), folderName);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		JSONObject cloneFolder2 = new JSONObject(response.getText());
@@ -212,21 +211,21 @@ public class GitUtilsTest extends GitTest {
 
 		String cloneLocation = cloneFolder1.getString(ProtocolConstants.KEY_LOCATION);
 		URI subfolderUri = URI.create(cloneLocation);
-		IPath subfolderPath = new Path(subfolderUri.getPath()).removeFirstSegments(1); // remove /file
+		IPath subfolderPath = new Path(subfolderUri.getPath());
 		Map<IPath, File> gitDirs = GitUtils.getGitDirs(subfolderPath, Traverse.GO_DOWN);
 		assertFalse(gitDirs.isEmpty());
 		gitDirs.clear();
 
 		cloneLocation = cloneFolder2.getString(ProtocolConstants.KEY_LOCATION);
 		subfolderUri = URI.create(cloneLocation);
-		subfolderPath = new Path(subfolderUri.getPath()).removeFirstSegments(1); // remove /file
+		subfolderPath = new Path(subfolderUri.getPath());
 		gitDirs = GitUtils.getGitDirs(subfolderPath, Traverse.GO_DOWN);
 		assertFalse(gitDirs.isEmpty());
 		gitDirs.clear();
 
 		String projectLocation = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		URI projectUri = URI.create(projectLocation);
-		IPath projectPath = new Path(projectUri.getPath()).removeFirstSegments(1); // remove /file
+		IPath projectPath = new Path(projectUri.getPath());
 		gitDirs = GitUtils.getGitDirs(projectPath, Traverse.GO_DOWN);
 		assertFalse(gitDirs.isEmpty());
 		assertEquals(2, gitDirs.size());

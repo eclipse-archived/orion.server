@@ -273,7 +273,12 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			// make sure a clone is addressed
 			WebProject webProject = GitUtils.projectFromPath(path);
 			if (isAccessAllowed(request.getRemoteUser(), webProject)) {
-				File gitDir = GitUtils.getGitDirs(path, Traverse.CURRENT).values().iterator().next();
+				Map<IPath, File> gitDirs = GitUtils.getGitDirs(path, Traverse.CURRENT);
+				if (gitDirs.isEmpty()) {
+					String msg = NLS.bind("Request path is not a git repository: {0}", path);
+					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+				}
+				File gitDir = gitDirs.values().iterator().next();
 
 				// make sure required fields are set
 				JSONObject toCheckout = OrionServlet.readJSONRequest(request);

@@ -6,7 +6,7 @@ import com.meterware.httpunit.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.*;
-import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
 import org.json.*;
@@ -34,8 +34,6 @@ import org.xml.sax.SAXException;
  */
 public class HostingTest extends CoreSiteTest {
 
-	private WebResponse workspaceResponse;
-	private JSONObject workspaceObject;
 	private String workspaceId;
 
 	@BeforeClass
@@ -47,14 +45,13 @@ public class HostingTest extends CoreSiteTest {
 	/**
 	 * Before each test, create a workspace and prepare fields for use by test methods.
 	 */
-	public void setUp() throws CoreException, SAXException, IOException, JSONException {
+	public void setUp() throws Exception {
 		clearWorkspace();
 		webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 		setUpAuthorization();
-		workspaceResponse = basicCreateWorkspace(this.getClass().getName());
-		workspaceObject = new JSONObject(workspaceResponse.getText());
-		workspaceId = workspaceObject.getString(ProtocolConstants.KEY_ID);
+		createTestProject("HostingTest");
+		workspaceId = new Path(testProjectBaseLocation).segment(0);
 	}
 
 	@Test
@@ -101,7 +98,11 @@ public class HostingTest extends CoreSiteTest {
 
 		// Create a site that exposes the workspace file
 		final String siteName = "My hosted site";
-		final String filePath = "/" + filename;
+		//make absolute by adding test project path
+		String filePath = URI.create(makeResourceURIAbsolute("/" + filename)).getPath();
+		//remove /file segment to get the servlet-relative path
+		Assert.assertTrue(filePath.startsWith("/file/"));
+		filePath = filePath.substring(5);
 		final String mountAt = "/file.html";
 
 		final JSONArray mappings = makeMappings(new String[][] {{mountAt, filePath}});
@@ -135,7 +136,8 @@ public class HostingTest extends CoreSiteTest {
 	public void testRemoteProxyRequest() throws SAXException, IOException, JSONException, URISyntaxException {
 		// Create a site that just points back to the Orion server being tested (mini self-host)
 		final String siteName = "My remote hosting site";
-		final String remoteRoot = "/remoteWeb", remoteFilePath = "/remoteFile", remotePrefPath = "/remotePref";
+		final String remoteRoot = "/remoteWeb", remotePrefPath = "/remotePref", remoteFilePath = "/remoteFile";
+
 		final JSONArray mappings = makeMappings(new String[][] { {remoteRoot, SERVER_LOCATION}, {remoteFilePath, SERVER_LOCATION + FILE_SERVLET_LOCATION}, {remotePrefPath, SERVER_LOCATION + "/prefs"}});
 		WebRequest createSiteReq = getCreateSiteRequest(siteName, workspaceId, mappings, null);
 		WebResponse createSiteResp = webConversation.getResponse(createSiteReq);
@@ -159,7 +161,7 @@ public class HostingTest extends CoreSiteTest {
 		// Test that we can invoke the Orion file API through the site, to create a file
 		final String fileName = "fizz.txt";
 		final String fileContent = "Created through a site";
-		createFileOnServer(hostedURL + remoteFilePath, fileName, fileContent);
+		createFileOnServer(hostedURL + remoteFilePath + testProjectBaseLocation, fileName, fileContent);
 
 		// Bugs 369813, 366098, 369811: ensure query parameters are passed through the site unmangled
 		// For this we'll call the 'prefs' API which uses query parameters

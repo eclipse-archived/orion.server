@@ -261,9 +261,12 @@ public class Commit extends GitObject {
 	private URI createDiffLocation(String toRefId, String fromRefId, String path) throws URISyntaxException {
 		IPath diffPath = new Path(GitServlet.GIT_URI).append(Diff.RESOURCE);
 
+		//diff range format is [fromRef..]toRef
+		String diffRange = ""; //$NON-NLS-1$
 		if (fromRefId != null)
-			diffPath = diffPath.append(fromRefId + ".."); //$NON-NLS-1$
-		diffPath = diffPath.append(toRefId);
+			diffRange = fromRefId + ".."; //$NON-NLS-1$
+		diffRange += toRefId;
+		diffPath = diffPath.append(diffRange);
 
 		//clone location is of the form /gitapi/clone/file/{workspaceId}/{projectName}[/{path}]
 		IPath clonePath = new Path(cloneLocation.getPath()).removeFirstSegments(2);
@@ -282,15 +285,17 @@ public class Commit extends GitObject {
 	}
 
 	private URI createContentLocation(final DiffEntry entr, String path) throws URISyntaxException {
-		IPath p = new Path(cloneLocation.getPath());
+		//remove /gitapi/clone from the start of path
+		IPath clonePath = new Path(cloneLocation.getPath()).removeFirstSegments(2);
 		IPath result;
 		if (path == null) {
-			result = p.removeFirstSegments(2);
+			result = clonePath;
 		} else if (isRoot) {
-			result = p.removeFirstSegments(2).append(path);
+			result = clonePath.append(path);
 		} else {
-			// TODO: not sure if this is right, but it's fine with tests
-			result = p.removeLastSegments(p.segmentCount() - 4).removeFirstSegments(2).append(path);
+			//need to start from the project root
+			//project path is of the form /file/{workspaceId}/{projectName}
+			result = clonePath.uptoSegment(3).append(path);
 		}
 		return new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), result.makeAbsolute().toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
 	}
