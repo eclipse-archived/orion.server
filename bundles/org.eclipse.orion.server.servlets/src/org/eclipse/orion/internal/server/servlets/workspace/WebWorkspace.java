@@ -91,17 +91,17 @@ public class WebWorkspace extends WebElement {
 	}
 
 	/**
-	 * Returns the next available project id. The id is guaranteed to be globally unique within
+	 * Returns the next available workspace id. The id is guaranteed to be globally unique within
 	 * this server.
-	 * @return the next available project id, or <code>null</code> if an id could not be allocated
+	 * @return the next available workspace id, or <code>null</code> if an id could not be allocated
 	 */
-	public static String nextWorkspaceId() {
+	public static String nextWorkspaceId(String defaultId) {
 		synchronized (workspaceCounter) {
-			String candidate;
-			do {
+			String candidate = defaultId;
+			while (exists(candidate)) {
 				candidate = workspaceCounter.toString();
 				workspaceCounter.increment();
-			} while (exists(candidate));
+			}
 			return candidate;
 		}
 	}
@@ -112,6 +112,8 @@ public class WebWorkspace extends WebElement {
 	 * @return <code>true</code> if the workspace already exists, and <code>false</code> otherwise.
 	 */
 	public static boolean exists(String id) {
+		if (id == null)
+			return false;
 		try {
 			return scope.getNode(WORKSPACE_NODE_NAME).nodeExists(id);
 		} catch (Exception e) {

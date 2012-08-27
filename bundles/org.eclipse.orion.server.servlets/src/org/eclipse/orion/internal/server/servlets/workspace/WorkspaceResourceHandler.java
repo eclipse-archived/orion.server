@@ -22,7 +22,6 @@ import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.*;
-import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
@@ -116,30 +115,6 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 
 	public WorkspaceResourceHandler(ServletResourceHandler<IStatus> statusHandler) {
 		this.statusHandler = statusHandler;
-	}
-
-	/**
-	 * Adds the right for the user of the current request to access/modify the given location.
-	 * @throws CoreException 
-	 */
-	private static void addProjectRights(String user, WebProject project) throws CoreException {
-		String location = Activator.LOCATION_FILE_SERVLET + '/' + project.getId();
-		//right to access the location
-		AuthorizationService.addUserRight(user, location);
-		//right to access all children of the location
-		AuthorizationService.addUserRight(user, location + "/*"); //$NON-NLS-1$
-	}
-
-	/**
-	 * Removes the right for the user of the current request to access/modify the given location.
-	 * @throws CoreException 
-	 */
-	private static void removeProjectRights(String user, WebProject project) throws CoreException {
-		String location = Activator.LOCATION_FILE_SERVLET + '/' + project.getId();
-		//right to access the location
-		AuthorizationService.removeUserRight(user, location);
-		//right to access all children of the location
-		AuthorizationService.removeUserRight(user, location + "/*"); //$NON-NLS-1$
 	}
 
 	public static void computeProjectLocation(WebProject project, String location, String user, boolean init) throws URISyntaxException, CoreException {
@@ -251,15 +226,9 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 			String msg = NLS.bind("Invalid project location: {0}", content);
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, e));
 		}
-		//If all went well, add project to workspace
-		workspace.addProject(project);
-
 		try {
-			// give the project creator access rights to the project
-			addProjectRights(request.getRemoteUser(), project);
-			//save the workspace and project metadata
-			project.save();
-			workspace.save();
+			//If all went well, add project to workspace
+			addProject(request.getRemoteUser(), workspace, project);
 		} catch (CoreException e) {
 			String msg = "Error persisting project state";
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
@@ -524,8 +493,6 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 	public static void addProject(String user, WebWorkspace workspace, WebProject project) throws CoreException {
 		//add project to workspace
 		workspace.addProject(project);
-		// give the project creator access rights to the project
-		addProjectRights(user, project);
 		//save the workspace and project metadata
 		project.save();
 		workspace.save();
@@ -544,9 +511,6 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 				child.delete(EFS.NONE, null);
 			}
 		}
-
-		// remove user rights for the project
-		removeProjectRights(user, project);
 
 		//If all went well, remove project from workspace
 		workspace.removeProject(project);

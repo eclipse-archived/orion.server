@@ -17,7 +17,6 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.site.*;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerConstants;
-import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.core.users.OrionScope;
 import org.json.*;
 import org.osgi.service.prefs.BackingStoreException;
@@ -38,9 +37,9 @@ public class WebUser extends WebElement {
 		IEclipsePreferences users = new OrionScope().getNode("Users"); //$NON-NLS-1$
 		IEclipsePreferences result = (IEclipsePreferences) users.node(userName);
 		if (result.get(ProtocolConstants.KEY_NAME, null) == null)
-			result.put(ProtocolConstants.KEY_NAME, userName);
+			result.put(ProtocolConstants.KEY_NAME, "Anonymous User");
 		if (result.get(ProtocolConstants.KEY_ID, null) == null)
-			result.put(ProtocolConstants.KEY_ID, new UniversalUniqueIdentifier().toBase64String());
+			result.put(ProtocolConstants.KEY_ID, userName);
 		try {
 			result.flush();
 		} catch (BackingStoreException e) {
@@ -50,7 +49,7 @@ public class WebUser extends WebElement {
 	}
 
 	public WebWorkspace createWorkspace(String name) throws CoreException {
-		String id = WebWorkspace.nextWorkspaceId();
+		String id = WebWorkspace.nextWorkspaceId(name);
 		WebWorkspace workspace = WebWorkspace.fromId(id);
 		workspace.setName(name);
 		workspace.save();
@@ -94,6 +93,14 @@ public class WebUser extends WebElement {
 			//someone has bashed the underlying storage - just fall through below
 		}
 		return new JSONArray();
+	}
+
+	public String getUserName() {
+		return store.get(ProtocolConstants.KEY_USER_NAME, ""); //$NON-NLS-1$
+	}
+
+	public void setUserName(String name) {
+		store.put(ProtocolConstants.KEY_USER_NAME, name);
 	}
 
 	/**

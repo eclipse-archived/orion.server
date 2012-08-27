@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others.
+ * Copyright (c) 2010, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -123,7 +123,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 		IOrionCredentialsService userAdmin = getUserAdmin();
 
-		User user = (User) userAdmin.getUser(UserConstants.KEY_LOGIN, login);
+		User user = userAdmin.getUser(UserConstants.KEY_LOGIN, login);
 
 		if (user == null)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "User " + login + " could not be found.", null));
@@ -145,6 +145,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		//		String store = req.getParameter(UserConstants.KEY_STORE);
 		String login = req.getParameter(UserConstants.KEY_LOGIN);
 		String name = req.getParameter(ProtocolConstants.KEY_NAME);
+		if (name == null)
+			name = login;
 		String password = req.getParameter(UserConstants.KEY_PASSWORD);
 
 		if (login == null || login.length() == 0)
@@ -159,13 +161,19 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (userAdmin.getUser(UserConstants.KEY_LOGIN, login) != null)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + login + " already exists.", null));
 
-		User newUser = new User(login, name != null ? name : "", password == null ? "" : password);
+		User newUser = new User(login, name, password);
 
 		newUser = userAdmin.createUser(newUser);
 
 		if (newUser == null) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Error creating user: {0}", login), null));
 		}
+
+		//create user object for workspace service
+		WebUser webUser = WebUser.fromUserName(newUser.getUid());
+		webUser.setUserName(login);
+		webUser.setName(name);
+		webUser.save();
 
 		try {
 			AuthorizationService.addUserRight(newUser.getUid(), newUser.getLocation());
@@ -186,11 +194,10 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 		IOrionCredentialsService userAdmin = getUserAdmin();
 
-		User user = (User) userAdmin.getUser(UserConstants.KEY_UID, userId);
-		String emailConfirmationid = user.getConfirmationId();
-
+		User user = userAdmin.getUser(UserConstants.KEY_UID, userId);
 		if (user == null)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + userId + " could not be found.", null));
+		String emailConfirmationid = user.getConfirmationId();
 
 		//users other than admin have to know the old password to set a new one
 		if (!isAdmin(req.getRemoteUser())) {
