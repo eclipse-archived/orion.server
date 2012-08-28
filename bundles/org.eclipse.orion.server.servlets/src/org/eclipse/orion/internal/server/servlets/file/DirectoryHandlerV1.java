@@ -136,6 +136,10 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 		}
 		try {
 			IFileStore source = resolveSourceLocation(request, locationString);
+			if (source == null) {
+				statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("Source does not exist: ", locationString), null));
+				return false;
+			}
 			//note we checked in preconditions that overwrite is ok here
 			try {
 				if (isCopy)
@@ -159,7 +163,8 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 
 	/**
 	 * Maps the client-facing location URL of a file or directory back to the local
-	 * file system path on the server.
+	 * file system path on the server. Returns <code>null</code> if the
+	 * location could not be resolved to a local file system location.
 	 */
 	private IFileStore resolveSourceLocation(HttpServletRequest request, String locationString) throws URISyntaxException, CoreException {
 		URI sourceLocation = new URI(locationString);
@@ -167,8 +172,7 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 		String sourcePath = getURI(request).resolve(sourceLocation).getPath();
 		//first segment is the servlet path
 		IPath path = new Path(sourcePath).removeFirstSegments(1);
-		IFileStore source = NewFileServlet.getFileStore(path);
-		return source;
+		return NewFileServlet.getFileStore(path);
 	}
 
 	/**
@@ -179,7 +183,7 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 		//get the slug first
 		String name = request.getHeader(ProtocolConstants.HEADER_SLUG);
 		//If the requestObject has a name then it must be used due to UTF-8 issues with names Bug 376671
-		if (requestObject != null && requestObject.has("Name")) {
+		if (requestObject.has("Name")) {
 			try {
 				name = requestObject.getString("Name");
 			} catch (JSONException e) {

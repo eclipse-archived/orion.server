@@ -104,7 +104,7 @@ public class SiteConfigurationServlet extends OrionServlet {
 	 */
 	private SiteConfiguration getExistingSiteConfig(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
 		String userName = getUserName(req);
-		WebUser user = WebUser.fromUserName(userName);
+		WebUser user = WebUser.fromUserId(userName);
 		IPath pathInfo = getPathInfo(req);
 		if (pathInfo.segmentCount() == 1) {
 			return user.getSiteConfiguration(pathInfo.segment(0));
@@ -116,7 +116,7 @@ public class SiteConfigurationServlet extends OrionServlet {
 	private boolean doGetAllSiteConfigurations(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
 		String userName = getUserName(req);
 		try {
-			WebUser user = WebUser.fromUserName(userName);
+			WebUser user = WebUser.fromUserId(userName);
 			JSONArray siteConfigurations = user.getSiteConfigurationsJSON(ServletResourceHandler.getURI(req));
 			JSONObject jsonResponse = new JSONObject();
 			jsonResponse.put(SiteConfigurationConstants.KEY_SITE_CONFIGURATIONS, siteConfigurations);

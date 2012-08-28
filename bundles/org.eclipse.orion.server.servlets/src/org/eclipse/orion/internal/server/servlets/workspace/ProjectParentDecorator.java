@@ -44,8 +44,9 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 			}
 			addParents(resource, representation, resourcePath);
 			//set the name of the project file to be the project name
-			if (resourcePath.segmentCount() == 2) {
-				WebProject project = WebProject.fromId(resourcePath.segment(1));
+			if (resourcePath.segmentCount() == 3) {
+				WebWorkspace workspace = WebWorkspace.fromId(resourcePath.segment(1));
+				WebProject project = workspace.getProjectByName(resourcePath.segment(2));
 				String projectName = project.getName();
 				if (projectName != null)
 					representation.put(ProtocolConstants.KEY_NAME, projectName);
@@ -62,7 +63,7 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 		resourcePath = resourcePath.removeLastSegments(1).addTrailingSeparator();
 		JSONArray parents = new JSONArray();
 		//for all but the project we can just manipulate the path to get the name and location
-		while (resourcePath.segmentCount() > 2) {
+		while (resourcePath.segmentCount() > 3) {
 			try {
 				URI uri = resource.resolve(new URI(null, resourcePath.toString(), null));
 				addParent(parents, resourcePath.lastSegment(), new URI(null, null, null, -1, uri.getPath(), uri.getQuery(), uri.getFragment()));
@@ -73,10 +74,11 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 			resourcePath = resourcePath.removeLastSegments(1);
 		}
 		//add the project
-		if (resourcePath.segmentCount() == 2) {
-			WebProject project = WebProject.fromId(resourcePath.segment(1));
-			URI uri = resource.resolve(resourcePath.toString());
+		if (resourcePath.segmentCount() == 3) {
+			WebWorkspace workspace = WebWorkspace.fromId(resourcePath.segment(1));
+			WebProject project = workspace.getProjectByName(resourcePath.segment(2));
 			try {
+				URI uri = resource.resolve(new URI(null, resourcePath.toString(), null));
 				addParent(parents, project.getName(), new URI(null, null, null, -1, uri.getPath(), uri.getQuery(), uri.getFragment()));
 			} catch (URISyntaxException e) {
 				//ignore this project

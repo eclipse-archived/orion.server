@@ -22,8 +22,8 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.storage.file.FileBasedConfig;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.URIish;
+import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.server.core.resources.*;
 import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
@@ -68,6 +68,11 @@ public class Clone {
 	}
 	protected Serializer<JSONObject> jsonSerializer = new JSONSerializer();
 
+	/**
+	 * Sets the clone id. The clone id is the HTTP resource URI of the file
+	 * resource. This id is of the form /file/{workspaceId}/{projectName}[/{folderPath}]
+	 * @param id
+	 */
 	public void setId(String id) {
 		this.id = id;
 	}
@@ -145,76 +150,76 @@ public class Clone {
 
 	@PropertyDescription(name = ProtocolConstants.KEY_LOCATION)
 	private URI getLocation() throws URISyntaxException {
-		IPath np = new Path(GitServlet.GIT_URI).append(Clone.RESOURCE).append("file").append(getId()); //$NON-NLS-1$
+		IPath np = new Path(GitServlet.GIT_URI).append(Clone.RESOURCE).append(getId());
 		return createUriWithPath(np);
 	}
 
 	@PropertyDescription(name = ProtocolConstants.KEY_CONTENT_LOCATION)
 	private URI getContentLocation2() throws URISyntaxException { // TODO duplicated method
-		IPath np = new Path("file").append(getId()).makeAbsolute(); //$NON-NLS-1$
+		IPath np = new Path(getId()).makeAbsolute();
 		return createUriWithPath(np);
 	}
 
 	// TODO: expandable
 	@PropertyDescription(name = GitConstants.KEY_REMOTE)
 	private URI getRemoteLocation() throws URISyntaxException {
-		IPath np = new Path(GitServlet.GIT_URI).append(Remote.RESOURCE).append("file").append(getId()); //$NON-NLS-1$
+		IPath np = new Path(GitServlet.GIT_URI).append(Remote.RESOURCE).append(getId());
 		return createUriWithPath(np);
 	}
 
 	// TODO: expandable
 	@PropertyDescription(name = GitConstants.KEY_CONFIG)
 	private URI getConfigLocation() throws URISyntaxException {
-		IPath np = new Path(GitServlet.GIT_URI).append(ConfigOption.RESOURCE).append(Clone.RESOURCE).append("file").append(getId()); //$NON-NLS-1$
+		IPath np = new Path(GitServlet.GIT_URI).append(ConfigOption.RESOURCE).append(Clone.RESOURCE).append(getId());
 		return createUriWithPath(np);
 	}
 
 	// TODO: expandable?
 	@PropertyDescription(name = GitConstants.KEY_HEAD)
 	private URI getHeadLocation() throws URISyntaxException {
-		IPath np = new Path(GitServlet.GIT_URI).append(Commit.RESOURCE).append(Constants.HEAD).append("file").append(getId()); //$NON-NLS-1$
+		IPath np = new Path(GitServlet.GIT_URI).append(Commit.RESOURCE).append(Constants.HEAD).append(getId());
 		return createUriWithPath(np);
 	}
 
 	// TODO: expandable?
 	@PropertyDescription(name = GitConstants.KEY_COMMIT)
 	private URI getCommitLocation() throws URISyntaxException {
-		IPath np = new Path(GitServlet.GIT_URI).append(Commit.RESOURCE).append("file").append(getId()); //$NON-NLS-1$
+		IPath np = new Path(GitServlet.GIT_URI).append(Commit.RESOURCE).append(getId());
 		return createUriWithPath(np);
 	}
 
 	// TODO: expandable
 	@PropertyDescription(name = GitConstants.KEY_BRANCH)
 	private URI getBranchLocation() throws URISyntaxException {
-		IPath np = new Path(GitServlet.GIT_URI).append(Branch.RESOURCE).append("file").append(getId()); //$NON-NLS-1$
+		IPath np = new Path(GitServlet.GIT_URI).append(Branch.RESOURCE).append(getId());
 		return createUriWithPath(np);
 	}
 
 	// TODO: expandable
 	@PropertyDescription(name = GitConstants.KEY_TAG)
 	private URI getTagLocation() throws URISyntaxException {
-		IPath np = new Path(GitServlet.GIT_URI).append(Tag.RESOURCE).append("file").append(getId()); //$NON-NLS-1$
+		IPath np = new Path(GitServlet.GIT_URI).append(Tag.RESOURCE).append(getId());
 		return createUriWithPath(np);
 	}
 
 	// TODO: expandable
 	@PropertyDescription(name = GitConstants.KEY_INDEX)
 	private URI getIndexLocation() throws URISyntaxException {
-		IPath np = new Path(GitServlet.GIT_URI).append(Index.RESOURCE).append("file").append(getId()); //$NON-NLS-1$
+		IPath np = new Path(GitServlet.GIT_URI).append(Index.RESOURCE).append(getId());
 		return createUriWithPath(np);
 	}
 
 	// TODO: expandable
 	@PropertyDescription(name = GitConstants.KEY_STATUS)
 	private URI getStatusLocation() throws URISyntaxException {
-		IPath np = new Path(GitServlet.GIT_URI).append(Status.RESOURCE).append("file").append(getId()); //$NON-NLS-1$
+		IPath np = new Path(GitServlet.GIT_URI).append(Status.RESOURCE).append(getId());
 		return createUriWithPath(np);
 	}
 
 	// TODO: expandable
 	@PropertyDescription(name = GitConstants.KEY_DIFF)
 	private URI getDiffLocation() throws URISyntaxException {
-		IPath np = new Path(GitServlet.GIT_URI).append(Diff.RESOURCE).append(GitConstants.KEY_DIFF_DEFAULT).append("file").append(getId()); //$NON-NLS-1$
+		IPath np = new Path(GitServlet.GIT_URI).append(Diff.RESOURCE).append(GitConstants.KEY_DIFF_DEFAULT).append(getId());
 		return createUriWithPath(np);
 	}
 
@@ -235,11 +240,11 @@ public class Clone {
 		return new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), path.toString(), baseLocation.getQuery(), baseLocation.getFragment());
 	}
 
-	public JSONObject toJSON(Entry<IPath, File> entry, URI baseLocation) throws JSONException, IOException, URISyntaxException {
-		id = entry.getKey().toString();
-		name = entry.getKey().segmentCount() == 1 ? WebProject.fromId(entry.getKey().segment(0)).getName() : entry.getKey().lastSegment();
+	public JSONObject toJSON(Entry<IPath, File> entry, URI aBaseLocation) throws IOException, URISyntaxException {
+		id = Activator.LOCATION_FILE_SERVLET + '/' + entry.getKey().toString();
+		name = entry.getKey().lastSegment();
 		db = new FileRepository(entry.getValue());
-		this.baseLocation = baseLocation;
+		this.baseLocation = aBaseLocation;
 		return toJSON();
 	}
 }

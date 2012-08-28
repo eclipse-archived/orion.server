@@ -16,44 +16,20 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
-import java.io.Writer;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import com.meterware.httpunit.*;
+import java.io.*;
+import java.net.*;
+import java.util.*;
 import junit.framework.Assert;
-
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.RebaseCommand.Operation;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.Ref;
-import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.lib.RepositoryCache;
+import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileBasedConfig;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.URIish;
@@ -62,43 +38,24 @@ import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
-import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
+import org.eclipse.orion.internal.server.servlets.workspace.*;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.git.objects.Branch;
-import org.eclipse.orion.server.git.objects.Clone;
-import org.eclipse.orion.server.git.objects.Commit;
-import org.eclipse.orion.server.git.objects.ConfigOption;
-import org.eclipse.orion.server.git.objects.Remote;
-import org.eclipse.orion.server.git.objects.RemoteBranch;
+import org.eclipse.orion.server.git.objects.*;
 import org.eclipse.orion.server.git.objects.Status;
-import org.eclipse.orion.server.git.objects.Tag;
 import org.eclipse.orion.server.git.servlets.GitServlet;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import org.json.*;
+import org.junit.*;
 import org.xml.sax.SAXException;
-
-import com.meterware.httpunit.GetMethodWebRequest;
-import com.meterware.httpunit.PostMethodWebRequest;
-import com.meterware.httpunit.PutMethodWebRequest;
-import com.meterware.httpunit.WebConversation;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 
 public abstract class GitTest extends FileSystemTest {
 
 	static final String GIT_SERVLET_LOCATION = GitServlet.GIT_URI + '/';
 
-	static WebConversation webConversation;
 	File gitDir;
 	File testFile;
 	protected FileRepository db;
@@ -169,6 +126,24 @@ public abstract class GitTest extends FileSystemTest {
 		FileUtils.delete(gitDir, FileUtils.RECURSIVE);
 	}
 
+	/**
+	 * Creates a request to get the status result for the given location.
+	 * @param location Either an absolute URI, or a workspace-relative URI
+	 */
+	protected WebRequest getGetGitStatusRequest(String location) {
+		String requestURI;
+		if (location.startsWith("http://"))
+			requestURI = location;
+		else if (location.startsWith("/"))
+			requestURI = SERVER_LOCATION + location;
+		else
+			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Status.RESOURCE + location;
+		WebRequest request = new GetMethodWebRequest(requestURI);
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		return request;
+	}
+
 	protected JSONObject linkProject(String contentLocation, String projectName) throws JSONException, IOException, SAXException {
 		// TODO: remove me
 		URI workspaceLocation = createWorkspace(getMethodName());
@@ -192,15 +167,10 @@ public abstract class GitTest extends FileSystemTest {
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
+		String workspaceId = new Path(workspaceLocation.getPath()).segment(1);
+		testProjectBaseLocation = "/" + workspaceId + '/' + projectName;
+		testProjectLocalFileLocation = "/" + project.optString(ProtocolConstants.KEY_ID, null);
 		return project;
-	}
-
-	protected URI createWorkspace(String suffix) throws IOException, SAXException {
-		String workspaceName = getClass().getName() + "#" + suffix;
-		WebRequest request = getCreateWorkspaceRequest(workspaceName);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		return URI.create(response.getHeaderField(ProtocolConstants.HEADER_LOCATION));
 	}
 
 	protected void createRepository() throws IOException, GitAPIException, CoreException {
@@ -329,7 +299,7 @@ public abstract class GitTest extends FileSystemTest {
 
 	protected static String getMethodName() {
 		final StackTraceElement[] ste = Thread.currentThread().getStackTrace();
-		return ste[3].getMethodName();
+		return ste[2].getMethodName();
 	}
 
 	protected static JSONObject getChildByKey(List<JSONObject> children, String key, String value) throws JSONException {
@@ -350,10 +320,13 @@ public abstract class GitTest extends FileSystemTest {
 		URI uri = URI.create(fileLocation);
 		IPath path = new Path(uri.getPath());
 
-		WebProject.exists(path.segment(1));
-		WebProject wp = WebProject.fromId(path.segment(1));
+		//path format is /file/{workspaceId}/{projectName}[/path]
+		assertTrue(WebWorkspace.exists(path.segment(1)));
+		WebWorkspace workspace = WebWorkspace.fromId(path.segment(1));
+		WebProject wp = workspace.getProjectByName(path.segment(2));
+		assertNotNull(wp);
 		IFileStore fsStore = getProjectStore(wp, "test");
-		fsStore = fsStore.getFileStore(path.removeFirstSegments(2));
+		fsStore = fsStore.getFileStore(path.removeFirstSegments(3));
 
 		File file = new File(fsStore.toURI());
 		if (RepositoryCache.FileKey.isGitRepository(file, FS.DETECTED)) {
@@ -389,6 +362,16 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	// clone
+	public String getCloneUri(String statusUri) throws JSONException, IOException, SAXException, CoreException {
+		assertStatusUri(statusUri);
+		WebRequest request = getGetGitStatusRequest(statusUri);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject status = new JSONObject(response.getText());
+		String cloneUri = status.getString(GitConstants.KEY_CLONE);
+		assertCloneUri(cloneUri);
+		return cloneUri;
+	}
 
 	protected JSONObject clone(URIish uri, IPath workspacePath, IPath filePath, String name, String kh, char[] p) throws JSONException, IOException, SAXException, CoreException {
 		// clone
@@ -413,7 +396,7 @@ public abstract class GitTest extends FileSystemTest {
 		JSONObject clone = clonesArray.getJSONObject(0);
 		String n = clone.getString(ProtocolConstants.KEY_NAME);
 		if (filePath != null)
-			assertTrue(filePath.segmentCount() == 2 && n.equals(WebProject.fromId(filePath.segment(1)).getName()) || n.equals(filePath.lastSegment()));
+			assertTrue(n.equals(filePath.lastSegment()));
 		if (workspacePath != null)
 			if (name != null)
 				assertEquals(name, n);
@@ -467,9 +450,27 @@ public abstract class GitTest extends FileSystemTest {
 		return clone(uri, workspacePath, filePath, name, null, null);
 	}
 
-	protected JSONObject clone(IPath filePath) throws JSONException, IOException, SAXException, CoreException {
+	protected JSONObject clone(IPath clonePath) throws JSONException, IOException, SAXException, CoreException {
 		URIish uri = new URIish(gitDir.toURI().toURL());
-		return clone(uri, null, filePath, null, null, null);
+		return clone(uri, null, clonePath, null, null, null);
+	}
+
+	/**
+	 * Returns the HTTP resource location for the given workspace and project.
+	 * @param workspaceId
+	 * @param project
+	 */
+	protected IPath getClonePath(String workspaceId, JSONObject project) {
+		String projectName = project.optString(ProtocolConstants.KEY_NAME, null);
+		assertNotNull(projectName);
+		return new Path("file").append(workspaceId).append(projectName).makeAbsolute();
+	}
+
+	/**
+	 * Creates a clone in the given workspace and project.
+	 */
+	protected JSONObject clone(String workspaceId, JSONObject project) throws JSONException, IOException, SAXException, CoreException {
+		return clone(getClonePath(workspaceId, project));
 	}
 
 	/**
@@ -1088,7 +1089,7 @@ public abstract class GitTest extends FileSystemTest {
 	static void assertCloneUri(String cloneUri) throws CoreException, IOException {
 		URI uri = URI.create(cloneUri);
 		IPath path = new Path(uri.getPath());
-		// /git/clone/workspace/{id} or /git/clone/file/{id}[/{path}]
+		// /git/clone/workspace/{id} or /git/clone/file/{workspaceId}/{projectName}[/{path}]
 		assertTrue(path.segmentCount() > 3);
 		assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
 		assertEquals(Clone.RESOURCE, path.segment(1));
@@ -1110,8 +1111,8 @@ public abstract class GitTest extends FileSystemTest {
 	private static void assertFileUri(String fileUri) {
 		URI uri = URI.create(fileUri);
 		IPath path = new Path(uri.getPath());
-		// /file/{id}[/{path}]
-		assertTrue(path.segmentCount() > 1);
+		// /file/{workspaceId}/{projectName}[/{path}]
+		assertTrue(path.segmentCount() > 2);
 		assertEquals("file", path.segment(0));
 	}
 
@@ -1164,7 +1165,6 @@ public abstract class GitTest extends FileSystemTest {
 	 * @return the request
 	 * @throws JSONException
 	 * @throws UnsupportedEncodingException 
-	 * @throws URISyntaxException 
 	 */
 	protected static WebRequest getPostGitCloneRequest(URIish uri, IPath workspacePath, IPath filePath, String name, String kh, char[] p) throws JSONException, UnsupportedEncodingException {
 		WebRequest request = new PostGitCloneRequest().setURIish(uri).setWorkspacePath(workspacePath).setFilePath(filePath).setName(name).setKnownHosts(kh).setPassword(p).getWebRequest();
@@ -1427,7 +1427,7 @@ public abstract class GitTest extends FileSystemTest {
 
 	protected JSONObject assertStatus(StatusResult expected, String statusUri) throws IOException, SAXException, JSONException {
 		assertStatusUri(statusUri);
-		WebRequest request = GitStatusTest.getGetGitStatusRequest(statusUri);
+		WebRequest request = getGetGitStatusRequest(statusUri);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject statusResponse = new JSONObject(response.getText());
@@ -1585,5 +1585,66 @@ public abstract class GitTest extends FileSystemTest {
 		JSONObject clones = new JSONObject(response.getText());
 		assertEquals(Clone.TYPE, clones.getString(ProtocolConstants.KEY_TYPE));
 		return clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+	}
+
+	protected String workspaceIdFromLocation(URI workspaceLocation) {
+		return new Path(workspaceLocation.getPath()).segment(1);
+	}
+
+	/**
+	 * Helper method to create two test projects for Git clone tests. One
+	 * project will have the clone location at the root, and the other project
+	 * has a clone location in a folder below the root. This method creates
+	 * the projects and returns the path for creating the clones, but does
+	 * not actually create the git clones.
+	 */
+	protected IPath[] createTestProjects(URI workspaceLocation) throws JSONException, IOException, SAXException {
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
+		WebWorkspace workspace = WebWorkspace.fromId(workspaceId);
+		assertNotNull(workspace);
+		String name = workspace.getName();
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, name + "-top", null);
+		IPath clonePathTop = getClonePath(workspaceId, projectTop);
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, name + "-folder", null);
+		IPath clonePathFolder = getClonePath(workspaceId, projectFolder).append("folder").makeAbsolute();
+
+		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		return clonePaths;
+	}
+
+	/**
+	 * Creates three pairs of test projects for clone tests. The pairs are as follows:
+	 *  - In first pair, both clones are at the project root
+	 *  - In second pair, both clones are in folders below the project root
+	 *  - In third pair, one clone is at the root and the other clone is within a child folder
+	 */
+	protected IPath[][] createTestClonePairs(URI workspaceLocation) throws IOException, SAXException, JSONException {
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
+		WebWorkspace workspace = WebWorkspace.fromId(workspaceId);
+		assertNotNull(workspace);
+		String name = workspace.getName();
+		JSONObject projectTop1 = createProjectOrLink(workspaceLocation, name + "-top1", null);
+		IPath clonePathTop1 = getClonePath(workspaceId, projectTop1);
+
+		JSONObject projectTop2 = createProjectOrLink(workspaceLocation, name + "-top2", null);
+		IPath clonePathTop2 = getClonePath(workspaceId, projectTop2);
+
+		JSONObject projectFolder1 = createProjectOrLink(workspaceLocation, name + "-folder1", null);
+		IPath clonePathFolder1 = getClonePath(workspaceId, projectFolder1).append("folder1").makeAbsolute();
+
+		JSONObject projectFolder2 = createProjectOrLink(workspaceLocation, name + "-folder2", null);
+		IPath clonePathFolder2 = getClonePath(workspaceId, projectFolder2).append("folder2").makeAbsolute();
+
+		JSONObject projectTop3 = createProjectOrLink(workspaceLocation, name + "-top3", null);
+		IPath clonePathTop3 = getClonePath(workspaceId, projectTop3);
+
+		JSONObject projectFolder3 = createProjectOrLink(workspaceLocation, name + "-folder3", null);
+		IPath clonePathFolder3 = getClonePath(workspaceId, projectFolder3).append("folder1").makeAbsolute();
+
+		IPath[] clonePathsTop = new IPath[] {clonePathTop1, clonePathTop2};
+		IPath[] clonePathsFolder = new IPath[] {clonePathFolder1, clonePathFolder2};
+		IPath[] clonePathsMixed = new IPath[] {clonePathTop3, clonePathFolder3};
+		IPath[][] clonePaths = new IPath[][] {clonePathsTop, clonePathsFolder, clonePathsMixed};
+		return clonePaths;
 	}
 }

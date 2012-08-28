@@ -27,12 +27,12 @@ public class WebProjectResourceHandler extends WebElementResourceHandler<WebProj
 		super();
 	}
 
-	public static JSONObject toJSON(WebProject project, URI parentLocation) {
+	public static JSONObject toJSON(WebWorkspace workspace, WebProject project, URI parentLocation) {
 		JSONObject result = WebElementResourceHandler.toJSON(project);
 		try {
 			result.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(parentLocation, "project/" + project.getId())); //$NON-NLS-1$
 			URI base = parentLocation.resolve(""); //$NON-NLS-1$
-			result.put(ProtocolConstants.KEY_CONTENT_LOCATION, WorkspaceResourceHandler.computeProjectContentLocation(base, project));
+			result.put(ProtocolConstants.KEY_CONTENT_LOCATION, WorkspaceResourceHandler.computeProjectURI(base, workspace, project));
 		} catch (JSONException e) {
 			//can't happen because key and value are well-formed
 		}

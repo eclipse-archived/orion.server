@@ -13,10 +13,11 @@ package org.eclipse.orion.server.tests.servlets.git;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
-
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.lib.Repository;
@@ -25,16 +26,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Test;
 
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
-
 public class GitInitTest extends GitTest {
 
 	@Test
 	public void testInit() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath initPath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath initPath = getClonePath(workspaceId, project);
 		String contentLocation = init(null, initPath, null).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		Repository repository = getRepositoryForContentLocation(contentLocation);
@@ -67,8 +66,9 @@ public class GitInitTest extends GitTest {
 	@Test
 	public void testInitAndCreateFolderByPath() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath initPath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).append("repos").append("repo1").makeAbsolute();
+		IPath initPath = getClonePath(workspaceId, project).append("repos").append("repo1").makeAbsolute();
 
 		// /file/{id}/repos/repo1, folders: 'repo' and 'repo1' don't exist
 		JSONObject repo = init(null, initPath, null);

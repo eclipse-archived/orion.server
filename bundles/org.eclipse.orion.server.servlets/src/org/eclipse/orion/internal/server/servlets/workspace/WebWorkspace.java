@@ -10,10 +10,14 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.workspace;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.resources.Base64Counter;
 import org.json.*;
+import org.osgi.service.prefs.BackingStoreException;
 
 /**
  * An Eclipse web workspace.
@@ -21,6 +25,37 @@ import org.json.*;
 public class WebWorkspace extends WebElement {
 	private static final String WORKSPACE_NODE_NAME = "Workspaces";//$NON-NLS-1$
 	private static final Base64Counter workspaceCounter = new Base64Counter();
+
+	/**
+	 * Returns a list of all known web workspaces.
+	 */
+	public static List<WebWorkspace> allWorkspaces() {
+		List<WebWorkspace> result = new ArrayList<WebWorkspace>();
+		IEclipsePreferences workspaceRoot = scope.getNode(WORKSPACE_NODE_NAME);
+		try {
+			String[] ids = workspaceRoot.childrenNames();
+			for (String id : ids)
+				result.add(WebWorkspace.fromId(id));
+		} catch (BackingStoreException e) {
+			LogHelper.log(e);
+		}
+		return result;
+	}
+
+	/**
+	 * Returns whether a workspace with the given id already exists.
+	 * @param id The id of the workspace 
+	 * @return <code>true</code> if the workspace already exists, and <code>false</code> otherwise.
+	 */
+	public static boolean exists(String id) {
+		if (id == null)
+			return false;
+		try {
+			return scope.getNode(WORKSPACE_NODE_NAME).nodeExists(id);
+		} catch (Exception e) {
+			return false;
+		}
+	}
 
 	/**
 	 * Creates a workspace instance with the given globally unique id. The workspace
@@ -35,6 +70,22 @@ public class WebWorkspace extends WebElement {
 	}
 
 	/**
+	 * Returns the next available workspace id. The id is guaranteed to be globally unique within
+	 * this server.
+	 * @return the next available workspace id, or <code>null</code> if an id could not be allocated
+	 */
+	public static String nextWorkspaceId(String defaultId) {
+		synchronized (workspaceCounter) {
+			String candidate = defaultId;
+			while (exists(candidate)) {
+				candidate = workspaceCounter.toString();
+				workspaceCounter.increment();
+			}
+			return candidate;
+		}
+	}
+
+	/**
 	 * Creates a new web workspace instance with the given backing storage.
 	 * @param store The storage where the workspace is persisted.
 	 */
@@ -46,19 +97,13 @@ public class WebWorkspace extends WebElement {
 	 * Adds a project to the list of projects that belong to this workspace.
 	 */
 	public void addProject(WebProject project) {
-		String existingProjects = store.get(ProtocolConstants.KEY_PROJECTS, "[]");
-		JSONArray allProjects;
-		try {
-			allProjects = new JSONArray(existingProjects);
-		} catch (JSONException e) {
-			//someone messed with the backing store and inserted something invalid- just wipe it out
-			allProjects = new JSONArray();
-		}
+		JSONArray allProjects = getProjectsJSON();
 		//make sure we don't already have it
 		String newProjectId = project.getId();
 		for (int i = 0; i < allProjects.length(); i++) {
 			try {
-				if (newProjectId.equals(allProjects.get(i)))
+				JSONObject existing = (JSONObject) allProjects.get(i);
+				if (newProjectId.equals(existing.get(ProtocolConstants.KEY_ID)))
 					return;
 			} catch (JSONException e) {
 				//ignore empty slots
@@ -77,32 +122,60 @@ public class WebWorkspace extends WebElement {
 	}
 
 	/**
-	 * Returns the next available project id. The id is guaranteed to be globally unique within
-	 * this server.
-	 * @return the next available project id, or <code>null</code> if an id could not be allocated
+	 * Returns the project in this workspace with the given name, or <code>null</code>
+	 * if there is no such project.
 	 */
-	public static String nextWorkspaceId() {
-		synchronized (workspaceCounter) {
-			String candidate;
-			do {
-				candidate = workspaceCounter.toString();
-				workspaceCounter.increment();
-			} while (exists(candidate));
-			return candidate;
+	public WebProject getProjectByName(String name) {
+		JSONArray projects = getProjectsJSON();
+		for (int i = 0; i < projects.length(); i++) {
+			try {
+				JSONObject projectJSON = (JSONObject) projects.get(i);
+				WebProject project = WebProject.fromId(projectJSON.optString(ProtocolConstants.KEY_ID, ""));
+				if (name.equals(project.getName()))
+					return project;
+			} catch (JSONException e) {
+				//ignore and keep looking
+			}
 		}
+		return null;
+
 	}
 
 	/**
-	 * Returns whether a workspace with the given id already exists.
-	 * @param id The id of the workspace 
-	 * @return <code>true</code> if the workspace already exists, and <code>false</code> otherwise.
+	 * Returns a JSON array of the projects in this workspace. Each entry in
+	 * the result array is a JSON object, including the unique project Id,
+	 * and any workspace-specific properties associated with that project.
 	 */
-	public static boolean exists(String id) {
+	public JSONArray getProjectsJSON() {
 		try {
-			return scope.getNode(WORKSPACE_NODE_NAME).nodeExists(id);
-		} catch (Exception e) {
-			return false;
+			String projects = store.get(ProtocolConstants.KEY_PROJECTS, null);
+			if (projects != null)
+				return new JSONArray(projects);
+		} catch (JSONException e) {
+			//someone has bashed the underlying storage - just fall through below
 		}
+		//just return empty array
+		JSONArray result = new JSONArray();
+		return result;
+	}
+
+	/**
+	 * Returns all projects in this workspace.
+	 */
+	public List<WebProject> getProjects() {
+		JSONArray projectsJSON = getProjectsJSON();
+		List<WebProject> allProjects = new ArrayList<WebProject>(projectsJSON.length());
+		for (int i = 0; i < projectsJSON.length(); i++) {
+			String projectId;
+			try {
+				JSONObject projectJSON = projectsJSON.getJSONObject(i);
+				projectId = projectJSON.getString(ProtocolConstants.KEY_ID);
+				allProjects.add(WebProject.fromId(projectId));
+			} catch (JSONException e) {
+				//someone has bashed the underlying storage - skip the project
+			}
+		}
+		return allProjects;
 	}
 
 	/**
@@ -135,24 +208,6 @@ public class WebWorkspace extends WebElement {
 			return;
 		allProjects.remove(index);
 		store.put(ProtocolConstants.KEY_PROJECTS, allProjects.toString());
-	}
-
-	/**
-	 * Returns a JSON array of the projects in this workspace. Each entry in
-	 * the result array is a JSON object, including the unique project Id,
-	 * and any workspace-specific properties associated with that project.
-	 */
-	public JSONArray getProjectsJSON() {
-		try {
-			String projects = store.get(ProtocolConstants.KEY_PROJECTS, null);
-			if (projects != null)
-				return new JSONArray(projects);
-		} catch (JSONException e) {
-			//someone has bashed the underlying storage - just fall through below
-		}
-		//just return empty array
-		JSONArray result = new JSONArray();
-		return result;
 	}
 
 }

@@ -13,11 +13,11 @@ package org.eclipse.orion.server.tests.servlets.git;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import com.meterware.httpunit.*;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
-
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.core.IOUtilities;
@@ -30,10 +30,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
-import com.meterware.httpunit.PostMethodWebRequest;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
-
 public class GitApplyPatchTest extends GitTest {
 
 	private static final String EOL = "\r\n"; //$NON-NLS-1$
@@ -42,8 +38,9 @@ public class GitApplyPatchTest extends GitTest {
 	public void testApplyPatch_addFile() throws Exception {
 		// clone: create
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 
 		// get project metadata
@@ -80,8 +77,9 @@ public class GitApplyPatchTest extends GitTest {
 	public void testApplyPatch_deleteFile() throws Exception {
 		// clone: create
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 
 		// get project metadata
@@ -115,8 +113,9 @@ public class GitApplyPatchTest extends GitTest {
 	public void testApplyPatch_modifyFile() throws Exception {
 		// clone: create
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 
 		// get project metadata
@@ -190,8 +189,9 @@ public class GitApplyPatchTest extends GitTest {
 	public void testApplyPatch_modifyFileApplyError() throws Exception {
 		// clone: create
 		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 
 		// get project metadata
@@ -227,7 +227,7 @@ public class GitApplyPatchTest extends GitTest {
 		assertStatus(StatusResult.CLEAN, gitStatusUri);
 	}
 
-	private static void patch(final String gitDiffUri, String patch) throws IOException, SAXException {
+	private void patch(final String gitDiffUri, String patch) throws IOException, SAXException {
 		WebRequest request = getPostGitDiffRequest(gitDiffUri, patch);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());

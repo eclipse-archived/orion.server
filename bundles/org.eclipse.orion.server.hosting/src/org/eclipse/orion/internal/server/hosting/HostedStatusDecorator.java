@@ -66,7 +66,7 @@ public class HostedStatusDecorator implements IWebResourceDecorator {
 	private static WebUser getWebUser(HttpServletRequest req) {
 		String remoteUser = req.getRemoteUser();
 		if (remoteUser != null) {
-			return WebUser.fromUserName(remoteUser);
+			return WebUser.fromUserId(remoteUser);
 		}
 		return null;
 	}

@@ -101,9 +101,9 @@ public class SiteHostingService implements ISiteHostingService {
 	public IHostedSite get(SiteConfiguration siteConfig, WebUser user) {
 		// Note this may overlap with a concurrent start()/stop() call that modifies the map
 		String id = siteConfig.getId();
-		String userName = user.getName();
+		String userId = user.getId();
 		for (IHostedSite site : sites.values()) {
-			if (site.getSiteConfigurationId().equals(id) && site.getUserName().equals(userName)) {
+			if (site.getSiteConfigurationId().equals(id) && site.getUserId().equals(userId)) {
 				return site;
 			}
 		}

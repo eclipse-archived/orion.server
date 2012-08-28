@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others 
+ * Copyright (c) 2010, 2012 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -36,23 +36,28 @@ import org.xml.sax.SAXException;
  * Basic tests for {@link NewFileServlet}.
  */
 public class CoreFilesTest extends FileSystemTest {
-	WebConversation webConversation;
 
 	@BeforeClass
 	public static void setupWorkspace() {
 		initializeWorkspaceLocation();
 	}
 
-	@After
-	public void removeTempDir() throws CoreException {
-		remove("sample");
+	private void addSourceLocation(JSONObject requestObject, String sourcePath) throws JSONException {
+		requestObject.put("Location", makeResourceURIAbsolute(sourcePath));
 	}
 
 	@Before
-	public void setUp() throws CoreException {
+	public void setUp() throws Exception {
 		webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 		setUpAuthorization();
+		createTestProject("CoreFilesTest");
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		clearWorkspace();
+		remove("sample");
 	}
 
 	@Test
@@ -177,6 +182,28 @@ public class CoreFilesTest extends FileSystemTest {
 	}
 
 	@Test
+	public void testCreateFileOverwrite() throws CoreException, IOException, SAXException, JSONException {
+		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+		createDirectory(directoryPath);
+		String fileName = "testfile.txt";
+
+		WebRequest request = getPostFilesRequest(directoryPath, getNewFileJSON(fileName).toString(), fileName);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+		//creating again at the same location should succeed but return OK rather than CREATED
+		request = getPostFilesRequest(directoryPath, getNewFileJSON(fileName).toString(), fileName);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		//creating with no-overwrite should fail if it already exists
+		request = getPostFilesRequest(directoryPath, getNewFileJSON(fileName).toString(), fileName);
+		request.setHeaderField("X-Create-Options", "no-overwrite");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_PRECON_FAILED, response.getResponseCode());
+	}
+
+	@Test
 	public void testCreateTopLevelFile() throws CoreException, IOException, SAXException, JSONException {
 		String directoryPath = "sample" + System.currentTimeMillis();
 		createDirectory(directoryPath);
@@ -201,100 +228,6 @@ public class CoreFilesTest extends FileSystemTest {
 		responseObject = new JSONObject(response.getText());
 		assertNotNull("No direcory information in response", responseObject);
 		checkFileMetadata(responseObject, fileName, null, null, null, null, null, null, null, null);
-	}
-
-	@Test
-	public void testCreateFileOverwrite() throws CoreException, IOException, SAXException, JSONException {
-		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
-		createDirectory(directoryPath);
-		String fileName = "testfile.txt";
-
-		WebRequest request = getPostFilesRequest(directoryPath, getNewFileJSON(fileName).toString(), fileName);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-
-		//creating again at the same location should succeed but return OK rather than CREATED
-		request = getPostFilesRequest(directoryPath, getNewFileJSON(fileName).toString(), fileName);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-		//creating with no-overwrite should fail if it already exists
-		request = getPostFilesRequest(directoryPath, getNewFileJSON(fileName).toString(), fileName);
-		request.setHeaderField("X-Create-Options", "no-overwrite");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_PRECON_FAILED, response.getResponseCode());
-	}
-
-	@Test
-	public void testWriteFile() throws CoreException, IOException, SAXException, JSONException {
-		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
-		createDirectory(directoryPath);
-		String fileName = "testfile.txt";
-
-		WebRequest request = getPostFilesRequest(directoryPath, getNewFileJSON(fileName).toString(), fileName);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-
-		//put to file location should succeed
-		String location = response.getHeaderField("Location");
-		String fileContent = "New contents";
-		request = getPutFileRequest(location, fileContent);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-		//get should return new contents
-		request = getGetFilesRequest(location);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		assertEquals("Invalid file content", fileContent, response.getText());
-	}
-
-	@Test
-	public void testWriteFileFromURL() throws CoreException, IOException, SAXException, JSONException {
-		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
-		createDirectory(directoryPath);
-		String fileName = "testfile.txt";
-
-		WebRequest request = getPostFilesRequest(directoryPath, getNewFileJSON(fileName).toString(), fileName);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-
-		//put to file location should succeed
-		String location = response.getHeaderField("Location");
-		//just need some stable file here
-		request = getPutFileRequest(location + "?source=http://eclipse.org/eclipse/project-info/home-page-one-liner.html", "");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-		//get should return new contents
-		request = getGetFilesRequest(location);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		assertEquals("Invalid file content", "<a href=\"/eclipse/\">Eclipse Project</a>", response.getText());
-	}
-
-	@Test
-	public void testWriteImageFromURL() throws CoreException, IOException, SAXException, JSONException {
-		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
-		createDirectory(directoryPath);
-		String fileName = "testfile.gif";
-
-		WebRequest request = getPostFilesRequest(directoryPath, getNewFileJSON(fileName).toString(), fileName);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-
-		//put to file location should succeed
-		String location = response.getHeaderField("Location");
-		//just need some stable file here
-		request = getPutFileRequest(location + "?source=http://eclipse.org/eclipse/development/images/Adarrow.gif", "");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-		//get should return new contents
-		request = getGetFilesRequest(location);
-		response = webConversation.getResponse(request);
-		assertEquals("image/gif", response.getHeaderField("CONTENT-TYPE"));
-		assertEquals("857", response.getHeaderField("CONTENT-LENGTH"));
 	}
 
 	@Test
@@ -423,7 +356,7 @@ public class CoreFilesTest extends FileSystemTest {
 
 		createDirectory(dirPath);
 		createFile(filePath, "Sample file content");
-		String requestURI = SERVER_LOCATION + FILE_SERVLET_LOCATION + filePath;
+		String requestURI = makeResourceURIAbsolute(filePath);
 		WebRequest get = new GetMethodWebRequest(requestURI);
 		setAuthentication(get);
 		WebResponse response = webConversation.getResource(get);
@@ -487,10 +420,6 @@ public class CoreFilesTest extends FileSystemTest {
 		checkFileMetadata(responseObject, destName, null, null, null, null, null, null, null, null);
 		assertFalse(checkFileExists(sourcePath));
 		assertTrue(checkFileExists(destPath));
-	}
-
-	private void addSourceLocation(JSONObject requestObject, String sourcePath) throws JSONException {
-		requestObject.put("Location", new Path(FileSystemTest.FILE_SERVLET_LOCATION).append(sourcePath));
 	}
 
 	@Test
@@ -567,6 +496,21 @@ public class CoreFilesTest extends FileSystemTest {
 	}
 
 	@Test
+	public void testReadFileContents() throws CoreException, IOException, SAXException {
+		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+		createDirectory(directoryPath);
+		String fileName = "sampleFile" + System.currentTimeMillis() + ".txt";
+		String fileContent = "Sample File Cotnent " + System.currentTimeMillis();
+		createFile(directoryPath + "/" + fileName, fileContent);
+
+		WebRequest request = getGetFilesRequest(directoryPath + "/" + fileName);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		assertEquals("Invalid file content", fileContent, response.getText());
+	}
+
+	@Test
 	public void testReadFileMetadata() throws Exception {
 		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
 		createDirectory(directoryPath);
@@ -583,7 +527,7 @@ public class CoreFilesTest extends FileSystemTest {
 
 		JSONArray parents = result.optJSONArray(ProtocolConstants.KEY_PARENTS);
 		assertNotNull(parents);
-		assertEquals(3, parents.length());
+		assertEquals(4, parents.length());
 		IPath parentPath = new Path(directoryPath);
 		//immediate parent
 		JSONObject parent = parents.getJSONObject(0);
@@ -604,17 +548,74 @@ public class CoreFilesTest extends FileSystemTest {
 	}
 
 	@Test
-	public void testReadFileContents() throws CoreException, IOException, SAXException {
+	public void testWriteFile() throws CoreException, IOException, SAXException, JSONException {
 		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
 		createDirectory(directoryPath);
-		String fileName = "sampleFile" + System.currentTimeMillis() + ".txt";
-		String fileContent = "Sample File Cotnent " + System.currentTimeMillis();
-		createFile(directoryPath + "/" + fileName, fileContent);
+		String fileName = "testfile.txt";
 
-		WebRequest request = getGetFilesRequest(directoryPath + "/" + fileName);
+		WebRequest request = getPostFilesRequest(directoryPath, getNewFileJSON(fileName).toString(), fileName);
 		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+		//put to file location should succeed
+		String location = response.getHeaderField("Location");
+		String fileContent = "New contents";
+		request = getPutFileRequest(location, fileContent);
+		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
+		//get should return new contents
+		request = getGetFilesRequest(location);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("Invalid file content", fileContent, response.getText());
+	}
+
+	@Test
+	public void testWriteFileFromURL() throws CoreException, IOException, SAXException, JSONException {
+		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+		createDirectory(directoryPath);
+		String fileName = "testfile.txt";
+
+		WebRequest request = getPostFilesRequest(directoryPath, getNewFileJSON(fileName).toString(), fileName);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+		//put to file location should succeed
+		String location = response.getHeaderField("Location");
+		//just need some stable file here
+		request = getPutFileRequest(location + "?source=http://eclipse.org/eclipse/project-info/home-page-one-liner.html", "");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		//get should return new contents
+		request = getGetFilesRequest(location);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals("Invalid file content", "<a href=\"/eclipse/\">Eclipse Project</a>", response.getText());
+	}
+
+	@Test
+	public void testWriteImageFromURL() throws CoreException, IOException, SAXException, JSONException {
+		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+		createDirectory(directoryPath);
+		String fileName = "testfile.gif";
+
+		WebRequest request = getPostFilesRequest(directoryPath, getNewFileJSON(fileName).toString(), fileName);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+		//put to file location should succeed
+		String location = response.getHeaderField("Location");
+		//just need some stable file here
+		request = getPutFileRequest(location + "?source=http://eclipse.org/eclipse/development/images/Adarrow.gif", "");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		//get should return new contents
+		request = getGetFilesRequest(location);
+		response = webConversation.getResponse(request);
+		assertEquals("image/gif", response.getHeaderField("CONTENT-TYPE"));
+		assertEquals("857", response.getHeaderField("CONTENT-LENGTH"));
 	}
 }

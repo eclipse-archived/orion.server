@@ -296,9 +296,9 @@ public class ProjectCleanup {
 			safeClose(inStream);
 		}
 		for (String user : usersToPermissions.keySet()) {
-			List<String> permissions = usersToPermissions.get(user);
+			List<String> userPermissions = usersToPermissions.get(user);
 			String permissionJSON = "[";
-			for (String perm : permissions) {
+			for (String perm : userPermissions) {
 				permissionJSON += "{\"Method\":15,\"Uri\":\"" + perm + "\"},";
 			}
 			//remove trailing comma
@@ -321,7 +321,6 @@ public class ProjectCleanup {
 		//map of user name to list of permissions for that user
 		Map<String, List<String>> usersToPermissions = new HashMap<String, List<String>>();
 		Map<String, List<String>> usersToWorkspaces = findUsersInMetadata();
-		Map<String, List<String>> workspacesToProjects = findWorkspacesInMetadata();
 		for (String user : usersToWorkspaces.keySet()) {
 			//don't mess with permissions of administrator
 			if (user.equals("admin"))
@@ -337,18 +336,9 @@ public class ProjectCleanup {
 				//user has access to their own workspace
 				newPermissions.add("/workspace/" + workspace);
 				newPermissions.add("/workspace/" + workspace + "/*");
-				//do for each project in current workspace
-				List<String> projectList = workspacesToProjects.get(workspace);
-				if (projectList == null)
-					continue;
-				for (String project : projectList) {
-					//access to project metadata
-					newPermissions.add("/workspace/" + workspace + "/project/" + project);
-					newPermissions.add("/workspace/" + workspace + "/project/" + project + "/*");
-					//access to project contents
-					newPermissions.add("/file/" + project);
-					newPermissions.add("/file/" + project + "/*");
-				}
+				//access to project contents
+				newPermissions.add("/file/" + workspace);
+				newPermissions.add("/file/" + workspace + "/*");
 			}
 			usersToPermissions.put(user, newPermissions);
 			System.out.println("New permissions for " + user + ": " + newPermissions);

@@ -14,22 +14,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
+import com.meterware.httpunit.*;
+import java.io.*;
+import java.net.*;
+import java.util.*;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
@@ -38,64 +29,18 @@ import org.eclipse.orion.internal.server.servlets.workspace.authorization.Author
 import org.eclipse.orion.server.core.users.OrionScope;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.junit.After;
+import org.json.*;
+import org.junit.*;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.osgi.service.prefs.BackingStoreException;
 import org.xml.sax.SAXException;
-
-import com.meterware.httpunit.GetMethodWebRequest;
-import com.meterware.httpunit.PostMethodWebRequest;
-import com.meterware.httpunit.WebConversation;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 
 /**
  * Tests for {@link WorkspaceServlet}.
  */
 public class WorkspaceServiceTest extends FileSystemTest {
-	WebConversation webConversation;
-
 	protected final List<IFileStore> toDelete = new ArrayList<IFileStore>();
-
-	protected WebRequest getCreateProjectRequest(URI workspaceLocation, String projectName, String projectLocation) throws JSONException, IOException {
-		workspaceLocation = addSchemeHostPort(workspaceLocation);
-		JSONObject body = new JSONObject();
-		if (projectLocation != null)
-			body.put(ProtocolConstants.KEY_CONTENT_LOCATION, projectLocation);
-		InputStream in = IOUtilities.toInputStream(body.toString());
-		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
-		if (projectName != null)
-			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
-		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		setAuthentication(request);
-		return request;
-	}
-
-	private URI addSchemeHostPort(URI uri) {
-		String scheme = uri.getScheme();
-		String host = uri.getHost();
-		int port = uri.getPort();
-		if (scheme == null) {
-			scheme = "http";
-		}
-		if (host == null) {
-			host = "localhost";
-		}
-		if (port == -1) {
-			port = 8080;
-		}
-		try {
-			return new URI(scheme, uri.getUserInfo(), host, port, uri.getPath(), uri.getQuery(), uri.getFragment());
-		} catch (URISyntaxException e) {
-			throw new RuntimeException(e);
-		}
-	}
 
 	protected WebRequest getCopyMoveProjectRequest(URI workspaceLocation, String projectName, String sourceLocation, boolean isMove) throws UnsupportedEncodingException {
 		workspaceLocation = addSchemeHostPort(workspaceLocation);
@@ -119,14 +64,6 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	@BeforeClass
 	public static void setupWorkspace() {
 		initializeWorkspaceLocation();
-	}
-
-	WebResponse createWorkspace(String workspaceName) throws IOException, SAXException {
-		WebRequest request = getCreateWorkspaceRequest(workspaceName);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		return response;
-
 	}
 
 	@Before
@@ -158,13 +95,12 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	public void testCreateProject() throws IOException, SAXException, JSONException, URISyntaxException {
 		//create workspace
 		String workspaceName = WorkspaceServiceTest.class.getName() + "#testCreateProject";
-		WebResponse response = createWorkspace(workspaceName);
-		URI workspaceLocation = new URI(response.getHeaderField(ProtocolConstants.HEADER_LOCATION));
+		URI workspaceLocation = createWorkspace(workspaceName);
 
 		//create a project
 		String projectName = "My Project";
 		WebRequest request = getCreateProjectRequest(workspaceLocation, projectName, null);
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		String locationHeader = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(locationHeader);
@@ -219,13 +155,12 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	public void testMoveBadRequest() throws IOException, SAXException, URISyntaxException {
 		//create workspace
 		String workspaceName = WorkspaceServiceTest.class.getName() + "#testMoveProject";
-		WebResponse response = createWorkspace(workspaceName);
-		URI workspaceLocation = new URI(response.getHeaderField(ProtocolConstants.HEADER_LOCATION));
+		URI workspaceLocation = createWorkspace(workspaceName);
 
 		//request a bogus move
 		String projectName = "My Project";
 		WebRequest request = getCopyMoveProjectRequest(workspaceLocation, projectName, "badsource", true);
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
 	}
 
@@ -233,13 +168,12 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	public void testMoveProject() throws IOException, SAXException, URISyntaxException, JSONException {
 		//create workspace
 		String workspaceName = WorkspaceServiceTest.class.getName() + "#testMoveProject";
-		WebResponse response = createWorkspace(workspaceName);
-		URI workspaceLocation = new URI(response.getHeaderField(ProtocolConstants.HEADER_LOCATION));
+		URI workspaceLocation = createWorkspace(workspaceName);
 
 		//create a project
 		String projectName = "Source Project";
 		WebRequest request = getCreateProjectRequest(workspaceLocation, projectName, null);
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		String sourceLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 
@@ -261,8 +195,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	public void testCopyProjectNonDefaultLocation() throws IOException, SAXException, URISyntaxException, JSONException {
 		//create workspace
 		String workspaceName = WorkspaceServiceTest.class.getName() + "#testCopyProjectNonDefaultLocation";
-		WebResponse response = createWorkspace(workspaceName);
-		URI workspaceLocation = new URI(response.getHeaderField(ProtocolConstants.HEADER_LOCATION));
+		URI workspaceLocation = createWorkspace(workspaceName);
 
 		String tmp = System.getProperty("java.io.tmpdir");
 		File projectLocation = new File(new File(tmp), "Orion-testCopyProjectNonDefaultLocation");
@@ -273,7 +206,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		//create a project
 		String sourceName = "My Project";
 		WebRequest request = getCreateProjectRequest(workspaceLocation, sourceName, projectLocation.toString());
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		String sourceLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		JSONObject responseObject = new JSONObject(response.getText());
@@ -328,13 +261,12 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	public void testCopyProject() throws IOException, SAXException, URISyntaxException, JSONException {
 		//create workspace
 		String workspaceName = WorkspaceServiceTest.class.getName() + "#testCopyProject";
-		WebResponse response = createWorkspace(workspaceName);
-		URI workspaceLocation = new URI(response.getHeaderField(ProtocolConstants.HEADER_LOCATION));
+		URI workspaceLocation = createWorkspace(workspaceName);
 
 		//create a project
 		String sourceName = "Source Project";
 		WebRequest request = getCreateProjectRequest(workspaceLocation, sourceName, null);
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		String sourceLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		JSONObject responseObject = new JSONObject(response.getText());
@@ -385,14 +317,13 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	public void testCreateProjectBadName() throws IOException, SAXException, URISyntaxException, JSONException {
 		//create workspace
 		String workspaceName = WorkspaceServiceTest.class.getName() + "#testCreateProjectBadName";
-		WebResponse response = createWorkspace(workspaceName);
-		URI workspaceLocation = new URI(response.getHeaderField(ProtocolConstants.HEADER_LOCATION));
+		URI workspaceLocation = createWorkspace(workspaceName);
 
 		//check a variety of bad project names
 		for (String badName : Arrays.asList("", " ", "/")) {
 			//create a project
 			WebRequest request = getCreateProjectRequest(workspaceLocation, badName, null);
-			response = webConversation.getResponse(request);
+			WebResponse response = webConversation.getResponse(request);
 			assertEquals("Shouldn't allow name: " + badName, HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
 		}
 	}
@@ -404,8 +335,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	public void testCreateProjectNonDefaultLocation() throws IOException, SAXException, JSONException, URISyntaxException {
 		//create workspace
 		String workspaceName = WorkspaceServiceTest.class.getName() + "#testCreateProjectNonDefaultLocation";
-		WebResponse response = createWorkspace(workspaceName);
-		URI workspaceLocation = new URI(response.getHeaderField(ProtocolConstants.HEADER_LOCATION));
+		URI workspaceLocation = createWorkspace(workspaceName);
 
 		String tmp = System.getProperty("java.io.tmpdir");
 		File projectLocation = new File(new File(tmp), "Orion-testCreateProjectNonDefaultLocation");
@@ -422,7 +352,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_FORBIDDEN, response.getResponseCode());
 
 		//now set the allowed prefixes and try again
@@ -438,7 +368,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	@Test
 	public void testCreateWorkspace() throws IOException, SAXException, JSONException {
 		String workspaceName = WorkspaceServiceTest.class.getName() + "#testCreateWorkspace";
-		WebResponse response = createWorkspace(workspaceName);
+		WebResponse response = basicCreateWorkspace(workspaceName);
 
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		String location = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
@@ -454,7 +384,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	public void testGetWorkspaceMetadata() throws IOException, SAXException, JSONException, URISyntaxException {
 		//create workspace
 		String workspaceName = WorkspaceServiceTest.class.getName() + "#testGetWorkspaceMetadata";
-		WebResponse response = createWorkspace(workspaceName);
+		WebResponse response = basicCreateWorkspace(workspaceName);
 		String locationString = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		URI workspaceLocation = new URI(locationString);
 		JSONObject workspace = new JSONObject(response.getText());
@@ -490,18 +420,17 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	public void testDeleteProject() throws IOException, SAXException, JSONException, URISyntaxException, CoreException {
 		//create workspace
 		String workspaceName = WorkspaceServiceTest.class.getName() + "#testDeleteProject";
-		WebResponse response = createWorkspace(workspaceName);
-		URI workspaceLocation = new URI(response.getHeaderField(ProtocolConstants.HEADER_LOCATION));
+		URI workspaceLocation = createWorkspace(workspaceName);
 
 		//create a project
 		String projectName = "My Project";
 		WebRequest request = getCreateProjectRequest(workspaceLocation, projectName, null);
-		response = webConversation.getResponse(request);
+		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		String projectLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 
 		//delete project
-		request = new DeleteMethodWebRequest(makeAbsolute(projectLocation));
+		request = new DeleteMethodWebRequest(makeResourceURIAbsolute(projectLocation));
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		response = webConversation.getResponse(request);
@@ -551,7 +480,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 
 		//now create a workspace
 		String workspaceName = WorkspaceServiceTest.class.getName() + "#testGetWorkspaces";
-		response = createWorkspace(workspaceName);
+		response = basicCreateWorkspace(workspaceName);
 		responseObject = new JSONObject(response.getText());
 		String workspaceId = responseObject.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(workspaceId);
