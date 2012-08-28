@@ -38,7 +38,7 @@ public class Activator implements BundleActivator {
 	public static final boolean DEBUG = true;
 
 	public static final String LOCATION_FILE_SERVLET = "/file"; //$NON-NLS-1$
-	public static final String LOCATION_PROJECT_SERVLET = "/project"; //$NON-NLS-1$
+	public static final String LOCATION_WORKSPACE_SERVLET = "/workspace"; //$NON-NLS-1$
 
 	public static final String PI_SERVER_SERVLETS = "org.eclipse.orion.server.servlets"; //$NON-NLS-1$
 	public static final String PROP_USER_AREA = "org.eclipse.orion.server.core.userArea"; //$NON-NLS-1$

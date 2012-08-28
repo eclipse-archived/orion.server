@@ -21,27 +21,29 @@ import org.json.JSONException;
  */
 public abstract class AuthorizationReader {
 	static AuthorizationReader readerV1 = new AuthorizationReaderV1();
-	static AuthorizationReader readerV2 = new AuthorizationReaderV2();
+	static AuthorizationReader readerV3 = new AuthorizationReaderV3();
 
-	public static JSONArray getAuthorizationData(IEclipsePreferences preferences) throws JSONException {
+	public static JSONArray getAuthorizationData(String userId, IEclipsePreferences preferences) throws JSONException {
 		int version = preferences.getInt(ProtocolConstants.KEY_USER_RIGHTS_VERSION, 1);
 		AuthorizationReader reader;
 		switch (version) {
 			case 1 :
+			case 2 :
+				//use same reader for v1 and v2 because it recomputes from workspace data
 				reader = readerV1;
 				break;
-			case 2 :
-				reader = readerV2;
+			case 3 :
+				reader = readerV3;
 				break;
 			default :
 				throw new RuntimeException("Unsupported auth data version: " + version); //$NON-NLS-1$
 		}
-		return reader.readAuthorizationInfo(preferences);
+		return reader.readAuthorizationInfo(userId, preferences);
 	}
 
 	/**
 	 * Returns a JSONArray of authorization data. The array entries
 	 * are JSON objects providing details on a particular right.
 	 */
-	abstract JSONArray readAuthorizationInfo(IEclipsePreferences preferences) throws JSONException;
+	abstract JSONArray readAuthorizationInfo(String userId, IEclipsePreferences preferences) throws JSONException;
 }
