@@ -137,24 +137,23 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			// handle adding new remote
 			// expected path: /git/remote/file/{path}
 			return addRemote(request, response, path);
+		}
+		JSONObject requestObject = OrionServlet.readJSONRequest(request);
+		boolean fetch = Boolean.parseBoolean(requestObject.optString(GitConstants.KEY_FETCH, null));
+		String srcRef = requestObject.optString(GitConstants.KEY_PUSH_SRC_REF, null);
+		boolean tags = requestObject.optBoolean(GitConstants.KEY_PUSH_TAGS, false);
+		boolean force = requestObject.optBoolean(GitConstants.KEY_FORCE, false);
+
+		// prepare creds
+		GitCredentialsProvider cp = GitUtils.createGitCredentialsProvider(requestObject);
+
+		// if all went well, continue with fetch or push
+		if (fetch) {
+			return fetch(request, response, cp, path, force);
+		} else if (srcRef != null) {
+			return push(request, response, path, cp, srcRef, tags, force);
 		} else {
-			JSONObject requestObject = OrionServlet.readJSONRequest(request);
-			boolean fetch = Boolean.parseBoolean(requestObject.optString(GitConstants.KEY_FETCH, null));
-			String srcRef = requestObject.optString(GitConstants.KEY_PUSH_SRC_REF, null);
-			boolean tags = requestObject.optBoolean(GitConstants.KEY_PUSH_TAGS, false);
-			boolean force = requestObject.optBoolean(GitConstants.KEY_FORCE, false);
-
-			// prepare creds
-			GitCredentialsProvider cp = GitUtils.createGitCredentialsProvider(requestObject);
-
-			// if all went well, continue with fetch or push
-			if (fetch) {
-				return fetch(request, response, cp, path, force);
-			} else if (srcRef != null) {
-				return push(request, response, path, cp, srcRef, tags, force);
-			} else {
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Only Fetch:true is currently supported.", null));
-			}
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Only Fetch:true is currently supported.", null));
 		}
 	}
 

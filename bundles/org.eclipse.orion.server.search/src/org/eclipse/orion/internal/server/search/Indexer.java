@@ -24,6 +24,7 @@ import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
+import org.eclipse.orion.internal.server.servlets.workspace.WebWorkspace;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.osgi.util.NLS;
@@ -110,10 +111,21 @@ public class Indexer extends Job {
 			message = "Error during searching indexing";
 
 		}
-		LogHelper.log(new Status(IStatus.ERROR, SearchActivator.PI_SEARCH, message, t)); //$NON-NLS-1$
+		LogHelper.log(new Status(IStatus.ERROR, SearchActivator.PI_SEARCH, message, t));
 	}
 
-	private int indexProject(WebProject project, SubMonitor monitor, List<SolrInputDocument> documents) {
+	/**
+	 * Runs an indexer pass over a workspace. Returns the number of documents indexed.
+	 */
+	private int indexWorkspace(WebWorkspace workspace, SubMonitor monitor, List<SolrInputDocument> documents) {
+		int indexed = 0;
+		for (WebProject project : workspace.getProjects()) {
+			indexed += indexProject(workspace, project, monitor, documents);
+		}
+		return indexed;
+	}
+
+	private int indexProject(WebWorkspace workspace, WebProject project, SubMonitor monitor, List<SolrInputDocument> documents) {
 		Logger logger = LoggerFactory.getLogger(Indexer.class);
 		if (logger.isDebugEnabled())
 			logger.debug("Indexing project id: " + project.getId() + " name: " + project.getName()); //$NON-NLS-1$ //$NON-NLS-2$
@@ -127,7 +139,7 @@ public class Indexer extends Job {
 			return 0;
 		}
 		//project location is always a directory
-		IPath projectLocation = new Path(Activator.LOCATION_FILE_SERVLET).append(project.getId()).addTrailingSeparator();
+		IPath projectLocation = new Path(Activator.LOCATION_FILE_SERVLET).append(workspace.getId()).append(project.getName()).addTrailingSeparator();
 		//gather all files
 		int projectLocationLength = projectStore.toURI().toString().length();
 		final List<IFileStore> toIndex = new ArrayList<IFileStore>();
@@ -224,17 +236,17 @@ public class Indexer extends Job {
 	@Override
 	protected IStatus run(IProgressMonitor monitor) {
 		long start = System.currentTimeMillis();
-		List<WebProject> projects = WebProject.allProjects();
-		SubMonitor progress = SubMonitor.convert(monitor, projects.size());
+		List<WebWorkspace> workspaces = WebWorkspace.allWorkspaces();
+		SubMonitor progress = SubMonitor.convert(monitor, workspaces.size());
 		List<SolrInputDocument> documents = new ArrayList<SolrInputDocument>();
 		int indexed = 0;
-		for (WebProject project : projects) {
-			indexed += indexProject(project, progress.newChild(1), documents);
+		for (WebWorkspace workspace : workspaces) {
+			indexed += indexWorkspace(workspace, progress.newChild(1), documents);
 		}
 		long duration = System.currentTimeMillis() - start;
 		Logger logger = LoggerFactory.getLogger(Indexer.class);
 		if (logger.isDebugEnabled())
-			logger.debug("Indexed " + projects.size() + " projects in " + duration + "ms"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+			logger.debug("Indexed " + workspaces.size() + " workspaces  in " + duration + "ms"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		//reschedule the indexing - throttle so the job never runs more than 10% of the time
 		long delay = Math.max(DEFAULT_DELAY, duration * 10);
 		//if there was nothing to index then back off for awhile

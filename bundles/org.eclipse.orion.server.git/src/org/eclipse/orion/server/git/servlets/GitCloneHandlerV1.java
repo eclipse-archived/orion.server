@@ -216,23 +216,16 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			// all clones in the workspace
 			if (WebWorkspace.exists(path.segment(1))) {
 				WebWorkspace workspace = WebWorkspace.fromId(path.segment(1));
-				JSONArray projects = workspace.getProjectsJSON();
 				JSONObject result = new JSONObject();
 				JSONArray children = new JSONArray();
-				for (int i = 0; i < projects.length(); i++) {
-					try {
-						JSONObject project = (JSONObject) projects.get(i);
-						//this is the location of the project metadata
-						WebProject webProject = WebProject.fromId(project.getString(ProtocolConstants.KEY_ID));
-						if (isAccessAllowed(user, webProject)) {
-							IPath projectPath = GitUtils.pathFromProject(workspace, webProject);
-							Map<IPath, File> gitDirs = GitUtils.getGitDirs(projectPath, Traverse.GO_DOWN);
-							for (Map.Entry<IPath, File> entry : gitDirs.entrySet()) {
-								children.put(new Clone().toJSON(entry, baseLocation));
-							}
+				for (WebProject webProject : workspace.getProjects()) {
+					//this is the location of the project metadata
+					if (isAccessAllowed(user, webProject)) {
+						IPath projectPath = GitUtils.pathFromProject(workspace, webProject);
+						Map<IPath, File> gitDirs = GitUtils.getGitDirs(projectPath, Traverse.GO_DOWN);
+						for (Map.Entry<IPath, File> entry : gitDirs.entrySet()) {
+							children.put(new Clone().toJSON(entry, baseLocation));
 						}
-					} catch (JSONException e) {
-						//ignore malformed children
 					}
 				}
 				result.put(ProtocolConstants.KEY_TYPE, Clone.TYPE);
