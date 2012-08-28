@@ -110,10 +110,9 @@ public class AuthorizationService {
 		JSONArray userRightArray = AuthorizationReader.getAuthorizationData(userId, (IEclipsePreferences) users.node(userId));
 		for (int i = 0; i < userRightArray.length(); i++) {
 			JSONObject userRight = (JSONObject) userRightArray.get(i);
-			String uriToMatch = uri.toLowerCase(Locale.ENGLISH);
-			String patternToMatch = userRight.getString(ProtocolConstants.KEY_USER_RIGHT_URI).toLowerCase(Locale.ENGLISH);
+			String patternToMatch = userRight.getString(ProtocolConstants.KEY_USER_RIGHT_URI);
 			int methodToMatch = userRight.getInt(ProtocolConstants.KEY_USER_RIGHT_METHOD);
-			if (wildCardMatch(uriToMatch, patternToMatch) && ((methodMask & methodToMatch) == methodMask))
+			if (wildCardMatch(uri, patternToMatch) && ((methodMask & methodToMatch) == methodMask))
 				return true;
 		}
 
