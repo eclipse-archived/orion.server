@@ -139,7 +139,7 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 			// If starting it failed, try to clean up
 			if (site != null) {
 				// Remove site config
-				WebUser user = WebUser.fromUserName(getUserName(req));
+				WebUser user = WebUser.fromUserId(getUserName(req));
 				user.removeSiteConfiguration(site);
 			}
 			throw e;
@@ -174,7 +174,7 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 	}
 
 	private boolean handleDelete(HttpServletRequest req, HttpServletResponse resp, SiteConfiguration site) throws CoreException {
-		WebUser user = WebUser.fromUserName(req.getRemoteUser());
+		WebUser user = WebUser.fromUserId(req.getRemoteUser());
 		ISiteHostingService hostingService = Activator.getDefault().getSiteHostingService();
 		IHostedSite runningSite = (IHostedSite) hostingService.get(site, user);
 		if (runningSite != null) {
@@ -221,7 +221,7 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 	 * Creates a new site configuration from the request
 	 */
 	private SiteConfiguration doCreateSiteConfiguration(HttpServletRequest req, JSONObject requestJson) throws CoreException {
-		WebUser user = WebUser.fromUserName(getUserName(req));
+		WebUser user = WebUser.fromUserId(getUserName(req));
 		String name = computeName(req, requestJson);
 		String workspace = requestJson.optString(SiteConfigurationConstants.KEY_WORKSPACE, null);
 		SiteConfiguration site = SiteConfigurationResourceHandler.createFromJSON(user, name, workspace, requestJson);
@@ -237,7 +237,7 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 	 * or if the hosting service threw an exception when trying to change the status.
 	 */
 	private void changeHostingStatus(HttpServletRequest req, HttpServletResponse resp, JSONObject requestJson, SiteConfiguration site) throws CoreException {
-		WebUser user = WebUser.fromUserName(getUserName(req));
+		WebUser user = WebUser.fromUserId(getUserName(req));
 		JSONObject hostingStatus = requestJson.optJSONObject(SiteConfigurationConstants.KEY_HOSTING_STATUS);
 		if (hostingStatus == null)
 			return;

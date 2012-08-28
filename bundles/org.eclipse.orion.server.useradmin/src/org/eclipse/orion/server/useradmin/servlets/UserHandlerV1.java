@@ -170,7 +170,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		}
 
 		//create user object for workspace service
-		WebUser webUser = WebUser.fromUserName(newUser.getUid());
+		WebUser webUser = WebUser.fromUserId(newUser.getUid());
 		webUser.setUserName(login);
 		webUser.setName(name);
 		webUser.save();
@@ -271,7 +271,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	private boolean handleUserDelete(HttpServletRequest req, HttpServletResponse resp, String userId) throws ServletException {
 		IOrionCredentialsService userAdmin = getUserAdmin();
 		User user = (User) userAdmin.getUser(UserConstants.KEY_UID, userId);
-		WebUser webUser = WebUser.fromUserName(user.getUid());
+		WebUser webUser = WebUser.fromUserId(user.getUid());
 		if (!userAdmin.deleteUser(user)) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + userId + " could not be found.", null));
 		}

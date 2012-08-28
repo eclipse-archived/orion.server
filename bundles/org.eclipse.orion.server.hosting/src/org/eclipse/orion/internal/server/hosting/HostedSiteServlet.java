@@ -235,13 +235,13 @@ public class HostedSiteServlet extends OrionServlet {
 
 	// returns true if the request has been served, false if not (only if failEarlyOn404 is true)
 	private boolean serveOrionFile(HttpServletRequest req, HttpServletResponse resp, IHostedSite site, IPath path, boolean failEarlyOn404) throws ServletException {
-		String userName = site.getUserName();
+		String userId = site.getUserId();
 		String workspaceId = site.getWorkspaceId();
 		String workspaceUri = WORKSPACE_SERVLET_ALIAS + "/" + workspaceId; //$NON-NLS-1$
 		boolean allow = false;
 		// Check that user who launched the hosted site really has access to the workspace
 		try {
-			if (AuthorizationService.checkRights(userName, workspaceUri, "GET")) { //$NON-NLS-1$
+			if (AuthorizationService.checkRights(userId, workspaceUri, "GET")) { //$NON-NLS-1$
 				allow = true;
 			}
 		} catch (JSONException e) {

@@ -43,8 +43,8 @@ public class WorkspaceServlet extends OrionServlet {
 	 * name is valid and false otherwise. If invalid, this method will handle
 	 * filling in the servlet response.
 	 */
-	private boolean checkUser(String user, HttpServletResponse response) throws ServletException {
-		if (user == null) {
+	private boolean checkUser(String userId, HttpServletResponse response) throws ServletException {
+		if (userId == null) {
 			handleException(response, new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "User name not specified"), HttpServletResponse.SC_FORBIDDEN);
 			return false;
 		}
@@ -92,11 +92,11 @@ public class WorkspaceServlet extends OrionServlet {
 	 * or <code>false</code> if the request could not be handled by this servlet.
 	 */
 	private boolean doGetWorkspaces(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
-		String userName = getUserName(req);
+		String userName = getUserId(req);
 		if (!checkUser(userName, resp))
 			return true;
 		try {
-			WebUser user = WebUser.fromUserName(userName);
+			WebUser user = WebUser.fromUserId(userName);
 			writeJSONResponse(req, resp, WebUserResourceHandler.toJSON(user, ServletResourceHandler.getURI(req)));
 		} catch (Exception e) {
 			handleException(resp, "An error occurred while obtaining workspace data", e);
@@ -122,8 +122,8 @@ public class WorkspaceServlet extends OrionServlet {
 	}
 
 	private void doCreateWorkspace(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		String userName = getUserName(req);
-		if (!checkUser(userName, resp))
+		String userId = getUserId(req);
+		if (!checkUser(userId, resp))
 			return;
 		String workspaceName = req.getHeader(ProtocolConstants.HEADER_SLUG);
 		if (workspaceName == null) {
@@ -131,7 +131,7 @@ public class WorkspaceServlet extends OrionServlet {
 			return;
 		}
 		try {
-			WebUser user = WebUser.fromUserName(userName);
+			WebUser user = WebUser.fromUserId(userId);
 			WebWorkspace workspace = user.createWorkspace(workspaceName);
 			JSONObject result = WorkspaceResourceHandler.toJSON(workspace, ServletResourceHandler.getURI(req));
 			writeJSONResponse(req, resp, result);
@@ -169,7 +169,7 @@ public class WorkspaceServlet extends OrionServlet {
 	/**
 	 * Obtain and return the user name from the request headers.
 	 */
-	private String getUserName(HttpServletRequest req) {
+	private String getUserId(HttpServletRequest req) {
 		return req.getRemoteUser();
 	}
 

@@ -26,9 +26,9 @@ public interface IHostedSite {
 	public Map<String, List<String>> getMappings();
 
 	/**
-	 * @return The name of the user who launched this site.
+	 * @return The id of the user who launched this site.
 	 */
-	public String getUserName();
+	public String getUserId();
 
 	/**
 	 * @return Workspace id that this site will use.

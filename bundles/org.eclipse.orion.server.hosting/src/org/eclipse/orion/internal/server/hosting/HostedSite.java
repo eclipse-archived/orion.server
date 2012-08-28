@@ -21,7 +21,7 @@ class HostedSite implements IHostedSite {
 
 	private String siteConfigurationId;
 	private Map<String, List<String>> mappings;
-	private String userName;
+	private String userId;
 	private String workspaceId;
 	private String host;
 	private String editServer;
@@ -29,12 +29,12 @@ class HostedSite implements IHostedSite {
 	public HostedSite(SiteConfiguration siteConfig, WebUser user, String host, String editServer) {
 		this.siteConfigurationId = siteConfig.getId();
 		this.mappings = Collections.unmodifiableMap(createMap(siteConfig));
-		this.userName = user.getName();
+		this.userId = user.getId();
 		this.workspaceId = siteConfig.getWorkspace();
 		this.host = host;
 		this.editServer = editServer;
 
-		if (this.userName == null || this.workspaceId == null || this.host == null || this.editServer == null) {
+		if (this.userId == null || this.workspaceId == null || this.host == null || this.editServer == null) {
 			throw new IllegalArgumentException("Parameters must be nonnull");
 		}
 	}
@@ -73,8 +73,8 @@ class HostedSite implements IHostedSite {
 	}
 
 	@Override
-	public String getUserName() {
-		return userName;
+	public String getUserId() {
+		return userId;
 	}
 
 	@Override

@@ -390,7 +390,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 	 */
 	private boolean isAccessAllowed(String userName, WebProject webProject) {
 		try {
-			WebUser webUser = WebUser.fromUserName(userName);
+			WebUser webUser = WebUser.fromUserId(userName);
 			JSONArray workspacesJSON = webUser.getWorkspacesJSON();
 			for (int i = 0; i < workspacesJSON.length(); i++) {
 				JSONObject workspace = workspacesJSON.getJSONObject(i);
@@ -422,7 +422,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 	 */
 	public static ServerStatus removeProject(String userName, WebProject webProject) {
 		try {
-			WebUser webUser = WebUser.fromUserName(userName);
+			WebUser webUser = WebUser.fromUserId(userName);
 			JSONArray workspacesJSON = webUser.getWorkspacesJSON();
 			for (int i = 0; i < workspacesJSON.length(); i++) {
 				JSONObject workspace = workspacesJSON.getJSONObject(i);

@@ -26,7 +26,7 @@ public class AuthorizationReaderV1 extends AuthorizationReader {
 		//because file URL structure changed in V3
 		JSONArray newPermissions = new JSONArray();
 		addPermission(newPermissions, "/users/" + userId); //$NON-NLS-1$
-		WebUser user = WebUser.fromUserName(userId);
+		WebUser user = WebUser.fromUserId(userId);
 		JSONArray workspacesJSON = user.getWorkspacesJSON();
 		//do for each workspace owned by current user
 		for (int i = 0; i < workspacesJSON.length(); i++) {

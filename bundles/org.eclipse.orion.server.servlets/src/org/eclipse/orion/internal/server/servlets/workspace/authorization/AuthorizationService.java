@@ -28,10 +28,6 @@ import org.osgi.service.prefs.BackingStoreException;
  */
 public class AuthorizationService {
 
-	/**
-	 * The current version of the authorization data storage format.
-	 */
-	private static final int CURRENT_VERSION = 3;
 	public static final int DELETE = 8;
 	public static final int GET = 4;
 	public static final int POST = 1;
@@ -64,7 +60,7 @@ public class AuthorizationService {
 			//add the new right
 			userRightArray.put(userRight);
 
-			saveRights(result, userRightArray);
+			AuthorizationReader.saveRights(result, userRightArray);
 		} catch (Exception e) {
 			String msg = "Error persisting user rights";
 			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
@@ -196,16 +192,10 @@ public class AuthorizationService {
 				if (uri.equals(((JSONObject) userRightArray.get(i)).get(ProtocolConstants.KEY_USER_RIGHT_URI)))
 					userRightArray.remove(i);
 			}
-			saveRights(result, userRightArray);
+			AuthorizationReader.saveRights(result, userRightArray);
 		} catch (Exception e) {
 			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error persisting user rights", e));
 		}
-	}
-
-	private static void saveRights(IEclipsePreferences result, JSONArray userRightArray) throws BackingStoreException {
-		result.put(ProtocolConstants.KEY_USER_RIGHTS, userRightArray.toString());
-		result.putInt(ProtocolConstants.KEY_USER_RIGHTS_VERSION, CURRENT_VERSION);
-		result.flush();
 	}
 
 	private static boolean wildCardMatch(String text, String pattern) {

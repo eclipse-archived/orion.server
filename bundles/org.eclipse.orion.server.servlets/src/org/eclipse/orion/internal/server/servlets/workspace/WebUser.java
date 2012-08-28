@@ -33,13 +33,15 @@ public class WebUser extends WebElement {
 	/**
 	 * Creates a web user instance for the given name.
 	 */
-	public static WebUser fromUserName(String userName) {
+	public static WebUser fromUserId(String userId) {
 		IEclipsePreferences users = new OrionScope().getNode("Users"); //$NON-NLS-1$
-		IEclipsePreferences result = (IEclipsePreferences) users.node(userName);
+		IEclipsePreferences result = (IEclipsePreferences) users.node(userId);
 		if (result.get(ProtocolConstants.KEY_NAME, null) == null)
 			result.put(ProtocolConstants.KEY_NAME, "Anonymous User");
 		if (result.get(ProtocolConstants.KEY_ID, null) == null)
-			result.put(ProtocolConstants.KEY_ID, userName);
+			result.put(ProtocolConstants.KEY_ID, userId);
+		if (result.get(ProtocolConstants.KEY_USER_NAME, null) == null)
+			result.put(ProtocolConstants.KEY_USER_NAME, userId);
 		try {
 			result.flush();
 		} catch (BackingStoreException e) {
@@ -49,7 +51,8 @@ public class WebUser extends WebElement {
 	}
 
 	public WebWorkspace createWorkspace(String name) throws CoreException {
-		String id = WebWorkspace.nextWorkspaceId(name);
+		//default to first workspace having username
+		String id = WebWorkspace.nextWorkspaceId(getUserName());
 		WebWorkspace workspace = WebWorkspace.fromId(id);
 		workspace.setName(name);
 		workspace.save();
@@ -95,10 +98,18 @@ public class WebUser extends WebElement {
 		return new JSONArray();
 	}
 
+	/**
+	 * Return the human readable username that appears in file URLs.
+	 * @return the user name
+	 */
 	public String getUserName() {
 		return store.get(ProtocolConstants.KEY_USER_NAME, ""); //$NON-NLS-1$
 	}
 
+	/**
+	 * Sets the human readable username that appears in file URLs.
+	 * @param name The new user name
+	 */
 	public void setUserName(String name) {
 		store.put(ProtocolConstants.KEY_USER_NAME, name);
 	}

@@ -38,7 +38,7 @@ public class WebUserResourceHandler extends WebElementResourceHandler<WebUser> {
 	public static JSONObject toJSON(WebUser user, URI baseLocation) {
 		JSONObject result = WebElementResourceHandler.toJSON(user);
 		try {
-			result.put(ProtocolConstants.KEY_USER_NAME, user.getName());
+			result.put(ProtocolConstants.KEY_USER_NAME, user.getUserName());
 			JSONArray workspacesJSON = user.getWorkspacesJSON();
 			for (int i = 0; i < workspacesJSON.length(); i++) {
 				JSONObject workspace = workspacesJSON.getJSONObject(i);
