@@ -38,8 +38,8 @@ public class WebUser extends WebElement {
 		IEclipsePreferences result = (IEclipsePreferences) users.node(userId);
 		if (result.get(ProtocolConstants.KEY_NAME, null) == null)
 			result.put(ProtocolConstants.KEY_NAME, "Anonymous User");
-		if (result.get(ProtocolConstants.KEY_ID, null) == null)
-			result.put(ProtocolConstants.KEY_ID, userId);
+		//ignore any existing value for userId because it used to be a randomly generated UUID
+		result.put(ProtocolConstants.KEY_ID, userId);
 		if (result.get(ProtocolConstants.KEY_USER_NAME, null) == null)
 			result.put(ProtocolConstants.KEY_USER_NAME, userId);
 		try {
