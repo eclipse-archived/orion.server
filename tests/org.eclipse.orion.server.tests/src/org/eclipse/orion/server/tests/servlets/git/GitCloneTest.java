@@ -34,6 +34,7 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.git.servlets.GitUtils;
@@ -127,6 +128,44 @@ public class GitCloneTest extends GitTest {
 		request = getGetFilesRequest(childrenLocation);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+	}
+
+	@Test
+	public void testCloneIntoNewProjectWithDuplicateCloneName() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		IPath clonePath = new Path("workspace").append(getWorkspaceId(workspaceLocation)).makeAbsolute();
+
+		// /workspace/{id} + {methodName}
+		String cloneName = getMethodName();
+		JSONObject cloneOne = clone(clonePath, null, cloneName);
+		assertEquals(cloneName, cloneOne.get("Name"));
+
+		//now try to clone again with the same clone name
+		URIish uri = new URIish(gitDir.toURI().toURL());
+		WebRequest request = getPostGitCloneRequest(uri, clonePath, null, cloneName, null, null);
+		WebResponse response = waitForTaskCompletionObjectResponse(webConversation.getResponse(request));
+		String cloneLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		if (cloneLocation == null) {
+			JSONObject taskResp = new JSONObject(response.getText());
+			assertTrue(taskResp.toString(), taskResp.has(ProtocolConstants.KEY_LOCATION));
+			assertFalse(taskResp.getString(TaskInfo.KEY_RESULT), taskResp.has(TaskInfo.KEY_FAILED) && taskResp.getBoolean(TaskInfo.KEY_FAILED));
+			cloneLocation = taskResp.getString(ProtocolConstants.KEY_LOCATION);
+		}
+		assertNotNull(cloneLocation);
+
+		// validate the clone metadata
+		response = webConversation.getResponse(getGetRequest(cloneLocation));
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject clones = new JSONObject(response.getText());
+		assertTrue("Clone doesn't have children at " + cloneLocation, clones.has(ProtocolConstants.KEY_CHILDREN));
+		JSONArray clonesArray = clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		assertEquals(1, clonesArray.length());
+		JSONObject cloneTwo = clonesArray.getJSONObject(0);
+		//the server should assign a different name to the second clone (slug is just a hint)
+		String nameTwo = cloneTwo.getString("Name");
+		assertNotNull(nameTwo);
+		assertFalse(cloneName.equals(nameTwo));
+
 	}
 
 	@Test

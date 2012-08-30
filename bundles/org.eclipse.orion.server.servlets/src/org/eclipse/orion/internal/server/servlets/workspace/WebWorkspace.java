@@ -12,10 +12,12 @@ package org.eclipse.orion.internal.server.servlets.workspace;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.resources.Base64Counter;
+import org.eclipse.osgi.util.NLS;
 import org.json.*;
 import org.osgi.service.prefs.BackingStoreException;
 
@@ -95,16 +97,20 @@ public class WebWorkspace extends WebElement {
 
 	/**
 	 * Adds a project to the list of projects that belong to this workspace.
+	 * @throws CoreException if the project already exists in this workspace
 	 */
-	public void addProject(WebProject project) {
+	public void addProject(WebProject project) throws CoreException {
 		JSONArray allProjects = getProjectsJSON();
-		//make sure we don't already have it
+		//make sure we don't already have project with same id or name
 		String newProjectId = project.getId();
+		String newProjectName = project.getName();
 		for (int i = 0; i < allProjects.length(); i++) {
 			try {
 				JSONObject existing = (JSONObject) allProjects.get(i);
-				if (newProjectId.equals(existing.get(ProtocolConstants.KEY_ID)))
-					return;
+				if (newProjectId.equals(existing.get(ProtocolConstants.KEY_ID)) || newProjectName.equals(existing.get(ProtocolConstants.KEY_NAME))) {
+					String msg = NLS.bind("Project already exists: {0}", newProjectName);
+					throw new CoreException(new Status(IStatus.ERROR, org.eclipse.orion.internal.server.servlets.Activator.PI_SERVER_SERVLETS, msg));
+				}
 			} catch (JSONException e) {
 				//ignore empty slots
 			}

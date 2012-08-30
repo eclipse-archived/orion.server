@@ -146,11 +146,13 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			IPath path = new Path(workspacePath);
 			// TODO: move this to CloneJob
 			// if so, modify init part to create a new project if necessary
+			WebWorkspace workspace = WebWorkspace.fromId(path.segment(1));
 			String id = WebProject.nextProjectId();
-			webProjectExists = false;
-			webProject = WebProject.fromId(id);
 			if (cloneName == null)
 				cloneName = new URIish(url).getHumanishName();
+			cloneName = getUniqueProjectName(workspace, cloneName);
+			webProjectExists = false;
+			webProject = WebProject.fromId(id);
 			webProject.setName(cloneName);
 
 			try {
@@ -162,7 +164,6 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			} catch (URISyntaxException e) {
 				// should not happen, we do not allow linking at this point
 			}
-			WebWorkspace workspace = WebWorkspace.fromId(path.segment(1));
 
 			try {
 				//If all went well, add project to workspace
@@ -194,6 +195,20 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		// if all went well, clone
 		CloneJob job = new CloneJob(clone, TaskJobHandler.getUserId(request), cp, request.getRemoteUser(), cloneLocation, webProjectExists ? null : webProject /* used for cleaning up, so null when not needed */);
 		return TaskJobHandler.handleTaskJob(request, response, job, statusHandler);
+	}
+
+	/**
+	 * Returns a unique project name that does not exist in the given workspace,
+	 * for the given clone name.
+	 */
+	private String getUniqueProjectName(WebWorkspace workspace, String cloneName) {
+		int i = 1;
+		String uniqueName = cloneName;
+		while (workspace.getProjectByName(uniqueName) != null) {
+			//add an incrementing counter suffix until we arrive at a unique name
+			uniqueName = cloneName + '-' + ++i;
+		}
+		return uniqueName;
 	}
 
 	public static void doConfigureClone(Git git, String user) throws IOException, CoreException {
