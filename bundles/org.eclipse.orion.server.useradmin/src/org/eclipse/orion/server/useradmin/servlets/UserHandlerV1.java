@@ -89,16 +89,42 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	private boolean handleUsersGet(HttpServletRequest req, HttpServletResponse resp) throws IOException, JSONException, CoreException {
 		// For Bug 372270 - changing the admin getUsers() to return a sorted list.
 		Collection<User> users = getUserAdmin().getUsers();
+		String startParam = req.getParameter(UserConstants.KEY_START);
+		String rowsParam = req.getParameter(UserConstants.KEY_ROWS);
+		boolean noStartParam = true;
+		int start = 0, rows = 0, count = 0;
+		if (startParam != null && !startParam.isEmpty()) {
+			start = Integer.parseInt(startParam);
+			if (start < 0) start = 0;
+			noStartParam = false;
+		} else {
+			start = 0;
+		}
+		if (rowsParam != null && !rowsParam.isEmpty()) {
+			rows = Integer.parseInt(rowsParam);
+			if (rows < 0) rows = 200;  // default is to return 200 at a time
+		} else {
+			// if there's no start and no rows then return the entire list to be backwards compatible
+			if (noStartParam)
+				rows = users.size(); // Return the full set of users
+			else
+				rows = 200; // default is to return 200 at a time
+		}
 		ArrayList<JSONObject> userJSONs = new ArrayList<JSONObject>();
 		URI location = OrionServlet.getURI(req);
 		IOrionUserProfileNode userNode = null;
 		for (User user : users) {
+			if (count >= start + rows) break;
+			if (count++ < start) continue;
 			URI userLocation = URIUtil.append(location, user.getUid());
 			userNode = getUserProfileService().getUserProfileNode(user.getUid(), true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
 			userJSONs.add(formJson(user, userNode, userLocation, req.getContextPath()));
 		}
 		JSONObject json = new JSONObject();
 		json.put(UserConstants.KEY_USERS, userJSONs);
+		json.put(UserConstants.KEY_USERS_START, start);
+		json.put(UserConstants.KEY_USERS_ROWS, rows);
+		json.put(UserConstants.KEY_USERS_LENGTH, users.size());
 		OrionServlet.writeJSONResponse(req, resp, json);
 		return true;
 	}
@@ -196,6 +222,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		IOrionCredentialsService userAdmin = getUserAdmin();
 
 		User user = userAdmin.getUser(UserConstants.KEY_UID, userId);
+
 		if (user == null)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + userId + " could not be found.", null));
 		String emailConfirmationid = user.getConfirmationId();
