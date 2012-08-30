@@ -225,6 +225,7 @@ public class HostedSiteServlet extends OrionServlet {
 				} else {
 					String message = "Only GET method is supported for workspace paths";
 					handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_METHOD_NOT_ALLOWED, NLS.bind(message, mappedURIs), null));
+					return;
 				}
 			} else {
 				if (proxyRemotePath(req, new LocationHeaderServletResponseWrapper(req, resp, site), uri, failEarlyOn404))
@@ -259,6 +260,7 @@ public class HostedSiteServlet extends OrionServlet {
 					return false;
 				}
 				handleException(resp, new ServerStatus(IStatus.ERROR, 404, NLS.bind("File not found: {0}", filePath), null));
+				return true;
 			}
 			if (fileSerializer.handleRequest(req, resp, file)) {
 				//return;
