@@ -93,14 +93,14 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		String rowsParam = req.getParameter(UserConstants.KEY_ROWS);
 		boolean noStartParam = true;
 		int start = 0, rows = 0, count = 0;
-		if (startParam != null && !startParam.isEmpty()) {
+		if (startParam != null && !(startParam.length() == 0)) {
 			start = Integer.parseInt(startParam);
 			if (start < 0) start = 0;
 			noStartParam = false;
 		} else {
 			start = 0;
 		}
-		if (rowsParam != null && !rowsParam.isEmpty()) {
+		if (rowsParam != null && !(rowsParam.length() == 0)) {
 			rows = Integer.parseInt(rowsParam);
 			if (rows < 0) rows = 200;  // default is to return 200 at a time
 		} else {
