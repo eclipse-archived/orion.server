@@ -10,16 +10,18 @@
  *******************************************************************************/
 package org.eclipse.orion.server.tests.prefs;
 
+import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
+import com.meterware.httpunit.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.List;
-
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.server.core.users.OrionScope;
 import org.eclipse.orion.server.tests.AbstractServerTest;
@@ -30,12 +32,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.osgi.service.prefs.BackingStoreException;
 
-import com.meterware.httpunit.GetMethodWebRequest;
-import com.meterware.httpunit.PutMethodWebRequest;
-import com.meterware.httpunit.WebConversation;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
-
 /**
  * Tests for the preference servlet.
  */
@@ -43,13 +39,14 @@ public class PreferenceTest extends AbstractServerTest {
 	WebConversation webConversation;
 
 	@Before
-	public void setUp() throws BackingStoreException {
+	public void setUp() throws BackingStoreException, CoreException {
 		OrionScope prefs = new OrionScope();
 		prefs.getNode("Users").removeNode();
 		prefs.getNode("Workspaces").removeNode();
 		prefs.getNode("Projects").removeNode();
 		webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
+		setUpAuthorization();
 	}
 
 	@Test
@@ -127,6 +124,51 @@ public class PreferenceTest extends AbstractServerTest {
 			result = new JSONObject(response.getText());
 			assertEquals("3." + location, "Fr&do", result.optString("Na=me"));
 		}
+	}
+
+	/**
+	 * Tests setting JSON objects as preference values
+	 * 
+	 * @throws IOException
+	 * @throws JSONException
+	 */
+	@Test
+	public void testPutJSON() throws IOException, JSONException {
+		List<String> locations = getTestPreferenceNodes();
+		for (String location : locations) {
+			//PUT http://myserver:8080/prefs/user/cm/configurations/jslint.config
+			//{"properties":{"options":"foo:true, bar:false"}}
+			JSONObject value = new JSONObject();
+			String options = "foo:true, bar:false";
+			value.put("options", options);
+			JSONObject prefs = new JSONObject();
+			prefs.put("properties", value);
+			String inString = prefs.toString();
+			WebRequest request = new PutMethodWebRequest(location, IOUtilities.toInputStream(inString), "application/json");
+			setAuthentication(request);
+			WebResponse response = webConversation.getResource(request);
+			assertEquals("1." + location, HttpURLConnection.HTTP_NO_CONTENT, response.getResponseCode());
+
+			//GET http://myserver:8080/prefs/user/cm/configurations/jslint.config
+			//should return: same value we put in
+			request = new GetMethodWebRequest(location);
+			setAuthentication(request);
+			response = webConversation.getResource(request);
+			assertEquals("2." + location, HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject resultObject = new JSONObject(response.getText());
+			assertTrue("3." + location, resultObject.has("properties"));
+			JSONObject resultValue = resultObject.getJSONObject("properties");
+			Object resultOptions = resultValue.get("options");
+			assertEquals("4." + location, options, resultOptions);
+
+		}
+		//
+		//but...
+		//
+		//GET http://myserver:8080/prefs/user/cm/configurations/jslint.config
+		//{
+		//  "properties" : "{\"options\":\"foo:true, bar:false\"}"
+		//}
 	}
 
 	@Test
