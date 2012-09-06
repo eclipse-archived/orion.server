@@ -63,10 +63,24 @@ public class SearchServlet extends OrionServlet {
 			String processedQuery = ""; //$NON-NLS-1$
 			//divide into search terms delimited by space character
 			String[] terms = queryString.split("\\s+"); //$NON-NLS-1$
+			String phrase = null;
 			for (String term : terms) {
 				if (term.length() == 0)
 					continue;
-				if (isSearchField(term)) {
+				if (term.charAt(0) == '"') {
+					//starting a phrase query
+					phrase = term;
+					continue;
+				}
+				if (phrase != null) {
+					//continue a phrase query
+					phrase += " " + term;
+					if (!term.endsWith("\""))
+						continue;
+					//end of a phrase
+					processedQuery += phrase;
+					phrase = null;
+				} else if (isSearchField(term)) {
 					//solr does not lowercase queries containing wildcards
 					//https://issues.apache.org/jira/browse/SOLR-219
 					if (term.startsWith("NameLower:")) {
