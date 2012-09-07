@@ -30,7 +30,6 @@ import org.eclipse.orion.server.useradmin.UserServiceHelper;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.junit.Before;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
@@ -39,24 +38,6 @@ import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
 
 public class BasicUsersTest extends UsersTest {
-
-	@Before
-	public void setUp() throws CoreException {
-		setUpAuthorization();
-	}
-
-	@Override
-	public void setUpAuthorization() throws CoreException {
-		User testUser = createUser("test", "test");
-		User adminUser = createUser("admin", "admin");
-
-		//by default allow 'admin' to modify all users data
-		AuthorizationService.addUserRight(adminUser.getUid(), "/users");
-		AuthorizationService.addUserRight(adminUser.getUid(), "/users/*");
-
-		//by default allow 'test' to modify his own data
-		AuthorizationService.addUserRight(testUser.getUid(), "/users/" + testUser.getUid());
-	}
 
 	@Test
 	public void testGetUsersList() throws IOException, SAXException, JSONException {
@@ -361,5 +342,29 @@ public class BasicUsersTest extends UsersTest {
 		foundUser = foundUsers.iterator().next();
 		assertEquals("Invalid user found", user.getUid(), foundUser.getUid());
 		assertEquals("Found user doesn't have the property expected", propertyValue, foundUser.getProperty(propertyName));
+	}
+
+	/**
+	 * @return a string representing the test users name.
+	 */
+	public String getTestUserName() {
+		return "testNoAccess";
+	}
+
+	public String getTestUserPassword() {
+		return "testNoAccess";
+	}
+
+	@Override
+	void setAdminRights(User adminUser) throws CoreException {
+		//by default allow 'admin' to modify all users data
+		AuthorizationService.addUserRight(adminUser.getUid(), "/users");
+		AuthorizationService.addUserRight(adminUser.getUid(), "/users/*");
+	}
+
+	@Override
+	void setTestUserRights(User testUser) throws CoreException {
+		//by default allow 'test' to modify his own data
+		AuthorizationService.addUserRight(testUser.getUid(), "/users/" + testUser.getUid());
 	}
 }
