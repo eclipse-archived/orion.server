@@ -163,6 +163,7 @@ public class PreferencesServlet extends OrionServlet {
 		handleException(resp, new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, NLS.bind(msg, path)), code);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
@@ -202,8 +203,20 @@ public class PreferencesServlet extends OrionServlet {
 		//			children.put(child, createQuery(req, "/prefs" + nodePath + '/' + child));
 		//		result.put("children", children);
 		//		JSONObject values = new JSONObject();
-		for (String key : node.keys())
-			result.put(key, node.get(key, null));
+		for (String key : node.keys()) {
+			String valueString = node.get(key, null);
+			Object value = null;
+			if (valueString != null) {
+				try {
+					//value might be serialized JSON
+					value = new JSONObject(valueString);
+				} catch (JSONException e) {
+					//value must be a string
+					value = valueString;
+				}
+			}
+			result.put(key, value);
+		}
 		return result;
 	}
 }

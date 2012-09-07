@@ -55,7 +55,7 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 		return context;
 	}
 
-	static SearchActivator getInstance() {
+	public static SearchActivator getInstance() {
 		return instance;
 	}
 
@@ -234,6 +234,20 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 			LogHelper.log(new Status(IStatus.ERROR, SearchActivator.PI_SEARCH, msg, e));
 		} finally {
 			IOUtilities.safeClose(out);
+		}
+	}
+
+	/**
+	 * Helper method for test suites. This method will block until the next indexer run completes.
+	 */
+	public void testWaitForIndex() {
+		try {
+			//cancel to wake up a sleeping indexer
+			indexer.cancel();
+			indexer.schedule();
+			indexer.join();
+		} catch (InterruptedException e) {
+			//just return
 		}
 	}
 
