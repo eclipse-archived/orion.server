@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<toc topic="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_settings_page/Plugging-into-the-settings-page.html" label="Plugging into the settings page">
+	<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_settings_page/Plugging-into-the-settings-page.html" label="Overview"></topic>
+	<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_settings_page/orion-core-setting.html" label="orion.core.setting">
+		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_settings_page/orion-core-setting.html#See_also" label="See also"></topic>
+	</topic>
+	<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_settings_page/Updating-this-document.html" label="Updating this document"></topic>
+</toc>

@@ -21,6 +21,7 @@
 		<topic href="WikiDoc/Orion/Server_admin_guide/Configuring-the-server.html#Creating_and_deleting_users" label="Creating and deleting users"></topic>
 		<topic href="WikiDoc/Orion/Server_admin_guide/Configuring-the-server.html#Changing_passwords" label="Changing passwords"></topic>
 		<topic href="WikiDoc/Orion/Server_admin_guide/Configuring-the-server.html#Enabling_anonymous_read_access" label="Enabling anonymous read access"></topic>
+		<topic href="WikiDoc/Orion/Server_admin_guide/Configuring-the-server.html#Email_configuration" label="Email configuration"></topic>
 		<topic href="WikiDoc/Orion/Server_admin_guide/Configuring-the-server.html#Automatic_git_projects" label="Automatic git projects"></topic>
 		<topic href="WikiDoc/Orion/Server_admin_guide/Configuring-the-server.html#Custom_page_footer" label="Custom page footer"></topic>
 		<topic href="WikiDoc/Orion/Server_admin_guide/Configuring-the-server.html#Configuring_virtual_host_names_for_launching_sites" label="Configuring virtual host names for launching sites">

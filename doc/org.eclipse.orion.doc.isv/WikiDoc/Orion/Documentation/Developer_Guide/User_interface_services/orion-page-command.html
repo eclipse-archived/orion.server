@@ -32,8 +32,7 @@
 		<h1 id="orion.page.command">orion.page.command</h1>
 		<p>The command service is responsible for managing and rendering commands such as tool bar and menu items. A command represents a single clickable action for a user, such as a toolbar button or menu item. Commands can typically be defined in common code, independent of any particular UI presentation of the commands or associated items. Here is an example of a simple command definition:</p>
 		<pre> define(['orion/commands'], function(mCommands) {
-</pre>
-		<pre>   var editCommand = new mCommands.Command({
+   var editCommand = new mCommands.Command({
      name: "Make Favorite",
      imageClass: "core-sprite-favorite",
      id: "my.command.id",

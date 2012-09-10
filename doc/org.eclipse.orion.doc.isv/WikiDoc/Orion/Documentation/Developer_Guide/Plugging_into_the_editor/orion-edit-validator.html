@@ -74,9 +74,9 @@ var serviceProvider = provider.registerServiceProvider("orion.edit.validator",
          var match = /\t \t| \t /.exec(line);
          if (match) {
            problems.push({
-             reason: "Mixed spaces and tabs",
+             description: "Mixed spaces and tabs",
              line: i + 1,
-             character: match.index + 1,
+             start: match.index + 1,
              end: match.index + match[0].length + 1,
              severity: "warning" });
          }

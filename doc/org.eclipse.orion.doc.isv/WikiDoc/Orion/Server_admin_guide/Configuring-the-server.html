@@ -31,7 +31,11 @@
 		</table><hr/>
 		<h1 id="Configuring_the_server">Configuring the server</h1>
 		<h2 id="Server_configuration_file">Server configuration file</h2>
-		<p>Many Orion server settings are found in the Orion server configuration file. By default Orion looks for this file in the current working directory of the Orion server process in a file called <tt>orion.conf</tt>. For example you can place this file in the root of your Orion install, then launch Orion from there. If the configuration file is not in the working directory, Orion will check the platform instance location - the location specified by the -data command line argument. By default this is a directory called "serverworkspace". Alternatively, the location of the configuration file can be specified via the system property <tt>orion.core.configFile</tt>. For example add this line to orion.ini:</p>
+		<p>Many Orion server settings are found in the Orion server configuration file. By default Orion looks for this file in the current working directory of the Orion server process in a file called <tt>orion.conf</tt>. For example you can place this file in the root of your Orion install, then launch Orion from there. </p>
+		<p>
+			<b>Note:</b> On Mac OS X, if you're launching Orion by double-clicking Orion.app, the working directory is <tt>orion.app/Contents/MacOS</tt>, so you must put the orion.conf file in that directory. (To drill into orion.app, Ctrl+click it and choose "Show Package Contents".)
+		</p>
+		<p>If the configuration file is not in the working directory, Orion will check the platform instance location - the location specified by the -data command line argument. By default this is a directory called "serverworkspace". Alternatively, the location of the configuration file can be specified via the system property <tt>orion.core.configFile</tt>. For example add this line to orion.ini:</p>
 		<pre>-Dorion.core.configFile=/home/fran/orion.conf
 </pre>
 		<p>The file is a simple text configuration file with key/value pairs delimited by '=' character. Lines starting with '#' are treated as comments and ignored</p>
@@ -94,13 +98,11 @@ jetty.ssl.protocol = SSLv3
 		<p>To configure the kind of authentication used by the server, set the <tt>orion.auth.name</tt> property in the 
 			<a href="Configuring-the-server.html#Server_configuration_file">server configuration file</a>. For example, the following line will configure the server to use simple form-based authentication:
 		</p>
-		<pre> orion.auth.name=FORM
+		<pre> orion.auth.name=FORM+OpenID
 </pre>
 		<p>Valid values for this property are:</p>
 		<ul>
-			<li>FORM: Simple form-based authentication</li>
 			<li>Basic: Basic HTTP authentication (not secure unless running on https)</li>
-			<li>OpenID: Authentication only with OpenID</li>
 			<li>FORM+OpenID: User can select form-based authentication or OpenID authentication</li>
 		</ul>
 		<h2 id="Allowing_users_to_create_accounts">Allowing users to create accounts</h2>
@@ -133,6 +135,28 @@ jetty.ssl.protocol = SSLv3
 			<a href="Configuring-the-server.html#Server_configuration_file">server configuration file</a>:
 		</p>
 		<pre>orion.file.anonymous.read=true
+</pre>
+		<h2 id="Email_configuration">Email configuration</h2>
+		<p>Orion allows to users to add their email account in profile, that will be later used to send email notifications, for instance resetting the password. This option is however only available if email and SMTP server configuration is present in the 
+			<a href="Configuring-the-server.html#Server_configuration_file">server configuration file</a>:
+		</p>
+		<p>SMTP host that will send email:</p>
+		<pre>mail.smtp.host=[smtp_host]
+</pre>
+		<p>port if different than 25 (default):</p>
+		<pre>mail.smtp.port=25
+</pre>
+		<p>information if authentication to SMTP server is needed</p>
+		<pre>mail.smtp.auth=true
+</pre>
+		<p>SMTP server user name if authentication to SMTP server is needed:</p>
+		<pre>mail.smtp.user=[smtp_user]
+</pre>
+		<p>SMTP server password if authentication to SMTP server is needed:</p>
+		<pre>mail.smtp.password=[password] 
+</pre>
+		<p>email that messages will come from (for instance webmaster@orion.eclipse.org):</p>
+		<pre>mail.from=[sender_of_mails]
 </pre>
 		<h2 id="Automatic_git_projects">Automatic git projects</h2>
 		<p>There is a server configuration property to automatically create a git repository for each created project. This allows a user to stage/commit changes, compare with committed changes, etc. This repository cannot currently be synchronized with a remote replica. To enable this setting, the following property must be specified in the server configuration file:</p>
@@ -187,7 +211,7 @@ jetty.ssl.protocol = SSLv3
 		<pre>$ sudo ifconfig lo0 alias 127.0.0.2 up
 $ sudo ifconfig lo0 alias 127.0.0.3 up
 </pre>
-		<p>Then try the example. Note that if you restart your machine, you'll have to do this again.
+		<p>Also ensure that your orion.conf file is located properly inside the orion.app.  You will want to "Show Package Contents" in the Finder and then place the file in Contents/MacOS.  Then try the example. Note that if you restart your machine, you'll have to execute the sudo commands again.
 			}}|image=Note.png|bgcolor=#def3fe|bdcolor=#c5d7e0}}</p>
 		<p>To use a more readable hostname instead of an IP address, you can edit the 
 			<a href="http://en.wikipedia.org/wiki/Hosts_file" target="orion_external">hosts file</a> on your local machine and create an entry that maps <code>friendlyHostname</code> to <code>127.0.0.1</code>. Then include the same hostname in the server configuration property, and Orion will use it:

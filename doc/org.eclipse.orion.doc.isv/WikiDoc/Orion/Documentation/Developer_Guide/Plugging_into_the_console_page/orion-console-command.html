@@ -1,0 +1,132 @@
+<?xml version='1.0' encoding='utf-8' ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<title>Plugging into the console page - orion.console.command</title>
+		<link type="text/css" rel="stylesheet" href="../../../../book.css"/>
+	</head>
+	<body>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<th style="width: 100%" align="center" colspan="3">orion.console.command</th>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="Plugging-into-the-console-page.html" title="Plugging into the console page">
+						<img alt="Previous" border="0" src="../../../../images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right">
+					<a href="Updating-this-document.html" title="Updating this document">
+						<img alt="Next" border="0" src="../../../../images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">Plugging into the console page</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">Updating this document</td>
+			</tr>
+		</table><hr/>
+		<h1 id="orion.console.command">orion.console.command</h1>
+		<p>The <tt>orion.console.command</tt> service is used to contribute commands to the Console page. When the service is executed, an object containing the user-supplied argument values is passed to the service's <tt>callback</tt> method. The command then optionally returns a response (a return value) to be displayed in the Console.</p>
+		<h2 id="Service_methods">Service methods</h2>
+		<p>Implementations of <tt>orion.console.command</tt> may define the following function:</p>
+		<dl>
+			<dt>callback(args)</dt>
+			<dd>Takes the user-supplied command-line arguments (if any) as an argument, and optionally returns an HTML response string.</dd>
+		</dl>
+		<p>The only context where a contributed command would not define a service method is to assist with the contribution of sub-commands.  For example, to contribute commands "tar create" and "tar extract", a parent command "tar" without a service method must first be contributed.</p>
+		<h2 id="Service_attributes">Service attributes</h2>
+		<p>Implementations of <tt>orion.console.command</tt> define the following attributes:</p>
+		<dl>
+			<dt>name</dt>
+			<dd>The name that is typed at the command line to invoke the command</dd>
+			<dt>description</dt>
+			<dd>(Recommended) A brief description of the command</dd>
+			<dt>manual</dt>
+			<dd>(Optional) A longer description of the command</dd>
+			<dt>parameters</dt>
+			<dd>(Optional) An array of the parameters that the command accepts</dd>
+		</dl>
+		<p>The Console page currently uses 
+			<a href="https://wiki.mozilla.org/DevTools/Features/GCLI" target="orion_external">GCLI</a> as its underlying console widget, and consequently has adopted its syntax for parameter specification.  For details on this syntax begin reading at the "## Default argument values" header in the 
+			<a href="https://raw.github.com/mozilla/gcli/master/docs/writing-commands.md" target="orion_external">GCLI Writing Commands doc</a>.  The basic parameter object attributes are:
+		</p>
+		<dl>
+			<dt>
+				<dl>
+					<dt>
+						<dl>
+							<dt>name</dt>
+							<dd>The parameter's identifier</dd>
+							<dt>type</dt>
+							<dd>One of { string | boolean | number | array | selection | deferred }</dd>
+							<dt>description</dt>
+							<dd>(Recommended) A brief description of the parameter</dd>
+							<dt>defaultValue</dt>
+							<dd>(Optional) The value assumed by the parameter if the user does not supply a value for it, makes the parameter optional</dd>
+						</dl>
+					</dt>
+				</dl>
+			</dt>
+		</dl>
+		<h2 id="Example">Example</h2>
+		<p>The following sample plug-in contributes an "echo" command to the Console:</p>
+		<pre>
+ var serviceImpl = {
+   callback: function(args) {
+     return "&lt;b&gt;" + args.string + "&lt;\/b&gt;";
+   }
+ };
+ var serviceProperties = { 
+   name: "echo",
+   description: "Echo a string",
+   parameters: [{
+     name: "string",
+     type: "string",
+     description: "The string to echo back"
+   }]
+ };
+ var provider = new eclipse.PluginProvider();
+ provider.registerServiceProvider(
+   "orion.console.command",
+   serviceImpl,
+   serviceProperties);
+ provider.connect();
+</pre>
+		<p>When this plug-in is installed the user can use the "echo" command in the Console.  In the first image shown below a user is in the process of entering an echo command.</p>
+		<p>
+			<img border="0" src="images/Orion-console-command-example1.png"/>
+		</p>
+		<p>In the following image the echo command has executed and its result is shown in the output area.</p>
+		<p>
+			<img border="0" src="images/Orion-console-command-example2.png"/>
+		</p><hr/>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="Plugging-into-the-console-page.html" title="Plugging into the console page">
+						<img alt="Previous" border="0" src="../../../../images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center">
+					<a href="Plugging-into-the-console-page.html" title="Plugging into the console page">
+						<img alt="Plugging into the console page" border="0" src="../../../../images/home.gif"/>
+					</a>
+				</td>
+				<td style="width: 20%" align="right">
+					<a href="Updating-this-document.html" title="Updating this document">
+						<img alt="Next" border="0" src="../../../../images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">Plugging into the console page</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">Updating this document</td>
+			</tr>
+		</table>
+	</body>
+</html>
