@@ -2,17 +2,30 @@ package org.eclipse.orion.server.tests.servlets.site;
 
 import static org.junit.Assert.assertEquals;
 
-import com.meterware.httpunit.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.net.*;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
+
 import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
-import org.json.*;
-import org.junit.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.xml.sax.SAXException;
+
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PutMethodWebRequest;
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 /**
  * Basic tests:
@@ -133,8 +146,47 @@ public class HostingTest extends CoreSiteTest {
 	}
 
 	@Test
+	/**
+	 * Tests accessing a workspace file and that it has the expected MIME type.
+	 */
+	public void testSiteFileMime() throws SAXException, IOException, JSONException, URISyntaxException {
+		// Expose a directory named my.css and ensure it doesn't get "text/css" content-type
+		// https://bugs.eclipse.org/bugs/show_bug.cgi?id=389252
+		final String filename = "foo.html";
+		final String fileContent = "<html><body>This is a test file</body></html>";
+		final String dirName = "/my.css";
+		createDirectoryOnServer(dirName);
+		createFileOnServer(dirName + "/" + filename, fileContent);
+
+		String filePath = URI.create(makeResourceURIAbsolute("/" + dirName)).getPath();
+		Assert.assertTrue(filePath.startsWith("/file/"));
+		filePath = filePath.substring(5);
+		final String mountAt = "/";
+
+		final JSONArray mappings = makeMappings(new String[][] {{mountAt, filePath}});
+		WebRequest createSiteReq = getCreateSiteRequest("testMime", workspaceId, mappings, null);
+		WebResponse createSiteResp = webConversation.getResponse(createSiteReq);
+		assertEquals(HttpURLConnection.HTTP_CREATED, createSiteResp.getResponseCode());
+		JSONObject siteObject = new JSONObject(createSiteResp.getText());
+
+		// Start site
+		final String siteLocation = siteObject.getString(ProtocolConstants.KEY_LOCATION);//createSiteResp.getHeaderField("Location");
+		siteObject = startSite(siteLocation);
+
+		// Access the directory through the site
+		final JSONObject hostingStatus = siteObject.getJSONObject(SiteConfigurationConstants.KEY_HOSTING_STATUS);
+		final String hostedURL = hostingStatus.getString(SiteConfigurationConstants.KEY_HOSTING_STATUS_URL);
+		WebRequest getFileReq = new GetMethodWebRequest(hostedURL + mountAt);
+		WebResponse getFileResp = webConversation.getResponse(getFileReq);
+		assertEquals(true, getFileResp.getText().contains(filename));
+		assertEquals(false, "text/html".equals(getFileResp.getHeaderField("Content-Type").toLowerCase()));
+
+		// Stop the site
+		stopSite(siteLocation);
+	}
+
+	@Test
 	public void testRemoteProxyRequest() throws SAXException, IOException, JSONException, URISyntaxException {
-		// Create a site that just points back to the Orion server being tested (mini self-host)
 		final String siteName = "My remote hosting site";
 		final String remoteRoot = "/remoteWeb", remotePrefPath = "/remotePref", remoteFilePath = "/remoteFile";
 
@@ -233,6 +285,13 @@ public class HostingTest extends CoreSiteTest {
 	 */
 	private void createFileOnServer(String filename, String fileContent) throws SAXException, IOException, JSONException, URISyntaxException {
 		createFileOnServer("/", filename, fileContent);
+	}
+
+	private void createDirectoryOnServer(String dirname) throws SAXException, IOException, JSONException {
+		webConversation.setExceptionsThrownOnErrorStatus(false);
+		WebRequest createDirReq = getPostFilesRequest("/", getNewDirJSON(dirname).toString(), dirname);
+		WebResponse createDirResp = webConversation.getResponse(createDirReq);
+		assertEquals(HttpURLConnection.HTTP_CREATED, createDirResp.getResponseCode());
 	}
 
 	private void createFileOnServer(String fileServletLocation, String filename, String fileContent) throws SAXException, IOException, JSONException, URISyntaxException {

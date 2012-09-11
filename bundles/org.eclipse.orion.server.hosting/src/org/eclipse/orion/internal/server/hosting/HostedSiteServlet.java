@@ -269,7 +269,7 @@ public class HostedSiteServlet extends OrionServlet {
 
 			if (file != null) {
 				addEditHeaders(resp, site, path);
-				addContentTypeHeader(resp, path);
+				addContentTypeHeader(resp, file.getName());
 			}
 		} else {
 			String msg = NLS.bind("No rights to access {0}", workspaceUri);
@@ -283,10 +283,9 @@ public class HostedSiteServlet extends OrionServlet {
 		resp.addHeader("X-Edit-Token", FILE_SERVLET_ALIAS + path.toString()); //$NON-NLS-1$
 	}
 
-	private void addContentTypeHeader(HttpServletResponse resp, IPath path) {
-		String last = path.lastSegment();
-		if (last != null) {
-			String mimeType = getServletContext().getMimeType(last);
+	private void addContentTypeHeader(HttpServletResponse resp, String filename) {
+		if (filename != null) {
+			String mimeType = getServletContext().getMimeType(filename);
 			if (mimeType != null)
 				resp.addHeader("Content-Type", mimeType);
 		}
