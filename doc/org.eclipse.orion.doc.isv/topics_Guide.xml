@@ -16,6 +16,9 @@
    <topic label="Core client services">
 		<link toc="WikiDoc/Orion-Documentation-Developer-Guide-Core-client-services-toc.xml" />
    </topic>
+   <topic label="Configuration services">
+      <link toc="WikiDoc/Orion-Documentation-Developer-Guide-Configuration-services-toc.xml"/>
+   </topic>
    <topic label="User interface services">
 		<link toc="WikiDoc/Orion-Documentation-Developer-Guide-User-interface-services-toc.xml" />
    </topic>
@@ -27,5 +30,11 @@
    </topic>
    <topic label="Plugging into the navigator">
 		<link toc="WikiDoc/Orion-Documentation-Developer-Guide-Plugging-into-the-navigator-toc.xml" />
+   </topic>
+   <topic label="Plugging into the console page">
+      <link toc="WikiDoc/Orion-Documentation-Developer-Guide-Plugging-into-the-console-page-toc.xml"/>
+   </topic>
+   <topic label="Plugging into the settings page">
+      <link toc="WikiDoc/Orion-Documentation-Developer-Guide-Plugging-into-the-settings-page-toc.xml"/>
    </topic>
 </toc>
