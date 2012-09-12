@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -51,9 +51,9 @@ public class TransferTest extends FileSystemTest {
 			totalTransferred += chunkSize;
 			WebResponse putResponse = webConversation.getResponse(put);
 			if (totalTransferred == length) {
-				assertEquals(201, putResponse.getResponseCode());
+				assertEquals(HttpURLConnection.HTTP_CREATED, putResponse.getResponseCode());
 			} else {
-				assertEquals(308, putResponse.getResponseCode());
+				assertEquals(308, putResponse.getResponseCode());//308 = Permanent Redirect
 				String range = putResponse.getHeaderField("Range");
 				assertEquals("bytes 0-" + (totalTransferred - 1), range);
 			}
@@ -114,6 +114,48 @@ public class TransferTest extends FileSystemTest {
 			}
 		}
 		assertTrue(found);
+	}
+
+	/**
+	 * Tests importing a zip file from a remote URL, and verifying that it is imported and unzipped.
+	 */
+	@Test
+	public void testImportAndUnzipFromURL() throws CoreException, IOException, SAXException {
+		//just a known zip file that we can use for testing that is stable
+		String sourceZip = "http://eclipse.org/eclipse/platform-core/downloads/tools/org.eclipse.core.tools.restorer_1.0.0.zip";
+
+		//create a directory to upload to
+		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+		createDirectory(directoryPath);
+
+		//start the import
+		String requestPath = getImportRequestPath(directoryPath) + "?source=" + sourceZip;
+		PostMethodWebRequest request = new PostMethodWebRequest(requestPath);
+		setAuthentication(request);
+		WebResponse postResponse = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, postResponse.getResponseCode());
+		String location = postResponse.getHeaderField("Location");
+		assertNotNull(location);
+
+		//assert the file has been unzipped in the workspace
+		assertTrue(checkFileExists(directoryPath + "/org.eclipse.core.tools.restorer_1.0.0/doc/readme.html"));
+	}
+
+	/**
+	 * Tests importing from a URL, where the source URL is not absolute. This should fail.
+	 */
+	@Test
+	public void testImportFromURLMalformed() throws CoreException, IOException, SAXException {
+		//create a directory to upload to
+		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+		createDirectory(directoryPath);
+
+		//start the import
+		String requestPath = getImportRequestPath(directoryPath) + "?source=pumpkins";
+		PostMethodWebRequest request = new PostMethodWebRequest(requestPath);
+		setAuthentication(request);
+		WebResponse postResponse = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, postResponse.getResponseCode());
 	}
 
 	@Test
@@ -205,7 +247,7 @@ public class TransferTest extends FileSystemTest {
 		request.setHeaderField("Content-Type", "application/zip");
 		setAuthentication(request);
 		WebResponse postResponse = webConversation.getResponse(request);
-		assertEquals(201, postResponse.getResponseCode());
+		assertEquals(HttpURLConnection.HTTP_CREATED, postResponse.getResponseCode());
 		String location = postResponse.getHeaderField("Location");
 		assertNotNull(location);
 		String type = postResponse.getHeaderField("Content-Type");

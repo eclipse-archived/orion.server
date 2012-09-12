@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,8 +11,7 @@
 package org.eclipse.orion.internal.server.servlets.xfer;
 
 import java.io.*;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.*;
@@ -44,6 +43,7 @@ class ClientImport {
 	private static final String KEY_OPTIONS = "Options"; //$NON-NLS-1$
 	private static final String KEY_PATH = "Path"; //$NON-NLS-1$
 	private static final String KEY_TRANSFERRED = "Transferred"; //$NON-NLS-1$
+	private static final String KEY_SOURCE_URL = "SourceURL"; //$NON-NLS-1$
 
 	/**
 	 * The UUID of this import operation.
@@ -146,6 +146,11 @@ class ClientImport {
 	 */
 	void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		save();
+		//if a source URl is specifed then we are importing from remote URL
+		if (getSourceURL() != null) {
+			doImportFromURL(req, resp);
+			return;
+		}
 		//if the transfer length header is not specified, then the file is being uploaded during the POST
 		if (req.getHeader(ProtocolConstants.HEADER_XFER_LENGTH) == null) {
 			doPut(req, resp);
@@ -154,6 +159,12 @@ class ClientImport {
 		//otherwise the POST is just starting a transfer to be completed later
 		resp.setStatus(HttpServletResponse.SC_OK);
 		setResponseLocationHeader(req, resp);
+	}
+
+	private void doImportFromURL(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
+		URL source = getSourceURL();
+		IOUtilities.pipe(source.openStream(), new FileOutputStream(new File(getStorageDirectory(), FILE_DATA), true), true, true);
+		completeTransfer(req, resp);
 	}
 
 	private void setResponseLocationHeader(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
@@ -280,6 +291,16 @@ class ClientImport {
 		return props.getProperty(KEY_PATH, ""); //$NON-NLS-1$
 	}
 
+	private URL getSourceURL() {
+		String urlString = props.getProperty(KEY_SOURCE_URL, null);
+		try {
+			return urlString == null ? null : new URL(urlString);
+		} catch (MalformedURLException e) {
+			//impossible because we validated URL in the setter method
+			throw new RuntimeException(e);
+		}
+	}
+
 	private File getStorageDirectory() {
 		return FrameworkUtil.getBundle(ClientImport.class).getDataFile("xfer/" + id); //$NON-NLS-1$
 	}
@@ -335,6 +356,16 @@ class ClientImport {
 
 	private void setTransferred(int transferred) {
 		props.put(KEY_TRANSFERRED, Integer.toString(transferred));
+	}
+
+	/**
+	 * Sets the URL of the file to be imported (optional).
+	 */
+	public void setSourceURL(String urlString) throws MalformedURLException {
+		//ensure it is a valid absolute URL
+		if (new URL(urlString).getProtocol() == null)
+			throw new MalformedURLException(NLS.bind("Expected an absolute URI: {0}", urlString));
+		props.put(KEY_SOURCE_URL, urlString);
 	}
 
 }
