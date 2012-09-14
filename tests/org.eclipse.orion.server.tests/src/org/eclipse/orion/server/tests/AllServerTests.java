@@ -11,6 +11,7 @@
 package org.eclipse.orion.server.tests;
 
 import org.eclipse.orion.server.tests.prefs.PreferenceTest;
+import org.eclipse.orion.server.tests.search.SearchTest;
 import org.eclipse.orion.server.tests.servlets.files.AdvancedFilesTest;
 import org.eclipse.orion.server.tests.servlets.files.CoreFilesTest;
 import org.eclipse.orion.server.tests.servlets.git.AllGitTests;
@@ -27,7 +28,7 @@ import org.junit.runners.Suite.SuiteClasses;
  * Runs all automated server tests.
  */
 @RunWith(Suite.class)
-@SuiteClasses({TransferTest.class, Base64Test.class, CoreFilesTest.class, AdvancedFilesTest.class, PreferenceTest.class, BasicUsersTest.class, WorkspaceServiceTest.class, AllSiteTests.class, AllGitTests.class, AllTaskTests.class, WebElementTest.class})
+@SuiteClasses({TransferTest.class, Base64Test.class, CoreFilesTest.class, AdvancedFilesTest.class, PreferenceTest.class, BasicUsersTest.class, WorkspaceServiceTest.class, AllSiteTests.class, AllGitTests.class, AllTaskTests.class, WebElementTest.class, SearchTest.class})
 public class AllServerTests {
 	//goofy junit4, no class body needed
 }

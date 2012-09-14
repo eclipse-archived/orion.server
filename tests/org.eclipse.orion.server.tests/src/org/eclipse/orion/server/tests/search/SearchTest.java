@@ -34,9 +34,10 @@ import org.xml.sax.SAXException;
 public class SearchTest extends FileSystemTest {
 
 	private static final String SEARCH_LOCATION = ServerTestsActivator.getServerLocation() + "/filesearch?q=";
+	private String oldTestUserLogin;
 
 	@BeforeClass
-	public static void setupWorkspace() {
+	public static void setupWorkspace() throws CoreException {
 		initializeWorkspaceLocation();
 	}
 
@@ -127,7 +128,9 @@ public class SearchTest extends FileSystemTest {
 	public void setUp() throws Exception {
 		webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
-		initializeWorkspaceLocation();
+		//use a different user to avoid search result contamination from other tests
+		oldTestUserLogin = testUserLogin;
+		testUserLogin = "SearchTestUser";
 		setUpAuthorization();
 		//search tests don't damage files, so only need to do this once per suite
 		if (!testProjectExists("SearchTestProject")) {
@@ -136,6 +139,12 @@ public class SearchTest extends FileSystemTest {
 			//wait for indexer to finish
 			SearchActivator.getInstance().testWaitForIndex();
 		}
+	}
+
+	@After
+	public void tearDown() {
+		//reset back to default user login
+		testUserLogin = oldTestUserLogin;
 	}
 
 	/**

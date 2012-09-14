@@ -90,10 +90,18 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	protected static void clearWorkspace() throws CoreException {
 		IFileStore workspaceDir = EFS.getStore(URI.create(FILESTORE_PREFIX));
 		//delete all projects
+		boolean success = true;
 		for (IFileStore child : workspaceDir.childStores(EFS.NONE, null)) {
-			if (!".metadata".equals(child.getName()))
-				child.delete(EFS.NONE, null);
+			try {
+				if (!".metadata".equals(child.getName()))
+					child.delete(EFS.NONE, null);
+			} catch (CoreException e) {
+				System.err.println("Error deleting " + child);
+				e.printStackTrace();
+				success = false;
+			}
 		}
+		assertTrue("Unable to clear workspace", success);
 		//delete workspace metadata
 		IFileStore metaDir = workspaceDir.getFileStore(new Path(".metadata/.plugins/org.eclipse.orion.server.core/.settings"));
 		metaDir.delete(EFS.NONE, null);
