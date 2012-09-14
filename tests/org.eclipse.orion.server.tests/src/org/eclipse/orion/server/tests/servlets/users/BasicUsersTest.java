@@ -14,28 +14,17 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import com.meterware.httpunit.*;
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
+import java.util.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
-import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
-import org.eclipse.orion.server.useradmin.User;
-import org.eclipse.orion.server.useradmin.UserConstants;
-import org.eclipse.orion.server.useradmin.UserServiceHelper;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.eclipse.orion.server.useradmin.*;
+import org.json.*;
 import org.junit.Test;
 import org.xml.sax.SAXException;
-
-import com.meterware.httpunit.WebConversation;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 
 public class BasicUsersTest extends UsersTest {
 
@@ -70,13 +59,62 @@ public class BasicUsersTest extends UsersTest {
 	}
 
 	@Test
+	public void testCreateDuplicateUser() throws IOException, SAXException, JSONException {
+		WebConversation webConversation = new WebConversation();
+		webConversation.setExceptionsThrownOnErrorStatus(false);
+
+		// create user
+		Map<String, String> params = new HashMap<String, String>();
+		params.put("login", "usertestCreateDuplicateUser");
+		params.put("Name", "username_testCreateDuplicateUser");
+
+		params.put("password", "pass_" + System.currentTimeMillis());
+		WebRequest request = getPostUsersRequest("", params, true);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		//try creating same user again
+		response = webConversation.getResponse(request);
+		assertEquals(response.getText(), HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
+	}
+
+	/**
+	 * Tests creating users with username that can't be represented in a URI.
+	 * @throws IOException
+	 * @throws SAXException
+	 * @throws JSONException
+	 */
+	@Test
+	public void testCreateUserInvalidName() throws IOException, SAXException, JSONException {
+		WebConversation webConversation = new WebConversation();
+		webConversation.setExceptionsThrownOnErrorStatus(false);
+
+		//restrict to alphanumeric characters
+		String invalidChars = " !@#$%^&*()-=_+[]{}\";':\\/><.,`~";
+		for (int i = 0; i < invalidChars.length(); i++) {
+			String name = "bad" + invalidChars.charAt(i) + "name";
+
+			// create user
+			Map<String, String> params = new HashMap<String, String>();
+			params.put("login", name);
+			params.put("Name", "Tom");
+
+			params.put("password", "pass_" + System.currentTimeMillis());
+			WebRequest request = getPostUsersRequest("", params, true);
+			WebResponse response = webConversation.getResponse(request);
+			assertEquals("Should fail with name: " + name, HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
+
+		}
+	}
+
+	@Test
 	public void testCreateDeleteUsers() throws IOException, SAXException, JSONException {
 		WebConversation webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 
 		// create user
 		Map<String, String> params = new HashMap<String, String>();
-		params.put("login", "user_" + System.currentTimeMillis());
+		params.put("login", "user" + System.currentTimeMillis());
 		params.put("Name", "username_" + System.currentTimeMillis());
 		//		params.put("email", "test@test_" + System.currentTimeMillis());
 		//		params.put("workspace", "workspace_" + System.currentTimeMillis());
@@ -88,7 +126,7 @@ public class BasicUsersTest extends UsersTest {
 
 		JSONObject responseObject = new JSONObject(response.getText());
 
-		assertTrue("Response should contian user location", responseObject.has(ProtocolConstants.KEY_LOCATION));
+		assertTrue("Response should contain user location", responseObject.has(ProtocolConstants.KEY_LOCATION));
 
 		// check user details
 		request = getAuthenticatedRequest(responseObject.getString(ProtocolConstants.KEY_LOCATION), METHOD_GET, true);
@@ -118,7 +156,7 @@ public class BasicUsersTest extends UsersTest {
 
 		// create user
 		Map<String, String> params = new HashMap<String, String>();
-		params.put("login", "user_" + System.currentTimeMillis());
+		params.put("login", "testCreateDeleteRights" + System.currentTimeMillis());
 		params.put("name", "username_" + System.currentTimeMillis());
 		params.put("email", "test@test_" + System.currentTimeMillis());
 		params.put("workspace", "workspace_" + System.currentTimeMillis());
@@ -173,7 +211,7 @@ public class BasicUsersTest extends UsersTest {
 
 		// create user
 		Map<String, String> params = new HashMap<String, String>();
-		params.put("login", "user_" + System.currentTimeMillis());
+		params.put("login", "user" + System.currentTimeMillis());
 		params.put("Name", "username_" + System.currentTimeMillis());
 		//		params.put("email", "test@test_" + System.currentTimeMillis());
 		//		params.put("workspace", "workspace_" + System.currentTimeMillis());
@@ -234,9 +272,9 @@ public class BasicUsersTest extends UsersTest {
 
 		// create user
 		Map<String, String> params = new HashMap<String, String>();
-		String username = "user_" + System.currentTimeMillis();
+		String username = "user" + System.currentTimeMillis();
 		params.put("login", username);
-		params.put("Name", "username_" + System.currentTimeMillis());
+		params.put("Name", "username" + System.currentTimeMillis());
 		//		params.put("email", "test@test_" + System.currentTimeMillis());
 		//		params.put("workspace", "workspace_" + System.currentTimeMillis());
 		params.put("roles", "admin");
@@ -279,7 +317,7 @@ public class BasicUsersTest extends UsersTest {
 		WebConversation webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 
-		String login1 = "login_1" + System.currentTimeMillis();
+		String login1 = "login1" + System.currentTimeMillis();
 		String password = "pass" + System.currentTimeMillis();
 
 		// create user
@@ -296,7 +334,7 @@ public class BasicUsersTest extends UsersTest {
 
 		String location = responseObject.getString(ProtocolConstants.KEY_LOCATION);
 
-		String login2 = "login_2" + System.currentTimeMillis();
+		String login2 = "login2" + System.currentTimeMillis();
 		JSONObject updateBody = new JSONObject();
 		updateBody.put("login", login2);
 
@@ -315,8 +353,8 @@ public class BasicUsersTest extends UsersTest {
 
 	@Test
 	public void testUserProperties() {
-		String sampleUser1 = "login_1" + System.currentTimeMillis();
-		String sampleUser2 = "login_2" + System.currentTimeMillis();
+		String sampleUser1 = "login1" + System.currentTimeMillis();
+		String sampleUser2 = "login2" + System.currentTimeMillis();
 		String login = "login" + System.currentTimeMillis();
 		String password = "password" + System.currentTimeMillis();
 		User user = createUser(login, password);

@@ -37,7 +37,7 @@ public class SearchTest extends FileSystemTest {
 	private String oldTestUserLogin;
 
 	@BeforeClass
-	public static void setupWorkspace() throws CoreException {
+	public static void setupWorkspace() {
 		initializeWorkspaceLocation();
 	}
 

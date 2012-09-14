@@ -95,14 +95,16 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		int start = 0, rows = 0, count = 0;
 		if (startParam != null && !(startParam.length() == 0)) {
 			start = Integer.parseInt(startParam);
-			if (start < 0) start = 0;
+			if (start < 0)
+				start = 0;
 			noStartParam = false;
 		} else {
 			start = 0;
 		}
 		if (rowsParam != null && !(rowsParam.length() == 0)) {
 			rows = Integer.parseInt(rowsParam);
-			if (rows < 0) rows = 200;  // default is to return 200 at a time
+			if (rows < 0)
+				rows = 200; // default is to return 200 at a time
 		} else {
 			// if there's no start and no rows then return the entire list to be backwards compatible
 			if (noStartParam)
@@ -114,8 +116,10 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		URI location = OrionServlet.getURI(req);
 		IOrionUserProfileNode userNode = null;
 		for (User user : users) {
-			if (count >= start + rows) break;
-			if (count++ < start) continue;
+			if (count >= start + rows)
+				break;
+			if (count++ < start)
+				continue;
 			URI userLocation = URIUtil.append(location, user.getUid());
 			userNode = getUserProfileService().getUserProfileNode(user.getUid(), true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
 			userJSONs.add(formJson(user, userNode, userLocation, req.getContextPath()));
@@ -179,6 +183,9 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (login == null || login.length() == 0)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User login not specified.", null));
 
+		if (!validateLogin(login))
+			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Invalid username: {0}", login), null));
+
 		if (password == null || password.length() == 0) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Cannot create user with empty password.", null));
 		}
@@ -213,6 +220,18 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 		OrionServlet.writeJSONResponse(req, resp, formJson(newUser, userNode, userLocation, req.getContextPath()));
 
+		return true;
+	}
+
+	/**
+	 * Validates that the provided login is valid. Login must consistent of alphanumeric characters only for now.
+	 * @return <code>true</code> if the login is valid, and <code>false</code> otherwise.
+	 */
+	private boolean validateLogin(String login) {
+		for (int i = 0; i < login.length(); i++) {
+			if (!Character.isLetterOrDigit(login.charAt(i)))
+				return false;
+		}
 		return true;
 	}
 
