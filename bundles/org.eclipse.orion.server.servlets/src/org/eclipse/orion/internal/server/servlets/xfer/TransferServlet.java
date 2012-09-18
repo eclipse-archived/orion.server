@@ -105,6 +105,13 @@ public class TransferServlet extends OrionServlet {
 		}
 		boolean unzip = !options.contains("raw"); //$NON-NLS-1$
 		String fileName = req.getHeader(ProtocolConstants.HEADER_SLUG);
+		//if file name is not provided we can guess from the source URL
+		if (fileName == null && sourceURL != null) {
+			int lastSlash = sourceURL.lastIndexOf('/');
+			if (lastSlash > 0)
+				fileName = sourceURL.substring(lastSlash + 1);
+		}
+
 		if (fileName == null && !unzip) {
 			handleException(resp, "Transfer request must indicate target filename", null, HttpServletResponse.SC_BAD_REQUEST);
 			return;

@@ -22,6 +22,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.core.IOUtilities;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.junit.*;
@@ -114,6 +115,32 @@ public class TransferTest extends FileSystemTest {
 			}
 		}
 		assertTrue(found);
+	}
+
+	/**
+	 * Tests importing a zip file from a remote URL, and verifying that it is imported
+	 */
+	@Test
+	public void testImportFromURL() throws CoreException, IOException, SAXException {
+		//just a known zip file that we can use for testing that is stable
+		String sourceZip = "http://eclipse.org/eclipse/platform-core/downloads/tools/org.eclipse.core.tools.restorer_1.0.0.zip";
+
+		//create a directory to upload to
+		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+		createDirectory(directoryPath);
+
+		//start the import
+		String requestPath = getImportRequestPath(directoryPath) + "?source=" + sourceZip;
+		PostMethodWebRequest request = new PostMethodWebRequest(requestPath);
+		setAuthentication(request);
+		request.setHeaderField(ProtocolConstants.HEADER_XFER_OPTIONS, "raw");
+		WebResponse postResponse = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, postResponse.getResponseCode());
+		String location = postResponse.getHeaderField("Location");
+		assertNotNull(location);
+
+		//assert the file has been imported but not unzipped
+		assertTrue(checkFileExists(directoryPath + "/org.eclipse.core.tools.restorer_1.0.0.zip"));
 	}
 
 	/**
