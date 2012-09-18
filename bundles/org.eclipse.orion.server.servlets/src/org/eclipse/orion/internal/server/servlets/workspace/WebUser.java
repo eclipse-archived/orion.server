@@ -22,7 +22,7 @@ import org.json.*;
 import org.osgi.service.prefs.BackingStoreException;
 
 /**
- * An Eclipse web user.
+ * Represents a single Orion user.
  */
 public class WebUser extends WebElement {
 
@@ -191,10 +191,9 @@ public class WebUser extends WebElement {
 				if (SiteConfiguration.siteConfigExists(id)) {
 					SiteConfiguration siteConfig = SiteConfiguration.fromId(id);
 					return siteConfig;
-				} else {
-					// Shouldn't happen
-					LogHelper.log(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "Site configuration does not exist in backing store"));
 				}
+				// Shouldn't happen
+				LogHelper.log(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "Site configuration does not exist in backing store"));
 			}
 		} catch (BackingStoreException e) {
 			LogHelper.log(e);
@@ -206,10 +205,9 @@ public class WebUser extends WebElement {
 		if (SiteConfiguration.siteConfigExists(id)) {
 			SiteConfiguration siteConfig = SiteConfiguration.fromId(id);
 			return siteConfig;
-		} else {
-			// Shouldn't happen. Maybe someone deleted the site configuration underlying storage
-			return null;
 		}
+		// Shouldn't happen. Maybe someone deleted the site configuration underlying storage
+		return null;
 	}
 
 	/**
