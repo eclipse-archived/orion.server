@@ -143,6 +143,7 @@ public class HostingTest extends CoreSiteTest {
 		WebRequest getFile404Req = new GetMethodWebRequest(hostedURL + mountAt);
 		WebResponse getFile404Resp = webConversation.getResponse(getFile404Req);
 		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, getFile404Resp.getResponseCode());
+		assertEquals("no-cache", getFile404Resp.getHeaderField("Cache-Control").toLowerCase());
 	}
 
 	@Test
