@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2010, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -59,7 +59,8 @@ public class WebElement {
 	 */
 	public void save() throws CoreException {
 		try {
-			store.flush();
+			//flush directly at root level to workaround equinox bug 389754.
+			store.parent().flush();
 		} catch (BackingStoreException e) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "Error saving state"));
 		}

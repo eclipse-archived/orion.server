@@ -42,12 +42,13 @@ public class WebUser extends WebElement {
 		result.put(ProtocolConstants.KEY_ID, userId);
 		if (result.get(ProtocolConstants.KEY_USER_NAME, null) == null)
 			result.put(ProtocolConstants.KEY_USER_NAME, userId);
+		WebUser user = new WebUser(result);
 		try {
-			result.flush();
-		} catch (BackingStoreException e) {
+			user.save();
+		} catch (CoreException e) {
 			LogHelper.log(e);
 		}
-		return new WebUser(result);
+		return user;
 	}
 
 	public WebWorkspace createWorkspace(String name) throws CoreException {
