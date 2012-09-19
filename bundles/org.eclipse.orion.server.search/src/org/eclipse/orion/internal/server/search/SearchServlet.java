@@ -11,8 +11,7 @@
 package org.eclipse.orion.internal.server.search;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -62,29 +61,22 @@ public class SearchServlet extends OrionServlet {
 		if (queryString.length() > 0) {
 			String processedQuery = ""; //$NON-NLS-1$
 			//divide into search terms delimited by space character
-			String[] terms = queryString.split("\\s+"); //$NON-NLS-1$
-			String phrase = null;
-			for (String term : terms) {
+			List<String> terms = new ArrayList<String>(Arrays.asList(queryString.split("\\s+"))); //$NON-NLS-1$
+			boolean isPhrase = false;
+			while (!terms.isEmpty()) {
+				String term = terms.remove(0);
 				if (term.length() == 0)
 					continue;
-				if (term.charAt(0) == '"') {
+				isPhrase = term.charAt(0) == '"';
+				if (isPhrase) {
 					//starting a phrase query
-					phrase = term;
-					continue;
+					term += consumePhrase(terms);
 				}
-				if (phrase != null) {
-					//continue a phrase query
-					phrase += " " + term;
-					if (!term.endsWith("\""))
-						continue;
-					//end of a phrase
-					processedQuery += phrase;
-					phrase = null;
-				} else if (isSearchField(term)) {
+				if (isSearchField(term)) {
 					//solr does not lowercase queries containing wildcards
 					//https://issues.apache.org/jira/browse/SOLR-219
-					if (term.startsWith("NameLower:")) {
-						processedQuery += "NameLower:" + term.substring(10).toLowerCase();
+					if (term.startsWith("NameLower:")) { //$NON-NLS-1$
+						processedQuery += "NameLower:" + term.substring(10).toLowerCase(); //$NON-NLS-1$
 					} else {
 						//all other field searches are case sensitive
 						processedQuery += term;
@@ -94,10 +86,12 @@ public class SearchServlet extends OrionServlet {
 					//see https://bugs.eclipse.org/bugs/show_bug.cgi?id=359766
 					String processedTerm = term.toLowerCase();
 					//add leading and trailing wildcards to match word segments
-					if (processedTerm.charAt(0) != '*')
-						processedTerm = '*' + processedTerm;
-					if (processedTerm.charAt(processedTerm.length() - 1) != '*')
-						processedTerm += '*';
+					if (!isPhrase) {
+						if (processedTerm.charAt(0) != '*')
+							processedTerm = '*' + processedTerm;
+						if (processedTerm.charAt(processedTerm.length() - 1) != '*')
+							processedTerm += '*';
+					}
 					processedQuery += processedTerm;
 
 				}
@@ -112,6 +106,21 @@ public class SearchServlet extends OrionServlet {
 		setField(req, query, CommonParams.START);
 		setField(req, query, CommonParams.SORT);
 		return query;
+	}
+
+	/**
+	 * Consumes search terms until the end of a phrase is found (quote character).
+	 * Returns the resulting phrase.
+	 */
+	private String consumePhrase(List<String> terms) {
+		StringBuffer phrase = new StringBuffer();
+		while (!terms.isEmpty()) {
+			String term = terms.remove(0);
+			phrase.append(' ').append(term);
+			if (term.endsWith("\"")) //$NON-NLS-1$
+				return phrase.toString();
+		}
+		return phrase.toString();
 	}
 
 	/**

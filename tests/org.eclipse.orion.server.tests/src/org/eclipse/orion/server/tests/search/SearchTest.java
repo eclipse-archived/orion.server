@@ -180,6 +180,17 @@ public class SearchTest extends FileSystemTest {
 	}
 
 	/**
+	 * Tests searching for a sequence of words in a particular order
+	 * @throws Exception
+	 */
+	@Test
+	public void testPhraseDifferentCase() throws Exception {
+		//these same words appear in a.txt in a different order
+		JSONObject searchResult = doSearch("%22ECLIPSE public LiCeNse%22");
+		assertOneMatch(searchResult, "script.js");
+	}
+
+	/**
 	 * Tests finding search results on a whole single word.
 	 */
 	@Test
@@ -199,6 +210,20 @@ public class SearchTest extends FileSystemTest {
 		//should not match
 		searchResult = doSearch("Will-o'-the-whisk");
 		assertNoMatch(searchResult);
+	}
+
+	/**
+	 * Tests finding search results in a file and directory with whitespace in the name.
+	 */
+	@Test
+	public void testPathWithSpaces() throws Exception {
+		//simple word
+		JSONObject searchResult = doSearch("oryx");
+		assertOneMatch(searchResult, "file with spaces.txt");
+
+		//wildcard
+		searchResult = doSearch("lem?r");
+		assertOneMatch(searchResult, "file with spaces.txt");
 	}
 
 }
