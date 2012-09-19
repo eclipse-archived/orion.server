@@ -146,7 +146,7 @@ class ClientImport {
 	 */
 	void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		save();
-		//if a source URl is specifed then we are importing from remote URL
+		//if a source URl is specified then we are importing from remote URL
 		if (getSourceURL() != null) {
 			doImportFromURL(req, resp);
 			return;
