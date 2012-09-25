@@ -50,14 +50,15 @@ public class SearchTest extends FileSystemTest {
 	}
 
 	/**
-	 * Asserts that a search result has exactly one match.
+	 * Asserts that a search result has exactly one match. Returns the matching document.
 	 */
-	private void assertOneMatch(JSONObject searchResult, String file) throws JSONException {
+	private JSONObject assertOneMatch(JSONObject searchResult, String file) throws JSONException {
 		JSONObject response = searchResult.getJSONObject("response");
 		assertEquals(1, response.getInt("numFound"));
 		JSONArray docs = response.getJSONArray("docs");
 		JSONObject single = docs.getJSONObject(0);
 		assertEquals(file, single.getString("Name"));
+		return single;
 	}
 
 	/**
@@ -217,13 +218,26 @@ public class SearchTest extends FileSystemTest {
 	 */
 	@Test
 	public void testPathWithSpaces() throws Exception {
+
 		//simple word
 		JSONObject searchResult = doSearch("oryx");
 		assertOneMatch(searchResult, "file with spaces.txt");
 
 		//wildcard
 		searchResult = doSearch("lem?r");
-		assertOneMatch(searchResult, "file with spaces.txt");
+		JSONObject match = assertOneMatch(searchResult, "file with spaces.txt");
+
+		//query with location
+		String location = match.getString("Location");
+		searchResult = doSearch("oryx+Location:" + location);
+		match = assertOneMatch(searchResult, "file with spaces.txt");
+
+		//same query with wildcard on location
+		location = match.getString("Location");
+		location = location.substring(0, location.length() - "file%20with%20spaces.txt".length());
+		searchResult = doSearch("oryx+Location:" + location + '*');
+		match = assertOneMatch(searchResult, "file with spaces.txt");
+
 	}
 
 }

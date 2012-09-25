@@ -11,6 +11,8 @@
 package org.eclipse.orion.internal.server.search;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -57,31 +59,32 @@ public class SearchServlet extends OrionServlet {
 		SolrQuery query = new SolrQuery();
 		query.setParam(CommonParams.WT, "json"); //$NON-NLS-1$
 		query.setParam(CommonParams.FL, FIELD_NAMES);
-		String queryString = req.getParameter(CommonParams.Q).trim();
+		String queryString = getEncodedParameter(req, CommonParams.Q);
 		if (queryString.length() > 0) {
 			String processedQuery = ""; //$NON-NLS-1$
-			//divide into search terms delimited by space character
-			List<String> terms = new ArrayList<String>(Arrays.asList(queryString.split("\\s+"))); //$NON-NLS-1$
-			boolean isPhrase = false;
+			//divide into search terms delimited by space or plus ('+') character
+			List<String> terms = new ArrayList<String>(Arrays.asList(queryString.split("[\\s\\+]+"))); //$NON-NLS-1$
 			while (!terms.isEmpty()) {
 				String term = terms.remove(0);
 				if (term.length() == 0)
 					continue;
-				isPhrase = term.charAt(0) == '"';
-				if (isPhrase) {
-					//starting a phrase query
-					term += consumePhrase(terms);
-				}
 				if (isSearchField(term)) {
-					//solr does not lowercase queries containing wildcards
-					//https://issues.apache.org/jira/browse/SOLR-219
 					if (term.startsWith("NameLower:")) { //$NON-NLS-1$
+						//solr does not lowercase queries containing wildcards
+						//https://issues.apache.org/jira/browse/SOLR-219
 						processedQuery += "NameLower:" + term.substring(10).toLowerCase(); //$NON-NLS-1$
 					} else {
 						//all other field searches are case sensitive
 						processedQuery += term;
 					}
 				} else {
+					//decode the term string now
+					try {
+						term = URLDecoder.decode(term, "UTF-8");
+					} catch (UnsupportedEncodingException e) {
+						//try with encoded term
+					}
+					boolean isPhrase = term.charAt(0) == '"';
 					//solr does not lowercase queries containing wildcards
 					//see https://bugs.eclipse.org/bugs/show_bug.cgi?id=359766
 					String processedTerm = term.toLowerCase();
@@ -109,18 +112,18 @@ public class SearchServlet extends OrionServlet {
 	}
 
 	/**
-	 * Consumes search terms until the end of a phrase is found (quote character).
-	 * Returns the resulting phrase.
+	 * Returns a request parameter in encoded form. Returns <code>null</code>
+	 * if no such parameter is defined or has an empty value.
 	 */
-	private String consumePhrase(List<String> terms) {
-		StringBuffer phrase = new StringBuffer();
-		while (!terms.isEmpty()) {
-			String term = terms.remove(0);
-			phrase.append(' ').append(term);
-			if (term.endsWith("\"")) //$NON-NLS-1$
-				return phrase.toString();
+	private String getEncodedParameter(HttpServletRequest req, String key) {
+		//TODO need to get query string unencoded - maybe use req.getQueryString() and parse manually
+		String query = req.getQueryString();
+		for (String param : query.split("&")) { //$NON-NLS-1$
+			String[] pair = param.split("="); //$NON-NLS-1$
+			if (pair.length == 2 && key.equals(pair[0]))
+				return pair[1];
 		}
-		return phrase.toString();
+		return null;
 	}
 
 	/**
