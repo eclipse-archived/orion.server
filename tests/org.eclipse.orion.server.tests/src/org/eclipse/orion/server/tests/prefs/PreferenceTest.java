@@ -20,6 +20,7 @@ import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.List;
 
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.server.core.users.OrionScope;
 import org.eclipse.orion.server.tests.AbstractServerTest;
@@ -45,11 +46,20 @@ public class PreferenceTest extends AbstractServerTest {
 	@Before
 	public void setUp() throws BackingStoreException {
 		OrionScope prefs = new OrionScope();
-		prefs.getNode("Users").removeNode();
-		prefs.getNode("Workspaces").removeNode();
-		prefs.getNode("Projects").removeNode();
+		clearPreferences(prefs.getNode("Users"));
+		clearPreferences(prefs.getNode("Workspaces"));
+		clearPreferences(prefs.getNode("Projects"));
 		webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
+	}
+
+	private void clearPreferences(IEclipsePreferences prefs) throws BackingStoreException {
+		//clear  children
+		for (String child : prefs.childrenNames()) {
+			prefs.node(child).removeNode();
+		}
+		prefs.clear();
+		prefs.flush();
 	}
 
 	@Test
@@ -227,21 +237,21 @@ public class PreferenceTest extends AbstractServerTest {
 			WebRequest request = new GetMethodWebRequest(location);
 			setAuthentication(request);
 			WebResponse response = webConversation.getResource(request);
-			assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
+			assertEquals("1." + location, HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 
 			//put a value
 			request = createSetPreferenceRequest(location, "Name", "Frodo");
 			setAuthentication(request);
 			response = webConversation.getResource(request);
-			assertEquals("1." + location, HttpURLConnection.HTTP_NO_CONTENT, response.getResponseCode());
+			assertEquals("2." + location, HttpURLConnection.HTTP_NO_CONTENT, response.getResponseCode());
 
 			//now doing a get should succeed
 			request = new GetMethodWebRequest(location);
 			setAuthentication(request);
 			response = webConversation.getResource(request);
-			assertEquals("2." + location, HttpURLConnection.HTTP_OK, response.getResponseCode());
+			assertEquals("3." + location, HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject result = new JSONObject(response.getText());
-			assertEquals("3." + location, "Frodo", result.optString("Name"));
+			assertEquals("4." + location, "Frodo", result.optString("Name"));
 		}
 	}
 

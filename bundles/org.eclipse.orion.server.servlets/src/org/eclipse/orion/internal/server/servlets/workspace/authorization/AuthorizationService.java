@@ -105,7 +105,8 @@ public class AuthorizationService {
 	private static void saveRights(IEclipsePreferences result, JSONArray userRightArray) throws BackingStoreException {
 		result.put(ProtocolConstants.KEY_USER_RIGHTS, userRightArray.toString());
 		result.putInt(ProtocolConstants.KEY_USER_RIGHTS_VERSION, CURRENT_VERSION);
-		result.flush();
+		//flush directly at root level to workaround equinox bug 389754.
+		result.parent().flush();
 	}
 
 	/**
