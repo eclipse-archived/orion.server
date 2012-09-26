@@ -135,5 +135,10 @@ public class AdvancedFilesTest extends FileSystemTest {
 		responseObject = new JSONObject(response.getText());
 		checkFileMetadata(responseObject, fileName, new Long(-1), null, null, request.getURL().getRef(), new Long(0), new Boolean(true), new Boolean(true), null);
 
+		//make the file writeable again so test can clean up
+		request = getPutFileRequest(fileName + "?parts=meta", getFileMetadataObject(false, false).toString());
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_NO_CONTENT, response.getResponseCode());
+
 	}
 }
