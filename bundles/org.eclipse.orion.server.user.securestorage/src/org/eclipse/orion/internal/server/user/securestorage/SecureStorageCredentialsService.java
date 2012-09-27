@@ -199,9 +199,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 	}
 
 	public User getUser(String key, String value) {
-		// TODO currently searching only by uid and login, all other searches return nothing
 		if (key.equals(USER_LOGIN)) {
-
 			try {
 				ISecurePreferences node = findNodeByLoginIgnoreCase(storage, value);
 				return formUser(node);
@@ -212,7 +210,18 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 			ISecurePreferences node = findNode(storage, value);
 			return formUser(node);
 		} else if (key.equals(USER_EMAIL)) {
-
+			ISecurePreferences usersPref = storage.node(USERS);
+			for (String uid : usersPref.childrenNames()) {
+				ISecurePreferences node = usersPref.node(uid);
+				try {
+					String email = node.get(USER_EMAIL, null);
+					if (email != null && email.equals(value)) {
+						return formUser(node);
+					}
+				} catch(StorageException e) {
+					continue;
+				}
+			}
 		}
 		return null;
 	}
