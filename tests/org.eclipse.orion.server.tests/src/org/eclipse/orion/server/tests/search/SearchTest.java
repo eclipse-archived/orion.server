@@ -134,8 +134,8 @@ public class SearchTest extends FileSystemTest {
 		testUserLogin = "SearchTestUser";
 		setUpAuthorization();
 		//search tests don't damage files, so only need to do this once per suite
-		if (!testProjectExists("SearchTestProject")) {
-			createTestProject("SearchTest");
+		if (!testProjectExists("Search TestProject")) {
+			createTestProject("Search Test");
 			createTestData();
 			//wait for indexer to finish
 			SearchActivator.getInstance().testWaitForIndex();

@@ -11,6 +11,8 @@
 package org.eclipse.orion.internal.server.search;
 
 import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.*;
 import org.apache.solr.client.solrj.*;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -138,8 +140,15 @@ public class Indexer extends Job {
 			handleIndexingFailure(e, null);
 			return 0;
 		}
-		//project location is always a directory
-		IPath projectLocation = new Path(Activator.LOCATION_FILE_SERVLET).append(workspace.getId()).append(project.getName()).addTrailingSeparator();
+		String encodedProjectName;
+		try {
+			//project location field is an encoded URI
+			encodedProjectName = new URI(null, project.getName(), null).toString();
+		} catch (URISyntaxException e) {
+			//UTF-8 should never be unsupported
+			throw new RuntimeException(e);
+		}
+		IPath projectLocation = new Path(Activator.LOCATION_FILE_SERVLET).append(workspace.getId()).append(encodedProjectName).addTrailingSeparator();
 		//gather all files
 		int projectLocationLength = projectStore.toURI().toString().length();
 		final List<IFileStore> toIndex = new ArrayList<IFileStore>();
