@@ -22,6 +22,9 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.authentication.Activator;
 import org.eclipse.orion.server.authentication.form.FormAuthHelper;
+import org.eclipse.orion.server.authentication.formpersona.PersonaConstants;
+import org.eclipse.orion.server.authentication.formpersona.PersonaException;
+import org.eclipse.orion.server.authentication.formpersona.PersonaHelper;
 import org.eclipse.orion.server.authentication.openid.OpenIdException;
 import org.eclipse.orion.server.authentication.openid.OpenIdHelper;
 import org.eclipse.orion.server.authentication.openid.OpenidConsumer;
@@ -112,6 +115,17 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 					displayError(e.getMessage(), req, resp);
 				}
 				return;
+			}
+		}
+
+		if (pathInfo.startsWith("/persona")) { //$NON-NLS-1$
+			String assertion = req.getParameter(PersonaConstants.PARAM_ASSERTION);
+			if (assertion != null) {
+				try {
+					new PersonaHelper().handleCredentialsAndLogin(req, resp);
+				} catch (PersonaException e) {
+					displayError(e.getMessage(), req, resp);
+				}
 			}
 		}
 

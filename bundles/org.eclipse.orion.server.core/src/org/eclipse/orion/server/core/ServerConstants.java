@@ -34,6 +34,16 @@ public class ServerConstants {
 	public static final String CONFIG_AUTH_ADMIN_DEFAULT_PASSWORD = "orion.auth.admin.default.password"; //$NON-NLS-1$
 
 	/**
+	 * The server hostname used to derive the Persona audience.
+	 */
+	public static final String CONFIG_AUTH_PERSONA_SERVER_NAME = "orion.auth.persona.audience.hostname"; //$NON-NLS-1$
+
+	/**
+	 * The API used for verifying Persona logins.
+	 */
+	public static final String CONFIG_AUTH_PERSONA_VERIFIER = "orion.auth.persona.verifier"; //$NON-NLS-1$
+
+	/**
 	 * The name of a configuration property specifying an alternate URI to handle registrations for accounts.
 	 * If this variable is set AND the site does not allow for direct registrations the
 	 * Register Button will be visible and this URI will be opened taking the user off site.
