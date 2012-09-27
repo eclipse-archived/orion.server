@@ -55,7 +55,7 @@ public abstract class OrionServlet extends HttpServlet {
 
 	public static void writeJSONResponse(HttpServletRequest req, HttpServletResponse resp, Object result, JsonURIUnqualificationStrategy strategy) throws IOException {
 		Assert.isLegal(result instanceof JSONObject || result instanceof JSONArray);
-		resp.setCharacterEncoding("UTF-8");
+		resp.setCharacterEncoding("UTF-8"); //$NON-NLS-1$
 		resp.setStatus(HttpServletResponse.SC_OK);
 		resp.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 		resp.setHeader("Cache-Control", "no-store"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -149,7 +149,6 @@ public abstract class OrionServlet extends HttpServlet {
 		handleException(resp, new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, msg, e), httpCode);
 	}
 
-	@SuppressWarnings("unchecked")
 	protected void printHeaders(HttpServletRequest req, StringBuffer out) {
 		for (String header : Collections.<String> list(req.getHeaderNames()))
 			out.append(header + ": " + req.getHeader(header) + "\n"); //$NON-NLS-1$ //$NON-NLS-2$
