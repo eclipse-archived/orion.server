@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others 
+ * Copyright (c) 2010, 2012 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -70,7 +70,12 @@ public abstract class FileSystemTest extends AbstractServerTest {
 		String projectName = name + "Project";
 		WebRequest request = getCreateProjectRequest(workspaceLocation, projectName, null);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		if (response.getResponseCode() != HttpURLConnection.HTTP_CREATED) {
+			String msg = "Unexpected " + response.getResponseCode() + " response creating project: " + projectName;
+			System.out.println(msg);
+			System.out.println(response.getText());
+			fail(msg);
+		}
 		String workspaceId = new Path(workspaceLocation.getPath()).segment(1);
 		testProjectBaseLocation = "/" + workspaceId + '/' + projectName;
 		JSONObject project = new JSONObject(response.getText());
