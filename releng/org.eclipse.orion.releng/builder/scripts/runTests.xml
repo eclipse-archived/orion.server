@@ -337,6 +337,7 @@
 		
 		<!-- junit results -->
 		<xslt style="${builder}/html/JUNIT.XSL" basedir="${buildDirectory}/test/eclipse/results" destdir="${dropLocation}" includes="*.xml" />
+		<copy file="${buildDirectory}/test/eclipse/server-folder/.metadata/.log" tofile="${dropLocation}/junitLog-${buildLabel}.txt" />
 		
 		<!-- update the test status -->
 		<updateTestResult testFile="Chrome-12.0-testResults.html" token="@JS-CHROME12@"/>
