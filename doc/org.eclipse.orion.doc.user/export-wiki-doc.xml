@@ -56,6 +56,7 @@
     		title="Orion"
     		generateUnifiedToc="false">
     		<path name="${orion.user.guide}/Getting_started" title="Getting started" generateToc="true"/>
+    		<path name="${orion.user.guide}/Tasks/Working_with_folders_and_files" title="Working with folders and files" generateToc="true"/>
     		<path name="${orion.user.guide}/Reference/Welcome_page" title="Welcome page" generateToc="false"/>
     		<path name="${orion.user.guide}/Reference/Login_page" title="Login page" generateToc="false"/>
     		<path name="${orion.user.guide}/Reference/Navigator_page" title="Navigator page" generateToc="true"/>

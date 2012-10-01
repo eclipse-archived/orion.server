@@ -4,5 +4,5 @@
 <!-- Define topics for the Tasks section -->
 <!-- ========================== -->
 <toc label="Tasks">
-
+	<link toc="WikiDoc/Orion-Documentation-User-Guide-Tasks-Working-with-folders-and-files-toc.xml" />
 </toc>
