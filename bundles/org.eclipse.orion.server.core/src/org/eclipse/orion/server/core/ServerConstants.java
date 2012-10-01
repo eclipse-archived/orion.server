@@ -36,7 +36,7 @@ public class ServerConstants {
 	/**
 	 * The server hostname used to derive the Persona audience.
 	 */
-	public static final String CONFIG_AUTH_PERSONA_SERVER_NAME = "orion.auth.persona.audience.hostname"; //$NON-NLS-1$
+	public static final String CONFIG_AUTH_PERSONA_DOMAIN = "orion.auth.persona.audience.domain"; //$NON-NLS-1$
 
 	/**
 	 * The API used for verifying Persona logins.

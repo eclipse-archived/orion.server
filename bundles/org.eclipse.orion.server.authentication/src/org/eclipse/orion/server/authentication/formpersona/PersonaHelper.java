@@ -54,7 +54,7 @@ public class PersonaHelper {
 	static {
 		//if there is no list of users authorised to create accounts, it means everyone can create accounts
 		allowAnonymousAccountCreation = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION, null) == null; //$NON-NLS-1$
-		serverName = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_PERSONA_SERVER_NAME, null);
+		serverName = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_PERSONA_DOMAIN, null);
 		verifierUrl = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_PERSONA_VERIFIER, DEFAULT_VERIFIER);
 	}
 
