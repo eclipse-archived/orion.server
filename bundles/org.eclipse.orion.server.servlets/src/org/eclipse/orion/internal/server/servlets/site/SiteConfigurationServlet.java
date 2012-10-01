@@ -36,7 +36,7 @@ public class SiteConfigurationServlet extends OrionServlet {
 	}
 
 	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+	protected synchronized void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
 		IPath pathInfo = getPathInfo(req);
 		if (pathInfo.segmentCount() == 0) {
@@ -55,7 +55,7 @@ public class SiteConfigurationServlet extends OrionServlet {
 	}
 
 	@Override
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+	protected synchronized void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
 		IPath pathInfo = getPathInfo(req);
 		if (pathInfo.segmentCount() == 0) {
@@ -70,7 +70,7 @@ public class SiteConfigurationServlet extends OrionServlet {
 	}
 
 	@Override
-	protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+	protected synchronized void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
 		IPath pathInfo = getPathInfo(req);
 		if (pathInfo.segmentCount() == 1) {
@@ -86,7 +86,7 @@ public class SiteConfigurationServlet extends OrionServlet {
 	}
 
 	@Override
-	protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+	protected synchronized void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
 		if (getPathInfo(req).segmentCount() == 1) {
 			SiteConfiguration site = getExistingSiteConfig(req, resp);
