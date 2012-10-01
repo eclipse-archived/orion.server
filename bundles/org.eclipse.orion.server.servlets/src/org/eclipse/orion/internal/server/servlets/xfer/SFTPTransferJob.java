@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -97,6 +97,8 @@ public abstract class SFTPTransferJob extends Job {
 			try {
 				Session session = jsch.getSession(user, host, port);
 				session.setUserInfo(new SFTPUserInfo(passphrase, passphrase));
+				//don't require host key to be in orion server's known hosts file
+				session.setConfig("StrictHostKeyChecking", "no"); //$NON-NLS-1$ //$NON-NLS-2$
 				session.connect();
 				try {
 					ChannelSftp channel = (ChannelSftp) session.openChannel("sftp"); //$NON-NLS-1$
