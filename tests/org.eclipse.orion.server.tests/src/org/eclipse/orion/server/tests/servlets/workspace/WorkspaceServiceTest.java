@@ -152,7 +152,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	}
 
 	@Test
-	public void testMoveBadRequest() throws IOException, SAXException, URISyntaxException {
+	public void testMoveBadRequest() throws IOException, SAXException {
 		//create workspace
 		String workspaceName = WorkspaceServiceTest.class.getName() + "#testMoveProject";
 		URI workspaceLocation = createWorkspace(workspaceName);
@@ -165,7 +165,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	}
 
 	@Test
-	public void testMoveProject() throws IOException, SAXException, URISyntaxException, JSONException {
+	public void testMoveProject() throws IOException, SAXException, JSONException {
 		//create workspace
 		String workspaceName = WorkspaceServiceTest.class.getName() + "#testMoveProject";
 		URI workspaceLocation = createWorkspace(workspaceName);
@@ -192,7 +192,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	}
 
 	@Test
-	public void testCopyProjectNonDefaultLocation() throws IOException, SAXException, URISyntaxException, JSONException {
+	public void testCopyProjectNonDefaultLocation() throws IOException, SAXException, JSONException {
 		//create workspace
 		String workspaceName = WorkspaceServiceTest.class.getName() + "#testCopyProjectNonDefaultLocation";
 		URI workspaceLocation = createWorkspace(workspaceName);
@@ -258,7 +258,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	}
 
 	@Test
-	public void testCopyProject() throws IOException, SAXException, URISyntaxException, JSONException {
+	public void testCopyProject() throws IOException, SAXException, JSONException {
 		//create workspace
 		String workspaceName = WorkspaceServiceTest.class.getName() + "#testCopyProject";
 		URI workspaceLocation = createWorkspace(workspaceName);
@@ -314,7 +314,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	}
 
 	@Test
-	public void testCreateProjectBadName() throws IOException, SAXException, URISyntaxException, JSONException {
+	public void testCreateProjectBadName() throws IOException, SAXException, JSONException {
 		//create workspace
 		String workspaceName = WorkspaceServiceTest.class.getName() + "#testCreateProjectBadName";
 		URI workspaceLocation = createWorkspace(workspaceName);
@@ -332,7 +332,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	 * Tests creating a project that is stored at a non-default location on the server.
 	 */
 	@Test
-	public void testCreateProjectNonDefaultLocation() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testCreateProjectNonDefaultLocation() throws IOException, SAXException, JSONException {
 		//create workspace
 		String workspaceName = WorkspaceServiceTest.class.getName() + "#testCreateProjectNonDefaultLocation";
 		URI workspaceLocation = createWorkspace(workspaceName);
