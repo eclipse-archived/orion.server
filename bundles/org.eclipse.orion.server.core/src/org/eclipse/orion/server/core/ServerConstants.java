@@ -27,6 +27,13 @@ public class ServerConstants {
 	 * create accounts.
 	 */
 	public static final String CONFIG_AUTH_USER_CREATION= "orion.auth.user.creation"; //$NON-NLS-1$
+	
+	/**
+	 * The name of a configuration property specifying is user email is mandatory while user creation.
+	 * If <code>true</code> user will be forced to add email while creating account. Account will be blocked
+	 * until user email is confirmed.
+	 */
+	public static final String CONFIG_AUTH_USER_CREATION_FORCE_EMAIL= "orion.auth.user.creation.force.email"; //$NON-NLS-1$
 
 	/**
 	 * The system property name for the secure storage master password.

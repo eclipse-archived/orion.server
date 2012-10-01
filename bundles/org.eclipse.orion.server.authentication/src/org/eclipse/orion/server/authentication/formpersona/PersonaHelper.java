@@ -48,6 +48,7 @@ public class PersonaHelper {
 	private static IOrionCredentialsService userAdmin;
 	private static IOrionUserProfileService userProfileService;
 	private static boolean allowAnonymousAccountCreation;
+	private static boolean forceEmailWhileCreatingAccount;
 	private static String serverName;
 	private static String verifierUrl;
 
@@ -55,6 +56,7 @@ public class PersonaHelper {
 		//if there is no list of users authorised to create accounts, it means everyone can create accounts
 		allowAnonymousAccountCreation = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION, null) == null; //$NON-NLS-1$
 		serverName = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_PERSONA_DOMAIN, null);
+		forceEmailWhileCreatingAccount  = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION_FORCE_EMAIL, "false").equalsIgnoreCase("true"); //$NON-NLS-1$
 		verifierUrl = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_PERSONA_VERIFIER, DEFAULT_VERIFIER);
 	}
 

@@ -41,12 +41,14 @@ public class FormAuthHelper {
 	private static IOrionUserProfileService userProfileService;
 
 	private static boolean allowAnonymousAccountCreation;
+	private static boolean forceEmailWhileCreatingAccount;
 	
 	private static String registrationURI;
 
 	static {
 		//if there is no list of users authorised to create accounts, it means everyone can create accounts
 		allowAnonymousAccountCreation = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION, null) == null; //$NON-NLS-1$
+		forceEmailWhileCreatingAccount  = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION_FORCE_EMAIL, "false").equalsIgnoreCase("true"); //$NON-NLS-1$
 		
 		//if there is an alternate URI to handle registrations retrieve it.
 		registrationURI = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_REGISTRATION_URI, null);
@@ -68,7 +70,7 @@ public class FormAuthHelper {
 		String login = req.getParameter("login");//$NON-NLS-1$
 		User user = getUserForCredentials(login, req.getParameter("password")); //$NON-NLS-1$
 
-		if (user != null) {
+		if (user != null && !user.getBlocked()) {
 			String actualLogin = user.getUid();
 			if (logger.isInfoEnabled())
 				logger.info("Login success: " + actualLogin); //$NON-NLS-1$ 
@@ -108,6 +110,10 @@ public class FormAuthHelper {
 	 */
 	public static boolean canAddUsers() {
 		return allowAnonymousAccountCreation ? (userAdmin==null ? false : userAdmin.canCreateUsers()) : false;
+	}
+	
+	public static boolean forceEmail(){
+		return forceEmailWhileCreatingAccount;
 	}
 	
 	/**

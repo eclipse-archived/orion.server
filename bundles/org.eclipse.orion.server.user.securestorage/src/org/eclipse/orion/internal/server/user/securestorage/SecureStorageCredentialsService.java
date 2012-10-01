@@ -39,6 +39,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 	static final String USER_UID = "uid"; //$NON-NLS-1$
 	static final String USER_NAME = "name"; //$NON-NLS-1$
 	static final String USER_PASSWORD = "password"; //$NON-NLS-1$
+	static final String USER_BLOCKED = "blocked"; //$NON-NLS-1$
 	static final String USER_EMAIL = "email"; //$NON-NLS-1$
 	static final String USER_EMAIL_CONFIRMATION = "email_confirmation"; //$NON-NLS-1$
 	static final String USER_ROLES = "roles"; //$NON-NLS-1$
@@ -179,6 +180,9 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 			try {
 				User user = new User(childName, userPrefs.get(USER_LOGIN, childName), userPrefs.get(USER_NAME, ""), userPrefs.get(USER_PASSWORD, null) == null ? null : "" /* don't expose the password */); //$NON-NLS-1$ //$NON-NLS-2$
 				user.setEmail(userPrefs.get(USER_EMAIL, "")); //$NON-NLS-1$
+				if(userPrefs.getBoolean(USER_BLOCKED, false)){
+					user.setBlocked(true);
+				}
 				if (userPrefs.get(USER_EMAIL_CONFIRMATION, null) != null)
 					user.setConfirmationId(userPrefs.get(USER_EMAIL_CONFIRMATION, null));
 
@@ -266,6 +270,9 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 
 			User user = new User(node.name(), node.get(USER_LOGIN, node.name()), node.get(USER_NAME, ""), node.get(USER_PASSWORD, null)); //$NON-NLS-1$
 			user.setEmail(node.get(USER_EMAIL, "")); //$NON-NLS-1$
+			if(node.getBoolean(USER_BLOCKED, false)){
+				user.setBlocked(true);
+			}
 			if (node.get(USER_EMAIL_CONFIRMATION, null) != null)
 				user.setConfirmationId(node.get(USER_EMAIL_CONFIRMATION, null));
 
@@ -366,6 +373,11 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 			userPrefs.put(USER_NAME, user.getName(), false);
 		if (user.getPassword() != null)
 			userPrefs.put(USER_PASSWORD, user.getPassword(), true);
+		if (user.getBlocked()){
+			userPrefs.put(USER_BLOCKED, String.valueOf(user.getBlocked()), false);
+		}else{
+			userPrefs.remove(USER_BLOCKED);
+		}
 		if (user.getEmail() != null) {
 			if (user.getEmail().length() > 0 && !user.getEmail().equals(userPrefs.get(USER_EMAIL, null))) {
 				user.setConfirmationId();

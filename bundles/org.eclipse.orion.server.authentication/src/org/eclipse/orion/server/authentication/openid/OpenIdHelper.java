@@ -65,10 +65,12 @@ public class OpenIdHelper {
 	private HttpService httpService;
 
 	private static boolean allowAnonymousAccountCreation;
+	private static boolean forceEmailWhileCreatingAccount;
 
 	static {
 		//if there is no list of users authorised to create accounts, it means everyone can create accounts
 		allowAnonymousAccountCreation = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION, null) == null; //$NON-NLS-1$
+		forceEmailWhileCreatingAccount  = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION_FORCE_EMAIL, "false").equalsIgnoreCase("true"); //$NON-NLS-1$
 	}
 
 	/**
@@ -115,7 +117,7 @@ public class OpenIdHelper {
 	}
 
 	private static boolean canAddUsers() {
-		return allowAnonymousAccountCreation ? userAdmin.canCreateUsers() : false;
+		return (allowAnonymousAccountCreation && !forceEmailWhileCreatingAccount) ? userAdmin.canCreateUsers() : false;
 	}
 
 	/**

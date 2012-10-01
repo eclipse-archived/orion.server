@@ -12,6 +12,7 @@ package org.eclipse.orion.server.useradmin.servlets;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -176,6 +177,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		//		String store = req.getParameter(UserConstants.KEY_STORE);
 		String login = req.getParameter(UserConstants.KEY_LOGIN);
 		String name = req.getParameter(ProtocolConstants.KEY_NAME);
+		String email = req.getParameter(UserConstants.KEY_EMAIL);
+
 		if (name == null)
 			name = login;
 		String password = req.getParameter(UserConstants.KEY_PASSWORD);
@@ -190,12 +193,24 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Cannot create user with empty password.", null));
 		}
 
+		if (PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION_FORCE_EMAIL, "false").equals("true") && (email == null || email.length() == 0)) {
+			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User email is mandatory.", null));
+		}
+
 		IOrionCredentialsService userAdmin = getUserAdmin();
 
 		if (userAdmin.getUser(UserConstants.KEY_LOGIN, login) != null)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + login + " already exists.", null));
+		
+		if(email!=null && email.length()>0 && !email.contains("@")){
+			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Invalid user email.", null));
+		}
 
 		User newUser = new User(login, name, password);
+		newUser.setEmail(email);
+		if (PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION_FORCE_EMAIL, "false").equalsIgnoreCase("true")) {
+			newUser.setBlocked(true);
+		}
 
 		newUser = userAdmin.createUser(newUser);
 
@@ -218,7 +233,24 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		URI userLocation = URIUtil.append(OrionServlet.getURI(req), newUser.getUid());
 		IOrionUserProfileNode userNode = getUserProfileService().getUserProfileNode(newUser.getUid(), true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
 
-		OrionServlet.writeJSONResponse(req, resp, formJson(newUser, userNode, userLocation, req.getContextPath()));
+		if (newUser.getBlocked()) {
+			try {
+				UserEmailUtil.getUtil().sendEmailConfirmation(getURI(req).resolve("../useremailconfirmation"), newUser);
+				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_CREATED, NLS.bind("User {0} has been succesfully created. To log in please confirm your email first.", login), null));
+			} catch (URISyntaxException e) {
+				LogHelper.log(e);
+				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Could not send confirmation email to " + newUser.getEmail(), null));
+			}
+		} else {
+			OrionServlet.writeJSONResponse(req, resp, formJson(newUser, userNode, userLocation, req.getContextPath()));
+			if(email!=null && email.length()>0){
+				try {
+					UserEmailUtil.getUtil().sendEmailConfirmation(getURI(req).resolve("../useremailconfirmation"), newUser);
+				} catch (URISyntaxException e) {
+					LogHelper.log(e);
+				}
+			}
+		}
 
 		return true;
 	}

@@ -30,6 +30,8 @@ public class User implements org.osgi.service.useradmin.User {
 	
 	public static final String EMAIL = "email";
 	
+	public static final String BLOCKED = "blocked";
+	
 	public static final String EMAIL_CONFIRMATION = "email_confirmation";
 
 	private Set<Role> roles = new HashSet<Role>();
@@ -101,6 +103,18 @@ public class User implements org.osgi.service.useradmin.User {
 	public void setPassword(String password) {
 		userCredentials.setProperty(PASSWORD, password);
 	}
+	
+	public void setBlocked(boolean blocked){
+		if(blocked){
+			userCredentials.setProperty(BLOCKED, "true");
+		} else {
+			userCredentials.remove(BLOCKED);
+		}
+	}
+	
+	public boolean getBlocked(){
+		return userCredentials.getProperty(BLOCKED, "false").equalsIgnoreCase("true");
+	}
 
 	public int getType() {
 		return Role.USER;
@@ -156,6 +170,7 @@ public class User implements org.osgi.service.useradmin.User {
 	
 	public void confirmEmail(){
 		userCredentials.remove(EMAIL_CONFIRMATION);
+		this.setBlocked(false);
 	}
 	
 	public void setConfirmationId(){

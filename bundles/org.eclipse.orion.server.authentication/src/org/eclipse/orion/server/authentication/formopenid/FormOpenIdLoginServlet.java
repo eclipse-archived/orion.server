@@ -133,6 +133,7 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 			JSONObject jsonResp = new JSONObject();
 			try {
 				jsonResp.put("CanAddUsers", FormAuthHelper.canAddUsers());
+				jsonResp.put("ForceEmail", FormAuthHelper.forceEmail());
 				jsonResp.put("RegistrationURI", FormAuthHelper.registrationURI());
 			} catch (JSONException e) {
 			}
