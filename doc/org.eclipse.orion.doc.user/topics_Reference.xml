@@ -6,7 +6,7 @@
 <toc label="Reference">
 	<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Welcome_page/Welcome-page.html" label="Welcome page"></topic>
 	<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Login_page/Login-page.html" label="Login page"></topic>
-	<link toc="WikiDoc/Orion-Documentation-User-Guide-Reference-Navigator-page-toc.xml" />
+	<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Navigator_page/Navigator-page.html" label="Navigator page"></topic>
 	<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Coding_page/Coding-page.html" label="Coding page"></topic>
 	<topic label="Global Search and Replace">
 		<link toc="WikiDoc/Orion-Documentation-User-Guide-Reference-Search-Results-page-toc.xml" />

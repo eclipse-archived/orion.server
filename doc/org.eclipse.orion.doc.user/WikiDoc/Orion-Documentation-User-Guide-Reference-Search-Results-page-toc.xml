@@ -1,7 +1,6 @@
 <?xml version='1.0' encoding='utf-8' ?>
 <toc topic="WikiDoc/Orion/Documentation/User_Guide/Reference/Search_Results_page/Search-Results-page.html" label="Global Search and Replace">
 	<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Search_Results_page/Search-Results-page.html" label="Search Results page">
-		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Search_Results_page/Search-Results-page.html#Starting_search" label="Starting search"></topic>
 		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Search_Results_page/Search-Results-page.html#Search_scopes" label="Search scopes">
 			<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Search_Results_page/Search-Results-page.html#Scoping_down" label="Scoping down"></topic>
 			<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Search_Results_page/Search-Results-page.html#Scoping_up" label="Scoping up"></topic>
@@ -16,7 +15,6 @@
 		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Search_Results_page/Search-Results-page.html#Current_limitations" label="Current limitations"></topic>
 	</topic>
 	<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Search_Results_page/Replace-page.html" label="Replace page">
-		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Search_Results_page/Replace-page.html#Invoking_replace" label="Invoking replace"></topic>
 		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Search_Results_page/Replace-page.html#Filtering_matches" label="Filtering matches"></topic>
 		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Search_Results_page/Replace-page.html#Keyboard_navigation_2" label="Keyboard navigation"></topic>
 		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Search_Results_page/Replace-page.html#Viewing_differences" label="Viewing differences"></topic>
@@ -24,7 +22,7 @@
 		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Search_Results_page/Replace-page.html#Report_page" label="Report page"></topic>
 		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Search_Results_page/Replace-page.html#Replacing_page_by_page" label="Replacing page by page"></topic>
 	</topic>
-	<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Search_Results_page/Sample-refactor-a-function-name.html" label="Sample: refactor a function name">
-		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Search_Results_page/Sample-refactor-a-function-name.html#Updating_this_document" label="Updating this document"></topic>
+	<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Search_Results_page/Related-Tasks.html" label="Related Tasks">
+		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Search_Results_page/Related-Tasks.html#Updating_this_document" label="Updating this document"></topic>
 	</topic>
 </toc>

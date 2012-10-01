@@ -26,14 +26,9 @@
 			</tr>
 		</table><hr/>
 		<h1 id="Search_Results_page">Search Results page</h1>
-		<p>The <b>Search Results</b> page displays files for any search performed in the search entry field in the title area of any page. Each file is expandable to display all the lines that match the keyword. You can use right arrow key to pop up a 5-line context around the line. To view the file with the line located you can click on any match to open the editor. The page is designed to display multiple pages if the number of result files exceeds 40. To view more results you can use the previous and next page actions in the tool bar.</p>
+		<p>The <b>Search Results</b> page displays files for any search performed in the search entry field in the title area of any page. The header displays the total number of matches and the number range of the first page. Each file is expandable to display all the lines that match the keyword. You can use right arrow key to pop up a 5-line context around the line. To view the file with the line located you can click on any match to open the editor. The page is designed to display multiple pages if the number of result files exceeds 40. To view more results you can use the previous and next page actions in the tool bar.</p>
 		<p>
 			<img title="Search results page" alt="Search results page" border="0" src="images/Orion-search-ResultOverview.png"/>
-		</p>
-		<h2 id="Starting_search">Starting search</h2>
-		<p>Starting search is very simple: just type or paste a keyword in the search entry field and hit enter. The result will be displayed in the same tab of your browser where you entered the keyword. The header of the result displays the total file number and the number range of the first page. Both literal and wild card search are supported. For example, "fo*ar" will hit all the files containing "foobar" while "fo??ar" will hit the same files. Please also note that the search ignores case.</p>
-		<p>
-			<img title="Search bar" alt="Search bar" border="0" src="images/Search_starting_search.png"/>
 		</p>
 		<h2 id="Search_scopes">Search scopes</h2>
 		<p>If you start a search from a page where a folder is presented, or in another word, if bread crumb is presented, the place holder of the search entry field indicates the folder name on which your search will start. Currently the pages supporting this are navigator, git log, editor and search pages. For all other pages, the search will start from the project root. But once you are in the search result page, you can scope up and down for the same keyword.</p>
@@ -92,8 +87,7 @@
 		<p>There are several limitations that will be addressed in the future releases.</p>
 		<ul>
 			<li>Case sensitive search is not supported.</li>
-			<li>Phrase search separated by white space. Note that white space is escaped when passing the key word to the sever. For example, <b>foo bar</b> will be treated as <b>foobar</b>.</li>
-			<li>When sorting by name, all the upper case file names are sorted in front of all lower cases.</li>
+			<li>If you enter multiple words in the search box, it will search for that exact phrase. Phrase search does not support wildcards, and will ignore punctuation between words. For example, if you search for <b>foo bar</b>, it will find matches such as <b>foo. (bar)</b></li>
 		</ul><hr/>
 		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
 			<tr>
