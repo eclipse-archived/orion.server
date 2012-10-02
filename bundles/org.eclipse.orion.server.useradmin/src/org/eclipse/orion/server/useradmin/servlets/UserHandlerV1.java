@@ -207,7 +207,9 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		}
 
 		User newUser = new User(login, name, password);
-		newUser.setEmail(email);
+		if(email!=null && email.length()>0){
+			newUser.setEmail(email);
+		}
 		if (PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION_FORCE_EMAIL, "false").equalsIgnoreCase("true")) {
 			newUser.setBlocked(true);
 		}
@@ -243,7 +245,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 			}
 		} else {
 			OrionServlet.writeJSONResponse(req, resp, formJson(newUser, userNode, userLocation, req.getContextPath()));
-			if(email!=null && email.length()>0){
+			if(email!=null && email.length()>0 && UserEmailUtil.getUtil().isEmailConfigured()){
 				try {
 					UserEmailUtil.getUtil().sendEmailConfirmation(getURI(req).resolve("../useremailconfirmation"), newUser);
 				} catch (URISyntaxException e) {
