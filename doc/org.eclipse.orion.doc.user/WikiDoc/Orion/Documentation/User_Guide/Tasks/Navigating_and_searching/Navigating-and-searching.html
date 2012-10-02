@@ -20,14 +20,32 @@
 			<img title="Search bar" alt="Search bar" border="0" src="images/Search_starting_search.png"/>
 		</p>
 		<p>The drop-down menu next to the search bar allows you to configure search options, and browse recent or saved searches.</p>
+		<p>Read the 
+			<a href="../../../../../Orion/Documentation/User_Guide/Reference/Search_Results_page/Search-Results-page.html" title="Orion/Documentation/User_Guide/Reference/Search_Results_page">Search Results page</a> documentation for more details on how to browse, filter, and process search results.
+		</p>
 		<h2 id="Search_and_replace_across_files">Search and replace across files</h2>
-		<p>A global search and replace can be performed by first running a search from the search box, and then supplying a replace term in the 
-			<a href="../../../../../Orion/Documentation/User_Guide/Reference/Search_Results_page/Search-Results-page.html" title="Orion/Documentation/User_Guide/Reference/Search_Results_page">Search Results page</a>.
-		</p>
-		<p>In the search result page, click on <b>Replace</b> on the tool bar to bring up the slide out. Type the replacing string and press <b>Enter</b> or click on <b>Preview Changes</b> to go to the replace page. Note you can also use <b>Esc</b> key or click on <b>x</b> to go back to the search page.  </p>
-		<p>
-			<img title="Invoking replace" alt="Invoking replace" border="0" src="images/Search_invoke_replace.png"/>
-		</p>
+		<ol>
+			<li>Enter the search term to be replaced in the global search bar on any page.</li>
+			<li>In the 
+				<a href="../../../../../Orion/Documentation/User_Guide/Reference/Search_Results_page/Search-Results-page.html" title="Orion/Documentation/User_Guide/Reference/Search_Results_page">Search Results page</a>, click on <b>Replace</b> on the tool bar to bring up the slide out. 
+				<img title="Invoking replace" alt="Invoking replace" border="0" src="images/Search_invoke_replace.png"/>
+			</li>
+			<li>Type the replacing string and press <b>Preview Changes</b>. You can also press <b>Enter</b> to replace without preview, or press Esc to cancel the replace.</li>
+			<li>Browse the changes, and use the check boxes to select the files and matches you want to replace. Note that if there are multiple matches in a single line, it will be <b>split</b> to multiple lines where each line represents one match. There are 3 levels of check box.
+				<br/> 
+				<img title="Filtering matches" alt="Filtering matches" border="0" src="images/Search_replace_filtering.png"/> 
+				<ul>
+					<li>Overall: this allows you to toggle all the files and matches on the current page.</li>
+					<li>File level: this allows you to toggle all the matches in a file.</li>
+					<li>Match level: this allows you to toggle each match.</li>
+				</ul>
+			</li>
+			<li>Once you have selected all the matches that you want to replace, click on Commit on the tool bar. This will write all the replacement on the server. </li>
+			<li>After the changes are committed, the replace page displays a list of files indicating the success or failure of the replacement. It also reports on how many matches were replaced on each file. You can click on any file to see the new content in a new tab. If some body else has changed the same file while you are replacing, a failure is generated and you have to refresh the page to redo it. 
+				<img title="Search replace report" alt="Search replace report" border="0" src="images/Search_replace_report.png"/> 
+			</li>
+			<li>If there is more than one page of search results, click on <b>Next Page</b> or <b>Previous Page</b> to repeat the process on the next set of results.</li>
+		</ol>
 		<h2 id="Example:_refactor_a_function_name">Example: refactor a function name</h2>
 		<p>Lets say there is a function called <b>foo</b> that is used in 60 files. User <b>A</b> creates a new function called <b>bar</b> and wants to replace the function name in 5 files. Meanwhile, user <b>B</b> modified and saved one of the files. The steps below describes the complete workflow:</p>
 		<ol>

@@ -8,9 +8,7 @@
 	<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Login_page/Login-page.html" label="Login page"></topic>
 	<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Navigator_page/Navigator-page.html" label="Navigator page"></topic>
 	<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Coding_page/Coding-page.html" label="Coding page"></topic>
-	<topic label="Global Search and Replace">
-		<link toc="WikiDoc/Orion-Documentation-User-Guide-Reference-Search-Results-page-toc.xml" />
-	</topic>
+	<link toc="WikiDoc/Orion-Documentation-User-Guide-Reference-Search-Results-page-toc.xml" />
 	<link toc="WikiDoc/Orion-Documentation-User-Guide-Reference-Settings-page-toc.xml" />
 	<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Profile_page/Profile-page.html" label="Profile page"></topic>
 	<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Operations_page/Operations-page.html" label="Operations page"></topic>

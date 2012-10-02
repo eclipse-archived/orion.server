@@ -2,29 +2,10 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-		<title>Global Search and Replace</title>
+		<title>Search and Replace page</title>
 		<link type="text/css" rel="stylesheet" href="../../../../../book.css"/>
 	</head>
 	<body>
-		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
-			<tr>
-				<th style="width: 100%" align="center" colspan="3">Global Search and Replace</th>
-			</tr>
-			<tr>
-				<td style="width: 20%" align="left"></td>
-				<td style="width: 60%" align="center"></td>
-				<td style="width: 20%" align="right">
-					<a href="Replace-page.html" title="Replace page">
-						<img alt="Next" border="0" src="../../../../../images/next.gif"/>
-					</a>
-				</td>
-			</tr>
-			<tr>
-				<td style="width: 20%" align="left" valign="top"></td>
-				<td style="width: 60%" align="center"></td>
-				<td style="width: 20%" align="right" valign="top">Replace page</td>
-			</tr>
-		</table><hr/>
 		<h1 id="Search_Results_page">Search Results page</h1>
 		<p>The <b>Search Results</b> page displays files for any search performed in the search entry field in the title area of any page. The header displays the total number of matches and the number range of the first page. Each file is expandable to display all the lines that match the keyword. You can use right arrow key to pop up a 5-line context around the line. To view the file with the line located you can click on any match to open the editor. The page is designed to display multiple pages if the number of result files exceeds 40. To view more results you can use the previous and next page actions in the tool bar.</p>
 		<p>
@@ -64,6 +45,7 @@
 			<li>To open a file or go to the matching line with that file, use Enter key.</li>
 			<li>To open a file or go to the matching line with that file in a new tab, use Ctrl+Enter key.</li>
 		</ul>
+		<p>Keyboard navigation when doing global search and replace is similar. But as the file and match names are not links to open the editor, enter key is not available. Also note that there is no context tip because you can view them in the compare view.</p>
 		<h2 id="Viewing_details">Viewing details</h2>
 		<p>There are two ways to view details on a match. When the current row is on a match, pressing <b>right arrow</b> key will pop up a context tip with five lines of code around the hit line. Note that if you use <b>up</b> and <b>down</b> arrow keys from now, the context tip changes contents when a match is iterated. Use <b>left arrow</b> key to cancel the context tip. If you want to view more details, press enter key or click on the link of the match. This will open the Orion editor with the line located at the matching place.</p>
 		<p>
@@ -83,27 +65,27 @@
 		<p>
 			<img title="Stale files in the results" alt="Stale files in the results" border="0" src="images/Search_stale_files.png"/> 
 		</p>
+		<h2 id="Viewing_differences">Viewing differences</h2>
+		<p>When the replace page is loaded, the compare view is displayed by default at the bottom of the main pain. While you are iterating matches, the compare view highlights the difference for the current row. Note that you can click on <b>Hide Compare</b> on the toolbar to hide it for a smoother iteration and bring it back later by <b>Show Compare</b>.</p>
+		<p>
+			<img title="View compare" alt="View compare" border="0" src="images/Search_replace_view_diff.png"/>
+		</p>
 		<h2 id="Current_limitations">Current limitations</h2>
 		<p>There are several limitations that will be addressed in the future releases.</p>
 		<ul>
 			<li>Case sensitive search is not supported.</li>
 			<li>If you enter multiple words in the search box, it will search for that exact phrase. Phrase search does not support wildcards, and will ignore punctuation between words. For example, if you search for <b>foo bar</b>, it will find matches such as <b>foo. (bar)</b></li>
-		</ul><hr/>
-		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
-			<tr>
-				<td style="width: 20%" align="left"></td>
-				<td style="width: 60%" align="center"></td>
-				<td style="width: 20%" align="right">
-					<a href="Replace-page.html" title="Replace page">
-						<img alt="Next" border="0" src="../../../../../images/next.gif"/>
-					</a>
-				</td>
-			</tr>
-			<tr>
-				<td style="width: 20%" align="left" valign="top"></td>
-				<td style="width: 60%" align="center"></td>
-				<td style="width: 20%" align="right" valign="top">Replace page</td>
-			</tr>
-		</table>
+		</ul>
+		<h2 id="Related_Tasks">Related Tasks</h2>
+		<ul>
+			<li>
+				<a href="../../../../../Orion/Documentation/User_Guide/Tasks/Navigating_and_searching/Navigating-and-searching.html" title="Orion/Documentation/User_Guide/Tasks/Navigating_and_searching">Navigating and searching</a>
+			</li>
+		</ul>
+		<h2 id="Updating_this_document">Updating this document</h2>
+		<p>This document is maintained in a collaborative wiki.  If you wish to update or modify this document please visit 
+
+			<a href="http://wiki.eclipse.org/Orion/Documentation/User_Guide/Reference/Search_Results_page" target="orion_external">http://wiki.eclipse.org/Orion/Documentation/User_Guide/Reference/Search_Results_page</a>
+		</p>
 	</body>
 </html>

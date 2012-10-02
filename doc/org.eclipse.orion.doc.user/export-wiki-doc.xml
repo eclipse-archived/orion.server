@@ -60,11 +60,12 @@
     		<path name="${orion.user.guide}/Tasks/Navigating_and_searching" title="Navigating and searching" generateToc="true"/>
     		<path name="${orion.user.guide}/Tasks/Importing" title="Importing" generateToc="true"/>
     		<path name="${orion.user.guide}/Tasks/Exporting" title="Exporting" generateToc="true"/>
+    		<path name="${orion.user.guide}/Tasks/Comparing" title="Comparing" generateToc="true"/>
     		<path name="${orion.user.guide}/Reference/Welcome_page" title="Welcome page" generateToc="false"/>
     		<path name="${orion.user.guide}/Reference/Login_page" title="Login page" generateToc="false"/>
     		<path name="${orion.user.guide}/Reference/Navigator_page" title="Navigator page" generateToc="false"/>
     		<path name="${orion.user.guide}/Reference/Coding_page" title="Coding page" generateToc="false"/>
-    		<path name="${orion.user.guide}/Reference/Search_Results_page" title="Global Search and Replace" generateToc="true"/>
+    		<path name="${orion.user.guide}/Reference/Search_Results_page" title="Search and Replace page" generateToc="true"/>
     		<path name="${orion.user.guide}/Reference/Settings_page" title="Settings page" generateToc="true"/>
     		<path name="${orion.user.guide}/Reference/Profile_page" title="Profile page" generateToc="false"/>
     		<path name="${orion.user.guide}/Reference/Operations_page" title="Operations page" generateToc="false"/>
