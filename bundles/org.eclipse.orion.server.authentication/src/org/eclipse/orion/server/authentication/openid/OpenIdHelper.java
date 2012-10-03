@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 2011 IBM Corporation and others 
+ * Copyright (c) 2010, 2012 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,41 +10,23 @@
  *******************************************************************************/
 package org.eclipse.orion.server.authentication.openid;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
+import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.authentication.Activator;
 import org.eclipse.orion.server.authentication.formopenid.OpenIdConstants;
 import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.PreferenceHelper;
-import org.eclipse.orion.server.core.ServerConstants;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
+import org.eclipse.orion.server.user.profile.*;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.User;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.*;
 import org.openid4java.consumer.ConsumerException;
 import org.openid4java.discovery.Identifier;
-import org.osgi.service.http.HttpContext;
-import org.osgi.service.http.HttpService;
-import org.osgi.service.http.NamespaceException;
+import org.osgi.service.http.*;
 
 /**
  * Groups methods to handle session attributes for OpenID authentication.
@@ -64,15 +46,6 @@ public class OpenIdHelper {
 
 	private HttpService httpService;
 
-	private static boolean allowAnonymousAccountCreation;
-	private static boolean forceEmailWhileCreatingAccount;
-
-	static {
-		//if there is no list of users authorised to create accounts, it means everyone can create accounts
-		allowAnonymousAccountCreation = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION, null) == null; //$NON-NLS-1$
-		forceEmailWhileCreatingAccount  = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION_FORCE_EMAIL, "false").equalsIgnoreCase("true"); //$NON-NLS-1$
-	}
-
 	/**
 	 * Redirects to OpenId provider stored in <code>openid</code> parameter of
 	 * request. If user is to be redirected after login perform the redirect
@@ -86,7 +59,7 @@ public class OpenIdHelper {
 	 *            {@link #handleOpenIdReturnAndLogin(HttpServletRequest, HttpServletResponse, OpenidConsumer)}
 	 *            . If <code>null</code> the new {@link OpenidConsumer} will be
 	 *            created and returned
-	 * @return
+	 * @return the authenticated open id consumer.
 	 * @throws IOException
 	 * @throws OpenIdException 
 	 */
@@ -98,12 +71,9 @@ public class OpenIdHelper {
 			sb.append("?").append(OP_RETURN).append("=true"); //$NON-NLS-1$ //$NON-NLS-2$
 			if (redirect != null && redirect.length() > 0) {
 				sb.append("&").append(REDIRECT).append("="); //$NON-NLS-1$ //$NON-NLS-2$
-				
+
 				// need to urlencode redirect (URLEncoder form encodes rest of the replaces handle differences when on a browser address bar)
-				sb.append(URLEncoder.encode(redirect, "UTF-8")
-					.replaceAll("\\+", "%20").replaceAll("\\%21", "!")
-					.replaceAll("\\%27", "'").replaceAll("\\%28", "(")
-					.replaceAll("\\%29", ")").replaceAll("\\%7E", "~"));
+				sb.append(URLEncoder.encode(redirect, "UTF-8").replaceAll("\\+", "%20").replaceAll("\\%21", "!").replaceAll("\\%27", "'").replaceAll("\\%28", "(").replaceAll("\\%29", ")").replaceAll("\\%7E", "~"));
 			}
 			consumer = new OpenidConsumer(sb.toString());
 			consumer.authRequest(req.getParameter(OPENID), req, resp);
@@ -114,10 +84,6 @@ public class OpenIdHelper {
 			throw new OpenIdException(e);
 		}
 		return consumer;
-	}
-
-	private static boolean canAddUsers() {
-		return (allowAnonymousAccountCreation && !forceEmailWhileCreatingAccount) ? userAdmin.canCreateUsers() : false;
 	}
 
 	/**
@@ -144,14 +110,8 @@ public class OpenIdHelper {
 			User user;
 			if (users.size() > 0) {
 				user = users.iterator().next();
-			} else if (canAddUsers()) {
-				User newUser = new User();
-				newUser.setName(id.getIdentifier());
-				newUser.addProperty("openid", id.getIdentifier());
-				user = userAdmin.createUser(newUser);
 			} else {
-				throw new OpenIdException("Your authentication was successful, but that account is not associated with any Orion profile." +
-						" External accounts can be added on your profile page after login.<a class='loginWindow' href='http://wiki.eclipse.org/Orion/Documentation/User_Guide/Reference/Login_page'> Learn more.</a>");
+				throw new OpenIdException("There is no Orion account associated with this Id. Please register or contact your system administrator for assistance.");
 			}
 
 			req.getSession().setAttribute("user", user.getUid()); //$NON-NLS-1$
