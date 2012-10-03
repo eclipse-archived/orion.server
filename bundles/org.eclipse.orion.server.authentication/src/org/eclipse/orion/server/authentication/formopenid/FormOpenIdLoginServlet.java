@@ -22,6 +22,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.authentication.Activator;
 import org.eclipse.orion.server.authentication.form.FormAuthHelper;
+import org.eclipse.orion.server.authentication.form.FormAuthHelper.LoginResult;
 import org.eclipse.orion.server.authentication.formpersona.PersonaConstants;
 import org.eclipse.orion.server.authentication.formpersona.PersonaException;
 import org.eclipse.orion.server.authentication.formpersona.PersonaHelper;
@@ -58,7 +59,8 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 
 		if (pathInfo.startsWith("/form")) { //$NON-NLS-1$
 			try {
-				if (FormAuthHelper.performAuthentication(req, resp)) {
+				LoginResult authResult = FormAuthHelper.performAuthentication(req, resp); 
+				if (authResult == LoginResult.OK) {
 					// redirection from
 					// FormAuthenticationService.setNotAuthenticated
 					String versionString = req.getHeader("Orion-Version"); //$NON-NLS-1$
@@ -85,6 +87,8 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 						}
 					}
 					resp.flushBuffer();
+				} else if(authResult == LoginResult.BLOCKED){
+					displayError("Your account is not active. Please confirm your email before logging in.", req, resp);
 				} else {
 					displayError("Invalid user or password", req, resp);
 				}

@@ -43,6 +43,10 @@ public class FormAuthHelper {
 	private static boolean allowAnonymousAccountCreation;
 	private static boolean forceEmailWhileCreatingAccount;
 	
+	public enum LoginResult{
+		OK, FAIL, BLOCKED
+	}
+	
 	private static String registrationURI;
 
 	static {
@@ -65,12 +69,15 @@ public class FormAuthHelper {
 	 * @throws IOException
 	 * @throws UnsupportedUserStoreException 
 	 */
-	public static boolean performAuthentication(HttpServletRequest req, HttpServletResponse resp) throws IOException, UnsupportedUserStoreException {
+	public static LoginResult performAuthentication(HttpServletRequest req, HttpServletResponse resp) throws IOException, UnsupportedUserStoreException {
 		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.login"); //$NON-NLS-1$
 		String login = req.getParameter("login");//$NON-NLS-1$
 		User user = getUserForCredentials(login, req.getParameter("password")); //$NON-NLS-1$
 
-		if (user != null && !user.getBlocked()) {
+		if (user != null) {
+			if(user.getBlocked()){
+				return LoginResult.BLOCKED;
+			}
 			String actualLogin = user.getUid();
 			if (logger.isInfoEnabled())
 				logger.info("Login success: " + actualLogin); //$NON-NLS-1$ 
@@ -85,12 +92,12 @@ public class FormAuthHelper {
 				// just log that the login timestamp was not stored
 				LogHelper.log(e);
 			}
-			return true;
+			return LoginResult.OK;
 		}
 		//don't bother tracing malformed login attempts
 		if (login != null)
 			logger.info("Login failed: " + login); //$NON-NLS-1$
-		return false;
+		return LoginResult.FAIL;
 	}
 
 	private static User getUserForCredentials(String login, String password) throws UnsupportedUserStoreException {
