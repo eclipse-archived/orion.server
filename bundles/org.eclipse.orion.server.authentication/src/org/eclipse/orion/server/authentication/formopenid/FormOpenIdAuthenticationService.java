@@ -12,12 +12,8 @@ package org.eclipse.orion.server.authentication.formopenid;
 
 import java.io.IOException;
 import java.util.Properties;
-
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
+import javax.servlet.http.*;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -51,10 +47,7 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 
 	public String getAuthenticatedUser(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException {
 		HttpSession s = req.getSession(true);
-		if (s.getAttribute("user") != null) { //$NON-NLS-1$
-			return (String) s.getAttribute("user"); //$NON-NLS-1$
-		}
-		return null;
+		return (String) s.getAttribute("user");//$NON-NLS-1$
 	}
 
 	public String getAuthType() {

@@ -196,7 +196,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Cannot create user with empty password.", null));
 		}
 
-		if (PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION_FORCE_EMAIL, "false").equals("true") && (email == null || email.length() == 0)) {
+		boolean requireEmail = Boolean.TRUE.toString().equalsIgnoreCase(PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION_FORCE_EMAIL));
+		if (requireEmail && (email == null || email.length() == 0)) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User email is mandatory.", null));
 		}
 
@@ -213,9 +214,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (email != null && email.length() > 0) {
 			newUser.setEmail(email);
 		}
-		if (PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION_FORCE_EMAIL, "false").equalsIgnoreCase("true")) {
+		if (requireEmail)
 			newUser.setBlocked(true);
-		}
 
 		newUser = userAdmin.createUser(newUser);
 
