@@ -216,9 +216,9 @@ public class HostingTest extends CoreSiteTest {
 		final String fileContent = "Created through a site";
 		createFileOnServer(hostedURL + remoteFilePath + testProjectBaseLocation, fileName, fileContent);
 
-		// Bugs 369813, 366098, 369811: ensure query parameters are passed through the site unmangled
+		// Bugs 369813, 366098, 369811, 390732: ensure query parameters are passed through the site unmangled
 		// For this we'll call the 'prefs' API which uses query parameters
-		String prefKey = "foo[-]bar";
+		String prefKey = "foo[-]bar baz+quux";
 		String prefValue = "pref value";
 		String remotePrefUrl = hostedURL + remotePrefPath + "/user";
 		WebRequest putPrefReq = createSetPreferenceRequest(remotePrefUrl, prefKey, prefValue);

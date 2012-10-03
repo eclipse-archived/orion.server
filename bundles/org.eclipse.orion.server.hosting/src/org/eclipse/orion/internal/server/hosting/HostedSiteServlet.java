@@ -11,7 +11,6 @@
 package org.eclipse.orion.internal.server.hosting;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.*;
 import java.util.*;
 import java.util.Map.Entry;
@@ -144,7 +143,6 @@ public class HostedSiteServlet extends OrionServlet {
 	protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
 		String pathInfoString = req.getPathInfo();
-		String queryString = getQueryString(req);
 		IPath pathInfo = new Path(null /*don't parse host:port as device*/, pathInfoString == null ? "" : pathInfoString); //$NON-NLS-1$
 		if (pathInfo.segmentCount() > 0) {
 			String hostedHost = pathInfo.segment(0);
@@ -155,7 +153,7 @@ public class HostedSiteServlet extends OrionServlet {
 				IPath contextlessPath = path.makeRelativeTo(contextPath).makeAbsolute();
 				URI[] mappedPaths;
 				try {
-					mappedPaths = getMapped(site, contextlessPath, queryString);
+					mappedPaths = getMapped(site, contextlessPath, req.getQueryString());
 				} catch (URISyntaxException e) {
 					handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Could not create target URI	", e));
 					return;
@@ -202,7 +200,7 @@ public class HostedSiteServlet extends OrionServlet {
 				rest = originalPath.removeFirstSegments(count - i).toString();
 				for (int j = 0; j < base.size(); j++) {
 					URI uri = (rest.equals("") || rest.equals("/")) ? new URI(base.get(j)) : URIUtil.append(new URI(base.get(j)), rest);
-					uris.add(new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost(), uri.getPort(), uri.getPath(), queryString, uri.getFragment()));
+					uris.add(createUri(uri, queryString));
 				}
 			}
 			path = path.removeLastSegments(1);
@@ -212,6 +210,16 @@ public class HostedSiteServlet extends OrionServlet {
 			return null;
 		else
 			return uris.toArray(new URI[uris.size()]);
+	}
+
+	// Returns a copy of uri with queryString giving the query component. The query is not decoded.
+	private URI createUri(URI uri, String queryString) throws URISyntaxException {
+		String queryPart = queryString == null ? "" : "?" + queryString; //$NON-NLS-1$ //$NON-NLS-2$
+		String fragmentPart = uri.getFragment() == null ? "" : "#" + uri.getRawFragment();//$NON-NLS-1$ //$NON-NLS-2$
+		URI pathonly = new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost(), uri.getPort(), uri.getPath(), null, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append(pathonly.toString()).append(queryPart).append(fragmentPart);
+		return new URI(buf.toString());
 	}
 
 	private void serve(HttpServletRequest req, HttpServletResponse resp, IHostedSite site, URI[] mappedURIs) throws ServletException, IOException {
@@ -352,23 +360,4 @@ public class HostedSiteServlet extends OrionServlet {
 		return true;
 	}
 
-	/**
-	 * @param req The request.
-	 * @return The query string of the request in its raw (not URL-encoded) form. This is suitable for passing as the 
-	 * 'query' parameter to one of the multi-argument {@link URI} constructors.
-	 */
-	private static String getQueryString(HttpServletRequest req) {
-		String query = req.getQueryString();
-		if (query == null || "".equals(query)) //$NON-NLS-1$
-			return query;
-		String encoding = req.getCharacterEncoding();
-		if (encoding == null)
-			encoding = "UTF-8"; //$NON-NLS-1$
-		try {
-			return URLDecoder.decode(query, encoding);
-		} catch (UnsupportedEncodingException e) {
-			LogHelper.log(new Status(IStatus.WARNING, HostingActivator.PI_SERVER_HOSTING, "Cannot decode query string", e));
-			return query;
-		}
-	}
 }
