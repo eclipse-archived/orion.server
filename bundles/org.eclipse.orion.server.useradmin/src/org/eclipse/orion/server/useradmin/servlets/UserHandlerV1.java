@@ -28,12 +28,15 @@ import org.eclipse.orion.server.user.profile.*;
 import org.eclipse.orion.server.useradmin.*;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A user handler for Orion User API v 1.0.
  */
 public class UserHandlerV1 extends ServletResourceHandler<String> {
 
+	private static final String PATH_EMAIL_CONFIRMATION = "../useremailconfirmation";
 	private ServletResourceHandler<IStatus> statusHandler;
 
 	UserHandlerV1(UserServiceHelper userServiceHelper, ServletResourceHandler<IStatus> statusHandler) {
@@ -201,13 +204,13 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 		if (userAdmin.getUser(UserConstants.KEY_LOGIN, login) != null)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + login + " already exists.", null));
-		
-		if(email!=null && email.length()>0 && !email.contains("@")){
+
+		if (email != null && email.length() > 0 && !email.contains("@")) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Invalid user email.", null));
 		}
 
 		User newUser = new User(login, name, password);
-		if(email!=null && email.length()>0){
+		if (email != null && email.length() > 0) {
 			newUser.setEmail(email);
 		}
 		if (PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION_FORCE_EMAIL, "false").equalsIgnoreCase("true")) {
@@ -226,7 +229,12 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		webUser.setName(name);
 		webUser.save();
 
+		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.account"); //$NON-NLS-1$
+		if (logger.isInfoEnabled())
+			logger.info("Account created: " + login); //$NON-NLS-1$ 
+
 		try {
+			//give the user access to their own user profile
 			AuthorizationService.addUserRight(newUser.getUid(), newUser.getLocation());
 		} catch (CoreException e) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User rights could not be added.", e));
@@ -237,20 +245,19 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 		if (newUser.getBlocked()) {
 			try {
-				UserEmailUtil.getUtil().sendEmailConfirmation(getURI(req).resolve("../useremailconfirmation"), newUser);
+				UserEmailUtil.getUtil().sendEmailConfirmation(getURI(req).resolve(PATH_EMAIL_CONFIRMATION), newUser);
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_CREATED, NLS.bind("User {0} has been succesfully created. To log in please confirm your email first.", login), null));
 			} catch (URISyntaxException e) {
 				LogHelper.log(e);
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Could not send confirmation email to " + newUser.getEmail(), null));
 			}
-		} else {
-			OrionServlet.writeJSONResponse(req, resp, formJson(newUser, userNode, userLocation, req.getContextPath()));
-			if(email!=null && email.length()>0 && UserEmailUtil.getUtil().isEmailConfigured()){
-				try {
-					UserEmailUtil.getUtil().sendEmailConfirmation(getURI(req).resolve("../useremailconfirmation"), newUser);
-				} catch (URISyntaxException e) {
-					LogHelper.log(e);
-				}
+		}
+		OrionServlet.writeJSONResponse(req, resp, formJson(newUser, userNode, userLocation, req.getContextPath()));
+		if (email != null && email.length() > 0 && UserEmailUtil.getUtil().isEmailConfigured()) {
+			try {
+				UserEmailUtil.getUtil().sendEmailConfirmation(getURI(req).resolve(PATH_EMAIL_CONFIRMATION), newUser);
+			} catch (URISyntaxException e) {
+				LogHelper.log(e);
 			}
 		}
 
@@ -323,7 +330,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 		if (user.getConfirmationId() != null && !user.getConfirmationId().equals(emailConfirmationid)) {
 			try {
-				UserEmailUtil.getUtil().sendEmailConfirmation(getURI(req).resolve("../useremailconfirmation"), user);
+				UserEmailUtil.getUtil().sendEmailConfirmation(getURI(req).resolve(PATH_EMAIL_CONFIRMATION), user);
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.INFO, HttpServletResponse.SC_OK, "Confirmation email has been sent to " + user.getEmail(), null));
 			} catch (Exception e) {
 				LogHelper.log(e);
@@ -351,7 +358,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 	private boolean handleUserDelete(HttpServletRequest req, HttpServletResponse resp, String userId) throws ServletException {
 		IOrionCredentialsService userAdmin = getUserAdmin();
-		User user = (User) userAdmin.getUser(UserConstants.KEY_UID, userId);
+		User user = userAdmin.getUser(UserConstants.KEY_UID, userId);
 		WebUser webUser = WebUser.fromUserId(user.getUid());
 		if (!userAdmin.deleteUser(user)) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + userId + " could not be found.", null));
@@ -361,6 +368,10 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		} catch (CoreException e) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Removing " + userId + " failed.", e));
 		}
+		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.account"); //$NON-NLS-1$
+		if (logger.isInfoEnabled())
+			logger.info("Account deleted: " + userId); //$NON-NLS-1$ 
+
 		return true;
 	}
 

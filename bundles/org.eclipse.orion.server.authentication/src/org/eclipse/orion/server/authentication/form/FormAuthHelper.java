@@ -11,21 +11,12 @@
 package org.eclipse.orion.server.authentication.form;
 
 import java.io.IOException;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.PreferenceHelper;
-import org.eclipse.orion.server.core.ServerConstants;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
-import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
-import org.eclipse.orion.server.useradmin.UnsupportedUserStoreException;
-import org.eclipse.orion.server.useradmin.User;
-import org.eclipse.orion.server.useradmin.UserConstants;
+import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.user.profile.*;
+import org.eclipse.orion.server.useradmin.*;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -42,18 +33,18 @@ public class FormAuthHelper {
 
 	private static boolean allowAnonymousAccountCreation;
 	private static boolean forceEmailWhileCreatingAccount;
-	
-	public enum LoginResult{
+
+	public enum LoginResult {
 		OK, FAIL, BLOCKED
 	}
-	
+
 	private static String registrationURI;
 
 	static {
 		//if there is no list of users authorised to create accounts, it means everyone can create accounts
 		allowAnonymousAccountCreation = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION, null) == null; //$NON-NLS-1$
-		forceEmailWhileCreatingAccount  = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION_FORCE_EMAIL, "false").equalsIgnoreCase("true"); //$NON-NLS-1$
-		
+		forceEmailWhileCreatingAccount = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION_FORCE_EMAIL, "false").equalsIgnoreCase("true"); //$NON-NLS-1$
+
 		//if there is an alternate URI to handle registrations retrieve it.
 		registrationURI = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_REGISTRATION_URI, null);
 	}
@@ -75,15 +66,15 @@ public class FormAuthHelper {
 		User user = getUserForCredentials(login, req.getParameter("password")); //$NON-NLS-1$
 
 		if (user != null) {
-			if(user.getBlocked()){
+			if (user.getBlocked()) {
 				return LoginResult.BLOCKED;
 			}
-			String actualLogin = user.getUid();
+			String userId = user.getUid();
 			if (logger.isInfoEnabled())
-				logger.info("Login success: " + actualLogin); //$NON-NLS-1$ 
-			req.getSession().setAttribute("user", actualLogin); //$NON-NLS-1$
+				logger.info("Login success: " + login); //$NON-NLS-1$ 
+			req.getSession().setAttribute("user", userId); //$NON-NLS-1$
 
-			IOrionUserProfileNode userProfileNode = getUserProfileService().getUserProfileNode(actualLogin, IOrionUserProfileConstants.GENERAL_PROFILE_PART);
+			IOrionUserProfileNode userProfileNode = getUserProfileService().getUserProfileNode(userId, IOrionUserProfileConstants.GENERAL_PROFILE_PART);
 			try {
 				// try to store the login timestamp in the user profile
 				userProfileNode.put(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, new Long(System.currentTimeMillis()).toString(), false);
@@ -116,13 +107,13 @@ public class FormAuthHelper {
 	 * and <code>false</code> otherwise.
 	 */
 	public static boolean canAddUsers() {
-		return allowAnonymousAccountCreation ? (userAdmin==null ? false : userAdmin.canCreateUsers()) : false;
+		return allowAnonymousAccountCreation ? (userAdmin == null ? false : userAdmin.canCreateUsers()) : false;
 	}
-	
-	public static boolean forceEmail(){
+
+	public static boolean forceEmail() {
 		return forceEmailWhileCreatingAccount;
 	}
-	
+
 	/**
 	 * Returns a URI to use for account registrations or null if none.
 	 * @return String a URI to open when adding user accounts.
