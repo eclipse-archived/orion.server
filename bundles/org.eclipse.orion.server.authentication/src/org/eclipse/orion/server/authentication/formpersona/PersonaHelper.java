@@ -47,16 +47,12 @@ public class PersonaHelper {
 	private final Logger log = LoggerFactory.getLogger("org.eclipse.orion.server.login"); //$NON-NLS-1$
 	private static IOrionCredentialsService userAdmin;
 	private static IOrionUserProfileService userProfileService;
-	private static boolean allowAnonymousAccountCreation;
-	private static boolean forceEmailWhileCreatingAccount;
 	private static String serverName;
 	private static String verifierUrl;
 
 	static {
 		//if there is no list of users authorised to create accounts, it means everyone can create accounts
-		allowAnonymousAccountCreation = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION, null) == null; //$NON-NLS-1$
 		serverName = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_PERSONA_DOMAIN, null);
-		forceEmailWhileCreatingAccount  = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION_FORCE_EMAIL, "false").equalsIgnoreCase("true"); //$NON-NLS-1$
 		verifierUrl = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_PERSONA_VERIFIER, DEFAULT_VERIFIER);
 	}
 
@@ -90,10 +86,6 @@ public class PersonaHelper {
 		userProfileService = null;
 	}
 
-	private static boolean canAddUsers() {
-		return allowAnonymousAccountCreation ? userAdmin.canCreateUsers() : false;
-	}
-
 	public void handleCredentialsAndLogin(HttpServletRequest req, HttpServletResponse res) throws PersonaException {
 		String assertion = req.getParameter(PersonaConstants.PARAM_ASSERTION);
 		if (assertion != null) {
@@ -109,14 +101,7 @@ public class PersonaHelper {
 
 			User user = userAdmin.getUser(UserConstants.KEY_EMAIL, email);
 			if (user == null) {
-				if (canAddUsers()) {
-					User newUser = new User();
-					newUser.setName(email);
-					newUser.setEmail(email);
-					user = userAdmin.createUser(newUser);
-				} else {
-					throw new PersonaException("Your Persona email, "+email+", is not associated with any Orion account. Log in to Orion and set your email address from the Settings page.");
-				}
+				throw new PersonaException("There is no Orion account associated with your Persona email. Please register or contact your system administrator for assistance.");
 			}
 			req.getSession().setAttribute("user", user.getUid()); //$NON-NLS-1$
 
