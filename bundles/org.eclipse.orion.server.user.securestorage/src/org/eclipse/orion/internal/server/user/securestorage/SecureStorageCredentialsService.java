@@ -180,7 +180,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 			try {
 				User user = new User(childName, userPrefs.get(USER_LOGIN, childName), userPrefs.get(USER_NAME, ""), userPrefs.get(USER_PASSWORD, null) == null ? null : "" /* don't expose the password */); //$NON-NLS-1$ //$NON-NLS-2$
 				user.setEmail(userPrefs.get(USER_EMAIL, "")); //$NON-NLS-1$
-				if(userPrefs.getBoolean(USER_BLOCKED, false)){
+				if (userPrefs.getBoolean(USER_BLOCKED, false)) {
 					user.setBlocked(true);
 				}
 				if (userPrefs.get(USER_EMAIL_CONFIRMATION, null) != null)
@@ -222,7 +222,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 					if (email != null && email.equals(value)) {
 						return formUser(node);
 					}
-				} catch(StorageException e) {
+				} catch (StorageException e) {
 					continue;
 				}
 			}
@@ -270,7 +270,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 
 			User user = new User(node.name(), node.get(USER_LOGIN, node.name()), node.get(USER_NAME, ""), node.get(USER_PASSWORD, null)); //$NON-NLS-1$
 			user.setEmail(node.get(USER_EMAIL, "")); //$NON-NLS-1$
-			if(node.getBoolean(USER_BLOCKED, false)){
+			if (node.getBoolean(USER_BLOCKED, false)) {
 				user.setBlocked(true);
 			}
 			if (node.get(USER_EMAIL_CONFIRMATION, null) != null)
@@ -373,9 +373,9 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 			userPrefs.put(USER_NAME, user.getName(), false);
 		if (user.getPassword() != null)
 			userPrefs.put(USER_PASSWORD, user.getPassword(), true);
-		if (user.getBlocked()){
+		if (user.getBlocked()) {
 			userPrefs.put(USER_BLOCKED, String.valueOf(user.getBlocked()), false);
-		}else{
+		} else {
 			userPrefs.remove(USER_BLOCKED);
 		}
 		if (user.getEmail() != null) {
@@ -393,11 +393,12 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 			rolesPrefs.node(roleName).removeNode();
 		for (org.osgi.service.useradmin.Role role : user.getRoles())
 			rolesPrefs.node(((Role) role).getName());
-		userPrefs.node(USER_PROPERTIES).clear();
+		ISecurePreferences propsNode = userPrefs.node(USER_PROPERTIES);
+		propsNode.clear();
 		Enumeration<?> keys = user.getProperties().keys();
 		while (keys.hasMoreElements()) {
 			String property = (String) keys.nextElement();
-			userPrefs.node(USER_PROPERTIES).put(property, (String) user.getProperty(property), false);
+			propsNode.put(property, (String) user.getProperty(property), false);
 		}
 
 		userPrefs.flush();

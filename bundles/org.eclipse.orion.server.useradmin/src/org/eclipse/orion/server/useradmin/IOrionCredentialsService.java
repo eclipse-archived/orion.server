@@ -12,7 +12,6 @@ package org.eclipse.orion.server.useradmin;
 
 import java.util.Collection;
 import java.util.Set;
-
 import org.eclipse.core.runtime.IStatus;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.service.useradmin.Authorization;
@@ -42,7 +41,7 @@ public interface IOrionCredentialsService {
 	public abstract boolean canCreateUsers();
 
 	public abstract Collection<User> getUsers();
-	
+
 	/**
 	 * Creates a {@code Role} object with the given name and of the given
 	 * type.
@@ -151,13 +150,13 @@ public interface IOrionCredentialsService {
 	 *         {@code User} object.
 	 */
 	public Authorization getAuthorization(User user);
-	
+
 	/**
 	 * Finds users having given properties.
 	 * 
 	 * @param key The property key
 	 * @param value The property value or regular expression to match
-	 * @param regExp <code>true</code> if <code>value</code> should be matched as regural expression.
+	 * @param regExp <code>true</code> if <code>value</code> should be matched as regular expression.
 	 * @param ignoreCase
 	 * @return set of users matching criteria
 	 */
