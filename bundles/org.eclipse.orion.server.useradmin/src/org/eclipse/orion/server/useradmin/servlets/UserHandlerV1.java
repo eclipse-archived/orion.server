@@ -206,8 +206,11 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (userAdmin.getUser(UserConstants.KEY_LOGIN, login) != null)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + login + " already exists.", null));
 
-		if (email != null && email.length() > 0 && !email.contains("@")) {
-			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Invalid user email.", null));
+		if (email != null && email.length() > 0) {
+			if (!email.contains("@")) //$NON-NLS-1$
+				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Invalid user email.", null));
+			if (userAdmin.getUser(UserConstants.KEY_EMAIL, email) != null)
+				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Email address already in use: {0}.", email), null));
 		}
 
 		User newUser = new User(login, name, password);

@@ -14,28 +14,17 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import com.meterware.httpunit.*;
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
+import java.util.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
-import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
-import org.eclipse.orion.server.useradmin.User;
-import org.eclipse.orion.server.useradmin.UserConstants;
-import org.eclipse.orion.server.useradmin.UserServiceHelper;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.eclipse.orion.server.useradmin.*;
+import org.json.*;
 import org.junit.Test;
 import org.xml.sax.SAXException;
-
-import com.meterware.httpunit.WebConversation;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 
 public class BasicUsersTest extends UsersTest {
 
@@ -85,6 +74,28 @@ public class BasicUsersTest extends UsersTest {
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		//try creating same user again
+		response = webConversation.getResponse(request);
+		assertEquals(response.getText(), HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
+	}
+
+	@Test
+	public void testCreateUserDuplicateEmail() throws IOException, SAXException, JSONException {
+		WebConversation webConversation = new WebConversation();
+		webConversation.setExceptionsThrownOnErrorStatus(false);
+
+		// create user
+		Map<String, String> params = new HashMap<String, String>();
+		params.put("login", "usertestCreateUserDuplicateEmail");
+		params.put("Name", "username_testCreateUserDuplicateEmail");
+		params.put("password", "pass_" + System.currentTimeMillis());
+		params.put("email", "username@example.com");
+		WebRequest request = getPostUsersRequest("", params, true);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		//try creating another user with same email address
+		params.put("login", "usertestCreateUserDuplicateEmail2");
+		request = getPostUsersRequest("", params, true);
 		response = webConversation.getResponse(request);
 		assertEquals(response.getText(), HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
 	}
