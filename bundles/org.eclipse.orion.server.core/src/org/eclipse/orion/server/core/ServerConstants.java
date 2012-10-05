@@ -41,9 +41,11 @@ public class ServerConstants {
 	public static final String CONFIG_AUTH_ADMIN_DEFAULT_PASSWORD = "orion.auth.admin.default.password"; //$NON-NLS-1$
 
 	/**
-	 * The server hostname used to derive the Persona audience.
+	 * Mozilla Persona audience configuration.
 	 */
-	public static final String CONFIG_AUTH_PERSONA_DOMAIN = "orion.auth.persona.audience.domain"; //$NON-NLS-1$
+	public static final String CONFIG_AUTH_PERSONA_SCHEME = "orion.auth.persona.audience.scheme"; //$NON-NLS-1$
+	public static final String CONFIG_AUTH_PERSONA_HOST = "orion.auth.persona.audience.host"; //$NON-NLS-1$
+	public static final String CONFIG_AUTH_PERSONA_PORT = "orion.auth.persona.audience.port"; //$NON-NLS-1$
 
 	/**
 	 * The API used for verifying Persona logins.
