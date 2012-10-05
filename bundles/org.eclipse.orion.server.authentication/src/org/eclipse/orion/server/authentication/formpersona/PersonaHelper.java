@@ -13,10 +13,18 @@ package org.eclipse.orion.server.authentication.formpersona;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
+import java.net.NetworkInterface;
 import java.net.ProtocolException;
+import java.net.SocketException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.net.UnknownHostException;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -47,12 +55,25 @@ public class PersonaHelper {
 	private final Logger log = LoggerFactory.getLogger("org.eclipse.orion.server.login"); //$NON-NLS-1$
 	private static IOrionCredentialsService userAdmin;
 	private static IOrionUserProfileService userProfileService;
-	private static String serverName;
+	private static Pattern audienceScheme;
+	private static Pattern audienceHost;
+	private static Pattern audiencePort;
 	private static String verifierUrl;
 
 	static {
-		//if there is no list of users authorised to create accounts, it means everyone can create accounts
-		serverName = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_PERSONA_DOMAIN, null);
+		try {
+			String scheme = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_PERSONA_SCHEME, null);
+			String host = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_PERSONA_HOST, null);
+			String port = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_PERSONA_PORT, null);
+			audienceScheme = scheme == null ? null : Pattern.compile(scheme);
+			audienceHost = host == null ? null : Pattern.compile(host);
+			audiencePort = port == null ? null : Pattern.compile(port);
+		} catch (PatternSyntaxException e) {
+			LogHelper.log(e);
+			audienceScheme = null;
+			audienceHost = null;
+			audiencePort = null;
+		}
 		verifierUrl = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_PERSONA_VERIFIER, DEFAULT_VERIFIER);
 	}
 
@@ -86,11 +107,73 @@ public class PersonaHelper {
 		userProfileService = null;
 	}
 
+	/**
+	 * @param req
+	 * @return The audience to use, if the request's server name matches the server's configured audience info.
+	 * Throws if it doesn't match.
+	 */
+	private String getConfiguredAudience(HttpServletRequest req) throws PersonaException {
+		if (audienceScheme == null || audienceHost == null || audiencePort == null) {
+			throw new PersonaException("Persona audience is not configured");
+		}
+		String scheme = req.getScheme();
+		String serverName = req.getServerName();
+		int port = req.getServerPort();
+		if (!audienceScheme.matcher(scheme).matches())
+			throw new PersonaException("Scheme not allowed: " + scheme);
+		if (!audienceHost.matcher(serverName).matches())
+			throw new PersonaException("Server name not allowed: " + serverName);
+		if (!audiencePort.matcher(String.valueOf(port)).matches())
+			throw new PersonaException("Port not allowed: " + port);
+		try {
+			return new URI(scheme, null, serverName, port, null, null, null).toString();
+		} catch (URISyntaxException e) {
+			throw new PersonaException(e);
+		}
+	}
+
+	private static boolean isLoopback(String localAddr) {
+		try {
+			InetAddress addr = InetAddress.getByName(localAddr);
+			if (addr.isLoopbackAddress())
+				return true;
+			return NetworkInterface.getByInetAddress(addr) != null;
+		} catch (UnknownHostException e) {
+			return false;
+		} catch (SocketException e) {
+			return false;
+		}
+	}
+
+	private String getVerifiedAudience(HttpServletRequest req) {
+		String serverName = req.getServerName();
+		String audience;
+		if (isLoopback(req.getLocalAddr())) {
+			try {
+				audience = new URI(req.getScheme(), req.getRemoteUser(), serverName, req.getServerPort(), null, null, null).toString();
+			} catch (URISyntaxException e) {
+				throw new PersonaException(e);
+			}
+			if (log.isInfoEnabled())
+				log.info("Persona auth request from loopback. Sending audience " + audience);
+			return audience;
+		} else {
+			// Check if this server is configured to allow the given host as an Persona audience
+			try {
+				audience = getConfiguredAudience(req);
+				if (log.isInfoEnabled())
+					log.info("Persona auth request for configured host. Sending audience " + audience);
+				return audience;
+			} catch (PersonaException e) {
+				throw new PersonaException("Error logging in: " + e.getMessage() + ". Contact your system administrator for assistance.");
+			}
+		}
+	}
+
 	public void handleCredentialsAndLogin(HttpServletRequest req, HttpServletResponse res) throws PersonaException {
 		String assertion = req.getParameter(PersonaConstants.PARAM_ASSERTION);
 		if (assertion != null) {
-			String hostname = serverName == null ? req.getServerName() : serverName;
-			String audience = req.getScheme() + "://" + hostname + ":" + req.getServerPort(); //$NON-NLS-1$ //$NON-NLS-2$
+			String audience = getVerifiedAudience(req);
 			
 			// Verify response against verifierUrl
 			PersonaVerificationSuccess success = verifyCredentials(assertion, audience, req);
