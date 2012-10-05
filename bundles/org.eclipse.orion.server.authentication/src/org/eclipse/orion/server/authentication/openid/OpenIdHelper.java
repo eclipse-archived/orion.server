@@ -11,7 +11,7 @@
 package org.eclipse.orion.server.authentication.openid;
 
 import java.io.*;
-import java.net.URLEncoder;
+import java.net.*;
 import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -66,7 +66,7 @@ public class OpenIdHelper {
 	public static OpenidConsumer redirectToOpenIdProvider(HttpServletRequest req, HttpServletResponse resp, OpenidConsumer consumer) throws IOException, OpenIdException {
 		String redirect = req.getParameter(REDIRECT);
 		try {
-			StringBuffer sb = getRequestServer(req);
+			StringBuffer sb = getRequestServer(req, redirect);
 			sb.append(req.getServletPath() + (req.getPathInfo() == null ? "" : req.getPathInfo())); //$NON-NLS-1$
 			sb.append("?").append(OP_RETURN).append("=true"); //$NON-NLS-1$ //$NON-NLS-2$
 			if (redirect != null && redirect.length() > 0) {
@@ -159,14 +159,29 @@ public class OpenIdHelper {
 
 	}
 
-	private static StringBuffer getRequestServer(HttpServletRequest req) {
+	/**
+	 * Returns the string representation of the server to use for the redirect (the URL
+	 * to return to after openid login completes.
+	 */
+	private static StringBuffer getRequestServer(HttpServletRequest req, String redirectString) {
 		StringBuffer url = new StringBuffer();
-		String scheme = req.getScheme();
-		int port = req.getServerPort();
+		URI redirect = null;
+		if (redirectString != null) {
+			try {
+				redirect = new URI(redirectString);
+			} catch (URISyntaxException e) {
+				//fall through and use request server info
+			}
+		}
+		//infer server information from redirect URL if possible
+		//when Orion is behind an https proxy the request scheme might not be correct for the redirect
+		String scheme = redirect == null ? req.getScheme() : redirect.getScheme();
+		String serverName = redirect == null ? req.getServerName() : redirect.getHost();
+		int port = redirect == null ? req.getServerPort() : redirect.getPort();
 
 		url.append(scheme);
 		url.append("://"); //$NON-NLS-1$
-		url.append(req.getServerName());
+		url.append(serverName);
 		if ((scheme.equals("http") && port != 80) //$NON-NLS-1$
 				|| (scheme.equals("https") && port != 443)) { //$NON-NLS-1$
 			url.append(':');
