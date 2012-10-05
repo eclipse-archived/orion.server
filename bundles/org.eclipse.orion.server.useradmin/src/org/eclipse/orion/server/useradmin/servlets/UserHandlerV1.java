@@ -36,6 +36,14 @@ import org.slf4j.LoggerFactory;
  */
 public class UserHandlerV1 extends ServletResourceHandler<String> {
 
+	/**
+	 * The minimum length of a username.
+	 */
+	private static final int USERNAME_MIN_LENGTH = 3;
+	/**
+	 * The maximum length of a username.
+	 */
+	private static final int USERNAME_MAX_LENGTH = 20;
 	private static final String PATH_EMAIL_CONFIRMATION = "../useremailconfirmation";
 	private ServletResourceHandler<IStatus> statusHandler;
 
@@ -186,11 +194,9 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 			name = login;
 		String password = req.getParameter(UserConstants.KEY_PASSWORD);
 
-		if (login == null || login.length() == 0)
-			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User login not specified.", null));
-
-		if (!validateLogin(login))
-			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Invalid username: {0}", login), null));
+		String msg = validateLogin(login);
+		if (msg != null)
+			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 
 		if (password == null || password.length() == 0) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Cannot create user with empty password.", null));
@@ -269,14 +275,25 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 	/**
 	 * Validates that the provided login is valid. Login must consistent of alphanumeric characters only for now.
-	 * @return <code>true</code> if the login is valid, and <code>false</code> otherwise.
+	 * @return <code>null</code> if the login is valid, and otherwise a string message stating the reason
+	 * why it is not valid.
 	 */
-	private boolean validateLogin(String login) {
-		for (int i = 0; i < login.length(); i++) {
+	private String validateLogin(String login) {
+		if (login == null || login.length() == 0)
+			return "User login not specified";
+		int length = login.length();
+		if (length < USERNAME_MIN_LENGTH)
+			return NLS.bind("Username must contain at least {0} characters", USERNAME_MIN_LENGTH);
+		if (length > USERNAME_MAX_LENGTH)
+			return NLS.bind("Username must contain no more than {0} characters", USERNAME_MAX_LENGTH);
+		if (login.equals("ultramegatron"))
+			return "Nice try, Mark";
+
+		for (int i = 0; i < length; i++) {
 			if (!Character.isLetterOrDigit(login.charAt(i)))
-				return false;
+				return NLS.bind("Username {0} contains invalid character ''{1}''", login, login.charAt(i));
 		}
-		return true;
+		return null;
 	}
 
 	private boolean handleUserPut(HttpServletRequest req, HttpServletResponse resp, String userId) throws ServletException, IOException, CoreException, JSONException {
