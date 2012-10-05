@@ -47,12 +47,12 @@ public class PersonaHelper {
 	private final Logger log = LoggerFactory.getLogger("org.eclipse.orion.server.login"); //$NON-NLS-1$
 	private static IOrionCredentialsService userAdmin;
 	private static IOrionUserProfileService userProfileService;
-	private static String serverName;
+	private static String audience;
 	private static String verifierUrl;
 
 	static {
 		//if there is no list of users authorised to create accounts, it means everyone can create accounts
-		serverName = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_PERSONA_DOMAIN, null);
+		audience = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_PERSONA_AUDIENCE, null);
 		verifierUrl = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_PERSONA_VERIFIER, DEFAULT_VERIFIER);
 	}
 
@@ -89,8 +89,7 @@ public class PersonaHelper {
 	public void handleCredentialsAndLogin(HttpServletRequest req, HttpServletResponse res) throws PersonaException {
 		String assertion = req.getParameter(PersonaConstants.PARAM_ASSERTION);
 		if (assertion != null) {
-			String hostname = serverName == null ? req.getServerName() : serverName;
-			String audience = req.getScheme() + "://" + hostname + ":" + req.getServerPort(); //$NON-NLS-1$ //$NON-NLS-2$
+			String audience = PersonaHelper.audience != null ? PersonaHelper.audience : (req.getScheme() + "://" + req.getServerName() + ":" + req.getServerPort()); //$NON-NLS-1$ //$NON-NLS-2$
 			
 			// Verify response against verifierUrl
 			PersonaVerificationSuccess success = verifyCredentials(assertion, audience, req);
