@@ -2,7 +2,7 @@
 plugin@org.eclipse.orion.client.core=GIT,tag=v20121005-1638,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.core
 plugin@org.eclipse.orion.client.editor=GIT,tag=v20121004-1956,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.editor
 plugin@org.eclipse.orion.client.users=GIT,tag=v20121004-2124,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.users
-plugin@org.eclipse.orion.client.git=GIT,tag=v20121004-1620,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.git
+plugin@org.eclipse.orion.client.git=GIT,tag=v20121008-1534,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.git
 plugin@org.eclipse.orion.dojo=GIT,tag=v20120814-1857,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.dojo
 
 #server
