@@ -27,6 +27,8 @@ import org.json.*;
 import org.openid4java.consumer.ConsumerException;
 import org.openid4java.discovery.Identifier;
 import org.osgi.service.http.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Groups methods to handle session attributes for OpenID authentication.
@@ -164,15 +166,20 @@ public class OpenIdHelper {
 	 * to return to after openid login completes.
 	 */
 	private static StringBuffer getRequestServer(HttpServletRequest req, String redirectString) {
+		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.openid"); //$NON-NLS-1$
 		StringBuffer url = new StringBuffer();
 		URI redirect = null;
 		if (redirectString != null) {
 			try {
 				redirect = new URI(redirectString);
 			} catch (URISyntaxException e) {
+				if (logger.isErrorEnabled())
+					logger.error("Error processing redirect string", e); //$NON-NLS-1$
 				//fall through and use request server info
 			}
 		}
+		if (logger.isInfoEnabled())
+			logger.info("Redirect from query: " + redirectString); //$NON-NLS-1$ 
 		//infer server information from redirect URL if possible
 		//when Orion is behind an https proxy the request scheme might not be correct for the redirect
 		String scheme = redirect == null ? req.getScheme() : redirect.getScheme();
@@ -187,6 +194,8 @@ public class OpenIdHelper {
 			url.append(':');
 			url.append(req.getServerPort());
 		}
+		if (logger.isInfoEnabled())
+			logger.info("Final redirect: " + url.toString()); //$NON-NLS-1$ 
 		return url;
 	}
 
