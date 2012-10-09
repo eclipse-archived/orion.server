@@ -65,7 +65,7 @@ public class BasicUsersTest extends UsersTest {
 
 		// create user
 		Map<String, String> params = new HashMap<String, String>();
-		params.put("login", "usertestCreateDuplicateUser");
+		params.put("login", "testDupUser");
 		params.put("Name", "username_testCreateDuplicateUser");
 
 		params.put("password", "pass_" + System.currentTimeMillis());
@@ -85,7 +85,7 @@ public class BasicUsersTest extends UsersTest {
 
 		// create user
 		Map<String, String> params = new HashMap<String, String>();
-		params.put("login", "usertestCreateUserDuplicateEmail");
+		params.put("login", "testDupEmail");
 		params.put("Name", "username_testCreateUserDuplicateEmail");
 		params.put("password", "pass_" + System.currentTimeMillis());
 		params.put("email", "username@example.com");
@@ -178,7 +178,7 @@ public class BasicUsersTest extends UsersTest {
 
 		// create user
 		Map<String, String> params = new HashMap<String, String>();
-		params.put("login", "testCreateDeleteRights" + System.currentTimeMillis());
+		params.put("login", "testCrDelRights");
 		params.put("name", "username_" + System.currentTimeMillis());
 		params.put("email", "test@test_" + System.currentTimeMillis());
 		params.put("workspace", "workspace_" + System.currentTimeMillis());
