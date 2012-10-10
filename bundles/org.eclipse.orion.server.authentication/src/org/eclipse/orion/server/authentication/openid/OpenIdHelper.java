@@ -189,10 +189,13 @@ public class OpenIdHelper {
 		url.append(scheme);
 		url.append("://"); //$NON-NLS-1$
 		url.append(serverName);
-		if ((scheme.equals("http") && port != 80) //$NON-NLS-1$
-				|| (scheme.equals("https") && port != 443)) { //$NON-NLS-1$
-			url.append(':');
-			url.append(req.getServerPort());
+		//only include the port if request has a non-default port for that scheme
+		if (port > 0) {
+			if ((scheme.equals("http") && port != 80) //$NON-NLS-1$
+					|| (scheme.equals("https") && port != 443)) { //$NON-NLS-1$
+				url.append(':');
+				url.append(port);
+			}
 		}
 		if (logger.isInfoEnabled())
 			logger.info("Final redirect: " + url.toString()); //$NON-NLS-1$ 
