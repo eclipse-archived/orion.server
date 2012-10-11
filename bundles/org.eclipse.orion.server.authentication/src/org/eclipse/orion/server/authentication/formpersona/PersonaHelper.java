@@ -23,8 +23,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.net.UnknownHostException;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -110,21 +108,7 @@ public class PersonaHelper {
 		if (configuredAudience == null) {
 			throw new PersonaException("Authentication host not configured");
 		}
-		int configuredPort = configuredAudience.getPort() == -1 ? configuredAudience.getDefaultPort() : configuredAudience.getPort();
-		String scheme = req.getScheme();
-		String serverName = req.getServerName();
-		int port = req.getServerPort();
-		if (!configuredAudience.getProtocol().equals(scheme))
-			throw new PersonaException("Scheme not allowed: " + scheme);
-		if (!configuredAudience.getHost().equals(serverName))
-			throw new PersonaException("Server name not allowed: " + serverName);
-		if (configuredPort != port)
-			throw new PersonaException("Port not allowed: " + port);
-		try {
-			return new URI(scheme, null, serverName, port, null, null, null).toString();
-		} catch (URISyntaxException e) {
-			throw new PersonaException(e);
-		}
+		return configuredAudience.toString();
 	}
 
 	private static boolean isLoopback(InetAddress addr) {
