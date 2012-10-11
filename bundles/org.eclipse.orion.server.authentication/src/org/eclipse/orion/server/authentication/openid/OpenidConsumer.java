@@ -14,27 +14,13 @@ package org.eclipse.orion.server.authentication.openid;
 import java.io.IOException;
 import java.net.URL;
 import java.util.List;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
+import javax.servlet.http.*;
+import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.authentication.Activator;
 import org.openid4java.OpenIDException;
-import org.openid4java.consumer.ConsumerException;
-import org.openid4java.consumer.ConsumerManager;
-import org.openid4java.consumer.InMemoryConsumerAssociationStore;
-import org.openid4java.consumer.InMemoryNonceVerifier;
-import org.openid4java.consumer.VerificationResult;
-import org.openid4java.discovery.DiscoveryException;
-import org.openid4java.discovery.DiscoveryInformation;
-import org.openid4java.discovery.Identifier;
-import org.openid4java.message.AuthRequest;
-import org.openid4java.message.AuthSuccess;
-import org.openid4java.message.ParameterList;
+import org.openid4java.consumer.*;
+import org.openid4java.discovery.*;
+import org.openid4java.message.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -109,7 +95,7 @@ public class OpenidConsumer {
 	}
 
 	// --- processing the authentication response ---
-	public Identifier verifyResponse(HttpServletRequest httpReq) {
+	public Identifier verifyResponse(HttpServletRequest httpReq) throws OpenIdException {
 		// extract the parameters from the authentication response
 		// (which comes in as a HTTP request from the OpenID provider)
 		ParameterList response = new ParameterList(httpReq.getParameterMap());
@@ -118,7 +104,8 @@ public class OpenidConsumer {
 		DiscoveryInformation discovered = (DiscoveryInformation) httpReq.getSession().getAttribute(OpenIdHelper.OPENID_DISC);
 		try {
 			// extract the receiving URL from the HTTP request
-			StringBuffer receivingURL = httpReq.getRequestURL();
+			StringBuffer receivingURL = OpenIdHelper.getAuthServerRequest(httpReq);
+
 			String queryString = httpReq.getQueryString();
 			if (queryString != null && queryString.length() > 0)
 				receivingURL.append("?").append(httpReq.getQueryString()); //$NON-NLS-1$
