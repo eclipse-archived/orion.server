@@ -55,24 +55,18 @@ public class PersonaHelper {
 	private final Logger log = LoggerFactory.getLogger("org.eclipse.orion.server.login"); //$NON-NLS-1$
 	private static IOrionCredentialsService userAdmin;
 	private static IOrionUserProfileService userProfileService;
-	private static Pattern audienceScheme;
-	private static Pattern audienceHost;
-	private static Pattern audiencePort;
+	private static URL configuredAudience;
 	private static String verifierUrl;
 
 	static {
+		configuredAudience = null;
 		try {
-			String scheme = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_PERSONA_SCHEME, null);
-			String host = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_PERSONA_HOST, null);
-			String port = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_PERSONA_PORT, null);
-			audienceScheme = scheme == null ? null : Pattern.compile(scheme);
-			audienceHost = host == null ? null : Pattern.compile(host);
-			audiencePort = port == null ? null : Pattern.compile(port);
-		} catch (PatternSyntaxException e) {
+			String audiencePref = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_HOST, null);
+			if (audiencePref != null) {
+				configuredAudience = new URL(audiencePref);
+			}
+		} catch (MalformedURLException e) {
 			LogHelper.log(e);
-			audienceScheme = null;
-			audienceHost = null;
-			audiencePort = null;
 		}
 		verifierUrl = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_PERSONA_VERIFIER, DEFAULT_VERIFIER);
 	}
@@ -113,17 +107,18 @@ public class PersonaHelper {
 	 * Throws if it doesn't match.
 	 */
 	private String getConfiguredAudience(HttpServletRequest req) throws PersonaException {
-		if (audienceScheme == null || audienceHost == null || audiencePort == null) {
-			throw new PersonaException("Persona audience is not configured");
+		if (configuredAudience == null) {
+			throw new PersonaException("Authentication host not configured");
 		}
+		int configuredPort = configuredAudience.getPort() == -1 ? configuredAudience.getDefaultPort() : configuredAudience.getPort();
 		String scheme = req.getScheme();
 		String serverName = req.getServerName();
 		int port = req.getServerPort();
-		if (!audienceScheme.matcher(scheme).matches())
+		if (!configuredAudience.getProtocol().equals(scheme))
 			throw new PersonaException("Scheme not allowed: " + scheme);
-		if (!audienceHost.matcher(serverName).matches())
+		if (!configuredAudience.getHost().equals(serverName))
 			throw new PersonaException("Server name not allowed: " + serverName);
-		if (!audiencePort.matcher(String.valueOf(port)).matches())
+		if (configuredPort != port)
 			throw new PersonaException("Port not allowed: " + port);
 		try {
 			return new URI(scheme, null, serverName, port, null, null, null).toString();
@@ -132,41 +127,61 @@ public class PersonaHelper {
 		}
 	}
 
-	private static boolean isLoopback(String localAddr) {
+	private static boolean isLoopback(InetAddress addr) {
 		try {
-			InetAddress addr = InetAddress.getByName(localAddr);
 			if (addr.isLoopbackAddress())
 				return true;
 			return NetworkInterface.getByInetAddress(addr) != null;
-		} catch (UnknownHostException e) {
-			return false;
 		} catch (SocketException e) {
 			return false;
 		}
 	}
 
-	private String getVerifiedAudience(HttpServletRequest req) {
-		String serverName = req.getServerName();
-		String audience;
-		if (isLoopback(req.getLocalAddr())) {
+	/**
+	 * If the request appears to be from a loopback interface, returns an audience constructed from the server name.
+	 * Otherwise returns null.
+	 */
+	private String getLoopbackAudience(HttpServletRequest req) throws PersonaException {
+		try {
+			String serverName = req.getServerName();
 			try {
-				audience = new URI(req.getScheme(), req.getRemoteUser(), serverName, req.getServerPort(), null, null, null).toString();
-			} catch (URISyntaxException e) {
-				throw new PersonaException(e);
+				// First ensure the request is coming from the IP of a loopback device
+				if (isLoopback(InetAddress.getByName(req.getLocalAddr()))) {
+					// Verify that the server name resolves to a loopback device, to prevent spoofing
+					InetAddress addr = InetAddress.getByName(serverName);
+					if (isLoopback(addr))
+						return new URI(req.getScheme(), req.getRemoteUser(), serverName, req.getServerPort(), null, null, null).toString();
+				}
+			} catch (UnknownHostException e) {
+				// Bogus serverName, ignore
 			}
-			if (log.isInfoEnabled())
-				log.info("Persona auth request from loopback. Sending audience " + audience);
-			return audience;
-		} else {
-			// Check if this server is configured to allow the given host as an Persona audience
-			try {
+		} catch (URISyntaxException e) {
+			throw new PersonaException(e);
+		}
+		return null;
+	}
+
+	private String getVerifiedAudience(HttpServletRequest req) {
+		try {
+			String audience;
+			if (configuredAudience != null) {
+				// Check if this server is configured to allow the given host as an Persona audience
 				audience = getConfiguredAudience(req);
 				if (log.isInfoEnabled())
 					log.info("Persona auth request for configured host. Sending audience " + audience);
 				return audience;
-			} catch (PersonaException e) {
-				throw new PersonaException("Error logging in: " + e.getMessage() + ". Contact your system administrator for assistance.");
+			} else {
+				audience = getLoopbackAudience(req);
+				if (audience != null) {
+					if (log.isInfoEnabled())
+						log.info("Persona auth request from loopback. Sending audience " + audience);
+					return audience;
+				} else {
+					throw new PersonaException("Authentication host not configured");
+				}
 			}
+		} catch (PersonaException e) {
+			throw new PersonaException("Error logging in: " + e.getMessage() + ". Contact your system administrator for assistance.");
 		}
 	}
 
