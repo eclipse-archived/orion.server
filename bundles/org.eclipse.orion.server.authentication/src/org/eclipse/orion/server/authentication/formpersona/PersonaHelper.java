@@ -12,34 +12,14 @@ package org.eclipse.orion.server.authentication.formpersona;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.InetAddress;
-import java.net.MalformedURLException;
-import java.net.NetworkInterface;
-import java.net.ProtocolException;
-import java.net.SocketException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.net.UnknownHostException;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
+import java.net.*;
+import javax.servlet.http.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.PreferenceHelper;
-import org.eclipse.orion.server.core.ServerConstants;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
-import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
-import org.eclipse.orion.server.useradmin.User;
-import org.eclipse.orion.server.useradmin.UserConstants;
+import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.user.profile.*;
+import org.eclipse.orion.server.useradmin.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -154,16 +134,13 @@ public class PersonaHelper {
 				if (log.isInfoEnabled())
 					log.info("Persona auth request for configured host. Sending audience " + audience);
 				return audience;
-			} else {
-				audience = getLoopbackAudience(req);
-				if (audience != null) {
-					if (log.isInfoEnabled())
-						log.info("Persona auth request from loopback. Sending audience " + audience);
-					return audience;
-				} else {
-					throw new PersonaException("Authentication host not configured");
-				}
 			}
+			audience = getLoopbackAudience(req);
+			if (audience == null)
+				throw new PersonaException("Authentication host not configured");
+			if (log.isInfoEnabled())
+				log.info("Persona auth request from loopback. Sending audience " + audience);
+			return audience;
 		} catch (PersonaException e) {
 			throw new PersonaException("Error logging in: " + e.getMessage() + ". Contact your system administrator for assistance.");
 		}
@@ -173,11 +150,11 @@ public class PersonaHelper {
 		String assertion = req.getParameter(PersonaConstants.PARAM_ASSERTION);
 		if (assertion != null) {
 			String audience = getVerifiedAudience(req);
-			
+
 			// Verify response against verifierUrl
 			PersonaVerificationSuccess success = verifyCredentials(assertion, audience, req);
 			String email = success.getEmail();
-			if (success == null || email == null || email.equals("")) { //$NON-NLS-1$
+			if (email == null || email.equals("")) { //$NON-NLS-1$
 				throw new PersonaException("Verification response is not sufficient");
 			}
 
@@ -215,15 +192,14 @@ public class PersonaHelper {
 			connection.setRequestProperty(ProtocolConstants.HEADER_CONTENT_TYPE, "application/x-www-form-urlencoded"); //$NON-NLS-1$
 			connection.setUseCaches(false);
 			connection.connect();
-			String postData = new StringBuilder()
-					.append("assertion=").append(URLEncoder.encode(assertion, "UTF-8")) //$NON-NLS-1$ //$NON-NLS-2$
+			String postData = new StringBuilder().append("assertion=").append(URLEncoder.encode(assertion, "UTF-8")) //$NON-NLS-1$ //$NON-NLS-2$
 					.append("&audience=").append(URLEncoder.encode(audience, "UTF-8")) //$NON-NLS-1$ //$NON-NLS-2$
 					.toString();
 			connection.getOutputStream().write(postData.getBytes("UTF-8")); //$NON-NLS-1$
 			PersonaVerificationResponse personaResponse = new PersonaVerificationResponse(IOUtilities.toString(connection.getInputStream()));
 			PersonaVerificationSuccess success;
 			PersonaVerificationFailure failure;
-			if ((success = personaResponse.getSuccess()) != null) { //$NON-NLS-1$
+			if ((success = personaResponse.getSuccess()) != null) {
 				HttpSession session = req.getSession(true);
 				String email = success.getEmail();
 				session.setAttribute(PersonaConstants.PERSONA_IDENTIFIER, email);
