@@ -163,8 +163,9 @@ public class OpenIdHelper {
 	/**
 	 * Returns the string representation of the request  to use for the redirect (the URL
 	 * to return to after openid login completes). The returned URL will include the host and
-	 * path, but no query parameters. This method returns <code>null</code> if this 
-	 * server has not been properly configured with an authentication host.
+	 * path, but no query parameters. If this server has not been configured with a different
+	 * authentication host, then the server that received this request is considered to
+	 * be the authentication server.
 	 */
 	static StringBuffer getAuthServerRequest(HttpServletRequest req) {
 		//use authentication host for redirect because we may be sitting behind a proxy

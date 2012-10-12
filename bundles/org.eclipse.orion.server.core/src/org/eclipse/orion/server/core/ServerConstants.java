@@ -19,21 +19,21 @@ public class ServerConstants {
 	 * The name of a configuration property specifying the name of the authorization
 	 * component to be used.
 	 */
-	public static final String CONFIG_AUTH_NAME= "orion.auth.name"; //$NON-NLS-1$
-	
+	public static final String CONFIG_AUTH_NAME = "orion.auth.name"; //$NON-NLS-1$
+
 	/**
 	 * The name of a configuration property specifying a comma-separated list of users
 	 * that are allowed to create accounts. If unspecified, then anonymous users can
 	 * create accounts.
 	 */
-	public static final String CONFIG_AUTH_USER_CREATION= "orion.auth.user.creation"; //$NON-NLS-1$
-	
+	public static final String CONFIG_AUTH_USER_CREATION = "orion.auth.user.creation"; //$NON-NLS-1$
+
 	/**
 	 * The name of a configuration property specifying is user email is mandatory while user creation.
 	 * If <code>true</code> user will be forced to add email while creating account. Account will be blocked
 	 * until user email is confirmed.
 	 */
-	public static final String CONFIG_AUTH_USER_CREATION_FORCE_EMAIL= "orion.auth.user.creation.force.email"; //$NON-NLS-1$
+	public static final String CONFIG_AUTH_USER_CREATION_FORCE_EMAIL = "orion.auth.user.creation.force.email"; //$NON-NLS-1$
 
 	/**
 	 * The system property name for the secure storage master password.
@@ -41,7 +41,11 @@ public class ServerConstants {
 	public static final String CONFIG_AUTH_ADMIN_DEFAULT_PASSWORD = "orion.auth.admin.default.password"; //$NON-NLS-1$
 
 	/**
-	 * The name of the configuration property that tells us what server we are for authentication purposes.
+	 * The name of the configuration property that tells us what server to use for authentication purposes.
+	 * In a basic server configuration this will be undefined, and the direct Orion server will be treated as
+	 * the authentication host. If the Orion server is sitting behind a proxy, the server administrator
+	 * will typically need to set the value of this property to be the proxy host. Refer to the Orion
+	 * server administration guide for more details.
 	 */
 	public static final String CONFIG_AUTH_HOST = "orion.auth.host"; //$NON-NLS-1$
 
@@ -68,7 +72,7 @@ public class ServerConstants {
 	 * is allowed to files stored on this orion server. The property value is a boolean and
 	 * the default is <code>false</code>.
 	 */
-	public static final String CONFIG_FILE_ANONYMOUS_READ= "orion.file.anonymous.read"; //$NON-NLS-1$
+	public static final String CONFIG_FILE_ANONYMOUS_READ = "orion.file.anonymous.read"; //$NON-NLS-1$
 
 	/**
 	 * The name of a configuration property specifying a comma-separated list of server
@@ -87,8 +91,8 @@ public class ServerConstants {
 	 * test sites launched by this server. The property value is a comma-separated 
 	 * list of host names.
 	 */
-	public static final String CONFIG_SITE_VIRTUAL_HOSTS= "orion.site.virtualHosts"; //$NON-NLS-1$
-	
+	public static final String CONFIG_SITE_VIRTUAL_HOSTS = "orion.site.virtualHosts"; //$NON-NLS-1$
+
 	/**
 	 * The name of configuration property specifying the SMTP host for sending mail
 	 */
