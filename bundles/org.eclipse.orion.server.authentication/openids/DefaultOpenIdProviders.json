@@ -1,5 +1,3 @@
 [
-{Name: "Google", Url: "https://www.google.com/accounts/o8/id", Image: "../openids/google.png"},
-{Name: "Yahoo!", Url: "http://me.yahoo.com", Image: "../openids/yahoo-logo.png"},
-{Name: "myOpenID", Url: "http://myopenid.com", Image: "../openids/myopenid-logo.png"}
+{Name: "Google", Url: "https://www.google.com/accounts/o8/id", Image: "../mixloginstatic/images/google.png"}
 ]
