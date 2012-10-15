@@ -61,7 +61,6 @@
     		<path name="${orion.user.guide}/Tasks/Importing" title="Importing" generateToc="true"/>
     		<path name="${orion.user.guide}/Tasks/Exporting" title="Exporting" generateToc="true"/>
     		<path name="${orion.user.guide}/Tasks/Comparing" title="Comparing" generateToc="true"/>
-    		<path name="${orion.user.guide}/Reference/Welcome_page" title="Welcome page" generateToc="false"/>
     		<path name="${orion.user.guide}/Reference/Login_page" title="Login page" generateToc="false"/>
     		<path name="${orion.user.guide}/Reference/Navigator_page" title="Navigator page" generateToc="false"/>
     		<path name="${orion.user.guide}/Reference/Coding_page" title="Coding page" generateToc="false"/>

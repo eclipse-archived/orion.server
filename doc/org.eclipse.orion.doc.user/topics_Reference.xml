@@ -4,7 +4,6 @@
 <!-- Define topics for the Reference -->
 <!-- ========================== -->
 <toc label="Reference">
-	<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Welcome_page/Welcome-page.html" label="Welcome page"></topic>
 	<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Login_page/Login-page.html" label="Login page"></topic>
 	<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Navigator_page/Navigator-page.html" label="Navigator page"></topic>
 	<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Coding_page/Coding-page.html" label="Coding page"></topic>
