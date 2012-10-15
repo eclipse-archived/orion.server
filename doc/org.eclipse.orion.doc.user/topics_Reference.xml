@@ -12,7 +12,7 @@
 	<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Profile_page/Profile-page.html" label="Profile page"></topic>
 	<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Operations_page/Operations-page.html" label="Operations page"></topic>
 	<topic label="Deploying and managing test sites">
-		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Site_Configurations_page/Site-Configurations-page.html" label="Site Configurations page"></topic>
+		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Sites_page/Sites-page.html" label="Sites page"></topic>
 		<topic href="WikiDoc/Orion/Documentation/User_Guide/Reference/Edit_Site_page/Edit-Site-page.html" label="Edit Site page"></topic>
 	</topic>
 	<topic label="Team support with Git">
