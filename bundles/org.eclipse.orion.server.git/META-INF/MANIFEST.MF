@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %Bundle-Name
 Bundle-SymbolicName: org.eclipse.orion.server.git;singleton:=true
-Bundle-Version: 0.4.0.qualifier
+Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: org.eclipse.orion.server.git.GitActivator
 Require-Bundle: org.eclipse.orion.server.servlets;bundle-version="0.1.0",
  javax.servlet;bundle-version="2.5.0",
