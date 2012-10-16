@@ -1,6 +1,6 @@
 #client
-plugin@org.eclipse.orion.client.core=GIT,tag=v20121015-1346,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.core
-plugin@org.eclipse.orion.client.editor=GIT,tag=v20121012-1912,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.editor
+plugin@org.eclipse.orion.client.core=GIT,tag=v20121015-2105,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.core
+plugin@org.eclipse.orion.client.editor=GIT,tag=v20121015-2105,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.editor
 plugin@org.eclipse.orion.client.users=GIT,tag=v20121012-1326,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.users
 plugin@org.eclipse.orion.client.git=GIT,tag=v20121012-1821,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.git
 plugin@org.eclipse.orion.dojo=GIT,tag=v20120814-1857,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.dojo
@@ -18,7 +18,7 @@ plugin@org.eclipse.orion.server.user.securestorage=GIT,tag=v20121004-1958,repo=g
 plugin@org.eclipse.orion.server.useradmin=GIT,tag=v20121005-1951,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.useradmin
 plugin@org.eclipse.orion.server.useradmin.xml=GIT,tag=v20110412-0931,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.useradmin.xml
 plugin@org.eclipse.orion.server.search=GIT,tag=v20120927-1828,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.search
-fragment@org.eclipse.orion.server.logback.config=GIT,tag=v20121009-1746,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.logback.config
+fragment@org.eclipse.orion.server.logback.config=GIT,tag=v20121015-1432,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.logback.config
 plugin@org.eclipse.orion.server.hosting=GIT,tag=v20121003-1758,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.hosting
 
 #ui
@@ -26,7 +26,7 @@ plugin@org.eclipse.orion.server.ui=GIT,tag=v20110606-1500,repo=git://git.eclipse
 
 #doc
 plugin@org.eclipse.orion.doc.isv=GIT,tag=v20120911-1405,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=doc/org.eclipse.orion.doc.isv
-plugin@org.eclipse.orion.doc.user=GIT,tag=v20121002-2049,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=doc/org.eclipse.orion.doc.user
+plugin@org.eclipse.orion.doc.user=GIT,tag=v20121015-1934,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=doc/org.eclipse.orion.doc.user
 
 #tests
 plugin@org.eclipse.orion.server.tests=GIT,tag=v20121009-1746,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=tests/org.eclipse.orion.server.tests
