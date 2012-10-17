@@ -74,11 +74,11 @@ provider.registerServiceProvider("orion.edit.outliner", {
     var outline = [];
     var lines = contents.split(/\r?\n/);
     for (var i=0; i &lt; lines.length; i++) {
-      var line = lines[i];
+      var line = lines<a href="i">i</a>;
       var match = /^=\s*(.+?)\s*=$/.exec(line);
       if (match) {
         outline.push({
-           label: match[1],
+           label: match<a href="1">1</a>,
            line: i+1  // lines are numbered from 1
         });
       }
@@ -86,7 +86,7 @@ provider.registerServiceProvider("orion.edit.outliner", {
     return outline;
   }
 }, {
-  contentType: ["text/plain"],
+  contentType: <a href="&quot;text/plain&quot;">"text/plain"</a>,
   name: "Headings",
   id: "orion.outliner.example.headings"
 });

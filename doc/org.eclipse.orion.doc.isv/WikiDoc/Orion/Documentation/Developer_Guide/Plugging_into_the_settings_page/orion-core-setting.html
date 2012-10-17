@@ -30,11 +30,73 @@
 			</tr>
 		</table><hr/>
 		<h1 id="orion.core.setting">orion.core.setting</h1>
-		<p>Contributes a setting.</p>
+		<p>The <code>orion.core.setting</code> service contributes Settings.</p>
+		<h2 id="Service_properties">Service properties</h2>
+		<p>To contribute one or more Settings, the 
+			<b>settings</b> service property is used:
+		</p>
+		<dl>
+			<dt>settings</dt>
+			<dd><code>Setting[]</code>. Defines Settings. Each <code>Setting</code> element has the following shape:
+				<dl>
+					<dt>pid</dt>
+					<dd><code>String</code>. The PID for this setting. This PID occupies the same namespace as the PIDs contributed by 
+						<a href="../../../../Orion/Documentation/Developer_Guide/Configuration_services/Configuration-services.html#Managed_Services" title="Orion/Documentation/Developer Guide/Configuration services#Managed Services">Managed Services</a>, and must be unique in that respect.
+					</dd>
+					<dt>name</dt>
+					<dd><code>String</code>. Human-readable name of this setting.</dd>
+					<dt>tags</dt>
+					<dd><code>String[]</code>. 
+						<i>Optional.</i> List of tags applying to this setting.
+					</dd>
+					<dt>properties</dt>
+					<dd><code>AttributeDefinition[]</code>. Gives the properties that make up this setting. The shape of the <code>AttributeDefinition</code> element is explained in 
+						<a href="../../../../Orion/Documentation/Developer_Guide/Configuration_services/orion-cm-metatype.html#Define_an_OCD" title="Orion/Documentation/Developer Guide/Configuration services#Define an OCD">Metatype documentation</a>.
+					</dd>
+				</dl>
+			</dd>
+		</dl>
+		<h2 id="Service_methods">Service methods</h2>
+		<p>None. This service is completely declarative.</p>
+		<h2 id="Examples">Examples</h2>
+		<p>This example shows how to define a Setting with PID <code>example.navconfig</code>. This Setting has a single property <code>newtab</code>, which is boolean-typed. Because we've enumerated the property's possible values using an 
+			<b>options</b>, the generated UI presentation will show a drop-down menu. Since we've provided a 
+			<b>defaultValue</b> of <code>false</code>, the second option "Open links in a same tab" will selected by default.
+		</p>
+		<pre>define(<a href="'orion/plugin'">'orion/plugin'</a>, function(PluginProvider) {
+    var pluginProvider = new PluginProvider();
+    pluginProvider.registerService('orion.core.setting',
+        {},
+        {  settings: [
+               {  pid: 'example.navconfig',
+                  name: 'Navigation settings',
+                  properties: [
+                      {  id: 'newtab',
+                         name: 'Links',
+                         type: 'boolean',
+                         defaultValue: false,
+                         options: [
+                             {  label: "Open links in a new tab",
+                                value: true
+                             },
+                             {  label: "Open links in same tab",
+                                value: false
+                             }
+                         ]
+                      }
+                  ]
+               }
+           ]
+        });
+    provider.connect();
+});
+</pre>
 		<h2 id="See_also">See also</h2>
-		<p>
-			<a href="../../../../Orion/Documentation/Developer_Guide/Configuration_services/Configuration-services.html" title="Orion/Documentation/Developer Guide/Configuration services">Configuration services</a>
-		</p><hr/>
+		<ul>
+			<li>
+				<a href="../../../../Orion/Documentation/Developer_Guide/Configuration_services/Configuration-services.html" title="Orion/Documentation/Developer Guide/Configuration services">Configuration services</a>
+			</li>
+		</ul><hr/>
 		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
 			<tr>
 				<td style="width: 20%" align="left">

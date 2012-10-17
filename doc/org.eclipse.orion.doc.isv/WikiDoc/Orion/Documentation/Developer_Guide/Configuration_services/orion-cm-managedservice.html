@@ -47,9 +47,9 @@
 		</dl>
 		<h2 id="Examples">Examples</h2>
 		<p>This minimal example shows the implementation of a plugin which registers a Managed Service under the PID "example.pid". When its updated() method is called, it simply prints out what it received:</p>
-		<pre>define(["orion/plugin"], function(PluginProvider) {
+		<pre>define(<a href="&quot;orion/plugin&quot;">"orion/plugin"</a>, function(PluginProvider) {
     var provider = new PluginProvider();
-    provider.registerService(["orion.cm.managedservice"],
+    provider.registerService(<a href="&quot;orion.cm.managedservice&quot;">"orion.cm.managedservice"</a>,
         {  pid: "example.pid"
         },
         {  updated: function(properties) {
@@ -65,12 +65,12 @@
 });
 </pre>
 		<p>Here is a larger example, showing how a validation service (a spellchecker that checks for any occurrences of the misspelling "definately") might accept options through its configuration properties. The service implementation in this example is both a validator and a Managed Service.</p>
-		<pre>define(["orion/plugin"], function(PluginProvider) {
+		<pre>define(<a href="&quot;orion/plugin&quot;">"orion/plugin"</a>, function(PluginProvider) {
     var provider = new PluginProvider();
     var options;
-    provider.registerService(["orion.cm.managedservice", "orion.edit.validator"],
+    provider.registerService(<a href="&quot;orion.cm.managedservice&quot;,">"orion.edit.validator"</a>,
         {  pid: "example.validator",
-           contentType: ["text/plain"]
+           contentType: <a href="&quot;text/plain&quot;">"text/plain"</a>
         },
         {  updated: function(properties) {
                if (properties === null) {

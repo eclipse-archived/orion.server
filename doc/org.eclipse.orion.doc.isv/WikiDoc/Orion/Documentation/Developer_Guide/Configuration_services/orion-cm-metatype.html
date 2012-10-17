@@ -32,7 +32,7 @@
 		<h1 id="orion.cm.metatype">orion.cm.metatype</h1>
 		<p>The <code>orion.cm.metatype</code> service contributes Metatype information. Metatype information is based around 
 			<i>Object Class Definitions</i> (OCDs), which are first-class reusable elements. An OCD contains one or more 
-			<i>Property Types</i>. A Property Type defines an individual property that can appear within a particular instance of the containing OCD.
+			<i>Attribute Definitions</i>. An Attribute Definition defines an individual property that can appear within a particular instance of the containing OCD.
 		</p>
 		<p>The <code>orion.cm.metatype</code> service serves two purposes:</p>
 		<ul>
@@ -42,8 +42,8 @@
 			</li>
 		</ul>
 		<p>Object Classes are analogous to OSGi 
-			<a href="http://www.osgi.org/javadoc/r4v42/org/osgi/service/metatype/ObjectClassDefinition.html" target="orion_external">Object Class Definitions</a>, and Property Types to OSGi 
-			<a href="http://www.osgi.org/javadoc/r4v42/org/osgi/service/metatype/AttributeDefinition.html" target="orion_external">Attribute Definitions</a>. In OO terms, Object Classes are similar to classes, and Property Types are similar to fields or instance variables.
+			<a href="http://www.osgi.org/javadoc/r4v42/org/osgi/service/metatype/ObjectClassDefinition.html" target="orion_external">Object Class Definitions</a>, and Attribute Definitions to OSGi 
+			<a href="http://www.osgi.org/javadoc/r4v42/org/osgi/service/metatype/AttributeDefinition.html" target="orion_external">Attribute Definitions</a>. In OO terms, Object Classes are similar to classes, and Attribute Definitions are similar to fields or instance variables.
 		</p>
 		<h2 id="Service_properties_2">Service properties</h2>
 		<p>There are two top-level properties: 
@@ -65,7 +65,7 @@
 						<i>Optional.</i> The name of this OCD.
 					</dd>
 					<dt>properties</dt>
-					<dd><code>PropertyType[]</code>. Defines the Property Types that can appear in instances of this OCD. Each <code>PropertyType</code> element has the following shape:
+					<dd><code>AttributeDefinition[]</code>. Defines the Attribute Definitions that can appear in instances of this OCD. Each <code>AttributeDefinition</code> element has the following shape:
 						<dl>
 							<dt>id</dt>
 							<dd><code>String</code>. The property id. This is unique within the containing OCD.</dd>
@@ -118,8 +118,8 @@
 		<h2 id="Service_methods_2">Service methods</h2>
 		<p>None. This service is purely declarative.</p>
 		<h2 id="Examples_2">Examples</h2>
-		<p>This example shows how to define an OCD with ID <code>example.customer</code>. The OCD has two PropertyTypes.</p>
-		<pre>define(['orion/plugin'], function(PluginProvider) {
+		<p>This example shows how to define an OCD with ID <code>example.customer</code>. The OCD has two AttributeDefinitions.</p>
+		<pre>define(<a href="'orion/plugin'">'orion/plugin'</a>, function(PluginProvider) {
     var pluginProvider = new PluginProvider();
     pluginProvider.registerService('orion.cm.metatype',
         {},
@@ -142,10 +142,9 @@
 });
 </pre>
 		<p>Building on the previous example, here's how we would use a 
-			<b>designates</b> to associate the <code>example.customer</code> OCD with a PID named <code>example.pid</code>. (The 
-			<b>bold</b> text shows what was added.)
+			<b>designates</b> to associate the <code>example.customer</code> OCD with a PID named <code>example.pid</code>.
 		</p>
-		<pre>define(['orion/plugin'], function(PluginProvider) {
+		<pre>define(<a href="'orion/plugin'">'orion/plugin'</a>, function(PluginProvider) {
     var pluginProvider = new PluginProvider();
     pluginProvider.registerService('orion.cm.metatype',
         {},
@@ -164,14 +163,15 @@
                }
            ]
         });
-    &lt;b&gt;pluginProvider.registerService('orion.cm.metatype',
+    // New code starts here
+    pluginProvider.registerService('orion.cm.metatype',
         {},
         {  designates: [
                {  pid: 'example.pid',
                   classId: 'example.customer'
                }
            ]
-        });&lt;/b&gt;
+        });
     provider.connect();
 });
 </pre>
@@ -179,7 +179,7 @@
 			<b>classes</b> and 
 			<b>designates</b>, to achieve the same effect:
 		</p>
-		<pre>define(['orion/plugin'], function(PluginProvider) {
+		<pre>define(<a href="'orion/plugin'">'orion/plugin'</a>, function(PluginProvider) {
     var pluginProvider = new PluginProvider();
     pluginProvider.registerService('orion.cm.metatype',
         {},

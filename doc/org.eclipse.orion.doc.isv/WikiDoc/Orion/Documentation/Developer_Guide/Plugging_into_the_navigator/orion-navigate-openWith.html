@@ -12,7 +12,7 @@
 			</tr>
 			<tr>
 				<td style="width: 20%" align="left">
-					<a href="orion-navigate-command.html" title="orion.navigate.command">
+					<a href="orion-navigate-content.html" title="orion.navigate.content">
 						<img alt="Previous" border="0" src="../../../../images/prev.gif"/>
 					</a>
 				</td>
@@ -24,7 +24,7 @@
 				</td>
 			</tr>
 			<tr>
-				<td style="width: 20%" align="left" valign="top">orion.navigate.command</td>
+				<td style="width: 20%" align="left" valign="top">orion.navigate.content</td>
 				<td style="width: 60%" align="center"></td>
 				<td style="width: 20%" align="right" valign="top">orion.core.contenttype</td>
 			</tr>
@@ -35,9 +35,9 @@
 			<a href="orion-core-contenttype.html#orion.core.contenttype">orion.core.contenttype</a>). Once this association has been made, the editor will be presented as a choice in the "Open With" menu beside files of that content type. 
 		</p>
 		<p>By default, the Orion client UI provides an editor with ID <code>orion.editor</code>, to be used for editing source code. You can refer to this editor ID when you want to associate a new content type with the Orion Editor.</p>
-		<h2 id="Service_methods_2">Service methods</h2>
+		<h2 id="Service_methods_3">Service methods</h2>
 		<p>None. This service is purely declarative.</p>
-		<h2 id="Service_attributes_2">Service attributes</h2>
+		<h2 id="Service_attributes_3">Service attributes</h2>
 		<p>Implementations of <tt>orion.navigate.openWith</tt> must define the following attributes:</p>
 		<dl>
 			<dt>editor</dt>
@@ -47,14 +47,14 @@
 			<dt>contentType</dt>
 			<dd><code>String[]</code> An array of one or more content type IDs that will be associated with the editor.</dd>
 		</dl>
-		<h2 id="Example_2">Example</h2>
+		<h2 id="Example_3">Example</h2>
 		<p>Here is a sample plug-in that associates the Orion Editor with the <code>"text/markdown"</code> content type. This example assumes that the <code>"text/markdown"</code> type has been previously registered with the 
 			<a href="orion-core-contenttype.html#orion.core.contenttype">orion.core.contenttype</a> service.
 		</p>
 		<pre> var provider = new eclipse.PluginProvider();
  provider.registerServiceProvider("orion.navigate.openWith", {},
    {  id: "orion.editor",
-      contentType: ["text/markdown"]
+      contentType: <a href="&quot;text/markdown&quot;">"text/markdown"</a>
    });
  provider.connect();
 </pre>
@@ -65,7 +65,7 @@
 		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
 			<tr>
 				<td style="width: 20%" align="left">
-					<a href="orion-navigate-command.html" title="orion.navigate.command">
+					<a href="orion-navigate-content.html" title="orion.navigate.content">
 						<img alt="Previous" border="0" src="../../../../images/prev.gif"/>
 					</a>
 				</td>
@@ -81,7 +81,7 @@
 				</td>
 			</tr>
 			<tr>
-				<td style="width: 20%" align="left" valign="top">orion.navigate.command</td>
+				<td style="width: 20%" align="left" valign="top">orion.navigate.content</td>
 				<td style="width: 60%" align="center"></td>
 				<td style="width: 20%" align="right" valign="top">orion.core.contenttype</td>
 			</tr>

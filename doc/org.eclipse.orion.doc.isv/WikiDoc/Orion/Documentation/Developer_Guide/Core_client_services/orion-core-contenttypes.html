@@ -36,12 +36,12 @@
 		<p>Here is an example usage showing how to query all registered content types and print them to the console:</p>
 		<pre>serviceRegistry.getService("orion.core.contenttypes").getContentTypes().then(function(contentTypes) {
   for (var i=0; i &lt; contentTypes.length; i++) {
-    var contentType = contentTypes[i];
+    var contentType = contentTypes<a href="i">i</a>;
     console.log("Content Type ID: " + contentType.id + ", " +
                 "name: " + contentType.name + ", " +
-                "extends from: " + contentType['extends'] + ", " +
-                "file extension(s): [" + contentType.extension.join(",") + "], " +
-                "filename(s): [" + contentType.filename.join(",") + "], " +
+                "extends from: " + contentType<a href="'extends'">'extends'</a> + ", " +
+                "file extension(s): <a href="&quot;">+ contentType.extension.join(",") + "</a>, " +
+                "filename(s): <a href="&quot;">+ contentType.filename.join(",") + "</a>, " +
                 "image: " + contentType.image + "\n");
   }
 });

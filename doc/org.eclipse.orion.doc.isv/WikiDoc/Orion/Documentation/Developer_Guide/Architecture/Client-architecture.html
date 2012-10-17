@@ -46,7 +46,7 @@
   ...
   deleteFile: function(itemId) {
      var item = this.myTree.getItem(itemId);
-     var service = &lt;b&gt;registry.getService&lt;/b&gt;("orion.page.dialog");
+     var service = <b>registry.getService</b>("orion.page.dialog");
      var message = "Are you sure you want to delete '" + item.Name + "'?";
      service.confirm(message, function(doit) { /* perform deletion */});
   }
@@ -57,7 +57,7 @@
 		</p>
 		<h3 id="Service_definitions">Service definitions</h3>
 		<p>A service definition includes both a declarative aspect, and optionally a concrete service object. Declarative service properties can be cached by the Orion service registry, avoiding loading of the plug-in providing that service until it is needed. The following is an example of a very simple service definition:</p>
-		<pre> var provider = new eclipse.PluginProvider();
+		<pre> var provider = new orion.PluginProvider();
  var serviceImpl = {
    run : function(text) {
      return text.toUpperCase();
@@ -68,11 +68,10 @@
    img : "/images/gear.gif",
    key : [ "u", true ]
  };
- provider.registerServiceProvider("orion.edit.command", serviceImpl, serviceProps);
+ provider.registerService("orion.edit.command", serviceImpl, serviceProps);
  provider.connect();
 </pre>
-		<p>This service registers a new command in the editor. The service implementation has a single <tt>run</tt> method that converts the provided text to upper case. The service properties specify
-			the name of the command, the icon, and key binding. This way the editor can display the command in the toolbar using the cached service properties, without actually loading the plugin.</p>
+		<p>This service registers a new command in the editor. The service implementation has a single <tt>run</tt> method that converts the provided text to upper case. The service properties specify the name of the command, the icon, and key binding. This way the editor can display the command in the toolbar using the cached service properties, without actually loading the plugin.</p>
 		<h2 id="Extensions">Extensions</h2>
 		<p>Orion implements the Eclipse concept of extensions and extension points using the Orion service registry. An extension point is simply a service interface that clients are expected to implement. Each instance of that service is an extension. You will often see the terms "extension" and "service" used interchangeably in the Orion documentation. There is no technical difference between them; rather, it is an expression of how the service is intended to be used. Services provided by clients are conceptually extensions, and services used by clients are simply called services.</p>
 		<h2 id="Plugins">Plugins</h2>
@@ -81,11 +80,11 @@
  &lt;html&gt;
  &lt;head&gt;
    &lt;meta http-equiv="Content-Type" content="text/html; charset=UTF-8"&gt;
-   &amp;lt;!-- Dependencies --&amp;gt;
+   &lt;!-- Dependencies --&gt;
    &lt;script type="text/javascript" src="../orion/plugin.js"&gt;&lt;/script&gt;
    &lt;script&gt;
      window.onload = function() {
-       &amp;lt;!-- Service declarations go here --&amp;gt;
+       &lt;!-- Service declarations go here --&gt;
      };
    &lt;/script&gt;
  &lt;/head&gt;
@@ -94,7 +93,7 @@
  &lt;/html&gt;
 </pre>
 		<p>A simple plugin can consist of only the plugin's HTML file, and the required <tt>plugin.js</tt> script from Orion. More complex plugins will typically include several script files containing the concrete service implementation objects.</p>
-		<p>Plugins are installed or uninstalled from the <b>Plugins</b> page within the Orion user interface.</p><hr/>
+		<p>Plugins are installed or uninstalled from the <b>Settings</b> page within the Orion user interface.</p><hr/>
 		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
 			<tr>
 				<td style="width: 20%" align="left">

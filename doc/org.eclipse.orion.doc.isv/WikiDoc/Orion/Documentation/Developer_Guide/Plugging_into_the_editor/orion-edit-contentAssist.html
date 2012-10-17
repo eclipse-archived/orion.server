@@ -66,6 +66,7 @@
 			<dd><b>description</b> A <tt>String</tt> describing the completion. This text will be shown in the content assist popup.</dd>
 			<dd><b>positions</b> An optional <tt>Array</tt> of positions within the completion proposal that require user input. Supplying this property will cause the editor to enter <i>linked mode</i>, and the user can use the <b>Tab</b> key to iterate through the regions of the proposal that require user input. For example if the completion is a function, the positions could indicate the function arguments that need to be supplied. Entries in this position array must be objects with two integer properties: <b>offset</b>, and <b>length</b> describing the regions requiring user input.</dd>
 			<dd><b>escapePosition</b> An optional <tt>Number</tt> indicating the offset the cursor should have in the document after the completion is inserted. If this value is not supplied, the cursor will be positioned at the end of the inserted text.</dd>
+			<dd><b>style</b> Styling information for the proposal.  The available styles are: default (no styling, also used if this property is not present), emphasis (proposal displayed in bold), noemphasis (proposal is greyed out with a colored background), hr (proposal displayed as a <hr/> and is not selectable by up and down arrows).</dd>
 		</dl>
 		<p>Alternatively, a 
 			<a href="http://dojotoolkit.org/documentation/tutorials/1.6/promises/" target="orion_external">promise</a> may be returned, which allows the suggestions to be computed asynchronously.
@@ -91,7 +92,7 @@ provider.registerServiceProvider("orion.edit.contentAssist",
                         "this", "throw", "try", "typeof", "var", "void", "while", "with" ];
        var proposals = [];
        for (var i=0; i &lt; keywords.length; i++) {
-           var keyword = keywords[i];
+           var keyword = keywords<a href="i">i</a>;
            if (keyword.indexOf(context.prefix) === 0) {
                proposals.push({
                    proposal: keyword.substring(context.prefix.length),
@@ -104,7 +105,7 @@ provider.registerServiceProvider("orion.edit.contentAssist",
   },
   {
     name: "JavaScript content assist",
-    contentType: ["application/javascript"]
+    contentType: <a href="&quot;application/javascript&quot;">"application/javascript"</a>
   });
 provider.connect();
 </pre>
@@ -124,7 +125,7 @@ provider.registerServiceProvider('orion.edit.contentAssist',
   },
   {
     name: 'HTML content assist',
-    contentType: ['text/html']
+    contentType: <a href="'text/html'">'text/html'</a>
   });
 provider.connect();
 </pre><hr/>

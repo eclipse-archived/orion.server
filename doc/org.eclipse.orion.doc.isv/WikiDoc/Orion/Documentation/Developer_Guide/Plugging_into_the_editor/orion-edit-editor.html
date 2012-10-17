@@ -68,7 +68,7 @@
  provider.registerServiceProvider("orion.edit.editor", {}, 
    { id: "example.mygreateditor",
      name: "My Great Editor",
-     uriTemplate: "http://mysite.com/myGreatEditor.php?fileToEdit={Location}"
+     uriTemplate: "<a href="http://mysite.com/myGreatEditor.php?fileToEdit=" target="orion_external">http://mysite.com/myGreatEditor.php?fileToEdit=</a>{Location}"
    });
 </pre>
 		<p>The code below shows a complete example of how to use the <code>orion.editor</code>, <code>orion.core.contenttype</code>, and <code>orion.navigate.openWith</code> services in conjunction to declare a new editor, declare new file types, and associate them together. The example is adapted from Orion's own source code.</p>
@@ -84,19 +84,19 @@
    contentTypes:
      [{ id: "text/plain",
         name: "Text",
-        extension: ["txt"]
+        extension: <a href="&quot;txt&quot;">"txt"</a>
      },
      {  id: "text/html",
         "extends": "text/plain",
         name: "HTML",
-        extension: ["html", "htm"]
+        extension: <a href="&quot;html&quot;,">"htm"</a>
      }]
    });
 </pre>
 		<pre> // Associate editor with content types
  provider.registerServiceProvider("orion.navigate.openWith", {}, {
      editor: "orion.editor",
-     contentType: ["text/plain", "text/html"]});
+     contentType: <a href="&quot;text/plain&quot;,">"text/html"</a>});
 </pre>
 		<pre> provider.connect();
 </pre>

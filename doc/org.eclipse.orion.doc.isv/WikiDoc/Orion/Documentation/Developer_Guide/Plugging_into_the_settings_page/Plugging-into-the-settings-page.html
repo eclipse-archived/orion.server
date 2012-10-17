@@ -27,10 +27,17 @@
 		</table><hr/>
 		<h1 id="Overview">Overview</h1>
 		<p>Orion plugins can define 
-			<i>settings</i>. A setting defines some persistent information that is provided to one of the plugins's services. Defined settings appear on Orion's Settings page, and their values can be changed using an automatically-generated UI. Each setting has a unique identifier called a 
-			<i>PID</i> (persistent identifier), as well as 
-			<i>metatype</i> information. The metatype defines the "shape" of the setting, specifically what named properties appear in the setting and what data type they have (string, boolean, number, etc). The Settings page uses this metatype information to generate appropriate UI widgets (for example, text field, checkbox, etc).
-		</p><hr/>
+			<i>Settings</i>. A Setting defines some persistent information that is provided to one of the plugin's services. Defined Settings appear on Orion's "Settings" page, and their values can be changed using an automatically-generated UI.
+		</p>
+		<p>A Setting is a combination of two more basic configuration elements:</p>
+		<ul>
+			<li>A 
+				<a href="../../../../Orion/Documentation/Developer_Guide/Configuration_services/Configuration-services.html#Managed_Services" title="Orion/Documentation/Developer Guide/Configuration services#Managed Services">''PID'' (persistent identifier)</a>, which uniquely identifies the configuration data for the setting.
+			</li>
+			<li>
+				<a href="../../../../Orion/Documentation/Developer_Guide/Configuration_services/Configuration-services.html#Meta_Typing" title="Orion/Documentation/Developer Guide/Configuration services#Meta Typing">''Metatype'' information</a>, which defines the "shape" of the setting. Specifically, it defines what named properties appear in the setting and what data type they have (string, boolean, number, etc). The Settings page uses this Metatype information to generate appropriate UI widgets (for example, text field, checkbox, etc).
+			</li>
+		</ul><hr/>
 		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
 			<tr>
 				<td style="width: 20%" align="left"></td>

@@ -48,7 +48,7 @@
    if (typeof projects === "string") {
      projects = JSON.parse(projects);
    }
-   projects.push({name: "My Proj", location: "http://example.com/myproj"});
+   projects.push({name: "My Proj", location: "<a href="http://example.com/myproj" target="orion_external">http://example.com/myproj</a>"});
    prefs.put("projects", projects);
  });
 </pre><hr/>

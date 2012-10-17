@@ -70,14 +70,14 @@ var serviceProvider = provider.registerServiceProvider("orion.edit.validator",
        var problems = [];
        var lines = contents.split(/\r?\n/);
        for (var i=0; i &lt; lines.length; i++) {
-         var line = lines[i];
+         var line = lines<a href="i">i</a>;
          var match = /\t \t| \t /.exec(line);
          if (match) {
            problems.push({
              description: "Mixed spaces and tabs",
              line: i + 1,
              start: match.index + 1,
-             end: match.index + match[0].length + 1,
+             end: match.index + match<a href="0">0</a>.length + 1,
              severity: "warning" });
          }
        }
@@ -86,9 +86,9 @@ var serviceProvider = provider.registerServiceProvider("orion.edit.validator",
      }
   },
   {
-     contentType: ["application/javascript"]
-  });&lt;!--
-service.dispatchEvent = serviceProvider.dispatchEvent;--&gt;
+     contentType: <a href="&quot;application/javascript&quot;">"application/javascript"</a>
+  });<!--
+service.dispatchEvent = serviceProvider.dispatchEvent;-->
 provider.connect();
 </pre>
 		<p>This example will validate JavaScript files. It finds lines containing a sequence of 

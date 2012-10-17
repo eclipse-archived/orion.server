@@ -12,7 +12,7 @@
 			</tr>
 			<tr>
 				<td style="width: 20%" align="left">
-					<a href="Configuring-the-server.html" title="Configuring the server">
+					<a href="Administering-users.html" title="Administering users">
 						<img alt="Previous" border="0" src="../../images/prev.gif"/>
 					</a>
 				</td>
@@ -24,12 +24,50 @@
 				</td>
 			</tr>
 			<tr>
-				<td style="width: 20%" align="left" valign="top">Configuring the server</td>
+				<td style="width: 20%" align="left" valign="top">Administering users</td>
 				<td style="width: 60%" align="center"></td>
 				<td style="width: 20%" align="right" valign="top">Updating this document</td>
 			</tr>
 		</table><hr/>
 		<h1 id="Ongoing_server_management">Ongoing server management</h1>
+		<h2 id="Server_Messages_on_Login_Page">Server Messages on Login Page</h2>
+		<p>If you wish to display a message linked to a more detailed description of some server or service information you must modify the 
+			<i>server-status.json</i> file located in the web directory.  By default this file contains an example which is not displayed.  The example shows that a message must contain a 
+			<i>title</i> (not too long), a 
+			<i>startdate</i> (in YYYY/MM/DD format), an 
+			<i>enddate</i> and a longer textual 
+			<i>description</i> of the message.  If the date the user connects to the server and is presented with the login page is between the startdate and enddate then the login page will show the title along with a link to a page with all the recent server messages.
+		</p>
+		<p>Example contents of the 
+			<i>server-status.json</i> file:
+		</p>
+		<pre class="source-javascript">{
+"README.TXT" : "Each message needs to have a title, startdate, enddate and description field. Only the first message can be displayed on the login screen.",
+"messages" : [
+	{
+		"title" : "Provide a short description of the message here",
+		"startdate" : "2012/10/22",
+		"enddate" : "2012/10/23",
+		"description" : "This is the longer description of the message.  You can see that this message will be displayed from October 22nd until the end of October 23rd."
+	},
+	{
+		"title" : "This is an older message",
+		"startdate" : "2012/10/10",
+		"enddate" : "2012/10/12",
+		"description" : "This message will be display on the server messages page but not in the login page."
+	}
+],
+"example-messages" : [
+	{
+		"title" : "This is an older message never to be displayed",
+		"startdate" : "2012/10/22",
+		"enddate" : "2012/10/23",
+		"description" : "This is the longer description of the message.  You can see that this message will be displayed from October 22nd until the end of October 23rd."
+	}
+]
+}
+
+</pre>
 		<h2 id="Wiping_server_data">Wiping server data</h2>
 		<p>If you are deploying a demo server of Orion, you may want to periodically wipe out all user data, but preserve account names and passwords. This is done as follows:</p>
 		<ul>
@@ -98,7 +136,7 @@ $CURL -b curl_cookies.txt    \ # Use this cookies file
 		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
 			<tr>
 				<td style="width: 20%" align="left">
-					<a href="Configuring-the-server.html" title="Configuring the server">
+					<a href="Administering-users.html" title="Administering users">
 						<img alt="Previous" border="0" src="../../images/prev.gif"/>
 					</a>
 				</td>
@@ -114,7 +152,7 @@ $CURL -b curl_cookies.txt    \ # Use this cookies file
 				</td>
 			</tr>
 			<tr>
-				<td style="width: 20%" align="left" valign="top">Configuring the server</td>
+				<td style="width: 20%" align="left" valign="top">Administering users</td>
 				<td style="width: 60%" align="center"></td>
 				<td style="width: 20%" align="right" valign="top">Updating this document</td>
 			</tr>

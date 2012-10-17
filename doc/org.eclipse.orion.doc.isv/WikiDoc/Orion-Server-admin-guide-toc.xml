@@ -16,10 +16,11 @@
 		<topic href="WikiDoc/Orion/Server_admin_guide/Configuring-the-server.html#Configuring_paths_where_users_can_store_files" label="Configuring paths where users can store files"></topic>
 		<topic href="WikiDoc/Orion/Server_admin_guide/Configuring-the-server.html#Configuring_project_layout" label="Configuring project layout"></topic>
 		<topic href="WikiDoc/Orion/Server_admin_guide/Configuring-the-server.html#Authentication_type" label="Authentication type"></topic>
-		<topic href="WikiDoc/Orion/Server_admin_guide/Configuring-the-server.html#Allowing_users_to_create_accounts" label="Allowing users to create accounts"></topic>
-		<topic href="WikiDoc/Orion/Server_admin_guide/Configuring-the-server.html#Creating_an_admin_user" label="Creating an admin user"></topic>
-		<topic href="WikiDoc/Orion/Server_admin_guide/Configuring-the-server.html#Creating_and_deleting_users" label="Creating and deleting users"></topic>
-		<topic href="WikiDoc/Orion/Server_admin_guide/Configuring-the-server.html#Changing_passwords" label="Changing passwords"></topic>
+		<topic href="WikiDoc/Orion/Server_admin_guide/Configuring-the-server.html#Configuring_Mozilla_Persona_authentication" label="Configuring Mozilla Persona authentication">
+			<topic href="WikiDoc/Orion/Server_admin_guide/Configuring-the-server.html#Setting_the_authentication_host" label="Setting the authentication host"></topic>
+			<topic href="WikiDoc/Orion/Server_admin_guide/Configuring-the-server.html#Setting_the_verifier" label="Setting the verifier"></topic>
+		</topic>
+		<topic href="WikiDoc/Orion/Server_admin_guide/Configuring-the-server.html#Password_storage" label="Password storage"></topic>
 		<topic href="WikiDoc/Orion/Server_admin_guide/Configuring-the-server.html#Enabling_anonymous_read_access" label="Enabling anonymous read access"></topic>
 		<topic href="WikiDoc/Orion/Server_admin_guide/Configuring-the-server.html#Email_configuration" label="Email configuration"></topic>
 		<topic href="WikiDoc/Orion/Server_admin_guide/Configuring-the-server.html#Automatic_git_projects" label="Automatic git projects"></topic>
@@ -30,7 +31,15 @@
 			<topic href="WikiDoc/Orion/Server_admin_guide/Configuring-the-server.html#Hosting_locally" label="Hosting locally"></topic>
 		</topic>
 	</topic>
+	<topic href="WikiDoc/Orion/Server_admin_guide/Administering-users.html" label="Administering users">
+		<topic href="WikiDoc/Orion/Server_admin_guide/Administering-users.html#Creating_and_deleting_users" label="Creating and deleting users"></topic>
+		<topic href="WikiDoc/Orion/Server_admin_guide/Administering-users.html#Changing_passwords" label="Changing passwords"></topic>
+		<topic href="WikiDoc/Orion/Server_admin_guide/Administering-users.html#Allowing_users_to_create_accounts" label="Allowing users to create accounts"></topic>
+		<topic href="WikiDoc/Orion/Server_admin_guide/Administering-users.html#Requiring_users_to_add_email_while_creating_account" label="Requiring users to add email while creating account"></topic>
+		<topic href="WikiDoc/Orion/Server_admin_guide/Administering-users.html#Creating_an_admin_user" label="Creating an admin user"></topic>
+	</topic>
 	<topic href="WikiDoc/Orion/Server_admin_guide/Ongoing-server-management.html" label="Ongoing server management">
+		<topic href="WikiDoc/Orion/Server_admin_guide/Ongoing-server-management.html#Server_Messages_on_Login_Page" label="Server Messages on Login Page"></topic>
 		<topic href="WikiDoc/Orion/Server_admin_guide/Ongoing-server-management.html#Wiping_server_data" label="Wiping server data"></topic>
 		<topic href="WikiDoc/Orion/Server_admin_guide/Ongoing-server-management.html#Automating_account_creation_with_curl" label="Automating account creation with curl"></topic>
 	</topic>

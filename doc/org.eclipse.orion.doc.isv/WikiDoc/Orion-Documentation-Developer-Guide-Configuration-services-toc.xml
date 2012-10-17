@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8' ?>
 <toc topic="WikiDoc/Orion/Documentation/Developer_Guide/Configuration_services/Configuration-services.html" label="Configuration services">
-	<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Configuration_services/Configuration-services.html" label="Overview">
+	<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Configuration_services/Configuration-services.html" label="Overview of configuration services">
 		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Configuration_services/Configuration-services.html#Managed_Services" label="Managed Services"></topic>
 		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Configuration_services/Configuration-services.html#Meta_Typing" label="Meta Typing"></topic>
 		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Configuration_services/Configuration-services.html#Configuration_management" label="Configuration management"></topic>

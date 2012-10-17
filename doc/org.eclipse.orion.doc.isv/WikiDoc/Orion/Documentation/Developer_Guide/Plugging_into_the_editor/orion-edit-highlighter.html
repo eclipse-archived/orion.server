@@ -84,11 +84,11 @@ provider.registerServiceProvider("orion.edit.highlighter",
     // "grammar" provider is purely declarative. No service methods.
   }, {
     type : "grammar",
-    contentType: ["text/html"],
+    contentType: <a href="&quot;text/html&quot;">"text/html"</a>,
     grammar: {
       patterns: [
-          {  begin: "&amp;lt;!--", 
-             end: "--&amp;gt;",
+          {  begin: "&lt;!--", 
+             end: "--&gt;",
              captures: { "0": "punctuation.definition.comment.html" },
              contentName: "comment.block.html"
           }
