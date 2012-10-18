@@ -39,8 +39,7 @@ import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.*;
-import org.eclipse.orion.server.core.ServerConstants;
-import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.*;
@@ -162,7 +161,11 @@ public abstract class GitTest extends FileSystemTest {
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		if (response.getResponseCode() != HttpURLConnection.HTTP_CREATED) {
+			String msg = response.getText();
+			LogHelper.log(new org.eclipse.core.runtime.Status(IStatus.ERROR, "org.eclipse.orion.server.tests", msg));
+			assertTrue("Unexpected failure cloning: " + msg, false);
+		}
 		JSONObject project = new JSONObject(response.getText());
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
