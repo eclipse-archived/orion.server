@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8' ?>
 <toc topic="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_shell/Plugging-into-the-shell.html" label="Plugging into the shell">
-	<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_shell/Plugging-into-the-shell.html" label="Overview of contributing services to the Shell page"></topic>
+	<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_shell/Plugging-into-the-shell.html" label="Overview of contributing services to the Shell"></topic>
 	<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_shell/orion-shell-command.html" label="orion.shell.command">
 		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_shell/orion-shell-command.html#Service_methods" label="Service methods"></topic>
 		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_shell/orion-shell-command.html#Service_attributes" label="Service attributes"></topic>

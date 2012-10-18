@@ -65,7 +65,6 @@
        		<path name="Orion/Documentation/Developer_Guide/Plugging_into_the_editor" title="Plugging into the editor" generateToc="true"/>
     		<path name="Orion/Documentation/Developer_Guide/Plugging_into_the_navigator" title="Plugging into the navigator" generateToc="true"/>
     		<path name="Orion/Documentation/Developer_Guide/Plugging_into_the_shell" title="Plugging into the shell" generateToc="true"/>
-    		<path name="Orion/Documentation/Developer_Guide/Plugging_into_the_settings_page" title="Plugging into the settings page" generateToc="true"/>
     		<path name="Orion/Server_API" title="Server API" generateToc="true"/>
     		<path name="Orion/Server_admin_guide" title="Server administration guide" generateToc="true"/>
 			<stylesheet url="book.css"/>
