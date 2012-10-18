@@ -55,7 +55,7 @@
 				<a href="http://wiki.eclipse.org/Orion/Server_API/File_API#File" title="Orion/Server API/File API#File" target="orion_external">File</a>.
 			</dt>
 			<dd>Loads the workspace with the given id and sets it to be the current workspace for the IDE. The workspace is created if none already exists.&lt;br /&gt;Called by the Orion navigator when navigating to the root of the file system.&lt;br /&gt;NOTE: The returned file object should have a zero-length 'Parents' array to designate it as the root of the filesystem (see 
-				<a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=375947" target="orion_external">bug 375947</a>).
+				<a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=392374" target="orion_external">bug 392374</a>).
 			</dd>
 			<dt>createProject (url, projectName, serverPath, create)</dt>
 			<dd>Adds a project to a workspace.&lt;br /&gt;TODO -- the Orion IDE never calls this function for third-party file systems.</dd>

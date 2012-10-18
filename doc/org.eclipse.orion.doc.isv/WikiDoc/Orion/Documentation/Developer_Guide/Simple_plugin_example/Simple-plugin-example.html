@@ -77,7 +77,12 @@
 		<p>Next, we'll add some code that connects our file to Orion. Add the following, again inside the &lt;head&gt; tags:</p>
 		<pre>&lt;script&gt;
   window.onload = function() {
-    var provider = new orion.PluginProvider();
+    var headers = {
+         name: "My Plugin",
+         version: "1.0",
+         description: "My first Orion plugin."
+    };
+    var provider = new orion.PluginProvider(headers);
     provider.connect();
   };
 &lt;/script&gt;
@@ -85,7 +90,8 @@
 		<p>At this point, we've got an honest-to-goodness Orion plugin, albeit one that does nothing. Let's go over the various parts in detail. </p>
 		<ul>
 			<li><tt>window.onload</tt> — Runs our function after <tt>plugin.js</tt> has been loaded by the browser. This ensures that the <tt>orion.PluginProvider</tt> constructor is available.</li>
-			<li><tt>var provider = new orion.PluginProvider()</tt> — Creates a new PluginProvider. The PluginProvider may provide one or more services, but right now ours doesn't provide any.
+			<li><tt>var headers = ...</tt> - An optional object supplying metadata about the plugin's name, version and description. This is used to display information about the plugin on the plugin settings page.</li>
+			<li><tt>var provider = new orion.PluginProvider(headers)</tt> — Creates a new PluginProvider. The PluginProvider may provide one or more services, but right now ours doesn't provide any.
 				<br/>Optionally, an object giving metadata about the plugin can be provided as an argument to the constructor.
 			</li>
 			<li><tt>provider.connect()</tt> — This is where the magic happens. When our plugin is activated from Orion, this call opens an asynchronous communication channel. Orion adds information about our plugin, and any service contributions it makes, to the Orion registry.</li>
@@ -96,7 +102,8 @@
 			Add the additional lines as shown:
 		</p>
 		<pre>window.onload = function() {
-  var provider = new orion.PluginProvider();
+  var headers = {name: "My Plugin", version: "1.0", description: "My first Orion plugin."};
+  var provider = new orion.PluginProvider(headers);
   var serviceImpl = { };
   var serviceProperties = { };
   provider.registerService("orion.edit.command", serviceImpl, serviceProperties);
@@ -143,7 +150,8 @@
   &lt;script src="plugin.js"&gt;&lt;/script&gt;
   &lt;script&gt;
   window.onload = function() {
-      var provider = new orion.PluginProvider();
+      var headers = {name: "My Plugin", version: "1.0", description: "My first Orion plugin."};
+      var provider = new orion.PluginProvider(headers);
       var serviceImpl = {
               run: function(text) {
                   return text.split("").reverse().join("");
@@ -204,6 +212,12 @@
 				<a href="http://orionhub.org/plugins/webEditingPlugin.html" target="orion_external">http://orionhub.org/plugins/webEditingPlugin.html</a>
 			</dt>
 			<dd>Contributes syntax highlighting support for HTML files by using the <tt>orion.edit.highlighter</tt> service type.</dd>
+		</dl>
+		<dl>
+			<dt>
+				<a href="http://orionhub.org/plugins/sampleSearchProposalPlugin_notFiltered.html" target="orion_external">http://orionhub.org/plugins/sampleSearchProposalPlugin_notFiltered.html</a>
+			</dt>
+			<dd>Contributes extended search completion in addition to recent searches by using the <tt>orion.search.proposal</tt> service type.</dd>
 		</dl>
 		<dl>
 			<dt>
