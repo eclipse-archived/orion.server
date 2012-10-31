@@ -166,6 +166,37 @@ public class SearchTest extends FileSystemTest {
 	public void testPartialWord() throws Exception {
 		JSONObject searchResult = doSearch("ErrorMess");
 		assertOneMatch(searchResult, "script.js");
+	}
+
+	/**
+	 * Tests a malicious search that attempts to inject HTML.
+	 * @throws Exception
+	 */
+	@Test
+	public void testHTMLTag() throws Exception {
+		JSONObject searchResult = doSearch("<img src=\"http://i.imgur.com/3dLMJ.jpg\" alt=\"Mark Macdonald\" title=\"Mark Macdonald\">");
+		assertNoMatch(searchResult);
+	}
+
+	/**
+	 * Tests searching for special characters.
+	 */
+	@Test
+	public void testSearchNonAlphaNumeric() throws Exception {
+		JSONObject searchResult = doSearch("amber&sand");
+		assertOneMatch(searchResult, "a.txt");
+		searchResult = doSearch("per%25cent");
+		assertOneMatch(searchResult, "a.txt");
+		searchResult = doSearch("car%5Eat");
+		assertOneMatch(searchResult, "a.txt");
+		searchResult = doSearch("do%24%24ar");
+		assertOneMatch(searchResult, "a.txt");
+		searchResult = doSearch("has%23");
+		assertOneMatch(searchResult, "a.txt");
+		searchResult = doSearch("at%40sign");
+		assertOneMatch(searchResult, "a.txt");
+		searchResult = doSearch("equals%3Dcharacter");
+		assertOneMatch(searchResult, "page.html");
 
 	}
 

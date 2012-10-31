@@ -46,6 +46,10 @@ public class SearchServlet extends OrionServlet {
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
 		SolrQuery query = buildSolrQuery(req);
+		if (query == null) {
+			handleException(resp, "Invalid search request", null, HttpServletResponse.SC_BAD_REQUEST);
+			return;
+		}
 		try {
 			QueryResponse solrResponse = SearchActivator.getInstance().getSolrServer().query(query);
 			writeResponse(query, req, resp, solrResponse);
@@ -60,6 +64,8 @@ public class SearchServlet extends OrionServlet {
 		query.setParam(CommonParams.WT, "json"); //$NON-NLS-1$
 		query.setParam(CommonParams.FL, FIELD_NAMES);
 		String queryString = getEncodedParameter(req, CommonParams.Q);
+		if (queryString == null)
+			return null;
 		if (queryString.length() > 0) {
 			String processedQuery = ""; //$NON-NLS-1$
 			//divide into search terms delimited by space or plus ('+') character
@@ -87,7 +93,7 @@ public class SearchServlet extends OrionServlet {
 					boolean isPhrase = term.charAt(0) == '"';
 					//solr does not lowercase queries containing wildcards
 					//see https://bugs.eclipse.org/bugs/show_bug.cgi?id=359766
-					String processedTerm = term.toLowerCase();
+					String processedTerm = ClientUtils.escapeQueryChars(term.toLowerCase());
 					//add leading and trailing wildcards to match word segments
 					if (!isPhrase) {
 						if (processedTerm.charAt(0) != '*')
@@ -96,7 +102,6 @@ public class SearchServlet extends OrionServlet {
 							processedTerm += '*';
 					}
 					processedQuery += processedTerm;
-
 				}
 				processedQuery += " AND "; //$NON-NLS-1$
 			}
@@ -119,7 +124,7 @@ public class SearchServlet extends OrionServlet {
 		//TODO need to get query string unencoded - maybe use req.getQueryString() and parse manually
 		String query = req.getQueryString();
 		for (String param : query.split("&")) { //$NON-NLS-1$
-			String[] pair = param.split("="); //$NON-NLS-1$
+			String[] pair = param.split("=", 2); //$NON-NLS-1$
 			if (pair.length == 2 && key.equals(pair[0]))
 				return pair[1];
 		}
