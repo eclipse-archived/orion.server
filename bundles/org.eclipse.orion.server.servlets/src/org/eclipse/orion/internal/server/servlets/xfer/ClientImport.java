@@ -241,7 +241,7 @@ class ClientImport {
 	private byte[] readChunk(HttpServletRequest req, int chunkSize) throws IOException {
 		ServletInputStream requestStream = req.getInputStream();
 		String contentType = req.getHeader(ProtocolConstants.HEADER_CONTENT_TYPE);
-		if (contentType.startsWith("multipart")) //$NON-NLS-1$
+		if (contentType != null && contentType.startsWith("multipart")) //$NON-NLS-1$
 			return readMultiPartChunk(requestStream, contentType);
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream(chunkSize);
 		IOUtilities.pipe(requestStream, outputStream, false, false);
