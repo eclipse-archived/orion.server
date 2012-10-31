@@ -129,9 +129,11 @@ public class OpenidConsumer {
 			log.error("An error occured when verifyng response.", e); //$NON-NLS-1$
 		}
 		if (log.isInfoEnabled()) {
-			Identifier claimedId = discovered.getClaimedIdentifier();
+			Identifier claimedId = discovered == null ? null : discovered.getClaimedIdentifier();
 			if (claimedId != null)
 				log.info("Login failed: " + claimedId.getIdentifier());//$NON-NLS-1$ 
+			else
+				log.info("Login failed: expired OpenID session state"); //$NON-NLS-1$
 		}
 		return null;
 	}
