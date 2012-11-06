@@ -97,6 +97,11 @@ public class ServerConstants {
 	 * The name of configuration property specifying the SMTP host for sending mail
 	 */
 	public static final String CONFIG_MAIL_SMTP_HOST = "mail.smtp.host"; //$NON-NLS-1$
+	
+	/**
+	 * The name of configuration property specifying if TLS should be enabled
+	 */
+	public static final String CONFIG_MAIL_SMTP_STARTTLS = "mail.smtp.starttls.enable"; //$NON-NLS-1$
 
 	/**
 	 * The bundle ID of the server core. 

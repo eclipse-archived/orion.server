@@ -85,7 +85,7 @@ public class UserEmailUtil {
 
 	public UserEmailUtil() {
 		properties = System.getProperties();
-		properties.put("mail.smtp.starttls.enable", "true");
+		properties.put("mail.smtp.starttls.enable", PreferenceHelper.getString(ServerConstants.CONFIG_MAIL_SMTP_STARTTLS, "true"));
 
 		if (PreferenceHelper.getString(ServerConstants.CONFIG_MAIL_SMTP_HOST, null) != null)
 			properties.put("mail.smtp.host", PreferenceHelper.getString(ServerConstants.CONFIG_MAIL_SMTP_HOST, null));
