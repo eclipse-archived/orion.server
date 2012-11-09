@@ -219,7 +219,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 				ISecurePreferences node = usersPref.node(uid);
 				try {
 					String email = node.get(USER_EMAIL, null);
-					if (email != null && email.equals(value)) {
+					if (email != null && email.equalsIgnoreCase(value)) {
 						return formUser(node);
 					}
 				} catch (StorageException e) {

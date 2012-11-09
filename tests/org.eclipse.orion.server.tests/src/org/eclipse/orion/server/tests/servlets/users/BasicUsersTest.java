@@ -100,6 +100,29 @@ public class BasicUsersTest extends UsersTest {
 		assertEquals(response.getText(), HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
 	}
 
+	@Test
+	public void testCreateUserEmailDifferentCase() throws IOException, SAXException {
+		WebConversation webConversation = new WebConversation();
+		webConversation.setExceptionsThrownOnErrorStatus(false);
+
+		// create user
+		Map<String, String> params = new HashMap<String, String>();
+		params.put("login", "testCaseEmail");
+		params.put("Name", "username_testCreateUserDuplicateEmail");
+		params.put("password", "pass_" + System.currentTimeMillis());
+		params.put("email", "duplicateemail@example.com");
+		WebRequest request = getPostUsersRequest("", params, true);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		//try creating another user with same email address but different case
+		params.put("email", "DUPLICATEEMAIL@example.com");
+		params.put("login", "testCaseEmail2");
+		request = getPostUsersRequest("", params, true);
+		response = webConversation.getResponse(request);
+		assertEquals(response.getText(), HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
+	}
+
 	/**
 	 * Tests creating users with username that can't be represented in a URI.
 	 * @throws IOException
