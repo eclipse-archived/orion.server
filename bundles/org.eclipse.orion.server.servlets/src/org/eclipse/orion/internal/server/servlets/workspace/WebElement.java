@@ -31,11 +31,6 @@ public class WebElement {
 	 */
 	public WebElement(IEclipsePreferences store) {
 		this.store = store;
-		try {
-			store.sync();
-		} catch (BackingStoreException e) {
-			//log
-		}
 	}
 
 	/**
