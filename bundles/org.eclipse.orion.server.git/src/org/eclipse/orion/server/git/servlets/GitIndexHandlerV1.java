@@ -27,6 +27,7 @@ import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Index;
@@ -69,10 +70,14 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 					return handlePut(request, response, db, GitUtils.getRelativePath(p, set.iterator().next().getKey()));
 				case POST :
 					return handlePost(request, response, db, p);
+				default :
+					//fall through and return false below
 			}
 		} catch (Exception e) {
 			String msg = NLS.bind("Failed to process an operation on index for {0}", path); //$NON-NLS-1$
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+			ServerStatus status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
+			LogHelper.log(status);
+			return statusHandler.handleRequest(request, response, status);
 		} finally {
 			if (db != null)
 				db.close();
