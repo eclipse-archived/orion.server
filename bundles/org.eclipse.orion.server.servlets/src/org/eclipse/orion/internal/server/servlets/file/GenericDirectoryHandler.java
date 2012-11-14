@@ -11,6 +11,8 @@
 package org.eclipse.orion.internal.server.servlets.file;
 
 import java.io.PrintWriter;
+import java.sql.Date;
+import java.text.SimpleDateFormat;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -23,6 +25,8 @@ import org.eclipse.osgi.util.NLS;
  * A directory handler suitable for use by a generic HTTP client, such as a web browser.
  */
 public class GenericDirectoryHandler extends ServletResourceHandler<IFileStore> {
+	private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/DD HH:mm:ss"); //$NON-NLS-1$
+
 	@Override
 	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, IFileStore dir) throws ServletException {
 		//can only generically handle get
@@ -41,7 +45,7 @@ public class GenericDirectoryHandler extends ServletResourceHandler<IFileStore> 
 			writer.println("</head>"); //$NON-NLS-1$
 			writer.println("<body>"); //$NON-NLS-1$
 			writer.println("<h1>Index of " + path + "</h1>"); //$NON-NLS-1$ //$NON-NLS-2$
-			writer.println("<pre>Name                          Last modified      Size  "); //$NON-NLS-1$
+			writer.println("<pre>Name                          Last modified		Size  "); //$NON-NLS-1$
 			writer.println("<hr>"); //$NON-NLS-1$
 			for (IFileStore child : children) {
 				IFileInfo childInfo = child.fetchInfo();
@@ -51,7 +55,8 @@ public class GenericDirectoryHandler extends ServletResourceHandler<IFileStore> 
 				writer.print("<a href=\"" + childName + "\">" + childName + "</a>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 				for (int i = childName.length(); i < 30; i++)
 					writer.print(' ');
-				writer.println(childInfo.getLastModified() + "      " + childInfo.getLength()); //$NON-NLS-1$
+				String formattedLastModified = dateFormat.format(new Date(childInfo.getLastModified()));
+				writer.println(formattedLastModified + "      " + childInfo.getLength()); //$NON-NLS-1$
 			}
 			writer.println("<hr>"); //$NON-NLS-1$
 			writer.println("</pre>"); //$NON-NLS-1$
