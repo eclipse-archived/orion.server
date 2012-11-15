@@ -12,6 +12,7 @@ package org.eclipse.orion.server.tests.tasks;
 
 import junit.framework.TestCase;
 
+import org.eclipse.orion.server.core.tasks.CorruptedTaskException;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.junit.Test;
 
@@ -24,18 +25,31 @@ public class TaskInfoTest extends TestCase {
 		TaskInfo task = AllTaskTests.createTestTask("test");
 		String json = task.toJSON().toString();
 		json = json.replace('}', ')');
-		assertNull(TaskInfo.fromJSON(json));
+		boolean exceptionThrown = false;
+		try {
+			TaskInfo.fromJSON(json);
+		} catch (CorruptedTaskException e) {
+			exceptionThrown = true;
+		}
+		assertTrue(json, exceptionThrown);
 
 		//missing task id
 		json = "{\"Message\":\"Hello\", \"TaskID\":\"foo\"}";
-		assertNull(TaskInfo.fromJSON(json));
+		exceptionThrown = false;
+		try {
+			TaskInfo.fromJSON(json);
+		} catch (CorruptedTaskException e) {
+			exceptionThrown = true;
+		}
+		assertTrue(json, exceptionThrown);
 	}
 
 	/**
 	 * Tests the JSON representation of tasks.
+	 * @throws CorruptedTaskException 
 	 */
 	@Test
-	public void testJSONRoundTrip() {
+	public void testJSONRoundTrip() throws CorruptedTaskException {
 		TaskInfo info = AllTaskTests.createTestTask("test");
 		TaskInfo task2 = TaskInfo.fromJSON(info.toJSON().toString());
 		AllTaskTests.assertEqualTasks(info, task2);

@@ -14,9 +14,6 @@ import java.net.URI;
 import java.util.Date;
 
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -58,8 +55,9 @@ public class TaskInfo {
 	 * null if the given string is not a valid JSON task representation.
 	 * This function does not set <code>canBeCanceled</code>. The caller
 	 * must find out himself if the task can be canceled and set this flag.
+	 * @throws CorruptedTaskException 
 	 */
-	public static TaskInfo fromJSON(String taskString) {
+	public static TaskInfo fromJSON(String taskString) throws CorruptedTaskException {
 		TaskInfo info;
 		try {
 			JSONObject json = new JSONObject(taskString);
@@ -86,8 +84,7 @@ public class TaskInfo {
 				info.result = ServerStatus.fromJSON(resultString);
 			return info;
 		} catch (JSONException e) {
-			LogHelper.log(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "Invalid task: " + taskString, e)); //$NON-NLS-1$
-			return null;
+			throw new CorruptedTaskException(taskString, e);
 		}
 	}
 

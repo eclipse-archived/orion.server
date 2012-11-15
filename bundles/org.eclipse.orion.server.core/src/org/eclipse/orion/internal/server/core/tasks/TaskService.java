@@ -30,6 +30,7 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
+import org.eclipse.orion.server.core.tasks.CorruptedTaskException;
 import org.eclipse.orion.server.core.tasks.ITaskCanceler;
 import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.tasks.TaskDoesNotExistException;
@@ -113,20 +114,26 @@ public class TaskService implements ITaskService {
 		Calendar monthAgo = Calendar.getInstance();
 		monthAgo.add(Calendar.MONTH, -1);
 		for (TaskDescription taskDescription : allTasks) {
-			TaskInfo task = TaskInfo.fromJSON(store.readTask(taskDescription));
-			if (task == null) {
-				continue;
-			}
-			if (task.isRunning()) {//mark all running tasks as failed due to server restart
-				task.done(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Task could not be completed due to server restart", null));
-				updateTask(task);
-			}
-			if (task.getModified().before(monthAgo.getTime())) { //remove tasks older than a month
-				try {
-					removeTask(task.getUserId(), task.getTaskId());
-				} catch (TaskOperationException e) {
-					LogHelper.log(e); //should never happen. All running tasks where already stopped. 
+			TaskInfo task;
+			try {
+				task = TaskInfo.fromJSON(store.readTask(taskDescription));
+				if (task == null) {
+					continue;
 				}
+				if (task.isRunning()) {//mark all running tasks as failed due to server restart
+					task.done(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Task could not be completed due to server restart", null));
+					updateTask(task);
+				}
+				if (task.getModified().before(monthAgo.getTime())) { //remove tasks older than a month
+					try {
+						removeTask(task.getUserId(), task.getTaskId());
+					} catch (TaskOperationException e) {
+						LogHelper.log(e); //should never happen. All running tasks where already stopped. 
+					}
+				}
+			} catch (CorruptedTaskException e) {
+				LogHelper.log(e);
+				store.removeTask(taskDescription);
 			}
 		}
 	}
@@ -199,10 +206,17 @@ public class TaskService implements ITaskService {
 		String taskString = store.readTask(new TaskDescription(userId, id));
 		if (taskString == null)
 			return null;
-		TaskInfo info = TaskInfo.fromJSON(taskString);
-		if (taskCancelers.get(id) != null)
-			info.setCanBeCanceled(true);
-		return info;
+		TaskInfo info;
+		try {
+			info = TaskInfo.fromJSON(taskString);
+			if (taskCancelers.get(id) != null)
+				info.setCanBeCanceled(true);
+			return info;
+		} catch (CorruptedTaskException e) {
+			LogHelper.log(e);
+			store.removeTask(new TaskDescription(userId, id));
+		}
+		return null;
 	}
 
 	public void updateTask(TaskInfo task) {
@@ -225,21 +239,27 @@ public class TaskService implements ITaskService {
 
 	public List<TaskInfo> getTasks(String userId, Date modifiedSince, boolean running) {
 		List<TaskInfo> tasks = new ArrayList<TaskInfo>();
-		for (String taskString : store.readAllTasks(userId)) {
-			TaskInfo info = TaskInfo.fromJSON(taskString);
-			if (modifiedSince != null) {
-				if (info.getModified().getTime() < modifiedSince.getTime()) {
+		for (TaskDescription taskDescr : store.readAllTasks(userId)) {
+			TaskInfo info;
+			try {
+				info = TaskInfo.fromJSON(store.readTask(taskDescr));
+				if (modifiedSince != null) {
+					if (info.getModified().getTime() < modifiedSince.getTime()) {
+						continue;
+					}
+				}
+				if (running && !info.isRunning()) {
 					continue;
 				}
+				
+				ITaskCanceler taskCanceler = taskCancelers.get(info.getTaskId());
+				if (taskCanceler != null)
+					info.setCanBeCanceled(true);
+				tasks.add(info);
+			} catch (CorruptedTaskException e) {
+				LogHelper.log(e);
+				store.removeTask(taskDescr);
 			}
-			if (running && !info.isRunning()) {
-				continue;
-			}
-
-			ITaskCanceler taskCanceler = taskCancelers.get(info.getTaskId());
-			if (taskCanceler != null)
-				info.setCanBeCanceled(true);
-			tasks.add(info);
 		}
 		return tasks;
 	}

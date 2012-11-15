@@ -172,12 +172,12 @@ public class TaskStore {
 	 * @param userId id of a user that is an owner of tasks
 	 * @return a list of tasks tracked for this user
 	 */
-	public synchronized List<String> readAllTasks(String userId) {
+	public synchronized List<TaskDescription> readAllTasks(String userId) {
 		File userDirectory = new File(root, getUserDirectory(userId));
 		if (!userDirectory.exists())
-			return new ArrayList<String>();
+			return new ArrayList<TaskDescription>();
 
-		return internalReadAllTasks(userDirectory);
+		return internalReadAllTasksDescriptions(userDirectory);
 	}
 
 	public synchronized List<TaskDescription> readAllTasks() {

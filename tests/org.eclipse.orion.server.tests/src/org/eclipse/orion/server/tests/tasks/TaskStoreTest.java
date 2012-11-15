@@ -25,6 +25,7 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.orion.internal.server.core.tasks.TaskDescription;
 import org.eclipse.orion.internal.server.core.tasks.TaskService;
 import org.eclipse.orion.internal.server.core.tasks.TaskStore;
+import org.eclipse.orion.server.core.tasks.CorruptedTaskException;
 import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.junit.After;
@@ -45,7 +46,7 @@ public class TaskStoreTest extends TestCase {
 	}
 
 	@Test
-	public void testRoundTrip() {
+	public void testRoundTrip() throws CorruptedTaskException {
 		TaskInfo task = AllTaskTests.createTestTask("test");
 		TaskStore store = new TaskStore(tempDir);
 		store.writeTask(new TaskDescription(task.getUserId(), task.getTaskId()), task.toJSON().toString());
