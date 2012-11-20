@@ -123,7 +123,7 @@ public class TransferTest extends FileSystemTest {
 	@Test
 	public void testImportFromURL() throws CoreException, IOException, SAXException {
 		//just a known zip file that we can use for testing that is stable
-		String sourceZip = "http://eclipse.org/eclipse/platform-core/downloads/tools/org.eclipse.core.tools.restorer_1.0.0.zip";
+		String sourceZip = "http://eclipse.org/eclipse/platform-core/downloads/tools/org.eclipse.core.tools.restorer_3.0.0.zip";
 
 		//create a directory to upload to
 		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
@@ -140,7 +140,7 @@ public class TransferTest extends FileSystemTest {
 		assertNotNull(location);
 
 		//assert the file has been imported but not unzipped
-		assertTrue(checkFileExists(directoryPath + "/org.eclipse.core.tools.restorer_1.0.0.zip"));
+		assertTrue(checkFileExists(directoryPath + "/org.eclipse.core.tools.restorer_3.0.0.zip"));
 	}
 
 	/**
@@ -149,7 +149,7 @@ public class TransferTest extends FileSystemTest {
 	@Test
 	public void testImportAndUnzipFromURL() throws CoreException, IOException, SAXException {
 		//just a known zip file that we can use for testing that is stable
-		String sourceZip = "http://eclipse.org/eclipse/platform-core/downloads/tools/org.eclipse.core.tools.restorer_1.0.0.zip";
+		String sourceZip = "http://eclipse.org/eclipse/platform-core/downloads/tools/org.eclipse.core.tools.restorer_3.0.0.zip";
 
 		//create a directory to upload to
 		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
@@ -165,7 +165,7 @@ public class TransferTest extends FileSystemTest {
 		assertNotNull(location);
 
 		//assert the file has been unzipped in the workspace
-		assertTrue(checkFileExists(directoryPath + "/org.eclipse.core.tools.restorer_1.0.0/doc/readme.html"));
+		assertTrue(checkFileExists(directoryPath + "/org.eclipse.core.tools.restorer_3.0.0/org.eclipse.core.tools.restorer_3.0.0.200607121527.jar"));
 	}
 
 	/**
