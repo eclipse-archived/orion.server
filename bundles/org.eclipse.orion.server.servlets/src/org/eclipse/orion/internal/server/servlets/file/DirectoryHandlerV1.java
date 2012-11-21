@@ -116,7 +116,7 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 		boolean isCopy = (options & CREATE_COPY) != 0;
 		boolean isMove = (options & CREATE_MOVE) != 0;
 		if (isCopy || isMove)
-			return performCopyMove(request, response, requestObject, toCreate, isCopy);
+			return performCopyMove(request, response, requestObject, toCreate, isCopy, options);
 		if (requestObject.optBoolean(ProtocolConstants.KEY_DIRECTORY))
 			toCreate.mkdir(EFS.NONE, null);
 		else
@@ -128,7 +128,7 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 	 * Perform a copy or move as specified by the request.
 	 * @return <code>true</code> if the operation was successful, and <code>false</code> otherwise.
 	 */
-	private boolean performCopyMove(HttpServletRequest request, HttpServletResponse response, JSONObject requestObject, IFileStore toCreate, boolean isCopy) throws ServletException, CoreException {
+	private boolean performCopyMove(HttpServletRequest request, HttpServletResponse response, JSONObject requestObject, IFileStore toCreate, boolean isCopy, int options) throws ServletException, CoreException {
 		String locationString = requestObject.optString(ProtocolConstants.KEY_LOCATION, null);
 		if (locationString == null) {
 			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Copy or move request must specify source location", null));
@@ -140,15 +140,20 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 				statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("Source does not exist: ", locationString), null));
 				return false;
 			}
-			//note we checked in preconditions that overwrite is ok here
+			boolean allowOverwrite = (options & CREATE_NO_OVERWRITE) == 0;
+			int efsOptions = allowOverwrite ? EFS.OVERWRITE : EFS.NONE;
 			try {
 				if (isCopy)
-					source.copy(toCreate, EFS.OVERWRITE, null);
+					source.copy(toCreate, efsOptions, null);
 				else
-					source.move(toCreate, EFS.OVERWRITE, null);
+					source.move(toCreate, efsOptions, null);
 			} catch (CoreException e) {
 				if (!source.fetchInfo().exists()) {
 					statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("Source does not exist: ", locationString), e));
+					return false;
+				}
+				if (e.getStatus().getCode() == EFS.ERROR_EXISTS) {
+					statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_PRECONDITION_FAILED, "A file or folder with the same name already exists at this location", null));
 					return false;
 				}
 				//just rethrow if we can't do something more specific
@@ -215,7 +220,8 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 		}
 		//if overwrite is disallowed make sure destination does not exist yet
 		boolean noOverwrite = (options & CREATE_NO_OVERWRITE) != 0;
-		if (noOverwrite && destinationExists) {
+		//for copy/move case, let the implementation check for overwrite because pre-validating is complicated
+		if ((options & copyMove) == 0 && noOverwrite && destinationExists) {
 			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_PRECONDITION_FAILED, "A file or folder with the same name already exists at this location", null));
 			return false;
 		}

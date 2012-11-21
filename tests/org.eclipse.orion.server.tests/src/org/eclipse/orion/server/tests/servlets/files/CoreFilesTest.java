@@ -422,6 +422,29 @@ public class CoreFilesTest extends FileSystemTest {
 		assertTrue(checkFileExists(destPath));
 	}
 
+	/**
+	 * Tests renaming a file where only the case of the file name is changing.
+	 * @throws Exception
+	 */
+	@Test
+	public void testRenameFileChangeCase() throws Exception {
+		String directoryPath = "/testMoveFile/directory/path" + System.currentTimeMillis();
+		String sourcePath = directoryPath + "/source.txt";
+		String destName = "SOURCE.txt";
+		String destPath = directoryPath + "/" + destName;
+		createDirectory(directoryPath);
+		createFile(sourcePath, "This is the contents");
+		JSONObject requestObject = new JSONObject();
+		addSourceLocation(requestObject, sourcePath);
+		WebRequest request = getPostFilesRequest(directoryPath, requestObject.toString(), destName);
+		request.setHeaderField("X-Create-Options", "move");
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject responseObject = new JSONObject(response.getText());
+		checkFileMetadata(responseObject, destName, null, null, null, null, null, null, null, null);
+		assertTrue(checkFileExists(destPath));
+	}
+
 	@Test
 	public void testMoveFileOverwrite() throws Exception {
 		String directoryPath = "/testMoveFile/directory/path" + System.currentTimeMillis();
