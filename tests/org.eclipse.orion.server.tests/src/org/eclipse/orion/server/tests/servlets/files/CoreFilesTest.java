@@ -439,7 +439,7 @@ public class CoreFilesTest extends FileSystemTest {
 		WebRequest request = getPostFilesRequest(directoryPath, requestObject.toString(), destName);
 		request.setHeaderField("X-Create-Options", "move");
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertTrue(response.getResponseCode() < 300);
 		JSONObject responseObject = new JSONObject(response.getText());
 		checkFileMetadata(responseObject, destName, null, null, null, null, null, null, null, null);
 		assertTrue(checkFileExists(destPath));
