@@ -18,7 +18,7 @@ export PATH
 writableBuildRoot=/shared/eclipse/e4/orion
 supportDir=$writableBuildRoot/support
 builderDir=$supportDir/org.eclipse.orion.releng
-basebuilderBranch=R3_7
+basebuilderBranch=R3_8
 publish=""
 user=aniefer
 resultsEmail=orion-releng@eclipse.org
