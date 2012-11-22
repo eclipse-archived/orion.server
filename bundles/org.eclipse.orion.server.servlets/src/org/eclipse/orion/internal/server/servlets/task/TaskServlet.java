@@ -119,20 +119,25 @@ public class TaskServlet extends OrionServlet {
 	public JSONObject getTasksList(Collection<TaskInfo> tasks, Collection<String> deletedTasks, Date timestamp, HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, JSONException, URISyntaxException {
 		JSONObject result = new JSONObject();
 		JSONArray tasksList = new JSONArray();
+		URI uriPrefix = new URI(getURI(req).toString() + "/");
 		for (TaskInfo task : tasks) {
 			if ("true".equals(req.getParameter("results"))) {
 				JSONObject taskJson = task.toJSON();
 				if (taskJson.optString(ProtocolConstants.KEY_LOCATION, "").equals(""))
-					taskJson.put(ProtocolConstants.KEY_LOCATION, new URI(getURI(req).toString() + "/").resolve("id/" + task.getTaskId()).toString());
+					taskJson.put(ProtocolConstants.KEY_LOCATION, uriPrefix.resolve("id/" + task.getTaskId()).toString());
 				tasksList.put(taskJson);
 			} else {
 				JSONObject taskJson = task.toLightJSON();
 				if (taskJson.optString(ProtocolConstants.KEY_LOCATION, "").equals(""))
-					taskJson.put(ProtocolConstants.KEY_LOCATION, new URI(getURI(req).toString() + "/").resolve("id/" + task.getTaskId()).toString());
+					taskJson.put(ProtocolConstants.KEY_LOCATION, uriPrefix.resolve("id/" + task.getTaskId()).toString());
 				tasksList.put(taskJson);
 			}
 		}
-		result.put(ProtocolConstants.KEY_DELETED_CHILDREN, deletedTasks);
+		List<String> deletedTasksLocations = new ArrayList<String>();
+		for (String taskId : deletedTasks) {
+			deletedTasksLocations.add(uriPrefix.resolve("id/" + taskId).toString());
+		}
+		result.put(ProtocolConstants.KEY_DELETED_CHILDREN, deletedTasksLocations);
 		result.put(ProtocolConstants.KEY_CHILDREN, tasksList);
 		result.put(ProtocolConstants.KEY_LOCAL_TIMESTAMP, timestamp.getTime());
 		return result;
