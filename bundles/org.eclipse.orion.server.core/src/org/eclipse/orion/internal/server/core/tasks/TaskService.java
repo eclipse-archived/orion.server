@@ -242,7 +242,11 @@ public class TaskService implements ITaskService {
 		for (TaskDescription taskDescr : store.readAllTasks(userId)) {
 			TaskInfo info;
 			try {
-				info = TaskInfo.fromJSON(store.readTask(taskDescr));
+				String taskString = store.readTask(taskDescr);
+				if(taskString==null){
+					continue; //Task removed in between
+				}
+				info = TaskInfo.fromJSON(taskString);
 				if (modifiedSince != null) {
 					if (info.getModified().getTime() < modifiedSince.getTime()) {
 						continue;
