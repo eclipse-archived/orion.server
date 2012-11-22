@@ -7,7 +7,7 @@ plugin@org.eclipse.orion.dojo=GIT,tag=v20120814-1857,repo=git://git.eclipse.org/
 
 #server
 plugin@org.eclipse.orion.launching=GIT,tag=v20110309-2156,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.launching
-plugin@org.eclipse.orion.server.core=GIT,tag=v20121119-1446,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.core
+plugin@org.eclipse.orion.server.core=GIT,tag=v20121122-1332,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.core
 plugin@org.eclipse.orion.server.servlets=GIT,tag=v20121121-1840,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.servlets
 plugin@org.eclipse.orion.server.configurator=GIT,tag=v20121016-1843,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.configurator
 plugin@org.eclipse.orion.server.basicauth=GIT,tag=v20110309-2156,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.basicauth
