@@ -3,9 +3,7 @@
       id="org.eclipse.orion.client.feature"
       label="%featureName"
       version="1.0.0.qualifier"
-      provider-name="%providerName"
-      license-feature="org.eclipse.license"
-      license-feature-version="1.0.0.qualifier">
+      provider-name="%providerName">
 
    <description>
       %description
@@ -15,8 +13,8 @@
       %copyright
    </copyright>
 
-   <license url="%licenseURL">
-      %license
+   <license url="">
+      IBM
    </license>
 
    <plugin
