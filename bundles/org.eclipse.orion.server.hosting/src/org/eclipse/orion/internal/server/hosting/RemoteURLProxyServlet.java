@@ -87,7 +87,6 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 
 			// copy headers
 			boolean xForwardedFor = false;
-			boolean hasContent = false;
 			Enumeration enm = request.getHeaderNames();
 			while (enm.hasMoreElements()) {
 				// TODO could be better than this!
@@ -109,9 +108,6 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 					continue;
 				if (connectionHdr != null && connectionHdr.indexOf(lhdr) >= 0)
 					continue;
-
-				if ("content-type".equals(lhdr))
-					hasContent = true;
 
 				Enumeration vals = request.getHeaders(hdr);
 				while (vals.hasMoreElements()) {
@@ -158,7 +154,7 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 
 				// do input thang!
 				InputStream in = request.getInputStream();
-				if (hasContent && isOutputSupported(request)) {
+				if (isOutputSupported(request)) {
 					connection.setDoOutput(true);
 					IO.copy(in, connection.getOutputStream());
 				}
