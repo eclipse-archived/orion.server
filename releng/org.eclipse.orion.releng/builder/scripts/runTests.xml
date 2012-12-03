@@ -188,13 +188,31 @@
 			<arg value="--config" />
 			<fileset dir="${workingDir}" includes="**/jsTestDriver.conf" />	
 		</apply>
-		
+
+		<!-- Chrome Tests -->
+		<apply executable="${java.home}/bin/java" parallel="false" >
+			<arg line="-Dhttp.proxyHost=proxy.eclipse.org -Dhttp.proxyPort=9898 -Dhttp.nonProxyHosts=*.eclipse.org" />
+			<arg line="-Dhttps.proxyHost=proxy.eclipse.org -Dhttps.proxyPort=9898 -Dhttps.nonProxyHosts=*.eclipse.org" />
+			<arg line="-Dftp.proxyHost=proxy.eclipse.org -Dftp.proxyPort=9898 -Dftp.nonProxyHosts=*.eclipse.org" />
+			<arg line="-jar ${workingDir}/JsTestDriver.jar" />
+			<arg line="--port 42442" />
+			<arg line="--tests all" />
+			<arg line="--testOutput ${workingDir}/results" />
+			<arg value="--browser" />
+			<arg value="C:\\Users\\kmoir\\AppData\\Local\\Google\\Chrome\\Application\\chrome.exe" />
+			<arg value="--config" />
+			<fileset dir="${workingDir}" includes="**/jsTestDriver.conf" />	
+		</apply>
+				
 		<delete>
 			<fileset dir="${env.WORKSPACE}" includes="*.xml" />
 		</delete>
 		
 		<junitreport todir="${env.WORKSPACE}" tofile="IE-9.0-testResults.xml">
-			<fileset dir="${workingDir}/results" includes="**/TEST-*.xml" />
+			<fileset dir="${workingDir}/results" includes="**/TEST-IE*.xml" />
+		</junitreport>
+		<junitreport todir="${env.WORKSPACE}" tofile="Chrome-testResults.xml">
+			<fileset dir="${workingDir}/results" includes="**/TEST-Chrome*.xml" />
 		</junitreport>
 		<copy todir="${env.WORKSPACE}" >
 			<fileset dir="${workingDir}/results" includes="TEST-*.Performance.xml"/>
@@ -202,7 +220,8 @@
 		</copy>
 		<xslt style="${basedir}/../html/JUNIT.XSL" basedir="${env.WORKSPACE}" destdir="${env.WORKSPACE}" includes="IE-9.0-testResults.xml" />
 
-		<delete dir="${workingDir}" />
+<!-- comment out while debugging -->
+<!--		<delete dir="${workingDir}" /> -->
 	</target>
 			
 	<target name="prepareJsTests" >
