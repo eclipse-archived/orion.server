@@ -182,7 +182,6 @@
 			<arg line="-jar ${workingDir}/JsTestDriver.jar" />
 			<arg line="--port 42443" />
 			<arg line="--tests all" />
-			<arg line="--runnerMode DEBUG" />
 			<arg line="--testOutput ${workingDir}/results" />
 			<arg value="--browser" />
 			<arg value="C:\\Program Files\\Internet Explorer\\iexplore.exe" />
@@ -198,7 +197,6 @@
 			<arg line="-jar ${workingDir}/JsTestDriver.jar" />
 			<arg line="--port 42443" />
 			<arg line="--tests all" />
-			<arg line="--runnerMode DEBUG" />
 			<arg line="--testOutput ${workingDir}/results" />
 			<arg value="--browser" />
 			<arg value="C:\\Users\\kmoir\\AppData\\Local\\Google\\Chrome\\Application\\chrome.exe" />
