@@ -180,8 +180,9 @@
 			<arg line="-Dhttps.proxyHost=proxy.eclipse.org -Dhttps.proxyPort=9898 -Dhttps.nonProxyHosts=*.eclipse.org" />
 			<arg line="-Dftp.proxyHost=proxy.eclipse.org -Dftp.proxyPort=9898 -Dftp.nonProxyHosts=*.eclipse.org" />
 			<arg line="-jar ${workingDir}/JsTestDriver.jar" />
-			<arg line="--port 42442" />
+			<arg line="--port 42443" />
 			<arg line="--tests all" />
+			<arg line="--runnerMode DEBUG" />
 			<arg line="--testOutput ${workingDir}/results" />
 			<arg value="--browser" />
 			<arg value="C:\\Program Files\\Internet Explorer\\iexplore.exe" />
@@ -195,8 +196,9 @@
 			<arg line="-Dhttps.proxyHost=proxy.eclipse.org -Dhttps.proxyPort=9898 -Dhttps.nonProxyHosts=*.eclipse.org" />
 			<arg line="-Dftp.proxyHost=proxy.eclipse.org -Dftp.proxyPort=9898 -Dftp.nonProxyHosts=*.eclipse.org" />
 			<arg line="-jar ${workingDir}/JsTestDriver.jar" />
-			<arg line="--port 42442" />
+			<arg line="--port 42443" />
 			<arg line="--tests all" />
+			<arg line="--runnerMode DEBUG" />
 			<arg line="--testOutput ${workingDir}/results" />
 			<arg value="--browser" />
 			<arg value="C:\\Users\\kmoir\\AppData\\Local\\Google\\Chrome\\Application\\chrome.exe" />
