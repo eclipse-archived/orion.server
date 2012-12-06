@@ -190,7 +190,7 @@
 			<fileset dir="${workingDir}" includes="**/jsTestDriver.conf" />	
 		</apply>
 
-		<!-- Internet Explorer 9 Tests -->
+		<!-- Internet Explorer 9 Tests
 		<apply executable="${java.home}/bin/java" parallel="false" >
 			<arg line="-Dhttp.proxyHost=proxy.eclipse.org -Dhttp.proxyPort=9898 -Dhttp.nonProxyHosts=*.eclipse.org" />
 			<arg line="-Dhttps.proxyHost=proxy.eclipse.org -Dhttps.proxyPort=9898 -Dhttps.nonProxyHosts=*.eclipse.org" />
@@ -205,6 +205,7 @@
 			<arg value="--config" />
 			<fileset dir="${workingDir}" includes="**/jsTestDriver.conf" />	
 		</apply>
+		-->
 
 		<delete>
 			<fileset dir="${env.WORKSPACE}" includes="*.xml" />
