@@ -201,7 +201,7 @@
 			<arg line="--tests all" />
 			<arg line="--testOutput ${workingDir}/results" />
 			<arg value="--browser" />
-			<arg value="C:\\Users\\kmoir\\AppData\\Local\\Google\\Chrome\\Application\\chrome.exe" />
+			<arg value="c:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" />
 			<arg value="--config" />
 			<fileset dir="${workingDir}" includes="**/jsTestDriver.conf" />	
 		</apply>
