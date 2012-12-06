@@ -161,7 +161,7 @@
 		</waitfor>
 
 		<get ignoreerrors="true" src="${hudsonResultURL}" dest="${hudsonDownloadedHTML}"/>	
-		<get ignoreerrors="true" src="${hudsonResultRootURL}/IE-9.0-testResults.html" dest="${jsTestDir}/IE-9.0-testResults.html" />
+<!--		<get ignoreerrors="true" src="${hudsonResultRootURL}/IE-9.0-testResults.html" dest="${jsTestDir}/IE-9.0-testResults.html" /> -->
 	</target>
 	
 	<!-- This target runs on the Hudson Windows Slave -->
@@ -196,13 +196,13 @@
 			<arg line="-Dhttps.proxyHost=proxy.eclipse.org -Dhttps.proxyPort=9898 -Dhttps.nonProxyHosts=*.eclipse.org" />
 			<arg line="-Dftp.proxyHost=proxy.eclipse.org -Dftp.proxyPort=9898 -Dftp.nonProxyHosts=*.eclipse.org" />
 			<arg line="-jar ${workingDir}/JsTestDriver.jar" />
-			<arg line="--port 42443" />
-			<arg line="--runnerMode DEBUG_NO_TRACE" />
-			<arg line="--tests all" />
-			<arg line="--testOutput ${workingDir}/results" />
-			<arg value="--browser" />
+			<arg line="- -port 42443" />
+			<arg line="- -runnerMode DEBUG_NO_TRACE" />
+			<arg line="- -tests all" />
+			<arg line="- -testOutput ${workingDir}/results" />
+			<arg value="- -browser" />
 			<arg value="C:\\Program Files\\Internet Explorer\\iexplore.exe" />
-			<arg value="--config" />
+			<arg value="- -config" />
 			<fileset dir="${workingDir}" includes="**/jsTestDriver.conf" />	
 		</apply>
 		-->
@@ -361,7 +361,7 @@
 		<!-- update the test status -->
 		<updateTestResult testFile="Chrome-12.0-testResults.html" token="@JS-CHROME12@"/>
 		<updateTestResult testFile="Firefox-17.0-testResults.html" token="@JS-FIREFOX17@"/>
-		<updateTestResult testFile="IE-9.0-testResults.html" token="@JS-IE9@"/>
+<!--		<updateTestResult testFile="IE-9.0-testResults.html" token="@JS-IE9@"/> -->
 		<updateTestResult testFile="Chrome-testResults.html" token="@JS-WIN-CHROME@"/>
 		<updateTestResult testFile="Performance-testResults.html" token="@PERFORMANCE@"/>
 		<updateTestResult testFile="org.eclipse.orion.server.tests.AllServerTests.html" token="@SERVER-TESTS@"/>
