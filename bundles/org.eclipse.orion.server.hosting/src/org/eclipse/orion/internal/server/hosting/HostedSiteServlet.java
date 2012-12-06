@@ -246,22 +246,16 @@ public class HostedSiteServlet extends OrionServlet {
 	// returns true if the request has been served, false if not (only if failEarlyOn404 is true)
 	private boolean serveOrionFile(HttpServletRequest req, HttpServletResponse resp, IHostedSite site, IPath path, boolean failEarlyOn404) throws ServletException {
 		String userId = site.getUserId();
-		String workspaceId = site.getWorkspaceId();
-		String workspaceUri = WORKSPACE_SERVLET_ALIAS + "/" + workspaceId; //$NON-NLS-1$
 		String fileURI = FILE_SERVLET_ALIAS + path.toString();
 		boolean allow = false;
-		// Check that user who launched the hosted site really has access to the workspace
+		// Check that user who launched the hosted site really has access to the files
 		try {
-			if (AuthorizationService.checkRights(userId, workspaceUri, "GET")) { //$NON-NLS-1$
-				boolean fileMatch = AuthorizationService.checkRights(userId, fileURI, "GET"); //$NON-NLS-1$
-				boolean dirMatch = fileURI.endsWith("/") && AuthorizationService.checkRights(userId, fileURI, "GET"); //$NON-NLS-1$ //$NON-NLS-2$
-				if (fileMatch || dirMatch) {
-					allow = true;
-				} else {
-					handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, NLS.bind("No rights to access {0}", fileURI), null));
-				}
+			boolean fileMatch = AuthorizationService.checkRights(userId, fileURI, "GET"); //$NON-NLS-1$
+			boolean dirMatch = fileURI.endsWith("/") && AuthorizationService.checkRights(userId, fileURI, "GET"); //$NON-NLS-1$ //$NON-NLS-2$
+			if (fileMatch || dirMatch) {
+				allow = true;
 			} else {
-				handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, NLS.bind("No rights to access {0}", workspaceUri), null));
+				handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, NLS.bind("No rights to access {0}", fileURI), null));
 			}
 		} catch (JSONException e) {
 			throw new ServletException(e);
