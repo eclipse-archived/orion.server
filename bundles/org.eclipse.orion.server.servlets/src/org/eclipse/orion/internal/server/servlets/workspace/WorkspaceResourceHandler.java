@@ -455,6 +455,9 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 			String scheme = candidate.getScheme();
 			if (scheme != null && EFS.getFileSystem(scheme) != null)
 				contentURI = candidate;
+			//we only restrict local file system access
+			if (!EFS.SCHEME_FILE.equals(scheme))
+				return true;
 		} catch (URISyntaxException e) {
 			//if this is not a valid URI try to parse it as file path below
 		} catch (CoreException e) {
