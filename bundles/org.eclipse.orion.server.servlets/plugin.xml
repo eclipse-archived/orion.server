@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         id="sftpfile"
+         name="SFTP file system"
+         point="org.eclipse.core.filesystem.filesystems">
+       <filesystem scheme="sftp">
+           <run class="org.eclipse.orion.internal.server.sftpfile.SftpFileSystem"/> 
+       </filesystem> 
+   </extension>
+
+</plugin>

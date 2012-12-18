@@ -1,0 +1,163 @@
+/*******************************************************************************
+ * Copyright (c) 2012 IBM Corporation and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+package org.eclipse.orion.internal.server.sftpfile;
+
+import com.jcraft.jsch.ChannelSftp.LsEntry;
+import com.jcraft.jsch.SftpATTRS;
+import java.io.BufferedInputStream;
+import java.io.InputStream;
+import java.net.URI;
+import java.util.*;
+import org.eclipse.core.filesystem.IFileInfo;
+import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.filesystem.provider.FileInfo;
+import org.eclipse.core.filesystem.provider.FileStore;
+import org.eclipse.core.runtime.*;
+import org.eclipse.orion.internal.server.servlets.Activator;
+import org.eclipse.osgi.util.NLS;
+
+/**
+ * A handle representing a single file or directory in a remote SFTP server. 
+ */
+public class SftpFileStore extends FileStore {
+
+	private URI host;
+	private IPath path;
+
+	/**
+	 * Converts a jsch attributes object to an EFS file info.
+	 */
+	private static FileInfo attrsToInfo(String fileName, SftpATTRS stat) {
+		FileInfo info = new FileInfo(fileName);
+		info.setExists(true);
+		info.setDirectory(stat.isDir());
+		info.setLength(stat.getSize());
+		info.setLastModified(((long) stat.getMTime()) * 1000);
+		return info;
+	}
+
+	public SftpFileStore(URI host, IPath path) {
+		this.host = host;
+		this.path = path;
+	}
+
+	@Override
+	public IFileInfo[] childInfos(int options, IProgressMonitor monitor) throws CoreException {
+		SynchronizedChannel channel = getChannel();
+		try {
+			Vector<LsEntry> children = channel.ls(path.toString());
+			List<IFileInfo> childInfos = new ArrayList<IFileInfo>(children.size());
+			for (LsEntry child : children) {
+				if (!shouldSkip(child.getFilename()))
+					childInfos.add(attrsToInfo(child.getFilename(), child.getAttrs()));
+			}
+			return childInfos.toArray(new IFileInfo[childInfos.size()]);
+
+		} catch (Exception e) {
+			ChannelCache.flush(host);
+			throw wrap(e);
+		}
+	}
+
+	@Override
+	public String[] childNames(int options, IProgressMonitor monitor) throws CoreException {
+		SynchronizedChannel channel = getChannel();
+		try {
+			Vector<LsEntry> children = channel.ls(path.toString());
+			List<String> childNames = new ArrayList<String>(children.size());
+			for (LsEntry child : children) {
+				if (!shouldSkip(child.getFilename()))
+					childNames.add(child.getFilename());
+			}
+			return childNames.toArray(new String[childNames.size()]);
+
+		} catch (Exception e) {
+			ChannelCache.flush(host);
+			throw wrap(e);
+		}
+	}
+
+	@Override
+	public IFileInfo fetchInfo(int options, IProgressMonitor monitor) throws CoreException {
+		SynchronizedChannel channel = getChannel();
+		try {
+			SftpATTRS stat = channel.stat(path.toString());
+			FileInfo info = attrsToInfo(getName(), stat);
+			return info;
+		} catch (Exception e) {
+			ChannelCache.flush(host);
+			throw wrap(e);
+		}
+	}
+
+	/**
+	 * Returns the channel for communicating with this file store.
+	 */
+	private SynchronizedChannel getChannel() throws CoreException {
+		return ChannelCache.getChannel(host);
+	}
+
+	@Override
+	public IFileStore getChild(String name) {
+		return new SftpFileStore(host, path.append(name));
+	}
+
+	@Override
+	public String getName() {
+		return path.lastSegment();
+	}
+
+	@Override
+	public IFileStore getParent() {
+		return new SftpFileStore(host, path.removeLastSegments(1));
+	}
+
+	@Override
+	public IFileStore mkdir(int options, IProgressMonitor monitor) throws CoreException {
+		//TODO implement mkdir
+		return this;
+	}
+
+	@Override
+	public InputStream openInputStream(int options, IProgressMonitor monitor) throws CoreException {
+		SynchronizedChannel channel = getChannel();
+		try {
+			return new BufferedInputStream(channel.get(path.toString()));
+		} catch (Exception e) {
+			ChannelCache.flush(host);
+			throw wrap(e);
+		}
+	}
+
+	/**
+	 * Returns whether the given file name should be ignored by sftp file system
+	 */
+	protected boolean shouldSkip(String fileName) {
+		//skip parent and self references
+		if (".".equals(fileName) || "..".equals(fileName))//$NON-NLS-1$ //$NON-NLS-2$
+			return true;
+		return false;
+	}
+
+	@Override
+	public URI toURI() {
+		return URIUtil.append(host, path.toString());
+	}
+
+	/**
+	 * Wraps a jsch exception in a form suitable to return to caller of EFS API.
+	 */
+	private CoreException wrap(Exception e) {
+		String msg = NLS.bind("Failure connecting to {0}", host, e.getMessage());
+		return new CoreException(new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, msg, e));
+	}
+
+}

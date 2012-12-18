@@ -16,12 +16,12 @@ import com.jcraft.jsch.UserInfo;
  * Implementation of jsch's UserInfo for purpose of SFTP import and export support.
  * This implementation just hard-codes the credential information and never prompts.
  */
-class SFTPUserInfo implements UserInfo {
+public class SFTPUserInfo implements UserInfo {
 
 	private final String passphrase;
 	private final String password;
 
-	SFTPUserInfo(String password, String passphrase) {
+	public SFTPUserInfo(String password, String passphrase) {
 		this.password = password;
 		this.passphrase = passphrase;
 
