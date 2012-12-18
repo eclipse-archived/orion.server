@@ -31,7 +31,6 @@ import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.core.tasks.CorruptedTaskException;
-import org.eclipse.orion.server.core.tasks.ITaskCanceler;
 import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.tasks.TaskDoesNotExistException;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
@@ -44,7 +43,6 @@ import org.eclipse.orion.server.core.tasks.TaskOperationException;
 public class TaskService implements ITaskService {
 
 	TaskStore store;
-	private Map<String, ITaskCanceler> taskCancelers = new HashMap<String, ITaskCanceler>();
 	private Set<TaskModificationListener> taskListeners = new HashSet<TaskModificationListener>();
 	private Map<String, List<TaskDeletion>> taskDeletions = new HashMap<String, List<TaskDeletion>>();
 
@@ -116,20 +114,13 @@ public class TaskService implements ITaskService {
 		for (TaskDescription taskDescription : allTasks) {
 			TaskInfo task;
 			try {
-				task = TaskInfo.fromJSON(store.readTask(taskDescription));
+				task = TaskInfo.fromJSON(taskDescription, store.readTask(taskDescription));
 				if (task == null) {
 					continue;
 				}
 				if (task.isRunning()) {//mark all running tasks as failed due to server restart
 					task.done(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Task could not be completed due to server restart", null));
 					updateTask(task);
-				}
-				if (task.getModified().before(monthAgo.getTime())) { //remove tasks older than a month
-					try {
-						removeTask(task.getUserId(), task.getTaskId());
-					} catch (TaskOperationException e) {
-						LogHelper.log(e); //should never happen. All running tasks where already stopped. 
-					}
 				}
 			} catch (CorruptedTaskException e) {
 				LogHelper.log(e);
@@ -138,19 +129,14 @@ public class TaskService implements ITaskService {
 		}
 	}
 
-	public TaskInfo createTask(String taskName, String userId, boolean isIdempotent) {
-		return createTask(taskName, userId, null, isIdempotent);
-	}
-
-	private TaskInfo internalRemoveTask(String userId, String id, Date dateRemoved) throws TaskOperationException {
-		TaskInfo task = getTask(userId, id);
+	private TaskInfo internalRemoveTask(String userId, String id, boolean keep, Date dateRemoved) throws TaskOperationException {
+		TaskInfo task = getTask(userId, id, keep);
 		if (task == null)
 			throw new TaskDoesNotExistException(id);
 		if (task.isRunning())
 			throw new TaskOperationException("Cannot remove a task that is running. Try to cancel first");
-		if (!store.removeTask(new TaskDescription(userId, id)))
+		if (!store.removeTask(new TaskDescription(userId, id, keep)))
 			throw new TaskOperationException("Task could not be removed");
-		taskCancelers.remove(id);
 		if (!taskDeletions.containsKey(userId)) {
 			taskDeletions.put(userId, new ArrayList<TaskService.TaskDeletion>());
 		}
@@ -162,9 +148,9 @@ public class TaskService implements ITaskService {
 		return task;
 	}
 
-	public void removeTask(String userId, String id) throws TaskOperationException {
+	public void removeTask(String userId, String id, boolean keep) throws TaskOperationException {
 		Date date = new Date();
-		internalRemoveTask(userId, id, date);
+		internalRemoveTask(userId, id, keep, date);
 		notifyDeletionListeners(userId, date);
 	}
 
@@ -173,7 +159,7 @@ public class TaskService implements ITaskService {
 		for (TaskInfo task : getTasks(userId)) {
 			if (!task.isRunning()) {
 				try {
-					internalRemoveTask(userId, task.getTaskId(), date);
+					internalRemoveTask(userId, task.getId(), task.isKeep(), date);
 				} catch (TaskOperationException e) {
 					LogHelper.log(e);
 				}
@@ -182,62 +168,43 @@ public class TaskService implements ITaskService {
 		notifyDeletionListeners(userId, date);
 	}
 
-	public TaskInfo createTask(String taskName, String userId, ITaskCanceler taskCanceler, boolean isIdempotent) {
-		TaskInfo task = new TaskInfo(userId, new UniversalUniqueIdentifier().toBase64String(), isIdempotent);
-		task.setName(taskName);
-		if (taskCanceler != null) {
-			taskCancelers.put(task.getTaskId(), taskCanceler);
-			task.setCanBeCanceled(true);
-		}
-		store.writeTask(new TaskDescription(userId, task.getTaskId()), task.toJSON().toString());
-		notifyListeners(userId, task.getModified());
+	public TaskInfo createTask(String userId, boolean keep) {
+		TaskInfo task = new TaskInfo(userId, new UniversalUniqueIdentifier().toBase64String(), keep);
+		store.writeTask(new TaskDescription(userId, task.getId(), keep), task.toJSON().toString());
+		notifyListeners(userId);
 		return task;
 	}
 
-	private void notifyListeners(String userId, Date modificationDate) {
-		new TasksNotificationJob(userId, modificationDate).schedule();
+	private void notifyListeners(String userId) {
+		new TasksNotificationJob(userId, new Date()).schedule();
 	}
 
 	private void notifyDeletionListeners(String userId, Date deletionDate) {
 		new DeletedTasksNotificationJob(userId, deletionDate).schedule();
 	}
 
-	public TaskInfo getTask(String userId, String id) {
-		String taskString = store.readTask(new TaskDescription(userId, id));
+	public TaskInfo getTask(String userId, String id, boolean keep) {
+		TaskDescription taskDescr = new TaskDescription(userId, id, keep);
+		String taskString = store.readTask(taskDescr);
 		if (taskString == null)
 			return null;
 		TaskInfo info;
 		try {
-			info = TaskInfo.fromJSON(taskString);
-			if (taskCancelers.get(id) != null)
-				info.setCanBeCanceled(true);
+			info = TaskInfo.fromJSON(taskDescr, taskString);
 			return info;
 		} catch (CorruptedTaskException e) {
 			LogHelper.log(e);
-			store.removeTask(new TaskDescription(userId, id));
+			store.removeTask(new TaskDescription(userId, id, keep));
 		}
 		return null;
 	}
 
 	public void updateTask(TaskInfo task) {
-		task.setModified(new Date());
-		store.writeTask(new TaskDescription(task.getUserId(), task.getTaskId()), task.toJSON().toString());
-		notifyListeners(task.getUserId(), task.getModified());
+		store.writeTask(new TaskDescription(task.getUserId(), task.getId(), task.isKeep()), task.toJSON().toString());
+		notifyListeners(task.getUserId());
 	}
 
 	public List<TaskInfo> getTasks(String userId) {
-		return getTasks(userId, null, false);
-	}
-
-	public void cancelTask(TaskInfo task) throws TaskOperationException {
-		ITaskCanceler taskCanceler = taskCancelers.get(task.getTaskId());
-		if (taskCanceler == null) {
-			throw new TaskOperationException("Task does not support canceling.");
-		}
-		taskCanceler.cancelTask();
-	}
-
-	public List<TaskInfo> getTasks(String userId, Date modifiedSince, boolean running) {
 		List<TaskInfo> tasks = new ArrayList<TaskInfo>();
 		for (TaskDescription taskDescr : store.readAllTasks(userId)) {
 			TaskInfo info;
@@ -246,19 +213,8 @@ public class TaskService implements ITaskService {
 				if(taskString==null){
 					continue; //Task removed in between
 				}
-				info = TaskInfo.fromJSON(taskString);
-				if (modifiedSince != null) {
-					if (info.getModified().getTime() < modifiedSince.getTime()) {
-						continue;
-					}
-				}
-				if (running && !info.isRunning()) {
-					continue;
-				}
+				info = TaskInfo.fromJSON(taskDescr, taskString);
 				
-				ITaskCanceler taskCanceler = taskCancelers.get(info.getTaskId());
-				if (taskCanceler != null)
-					info.setCanBeCanceled(true);
 				tasks.add(info);
 			} catch (CorruptedTaskException e) {
 				LogHelper.log(e);
@@ -294,5 +250,4 @@ public class TaskService implements ITaskService {
 		}
 		return deletedTasks;
 	}
-
 }

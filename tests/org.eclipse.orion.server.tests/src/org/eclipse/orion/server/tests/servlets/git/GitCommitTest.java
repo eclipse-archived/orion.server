@@ -14,18 +14,25 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.*;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
+
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Commit;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 public class GitCommitTest extends GitTest {
 
@@ -416,20 +423,20 @@ public class GitCommitTest extends GitTest {
 			final String defaultEmail = "default email";
 			request = GitConfigTest.getPostGitConfigRequest(gitConfigUri, "user.name", defaultName);
 			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+			assertEquals(response.getText(), HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 			request = GitConfigTest.getPostGitConfigRequest(gitConfigUri, "user.email", defaultEmail);
 			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+			assertEquals(response.getText(), HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
 			// "git add ."
 			request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
 			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// commit - author and committer not specified
 			request = getPostGitCommitRequest(gitHeadUri, "1", false, null, null, null, null);
 			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// log - expect default values
 			JSONArray commitsArray = log(gitHeadUri);

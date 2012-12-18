@@ -56,7 +56,7 @@ public class RemoteDetailsJob extends GitJob {
 	 * @param baseLocation URI used as a base for generating next and previous page links. Should not contain any parameters.
 	 */
 	public RemoteDetailsJob(String userRunningTask, String configName, IPath repositoryPath, URI cloneLocation, int commitsSize, int pageNo, int pageSize, String baseLocation) {
-		super(NLS.bind("Getting remote details {0}", configName), userRunningTask, NLS.bind("Getting remote details {0}...", configName), true, false);
+		super(userRunningTask, false);
 		this.path = repositoryPath;
 		this.cloneLocation = cloneLocation;
 		this.commitsSize = commitsSize;

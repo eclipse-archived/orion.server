@@ -13,22 +13,30 @@ package org.eclipse.orion.server.tests.servlets.git;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 import java.net.HttpURLConnection;
 import java.net.URI;
+
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.jgit.api.*;
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
+import org.eclipse.jgit.api.PullResult;
+import org.eclipse.jgit.api.RmCommand;
 import org.eclipse.jgit.dircache.DirCache;
 import org.eclipse.jgit.dircache.DirCacheEntry;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.ConfigConstants;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 public class GitStatusTest extends GitTest {
 
@@ -651,7 +659,9 @@ public class GitStatusTest extends GitTest {
 			// get branch details
 			request = getGetRequest(clone.getString(GitConstants.KEY_BRANCH));
 			response = webConversation.getResponse(request);
-			JSONObject branches = waitForTaskCompletion(response);
+			ServerStatus status = waitForTask(response);
+			assertTrue(status.toString(), status.isOK());
+			JSONObject branches = status.getJsonData();
 			assertEquals(Constants.MASTER, GitBranchTest.getCurrentBranch(branches).getString(ProtocolConstants.KEY_NAME));
 		}
 	}

@@ -22,13 +22,15 @@ import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.util.FileUtils;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.git.servlets.GitCloneHandlerV1;
-import org.eclipse.osgi.util.NLS;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * A job to perform a clone operation in the background
@@ -38,13 +40,14 @@ public class CloneJob extends GitJob {
 	private final WebProject project;
 	private final Clone clone;
 	private final String user;
+	private String cloneLocation;
 
 	public CloneJob(Clone clone, String userRunningTask, CredentialsProvider credentials, String user, String cloneLocation, WebProject project) {
-		super(NLS.bind("Cloning {0}", clone.getUrl()), userRunningTask, NLS.bind("Cloning {0}...", clone.getUrl()), false, false, (GitCredentialsProvider) credentials); //$NON-NLS-1$
+		super(userRunningTask, true, (GitCredentialsProvider) credentials); //$NON-NLS-1$
 		this.clone = clone;
 		this.user = user;
 		this.project = project;
-		setFinalLocation(URI.create(cloneLocation));
+		this.cloneLocation = cloneLocation;
 		setFinalMessage("Clone complete.");
 	}
 
@@ -63,7 +66,6 @@ public class CloneJob extends GitJob {
 			Git git = cc.call();
 
 			// Configure the clone, see Bug 337820
-			setMessage(NLS.bind("Configuring {0}...", clone.getUrl()));
 			GitCloneHandlerV1.doConfigureClone(git, user);
 			git.getRepository().close();
 		} catch (IOException e) {
@@ -77,7 +79,13 @@ public class CloneJob extends GitJob {
 		} catch (Exception e) {
 			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error cloning git repository", e);
 		}
-		return Status.OK_STATUS;
+		JSONObject jsonData = new JSONObject();
+		try {
+			jsonData.put(ProtocolConstants.KEY_LOCATION, URI.create(this.cloneLocation));
+		} catch (JSONException e) {
+			// Should not happen
+		}
+		return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, jsonData);
 	}
 
 	@Override

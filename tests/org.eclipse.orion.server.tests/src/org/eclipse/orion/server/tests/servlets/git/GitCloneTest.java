@@ -16,17 +16,29 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.*;
-import java.io.*;
-import java.net.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import org.eclipse.core.runtime.*;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
-import org.eclipse.jgit.api.*;
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.api.PullResult;
+import org.eclipse.jgit.lib.ConfigConstants;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.RepositoryCache;
+import org.eclipse.jgit.lib.RepositoryState;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.core.IOUtilities;
@@ -34,14 +46,22 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
-import org.eclipse.orion.server.core.tasks.TaskInfo;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
-import org.json.*;
-import org.junit.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.Assume;
+import org.junit.BeforeClass;
 import org.junit.Test;
+
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 public class GitCloneTest extends GitTest {
 
@@ -143,14 +163,10 @@ public class GitCloneTest extends GitTest {
 		//now try to clone again with the same clone name
 		URIish uri = new URIish(gitDir.toURI().toURL());
 		WebRequest request = getPostGitCloneRequest(uri, clonePath, null, cloneName, null, null);
-		WebResponse response = waitForTaskCompletionObjectResponse(webConversation.getResponse(request));
-		String cloneLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		if (cloneLocation == null) {
-			JSONObject taskResp = new JSONObject(response.getText());
-			assertTrue(taskResp.toString(), taskResp.has(ProtocolConstants.KEY_LOCATION));
-			assertFalse(taskResp.getString(TaskInfo.KEY_RESULT), taskResp.has(TaskInfo.KEY_FAILED) && taskResp.getBoolean(TaskInfo.KEY_FAILED));
-			cloneLocation = taskResp.getString(ProtocolConstants.KEY_LOCATION);
-		}
+		WebResponse response = webConversation.getResponse(request);
+		ServerStatus status = waitForTask(response);
+		assertTrue(status.toString(), status.isOK());
+		String cloneLocation = status.getJsonData().getString(ProtocolConstants.KEY_LOCATION);
 		assertNotNull(cloneLocation);
 
 		// validate the clone metadata
@@ -258,13 +274,14 @@ public class GitCloneTest extends GitTest {
 		// see bug 369282
 		WebRequest request = new PostGitCloneRequest().setURIish("ssh://git.eclipse.org/gitroot/platform/eclipse.platform.news.git").setFilePath(clonePath).getWebRequest();
 		setAuthentication(request);
-		WebResponse response = waitForTaskCompletionObjectResponse(webConversation.getResponse(request));
-		JSONObject result = getResult(response);
+		WebResponse response = webConversation.getResponse(request);
+		ServerStatus status = waitForTask(response);
+		assertFalse(status.toString(), status.isOK());
 
-		assertEquals(result.toString(), HttpURLConnection.HTTP_BAD_REQUEST, result.getInt("HttpCode"));
-		assertEquals("Error", result.getString("Severity"));
-		assertEquals("ssh://git.eclipse.org/gitroot/platform/eclipse.platform.news.git: username must not be null.", result.getString("Message"));
-		assertTrue(result.getString("DetailedMessage").contains("username must not be null"));
+		assertEquals(status.toString(), HttpURLConnection.HTTP_BAD_REQUEST, status.getHttpCode());
+		assertEquals("ssh://git.eclipse.org/gitroot/platform/eclipse.platform.news.git: username must not be null.", status.getMessage());
+		assertNotNull(status.getJsonData());
+		assertTrue(status.getJsonData().toString(), status.getException().getMessage().contains("username must not be null"));
 	}
 
 	@Test
@@ -278,24 +295,14 @@ public class GitCloneTest extends GitTest {
 		IPath randomLocation = AllGitTests.getRandomLocation();
 		assertNull(GitUtils.getGitDir(randomLocation.toFile()));
 		WebRequest request = getPostGitCloneRequest(randomLocation.toString(), clonePath);
-		WebResponse response = waitForTaskCompletionObjectResponse(webConversation.getResponse(request));
+		WebResponse response = webConversation.getResponse(request);
+		ServerStatus status = waitForTask(response);
+		assertFalse(status.toString(), status.isOK());
 
-		// task completed, but cloning failed
-		if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
-			JSONObject completedTask = new JSONObject(response.getText());
-			assertEquals(false, completedTask.getBoolean("Running"));
-			assertEquals(100, completedTask.getInt("PercentComplete"));
-			JSONObject result = completedTask.getJSONObject("Result");
-			assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, result.getInt("HttpCode"));
-			assertEquals("Error", result.getString("Severity"));
-			assertEquals("An internal git error cloning git repository", result.getString("Message"));
-			assertEquals("Invalid remote: origin", result.getString("DetailedMessage"));
-		} else {
-			assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, response.getResponseCode());
-			JSONObject result = new JSONObject(response.getText());
-			assertEquals("Error cloning git repository", result.getString("Message"));
-			assertEquals(result.toString(), "Invalid remote: origin", result.getString("DetailedMessage"));
-		}
+		assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, status.getHttpCode());
+		assertEquals("Error cloning git repository", status.getMessage());
+		assertNotNull(status.getJsonData());
+		assertEquals(status.toString(), "Invalid remote: origin", status.getException().getMessage());
 
 		// we don't know ID of the clone that failed to be created, so we're checking if none has been added
 		JSONArray clonesArray = listClones(workspaceId, null);
@@ -425,25 +432,13 @@ public class GitCloneTest extends GitTest {
 
 		// cloning
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
-		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(taskLocation);
-		String cloneLocation = waitForTaskCompletion(taskLocation);
+		ServerStatus status = waitForTask(response);
+		assertFalse(status.toString(), status.isOK());
 
-		// task completed, but cloning failed
-		response = webConversation.getResponse(getGetRequest(cloneLocation));
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject completedTask = new JSONObject(response.getText());
-		assertEquals(false, completedTask.getBoolean("Running"));
-		assertEquals(100, completedTask.getInt("PercentComplete"));
-		JSONObject result = completedTask.getJSONObject("Result");
-		assertEquals(HttpURLConnection.HTTP_FORBIDDEN, result.getInt("HttpCode"));
-		assertEquals("Error", result.getString("Severity"));
-		assertRepositoryInfo(uri, result);
-		assertTrue(result.getString("Message").startsWith("The authenticity of host "));
-		assertTrue(result.getString("Message").endsWith(" can't be established"));
-		assertTrue(result.getString("DetailedMessage").startsWith("The authenticity of host "));
-		assertTrue(result.getString("DetailedMessage").endsWith(" can't be established"));
+		assertTrue(status.getMessage(), status.getMessage().startsWith("The authenticity of host "));
+		assertTrue(status.getMessage(), status.getMessage().endsWith(" can't be established"));
+		assertTrue(status.getJsonData().toString(), status.getJsonData().getString("DetailedMessage").startsWith("The authenticity of host "));
+		assertTrue(status.getJsonData().toString(), status.getJsonData().getString("DetailedMessage").endsWith(" can't be established"));
 
 		// no project should be created
 		request = new GetMethodWebRequest(workspaceLocation.toString());
@@ -466,23 +461,13 @@ public class GitCloneTest extends GitTest {
 
 		// cloning
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
-		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(taskLocation);
-		String cloneLocation = waitForTaskCompletion(taskLocation);
+		ServerStatus status = waitForTask(response);
+		assertFalse(status.toString(), status.isOK());
 
 		// task completed, but cloning failed
-		response = webConversation.getResponse(getGetRequest(cloneLocation));
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject completedTask = new JSONObject(response.getText());
-		assertEquals(false, completedTask.getBoolean("Running"));
-		assertEquals(100, completedTask.getInt("PercentComplete"));
-		JSONObject result = completedTask.getJSONObject("Result");
-		assertEquals(HttpURLConnection.HTTP_UNAUTHORIZED, result.getInt("HttpCode"));
-		assertRepositoryInfo(uri, result);
-		assertEquals("Error", result.getString("Severity"));
-		assertEquals("Auth fail", result.getString("Message"));
-		assertEquals("Auth fail", result.getString("DetailedMessage"));
+		assertEquals(HttpURLConnection.HTTP_UNAUTHORIZED, status.getHttpCode());
+		assertEquals("Auth fail", status.getMessage());
+		assertEquals("Auth fail", status.getJsonData().getString("DetailedMessage"));
 
 		// no project should be created
 		request = new GetMethodWebRequest(workspaceLocation.toString());
@@ -504,23 +489,13 @@ public class GitCloneTest extends GitTest {
 
 		// cloning
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
-		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(taskLocation);
-		String cloneLocation = waitForTaskCompletion(taskLocation);
+		ServerStatus status = waitForTask(response);
+		assertFalse(status.toString(), status.isOK());
 
 		// task completed, but cloning failed
-		response = webConversation.getResponse(getGetRequest(cloneLocation));
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject completedTask = new JSONObject(response.getText());
-		assertEquals(false, completedTask.getBoolean("Running"));
-		assertEquals(100, completedTask.getInt("PercentComplete"));
-		JSONObject result = completedTask.getJSONObject("Result");
-		assertEquals(HttpURLConnection.HTTP_UNAUTHORIZED, result.getInt("HttpCode"));
-		assertRepositoryInfo(uri, result);
-		assertEquals("Error", result.getString("Severity"));
-		assertEquals("Auth fail", result.getString("Message"));
-		assertEquals("Auth fail", result.getString("DetailedMessage"));
+		assertEquals(HttpURLConnection.HTTP_UNAUTHORIZED, status.getHttpCode());
+		assertEquals("Auth fail", status.getMessage());
+		assertEquals("Auth fail", status.getJsonData().getString("DetailedMessage"));
 
 		// no project should be created
 		request = new GetMethodWebRequest(workspaceLocation.toString());
@@ -767,13 +742,8 @@ public class GitCloneTest extends GitTest {
 		request = getPostGitCloneRequest(uri, null, bobClonePath, null, null, null);
 		setAuthentication(request, "bob", "bob");
 		response = webConversation.getResponse(request);
-		response = waitForTaskCompletionObjectResponse(response, "bob", "bob");
-		String cloneLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		if (cloneLocation == null) {
-			JSONObject taskResp = new JSONObject(response.getText());
-			assertTrue(taskResp.has(ProtocolConstants.KEY_LOCATION));
-			cloneLocation = taskResp.getString(ProtocolConstants.KEY_LOCATION);
-		}
+		ServerStatus status = waitForTask(response, "bob", "bob");
+		String cloneLocation = status.getJsonData().getString(ProtocolConstants.KEY_LOCATION);
 		assertNotNull(cloneLocation);
 
 		// validate the clone metadata
@@ -803,25 +773,12 @@ public class GitCloneTest extends GitTest {
 		IPath clonePath = getClonePath(workspaceId, project);
 		WebRequest request = getPostGitCloneRequest(new URIish(gitDir.toURI().toURL()).toString(), clonePath);
 		WebResponse response = webConversation.getResponse(request);
+		ServerStatus status = waitForTask(response);
 
-		response = waitForTaskCompletionObjectResponse(response);
-		JSONObject result;
+		assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, status.getHttpCode());
 
-		if (HttpURLConnection.HTTP_OK == response.getResponseCode()) {
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			JSONObject completedTask = new JSONObject(response.getText());
-			assertEquals(false, completedTask.getBoolean("Running"));
-			assertEquals(100, completedTask.getInt("PercentComplete"));
-			result = completedTask.getJSONObject("Result");
-		} else {
-			assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, response.getResponseCode());
-			result = new JSONObject(response.getText());
-		}
-
-		assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, result.getInt("HttpCode"));
-		assertEquals("Error", result.getString("Severity"));
-		assertEquals("Error cloning git repository", result.getString("Message"));
-		assertTrue(result.getString("DetailedMessage").contains("not an empty directory"));
+		assertEquals("Error cloning git repository", status.getMessage());
+		assertTrue(status.toString(), status.getException().getMessage().contains("not an empty directory"));
 
 		// no project should be created
 		request = new GetMethodWebRequest(workspaceLocation.toString());

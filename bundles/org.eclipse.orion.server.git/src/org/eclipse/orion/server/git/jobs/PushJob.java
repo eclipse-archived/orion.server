@@ -39,7 +39,7 @@ public class PushJob extends GitJob {
 	private boolean force;
 
 	public PushJob(String userRunningTask, CredentialsProvider credentials, Path path, String srcRef, boolean tags, boolean force) {
-		super(NLS.bind("Pushing {0}", path.segment(0)), userRunningTask, NLS.bind("Pushing {0}...", path.segment(0)), false, false, (GitCredentialsProvider) credentials);
+		super(userRunningTask, true, (GitCredentialsProvider) credentials);
 		this.path = path;
 		this.srcRef = srcRef;
 		this.tags = tags;

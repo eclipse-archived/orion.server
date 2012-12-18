@@ -10,8 +10,15 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.jobs;
 
-import java.io.File;
 import java.net.URI;
+import javax.servlet.http.HttpServletResponse;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.ServerStatus;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.File;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.InitCommand;
@@ -21,7 +28,6 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.git.servlets.GitCloneHandlerV1;
-import org.eclipse.osgi.util.NLS;
 
 /**
  * A job to perform an init operation in the background
@@ -30,12 +36,13 @@ public class InitJob extends GitJob {
 
 	private final Clone clone;
 	private final String user;
+	private String cloneLocation;
 
 	public InitJob(Clone clone, String userRunningTask, String user, String cloneLocation) {
-		super(NLS.bind("Initializing repository {0}", clone.getName()), userRunningTask, NLS.bind("Initializing repository {0}...", clone.getName()), false, false);
+		super(userRunningTask, true);
 		this.clone = clone;
 		this.user = user;
-		setFinalLocation(URI.create(cloneLocation));
+		this.cloneLocation = cloneLocation;
 		setFinalMessage("Init complete.");
 	}
 
@@ -61,7 +68,13 @@ public class InitJob extends GitJob {
 		} catch (Exception e) {
 			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error initializing git repository", e);
 		}
-		return Status.OK_STATUS;
+		JSONObject jsonData = new JSONObject();
+		try {
+			jsonData.put(ProtocolConstants.KEY_LOCATION, URI.create(this.cloneLocation));
+		} catch (JSONException e) {
+			// Should not happen
+		}
+		return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, jsonData);
 	}
 
 }

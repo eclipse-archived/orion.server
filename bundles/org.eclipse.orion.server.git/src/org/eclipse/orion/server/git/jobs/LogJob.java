@@ -31,8 +31,7 @@ public class LogJob extends GitJob {
 	private final Log log;
 
 	public LogJob(String userRunningTask, LogCommand logCommand, Log log, URI logLocation) {
-		super(NLS.bind("Generating git log for {0}", logCommand.getRepository()), userRunningTask, NLS.bind("Generating git log for {0} ...", logCommand.getRepository()), true, false);
-		setFinalLocation(logLocation);
+		super(userRunningTask, false);
 		setFinalMessage("Generating git log completed.");
 		this.logCommand = logCommand;
 		this.log = log;
