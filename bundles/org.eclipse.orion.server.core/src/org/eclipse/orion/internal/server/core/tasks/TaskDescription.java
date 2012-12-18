@@ -14,11 +14,13 @@ public class TaskDescription {
 
 	private String taskId;
 	private String userId;
+	private boolean keep;
 
-	public TaskDescription(String userId, String taskId) {
+	public TaskDescription(String userId, String taskId, boolean keep) {
 		super();
 		this.taskId = taskId;
 		this.userId = userId;
+		this.keep = keep;
 	}
 
 	public String getTaskId() {
@@ -37,4 +39,12 @@ public class TaskDescription {
 		this.userId = userId;
 	}
 
+	public boolean isKeep() {
+		return keep;
+	}
+
+	public void setKeep(boolean keep) {
+		this.keep = keep;
+	}
+	
 }

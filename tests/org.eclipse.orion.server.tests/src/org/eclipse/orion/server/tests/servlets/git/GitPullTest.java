@@ -15,10 +15,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.*;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
+
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Constants;
@@ -28,8 +28,14 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Clone;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.Test;
+
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 public class GitPullTest extends GitTest {
 
@@ -85,7 +91,9 @@ public class GitPullTest extends GitTest {
 		// get the current branch
 		request = getGetRequest(gitHeadUri);
 		response = webConversation.getResponse(request);
-		JSONObject newHead = waitForTaskCompletion(response);
+		ServerStatus status = waitForTask(response);
+		assertTrue(status.toString(), status.isOK());
+		JSONObject newHead = status.getJsonData();
 		String newHeadSha1 = newHead.getJSONArray(ProtocolConstants.KEY_CHILDREN).getJSONObject(0).getString(ProtocolConstants.KEY_NAME);
 		assertEquals(headSha1, newHeadSha1);
 	}

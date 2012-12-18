@@ -14,16 +14,24 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.*;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.*;
-import org.eclipse.core.runtime.*;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ListBranchCommand.ListMode;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.storage.file.FileRepository;
-import org.eclipse.jgit.transport.*;
+import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.RemoteConfig;
+import org.eclipse.jgit.transport.URIish;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -31,9 +39,16 @@ import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Remote;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.Test;
 import org.xml.sax.SAXException;
+
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 public class GitRemoteTest extends GitTest {
 	@Test
@@ -121,14 +136,8 @@ public class GitRemoteTest extends GitTest {
 
 		request = getGetGitRemoteRequest(nu.toString());
 		response = webConversation.getResponse(request);
-		response = waitForTaskCompletionObjectResponse(response);
-		if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
-			JSONObject responseObject = new JSONObject(response.getText());
-			assertTrue(responseObject.has("Result"));
-			assertEquals(HttpURLConnection.HTTP_NOT_FOUND, responseObject.getJSONObject("Result").getInt("HttpCode"));
-		} else {
-			assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
-		}
+		ServerStatus status = waitForTask(response);
+		assertEquals(status.toString(), status.getHttpCode(), HttpURLConnection.HTTP_NOT_FOUND);
 
 		p = new Path(u.getPath());
 		p = p.uptoSegment(3).append("xxx").append(p.removeFirstSegments(3));
@@ -279,12 +288,15 @@ public class GitRemoteTest extends GitTest {
 		// check details
 		WebRequest request = getGetRequest(remoteLocation);
 		response = webConversation.getResponse(request);
-		waitForTaskCompletion(response);
+		ServerStatus status = waitForTask(response);
+		assertTrue(status.toString(), status.isOK());
 
 		// list remotes
 		request = getGetRequest(remotesLocation);
 		response = webConversation.getResponse(request);
-		JSONObject remotes = waitForTaskCompletion(response);
+		status = waitForTask(response);
+		assertTrue(status.toString(), status.isOK());
+		JSONObject remotes = status.getJsonData();
 		JSONArray remotesArray = remotes.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 		// expect origin and new remote
 		assertEquals(2, remotesArray.length());
@@ -297,7 +309,9 @@ public class GitRemoteTest extends GitTest {
 		// list remotes again, make sure it's gone
 		request = getGetRequest(remotesLocation);
 		response = webConversation.getResponse(request);
-		remotes = waitForTaskCompletion(response);
+		status = waitForTask(response);
+		assertTrue(status.toString(), status.isOK());
+		remotes = status.getJsonData();
 		remotesArray = remotes.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 		// expect origin only
 		assertEquals(1, remotesArray.length());

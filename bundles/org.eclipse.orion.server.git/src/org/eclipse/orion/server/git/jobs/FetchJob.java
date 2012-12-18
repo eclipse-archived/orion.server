@@ -37,7 +37,7 @@ public class FetchJob extends GitJob {
 	private String branch; // can be null if fetching the whole branch
 
 	public FetchJob(String userRunningTask, CredentialsProvider credentials, Path path, boolean force) {
-		super("Fetching", userRunningTask, "Fetching...", false, false, (GitCredentialsProvider) credentials);
+		super(userRunningTask, true, (GitCredentialsProvider) credentials);
 		// path: {remote}[/{branch}]/file/{...}
 		this.path = path;
 		this.remote = path.segment(0);
@@ -51,12 +51,10 @@ public class FetchJob extends GitJob {
 		if (branch == null) {
 			Object[] bindings = new String[] {remote, cloneName};
 			setName(NLS.bind("Fetching {0} for {1}", bindings));
-			setMessage(NLS.bind("Fetching {0} for {1} ...", bindings));
 			setFinalMessage(NLS.bind("Fetching {0} for {1} done.", bindings));
 		} else {
 			Object[] bindings = new String[] {remote, branch, cloneName};
 			setName(NLS.bind("Fetching {0}/{1} for {2}", bindings));
-			setMessage(NLS.bind("Fetching {0}/{1} for {2} ...", bindings));
 			setFinalMessage(NLS.bind("Fetching {0}/{1} for {2} done.", bindings));
 		}
 	}

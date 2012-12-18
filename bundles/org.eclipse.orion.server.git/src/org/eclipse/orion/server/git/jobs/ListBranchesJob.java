@@ -59,7 +59,7 @@ public class ListBranchesJob extends GitJob {
 	 * @param baseLocation URI used as a base for generating next and previous page links. Should not contain any parameters.
 	 */
 	public ListBranchesJob(String userRunningTask, IPath repositoryPath, URI cloneLocation, int commitsSize, int pageNo, int pageSize, String baseLocation) {
-		super(NLS.bind("Getting branches for {0}", repositoryPath), userRunningTask, NLS.bind("Getting branches for {0}...", repositoryPath), true, false);
+		super(userRunningTask, false);
 		this.path = repositoryPath;
 		this.cloneLocation = cloneLocation;
 		this.commitsSize = commitsSize;

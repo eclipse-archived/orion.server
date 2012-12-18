@@ -40,8 +40,8 @@ public class TaskJobHandler {
 	 */
 	public static final long WAIT_TIME = 100;
 
-	private static URI createTaskLocation(URI baseLocation, String taskId) throws URISyntaxException {
-		return new URI(baseLocation.getScheme(), baseLocation.getAuthority(), "/task/id/" + taskId, null, null); //$NON-NLS-1$
+	private static URI createTaskLocation(URI baseLocation, String taskId, boolean keep) throws URISyntaxException {
+		return new URI(baseLocation.getScheme(), baseLocation.getAuthority(), (keep ? "/task/id/" : "/task/temp/") + taskId, null, null); //$NON-NLS-1$
 	}
 
 	public static final String getUserId(HttpServletRequest req) {
@@ -97,7 +97,7 @@ public class TaskJobHandler {
 		} else {
 			TaskInfo task = job.startTask();
 			JSONObject result = task.toJSON();
-			String taskLocation = result.has(ProtocolConstants.KEY_LOCATION) ? result.getString(ProtocolConstants.KEY_LOCATION) : createTaskLocation(OrionServlet.getURI(request), task.getTaskId()).toString();
+			String taskLocation = createTaskLocation(OrionServlet.getURI(request), task.getId(), task.isKeep()).toString();
 			result.put(ProtocolConstants.KEY_LOCATION, taskLocation);
 			if (!task.isRunning()) {
 				job.removeTask(); // Task is not used, we may remove it
@@ -114,9 +114,6 @@ public class TaskJobHandler {
 		IStatus result = job.getRealResult();
 		if (!result.isOK()) {
 			return statusHandler.handleRequest(request, response, result);
-		}
-		if (job.getFinalLocation() != null) {
-			response.setHeader(ProtocolConstants.HEADER_LOCATION, job.getFinalLocation().toString());
 		}
 		if (result instanceof ServerStatus) {
 			ServerStatus status = (ServerStatus) result;
