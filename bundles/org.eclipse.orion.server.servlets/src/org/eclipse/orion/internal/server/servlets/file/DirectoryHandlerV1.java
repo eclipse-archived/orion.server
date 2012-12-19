@@ -63,9 +63,10 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 		if (depth <= 0)
 			return;
 		JSONArray children = new JSONArray();
-		IFileStore[] childStores = dir.childStores(EFS.NONE, null);
-		for (IFileStore childStore : childStores) {
-			IFileInfo childInfo = childStore.fetchInfo();
+		//more efficient to ask for child information in bulk for certain file systems
+		IFileInfo[] childInfos = dir.childInfos(EFS.NONE, null);
+		for (IFileInfo childInfo : childInfos) {
+			IFileStore childStore = dir.getChild(childInfo.getName());
 			String name = childInfo.getName();
 			if (childInfo.isDirectory())
 				name += "/"; //$NON-NLS-1$

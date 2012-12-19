@@ -10,15 +10,9 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.core.tasks;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.resources.Base64;
@@ -53,8 +47,7 @@ public class TaskStore {
 	 * Returns a string representation of the task with the given id, or <code>null</code>
 	 * if no such task exists.
 	 * 
-	 * @param userId id of a user that is an owner of the task
-	 * @param id id of the task
+	 * @param td description of the task to read
 	 */
 	public synchronized String readTask(TaskDescription td) {
 		File userDirectory = new File(root, getUserDirectory(td.getUserId()));
@@ -87,8 +80,7 @@ public class TaskStore {
 	/**
 	 * Writes task representation
 	 * 
-	 * @param userId id of a user that is an owner of the task
-	 * @param id id of the task
+	 * @param td description of the task to write
 	 * @param representation string representation or the task
 	 */
 	public synchronized void writeTask(TaskDescription td, String representation) {
@@ -110,8 +102,7 @@ public class TaskStore {
 	 * Removes given task from the list. This doesn't consider task status, it is caller's
 	 * responsibility to make sure if task tracking can be stopped. This function does not stop the task.
 	 * 
-	 * @param userId id of a user that is an owner of the task
-	 * @param id id of the task
+	 * @param td description of the task to remove
 	 * @return <code>true</code> if task was removed, <code>false</code> otherwise. 
 	 */
 	public synchronized boolean removeTask(TaskDescription td) {
@@ -122,34 +113,6 @@ public class TaskStore {
 		if (!taskFile.exists())
 			return false;
 		return taskFile.delete();
-	}
-
-	private List<String> internalReadAllTasks(File userDirectory) {
-		List<String> result = new ArrayList<String>();
-		for (File taskFile : userDirectory.listFiles()) {
-			if (!taskFile.isFile())
-				continue;
-			StringWriter writer;
-			FileReader reader = null;
-			try {
-				reader = new FileReader(taskFile);
-				writer = new StringWriter();
-				IOUtilities.pipe(reader, writer, true, false);
-				result.add(writer.toString());
-			} catch (IOException e) {
-				LogHelper.log(e);
-				return null;
-			} finally {
-				if (reader != null)
-					try {
-						reader.close();
-					} catch (IOException e) {
-						LogHelper.log(e);
-						return null;
-					}
-			}
-		}
-		return result;
 	}
 
 	private List<TaskDescription> internalReadAllTasksDescriptions(File userDirectory) {

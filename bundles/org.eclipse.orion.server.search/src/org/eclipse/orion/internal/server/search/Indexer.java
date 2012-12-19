@@ -140,6 +140,9 @@ public class Indexer extends Job {
 			handleIndexingFailure(e, null);
 			return 0;
 		}
+		//don't index remote file systems for now
+		if (!EFS.getLocalFileSystem().getScheme().equals(projectStore.getFileSystem().getScheme()))
+			return 0;
 		String encodedProjectName;
 		try {
 			//project location field is an encoded URI

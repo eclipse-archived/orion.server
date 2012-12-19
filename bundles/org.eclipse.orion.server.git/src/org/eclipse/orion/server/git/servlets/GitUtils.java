@@ -83,8 +83,11 @@ public class GitUtils {
 		IFileStore fileStore = NewFileServlet.getFileStore(p);
 		if (fileStore == null)
 			return null;
-		File file = fileStore.toLocalFile(EFS.NONE, null);
 		Map<IPath, File> result = new HashMap<IPath, File>();
+		File file = fileStore.toLocalFile(EFS.NONE, null);
+		//jgit can only handle a local file
+		if (file == null)
+			return result;
 		switch (traverse) {
 			case CURRENT :
 				if (RepositoryCache.FileKey.isGitRepository(file, FS.DETECTED)) {

@@ -12,7 +12,8 @@ package org.eclipse.orion.server.useradmin.servlets;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -155,6 +156,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 		Set<User> users = new HashSet<User>();
 
 		if (userLogin != null && userLogin.trim().length() > 0) {
+			//reset using login
 			User user = userAdmin.getUser("login", userLogin.trim());
 			if (user == null) {
 				resp.sendError(HttpServletResponse.SC_NOT_FOUND, "User " + userLogin + " not found.");
@@ -168,14 +170,10 @@ public class EmailConfirmationServlet extends OrionServlet {
 			}
 			users.add(user);
 		} else if (userEmail != null && userEmail.trim().length() > 0) {
-			users.addAll(userAdmin.getUsersByProperty(UserConstants.KEY_EMAIL, userEmail, false, true));
-			for (Iterator<User> iter = users.iterator(); iter.hasNext();) {
-				User user = iter.next();
-				if (!user.isEmailConfirmed()) {
-					iter.remove();
-				}
-			}
-
+			//reset using email address
+			User user = userAdmin.getUser("email", userEmail.trim());
+			if (user != null && user.isEmailConfirmed())
+				users.add(user);
 			if (users.size() == 0) {
 				resp.sendError(HttpServletResponse.SC_NOT_FOUND, "User with email " + userEmail + " not found.");
 				return;
