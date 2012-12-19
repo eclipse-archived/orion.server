@@ -25,7 +25,7 @@ public class ChannelCache {
 	/**
 	 * Duration to keep the cache alive.
 	 */
-	private static final long CACHE_TIMEOUT = 500;
+	private static final long CACHE_TIMEOUT = 60000;
 	/**
 	 * Only cache one channel at a time for now.
 	 */

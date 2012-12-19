@@ -12,8 +12,7 @@ package org.eclipse.orion.internal.server.sftpfile;
 
 import com.jcraft.jsch.ChannelSftp.LsEntry;
 import com.jcraft.jsch.SftpATTRS;
-import java.io.BufferedInputStream;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URI;
 import java.util.*;
 import org.eclipse.core.filesystem.IFileInfo;
@@ -29,8 +28,11 @@ import org.eclipse.osgi.util.NLS;
  */
 public class SftpFileStore extends FileStore {
 
-	private URI host;
-	private IPath path;
+	private final URI host;
+	private final IPath path;
+
+	//cache fetched info just for purpose of determining if we are a directory
+	private IFileInfo cachedInfo;
 
 	/**
 	 * Converts a jsch attributes object to an EFS file info.
@@ -90,8 +92,8 @@ public class SftpFileStore extends FileStore {
 		SynchronizedChannel channel = getChannel();
 		try {
 			SftpATTRS stat = channel.stat(path.toString());
-			FileInfo info = attrsToInfo(getName(), stat);
-			return info;
+			cachedInfo = attrsToInfo(getName(), stat);
+			return cachedInfo;
 		} catch (Exception e) {
 			ChannelCache.flush(host);
 			throw wrap(e);
@@ -122,7 +124,13 @@ public class SftpFileStore extends FileStore {
 
 	@Override
 	public IFileStore mkdir(int options, IProgressMonitor monitor) throws CoreException {
-		//TODO implement mkdir
+		SynchronizedChannel channel = getChannel();
+		try {
+			channel.mkdir(path.toString());
+		} catch (Exception e) {
+			ChannelCache.flush(host);
+			throw wrap(e);
+		}
 		return this;
 	}
 
@@ -131,6 +139,41 @@ public class SftpFileStore extends FileStore {
 		SynchronizedChannel channel = getChannel();
 		try {
 			return new BufferedInputStream(channel.get(path.toString()));
+		} catch (Exception e) {
+			ChannelCache.flush(host);
+			throw wrap(e);
+		}
+	}
+
+	@Override
+	public OutputStream openOutputStream(int options, IProgressMonitor monitor) throws CoreException {
+		SynchronizedChannel channel = getChannel();
+		try {
+			return new BufferedOutputStream(channel.put(path.toString()));
+		} catch (Exception e) {
+			ChannelCache.flush(host);
+			throw wrap(e);
+		}
+	}
+
+	@Override
+	public void putInfo(IFileInfo info, int options, IProgressMonitor monitor) throws CoreException {
+		//not supported, but don't fail
+	}
+
+	@Override
+	public void delete(int options, IProgressMonitor monitor) throws CoreException {
+		SynchronizedChannel channel = getChannel();
+		try {
+			//we need to know if we are a directory or file, but used the last fetched info if available
+			IFileInfo info = cachedInfo;
+			//use local field in case of concurrent change to cached info
+			if (info == null)
+				info = fetchInfo();
+			if (info.isDirectory())
+				channel.rmdir(path.toString());
+			else
+				channel.rm(path.toString());
 		} catch (Exception e) {
 			ChannelCache.flush(host);
 			throw wrap(e);
