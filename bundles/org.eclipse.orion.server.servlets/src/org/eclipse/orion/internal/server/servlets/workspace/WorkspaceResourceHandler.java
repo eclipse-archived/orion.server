@@ -413,6 +413,8 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 				case DELETE :
 					//TBD could also handle deleting the workspace itself
 					return handleRemoveProject(request, response, workspace);
+				default :
+					//fall through
 			}
 		} catch (IOException e) {
 			String msg = NLS.bind("Error handling request against workspace {0}", workspace.getId());
