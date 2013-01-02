@@ -11,7 +11,7 @@
 package org.eclipse.orion.internal.server.sftpfile;
 
 import com.jcraft.jsch.ChannelSftp.LsEntry;
-import com.jcraft.jsch.SftpATTRS;
+import com.jcraft.jsch.*;
 import java.io.*;
 import java.net.URI;
 import java.util.*;
@@ -126,7 +126,16 @@ public class SftpFileStore extends FileStore {
 	public IFileStore mkdir(int options, IProgressMonitor monitor) throws CoreException {
 		SynchronizedChannel channel = getChannel();
 		try {
-			channel.mkdir(path.toString());
+			try {
+				channel.mkdir(path.toString());
+			} catch (SftpException sftpException) {
+				//jsch mkdir fails if dir already exists, but EFS API says we should not fail
+				SftpATTRS stat = channel.stat(path.toString());
+				if (stat.isDir())
+					return this;
+				//rethrow and fail
+				throw sftpException;
+			}
 		} catch (Exception e) {
 			ChannelCache.flush(host);
 			throw wrap(e);
