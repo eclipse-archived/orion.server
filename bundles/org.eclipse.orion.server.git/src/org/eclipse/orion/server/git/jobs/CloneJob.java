@@ -13,6 +13,7 @@ package org.eclipse.orion.server.git.jobs;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.util.concurrent.TimeUnit;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.CloneCommand;
@@ -49,6 +50,7 @@ public class CloneJob extends GitJob {
 		this.project = project;
 		this.cloneLocation = cloneLocation;
 		setFinalMessage("Clone complete.");
+		setTaskExpirationTime(TimeUnit.DAYS.toMillis(7));
 	}
 
 	private IStatus doClone() {

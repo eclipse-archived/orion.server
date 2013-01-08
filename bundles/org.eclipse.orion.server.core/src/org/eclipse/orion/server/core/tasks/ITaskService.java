@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.core.tasks;
 
-import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -67,15 +65,4 @@ public interface ITaskService {
 	 */
 	public void removeTask(String userId, String id, boolean keep) throws TaskOperationException;
 
-	/**
-	 * Registers a listener that is notified when task is updated
-	 * @param listener
-	 */
-	public void addTaskModyficationListener(TaskModificationListener listener);
-
-	/**
-	 * Unregisters a listener that is notified when task is updated
-	 * @param listener
-	 */
-	public void removeTaskModyficationListener(TaskModificationListener listener);
 }

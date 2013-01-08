@@ -11,19 +11,15 @@
 package org.eclipse.orion.internal.server.core.tasks;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
@@ -31,7 +27,6 @@ import org.eclipse.orion.server.core.tasks.CorruptedTaskException;
 import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.tasks.TaskDoesNotExistException;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
-import org.eclipse.orion.server.core.tasks.TaskModificationListener;
 import org.eclipse.orion.server.core.tasks.TaskOperationException;
 
 /**
@@ -39,63 +34,42 @@ import org.eclipse.orion.server.core.tasks.TaskOperationException;
  */
 public class TaskService implements ITaskService {
 
-	TaskStore store;
-	private Set<TaskModificationListener> taskListeners = new HashSet<TaskModificationListener>();
+	private TaskStore store;
+	private Timer timer;
+	private static long TEMP_TASK_LIFE = 15*60*1000; //15 minutes in milliseconds
 
-	private class TasksNotificationJob extends Job {
-
-		private String userId;
-		private Date modificationDate;
-
-		public TasksNotificationJob(String userId, Date modificationDate) {
-			super("Notyfing task listeners");
-			this.userId = userId;
-			this.modificationDate = modificationDate;
+	private class RemoveTask extends TimerTask {
+		
+		private TaskDescription taskDescription;
+		private ITaskService taskService;
+		
+		public RemoveTask(TaskDescription taskDescription, ITaskService taskService) {
+			super();
+			this.taskDescription = taskDescription;
+			this.taskService = taskService;
 		}
-
+		
 		@Override
-		protected IStatus run(IProgressMonitor monitor) {
-			synchronized (taskListeners) {
-				for (TaskModificationListener listener : taskListeners) {
-					listener.tasksModified(userId, modificationDate);
-				}
+		public void run() {
+			try {
+				taskService.removeTask(taskDescription.getUserId(), taskDescription.getTaskId(), taskDescription.isKeep());
+			} catch (TaskDoesNotExistException e) {
+				//ignore, task was already removed
+			} catch (TaskOperationException e) {
+				LogHelper.log(e);
 			}
-			return Status.OK_STATUS;
 		}
-
-	}
-
-	private class DeletedTasksNotificationJob extends Job {
-
-		private String userId;
-		private Date deletionDate;
-
-		public DeletedTasksNotificationJob(String userId, Date deletionDate) {
-			super("Notyfing task listeners");
-			this.userId = userId;
-			this.deletionDate = deletionDate;
-		}
-
-		@Override
-		protected IStatus run(IProgressMonitor monitor) {
-			synchronized (taskListeners) {
-				for (TaskModificationListener listener : taskListeners) {
-					listener.tasksDeleted(userId, deletionDate);
-				}
-			}
-			return Status.OK_STATUS;
-		}
+		
 	}
 
 	public TaskService(IPath baseLocation) {
 		store = new TaskStore(baseLocation.toFile());
+		timer = new Timer();
 		cleanUpTasks();
 	}
 
 	private void cleanUpTasks() {
 		List<TaskDescription> allTasks = store.readAllTasks();
-		Calendar monthAgo = Calendar.getInstance();
-		monthAgo.add(Calendar.MONTH, -1);
 		for (TaskDescription taskDescription : allTasks) {
 			TaskInfo task;
 			try {
@@ -106,6 +80,8 @@ public class TaskService implements ITaskService {
 				if (task.isRunning()) {//mark all running tasks as failed due to server restart
 					task.done(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Task could not be completed due to server restart", null));
 					updateTask(task);
+				} else if(task.getExpires()!=null){
+					timer.schedule(new RemoveTask(taskDescription, this), new Date(task.getExpires()));
 				}
 			} catch (CorruptedTaskException e) {
 				LogHelper.log(e);
@@ -128,7 +104,6 @@ public class TaskService implements ITaskService {
 	public void removeTask(String userId, String id, boolean keep) throws TaskOperationException {
 		Date date = new Date();
 		internalRemoveTask(userId, id, keep, date);
-		notifyDeletionListeners(userId, date);
 	}
 
 	public void removeCompletedTasks(String userId) {
@@ -142,22 +117,12 @@ public class TaskService implements ITaskService {
 				}
 			}
 		}
-		notifyDeletionListeners(userId, date);
 	}
 
 	public TaskInfo createTask(String userId, boolean keep) {
 		TaskInfo task = new TaskInfo(userId, new UniversalUniqueIdentifier().toBase64String(), keep);
 		store.writeTask(new TaskDescription(userId, task.getId(), keep), task.toJSON().toString());
-		notifyListeners(userId);
 		return task;
-	}
-
-	private void notifyListeners(String userId) {
-		new TasksNotificationJob(userId, new Date()).schedule();
-	}
-
-	private void notifyDeletionListeners(String userId, Date deletionDate) {
-		new DeletedTasksNotificationJob(userId, deletionDate).schedule();
 	}
 
 	public TaskInfo getTask(String userId, String id, boolean keep) {
@@ -177,8 +142,17 @@ public class TaskService implements ITaskService {
 	}
 
 	public void updateTask(TaskInfo task) {
-		store.writeTask(new TaskDescription(task.getUserId(), task.getId(), task.isKeep()), task.toJSON().toString());
-		notifyListeners(task.getUserId());
+		TaskDescription taskDescription = new TaskDescription(task.getUserId(), task.getId(), task.isKeep());
+		store.writeTask(taskDescription, task.toJSON().toString());
+		if(!task.isRunning()){
+			if(task.isKeep()){
+				if(task.getExpires()!=null){
+					timer.schedule(new RemoveTask(taskDescription, this), new Date(task.getExpires()));
+				}
+			} else {
+				timer.schedule(new RemoveTask(taskDescription, this), TEMP_TASK_LIFE);
+			}
+		}
 	}
 
 	public List<TaskInfo> getTasks(String userId) {
@@ -199,17 +173,5 @@ public class TaskService implements ITaskService {
 			}
 		}
 		return tasks;
-	}
-
-	public void addTaskModyficationListener(TaskModificationListener listener) {
-		synchronized (taskListeners) {
-			this.taskListeners.add(listener);
-		}
-	}
-
-	public synchronized void removeTaskModyficationListener(TaskModificationListener listener) {
-		synchronized (taskListeners) {
-			this.taskListeners.remove(listener);
-		}
 	}
 }

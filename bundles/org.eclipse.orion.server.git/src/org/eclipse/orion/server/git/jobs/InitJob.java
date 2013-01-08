@@ -10,24 +10,23 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.jobs;
 
-import java.net.URI;
-import javax.servlet.http.HttpServletResponse;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.server.core.ServerStatus;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.File;
+import java.net.URI;
+import java.util.concurrent.TimeUnit;
+import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.InitCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.git.servlets.GitCloneHandlerV1;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * A job to perform an init operation in the background
@@ -44,6 +43,7 @@ public class InitJob extends GitJob {
 		this.user = user;
 		this.cloneLocation = cloneLocation;
 		setFinalMessage("Init complete.");
+		setTaskExpirationTime(TimeUnit.DAYS.toMillis(7));
 	}
 
 	public IStatus performJob() {

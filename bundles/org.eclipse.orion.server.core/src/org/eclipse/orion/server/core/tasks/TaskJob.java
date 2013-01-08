@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.server.core.tasks;
 
+import java.util.Date;
+
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -32,6 +34,7 @@ public abstract class TaskJob extends Job {
 	private ITaskService taskService;
 	private ServiceReference<ITaskService> taskServiceRef;
 	private IStatus realResult;
+	private Long taskExpirationTime = null;
 
 	public TaskJob(String userRunningTask, boolean keep) {
 		super("Long running task job");
@@ -42,6 +45,10 @@ public abstract class TaskJob extends Job {
 
 	protected void setFinalMessage(String message) {
 		this.finalMessage = message;
+	}
+	
+	protected void setTaskExpirationTime(Long taskExpirationTime){
+		this.taskExpirationTime = taskExpirationTime;
 	}
 
 	public JSONObject getFinalResult() throws JSONException {
@@ -102,6 +109,9 @@ public abstract class TaskJob extends Job {
 
 	private synchronized void setTaskResult(IStatus result) {
 		task.done(result);
+		if(taskExpirationTime!=null){
+			task.setExpires(new Date().getTime() + taskExpirationTime);
+		}
 		getTaskService().updateTask(task);
 	}
 

@@ -11,6 +11,7 @@
 package org.eclipse.orion.server.git.jobs;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jgit.api.*;
@@ -42,6 +43,7 @@ public class PullJob extends GitJob {
 		// this.force = force; // TODO: enable when JGit starts to support this option
 		setName(NLS.bind("Pulling {0}", projectName));
 		setFinalMessage(NLS.bind("Pulling {0} done", projectName));
+		setTaskExpirationTime(TimeUnit.DAYS.toMillis(7));
 	}
 
 	private IStatus doPull() throws IOException, GitAPIException, CoreException {

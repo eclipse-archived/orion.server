@@ -12,6 +12,7 @@ package org.eclipse.orion.server.git.jobs;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.concurrent.TimeUnit;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
@@ -44,6 +45,7 @@ public class FetchJob extends GitJob {
 		this.force = force;
 		this.branch = path.segment(1).equals("file") ? null : path.segment(1); //$NON-NLS-1$
 		builtMessages();
+		setTaskExpirationTime(TimeUnit.DAYS.toMillis(7));
 	}
 
 	private void builtMessages() {

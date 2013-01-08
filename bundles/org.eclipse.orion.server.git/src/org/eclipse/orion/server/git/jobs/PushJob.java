@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PushCommand;
@@ -45,6 +46,7 @@ public class PushJob extends GitJob {
 		this.tags = tags;
 		this.force = force;
 		setFinalMessage(NLS.bind("Pushing {0} done", path.segment(0)));
+		setTaskExpirationTime(TimeUnit.DAYS.toMillis(7));
 	}
 
 	private IStatus doPush() throws IOException, CoreException, URISyntaxException, GitAPIException {
