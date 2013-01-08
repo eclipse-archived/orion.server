@@ -46,14 +46,6 @@ public interface ITaskService {
 	List<TaskInfo> getTasks(String userId);
 
 	/**
-	 * Returns all user's tasks deleted since given date.
-	 * @param userId
-	 * @param deletedSince
-	 * @return
-	 */
-	Collection<String> getTasksDeletedSince(String userId, Date deletedSince);
-
-	/**
 	 * Updates the state of the given task within the task service. Any changes
 	 * to a task object are only observed by other clients of the task service
 	 * after this method has been called.

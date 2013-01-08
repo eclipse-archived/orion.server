@@ -12,12 +12,9 @@ package org.eclipse.orion.internal.server.core.tasks;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
@@ -44,7 +41,6 @@ public class TaskService implements ITaskService {
 
 	TaskStore store;
 	private Set<TaskModificationListener> taskListeners = new HashSet<TaskModificationListener>();
-	private Map<String, List<TaskDeletion>> taskDeletions = new HashMap<String, List<TaskDeletion>>();
 
 	private class TaskDeletion {
 		public final Date deletionDate;
@@ -137,14 +133,6 @@ public class TaskService implements ITaskService {
 			throw new TaskOperationException("Cannot remove a task that is running. Try to cancel first");
 		if (!store.removeTask(new TaskDescription(userId, id, keep)))
 			throw new TaskOperationException("Task could not be removed");
-		if (!taskDeletions.containsKey(userId)) {
-			taskDeletions.put(userId, new ArrayList<TaskService.TaskDeletion>());
-		}
-		int i = taskDeletions.get(userId).size();
-		while (i > 0 && taskDeletions.get(userId).get(i - 1).deletionDate.after(dateRemoved)) {
-			i--;
-		}
-		taskDeletions.get(userId).add(i, new TaskDeletion(dateRemoved, id));
 		return task;
 	}
 
@@ -234,20 +222,5 @@ public class TaskService implements ITaskService {
 		synchronized (taskListeners) {
 			this.taskListeners.remove(listener);
 		}
-	}
-
-	public synchronized Collection<String> getTasksDeletedSince(String userId, Date deletedSince) {
-		Set<String> deletedTasks = new HashSet<String>();
-		List<TaskDeletion> taskDeletionsList = taskDeletions.get(userId);
-		if (taskDeletionsList == null || deletedSince == null) {
-			return deletedTasks;
-		}
-		for (int i = taskDeletionsList.size() - 1; i > 0; i--) {
-			if (taskDeletionsList.get(i).deletionDate.before(deletedSince)) {
-				return deletedTasks;
-			}
-			deletedTasks.add(taskDeletionsList.get(i).taskId);
-		}
-		return deletedTasks;
 	}
 }
