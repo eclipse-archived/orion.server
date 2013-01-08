@@ -42,17 +42,6 @@ public class TaskService implements ITaskService {
 	TaskStore store;
 	private Set<TaskModificationListener> taskListeners = new HashSet<TaskModificationListener>();
 
-	private class TaskDeletion {
-		public final Date deletionDate;
-		public final String taskId;
-
-		public TaskDeletion(Date deletionDate, String taskId) {
-			super();
-			this.deletionDate = deletionDate;
-			this.taskId = taskId;
-		}
-	}
-
 	private class TasksNotificationJob extends Job {
 
 		private String userId;
