@@ -133,13 +133,13 @@ public abstract class GitJob extends TaskJob {
 		return status;
 	}
 
-	public GitJob(String name, String userRunningTask, String initialMessage, boolean isIdempotent, boolean canCancel, GitCredentialsProvider credentials) {
-		super(name, userRunningTask, initialMessage, isIdempotent, canCancel);
+	public GitJob(String userRunningTask, boolean keep, GitCredentialsProvider credentials) {
+		super(userRunningTask, keep);
 		this.credentials = credentials;
 	}
 
-	public GitJob(String name, String userRunningTask, String initialMessage, boolean isIdempotent, boolean canCancel) {
-		this(name, userRunningTask, initialMessage, isIdempotent, canCancel, null);
+	public GitJob(String userRunningTask, boolean keep) {
+		this(userRunningTask, keep, null);
 	}
 
 	/**

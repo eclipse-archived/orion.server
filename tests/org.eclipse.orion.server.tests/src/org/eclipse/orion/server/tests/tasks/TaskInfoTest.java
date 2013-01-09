@@ -12,6 +12,7 @@ package org.eclipse.orion.server.tests.tasks;
 
 import junit.framework.TestCase;
 
+import org.eclipse.orion.internal.server.core.tasks.TaskDescription;
 import org.eclipse.orion.server.core.tasks.CorruptedTaskException;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.junit.Test;
@@ -27,17 +28,7 @@ public class TaskInfoTest extends TestCase {
 		json = json.replace('}', ')');
 		boolean exceptionThrown = false;
 		try {
-			TaskInfo.fromJSON(json);
-		} catch (CorruptedTaskException e) {
-			exceptionThrown = true;
-		}
-		assertTrue(json, exceptionThrown);
-
-		//missing task id
-		json = "{\"Message\":\"Hello\", \"TaskID\":\"foo\"}";
-		exceptionThrown = false;
-		try {
-			TaskInfo.fromJSON(json);
+			TaskInfo.fromJSON(new TaskDescription(task.getUserId(), task.getId(), true), json);
 		} catch (CorruptedTaskException e) {
 			exceptionThrown = true;
 		}
@@ -51,18 +42,8 @@ public class TaskInfoTest extends TestCase {
 	@Test
 	public void testJSONRoundTrip() throws CorruptedTaskException {
 		TaskInfo info = AllTaskTests.createTestTask("test");
-		TaskInfo task2 = TaskInfo.fromJSON(info.toJSON().toString());
+		TaskInfo task2 = TaskInfo.fromJSON(new TaskDescription(info.getUserId(), info.getId(), true), info.toJSON().toString());
 		AllTaskTests.assertEqualTasks(info, task2);
-	}
-
-	@Test
-	public void testSetMessage() {
-		TaskInfo info = new TaskInfo("test", "mytask", false);
-		assertEquals("", info.getMessage());
-		info.setMessage("msg");
-		assertEquals("msg", info.getMessage());
-		info.setMessage(null);
-		assertEquals("", info.getMessage());
 	}
 
 }

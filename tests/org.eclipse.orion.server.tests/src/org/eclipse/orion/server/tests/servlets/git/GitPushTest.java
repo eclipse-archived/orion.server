@@ -15,11 +15,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.*;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
+
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jgit.api.Git;
@@ -36,9 +36,16 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Remote;
-import org.json.*;
-import org.junit.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.Assume;
+import org.junit.BeforeClass;
 import org.junit.Test;
+
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 public class GitPushTest extends GitTest {
 
@@ -409,7 +416,9 @@ public class GitPushTest extends GitTest {
 
 			request = GitRemoteTest.getGetGitRemoteRequest(remoteLocation1);
 			response = webConversation.getResponse(request);
-			remote1 = waitForTaskCompletion(response);
+			ServerStatus status = waitForTask(response);
+			assertTrue(status.toString(), status.isOK());
+			remote1 = status.getJsonData();
 			JSONArray refsArray = remote1.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 			assertEquals(2, refsArray.length());
 			JSONObject ref = refsArray.getJSONObject(0);
@@ -464,11 +473,13 @@ public class GitPushTest extends GitTest {
 
 			// clone 2 - fetch
 			request = GitFetchTest.getPostGitRemoteRequest(remoteBranchLocation2, true, false);
-			response = waitForTaskCompletionObjectResponse(webConversation.getResponse(request));
+			response = webConversation.getResponse(request);
+			status = waitForTask(response);
+			assertFalse(status.toString(), status.isOK());
 
 			// clone 2 - fetch task should fail
-			JSONObject status = new JSONObject(response.getText());
-			JSONObject result = status.has("Result") ? status.getJSONObject("Result") : status;
+			JSONObject statusJson = status.toJSON();
+			JSONObject result = statusJson.has("Result") ? statusJson.getJSONObject("Result") : statusJson;
 			assertEquals("Error", result.getString("Severity"));
 		}
 	}
@@ -521,7 +532,9 @@ public class GitPushTest extends GitTest {
 
 		// push
 		request = getPostGitRemoteRequest(remoteBranchLocation, Constants.HEAD, false, false);
-		waitForTaskCompletion(webConversation.getResponse(request));
+		response = webConversation.getResponse(request);
+		ServerStatus status = waitForTask(response);
+		assertTrue(status.toString(), status.isOK());
 	}
 
 	@Test

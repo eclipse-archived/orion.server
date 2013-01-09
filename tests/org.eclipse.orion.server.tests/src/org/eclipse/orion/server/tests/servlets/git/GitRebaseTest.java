@@ -15,14 +15,15 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.*;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.regex.Pattern;
+
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.jgit.api.*;
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.RebaseCommand.Operation;
+import org.eclipse.jgit.api.RebaseResult;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.orion.internal.server.core.IOUtilities;
@@ -34,6 +35,10 @@ import org.eclipse.orion.server.git.objects.Commit;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Test;
+
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 public class GitRebaseTest extends GitTest {
 	@Test
@@ -568,7 +573,9 @@ public class GitRebaseTest extends GitTest {
 
 			// clone1: fetch
 			request = GitFetchTest.getPostGitRemoteRequest(remoteBranchLocation1, true, false);
-			waitForTaskCompletion(webConversation.getResponse(request));
+			response = webConversation.getResponse(request);
+			ServerStatus status = waitForTask(response);
+			assertTrue(status.toString(), status.isOK());
 
 			// clone1: get remote details again
 			JSONObject remoteBranch = getRemoteBranch(gitRemoteUri1, 1, 0, Constants.MASTER);

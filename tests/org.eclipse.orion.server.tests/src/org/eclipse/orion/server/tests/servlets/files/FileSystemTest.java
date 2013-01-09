@@ -28,6 +28,7 @@ import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.tests.AbstractServerTest;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
@@ -71,9 +72,9 @@ public abstract class FileSystemTest extends AbstractServerTest {
 		WebRequest request = getCreateProjectRequest(workspaceLocation, projectName, null);
 		WebResponse response = webConversation.getResponse(request);
 		if (response.getResponseCode() != HttpURLConnection.HTTP_CREATED) {
-			String msg = "Unexpected " + response.getResponseCode() + " response creating project: " + projectName;
+			String msg = "Unexpected " + response.getResponseCode() + " response creating project" + projectName + ": " + response.getText();
 			System.out.println(msg);
-			System.out.println(response.getText());
+			LogHelper.log(new Status(IStatus.ERROR, ServerTestsActivator.PI_TESTS, msg));
 			fail(msg);
 		}
 		String workspaceId = new Path(workspaceLocation.getPath()).segment(1);

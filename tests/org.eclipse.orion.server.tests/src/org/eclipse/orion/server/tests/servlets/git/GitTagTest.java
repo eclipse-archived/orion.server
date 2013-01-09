@@ -15,19 +15,22 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 import java.io.File;
 import java.net.HttpURLConnection;
 import java.net.URI;
+
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Assume;
 import org.junit.Test;
+
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 public class GitTagTest extends GitTest {
 	@Test
@@ -186,7 +189,7 @@ public class GitTagTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, result.getInt("HttpCode"));
 			assertEquals("Error", result.getString("Severity"));
 			assertEquals("An error occured when tagging.", result.getString("Message"));
-			assertTrue(result.getString("DetailedMessage").endsWith("REJECTED"));
+			assertTrue(result.toString(), result.getString("DetailedMessage").endsWith("REJECTED"));
 
 			// tag HEAD with 'tag' again (CommitHandler) - should fail
 			request = getPutGitCommitRequest(gitHeadUri, "tag");
@@ -196,7 +199,7 @@ public class GitTagTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, result.getInt("HttpCode"));
 			assertEquals("Error", result.getString("Severity"));
 			assertEquals("An error occured when tagging.", result.getString("Message"));
-			assertTrue(result.getString("DetailedMessage").endsWith("REJECTED"));
+			assertTrue(result.toString(), result.getString("DetailedMessage").endsWith("REJECTED"));
 		}
 	}
 
@@ -276,7 +279,9 @@ public class GitTagTest extends GitTest {
 			// check current branch
 			request = getGetRequest(clone.getString(GitConstants.KEY_BRANCH));
 			response = webConversation.getResponse(request);
-			JSONObject branches = waitForTaskCompletion(response);
+			ServerStatus status = waitForTask(response);
+			assertTrue(status.toString(), status.isOK());
+			JSONObject branches = status.getJsonData();
 			assertEquals("tag_tag", GitBranchTest.getCurrentBranch(branches).getString(ProtocolConstants.KEY_NAME));
 			// log
 			JSONArray commitsArray = log(gitHeadUri);

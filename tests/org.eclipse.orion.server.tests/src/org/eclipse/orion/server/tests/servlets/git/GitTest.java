@@ -16,20 +16,44 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.*;
-import java.io.*;
-import java.net.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
+import java.io.Writer;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import junit.framework.Assert;
+
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.RebaseCommand.Operation;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.RepositoryCache;
 import org.eclipse.jgit.storage.file.FileBasedConfig;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.URIish;
@@ -38,18 +62,39 @@ import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.workspace.*;
-import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
+import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
+import org.eclipse.orion.internal.server.servlets.workspace.WebWorkspace;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.git.objects.*;
+import org.eclipse.orion.server.git.objects.Branch;
+import org.eclipse.orion.server.git.objects.Clone;
+import org.eclipse.orion.server.git.objects.Commit;
+import org.eclipse.orion.server.git.objects.ConfigOption;
+import org.eclipse.orion.server.git.objects.Remote;
+import org.eclipse.orion.server.git.objects.RemoteBranch;
 import org.eclipse.orion.server.git.objects.Status;
+import org.eclipse.orion.server.git.objects.Tag;
 import org.eclipse.orion.server.git.servlets.GitServlet;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
-import org.json.*;
-import org.junit.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.xml.sax.SAXException;
+
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.PutMethodWebRequest;
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 public abstract class GitTest extends FileSystemTest {
 
@@ -205,18 +250,6 @@ public abstract class GitTest extends FileSystemTest {
 		cfg.save();
 	}
 
-	/**
-	 * Some git commands are long running operations. This method waits until the
-	 * given task has completed, and then returns the location from the status object.
-	 */
-	protected String waitForTaskCompletion(String taskLocation) throws IOException, SAXException, JSONException {
-		return waitForTaskCompletionObject(taskLocation, testUserLogin, testUserPassword).getString(ProtocolConstants.KEY_LOCATION);
-	}
-
-	protected String waitForTaskCompletion(String taskLocation, String userName, String userPassword) throws IOException, SAXException, JSONException {
-		return waitForTaskCompletionObject(taskLocation, userName, userPassword).getString(ProtocolConstants.KEY_LOCATION);
-	}
-
 	private JSONObject waitForTaskCompletionObject(String taskLocation, String userName, String userPassword) throws IOException, SAXException, JSONException {
 		JSONObject status = null;
 		long start = System.currentTimeMillis();
@@ -226,9 +259,10 @@ public abstract class GitTest extends FileSystemTest {
 			WebResponse response = webConversation.getResponse(request);
 			String text = response.getText();
 			status = new JSONObject(text);
-			if (status.isNull("Running"))
+			if (status.isNull(TaskInfo.KEY_TYPE))
 				Assert.fail("Unexpected task format: " + text);
-			boolean running = status.getBoolean("Running");
+			String type = status.getString(TaskInfo.KEY_TYPE);
+			boolean running = "loadstart".equals(type) || "progress".equals(type);
 			if (!running)
 				break;
 			//timeout after reasonable time to avoid hanging tests
@@ -244,60 +278,30 @@ public abstract class GitTest extends FileSystemTest {
 		return status;
 	}
 
-	protected JSONObject getResult(WebResponse response) throws JSONException, IOException {
-		JSONObject jsonResponse = new JSONObject(response.getText());
-		if (jsonResponse.has("Result"))
-			return jsonResponse.getJSONObject("Result");
-		return jsonResponse;
+	protected ServerStatus waitForTask(WebResponse response) throws JSONException, IOException, SAXException {
+		return waitForTask(response, testUserLogin, testUserPassword);
 	}
 
-	protected WebResponse waitForTaskCompletionObjectResponse(WebResponse response) throws IOException, SAXException, JSONException {
-		return waitForTaskCompletionObjectResponse(response, testUserLogin, testUserPassword);
-	}
-
-	protected WebResponse waitForTaskCompletionObjectResponse(WebResponse response, String userName, String userPassword) throws IOException, SAXException, JSONException {
+	protected ServerStatus waitForTask(WebResponse response, String userName, String userPassword) throws JSONException, IOException, SAXException {
 		if (response.getResponseCode() == HttpURLConnection.HTTP_ACCEPTED) {
-			JSONObject status = null;
-			long start = System.currentTimeMillis();
-			while (true) {
-				String text = response.getText();
-				status = new JSONObject(text);
-				if (status.isNull("Running"))
-					Assert.fail("Unexpected task format: " + text);
-				boolean running = status.getBoolean("Running");
-				if (!running)
-					break;
-				//timeout after reasonable time to avoid hanging tests
-				if (System.currentTimeMillis() - start > 10000)
-					assertTrue("The operation took too long", false);
+			String text = response.getText();
+			JSONObject taskDescription = new JSONObject(text);
+			JSONObject taskResponse = waitForTaskCompletionObject(taskDescription.getString(ProtocolConstants.KEY_LOCATION), userName, userPassword);
+			ServerStatus status = ServerStatus.fromJSON(taskResponse.getString("Result"));
+			return status;
+		} else {
+			try {
+				return ServerStatus.fromJSON(response.getText());
+			} catch (Exception e) {
+				JSONObject jsonData = null;
 				try {
-					Thread.sleep(200);
-				} catch (InterruptedException e) {
+					jsonData = new JSONObject(response.getText());
+				} catch (Exception e1) {
 					//ignore
 				}
-				WebRequest request = new GetMethodWebRequest(status.getString("Location"));
-				setAuthentication(request, userName, userPassword);
-				response = webConversation.getResponse(request);
+				return new ServerStatus(response.getResponseCode() == HttpURLConnection.HTTP_OK ? IStatus.OK : IStatus.ERROR, response.getResponseCode(), response.getText(), jsonData, null);
 			}
-			return response;
 		}
-		return response;
-	}
-
-	protected JSONObject waitForTaskCompletion(WebResponse response) throws IOException, JSONException, SAXException {
-		if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
-			String text = response.getText();
-			return new JSONObject(text);
-		} else if (response.getResponseCode() == HttpURLConnection.HTTP_ACCEPTED) {
-			JSONObject taskResp = new JSONObject(response.getText());
-			JSONObject status = waitForTaskCompletionObject(taskResp.getString(ProtocolConstants.KEY_LOCATION), testUserLogin, testUserPassword);
-			assertTrue(status.has("Result"));
-			assertFalse(status.getString("Result"), status.has("Failed") && status.getBoolean("Failed"));
-			JSONObject result = status.getJSONObject("Result");
-			return result.has("JsonData") ? result.getJSONObject("JsonData") : result;
-		}
-		fail("Task failed with code " + response.getResponseCode() + ", result: " + response.getText());
-		return null;
 	}
 
 	protected static String getMethodName() {
@@ -379,18 +383,15 @@ public abstract class GitTest extends FileSystemTest {
 	protected JSONObject clone(URIish uri, IPath workspacePath, IPath filePath, String name, String kh, char[] p) throws JSONException, IOException, SAXException, CoreException {
 		// clone
 		WebRequest request = getPostGitCloneRequest(uri, workspacePath, filePath, name, kh, p);
-		WebResponse response = waitForTaskCompletionObjectResponse(webConversation.getResponse(request));
-		String cloneLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		if (cloneLocation == null) {
-			JSONObject taskResp = new JSONObject(response.getText());
-			assertTrue(taskResp.toString(), taskResp.has(ProtocolConstants.KEY_LOCATION));
-			assertFalse(taskResp.getString(TaskInfo.KEY_RESULT), taskResp.has(TaskInfo.KEY_FAILED) && taskResp.getBoolean(TaskInfo.KEY_FAILED));
-			cloneLocation = taskResp.getString(ProtocolConstants.KEY_LOCATION);
-		}
+		ServerStatus status = waitForTask(webConversation.getResponse(request));
+
+		assertTrue(status.toString(), status.isOK());
+
+		String cloneLocation = status.getJsonData().getString(ProtocolConstants.KEY_LOCATION);
 		assertNotNull(cloneLocation);
 
 		// validate the clone metadata
-		response = webConversation.getResponse(getGetRequest(cloneLocation));
+		WebResponse response = webConversation.getResponse(getGetRequest(cloneLocation));
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject clones = new JSONObject(response.getText());
 		assertTrue("Clone doesn't have children at " + cloneLocation, clones.has(ProtocolConstants.KEY_CHILDREN));
@@ -417,19 +418,15 @@ public abstract class GitTest extends FileSystemTest {
 	protected JSONObject init(IPath workspacePath, IPath filePath, String name) throws JSONException, IOException, SAXException, CoreException {
 		// no Git URL for init
 		WebRequest request = getPostGitCloneRequest(null, workspacePath, filePath, name, null, null);
-		WebResponse response = waitForTaskCompletionObjectResponse(webConversation.getResponse(request));
+		ServerStatus status = waitForTask(webConversation.getResponse(request));
 
-		String cloneLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		if (cloneLocation == null) {
-			JSONObject taskResp = new JSONObject(response.getText());
-			assertTrue(taskResp.has(ProtocolConstants.KEY_LOCATION));
-			assertFalse(taskResp.getString(TaskInfo.KEY_RESULT), taskResp.has(TaskInfo.KEY_FAILED) && taskResp.getBoolean(TaskInfo.KEY_FAILED));
-			cloneLocation = taskResp.getString(ProtocolConstants.KEY_LOCATION);
-		}
+		assertTrue(status.toString(), status.isOK());
+
+		String cloneLocation = status.getJsonData().getString(ProtocolConstants.KEY_LOCATION);
 		assertNotNull(cloneLocation);
 
 		// validate the clone metadata
-		response = webConversation.getResponse(getGetRequest(cloneLocation));
+		WebResponse response = webConversation.getResponse(getGetRequest(cloneLocation));
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject clones = new JSONObject(response.getText());
 		assertTrue("Clone doesn't have children at " + cloneLocation, clones.has(ProtocolConstants.KEY_CHILDREN));
@@ -533,7 +530,7 @@ public abstract class GitTest extends FileSystemTest {
 
 		WebRequest request = GitRemoteTest.getGetGitRemoteRequest(remoteLocation);
 		WebResponse response = webConversation.getResponse(request);
-		remote = waitForTaskCompletion(response);
+		remote = waitForTask(response).getJsonData();
 		assertNotNull(remote);
 		assertEquals(Constants.DEFAULT_REMOTE_NAME, remote.getString(ProtocolConstants.KEY_NAME));
 		assertNotNull(remote.getString(ProtocolConstants.KEY_LOCATION));
@@ -549,7 +546,7 @@ public abstract class GitTest extends FileSystemTest {
 
 		request = GitRemoteTest.getGetGitRemoteRequest(remoteBranchLocation);
 		response = webConversation.getResponse(request);
-		JSONObject remoteBranch = waitForTaskCompletion(response);
+		JSONObject remoteBranch = waitForTask(response).getJsonData();
 		assertEquals(RemoteBranch.TYPE, remoteBranch.getString(ProtocolConstants.KEY_TYPE));
 		assertNotNull(remoteBranch.optString(GitConstants.KEY_COMMIT));
 		assertNotNull(remoteBranch.optString(GitConstants.KEY_HEAD));
@@ -629,42 +626,8 @@ public abstract class GitTest extends FileSystemTest {
 	protected ServerStatus push(String gitRemoteBranchUri, String srcRef, boolean tags, boolean force) throws IOException, SAXException, JSONException {
 		assertRemoteOrRemoteBranchLocation(gitRemoteBranchUri);
 		WebRequest request = GitPushTest.getPostGitRemoteRequest(gitRemoteBranchUri, srcRef, tags, force);
-		WebResponse response = webConversation.getResponse(request);
-		if (HttpURLConnection.HTTP_ACCEPTED == response.getResponseCode()) {
-			assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
-			String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-			assertNotNull(taskLocation);
-			waitForTaskCompletion(taskLocation);
-
-			// get task details again
-			request = new GetMethodWebRequest(taskLocation);
-			request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-			setAuthentication(request);
-			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			return ServerStatus.fromJSON(new JSONObject(response.getText()).optJSONObject("Result"/*TaskInfo.KEY_RESULT*/).toString());
-		}
-		JSONObject jsonResp = new JSONObject(response.getText());
-		int status = jsonResp.has("Severity") ? parseSeverity(jsonResp) : (response.getResponseCode() == HttpURLConnection.HTTP_OK ? IStatus.OK : IStatus.ERROR);
-		String messsage = jsonResp.has("Message") ? jsonResp.getString("Message") : null;
-		JSONObject jsonData = jsonResp.has("JsonData") ? jsonResp.getJSONObject("JsonData") : jsonResp;
-		return new ServerStatus(status, response.getResponseCode(), messsage, jsonData, null);
-	}
-
-	private int parseSeverity(JSONObject status) throws JSONException {
-		if (!status.has("Severity")) {
-			return IStatus.OK;
-		}
-		if ("Error".equals(status.getString("Severity"))) {
-			return IStatus.ERROR;
-		}
-		if ("Warning".equals(status.getString("Severity"))) {
-			return IStatus.WARNING;
-		}
-		if ("Info".equals(status.getString("Severity"))) {
-			return IStatus.INFO;
-		}
-		return IStatus.OK;
+		ServerStatus status = waitForTask(webConversation.getResponse(request));
+		return status;
 	}
 
 	protected ServerStatus push(String gitRemoteUri, int size, int i, String name, String srcRef, boolean tags, String userName, String kh, byte[] privk, byte[] pubk, byte[] p, boolean shouldBeOK) throws IOException, SAXException, JSONException {
@@ -676,28 +639,13 @@ public abstract class GitTest extends FileSystemTest {
 		String remoteBranchLocation = getRemoteBranch(gitRemoteUri, size, i, name).getString(ProtocolConstants.KEY_LOCATION);
 		WebRequest request = GitPushTest.getPostGitRemoteRequest(remoteBranchLocation, srcRef, tags, force, userName, kh, privk, pubk, p);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
-		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(taskLocation);
-		String location = waitForTaskCompletion(taskLocation);
+		ServerStatus status = waitForTask(response);
 
 		if (shouldBeOK) {
-			request = new GetMethodWebRequest(location);
-			response = webConversation.getResponse(request);
-			JSONObject status = new JSONObject(response.getText());
-
-			assertFalse(status.getBoolean("Running"));
-			assertEquals(HttpURLConnection.HTTP_OK, status.getJSONObject("Result").getInt("HttpCode"));
+			assertTrue(status.toString(), status.isOK());
 		}
 
-		// get task details again
-		request = new GetMethodWebRequest(taskLocation);
-		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		setAuthentication(request);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-		return ServerStatus.fromJSON(new JSONObject(response.getText()).optJSONObject("Result"/*TaskInfo.KEY_RESULT*/).toString());
+		return status;
 	}
 
 	/**
@@ -729,18 +677,10 @@ public abstract class GitTest extends FileSystemTest {
 		// fetch
 		WebRequest request = GitFetchTest.getPostGitRemoteRequest(remoteBranchLocation, true, force, userName, kh, privk, pubk, p);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
-		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(taskLocation);
-		String location = waitForTaskCompletion(taskLocation);
+		ServerStatus status = waitForTask(response);
 
 		if (shouldBeOK) {
-			request = new GetMethodWebRequest(location);
-			response = webConversation.getResponse(request);
-			JSONObject status = new JSONObject(response.getText());
-
-			assertFalse(status.getBoolean("Running"));
-			assertEquals(HttpURLConnection.HTTP_OK, status.getJSONObject("Result").getInt("HttpCode"));
+			assertTrue(status.toString(), status.isOK());
 		}
 
 		// get remote branch details again
@@ -778,12 +718,14 @@ public abstract class GitTest extends FileSystemTest {
 
 		// fetch
 		WebRequest request = GitFetchTest.getPostGitRemoteRequest(remoteLocation, true, force);
-		waitForTaskCompletion(webConversation.getResponse(request));
+		ServerStatus status = waitForTask(webConversation.getResponse(request));
+		assertTrue(status.toString(), status.isOK());
 
 		// get remote (branch) details again
 		request = GitRemoteTest.getGetGitRemoteRequest(remoteLocation);
-		WebResponse response = webConversation.getResponse(request);
-		return waitForTaskCompletion(response);
+		status = waitForTask(webConversation.getResponse(request));
+		assertTrue(status.toString(), status.isOK());
+		return status.getJsonData();
 	}
 
 	/**
@@ -801,7 +743,9 @@ public abstract class GitTest extends FileSystemTest {
 
 		// pull
 		WebRequest request = GitPullTest.getPostGitRemoteRequest(cloneLocation, false);
-		return waitForTaskCompletion(webConversation.getResponse(request));
+		ServerStatus status = waitForTask(webConversation.getResponse(request));
+		assertTrue(status.toString(), status.isOK());
+		return status.getJsonData();
 	}
 
 	// tag
@@ -847,7 +791,9 @@ public abstract class GitTest extends FileSystemTest {
 		assertTagListUri(gitTagUri);
 		WebRequest request = getGetGitTagRequest(gitTagUri);
 		WebResponse response = webConversation.getResponse(request);
-		JSONObject tags = waitForTaskCompletion(response);
+		ServerStatus status = waitForTask(webConversation.getResponse(request));
+		assertTrue(status.toString(), status.isOK());
+		JSONObject tags = status.getJsonData();
 		assertEquals(Tag.TYPE, tags.getString(ProtocolConstants.KEY_TYPE));
 		return tags.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 	}
@@ -906,20 +852,9 @@ public abstract class GitTest extends FileSystemTest {
 		WebRequest request = GitCommitTest.getGetGitCommitRequest(gitCommitUri, false, page, pageSize);
 		setAuthentication(request);
 		WebResponse response = webConversation.getResponse(request);
-		switch (response.getResponseCode()) {
-			case HttpURLConnection.HTTP_OK :
-				assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-				return new JSONObject(response.getText());
-			case HttpURLConnection.HTTP_ACCEPTED :
-				String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-				assertNotNull(taskLocation);
-				assertEquals(taskLocation, new JSONObject(response.getText()).getString(ProtocolConstants.KEY_LOCATION));
-				JSONObject logObject = waitForTaskCompletionObject(taskLocation, testUserLogin, testUserPassword);
-				assertEquals("Generating git log completed.", logObject.getString("Message"));
-				return logObject.getJSONObject("Result").getJSONObject("JsonData");
-		}
-		fail("Unexpected response code: " + response.getResponseCode());
-		return null;
+		ServerStatus status = waitForTask(response);
+		assertTrue(status.toString(), status.isOK());
+		return status.getJsonData();
 	}
 
 	protected JSONArray log(String gitCommitUri, Integer page, Integer pageSize, boolean prevPage, boolean nextPage) throws IOException, SAXException, JSONException {
@@ -978,7 +913,9 @@ public abstract class GitTest extends FileSystemTest {
 	JSONObject listBranches(final String branchesLocation) throws IOException, SAXException, JSONException {
 		WebRequest request = getGetRequest(branchesLocation);
 		WebResponse response = webConversation.getResponse(request);
-		JSONObject branches = waitForTaskCompletion(response);
+		ServerStatus status = waitForTask(webConversation.getResponse(request));
+		assertTrue(status.toString(), status.isOK());
+		JSONObject branches = status.getJsonData();
 		assertEquals(Branch.TYPE, branches.getString(ProtocolConstants.KEY_TYPE));
 		return branches;
 	}
@@ -1274,10 +1211,12 @@ public abstract class GitTest extends FileSystemTest {
 
 	protected String clone(WebRequest request) throws JSONException, IOException, SAXException {
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
-		String taskLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		assertNotNull(taskLocation);
-		String cloneLocation = waitForTaskCompletion(taskLocation);
+		ServerStatus status = waitForTask(webConversation.getResponse(request));
+
+		assertTrue(status.toString(), status.isOK());
+
+		String cloneLocation = status.getJsonData().getString(ProtocolConstants.KEY_LOCATION);
+		assertNotNull(cloneLocation);
 
 		// validate the clone metadata
 		response = webConversation.getResponse(getGetRequest(cloneLocation));

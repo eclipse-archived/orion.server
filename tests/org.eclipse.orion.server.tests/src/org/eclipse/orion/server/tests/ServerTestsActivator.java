@@ -12,11 +12,7 @@ package org.eclipse.orion.server.tests;
 
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.server.configurator.ConfiguratorActivator;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleActivator;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.BundleException;
-import org.osgi.framework.ServiceReference;
+import org.osgi.framework.*;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.packageadmin.PackageAdmin;
 import org.osgi.util.tracker.ServiceTracker;
@@ -24,6 +20,7 @@ import org.osgi.util.tracker.ServiceTracker;
 public class ServerTestsActivator implements BundleActivator {
 	private static final String EQUINOX_HTTP_JETTY = "org.eclipse.equinox.http.jetty"; //$NON-NLS-1$
 	private static final String EQUINOX_HTTP_REGISTRY = "org.eclipse.equinox.http.registry"; //$NON-NLS-1$
+	public static final String PI_TESTS = "org.eclipse.orion.server.tests";
 
 	public static BundleContext bundleContext;
 	private static ServiceTracker<HttpService, HttpService> httpServiceTracker;

@@ -11,6 +11,7 @@
 package org.eclipse.orion.server.git.jobs;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jgit.api.*;
@@ -35,14 +36,14 @@ public class PullJob extends GitJob {
 	private String projectName;
 
 	public PullJob(String userRunningTask, CredentialsProvider credentials, Path path, boolean force) {
-		super("Pulling", userRunningTask, "Pulling...", false, false, (GitCredentialsProvider) credentials); //$NON-NLS-1$
+		super(userRunningTask, true, (GitCredentialsProvider) credentials); //$NON-NLS-1$
 		// path: file/{...}
 		this.path = path;
 		this.projectName = path.segmentCount() == 2 ? WebProject.fromId(path.segment(1)).getName() : path.lastSegment();
 		// this.force = force; // TODO: enable when JGit starts to support this option
 		setName(NLS.bind("Pulling {0}", projectName));
-		setMessage(NLS.bind("Pulling {0}...", projectName));
 		setFinalMessage(NLS.bind("Pulling {0} done", projectName));
+		setTaskExpirationTime(TimeUnit.DAYS.toMillis(7));
 	}
 
 	private IStatus doPull() throws IOException, GitAPIException, CoreException {

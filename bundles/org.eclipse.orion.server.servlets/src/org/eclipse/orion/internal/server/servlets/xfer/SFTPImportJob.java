@@ -30,23 +30,26 @@ public class SFTPImportJob extends SFTPTransferJob {
 	}
 
 	protected void doTransferDirectory(ChannelSftp channel, IPath remotePath, SftpATTRS remoteAttributes, File localFile) throws SftpException, IOException {
-		setTaskMessage(NLS.bind("Importing {0}...", host + remotePath.toString()));
 		//create the local folder on import
 		localFile.mkdirs();
 		@SuppressWarnings("unchecked")
 		Vector<LsEntry> remoteChildren = channel.ls(remotePath.toString());
+		addTaskTotal(remoteChildren.size());
 
 		//visit remote children
 		for (LsEntry remoteChild : remoteChildren) {
 			String childName = remoteChild.getFilename();
-			if (shouldSkip(childName))
+			if (shouldSkip(childName)) {
+				taskItemLoaded();
 				continue;
+			}
 			File localChild = new File(localFile, childName);
 			if (remoteChild.getAttrs().isDir()) {
 				doTransferDirectory(channel, remotePath.append(childName), remoteChild.getAttrs(), localChild);
 			} else {
 				doTransferFile(channel, remotePath.append(childName), remoteChild.getAttrs(), localChild);
 			}
+			taskItemLoaded();
 		}
 		synchronizeTimestamp(remoteAttributes, localFile);
 	}

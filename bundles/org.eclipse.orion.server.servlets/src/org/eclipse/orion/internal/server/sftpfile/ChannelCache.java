@@ -25,7 +25,7 @@ public class ChannelCache {
 	/**
 	 * Duration to keep the cache alive.
 	 */
-	private static final long CACHE_TIMEOUT = 500;
+	private static final long CACHE_TIMEOUT = 60000;
 	/**
 	 * Only cache one channel at a time for now.
 	 */
@@ -101,8 +101,10 @@ public class ChannelCache {
 			if (port < 0)
 				port = 22;//default SFTP port
 			String user = host.getUserInfo();
-			Session session = jsch.getSession(user, host.getHost(), port);
-			session.setUserInfo(new SFTPUserInfo("password", "password"));
+			String[] userParts = user.split(":");
+			Session session = jsch.getSession(userParts[0], host.getHost(), port);
+			String password = userParts.length == 2 ? userParts[1] : "password";
+			session.setUserInfo(new SFTPUserInfo(password, password));
 			//don't require host key to be in orion server's known hosts file
 			session.setConfig("StrictHostKeyChecking", "no"); //$NON-NLS-1$ //$NON-NLS-2$
 			session.connect();

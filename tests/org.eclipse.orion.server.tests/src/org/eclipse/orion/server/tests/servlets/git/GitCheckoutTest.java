@@ -13,12 +13,13 @@ package org.eclipse.orion.server.tests.servlets.git;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
+
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
@@ -27,11 +28,18 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Clone;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import com.meterware.httpunit.PutMethodWebRequest;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 public class GitCheckoutTest extends GitTest {
 
@@ -568,7 +576,9 @@ public class GitCheckoutTest extends GitTest {
 			// secondary
 			request = getGetRequest(remotesArray.getJSONObject(1).getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
-			JSONObject remote = waitForTaskCompletion(response);
+			ServerStatus status = waitForTask(response);
+			assertTrue(status.toString(), status.isOK());
+			JSONObject remote = status.getJsonData();
 
 			// checkout remote branch: secondary/branch
 			String remoteBranchName = remote.getJSONArray(ProtocolConstants.KEY_CHILDREN).getJSONObject(0).getString(ProtocolConstants.KEY_NAME);
@@ -585,7 +595,9 @@ public class GitCheckoutTest extends GitTest {
 			// origin
 			request = getGetRequest(remotesArray.getJSONObject(0).getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
-			remote = waitForTaskCompletion(response);
+			status = waitForTask(response);
+			assertTrue(status.toString(), status.isOK());
+			remote = status.getJsonData();
 
 			// checkout remote branch: origin/test
 			JSONArray remoteChildren = remote.getJSONArray(ProtocolConstants.KEY_CHILDREN);

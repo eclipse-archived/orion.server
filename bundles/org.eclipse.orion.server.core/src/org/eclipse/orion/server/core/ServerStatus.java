@@ -34,7 +34,7 @@ public class ServerStatus extends Status {
 	/**
 	 * A detailed human readable error message string.
 	 */
-	private static final String PROP_DETAILED_MESSAGE = "DetailedMessage"; //$NON-NLS-1$
+	public static final String PROP_DETAILED_MESSAGE = "DetailedMessage"; //$NON-NLS-1$
 	/**
 	 * The integer HTTP response code.
 	 */
@@ -42,7 +42,7 @@ public class ServerStatus extends Status {
 	/**
 	 * A high level error message string, suitable for display to a user.
 	 */
-	private static final String PROP_MESSAGE = "Message"; //$NON-NLS-1$
+	public static final String PROP_MESSAGE = "Message"; //$NON-NLS-1$
 	
 	/**
 	 * A property containing JSON object with data needed to handle exception

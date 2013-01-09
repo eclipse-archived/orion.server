@@ -15,14 +15,16 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.*;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
+
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileBasedConfig;
 import org.eclipse.jgit.transport.RemoteRefUpdate.Status;
@@ -32,9 +34,16 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Remote;
-import org.json.*;
-import org.junit.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.Assume;
+import org.junit.BeforeClass;
 import org.junit.Test;
+
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 public class GitFetchTest extends GitTest {
 
@@ -595,12 +604,15 @@ public class GitFetchTest extends GitTest {
 
 			//JSONObject newDetails = fetch(remoteBranchLocation);
 			request = GitFetchTest.getPostGitRemoteRequest(remoteBranchLocation, true, false);
-			waitForTaskCompletionObjectResponse(webConversation.getResponse(request));
+			response = webConversation.getResponse(request);
+			ServerStatus status = waitForTask(response);
 
 			// get remote (branch) details again
 			request = GitRemoteTest.getGetGitRemoteRequest(remoteBranchLocation);
 			response = webConversation.getResponse(request);
-			JSONObject newDetails = waitForTaskCompletion(response);
+			status = waitForTask(response);
+			assertTrue(status.toString(), status.isOK());
+			JSONObject newDetails = status.getJsonData();
 
 			// assert nothing new on 'master'
 			String newRefId = newDetails.getString(ProtocolConstants.KEY_ID);

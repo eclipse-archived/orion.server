@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PushCommand;
@@ -39,12 +40,13 @@ public class PushJob extends GitJob {
 	private boolean force;
 
 	public PushJob(String userRunningTask, CredentialsProvider credentials, Path path, String srcRef, boolean tags, boolean force) {
-		super(NLS.bind("Pushing {0}", path.segment(0)), userRunningTask, NLS.bind("Pushing {0}...", path.segment(0)), false, false, (GitCredentialsProvider) credentials);
+		super(userRunningTask, true, (GitCredentialsProvider) credentials);
 		this.path = path;
 		this.srcRef = srcRef;
 		this.tags = tags;
 		this.force = force;
 		setFinalMessage(NLS.bind("Pushing {0} done", path.segment(0)));
+		setTaskExpirationTime(TimeUnit.DAYS.toMillis(7));
 	}
 
 	private IStatus doPush() throws IOException, CoreException, URISyntaxException, GitAPIException {

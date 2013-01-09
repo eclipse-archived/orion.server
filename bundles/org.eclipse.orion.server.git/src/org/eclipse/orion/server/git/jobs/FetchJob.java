@@ -12,6 +12,7 @@ package org.eclipse.orion.server.git.jobs;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.concurrent.TimeUnit;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
@@ -37,13 +38,14 @@ public class FetchJob extends GitJob {
 	private String branch; // can be null if fetching the whole branch
 
 	public FetchJob(String userRunningTask, CredentialsProvider credentials, Path path, boolean force) {
-		super("Fetching", userRunningTask, "Fetching...", false, false, (GitCredentialsProvider) credentials);
+		super(userRunningTask, true, (GitCredentialsProvider) credentials);
 		// path: {remote}[/{branch}]/file/{...}
 		this.path = path;
 		this.remote = path.segment(0);
 		this.force = force;
 		this.branch = path.segment(1).equals("file") ? null : path.segment(1); //$NON-NLS-1$
 		builtMessages();
+		setTaskExpirationTime(TimeUnit.DAYS.toMillis(7));
 	}
 
 	private void builtMessages() {
@@ -51,12 +53,10 @@ public class FetchJob extends GitJob {
 		if (branch == null) {
 			Object[] bindings = new String[] {remote, cloneName};
 			setName(NLS.bind("Fetching {0} for {1}", bindings));
-			setMessage(NLS.bind("Fetching {0} for {1} ...", bindings));
 			setFinalMessage(NLS.bind("Fetching {0} for {1} done.", bindings));
 		} else {
 			Object[] bindings = new String[] {remote, branch, cloneName};
 			setName(NLS.bind("Fetching {0}/{1} for {2}", bindings));
-			setMessage(NLS.bind("Fetching {0}/{1} for {2} ...", bindings));
 			setFinalMessage(NLS.bind("Fetching {0}/{1} for {2} done.", bindings));
 		}
 	}
