@@ -59,6 +59,16 @@ public class TaskServlet extends OrionServlet {
 		ITaskService taskService = taskTracker.getService();
 		if (path.segmentCount() == 0) {
 			taskService.removeCompletedTasks(TaskJobHandler.getUserId(req));
+			List<TaskInfo> tasks = taskService.getTasks(TaskJobHandler.getUserId(req));
+			List<String> locations = new ArrayList<String>();
+			try {
+				for (TaskInfo task : tasks) {
+					locations.add(getJsonWithLocation(req, task).optString(ProtocolConstants.KEY_LOCATION));
+				}
+			} catch (Exception e) {
+				handleException(resp, e.getMessage(), e);
+			}
+			writeJSONResponse(req, resp, new JSONArray(locations));
 			return;
 		}
 
