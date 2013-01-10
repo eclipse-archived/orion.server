@@ -69,6 +69,7 @@ public class TaskService implements ITaskService {
 	}
 
 	private void cleanUpTasks() {
+		store.removeAllTempTasks();
 		List<TaskDescription> allTasks = store.readAllTasks();
 		for (TaskDescription taskDescription : allTasks) {
 			TaskInfo task;

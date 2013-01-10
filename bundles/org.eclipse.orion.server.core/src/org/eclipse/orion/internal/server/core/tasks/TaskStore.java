@@ -149,12 +149,19 @@ public class TaskStore {
 			LogHelper.log(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "Cannot delete file " + f.getName()));
 
 	}
+	
+	public synchronized void removeAllTempTasks(){
+		for (File userDirectory : root.listFiles()) {
+			if (userDirectory.isDirectory()) {
+				removeAllTempTasks(userDirectory);
+			}
+		}
+	}
 
-	public synchronized void removeAllTempTasks(String userId) {
-		File directory = new File(root, getUserDirectory(userId));
-		if (!directory.exists())
+	private synchronized void removeAllTempTasks(File userDirectory) {
+		if (!userDirectory.exists())
 			return;
-		directory = new File(directory, tempDirectory);
+		File directory = new File(userDirectory, tempDirectory);
 		if (!directory.exists())
 			return;
 		try {
