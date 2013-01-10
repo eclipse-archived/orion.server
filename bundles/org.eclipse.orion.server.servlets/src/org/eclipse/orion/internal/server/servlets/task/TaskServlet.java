@@ -17,10 +17,10 @@ import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.*;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.*;
@@ -91,8 +91,8 @@ public class TaskServlet extends OrionServlet {
 		}
 	}
 
-	public JSONObject getTasksList(Collection<TaskInfo> tasks, Date timestamp, HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, JSONException, URISyntaxException {
-		return getTasksList(tasks, new ArrayList<String>(), timestamp, req, resp);
+	public JSONObject getTasksList(Collection<TaskInfo> tasks, HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, JSONException, URISyntaxException {
+		return getTasksList(tasks, new ArrayList<String>(), req, resp);
 	}
 
 	private static JSONObject getJsonWithLocation(HttpServletRequest req, TaskInfo task) throws JSONException, URISyntaxException {
@@ -111,7 +111,7 @@ public class TaskServlet extends OrionServlet {
 		return taskJson;
 	}
 
-	public JSONObject getTasksList(Collection<TaskInfo> tasks, Collection<String> deletedTasks, Date timestamp, HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, JSONException, URISyntaxException {
+	public JSONObject getTasksList(Collection<TaskInfo> tasks, Collection<String> deletedTasks, HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, JSONException, URISyntaxException {
 		JSONObject result = new JSONObject();
 		JSONArray tasksList = new JSONArray();
 		for (TaskInfo task : tasks) {
@@ -119,7 +119,6 @@ public class TaskServlet extends OrionServlet {
 		}
 		result.put(ProtocolConstants.KEY_DELETED_CHILDREN, deletedTasks);
 		result.put(ProtocolConstants.KEY_CHILDREN, tasksList);
-		result.put(ProtocolConstants.KEY_LOCAL_TIMESTAMP, timestamp.getTime());
 		return result;
 	}
 
@@ -130,13 +129,10 @@ public class TaskServlet extends OrionServlet {
 		ITaskService taskService = taskTracker.getService();
 
 		if (path.segmentCount() == 0) {
-			boolean runningOnly = "true".equals(req.getParameter(KEY_RUNNING_ONLY));
-
-			Date timestamp = new Date();
 
 			List<TaskInfo> tasks = taskService.getTasks(TaskJobHandler.getUserId(req));
 			try {
-				writeJSONResponse(req, resp, getTasksList(tasks, timestamp, req, resp));
+				writeJSONResponse(req, resp, getTasksList(tasks, req, resp));
 			} catch (JSONException e) {
 				handleException(resp, e.getMessage(), e);
 				return;
@@ -161,7 +157,14 @@ public class TaskServlet extends OrionServlet {
 		TaskInfo task = taskService.getTask(TaskJobHandler.getUserId(req), taskId, keep);
 
 		if (task == null) {
-			handleException(resp, "Task not found: " + taskId, null, HttpServletResponse.SC_NOT_FOUND);
+			JSONObject errorDescription = new JSONObject();
+			try {
+				errorDescription.put("taskNotFound", taskId);
+				handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Task not found: " + taskId, errorDescription, null));
+				//				handleException(resp, "Task not found: " + taskId, null, HttpServletResponse.SC_NOT_FOUND);
+			} catch (JSONException e) {
+				handleException(resp, e.getMessage(), e);
+			}
 			return;
 		}
 		JSONObject result = task.toJSON();
