@@ -79,6 +79,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		}
 		//add children element to conform to file API structure
 		JSONArray children = new JSONArray();
+		JSONArray drives = new JSONArray();
 		for (int i = 0; i < projects.length(); i++) {
 			try {
 				WebProject project = WebProject.fromId(projects.getJSONObject(i).getString(ProtocolConstants.KEY_ID));
@@ -99,13 +100,27 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 					throw new RuntimeException(e);
 				}
 				child.put(ProtocolConstants.KEY_ID, project.getId());
-				children.put(child);
+				//remote folders are listed separately
+				boolean isLocal = true;
+				try {
+					isLocal = EFS.SCHEME_FILE.equals(project.getProjectStore().getFileSystem().getScheme());
+				} catch (CoreException e) {
+					//ignore and treat as local
+				}
+				if (isLocal) {
+					children.put(child);
+				} else {
+					//also include drives as local children for now
+					children.put(child);
+					drives.put(child);
+				}
 			} catch (JSONException e) {
 				//ignore malformed children
 			}
 		}
 		try {
 			result.put(ProtocolConstants.KEY_CHILDREN, children);
+			result.put(ProtocolConstants.KEY_DRIVES, drives);
 		} catch (JSONException e) {
 			//cannot happen
 		}

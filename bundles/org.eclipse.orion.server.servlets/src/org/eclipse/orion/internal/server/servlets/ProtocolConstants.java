@@ -107,6 +107,12 @@ public class ProtocolConstants {
 	public static final String KEY_CHILDREN = "Children"; //$NON-NLS-1$
 
 	/**
+	 * JSON representation key for an object's drives. The value's data
+	 * type is a JSON array of workspace objects.
+	 */
+	public static final String KEY_DRIVES = "Drives"; //$NON-NLS-1$
+
+	/**
 	 * JSON representation key for an object's children ids that have been deleted. The value's data
 	 * type is a JSON array of workspace objects.
 	 */
