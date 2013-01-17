@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2012 IBM Corporation and others.
+ * Copyright (c) 2010, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -107,12 +107,6 @@ public class ProtocolConstants {
 	public static final String KEY_CHILDREN = "Children"; //$NON-NLS-1$
 
 	/**
-	 * JSON representation key for an object's drives. The value's data
-	 * type is a JSON array of workspace objects.
-	 */
-	public static final String KEY_DRIVES = "Drives"; //$NON-NLS-1$
-
-	/**
 	 * JSON representation key for an object's children ids that have been deleted. The value's data
 	 * type is a JSON array of workspace objects.
 	 */
@@ -124,6 +118,14 @@ public class ProtocolConstants {
 	 * The value's data type is a String.
 	 */
 	public static final String KEY_CHILDREN_LOCATION = "ChildrenLocation"; //$NON-NLS-1$
+
+	/**
+	 * JSON representation key for the server location of an object's drives. Performing
+	 * a GET on this location should return an object containing children objects.
+	 * The value's data type is a String.
+	 */
+	public static final String KEY_DRIVE_LOCATION = "DriveLocation"; //$NON-NLS-1$
+
 	/**
 	 * JSON representation key for the location of an object's contents. This key
 	 * typically only exists when an object has both metadata and non-metadata content.
@@ -358,5 +360,10 @@ public class ProtocolConstants {
 	 * The value's data type is a String.
 	 */
 	public static final String KEY_NEXT_LOCATION = "NextLocation"; //$NON-NLS-1$
+
+	/**
+	 * The URL path of a workspace drive resource.
+	 */
+	public static final String PATH_DRIVE = "drive"; //$NON-NLS-1$
 
 }

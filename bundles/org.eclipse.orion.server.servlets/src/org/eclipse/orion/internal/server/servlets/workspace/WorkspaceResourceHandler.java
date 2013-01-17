@@ -45,12 +45,13 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 	}
 
 	/**
-	 * Returns a JSON representation of the workspace, conforming to EclipseWeb
+	 * Returns a JSON representation of the workspace, conforming to Orion
 	 * workspace API protocol.
 	 * @param workspace The workspace to store
+	 * @param requestLocation The location of the current request
 	 * @param baseLocation The base location for the workspace servlet
 	 */
-	public static JSONObject toJSON(WebWorkspace workspace, URI baseLocation) {
+	public static JSONObject toJSON(WebWorkspace workspace, URI requestLocation, URI baseLocation) {
 		JSONObject result = WebElementResourceHandler.toJSON(workspace);
 		JSONArray projects = workspace.getProjectsJSON();
 		URI workspaceLocation = URIUtil.append(baseLocation, workspace.getId());
@@ -72,14 +73,16 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		try {
 			result.put(ProtocolConstants.KEY_LOCATION, workspaceLocation);
 			result.put(ProtocolConstants.KEY_CHILDREN_LOCATION, workspaceLocation);
+			result.put(ProtocolConstants.KEY_DRIVE_LOCATION, URIUtil.append(workspaceLocation, ProtocolConstants.PATH_DRIVE));
 			result.put(ProtocolConstants.KEY_PROJECTS, projects);
 			result.put(ProtocolConstants.KEY_DIRECTORY, "true"); //$NON-NLS-1$
 		} catch (JSONException e) {
 			//can't happen because key and value are well-formed
 		}
+		//is caller requesting local children
+		boolean requestLocal = !ProtocolConstants.PATH_DRIVE.equals(URIUtil.lastSegment(requestLocation));
 		//add children element to conform to file API structure
 		JSONArray children = new JSONArray();
-		JSONArray drives = new JSONArray();
 		for (int i = 0; i < projects.length(); i++) {
 			try {
 				WebProject project = WebProject.fromId(projects.getJSONObject(i).getString(ProtocolConstants.KEY_ID));
@@ -107,12 +110,14 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 				} catch (CoreException e) {
 					//ignore and treat as local
 				}
-				if (isLocal) {
-					children.put(child);
+				if (requestLocal) {
+					//only include local children
+					if (isLocal)
+						children.put(child);
 				} else {
-					//also include drives as local children for now
-					children.put(child);
-					drives.put(child);
+					//only include remote children
+					if (!isLocal)
+						children.put(child);
 				}
 			} catch (JSONException e) {
 				//ignore malformed children
@@ -120,7 +125,6 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		}
 		try {
 			result.put(ProtocolConstants.KEY_CHILDREN, children);
-			result.put(ProtocolConstants.KEY_DRIVES, drives);
 		} catch (JSONException e) {
 			//cannot happen
 		}
@@ -378,9 +382,9 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 	private boolean handleGetWorkspaceMetadata(HttpServletRequest request, HttpServletResponse response, WebWorkspace workspace) throws IOException {
 		//we need the base location for the workspace servlet. Since this is a GET 
 		//on a single workspace we need to strip off the workspace id from the request URI
-		URI baseLocation = getURI(request);
-		baseLocation = baseLocation.resolve(""); //$NON-NLS-1$
-		OrionServlet.writeJSONResponse(request, response, toJSON(workspace, baseLocation));
+		URI requestLocation = getURI(request);
+		URI baseLocation = requestLocation.resolve(""); //$NON-NLS-1$
+		OrionServlet.writeJSONResponse(request, response, toJSON(workspace, requestLocation, baseLocation));
 		return true;
 
 	}

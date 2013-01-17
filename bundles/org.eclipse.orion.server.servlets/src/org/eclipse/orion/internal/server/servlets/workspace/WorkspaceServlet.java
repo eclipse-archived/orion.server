@@ -60,11 +60,12 @@ public class WorkspaceServlet extends OrionServlet {
 			return;
 		}
 		IPath path = new Path(pathString);
-		if (path.segmentCount() == 1) {
+		int segmentCount = path.segmentCount();
+		if (segmentCount > 0 && segmentCount < 3) {
 			WebWorkspace workspace = WebWorkspace.fromId(path.segment(0));
 			if (workspaceResourceHandler.handleRequest(req, resp, workspace))
 				return;
-		} else if (path.segmentCount() == 3) {
+		} else if (segmentCount == 3) {
 			//path format is /<wsId>/project/<projectId>
 			WebProject project = WebProject.fromId(path.segment(2));
 			if (projectResourceHandler.handleRequest(req, resp, project))
@@ -133,7 +134,8 @@ public class WorkspaceServlet extends OrionServlet {
 		try {
 			WebUser user = WebUser.fromUserId(userId);
 			WebWorkspace workspace = user.createWorkspace(workspaceName);
-			JSONObject result = WorkspaceResourceHandler.toJSON(workspace, ServletResourceHandler.getURI(req));
+			URI requestLocation = ServletResourceHandler.getURI(req);
+			JSONObject result = WorkspaceResourceHandler.toJSON(workspace, requestLocation, requestLocation);
 			writeJSONResponse(req, resp, result);
 			String resultLocation = result.optString(ProtocolConstants.KEY_LOCATION);
 			resp.setHeader(ProtocolConstants.KEY_LOCATION, resultLocation);
