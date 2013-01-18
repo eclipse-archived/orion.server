@@ -102,7 +102,6 @@ public class HostedSiteServlet extends OrionServlet {
 
 	private static final long serialVersionUID = 1L;
 
-	private static final String WORKSPACE_SERVLET_ALIAS = "/workspace"; //$NON-NLS-1$
 	private static final String FILE_SERVLET_ALIAS = "/file"; //$NON-NLS-1$
 
 	// FIXME these variables are copied from fileservlet

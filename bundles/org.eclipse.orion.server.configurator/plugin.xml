@@ -203,6 +203,10 @@
                bundle="org.eclipse.orion.client.core"
                path="/web">
          </resource-mapping>
+         <resource-mapping
+               bundle="org.eclipse.orion.client.ui"
+               path="/web">
+         </resource-mapping>
          <mime-mapping
                extension="webapp"
                mime-type="application/x-web-app-manifest+json">
