@@ -53,6 +53,10 @@ public class SynchronizedChannel {
 		return new ByteArrayInputStream(bytesOut.toByteArray());
 	}
 
+	public synchronized String getHome() throws SftpException {
+		return inner.getHome();
+	}
+
 	public synchronized boolean isConnected() {
 		return inner.isConnected() && !inner.isClosed();
 	}

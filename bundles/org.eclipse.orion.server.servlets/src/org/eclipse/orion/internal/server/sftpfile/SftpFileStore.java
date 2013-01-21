@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 IBM Corporation and others.
+ * Copyright (c) 2012, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -25,8 +25,15 @@ import org.eclipse.osgi.util.NLS;
 
 /**
  * A handle representing a single file or directory in a remote SFTP server. 
+ * This implementation defaults to using the user home directory when no
+ * initial path is specified.
  */
 public class SftpFileStore extends FileStore {
+
+	/**
+	 * Path representing user home directory.
+	 */
+	private static final Path HOME = new Path("~"); //$NON-NLS-1$
 
 	private final URI host;
 	private final IPath path;
@@ -48,14 +55,15 @@ public class SftpFileStore extends FileStore {
 
 	public SftpFileStore(URI host, IPath path) {
 		this.host = host;
-		this.path = path;
+		//if no path specified, default to user home directory
+		this.path = path.segmentCount() == 0 ? HOME : path;
 	}
 
 	@Override
 	public IFileInfo[] childInfos(int options, IProgressMonitor monitor) throws CoreException {
 		SynchronizedChannel channel = getChannel();
 		try {
-			Vector<LsEntry> children = channel.ls(path.toString());
+			Vector<LsEntry> children = channel.ls(getPathString(channel));
 			List<IFileInfo> childInfos = new ArrayList<IFileInfo>(children.size());
 			for (LsEntry child : children) {
 				if (!shouldSkip(child.getFilename()))
@@ -69,11 +77,20 @@ public class SftpFileStore extends FileStore {
 		}
 	}
 
+	private String getPathString(SynchronizedChannel channel) throws SftpException {
+		if (path.segmentCount() > 0 && path.segment(0).equals(HOME.segment(0))) {
+			IPath result = new Path(channel.getHome());
+			result = result.append(path.removeFirstSegments(1));
+			return result.toString();
+		}
+		return path.toString();
+	}
+
 	@Override
 	public String[] childNames(int options, IProgressMonitor monitor) throws CoreException {
 		SynchronizedChannel channel = getChannel();
 		try {
-			Vector<LsEntry> children = channel.ls(path.toString());
+			Vector<LsEntry> children = channel.ls(getPathString(channel));
 			List<String> childNames = new ArrayList<String>(children.size());
 			for (LsEntry child : children) {
 				if (!shouldSkip(child.getFilename()))
@@ -91,7 +108,7 @@ public class SftpFileStore extends FileStore {
 	public IFileInfo fetchInfo(int options, IProgressMonitor monitor) throws CoreException {
 		SynchronizedChannel channel = getChannel();
 		try {
-			SftpATTRS stat = channel.stat(path.toString());
+			SftpATTRS stat = channel.stat(getPathString(channel));
 			cachedInfo = attrsToInfo(getName(), stat);
 			return cachedInfo;
 		} catch (Exception e) {
@@ -127,10 +144,10 @@ public class SftpFileStore extends FileStore {
 		SynchronizedChannel channel = getChannel();
 		try {
 			try {
-				channel.mkdir(path.toString());
+				channel.mkdir(getPathString(channel));
 			} catch (SftpException sftpException) {
 				//jsch mkdir fails if dir already exists, but EFS API says we should not fail
-				SftpATTRS stat = channel.stat(path.toString());
+				SftpATTRS stat = channel.stat(getPathString(channel));
 				if (stat.isDir())
 					return this;
 				//rethrow and fail
@@ -147,7 +164,7 @@ public class SftpFileStore extends FileStore {
 	public InputStream openInputStream(int options, IProgressMonitor monitor) throws CoreException {
 		SynchronizedChannel channel = getChannel();
 		try {
-			return new BufferedInputStream(channel.get(path.toString()));
+			return new BufferedInputStream(channel.get(getPathString(channel)));
 		} catch (Exception e) {
 			ChannelCache.flush(host);
 			throw wrap(e);
@@ -158,7 +175,7 @@ public class SftpFileStore extends FileStore {
 	public OutputStream openOutputStream(int options, IProgressMonitor monitor) throws CoreException {
 		SynchronizedChannel channel = getChannel();
 		try {
-			return new BufferedOutputStream(channel.put(path.toString()));
+			return new BufferedOutputStream(channel.put(getPathString(channel)));
 		} catch (Exception e) {
 			ChannelCache.flush(host);
 			throw wrap(e);
@@ -180,9 +197,9 @@ public class SftpFileStore extends FileStore {
 			if (info == null)
 				info = fetchInfo();
 			if (info.isDirectory())
-				channel.rmdir(path.toString());
+				channel.rmdir(getPathString(channel));
 			else
-				channel.rm(path.toString());
+				channel.rm(getPathString(channel));
 		} catch (Exception e) {
 			ChannelCache.flush(host);
 			throw wrap(e);
