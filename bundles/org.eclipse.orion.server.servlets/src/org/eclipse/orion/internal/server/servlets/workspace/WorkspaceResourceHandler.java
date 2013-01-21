@@ -381,9 +381,15 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 
 	private boolean handleGetWorkspaceMetadata(HttpServletRequest request, HttpServletResponse response, WebWorkspace workspace) throws IOException {
 		//we need the base location for the workspace servlet. Since this is a GET 
-		//on a single workspace we need to strip off the workspace id from the request URI
+		//on workspace servlet we need to strip off all but the first segment of the request path
 		URI requestLocation = getURI(request);
-		URI baseLocation = requestLocation.resolve(""); //$NON-NLS-1$
+		URI baseLocation;
+		try {
+			baseLocation = new URI(requestLocation.getScheme(), requestLocation.getUserInfo(), requestLocation.getHost(), requestLocation.getPort(), Activator.LOCATION_WORKSPACE_SERVLET, null, null);
+		} catch (URISyntaxException e) {
+			//should never happen
+			throw new RuntimeException(e);
+		}
 		OrionServlet.writeJSONResponse(request, response, toJSON(workspace, requestLocation, baseLocation));
 		return true;
 
