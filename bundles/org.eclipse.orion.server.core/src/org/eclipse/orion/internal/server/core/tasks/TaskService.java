@@ -10,9 +10,12 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.core.tasks;
 
+import java.sql.Savepoint;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -24,10 +27,12 @@ import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.core.tasks.CorruptedTaskException;
+import org.eclipse.orion.server.core.tasks.ITaskCanceller;
 import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.tasks.TaskDoesNotExistException;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.core.tasks.TaskOperationException;
+import org.eclipse.orion.server.core.tasks.TaskInfo.TaskStatus;
 
 /**
  * A concrete implementation of the {@link ITaskService}.
@@ -37,6 +42,7 @@ public class TaskService implements ITaskService {
 	private TaskStore store;
 	private Timer timer;
 	private static long TEMP_TASK_LIFE = 15*60*1000; //15 minutes in milliseconds
+	private Map<TaskDescription, ITaskCanceller> taskCancellers = new HashMap<TaskDescription, ITaskCanceller>();
 
 	private class RemoveTask extends TimerTask {
 		
@@ -134,6 +140,9 @@ public class TaskService implements ITaskService {
 		TaskInfo info;
 		try {
 			info = TaskInfo.fromJSON(taskDescr, taskString);
+			if(taskCancellers.containsKey(taskDescr)){
+				info.setCancelable(true);
+			}
 			return info;
 		} catch (CorruptedTaskException e) {
 			LogHelper.log(e);
@@ -153,6 +162,7 @@ public class TaskService implements ITaskService {
 			} else {
 				timer.schedule(new RemoveTask(taskDescription, this), TEMP_TASK_LIFE);
 			}
+			taskCancellers.remove(taskDescription);
 		}
 	}
 
@@ -166,6 +176,9 @@ public class TaskService implements ITaskService {
 					continue; //Task removed in between
 				}
 				info = TaskInfo.fromJSON(taskDescr, taskString);
+				if(taskCancellers.containsKey(taskDescr)){
+					info.setCancelable(true);
+				}
 				
 				tasks.add(info);
 			} catch (CorruptedTaskException e) {
@@ -174,5 +187,27 @@ public class TaskService implements ITaskService {
 			}
 		}
 		return tasks;
+	}
+
+	public synchronized TaskInfo createTask(String userId, boolean keep, ITaskCanceller taskCanceller) {
+		TaskInfo info = createTask(userId, keep);
+		taskCancellers.put(new TaskDescription(info.getUserId(), info.getId(), info.isKeep()), taskCanceller);
+		info.setCancelable(true);
+		return info;
+	}
+
+	public synchronized void cancelTask(String userId, String id, boolean keep) throws TaskOperationException {
+		TaskDescription taskDescription = new TaskDescription(userId, id, keep);
+		ITaskCanceller taskCanceller = taskCancellers.get(taskDescription);
+		if(taskCanceller==null){
+			throw new TaskOperationException("Task does not support cancelling");
+		}
+		if(!taskCanceller.cancelTask()){
+			throw new TaskOperationException("Cancelling task failed");
+		}
+		TaskInfo task = getTask(userId, id, keep);
+		task.setStatus(TaskStatus.ABORT);
+		updateTask(task);
+		taskCancellers.remove(taskDescription);
 	}
 }

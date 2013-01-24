@@ -25,7 +25,7 @@ import org.json.JSONObject;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
-public abstract class TaskJob extends Job {
+public abstract class TaskJob extends Job implements ITaskCanceller {
 
 	private String userRunningTask;
 	private boolean keep;
@@ -40,7 +40,6 @@ public abstract class TaskJob extends Job {
 		super("Long running task job");
 		this.userRunningTask = userRunningTask;
 		this.keep = keep;
-		
 	}
 
 	protected void setFinalMessage(String message) {
@@ -88,7 +87,7 @@ public abstract class TaskJob extends Job {
 	}
 
 	public synchronized TaskInfo startTask() {
-		task = getTaskService().createTask(userRunningTask, keep);
+		task = getTaskService().createTask(userRunningTask, keep, this);
 		if (getRealResult() != null) {
 			setTaskResult(getRealResult());
 		}
@@ -108,6 +107,9 @@ public abstract class TaskJob extends Job {
 	protected abstract IStatus performJob();
 
 	private synchronized void setTaskResult(IStatus result) {
+		if(!task.isRunning()){
+			return;
+		}
 		task.done(result);
 		if(taskExpirationTime!=null){
 			task.setExpires(new Date().getTime() + taskExpirationTime);
@@ -130,8 +132,9 @@ public abstract class TaskJob extends Job {
 		}
 	}
 
-	public void cancelTask() {
+	public boolean cancelTask() {
 		this.cancel();
+		return true;
 	}
 
 	@Override
@@ -139,6 +142,9 @@ public abstract class TaskJob extends Job {
 		super.canceling();
 		if (task != null && task.isRunning()) {
 			task.done(new Status(IStatus.CANCEL, ServerConstants.PI_SERVER_CORE, "Task was canceled."));
+			if(taskExpirationTime!=null){
+				task.setExpires(new Date().getTime() + taskExpirationTime);
+			}
 			getTaskService().updateTask(task);
 		}
 		cleanUp();

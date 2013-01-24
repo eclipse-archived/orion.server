@@ -46,5 +46,20 @@ public class TaskDescription {
 	public void setKeep(boolean keep) {
 		this.keep = keep;
 	}
+
+	@Override
+	public boolean equals(Object o) {
+		if(!(o instanceof TaskDescription)){
+			return false;
+		}
+		TaskDescription td = (TaskDescription) o;
+		return (this.getUserId().equals(td.getUserId()) && (this.getTaskId().equals(td.getTaskId()) && this.isKeep()==td.isKeep()));
+	}
+
+	@Override
+	public int hashCode() {
+		return (this.getUserId().hashCode() + this.getTaskId().hashCode() + (this.isKeep() ? 1: 0))/2;
+	}
+	
 	
 }

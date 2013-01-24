@@ -22,6 +22,7 @@ import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.*;
+import org.eclipse.orion.server.core.tasks.TaskInfo.TaskStatus;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.*;
 import org.osgi.util.tracker.ServiceTracker;
@@ -50,6 +51,38 @@ public class TaskServlet extends OrionServlet {
 	@Override
 	protected void handleException(HttpServletResponse resp, String msg, Exception e) throws ServletException {
 		super.handleException(resp, msg, e);
+	}
+
+	@Override
+	protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		String pathInfo = req.getPathInfo();
+		IPath path = pathInfo == null ? Path.EMPTY : new Path(pathInfo);
+		if (path.segmentCount() != 2) {
+			handleException(resp, "Invalid request path: " + path, null, HttpServletResponse.SC_BAD_REQUEST);
+			return;
+		}
+
+		try {
+			JSONObject data = OrionServlet.readJSONRequest(req);
+			if (!"true".equals(data.getString(TaskStatus.ABORT.toString()))) {
+				handleException(resp, "Invalid request paramethers, try {" + TaskStatus.ABORT.toString() + ":true}", null, HttpServletResponse.SC_BAD_REQUEST);
+			}
+		} catch (JSONException e1) {
+			handleException(resp, "Invalid request paramethers, try {" + TaskStatus.ABORT.toString() + ":true}", e1, HttpServletResponse.SC_BAD_REQUEST);
+		}
+
+		boolean isKeep = "id".equals(path.segment(0));
+		String taskId = path.segment(1);
+		ITaskService taskService = taskTracker.getService();
+		try {
+			taskService.cancelTask(TaskJobHandler.getUserId(req), taskId, isKeep);
+		} catch (TaskDoesNotExistException e) {
+			handleException(resp, "Could not cancel task that does not exist: " + e.getTaskId(), e, HttpServletResponse.SC_NOT_FOUND);
+			return;
+		} catch (TaskOperationException e) {
+			handleException(resp, e.getMessage(), e);
+			return;
+		}
 	}
 
 	@Override

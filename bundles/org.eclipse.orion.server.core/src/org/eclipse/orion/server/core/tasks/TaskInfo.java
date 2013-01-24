@@ -30,6 +30,7 @@ public class TaskInfo {
 	public static final String KEY_TOTAL = "total";
 	public static final String KEY_EXPIRES = "expires";
 	public static final String KEY_RESULT = "Result";
+	public static final String KEY_CANCELABLE = "cancelable";
 
 	private static final String STATUS_LOADSTART = "loadstart";
 	private static final String STATUS_PROGRESS = "progress";
@@ -82,6 +83,7 @@ public class TaskInfo {
 	private int loaded = 0;
 	private int total = 0;
 	private IStatus result;
+	private boolean cancelable = false;
 
 	/**
 	 * Returns a task object based on its JSON representation. Returns
@@ -197,6 +199,14 @@ public class TaskInfo {
 	public IStatus getResult() {
 		return result;
 	}
+	
+	public boolean isCancelable() {
+		return cancelable;
+	}
+
+	public void setCancelable(boolean cancelable) {
+		this.cancelable = cancelable;
+	}
 
 	public void done(IStatus result) {
 		this.result = result;
@@ -267,6 +277,8 @@ public class TaskInfo {
 				resultObject.put(KEY_TIMESTAMP, getTimestamp());
 			if(getExpires()!=null)
 				resultObject.put(KEY_EXPIRES, getExpires());
+			if(isCancelable())
+				resultObject.put(KEY_CANCELABLE, isCancelable());
 			resultObject.put(KEY_TYPE, getStatus().toString());
 		} catch (JSONException e) {
 			//can only happen if key is null
