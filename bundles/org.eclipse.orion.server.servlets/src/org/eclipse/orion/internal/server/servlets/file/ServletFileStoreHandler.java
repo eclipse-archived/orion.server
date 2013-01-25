@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2012 IBM Corporation and others.
+ * Copyright (c) 2010, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -19,6 +19,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.filesystem.*;
 import org.eclipse.core.filesystem.provider.FileInfo;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
@@ -147,8 +148,17 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 	}
 
 	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws ServletException {
-		IFileInfo fileInfo = file.fetchInfo();
-		if (!request.getMethod().equals("PUT") && !fileInfo.exists())
+		IFileInfo fileInfo;
+		try {
+			fileInfo = file.fetchInfo(EFS.NONE, null);
+		} catch (CoreException e) {
+			if (handleAuthFailure(request, response, e))
+				return true;
+			//assume file does not exist
+			fileInfo = new FileInfo(file.getName());
+			((FileInfo) fileInfo).setExists(false);
+		}
+		if (!request.getMethod().equals("PUT") && !fileInfo.exists()) //$NON-NLS-1$
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, 404, NLS.bind("File not found: {0}", request.getPathInfo()), null));
 		if (fileInfo.isDirectory())
 			return handleDirectory(request, response, file);

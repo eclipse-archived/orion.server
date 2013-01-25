@@ -54,7 +54,7 @@ class FileHandlerV1 extends GenericFileHandler {
 	// responseWriter is used, as in some cases response should be
 	// appended to response generated earlier (i.e. multipart get)
 	protected void handleGetMetadata(HttpServletRequest request, HttpServletResponse response, Writer responseWriter, IFileStore file) throws IOException, NoSuchAlgorithmException, JSONException, CoreException {
-		JSONObject result = ServletFileStoreHandler.toJSON(file, file.fetchInfo(), getURI(request));
+		JSONObject result = ServletFileStoreHandler.toJSON(file, file.fetchInfo(EFS.NONE, null), getURI(request));
 		String etag = generateFileETag(file);
 		result.put(ProtocolConstants.KEY_ETAG, etag);
 		response.setHeader(ProtocolConstants.KEY_ETAG, etag);
@@ -121,7 +121,7 @@ class FileHandlerV1 extends GenericFileHandler {
 		while ((line = reader.readLine()) != null && !line.equals(boundary))
 			buf.append(line);
 		//merge with existing metadata
-		FileInfo info = (FileInfo) file.fetchInfo();
+		FileInfo info = (FileInfo) file.fetchInfo(EFS.NONE, null);
 		ServletFileStoreHandler.copyJSONToFileInfo(new JSONObject(buf.toString()), info);
 		file.putInfo(info, EFS.SET_ATTRIBUTES, null);
 	}

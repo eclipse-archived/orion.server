@@ -44,7 +44,7 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 
 	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, IFileStore dir) throws IOException, CoreException {
 		URI location = getURI(request);
-		JSONObject result = ServletFileStoreHandler.toJSON(dir, dir.fetchInfo(), location);
+		JSONObject result = ServletFileStoreHandler.toJSON(dir, dir.fetchInfo(EFS.NONE, null), location);
 		String depthString = request.getParameter(ProtocolConstants.PARM_DEPTH);
 		int depth = 0;
 		if (depthString != null) {
@@ -92,14 +92,14 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "File name not specified.", null));
 		int options = getCreateOptions(request);
 		IFileStore toCreate = dir.getChild(name);
-		boolean destinationExists = toCreate.fetchInfo().exists();
+		boolean destinationExists = toCreate.fetchInfo(EFS.NONE, null).exists();
 		if (!validateOptions(request, response, toCreate, destinationExists, options))
 			return true;
 		//perform the operation
 		if (performPost(request, response, requestObject, toCreate, options)) {
 			//write the response
 			URI location = URIUtil.append(getURI(request), name);
-			JSONObject result = ServletFileStoreHandler.toJSON(toCreate, toCreate.fetchInfo(), location);
+			JSONObject result = ServletFileStoreHandler.toJSON(toCreate, toCreate.fetchInfo(EFS.NONE, null), location);
 			OrionServlet.writeJSONResponse(request, response, result);
 			response.setHeader(ProtocolConstants.HEADER_LOCATION, location.toString());
 			//response code should indicate if a new resource was actually created or not
@@ -149,7 +149,7 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 				else
 					source.move(toCreate, efsOptions, null);
 			} catch (CoreException e) {
-				if (!source.fetchInfo().exists()) {
+				if (!source.fetchInfo(EFS.NONE, null).exists()) {
 					statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("Source does not exist: ", locationString), e));
 					return false;
 				}

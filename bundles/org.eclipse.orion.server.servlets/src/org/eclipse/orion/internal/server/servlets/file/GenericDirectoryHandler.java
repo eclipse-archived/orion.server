@@ -48,7 +48,7 @@ public class GenericDirectoryHandler extends ServletResourceHandler<IFileStore> 
 			writer.println("<pre>Name                          Last modified		Size  "); //$NON-NLS-1$
 			writer.println("<hr>"); //$NON-NLS-1$
 			for (IFileStore child : children) {
-				IFileInfo childInfo = child.fetchInfo();
+				IFileInfo childInfo = child.fetchInfo(EFS.NONE, null);
 				String childName = child.getName();
 				if (childInfo.isDirectory())
 					childName += '/';

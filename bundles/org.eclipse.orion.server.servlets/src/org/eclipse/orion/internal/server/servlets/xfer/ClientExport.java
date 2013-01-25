@@ -38,7 +38,7 @@ public class ClientExport {
 		IFileStore source = NewFileServlet.getFileStore(req, sourcePath);
 
 		try {
-			if (source.fetchInfo().isDirectory() && source.childNames(EFS.NONE, null).length == 0) {
+			if (source.fetchInfo(EFS.NONE, null).isDirectory() && source.childNames(EFS.NONE, null).length == 0) {
 				resp.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, "You cannot export an empty folder");
 				return;
 			}
@@ -53,7 +53,7 @@ public class ClientExport {
 	}
 
 	private void write(IFileStore source, IPath path, ZipOutputStream zout) throws IOException, CoreException {
-		IFileInfo info = source.fetchInfo();
+		IFileInfo info = source.fetchInfo(EFS.NONE, null);
 		if (info.isDirectory()) {
 			for (IFileStore child : source.childStores(EFS.NONE, null))
 				write(child, path.append(child.getName()), zout);

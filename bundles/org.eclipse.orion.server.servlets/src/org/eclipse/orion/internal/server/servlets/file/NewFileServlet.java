@@ -100,7 +100,7 @@ public class NewFileServlet extends OrionServlet {
 		if (project == null)
 			return null;
 		try {
-			return project.getProjectStore().getFileStore(path.removeFirstSegments(2));
+			return project.getProjectStore(request).getFileStore(path.removeFirstSegments(2));
 		} catch (CoreException e) {
 			LogHelper.log(new Status(IStatus.WARNING, Activator.PI_SERVER_SERVLETS, 1, NLS.bind("An error occurred when getting file store for path {0}", path), e));
 			// fallback and return null
