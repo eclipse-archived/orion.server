@@ -93,7 +93,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 				URI contentLocation = computeProjectURI(baseLocation, workspace, project);
 				child.put(ProtocolConstants.KEY_LOCATION, contentLocation);
 				try {
-					child.put(ProtocolConstants.KEY_LOCAL_TIMESTAMP, project.getProjectStore().fetchInfo().getLastModified());
+					child.put(ProtocolConstants.KEY_LOCAL_TIMESTAMP, project.getProjectStore().fetchInfo(EFS.NONE, null).getLastModified());
 				} catch (CoreException coreException) {
 					//just omit the timestamp in this case because the project location is unreachable
 				}
@@ -543,7 +543,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 			URI platformLocationURI = Activator.getDefault().getRootLocationURI();
 			IFileStore child;
 			child = EFS.getStore(platformLocationURI).getChild(project.getId());
-			if (child.fetchInfo().exists()) {
+			if (child.fetchInfo(EFS.NONE, null).exists()) {
 				child.delete(EFS.NONE, null);
 			}
 		}
