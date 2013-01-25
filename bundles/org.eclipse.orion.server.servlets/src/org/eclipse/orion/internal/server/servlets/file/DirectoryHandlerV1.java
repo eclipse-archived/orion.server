@@ -178,7 +178,7 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 		String sourcePath = getURI(request).resolve(sourceLocation).getPath();
 		//first segment is the servlet path
 		IPath path = new Path(sourcePath).removeFirstSegments(1);
-		return NewFileServlet.getFileStore(path);
+		return NewFileServlet.getFileStore(request, path);
 	}
 
 	/**
@@ -189,10 +189,11 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 		//get the slug first
 		String name = request.getHeader(ProtocolConstants.HEADER_SLUG);
 		//If the requestObject has a name then it must be used due to UTF-8 issues with names Bug 376671
-		if (requestObject.has("Name")) {
+		if (requestObject.has("Name")) { //$NON-NLS-1$
 			try {
-				name = requestObject.getString("Name");
+				name = requestObject.getString("Name"); //$NON-NLS-1$
 			} catch (JSONException e) {
+				//can't happen because we checked for key
 			}
 		}
 		//next comes the source location for a copy/move
@@ -278,6 +279,8 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 			//core exception messages are designed for end user consumption, so use message directly
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), e));
 		} catch (Exception e) {
+			if (handleAuthFailure(request, response, e))
+				return true;
 			//the exception message is probably not appropriate for end user consumption
 			LogHelper.log(e);
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An unknown failure occurred. Consult your server log or contact your system administrator.", e));

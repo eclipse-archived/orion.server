@@ -80,7 +80,7 @@ public class GitUtils {
 	 */
 	public static Map<IPath, File> getGitDirs(IPath path, Traverse traverse) throws CoreException {
 		IPath p = path.removeFirstSegments(1);//remove /file
-		IFileStore fileStore = NewFileServlet.getFileStore(p);
+		IFileStore fileStore = NewFileServlet.getFileStore(null, p);
 		if (fileStore == null)
 			return null;
 		Map<IPath, File> result = new HashMap<IPath, File>();

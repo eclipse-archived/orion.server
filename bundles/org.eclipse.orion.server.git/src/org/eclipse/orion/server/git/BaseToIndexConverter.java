@@ -47,7 +47,7 @@ public abstract class BaseToIndexConverter {
 		// /file/{projectId}[/{path}] -> /{projectId}[/{path}]
 		IPath p = filePath.removeFirstSegments(1);
 		while (p.segmentCount() > 0) {
-			IFileStore fileStore = NewFileServlet.getFileStore(p);
+			IFileStore fileStore = NewFileServlet.getFileStore(null, p);
 			if (fileStore == null)
 				return null;
 			File file;

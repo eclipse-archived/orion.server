@@ -62,7 +62,8 @@ public class GenericDirectoryHandler extends ServletResourceHandler<IFileStore> 
 			writer.println("</pre>"); //$NON-NLS-1$
 			writer.println("</body></html>"); //$NON-NLS-1$
 		} catch (Exception e) {
-			throw new ServletException(NLS.bind("Error retrieving directory: {0}", dir), e);
+			if (!handleAuthFailure(request, response, e))
+				throw new ServletException(NLS.bind("Error retrieving directory: {0}", dir), e);
 		}
 		return true;
 	}

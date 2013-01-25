@@ -72,7 +72,7 @@ class ClientImport {
 		IPath destPath = new Path(getPath()).append(getFileName());
 		try {
 			IFileStore source = EFS.getStore(new File(getStorageDirectory(), FILE_DATA).toURI());
-			IFileStore destination = NewFileServlet.getFileStore(destPath);
+			IFileStore destination = NewFileServlet.getFileStore(req, destPath);
 			source.move(destination, EFS.OVERWRITE, null);
 		} catch (CoreException e) {
 			String msg = NLS.bind("Failed to complete file transfer on {0}", destPath.toString());
@@ -112,7 +112,7 @@ class ClientImport {
 		IPath destPath = new Path(getPath());
 		try {
 			ZipFile source = new ZipFile(new File(getStorageDirectory(), FILE_DATA));
-			IFileStore destinationRoot = NewFileServlet.getFileStore(destPath);
+			IFileStore destinationRoot = NewFileServlet.getFileStore(req, destPath);
 			Enumeration<? extends ZipEntry> entries = source.entries();
 			while (entries.hasMoreElements()) {
 				ZipEntry entry = entries.nextElement();
