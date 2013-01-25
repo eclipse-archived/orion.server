@@ -175,7 +175,8 @@ class FileHandlerV1 extends GenericFileHandler {
 		} catch (JSONException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Syntax error in request", e));
 		} catch (Exception e) {
-			throw new ServletException(NLS.bind("Error retrieving file: {0}", file), e);
+			if (!handleAuthFailure(request, response, e))
+				throw new ServletException(NLS.bind("Error retrieving file: {0}", file), e);
 		}
 		return false;
 	}

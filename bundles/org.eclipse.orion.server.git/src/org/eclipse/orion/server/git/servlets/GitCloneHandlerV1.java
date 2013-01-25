@@ -156,7 +156,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			webProject.setName(cloneName);
 
 			try {
-				WorkspaceResourceHandler.computeProjectLocation(webProject, null, request.getRemoteUser(), false);
+				WorkspaceResourceHandler.computeProjectLocation(request, webProject, null, false);
 			} catch (CoreException e) {
 				//we are unable to write in the platform location!
 				String msg = NLS.bind("Server content location could not be written: {0}", Activator.getDefault().getRootLocationURI());

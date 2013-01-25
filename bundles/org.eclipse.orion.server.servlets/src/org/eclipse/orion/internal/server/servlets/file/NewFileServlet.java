@@ -59,7 +59,7 @@ public class NewFileServlet extends OrionServlet {
 			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, NLS.bind("Forbidden: {0}", path), null));
 			return;
 		}
-		IFileStore file = getFileStore(path);
+		IFileStore file = getFileStore(req, path);
 		if (file == null) {
 			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("File not found: {0}", path), null));
 			return;
@@ -88,8 +88,10 @@ public class NewFileServlet extends OrionServlet {
 	/**
 	 * Returns the store representing the file to be retrieved for the given
 	 * request or <code>null</code> if an error occurred.
+	 * @param request The current servlet request, or <code>null</code> if unknown
+	 * @param path The path of the file resource to obtain the store for
 	 */
-	public static IFileStore getFileStore(IPath path) {
+	public static IFileStore getFileStore(HttpServletRequest request, IPath path) {
 		//path format is /workspaceId/projectName/[suffix]
 		if (path.segmentCount() <= 1)
 			return null;

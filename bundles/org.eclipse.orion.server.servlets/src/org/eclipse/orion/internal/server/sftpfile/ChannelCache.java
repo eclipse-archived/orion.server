@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 IBM Corporation and others.
+ * Copyright (c) 2012, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -96,14 +96,17 @@ public class ChannelCache {
 	private static SynchronizedChannel openChannel(URI host) throws CoreException {
 		System.out.println("Opening channel to: " + host);
 		JSch jsch = new JSch();
+		int port = host.getPort();
+		if (port < 0)
+			port = 22;//default SFTP port
+		String user = host.getUserInfo();
+		//standard URI format of user:password
+		String[] userParts = user != null ? user.split(":") : null; //$NON-NLS-1$
+		if (userParts == null || userParts.length != 2)
+			throw authFail(host);
 		try {
-			int port = host.getPort();
-			if (port < 0)
-				port = 22;//default SFTP port
-			String user = host.getUserInfo();
-			String[] userParts = user.split(":");
 			Session session = jsch.getSession(userParts[0], host.getHost(), port);
-			String password = userParts.length == 2 ? userParts[1] : "password";
+			String password = userParts[1];
 			session.setUserInfo(new SFTPUserInfo(password, password));
 			//don't require host key to be in orion server's known hosts file
 			session.setConfig("StrictHostKeyChecking", "no"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -113,8 +116,18 @@ public class ChannelCache {
 			cacheExpiry = System.currentTimeMillis() + CACHE_TIMEOUT;
 			return new SynchronizedChannel(channel);
 		} catch (Exception e) {
+			//Message is hard-coded in jsch implementation and is the only way to distinguish from other errors
+			if ("Auth fail".equals(e.getMessage())) //$NON-NLS-1$
+				throw authFail(host);
 			String msg = NLS.bind("Failure connecting to {0}", host, e.getMessage());
 			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, msg, e));
 		}
+	}
+
+	/**
+	 * Returns a core exception indicating failure to authenticate with the given host.
+	 */
+	private static CoreException authFail(URI host) {
+		return new AuthCoreException(host.getHost());
 	}
 }

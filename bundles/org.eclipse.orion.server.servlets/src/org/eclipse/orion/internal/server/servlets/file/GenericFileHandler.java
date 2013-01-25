@@ -64,7 +64,8 @@ class GenericFileHandler extends ServletResourceHandler<IFileStore> {
 		try {
 			handleFileContents(request, response, file);
 		} catch (Exception e) {
-			throw new ServletException(NLS.bind("Error retrieving file: {0}", file), e);
+			if (!handleAuthFailure(request, response, e))
+				throw new ServletException(NLS.bind("Error retrieving file: {0}", file), e);
 		}
 		return true;
 	}

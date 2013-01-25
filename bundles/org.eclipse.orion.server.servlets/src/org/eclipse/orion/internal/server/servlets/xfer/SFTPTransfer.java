@@ -49,7 +49,7 @@ class SFTPTransfer {
 		this.response = resp;
 		this.statusHandler = statusHandler;
 		this.options = options;
-		initLocalPath();
+		initLocalPath(req);
 	}
 
 	public void doTransfer() throws ServletException {
@@ -105,9 +105,9 @@ class SFTPTransfer {
 		statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, httpCode, string, exception));
 	}
 
-	private void initLocalPath() {
+	private void initLocalPath(HttpServletRequest req) {
 		IPath path = new Path(request.getPathInfo());
 		//first segment is "import" or "export"
-		localRoot = NewFileServlet.getFileStore(path.removeFirstSegments(1).removeFileExtension());
+		localRoot = NewFileServlet.getFileStore(req, path.removeFirstSegments(1).removeFileExtension());
 	}
 }

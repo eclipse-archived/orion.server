@@ -12,8 +12,8 @@ package org.eclipse.orion.internal.server.servlets.workspace;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import javax.servlet.http.HttpServletRequest;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
@@ -21,6 +21,7 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.core.resources.Base64Counter;
 import org.osgi.service.prefs.BackingStoreException;
 
@@ -132,11 +133,28 @@ public class WebProject extends WebElement {
 
 	/**
 	 * Returns the server local file system location for this project's contents.
+	 * @param request The current servlet request, or <code>null</code> if not
+	 * called from within a servlet request.
 	 * @throws CoreException 
 	 */
-	public IFileStore getProjectStore() throws CoreException {
+	public IFileStore getProjectStore(HttpServletRequest request) throws CoreException {
 		URI location = getContentLocation();
 		if (location.isAbsolute()) {
+			//insert authentication details from request if available
+			if (request != null && !EFS.SCHEME_FILE.equals(location.getScheme()) && location.getUserInfo() == null) {
+				String authHead = request.getHeader("Authorization"); //$NON-NLS-1$
+				if (authHead != null && authHead.toUpperCase(Locale.ENGLISH).startsWith("BASIC")) { //$NON-NLS-1$
+					String base64 = authHead.substring(6);
+					String authString = new String(Base64.decode(base64.getBytes()));
+					if (authString.length() > 0) {
+						try {
+							location = new URI(location.getScheme(), authString, location.getHost(), location.getPort(), location.getPath(), location.getQuery(), location.getFragment());
+						} catch (URISyntaxException e) {
+							//just fall through and use original location
+						}
+					}
+				}
+			}
 			return EFS.getStore(location);
 		}
 		//there is no scheme but it could still be an absolute path
@@ -148,6 +166,14 @@ public class WebProject extends WebElement {
 		URI rootLocation = Activator.getDefault().getRootLocationURI();
 		IFileStore root = EFS.getStore(rootLocation);
 		return root.getChild(location.toString());
+	}
+
+	/**
+	 * Returns the server local file system location for this project's contents.
+	 * @throws CoreException 
+	 */
+	public IFileStore getProjectStore() throws CoreException {
+		return getProjectStore(null);
 	}
 
 }

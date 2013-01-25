@@ -78,6 +78,11 @@ public class ProtocolConstants {
 	public static final String HEADER_XFER_OPTIONS = "X-Xfer-Options"; //$NON-NLS-1$
 
 	/**
+	 * HTTP response header, indicating an authentication challenge (rfc 2617)
+	 */
+	public static final String HEADER_WWW_AUTHENTICATE = "WWW-Authenticate"; //$NON-NLS-1$
+
+	/**
 	 * Option header value indicating that this is a copy request.
 	 */
 	public static final String OPTION_COPY = "copy"; //$NON-NLS-1$
@@ -365,5 +370,4 @@ public class ProtocolConstants {
 	 * The URL path of a workspace drive resource.
 	 */
 	public static final String PATH_DRIVE = "drive"; //$NON-NLS-1$
-
 }

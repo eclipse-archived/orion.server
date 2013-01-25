@@ -136,7 +136,8 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		this.statusHandler = statusHandler;
 	}
 
-	public static void computeProjectLocation(WebProject project, String location, String user, boolean init) throws URISyntaxException, CoreException {
+	public static void computeProjectLocation(HttpServletRequest request, WebProject project, String location, boolean init) throws URISyntaxException, CoreException {
+		String user = request.getRemoteUser();
 		URI contentURI;
 		if (location == null) {
 			contentURI = generateProjectLocation(project, user);
@@ -150,7 +151,8 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 				contentURI = new File(location).toURI();
 			}
 			if (init) {
-				IFileStore child = EFS.getStore(contentURI);
+				project.setContentLocation(contentURI);
+				IFileStore child = project.getProjectStore(request);
 				child.mkdir(EFS.NONE, null);
 			}
 		}
@@ -236,8 +238,10 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, msg, null));
 		}
 		try {
-			computeProjectLocation(project, content, request.getRemoteUser(), getInit(toAdd));
+			computeProjectLocation(request, project, content, getInit(toAdd));
 		} catch (CoreException e) {
+			if (handleAuthFailure(request, response, e))
+				return true;
 			//we are unable to write in the platform location!
 			String msg = NLS.bind("Server content location could not be written: {0}", Activator.getDefault().getRootLocationURI());
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
