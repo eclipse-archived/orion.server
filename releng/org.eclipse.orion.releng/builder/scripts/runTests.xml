@@ -225,11 +225,6 @@
 	</target>
 			
 	<target name="prepareJsTests" >
-		<!-- js tests need dojo extracted -->
-		<mkdir dir="${buildDirectory}/plugins/org.dojotoolkit" />
-		<unzip dest="${buildDirectory}/plugins/org.dojotoolkit">
-			<fileset dir="${buildDirectory}/buildRepo/plugins" includes="org.dojotoolkit_*.jar" />
-		</unzip>
 		<!-- prepare zip file to send to hudson build before it can be touched by other jstests -->
 		<zip destfile="${buildDirectory}/test/${buildLabel}.zip" >
 			<fileset dir="${buildDirectory}" includes="plugins/**" />

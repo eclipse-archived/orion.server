@@ -119,14 +119,7 @@
                value="public, max-age=86400, must-revalidate">
          </init-param>
       </filter>      
-      <filter
-            alias="/org.dojotoolkit"
-            class="org.eclipse.orion.server.configurator.servlet.CacheFilter">
-         <init-param
-               name="directives"
-               value="public, max-age=86400, must-revalidate">
-         </init-param>
-      </filter>   
+ 
       <filter
             alias="/"
             class="org.eclipse.orion.server.configurator.servlet.CacheFilter">
@@ -140,7 +133,7 @@
          </init-param>
          <init-param
                name="excludeMatches"
-               value="^/(file|hosted|gitapi|requirejs|org.dojotoolkit)/.*">
+               value="^/(file|hosted|gitapi|requirejs)/.*">
          </init-param>
       </filter>
       <filter
@@ -269,46 +262,6 @@
          </resource-mapping>
       </httpcontext>
       <httpcontext
-            id="org.eclipse.orion.server.configurator.httpcontext.dojo">
-         <resource-mapping
-               bundle="org.dojotoolkit"
-               path="/">
-         </resource-mapping>
-      </httpcontext>
-      <httpcontext
-            id="org.eclipse.orion.server.configurator.httpcontext.orion.dojo">
-         <resource-mapping
-               bundle="org.eclipse.orion.client.ui"
-               path="/web/dojo">
-         </resource-mapping>
-         <resource-mapping
-               bundle="org.dojotoolkit"
-               path="/dojo">
-         </resource-mapping>
-      </httpcontext>      
-      <httpcontext
-            id="org.eclipse.orion.server.configurator.httpcontext.orion.dijit">
-         <resource-mapping
-               bundle="org.eclipse.orion.client.ui"
-               path="/web/dijit">
-         </resource-mapping>
-         <resource-mapping
-               bundle="org.dojotoolkit"
-               path="/dijit">
-         </resource-mapping>
-      </httpcontext>  
-      <httpcontext
-            id="org.eclipse.orion.server.configurator.httpcontext.orion.dojox">
-         <resource-mapping
-               bundle="org.eclipse.orion.client.ui"
-               path="/web/dojox">
-         </resource-mapping>
-         <resource-mapping
-               bundle="org.dojotoolkit"
-               path="/dojox">
-         </resource-mapping>
-      </httpcontext>
-      <httpcontext
             id="org.eclipse.orion.server.configurator.httpcontext.search">
          <resource-mapping
                bundle="org.eclipse.orion.server.search"
@@ -366,22 +319,6 @@
       <resource
             alias="/js-tests/textview"
             httpcontextId="org.eclipse.orion.server.configurator.httpcontext.textview.tests">
-      </resource>
-      <resource
-            alias="/org.dojotoolkit"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.dojo">
-      </resource>
-      <resource
-            alias="/org.dojotoolkit/dojo"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.orion.dojo">
-      </resource>
-      <resource
-            alias="/org.dojotoolkit/dijit"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.orion.dijit">
-      </resource>
-      <resource
-            alias="/org.dojotoolkit/dojox"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.orion.dojox">
       </resource>
       <resource
             alias="/profile"
