@@ -105,7 +105,20 @@ public class WebProject extends WebElement {
 	 * case where content is stored on a different server.
 	 */
 	public void setContentLocation(URI contentURI) {
-		store.put(ProtocolConstants.KEY_CONTENT_LOCATION, contentURI.toString());
+		String uriString = null;
+		if (contentURI.getUserInfo() == null) {
+			uriString = contentURI.toString();
+		} else {
+			//strip out credential information
+			try {
+				URI noCredentials = new URI(contentURI.getScheme(), null, contentURI.getHost(), contentURI.getPort(), contentURI.getPath(), contentURI.getQuery(), contentURI.getFragment());
+				uriString = noCredentials.toString();
+			} catch (URISyntaxException e) {
+				//should never happen because we are stripping info from a valid URI
+				throw new RuntimeException(e);
+			}
+		}
+		store.put(ProtocolConstants.KEY_CONTENT_LOCATION, uriString);
 	}
 
 	/**
