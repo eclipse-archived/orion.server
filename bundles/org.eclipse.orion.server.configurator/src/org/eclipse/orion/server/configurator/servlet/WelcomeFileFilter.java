@@ -75,6 +75,13 @@ public class WelcomeFileFilter implements Filter {
 					}
 				}
 
+				public void setContentLength(int len) {
+					if (len == 0) {
+						handleWelcomeFile(SC_NOT_FOUND);
+					} else
+						super.setContentLength(len);
+				}
+
 				public void setStatus(int sc) {
 					if (!handleWelcomeFile(sc)) {
 						super.setStatus(sc);
