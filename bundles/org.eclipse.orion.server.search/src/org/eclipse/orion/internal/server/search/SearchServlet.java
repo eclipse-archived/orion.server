@@ -13,10 +13,14 @@ package org.eclipse.orion.internal.server.search;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -63,7 +67,7 @@ public class SearchServlet extends OrionServlet {
 		SolrQuery query = new SolrQuery();
 		query.setParam(CommonParams.WT, "json"); //$NON-NLS-1$
 		query.setParam(CommonParams.FL, FIELD_NAMES);
-		String queryString = getEncodedParameter(req, CommonParams.Q);
+		String queryString = req.getParameter(CommonParams.Q);
 		if (queryString == null)
 			return null;
 		if (queryString.length() > 0) {
@@ -114,21 +118,6 @@ public class SearchServlet extends OrionServlet {
 		setField(req, query, CommonParams.START);
 		setField(req, query, CommonParams.SORT);
 		return query;
-	}
-
-	/**
-	 * Returns a request parameter in encoded form. Returns <code>null</code>
-	 * if no such parameter is defined or has an empty value.
-	 */
-	private String getEncodedParameter(HttpServletRequest req, String key) {
-		//TODO need to get query string unencoded - maybe use req.getQueryString() and parse manually
-		String query = req.getQueryString();
-		for (String param : query.split("&")) { //$NON-NLS-1$
-			String[] pair = param.split("=", 2); //$NON-NLS-1$
-			if (pair.length == 2 && key.equals(pair[0]))
-				return pair[1];
-		}
-		return null;
 	}
 
 	/**
