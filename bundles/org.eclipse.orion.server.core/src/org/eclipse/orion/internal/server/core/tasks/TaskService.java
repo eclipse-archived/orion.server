@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,28 +10,14 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.core.tasks;
 
-import java.sql.Savepoint;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
-
+import java.util.*;
 import javax.servlet.http.HttpServletResponse;
-
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
-import org.eclipse.orion.server.core.tasks.CorruptedTaskException;
-import org.eclipse.orion.server.core.tasks.ITaskCanceller;
-import org.eclipse.orion.server.core.tasks.ITaskService;
-import org.eclipse.orion.server.core.tasks.TaskDoesNotExistException;
-import org.eclipse.orion.server.core.tasks.TaskInfo;
-import org.eclipse.orion.server.core.tasks.TaskOperationException;
+import org.eclipse.orion.server.core.tasks.*;
 import org.eclipse.orion.server.core.tasks.TaskInfo.TaskStatus;
 
 /**
@@ -41,20 +27,20 @@ public class TaskService implements ITaskService {
 
 	private TaskStore store;
 	private Timer timer;
-	private static long TEMP_TASK_LIFE = 15*60*1000; //15 minutes in milliseconds
+	private static long TEMP_TASK_LIFE = 15 * 60 * 1000; //15 minutes in milliseconds
 	private Map<TaskDescription, ITaskCanceller> taskCancellers = new HashMap<TaskDescription, ITaskCanceller>();
 
 	private class RemoveTask extends TimerTask {
-		
+
 		private TaskDescription taskDescription;
 		private ITaskService taskService;
-		
+
 		public RemoveTask(TaskDescription taskDescription, ITaskService taskService) {
 			super();
 			this.taskDescription = taskDescription;
 			this.taskService = taskService;
 		}
-		
+
 		@Override
 		public void run() {
 			try {
@@ -65,7 +51,7 @@ public class TaskService implements ITaskService {
 				LogHelper.log(e);
 			}
 		}
-		
+
 	}
 
 	public TaskService(IPath baseLocation) {
@@ -87,7 +73,7 @@ public class TaskService implements ITaskService {
 				if (task.isRunning()) {//mark all running tasks as failed due to server restart
 					task.done(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Task could not be completed due to server restart", null));
 					updateTask(task);
-				} else if(task.getExpires()!=null){
+				} else if (task.getExpires() != null) {
 					timer.schedule(new RemoveTask(taskDescription, this), new Date(task.getExpires()));
 				}
 			} catch (CorruptedTaskException e) {
@@ -140,7 +126,7 @@ public class TaskService implements ITaskService {
 		TaskInfo info;
 		try {
 			info = TaskInfo.fromJSON(taskDescr, taskString);
-			if(taskCancellers.containsKey(taskDescr)){
+			if (taskCancellers.containsKey(taskDescr)) {
 				info.setCancelable(true);
 			}
 			return info;
@@ -154,9 +140,9 @@ public class TaskService implements ITaskService {
 	public void updateTask(TaskInfo task) {
 		TaskDescription taskDescription = new TaskDescription(task.getUserId(), task.getId(), task.isKeep());
 		store.writeTask(taskDescription, task.toJSON().toString());
-		if(!task.isRunning()){
-			if(task.isKeep()){
-				if(task.getExpires()!=null){
+		if (!task.isRunning()) {
+			if (task.isKeep()) {
+				if (task.getExpires() != null) {
 					timer.schedule(new RemoveTask(taskDescription, this), new Date(task.getExpires()));
 				}
 			} else {
@@ -172,14 +158,14 @@ public class TaskService implements ITaskService {
 			TaskInfo info;
 			try {
 				String taskString = store.readTask(taskDescr);
-				if(taskString==null){
+				if (taskString == null) {
 					continue; //Task removed in between
 				}
 				info = TaskInfo.fromJSON(taskDescr, taskString);
-				if(taskCancellers.containsKey(taskDescr)){
+				if (taskCancellers.containsKey(taskDescr)) {
 					info.setCancelable(true);
 				}
-				
+
 				tasks.add(info);
 			} catch (CorruptedTaskException e) {
 				LogHelper.log(e);
@@ -199,10 +185,10 @@ public class TaskService implements ITaskService {
 	public synchronized void cancelTask(String userId, String id, boolean keep) throws TaskOperationException {
 		TaskDescription taskDescription = new TaskDescription(userId, id, keep);
 		ITaskCanceller taskCanceller = taskCancellers.get(taskDescription);
-		if(taskCanceller==null){
+		if (taskCanceller == null) {
 			throw new TaskOperationException("Task does not support cancelling");
 		}
-		if(!taskCanceller.cancelTask()){
+		if (!taskCanceller.cancelTask()) {
 			throw new TaskOperationException("Cancelling task failed");
 		}
 		TaskInfo task = getTask(userId, id, keep);
