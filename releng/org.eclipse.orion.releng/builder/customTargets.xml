@@ -208,8 +208,8 @@ lastMapTag=${mapsTagTag}
 		</copy>
 		
 		<!-- build standalone editor -->
-		<editorOptimize name="${buildHome}/requirejs/config-js.js"/>
-   		<editorOptimize name="${buildHome}/requirejs/config-css.js"/>
+		<editorOptimize name="editor.build-js.js"/>
+		<editorOptimize name="editor.build-css.js"/>
 
 		<!-- build orion pages and plugins -->
 		<optimize pageDir="." name="index" bundle="org.eclipse.orion.client.ui" />
