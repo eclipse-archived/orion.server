@@ -175,10 +175,10 @@ lastMapTag=${mapsTagTag}
 				<!-- JavaScript language version -->
 				<arg value="-version" />
 				<arg value="180" />
-				<arg value="optimize=closure" />
 				<arg value="${requirejsHome}/dist/r.js"/>
 				<arg value="-o" />
 				<arg value="@{name}"/>
+				<arg value="optimize=closure" />
 			</java>
 		</sequential>
 	</macrodef>
