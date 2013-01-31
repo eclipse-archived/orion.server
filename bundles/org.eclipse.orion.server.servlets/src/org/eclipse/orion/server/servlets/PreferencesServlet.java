@@ -131,7 +131,11 @@ public class PreferencesServlet extends OrionServlet {
 				resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
 				return null;
 			}
-			nodePath = new Path("Users").append(username); //$NON-NLS-1$
+			if (segmentCount > 1 && "operations".equalsIgnoreCase(path.segment(1))) {
+				nodePath = new Path("Operations").append(username); //$NON-NLS-1$
+			} else {
+				nodePath = new Path("Users").append(username); //$NON-NLS-1$
+			}
 		} else if ("workspace".equalsIgnoreCase(scope) && segmentCount > 1) { //$NON-NLS-1$
 			nodePath = new Path("Workspaces"); //$NON-NLS-1$
 		} else if ("project".equalsIgnoreCase(scope) && segmentCount > 1) { //$NON-NLS-1$
