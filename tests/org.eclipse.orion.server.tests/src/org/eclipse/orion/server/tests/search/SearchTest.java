@@ -13,20 +13,40 @@ package org.eclipse.orion.server.tests.search;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import com.meterware.httpunit.*;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import org.eclipse.core.runtime.*;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.search.SearchActivator;
 import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.eclipse.orion.server.tests.servlets.xfer.TransferTest;
-import org.json.*;
-import org.junit.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.xml.sax.SAXException;
+
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.PutMethodWebRequest;
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 /**
  * Tests for the search servlet.
@@ -260,13 +280,13 @@ public class SearchTest extends FileSystemTest {
 
 		//query with location
 		String location = match.getString("Location");
-		searchResult = doSearch("oryx+Location:" + location);
+		searchResult = doSearch("oryx%2BLocation:" + location);
 		match = assertOneMatch(searchResult, "file with spaces.txt");
 
 		//same query with wildcard on location
 		location = match.getString("Location");
 		location = location.substring(0, location.length() - "file%20with%20spaces.txt".length());
-		searchResult = doSearch("oryx+Location:" + location + '*');
+		searchResult = doSearch("oryx%2BLocation:" + location + '*');
 		match = assertOneMatch(searchResult, "file with spaces.txt");
 
 	}

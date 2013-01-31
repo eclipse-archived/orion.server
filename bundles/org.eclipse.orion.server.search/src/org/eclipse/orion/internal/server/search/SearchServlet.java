@@ -11,8 +11,6 @@
 package org.eclipse.orion.internal.server.search;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -72,8 +70,8 @@ public class SearchServlet extends OrionServlet {
 			return null;
 		if (queryString.length() > 0) {
 			String processedQuery = ""; //$NON-NLS-1$
-			//divide into search terms delimited by space or plus ('+') character
-			List<String> terms = new ArrayList<String>(Arrays.asList(queryString.split("[\\s\\+]+"))); //$NON-NLS-1$
+			//divide into search terms delimited by plus ('+') character
+			List<String> terms = new ArrayList<String>(Arrays.asList(queryString.split("[\\+]+"))); //$NON-NLS-1$
 			while (!terms.isEmpty()) {
 				String term = terms.remove(0);
 				if (term.length() == 0)
@@ -88,12 +86,6 @@ public class SearchServlet extends OrionServlet {
 						processedQuery += term;
 					}
 				} else {
-					//decode the term string now
-					try {
-						term = URLDecoder.decode(term, "UTF-8");
-					} catch (UnsupportedEncodingException e) {
-						//try with encoded term
-					}
 					boolean isPhrase = term.charAt(0) == '"';
 					//solr does not lowercase queries containing wildcards
 					//see https://bugs.eclipse.org/bugs/show_bug.cgi?id=359766
