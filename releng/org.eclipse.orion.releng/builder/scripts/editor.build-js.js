@@ -27,8 +27,8 @@
 		ascii_only: true
 	},
 	wrap: {
-		start: "",
-		end: "define(['orion/editor/edit'], function(edit) {return edit;});"
+		start: "/* orion editor */ ", //start cannot be empty
+		end: " define(['orion/editor/edit'], function(edit) {return edit;});"
 	},
 	out: "built-orioneditor.js"
 })
