@@ -186,6 +186,10 @@ public class TaskService implements ITaskService {
 		TaskDescription taskDescription = new TaskDescription(userId, id, keep);
 		ITaskCanceller taskCanceller = taskCancellers.get(taskDescription);
 		if (taskCanceller == null) {
+			TaskInfo task = getTask(userId, id, keep);
+			if (task == null || task.isRunning() == false) {
+				return;
+			}
 			throw new TaskOperationException("Task does not support cancelling");
 		}
 		if (!taskCanceller.cancelTask()) {
