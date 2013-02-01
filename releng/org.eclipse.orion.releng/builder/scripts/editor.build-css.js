@@ -14,6 +14,5 @@
  
 ({
 	baseUrl: ".",
-	cssIn: "examples/editor/themes/default.css",
-	out: "built-orioneditor.css"
+	cssIn: "examples/editor/themes/default.css"
 })

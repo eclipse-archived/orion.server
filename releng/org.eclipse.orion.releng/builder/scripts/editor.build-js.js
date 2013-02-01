@@ -29,6 +29,5 @@
 	wrap: {
 		start: "/* orion editor */ ", //start cannot be empty
 		end: " define(['orion/editor/edit'], function(edit) {return edit;});"
-	},
-	out: "built-orioneditor.js"
+	}
 })
