@@ -182,6 +182,7 @@ lastMapTag=${mapsTagTag}
 				<arg value="@{scriptName}"/>
 				<arg value="optimize=closure" />
 				<arg value="out=${minifyDirectory}/@{fileName}"/>
+				<arg value="dir=" />
 			</java>
 		</sequential>
 	</macrodef>
