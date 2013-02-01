@@ -1,6 +1,7 @@
 <project name="WebIDE customTargets overrides" >
 
 	<property name="super" value="Build specific targets and properties" />
+	<property name="minifyDirectory" value="${buildDirectory}/built-js" />
 	<import file="${eclipse.pdebuild.templates}/headless-build/customTargets.xml"/>
 
 	<!-- Map files are here in the releng project -->
@@ -195,7 +196,6 @@ lastMapTag=${mapsTagTag}
 	</target>
 
 	<target name="requirejs" if="requirejsHome" >
-		<property name="minifyDirectory" value="${buildDirectory}/built-js" />
 		<delete dir="${buildDirectory}/optimization" />
 		<delete dir="${minifyDirectory}" />
 		<mkdir dir="${minifyDirectory}" />
