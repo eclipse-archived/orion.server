@@ -133,9 +133,9 @@ public class UserEmailUtil {
 			transport.sendMessage(message, message.getAllRecipients());
 			transport.close();
 		} catch (AddressException e) {
-			throw new CoreException(new Status(IStatus.ERROR, UserAdminActivator.PI_USERADMIN, "", e));
+			throw new CoreException(new Status(IStatus.ERROR, UserAdminActivator.PI_USERADMIN, e.getMessage(), e));
 		} catch (MessagingException e) {
-			throw new CoreException(new Status(IStatus.ERROR, UserAdminActivator.PI_USERADMIN, "", e));
+			throw new CoreException(new Status(IStatus.ERROR, UserAdminActivator.PI_USERADMIN, e.getMessage(), e));
 		}
 	}
 

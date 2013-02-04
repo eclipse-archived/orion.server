@@ -14,10 +14,13 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.core.runtime.*;
+import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
@@ -353,7 +356,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 				UserEmailUtil.getUtil().sendEmailConfirmation(getURI(req).resolve(PATH_EMAIL_CONFIRMATION), user);
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.INFO, HttpServletResponse.SC_OK, "Confirmation email has been sent to " + user.getEmail(), null));
 			} catch (Exception e) {
-				LogHelper.log(e);
+				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "Error while sending email" + (e.getMessage()==null ? "" : ": "+ e.getMessage()) +". See http://wiki.eclipse.org/Orion/Server_admin_guide#Email_configuration for email configuration guide."));
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Could not send confirmation email to " + user.getEmail(), null));
 			}
 		}
