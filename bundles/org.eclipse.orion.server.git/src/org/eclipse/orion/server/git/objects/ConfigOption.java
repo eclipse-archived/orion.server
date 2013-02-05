@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -27,6 +27,7 @@ import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.eclipse.orion.server.git.BaseToConfigEntryConverter;
 import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.json.*;
 
 @ResourceDescription(type = ConfigOption.TYPE)
@@ -114,7 +115,7 @@ public class ConfigOption extends GitObject {
 	@Override
 	protected URI getLocation() throws URISyntaxException {
 		String key = keySegments != null ? segmentsToKey(keySegments) : ""; //$NON-NLS-1$
-		return BaseToConfigEntryConverter.CLONE.baseToConfigEntryLocation(cloneLocation, key);
+		return BaseToConfigEntryConverter.CLONE.baseToConfigEntryLocation(cloneLocation, GitUtils.encode(key));
 	}
 
 	/**

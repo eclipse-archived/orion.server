@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -43,7 +43,7 @@ public class FetchJob extends GitJob {
 		this.path = path;
 		this.remote = path.segment(0);
 		this.force = force;
-		this.branch = path.segment(1).equals("file") ? null : path.segment(1); //$NON-NLS-1$
+		this.branch = path.segment(1).equals("file") ? null : GitUtils.decode(path.segment(1)); //$NON-NLS-1$
 		builtMessages();
 		setTaskExpirationTime(TimeUnit.DAYS.toMillis(7));
 	}

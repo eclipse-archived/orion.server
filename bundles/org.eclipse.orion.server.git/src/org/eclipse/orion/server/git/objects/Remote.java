@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -25,6 +25,7 @@ import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.eclipse.orion.server.git.BaseToRemoteConverter;
 import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
 
@@ -123,7 +124,7 @@ public class Remote extends GitObject {
 			o.put(ProtocolConstants.KEY_NAME, name.substring(Constants.R_REMOTES.length()));
 			o.put(ProtocolConstants.KEY_FULL_NAME, name);
 			o.put(ProtocolConstants.KEY_TYPE, RemoteBranch.TYPE);
-			o.put(ProtocolConstants.KEY_LOCATION, BaseToRemoteConverter.REMOVE_FIRST_2.baseToRemoteLocation(cloneLocation, "" /*short name is {remote}/{branch}*/, Repository.shortenRefName(name))); //$NON-NLS-1$
+			o.put(ProtocolConstants.KEY_LOCATION, BaseToRemoteConverter.REMOVE_FIRST_2.baseToRemoteLocation(cloneLocation, "", /*short name is {remote}/{branch}*/getName() + "/" + GitUtils.encode(newBranch))); //$NON-NLS-1$
 			children.put(o);
 		}
 

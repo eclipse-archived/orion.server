@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -106,7 +106,7 @@ public class GitBranchHandlerV1 extends AbstractGitHandler {
 						return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Branch name must be provided", null));
 					else {
 						String shortName = Repository.shortenRefName(startPoint);
-						branchName = shortName.substring(shortName.lastIndexOf("/") + 1); //$NON-NLS-1$
+						branchName = shortName.substring(shortName.indexOf("/") + 1); //$NON-NLS-1$
 					}
 				}
 

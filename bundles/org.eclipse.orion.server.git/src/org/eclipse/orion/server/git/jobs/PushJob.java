@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -35,6 +35,8 @@ import org.eclipse.osgi.util.NLS;
 public class PushJob extends GitJob {
 
 	private Path path;
+	private String remote;
+	private String branch;
 	private String srcRef;
 	private boolean tags;
 	private boolean force;
@@ -42,6 +44,8 @@ public class PushJob extends GitJob {
 	public PushJob(String userRunningTask, CredentialsProvider credentials, Path path, String srcRef, boolean tags, boolean force) {
 		super(userRunningTask, true, (GitCredentialsProvider) credentials);
 		this.path = path;
+		this.remote = path.segment(0);
+		this.branch = GitUtils.decode(path.segment(1));
 		this.srcRef = srcRef;
 		this.tags = tags;
 		this.force = force;
@@ -57,12 +61,12 @@ public class PushJob extends GitJob {
 
 		PushCommand pushCommand = git.push();
 
-		RemoteConfig remoteConfig = new RemoteConfig(git.getRepository().getConfig(), path.segment(0));
+		RemoteConfig remoteConfig = new RemoteConfig(git.getRepository().getConfig(), remote);
 		credentials.setUri(remoteConfig.getURIs().get(0));
 		pushCommand.setCredentialsProvider(credentials);
 
-		RefSpec spec = new RefSpec(srcRef + ':' + Constants.R_HEADS + path.segment(1));
-		pushCommand.setRemote(path.segment(0)).setRefSpecs(spec);
+		RefSpec spec = new RefSpec(srcRef + ':' + Constants.R_HEADS + branch);
+		pushCommand.setRemote(remote).setRefSpecs(spec);
 		if (tags)
 			pushCommand.setPushTags();
 		pushCommand.setForce(force);
@@ -73,7 +77,7 @@ public class PushJob extends GitJob {
 		for (final RemoteRefUpdate rru : pushResult.getRemoteUpdates()) {
 			final String rm = rru.getRemoteName();
 			// check status only for branch given in the URL or tags
-			if (path.segment(1).equals(Repository.shortenRefName(rm)) || rm.startsWith(Constants.R_TAGS)) {
+			if (branch.equals(Repository.shortenRefName(rm)) || rm.startsWith(Constants.R_TAGS)) {
 				RemoteRefUpdate.Status status = rru.getStatus();
 				// any status different from UP_TO_DATE and OK should generate warning
 				if (status != RemoteRefUpdate.Status.OK && status != RemoteRefUpdate.Status.UP_TO_DATE)

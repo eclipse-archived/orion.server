@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -100,7 +100,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			Repository db = new FileRepository(gitDir);
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.REMOTE_BRANCH);
 			Remote remote = new Remote(cloneLocation, db, p.segment(0));
-			RemoteBranch remoteBranch = new RemoteBranch(cloneLocation, db, remote, p.segment(1));
+			RemoteBranch remoteBranch = new RemoteBranch(cloneLocation, db, remote, GitUtils.decode(p.segment(1)));
 			if (remoteBranch.exists()) {
 				JSONObject result = remoteBranch.toJSON();
 				OrionServlet.writeJSONResponse(request, response, result);
