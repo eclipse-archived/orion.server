@@ -67,6 +67,7 @@ public class ConfigOption extends GitObject {
 
 	public ConfigOption(URI cloneLocation, Repository db, String key) throws IOException {
 		this(cloneLocation, db);
+		key = GitUtils.decode(key);
 		this.keySegments = keyToSegments(key);
 		Assert.isLegal(this.keySegments != null, "Config entry key must be provided in the following form: section[.subsection].name");
 	}
