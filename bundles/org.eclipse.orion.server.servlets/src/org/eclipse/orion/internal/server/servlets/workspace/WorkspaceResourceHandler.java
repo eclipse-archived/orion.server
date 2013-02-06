@@ -86,6 +86,24 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		for (int i = 0; i < projects.length(); i++) {
 			try {
 				WebProject project = WebProject.fromId(projects.getJSONObject(i).getString(ProtocolConstants.KEY_ID));
+				//remote folders are listed separately
+				boolean isLocal = true;
+				IFileStore projectStore = null;
+				try {
+					projectStore = project.getProjectStore();
+					isLocal = EFS.SCHEME_FILE.equals(projectStore.getFileSystem().getScheme());
+				} catch (CoreException e) {
+					//ignore and treat as local
+				}
+				if (requestLocal) {
+					//only include local children
+					if (!isLocal)
+						continue;
+				} else {
+					//only include remote children
+					if (isLocal)
+						continue;
+				}
 				JSONObject child = new JSONObject();
 				child.put(ProtocolConstants.KEY_NAME, project.getName());
 				child.put(ProtocolConstants.KEY_DIRECTORY, true);
@@ -93,7 +111,8 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 				URI contentLocation = computeProjectURI(baseLocation, workspace, project);
 				child.put(ProtocolConstants.KEY_LOCATION, contentLocation);
 				try {
-					child.put(ProtocolConstants.KEY_LOCAL_TIMESTAMP, project.getProjectStore().fetchInfo(EFS.NONE, null).getLastModified());
+					if (projectStore != null)
+						child.put(ProtocolConstants.KEY_LOCAL_TIMESTAMP, projectStore.fetchInfo(EFS.NONE, null).getLastModified());
 				} catch (CoreException coreException) {
 					//just omit the timestamp in this case because the project location is unreachable
 				}
@@ -103,22 +122,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 					throw new RuntimeException(e);
 				}
 				child.put(ProtocolConstants.KEY_ID, project.getId());
-				//remote folders are listed separately
-				boolean isLocal = true;
-				try {
-					isLocal = EFS.SCHEME_FILE.equals(project.getProjectStore().getFileSystem().getScheme());
-				} catch (CoreException e) {
-					//ignore and treat as local
-				}
-				if (requestLocal) {
-					//only include local children
-					if (isLocal)
-						children.put(child);
-				} else {
-					//only include remote children
-					if (!isLocal)
-						children.put(child);
-				}
+				children.put(child);
 			} catch (JSONException e) {
 				//ignore malformed children
 			}
