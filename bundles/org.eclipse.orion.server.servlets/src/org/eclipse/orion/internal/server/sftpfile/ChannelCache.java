@@ -17,6 +17,8 @@ import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.xfer.SFTPUserInfo;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.osgi.util.NLS;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A class that maintains a small cache of open SFTP channels.
@@ -58,17 +60,18 @@ public class ChannelCache {
 	}
 
 	public static synchronized SynchronizedChannel getChannel(URI host) throws CoreException {
-		if (isCacheAlive(host))
+		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.sftp"); //$NON-NLS-1$
+		if (isCacheAlive(host, logger))
 			return cache;
 		//discard the current channel because we will cache a new one below
 		closeChannel();
 
-		cache = openChannel(host);
+		cache = openChannel(host, logger);
 		cacheHost = host;
 		return cache;
 	}
 
-	private static boolean isCacheAlive(URI host) {
+	private static boolean isCacheAlive(URI host, Logger logger) {
 		if (cacheHost == null)
 			return false;
 		if (!cacheHost.equals(host))
@@ -76,7 +79,8 @@ public class ChannelCache {
 		if (!cache.isConnected())
 			return false;
 		if (System.currentTimeMillis() > cacheExpiry) {
-			System.out.println("Cache expired: " + host);
+			if (logger.isInfoEnabled())
+				logger.info("Cache expired: " + host); //$NON-NLS-1$ 
 			return false;
 		}
 		return true;
@@ -87,14 +91,13 @@ public class ChannelCache {
 	 */
 	public static synchronized void flush(URI host) {
 		if (host != null && host.equals(cacheHost)) {
-			System.out.println("Flushing channel to: " + host);
 			closeChannel();
 		}
-
 	}
 
-	private static SynchronizedChannel openChannel(URI host) throws CoreException {
-		System.out.println("Opening channel to: " + host);
+	private static SynchronizedChannel openChannel(URI host, Logger logger) throws CoreException {
+		if (logger.isInfoEnabled())
+			logger.info("Opening channel to: " + host); //$NON-NLS-1$ 
 		JSch jsch = new JSch();
 		int port = host.getPort();
 		if (port < 0)
