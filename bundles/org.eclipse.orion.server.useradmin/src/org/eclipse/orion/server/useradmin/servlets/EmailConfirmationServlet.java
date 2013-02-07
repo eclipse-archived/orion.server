@@ -163,7 +163,12 @@ public class EmailConfirmationServlet extends OrionServlet {
 				return;
 			}
 			if (userEmail != null && userEmail.trim().length() > 0) {
-				if (!user.isEmailConfirmed() || !userEmail.equals(user.getEmail())) {
+				if(!user.isEmailConfirmed()){
+					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User " + userLogin + " email has not been yet confirmed."
+							+ " Please follow the instructions from the confirmation email in your inbox and then reuest password reset again.");
+					return;
+				}
+				if (!userEmail.equals(user.getEmail())) {
 					resp.sendError(HttpServletResponse.SC_NOT_FOUND, "User " + userLogin + " with email " + userEmail + " does not exist.");
 					return;
 				}
@@ -175,7 +180,12 @@ public class EmailConfirmationServlet extends OrionServlet {
 			if (user != null && user.isEmailConfirmed())
 				users.add(user);
 			if (users.size() == 0) {
-				resp.sendError(HttpServletResponse.SC_NOT_FOUND, "User with email " + userEmail + " not found.");
+				if(user==null){
+					resp.sendError(HttpServletResponse.SC_NOT_FOUND, "User with email " + userEmail + " not found.");
+				}else{
+					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Email " + userLogin + " has not been yet confirmed."
+							+ " Please follow the instructions from the confirmation email in your inbox and then reuest password reset again.");
+				}
 				return;
 			}
 		}
@@ -201,8 +211,13 @@ public class EmailConfirmationServlet extends OrionServlet {
 	}
 
 	private IStatus sendPasswordResetConfirmation(User user, URI baseUri) {
-		if (user.getEmail() == null || user.getEmail().length() == 0 || !user.isEmailConfirmed()) {
+		if (user.getEmail() == null || user.getEmail().length() == 0) {
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + user.getLogin() + " doesn't have its email set. Contact administrator to reset your password.", null);
+		}
+		
+		if(!user.isEmailConfirmed()){
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Your email has not been yet confirmed."
+					+ " Please follow the instructions from the confirmation email in your inbox and then reuest password reset again.", null);
 		}
 
 		IOrionCredentialsService userAdmin = getUserAdmin();

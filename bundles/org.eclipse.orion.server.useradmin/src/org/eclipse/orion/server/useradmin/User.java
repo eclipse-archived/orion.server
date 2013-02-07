@@ -178,6 +178,7 @@ public class User implements org.osgi.service.useradmin.User {
 	}
 	
 	public boolean isEmailConfirmed(){
-		return userCredentials.getProperty(EMAIL_CONFIRMATION)==null;
+		String email = getEmail();
+		return (email!=null && email.length()>0) ? userCredentials.getProperty(EMAIL_CONFIRMATION)==null : false;
 	}
 }
