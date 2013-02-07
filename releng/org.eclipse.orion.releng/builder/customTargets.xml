@@ -216,8 +216,8 @@ lastMapTag=${mapsTagTag}
 		
 		<!-- build standalone editor -->
 		<editorOptimize  filename="built-editor.css" scriptname="editor.build-css.js" optimize="closure"/>
-		<editorOptimize  filename="built-editor-amd.min.js" scriptname="editor.build-js.js"/ optimize="closure"/>
-		<editorOptimize  filename="built-editor-amd.js" scriptname="editor.build-js.js"/ optimize="none"/>
+		<editorOptimize  filename="built-editor-amd.min.js" scriptname="editor.build-js.js" optimize="closure"/>
+		<editorOptimize  filename="built-editor-amd.js" scriptname="editor.build-js.js" optimize="none"/>
 		<editorOptimize  filename="built-editor.min.js" scriptname="editor.build.almond-js.js" optimize="closure"/>
 		<editorOptimize  filename="built-editor.js" scriptname="editor.build.almond-js.js" optimize="none"/>
 		
