@@ -167,6 +167,7 @@ lastMapTag=${mapsTagTag}
 	<macrodef name="editorOptimize" >
 		<attribute name="scriptName" />
 		<attribute name="fileName" />
+		<attribute name="optimize" />
 		<sequential>
 			<java classname="org.mozilla.javascript.tools.shell.Main" fork="true" 
 				 dir="${buildDirectory}/optimization">
@@ -180,7 +181,7 @@ lastMapTag=${mapsTagTag}
 				<arg value="${requirejsHome}/dist/r.js"/>
 				<arg value="-o" />
 				<arg value="@{scriptName}"/>
-				<arg value="optimize=closure" />
+				<arg value="optimize=@{optimize}" />
 				<arg value="out=${minifyDirectory}/@{fileName}"/>
 				<arg value="dir=" />
 			</java>
@@ -214,9 +215,12 @@ lastMapTag=${mapsTagTag}
 		</copy>
 		
 		<!-- build standalone editor -->
-		<editorOptimize  filename="built-editor.js" scriptname="editor.build-js.js"/>
-		<editorOptimize  filename="built-editor.css" scriptname="editor.build-css.js"/>
-
+		<editorOptimize  filename="built-editor.css" scriptname="editor.build-css.js" optimize="closure"/>
+		<editorOptimize  filename="built-editor-amd.min.js" scriptname="editor.build-js.js"/ optimize="closure">
+		<editorOptimize  filename="built-editor-amd.js" scriptname="editor.build-js.js"/ optimize="none">
+		<editorOptimize  filename="built-editor.min.js" scriptname="editor.build.almond-js.js" optimize="closure"/>
+		<editorOptimize  filename="built-editor.js" scriptname="editor.build.almond-js.js" optimize="none"/>
+		
 		<!-- build orion pages and plugins -->
 		<optimize pageDir="." name="index" bundle="org.eclipse.orion.client.ui" />
 		<optimize pageDir="navigate" name="table" bundle="org.eclipse.orion.client.ui" />
