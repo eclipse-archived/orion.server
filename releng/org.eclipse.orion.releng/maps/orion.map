@@ -1,8 +1,8 @@
 #client
-plugin@org.eclipse.orion.client.core=GIT,tag=v20130205-2131,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.core
-plugin@org.eclipse.orion.client.ui=GIT,tag=v20130207-1320,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.ui
-plugin@org.eclipse.orion.client.editor=GIT,tag=v20130206-2127,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.editor
-plugin@org.eclipse.orion.client.users=GIT,tag=v20130201-1438,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.users
+plugin@org.eclipse.orion.client.core=GIT,tag=v20130207-2046,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.core
+plugin@org.eclipse.orion.client.ui=GIT,tag=v20130207-2104,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.ui
+plugin@org.eclipse.orion.client.editor=GIT,tag=v20130207-2134,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.editor
+plugin@org.eclipse.orion.client.users=GIT,tag=v20130207-1922,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.users
 plugin@org.eclipse.orion.client.git=GIT,tag=v20130206-1748,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.git
 
 #server
@@ -15,7 +15,7 @@ plugin@org.eclipse.orion.server.authentication=GIT,tag=v20121031-1839,repo=git:/
 plugin@org.eclipse.orion.server.git=GIT,tag=v20130206-1754,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.git
 plugin@org.eclipse.orion.server.sshconfig.userprofile=GIT,tag=v20110420-1839,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.sshconfig.userprofile
 plugin@org.eclipse.orion.server.user.securestorage=GIT,tag=v20121109-2133,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.user.securestorage
-plugin@org.eclipse.orion.server.useradmin=GIT,tag=v20130204-1208,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.useradmin
+plugin@org.eclipse.orion.server.useradmin=GIT,tag=v20130207-1546,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.useradmin
 plugin@org.eclipse.orion.server.useradmin.xml=GIT,tag=v20110412-0931,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.useradmin.xml
 plugin@org.eclipse.orion.server.search=GIT,tag=v20130131-0030,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.search
 fragment@org.eclipse.orion.server.logback.config=GIT,tag=v20130206-2048,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.logback.config
