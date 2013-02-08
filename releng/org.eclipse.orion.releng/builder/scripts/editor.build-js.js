@@ -19,7 +19,7 @@
 		loggingLevel: 'WARNING'
 	},
 	paths: {
-        i18n: 'requirejs/i18n',
+        i18n: 'requirejs/i18n'
 	},
 	name: "orion/editor/edit",
 	preserveLicenseComments: false,

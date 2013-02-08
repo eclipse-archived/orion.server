@@ -203,6 +203,7 @@ lastMapTag=${mapsTagTag}
 		<mkdir dir="${minifyDirectory}" />
 		<copy file="${builder}/scripts/orion.build.js" tofile="${buildDirectory}/optimization/orion.build.js" overwrite="true"/>
 		<copy file="${builder}/scripts/editor.build-js.js" tofile="${buildDirectory}/optimization/editor.build-js.js" overwrite="true"/>
+		<copy file="${builder}/scripts/editor.build.almond-js.js" tofile="${buildDirectory}/optimization/editor.build.almond-js.js" overwrite="true"/>
 		<copy file="${builder}/scripts/editor.build-css.js" tofile="${buildDirectory}/optimization/editor.build-css.js" overwrite="true"/>
 
 		<!-- Stage files for optimization -->
