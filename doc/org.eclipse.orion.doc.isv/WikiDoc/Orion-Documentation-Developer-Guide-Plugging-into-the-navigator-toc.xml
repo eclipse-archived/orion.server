@@ -6,20 +6,15 @@
 		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_navigator/orion-navigate-command.html#Service_attributes" label="Service attributes"></topic>
 		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_navigator/orion-navigate-command.html#Example" label="Example"></topic>
 	</topic>
-	<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_navigator/orion-navigate-content.html" label="orion.navigate.content">
-		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_navigator/orion-navigate-content.html#Service_methods_2" label="Service methods"></topic>
-		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_navigator/orion-navigate-content.html#Service_attributes_2" label="Service attributes"></topic>
-		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_navigator/orion-navigate-content.html#Example_2" label="Example"></topic>
-	</topic>
 	<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_navigator/orion-navigate-openWith.html" label="orion.navigate.openWith">
-		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_navigator/orion-navigate-openWith.html#Service_methods_3" label="Service methods"></topic>
-		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_navigator/orion-navigate-openWith.html#Service_attributes_3" label="Service attributes"></topic>
-		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_navigator/orion-navigate-openWith.html#Example_3" label="Example"></topic>
+		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_navigator/orion-navigate-openWith.html#Service_methods_2" label="Service methods"></topic>
+		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_navigator/orion-navigate-openWith.html#Service_attributes_2" label="Service attributes"></topic>
+		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_navigator/orion-navigate-openWith.html#Example_2" label="Example"></topic>
 	</topic>
 	<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_navigator/orion-core-contenttype.html" label="orion.core.contenttype">
-		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_navigator/orion-core-contenttype.html#Service_attributes_4" label="Service attributes"></topic>
-		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_navigator/orion-core-contenttype.html#Service_methods_4" label="Service methods"></topic>
-		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_navigator/orion-core-contenttype.html#Example_4" label="Example"></topic>
+		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_navigator/orion-core-contenttype.html#Service_attributes_3" label="Service attributes"></topic>
+		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_navigator/orion-core-contenttype.html#Service_methods_3" label="Service methods"></topic>
+		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_navigator/orion-core-contenttype.html#Example_3" label="Example"></topic>
 	</topic>
 	<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_navigator/Updating-this-document.html" label="Updating this document"></topic>
 </toc>

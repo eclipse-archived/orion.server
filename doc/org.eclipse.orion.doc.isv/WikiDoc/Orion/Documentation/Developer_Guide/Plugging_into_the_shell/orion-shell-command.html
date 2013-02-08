@@ -35,7 +35,7 @@
 		<p>Implementations of <tt>orion.shell.command</tt> may define the following function:</p>
 		<dl>
 			<dt>callback(args)</dt>
-			<dd>Takes the user-supplied command-line arguments (if any) as an argument, and optionally returns an HTML response string.</dd>
+			<dd>Takes the user-supplied command-line arguments (if any) as an argument, and optionally returns a response string in plain text (no HTML is allowed).</dd>
 		</dl>
 		<p>The only context where a contributed command would not define a service method is to assist with the contribution of sub-commands.  For example, to contribute commands "tar create" and "tar extract", a parent command "tar" without a service method must first be contributed.</p>
 		<h2 id="Service_attributes">Service attributes</h2>
@@ -75,9 +75,13 @@
 		<h2 id="Example">Example</h2>
 		<p>The following sample plug-in contributes an "echo" command to the Shell:</p>
 		<pre>
+&lt;html&gt;
+&lt;head&gt;
+&lt;script src="http://orionhub.org/orion/plugin.js"&gt;&lt;/script&gt;
+&lt;script&gt;
  var serviceImpl = {
    callback: function(args) {
-     return "&lt;b&gt;" + args.string + "&lt;\/b&gt;";
+     return "'" + args.string + "'";
    }
  };
  var serviceProperties = { 
@@ -89,12 +93,15 @@
      description: "The string to echo back"
    }]
  };
- var provider = new eclipse.PluginProvider();
+ var provider = new orion.PluginProvider();
  provider.registerServiceProvider(
    "orion.shell.command",
    serviceImpl,
    serviceProperties);
  provider.connect();
+&lt;/script&gt;
+&lt;/head&gt;
+&lt;/html&gt;
 </pre>
 		<p>When this plug-in is installed the user can use the "echo" command in the Shell.  In the first image shown below a user is in the process of entering an echo command, and is shown a hint that argument "string" (the string to echo) is expected.</p>
 		<p>

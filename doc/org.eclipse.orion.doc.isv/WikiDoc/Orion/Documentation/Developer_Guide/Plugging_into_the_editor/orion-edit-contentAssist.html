@@ -68,9 +68,7 @@
 			<dd><b>escapePosition</b> An optional <tt>Number</tt> indicating the offset the cursor should have in the document after the completion is inserted. If this value is not supplied, the cursor will be positioned at the end of the inserted text.</dd>
 			<dd><b>style</b> Styling information for the proposal.  The available styles are: default (no styling, also used if this property is not present), emphasis (proposal displayed in bold), noemphasis (proposal is greyed out with a colored background), hr (proposal displayed as a <hr/> and is not selectable by up and down arrows).</dd>
 		</dl>
-		<p>Alternatively, a 
-			<a href="http://dojotoolkit.org/documentation/tutorials/1.6/promises/" target="orion_external">promise</a> may be returned, which allows the suggestions to be computed asynchronously.
-		</p>
+		<p>Alternatively, a Deferred may be returned, which allows the suggestions to be computed asynchronously.</p>
 		<h2 id="Service_attributes_2">Service attributes</h2>
 		<p>Implementations of <tt>orion.edit.contentAssist</tt> must define the following attributes:</p>
 		<dl>

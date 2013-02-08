@@ -4,7 +4,12 @@
 	<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_editor/orion-edit-command.html" label="orion.edit.command">
 		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_editor/orion-edit-command.html#Service_methods" label="Service methods"></topic>
 		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_editor/orion-edit-command.html#Service_attributes" label="Service attributes"></topic>
-		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_editor/orion-edit-command.html#Examples" label="Examples"></topic>
+		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_editor/orion-edit-command.html#Examples" label="Examples">
+			<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_editor/orion-edit-command.html#Replacing_the_selection" label="Replacing the selection"></topic>
+			<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_editor/orion-edit-command.html#Replacing_the_editor_contents" label="Replacing the editor contents"></topic>
+			<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_editor/orion-edit-command.html#Delegating_a_UI_before_manipulating_the_editor" label="Delegating a UI before manipulating the editor"></topic>
+			<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_editor/orion-edit-command.html#Google_Picker_example" label="Google Picker example"></topic>
+		</topic>
 	</topic>
 	<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_editor/orion-edit-contentAssist.html" label="orion.edit.contentAssist">
 		<topic href="WikiDoc/Orion/Documentation/Developer_Guide/Plugging_into_the_editor/orion-edit-contentAssist.html#Service_methods_2" label="Service methods"></topic>

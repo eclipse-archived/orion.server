@@ -51,7 +51,9 @@
      service.confirm(message, function(doit) { /* perform deletion */});
   }
 </pre>
-		<p>The <tt>getService</tt> function takes the service name as argument, and returns either the service instance or null. For this example we're assuming the service is present however especially when using services dynamically contributed from a plugin you should check for null. One particularly important point to emphasize is that <i>all</i> service calls through the service registry are <i>asynchronous</i> and return a 
+		<p>The <tt>getService</tt> function takes the service name as argument, and returns either the service instance or null. For this example we're assuming the service is present. However &mdash; especially when using services dynamically contributed from a plugin &mdash; you should check for <code>null</code>. One particularly important point to emphasize is that 
+			<i>all</i> service calls through the service registry are 
+			<i>asynchronous</i> and return a 
 			<a href="http://wiki.commonjs.org/wiki/Promises/A" target="orion_external">promise</a> object (such as a Dojo 
 			<a href="http://dojotoolkit.org/api/1.6/dojo/Deferred" target="orion_external">Deferred</a>). You cannot assume that the service function will have been executed by the time the service function returns and instead must chain any follow-on calls to the "promise". This allows the service implementation to employ a variety of long-running techniques to execute the service, such as calls to a remote web service, cross-domain postMessage, HTML5 web workers, etc.
 		</p>
