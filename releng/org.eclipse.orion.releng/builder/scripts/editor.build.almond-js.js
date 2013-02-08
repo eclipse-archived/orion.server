@@ -23,6 +23,7 @@
         i18n: 'requirejs/i18n',
 	},
 	name: "almond",
+	include: "orion/editor/edit",
 	preserveLicenseComments: false,
 	uglify: {
 		ascii_only: true
