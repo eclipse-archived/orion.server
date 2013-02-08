@@ -15,4 +15,7 @@
 	<topic label = "Server administration guide">
 		<link toc="WikiDoc/Orion-Server-admin-guide-toc.xml" />
 	</topic>
+	<topic label = "Getting started with Orion on Node">
+		<link toc="WikiDoc/Orion-Getting-Started-with-Orion-node-toc.xml" />
+	</topic>
 </toc>

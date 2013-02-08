@@ -67,6 +67,7 @@
     		<path name="Orion/Documentation/Developer_Guide/Plugging_into_the_shell" title="Plugging into the shell" generateToc="true"/>
     		<path name="Orion/Server_API" title="Server API" generateToc="true"/>
     		<path name="Orion/Server_admin_guide" title="Server administration guide" generateToc="true"/>
+    		<path name="Orion/Getting_Started_with_Orion_node" title="Getting started with Orion on Node" generateToc="true"/>
 			<stylesheet url="book.css"/>
     		<pageAppendum>
 
