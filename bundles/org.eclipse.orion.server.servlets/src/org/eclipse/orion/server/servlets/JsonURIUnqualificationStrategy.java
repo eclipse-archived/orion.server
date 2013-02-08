@@ -128,7 +128,7 @@ public abstract class JsonURIUnqualificationStrategy {
 		URI simpleURI = uri;
 		int uriPort = uri.getPort();
 		if (uriPort == -1) {
-			uriPort = 80;
+			uriPort = getDefaultPort(uri.getScheme());
 		}
 		if (scheme.equals(uri.getScheme()) && hostname.equals(uri.getHost()) && port == uriPort) {
 			try {
@@ -138,5 +138,15 @@ public abstract class JsonURIUnqualificationStrategy {
 			}
 		}
 		return simpleURI;
+	}
+
+	private static int getDefaultPort(String scheme) {
+		if ("http".equalsIgnoreCase(scheme)) {
+			return 80;
+		}
+		if ("https".equalsIgnoreCase(scheme)) {
+			return 443;
+		}
+		return -1;
 	}
 }
