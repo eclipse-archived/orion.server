@@ -1,5 +1,5 @@
 #******************************************************************************
-# Copyright (c) 2010, 2011 IBM Corporation and others.
+# Copyright (c) 2010, 2013 IBM Corporation and others.
 # All rights reserved. This program and the accompanying materials
 # are made available under the terms of the Eclipse Public License v1.0
 # which accompanies this distribution, and is available at
@@ -10,7 +10,6 @@
 #*******************************************************************************
 #!/bin/bash
 #
-
 
 serverHome=/home/admin/current
 
@@ -78,6 +77,10 @@ sed -i '/^-console$/ d' $serverHome/eclipse/orion.ini
 
 #copy orion.conf file into server
 cp $serverHome/orion.conf $serverHome/eclipse/orion.conf
+
+#copy old server-status.json file into new server to preserve server messages
+echo Copying old server status messages into new server
+cp -f $serverHome/$oldBuildDir/plugins/org.eclipse.orion.client.ui_*/web/server-status.json $serverHome/eclipse/plugins/org.eclipse.orion.client.ui_*/web/server-status.json
 
 #start new server
 echo Starting server
