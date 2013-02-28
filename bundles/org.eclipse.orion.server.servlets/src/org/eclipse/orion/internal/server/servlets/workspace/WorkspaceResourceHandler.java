@@ -164,7 +164,8 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 	}
 
 	/**
-	 * Generates a file system location for newly created project
+	 * Generates a file system location for newly created project. Creates a new
+	 * folder in the file system and ensures it is empty.
 	 */
 	private static URI generateProjectLocation(WebProject project, String user) throws CoreException, URISyntaxException {
 		URI platformLocationURI = Activator.getDefault().getRootLocationURI();
@@ -185,6 +186,8 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 			projectStore = root.getChild(project.getId());
 			location = new URI(null, projectStore.getName(), null);
 		}
+		//This folder must be empty initially or we risk showing another user's old private data
+		projectStore.delete(EFS.NONE, null);
 		projectStore.mkdir(EFS.NONE, null);
 		return location;
 	}
