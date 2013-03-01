@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -22,22 +22,6 @@ public class SessionHandler {
 	private JSch jSch;
 
 	/**
-	 * Creates a session based on general information.
-	 * 
-	 * @param user
-	 * @param host
-	 * @param port
-	 * @param knownHosts
-	 * @throws JSchException
-	 */
-	public SessionHandler(String user, String host, int port, String knownHosts) throws JSchException {
-		this.jSch = new JSch();
-		JSchUtil.knownHosts(jSch, knownHosts);
-		this.session = jSch.getSession(user, host);
-		this.session.setConfig("MaxAuthTries", "1");
-	}
-
-	/**
 	 * Creates a session identified via private key.
 	 * 
 	 * @param user
@@ -54,7 +38,8 @@ public class SessionHandler {
 		JSchUtil.knownHosts(jSch, knownHosts);
 		JSchUtil.identity(jSch, privateKey, publicKey, passphrase);
 		this.session = jSch.getSession(user, host);
-		this.session.setConfig("MaxAuthTries", "1");
+		//we don't prompt for password on the server so we never want to retry on authorization failure
+		this.session.setConfig("MaxAuthTries", "1"); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
 	public void setPassword(String password) {
