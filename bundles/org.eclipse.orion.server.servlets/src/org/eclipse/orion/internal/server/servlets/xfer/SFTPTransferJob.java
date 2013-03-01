@@ -96,7 +96,7 @@ public abstract class SFTPTransferJob extends Job {
 			IStatus result = null;
 			try {
 				Session session = jsch.getSession(user, host, port);
-				session.setUserInfo(new SFTPUserInfo(passphrase, passphrase));
+				session.setPassword(passphrase);
 				//don't require host key to be in orion server's known hosts file
 				session.setConfig("StrictHostKeyChecking", "no"); //$NON-NLS-1$ //$NON-NLS-2$
 				session.connect();

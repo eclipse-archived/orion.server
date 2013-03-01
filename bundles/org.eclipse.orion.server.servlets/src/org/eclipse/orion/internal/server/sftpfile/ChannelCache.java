@@ -14,7 +14,6 @@ import com.jcraft.jsch.*;
 import java.net.URI;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.Activator;
-import org.eclipse.orion.internal.server.servlets.xfer.SFTPUserInfo;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.osgi.util.NLS;
 import org.slf4j.Logger;
@@ -110,7 +109,7 @@ public class ChannelCache {
 		try {
 			Session session = jsch.getSession(userParts[0], host.getHost(), port);
 			String password = userParts[1];
-			session.setUserInfo(new SFTPUserInfo(password, password));
+			session.setPassword(password);
 			//don't require host key to be in orion server's known hosts file
 			session.setConfig("StrictHostKeyChecking", "no"); //$NON-NLS-1$ //$NON-NLS-2$
 			session.connect();
