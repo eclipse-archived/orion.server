@@ -34,6 +34,7 @@ public class SessionHandler {
 		this.jSch = new JSch();
 		JSchUtil.knownHosts(jSch, knownHosts);
 		this.session = jSch.getSession(user, host);
+		this.session.setConfig("MaxAuthTries", "1");
 	}
 
 	/**
@@ -53,6 +54,7 @@ public class SessionHandler {
 		JSchUtil.knownHosts(jSch, knownHosts);
 		JSchUtil.identity(jSch, privateKey, publicKey, passphrase);
 		this.session = jSch.getSession(user, host);
+		this.session.setConfig("MaxAuthTries", "1");
 	}
 
 	public void setPassword(String password) {
