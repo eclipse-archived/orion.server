@@ -17,6 +17,7 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.site.*;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.core.resources.Base64Counter;
 import org.eclipse.orion.server.core.users.OrionScope;
 import org.json.*;
 import org.osgi.service.prefs.BackingStoreException;
@@ -26,18 +27,45 @@ import org.osgi.service.prefs.BackingStoreException;
  */
 public class WebUser extends WebElement {
 
+	private static final String USERS_NODE = "Users"; //$NON-NLS-1$
+	private static final Base64Counter guestUserCounter = new Base64Counter();
+
 	public WebUser(IEclipsePreferences store) {
 		super(store);
+	}
+
+	public static String nextGuestUserUid() {
+		synchronized (guestUserCounter) {
+			String candidate;
+			do {
+				candidate = "user" + guestUserCounter.toString(); //$NON-NLS-1$
+				guestUserCounter.increment();
+			} while (exists(candidate) || (!caseSensitive && containsUpperCase(candidate)));
+			return candidate;
+		}
+	}
+
+	/**
+	 * Returns whether a user with the given id already exists.
+	 * @param id The id of the user
+	 * @return <code>true</code> if the user already exists, and <code>false</code> otherwise.
+	 */
+	public static boolean exists(String id) {
+		try {
+			return new OrionScope().getNode(USERS_NODE).nodeExists(id);
+		} catch (Exception e) {
+			return false;
+		}
 	}
 
 	/**
 	 * Creates a web user instance for the given name.
 	 */
 	public static WebUser fromUserId(String userId) {
-		IEclipsePreferences users = new OrionScope().getNode("Users"); //$NON-NLS-1$
+		IEclipsePreferences users = new OrionScope().getNode(USERS_NODE);
 		IEclipsePreferences result = (IEclipsePreferences) users.node(userId);
 		if (result.get(ProtocolConstants.KEY_NAME, null) == null)
-			result.put(ProtocolConstants.KEY_NAME, "Anonymous User");
+			result.put(ProtocolConstants.KEY_NAME, "Unnamed User");
 		//ignore any existing value for userId because it used to be a randomly generated UUID
 		result.put(ProtocolConstants.KEY_ID, userId);
 		if (result.get(ProtocolConstants.KEY_USER_NAME, null) == null)
@@ -113,6 +141,10 @@ public class WebUser extends WebElement {
 	 */
 	public void setUserName(String name) {
 		store.put(ProtocolConstants.KEY_USER_NAME, name);
+	}
+
+	public boolean isGuest() {
+		return this.store.getBoolean(ProtocolConstants.KEY_GUEST, false);
 	}
 
 	/**
@@ -231,4 +263,5 @@ public class WebUser extends WebElement {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "Error removing user", e));
 		}
 	}
+
 }

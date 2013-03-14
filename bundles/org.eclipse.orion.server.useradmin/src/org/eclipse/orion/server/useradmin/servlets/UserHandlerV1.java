@@ -48,6 +48,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	 */
 	private static final int USERNAME_MAX_LENGTH = 20;
 	private static final String PATH_EMAIL_CONFIRMATION = "../useremailconfirmation";
+	private static final boolean requirePassword = false;
 	private ServletResourceHandler<IStatus> statusHandler;
 
 	UserHandlerV1(UserServiceHelper userServiceHelper, ServletResourceHandler<IStatus> statusHandler) {
@@ -189,32 +190,43 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 	private boolean handleUserCreate(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, JSONException, CoreException {
 		//		String store = req.getParameter(UserConstants.KEY_STORE);
+		String uid = null;
 		String login = req.getParameter(UserConstants.KEY_LOGIN);
 		String name = req.getParameter(ProtocolConstants.KEY_NAME);
 		String email = req.getParameter(UserConstants.KEY_EMAIL);
+		String password = req.getParameter(UserConstants.KEY_PASSWORD);
+
+		boolean isGuestUser = req.getParameter(UserConstants.KEY_GUEST) != null;
+		boolean isPasswordRequired = requirePassword;
+		boolean isEmailRequired = Boolean.TRUE.toString().equalsIgnoreCase(PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION_FORCE_EMAIL));
+
+		if (isGuestUser) {
+			if (!Boolean.TRUE.equals(PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION_GUEST, Boolean.FALSE.toString()))) {
+				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Guest user creation is not allowed on this server.", null));
+			}
+			// Guest users don't need password or email
+			isPasswordRequired = false;
+			isEmailRequired = false;
+			uid = login = WebUser.nextGuestUserUid();
+		}
 
 		if (name == null)
 			name = login;
-		String password = req.getParameter(UserConstants.KEY_PASSWORD);
 
-		String msg = validateLogin(login);
+		String msg = validateLogin(login, isGuestUser);
 		if (msg != null)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 
-		if (password == null || password.length() == 0) {
+		if (isPasswordRequired && (password == null || password.length() == 0)) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Cannot create user with empty password.", null));
 		}
 
-		boolean requireEmail = Boolean.TRUE.toString().equalsIgnoreCase(PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION_FORCE_EMAIL));
-		if (requireEmail && (email == null || email.length() == 0)) {
+		IOrionCredentialsService userAdmin = getUserAdmin();
+		if (isEmailRequired && (email == null || email.length() == 0)) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User email is mandatory.", null));
 		}
-
-		IOrionCredentialsService userAdmin = getUserAdmin();
-
 		if (userAdmin.getUser(UserConstants.KEY_LOGIN, login) != null)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + login + " already exists.", null));
-
 		if (email != null && email.length() > 0) {
 			if (!email.contains("@")) //$NON-NLS-1$
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Invalid user email.", null));
@@ -222,12 +234,20 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Email address already in use: {0}.", email), null));
 		}
 
-		User newUser = new User(login, name, password);
+		User newUser;
+		if (isGuestUser) {
+			// Guest users get distinctive UIDs
+			newUser = new User(uid, login, name, password);
+		} else {
+			newUser = new User(login, name, password);
+		}
 		if (email != null && email.length() > 0) {
 			newUser.setEmail(email);
 		}
-		if (requireEmail)
+		if (isEmailRequired)
 			newUser.setBlocked(true);
+		if (isGuestUser)
+			newUser.addProperty(UserConstants.KEY_GUEST, Boolean.TRUE.toString());
 
 		newUser = userAdmin.createUser(newUser);
 
@@ -281,7 +301,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	 * @return <code>null</code> if the login is valid, and otherwise a string message stating the reason
 	 * why it is not valid.
 	 */
-	private String validateLogin(String login) {
+	private String validateLogin(String login, boolean isGuest) {
 		if (login == null || login.length() == 0)
 			return "User login not specified";
 		int length = login.length();
@@ -292,9 +312,12 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (login.equals("ultramegatron"))
 			return "Nice try, Mark";
 
-		for (int i = 0; i < length; i++) {
-			if (!Character.isLetterOrDigit(login.charAt(i)))
-				return NLS.bind("Username {0} contains invalid character ''{1}''", login, login.charAt(i));
+		// Guest usernames can contain a few special characters (eg. +, /)
+		if (!isGuest) {
+			for (int i = 0; i < length; i++) {
+				if (!Character.isLetterOrDigit(login.charAt(i)))
+					return NLS.bind("Username {0} contains invalid character ''{1}''", login, login.charAt(i));
+			}
 		}
 		return null;
 	}
