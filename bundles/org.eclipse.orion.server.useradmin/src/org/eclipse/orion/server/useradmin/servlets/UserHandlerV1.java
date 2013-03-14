@@ -31,6 +31,7 @@ import org.eclipse.orion.server.user.profile.*;
 import org.eclipse.orion.server.useradmin.*;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
+import org.osgi.service.prefs.BackingStoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,6 +50,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	private static final int USERNAME_MAX_LENGTH = 20;
 	private static final String PATH_EMAIL_CONFIRMATION = "../useremailconfirmation";
 	private static final boolean requirePassword = false;
+	
 	private ServletResourceHandler<IStatus> statusHandler;
 
 	UserHandlerV1(UserServiceHelper userServiceHelper, ServletResourceHandler<IStatus> statusHandler) {
@@ -201,7 +203,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		boolean isEmailRequired = Boolean.TRUE.toString().equalsIgnoreCase(PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION_FORCE_EMAIL));
 
 		if (isGuestUser) {
-			if (!Boolean.TRUE.equals(PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION_GUEST, Boolean.FALSE.toString()))) {
+			if (!Boolean.TRUE.toString().equals(PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION_GUEST, Boolean.FALSE.toString()))) {
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Guest user creation is not allowed on this server.", null));
 			}
 			// Guest users don't need password or email
@@ -259,9 +261,16 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		WebUser webUser = WebUser.fromUserId(newUser.getUid());
 		webUser.setUserName(login);
 		webUser.setName(name);
+		webUser.setGuest(isGuestUser);
 		webUser.save();
 
 		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.account"); //$NON-NLS-1$
+		if (isGuestUser) {
+			// Remove excess guest accounts
+			int maxGuestAccounts = PreferenceHelper.getInt(ServerConstants.CONFIG_AUTH_USER_CREATION_GUEST_LIMIT, 500);
+			deleteGuestAccounts(WebUser.getGuestAccountsToDelete(maxGuestAccounts));
+		}
+
 		if (logger.isInfoEnabled())
 			logger.info("Account created: " + login); //$NON-NLS-1$ 
 
@@ -294,6 +303,31 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		}
 
 		return true;
+	}
+
+	private void deleteGuestAccounts(Collection<String> uids) {
+		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.account");
+		IOrionCredentialsService userAdmin = getUserAdmin();
+		for (String uid : uids) {
+			try {
+				User user = userAdmin.getUser(UserConstants.KEY_UID, uid);
+				WebUser webUser = WebUser.fromUserId(uid);
+				if (webUser == null) {
+					if (logger.isInfoEnabled())
+						logger.info("WebUser " + uid + " not be found in backing store");
+				}
+				if (!userAdmin.deleteUser(user)) {
+					if (logger.isInfoEnabled())
+						logger.info("User " + uid + " not be found in the credential store");
+				}
+				webUser.delete();
+				if (logger.isInfoEnabled())
+					logger.info("Removed user " + uid + " (too many guest accounts).");
+			} catch (CoreException e) {
+				if (logger.isInfoEnabled())
+					logger.info("Removing " + uid + " failed.");
+			}
+		}
 	}
 
 	/**

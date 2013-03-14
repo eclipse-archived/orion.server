@@ -52,6 +52,18 @@ public class Base64Counter {
 	}
 
 	/**
+	 * @returns The number of times increment() has
+	 */
+	public long count() {
+		int position = 5;
+		long count = 0;
+		while (position <= 5) {
+			count = (count << 8) + (counter[position++] & 0xffL);
+		}
+		return count;
+	}
+
+	/**
 	 * Returns a base 64 string representation of this counter.
 	 */
 	public String toString() {

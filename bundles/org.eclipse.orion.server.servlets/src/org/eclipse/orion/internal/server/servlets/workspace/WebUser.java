@@ -11,6 +11,7 @@
 package org.eclipse.orion.internal.server.servlets.workspace;
 
 import java.net.URI;
+import java.util.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -28,6 +29,7 @@ import org.osgi.service.prefs.BackingStoreException;
 public class WebUser extends WebElement {
 
 	private static final String USERS_NODE = "Users"; //$NON-NLS-1$
+	private static final String GUEST_UID_PREFIX = "user"; //$NON-NLS-1$
 	private static final Base64Counter guestUserCounter = new Base64Counter();
 
 	public WebUser(IEclipsePreferences store) {
@@ -38,23 +40,63 @@ public class WebUser extends WebElement {
 		synchronized (guestUserCounter) {
 			String candidate;
 			do {
-				candidate = "user" + guestUserCounter.toString(); //$NON-NLS-1$
+				candidate = GUEST_UID_PREFIX + guestUserCounter.toString();
 				guestUserCounter.increment();
-			} while (exists(candidate) || (!caseSensitive && containsUpperCase(candidate)));
+			} while (exists(candidate));
 			return candidate;
 		}
 	}
 
+	public static Collection<String> getGuestAccountsToDelete(int limit) {
+		List<String> uids = new ArrayList<String>();
+		try {
+			int excess = guestUserCount() - limit;
+			while (excess-- > 0) {
+				// Deletes oldest ones first
+				Base64Counter count = new Base64Counter();
+				String uid;
+				do {
+					uid = GUEST_UID_PREFIX + count.toString();
+					count.increment();
+				} while (!exists(uid));
+				uids.add(uid);
+			}
+		} catch (BackingStoreException e) {
+			LogHelper.log(e);
+		}
+		return uids;
+	}
+
+	private static int guestUserCount() throws BackingStoreException {
+		// FIXME probably slow
+		int count = 0;
+		IEclipsePreferences usersNode = new OrionScope().getNode(USERS_NODE);
+		for (String uid : usersNode.childrenNames()) {
+			if (uid.startsWith(GUEST_UID_PREFIX)) {
+				count++;
+			}
+		}
+		return count;
+	}
+
 	/**
 	 * Returns whether a user with the given id already exists.
-	 * @param id The id of the user
+	 * @param uid The id of the user
 	 * @return <code>true</code> if the user already exists, and <code>false</code> otherwise.
 	 */
-	public static boolean exists(String id) {
+	private static boolean exists(String uid) {
 		try {
-			return new OrionScope().getNode(USERS_NODE).nodeExists(id);
+			return new OrionScope().getNode(USERS_NODE).nodeExists(uid);
 		} catch (Exception e) {
 			return false;
+		}
+	}
+
+	private static IEclipsePreferences getUserNode(String uid) {
+		try {
+			return (IEclipsePreferences) new OrionScope().getNode(USERS_NODE).node(uid);
+		} catch (Exception e) {
+			return null;
 		}
 	}
 
@@ -62,8 +104,7 @@ public class WebUser extends WebElement {
 	 * Creates a web user instance for the given name.
 	 */
 	public static WebUser fromUserId(String userId) {
-		IEclipsePreferences users = new OrionScope().getNode(USERS_NODE);
-		IEclipsePreferences result = (IEclipsePreferences) users.node(userId);
+		IEclipsePreferences result = getUserNode(userId);
 		if (result.get(ProtocolConstants.KEY_NAME, null) == null)
 			result.put(ProtocolConstants.KEY_NAME, "Unnamed User");
 		//ignore any existing value for userId because it used to be a randomly generated UUID
@@ -145,6 +186,10 @@ public class WebUser extends WebElement {
 
 	public boolean isGuest() {
 		return this.store.getBoolean(ProtocolConstants.KEY_GUEST, false);
+	}
+
+	public void setGuest(boolean isGuest) {
+		this.store.putBoolean(ProtocolConstants.KEY_GUEST, isGuest);
 	}
 
 	/**
@@ -255,6 +300,7 @@ public class WebUser extends WebElement {
 	public void delete() throws CoreException {
 		try {
 			IEclipsePreferences parent = (IEclipsePreferences) store.parent();
+			boolean isGuest = this.isGuest();
 			store.clear();
 			store.removeNode();
 			// TODO: consider removing user's Workspaces, Projects, Clones, SiteConfigs if no one else is using them
@@ -263,5 +309,4 @@ public class WebUser extends WebElement {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "Error removing user", e));
 		}
 	}
-
 }
