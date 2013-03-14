@@ -28,6 +28,7 @@ Export-Package: org.eclipse.orion.internal.server.servlets;x-friends:="org.eclip
    org.eclipse.orion.server.useradmin",
  org.eclipse.orion.internal.server.servlets.workspace.authorization,
  org.eclipse.orion.internal.server.servlets.xfer;x-friends:="org.eclipse.orion.server.configurator",
+ org.eclipse.orion.internal.server.sftpfile;x-internal:=true,
  org.eclipse.orion.server.servlets
 Import-Package: javax.servlet;version="2.5.0",
  javax.servlet.http;version="2.5.0",
