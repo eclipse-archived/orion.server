@@ -39,6 +39,10 @@
             httpcontextId="org.eclipse.orion.server.configurator.httpcontext.search">
       </servlet>
       <servlet
+            alias="/npm"
+            class="org.eclipse.orion.server.npm.NpmServlet">
+      </servlet>
+      <servlet
             alias="/users"
             class="org.eclipse.orion.server.useradmin.servlets.UserServlet">
       </servlet>
@@ -154,6 +158,10 @@
       </filter>
       <filter
             alias="/filesearch"
+            class="org.eclipse.orion.server.configurator.servlet.LoggedInUserFilter">
+      </filter>
+      <filter
+            alias="/npm"
             class="org.eclipse.orion.server.configurator.servlet.LoggedInUserFilter">
       </filter>
       <filter

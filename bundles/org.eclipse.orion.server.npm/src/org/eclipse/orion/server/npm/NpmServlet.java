@@ -19,6 +19,7 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.npm.ProcessController.TimeOutException;
 //import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.orion.internal.server.servlets.file.*;
@@ -67,7 +68,7 @@ public class NpmServlet extends OrionServlet {
 			String cwdPath = fStore.toString();
 			String newArgs;
 			if (args != null) {
-				newArgs = " " + args;
+				newArgs = args;
 			} else {
 				newArgs = "";
 			}
@@ -76,27 +77,18 @@ public class NpmServlet extends OrionServlet {
 				result = "Error: Npm path is not defined, contact the server administrator.\n";
 				return result;
 			}
-			String cmd = npmPath + " " + type + newArgs;
-			Process p = Runtime.getRuntime().exec(cmd, null, new File(cwdPath));
-			
-			BufferedReader bri = new BufferedReader(new InputStreamReader(
-					p.getInputStream()));
-			BufferedReader bre = new BufferedReader(new InputStreamReader(
-					p.getErrorStream()));
-			String line;
-			while ((line = bri.readLine()) != null) {
-				result = result + line + "\n";
-			}
-			bri.close();
-			while ((line = bre.readLine()) != null) {
-				result = result + line + "\n";
-			}
-			bre.close();
-			p.waitFor();
-			result = result + "Done.\n";
-			// System.out.println("Done.");
+			String cmd[] = new String[] {npmPath,type,newArgs};
+			ProcessController pc = new ProcessController(55000L, cmd, new File(cwdPath)); 
+			ByteArrayOutputStream outs = new ByteArrayOutputStream();
+			ByteArrayOutputStream errs = new ByteArrayOutputStream();
+			pc.forwardOutput(outs);
+			pc.forwardErrorOutput(errs);
+			pc.execute();
+			String cmdOutPut = new String(outs.toByteArray(),"UTF-8");
+			String cmdError = new String(errs.toByteArray(),"UTF-8");
+			result = result + cmdError + cmdOutPut ;
 		} catch (Exception err) {
-			err.printStackTrace();
+			return err.getMessage();
 		}
 		return result;
 	}
