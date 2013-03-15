@@ -158,7 +158,7 @@ public class PersonaHelper {
 				throw new PersonaException("Verification response is not sufficient");
 			}
 
-			User user = userAdmin.getUser(UserConstants.KEY_GUEST, email);
+			User user = userAdmin.getUser(UserConstants.KEY_EMAIL, email);
 			if (user == null) {
 				throw new PersonaException("There is no Orion account associated with your Persona email. Please register or contact your system administrator for assistance.");
 			}
