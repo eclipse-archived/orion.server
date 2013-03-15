@@ -98,8 +98,15 @@ public class FormAuthHelper {
 		User user = userAdmin.getUser("login", login); //$NON-NLS-1$
 		if (user != null && user.hasCredential("password", password)) { //$NON-NLS-1$
 			return user;
+		} else if (user != null && isGuestUser(user)) {
+			// Guest users can be logged in with no password
+			return user;
 		}
 		return null;
+	}
+
+	private static boolean isGuestUser(User user) {
+		return Boolean.TRUE.toString().equals(user.getProperty(UserConstants.KEY_GUEST));
 	}
 
 	/**
@@ -155,6 +162,9 @@ public class FormAuthHelper {
 				Long lastLogin = Long.parseLong(generalUserProfile.get(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, ""));
 
 				obj.put(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, lastLogin);
+			}
+			if (isGuestUser(user)) {
+				obj.put(UserConstants.KEY_GUEST, true);
 			}
 		} catch (IllegalArgumentException e) {
 			LogHelper.log(e);
