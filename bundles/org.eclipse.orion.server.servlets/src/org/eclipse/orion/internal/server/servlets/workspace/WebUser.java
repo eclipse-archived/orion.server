@@ -51,9 +51,9 @@ public class WebUser extends WebElement {
 		List<String> uids = new ArrayList<String>();
 		try {
 			int excess = guestUserCount() - limit;
+			Base64Counter count = new Base64Counter();
 			while (excess-- > 0) {
 				// Deletes oldest ones first
-				Base64Counter count = new Base64Counter();
 				String uid;
 				do {
 					uid = GUEST_UID_PREFIX + count.toString();
