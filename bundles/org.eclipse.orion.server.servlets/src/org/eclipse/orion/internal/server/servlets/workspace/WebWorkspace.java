@@ -16,6 +16,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.resources.Base64Counter;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
@@ -214,6 +215,21 @@ public class WebWorkspace extends WebElement {
 			return;
 		allProjects.remove(index);
 		store.put(ProtocolConstants.KEY_PROJECTS, allProjects.toString());
+	}
+
+	/**
+	 * Removes a workspace from the store. Does not remove any WebProjects that are in this
+	 * workspace. Does not revoke any user rights to this workspace.
+	 */
+	public void removeNode() throws CoreException {
+		try {
+			IEclipsePreferences parent = (IEclipsePreferences) store.parent();
+			store.clear();
+			store.removeNode();
+			parent.flush();
+		} catch (BackingStoreException e) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "Error removing workspace", e));
+		}
 	}
 
 }

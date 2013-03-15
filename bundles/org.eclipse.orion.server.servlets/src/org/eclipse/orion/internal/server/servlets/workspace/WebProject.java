@@ -21,6 +21,7 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.core.resources.Base64Counter;
 import org.osgi.service.prefs.BackingStoreException;
@@ -100,9 +101,33 @@ public class WebProject extends WebElement {
 	}
 
 	/**
-	 * Sets the location of the contents of this project. The location is either
-	 * relative to the workspace servlet location, or an absolute URI in the 
-	 * case where content is stored on a different server.
+	 * Removes this WebProject from the store. Does not remove the project from any
+	 * WebWorkspaces.
+	 */
+	public void removeNode() throws CoreException {
+		try {
+			IEclipsePreferences parent = (IEclipsePreferences) store.parent();
+			store.clear();
+			store.removeNode();
+			parent.flush();
+		} catch (BackingStoreException e) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "Error removing project", e));
+		}
+	}
+
+	/**
+	 * Deletes this project's contents and directory.
+	 * 
+	 * @throws CoreException
+	 */
+	public void deleteContents() throws CoreException {
+		getProjectStore().delete(EFS.NONE, null);
+	}
+
+	/**
+	 * Sets the location of the contents of this project. The location is either relative to
+	 * the workspace servlet location, or an absolute URI in the case where content is stored
+	 * on a different server.
 	 */
 	public void setContentLocation(URI contentURI) {
 		String uriString = null;

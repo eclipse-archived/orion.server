@@ -13,25 +13,43 @@ package org.eclipse.orion.server.useradmin.servlets;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.Iterator;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
+import org.eclipse.orion.internal.server.servlets.workspace.WebWorkspace;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
-import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.servlets.OrionServlet;
-import org.eclipse.orion.server.user.profile.*;
-import org.eclipse.orion.server.useradmin.*;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
+import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
+import org.eclipse.orion.server.useradmin.User;
+import org.eclipse.orion.server.useradmin.UserConstants;
+import org.eclipse.orion.server.useradmin.UserEmailUtil;
+import org.eclipse.orion.server.useradmin.UserServiceHelper;
 import org.eclipse.osgi.util.NLS;
-import org.json.*;
-import org.osgi.service.prefs.BackingStoreException;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -314,13 +332,13 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 				WebUser webUser = WebUser.fromUserId(uid);
 				if (webUser == null) {
 					if (logger.isInfoEnabled())
-						logger.info("WebUser " + uid + " not be found in backing store");
+						logger.info("WebUser " + uid + " could not be found in backing store");
 				}
 				if (!userAdmin.deleteUser(user)) {
 					if (logger.isInfoEnabled())
-						logger.info("User " + uid + " not be found in the credential store");
+						logger.info("User " + uid + " could not be found in the credential store");
 				}
-				webUser.delete();
+				deleteUserAndArtifacts(webUser);
 				if (logger.isInfoEnabled())
 					logger.info("Removed user " + uid + " (too many guest accounts).");
 			} catch (CoreException e) {
@@ -328,6 +346,46 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 					logger.info("Removing " + uid + " failed.");
 			}
 		}
+	}
+
+	/**
+	 * Helper for deleting a WebUser leaving no traces. Removes the WebUser, and all WebWorkspaces 
+	 * the user has access to, and any WebProjects therein. All files in the projects are
+	 * deleted from the filesystem.<p>This method only produces a consistent backing store when
+	 * <code>user</code> is the sole owner of the workspaces and projects they have access to.
+	 * If workspaces or projects are shared among users, this method should not be called.
+	 * @param user The user to delete.
+	 * 
+	 * TODO Move into WebUser?
+	 */
+	private void deleteUserAndArtifacts(WebUser user) throws CoreException {
+		try {
+			// Delete filesystem contents
+			JSONArray workspaces = user.getWorkspacesJSON();
+			for (int i = 0; i < workspaces.length(); i++) {
+				JSONObject workspace = workspaces.getJSONObject(i);
+				WebWorkspace webWorkspace = WebWorkspace.fromId(workspace.getString(ProtocolConstants.KEY_ID));
+				for (WebProject project : webWorkspace.getProjects()) {
+					project.deleteContents();
+					webWorkspace.removeProject(project);
+					project.removeNode();
+				}
+				webWorkspace.removeNode();
+			}
+			// Delete site configurations
+			JSONArray sites = user.getSiteConfigurationsJSON(new URI("")); //$NON-NLS-1$
+			for (int i = 0; i < sites.length(); i++) {
+				JSONObject site = sites.getJSONObject(i);
+				String id = site.getString(ProtocolConstants.KEY_ID);
+				user.removeSiteConfiguration(user.getSiteConfiguration(id));
+			}
+			// TODO delete Git clones
+		} catch (URISyntaxException e) {
+			LogHelper.log(e);
+		} catch (JSONException e) {
+			LogHelper.log(e);
+		}
+		user.delete();
 	}
 
 	/**
@@ -444,7 +502,10 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + userId + " could not be found.", null));
 		}
 		try {
-			webUser.delete();
+			if (webUser.isGuest())
+				deleteUserAndArtifacts(webUser);
+			else
+				webUser.delete();
 		} catch (CoreException e) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Removing " + userId + " failed.", e));
 		}
