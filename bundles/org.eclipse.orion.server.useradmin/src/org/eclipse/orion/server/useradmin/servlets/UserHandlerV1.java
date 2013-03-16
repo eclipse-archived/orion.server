@@ -556,6 +556,10 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		return UserServiceHelper.getDefault().getUserStore();
 	}
 
+	private IOrionCredentialsService getGuestUserAdmin() {
+		return UserServiceHelper.getDefault().getGuestUserStore();
+	}
+
 	private IOrionUserProfileService getUserProfileService() {
 		return UserServiceHelper.getDefault().getUserProfileService();
 	}

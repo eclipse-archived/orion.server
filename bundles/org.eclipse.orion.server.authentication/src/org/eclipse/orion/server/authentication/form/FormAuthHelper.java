@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 public class FormAuthHelper {
 
 	private static IOrionCredentialsService userAdmin;
-
+	
 	private static IOrionUserProfileService userProfileService;
 
 	private static boolean allowAnonymousAccountCreation;

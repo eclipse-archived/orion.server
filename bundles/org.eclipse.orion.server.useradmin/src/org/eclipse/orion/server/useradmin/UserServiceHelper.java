@@ -21,6 +21,7 @@ public class UserServiceHelper {
 
 	private Map<String, IOrionCredentialsService> userStores = new HashMap<String, IOrionCredentialsService>();
 	private IOrionCredentialsService defaultUserAdmin;
+	private IOrionCredentialsService guestUserAdmin;
 
 	private IOrionUserProfileService userProfileService;
 
@@ -82,5 +83,19 @@ public class UserServiceHelper {
 
 	public void unbindUserProfileService(IOrionUserProfileService userProfileService) {
 		this.userProfileService = null;
+	}
+
+	public IOrionCredentialsService getGuestUserStore() {
+		return guestUserAdmin;
+	}
+
+	public void setGuestUserAdmin(IOrionCredentialsService guestUserAdmin) {
+		this.guestUserAdmin = guestUserAdmin;
+	}
+
+	public void unsetGuestUserAdmin(IOrionCredentialsService guestUserAdmin) {
+		if (guestUserAdmin.equals(this.guestUserAdmin)) {
+			this.guestUserAdmin = null;
+		}
 	}
 }
