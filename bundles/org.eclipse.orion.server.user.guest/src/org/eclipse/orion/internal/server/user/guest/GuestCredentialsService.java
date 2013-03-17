@@ -19,15 +19,12 @@ import java.util.Set;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.equinox.security.storage.ISecurePreferences;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
-import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
-import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
+import org.eclipse.orion.server.useradmin.IOrionGuestCredentialsService;
 import org.eclipse.orion.server.useradmin.Role;
 import org.eclipse.orion.server.useradmin.User;
 import org.eclipse.orion.server.useradmin.UserAdminActivator;
-import org.eclipse.orion.server.useradmin.UserConstants;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.service.useradmin.Authorization;
 
@@ -35,7 +32,7 @@ import org.osgi.service.useradmin.Authorization;
  * An implementation of User Service that stores guest users in memory.
  */
 @SuppressWarnings("restriction")
-public class GuestCredentialsService implements IOrionCredentialsService {
+public class GuestCredentialsService implements IOrionGuestCredentialsService {
 
 	// TODO can get these be gotten from UserConstants instead?
 	static final String USER_UID = "uid"; //$NON-NLS-1$

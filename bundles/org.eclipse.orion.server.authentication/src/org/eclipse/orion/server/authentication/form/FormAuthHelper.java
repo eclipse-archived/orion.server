@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 public class FormAuthHelper {
 
 	private static IOrionCredentialsService userAdmin;
-	private static IOrionCredentialsService guestUserAdmin;
+	private static IOrionGuestCredentialsService guestUserAdmin;
 
 	private static IOrionUserProfileService userProfileService;
 
@@ -155,11 +155,11 @@ public class FormAuthHelper {
 		return guestUserAdmin;
 	}
 
-	public void setGuestUserAdmin(IOrionCredentialsService service) {
+	public void setGuestUserAdmin(IOrionGuestCredentialsService service) {
 		guestUserAdmin = service;
 	}
 
-	public void unsetGuestUserAdmin(IOrionCredentialsService service) {
+	public void unsetGuestUserAdmin(IOrionGuestCredentialsService service) {
 		if (service.equals(guestUserAdmin)) {
 			guestUserAdmin = null;
 		}
