@@ -27,6 +27,7 @@ import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.Role;
 import org.eclipse.orion.server.useradmin.User;
 import org.eclipse.orion.server.useradmin.UserAdminActivator;
+import org.eclipse.orion.server.useradmin.UserConstants;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.service.useradmin.Authorization;
 
@@ -36,6 +37,7 @@ import org.osgi.service.useradmin.Authorization;
 @SuppressWarnings("restriction")
 public class GuestCredentialsService implements IOrionCredentialsService {
 
+	// TODO can get these be gotten from UserConstants instead?
 	static final String USER_UID = "uid"; //$NON-NLS-1$
 	static final String USER_LOGIN = "login"; //$NON-NLS-1$
 	static final String USER_NAME = "name"; //$NON-NLS-1$
@@ -118,6 +120,8 @@ public class GuestCredentialsService implements IOrionCredentialsService {
 	}
 
 	public boolean deleteUser(User user) {
+		if (user == null)
+			return false;
 		synchronized (userTable) {
 			return userTable.remove(user.getUid()) != null;
 		}
@@ -177,8 +181,13 @@ public class GuestCredentialsService implements IOrionCredentialsService {
 	public User getUser(String key, String value) {
 		if (USER_UID.equals(key)) {
 			return userTable.get(value);
+		} else if (USER_LOGIN.equals(key)) {
+			for (User user : userTable.values()) {
+				if (user.getLogin().equals(value)) {
+					return user;
+				}
+			}
 		}
-		// TODO search by login
 		return null;
 	}
 

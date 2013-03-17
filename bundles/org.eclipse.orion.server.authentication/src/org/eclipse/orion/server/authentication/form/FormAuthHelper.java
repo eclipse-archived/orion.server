@@ -11,6 +11,8 @@
 package org.eclipse.orion.server.authentication.form;
 
 import java.io.IOException;
+import java.security.Guard;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.CoreException;
@@ -28,7 +30,8 @@ import org.slf4j.LoggerFactory;
 public class FormAuthHelper {
 
 	private static IOrionCredentialsService userAdmin;
-	
+	private static IOrionCredentialsService guestUserAdmin;
+
 	private static IOrionUserProfileService userProfileService;
 
 	private static boolean allowAnonymousAccountCreation;
@@ -92,14 +95,19 @@ public class FormAuthHelper {
 	}
 
 	private static User getUserForCredentials(String login, String password) throws UnsupportedUserStoreException {
+		User user;
+		// First try authenticating them against the guest user service
+		if (getGuestUserAdmin() != null) {
+			user = getGuestUserAdmin().getUser("login", login); //$NON-NLS-1$
+			if (user != null)
+				return user;
+		}
+		// Now try default credentials service
 		if (userAdmin == null) {
 			throw new UnsupportedUserStoreException();
 		}
-		User user = userAdmin.getUser("login", login); //$NON-NLS-1$
+		user = userAdmin.getUser("login", login); //$NON-NLS-1$
 		if (user != null && user.hasCredential("password", password)) { //$NON-NLS-1$
-			return user;
-		} else if (user != null && isGuestUser(user)) {
-			// Guest users can be logged in with no password
 			return user;
 		}
 		return null;
@@ -143,12 +151,32 @@ public class FormAuthHelper {
 		}
 	}
 
+	public static IOrionCredentialsService getGuestUserAdmin() {
+		return guestUserAdmin;
+	}
+
+	public void setGuestUserAdmin(IOrionCredentialsService service) {
+		guestUserAdmin = service;
+	}
+
+	public void unsetGuestUserAdmin(IOrionCredentialsService service) {
+		if (service.equals(guestUserAdmin)) {
+			guestUserAdmin = null;
+		}
+	}
+
 	public static JSONObject getUserJson(String uid, String contextPath) throws JSONException {
 		JSONObject obj = new JSONObject();
 		obj.put("login", uid); //$NON-NLS-1$
-
 		try {
-			User user = userAdmin.getUser(UserConstants.KEY_UID, uid);
+			User user = null;
+			// Try guest login first
+			if (getGuestUserAdmin() != null) {
+				user = getGuestUserAdmin().getUser(UserConstants.KEY_UID, uid);
+			}
+			if (user == null)
+				user = userAdmin.getUser(UserConstants.KEY_UID, uid);
+
 			if (user == null) {
 				return null;
 			}

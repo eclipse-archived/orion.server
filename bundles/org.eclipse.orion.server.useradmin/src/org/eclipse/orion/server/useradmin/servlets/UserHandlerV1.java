@@ -122,9 +122,18 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		}
 	}
 
-	private boolean handleUsersGet(HttpServletRequest req, HttpServletResponse resp) throws IOException, JSONException, CoreException {
+	private Collection<User> getAllUsers() {
 		// For Bug 372270 - changing the admin getUsers() to return a sorted list.
 		Collection<User> users = getUserAdmin().getUsers();
+		IOrionCredentialsService guestUserAdmin = getGuestUserAdmin();
+		if (guestUserAdmin != null) {
+			users.addAll(guestUserAdmin.getUsers());
+		}
+		return users;
+	}
+
+	private boolean handleUsersGet(HttpServletRequest req, HttpServletResponse resp) throws IOException, JSONException, CoreException {
+		Collection<User> users = getAllUsers();
 		String startParam = req.getParameter(UserConstants.KEY_START);
 		String rowsParam = req.getParameter(UserConstants.KEY_ROWS);
 		boolean noStartParam = true;
@@ -170,9 +179,16 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	private boolean handleUserGet(HttpServletRequest req, HttpServletResponse resp, String userId) throws IOException, JSONException, ServletException, CoreException {
-		User user = (User) getUserAdmin().getUser(UserConstants.KEY_UID, userId);
+		User user = null;
+		// Try guest user admin first
+		if (getGuestUserAdmin() != null)
+			user = getGuestUserAdmin().getUser(UserConstants.KEY_UID, userId);
+		// Fallback to regular user admin
 		if (user == null)
-			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User not found " + userId, null));
+			user = getUserAdmin().getUser(UserConstants.KEY_UID, userId);
+
+		if (user == null)
+			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "User not found " + userId, null));
 
 		IOrionUserProfileNode userNode = getUserProfileService().getUserProfileNode(userId, true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
 
@@ -187,6 +203,13 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 		if (login == null || login.length() == 0)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User login not specified.", null));
+
+		// If it's a guest user, do not allow their password to be reset.
+		if (getGuestUserAdmin() != null) {
+			User user = getGuestUserAdmin().getUser(UserConstants.KEY_LOGIN, login);
+			if (user != null)
+				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "User " + login + "is a guest, cannot reset password.", null));
+		}
 
 		IOrionCredentialsService userAdmin = getUserAdmin();
 
@@ -220,14 +243,20 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		boolean isPasswordRequired = requirePassword;
 		boolean isEmailRequired = Boolean.TRUE.toString().equalsIgnoreCase(PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION_FORCE_EMAIL));
 
+		IOrionCredentialsService userAdmin;
 		if (isGuestUser) {
 			if (!Boolean.TRUE.toString().equals(PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION_GUEST, Boolean.FALSE.toString()))) {
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Guest user creation is not allowed on this server.", null));
 			}
-			// Guest users don't need password or email
 			isPasswordRequired = false;
 			isEmailRequired = false;
 			uid = login = WebUser.nextGuestUserUid();
+			userAdmin = getGuestUserAdmin();
+			if (userAdmin == null) {
+				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Cannot create guest users. Contact your server administrator.", null));
+			}
+		} else {
+			userAdmin = getUserAdmin();
 		}
 
 		if (name == null)
@@ -241,10 +270,10 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Cannot create user with empty password.", null));
 		}
 
-		IOrionCredentialsService userAdmin = getUserAdmin();
 		if (isEmailRequired && (email == null || email.length() == 0)) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User email is mandatory.", null));
 		}
+
 		if (userAdmin.getUser(UserConstants.KEY_LOGIN, login) != null)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + login + " already exists.", null));
 		if (email != null && email.length() > 0) {
@@ -325,7 +354,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 	private void deleteGuestAccounts(Collection<String> uids) {
 		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.account");
-		IOrionCredentialsService userAdmin = getUserAdmin();
+		IOrionCredentialsService userAdmin = getGuestUserAdmin();
 		for (String uid : uids) {
 			try {
 				User user = userAdmin.getUser(UserConstants.KEY_UID, uid);
@@ -417,9 +446,17 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	private boolean handleUserPut(HttpServletRequest req, HttpServletResponse resp, String userId) throws ServletException, IOException, CoreException, JSONException {
 		JSONObject data = OrionServlet.readJSONRequest(req);
 
-		IOrionCredentialsService userAdmin = getUserAdmin();
-
-		User user = userAdmin.getUser(UserConstants.KEY_UID, userId);
+		IOrionCredentialsService userAdmin = null;
+		User user = null;
+		if (getGuestUserAdmin() != null) {
+			userAdmin = getGuestUserAdmin();
+			user = userAdmin.getUser(UserConstants.KEY_UID, userId);
+		}
+		// Fallback to regular user admin
+		if (user == null) {
+			userAdmin = getUserAdmin();
+			user = userAdmin.getUser(UserConstants.KEY_UID, userId);
+		}
 
 		if (user == null)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + userId + " could not be found.", null));
@@ -495,12 +532,28 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	private boolean handleUserDelete(HttpServletRequest req, HttpServletResponse resp, String userId) throws ServletException {
-		IOrionCredentialsService userAdmin = getUserAdmin();
-		User user = userAdmin.getUser(UserConstants.KEY_UID, userId);
-		WebUser webUser = WebUser.fromUserId(user.getUid());
-		if (!userAdmin.deleteUser(user)) {
-			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + userId + " could not be found.", null));
+		IOrionCredentialsService userAdmin = null;
+		User user = null;
+
+		boolean isGuest = false;
+		if (getGuestUserAdmin() != null) {
+			userAdmin = getGuestUserAdmin();
+			user = userAdmin.getUser(UserConstants.KEY_UID, userId);
+			isGuest = (user != null);
 		}
+		if (user == null) {
+			userAdmin = getUserAdmin();
+			user = userAdmin.getUser(UserConstants.KEY_UID, userId);
+		}
+
+		// Delete user from credential store
+		if (!userAdmin.deleteUser(user)) {
+			if (!isGuest) {
+				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + userId + " could not be found.", null));
+			}
+		}
+		// Delete WebUser
+		WebUser webUser = WebUser.fromUserId(userId);
 		try {
 			if (webUser.isGuest())
 				deleteUserAndArtifacts(webUser);
@@ -534,10 +587,11 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		}
 		json.put(UserConstants.KEY_PROPERTIES, properties);
 
-		json.put(UserConstants.KEY_LAST_LOGIN_TIMESTAMP, userProfile.get(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, ""));
-
-		json.put("GitMail", userProfile.get("GitMail", null));
-		json.put("GitName", userProfile.get("GitName", null));
+		if (userProfile != null) {
+			json.put(UserConstants.KEY_LAST_LOGIN_TIMESTAMP, userProfile.get(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, ""));
+			json.put("GitMail", userProfile.get("GitMail", null));
+			json.put("GitName", userProfile.get("GitName", null));
+		}
 		
 		JSONArray plugins = new JSONArray();
 		try {
@@ -555,7 +609,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	private IOrionCredentialsService getUserAdmin() {
 		return UserServiceHelper.getDefault().getUserStore();
 	}
-
+	
 	private IOrionCredentialsService getGuestUserAdmin() {
 		return UserServiceHelper.getDefault().getGuestUserStore();
 	}
