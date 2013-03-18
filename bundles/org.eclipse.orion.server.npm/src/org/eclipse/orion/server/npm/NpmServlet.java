@@ -60,13 +60,17 @@ public class NpmServlet extends OrionServlet {
 			} else {
 				newArgs = "";
 			}
+			//Getting npm command path from the configuration file
 			String npmPath = PreferenceHelper.getString("orion.npmPath");
 			if (npmPath == null || npmPath.isEmpty()) {
-				result = "Error: Npm path is not defined, contact the server administrator.\n";
-				return result;
+				//result = "Error: Npm path is not defined, contact the server administrator.\n";
+				//return result;
+				npmPath = "/data/node-v0.10.0-linux-x64/bin/npm";
 			}
 			String cmd[] = new String[] {npmPath, type, newArgs};
+			//The client side http request timeout is set to 60 seconds, so we set 55 seconds on the server side here.
 			ProcessController pc = new ProcessController(55000L, cmd, new File(cwdPath));
+			
 			ByteArrayOutputStream outs = new ByteArrayOutputStream();
 			ByteArrayOutputStream errs = new ByteArrayOutputStream();
 			pc.forwardOutput(outs);
@@ -95,6 +99,7 @@ public class NpmServlet extends OrionServlet {
 
 			resp.setStatus(HttpServletResponse.SC_OK);
 			JSONObject jsonResult = new JSONObject();
+			//The property "cmdOutput" is used as a single string to respond back to client.
 			jsonResult.put("cmdOutput", result);
 			OrionServlet.writeJSONResponse(req, resp, jsonResult);
 		} catch (JSONException e) {
