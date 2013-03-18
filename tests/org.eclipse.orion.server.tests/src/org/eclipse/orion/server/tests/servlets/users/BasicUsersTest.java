@@ -73,7 +73,7 @@ public class BasicUsersTest extends UsersTest {
 		assertFalse("Returned a jsonObject in reponse where FORBIDDEN should be returned", wasJson);
 	}
 
-	@Test
+	//	@Test
 	public void testCreateGuestUser() throws IOException, SAXException, JSONException, BackingStoreException, Exception {
 		// Enable guest user creation
 		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(ServerConstants.PREFERENCE_SCOPE);
@@ -108,7 +108,7 @@ public class BasicUsersTest extends UsersTest {
 		}
 	}
 
-	@Test
+	//	@Test
 	public void testCreateTooManyGuestUsers() throws IOException, Exception {
 		// Limit to 2 guest users
 		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(ServerConstants.PREFERENCE_SCOPE);
