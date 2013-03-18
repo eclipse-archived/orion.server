@@ -43,6 +43,7 @@ public class UserAuthFilter implements Filter {
 	private Properties authProperties;
 
 	private List<String> authorizedAccountCreators;
+	private boolean isGuestEnabled;
 
 	public void init(FilterConfig filterConfig) throws ServletException {
 		authenticationService = UserAdminActivator.getDefault().getAuthenticationService();
@@ -58,17 +59,24 @@ public class UserAuthFilter implements Filter {
 			authorizedAccountCreators = new ArrayList<String>();
 			authorizedAccountCreators.addAll(Arrays.asList(creators.split(","))); //$NON-NLS-1$
 		}
+		isGuestEnabled = Boolean.TRUE.toString().equals(PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION_GUEST, null));
 	}
 
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
 		HttpServletRequest httpRequest = (HttpServletRequest) request;
 		HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-		if ("POST".equals(httpRequest.getMethod()) && httpRequest.getParameter(UserConstants.KEY_RESET) == null) { //$NON-NLS-1$
-			// either everyone can create users, or only the specific list
-			if (authorizedAccountCreators == null || authorizedAccountCreators.contains(httpRequest.getRemoteUser())) {
+		if ("POST".equals(httpRequest.getMethod())) { //$NON-NLS-1$
+			if (isGuestEnabled && httpRequest.getParameter(UserConstants.KEY_GUEST) != null) {
+				// everyone is allowed to create guest user
 				chain.doFilter(request, response);
 				return;
+			} else if (httpRequest.getParameter(UserConstants.KEY_RESET) == null) {
+				// either everyone can create users, or only the specific list
+				if (authorizedAccountCreators == null || authorizedAccountCreators.contains(httpRequest.getRemoteUser())) {
+					chain.doFilter(request, response);
+					return;
+				}
 			}
 		}
 
