@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2012 IBM Corporation and others 
+ * Copyright (c) 2010, 2013 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -32,22 +32,8 @@ public class FormAuthHelper {
 
 	private static IOrionUserProfileService userProfileService;
 
-	private static boolean allowAnonymousAccountCreation;
-	private static boolean forceEmailWhileCreatingAccount;
-
 	public enum LoginResult {
 		OK, FAIL, BLOCKED
-	}
-
-	private static String registrationURI;
-
-	static {
-		//if there is no list of users authorised to create accounts, it means everyone can create accounts
-		allowAnonymousAccountCreation = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION, null) == null; //$NON-NLS-1$
-		forceEmailWhileCreatingAccount = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION_FORCE_EMAIL, "false").equalsIgnoreCase("true"); //$NON-NLS-1$
-
-		//if there is an alternate URI to handle registrations retrieve it.
-		registrationURI = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_REGISTRATION_URI, null);
 	}
 
 	/**
@@ -120,11 +106,13 @@ public class FormAuthHelper {
 	 * and <code>false</code> otherwise.
 	 */
 	public static boolean canAddUsers() {
+		//if there is no list of users authorised to create accounts, it means everyone can create accounts
+		boolean allowAnonymousAccountCreation = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION, null) == null;
 		return allowAnonymousAccountCreation ? (userAdmin == null ? false : userAdmin.canCreateUsers()) : false;
 	}
 
 	public static boolean forceEmail() {
-		return forceEmailWhileCreatingAccount;
+		return PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION_FORCE_EMAIL, "false").equalsIgnoreCase("true"); //$NON-NLS-1$ //$NON-NLS-2$;
 	}
 
 	/**
@@ -132,7 +120,8 @@ public class FormAuthHelper {
 	 * @return String a URI to open when adding user accounts.
 	 */
 	public static String registrationURI() {
-		return registrationURI;
+		//if there is an alternate URI to handle registrations retrieve it.
+		return PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_REGISTRATION_URI, null);
 	}
 
 	public static IOrionCredentialsService getDefaultUserAdmin() {

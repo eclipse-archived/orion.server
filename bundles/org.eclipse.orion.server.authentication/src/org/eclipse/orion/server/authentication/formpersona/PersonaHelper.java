@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 IBM Corporation and others.
+ * Copyright (c) 2012, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -35,19 +35,6 @@ public class PersonaHelper {
 	private static IOrionUserProfileService userProfileService;
 	private static URL configuredAudience;
 	private static String verifierUrl;
-
-	static {
-		configuredAudience = null;
-		try {
-			String audiencePref = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_HOST, null);
-			if (audiencePref != null) {
-				configuredAudience = new URL(audiencePref);
-			}
-		} catch (MalformedURLException e) {
-			LogHelper.log(e);
-		}
-		verifierUrl = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_PERSONA_VERIFIER, DEFAULT_VERIFIER);
-	}
 
 	public static String getAuthType() {
 		return "Persona"; //$NON-NLS-1$
@@ -85,10 +72,11 @@ public class PersonaHelper {
 	 * Throws if it doesn't match.
 	 */
 	private String getConfiguredAudience(HttpServletRequest req) throws PersonaException {
-		if (configuredAudience == null) {
+		URL audienceURL = getConfiguredAudienceURL();
+		if (audienceURL == null) {
 			throw new PersonaException("Authentication host not configured");
 		}
-		return configuredAudience.toString();
+		return audienceURL.toString();
 	}
 
 	private static boolean isLoopback(InetAddress addr) {
@@ -128,7 +116,7 @@ public class PersonaHelper {
 	private String getVerifiedAudience(HttpServletRequest req) {
 		try {
 			String audience;
-			if (configuredAudience != null) {
+			if (getConfiguredAudienceURL() != null) {
 				// Check if this server is configured to allow the given host as an Persona audience
 				audience = getConfiguredAudience(req);
 				if (log.isInfoEnabled())
@@ -185,7 +173,7 @@ public class PersonaHelper {
 	 */
 	public PersonaVerificationSuccess verifyCredentials(String assertion, String audience, HttpServletRequest req) throws PersonaException {
 		try {
-			HttpURLConnection connection = (HttpURLConnection) new URL(verifierUrl).openConnection();
+			HttpURLConnection connection = (HttpURLConnection) new URL(getVerifierUrl()).openConnection();
 			connection.setRequestMethod("POST"); //$NON-NLS-1$
 			connection.setDoInput(true);
 			connection.setDoOutput(true);
@@ -229,5 +217,25 @@ public class PersonaHelper {
 			log.error("An error occured when verifying credentials.", e);
 			throw new PersonaException(e);
 		}
+	}
+
+	private static String getVerifierUrl() {
+		if (verifierUrl == null)
+			verifierUrl = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_PERSONA_VERIFIER, DEFAULT_VERIFIER);
+		return verifierUrl;
+	}
+
+	private static URL getConfiguredAudienceURL() {
+		if (configuredAudience == null) {
+			try {
+				String audiencePref = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_HOST, null);
+				if (audiencePref != null) {
+					configuredAudience = new URL(audiencePref);
+				}
+			} catch (MalformedURLException e) {
+				LogHelper.log(e);
+			}
+		}
+		return configuredAudience;
 	}
 }
