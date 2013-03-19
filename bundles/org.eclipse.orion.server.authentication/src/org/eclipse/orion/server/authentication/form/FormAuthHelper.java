@@ -11,8 +11,6 @@
 package org.eclipse.orion.server.authentication.form;
 
 import java.io.IOException;
-import java.security.Guard;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.CoreException;
