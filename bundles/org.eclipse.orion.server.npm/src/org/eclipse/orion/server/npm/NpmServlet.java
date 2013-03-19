@@ -54,12 +54,6 @@ public class NpmServlet extends OrionServlet {
 				return result;
 			}
 			String cwdPath = fStore.toString();
-			String newArgs;
-			if (args != null) {
-				newArgs = args;
-			} else {
-				newArgs = "";
-			}
 			//Getting npm command path from the configuration file
 			String npmPath = PreferenceHelper.getString("orion.npmPath");
 			if (npmPath == null || npmPath.isEmpty()) {
@@ -67,7 +61,12 @@ public class NpmServlet extends OrionServlet {
 				//return result;
 				npmPath = "/data/node-v0.10.0-linux-x64/bin/npm";
 			}
-			String cmd[] = new String[] {npmPath, type, newArgs};
+			String cmd[];//The command passed to the process controller. E.g : "npmPath", "install", "express"
+			if (args != null) {//If there is arguments, we should pass the args to the command
+				cmd = new String[] {npmPath, type, args};//E.g. ["/data/node-v0.10.0-linux-x64/bin/npm", "install", "express"]
+			} else {
+				cmd = new String[] {npmPath, type};//E.g. ["/data/node-v0.10.0-linux-x64/bin/npm", "shrinkwrap"], ["/data/node-v0.10.0-linux-x64/bin/npm", "install"]
+			}
 			//The client side http request timeout is set to 60 seconds, so we set 55 seconds on the server side here.
 			ProcessController pc = new ProcessController(55000L, cmd, new File(cwdPath));
 			
@@ -94,6 +93,9 @@ public class NpmServlet extends OrionServlet {
 			String args = null;
 			if (type.equalsIgnoreCase("install")) {
 				args = o.getString("package");
+				if(args.equalsIgnoreCase("null")){
+					args = null;
+				}
 			}
 			String result = this.excuteCmd(type, cwd, args);
 
