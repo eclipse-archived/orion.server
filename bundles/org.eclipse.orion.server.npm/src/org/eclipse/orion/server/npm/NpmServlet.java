@@ -57,9 +57,8 @@ public class NpmServlet extends OrionServlet {
 			//Getting npm command path from the configuration file
 			String npmPath = PreferenceHelper.getString("orion.npmPath");
 			if (npmPath == null || npmPath.isEmpty()) {
-				//result = "Error: Npm path is not defined, contact the server administrator.\n";
-				//return result;
-				npmPath = "/data/node-v0.10.0-linux-x64/bin/npm";
+				result = "Error: Npm path is not defined, contact the server administrator.\n";
+				return result;
 			}
 			String cmd[];//The command passed to the process controller. E.g : "npmPath", "install", "express"
 			if (args != null) {//If there is arguments, we should pass the args to the command
