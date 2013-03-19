@@ -496,12 +496,13 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		}
 
 		IOrionUserProfileNode userNode = getUserProfileService().getUserProfileNode(userId, true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
-
-		if (data.has("GitMail"))
-			userNode.put("GitMail", data.getString("GitMail"), false);
-		if (data.has("GitName"))
-			userNode.put("GitName", data.getString("GitName"), false);
-		userNode.flush();
+		if (userNode != null) {
+			if (data.has("GitMail"))
+				userNode.put("GitMail", data.getString("GitMail"), false);
+			if (data.has("GitName"))
+				userNode.put("GitName", data.getString("GitName"), false);
+			userNode.flush();
+		}
 
 		if (user.getConfirmationId() != null && !user.getConfirmationId().equals(emailConfirmationid)) {
 			try {
