@@ -11,6 +11,7 @@
 package org.eclipse.orion.server.npm;
 
 import java.io.*;
+import java.net.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -50,7 +51,7 @@ public class NpmServlet extends OrionServlet {
 			IPath path = new Path(cwd).removeFirstSegments(1);
 			IFileStore fStore = NewFileServlet.getFileStore(null, path);
 			if (fStore == null) {
-				result = "Error: Can not use this command in the workspace root\n";
+				result = "Error: This command must be used in an application folder\n";
 				return result;
 			}
 			String cwdPath = fStore.toString();
@@ -89,6 +90,7 @@ public class NpmServlet extends OrionServlet {
 			JSONObject o = OrionServlet.readJSONRequest(req);
 			String type = o.getString("type");
 			String cwd = o.getString("cwd");
+			cwd = new URI(cwd).getPath();
 			String args = null;
 			if (type.equalsIgnoreCase("install")) {
 				args = o.getString("package");
@@ -106,6 +108,8 @@ public class NpmServlet extends OrionServlet {
 		} catch (JSONException e) {
 			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
 		} catch (IOException e) {
+			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+		} catch (URISyntaxException e){
 			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
 		}
 	}
