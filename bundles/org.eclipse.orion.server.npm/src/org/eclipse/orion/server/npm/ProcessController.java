@@ -114,7 +114,7 @@ public class ProcessController {
 			return result;
 		} finally {
 			if (wasKilled())
-				throw new TimeOutException("Timeout on server side processing input stream");
+				throw new TimeOutException("Timeout processing npm command.");
 		}
 	}
 
