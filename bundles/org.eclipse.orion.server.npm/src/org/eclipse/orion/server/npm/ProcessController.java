@@ -114,7 +114,7 @@ public class ProcessController {
 			return result;
 		} finally {
 			if (wasKilled())
-				throw new TimeOutException();
+				throw new TimeOutException("Timeout on server side processing input stream");
 		}
 	}
 

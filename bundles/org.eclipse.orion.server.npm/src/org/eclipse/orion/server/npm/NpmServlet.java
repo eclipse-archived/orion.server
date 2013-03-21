@@ -68,7 +68,7 @@ public class NpmServlet extends OrionServlet {
 				cmd = new String[] {npmPath, type};//E.g. ["/data/node-v0.10.0-linux-x64/bin/npm", "shrinkwrap"], ["/data/node-v0.10.0-linux-x64/bin/npm", "install"]
 			}
 			//The client side http request timeout is set to 60 seconds, so we set 55 seconds on the server side here.
-			ProcessController pc = new ProcessController(55000L, cmd, new File(cwdPath));
+			ProcessController pc = new ProcessController(295000L, cmd, new File(cwdPath));
 			
 			ByteArrayOutputStream outs = new ByteArrayOutputStream();
 			ByteArrayOutputStream errs = new ByteArrayOutputStream();
