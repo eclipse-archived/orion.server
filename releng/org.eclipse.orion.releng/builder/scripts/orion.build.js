@@ -13,9 +13,7 @@
     optimizeCss: "standard.keepLines",
 
     closure: {
-        CompilerOptions: {
-            languageIn: 'ECMASCRIPT5'
-        },
+        CompilerOptions: {},
         CompilationLevel: 'SIMPLE_OPTIMIZATIONS',
         loggingLevel: 'WARNING'
     },
