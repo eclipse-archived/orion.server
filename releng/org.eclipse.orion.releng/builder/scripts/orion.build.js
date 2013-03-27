@@ -13,7 +13,9 @@
     optimizeCss: "standard.keepLines",
 
     closure: {
-        CompilerOptions: {},
+        CompilerOptions: {
+            languageIn: Packages.com.google.javascript.jscomp.CompilerOptions.LanguageMode.valueOf("ECMASCRIPT5")
+        },
         CompilationLevel: 'SIMPLE_OPTIMIZATIONS',
         loggingLevel: 'WARNING'
     },
