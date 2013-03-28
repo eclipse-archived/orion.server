@@ -14,7 +14,7 @@
 
     closure: {
         CompilerOptions: {
-            languageIn: Packages.com.google.javascript.jscomp.CompilerOptions.LanguageMode.valueOf("ECMASCRIPT5")
+            languageIn: Packages.com.google.javascript.jscomp.CompilerOptions.LanguageMode.fromString("ECMASCRIPT5")
         },
         CompilationLevel: 'SIMPLE_OPTIMIZATIONS',
         loggingLevel: 'WARNING'
