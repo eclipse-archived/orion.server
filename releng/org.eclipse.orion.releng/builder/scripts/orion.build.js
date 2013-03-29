@@ -8,13 +8,13 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-
+/*global Packages*/
 ({
     optimizeCss: "standard.keepLines",
 
     closure: {
         CompilerOptions: {
-            languageIn: Packages.com.google.javascript.jscomp.CompilerOptions.LanguageMode.fromString("ECMASCRIPT5")
+            languageIn: Packages.com.google.javascript.jscomp.CompilerOptions.LanguageMode.valueOf(Packages.com.google.javascript.jscomp.CompilerOptions.LanguageMode, "ECMASCRIPT5")
         },
         CompilationLevel: 'SIMPLE_OPTIMIZATIONS',
         loggingLevel: 'WARNING'
