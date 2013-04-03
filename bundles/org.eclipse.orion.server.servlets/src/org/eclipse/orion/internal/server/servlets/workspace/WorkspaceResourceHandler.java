@@ -396,7 +396,8 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		URI requestLocation = getURI(request);
 		URI baseLocation;
 		try {
-			baseLocation = new URI(requestLocation.getScheme(), requestLocation.getUserInfo(), requestLocation.getHost(), requestLocation.getPort(), Activator.LOCATION_WORKSPACE_SERVLET, null, null);
+			//baseLocation = new URI(requestLocation.getScheme(), requestLocation.getUserInfo(), requestLocation.getHost(), requestLocation.getPort(), Activator.LOCATION_WORKSPACE_SERVLET, null, null);
+			baseLocation = new URI(requestLocation.getScheme(), requestLocation.getUserInfo(), requestLocation.getHost(), requestLocation.getPort(), request.getContextPath() + request.getServletPath(), null, null);
 		} catch (URISyntaxException e) {
 			//should never happen
 			throw new RuntimeException(e);

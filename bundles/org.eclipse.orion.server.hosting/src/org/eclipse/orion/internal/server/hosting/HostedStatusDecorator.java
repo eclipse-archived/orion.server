@@ -32,15 +32,14 @@ public class HostedStatusDecorator implements IWebResourceDecorator {
 
 	@Override
 	public void addAtributesFor(HttpServletRequest req, URI resource, JSONObject representation) {
-		String requestPath = req.getServletPath() + (req.getPathInfo() == null ? "" : req.getPathInfo());
-		IPath resourcePath = new Path(requestPath);
-		String service = req.getServletPath();
-		if (!(("/" + SITE_CONFIGURATION_SERVLET_ALIAS).equals(service)))
+		IPath path = new Path(req.getPathInfo() == null ? "" : req.getPathInfo());
+
+		if (!(("/" + SITE_CONFIGURATION_SERVLET_ALIAS).equals(req.getServletPath())))
 			return;
 
 		try {
 			WebUser webUser = getWebUser(req);
-			if (resourcePath.segmentCount() == 1) {
+			if (path.segmentCount() == 0) {
 				if ("GET".equals(req.getMethod())) { //$NON-NLS-1$
 					// GET /site/ (get all site configs) 
 					JSONArray siteConfigurations = representation.optJSONArray(SiteConfigurationConstants.KEY_SITE_CONFIGURATIONS);
@@ -53,7 +52,7 @@ public class HostedStatusDecorator implements IWebResourceDecorator {
 					// POST /site/ (create a site config)
 					addStatus(req, representation, webUser, resource);
 				}
-			} else if (resourcePath.segmentCount() == 2) {
+			} else if (path.segmentCount() == 1) {
 				// GET /site/siteConfigId (get a single site config)
 				addStatus(req, representation, webUser, resource);
 			}

@@ -34,19 +34,21 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 	 * @see org.eclipse.orion.internal.server.core.IWebResourceDecorator#addAtributesFor(java.net.URI, org.json.JSONObject)
 	 */
 	public void addAtributesFor(HttpServletRequest request, URI resource, JSONObject representation) {
-		IPath resourcePath = new Path(resource.getPath());
-
 		if (!"/file".equals(request.getServletPath())) //$NON-NLS-1$
 			return;
 		try {
+			URI base = new URI(resource.getScheme(), resource.getUserInfo(), resource.getHost(), resource.getPort(), request.getContextPath() + request.getServletPath() + "/", null, null);
+			IPath basePath = new Path(base.getPath());
+			IPath resourcePath = new Path(resource.getPath());
 			if (resourcePath.hasTrailingSeparator() && !representation.getBoolean(ProtocolConstants.KEY_DIRECTORY)) {
 				resourcePath = resourcePath.append(representation.getString(ProtocolConstants.KEY_NAME));
 			}
-			addParents(resource, representation, resourcePath);
+			IPath path = resourcePath.makeRelativeTo(basePath);
+			addParents(base, representation, path);
 			//set the name of the project file to be the project name
-			if (resourcePath.segmentCount() == 3) {
-				WebWorkspace workspace = WebWorkspace.fromId(resourcePath.segment(1));
-				WebProject project = workspace.getProjectByName(resourcePath.segment(2));
+			if (path.segmentCount() == 2) {
+				WebWorkspace workspace = WebWorkspace.fromId(path.segment(0));
+				WebProject project = workspace.getProjectByName(path.segment(1));
 				String projectName = project.getName();
 				if (projectName != null)
 					representation.put(ProtocolConstants.KEY_NAME, projectName);
@@ -54,6 +56,9 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 		} catch (JSONException e) {
 			//Shouldn't happen because names and locations should be valid JSON.
 			//Since we are just decorating some else's response we shouldn't cause a failure
+			LogHelper.log(e);
+		} catch (URISyntaxException e) {
+			// again shouldn't happen
 			LogHelper.log(e);
 		}
 	}
@@ -63,7 +68,7 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 		resourcePath = resourcePath.removeLastSegments(1).addTrailingSeparator();
 		JSONArray parents = new JSONArray();
 		//for all but the project we can just manipulate the path to get the name and location
-		while (resourcePath.segmentCount() > 3) {
+		while (resourcePath.segmentCount() > 2) {
 			try {
 				URI uri = resource.resolve(new URI(null, resourcePath.toString(), null));
 				addParent(parents, resourcePath.lastSegment(), new URI(null, null, null, -1, uri.getPath(), uri.getQuery(), uri.getFragment()));
@@ -74,9 +79,9 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 			resourcePath = resourcePath.removeLastSegments(1);
 		}
 		//add the project
-		if (resourcePath.segmentCount() == 3) {
-			WebWorkspace workspace = WebWorkspace.fromId(resourcePath.segment(1));
-			WebProject project = workspace.getProjectByName(resourcePath.segment(2));
+		if (resourcePath.segmentCount() == 2) {
+			WebWorkspace workspace = WebWorkspace.fromId(resourcePath.segment(0));
+			WebProject project = workspace.getProjectByName(resourcePath.segment(1));
 			try {
 				URI uri = resource.resolve(new URI(null, resourcePath.toString(), null));
 				addParent(parents, project.getName(), new URI(null, null, null, -1, uri.getPath(), uri.getQuery(), uri.getFragment()));
