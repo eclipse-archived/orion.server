@@ -108,57 +108,9 @@ public class ConfiguratorActivator implements BundleActivator {
 
 		authServiceTracker = new AuthServiceTracker(context);
 		authServiceTracker.open();
-
-		IEclipsePreferences preferences = DefaultScope.INSTANCE.getNode(ServerConstants.PREFERENCE_SCOPE);
-		Boolean httpsEnabled = new Boolean(preferences.get(ConfigurationFormat.HTTPS_ENABLED, "false")); //$NON-NLS-1$
-
-		Dictionary<String, Object> properties = new Hashtable<String, Object>();
-		properties.put(JettyConstants.CONTEXT_SESSIONINACTIVEINTERVAL, new Integer(4 * 60 * 60)); // 4 hours
-		//properties.put(JettyConstants.CONTEXT_PATH, "/cc");
-		if (httpsEnabled) {
-			LogHelper.log(new Status(IStatus.INFO, PI_CONFIGURATOR, "Https is enabled", null)); //$NON-NLS-1$
-
-			properties.put(JettyConstants.HTTPS_ENABLED, true);
-			properties.put(JettyConstants.HTTPS_PORT, new Integer(preferences.get(HTTPS_PORT, System.getProperty("org.eclipse.equinox.http.jetty.https.port", "8443")))); //$NON-NLS-1$//$NON-NLS-2$
-			properties.put(JettyConstants.SSL_KEYSTORE, preferences.get(SSL_KEYSTORE, "keystore")); //$NON-NLS-1$
-
-			LogHelper.log(new Status(IStatus.INFO, PI_CONFIGURATOR, "Keystore absolute path is " + preferences.get(SSL_KEYSTORE, "keystore"))); //$NON-NLS-1$ //$NON-NLS-2$
-
-			properties.put(JettyConstants.SSL_PASSWORD, preferences.get(SSL_PASSWORD, "password")); //$NON-NLS-1$
-			properties.put(JettyConstants.SSL_KEYPASSWORD, preferences.get(SSL_KEYPASSWORD, "password")); //$NON-NLS-1$
-			properties.put(JettyConstants.SSL_PROTOCOL, preferences.get(SSL_PROTOCOL, "SSLv3")); //$NON-NLS-1$
-
-			String httpsHost = System.getProperty("org.eclipse.equinox.http.jetty.https.host"); //$NON-NLS-1$
-			if (httpsHost != null) {
-				properties.put(JettyConstants.HTTPS_HOST, httpsHost);
-			}
-		}
-
-		String port = null;
-		if (!httpsEnabled) {
-			properties.put(JettyConstants.HTTP_ENABLED, true);
-			port = preferences.get(HTTP_PORT, System.getProperty("org.eclipse.equinox.http.jetty.http.port", "8080"));//$NON-NLS-1$ //$NON-NLS-2$
-			properties.put(JettyConstants.HTTP_PORT, new Integer(port));
-
-			String httpHost = System.getProperty("org.eclipse.equinox.http.jetty.http.host"); //$NON-NLS-1$
-			if (httpHost != null) {
-				properties.put(JettyConstants.HTTP_HOST, httpHost);
-			}
-		}
-
-		//properties to help us filter orion content
-		properties.put("other.info", "org.eclipse.orion"); //$NON-NLS-1$ //$NON-NLS-2$ 
-
-		try {
-			JettyConfigurator.startServer("MasterJetty", properties); //$NON-NLS-1$
-		} catch (Exception e) {
-			throw new Exception("Error starting Jetty on port: " + port, e);
-		}
 	}
 
 	public void stop(BundleContext context) throws Exception {
-
-		JettyConfigurator.stopServer("MasterJetty"); //$NON-NLS-1$
 
 		if (authServiceTracker != null) {
 			authServiceTracker.close();
