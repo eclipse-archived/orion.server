@@ -12,21 +12,8 @@
 package org.eclipse.orion.server.configurator;
 
 import static org.eclipse.orion.server.configurator.configuration.ConfigurationFormat.DEFAULT_AUTHENTICATION_NAME;
-import static org.eclipse.orion.server.configurator.configuration.ConfigurationFormat.HTTPS_PORT;
-import static org.eclipse.orion.server.configurator.configuration.ConfigurationFormat.HTTP_PORT;
-import static org.eclipse.orion.server.configurator.configuration.ConfigurationFormat.SSL_KEYPASSWORD;
-import static org.eclipse.orion.server.configurator.configuration.ConfigurationFormat.SSL_KEYSTORE;
-import static org.eclipse.orion.server.configurator.configuration.ConfigurationFormat.SSL_PASSWORD;
-import static org.eclipse.orion.server.configurator.configuration.ConfigurationFormat.SSL_PROTOCOL;
 
 import java.util.*;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.preferences.DefaultScope;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.equinox.http.jetty.JettyConfigurator;
-import org.eclipse.equinox.http.jetty.JettyConstants;
-import org.eclipse.orion.server.configurator.configuration.ConfigurationFormat;
 import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.core.authentication.IAuthenticationService;
 import org.eclipse.orion.server.core.authentication.NoneAuthenticationService;
@@ -35,6 +22,7 @@ import org.osgi.framework.*;
 import org.osgi.service.packageadmin.PackageAdmin;
 import org.osgi.util.tracker.ServiceTracker;
 
+@SuppressWarnings("deprecation")
 public class ConfiguratorActivator implements BundleActivator {
 
 	/**
