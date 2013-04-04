@@ -106,7 +106,8 @@ public class WebApplication implements IApplication {
 			throw new Exception("Error starting Jetty on port: " + port, e);
 		}
 
-		context.applicationRunning();
+		if (appContext != null)
+			appContext.applicationRunning();
 		Object instanceLocationCheck = checkInstanceLocation();
 		if (instanceLocationCheck != null) {
 			return instanceLocationCheck;

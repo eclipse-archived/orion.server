@@ -12,7 +12,12 @@ package org.eclipse.orion.server.tests;
 
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.server.configurator.ConfiguratorActivator;
-import org.osgi.framework.*;
+import org.eclipse.orion.server.configurator.WebApplication;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.BundleException;
+import org.osgi.framework.ServiceReference;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.packageadmin.PackageAdmin;
 import org.osgi.util.tracker.ServiceTracker;
@@ -29,6 +34,7 @@ public class ServerTestsActivator implements BundleActivator {
 	private static boolean initialized = false;
 	private static String serverHost = null;
 	private static int serverPort = 0;
+	private static WebApplication webapp;
 
 	public static BundleContext getContext() {
 		return bundleContext;
@@ -45,6 +51,8 @@ public class ServerTestsActivator implements BundleActivator {
 				org.eclipse.orion.server.authentication.Activator.getDefault();
 				Activator.getDefault();
 				ConfiguratorActivator.getDefault();
+				webapp = new WebApplication();
+				webapp.start(null);
 			} catch (Exception e) {
 				e.printStackTrace();
 				return null;
@@ -71,6 +79,9 @@ public class ServerTestsActivator implements BundleActivator {
 	}
 
 	public void stop(BundleContext context) throws Exception {
+		if (webapp != null)
+			webapp.stop();
+
 		if (httpServiceTracker != null)
 			httpServiceTracker.close();
 		if (packageAdminTracker != null)
