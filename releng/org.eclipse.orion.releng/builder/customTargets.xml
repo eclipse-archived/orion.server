@@ -211,9 +211,9 @@ lastMapTag=${mapsTagTag}
 
 	<!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=404957 -->
 	<target name="updateJS" depends="checkBuiltResult" if="builtResultExists">
-		<property name="defineBuiltResult" value="define(&apos;built-${name}.js&apos;" />
-		<replace file="${minifiedScript}" token="define(&quot;${name}.js&quot;" value="${defineBuiltResult}" />
-		<replace file="${minifiedScript}" token="define(&apos;${name}.js&apos;" value="${defineBuiltResult}" />
+		<property name="defineBuiltResult" value="define(&apos;${pageDir}/built-${name}.js&apos;" />
+		<replace file="${minifiedScript}" token="define(&quot;${pageDir}/${name}&quot;" value="${defineBuiltResult}" />
+		<replace file="${minifiedScript}" token="define(&apos;${pageDir}/${name}&apos;" value="${defineBuiltResult}" />
 	</target>
 
 	<target name="requirejs" if="requirejsHome" >
