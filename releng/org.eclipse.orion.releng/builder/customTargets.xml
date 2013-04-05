@@ -203,11 +203,14 @@ lastMapTag=${mapsTagTag}
 		<replace file="${buildDirectory}/optimization/${pageDir}/${name}.html" token="requirejs/require.js" value="requirejs/require.min.js" />
 	</target>
 
-	<target name="builtResult">
+	<target name="checkBuiltResult">
+		<condition property="builtResultExists" value="1" >
+			<length file="${minifiedScript}" when="greater" length="0" />
+		</condition>
 	</target>
 
 	<!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=404957 -->
-	<target name="updateJS" depends="builtResult">
+	<target name="updateJS" depends="checkBuiltResult" if="builtResultExists">
 		<property name="defineBuiltResult" value="define(&apos;built-${name}.js&apos;" />
 		<replace file="${minifiedScript}" token="define(&quot;${name}.js&quot;" value="${defineBuiltResult}" />
 		<replace file="${minifiedScript}" token="define(&apos;${name}.js&apos;" value="${defineBuiltResult}" />
