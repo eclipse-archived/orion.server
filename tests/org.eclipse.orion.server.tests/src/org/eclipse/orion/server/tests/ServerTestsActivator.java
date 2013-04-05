@@ -43,7 +43,6 @@ public class ServerTestsActivator implements BundleActivator {
 	public static String getServerLocation() {
 		if (!initialized) {
 			try {
-				initialize();
 				//make sure the http registry is started
 				ensureBundleStarted(EQUINOX_HTTP_JETTY);
 				ensureBundleStarted(EQUINOX_HTTP_REGISTRY);
@@ -53,6 +52,7 @@ public class ServerTestsActivator implements BundleActivator {
 				ConfiguratorActivator.getDefault();
 				webapp = new WebApplication();
 				webapp.start(null);
+				initialize();
 			} catch (Exception e) {
 				e.printStackTrace();
 				return null;
