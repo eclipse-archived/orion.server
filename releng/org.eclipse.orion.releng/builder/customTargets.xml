@@ -156,6 +156,12 @@ lastMapTag=${mapsTagTag}
 				<param name="name" value="@{name}" />
 			</antcall>
 
+			<antcall target="updateJS">
+				<param name="minifiedScript" value="${buildDirectory}/optimization/@{pageDir}/built-@{name}.js" />
+				<param name="pageDir" value="@{pageDir}" />
+				<param name="name" value="@{name}" />
+			</antcall>
+
 			<copy todir="${buildDirectory}/plugins/@{bundle}/web/@{pageDir}" >
 				<fileset dir="${buildDirectory}/optimization/@{pageDir}" includes="built-@{name}.js, @{name}.html" >
 					<size when="more" value="0" />
@@ -195,6 +201,16 @@ lastMapTag=${mapsTagTag}
 		<replace file="${buildDirectory}/optimization/${pageDir}/${name}.html" token="require([&quot;${name}.js&quot;]);" value="${builtResult}" />
 		<replace file="${buildDirectory}/optimization/${pageDir}/${name}.html" token="require([&apos;${name}.js&apos;]);" value="${builtResult}" />
 		<replace file="${buildDirectory}/optimization/${pageDir}/${name}.html" token="requirejs/require.js" value="requirejs/require.min.js" />
+	</target>
+
+	<target name="builtResult">
+	</target>
+
+	<!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=404957 -->
+	<target name="updateJS" depends="builtResult">
+		<property name="defineBuiltResult" value="define(&apos;built-${name}.js&apos;" />
+		<replace file="${minifiedScript}" token="define(&quot;${name}.js&quot;" value="${defineBuiltResult}" />
+		<replace file="${minifiedScript}" token="define(&apos;${name}.js&apos;" value="${defineBuiltResult}" />
 	</target>
 
 	<target name="requirejs" if="requirejsHome" >
