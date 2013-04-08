@@ -314,7 +314,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.account"); //$NON-NLS-1$
 		if (isGuestUser) {
 			// Remove excess guest accounts
-			int maxGuestAccounts = PreferenceHelper.getInt(ServerConstants.CONFIG_AUTH_USER_CREATION_GUEST_LIMIT, 500);
+			int maxGuestAccounts = PreferenceHelper.getInt(ServerConstants.CONFIG_AUTH_USER_CREATION_GUEST_LIMIT, 100);
 			deleteGuestAccounts(WebUser.getGuestAccountsToDelete(maxGuestAccounts));
 		}
 

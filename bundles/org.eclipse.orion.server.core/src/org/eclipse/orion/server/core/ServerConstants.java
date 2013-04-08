@@ -36,7 +36,7 @@ public class ServerConstants {
 
 	/**
 	 * The maximum number of guest accounts that may exist at any given time.
-	 * If unspecified, defaults to <code>500</code>.
+	 * If unspecified, defaults to <code>100</code>.
 	 */
 	public static final String CONFIG_AUTH_USER_CREATION_GUEST_LIMIT = "orion.auth.user.creation.guest.limit"; //$NON-NLS-1$
 
