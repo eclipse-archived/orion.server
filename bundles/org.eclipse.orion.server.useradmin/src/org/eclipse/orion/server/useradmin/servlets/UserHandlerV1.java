@@ -283,6 +283,12 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Email address already in use: {0}.", email), null));
 		}
 
+		if (isGuestUser) {
+			// Before creating a new guest user, remove any excess guest accounts
+			int maxGuestAccounts = Math.max(0, PreferenceHelper.getInt(ServerConstants.CONFIG_AUTH_USER_CREATION_GUEST_LIMIT, 100) - 1);
+			deleteGuestAccounts(WebUser.getGuestAccountsToDelete(maxGuestAccounts));
+		}
+
 		User newUser;
 		if (isGuestUser) {
 			// Guest users get distinctive UIDs
@@ -312,11 +318,6 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		webUser.save();
 
 		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.account"); //$NON-NLS-1$
-		if (isGuestUser) {
-			// Remove excess guest accounts
-			int maxGuestAccounts = PreferenceHelper.getInt(ServerConstants.CONFIG_AUTH_USER_CREATION_GUEST_LIMIT, 100);
-			deleteGuestAccounts(WebUser.getGuestAccountsToDelete(maxGuestAccounts));
-		}
 
 		if (logger.isInfoEnabled())
 			logger.info("Account created: " + login); //$NON-NLS-1$ 
@@ -364,12 +365,16 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 						logger.info("WebUser " + uid + " could not be found in backing store");
 				}
 				if (!userAdmin.deleteUser(user)) {
-					if (logger.isInfoEnabled())
-						logger.info("User " + uid + " could not be found in the credential store");
+					// This is expected if the server is restarted. The guest user then exists on disk (WebUser) 
+					// but doesn't exist in the transient guest credential store (User).
+					if (webUser == null && logger.isInfoEnabled())
+						logger.info("Guest user " + uid + " doesn't exist in backing store or credential store.");
 				}
-				deleteUserAndArtifacts(webUser);
-				if (logger.isInfoEnabled())
-					logger.info("Removed user " + uid + " (too many guest accounts).");
+				if (webUser != null) {
+					deleteUserAndArtifacts(webUser);
+					if (logger.isInfoEnabled())
+						logger.info("Removed user " + uid + " (too many guest accounts).");
+				}
 			} catch (CoreException e) {
 				if (logger.isInfoEnabled())
 					logger.info("Removing " + uid + " failed.");
