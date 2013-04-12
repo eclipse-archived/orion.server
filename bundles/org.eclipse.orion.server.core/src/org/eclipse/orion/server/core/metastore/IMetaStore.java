@@ -38,9 +38,9 @@ public interface IMetaStore {
 
 	public void createProject(ProjectInfo info) throws CoreException;
 
-	public UserInfo readUser(URI location) throws CoreException;
+	public UserInfo readUser(String uid) throws CoreException;
 
-	public void updateUser(URI location, UserInfo info) throws CoreException;
+	public void updateUser(UserInfo info) throws CoreException;
 
 	public void deleteUser(URI location) throws CoreException;
 }

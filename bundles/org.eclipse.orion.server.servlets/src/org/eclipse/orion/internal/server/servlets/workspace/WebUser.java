@@ -11,14 +11,12 @@
 package org.eclipse.orion.internal.server.servlets.workspace;
 
 import java.net.URI;
-import java.util.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.site.*;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerConstants;
-import org.eclipse.orion.server.core.resources.Base64Counter;
 import org.eclipse.orion.server.core.users.OrionScope;
 import org.json.*;
 import org.osgi.service.prefs.BackingStoreException;
@@ -29,68 +27,42 @@ import org.osgi.service.prefs.BackingStoreException;
 public class WebUser extends WebElement {
 
 	private static final String USERS_NODE = "Users"; //$NON-NLS-1$
-	private static final String GUEST_UID_PREFIX = "user"; //$NON-NLS-1$
-	private static final Base64Counter guestUserCounter = new Base64Counter();
 
 	public WebUser(IEclipsePreferences store) {
 		super(store);
 	}
 
-	public static String nextGuestUserUid() {
-		synchronized (guestUserCounter) {
-			String candidate;
-			do {
-				candidate = GUEST_UID_PREFIX + guestUserCounter.toString();
-				guestUserCounter.increment();
-			} while (exists(candidate));
-			return candidate;
-		}
-	}
-
-	public static Collection<String> getGuestAccountsToDelete(int limit) {
-		List<String> uids = new ArrayList<String>();
-		try {
-			int excess = guestUserCount() - limit;
-			Base64Counter count = new Base64Counter();
-			while (excess-- > 0) {
-				// Deletes oldest ones first
-				String uid;
-				do {
-					uid = GUEST_UID_PREFIX + count.toString();
-					count.increment();
-				} while (!exists(uid));
-				uids.add(uid);
-			}
-		} catch (BackingStoreException e) {
-			LogHelper.log(e);
-		}
-		return uids;
-	}
-
-	private static int guestUserCount() throws BackingStoreException {
-		// FIXME probably slow
-		int count = 0;
-		IEclipsePreferences usersNode = new OrionScope().getNode(USERS_NODE);
-		for (String uid : usersNode.childrenNames()) {
-			if (uid.startsWith(GUEST_UID_PREFIX)) {
-				count++;
-			}
-		}
-		return count;
-	}
-
-	/**
-	 * Returns whether a user with the given id already exists.
-	 * @param uid The id of the user
-	 * @return <code>true</code> if the user already exists, and <code>false</code> otherwise.
-	 */
-	private static boolean exists(String uid) {
-		try {
-			return new OrionScope().getNode(USERS_NODE).nodeExists(uid);
-		} catch (Exception e) {
-			return false;
-		}
-	}
+	//	public static Collection<String> getGuestAccountsToDelete(int limit) {
+	//		List<String> uids = new ArrayList<String>();
+	//		try {
+	//			int excess = guestUserCount() - limit;
+	//			Base64Counter count = new Base64Counter();
+	//			while (excess-- > 0) {
+	//				// Deletes oldest ones first
+	//				String uid;
+	//				do {
+	//					uid = GUEST_UID_PREFIX + count.toString();
+	//					count.increment();
+	//				} while (!exists(uid));
+	//				uids.add(uid);
+	//			}
+	//		} catch (BackingStoreException e) {
+	//			LogHelper.log(e);
+	//		}
+	//		return uids;
+	//	}
+	//
+	//	private static int guestUserCount() throws BackingStoreException {
+	//		// FIXME probably slow
+	//		int count = 0;
+	//		IEclipsePreferences usersNode = new OrionScope().getNode(USERS_NODE);
+	//		for (String uid : usersNode.childrenNames()) {
+	//			if (uid.startsWith(GUEST_UID_PREFIX)) {
+	//				count++;
+	//			}
+	//		}
+	//		return count;
+	//	}
 
 	private static IEclipsePreferences getUserNode(String uid) {
 		try {

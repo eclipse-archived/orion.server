@@ -18,6 +18,7 @@ import java.util.*;
  * store. Changes to this object are not persisted without invoking a method on @link {@link IMetaStore}.
  */
 public class MetadataInfo {
+
 	private String id;
 	private final Map<String, String> properties = Collections.synchronizedMap(new HashMap<String, String>());
 
@@ -36,8 +37,16 @@ public class MetadataInfo {
 		return id;
 	}
 
+	public String getProperty(String key) {
+		return properties.get(key);
+	}
+
 	public void setProperty(String key, String value) {
 		properties.put(key, value);
+	}
+
+	public void setUID(String id) {
+		this.id = id;
 	}
 
 }
