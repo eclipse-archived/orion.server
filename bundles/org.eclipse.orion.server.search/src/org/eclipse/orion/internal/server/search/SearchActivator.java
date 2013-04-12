@@ -10,14 +10,29 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.search;
 
-import java.io.*;
-import java.net.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+
 import javax.servlet.http.HttpServletRequest;
+
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
-import org.apache.solr.core.*;
+import org.apache.solr.core.CoreContainer;
+import org.apache.solr.core.CoreDescriptor;
+import org.apache.solr.core.SolrCore;
 import org.eclipse.core.filesystem.EFS;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
@@ -26,7 +41,9 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.LogHelper;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.osgi.framework.*;
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceRegistration;
 
 public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 	private static BundleContext context;
@@ -70,7 +87,7 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 			return;
 		try {
 			// we can also augment with a query argument that includes the resource path
-			URI result = new URI(resource.getScheme(), resource.getUserInfo(), resource.getHost(), resource.getPort(), request.getContextPath() + "/filesearch", "q=", null); //$NON-NLS-1$//$NON-NLS-2$
+			URI result = new URI(null, null, null, -1, request.getContextPath() + "/filesearch", "q=", null); //$NON-NLS-1$//$NON-NLS-2$
 			representation.put(ProtocolConstants.KEY_SEARCH_LOCATION, result);
 		} catch (URISyntaxException e) {
 			LogHelper.log(e);
