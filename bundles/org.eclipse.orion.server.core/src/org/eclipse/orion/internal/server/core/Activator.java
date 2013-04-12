@@ -128,10 +128,10 @@ public class Activator implements BundleActivator {
 	public void start(BundleContext context) throws Exception {
 		singleton = this;
 		bundleContext = context;
-		startTaskService();
+		registerServices();
 	}
 
-	private void startTaskService() {
+	private void registerServices() {
 		try {
 			IPath taskLocation = getTaskLocation();
 			ITaskService service = new TaskService(taskLocation);
