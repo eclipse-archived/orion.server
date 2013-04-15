@@ -158,6 +158,13 @@
          unpack="false"/>
 
    <plugin
+         id="org.eclipse.orion.server.user.guest"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
          id="org.eclipse.orion.server.git"
          download-size="0"
          install-size="0"
