@@ -10,15 +10,22 @@
  *******************************************************************************/
 package org.eclipse.orion.server.core.metastore;
 
-import java.util.List;
+import java.util.*;
 
 /**
  * Information about a single user.
  */
 public class UserInfo extends MetadataInfo {
+	private boolean isGuest;
+
 	private String userName;
 
+	private List<String> workspaceIds;
+
 	/**
+	 * Returns the username for this user. A username is a short handle typically
+	 * used for login or to allow anonymous interaction between users. This
+	 * is distinct from the user's full name as defined by {@link MetadataInfo#getFullName()}.
 	 * @return the userName
 	 */
 	public String getUserName() {
@@ -26,27 +33,13 @@ public class UserInfo extends MetadataInfo {
 	}
 
 	/**
-	 * @param userName the userName to set
+	 * Returns the globally unique id of all the workspaces owned by this user.
 	 */
-	public void setUserName(String userName) {
-		this.userName = userName;
+	public List<String> getWorkspaceIds() {
+		return workspaceIds;
 	}
 
-	/**
-	 * @return the fullName
-	 */
-	public String getFullName() {
-		return fullName;
-	}
-
-	/**
-	 * @param fullName the fullName to set
-	 */
-	public void setFullName(String fullName) {
-		this.fullName = fullName;
-	}
-
-	/**
+	/** 
 	 * @return the isGuest
 	 *TODO Should this just be a generic property?
 	 */
@@ -61,14 +54,16 @@ public class UserInfo extends MetadataInfo {
 		this.isGuest = isGuest;
 	}
 
-	private String fullName;
-	private boolean isGuest;
-
 	/**
-	 * Returns the globally unique id of all the workspaces owned by this user.
+	 * @param userName the userName to set
 	 */
-	public List<String> getWorkspaceIds() {
-		return null;
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
+
+	public void setWorkspaceIds(List<String> ids) {
+		//copy and wrap read only 
+		this.workspaceIds = Collections.unmodifiableList(new ArrayList<String>(ids));
 	}
 
 }

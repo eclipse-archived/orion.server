@@ -32,8 +32,8 @@ import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;
 import org.eclipse.orion.internal.server.servlets.workspace.*;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
-import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.git.GitCredentialsProvider;
+import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.git.*;
 import org.eclipse.orion.server.git.jobs.*;
 import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
@@ -398,11 +398,8 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 	 */
 	private boolean isAccessAllowed(String userName, WebProject webProject) {
 		try {
-			WebUser webUser = WebUser.fromUserId(userName);
-			JSONArray workspacesJSON = webUser.getWorkspacesJSON();
-			for (int i = 0; i < workspacesJSON.length(); i++) {
-				JSONObject workspace = workspacesJSON.getJSONObject(i);
-				String workspaceId = workspace.getString(ProtocolConstants.KEY_ID);
+			UserInfo user = GitActivator.getDefault().getMetastore().readUser(userName);
+			for (String workspaceId : user.getWorkspaceIds()) {
 				WebWorkspace webWorkspace = WebWorkspace.fromId(workspaceId);
 				JSONArray projectsJSON = webWorkspace.getProjectsJSON();
 				for (int j = 0; j < projectsJSON.length(); j++) {
@@ -412,8 +409,9 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 						return true;
 				}
 			}
-		} catch (JSONException e) {
-			// ignore, deny access
+		} catch (Exception e) {
+			// fall through and deny access
+			LogHelper.log(e);
 		}
 		return false;
 	}

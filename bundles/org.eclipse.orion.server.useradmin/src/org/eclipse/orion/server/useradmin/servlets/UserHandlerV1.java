@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2012 IBM Corporation and others.
+ * Copyright (c) 2010, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -19,9 +19,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.*;
-import org.eclipse.orion.internal.server.servlets.workspace.*;
+import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
+import org.eclipse.orion.internal.server.servlets.workspace.WebWorkspace;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.resources.Base64Counter;
 import org.eclipse.orion.server.servlets.OrionServlet;
@@ -392,34 +394,17 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	 * 
 	 * TODO Move into WebUser?
 	 */
-	private void deleteUserAndArtifacts(WebUser user) throws CoreException {
-		try {
-			// Delete filesystem contents
-			JSONArray workspaces = user.getWorkspacesJSON();
-			for (int i = 0; i < workspaces.length(); i++) {
-				JSONObject workspace = workspaces.getJSONObject(i);
-				WebWorkspace webWorkspace = WebWorkspace.fromId(workspace.getString(ProtocolConstants.KEY_ID));
-				for (WebProject project : webWorkspace.getProjects()) {
-					project.deleteContents();
-					webWorkspace.removeProject(project);
-					project.removeNode();
-				}
-				webWorkspace.removeNode();
+	private void deleteUserArtifacts(UserInfo user) throws CoreException {
+		// Delete filesystem contents
+		for (String workspaceId : user.getWorkspaceIds()) {
+			WebWorkspace webWorkspace = WebWorkspace.fromId(workspaceId);
+			for (WebProject project : webWorkspace.getProjects()) {
+				project.deleteContents();
+				webWorkspace.removeProject(project);
+				project.removeNode();
 			}
-			// Delete site configurations
-			JSONArray sites = user.getSiteConfigurationsJSON(new URI("")); //$NON-NLS-1$
-			for (int i = 0; i < sites.length(); i++) {
-				JSONObject site = sites.getJSONObject(i);
-				String id = site.getString(ProtocolConstants.KEY_ID);
-				user.removeSiteConfiguration(user.getSiteConfiguration(id));
-			}
-			// TODO delete Git clones
-		} catch (URISyntaxException e) {
-			LogHelper.log(e);
-		} catch (JSONException e) {
-			LogHelper.log(e);
+			webWorkspace.removeNode();
 		}
-		user.delete();
 	}
 
 	/**
@@ -558,13 +543,12 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + userId + " could not be found.", null));
 			}
 		}
-		// Delete WebUser
-		WebUser webUser = WebUser.fromUserId(userId);
+		// Delete user from metadata store
 		try {
-			if (webUser.isGuest())
-				deleteUserAndArtifacts(webUser);
-			else
-				webUser.delete();
+			final IMetaStore metastore = Activator.getDefault().getMetastore();
+			if (isGuest)
+				deleteUserArtifacts(metastore.readUser(userId));
+			metastore.deleteUser(userId);
 		} catch (CoreException e) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Removing " + userId + " failed.", e));
 		}

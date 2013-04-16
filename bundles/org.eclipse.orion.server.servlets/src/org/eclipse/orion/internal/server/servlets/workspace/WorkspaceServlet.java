@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.JSONObject;
 
@@ -93,12 +94,12 @@ public class WorkspaceServlet extends OrionServlet {
 	 * or <code>false</code> if the request could not be handled by this servlet.
 	 */
 	private boolean doGetWorkspaces(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
-		String userName = getUserId(req);
-		if (!checkUser(userName, resp))
+		String userId = getUserId(req);
+		if (!checkUser(userId, resp))
 			return true;
 		try {
-			WebUser user = WebUser.fromUserId(userName);
-			writeJSONResponse(req, resp, WebUserResourceHandler.toJSON(user, ServletResourceHandler.getURI(req)));
+			UserInfo user = Activator.getDefault().getMetastore().readUser(userId);
+			writeJSONResponse(req, resp, UserInfoResourceHandler.toJSON(user, ServletResourceHandler.getURI(req)));
 		} catch (Exception e) {
 			handleException(resp, "An error occurred while obtaining workspace data", e);
 		}
