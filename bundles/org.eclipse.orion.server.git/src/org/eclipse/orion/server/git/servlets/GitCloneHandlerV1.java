@@ -421,18 +421,15 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 	 * 
 	 * @see WorkspaceResourceHandler#handleRemoveProject(HttpServletRequest, HttpServletResponse, WebWorkspace)
 	 * 
-	 * @param userName the user name
+	 * @param userId the user name
 	 * @param webProject the project to remove
 	 * @return ServerStatus <code>OK</code> if the project has been found and successfully removed,
 	 * <code>ERROR</code> if an error occurred or the project couldn't be found
 	 */
-	public static ServerStatus removeProject(String userName, WebProject webProject) {
+	public static ServerStatus removeProject(String userId, WebProject webProject) {
 		try {
-			WebUser webUser = WebUser.fromUserId(userName);
-			JSONArray workspacesJSON = webUser.getWorkspacesJSON();
-			for (int i = 0; i < workspacesJSON.length(); i++) {
-				JSONObject workspace = workspacesJSON.getJSONObject(i);
-				String workspaceId = workspace.getString(ProtocolConstants.KEY_ID);
+			UserInfo user = GitActivator.getDefault().getMetastore().readUser(userId);
+			for (String workspaceId : user.getWorkspaceIds()) {
 				WebWorkspace webWorkspace = WebWorkspace.fromId(workspaceId);
 				JSONArray projectsJSON = webWorkspace.getProjectsJSON();
 				for (int j = 0; j < projectsJSON.length(); j++) {
@@ -441,7 +438,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 					if (projectId.equals(webProject.getId())) {
 						//If found, remove project from workspace
 						try {
-							WorkspaceResourceHandler.removeProject(userName, webWorkspace, webProject);
+							WorkspaceResourceHandler.removeProject(userId, webWorkspace, webProject);
 						} catch (CoreException e) {
 							//we are unable to write in the platform location!
 							String msg = NLS.bind("Server content location could not be written: {0}", Activator.getDefault().getRootLocationURI());
@@ -452,7 +449,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 					}
 				}
 			}
-		} catch (JSONException e) {
+		} catch (Exception e) {
 			// ignore, no project will be harmed
 		}
 		// FIXME: not sure about this one
