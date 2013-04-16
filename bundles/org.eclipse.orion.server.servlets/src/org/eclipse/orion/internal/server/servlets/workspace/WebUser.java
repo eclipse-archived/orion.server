@@ -272,7 +272,6 @@ public class WebUser extends WebElement {
 	public void delete() throws CoreException {
 		try {
 			IEclipsePreferences parent = (IEclipsePreferences) store.parent();
-			boolean isGuest = this.isGuest();
 			store.clear();
 			store.removeNode();
 			// TODO: consider removing user's Workspaces, Projects, Clones, SiteConfigs if no one else is using them

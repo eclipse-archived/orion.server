@@ -20,6 +20,8 @@ import java.util.*;
 public class MetadataInfo {
 
 	private String id;
+	private String fullName;
+
 	private final Map<String, String> properties = Collections.synchronizedMap(new HashMap<String, String>());
 
 	/**
@@ -35,6 +37,20 @@ public class MetadataInfo {
 	 */
 	public String getUID() {
 		return id;
+	}
+
+	/**
+	 * @return the fullName
+	 */
+	public String getFullName() {
+		return fullName;
+	}
+
+	/**
+	 * @param fullName the fullName to set
+	 */
+	public void setFullName(String fullName) {
+		this.fullName = fullName;
 	}
 
 	public String getProperty(String key) {

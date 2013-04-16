@@ -16,15 +16,16 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.json.*;
 
 /**
- * 
+ * Handles requests against a single user resource.
  */
-public class WebUserResourceHandler extends WebElementResourceHandler<WebUser> {
+public class UserInfoResourceHandler extends MetadataInfoResourceHandler<UserInfo> {
 
 	@Override
-	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, WebUser object) throws ServletException {
+	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, UserInfo user) throws ServletException {
 		return false;
 	}
 
@@ -35,16 +36,17 @@ public class WebUserResourceHandler extends WebElementResourceHandler<WebUser> {
 	 * @param baseLocation The location of the workspace servlet
 	 * @return A JSON representation of the user.
 	 */
-	public static JSONObject toJSON(WebUser user, URI baseLocation) {
-		JSONObject result = WebElementResourceHandler.toJSON(user);
+	public static JSONObject toJSON(UserInfo user, URI baseLocation) {
+		JSONObject result = MetadataInfoResourceHandler.toJSON(user);
 		try {
 			result.put(ProtocolConstants.KEY_USER_NAME, user.getUserName());
-			JSONArray workspacesJSON = user.getWorkspacesJSON();
-			for (int i = 0; i < workspacesJSON.length(); i++) {
-				JSONObject workspace = workspacesJSON.getJSONObject(i);
-				String workspaceId = workspace.getString(ProtocolConstants.KEY_ID);
+			JSONArray workspacesJSON = new JSONArray();
+			for (String workspaceId : user.getWorkspaceIds()) {
+				JSONObject workspace = new JSONObject();
+				workspace.put(ProtocolConstants.KEY_ID, workspaceId);
 				workspace.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(baseLocation, workspaceId));
 				workspace.put(ProtocolConstants.KEY_NAME, WebWorkspace.fromId(workspaceId).getName());
+				workspacesJSON.put(workspace);
 			}
 			result.put(ProtocolConstants.KEY_WORKSPACES, workspacesJSON);
 		} catch (JSONException e) {

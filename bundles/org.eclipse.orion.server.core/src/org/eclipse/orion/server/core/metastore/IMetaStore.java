@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.core.metastore;
 
-import java.net.URI;
 import org.eclipse.core.runtime.CoreException;
 
 /**
@@ -42,5 +41,5 @@ public interface IMetaStore {
 
 	public void updateUser(UserInfo info) throws CoreException;
 
-	public void deleteUser(URI location) throws CoreException;
+	public void deleteUser(String uid) throws CoreException;
 }
