@@ -19,8 +19,8 @@ import java.util.*;
  */
 public class MetadataInfo {
 
-	private String id;
 	private String fullName;
+	private String id;
 
 	private final Map<String, String> properties = Collections.synchronizedMap(new HashMap<String, String>());
 
@@ -32,6 +32,28 @@ public class MetadataInfo {
 	}
 
 	/**
+	 * Returns the full, human readable name of this object. This is typically a name chosen
+	 * by the end user for this particular user, workspace or project. There is no guarantee
+	 * of uniqueness across instances.
+	 * @return the full name of this metadata object
+	 */
+	public String getFullName() {
+		return fullName;
+	}
+
+	/**
+	 * Returns the value of the persistent property of this metadata object identified
+	 * by the given key, or <code>null</code> if this resource has no such property.
+	 *
+	 * @param key the qualified name of the property
+	 * @return the string value of the property, 
+	 *     or <code>null</code> if this resource has no such property
+	 */
+	public String getProperty(String key) {
+		return properties.get(key);
+	}
+
+	/**
 	 * Returns the globally unique id of this metadata object.
 	 * @return the id of this object
 	 */
@@ -40,27 +62,41 @@ public class MetadataInfo {
 	}
 
 	/**
-	 * @return the fullName
-	 */
-	public String getFullName() {
-		return fullName;
-	}
-
-	/**
+	 * Sets the full, human readable name of this object. This is typically a name chosen
+	 * by the end user for this particular user, workspace or project. There is no guarantee
+	 * of uniqueness across instances.
 	 * @param fullName the fullName to set
 	 */
 	public void setFullName(String fullName) {
 		this.fullName = fullName;
 	}
 
-	public String getProperty(String key) {
-		return properties.get(key);
-	}
-
+	/**
+	 * Sets the value of the persistent property of this metadata object identified
+	 * by the given key. If the supplied value is <code>null</code>,
+	 * the persistent property is removed from this resource.
+	 * <p>
+	 * Persistent properties are intended to be used to store specific information 
+	 * about this metadata object that should be persisted.
+	 * The value of a persistent property is a string that must be short -
+	 * 2KB or less in length.
+	 * </p>
+	 *
+	 * @param key the qualified name of the property
+	 * @param value the string value of the property, 
+	 *     or <code>null</code> if the property is to be removed
+	 */
 	public void setProperty(String key, String value) {
 		properties.put(key, value);
 	}
 
+	/**
+	 * Sets the unique id of this metadata object. The id must be unique
+	 * across all metadata objects of any given subclass of this class.
+	 * The id is not guaranteed to be globally unique across all server
+	 * instances.
+	 * @param id the unique id of this object
+	 */
 	public void setUID(String id) {
 		this.id = id;
 	}
