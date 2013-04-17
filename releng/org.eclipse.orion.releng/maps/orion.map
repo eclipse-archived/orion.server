@@ -1,7 +1,7 @@
 #client
 plugin@org.eclipse.orion.client.core=GIT,tag=v20130408-1532,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.core
-plugin@org.eclipse.orion.client.ui=GIT,tag=v20130415-1940,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.ui
-plugin@org.eclipse.orion.client.editor=GIT,tag=v20130411-1758,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.editor
+plugin@org.eclipse.orion.client.ui=GIT,tag=v20130416-1946,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.ui
+plugin@org.eclipse.orion.client.editor=GIT,tag=v20130416-2145,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.editor
 plugin@org.eclipse.orion.client.users=GIT,tag=v20130401-2056,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.users
 plugin@org.eclipse.orion.client.git=GIT,tag=v20130410-1358,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.git
 
@@ -15,7 +15,7 @@ plugin@org.eclipse.orion.server.authentication=GIT,tag=v20130319-1558,repo=git:/
 plugin@org.eclipse.orion.server.git=GIT,tag=v20130301-2132,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.git
 plugin@org.eclipse.orion.server.sshconfig.userprofile=GIT,tag=v20110420-1839,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.sshconfig.userprofile
 plugin@org.eclipse.orion.server.user.securestorage=GIT,tag=v20130318-0527,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.user.securestorage
-plugin@org.eclipse.orion.server.user.guest=GIT,tag=v20130318-0527,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.user.guest
+plugin@org.eclipse.orion.server.user.guest=GIT,tag=v20130319-0310,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.user.guest
 plugin@org.eclipse.orion.server.useradmin=GIT,tag=v20130411-1615,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.useradmin
 plugin@org.eclipse.orion.server.useradmin.xml=GIT,tag=v20110412-0931,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.useradmin.xml
 plugin@org.eclipse.orion.server.search=GIT,tag=v20130131-0030,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.search
@@ -40,7 +40,7 @@ plugin@org.eclipse.jgit=p2IU,id=org.eclipse.jgit,repository=http://download.ecli
 
 #features
 feature@org.eclipse.orion.base.feature=GIT,tag=v20121016-1843,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=features/org.eclipse.orion.base-feature
-feature@org.eclipse.orion.server.feature=GIT,tag=v20130315-2054,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=features/org.eclipse.orion.server-feature
+feature@org.eclipse.orion.server.feature=GIT,tag=v20130416-1725,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=features/org.eclipse.orion.server-feature
 feature@org.eclipse.orion.server.search.feature=GIT,tag=v20121016-2005,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=features/org.eclipse.orion.server.search-feature
 feature@org.eclipse.orion.server.authentication.feature=GIT,tag=v20121016-1843,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=features/org.eclipse.orion.server.authentication-feature
 feature@org.eclipse.orion.server.ui.feature=GIT,tag=v20121016-1843,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=features/org.eclipse.orion.server.ui-feature
