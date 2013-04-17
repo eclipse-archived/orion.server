@@ -30,7 +30,7 @@ import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.git.objects.Clone;
+import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -54,7 +54,7 @@ public class GitCheckoutTest extends GitTest {
 		clone(clonePath);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -88,7 +88,7 @@ public class GitCheckoutTest extends GitTest {
 		clone(clonePath);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -122,7 +122,7 @@ public class GitCheckoutTest extends GitTest {
 		clone(clonePath);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -156,7 +156,7 @@ public class GitCheckoutTest extends GitTest {
 		clone(clonePath);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -180,7 +180,7 @@ public class GitCheckoutTest extends GitTest {
 		clone(clonePath);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -208,7 +208,7 @@ public class GitCheckoutTest extends GitTest {
 		clone(clonePath);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -239,7 +239,7 @@ public class GitCheckoutTest extends GitTest {
 		clone(clonePath);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -280,7 +280,7 @@ public class GitCheckoutTest extends GitTest {
 			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project/folder metadata
-			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebRequest request = getGetRequest(cloneContentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder = new JSONObject(response.getText());
@@ -328,7 +328,7 @@ public class GitCheckoutTest extends GitTest {
 		clone(clonePath);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -365,7 +365,7 @@ public class GitCheckoutTest extends GitTest {
 			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project/folder metadata
-			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebRequest request = getGetRequest(cloneContentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder = new JSONObject(response.getText());
@@ -409,7 +409,7 @@ public class GitCheckoutTest extends GitTest {
 		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -436,7 +436,7 @@ public class GitCheckoutTest extends GitTest {
 		String location = clone.getString(ProtocolConstants.KEY_LOCATION);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -457,7 +457,7 @@ public class GitCheckoutTest extends GitTest {
 		String location = clone.getString(ProtocolConstants.KEY_LOCATION);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -478,7 +478,7 @@ public class GitCheckoutTest extends GitTest {
 			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project/folder metadata
-			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebRequest request = getGetRequest(cloneContentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder = new JSONObject(response.getText());
@@ -531,7 +531,7 @@ public class GitCheckoutTest extends GitTest {
 			String remotesLocation = clone.getString(GitConstants.KEY_REMOTE);
 
 			// get project/folder metadata
-			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebRequest request = getGetRequest(cloneContentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -620,14 +620,14 @@ public class GitCheckoutTest extends GitTest {
 	}
 
 	private WebRequest getCheckoutRequest(String location, String[] paths, boolean removeUntracked) throws IOException, JSONException {
-		String requestURI;
-		if (location.startsWith("http://")) {
-			// assume the caller knows what he's doing
-			// assertCloneUri(location);
-			requestURI = location;
-		} else {
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Clone.RESOURCE + location;
-		}
+		String requestURI = URI.create(ServerTestsActivator.getServerLocation()).resolve(location).toString();
+		//		if (location.startsWith("http://")) {
+		//			// assume the caller knows what he's doing
+		//			// assertCloneUri(location);
+		//			requestURI = location;
+		//		} else {
+		//			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Clone.RESOURCE + location;
+		//		}
 		JSONObject body = new JSONObject();
 		JSONArray jsonPaths = new JSONArray();
 		for (String path : paths)

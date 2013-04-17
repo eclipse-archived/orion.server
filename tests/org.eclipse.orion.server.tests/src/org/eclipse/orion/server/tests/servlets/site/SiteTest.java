@@ -2,20 +2,29 @@ package org.eclipse.orion.server.tests.servlets.site;
 
 import static org.junit.Assert.assertEquals;
 
-import com.meterware.httpunit.*;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URISyntaxException;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
 import org.eclipse.orion.server.core.users.OrionScope;
-import org.json.*;
-import org.junit.*;
+import org.eclipse.orion.server.tests.ServerTestsActivator;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.osgi.service.prefs.BackingStoreException;
 import org.xml.sax.SAXException;
+
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 /**
  * Tests for the site configurations API.
@@ -114,7 +123,10 @@ public class SiteTest extends CoreSiteTest {
 		final String hostHint = "bobhost";
 		WebResponse createResp = createSite(name, workspaceId, mappings, hostHint, null);
 		JSONObject site = new JSONObject(createResp.getText());
-		final String location = site.getString(ProtocolConstants.HEADER_LOCATION);
+
+		String location = site.getString(ProtocolConstants.HEADER_LOCATION);
+		URI serverURI = new URI(ServerTestsActivator.getServerLocation());
+		location = serverURI.resolve(location).toString();
 
 		// Fetch site using its Location and ensure that what we find matches what was POSTed
 		WebRequest fetchReq = getRetrieveSiteRequest(location, null);
@@ -139,7 +151,9 @@ public class SiteTest extends CoreSiteTest {
 		final String hostHint = "orion-is-awesome";
 		WebResponse createResp = createSite(name, workspaceId, mappings, hostHint, null);
 		JSONObject site = new JSONObject(createResp.getText());
-		final String location = site.getString(ProtocolConstants.HEADER_LOCATION);
+		String location = site.getString(ProtocolConstants.HEADER_LOCATION);
+		URI serverURI = new URI(ServerTestsActivator.getServerLocation());
+		location = serverURI.resolve(location).toString();
 
 		// Update site
 		final String newName = "A site that was updated";
@@ -168,7 +182,9 @@ public class SiteTest extends CoreSiteTest {
 		WebResponse createResp = createSite(name, workspaceId, null, null, null);
 		JSONObject site = new JSONObject(createResp.getText());
 		final String siteId = site.getString(ProtocolConstants.KEY_ID);
-		final String location = site.getString(ProtocolConstants.HEADER_LOCATION);
+		String location = site.getString(ProtocolConstants.HEADER_LOCATION);
+		URI serverURI = new URI(ServerTestsActivator.getServerLocation());
+		location = serverURI.resolve(location).toString();
 
 		OrionScope prefs = new OrionScope();
 		IEclipsePreferences userSites = prefs.getNode("Users" + "/" + testUserId + "/" + SITE_CONFIG_PREF_NODE);
@@ -213,7 +229,9 @@ public class SiteTest extends CoreSiteTest {
 		final String workspaceId = workspaceObject.getString(ProtocolConstants.KEY_ID);
 		WebResponse createResp = createSite(name, workspaceId, null, null, "alice");
 		JSONObject site = new JSONObject(createResp.getText());
-		final String location = site.getString(ProtocolConstants.HEADER_LOCATION);
+		String location = site.getString(ProtocolConstants.HEADER_LOCATION);
+		URI serverURI = new URI(ServerTestsActivator.getServerLocation());
+		location = serverURI.resolve(location).toString();
 
 		// Alice: Get site
 		WebRequest getReq = getRetrieveSiteRequest(location, "alice");

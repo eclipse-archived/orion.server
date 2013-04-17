@@ -15,20 +15,26 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.*;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
+
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jgit.api.CherryPickResult.CherryPickStatus;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.git.objects.Commit;
-import org.json.*;
+import org.eclipse.orion.server.tests.ServerTestsActivator;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.Test;
 import org.xml.sax.SAXException;
+
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 public class GitCherryPickTest extends GitTest {
 	@Test
@@ -44,7 +50,7 @@ public class GitCherryPickTest extends GitTest {
 			String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 			// get project/folder metadata
-			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebRequest request = getGetRequest(cloneContentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder = new JSONObject(response.getText());
@@ -143,7 +149,7 @@ public class GitCherryPickTest extends GitTest {
 			assertNull(newTxt);
 
 			// check cherry-pick result in the file
-			request = getGetFilesRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
+			request = getGetRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			assertEquals("first line\nsecond line\nthird line\nfeature++\n", response.getText());
@@ -173,11 +179,11 @@ public class GitCherryPickTest extends GitTest {
 	}
 
 	private static WebRequest getPostGitCherryPickRequest(String location, String toCherryPick) throws JSONException, UnsupportedEncodingException {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Commit.RESOURCE + location;
+		String requestURI = URI.create(ServerTestsActivator.getServerLocation()).resolve(location).toString();
+		//		if (location.startsWith("http://"))
+		//			requestURI = location;
+		//		else
+		//			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Commit.RESOURCE + location;
 
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_CHERRY_PICK, toCherryPick);

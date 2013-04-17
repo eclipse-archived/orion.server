@@ -16,22 +16,28 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 
-import com.meterware.httpunit.*;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
+
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jgit.diff.DiffEntry.ChangeType;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.git.objects.Commit;
 import org.eclipse.orion.server.git.objects.Diff;
-import org.json.*;
+import org.eclipse.orion.server.tests.ServerTestsActivator;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.Assume;
 import org.junit.Test;
+
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 public class GitLogTest extends GitTest {
 
@@ -46,7 +52,7 @@ public class GitLogTest extends GitTest {
 			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project/folder metadata
-			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebRequest request = getGetRequest(cloneContentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder = new JSONObject(response.getText());
@@ -131,7 +137,7 @@ public class GitLogTest extends GitTest {
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		// get project/folder metadata
-		WebRequest request = getGetFilesRequest(location);
+		WebRequest request = getGetRequest(location);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject folder = new JSONObject(response.getText());
@@ -155,7 +161,7 @@ public class GitLogTest extends GitTest {
 			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project/folder metadata
-			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebRequest request = getGetRequest(cloneContentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder = new JSONObject(response.getText());
@@ -181,7 +187,7 @@ public class GitLogTest extends GitTest {
 			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebRequest request = getGetRequest(cloneContentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -219,7 +225,7 @@ public class GitLogTest extends GitTest {
 			String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebRequest request = getGetRequest(cloneContentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -254,7 +260,7 @@ public class GitLogTest extends GitTest {
 			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebRequest request = getGetRequest(cloneContentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -317,7 +323,7 @@ public class GitLogTest extends GitTest {
 			String gitCommitUri = clone.getString(GitConstants.KEY_COMMIT);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebRequest request = getGetRequest(cloneContentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -557,7 +563,7 @@ public class GitLogTest extends GitTest {
 		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -571,7 +577,7 @@ public class GitLogTest extends GitTest {
 		checkoutBranch(cloneLocation, "a");
 
 		// get project metadata again
-		request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_LOCATION));
+		request = getGetRequest(project.getString(ProtocolConstants.KEY_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -592,7 +598,7 @@ public class GitLogTest extends GitTest {
 			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project/folder metadata
-			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebRequest request = getGetRequest(cloneContentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder = new JSONObject(response.getText());
@@ -656,7 +662,7 @@ public class GitLogTest extends GitTest {
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -689,7 +695,7 @@ public class GitLogTest extends GitTest {
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -723,7 +729,7 @@ public class GitLogTest extends GitTest {
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -789,11 +795,11 @@ public class GitLogTest extends GitTest {
 	}
 
 	private static WebRequest getPostForScopedLogRequest(String location, String newCommit) throws JSONException, UnsupportedEncodingException {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Commit.RESOURCE + location;
+		String requestURI = URI.create(ServerTestsActivator.getServerLocation()).resolve(location).toString();
+		//		if (location.startsWith("http://"))
+		//			requestURI = location;
+		//		else
+		//			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Commit.RESOURCE + location;
 
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_COMMIT_NEW, newCommit);

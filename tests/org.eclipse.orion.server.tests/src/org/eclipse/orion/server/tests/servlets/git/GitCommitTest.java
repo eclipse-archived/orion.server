@@ -22,7 +22,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.git.objects.Commit;
+import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -230,7 +230,7 @@ public class GitCommitTest extends GitTest {
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject cloneFolder = new JSONObject(response.getText());
@@ -322,7 +322,7 @@ public class GitCommitTest extends GitTest {
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -364,7 +364,7 @@ public class GitCommitTest extends GitTest {
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -406,7 +406,7 @@ public class GitCommitTest extends GitTest {
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -481,13 +481,13 @@ public class GitCommitTest extends GitTest {
 	}
 
 	static WebRequest getPostGitCommitRequest(String location, String message, boolean amend, String committerName, String committerEmail, String authorName, String authorEmail) throws JSONException, UnsupportedEncodingException {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else if (location.startsWith("/"))
-			requestURI = SERVER_LOCATION + location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Commit.RESOURCE + location;
+		String requestURI = URI.create(ServerTestsActivator.getServerLocation()).resolve(location).toString();
+		//		if (location.startsWith("http://"))
+		//			requestURI = location;
+		//		else if (location.startsWith("/"))
+		//			requestURI = SERVER_LOCATION + location;
+		//		else
+		//			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Commit.RESOURCE + location;
 
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_COMMIT_MESSAGE, message);
@@ -511,13 +511,13 @@ public class GitCommitTest extends GitTest {
 	}
 
 	static WebRequest getGetGitCommitRequest(String location, boolean body, Integer page, Integer pageSize) {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else if (location.startsWith("/"))
-			requestURI = SERVER_LOCATION + location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Commit.RESOURCE + '/' + location;
+		String requestURI = URI.create(ServerTestsActivator.getServerLocation()).resolve(location).toString();
+		//		if (location.startsWith("http://"))
+		//			requestURI = location;
+		//		else if (location.startsWith("/"))
+		//			requestURI = SERVER_LOCATION + location;
+		//		else
+		//			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Commit.RESOURCE + '/' + location;
 		boolean firstParam = true;
 		if (body) {
 			if (firstParam) {

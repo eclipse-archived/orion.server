@@ -35,7 +35,7 @@ import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.git.objects.Remote;
+import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -64,7 +64,7 @@ public class GitPushTest extends GitTest {
 		clone(clonePath);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -93,7 +93,7 @@ public class GitPushTest extends GitTest {
 		clone(clonePath1);
 
 		// get project1 metadata
-		WebRequest request = getGetFilesRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project1 = new JSONObject(response.getText());
@@ -108,7 +108,7 @@ public class GitPushTest extends GitTest {
 		clone(clonePath2);
 
 		// get project2 metadata
-		request = getGetFilesRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		request = getGetRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project2 = new JSONObject(response.getText());
@@ -161,7 +161,7 @@ public class GitPushTest extends GitTest {
 
 		// clone2: assert change from clone1 is in place
 		JSONObject testTxt2 = getChild(project2, "test.txt");
-		request = getGetFilesRequest(testTxt2.getString(ProtocolConstants.KEY_LOCATION));
+		request = getGetRequest(testTxt2.getString(ProtocolConstants.KEY_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("incoming change", response.getText());
@@ -186,7 +186,7 @@ public class GitPushTest extends GitTest {
 		String cloneContentLocation1 = clone(request);
 
 		// clone1: get project/folder metadata
-		request = getGetFilesRequest(cloneContentLocation1);
+		request = getGetRequest(cloneContentLocation1);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project1 = new JSONObject(response.getText());
@@ -204,7 +204,7 @@ public class GitPushTest extends GitTest {
 		String cloneContentLocation2 = clone(request);
 
 		// clone2: get project/folder metadata
-		request = getGetFilesRequest(cloneContentLocation2);
+		request = getGetRequest(cloneContentLocation2);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project2 = new JSONObject(response.getText());
@@ -262,7 +262,7 @@ public class GitPushTest extends GitTest {
 
 		// clone2: assert change from clone1 is in place
 		JSONObject testTxt2 = getChild(project2, "test.txt");
-		request = getGetFilesRequest(testTxt2.getString(ProtocolConstants.KEY_LOCATION));
+		request = getGetRequest(testTxt2.getString(ProtocolConstants.KEY_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("incoming change", response.getText());
@@ -281,7 +281,7 @@ public class GitPushTest extends GitTest {
 		String branchesLocation1 = clone1.getString(GitConstants.KEY_BRANCH);
 
 		// get project1 metadata
-		WebRequest request = getGetFilesRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project1 = new JSONObject(response.getText());
@@ -317,6 +317,8 @@ public class GitPushTest extends GitTest {
 		ServerStatus pushStatus = push(remoteBranchLocation, Constants.HEAD, false);
 		assertTrue(pushStatus.isOK());
 
+		remoteBranchLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(remoteBranchLocation).toString();
+
 		// clone1: get the remote branch name
 		request = getGetRequest(remoteBranchLocation);
 		response = webConversation.getResponse(request);
@@ -331,7 +333,7 @@ public class GitPushTest extends GitTest {
 		String branchesLocation2 = clone2.getString(GitConstants.KEY_BRANCH);
 
 		// get project2 metadata
-		request = getGetFilesRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		request = getGetRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project2 = new JSONObject(response.getText());
@@ -345,7 +347,7 @@ public class GitPushTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		JSONObject testTxt2 = getChild(project2, "test.txt");
-		request = getGetFilesRequest(testTxt2.getString(ProtocolConstants.KEY_LOCATION));
+		request = getGetRequest(testTxt2.getString(ProtocolConstants.KEY_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("branch 'a' change", response.getText());
@@ -364,7 +366,7 @@ public class GitPushTest extends GitTest {
 			String branchesLocation1 = clone1.getString(GitConstants.KEY_BRANCH);
 
 			// clone 1 - get project1 metadata
-			WebRequest request = getGetFilesRequest(contentLocation1);
+			WebRequest request = getGetRequest(contentLocation1);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project1 = new JSONObject(response.getText());
@@ -432,7 +434,7 @@ public class GitPushTest extends GitTest {
 			String contentLocation2 = clone2.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// clone 2 - get project2 metadata
-			request = getGetFilesRequest(contentLocation2);
+			request = getGetRequest(contentLocation2);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project2 = new JSONObject(response.getText());
@@ -494,7 +496,7 @@ public class GitPushTest extends GitTest {
 		clone(clonePath);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -548,7 +550,7 @@ public class GitPushTest extends GitTest {
 		clone(clonePath1);
 
 		// get project1 metadata
-		WebRequest request = getGetFilesRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project1 = new JSONObject(response.getText());
@@ -564,7 +566,7 @@ public class GitPushTest extends GitTest {
 		clone(clonePath2);
 
 		// get project2 metadata
-		request = getGetFilesRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		request = getGetRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project2 = new JSONObject(response.getText());
@@ -624,7 +626,7 @@ public class GitPushTest extends GitTest {
 		clone(clonePath);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -676,7 +678,7 @@ public class GitPushTest extends GitTest {
 			String contentLocation1 = clone(clonePath[0]).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project1 metadata
-			WebRequest request = getGetFilesRequest(contentLocation1);
+			WebRequest request = getGetRequest(contentLocation1);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project1 = new JSONObject(response.getText());
@@ -689,7 +691,7 @@ public class GitPushTest extends GitTest {
 			String contentLocation2 = clone(clonePath[1]).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project2 metadata
-			request = getGetFilesRequest(contentLocation2);
+			request = getGetRequest(contentLocation2);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project2 = new JSONObject(response.getText());
@@ -753,7 +755,7 @@ public class GitPushTest extends GitTest {
 		clone(clonePath1);
 
 		// get project1 metadata
-		WebRequest request = getGetFilesRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project1 = new JSONObject(response.getText());
@@ -769,7 +771,7 @@ public class GitPushTest extends GitTest {
 		clone(clonePath2);
 
 		// get project2 metadata
-		request = getGetFilesRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		request = getGetRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project2 = new JSONObject(response.getText());
@@ -817,7 +819,7 @@ public class GitPushTest extends GitTest {
 			String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 			// get project/folder metadata
-			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebRequest request = getGetRequest(cloneContentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder = new JSONObject(response.getText());
@@ -846,6 +848,8 @@ public class GitPushTest extends GitTest {
 			response = addRemote(remotesLocation, "secondary", dotGitDir.getParentFile().toURL().toString());
 			String secondaryRemoteLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 			assertNotNull(secondaryRemoteLocation);
+
+			remotesLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(remotesLocation).toString();
 
 			// list remotes
 			request = getGetRequest(remotesLocation);
@@ -912,7 +916,7 @@ public class GitPushTest extends GitTest {
 
 			// check file content
 			String cloneContentLocation2 = clone2.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-			request = getGetFilesRequest(cloneContentLocation2);
+			request = getGetRequest(cloneContentLocation2);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder2 = new JSONObject(response.getText());
@@ -922,11 +926,11 @@ public class GitPushTest extends GitTest {
 	}
 
 	static WebRequest getPostGitRemoteRequest(String location, String srcRef, boolean tags, boolean force) throws JSONException, UnsupportedEncodingException {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Remote.RESOURCE + location;
+		String requestURI = URI.create(ServerTestsActivator.getServerLocation()).resolve(location).toString();
+		//		if (location.startsWith("http://"))
+		//			requestURI = location;
+		//		else
+		//			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Remote.RESOURCE + location;
 
 		JSONObject body = new JSONObject();
 		if (srcRef != null)
@@ -940,11 +944,11 @@ public class GitPushTest extends GitTest {
 	}
 
 	static WebRequest getPostGitRemoteRequest(String location, String srcRef, boolean tags, boolean force, String name, String kh, byte[] privk, byte[] pubk, byte[] p) throws JSONException, UnsupportedEncodingException {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Remote.RESOURCE + location;
+		String requestURI = URI.create(ServerTestsActivator.getServerLocation()).resolve(location).toString();
+		//		if (location.startsWith("http://"))
+		//			requestURI = location;
+		//		else
+		//			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Remote.RESOURCE + location;
 
 		JSONObject body = new JSONObject();
 

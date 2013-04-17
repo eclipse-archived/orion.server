@@ -15,22 +15,33 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.*;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.List;
-import org.eclipse.core.runtime.*;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.server.core.ServerConstants;
-import org.json.*;
-import org.junit.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.osgi.service.prefs.BackingStoreException;
 import org.xml.sax.SAXException;
+
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 /**
  * Basic tests for {@link NewFileServlet}.
@@ -66,7 +77,7 @@ public class CoreFilesTest extends FileSystemTest {
 		createDirectory(directoryPath);
 
 		JSONObject requestObject = new JSONObject();
-		requestObject.put("Location", "/this/does/not/exist/at/all");
+		requestObject.put("Location", "/file/this/does/not/exist/at/all");
 		WebRequest request = getPostFilesRequest(directoryPath, requestObject.toString(), "destination.txt");
 		request.setHeaderField("X-Create-Options", "copy");
 		WebResponse response = webConversation.getResponse(request);

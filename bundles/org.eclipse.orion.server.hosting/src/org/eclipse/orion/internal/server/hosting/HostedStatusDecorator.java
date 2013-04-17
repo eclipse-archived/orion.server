@@ -86,7 +86,7 @@ public class HostedStatusDecorator implements IWebResourceDecorator {
 			String portSuffix = ":" + req.getLocalPort(); //$NON-NLS-1$
 			// Whatever scheme was used to access the resource, assume it's used for the sites too
 			// Hosted site also shares same contextPath 
-			String hostedUrl = resource.getScheme() + "://" + site.getHost() + portSuffix + req.getContextPath(); //$NON-NLS-1$
+			String hostedUrl = req.getScheme() + "://" + site.getHost() + portSuffix + req.getContextPath(); //$NON-NLS-1$
 			hostingStatus.put(SiteConfigurationConstants.KEY_HOSTING_STATUS_URL, hostedUrl);
 		} else {
 			hostingStatus.put(SiteConfigurationConstants.KEY_HOSTING_STATUS_STATUS, "stopped"); //$NON-NLS-1$

@@ -101,7 +101,7 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 			URI location = URIUtil.append(getURI(request), name);
 			JSONObject result = ServletFileStoreHandler.toJSON(toCreate, toCreate.fetchInfo(EFS.NONE, null), location);
 			OrionServlet.writeJSONResponse(request, response, result);
-			response.setHeader(ProtocolConstants.HEADER_LOCATION, location.toString());
+			response.setHeader(ProtocolConstants.HEADER_LOCATION, ServletResourceHandler.resovleOrionURI(request, location).toString());
 			//response code should indicate if a new resource was actually created or not
 			response.setStatus(destinationExists ? HttpServletResponse.SC_OK : HttpServletResponse.SC_CREATED);
 		}

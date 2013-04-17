@@ -65,13 +65,38 @@ public abstract class ServletResourceHandler<T> {
 	 * Convenience method to obtain the URI of the request
 	 */
 	public static URI getURI(HttpServletRequest request) {
-		StringBuffer result = request.getRequestURL();
+		String path = request.getServletPath();
+		String pathInfo = request.getPathInfo();
+		if (pathInfo != null) {
+			path += request.getPathInfo();
+		}
 		try {
-			return new URI(result.toString());
+			// Note: no query string!
+			return new URI("orion", null, path, null, null);
 		} catch (URISyntaxException e) {
 			//location not properly encoded
 			return null;
 		}
+	}
+
+	public static URI resovleOrionURI(HttpServletRequest request, URI uri) {
+		if (!uri.getScheme().equals("orion"))
+			return uri;
+
+		try {
+			return new URI(null, null, request.getContextPath() + uri.getPath(), uri.getQuery(), uri.getFragment());
+		} catch (URISyntaxException e) {
+			//location not properly encoded
+			return null;
+		}
+	}
+
+	public static String toOrionLocation(HttpServletRequest request, String location) {
+		String contextPath = request.getContextPath();
+		if (location != null && contextPath.length() != 0 && location.startsWith(contextPath)) {
+			location = location.substring(contextPath.length());
+		}
+		return location;
 	}
 
 	/**

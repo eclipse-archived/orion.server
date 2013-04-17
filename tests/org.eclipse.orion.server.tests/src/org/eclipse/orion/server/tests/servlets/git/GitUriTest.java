@@ -15,12 +15,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 import java.io.File;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.List;
+
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.util.FileUtils;
@@ -30,11 +29,13 @@ import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONObject;
 import org.junit.Test;
 
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
+
 public class GitUriTest extends GitTest {
 	@Test
 	public void testGitUrisAfterLinkingToExistingClone() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
-
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		assertGitSectionExists(project);
@@ -45,7 +46,6 @@ public class GitUriTest extends GitTest {
 	@Test
 	public void testGitUrisInContentLocation() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
-
 		String projectName = getMethodName();
 		// http://<host>/workspace/<workspaceId>/
 		JSONObject newProject = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -53,7 +53,7 @@ public class GitUriTest extends GitTest {
 		assertNotNull(contentLocation);
 
 		// http://<host>/file/<projectId>/
-		WebRequest request = getGetFilesRequest(contentLocation);
+		WebRequest request = getGetRequest(contentLocation);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject project = new JSONObject(response.getText());
@@ -65,7 +65,7 @@ public class GitUriTest extends GitTest {
 		assertNotNull(childrenLocation);
 
 		// http://<host>/file/<projectId>/?depth=1
-		request = getGetFilesRequest(childrenLocation);
+		request = getGetRequest(childrenLocation);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));
@@ -79,7 +79,7 @@ public class GitUriTest extends GitTest {
 		childrenLocation = getChildByName(children, "folder").getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
 
 		// http://<host>/file/<projectId>/folder/?depth=1
-		request = getGetFilesRequest(childrenLocation);
+		request = getGetRequest(childrenLocation);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		children = getDirectoryChildren(new JSONObject(response.getText()));
@@ -95,7 +95,6 @@ public class GitUriTest extends GitTest {
 	@Test
 	public void testGitUrisForEmptyDir() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
-
 		File emptyDir = AllGitTests.getRandomLocation().toFile();
 		emptyDir.mkdir();
 		ServletTestingSupport.allowedPrefixes = emptyDir.toString();
@@ -104,7 +103,7 @@ public class GitUriTest extends GitTest {
 		project.getString(ProtocolConstants.KEY_ID);
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
-		WebRequest request = getGetFilesRequest(location);
+		WebRequest request = getGetRequest(location);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject files = new JSONObject(response.getText());
@@ -136,7 +135,7 @@ public class GitUriTest extends GitTest {
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, dir.toString());
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
-		WebRequest request = getGetFilesRequest(location);
+		WebRequest request = getGetRequest(location);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject files = new JSONObject(response.getText());
@@ -155,6 +154,7 @@ public class GitUriTest extends GitTest {
 	@Test
 	public void testGitUrisForRepositoryClonedIntoSubfolder() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
+
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		String folderName = "subfolder";
@@ -165,7 +165,7 @@ public class GitUriTest extends GitTest {
 		clone(clonePath);
 
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		request = getGetFilesRequest(location);
+		request = getGetRequest(location);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject responseJSON = new JSONObject(response.getText());
@@ -179,7 +179,7 @@ public class GitUriTest extends GitTest {
 		assertNull(responseJSON.optString(GitConstants.KEY_TAG, null));
 		assertNull(responseJSON.optString(GitConstants.KEY_CLONE, null));
 
-		request = getGetFilesRequest(responseJSON.getString(ProtocolConstants.KEY_CHILDREN_LOCATION));
+		request = getGetRequest(responseJSON.getString(ProtocolConstants.KEY_CHILDREN_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -192,7 +192,7 @@ public class GitUriTest extends GitTest {
 		assertCloneUri(gitSection.optString(GitConstants.KEY_CLONE, null));
 
 		location = children.get(0).getString(ProtocolConstants.KEY_LOCATION);
-		request = getGetFilesRequest(location);
+		request = getGetRequest(location);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		responseJSON = new JSONObject(response.getText());

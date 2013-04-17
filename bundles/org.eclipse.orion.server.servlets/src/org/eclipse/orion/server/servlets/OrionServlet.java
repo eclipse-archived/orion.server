@@ -13,7 +13,6 @@ package org.eclipse.orion.server.servlets;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Collections;
 import javax.servlet.ServletException;
@@ -77,10 +76,11 @@ public abstract class OrionServlet extends HttpServlet {
 	 */
 	public static void decorateResponse(HttpServletRequest req, JSONObject result, JsonURIUnqualificationStrategy strategy) {
 		decorateResponse(req, result);
-		if ("XMLHttpRequest".equals(req.getHeader("X-Requested-With"))) { //$NON-NLS-1$ //$NON-NLS-2$
-			// In JSON that is sent to in-Browser clients, remove scheme/userInfo/port information from URLs.
-			strategy.run(req, result);
-		}
+		strategy.run(req, result);
+		//if ("XMLHttpRequest".equals(req.getHeader("X-Requested-With"))) { //$NON-NLS-1$ //$NON-NLS-2$
+		// In JSON that is sent to in-Browser clients, remove scheme/userInfo/port information from URLs.
+		//strategy.run(req, result);
+		//}
 	}
 
 	/**
@@ -105,16 +105,6 @@ public abstract class OrionServlet extends HttpServlet {
 		if (resultString.length() == 0)
 			return new JSONObject();
 		return new JSONObject(resultString);
-	}
-
-	/**
-	 * Creates a URI using the base URL of the request, but with the provided
-	 * query string as a suffix.
-	 */
-	protected String createQuery(HttpServletRequest req, String query) {
-		StringBuffer requestURL = req.getRequestURL();
-		int indexOfURI = requestURL.indexOf(req.getRequestURI().toString());
-		return requestURL.replace(indexOfURI, requestURL.length(), query).toString();
 	}
 
 	protected ServletResourceHandler<IStatus> getStatusHandler() {
@@ -167,18 +157,5 @@ public abstract class OrionServlet extends HttpServlet {
 		if (DEBUG_VEBOSE)
 			printHeaders(req, result);
 		LoggerFactory.getLogger(OrionServlet.class).debug(result.toString());
-	}
-
-	/**
-	 * Convenience method to obtain the URI of the request
-	 */
-	public static URI getURI(HttpServletRequest request) {
-		StringBuffer result = request.getRequestURL();
-		try {
-			return new URI(result.toString());
-		} catch (URISyntaxException e) {
-			//location not properly encoded
-			return null;
-		}
 	}
 }

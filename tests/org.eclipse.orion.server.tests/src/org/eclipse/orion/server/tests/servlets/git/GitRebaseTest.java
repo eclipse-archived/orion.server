@@ -31,7 +31,7 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.AdditionalRebaseStatus;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.git.objects.Commit;
+import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Test;
@@ -51,7 +51,7 @@ public class GitRebaseTest extends GitTest {
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -80,7 +80,7 @@ public class GitRebaseTest extends GitTest {
 			String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -150,12 +150,12 @@ public class GitRebaseTest extends GitTest {
 			// assert clean
 			assertStatus(StatusResult.CLEAN, gitStatusUri);
 
-			request = getGetFilesRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
+			request = getGetRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			assertEquals("change in a", response.getText());
 
-			request = getGetFilesRequest(folderTxt.getString(ProtocolConstants.KEY_LOCATION));
+			request = getGetRequest(folderTxt.getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			assertEquals("change in master", response.getText());
@@ -176,7 +176,7 @@ public class GitRebaseTest extends GitTest {
 			String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -245,7 +245,7 @@ public class GitRebaseTest extends GitTest {
 			assertEquals(RebaseResult.Status.STOPPED, rebaseResult);
 
 			// check conflicting file
-			request = getGetFilesRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
+			request = getGetRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			assertTrue(response.getText(), Pattern.matches("<<<<<<< Upstream, based on .*\n1master\n=======\n1a\n>>>>>>> .* first commit on a\n2\n3\n4a\n", response.getText()));
@@ -256,7 +256,7 @@ public class GitRebaseTest extends GitTest {
 			assertEquals(RebaseResult.Status.ABORTED, rebaseResult);
 
 			// file should reset to "a" branch
-			request = getGetFilesRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
+			request = getGetRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			assertEquals("1a\n2\n3\n4a", response.getText());
@@ -280,7 +280,7 @@ public class GitRebaseTest extends GitTest {
 			String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -349,7 +349,7 @@ public class GitRebaseTest extends GitTest {
 			assertEquals(RebaseResult.Status.STOPPED, rebaseResult);
 
 			// check conflicting file
-			request = getGetFilesRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
+			request = getGetRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			assertTrue(response.getText(), Pattern.matches("<<<<<<< Upstream, based on .*\n1master\n=======\n1a\n>>>>>>> .* first commit on a\n2\n3\n4a\n", response.getText()));
@@ -391,7 +391,7 @@ public class GitRebaseTest extends GitTest {
 			String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -460,7 +460,7 @@ public class GitRebaseTest extends GitTest {
 			assertEquals(RebaseResult.Status.STOPPED, rebaseResult);
 
 			// check conflicting file
-			request = getGetFilesRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
+			request = getGetRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			assertTrue(response.getText(), Pattern.matches("<<<<<<< Upstream, based on .*\n1master\n=======\n1a\n>>>>>>> .* first commit on a\n2\n3\n4a\n", response.getText()));
@@ -476,7 +476,7 @@ public class GitRebaseTest extends GitTest {
 			assertEquals(RebaseResult.Status.OK, rebaseResult);
 
 			// file should reset to "master" branch
-			request = getGetFilesRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
+			request = getGetRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			assertEquals("1master\n2\n3", response.getText());
@@ -496,7 +496,7 @@ public class GitRebaseTest extends GitTest {
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -528,7 +528,7 @@ public class GitRebaseTest extends GitTest {
 			String contentLocation1 = clone(clonePath[0]).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project1 metadata
-			WebRequest request = getGetFilesRequest(contentLocation1);
+			WebRequest request = getGetRequest(contentLocation1);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project1 = new JSONObject(response.getText());
@@ -539,7 +539,7 @@ public class GitRebaseTest extends GitTest {
 			String contentLocation2 = clone(clonePath[1]).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project2 metadata
-			request = getGetFilesRequest(contentLocation2);
+			request = getGetRequest(contentLocation2);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project2 = new JSONObject(response.getText());
@@ -592,7 +592,7 @@ public class GitRebaseTest extends GitTest {
 			assertEquals(RebaseResult.Status.FAST_FORWARD, rebaseResult);
 
 			JSONObject testTxt1 = getChild(project1, "test.txt");
-			request = getGetFilesRequest(testTxt1.getString(ProtocolConstants.KEY_LOCATION));
+			request = getGetRequest(testTxt1.getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			assertEquals("incoming change", response.getText());
@@ -600,11 +600,11 @@ public class GitRebaseTest extends GitTest {
 	}
 
 	public static WebRequest getPostGitRebaseRequest(String location, String commit, Operation operation) throws JSONException, UnsupportedEncodingException {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Commit.RESOURCE + location;
+		String requestURI = URI.create(ServerTestsActivator.getServerLocation()).resolve(location).toString();
+		//		if (location.startsWith("http://"))
+		//			requestURI = location;
+		//		else
+		//			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Commit.RESOURCE + location;
 
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_REBASE, commit);

@@ -50,6 +50,7 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.git.servlets.GitUtils;
+import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -135,7 +136,7 @@ public class GitCloneTest extends GitTest {
 		JSONObject clone = clone(clonePath, null, getMethodName());
 
 		String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		WebRequest request = getGetFilesRequest(cloneContentLocation);
+		WebRequest request = getGetRequest(cloneContentLocation);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject project = new JSONObject(response.getText());
@@ -145,7 +146,7 @@ public class GitCloneTest extends GitTest {
 		assertNotNull(childrenLocation);
 
 		// http://<host>/file/<projectId>/?depth=1
-		request = getGetFilesRequest(childrenLocation);
+		request = getGetRequest(childrenLocation);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 	}
@@ -168,6 +169,7 @@ public class GitCloneTest extends GitTest {
 		assertTrue(status.toString(), status.isOK());
 		String cloneLocation = status.getJsonData().getString(ProtocolConstants.KEY_LOCATION);
 		assertNotNull(cloneLocation);
+		cloneLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(cloneLocation).toString();
 
 		// validate the clone metadata
 		response = webConversation.getResponse(getGetRequest(cloneLocation));
@@ -195,7 +197,7 @@ public class GitCloneTest extends GitTest {
 		JSONObject clone = clone(clonePath);
 
 		String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		WebRequest request = getGetFilesRequest(cloneContentLocation);
+		WebRequest request = getGetRequest(cloneContentLocation);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject folder = new JSONObject(response.getText());
@@ -214,7 +216,7 @@ public class GitCloneTest extends GitTest {
 		JSONObject clone = clone(clonePath, null, null);
 
 		String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		WebRequest request = getGetFilesRequest(cloneContentLocation);
+		WebRequest request = getGetRequest(cloneContentLocation);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject project = new JSONObject(response.getText());
@@ -225,7 +227,7 @@ public class GitCloneTest extends GitTest {
 		assertNotNull(childrenLocation);
 
 		// http://<host>/file/<projectId>/?depth=1
-		request = getGetFilesRequest(childrenLocation);
+		request = getGetRequest(childrenLocation);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -321,7 +323,7 @@ public class GitCloneTest extends GitTest {
 		String projectContentLocation = newProject.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		// http://<host>/file/<projectId>/
-		WebRequest request = getGetFilesRequest(projectContentLocation);
+		WebRequest request = getGetRequest(projectContentLocation);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject link = new JSONObject(response.getText());
@@ -329,7 +331,7 @@ public class GitCloneTest extends GitTest {
 		assertNotNull(childrenLocation);
 
 		// http://<host>/file/<projectId>/?depth=1
-		request = getGetFilesRequest(childrenLocation);
+		request = getGetRequest(childrenLocation);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));
@@ -353,7 +355,7 @@ public class GitCloneTest extends GitTest {
 		String projectContentLocation = newProject.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		// http://<host>/file/<projectId>/
-		WebRequest request = getGetFilesRequest(projectContentLocation);
+		WebRequest request = getGetRequest(projectContentLocation);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject link = new JSONObject(response.getText());
@@ -361,7 +363,7 @@ public class GitCloneTest extends GitTest {
 		assertNotNull(childrenLocation);
 
 		// http://<host>/file/<projectId>/?depth=1
-		request = getGetFilesRequest(childrenLocation);
+		request = getGetRequest(childrenLocation);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));
@@ -391,7 +393,7 @@ public class GitCloneTest extends GitTest {
 			String projectContentLocation = newProject.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// http://<host>/file/<projectId>/
-			WebRequest request = getGetFilesRequest(projectContentLocation);
+			WebRequest request = getGetRequest(projectContentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -399,7 +401,7 @@ public class GitCloneTest extends GitTest {
 			assertNotNull(childrenLocation);
 
 			// http://<host>/file/<projectId>/?depth=1
-			request = getGetFilesRequest(childrenLocation);
+			request = getGetRequest(childrenLocation);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));
@@ -552,7 +554,10 @@ public class GitCloneTest extends GitTest {
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
 		JSONObject clone = clone(workspaceId, project);
 		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
+		cloneLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(cloneLocation).toString();
+
 		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		contentLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(contentLocation).toString();
 
 		// delete clone
 		WebRequest request = getDeleteCloneRequest(cloneLocation);
@@ -588,7 +593,10 @@ public class GitCloneTest extends GitTest {
 		IPath clonePath = getClonePath(workspaceId, project).append("clone").makeAbsolute();
 		JSONObject clone = clone(clonePath);
 		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
+		cloneLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(cloneLocation).toString();
+
 		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		contentLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(contentLocation).toString();
 
 		// delete clone
 		WebRequest request = getDeleteCloneRequest(cloneLocation);
@@ -606,7 +614,7 @@ public class GitCloneTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 
 		// but the project is still there
-		request = getGetFilesRequest("");
+		request = getGetRequest("");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 	}
@@ -618,6 +626,8 @@ public class GitCloneTest extends GitTest {
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		JSONObject clone = clone(workspaceId, project);
 		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
+		cloneLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(cloneLocation).toString();
+
 		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		Repository repository = getRepositoryForContentLocation(contentLocation);
@@ -714,6 +724,7 @@ public class GitCloneTest extends GitTest {
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		URI bobWorkspaceLocation = URI.create(response.getHeaderField(ProtocolConstants.HEADER_LOCATION));
+		bobWorkspaceLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(bobWorkspaceLocation);
 		String bobWorkspaceId = workspaceIdFromLocation(bobWorkspaceLocation);
 
 		// String bobWorkspaceId = getWorkspaceId(bobWorkspaceLocation);
@@ -744,6 +755,7 @@ public class GitCloneTest extends GitTest {
 		response = webConversation.getResponse(request);
 		ServerStatus status = waitForTask(response, "bob", "bob");
 		String cloneLocation = status.getJsonData().getString(ProtocolConstants.KEY_LOCATION);
+		cloneLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(cloneLocation).toString();
 		assertNotNull(cloneLocation);
 
 		// validate the clone metadata

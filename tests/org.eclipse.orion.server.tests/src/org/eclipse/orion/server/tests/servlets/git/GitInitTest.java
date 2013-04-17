@@ -13,18 +13,21 @@ package org.eclipse.orion.server.tests.servlets.git;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
+
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Test;
+
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 public class GitInitTest extends GitTest {
 
@@ -35,7 +38,7 @@ public class GitInitTest extends GitTest {
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath initPath = getClonePath(workspaceId, project);
 		String contentLocation = init(null, initPath, null).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-
+		contentLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(contentLocation).toString();
 		Repository repository = getRepositoryForContentLocation(contentLocation);
 		assertNotNull(repository);
 	}
@@ -48,7 +51,7 @@ public class GitInitTest extends GitTest {
 		JSONObject repo = init(initPath, null, getMethodName());
 
 		String contentLocation = repo.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		WebRequest request = getGetFilesRequest(contentLocation);
+		WebRequest request = getGetRequest(contentLocation);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject project = new JSONObject(response.getText());
@@ -58,7 +61,7 @@ public class GitInitTest extends GitTest {
 		assertNotNull(childrenLocation);
 
 		// http://<host>/file/<projectId>/?depth=1
-		request = getGetFilesRequest(childrenLocation);
+		request = getGetRequest(childrenLocation);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 	}
@@ -74,7 +77,7 @@ public class GitInitTest extends GitTest {
 		JSONObject repo = init(null, initPath, null);
 
 		String contentLocation = repo.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		WebRequest request = getGetFilesRequest(contentLocation);
+		WebRequest request = getGetRequest(contentLocation);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject folder = new JSONObject(response.getText());

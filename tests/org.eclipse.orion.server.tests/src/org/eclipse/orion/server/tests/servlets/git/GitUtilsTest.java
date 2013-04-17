@@ -128,21 +128,21 @@ public class GitUtilsTest extends GitTest {
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		// drill down to folder/folder.txt and delete it
-		WebRequest request = getGetFilesRequest(location);
+		WebRequest request = getGetRequest(location);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject jsonResponse = new JSONObject(response.getText());
-		request = getGetFilesRequest(jsonResponse.getString(ProtocolConstants.KEY_CHILDREN_LOCATION));
+		request = getGetRequest(jsonResponse.getString(ProtocolConstants.KEY_CHILDREN_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));
 		JSONObject testTxt = getChildByName(children, "folder");
 		String folderLocation = testTxt.getString(ProtocolConstants.KEY_LOCATION);
-		request = getGetFilesRequest(folderLocation);
+		request = getGetRequest(folderLocation);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		jsonResponse = new JSONObject(response.getText());
-		request = getGetFilesRequest(jsonResponse.getString(ProtocolConstants.KEY_CHILDREN_LOCATION));
+		request = getGetRequest(jsonResponse.getString(ProtocolConstants.KEY_CHILDREN_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		children = getDirectoryChildren(new JSONObject(response.getText()));

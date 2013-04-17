@@ -110,9 +110,9 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 				np = np.addTrailingSeparator();
 			URI nu = new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), np.toString(), u.getQuery(), u.getFragment());
 			JSONObject result = new JSONObject();
-			result.put(ProtocolConstants.KEY_LOCATION, nu.toString());
+			result.put(ProtocolConstants.KEY_LOCATION, nu);
 			OrionServlet.writeJSONResponse(request, response, result);
-			response.setHeader(ProtocolConstants.HEADER_LOCATION, nu.toString());
+			response.setHeader(ProtocolConstants.HEADER_LOCATION, resovleOrionURI(request, nu).toString());
 			return true;
 		} catch (Exception e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when identifying a new Commit resource.", e));

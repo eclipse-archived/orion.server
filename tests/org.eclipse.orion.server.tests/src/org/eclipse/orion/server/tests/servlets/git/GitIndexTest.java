@@ -17,7 +17,7 @@ import java.net.URI;
 
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.git.objects.Index;
+import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.json.JSONObject;
 import org.junit.Test;
 
@@ -50,13 +50,13 @@ public class GitIndexTest extends GitTest {
 	 * @param location Either an absolute URI, or a workspace-relative URI
 	 */
 	static WebRequest getGetGitIndexRequest(String location) {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else if (location.startsWith("/"))
-			requestURI = SERVER_LOCATION + location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Index.RESOURCE + location;
+		String requestURI = URI.create(ServerTestsActivator.getServerLocation()).resolve(location).toString();
+		//		if (location.startsWith("http://"))
+		//			requestURI = location;
+		//		else if (location.startsWith("/"))
+		//			requestURI = SERVER_LOCATION + location;
+		//		else
+		//			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Index.RESOURCE + location;
 		WebRequest request = new GetMethodWebRequest(requestURI);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);

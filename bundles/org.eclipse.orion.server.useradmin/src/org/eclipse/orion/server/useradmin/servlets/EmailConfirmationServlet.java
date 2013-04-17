@@ -191,9 +191,11 @@ public class EmailConfirmationServlet extends OrionServlet {
 		}
 
 		MultiStatus multiStatus = new MultiStatus(ServerConstants.PI_SERVER_CORE, IStatus.OK, null, null);
+		
+		req.getRequestURI();
 
 		for (User user : users) {
-			multiStatus.add(sendPasswordResetConfirmation(user, getURI(req)));
+			multiStatus.add(sendPasswordResetConfirmation(user, URI.create(req.getRequestURI())));
 		}
 
 		if (!multiStatus.isOK()) {

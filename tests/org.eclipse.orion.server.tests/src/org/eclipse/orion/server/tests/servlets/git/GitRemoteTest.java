@@ -36,8 +36,8 @@ import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.git.objects.Remote;
 import org.eclipse.orion.server.git.servlets.GitUtils;
+import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -60,7 +60,7 @@ public class GitRemoteTest extends GitTest {
 		assertNotNull(projectContentLocation);
 
 		// http://<host>/file/<projectId>/
-		WebRequest request = getGetFilesRequest(projectContentLocation);
+		WebRequest request = getGetRequest(projectContentLocation);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -89,7 +89,7 @@ public class GitRemoteTest extends GitTest {
 			assertNotNull(remoteBranch);
 
 			// get project/folder metadata
-			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebRequest request = getGetRequest(cloneContentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder = new JSONObject(response.getText());
@@ -110,7 +110,7 @@ public class GitRemoteTest extends GitTest {
 		clone(clonePath);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -159,7 +159,7 @@ public class GitRemoteTest extends GitTest {
 			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project/folder metadata
-			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebRequest request = getGetRequest(cloneContentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder = new JSONObject(response.getText());
@@ -227,11 +227,16 @@ public class GitRemoteTest extends GitTest {
 		IPath clonePath = getClonePath(workspaceId, project);
 		JSONObject clone = clone(clonePath);
 		String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		cloneContentLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(cloneContentLocation).toString();
+
 		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
+		cloneLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(cloneLocation).toString();
+
 		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
+		branchesLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(branchesLocation).toString();
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -275,6 +280,7 @@ public class GitRemoteTest extends GitTest {
 		IPath clonePath = getClonePath(workspaceId, project);
 		JSONObject clone = clone(clonePath);
 		String remotesLocation = clone.getString(GitConstants.KEY_REMOTE);
+		remotesLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(remotesLocation).toString();
 
 		// expect only origin
 		getRemote(remotesLocation, 1, 0, Constants.DEFAULT_REMOTE_NAME);
@@ -286,6 +292,7 @@ public class GitRemoteTest extends GitTest {
 		assertEquals(remoteLocation, remoteLocationFromBody);
 
 		// check details
+		remoteLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(remoteLocation).toString();
 		WebRequest request = getGetRequest(remoteLocation);
 		response = webConversation.getResponse(request);
 		ServerStatus status = waitForTask(response);
@@ -356,13 +363,13 @@ public class GitRemoteTest extends GitTest {
 	}
 
 	static WebRequest getGetGitRemoteRequest(String location) {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else if (location.startsWith("/"))
-			requestURI = SERVER_LOCATION + location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Remote.RESOURCE + location;
+		String requestURI = URI.create(ServerTestsActivator.getServerLocation()).resolve(location).toString();
+		//		if (location.startsWith("http://"))
+		//			requestURI = location;
+		//		else if (location.startsWith("/"))
+		//			requestURI = SERVER_LOCATION + location;
+		//		else
+		//			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Remote.RESOURCE + location;
 		WebRequest request = new GetMethodWebRequest(requestURI);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
@@ -370,13 +377,13 @@ public class GitRemoteTest extends GitTest {
 	}
 
 	static WebRequest getPostGitRemoteRequest(String location, String name, String uri, String fetchRefSpec, String pushUri, String pushRefSpec) throws JSONException, UnsupportedEncodingException {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else if (location.startsWith("/"))
-			requestURI = SERVER_LOCATION + location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Remote.RESOURCE + location;
+		String requestURI = URI.create(ServerTestsActivator.getServerLocation()).resolve(location).toString();
+		//		if (location.startsWith("http://"))
+		//			requestURI = location;
+		//		else if (location.startsWith("/"))
+		//			requestURI = SERVER_LOCATION + location;
+		//		else
+		//			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Remote.RESOURCE + location;
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_REMOTE_NAME, name);
 		body.put(GitConstants.KEY_REMOTE_URI, uri);
@@ -390,12 +397,12 @@ public class GitRemoteTest extends GitTest {
 	}
 
 	static WebRequest getDeleteGitRemoteRequest(String location) {
-		String requestURI;
-		if (location.startsWith("http://")) {
-			requestURI = location;
-		} else {
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Remote.RESOURCE + location;
-		}
+		String requestURI = URI.create(ServerTestsActivator.getServerLocation()).resolve(location).toString();
+		//		if (location.startsWith("http://")) {
+		//			requestURI = location;
+		//		} else {
+		//			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Remote.RESOURCE + location;
+		//		}
 		WebRequest request = new DeleteMethodWebRequest(requestURI);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);

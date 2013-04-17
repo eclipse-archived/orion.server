@@ -16,6 +16,7 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
+import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.useradmin.User;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -77,7 +78,10 @@ public class HostingTest extends CoreSiteTest {
 		JSONArray mappings = makeMappings(new String[][] {{"/", "/A/bogusWorkspacePath"}});
 		WebResponse siteResp = createSite("Fizz site", workspaceId, mappings, "fizzsite", null);
 		JSONObject siteObject = new JSONObject(siteResp.getText());
-		startSite(siteObject.getString(ProtocolConstants.KEY_LOCATION));
+		String location = siteObject.getString(ProtocolConstants.HEADER_LOCATION);
+		URI serverURI = new URI(ServerTestsActivator.getServerLocation());
+		location = serverURI.resolve(location).toString();
+		startSite(location);
 	}
 
 	@Test
@@ -86,12 +90,17 @@ public class HostingTest extends CoreSiteTest {
 		JSONArray mappings = makeMappings(new String[0][0]);
 		WebResponse siteResp = createSite("Empty mappings site", workspaceId, mappings, "empty", null);
 		JSONObject siteObject = new JSONObject(siteResp.getText());
-		startSite(siteObject.getString(ProtocolConstants.KEY_LOCATION));
+		String location = siteObject.getString(ProtocolConstants.HEADER_LOCATION);
+		URI serverURI = new URI(ServerTestsActivator.getServerLocation());
+		location = serverURI.resolve(location).toString();
+		startSite(location);
 
 		// No mappings at all
 		WebResponse siteResp2 = createSite("Null mappings site", workspaceId, null, "null", null);
 		JSONObject siteObject2 = new JSONObject(siteResp2.getText());
-		startSite(siteObject2.getString(ProtocolConstants.KEY_LOCATION));
+		String location2 = siteObject2.getString(ProtocolConstants.HEADER_LOCATION);
+		location2 = serverURI.resolve(location2).toString();
+		startSite(location2);
 	}
 
 	@Test
@@ -99,7 +108,9 @@ public class HostingTest extends CoreSiteTest {
 		JSONArray mappings = makeMappings(new String[][] {{"/", "/A/bogusWorkspacePath"}});
 		WebResponse siteResp = createSite("Buzz site", workspaceId, mappings, "buzzsite", null);
 		JSONObject siteObject = new JSONObject(siteResp.getText());
-		String location = siteObject.getString(ProtocolConstants.KEY_LOCATION);
+		String location = siteObject.getString(ProtocolConstants.HEADER_LOCATION);
+		URI serverURI = new URI(ServerTestsActivator.getServerLocation());
+		location = serverURI.resolve(location).toString();
 		startSite(location);
 		stopSite(location);
 	}
@@ -130,8 +141,10 @@ public class HostingTest extends CoreSiteTest {
 		JSONObject siteObject = new JSONObject(createSiteResp.getText());
 
 		// Start the site
-		final String siteLocation = siteObject.getString(ProtocolConstants.KEY_LOCATION);//createSiteResp.getHeaderField("Location");
-		siteObject = startSite(siteLocation);
+		String location = siteObject.getString(ProtocolConstants.HEADER_LOCATION);
+		URI serverURI = new URI(ServerTestsActivator.getServerLocation());
+		location = serverURI.resolve(location).toString();
+		siteObject = startSite(location);
 
 		final JSONObject hostingStatus = siteObject.getJSONObject(SiteConfigurationConstants.KEY_HOSTING_STATUS);
 		final String hostedURL = hostingStatus.getString(SiteConfigurationConstants.KEY_HOSTING_STATUS_URL);
@@ -142,7 +155,7 @@ public class HostingTest extends CoreSiteTest {
 		assertEquals(fileContent, getFileResp.getText());
 
 		// Stop the site
-		stopSite(siteLocation);
+		stopSite(location);
 
 		// Check that the workspace file can't be accessed anymore
 		WebRequest getFile404Req = new GetMethodWebRequest(hostedURL + mountAt);
@@ -176,8 +189,10 @@ public class HostingTest extends CoreSiteTest {
 		JSONObject siteObject = new JSONObject(createSiteResp.getText());
 
 		// Start site
-		final String siteLocation = siteObject.getString(ProtocolConstants.KEY_LOCATION);//createSiteResp.getHeaderField("Location");
-		siteObject = startSite(siteLocation);
+		String location = siteObject.getString(ProtocolConstants.HEADER_LOCATION);
+		URI serverURI = new URI(ServerTestsActivator.getServerLocation());
+		location = serverURI.resolve(location).toString();
+		siteObject = startSite(location);
 
 		// Access the directory through the site
 		final JSONObject hostingStatus = siteObject.getJSONObject(SiteConfigurationConstants.KEY_HOSTING_STATUS);
@@ -188,7 +203,7 @@ public class HostingTest extends CoreSiteTest {
 		assertEquals(false, "text/html".equals(getFileResp.getHeaderField("Content-Type").toLowerCase()));
 
 		// Stop the site
-		stopSite(siteLocation);
+		stopSite(location);
 	}
 
 	@Test
@@ -228,8 +243,10 @@ public class HostingTest extends CoreSiteTest {
 		JSONObject siteObject = new JSONObject(createSiteResp.getText());
 
 		// User B: Start the site
-		final String siteLocation = siteObject.getString(ProtocolConstants.KEY_LOCATION);//createSiteResp.getHeaderField("Location");
-		siteObject = startSite(siteLocation, userB, userB);
+		String location = siteObject.getString(ProtocolConstants.HEADER_LOCATION);
+		URI serverURI = new URI(ServerTestsActivator.getServerLocation());
+		location = serverURI.resolve(location).toString();
+		siteObject = startSite(location, userB, userB);
 
 		final JSONObject hostingStatus = siteObject.getJSONObject(SiteConfigurationConstants.KEY_HOSTING_STATUS);
 		final String hostedURL = hostingStatus.getString(SiteConfigurationConstants.KEY_HOSTING_STATUS_URL);
@@ -252,8 +269,10 @@ public class HostingTest extends CoreSiteTest {
 		JSONObject siteObject = new JSONObject(createSiteResp.getText());
 
 		// Start the site
-		final String siteLocation = siteObject.getString(ProtocolConstants.KEY_LOCATION);//createSiteResp.getHeaderField("Location");
-		siteObject = startSite(siteLocation);
+		String location = siteObject.getString(ProtocolConstants.HEADER_LOCATION);
+		URI serverURI = new URI(ServerTestsActivator.getServerLocation());
+		location = serverURI.resolve(location).toString();
+		siteObject = startSite(location);
 
 		final JSONObject hostingStatus = siteObject.getJSONObject(SiteConfigurationConstants.KEY_HOSTING_STATUS);
 		final String hostedURL = hostingStatus.getString(SiteConfigurationConstants.KEY_HOSTING_STATUS_URL);
@@ -289,7 +308,7 @@ public class HostingTest extends CoreSiteTest {
 		assertEquals("Pref obtained through site has correct value", prefObject.optString(prefKey), prefValue);
 
 		// Stop the site
-		stopSite(siteLocation);
+		stopSite(location);
 
 		// Check that remote URL can't be accessed anymore
 		WebRequest getRemoteUrl404Req = new GetMethodWebRequest(hostedURL + remoteRoot);

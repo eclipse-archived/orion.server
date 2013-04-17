@@ -28,7 +28,7 @@ import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.git.objects.Branch;
+import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -137,7 +137,7 @@ public class GitBranchTest extends GitTest {
 			cfg.save();
 
 			// get project/folder metadata
-			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebRequest request = getGetRequest(cloneContentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -198,7 +198,7 @@ public class GitBranchTest extends GitTest {
 			String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 			// get project/folder metadata
-			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebRequest request = getGetRequest(cloneContentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder = new JSONObject(response.getText());
@@ -247,12 +247,12 @@ public class GitBranchTest extends GitTest {
 	}
 
 	private WebRequest getDeleteGitBranchRequest(String location) {
-		String requestURI;
-		if (location.startsWith("http://")) {
-			requestURI = location;
-		} else {
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Branch.RESOURCE + location;
-		}
+		String requestURI = URI.create(ServerTestsActivator.getServerLocation()).resolve(location).toString();
+		//		if (location.startsWith("http://")) {
+		//			requestURI = location;
+		//		} else {
+		//			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Branch.RESOURCE + location;
+		//		}
 		WebRequest request = new DeleteMethodWebRequest(requestURI);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
