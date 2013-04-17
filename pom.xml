@@ -128,6 +128,7 @@
 		<module>features/org.eclipse.orion.releng.test.master-feature</module>
 		<module>features/org.eclipse.orion.server.tests-feature</module>
 		<module>features/org.eclipse.orion-feature</module>
+		<module>features/org.eclipse.license</module>
 
 		<module>releng/org.eclipse.orion.server.repository</module>
 
