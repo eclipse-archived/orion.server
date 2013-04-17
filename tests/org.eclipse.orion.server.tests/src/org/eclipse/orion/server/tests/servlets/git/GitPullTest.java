@@ -27,7 +27,6 @@ import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -195,12 +194,7 @@ public class GitPullTest extends GitTest {
 	}
 
 	static WebRequest getPostGitRemoteRequest(String location, boolean force) throws JSONException, UnsupportedEncodingException {
-		String requestURI = URI.create(ServerTestsActivator.getServerLocation()).resolve(location).toString();
-		//		if (location.startsWith("http://"))
-		//			requestURI = location;
-		//		else
-		//			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Clone.RESOURCE + location;
-
+		String requestURI = toAbsoluteURI(location);
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_PULL, Boolean.TRUE.toString());
 		body.put(GitConstants.KEY_FORCE, force);

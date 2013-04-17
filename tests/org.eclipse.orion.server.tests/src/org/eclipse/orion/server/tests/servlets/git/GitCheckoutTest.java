@@ -30,7 +30,6 @@ import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -620,14 +619,7 @@ public class GitCheckoutTest extends GitTest {
 	}
 
 	private WebRequest getCheckoutRequest(String location, String[] paths, boolean removeUntracked) throws IOException, JSONException {
-		String requestURI = URI.create(ServerTestsActivator.getServerLocation()).resolve(location).toString();
-		//		if (location.startsWith("http://")) {
-		//			// assume the caller knows what he's doing
-		//			// assertCloneUri(location);
-		//			requestURI = location;
-		//		} else {
-		//			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Clone.RESOURCE + location;
-		//		}
+		String requestURI = toAbsoluteURI(location);
 		JSONObject body = new JSONObject();
 		JSONArray jsonPaths = new JSONArray();
 		for (String path : paths)

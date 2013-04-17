@@ -21,7 +21,6 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Test;
@@ -209,13 +208,7 @@ public class GitAddTest extends GitTest {
 	}
 
 	static WebRequest getPutGitIndexRequest(String location, Set<String> patterns) throws UnsupportedEncodingException, JSONException {
-		String requestURI = URI.create(ServerTestsActivator.getServerLocation()).resolve(location).toString();
-		//		if (location.startsWith("http://"))
-		//			requestURI = location;
-		//		else if (location.startsWith("/"))
-		//			requestURI = SERVER_LOCATION + location;
-		//		else
-		//			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Index.RESOURCE + location;
+		String requestURI = toAbsoluteURI(location);
 		JSONObject body = new JSONObject();
 		if (patterns != null) {
 			body.put(ProtocolConstants.KEY_PATH, patterns);

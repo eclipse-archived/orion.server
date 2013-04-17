@@ -30,7 +30,6 @@ import org.eclipse.jgit.merge.ResolveMerger.MergeFailureReason;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Test;
@@ -65,11 +64,8 @@ public class GitMergeTest extends GitTest {
 		IPath clonePath = getClonePath(workspaceId, project);
 		JSONObject clone = clone(clonePath);
 		String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		cloneContentLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(cloneContentLocation).toString();
 		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
-		cloneLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(cloneLocation).toString();
 		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
-		branchesLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(branchesLocation).toString();
 
 		// get project metadata
 		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));

@@ -35,7 +35,6 @@ import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -316,8 +315,6 @@ public class GitPushTest extends GitTest {
 		String remoteBranchLocation = remoteBranchLocations.getJSONObject(0).getJSONArray(ProtocolConstants.KEY_CHILDREN).getJSONObject(0).getString(ProtocolConstants.KEY_LOCATION);
 		ServerStatus pushStatus = push(remoteBranchLocation, Constants.HEAD, false);
 		assertTrue(pushStatus.isOK());
-
-		remoteBranchLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(remoteBranchLocation).toString();
 
 		// clone1: get the remote branch name
 		request = getGetRequest(remoteBranchLocation);
@@ -849,8 +846,6 @@ public class GitPushTest extends GitTest {
 			String secondaryRemoteLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 			assertNotNull(secondaryRemoteLocation);
 
-			remotesLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(remotesLocation).toString();
-
 			// list remotes
 			request = getGetRequest(remotesLocation);
 			response = webConversation.getResponse(request);
@@ -926,12 +921,7 @@ public class GitPushTest extends GitTest {
 	}
 
 	static WebRequest getPostGitRemoteRequest(String location, String srcRef, boolean tags, boolean force) throws JSONException, UnsupportedEncodingException {
-		String requestURI = URI.create(ServerTestsActivator.getServerLocation()).resolve(location).toString();
-		//		if (location.startsWith("http://"))
-		//			requestURI = location;
-		//		else
-		//			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Remote.RESOURCE + location;
-
+		String requestURI = toAbsoluteURI(location);
 		JSONObject body = new JSONObject();
 		if (srcRef != null)
 			body.put(GitConstants.KEY_PUSH_SRC_REF, srcRef);
@@ -944,12 +934,7 @@ public class GitPushTest extends GitTest {
 	}
 
 	static WebRequest getPostGitRemoteRequest(String location, String srcRef, boolean tags, boolean force, String name, String kh, byte[] privk, byte[] pubk, byte[] p) throws JSONException, UnsupportedEncodingException {
-		String requestURI = URI.create(ServerTestsActivator.getServerLocation()).resolve(location).toString();
-		//		if (location.startsWith("http://"))
-		//			requestURI = location;
-		//		else
-		//			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Remote.RESOURCE + location;
-
+		String requestURI = toAbsoluteURI(location);
 		JSONObject body = new JSONObject();
 
 		body.put(ProtocolConstants.KEY_NAME, name);

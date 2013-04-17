@@ -36,7 +36,6 @@ import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSuppor
 import org.eclipse.orion.internal.server.servlets.workspace.WorkspaceServlet;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.users.OrionScope;
-import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
 import org.json.JSONArray;
@@ -125,15 +124,13 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		String locationHeader = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		assertNotNull(locationHeader);
 
-		URI serverURI = new URI(ServerTestsActivator.getServerLocation());
-		locationHeader = serverURI.resolve(locationHeader).toString();
 		JSONObject project = new JSONObject(response.getText());
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
 
 		//ensure project location = <workspace location>/project/<projectId>
-		URI projectLocation = new URI(locationHeader);
+		URI projectLocation = new URI(toAbsoluteURI(locationHeader));
 		URI relative = workspaceLocation.relativize(projectLocation);
 		IPath projectPath = new Path(relative.getPath());
 		assertEquals(2, projectPath.segmentCount());
@@ -161,11 +158,10 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		assertEquals("true", child.optString(ProtocolConstants.KEY_DIRECTORY));
 		String contentLocation = child.optString(ProtocolConstants.KEY_LOCATION);
 		assertNotNull(contentLocation);
-		contentLocation = serverURI.resolve(contentLocation).toString();
 
 		//add a file in the project
 		String fileName = "file.txt";
-		request = getPostFilesRequest(contentLocation, getNewFileJSON(fileName).toString(), fileName);
+		request = getPostFilesRequest(toAbsoluteURI(contentLocation), getNewFileJSON(fileName).toString(), fileName);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		assertEquals("Response should contain file metadata in JSON, but was " + response.getText(), "application/json", response.getContentType());
@@ -236,12 +232,9 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		String sourceContentLocation = responseObject.optString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		assertNotNull(sourceContentLocation);
 
-		URI serverURI = new URI(ServerTestsActivator.getServerLocation());
-		sourceContentLocation = serverURI.resolve(sourceContentLocation).toString();
-
 		//add a file in the project
 		String fileName = "file.txt";
-		request = getPostFilesRequest(sourceContentLocation, "{}", fileName);
+		request = getPostFilesRequest(toAbsoluteURI(sourceContentLocation), "{}", fileName);
 		response = webConversation.getResource(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		assertEquals("Response should contain file metadata in JSON, but was " + response.getText(), "application/json", response.getContentType());
@@ -257,15 +250,13 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		String destinationLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		String destinationContentLocation = responseObject.optString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
-		destinationContentLocation = serverURI.resolve(destinationContentLocation).toString();
-
 		//assert the copy took effect
 		assertFalse(sourceLocation.equals(destinationLocation));
 		JSONObject resultObject = new JSONObject(response.getText());
 		assertEquals(destinationName, resultObject.getString(ProtocolConstants.KEY_NAME));
 
 		//ensure the source is still intact
-		response = webConversation.getResponse(getGetFilesRequest(sourceContentLocation + "?depth=1"));
+		response = webConversation.getResponse(getGetRequest(sourceContentLocation + "?depth=1"));
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		resultObject = new JSONObject(response.getText());
 		assertEquals(sourceName, resultObject.getString(ProtocolConstants.KEY_NAME));
@@ -275,7 +266,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		assertEquals(fileName, child.getString(ProtocolConstants.KEY_NAME));
 
 		//ensure the destination is intact
-		response = webConversation.getResponse(getGetFilesRequest(destinationContentLocation + "?depth=1"));
+		response = webConversation.getResponse(getGetRequest(destinationContentLocation + "?depth=1"));
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		resultObject = new JSONObject(response.getText());
 		assertEquals(sourceName, resultObject.getString(ProtocolConstants.KEY_NAME));
@@ -301,12 +292,9 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		String sourceContentLocation = responseObject.optString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		assertNotNull(sourceContentLocation);
 
-		URI serverURI = new URI(ServerTestsActivator.getServerLocation());
-		sourceContentLocation = serverURI.resolve(sourceContentLocation).toString();
-
 		//add a file in the project
 		String fileName = "file.txt";
-		request = getPostFilesRequest(sourceContentLocation, "{}", fileName);
+		request = getPostFilesRequest(toAbsoluteURI(sourceContentLocation), "{}", fileName);
 		response = webConversation.getResource(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
@@ -317,7 +305,6 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		String destinationLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		String destinationContentLocation = responseObject.optString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		destinationContentLocation = serverURI.resolve(destinationContentLocation).toString();
 
 		//assert the copy took effect
 		assertFalse(sourceLocation.equals(destinationLocation));
@@ -325,7 +312,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		assertEquals(destinationName, resultObject.getString(ProtocolConstants.KEY_NAME));
 
 		//ensure the source is still intact
-		response = webConversation.getResponse(getGetFilesRequest(sourceContentLocation + "?depth=1"));
+		response = webConversation.getResponse(getGetRequest(sourceContentLocation + "?depth=1"));
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		resultObject = new JSONObject(response.getText());
 		assertEquals(sourceName, resultObject.getString(ProtocolConstants.KEY_NAME));
@@ -335,7 +322,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		assertEquals(fileName, child.getString(ProtocolConstants.KEY_NAME));
 
 		//ensure the destination is intact
-		response = webConversation.getResponse(getGetFilesRequest(destinationContentLocation + "?depth=1"));
+		response = webConversation.getResponse(getGetRequest(destinationContentLocation + "?depth=1"));
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		resultObject = new JSONObject(response.getText());
 		assertEquals(sourceName, resultObject.getString(ProtocolConstants.KEY_NAME));
@@ -461,11 +448,8 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		String projectLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 
-		URI serverURI = new URI(ServerTestsActivator.getServerLocation());
-		projectLocation = serverURI.resolve(projectLocation).toString();
-
 		//delete project
-		request = new DeleteMethodWebRequest(makeResourceURIAbsolute(projectLocation));
+		request = new DeleteMethodWebRequest(toAbsoluteURI(projectLocation));
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		response = webConversation.getResponse(request);

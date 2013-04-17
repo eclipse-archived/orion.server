@@ -175,7 +175,7 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 	private IFileStore resolveSourceLocation(HttpServletRequest request, String locationString) throws URISyntaxException, CoreException {
 		URI sourceLocation = new URI(locationString);
 		//resolve relative URI against request URI
-		String sourcePath = getURI(request).resolve(sourceLocation).getPath();
+		String sourcePath = sourceLocation.getPath().substring(request.getContextPath().length());
 		//first segment is the servlet path
 		IPath path = new Path(sourcePath).removeFirstSegments(1);
 		return NewFileServlet.getFileStore(request, path);

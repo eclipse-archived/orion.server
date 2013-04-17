@@ -16,20 +16,17 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.ServerConstants;
-import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.User;
 import org.eclipse.orion.server.useradmin.UserConstants;
@@ -278,8 +275,6 @@ public class BasicUsersTest extends UsersTest {
 
 		// check user details
 		String location = responseObject.getString(ProtocolConstants.KEY_LOCATION);
-		URI importURI = URIUtil.fromString(ServerTestsActivator.getServerLocation());
-		location = importURI.resolve(location).toString();
 
 		request = getAuthenticatedRequest(location, METHOD_GET, true);
 		response = webConversation.getResponse(request);
@@ -379,8 +374,7 @@ public class BasicUsersTest extends UsersTest {
 		assertTrue("Response should contian user location", responseObject.has(ProtocolConstants.KEY_LOCATION));
 
 		String location = responseObject.getString(ProtocolConstants.KEY_LOCATION);
-		URI importURI = URIUtil.fromString(ServerTestsActivator.getServerLocation());
-		location = importURI.resolve(location).toString();
+
 		// update user
 		JSONObject updateBody = new JSONObject();
 		updateBody.put("Name", "usernameUpdate_" + System.currentTimeMillis());
@@ -442,8 +436,7 @@ public class BasicUsersTest extends UsersTest {
 		assertTrue("Response should contian user location", responseObject.has(ProtocolConstants.KEY_LOCATION));
 
 		String location = responseObject.getString(ProtocolConstants.KEY_LOCATION);
-		URI importURI = URIUtil.fromString(ServerTestsActivator.getServerLocation());
-		location = importURI.resolve(location).toString();
+
 		//reset password
 		String newPass = "passUpdate_" + System.currentTimeMillis();
 		params = new HashMap<String, String>();
@@ -487,8 +480,6 @@ public class BasicUsersTest extends UsersTest {
 		assertTrue("Response should contian user location", responseObject.has(ProtocolConstants.KEY_LOCATION));
 
 		String location = responseObject.getString(ProtocolConstants.KEY_LOCATION);
-		URI importURI = URIUtil.fromString(ServerTestsActivator.getServerLocation());
-		location = importURI.resolve(location).toString();
 
 		String login2 = "login2" + System.currentTimeMillis();
 		JSONObject updateBody = new JSONObject();

@@ -24,7 +24,6 @@ import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.json.JSONObject;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -240,13 +239,7 @@ public class GitApplyPatchTest extends GitTest {
 	}
 
 	private static WebRequest getPostGitDiffRequest(String location, String patch) throws UnsupportedEncodingException {
-		String requestURI = URI.create(ServerTestsActivator.getServerLocation()).resolve(location).toString();
-		//		if (location.startsWith("http://"))
-		//			requestURI = location;
-		//		else if (location.startsWith("/"))
-		//			requestURI = SERVER_LOCATION + location;
-		//		else
-		//			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Diff.RESOURCE + location;
+		String requestURI = toAbsoluteURI(location);
 
 		String boundary = new UniversalUniqueIdentifier().toBase64String();
 		StringBuilder sb = new StringBuilder();

@@ -21,7 +21,6 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Test;
@@ -38,8 +37,7 @@ public class GitInitTest extends GitTest {
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath initPath = getClonePath(workspaceId, project);
 		String contentLocation = init(null, initPath, null).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		contentLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(contentLocation).toString();
-		Repository repository = getRepositoryForContentLocation(contentLocation);
+		Repository repository = getRepositoryForContentLocation(toAbsoluteURI(contentLocation));
 		assertNotNull(repository);
 	}
 

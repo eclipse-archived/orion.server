@@ -50,7 +50,6 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.git.servlets.GitUtils;
-import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -169,7 +168,6 @@ public class GitCloneTest extends GitTest {
 		assertTrue(status.toString(), status.isOK());
 		String cloneLocation = status.getJsonData().getString(ProtocolConstants.KEY_LOCATION);
 		assertNotNull(cloneLocation);
-		cloneLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(cloneLocation).toString();
 
 		// validate the clone metadata
 		response = webConversation.getResponse(getGetRequest(cloneLocation));
@@ -554,10 +552,7 @@ public class GitCloneTest extends GitTest {
 		String projectId = project.getString(ProtocolConstants.KEY_ID);
 		JSONObject clone = clone(workspaceId, project);
 		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
-		cloneLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(cloneLocation).toString();
-
 		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		contentLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(contentLocation).toString();
 
 		// delete clone
 		WebRequest request = getDeleteCloneRequest(cloneLocation);
@@ -593,10 +588,7 @@ public class GitCloneTest extends GitTest {
 		IPath clonePath = getClonePath(workspaceId, project).append("clone").makeAbsolute();
 		JSONObject clone = clone(clonePath);
 		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
-		cloneLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(cloneLocation).toString();
-
 		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		contentLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(contentLocation).toString();
 
 		// delete clone
 		WebRequest request = getDeleteCloneRequest(cloneLocation);
@@ -626,8 +618,6 @@ public class GitCloneTest extends GitTest {
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		JSONObject clone = clone(workspaceId, project);
 		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
-		cloneLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(cloneLocation).toString();
-
 		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		Repository repository = getRepositoryForContentLocation(contentLocation);
@@ -723,8 +713,7 @@ public class GitCloneTest extends GitTest {
 		setAuthentication(request, "bob", "bob");
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		URI bobWorkspaceLocation = URI.create(response.getHeaderField(ProtocolConstants.HEADER_LOCATION));
-		bobWorkspaceLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(bobWorkspaceLocation);
+		URI bobWorkspaceLocation = SERVER_URI.resolve(response.getHeaderField(ProtocolConstants.HEADER_LOCATION));
 		String bobWorkspaceId = workspaceIdFromLocation(bobWorkspaceLocation);
 
 		// String bobWorkspaceId = getWorkspaceId(bobWorkspaceLocation);
@@ -755,7 +744,6 @@ public class GitCloneTest extends GitTest {
 		response = webConversation.getResponse(request);
 		ServerStatus status = waitForTask(response, "bob", "bob");
 		String cloneLocation = status.getJsonData().getString(ProtocolConstants.KEY_LOCATION);
-		cloneLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(cloneLocation).toString();
 		assertNotNull(cloneLocation);
 
 		// validate the clone metadata
@@ -830,7 +818,7 @@ public class GitCloneTest extends GitTest {
 
 	private WebRequest getDeleteCloneRequest(String requestURI) throws CoreException, IOException {
 		assertCloneUri(requestURI);
-		WebRequest request = new DeleteMethodWebRequest(requestURI);
+		WebRequest request = new DeleteMethodWebRequest(toAbsoluteURI(requestURI));
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;

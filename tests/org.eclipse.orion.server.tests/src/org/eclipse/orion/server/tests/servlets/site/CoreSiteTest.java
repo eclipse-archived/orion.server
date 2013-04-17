@@ -12,20 +12,28 @@ package org.eclipse.orion.server.tests.servlets.site;
 
 import static org.junit.Assert.assertEquals;
 
-import com.meterware.httpunit.*;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
+
 import junit.framework.Assert;
+
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
-import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.xml.sax.SAXException;
+
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.PutMethodWebRequest;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 /**
  * Abstract base class for site and hosting tests.
@@ -33,7 +41,6 @@ import org.xml.sax.SAXException;
 public abstract class CoreSiteTest extends FileSystemTest {
 
 	public static final String SITE_SERVLET_LOCATION = "/site" + '/';
-	public static final String SERVER_LOCATION = ServerTestsActivator.getServerLocation();
 	public static final String SITE_CONFIG_PREF_NODE = "SiteConfigurations";
 
 	/**
@@ -107,7 +114,7 @@ public abstract class CoreSiteTest extends FileSystemTest {
 	 * @throws URISyntaxException 
 	 */
 	protected WebRequest getDeleteSiteRequest(String locationUri) throws URISyntaxException {
-		WebRequest request = new DeleteMethodWebRequest(makeResourceURIAbsolute(locationUri));
+		WebRequest request = new DeleteMethodWebRequest(toAbsoluteURI(locationUri));
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
@@ -120,7 +127,7 @@ public abstract class CoreSiteTest extends FileSystemTest {
 	 * @throws URISyntaxException 
 	 */
 	protected WebRequest getRetrieveSiteRequest(String locationUri, String user) throws URISyntaxException {
-		WebRequest request = new GetMethodWebRequest(makeResourceURIAbsolute(locationUri));
+		WebRequest request = new GetMethodWebRequest(toAbsoluteURI(locationUri));
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		if (user == null)
 			setAuthentication(request);
@@ -130,7 +137,7 @@ public abstract class CoreSiteTest extends FileSystemTest {
 	}
 
 	protected WebRequest getRetrieveAllSitesRequest(String user) throws URISyntaxException {
-		WebRequest request = new GetMethodWebRequest(makeResourceURIAbsolute(SERVER_LOCATION + SITE_SERVLET_LOCATION));
+		WebRequest request = new GetMethodWebRequest(toAbsoluteURI(SITE_SERVLET_LOCATION));
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		if (user == null)
 			setAuthentication(request);
@@ -156,7 +163,7 @@ public abstract class CoreSiteTest extends FileSystemTest {
 			json.putOpt(SiteConfigurationConstants.KEY_MAPPINGS, mappings);
 			json.putOpt(SiteConfigurationConstants.KEY_HOST_HINT, hostHint);
 			json.putOpt(SiteConfigurationConstants.KEY_HOSTING_STATUS, hostingStatus);
-			WebRequest request = new PutMethodWebRequest(makeResourceURIAbsolute(locationUri), IOUtilities.toInputStream(json.toString()), "application/json");
+			WebRequest request = new PutMethodWebRequest(toAbsoluteURI(locationUri), IOUtilities.toInputStream(json.toString()), "application/json");
 			request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 			setAuthentication(request);
 			return request;

@@ -11,16 +11,19 @@
 package org.eclipse.orion.server.tests;
 
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
 
 import junit.framework.Assert;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.User;
 import org.eclipse.orion.server.useradmin.UserServiceHelper;
 
+import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.WebRequest;
 
 /**
@@ -32,6 +35,9 @@ public class AbstractServerTest {
 	protected static String testUserLogin = "test";
 	protected static String testUserPassword = "test";
 	protected String testUserId;
+
+	public static final String SERVER_LOCATION = ServerTestsActivator.getServerLocation();
+	public static final URI SERVER_URI = URI.create(SERVER_LOCATION);
 
 	public static void setAuthentication(WebRequest request) {
 		setAuthentication(request, testUserLogin, testUserPassword);
@@ -73,5 +79,20 @@ public class AbstractServerTest {
 			// this should never happen
 			e.printStackTrace();
 		}
+	}
+
+	protected static String toAbsoluteURI(String location) {
+		return URI.create(SERVER_LOCATION).resolve(location).toString();
+	}
+
+	/**
+	 * Returns a GET request for the given location.
+	 */
+	protected static WebRequest getGetRequest(String location) {
+		String requestURI = toAbsoluteURI(location);
+		WebRequest request = new GetMethodWebRequest(requestURI);
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		return request;
 	}
 }

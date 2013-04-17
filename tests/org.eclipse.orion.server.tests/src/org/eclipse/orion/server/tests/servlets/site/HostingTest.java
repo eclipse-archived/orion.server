@@ -16,7 +16,6 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
-import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.useradmin.User;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -79,8 +78,6 @@ public class HostingTest extends CoreSiteTest {
 		WebResponse siteResp = createSite("Fizz site", workspaceId, mappings, "fizzsite", null);
 		JSONObject siteObject = new JSONObject(siteResp.getText());
 		String location = siteObject.getString(ProtocolConstants.HEADER_LOCATION);
-		URI serverURI = new URI(ServerTestsActivator.getServerLocation());
-		location = serverURI.resolve(location).toString();
 		startSite(location);
 	}
 
@@ -91,15 +88,12 @@ public class HostingTest extends CoreSiteTest {
 		WebResponse siteResp = createSite("Empty mappings site", workspaceId, mappings, "empty", null);
 		JSONObject siteObject = new JSONObject(siteResp.getText());
 		String location = siteObject.getString(ProtocolConstants.HEADER_LOCATION);
-		URI serverURI = new URI(ServerTestsActivator.getServerLocation());
-		location = serverURI.resolve(location).toString();
 		startSite(location);
 
 		// No mappings at all
 		WebResponse siteResp2 = createSite("Null mappings site", workspaceId, null, "null", null);
 		JSONObject siteObject2 = new JSONObject(siteResp2.getText());
 		String location2 = siteObject2.getString(ProtocolConstants.HEADER_LOCATION);
-		location2 = serverURI.resolve(location2).toString();
 		startSite(location2);
 	}
 
@@ -109,8 +103,6 @@ public class HostingTest extends CoreSiteTest {
 		WebResponse siteResp = createSite("Buzz site", workspaceId, mappings, "buzzsite", null);
 		JSONObject siteObject = new JSONObject(siteResp.getText());
 		String location = siteObject.getString(ProtocolConstants.HEADER_LOCATION);
-		URI serverURI = new URI(ServerTestsActivator.getServerLocation());
-		location = serverURI.resolve(location).toString();
 		startSite(location);
 		stopSite(location);
 	}
@@ -142,8 +134,6 @@ public class HostingTest extends CoreSiteTest {
 
 		// Start the site
 		String location = siteObject.getString(ProtocolConstants.HEADER_LOCATION);
-		URI serverURI = new URI(ServerTestsActivator.getServerLocation());
-		location = serverURI.resolve(location).toString();
 		siteObject = startSite(location);
 
 		final JSONObject hostingStatus = siteObject.getJSONObject(SiteConfigurationConstants.KEY_HOSTING_STATUS);
@@ -190,8 +180,6 @@ public class HostingTest extends CoreSiteTest {
 
 		// Start site
 		String location = siteObject.getString(ProtocolConstants.HEADER_LOCATION);
-		URI serverURI = new URI(ServerTestsActivator.getServerLocation());
-		location = serverURI.resolve(location).toString();
 		siteObject = startSite(location);
 
 		// Access the directory through the site
@@ -244,8 +232,6 @@ public class HostingTest extends CoreSiteTest {
 
 		// User B: Start the site
 		String location = siteObject.getString(ProtocolConstants.HEADER_LOCATION);
-		URI serverURI = new URI(ServerTestsActivator.getServerLocation());
-		location = serverURI.resolve(location).toString();
 		siteObject = startSite(location, userB, userB);
 
 		final JSONObject hostingStatus = siteObject.getJSONObject(SiteConfigurationConstants.KEY_HOSTING_STATUS);
@@ -270,8 +256,6 @@ public class HostingTest extends CoreSiteTest {
 
 		// Start the site
 		String location = siteObject.getString(ProtocolConstants.HEADER_LOCATION);
-		URI serverURI = new URI(ServerTestsActivator.getServerLocation());
-		location = serverURI.resolve(location).toString();
 		siteObject = startSite(location);
 
 		final JSONObject hostingStatus = siteObject.getJSONObject(SiteConfigurationConstants.KEY_HOSTING_STATUS);

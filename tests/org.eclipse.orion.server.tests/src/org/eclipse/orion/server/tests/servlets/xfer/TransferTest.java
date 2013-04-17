@@ -89,7 +89,7 @@ public class TransferTest extends FileSystemTest {
 	 */
 	private String getImportRequestPath(String directoryPath) {
 		IPath path = new Path("/xfer/import").append(getTestBaseResourceURILocation()).append(directoryPath);
-		return ServerTestsActivator.getServerLocation() + path.toString();
+		return SERVER_LOCATION + path.toString();
 	}
 
 	/**
@@ -97,7 +97,7 @@ public class TransferTest extends FileSystemTest {
 	 */
 	private String getExportRequestPath(String directoryPath) {
 		IPath path = new Path("/xfer/export").append(getTestBaseResourceURILocation()).append(directoryPath).removeTrailingSeparator().addFileExtension("zip");
-		return ServerTestsActivator.getServerLocation() + path.toString();
+		return SERVER_LOCATION + path.toString();
 	}
 
 	@After

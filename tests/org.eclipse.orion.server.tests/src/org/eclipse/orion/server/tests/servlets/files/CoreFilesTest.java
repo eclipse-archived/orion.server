@@ -155,7 +155,7 @@ public class CoreFilesTest extends FileSystemTest {
 
 		//should be able to perform GET on location header to obtain metadata
 		String location = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
-		request = getGetFilesRequest(location);
+		request = getGetRequest(location);
 		response = webConversation.getResource(request);
 		assertNotNull(location);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
@@ -183,7 +183,7 @@ public class CoreFilesTest extends FileSystemTest {
 
 		//should be able to perform GET on location header to obtain metadata
 		String location = response.getHeaderField("Location");
-		request = getGetFilesRequest(location + "?parts=meta");
+		request = getGetRequest(location + "?parts=meta");
 		response = webConversation.getResource(request);
 		assertNotNull(location);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
@@ -232,7 +232,7 @@ public class CoreFilesTest extends FileSystemTest {
 
 		//should be able to perform GET on location header to obtain metadata
 		String location = response.getHeaderField("Location");
-		request = getGetFilesRequest(location + "?parts=meta");
+		request = getGetRequest(location + "?parts=meta");
 		response = webConversation.getResource(request);
 		assertNotNull(location);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
@@ -387,19 +387,19 @@ public class CoreFilesTest extends FileSystemTest {
 		prefs.flush();
 		try {
 			//should not be allowed to get at file root
-			WebRequest request = new GetMethodWebRequest(SERVER_LOCATION + FILE_SERVLET_LOCATION);
+			WebRequest request = new GetMethodWebRequest(toAbsoluteURI(FILE_SERVLET_LOCATION));
 			setAuthentication(request);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals("Should not be able to get the root", HttpURLConnection.HTTP_FORBIDDEN, response.getResponseCode());
 
 			//should not be allowed to access the metadata directory
-			request = new GetMethodWebRequest(SERVER_LOCATION + FILE_SERVLET_LOCATION + ".metadata");
+			request = new GetMethodWebRequest(toAbsoluteURI(FILE_SERVLET_LOCATION + ".metadata"));
 			setAuthentication(request);
 			response = webConversation.getResponse(request);
 			assertEquals("Should not be able to get metadata", HttpURLConnection.HTTP_FORBIDDEN, response.getResponseCode());
 
 			//should not be allowed to read specific metadata files
-			request = new GetMethodWebRequest(SERVER_LOCATION + FILE_SERVLET_LOCATION + ".metadata/.plugins/org.eclipse.orion.server.user.securestorage/user_store");
+			request = new GetMethodWebRequest(toAbsoluteURI(FILE_SERVLET_LOCATION + ".metadata/.plugins/org.eclipse.orion.server.user.securestorage/user_store"));
 			setAuthentication(request);
 			response = webConversation.getResponse(request);
 			assertEquals("Should not be able to get metadata", HttpURLConnection.HTTP_FORBIDDEN, response.getResponseCode());
@@ -599,7 +599,7 @@ public class CoreFilesTest extends FileSystemTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		//get should return new contents
-		request = getGetFilesRequest(location);
+		request = getGetRequest(location);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("Invalid file content", fileContent, response.getText());
@@ -623,7 +623,7 @@ public class CoreFilesTest extends FileSystemTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		//get should return new contents
-		request = getGetFilesRequest(location);
+		request = getGetRequest(location);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("Invalid file content", "<a href=\"/eclipse/\">Eclipse Project</a>", response.getText());
@@ -647,7 +647,7 @@ public class CoreFilesTest extends FileSystemTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		//get should return new contents
-		request = getGetFilesRequest(location);
+		request = getGetRequest(location);
 		response = webConversation.getResponse(request);
 		assertEquals("image/gif", response.getHeaderField("CONTENT-TYPE"));
 		assertEquals("857", response.getHeaderField("CONTENT-LENGTH"));

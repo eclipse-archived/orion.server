@@ -30,7 +30,6 @@ import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Ignore;
@@ -647,7 +646,6 @@ public class GitStatusTest extends GitTest {
 			JSONObject statusResponse = new JSONObject(response.getText());
 			String cloneLocation = statusResponse.getString(GitConstants.KEY_CLONE);
 			assertCloneUri(cloneLocation);
-			cloneLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(cloneLocation).toString();
 
 			request = getGetRequest(cloneLocation);
 			response = webConversation.getResponse(request);
@@ -660,7 +658,6 @@ public class GitStatusTest extends GitTest {
 
 			// get branch details
 			String branchLocation = clone.getString(GitConstants.KEY_BRANCH);
-			branchLocation = URI.create(ServerTestsActivator.getServerLocation()).resolve(branchLocation).toString();
 			request = getGetRequest(branchLocation);
 			response = webConversation.getResponse(request);
 			ServerStatus status = waitForTask(response);

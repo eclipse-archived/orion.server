@@ -28,8 +28,6 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
-import junit.framework.Assert;
-
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileInfo;
 import org.eclipse.core.filesystem.IFileStore;
@@ -64,8 +62,6 @@ public abstract class FileSystemTest extends AbstractServerTest {
 
 	public static final String FILE_SERVLET_LOCATION = Activator.LOCATION_FILE_SERVLET + '/';
 	private static String FILESTORE_PREFIX;
-
-	public static final String SERVER_LOCATION = ServerTestsActivator.getServerLocation();
 
 	/**
 	 * Location of the test project within the file servlet namespace.
@@ -457,15 +453,8 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	 * Creates a new workspace, and returns the URI of the resulting resource.
 	 */
 	protected URI createWorkspace(String workspaceName) throws IOException, SAXException {
-		try {
-			WebResponse response = basicCreateWorkspace(workspaceName);
-			URI serverURI = new URI(ServerTestsActivator.getServerLocation());
-			return serverURI.resolve(response.getHeaderField(ProtocolConstants.HEADER_LOCATION));
-		} catch (URISyntaxException e) {
-			//shouldn't happen
-			Assert.fail("Unexpected URI syntax exception");
-			return null;
-		}
+		WebResponse response = basicCreateWorkspace(workspaceName);
+		return SERVER_URI.resolve(response.getHeaderField(ProtocolConstants.HEADER_LOCATION));
 	}
 
 }
