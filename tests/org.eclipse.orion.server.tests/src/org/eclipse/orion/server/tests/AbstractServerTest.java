@@ -38,6 +38,7 @@ public class AbstractServerTest {
 
 	public static final String SERVER_LOCATION = ServerTestsActivator.getServerLocation();
 	public static final URI SERVER_URI = URI.create(SERVER_LOCATION);
+	public static final URI SERVER_PATH_URI = URI.create(SERVER_URI.getRawPath());
 
 	public static void setAuthentication(WebRequest request) {
 		setAuthentication(request, testUserLogin, testUserPassword);
@@ -82,7 +83,15 @@ public class AbstractServerTest {
 	}
 
 	protected static String toAbsoluteURI(String location) {
-		return URI.create(SERVER_LOCATION).resolve(location).toString();
+		return SERVER_URI.resolve(location).toString();
+	}
+
+	protected static String toRelativeURI(String location) {
+		URI locationURI = URI.create(location);
+		if (locationURI.isAbsolute()) {
+			return SERVER_URI.relativize(URI.create(location)).toString();
+		}
+		return SERVER_PATH_URI.relativize(URI.create(location)).toString();
 	}
 
 	/**

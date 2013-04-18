@@ -128,7 +128,7 @@ public class GitRemoteTest extends GitTest {
 		String remoteLocation = remote.getString(ProtocolConstants.KEY_LOCATION);
 		assertNotNull(remoteLocation);
 
-		URI u = URI.create(remoteLocation);
+		URI u = URI.create(toRelativeURI(remoteLocation));
 		IPath p = new Path(u.getPath());
 		p = p.uptoSegment(2).append("xxx").append(p.removeFirstSegments(3));
 		URI nu = new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), p.toString(), u.getQuery(), u.getFragment());
@@ -335,7 +335,7 @@ public class GitRemoteTest extends GitTest {
 		final String pushRefSpec = "refs/heads/*:refs/heads/*";
 		addRemote(remotesLocation, remoteName, remoteUri, fetchRefSpec, pushUri, pushRefSpec);
 
-		Repository db2 = new FileRepository(GitUtils.getGitDir(clonePath));
+		Repository db2 = new FileRepository(GitUtils.getGitDir(new Path(toRelativeURI(clonePath.toString()))));
 		StoredConfig config = db2.getConfig();
 		RemoteConfig rc = new RemoteConfig(config, remoteName);
 

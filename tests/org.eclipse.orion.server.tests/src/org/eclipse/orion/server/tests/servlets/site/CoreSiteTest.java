@@ -40,7 +40,7 @@ import com.meterware.httpunit.WebResponse;
  */
 public abstract class CoreSiteTest extends FileSystemTest {
 
-	public static final String SITE_SERVLET_LOCATION = "/site" + '/';
+	public static final String SITE_SERVLET_LOCATION = "site" + '/';
 	public static final String SITE_CONFIG_PREF_NODE = "SiteConfigurations";
 
 	/**

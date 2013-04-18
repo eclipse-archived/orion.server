@@ -120,9 +120,19 @@ public class HostingTest extends CoreSiteTest {
 		// Create a site that exposes the workspace file
 		final String siteName = "My hosted site";
 		//make absolute by adding test project path
-		String filePath = URI.create(makeResourceURIAbsolute("/" + filename)).getPath();
-		//remove /file segment to get the servlet-relative path
-		Assert.assertTrue(filePath.startsWith("/file/"));
+		IPath path = new Path(URI.create(makeResourceURIAbsolute(filename)).getPath());
+		while (path.segmentCount() != 0 && !path.segment(0).equals("file")) {
+			if (path.segment(0).equals("file")) {
+				break;
+			}
+			path = path.removeFirstSegments(1);
+		}
+		String filePath = path.toString();
+		if (filePath.startsWith("/")) {
+			filePath = filePath.substring(1);
+		}
+		//remove file segment to get the servlet-relative path
+		Assert.assertTrue(filePath.startsWith("file/"));
 		filePath = filePath.substring(5);
 		final String mountAt = "/file.html";
 
@@ -163,12 +173,22 @@ public class HostingTest extends CoreSiteTest {
 		// https://bugs.eclipse.org/bugs/show_bug.cgi?id=389252
 		final String filename = "foo.html";
 		final String fileContent = "<html><body>This is a test file</body></html>";
-		final String dirName = "/my.css";
+		final String dirName = "my.css";
 		createDirectoryOnServer(dirName);
 		createFileOnServer(dirName + "/" + filename, fileContent);
 
-		String filePath = URI.create(makeResourceURIAbsolute("/" + dirName)).getPath();
-		Assert.assertTrue(filePath.startsWith("/file/"));
+		IPath path = new Path(URI.create(makeResourceURIAbsolute(filename)).getPath());
+		while (path.segmentCount() != 0 && !path.segment(0).equals("file")) {
+			if (path.segment(0).equals("file")) {
+				break;
+			}
+			path = path.removeFirstSegments(1);
+		}
+		String filePath = path.toString();
+		if (filePath.startsWith("/")) {
+			filePath = filePath.substring(1);
+		}
+		Assert.assertTrue(filePath.startsWith("file/"));
 		filePath = filePath.substring(5);
 		final String mountAt = "/";
 
@@ -348,12 +368,12 @@ public class HostingTest extends CoreSiteTest {
 	 * @param fileContent
 	 */
 	private WebResponse createFileOnServer(String filename, String fileContent) throws SAXException, IOException, JSONException, URISyntaxException {
-		return createFileOnServer("/", filename, fileContent);
+		return createFileOnServer("", filename, fileContent);
 	}
 
 	private void createDirectoryOnServer(String dirname) throws SAXException, IOException, JSONException {
 		webConversation.setExceptionsThrownOnErrorStatus(false);
-		WebRequest createDirReq = getPostFilesRequest("/", getNewDirJSON(dirname).toString(), dirname);
+		WebRequest createDirReq = getPostFilesRequest("", getNewDirJSON(dirname).toString(), dirname);
 		WebResponse createDirResp = webConversation.getResponse(createDirReq);
 		assertEquals(HttpURLConnection.HTTP_CREATED, createDirResp.getResponseCode());
 	}

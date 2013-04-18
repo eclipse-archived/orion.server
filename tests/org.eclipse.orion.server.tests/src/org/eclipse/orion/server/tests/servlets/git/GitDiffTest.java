@@ -825,7 +825,7 @@ public class GitDiffTest extends GitTest {
 	}
 
 	private static void assertDiffUri(String diffUri) {
-		URI uri = URI.create(diffUri);
+		URI uri = URI.create(toRelativeURI(diffUri));
 		IPath path = new Path(uri.getPath());
 		// /gitapi/diff/{scope}/file/{filePath}
 		assertTrue(path.segmentCount() > 4);

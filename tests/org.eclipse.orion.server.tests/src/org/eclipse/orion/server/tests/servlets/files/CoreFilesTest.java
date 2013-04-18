@@ -73,11 +73,11 @@ public class CoreFilesTest extends FileSystemTest {
 
 	@Test
 	public void testCopyFileInvalidSource() throws Exception {
-		String directoryPath = "/testCopyFile/directory/path" + System.currentTimeMillis();
+		String directoryPath = "testCopyFile/directory/path" + System.currentTimeMillis();
 		createDirectory(directoryPath);
 
 		JSONObject requestObject = new JSONObject();
-		requestObject.put("Location", "/file/this/does/not/exist/at/all");
+		requestObject.put("Location", toAbsoluteURI("file/this/does/not/exist/at/all"));
 		WebRequest request = getPostFilesRequest(directoryPath, requestObject.toString(), "destination.txt");
 		request.setHeaderField("X-Create-Options", "copy");
 		WebResponse response = webConversation.getResponse(request);
@@ -88,7 +88,7 @@ public class CoreFilesTest extends FileSystemTest {
 
 	@Test
 	public void testCopyFileNoOverwrite() throws Exception {
-		String directoryPath = "/testCopyFile/directory/path" + System.currentTimeMillis();
+		String directoryPath = "testCopyFile/directory/path" + System.currentTimeMillis();
 		String sourcePath = directoryPath + "/source.txt";
 		String destName = "destination.txt";
 		String destPath = directoryPath + "/" + destName;
@@ -108,7 +108,7 @@ public class CoreFilesTest extends FileSystemTest {
 
 	@Test
 	public void testCopyFileOverwrite() throws Exception {
-		String directoryPath = "/testCopyFile/directory/path" + System.currentTimeMillis();
+		String directoryPath = "testCopyFile/directory/path" + System.currentTimeMillis();
 		String sourcePath = directoryPath + "/source.txt";
 		String destName = "destination.txt";
 		String destPath = directoryPath + "/" + destName;
@@ -387,19 +387,19 @@ public class CoreFilesTest extends FileSystemTest {
 		prefs.flush();
 		try {
 			//should not be allowed to get at file root
-			WebRequest request = new GetMethodWebRequest(toAbsoluteURI(FILE_SERVLET_LOCATION));
+			WebRequest request = getGetRequest("file/");
 			setAuthentication(request);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals("Should not be able to get the root", HttpURLConnection.HTTP_FORBIDDEN, response.getResponseCode());
 
 			//should not be allowed to access the metadata directory
-			request = new GetMethodWebRequest(toAbsoluteURI(FILE_SERVLET_LOCATION + ".metadata"));
+			request = getGetRequest("file/" + ".metadata");
 			setAuthentication(request);
 			response = webConversation.getResponse(request);
 			assertEquals("Should not be able to get metadata", HttpURLConnection.HTTP_FORBIDDEN, response.getResponseCode());
 
 			//should not be allowed to read specific metadata files
-			request = new GetMethodWebRequest(toAbsoluteURI(FILE_SERVLET_LOCATION + ".metadata/.plugins/org.eclipse.orion.server.user.securestorage/user_store"));
+			request = getGetRequest("file/" + ".metadata/.plugins/org.eclipse.orion.server.user.securestorage/user_store");
 			setAuthentication(request);
 			response = webConversation.getResponse(request);
 			assertEquals("Should not be able to get metadata", HttpURLConnection.HTTP_FORBIDDEN, response.getResponseCode());
@@ -415,7 +415,7 @@ public class CoreFilesTest extends FileSystemTest {
 
 	@Test
 	public void testMoveFileNoOverwrite() throws Exception {
-		String directoryPath = "/testMoveFile/directory/path" + System.currentTimeMillis();
+		String directoryPath = "testMoveFile/directory/path" + System.currentTimeMillis();
 		String sourcePath = directoryPath + "/source.txt";
 		String destName = "destination.txt";
 		String destPath = directoryPath + "/" + destName;
@@ -439,7 +439,7 @@ public class CoreFilesTest extends FileSystemTest {
 	 */
 	@Test
 	public void testRenameFileChangeCase() throws Exception {
-		String directoryPath = "/testMoveFile/directory/path" + System.currentTimeMillis();
+		String directoryPath = "testMoveFile/directory/path" + System.currentTimeMillis();
 		String sourcePath = directoryPath + "/source.txt";
 		String destName = "SOURCE.txt";
 		String destPath = directoryPath + "/" + destName;
@@ -458,7 +458,7 @@ public class CoreFilesTest extends FileSystemTest {
 
 	@Test
 	public void testMoveFileOverwrite() throws Exception {
-		String directoryPath = "/testMoveFile/directory/path" + System.currentTimeMillis();
+		String directoryPath = "testMoveFile/directory/path" + System.currentTimeMillis();
 		String sourcePath = directoryPath + "/source.txt";
 		String destName = "destination.txt";
 		String destPath = directoryPath + "/" + destName;

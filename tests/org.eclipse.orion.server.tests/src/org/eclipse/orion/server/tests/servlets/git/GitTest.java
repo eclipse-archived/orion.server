@@ -79,6 +79,7 @@ import org.eclipse.orion.server.git.objects.RemoteBranch;
 import org.eclipse.orion.server.git.objects.Status;
 import org.eclipse.orion.server.git.objects.Tag;
 import org.eclipse.orion.server.git.servlets.GitServlet;
+import org.eclipse.orion.server.tests.AbstractServerTest;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
 import org.json.JSONArray;
@@ -98,7 +99,7 @@ import com.meterware.httpunit.WebResponse;
 
 public abstract class GitTest extends FileSystemTest {
 
-	static final String GIT_SERVLET_LOCATION = GitServlet.GIT_URI + '/';
+	static final String GIT_SERVLET_LOCATION = "gitapi/";
 
 	File gitDir;
 	File testFile;
@@ -209,7 +210,8 @@ public abstract class GitTest extends FileSystemTest {
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
-		String workspaceId = new Path(workspaceLocation.getPath()).segment(1);
+		IPath workspacePath = new Path(workspaceLocation.getPath());
+		String workspaceId = workspacePath.segment(workspacePath.segmentCount() - 1);
 		testProjectBaseLocation = "/" + workspaceId + '/' + projectName;
 		testProjectLocalFileLocation = "/" + project.optString(ProtocolConstants.KEY_ID, null);
 		return project;
@@ -461,7 +463,9 @@ public abstract class GitTest extends FileSystemTest {
 	protected IPath getClonePath(String workspaceId, JSONObject project) {
 		String projectName = project.optString(ProtocolConstants.KEY_NAME, null);
 		assertNotNull(projectName);
-		return new Path("file").append(workspaceId).append(projectName).makeAbsolute();
+		IPath serverPath = new Path(AbstractServerTest.SERVER_URI.getPath());
+
+		return serverPath.append("file").append(workspaceId).append(projectName).makeAbsolute();
 	}
 
 	/**
@@ -919,7 +923,7 @@ public abstract class GitTest extends FileSystemTest {
 	// assertions for URIs
 
 	private static void assertRemoteUri(String remoteUri) {
-		URI uri = URI.create(remoteUri);
+		URI uri = URI.create(toRelativeURI(remoteUri));
 		IPath path = new Path(uri.getPath());
 		// /git/remote/file/{path}
 		assertTrue(path.segmentCount() > 3);
@@ -929,7 +933,7 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	protected static void assertCommitUri(String commitUri) {
-		URI uri = URI.create(commitUri);
+		URI uri = URI.create(toRelativeURI(commitUri));
 		IPath path = new Path(uri.getPath());
 		AssertionError error = null;
 		// /gitapi/commit/{ref}/file/{path}
@@ -956,7 +960,7 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	static void assertStatusUri(String statusUri) {
-		URI uri = URI.create(statusUri);
+		URI uri = URI.create(toRelativeURI(statusUri));
 		IPath path = new Path(uri.getPath());
 		// /git/status/file/{path}
 		assertTrue(path.segmentCount() > 3);
@@ -966,7 +970,7 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	private static void assertRemoteOrRemoteBranchLocation(String remoteLocation) {
-		URI uri = URI.create(remoteLocation);
+		URI uri = URI.create(toRelativeURI(remoteLocation));
 		IPath path = new Path(uri.getPath());
 		AssertionError error = null;
 		// /git/remote/{remote}/file/{path}
@@ -993,7 +997,7 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	private static void assertTagListUri(String tagUri) {
-		URI uri = URI.create(tagUri);
+		URI uri = URI.create(toRelativeURI(tagUri));
 		IPath path = new Path(uri.getPath());
 		// /git/tag/file/{path}
 		assertTrue(path.segmentCount() > 3);
@@ -1003,7 +1007,7 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	private static void assertTagUri(String tagUri) {
-		URI uri = URI.create(tagUri);
+		URI uri = URI.create(toRelativeURI(tagUri));
 		IPath path = new Path(uri.getPath());
 		// /git/tag/{tag}/file/{path}
 		assertTrue(path.segmentCount() > 4);
@@ -1013,7 +1017,7 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	static void assertCloneUri(String cloneUri) throws CoreException, IOException {
-		URI uri = URI.create(cloneUri);
+		URI uri = URI.create(toRelativeURI(cloneUri));
 		IPath path = new Path(uri.getPath());
 		// /git/clone/workspace/{id} or /git/clone/file/{workspaceId}/{projectName}[/{path}]
 		assertTrue(path.segmentCount() > 3);
@@ -1028,6 +1032,7 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	private static void assertWorkspaceUri(URI uri) {
+		uri = URI.create(toRelativeURI(uri.toString()));
 		IPath path = new Path(uri.getPath());
 		// /workspace/{id}
 		assertTrue(path.segmentCount() == 2);
@@ -1035,7 +1040,7 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	private static void assertFileUri(String fileUri) {
-		URI uri = URI.create(fileUri);
+		URI uri = URI.create(toRelativeURI(fileUri));
 		IPath path = new Path(uri.getPath());
 		// /file/{workspaceId}/{projectName}[/{path}]
 		assertTrue(path.segmentCount() > 2);
@@ -1043,7 +1048,7 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	protected static void assertBranchUri(String branchUri) {
-		URI uri = URI.create(branchUri);
+		URI uri = URI.create(toRelativeURI(branchUri));
 		IPath path = new Path(uri.getPath());
 		// /git/branch/[{name}/]file/{path}
 		assertTrue(path.segmentCount() > 3);
@@ -1053,7 +1058,7 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	protected static void assertConfigUri(String configUri) {
-		URI uri = URI.create(configUri);
+		URI uri = URI.create(toRelativeURI(configUri));
 		IPath path = new Path(uri.getPath());
 		// /gitapi/config/[{key}/]clone/file/{id}
 		assertTrue(path.segmentCount() > 4);
@@ -1268,12 +1273,12 @@ public abstract class GitTest extends FileSystemTest {
 		} else {
 			JSONObject fileGitSection = fileObject[0].getJSONObject(GitConstants.KEY_GIT);
 			String gitCloneUri = fileGitSection.getString(GitConstants.KEY_CLONE);
-			IPath gitCloneFilePath = new Path(URI.create(gitCloneUri).getPath()).removeFirstSegments(2);
+			IPath gitCloneFilePath = new Path(URI.create(toRelativeURI(gitCloneUri)).getPath()).removeFirstSegments(2);
 			JSONObject clone = getCloneForGitResource(fileObject[0]);
 			String gitIndexUri = clone.getString(GitConstants.KEY_INDEX);
 			Set<String> patterns = new HashSet<String>(fileObject.length);
 			for (int i = 0; i < fileObject.length; i++) {
-				IPath locationPath = new Path(URI.create(fileObject[i].getString(ProtocolConstants.KEY_LOCATION)).getPath());
+				IPath locationPath = new Path(URI.create(toRelativeURI(fileObject[i].getString(ProtocolConstants.KEY_LOCATION))).getPath());
 				patterns.add(locationPath.makeRelativeTo(gitCloneFilePath).toString());
 			}
 
@@ -1479,7 +1484,8 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	protected String workspaceIdFromLocation(URI workspaceLocation) {
-		return new Path(workspaceLocation.getPath()).segment(1);
+		IPath path = new Path(workspaceLocation.getPath());
+		return path.segment(path.segmentCount() - 1);
 	}
 
 	/**

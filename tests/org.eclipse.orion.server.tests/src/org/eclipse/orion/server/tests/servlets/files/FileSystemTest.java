@@ -32,6 +32,7 @@ import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileInfo;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
@@ -60,7 +61,7 @@ import com.meterware.httpunit.WebResponse;
  */
 public abstract class FileSystemTest extends AbstractServerTest {
 
-	public static final String FILE_SERVLET_LOCATION = Activator.LOCATION_FILE_SERVLET + '/';
+	public static final String FILE_SERVLET_LOCATION = "file/";
 	private static String FILESTORE_PREFIX;
 
 	/**
@@ -95,7 +96,8 @@ public abstract class FileSystemTest extends AbstractServerTest {
 			LogHelper.log(new Status(IStatus.ERROR, ServerTestsActivator.PI_TESTS, msg));
 			fail(msg);
 		}
-		String workspaceId = new Path(workspaceLocation.getPath()).segment(1);
+		IPath workspacePath = new Path(workspaceLocation.getPath());
+		String workspaceId = new Path(workspaceLocation.getPath()).segment(workspacePath.segmentCount() - 1);
 		testProjectBaseLocation = "/" + workspaceId + '/' + projectName;
 		JSONObject project = new JSONObject(response.getText());
 		testProjectLocalFileLocation = "/" + project.optString(ProtocolConstants.KEY_ID, null);
@@ -378,6 +380,9 @@ public abstract class FileSystemTest extends AbstractServerTest {
 			URI uri = new URI(uriString);
 			if (uri.isAbsolute())
 				return uriString;
+			if (uriString.startsWith("/")) {
+				return toAbsoluteURI(uriString);
+			}
 		} catch (URISyntaxException e) {
 			//unencoded string - fall through
 		}

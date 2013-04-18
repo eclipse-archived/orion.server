@@ -54,7 +54,7 @@ import com.meterware.httpunit.WebResponse;
  */
 public class SearchTest extends FileSystemTest {
 
-	private static final String SEARCH_LOCATION = toAbsoluteURI("/filesearch?q=");
+	private static final String SEARCH_LOCATION = toAbsoluteURI("filesearch?q=");
 	private String oldTestUserLogin;
 
 	@BeforeClass

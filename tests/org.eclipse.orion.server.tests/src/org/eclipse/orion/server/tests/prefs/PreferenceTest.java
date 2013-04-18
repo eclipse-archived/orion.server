@@ -308,13 +308,13 @@ public class PreferenceTest extends AbstractServerTest {
 	}
 
 	private List<String> getTestPreferenceNodes() {
-		return Arrays.asList(toAbsoluteURI("/prefs/user/testprefs"), toAbsoluteURI("/prefs/workspace/myworkspace/testprefs"), toAbsoluteURI("/prefs/project/myproject/testprefs"));
+		return Arrays.asList(toAbsoluteURI("prefs/user/testprefs"), toAbsoluteURI("prefs/workspace/myworkspace/testprefs"), toAbsoluteURI("prefs/project/myproject/testprefs"));
 	}
 
 	/**
 	 * Returns preference nodes the client should not have access to.
 	 */
 	private List<String> getIllegalPreferenceNodes() {
-		return Arrays.asList(toAbsoluteURI("/prefs/Users"), toAbsoluteURI("/prefs/Workspaces"), toAbsoluteURI("/prefs/Projects"));
+		return Arrays.asList(toAbsoluteURI("prefs/Users"), toAbsoluteURI("prefs/Workspaces"), toAbsoluteURI("prefs/Projects"));
 	}
 }
