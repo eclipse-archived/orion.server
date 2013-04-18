@@ -28,9 +28,9 @@ Install Maven:
 
 Clone Git repositories:
 - clone `org.eclipse.orion.client` and `org.eclipse.orion.server` under the same local folder
-  `cd /my/git/repos`
-  `git clone http://git.eclipse.org/gitroot/orion/org.eclipse.orion.clien.git`
-  `git clone http://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git`
+-  `cd /my/git/repos`
+-  `git clone http://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git`
+-  `git clone http://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git`
   
 Run Maven build
 - `cd org.eclipse.orion.server/`
