@@ -18,9 +18,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.internal.server.servlets.hosting.*;
-import org.eclipse.orion.internal.server.servlets.workspace.WebElementResourceHandler;
-import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
 import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
@@ -29,7 +28,7 @@ import org.json.*;
 /**
  * Processes an HTTP request for a site configuration resource.
  */
-public class SiteConfigurationResourceHandler extends WebElementResourceHandler<SiteConfiguration> {
+public class SiteConfigurationResourceHandler extends ServletResourceHandler<SiteInfo> {
 
 	private final ServletResourceHandler<IStatus> statusHandler;
 
@@ -46,15 +45,15 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 	 * @param object Object from which other properties will be drawn
 	 * @return The created SiteConfiguration.
 	 */
-	public static SiteConfiguration createFromJSON(WebUser user, String name, String workspace, JSONObject object) throws CoreException {
+	public static SiteInfo createFromJSON(UserInfo user, String name, String workspace, JSONObject object) throws CoreException {
 		if (name == null || name.length() == 0)
 			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Name is missing", null));
 		else if (workspace == null || name.length() == 0)
 			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Workspace is missing", null));
 
-		SiteConfiguration site = user.createSiteConfiguration(name, workspace);
+		SiteInfo site = SiteInfo.newSiteConfiguration(user, name, workspace);
 		copyProperties(object, site, false);
-		site.save();
+		site.save(user);
 		return site;
 	}
 
@@ -67,7 +66,7 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 	 * <code>target</code>'s name.
 	 * @throws CoreException if, after copying, <code>target</code> is missing a required property.
 	 */
-	private static void copyProperties(JSONObject source, SiteConfiguration target, boolean copyName) throws CoreException {
+	private static void copyProperties(JSONObject source, SiteInfo target, boolean copyName) throws CoreException {
 		if (copyName) {
 			String name = source.optString(ProtocolConstants.KEY_NAME, null);
 			if (name != null)
@@ -97,14 +96,10 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 	 * @param baseLocation The URI of the SiteConfigurationServlet.
 	 * @return Representation of <code>site</code> as a JSONObject.
 	 */
-	public static JSONObject toJSON(SiteConfiguration site, URI baseLocation) {
-		JSONObject result = WebElementResourceHandler.toJSON(site);
+	public static JSONObject toJSON(SiteInfo site, URI baseLocation) {
+		JSONObject result = site.toJSON();
 		try {
 			result.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(baseLocation, site.getId()));
-			result.putOpt(SiteConfigurationConstants.KEY_HOST_HINT, site.getHostHint());
-			result.putOpt(SiteConfigurationConstants.KEY_WORKSPACE, site.getWorkspace());
-			result.put(SiteConfigurationConstants.KEY_MAPPINGS, site.getMappingsJSON());
-
 			// Note: The SiteConfigurationConstants.KEY_HOSTING_STATUS field will be contributed to the result
 			// by the site-hosting bundle (if present) via an IWebResourceDecorator
 		} catch (JSONException e) {
@@ -113,11 +108,10 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 		return result;
 	}
 
-	private boolean handleGet(HttpServletRequest req, HttpServletResponse resp, SiteConfiguration site) throws IOException {
+	private boolean handleGet(HttpServletRequest req, HttpServletResponse resp, SiteInfo site) throws IOException {
 		// Strip off the SiteConfig id from the request URI
 		URI location = getURI(req);
 		URI baseLocation = location.resolve(""); //$NON-NLS-1$
-
 		JSONObject result = toJSON(site, baseLocation);
 		OrionServlet.writeJSONResponse(req, resp, result, JsonURIUnqualificationStrategy.LOCATION_ONLY);
 		return true;
@@ -127,20 +121,20 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 	 * Creates a new site configuration, and possibly starts it.
 	 * @param site <code>null</code>
 	 */
-	private boolean handlePost(HttpServletRequest req, HttpServletResponse resp, SiteConfiguration site) throws CoreException, IOException, JSONException {
+	private boolean handlePost(HttpServletRequest req, HttpServletResponse resp, SiteInfo site) throws CoreException, IOException, JSONException {
 		if (site != null)
 			throw new IllegalArgumentException("Can't POST to an existing site");
 
+		UserInfo user = Activator.getDefault().getMetastore().readUser(getUserName(req));
 		JSONObject requestJson = getRequestJson(req);
 		try {
-			site = doCreateSiteConfiguration(req, requestJson);
-			changeHostingStatus(req, resp, requestJson, site);
+			site = doCreateSiteConfiguration(req, requestJson, user);
+			changeHostingStatus(req, resp, requestJson, user, site);
 		} catch (CoreException e) {
 			// If starting it failed, try to clean up
 			if (site != null) {
 				// Remove site config
-				WebUser user = WebUser.fromUserId(getUserName(req));
-				user.removeSiteConfiguration(site);
+				site.delete(user);
 			}
 			throw e;
 		}
@@ -154,15 +148,16 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 		return true;
 	}
 
-	private boolean handlePut(HttpServletRequest req, HttpServletResponse resp, SiteConfiguration site) throws IOException, CoreException, JSONException {
+	private boolean handlePut(HttpServletRequest req, HttpServletResponse resp, SiteInfo site) throws IOException, CoreException, JSONException {
+		UserInfo user = Activator.getDefault().getMetastore().readUser(getUserName(req));
 		JSONObject requestJson = OrionServlet.readJSONRequest(req);
 		copyProperties(requestJson, site, true);
 
 		// Start/stop the site if necessary
-		changeHostingStatus(req, resp, requestJson, site);
+		changeHostingStatus(req, resp, requestJson, user, site);
 
 		// Everything succeeded, save the changed site
-		site.save();
+		site.save(user);
 
 		// Strip off the SiteConfig id from the request URI
 		URI location = getURI(req);
@@ -173,21 +168,21 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 		return true;
 	}
 
-	private boolean handleDelete(HttpServletRequest req, HttpServletResponse resp, SiteConfiguration site) throws CoreException {
-		WebUser user = WebUser.fromUserId(req.getRemoteUser());
+	private boolean handleDelete(HttpServletRequest req, HttpServletResponse resp, SiteInfo site) throws CoreException {
+		UserInfo user = Activator.getDefault().getMetastore().readUser(getUserName(req));
 		ISiteHostingService hostingService = Activator.getDefault().getSiteHostingService();
 		IHostedSite runningSite = (IHostedSite) hostingService.get(site, user);
 		if (runningSite != null) {
 			String msg = NLS.bind("Site configuration is running at {0}. Must be stopped before it can be deleted", runningSite.getHost());
 			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_CONFLICT, msg, null));
 		} else {
-			user.removeSiteConfiguration(site);
+			site.delete(user);
 		}
 		return true;
 	}
 
 	@Override
-	public boolean handleRequest(HttpServletRequest req, HttpServletResponse resp, SiteConfiguration site) throws ServletException {
+	public boolean handleRequest(HttpServletRequest req, HttpServletResponse resp, SiteInfo site) throws ServletException {
 		if (site == null && getMethod(req) != Method.POST) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Site configuration not found", null)); //$NON-NLS-1$
 		}
@@ -220,11 +215,10 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 	/**
 	 * Creates a new site configuration from the request
 	 */
-	private SiteConfiguration doCreateSiteConfiguration(HttpServletRequest req, JSONObject requestJson) throws CoreException {
-		WebUser user = WebUser.fromUserId(getUserName(req));
+	private SiteInfo doCreateSiteConfiguration(HttpServletRequest req, JSONObject requestJson, UserInfo user) throws CoreException {
 		String name = computeName(req, requestJson);
 		String workspace = requestJson.optString(SiteConfigurationConstants.KEY_WORKSPACE, null);
-		SiteConfiguration site = SiteConfigurationResourceHandler.createFromJSON(user, name, workspace, requestJson);
+		SiteInfo site = createFromJSON(user, name, workspace, requestJson);
 		return site;
 	}
 
@@ -236,8 +230,7 @@ public class SiteConfigurationResourceHandler extends WebElementResourceHandler<
 	 * @throws CoreException If a bogus value was found for <code>HostingStatus.Status</code>,
 	 * or if the hosting service threw an exception when trying to change the status.
 	 */
-	private void changeHostingStatus(HttpServletRequest req, HttpServletResponse resp, JSONObject requestJson, SiteConfiguration site) throws CoreException {
-		WebUser user = WebUser.fromUserId(getUserName(req));
+	private void changeHostingStatus(HttpServletRequest req, HttpServletResponse resp, JSONObject requestJson, UserInfo user, SiteInfo site) throws CoreException {
 		JSONObject hostingStatus = requestJson.optJSONObject(SiteConfigurationConstants.KEY_HOSTING_STATUS);
 		if (hostingStatus == null)
 			return;

@@ -15,8 +15,8 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import org.eclipse.orion.internal.server.servlets.hosting.*;
-import org.eclipse.orion.internal.server.servlets.site.SiteConfiguration;
-import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
+import org.eclipse.orion.internal.server.servlets.site.SiteInfo;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 
 /**
  * Provides a same-server implementation of ISiteHostingService. Maintains a table of 
@@ -31,11 +31,11 @@ public class SiteHostingService implements ISiteHostingService {
 	 * Key: Host, in the form <code>hostname:port</code>.<br>
 	 * Value: The hosted site associated with the host.<p>
 	 * 
-	 * Updates to this map occur serially and are done by {@link #start(SiteConfiguration, WebUser, String)}
-	 * and {@link #stop(SiteConfiguration, WebUser)}.<p>
+	 * Updates to this map occur serially and are done by {@link #start(SiteInfo, UserInfo, String)}
+	 * and {@link #stop(SiteInfo, UserInfo)}.<p>
 	 * 
 	 * Reads may occur concurrently with updates and other reads, and are done by {@link #get(String)}
-	 * and {@link #get(SiteConfiguration, WebUser)}. This should be OK since map operations on ConcurrentMap
+	 * and {@link #get(SiteInfo, UserInfo)}. This should be OK since map operations on ConcurrentMap
 	 * are thread-safe.
 	 */
 	private ConcurrentMap<String, IHostedSite> sites;
@@ -54,7 +54,7 @@ public class SiteHostingService implements ISiteHostingService {
 	 * @see org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService#start(org.eclipse.orion.internal.server.servlets.site.SiteConfiguration, org.eclipse.orion.internal.server.servlets.workspace.WebUser, java.lang.String)
 	 */
 	@Override
-	public void start(SiteConfiguration siteConfig, WebUser user, String editServer) throws SiteHostingException {
+	public void start(SiteInfo siteConfig, UserInfo user, String editServer) throws SiteHostingException {
 		synchronized (sites) {
 			if (get(siteConfig, user) != null) {
 				return; // Already started; nothing to do
@@ -80,7 +80,7 @@ public class SiteHostingService implements ISiteHostingService {
 	 * @see org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService#stop(org.eclipse.orion.internal.server.servlets.site.SiteConfiguration, org.eclipse.orion.internal.server.servlets.workspace.WebUser)
 	 */
 	@Override
-	public void stop(SiteConfiguration siteConfig, WebUser user) throws SiteHostingException {
+	public void stop(SiteInfo siteConfig, UserInfo user) throws SiteHostingException {
 		synchronized (sites) {
 			IHostedSite site = get(siteConfig, user);
 			if (site == null) {
@@ -98,10 +98,10 @@ public class SiteHostingService implements ISiteHostingService {
 	 * @see org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService#get(org.eclipse.orion.internal.server.servlets.site.SiteConfiguration, org.eclipse.orion.internal.server.servlets.workspace.WebUser)
 	 */
 	@Override
-	public IHostedSite get(SiteConfiguration siteConfig, WebUser user) {
+	public IHostedSite get(SiteInfo siteConfig, UserInfo user) {
 		// Note this may overlap with a concurrent start()/stop() call that modifies the map
 		String id = siteConfig.getId();
-		String userId = user.getId();
+		String userId = user.getUID();
 		for (IHostedSite site : sites.values()) {
 			if (site.getSiteConfigurationId().equals(id) && site.getUserId().equals(userId)) {
 				return site;

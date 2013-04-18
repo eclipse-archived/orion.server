@@ -15,9 +15,11 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
+import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
+import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.JSONArray;
@@ -29,7 +31,7 @@ import org.json.JSONObject;
 public class SiteConfigurationServlet extends OrionServlet {
 	private static final long serialVersionUID = 1L;
 
-	private ServletResourceHandler<SiteConfiguration> siteConfigurationResourceHandler;
+	private ServletResourceHandler<SiteInfo> siteConfigurationResourceHandler;
 
 	public SiteConfigurationServlet() {
 		siteConfigurationResourceHandler = new SiteConfigurationResourceHandler(getStatusHandler());
@@ -43,7 +45,7 @@ public class SiteConfigurationServlet extends OrionServlet {
 			doGetAllSiteConfigurations(req, resp);
 			return;
 		} else if (pathInfo.segmentCount() == 1) {
-			SiteConfiguration site = getExistingSiteConfig(req, resp);
+			SiteInfo site = getExistingSiteConfig(req, resp);
 			if (siteConfigurationResourceHandler.handleRequest(req, resp, site)) {
 				return;
 			}
@@ -74,7 +76,7 @@ public class SiteConfigurationServlet extends OrionServlet {
 		traceRequest(req);
 		IPath pathInfo = getPathInfo(req);
 		if (pathInfo.segmentCount() == 1) {
-			SiteConfiguration site = getExistingSiteConfig(req, resp);
+			SiteInfo site = getExistingSiteConfig(req, resp);
 			if (siteConfigurationResourceHandler.handleRequest(req, resp, site)) {
 				return;
 			}
@@ -89,7 +91,7 @@ public class SiteConfigurationServlet extends OrionServlet {
 	protected synchronized void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
 		if (getPathInfo(req).segmentCount() == 1) {
-			SiteConfiguration site = getExistingSiteConfig(req, resp);
+			SiteInfo site = getExistingSiteConfig(req, resp);
 			if (siteConfigurationResourceHandler.handleRequest(req, resp, site)) {
 				return;
 			}
@@ -102,12 +104,17 @@ public class SiteConfigurationServlet extends OrionServlet {
 	/**
 	 * @return The SiteConfiguration whose id matches the 0th segment of the request pathInfo, or null.
 	 */
-	private SiteConfiguration getExistingSiteConfig(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
+	private SiteInfo getExistingSiteConfig(HttpServletRequest req, HttpServletResponse resp) {
 		String userName = getUserName(req);
-		WebUser user = WebUser.fromUserId(userName);
 		IPath pathInfo = getPathInfo(req);
-		if (pathInfo.segmentCount() == 1) {
-			return user.getSiteConfiguration(pathInfo.segment(0));
+		try {
+			if (pathInfo.segmentCount() != 1)
+				return null;//bad request
+			UserInfo user = Activator.getDefault().getMetastore().readUser(userName);
+			return SiteInfo.getSite(user, pathInfo.segment(0));
+		} catch (CoreException e) {
+			//backing store failure
+			LogHelper.log(e);
 		}
 		return null;
 	}
@@ -116,10 +123,15 @@ public class SiteConfigurationServlet extends OrionServlet {
 	private boolean doGetAllSiteConfigurations(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
 		String userName = getUserName(req);
 		try {
-			WebUser user = WebUser.fromUserId(userName);
-			JSONArray siteConfigurations = user.getSiteConfigurationsJSON(ServletResourceHandler.getURI(req));
+			UserInfo user = Activator.getDefault().getMetastore().readUser(userName);
+			//user info stores an object where key is site id, value is site info, but we just want the values
+			JSONArray configurations = new JSONArray();
+			JSONObject sites = SiteInfo.getSites(user);
+			for (String site : JSONObject.getNames(sites)) {
+				configurations.put(sites.getJSONObject(site));
+			}
 			JSONObject jsonResponse = new JSONObject();
-			jsonResponse.put(SiteConfigurationConstants.KEY_SITE_CONFIGURATIONS, siteConfigurations);
+			jsonResponse.put(SiteConfigurationConstants.KEY_SITE_CONFIGURATIONS, configurations);
 			writeJSONResponse(req, resp, jsonResponse, JsonURIUnqualificationStrategy.LOCATION_ONLY);
 		} catch (Exception e) {
 			handleException(resp, "An error occurred while obtaining site configurations", e);
