@@ -89,6 +89,15 @@
 				</plugins>
 			</build>
 		</profile>
+		<profile>
+			<id>local-build</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<modules>
+				<module>../org.eclipse.orion.client</module>
+			</modules>
+		</profile>
 	</profiles>
 
 	<modules>
@@ -113,11 +122,6 @@
 
 		<!-- <module>tests/org.eclipse.orion.server.tests</module> -->
 
-		<module>../org.eclipse.orion.client/bundles/org.eclipse.orion.client.core</module>
-		<module>../org.eclipse.orion.client/bundles/org.eclipse.orion.client.editor</module>
-		<module>../org.eclipse.orion.client/bundles/org.eclipse.orion.client.git</module>
-		<module>../org.eclipse.orion.client/bundles/org.eclipse.orion.client.ui</module>
-		<module>../org.eclipse.orion.client/bundles/org.eclipse.orion.client.users</module>
 
 		<module>features/org.eclipse.orion.base-feature</module>
 		<module>features/org.eclipse.orion.server-feature</module>
