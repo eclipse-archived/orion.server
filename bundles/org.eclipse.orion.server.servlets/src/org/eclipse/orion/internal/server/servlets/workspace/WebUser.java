@@ -14,15 +14,19 @@ import java.net.URI;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.site.*;
+import org.eclipse.orion.internal.server.servlets.site.SiteConfiguration;
+import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.core.metastore.IMetaStore;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.users.OrionScope;
 import org.json.*;
 import org.osgi.service.prefs.BackingStoreException;
 
 /**
  * Represents a single Orion user.
+ * @deprecated replaced by {@link IMetaStore} and {@link UserInfo}.
  */
 public class WebUser extends WebElement {
 
@@ -170,8 +174,7 @@ public class WebUser extends WebElement {
 	 * @param workspace
 	 * @return The created SiteConfiguration.
 	 */
-	public SiteConfiguration createSiteConfiguration(String name, String workspace) throws CoreException {
-		String id = SiteConfiguration.nextSiteConfigurationId();
+	public SiteConfiguration createSiteConfiguration(String id, String name, String workspace) throws CoreException {
 		SiteConfiguration siteConfig = SiteConfiguration.fromId(id);
 		siteConfig.setName(name);
 		siteConfig.setWorkspace(workspace);
@@ -217,7 +220,7 @@ public class WebUser extends WebElement {
 				// Get the actual site configuration this points to
 				SiteConfiguration siteConfig = getExistingSiteConfiguration(id);
 				if (siteConfig != null) {
-					JSONObject siteConfigJson = SiteConfigurationResourceHandler.toJSON(siteConfig, baseLocation);
+					JSONObject siteConfigJson = SiteConfiguration.toJSON(siteConfig, baseLocation);
 					jsonArray.put(siteConfigJson);
 				}
 			}

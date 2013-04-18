@@ -12,15 +12,14 @@ package org.eclipse.orion.internal.server.hosting;
 
 import java.net.URI;
 import javax.servlet.http.HttpServletRequest;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.hosting.IHostedSite;
-import org.eclipse.orion.internal.server.servlets.site.SiteConfiguration;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
-import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
+import org.eclipse.orion.internal.server.servlets.site.SiteInfo;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.json.*;
 
 /**
@@ -38,7 +37,7 @@ public class HostedStatusDecorator implements IWebResourceDecorator {
 			return;
 
 		try {
-			WebUser webUser = getWebUser(req);
+			UserInfo webUser = getWebUser(req);
 			if (path.segmentCount() == 0) {
 				if ("GET".equals(req.getMethod())) { //$NON-NLS-1$
 					// GET /site/ (get all site configs) 
@@ -62,10 +61,14 @@ public class HostedStatusDecorator implements IWebResourceDecorator {
 		}
 	}
 
-	private static WebUser getWebUser(HttpServletRequest req) {
+	private static UserInfo getWebUser(HttpServletRequest req) {
 		String remoteUser = req.getRemoteUser();
 		if (remoteUser != null) {
-			return WebUser.fromUserId(remoteUser);
+			try {
+				return HostingActivator.getDefault().getMetastore().readUser(remoteUser);
+			} catch (CoreException e) {
+				//ignore and fall through
+			}
 		}
 		return null;
 	}
@@ -76,9 +79,11 @@ public class HostedStatusDecorator implements IWebResourceDecorator {
 	 * @param user The user making the request.
 	 * @param resource The original request passed to the decorator.
 	 */
-	private void addStatus(HttpServletRequest req, JSONObject siteConfigJson, WebUser user, URI resource) throws JSONException {
+	private void addStatus(HttpServletRequest req, JSONObject siteConfigJson, UserInfo user, URI resource) throws JSONException {
 		String id = siteConfigJson.getString(ProtocolConstants.KEY_ID);
-		SiteConfiguration siteConfiguration = SiteConfiguration.fromId(id);
+		SiteInfo siteConfiguration = SiteInfo.getSite(user, id);
+		if (siteConfiguration == null)
+			return;
 		IHostedSite site = HostingActivator.getDefault().getHostingService().get(siteConfiguration, user);
 		JSONObject hostingStatus = new JSONObject();
 		if (site != null) {
