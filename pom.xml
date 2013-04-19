@@ -111,7 +111,7 @@
 		<module>doc/org.eclipse.orion.doc.isv</module>
 		<module>doc/org.eclipse.orion.doc.user</module>
 
-		<module>tests/org.eclipse.orion.server.tests</module>
+		<!--<module>tests/org.eclipse.orion.server.tests</module>-->
 
 		<module>../org.eclipse.orion.client/bundles/org.eclipse.orion.client.core</module>
 		<module>../org.eclipse.orion.client/bundles/org.eclipse.orion.client.editor</module>
@@ -125,8 +125,8 @@
 		<module>features/org.eclipse.orion.server.search-feature</module>
 		<module>features/org.eclipse.orion.server.ui-feature</module>
 		<module>features/org.eclipse.orion.client-feature</module>
-		<module>features/org.eclipse.orion.releng.test.master-feature</module>
-		<module>features/org.eclipse.orion.server.tests-feature</module>
+		<!--<module>features/org.eclipse.orion.releng.test.master-feature</module>
+		<module>features/org.eclipse.orion.server.tests-feature</module>-->
 		<module>features/org.eclipse.orion-feature</module>
 		<module>features/org.eclipse.license</module>
 
