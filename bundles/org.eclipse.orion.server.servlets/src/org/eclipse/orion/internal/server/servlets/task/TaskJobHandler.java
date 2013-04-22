@@ -97,13 +97,13 @@ public class TaskJobHandler {
 		} else {
 			TaskInfo task = job.startTask();
 			JSONObject result = task.toJSON();
-			String taskLocation = createTaskLocation(OrionServlet.getURI(request), task.getId(), task.isKeep()).toString();
+			URI taskLocation = createTaskLocation(ServletResourceHandler.getURI(request), task.getId(), task.isKeep());
 			result.put(ProtocolConstants.KEY_LOCATION, taskLocation);
 			if (!task.isRunning()) {
 				job.removeTask(); // Task is not used, we may remove it
 				return writeResult(request, response, job, statusHandler);
 			}
-			response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation.toString());
+			response.setHeader(ProtocolConstants.HEADER_LOCATION, ServletResourceHandler.resovleOrionURI(request, taskLocation).toString());
 			OrionServlet.writeJSONResponse(request, response, result);
 			response.setStatus(HttpServletResponse.SC_ACCEPTED);
 			return true;

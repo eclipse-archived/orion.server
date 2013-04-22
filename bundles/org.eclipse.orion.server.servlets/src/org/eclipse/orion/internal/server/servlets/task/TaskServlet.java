@@ -18,8 +18,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
-import org.eclipse.orion.internal.server.servlets.Activator;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.*;
 import org.eclipse.orion.server.core.tasks.TaskInfo.TaskStatus;
@@ -135,10 +134,11 @@ public class TaskServlet extends OrionServlet {
 	private static JSONObject getJsonWithLocation(HttpServletRequest req, TaskInfo task, boolean includeResult) throws JSONException, URISyntaxException {
 		JSONObject taskJson = includeResult ? task.toJSON() : task.toLightJSON();
 		if (taskJson.optString(ProtocolConstants.KEY_LOCATION, "").equals("")) {
+			URI uri = ServletResourceHandler.getURI(req);
 			if (task.isKeep()) {
-				taskJson.put(ProtocolConstants.KEY_LOCATION, new URI(getURI(req).toString() + "/").resolve("id/" + task.getId()).toString());
+				taskJson.put(ProtocolConstants.KEY_LOCATION, new URI(uri.getScheme(), null, "/task/id/" + task.getId(), null, null));
 			} else {
-				taskJson.put(ProtocolConstants.KEY_LOCATION, new URI(getURI(req).toString() + "/").resolve("temp/" + task.getId()).toString());
+				taskJson.put(ProtocolConstants.KEY_LOCATION, new URI(uri.getScheme(), null, "/task/temp/" + task.getId(), null, null));
 			}
 		}
 		return taskJson;
@@ -204,7 +204,7 @@ public class TaskServlet extends OrionServlet {
 		if (task.isKeep()) {
 			try {
 				if (result.optString(ProtocolConstants.KEY_LOCATION, "").equals(""))
-					result.put(ProtocolConstants.KEY_LOCATION, getURI(req).toString());
+					result.put(ProtocolConstants.KEY_LOCATION, ServletResourceHandler.getURI(req));
 			} catch (JSONException e) {
 				handleException(resp, e.getMessage(), e);
 			}

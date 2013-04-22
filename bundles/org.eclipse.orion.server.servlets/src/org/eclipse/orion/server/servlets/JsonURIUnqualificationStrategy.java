@@ -54,10 +54,10 @@ public abstract class JsonURIUnqualificationStrategy {
 	};
 
 	public void run(HttpServletRequest req, JSONObject result) {
-		rewrite(result, req.getScheme(), req.getServerName(), req.getServerPort());
+		rewrite(result, req.getScheme(), req.getServerName(), req.getServerPort(), req.getContextPath());
 	}
 
-	private void rewrite(JSONObject json, String scheme, String hostname, int port) {
+	private void rewrite(JSONObject json, String scheme, String hostname, int port, String contextPath) {
 		String[] names = JSONObject.getNames(json);
 		if (names == null)
 			return;
@@ -65,27 +65,36 @@ public abstract class JsonURIUnqualificationStrategy {
 			Object o = json.opt(name);
 			if (o instanceof URI) {
 				try {
-					json.put(name, unqualifyObjectProperty(name, (URI) o, scheme, hostname, port));
+					URI uri = (URI) o;
+					if ("orion".equals(uri.getScheme())) {
+						uri = new URI(null, null, contextPath + uri.getPath(), uri.getQuery(), uri.getFragment());
+					}
+					json.put(name, unqualifyObjectProperty(name, uri, scheme, hostname, port));
 				} catch (JSONException e) {
+				} catch (URISyntaxException e) {
 				}
 			} else if (o instanceof String) {
 				String string = (String) o;
-				if (string.startsWith(scheme)) {
+				if (string.startsWith(scheme) || string.startsWith("orion:/")) {
 					try {
-						json.put(name, unqualifyObjectProperty(name, new URI(string), scheme, hostname, port));
+						URI uri = new URI(string);
+						if ("orion".equals(uri.getScheme())) {
+							uri = new URI(null, null, contextPath + uri.getPath(), uri.getQuery(), uri.getFragment());
+						}
+						json.put(name, unqualifyObjectProperty(name, uri, scheme, hostname, port));
 					} catch (JSONException e) {
 					} catch (URISyntaxException e) {
 					}
 				}
 			} else {
-				rewrite(o, scheme, hostname, port);
+				rewrite(o, scheme, hostname, port, contextPath);
 			}
 		}
 	}
 
-	private void rewrite(Object o, String scheme, String hostname, int port) {
+	private void rewrite(Object o, String scheme, String hostname, int port, String contextPath) {
 		if (o instanceof JSONObject) {
-			rewrite((JSONObject) o, scheme, hostname, port);
+			rewrite((JSONObject) o, scheme, hostname, port, contextPath);
 		} else if (o instanceof JSONArray) {
 			JSONArray a = (JSONArray) o;
 			for (int i = 0; i < a.length(); i++) {
@@ -105,7 +114,7 @@ public abstract class JsonURIUnqualificationStrategy {
 						}
 					}
 				} else {
-					rewrite(v, scheme, hostname, port);
+					rewrite(v, scheme, hostname, port, contextPath);
 				}
 			}
 		}

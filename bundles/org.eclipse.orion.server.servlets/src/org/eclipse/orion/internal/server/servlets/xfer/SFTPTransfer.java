@@ -96,7 +96,7 @@ class SFTPTransfer {
 		URI requestLocation = ServletResourceHandler.getURI(request);
 		URI taskLocation = new URI(requestLocation.getScheme(), requestLocation.getAuthority(), "/task/id/" + task.getId(), null, null); //$NON-NLS-1$
 		result.put(ProtocolConstants.KEY_LOCATION, taskLocation);
-		response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation.toString());
+		response.setHeader(ProtocolConstants.HEADER_LOCATION, ServletResourceHandler.resovleOrionURI(request, taskLocation).toString());
 		OrionServlet.writeJSONResponse(request, response, result);
 		response.setStatus(HttpServletResponse.SC_ACCEPTED);
 	}

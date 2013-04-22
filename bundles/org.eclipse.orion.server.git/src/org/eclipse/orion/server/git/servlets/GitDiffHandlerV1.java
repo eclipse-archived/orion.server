@@ -36,6 +36,7 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Diff;
+import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONObject;
@@ -160,6 +161,8 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 			out.write(ProtocolConstants.HEADER_CONTENT_TYPE + ": " + ProtocolConstants.CONTENT_TYPE_JSON + EOL + EOL); //$NON-NLS-1$
 			out.flush();
 			JSONObject getURIs = new Diff(getURI(request), db).toJSON();
+			JsonURIUnqualificationStrategy.ALL.run(request, getURIs);
+
 			out.write(getURIs.toString());
 			out.write(EOL + "--" + boundary + EOL); //$NON-NLS-1$
 			out.write(ProtocolConstants.HEADER_CONTENT_TYPE + ": plain/text" + EOL + EOL); //$NON-NLS-1$
@@ -234,7 +237,7 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 			JSONObject result = new JSONObject();
 			result.put(ProtocolConstants.KEY_LOCATION, nu.toString());
 			OrionServlet.writeJSONResponse(request, response, result);
-			response.setHeader(ProtocolConstants.HEADER_LOCATION, nu.toString());
+			response.setHeader(ProtocolConstants.HEADER_LOCATION, resovleOrionURI(request, nu).toString());
 			return true;
 		} catch (Exception e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when identifying a new Diff resource.", e));

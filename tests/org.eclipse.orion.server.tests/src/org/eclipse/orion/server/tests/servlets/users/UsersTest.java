@@ -17,7 +17,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.tests.AbstractServerTest;
-import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
 import org.eclipse.orion.server.useradmin.User;
 import org.json.JSONObject;
@@ -29,8 +28,6 @@ import com.meterware.httpunit.PutMethodWebRequest;
 import com.meterware.httpunit.WebRequest;
 
 public abstract class UsersTest extends AbstractServerTest {
-
-	public static final String SERVER_LOCATION = ServerTestsActivator.getServerLocation();
 
 	protected static final int METHOD_GET = 0;
 	protected static final int METHOD_PUT = 1;
@@ -124,6 +121,7 @@ public abstract class UsersTest extends AbstractServerTest {
 	}
 
 	protected WebRequest getAuthenticatedRequest(String uri, int method, boolean admin, Map<String, String> params, JSONObject body) throws UnsupportedEncodingException {
+		uri = toAbsoluteURI(uri);
 		WebRequest request;
 		switch (method) {
 			case METHOD_DELETE :

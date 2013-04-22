@@ -33,7 +33,6 @@ import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.git.objects.Remote;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -62,7 +61,7 @@ public class GitFetchTest extends GitTest {
 		clone(clonePath);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -107,7 +106,7 @@ public class GitFetchTest extends GitTest {
 		clone(clonePath);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -144,7 +143,7 @@ public class GitFetchTest extends GitTest {
 		String contentLocation1 = clone(clonePath1).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		// get project1 metadata
-		WebRequest request = getGetFilesRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project1 = new JSONObject(response.getText());
@@ -159,7 +158,7 @@ public class GitFetchTest extends GitTest {
 		clone(clonePath2);
 
 		// get project2 metadata
-		request = getGetFilesRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		request = getGetRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project2 = new JSONObject(response.getText());
@@ -234,7 +233,7 @@ public class GitFetchTest extends GitTest {
 		String cloneContentLocation1 = clone(request);
 
 		// clone1: get project/folder metadata
-		request = getGetFilesRequest(cloneContentLocation1);
+		request = getGetRequest(cloneContentLocation1);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project1 = new JSONObject(response.getText());
@@ -251,7 +250,7 @@ public class GitFetchTest extends GitTest {
 		String cloneContentLocation2 = clone(request);
 
 		// clone2: get project/folder metadata
-		request = getGetFilesRequest(cloneContentLocation2);
+		request = getGetRequest(cloneContentLocation2);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project2 = new JSONObject(response.getText());
@@ -323,7 +322,7 @@ public class GitFetchTest extends GitTest {
 		String branchesLocation1 = clone1.getString(GitConstants.KEY_BRANCH);
 
 		// get project1 metadata
-		WebRequest request = getGetFilesRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project1 = new JSONObject(response.getText());
@@ -348,7 +347,7 @@ public class GitFetchTest extends GitTest {
 		clone(clonePath2);
 
 		// get project2 metadata
-		request = getGetFilesRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		request = getGetRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project2 = new JSONObject(response.getText());
@@ -436,7 +435,7 @@ public class GitFetchTest extends GitTest {
 		String branchesLocation1 = clone1.getString(GitConstants.KEY_BRANCH);
 
 		// get project1 metadata
-		WebRequest request = getGetFilesRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project1 = new JSONObject(response.getText());
@@ -459,7 +458,7 @@ public class GitFetchTest extends GitTest {
 		clone(clonePath2);
 
 		// get project2 metadata
-		request = getGetFilesRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		request = getGetRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project2 = new JSONObject(response.getText());
@@ -529,7 +528,7 @@ public class GitFetchTest extends GitTest {
 			String contentLocation1 = clone(clonePath[0]).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project1 metadata
-			WebRequest request = getGetFilesRequest(contentLocation1);
+			WebRequest request = getGetRequest(contentLocation1);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project1 = new JSONObject(response.getText());
@@ -543,7 +542,7 @@ public class GitFetchTest extends GitTest {
 			String contentLocation2 = clone(clonePath[1]).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project2 metadata
-			request = getGetFilesRequest(contentLocation2);
+			request = getGetRequest(contentLocation2);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project2 = new JSONObject(response.getText());
@@ -628,12 +627,7 @@ public class GitFetchTest extends GitTest {
 	}
 
 	static WebRequest getPostGitRemoteRequest(String location, boolean fetch, boolean force) throws JSONException, UnsupportedEncodingException {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Remote.RESOURCE + location;
-
+		String requestURI = toAbsoluteURI(location);
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_FETCH, Boolean.toString(fetch));
 		body.put(GitConstants.KEY_FORCE, force);
@@ -644,12 +638,7 @@ public class GitFetchTest extends GitTest {
 	}
 
 	static WebRequest getPostGitRemoteRequest(String location, boolean fetch, boolean force, String name, String kh, byte[] privk, byte[] pubk, byte[] p) throws JSONException, UnsupportedEncodingException {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Remote.RESOURCE + location;
-
+		String requestURI = toAbsoluteURI(location);
 		JSONObject body = new JSONObject();
 		body.put(ProtocolConstants.KEY_NAME, name);
 		if (kh != null)

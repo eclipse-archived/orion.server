@@ -16,6 +16,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -252,7 +253,7 @@ public class BasicUsersTest extends UsersTest {
 	}
 
 	@Test
-	public void testCreateDeleteUsers() throws IOException, SAXException, JSONException {
+	public void testCreateDeleteUsers() throws IOException, SAXException, JSONException, URISyntaxException {
 		WebConversation webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 
@@ -273,7 +274,9 @@ public class BasicUsersTest extends UsersTest {
 		assertTrue("Response should contain user location", responseObject.has(ProtocolConstants.KEY_LOCATION));
 
 		// check user details
-		request = getAuthenticatedRequest(responseObject.getString(ProtocolConstants.KEY_LOCATION), METHOD_GET, true);
+		String location = responseObject.getString(ProtocolConstants.KEY_LOCATION);
+
+		request = getAuthenticatedRequest(location, METHOD_GET, true);
 		response = webConversation.getResponse(request);
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 		responseObject = new JSONObject(response.getText());
@@ -287,7 +290,7 @@ public class BasicUsersTest extends UsersTest {
 		request = getGetUsersRequest("", true);
 
 		// delete user
-		request = getAuthenticatedRequest(responseObject.getString(ProtocolConstants.KEY_LOCATION), METHOD_DELETE, true);
+		request = getAuthenticatedRequest(location, METHOD_DELETE, true);
 		setAuthentication(request, params.get("login"), params.get("password"));
 		response = webConversation.getResponse(request);
 		assertEquals("User could not delete his own account, response: " + response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
@@ -349,7 +352,7 @@ public class BasicUsersTest extends UsersTest {
 	}
 
 	@Test
-	public void testUpdateUsers() throws IOException, SAXException, JSONException {
+	public void testUpdateUsers() throws IOException, SAXException, JSONException, URISyntaxException {
 		WebConversation webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 
@@ -410,7 +413,7 @@ public class BasicUsersTest extends UsersTest {
 	}
 
 	@Test
-	public void testResetUser() throws IOException, SAXException, JSONException {
+	public void testResetUser() throws IOException, SAXException, JSONException, URISyntaxException {
 		WebConversation webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 
@@ -457,7 +460,7 @@ public class BasicUsersTest extends UsersTest {
 	}
 
 	@Test
-	public void testChangeUserLogin() throws JSONException, IOException, SAXException {
+	public void testChangeUserLogin() throws JSONException, IOException, SAXException, URISyntaxException {
 		WebConversation webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 

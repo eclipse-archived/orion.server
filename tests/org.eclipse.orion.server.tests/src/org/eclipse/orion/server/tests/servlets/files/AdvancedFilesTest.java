@@ -14,11 +14,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
-import com.meterware.httpunit.*;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.json.JSONException;
@@ -26,6 +26,10 @@ import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.xml.sax.SAXException;
+
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 public class AdvancedFilesTest extends FileSystemTest {
 	private JSONObject getFileMetadataObject(Boolean readonly, Boolean executable) throws JSONException {
@@ -57,7 +61,7 @@ public class AdvancedFilesTest extends FileSystemTest {
 		String fileName = "testfile.txt";
 
 		//setup: create a file
-		WebRequest request = getPostFilesRequest("/", getNewFileJSON(fileName).toString(), fileName);
+		WebRequest request = getPostFilesRequest("", getNewFileJSON(fileName).toString(), fileName);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
@@ -111,7 +115,7 @@ public class AdvancedFilesTest extends FileSystemTest {
 		String fileName = "testMetadataHandling.txt";
 
 		//setup: create a file
-		WebRequest request = getPostFilesRequest("/", getNewFileJSON(fileName).toString(), fileName);
+		WebRequest request = getPostFilesRequest("", getNewFileJSON(fileName).toString(), fileName);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 

@@ -65,7 +65,7 @@ public class WebApplication implements IApplication {
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(JettyConstants.CONTEXT_SESSIONINACTIVEINTERVAL, new Integer(4 * 60 * 60)); // 4 hours
-		//		properties.put(JettyConstants.CONTEXT_PATH, "/cc");
+		//properties.put(JettyConstants.CONTEXT_PATH, "/cc");
 		if (httpsEnabled) {
 			LogHelper.log(new Status(IStatus.INFO, ConfiguratorActivator.PI_CONFIGURATOR, "Https is enabled", null)); //$NON-NLS-1$
 

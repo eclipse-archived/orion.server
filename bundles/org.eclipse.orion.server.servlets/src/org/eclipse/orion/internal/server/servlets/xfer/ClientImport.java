@@ -97,7 +97,7 @@ class ClientImport {
 			success = completeMove(req, resp);
 		}
 		if (success) {
-			resp.setHeader(ProtocolConstants.HEADER_LOCATION, "/file" + getPath()); //$NON-NLS-1$
+			resp.setHeader(ProtocolConstants.HEADER_LOCATION, req.getContextPath() + "/file" + getPath()); //$NON-NLS-1$
 			resp.setStatus(HttpServletResponse.SC_CREATED);
 			resp.setContentType(ProtocolConstants.CONTENT_TYPE_HTML);
 		}
@@ -176,7 +176,7 @@ class ClientImport {
 			//should not be possible
 			throw new ServletException(e);
 		}
-		resp.setHeader(ProtocolConstants.HEADER_LOCATION, responseURI.toString());
+		resp.setHeader(ProtocolConstants.HEADER_LOCATION, ServletResourceHandler.resovleOrionURI(req, responseURI).toString());
 	}
 
 	/**

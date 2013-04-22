@@ -77,7 +77,8 @@ public class HostingTest extends CoreSiteTest {
 		JSONArray mappings = makeMappings(new String[][] {{"/", "/A/bogusWorkspacePath"}});
 		WebResponse siteResp = createSite("Fizz site", workspaceId, mappings, "fizzsite", null);
 		JSONObject siteObject = new JSONObject(siteResp.getText());
-		startSite(siteObject.getString(ProtocolConstants.KEY_LOCATION));
+		String location = siteObject.getString(ProtocolConstants.HEADER_LOCATION);
+		startSite(location);
 	}
 
 	@Test
@@ -86,12 +87,14 @@ public class HostingTest extends CoreSiteTest {
 		JSONArray mappings = makeMappings(new String[0][0]);
 		WebResponse siteResp = createSite("Empty mappings site", workspaceId, mappings, "empty", null);
 		JSONObject siteObject = new JSONObject(siteResp.getText());
-		startSite(siteObject.getString(ProtocolConstants.KEY_LOCATION));
+		String location = siteObject.getString(ProtocolConstants.HEADER_LOCATION);
+		startSite(location);
 
 		// No mappings at all
 		WebResponse siteResp2 = createSite("Null mappings site", workspaceId, null, "null", null);
 		JSONObject siteObject2 = new JSONObject(siteResp2.getText());
-		startSite(siteObject2.getString(ProtocolConstants.KEY_LOCATION));
+		String location2 = siteObject2.getString(ProtocolConstants.HEADER_LOCATION);
+		startSite(location2);
 	}
 
 	@Test
@@ -99,7 +102,7 @@ public class HostingTest extends CoreSiteTest {
 		JSONArray mappings = makeMappings(new String[][] {{"/", "/A/bogusWorkspacePath"}});
 		WebResponse siteResp = createSite("Buzz site", workspaceId, mappings, "buzzsite", null);
 		JSONObject siteObject = new JSONObject(siteResp.getText());
-		String location = siteObject.getString(ProtocolConstants.KEY_LOCATION);
+		String location = siteObject.getString(ProtocolConstants.HEADER_LOCATION);
 		startSite(location);
 		stopSite(location);
 	}
@@ -117,9 +120,19 @@ public class HostingTest extends CoreSiteTest {
 		// Create a site that exposes the workspace file
 		final String siteName = "My hosted site";
 		//make absolute by adding test project path
-		String filePath = URI.create(makeResourceURIAbsolute("/" + filename)).getPath();
-		//remove /file segment to get the servlet-relative path
-		Assert.assertTrue(filePath.startsWith("/file/"));
+		IPath path = new Path(URI.create(makeResourceURIAbsolute(filename)).getPath());
+		while (path.segmentCount() != 0 && !path.segment(0).equals("file")) {
+			if (path.segment(0).equals("file")) {
+				break;
+			}
+			path = path.removeFirstSegments(1);
+		}
+		String filePath = path.toString();
+		if (filePath.startsWith("/")) {
+			filePath = filePath.substring(1);
+		}
+		//remove file segment to get the servlet-relative path
+		Assert.assertTrue(filePath.startsWith("file/"));
 		filePath = filePath.substring(5);
 		final String mountAt = "/file.html";
 
@@ -130,8 +143,8 @@ public class HostingTest extends CoreSiteTest {
 		JSONObject siteObject = new JSONObject(createSiteResp.getText());
 
 		// Start the site
-		final String siteLocation = siteObject.getString(ProtocolConstants.KEY_LOCATION);//createSiteResp.getHeaderField("Location");
-		siteObject = startSite(siteLocation);
+		String location = siteObject.getString(ProtocolConstants.HEADER_LOCATION);
+		siteObject = startSite(location);
 
 		final JSONObject hostingStatus = siteObject.getJSONObject(SiteConfigurationConstants.KEY_HOSTING_STATUS);
 		final String hostedURL = hostingStatus.getString(SiteConfigurationConstants.KEY_HOSTING_STATUS_URL);
@@ -142,7 +155,7 @@ public class HostingTest extends CoreSiteTest {
 		assertEquals(fileContent, getFileResp.getText());
 
 		// Stop the site
-		stopSite(siteLocation);
+		stopSite(location);
 
 		// Check that the workspace file can't be accessed anymore
 		WebRequest getFile404Req = new GetMethodWebRequest(hostedURL + mountAt);
@@ -160,12 +173,22 @@ public class HostingTest extends CoreSiteTest {
 		// https://bugs.eclipse.org/bugs/show_bug.cgi?id=389252
 		final String filename = "foo.html";
 		final String fileContent = "<html><body>This is a test file</body></html>";
-		final String dirName = "/my.css";
+		final String dirName = "my.css";
 		createDirectoryOnServer(dirName);
 		createFileOnServer(dirName + "/" + filename, fileContent);
 
-		String filePath = URI.create(makeResourceURIAbsolute("/" + dirName)).getPath();
-		Assert.assertTrue(filePath.startsWith("/file/"));
+		IPath path = new Path(URI.create(makeResourceURIAbsolute(filename)).getPath());
+		while (path.segmentCount() != 0 && !path.segment(0).equals("file")) {
+			if (path.segment(0).equals("file")) {
+				break;
+			}
+			path = path.removeFirstSegments(1);
+		}
+		String filePath = path.toString();
+		if (filePath.startsWith("/")) {
+			filePath = filePath.substring(1);
+		}
+		Assert.assertTrue(filePath.startsWith("file/"));
 		filePath = filePath.substring(5);
 		final String mountAt = "/";
 
@@ -176,8 +199,8 @@ public class HostingTest extends CoreSiteTest {
 		JSONObject siteObject = new JSONObject(createSiteResp.getText());
 
 		// Start site
-		final String siteLocation = siteObject.getString(ProtocolConstants.KEY_LOCATION);//createSiteResp.getHeaderField("Location");
-		siteObject = startSite(siteLocation);
+		String location = siteObject.getString(ProtocolConstants.HEADER_LOCATION);
+		siteObject = startSite(location);
 
 		// Access the directory through the site
 		final JSONObject hostingStatus = siteObject.getJSONObject(SiteConfigurationConstants.KEY_HOSTING_STATUS);
@@ -188,7 +211,7 @@ public class HostingTest extends CoreSiteTest {
 		assertEquals(false, "text/html".equals(getFileResp.getHeaderField("Content-Type").toLowerCase()));
 
 		// Stop the site
-		stopSite(siteLocation);
+		stopSite(location);
 	}
 
 	@Test
@@ -228,8 +251,8 @@ public class HostingTest extends CoreSiteTest {
 		JSONObject siteObject = new JSONObject(createSiteResp.getText());
 
 		// User B: Start the site
-		final String siteLocation = siteObject.getString(ProtocolConstants.KEY_LOCATION);//createSiteResp.getHeaderField("Location");
-		siteObject = startSite(siteLocation, userB, userB);
+		String location = siteObject.getString(ProtocolConstants.HEADER_LOCATION);
+		siteObject = startSite(location, userB, userB);
 
 		final JSONObject hostingStatus = siteObject.getJSONObject(SiteConfigurationConstants.KEY_HOSTING_STATUS);
 		final String hostedURL = hostingStatus.getString(SiteConfigurationConstants.KEY_HOSTING_STATUS_URL);
@@ -252,8 +275,8 @@ public class HostingTest extends CoreSiteTest {
 		JSONObject siteObject = new JSONObject(createSiteResp.getText());
 
 		// Start the site
-		final String siteLocation = siteObject.getString(ProtocolConstants.KEY_LOCATION);//createSiteResp.getHeaderField("Location");
-		siteObject = startSite(siteLocation);
+		String location = siteObject.getString(ProtocolConstants.HEADER_LOCATION);
+		siteObject = startSite(location);
 
 		final JSONObject hostingStatus = siteObject.getJSONObject(SiteConfigurationConstants.KEY_HOSTING_STATUS);
 		final String hostedURL = hostingStatus.getString(SiteConfigurationConstants.KEY_HOSTING_STATUS_URL);
@@ -289,7 +312,7 @@ public class HostingTest extends CoreSiteTest {
 		assertEquals("Pref obtained through site has correct value", prefObject.optString(prefKey), prefValue);
 
 		// Stop the site
-		stopSite(siteLocation);
+		stopSite(location);
 
 		// Check that remote URL can't be accessed anymore
 		WebRequest getRemoteUrl404Req = new GetMethodWebRequest(hostedURL + remoteRoot);
@@ -345,12 +368,12 @@ public class HostingTest extends CoreSiteTest {
 	 * @param fileContent
 	 */
 	private WebResponse createFileOnServer(String filename, String fileContent) throws SAXException, IOException, JSONException, URISyntaxException {
-		return createFileOnServer("/", filename, fileContent);
+		return createFileOnServer("", filename, fileContent);
 	}
 
 	private void createDirectoryOnServer(String dirname) throws SAXException, IOException, JSONException {
 		webConversation.setExceptionsThrownOnErrorStatus(false);
-		WebRequest createDirReq = getPostFilesRequest("/", getNewDirJSON(dirname).toString(), dirname);
+		WebRequest createDirReq = getPostFilesRequest("", getNewDirJSON(dirname).toString(), dirname);
 		WebResponse createDirResp = webConversation.getResponse(createDirReq);
 		assertEquals(HttpURLConnection.HTTP_CREATED, createDirResp.getResponseCode());
 	}

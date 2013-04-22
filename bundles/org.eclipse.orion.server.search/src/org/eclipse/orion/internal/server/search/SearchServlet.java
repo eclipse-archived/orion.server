@@ -13,10 +13,14 @@ package org.eclipse.orion.internal.server.search;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -79,6 +83,9 @@ public class SearchServlet extends OrionServlet {
 						//solr does not lowercase queries containing wildcards
 						//https://issues.apache.org/jira/browse/SOLR-219
 						processedQuery += "NameLower:" + term.substring(10).toLowerCase(); //$NON-NLS-1$
+					} else if (term.startsWith("Location:")) { //$NON-NLS-1${
+						//all other field searches are case sensitive
+						processedQuery += "Location:" + term.substring(9 + req.getContextPath().length());
 					} else {
 						//all other field searches are case sensitive
 						processedQuery += term;

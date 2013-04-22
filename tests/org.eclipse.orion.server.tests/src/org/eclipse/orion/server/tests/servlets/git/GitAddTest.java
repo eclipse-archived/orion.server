@@ -12,19 +12,22 @@ package org.eclipse.orion.server.tests.servlets.git;
 
 import static org.junit.Assert.assertEquals;
 
-import com.meterware.httpunit.*;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.Set;
+
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.git.objects.Index;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Test;
+
+import com.meterware.httpunit.PutMethodWebRequest;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 public class GitAddTest extends GitTest {
 
@@ -135,7 +138,7 @@ public class GitAddTest extends GitTest {
 			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project/folder metadata
-			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebRequest request = getGetRequest(cloneContentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder = new JSONObject(response.getText());
@@ -171,7 +174,7 @@ public class GitAddTest extends GitTest {
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), gitDir.toString());
 
 		// get project/folder metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -205,13 +208,7 @@ public class GitAddTest extends GitTest {
 	}
 
 	static WebRequest getPutGitIndexRequest(String location, Set<String> patterns) throws UnsupportedEncodingException, JSONException {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else if (location.startsWith("/"))
-			requestURI = SERVER_LOCATION + location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Index.RESOURCE + location;
+		String requestURI = toAbsoluteURI(location);
 		JSONObject body = new JSONObject();
 		if (patterns != null) {
 			body.put(ProtocolConstants.KEY_PATH, patterns);

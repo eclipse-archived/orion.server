@@ -14,19 +14,41 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.*;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-import org.eclipse.core.runtime.*;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.xml.sax.SAXException;
+
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.PutMethodWebRequest;
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebResponse;
 
 /**
  * 
@@ -67,7 +89,7 @@ public class TransferTest extends FileSystemTest {
 	 */
 	private String getImportRequestPath(String directoryPath) {
 		IPath path = new Path("/xfer/import").append(getTestBaseResourceURILocation()).append(directoryPath);
-		return ServerTestsActivator.getServerLocation() + path.toString();
+		return SERVER_LOCATION + path.toString();
 	}
 
 	/**
@@ -75,7 +97,7 @@ public class TransferTest extends FileSystemTest {
 	 */
 	private String getExportRequestPath(String directoryPath) {
 		IPath path = new Path("/xfer/export").append(getTestBaseResourceURILocation()).append(directoryPath).removeTrailingSeparator().addFileExtension("zip");
-		return ServerTestsActivator.getServerLocation() + path.toString();
+		return SERVER_LOCATION + path.toString();
 	}
 
 	@After
@@ -186,7 +208,7 @@ public class TransferTest extends FileSystemTest {
 	}
 
 	@Test
-	public void testImportAndUnzip() throws CoreException, IOException, SAXException {
+	public void testImportAndUnzip() throws CoreException, IOException, SAXException, URISyntaxException {
 		//create a directory to upload to
 		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
 		createDirectory(directoryPath);
@@ -195,14 +217,16 @@ public class TransferTest extends FileSystemTest {
 		URL entry = ServerTestsActivator.getContext().getBundle().getEntry("testData/importTest/client.zip");
 		File source = new File(FileLocator.toFileURL(entry).getPath());
 		long length = source.length();
-		PostMethodWebRequest request = new PostMethodWebRequest(getImportRequestPath(directoryPath));
+		String importPath = getImportRequestPath(directoryPath);
+		PostMethodWebRequest request = new PostMethodWebRequest(importPath);
 		request.setHeaderField("X-Xfer-Content-Length", Long.toString(length));
 		setAuthentication(request);
 		WebResponse postResponse = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, postResponse.getResponseCode());
 		String location = postResponse.getHeaderField("Location");
 		assertNotNull(location);
-
+		URI importURI = URIUtil.fromString(importPath);
+		location = importURI.resolve(location).toString();
 		doImport(source, length, location);
 
 		//assert the file has been unzipped in the workspace
@@ -210,7 +234,7 @@ public class TransferTest extends FileSystemTest {
 	}
 
 	@Test
-	public void testImportFile() throws CoreException, IOException, SAXException {
+	public void testImportFile() throws CoreException, IOException, SAXException, URISyntaxException {
 		//create a directory to upload to
 		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
 		createDirectory(directoryPath);
@@ -219,7 +243,8 @@ public class TransferTest extends FileSystemTest {
 		URL entry = ServerTestsActivator.getContext().getBundle().getEntry("testData/importTest/client.zip");
 		File source = new File(FileLocator.toFileURL(entry).getPath());
 		long length = source.length();
-		PostMethodWebRequest request = new PostMethodWebRequest(getImportRequestPath(directoryPath));
+		String importPath = getImportRequestPath(directoryPath);
+		PostMethodWebRequest request = new PostMethodWebRequest(importPath);
 		request.setHeaderField("X-Xfer-Content-Length", Long.toString(length));
 		request.setHeaderField("X-Xfer-Options", "raw");
 
@@ -229,6 +254,8 @@ public class TransferTest extends FileSystemTest {
 		assertEquals(HttpURLConnection.HTTP_OK, postResponse.getResponseCode());
 		String location = postResponse.getHeaderField("Location");
 		assertNotNull(location);
+		URI importURI = URIUtil.fromString(importPath);
+		location = importURI.resolve(location).toString();
 
 		doImport(source, length, location);
 

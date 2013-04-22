@@ -14,13 +14,22 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
-import com.meterware.httpunit.*;
-import java.io.*;
-import java.net.*;
-import java.util.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
@@ -29,12 +38,22 @@ import org.eclipse.orion.internal.server.servlets.workspace.authorization.Author
 import org.eclipse.orion.server.core.users.OrionScope;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
-import org.json.*;
-import org.junit.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.osgi.service.prefs.BackingStoreException;
 import org.xml.sax.SAXException;
+
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 /**
  * Tests for {@link WorkspaceServlet}.
@@ -111,7 +130,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		assertNotNull(projectId);
 
 		//ensure project location = <workspace location>/project/<projectId>
-		URI projectLocation = new URI(locationHeader);
+		URI projectLocation = new URI(toAbsoluteURI(locationHeader));
 		URI relative = workspaceLocation.relativize(projectLocation);
 		IPath projectPath = new Path(relative.getPath());
 		assertEquals(2, projectPath.segmentCount());
@@ -142,7 +161,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 
 		//add a file in the project
 		String fileName = "file.txt";
-		request = getPostFilesRequest(contentLocation, getNewFileJSON(fileName).toString(), fileName);
+		request = getPostFilesRequest(toAbsoluteURI(contentLocation), getNewFileJSON(fileName).toString(), fileName);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		assertEquals("Response should contain file metadata in JSON, but was " + response.getText(), "application/json", response.getContentType());
@@ -192,7 +211,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	}
 
 	@Test
-	public void testCopyProjectNonDefaultLocation() throws IOException, SAXException, JSONException {
+	public void testCopyProjectNonDefaultLocation() throws IOException, SAXException, JSONException, URISyntaxException {
 		//create workspace
 		String workspaceName = WorkspaceServiceTest.class.getName() + "#testCopyProjectNonDefaultLocation";
 		URI workspaceLocation = createWorkspace(workspaceName);
@@ -215,7 +234,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 
 		//add a file in the project
 		String fileName = "file.txt";
-		request = getPostFilesRequest(sourceContentLocation, "{}", fileName);
+		request = getPostFilesRequest(toAbsoluteURI(sourceContentLocation), "{}", fileName);
 		response = webConversation.getResource(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		assertEquals("Response should contain file metadata in JSON, but was " + response.getText(), "application/json", response.getContentType());
@@ -237,7 +256,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		assertEquals(destinationName, resultObject.getString(ProtocolConstants.KEY_NAME));
 
 		//ensure the source is still intact
-		response = webConversation.getResponse(getGetFilesRequest(sourceContentLocation + "?depth=1"));
+		response = webConversation.getResponse(getGetRequest(sourceContentLocation + "?depth=1"));
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		resultObject = new JSONObject(response.getText());
 		assertEquals(sourceName, resultObject.getString(ProtocolConstants.KEY_NAME));
@@ -247,7 +266,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		assertEquals(fileName, child.getString(ProtocolConstants.KEY_NAME));
 
 		//ensure the destination is intact
-		response = webConversation.getResponse(getGetFilesRequest(destinationContentLocation + "?depth=1"));
+		response = webConversation.getResponse(getGetRequest(destinationContentLocation + "?depth=1"));
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		resultObject = new JSONObject(response.getText());
 		assertEquals(sourceName, resultObject.getString(ProtocolConstants.KEY_NAME));
@@ -258,7 +277,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	}
 
 	@Test
-	public void testCopyProject() throws IOException, SAXException, JSONException {
+	public void testCopyProject() throws IOException, SAXException, JSONException, URISyntaxException {
 		//create workspace
 		String workspaceName = WorkspaceServiceTest.class.getName() + "#testCopyProject";
 		URI workspaceLocation = createWorkspace(workspaceName);
@@ -275,7 +294,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 
 		//add a file in the project
 		String fileName = "file.txt";
-		request = getPostFilesRequest(sourceContentLocation, "{}", fileName);
+		request = getPostFilesRequest(toAbsoluteURI(sourceContentLocation), "{}", fileName);
 		response = webConversation.getResource(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
@@ -293,7 +312,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		assertEquals(destinationName, resultObject.getString(ProtocolConstants.KEY_NAME));
 
 		//ensure the source is still intact
-		response = webConversation.getResponse(getGetFilesRequest(sourceContentLocation + "?depth=1"));
+		response = webConversation.getResponse(getGetRequest(sourceContentLocation + "?depth=1"));
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		resultObject = new JSONObject(response.getText());
 		assertEquals(sourceName, resultObject.getString(ProtocolConstants.KEY_NAME));
@@ -303,7 +322,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		assertEquals(fileName, child.getString(ProtocolConstants.KEY_NAME));
 
 		//ensure the destination is intact
-		response = webConversation.getResponse(getGetFilesRequest(destinationContentLocation + "?depth=1"));
+		response = webConversation.getResponse(getGetRequest(destinationContentLocation + "?depth=1"));
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		resultObject = new JSONObject(response.getText());
 		assertEquals(sourceName, resultObject.getString(ProtocolConstants.KEY_NAME));
@@ -430,7 +449,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		String projectLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 
 		//delete project
-		request = new DeleteMethodWebRequest(makeResourceURIAbsolute(projectLocation));
+		request = new DeleteMethodWebRequest(toAbsoluteURI(projectLocation));
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		response = webConversation.getResponse(request);

@@ -123,38 +123,37 @@ public class GitFileDecorator implements IWebResourceDecorator {
 
 		// add Git Diff URI
 		IPath path = new Path(GitServlet.GIT_URI + '/' + Diff.RESOURCE + '/' + GitConstants.KEY_DIFF_DEFAULT).append(targetPath);
-		String contextPath = request.getContextPath();
-		URI link = new URI(location.getScheme(), location.getAuthority(), contextPath + path.toString(), null, null);
+		URI link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_DIFF, link);
 
 		// add Git Status URI
 		path = new Path(GitServlet.GIT_URI + '/' + Status.RESOURCE).append(targetPath);
-		link = new URI(location.getScheme(), location.getAuthority(), contextPath + path.toString(), null, null);
+		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_STATUS, link);
 
 		// add Git Index URI
 		path = new Path(GitServlet.GIT_URI + '/' + Index.RESOURCE).append(targetPath);
-		link = new URI(location.getScheme(), location.getAuthority(), contextPath + path.toString(), null, null);
+		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_INDEX, link);
 
 		// add Git HEAD URI
 		path = new Path(GitServlet.GIT_URI + '/' + Commit.RESOURCE).append(Constants.HEAD).append(targetPath);
-		link = new URI(location.getScheme(), location.getAuthority(), contextPath + path.toString(), null, null);
+		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_HEAD, link);
 
 		// add Git Commit URI
 		path = new Path(GitServlet.GIT_URI + '/' + Commit.RESOURCE).append(GitUtils.encode(branchName)).append(targetPath);
-		link = new URI(location.getScheme(), location.getAuthority(), contextPath + path.toString(), null, null);
+		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_COMMIT, link);
 
 		// add Git Remote URI
 		path = new Path(GitServlet.GIT_URI + '/' + Remote.RESOURCE).append(targetPath);
-		link = new URI(location.getScheme(), location.getAuthority(), contextPath + path.toString(), null, null);
+		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_REMOTE, link);
 
 		// add Git Clone Config URI
 		path = new Path(GitServlet.GIT_URI + '/' + ConfigOption.RESOURCE + '/' + Clone.RESOURCE).append(targetPath);
-		link = new URI(location.getScheme(), location.getAuthority(), contextPath + path.toString(), null, null);
+		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_CONFIG, link);
 
 		// add Git Default Remote Branch URI 
@@ -162,7 +161,7 @@ public class GitFileDecorator implements IWebResourceDecorator {
 
 		// add Git Tag URI
 		path = new Path(GitServlet.GIT_URI + '/' + Tag.RESOURCE).append(targetPath);
-		link = new URI(location.getScheme(), location.getAuthority(), contextPath + path.toString(), null, null);
+		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_TAG, link);
 
 		// add Git Clone URI

@@ -68,7 +68,7 @@ public class GitMergeTest extends GitTest {
 		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -138,12 +138,12 @@ public class GitMergeTest extends GitTest {
 		// assert clean
 		assertStatus(StatusResult.CLEAN, gitStatusUri);
 
-		request = getGetFilesRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
+		request = getGetRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("change in a", response.getText());
 
-		request = getGetFilesRequest(folderTxt.getString(ProtocolConstants.KEY_LOCATION));
+		request = getGetRequest(folderTxt.getString(ProtocolConstants.KEY_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("change in master", response.getText());
@@ -195,7 +195,7 @@ public class GitMergeTest extends GitTest {
 		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -267,7 +267,7 @@ public class GitMergeTest extends GitTest {
 		// check status
 		assertStatus(new StatusResult().setConflictingNames("test.txt"), gitStatusUri);
 
-		request = getGetFilesRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
+		request = getGetRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		String[] responseLines = response.getText().split("\n");
@@ -292,7 +292,7 @@ public class GitMergeTest extends GitTest {
 		clone(clonePath);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -306,7 +306,7 @@ public class GitMergeTest extends GitTest {
 		clone(clonePath2);
 
 		// get project2 metadata
-		request = getGetFilesRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		request = getGetRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project2 = new JSONObject(response.getText());
@@ -349,7 +349,7 @@ public class GitMergeTest extends GitTest {
 		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -410,7 +410,7 @@ public class GitMergeTest extends GitTest {
 		clone(clonePath1);
 
 		// get project1 metadata
-		WebRequest request = getGetFilesRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project1 = new JSONObject(response.getText());
@@ -423,7 +423,7 @@ public class GitMergeTest extends GitTest {
 		clone(clonePath2);
 
 		// get project2 metadata
-		request = getGetFilesRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		request = getGetRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project2 = new JSONObject(response.getText());
@@ -478,7 +478,7 @@ public class GitMergeTest extends GitTest {
 		MergeStatus mergeResult = MergeStatus.valueOf(merge.getString(GitConstants.KEY_RESULT));
 		assertEquals(MergeStatus.FAST_FORWARD, mergeResult);
 
-		request = getGetFilesRequest(getChild(project1, "test.txt").getString(ProtocolConstants.KEY_LOCATION));
+		request = getGetRequest(getChild(project1, "test.txt").getString(ProtocolConstants.KEY_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("incoming change", response.getText());
@@ -496,7 +496,7 @@ public class GitMergeTest extends GitTest {
 			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project/folder metadata
-			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebRequest request = getGetRequest(cloneContentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder = new JSONObject(response.getText());
@@ -575,7 +575,7 @@ public class GitMergeTest extends GitTest {
 			MergeStatus mergeResult = MergeStatus.valueOf(merge.getString(GitConstants.KEY_RESULT));
 			assertEquals(MergeStatus.FAST_FORWARD, mergeResult);
 
-			request = getGetFilesRequest(folderChildrenLocation);
+			request = getGetRequest(folderChildrenLocation);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));

@@ -14,10 +14,12 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import com.meterware.httpunit.*;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jgit.api.Git;
@@ -31,9 +33,17 @@ import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.git.objects.ConfigOption;
 import org.eclipse.orion.server.tests.ReflectionUtils;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.Test;
 import org.xml.sax.SAXException;
+
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.PutMethodWebRequest;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 public class GitConfigTest extends GitTest {
 
@@ -64,7 +74,7 @@ public class GitConfigTest extends GitTest {
 
 		// now check if commits have the right committer set
 
-		request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -126,7 +136,7 @@ public class GitConfigTest extends GitTest {
 
 		// now check if commits have the right committer set
 
-		request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -176,7 +186,7 @@ public class GitConfigTest extends GitTest {
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -207,7 +217,7 @@ public class GitConfigTest extends GitTest {
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -260,7 +270,7 @@ public class GitConfigTest extends GitTest {
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -292,7 +302,7 @@ public class GitConfigTest extends GitTest {
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -334,7 +344,7 @@ public class GitConfigTest extends GitTest {
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -374,7 +384,7 @@ public class GitConfigTest extends GitTest {
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -424,7 +434,7 @@ public class GitConfigTest extends GitTest {
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -451,7 +461,7 @@ public class GitConfigTest extends GitTest {
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -485,7 +495,7 @@ public class GitConfigTest extends GitTest {
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -579,13 +589,7 @@ public class GitConfigTest extends GitTest {
 	}
 
 	static WebRequest getDeleteGitConfigRequest(String location) {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else if (location.startsWith("/"))
-			requestURI = SERVER_LOCATION + location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + ConfigOption.RESOURCE + location;
+		String requestURI = toAbsoluteURI(location);
 		WebRequest request = new DeleteMethodWebRequest(requestURI);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
@@ -593,11 +597,7 @@ public class GitConfigTest extends GitTest {
 	}
 
 	static WebRequest getPutGitConfigRequest(String location, String value) throws JSONException, UnsupportedEncodingException {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else
-			requestURI = SERVER_LOCATION + location;
+		String requestURI = toAbsoluteURI(location);
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_CONFIG_ENTRY_VALUE, value);
 		WebRequest request = new PutMethodWebRequest(requestURI, IOUtilities.toInputStream(body.toString()), "UTF-8");
@@ -607,13 +607,7 @@ public class GitConfigTest extends GitTest {
 	}
 
 	static WebRequest getPostGitConfigRequest(String location, String key, String value) throws JSONException, UnsupportedEncodingException {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else if (location.startsWith("/"))
-			requestURI = SERVER_LOCATION + location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + ConfigOption.RESOURCE + "/" + Clone.RESOURCE + location;
+		String requestURI = toAbsoluteURI(location);
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_CONFIG_ENTRY_KEY, key);
 		body.put(GitConstants.KEY_CONFIG_ENTRY_VALUE, value);
@@ -633,13 +627,7 @@ public class GitConfigTest extends GitTest {
 	}
 
 	static WebRequest getGetGitConfigRequest(String location) {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else if (location.startsWith("/"))
-			requestURI = SERVER_LOCATION + location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + ConfigOption.RESOURCE + "/" + Clone.RESOURCE + location;
+		String requestURI = toAbsoluteURI(location);
 		WebRequest request = new GetMethodWebRequest(requestURI);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);

@@ -142,8 +142,9 @@ public class WorkspaceServlet extends OrionServlet {
 			resp.setHeader(ProtocolConstants.KEY_LOCATION, resultLocation);
 
 			// add user rights for the workspace
-			AuthorizationService.addUserRight(req.getRemoteUser(), URI.create(resultLocation).getPath());
-			AuthorizationService.addUserRight(req.getRemoteUser(), URI.create(resultLocation).getPath() + "/*"); //$NON-NLS-1$
+			String workspacePath = Activator.LOCATION_WORKSPACE_SERVLET + '/' + workspace.getId();
+			AuthorizationService.addUserRight(req.getRemoteUser(), workspacePath);
+			AuthorizationService.addUserRight(req.getRemoteUser(), workspacePath + "/*"); //$NON-NLS-1$
 			// add user rights for file servlet location
 			String filePath = Activator.LOCATION_FILE_SERVLET + '/' + workspace.getId();
 			AuthorizationService.addUserRight(req.getRemoteUser(), filePath);

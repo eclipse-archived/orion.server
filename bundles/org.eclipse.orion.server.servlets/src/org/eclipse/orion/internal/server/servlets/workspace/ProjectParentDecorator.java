@@ -37,7 +37,7 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 		if (!"/file".equals(request.getServletPath())) //$NON-NLS-1$
 			return;
 		try {
-			URI base = new URI(resource.getScheme(), resource.getUserInfo(), resource.getHost(), resource.getPort(), request.getContextPath() + request.getServletPath() + "/", null, null);
+			URI base = new URI(resource.getScheme(), resource.getUserInfo(), resource.getHost(), resource.getPort(), request.getServletPath() + "/", null, null);
 			IPath basePath = new Path(base.getPath());
 			IPath resourcePath = new Path(resource.getPath());
 			if (resourcePath.hasTrailingSeparator() && !representation.getBoolean(ProtocolConstants.KEY_DIRECTORY)) {
@@ -71,7 +71,7 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 		while (resourcePath.segmentCount() > 2) {
 			try {
 				URI uri = resource.resolve(new URI(null, resourcePath.toString(), null));
-				addParent(parents, resourcePath.lastSegment(), new URI(null, null, null, -1, uri.getPath(), uri.getQuery(), uri.getFragment()));
+				addParent(parents, resourcePath.lastSegment(), new URI(resource.getScheme(), resource.getAuthority(), uri.getPath(), uri.getQuery(), uri.getFragment()));
 			} catch (URISyntaxException e) {
 				//ignore this parent
 				LogHelper.log(e);
@@ -84,7 +84,7 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 			WebProject project = workspace.getProjectByName(resourcePath.segment(1));
 			try {
 				URI uri = resource.resolve(new URI(null, resourcePath.toString(), null));
-				addParent(parents, project.getName(), new URI(null, null, null, -1, uri.getPath(), uri.getQuery(), uri.getFragment()));
+				addParent(parents, project.getName(), new URI(resource.getScheme(), resource.getAuthority(), uri.getPath(), uri.getQuery(), uri.getFragment()));
 			} catch (URISyntaxException e) {
 				//ignore this project
 				LogHelper.log(e);

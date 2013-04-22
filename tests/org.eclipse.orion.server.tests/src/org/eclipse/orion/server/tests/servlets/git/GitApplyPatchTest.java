@@ -13,22 +13,25 @@ package org.eclipse.orion.server.tests.servlets.git;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import com.meterware.httpunit.*;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
+
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.git.objects.Diff;
 import org.json.JSONObject;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.xml.sax.SAXException;
+
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 public class GitApplyPatchTest extends GitTest {
 
@@ -44,7 +47,7 @@ public class GitApplyPatchTest extends GitTest {
 		clone(clonePath);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -83,7 +86,7 @@ public class GitApplyPatchTest extends GitTest {
 		clone(clonePath);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -119,7 +122,7 @@ public class GitApplyPatchTest extends GitTest {
 		clone(clonePath);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -160,7 +163,7 @@ public class GitApplyPatchTest extends GitTest {
 		clone(clonePath);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -195,7 +198,7 @@ public class GitApplyPatchTest extends GitTest {
 		clone(clonePath);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -236,13 +239,7 @@ public class GitApplyPatchTest extends GitTest {
 	}
 
 	private static WebRequest getPostGitDiffRequest(String location, String patch) throws UnsupportedEncodingException {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else if (location.startsWith("/"))
-			requestURI = SERVER_LOCATION + location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Diff.RESOURCE + location;
+		String requestURI = toAbsoluteURI(location);
 
 		String boundary = new UniversalUniqueIdentifier().toBase64String();
 		StringBuilder sb = new StringBuilder();

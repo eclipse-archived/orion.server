@@ -107,9 +107,9 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		if (cloneName == null)
 			cloneName = request.getHeader(ProtocolConstants.HEADER_SLUG);
 		// expected path /workspace/{workspaceId}
-		String workspacePath = toAdd.optString(ProtocolConstants.KEY_LOCATION, null);
+		String workspacePath = ServletResourceHandler.toOrionLocation(request, toAdd.optString(ProtocolConstants.KEY_LOCATION, null));
 		// expected path /file/{workspaceId}/{projectName}[/{path}]
-		String filePathString = toAdd.optString(ProtocolConstants.KEY_PATH, null);
+		String filePathString = ServletResourceHandler.toOrionLocation(request, toAdd.optString(ProtocolConstants.KEY_PATH, null));
 		IPath filePath = filePathString == null ? null : new Path(filePathString);
 		if (filePath != null && filePath.segmentCount() < 3)
 			filePath = null;

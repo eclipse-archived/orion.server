@@ -58,7 +58,7 @@ public class ServerTestsActivator implements BundleActivator {
 				return null;
 			}
 		}
-		return "http://" + serverHost + ':' + String.valueOf(serverPort);
+		return "http://" + serverHost + ':' + String.valueOf(serverPort) + "/";// + "cc/";
 	}
 
 	private static void initialize() throws Exception {

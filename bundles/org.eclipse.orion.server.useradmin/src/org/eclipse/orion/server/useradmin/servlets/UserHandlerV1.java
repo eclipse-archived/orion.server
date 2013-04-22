@@ -142,7 +142,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 				rows = 200; // default is to return 200 at a time
 		}
 		ArrayList<JSONObject> userJSONs = new ArrayList<JSONObject>();
-		URI location = OrionServlet.getURI(req);
+		URI location = ServletResourceHandler.getURI(req);
 		IOrionUserProfileNode userNode = null;
 		for (User user : users) {
 			if (count >= start + rows)
@@ -176,7 +176,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 		IOrionUserProfileNode userNode = getUserProfileService().getUserProfileNode(userId, true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
 
-		URI location = OrionServlet.getURI(req);
+		URI location = ServletResourceHandler.getURI(req);
 		OrionServlet.writeJSONResponse(req, resp, formJson(user, userNode, location, req.getContextPath()));
 		return true;
 	}
@@ -267,6 +267,12 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Email address already in use: {0}.", email), null));
 		}
 
+		//		if (isGuestUser) {
+		//			// Before creating a new guest user, remove any excess guest accounts
+		//			int maxGuestAccounts = Math.max(0, PreferenceHelper.getInt(ServerConstants.CONFIG_AUTH_USER_CREATION_GUEST_LIMIT, 100) - 1);
+		//			deleteGuestAccounts(WebUser.getGuestAccountsToDelete(maxGuestAccounts));
+		//		}
+
 		User newUser;
 		if (isGuestUser) {
 			// Guest users get distinctive UIDs
@@ -314,7 +320,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User rights could not be added.", e));
 		}
 
-		URI userLocation = URIUtil.append(OrionServlet.getURI(req), newUser.getUid());
+		URI userLocation = URIUtil.append(ServletResourceHandler.getURI(req), newUser.getUid());
 		IOrionUserProfileNode userNode = getUserProfileService().getUserProfileNode(newUser.getUid(), true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
 
 		if (newUser.getBlocked()) {

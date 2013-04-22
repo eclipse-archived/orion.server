@@ -16,14 +16,26 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.*;
-import java.io.*;
-import java.net.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import junit.framework.Assert;
-import org.eclipse.core.filesystem.*;
-import org.eclipse.core.runtime.*;
+
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileInfo;
+import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.Activator;
@@ -32,18 +44,25 @@ import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.tests.AbstractServerTest;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.xml.sax.SAXException;
+
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.PutMethodWebRequest;
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 /**
  * Common base class for file system tests.
  */
 public abstract class FileSystemTest extends AbstractServerTest {
 
-	public static final String FILE_SERVLET_LOCATION = Activator.LOCATION_FILE_SERVLET + '/';
+	public static final String FILE_SERVLET_LOCATION = "file/";
 	private static String FILESTORE_PREFIX;
-
-	public static final String SERVER_LOCATION = ServerTestsActivator.getServerLocation();
 
 	/**
 	 * Location of the test project within the file servlet namespace.
@@ -77,7 +96,8 @@ public abstract class FileSystemTest extends AbstractServerTest {
 			LogHelper.log(new Status(IStatus.ERROR, ServerTestsActivator.PI_TESTS, msg));
 			fail(msg);
 		}
-		String workspaceId = new Path(workspaceLocation.getPath()).segment(1);
+		IPath workspacePath = new Path(workspaceLocation.getPath());
+		String workspaceId = new Path(workspaceLocation.getPath()).segment(workspacePath.segmentCount() - 1);
 		testProjectBaseLocation = "/" + workspaceId + '/' + projectName;
 		JSONObject project = new JSONObject(response.getText());
 		testProjectLocalFileLocation = "/" + project.optString(ProtocolConstants.KEY_ID, null);
@@ -360,6 +380,9 @@ public abstract class FileSystemTest extends AbstractServerTest {
 			URI uri = new URI(uriString);
 			if (uri.isAbsolute())
 				return uriString;
+			if (uriString.startsWith("/")) {
+				return toAbsoluteURI(uriString);
+			}
 		} catch (URISyntaxException e) {
 			//unencoded string - fall through
 		}
@@ -435,14 +458,8 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	 * Creates a new workspace, and returns the URI of the resulting resource.
 	 */
 	protected URI createWorkspace(String workspaceName) throws IOException, SAXException {
-		try {
-			WebResponse response = basicCreateWorkspace(workspaceName);
-			return new URI(response.getHeaderField(ProtocolConstants.HEADER_LOCATION));
-		} catch (URISyntaxException e) {
-			//shouldn't happen
-			Assert.fail("Unexpected URI syntax exception");
-			return null;
-		}
+		WebResponse response = basicCreateWorkspace(workspaceName);
+		return SERVER_URI.resolve(response.getHeaderField(ProtocolConstants.HEADER_LOCATION));
 	}
 
 }

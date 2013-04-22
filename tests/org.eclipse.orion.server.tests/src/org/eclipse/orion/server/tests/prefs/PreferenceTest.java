@@ -14,24 +14,29 @@ import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-import com.meterware.httpunit.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.List;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.server.core.users.OrionScope;
 import org.eclipse.orion.server.tests.AbstractServerTest;
-import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.osgi.service.prefs.BackingStoreException;
+
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PutMethodWebRequest;
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 /**
  * Tests for the preference servlet.
@@ -303,13 +308,13 @@ public class PreferenceTest extends AbstractServerTest {
 	}
 
 	private List<String> getTestPreferenceNodes() {
-		return Arrays.asList(ServerTestsActivator.getServerLocation() + "/prefs/user/testprefs", ServerTestsActivator.getServerLocation() + "/prefs/workspace/myworkspace/testprefs", ServerTestsActivator.getServerLocation() + "/prefs/project/myproject/testprefs");
+		return Arrays.asList(toAbsoluteURI("prefs/user/testprefs"), toAbsoluteURI("prefs/workspace/myworkspace/testprefs"), toAbsoluteURI("prefs/project/myproject/testprefs"));
 	}
 
 	/**
 	 * Returns preference nodes the client should not have access to.
 	 */
 	private List<String> getIllegalPreferenceNodes() {
-		return Arrays.asList(ServerTestsActivator.getServerLocation() + "/prefs/Users", ServerTestsActivator.getServerLocation() + "/prefs/Workspaces", ServerTestsActivator.getServerLocation() + "/prefs/Projects");
+		return Arrays.asList(toAbsoluteURI("prefs/Users"), toAbsoluteURI("prefs/Workspaces"), toAbsoluteURI("prefs/Projects"));
 	}
 }
