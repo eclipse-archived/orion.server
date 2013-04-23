@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.workspace.authorization;
 
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.metastore.UserInfo;
@@ -22,13 +20,12 @@ import org.json.*;
  */
 public class AuthorizationReaderV1 extends AuthorizationReader {
 	@Override
-	JSONArray readAuthorizationInfo(String userId, IEclipsePreferences preferences) throws JSONException {
+	JSONArray readAuthorizationInfo(UserInfo user) throws JSONException {
 		//recompute permissions based on workspace ownership 
 		//because file URL structure changed in V3
 		JSONArray newPermissions = new JSONArray();
-		addPermission(newPermissions, "/users/" + userId); //$NON-NLS-1$
+		addPermission(newPermissions, "/users/" + user.getUniqueId()); //$NON-NLS-1$
 		try {
-			UserInfo user = Activator.getDefault().getMetastore().readUser(userId);
 			//do for each workspace owned by current user
 			for (String workspaceId : user.getWorkspaceIds()) {
 				//user has access to their own workspace
@@ -38,7 +35,7 @@ public class AuthorizationReaderV1 extends AuthorizationReader {
 				addPermission(newPermissions, Activator.LOCATION_FILE_SERVLET + '/' + workspaceId);
 				addPermission(newPermissions, Activator.LOCATION_FILE_SERVLET + '/' + workspaceId + "/*"); //$NON-NLS-1$
 			}
-		} catch (CoreException e) {
+		} catch (JSONException e) {
 			//log and continue with no permissions
 			LogHelper.log(e);
 		}

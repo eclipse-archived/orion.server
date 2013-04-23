@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.server.core.metastore;
 
+import java.util.List;
 import org.eclipse.core.runtime.CoreException;
 
 /**
@@ -36,6 +37,14 @@ public interface IMetaStore {
 	public void createWorkspace(WorkspaceInfo info) throws CoreException;
 
 	public void createProject(ProjectInfo info) throws CoreException;
+
+	/**
+	 * Returns a list of all user ids in this store. Manipulating the returned
+	 * list is not supported. Adding or removing users can only be achieved using
+	 * {@link #createUser(UserInfo)} and {@link #deleteUser(String)}.
+	 * @return a list of all user ids
+	 */
+	public List<String> readAllUsers() throws CoreException;
 
 	public UserInfo readUser(String uid) throws CoreException;
 

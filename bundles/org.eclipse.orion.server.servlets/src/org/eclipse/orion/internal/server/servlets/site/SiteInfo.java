@@ -11,8 +11,8 @@
 package org.eclipse.orion.internal.server.servlets.site;
 
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.resources.Base64Counter;
 import org.json.*;
@@ -136,7 +136,7 @@ public class SiteInfo {
 			throw new RuntimeException(e);
 		}
 		user.setProperty(SiteConfigurationConstants.KEY_SITE_CONFIGURATIONS, sites.toString());
-		Activator.getDefault().getMetastore().updateUser(user);
+		OrionConfiguration.getMetaStore().updateUser(user);
 	}
 
 	/**
@@ -151,7 +151,7 @@ public class SiteInfo {
 		}
 		sites.remove(getId());
 		user.setProperty(SiteConfigurationConstants.KEY_SITE_CONFIGURATIONS, sites.toString());
-		Activator.getDefault().getMetastore().updateUser(user);
+		OrionConfiguration.getMetaStore().updateUser(user);
 	}
 
 	public void setHostHint(String hint) {

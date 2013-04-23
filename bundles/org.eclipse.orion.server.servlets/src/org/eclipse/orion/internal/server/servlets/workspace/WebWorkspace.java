@@ -15,7 +15,6 @@ import java.util.List;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.resources.Base64Counter;
 import org.eclipse.osgi.util.NLS;
@@ -28,22 +27,6 @@ import org.osgi.service.prefs.BackingStoreException;
 public class WebWorkspace extends WebElement {
 	private static final String WORKSPACE_NODE_NAME = "Workspaces";//$NON-NLS-1$
 	private static final Base64Counter workspaceCounter = new Base64Counter();
-
-	/**
-	 * Returns a list of all known web workspaces.
-	 */
-	public static List<WebWorkspace> allWorkspaces() {
-		List<WebWorkspace> result = new ArrayList<WebWorkspace>();
-		IEclipsePreferences workspaceRoot = scope.getNode(WORKSPACE_NODE_NAME);
-		try {
-			String[] ids = workspaceRoot.childrenNames();
-			for (String id : ids)
-				result.add(WebWorkspace.fromId(id));
-		} catch (BackingStoreException e) {
-			LogHelper.log(e);
-		}
-		return result;
-	}
 
 	/**
 	 * Returns whether a workspace with the given id already exists.

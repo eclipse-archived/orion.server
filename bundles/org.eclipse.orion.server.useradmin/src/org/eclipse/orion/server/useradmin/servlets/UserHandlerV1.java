@@ -10,6 +10,9 @@
  *******************************************************************************/
 package org.eclipse.orion.server.useradmin.servlets;
 
+import org.eclipse.orion.internal.server.servlets.Activator;
+import org.eclipse.orion.server.core.OrionConfiguration;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -296,11 +299,12 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 		//persist new user in metadata store
 		UserInfo userInfo = new UserInfo();
-		userInfo.setUID(newUser.getUid());
+		userInfo.setUniqueId(newUser.getUid());
 		userInfo.setUserName(login);
 		userInfo.setFullName(name);
 		userInfo.setGuest(isGuestUser);
-		Activator.getDefault().getMetastore().createUser(userInfo);
+		Activator r = Activator.getDefault();
+		OrionConfiguration.getMetaStore().createUser(userInfo);
 
 		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.account"); //$NON-NLS-1$
 		//TODO Don't do cleanup as part of creation, it can be separate op (command line tool, etc)
@@ -545,7 +549,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		}
 		// Delete user from metadata store
 		try {
-			final IMetaStore metastore = Activator.getDefault().getMetastore();
+			Activator r = Activator.getDefault();
+			final IMetaStore metastore = OrionConfiguration.getMetaStore();
 			if (isGuest)
 				deleteUserArtifacts(metastore.readUser(userId));
 			metastore.deleteUser(userId);

@@ -30,7 +30,6 @@ import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
-import org.json.JSONException;
 
 /**
  * Handles requests for URIs that are part of a running hosted site.
@@ -256,7 +255,7 @@ public class HostedSiteServlet extends OrionServlet {
 			} else {
 				handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, NLS.bind("No rights to access {0}", fileURI), null));
 			}
-		} catch (JSONException e) {
+		} catch (CoreException e) {
 			throw new ServletException(e);
 		}
 

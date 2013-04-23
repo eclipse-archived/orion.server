@@ -10,6 +10,9 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.workspace;
 
+import org.eclipse.orion.internal.server.servlets.Activator;
+import org.eclipse.orion.server.core.OrionConfiguration;
+
 import java.io.IOException;
 import java.net.URI;
 import javax.servlet.ServletException;
@@ -98,7 +101,8 @@ public class WorkspaceServlet extends OrionServlet {
 		if (!checkUser(userId, resp))
 			return true;
 		try {
-			UserInfo user = Activator.getDefault().getMetastore().readUser(userId);
+			Activator r = Activator.getDefault();
+			UserInfo user = OrionConfiguration.getMetaStore().readUser(userId);
 			writeJSONResponse(req, resp, UserInfoResourceHandler.toJSON(user, ServletResourceHandler.getURI(req)));
 		} catch (Exception e) {
 			handleException(resp, "An error occurred while obtaining workspace data", e);

@@ -15,10 +15,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
-import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
@@ -108,9 +106,10 @@ public class SiteConfigurationServlet extends OrionServlet {
 		String userName = getUserName(req);
 		IPath pathInfo = getPathInfo(req);
 		try {
+			//bad request
 			if (pathInfo.segmentCount() != 1)
-				return null;//bad request
-			UserInfo user = Activator.getDefault().getMetastore().readUser(userName);
+				return null;
+			UserInfo user = OrionConfiguration.getMetaStore().readUser(userName);
 			return SiteInfo.getSite(user, pathInfo.segment(0));
 		} catch (CoreException e) {
 			//backing store failure
@@ -123,7 +122,7 @@ public class SiteConfigurationServlet extends OrionServlet {
 	private boolean doGetAllSiteConfigurations(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
 		String userName = getUserName(req);
 		try {
-			UserInfo user = Activator.getDefault().getMetastore().readUser(userName);
+			UserInfo user = OrionConfiguration.getMetaStore().readUser(userName);
 			//user info stores an object where key is site id, value is site info, but we just want the values
 			JSONArray configurations = new JSONArray();
 			JSONObject sites = SiteInfo.getSites(user);

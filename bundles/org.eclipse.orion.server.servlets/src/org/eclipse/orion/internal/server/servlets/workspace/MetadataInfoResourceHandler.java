@@ -24,7 +24,7 @@ public abstract class MetadataInfoResourceHandler<T extends MetadataInfo> extend
 	public static JSONObject toJSON(MetadataInfo element) {
 		JSONObject result = new JSONObject();
 		try {
-			result.put(ProtocolConstants.KEY_ID, element.getUID());
+			result.put(ProtocolConstants.KEY_ID, element.getUniqueId());
 			result.put(ProtocolConstants.KEY_NAME, element.getFullName());
 		} catch (JSONException e) {
 			//cannot happen, we know keys and values are valid

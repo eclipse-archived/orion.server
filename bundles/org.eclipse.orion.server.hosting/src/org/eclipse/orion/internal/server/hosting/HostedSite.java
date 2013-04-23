@@ -29,7 +29,7 @@ class HostedSite implements IHostedSite {
 	public HostedSite(SiteInfo siteConfig, UserInfo user, String host, String editServer) {
 		this.siteConfigurationId = siteConfig.getId();
 		this.mappings = Collections.unmodifiableMap(createMap(siteConfig));
-		this.userId = user.getUID();
+		this.userId = user.getUniqueId();
 		this.workspaceId = siteConfig.getWorkspace();
 		this.host = host;
 		this.editServer = editServer;

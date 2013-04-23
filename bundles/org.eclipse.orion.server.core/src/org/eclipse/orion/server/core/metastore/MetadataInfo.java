@@ -57,7 +57,7 @@ public class MetadataInfo {
 	 * Returns the globally unique id of this metadata object.
 	 * @return the id of this object
 	 */
-	public String getUID() {
+	public String getUniqueId() {
 		return id;
 	}
 
@@ -97,7 +97,7 @@ public class MetadataInfo {
 	 * instances.
 	 * @param id the unique id of this object
 	 */
-	public void setUID(String id) {
+	public void setUniqueId(String id) {
 		this.id = id;
 	}
 

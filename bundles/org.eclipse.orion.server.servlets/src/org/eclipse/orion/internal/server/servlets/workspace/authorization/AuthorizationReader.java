@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,11 +10,13 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.workspace.authorization;
 
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.*;
+import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.osgi.service.prefs.BackingStoreException;
 
 /**
  * Reads authorization data from preferences. Supports migration of
@@ -28,8 +30,15 @@ public abstract class AuthorizationReader {
 	 */
 	private static final int CURRENT_VERSION = 3;
 
-	public static JSONArray getAuthorizationData(String userId, IEclipsePreferences preferences) throws JSONException {
-		int version = preferences.getInt(ProtocolConstants.KEY_USER_RIGHTS_VERSION, 1);
+	public static JSONArray getAuthorizationData(UserInfo user) throws CoreException {
+		String versionString = user.getProperty(ProtocolConstants.KEY_USER_RIGHTS_VERSION);
+		int version = -1;
+		try {
+			//assume version 1 if not specified
+			version = versionString == null ? 1 : Integer.valueOf(versionString);
+		} catch (NumberFormatException e) {
+			//ignore and fail below
+		}
 		AuthorizationReader reader;
 		switch (version) {
 			case 1 :
@@ -41,14 +50,19 @@ public abstract class AuthorizationReader {
 				reader = readerV3;
 				break;
 			default :
-				throw new RuntimeException("Unsupported auth data version: " + version); //$NON-NLS-1$
+				throw new CoreException(new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "Unsupported auth data version: " + version)); //$NON-NLS-1$
 		}
-		JSONArray authInfo = reader.readAuthorizationInfo(userId, preferences);
+		JSONArray authInfo;
+		try {
+			authInfo = reader.readAuthorizationInfo(user);
+		} catch (JSONException e1) {
+			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "Failure reading authorization data", e1)); //$NON-NLS-1$
+		}
 		try {
 			//always update to newest format
 			if (version != CURRENT_VERSION)
-				saveRights(preferences, authInfo);
-		} catch (BackingStoreException e) {
+				saveRights(user, authInfo);
+		} catch (CoreException e) {
 			//don't need to persistent now - if there are changes we will try later
 		}
 		return authInfo;
@@ -58,12 +72,11 @@ public abstract class AuthorizationReader {
 	 * Returns a JSONArray of authorization data. The array entries
 	 * are JSON objects providing details on a particular right.
 	 */
-	abstract JSONArray readAuthorizationInfo(String userId, IEclipsePreferences preferences) throws JSONException;
+	abstract JSONArray readAuthorizationInfo(UserInfo user) throws JSONException;
 
-	static void saveRights(IEclipsePreferences result, JSONArray userRightArray) throws BackingStoreException {
-		result.put(ProtocolConstants.KEY_USER_RIGHTS, userRightArray.toString());
-		result.putInt(ProtocolConstants.KEY_USER_RIGHTS_VERSION, CURRENT_VERSION);
-		//flush directly at root level to workaround equinox bug 389754.
-		result.parent().flush();
+	static void saveRights(UserInfo user, JSONArray userRightArray) throws CoreException {
+		user.setProperty(ProtocolConstants.KEY_USER_RIGHTS, userRightArray.toString());
+		user.setProperty(ProtocolConstants.KEY_USER_RIGHTS_VERSION, Integer.toString(CURRENT_VERSION));
+		OrionConfiguration.getMetaStore().updateUser(user);
 	}
 }

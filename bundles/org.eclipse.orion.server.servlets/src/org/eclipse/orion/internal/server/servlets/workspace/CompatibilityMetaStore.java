@@ -12,11 +12,14 @@ package org.eclipse.orion.internal.server.servlets.workspace;
 
 import java.util.*;
 import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.site.*;
 import org.eclipse.orion.server.core.metastore.*;
+import org.eclipse.orion.server.core.users.OrionScope;
 import org.json.*;
+import org.osgi.service.prefs.BackingStoreException;
 
 /**
  * A meta store implementation that is backed by the legacy Orion 1.0 back end
@@ -39,10 +42,14 @@ public class CompatibilityMetaStore implements IMetaStore {
 		//convert a legacy WebUser object into a UserInfo
 		WebUser webUser = WebUser.fromUserId(uid);
 		UserInfo info = new UserInfo();
-		info.setUID(webUser.getId());
+		info.setUniqueId(webUser.getId());
 		info.setFullName(webUser.getName());
 		info.setUserName(webUser.getUserName());
 		info.setGuest(webUser.isGuest());
+		//authorization info
+		IEclipsePreferences store = webUser.getStore();
+		info.setProperty(ProtocolConstants.KEY_USER_RIGHTS_VERSION, store.get(ProtocolConstants.KEY_USER_RIGHTS_VERSION, null));
+		info.setProperty(ProtocolConstants.KEY_USER_RIGHTS, store.get(ProtocolConstants.KEY_USER_RIGHTS, null));
 		//workspaces
 		JSONArray workspaces = webUser.getWorkspacesJSON();
 		List<String> workspaceIds = new ArrayList<String>(workspaces.length());
@@ -71,13 +78,22 @@ public class CompatibilityMetaStore implements IMetaStore {
 	}
 
 	public void updateUser(UserInfo info) throws CoreException {
-		String userId = info.getUID();
+		String userId = info.getUniqueId();
 		if (userId == null)
 			throw new IllegalArgumentException("User id not provided"); //$NON-NLS-1$
 		WebUser webUser = WebUser.fromUserId(userId);
 		webUser.setUserName(info.getUserName());
 		webUser.setName(info.getFullName());
 		webUser.setGuest(info.isGuest());
+
+		//authorization info
+		IEclipsePreferences store = webUser.getStore();
+		String prop = info.getProperty(ProtocolConstants.KEY_USER_RIGHTS_VERSION);
+		if (prop != null)
+			store.put(ProtocolConstants.KEY_USER_RIGHTS_VERSION, prop);
+		prop = info.getProperty(ProtocolConstants.KEY_USER_RIGHTS);
+		if (prop != null)
+			store.put(ProtocolConstants.KEY_USER_RIGHTS, prop);
 
 		updateSites(info, webUser);
 
@@ -135,4 +151,12 @@ public class CompatibilityMetaStore implements IMetaStore {
 		WebUser.fromUserId(uid).delete();
 	}
 
+	public List<String> readAllUsers() throws CoreException {
+		try {
+			String[] children = new OrionScope().getNode(WebUser.USERS_NODE).childrenNames();
+			return Arrays.asList(children);
+		} catch (BackingStoreException e) {
+			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "Unable to retrieve metadata", e));
+		}
+	}
 }

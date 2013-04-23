@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2011 IBM Corporation and others 
+ * Copyright (c) 2009, 2013 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -18,11 +18,14 @@ import org.eclipse.core.runtime.preferences.IPreferencesService;
 import org.eclipse.orion.internal.server.core.tasks.TaskService;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.osgi.framework.log.FrameworkLog;
 import org.eclipse.osgi.service.datalocation.Location;
 import org.osgi.framework.*;
 import org.osgi.util.tracker.ServiceTracker;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Activator for the server core bundle.
@@ -35,6 +38,8 @@ public class Activator implements BundleActivator {
 	ServiceTracker<FrameworkLog, FrameworkLog> logTracker;
 	ServiceTracker<IPreferencesService, IPreferencesService> prefTracker;
 	private ServiceRegistration<ITaskService> taskServiceRegistration;
+	private IMetaStore metastore;
+	private ServiceReference<IMetaStore> metastoreServiceReference;
 
 	public static Activator getDefault() {
 		return singleton;
@@ -52,6 +57,39 @@ public class Activator implements BundleActivator {
 		if (tracker == null)
 			return null;
 		return tracker.getService();
+	}
+
+	/**
+	 * Returns the currently configured metadata store for this server. This method never returns <code>null</code>.
+	 * @throws IllegalStateException if the server is not properly configured to have an @link {@link IMetaStore}. 
+	 */
+	public synchronized IMetaStore getMetastore() {
+		if (metastore == null) {
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+			logger.info("Initializing server metadata store"); //$NON-NLS-1$
+
+			//todo orion configuration should specify which metadata store to use
+			String filter = null;
+			Collection<ServiceReference<IMetaStore>> services;
+			try {
+				services = bundleContext.getServiceReferences(IMetaStore.class, filter);
+			} catch (InvalidSyntaxException e) {
+				//can only happen if our filter is malformed, which it should never be
+				throw new RuntimeException(e);
+			}
+			if (services.size() == 1) {
+				metastoreServiceReference = services.iterator().next();
+				logger.info("Found metastore service: " + metastoreServiceReference); //$NON-NLS-1$
+				metastore = bundleContext.getService(metastoreServiceReference);
+			}
+			if (metastore == null) {
+				//if we still don't have a store then something is wrong with server configuration
+				final String msg = "Invalid server configuration. Failed to initialize a metadata store"; //$NON-NLS-1$
+				logger.error(msg);
+				throw new IllegalStateException(msg);
+			}
+		}
+		return metastore;
 	}
 
 	/**
@@ -145,7 +183,6 @@ public class Activator implements BundleActivator {
 	 * @see org.osgi.framework.BundleActivator#stop(org.osgi.framework.BundleContext)
 	 */
 	public void stop(BundleContext context) throws Exception {
-		bundleContext = null;
 		stopTaskService();
 		if (prefTracker != null) {
 			prefTracker.close();
@@ -155,6 +192,12 @@ public class Activator implements BundleActivator {
 			logTracker.close();
 			logTracker = null;
 		}
+		metastore = null;
+		if (metastoreServiceReference != null) {
+			bundleContext.ungetService(metastoreServiceReference);
+			metastoreServiceReference = null;
+		}
+		bundleContext = null;
 	}
 
 	private void stopTaskService() {

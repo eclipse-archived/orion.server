@@ -30,10 +30,10 @@ import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;
 import org.eclipse.orion.internal.server.servlets.workspace.*;
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.core.metastore.UserInfo;
-import org.eclipse.orion.server.git.*;
+import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.git.jobs.*;
 import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
@@ -398,7 +398,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 	 */
 	private boolean isAccessAllowed(String userName, WebProject webProject) {
 		try {
-			UserInfo user = GitActivator.getDefault().getMetastore().readUser(userName);
+			UserInfo user = OrionConfiguration.getMetaStore().readUser(userName);
 			for (String workspaceId : user.getWorkspaceIds()) {
 				WebWorkspace webWorkspace = WebWorkspace.fromId(workspaceId);
 				JSONArray projectsJSON = webWorkspace.getProjectsJSON();
@@ -428,7 +428,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 	 */
 	public static ServerStatus removeProject(String userId, WebProject webProject) {
 		try {
-			UserInfo user = GitActivator.getDefault().getMetastore().readUser(userId);
+			UserInfo user = OrionConfiguration.getMetaStore().readUser(userId);
 			for (String workspaceId : user.getWorkspaceIds()) {
 				WebWorkspace webWorkspace = WebWorkspace.fromId(workspaceId);
 				JSONArray projectsJSON = webWorkspace.getProjectsJSON();

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2012 IBM Corporation and others.
+ * Copyright (c) 2010, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -27,8 +27,9 @@ import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.internal.server.servlets.workspace.WebWorkspace;
-import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.osgi.util.NLS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -117,17 +118,36 @@ public class Indexer extends Job {
 	}
 
 	/**
-	 * Runs an indexer pass over a workspace. Returns the number of documents indexed.
+	 * Runs an indexer pass over a user. Returns the number of documents indexed.
 	 */
-	private int indexWorkspace(WebWorkspace workspace, SubMonitor monitor, List<SolrInputDocument> documents) {
+	private int indexUser(String userId, IProgressMonitor monitor, List<SolrInputDocument> documents) {
 		int indexed = 0;
-		for (WebProject project : workspace.getProjects()) {
-			indexed += indexProject(workspace, project, monitor, documents);
+		try {
+			UserInfo user = OrionConfiguration.getMetaStore().readUser(userId);
+			List<String> workspaceIds = user.getWorkspaceIds();
+			SubMonitor progress = SubMonitor.convert(monitor, workspaceIds.size());
+			for (String workspaceId : workspaceIds) {
+				WebWorkspace workspace = WebWorkspace.fromId(workspaceId);
+				indexed += indexWorkspace(user, workspace, progress.newChild(1), documents);
+			}
+		} catch (CoreException e) {
+			handleIndexingFailure(e, null);
 		}
 		return indexed;
 	}
 
-	private int indexProject(WebWorkspace workspace, WebProject project, SubMonitor monitor, List<SolrInputDocument> documents) {
+	/**
+	 * Runs an indexer pass over a workspace. Returns the number of documents indexed.
+	 */
+	private int indexWorkspace(UserInfo user, WebWorkspace workspace, SubMonitor monitor, List<SolrInputDocument> documents) {
+		int indexed = 0;
+		for (WebProject project : workspace.getProjects()) {
+			indexed += indexProject(user, workspace, project, monitor, documents);
+		}
+		return indexed;
+	}
+
+	private int indexProject(UserInfo user, WebWorkspace workspace, WebProject project, SubMonitor monitor, List<SolrInputDocument> documents) {
 		Logger logger = LoggerFactory.getLogger(Indexer.class);
 		if (logger.isDebugEnabled())
 			logger.debug("Indexing project id: " + project.getId() + " name: " + project.getName()); //$NON-NLS-1$ //$NON-NLS-2$
@@ -158,7 +178,6 @@ public class Indexer extends Job {
 		collectFiles(projectStore, toIndex);
 		int unmodifiedCount = 0, indexedCount = 0;
 		//add each file to the index
-		List<String> users = findUsers(projectLocation);
 		for (IFileStore file : toIndex) {
 			checkCanceled(monitor);
 			IFileInfo fileInfo = file.fetchInfo();
@@ -186,9 +205,7 @@ public class Indexer extends Job {
 			//don't index body of non-text files
 			if (!skip(fileInfo))
 				doc.addField("Text", getContentsAsString(file)); //$NON-NLS-1$
-			if (users != null)
-				for (String user : users)
-					doc.addField(ProtocolConstants.KEY_USER_NAME, user);
+			doc.addField(ProtocolConstants.KEY_USER_NAME, user.getUniqueId());
 			try {
 				server.add(doc);
 			} catch (Exception e) {
@@ -203,10 +220,6 @@ public class Indexer extends Job {
 		if (logger.isDebugEnabled())
 			logger.debug("\tIndexed: " + indexedCount + " Unchanged:  " + unmodifiedCount); //$NON-NLS-1$ //$NON-NLS-2$
 		return indexedCount;
-	}
-
-	private List<String> findUsers(IPath projectLocation) {
-		return AuthorizationService.findUserWithRights(projectLocation.toString());
 	}
 
 	private boolean skip(IFileInfo fileInfo) {
@@ -248,17 +261,22 @@ public class Indexer extends Job {
 	@Override
 	protected IStatus run(IProgressMonitor monitor) {
 		long start = System.currentTimeMillis();
-		List<WebWorkspace> workspaces = WebWorkspace.allWorkspaces();
-		SubMonitor progress = SubMonitor.convert(monitor, workspaces.size());
-		List<SolrInputDocument> documents = new ArrayList<SolrInputDocument>();
 		int indexed = 0;
-		for (WebWorkspace workspace : workspaces) {
-			indexed += indexWorkspace(workspace, progress.newChild(1), documents);
+		try {
+			List<String> userIds = OrionConfiguration.getMetaStore().readAllUsers();
+			SubMonitor progress = SubMonitor.convert(monitor, userIds.size());
+			List<SolrInputDocument> documents = new ArrayList<SolrInputDocument>();
+			indexed = 0;
+			for (String userId : userIds) {
+				indexed += indexUser(userId, progress.newChild(1), documents);
+			}
+		} catch (CoreException e) {
+			handleIndexingFailure(e, null);
 		}
 		long duration = System.currentTimeMillis() - start;
 		Logger logger = LoggerFactory.getLogger(Indexer.class);
 		if (logger.isDebugEnabled())
-			logger.debug("Indexed " + workspaces.size() + " workspaces  in " + duration + "ms"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+			logger.debug("Indexed " + indexed + " documents in " + duration + "ms"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		//reschedule the indexing - throttle so the job never runs more than 10% of the time
 		long delay = Math.max(DEFAULT_DELAY, duration * 10);
 		//if there was nothing to index then back off for awhile

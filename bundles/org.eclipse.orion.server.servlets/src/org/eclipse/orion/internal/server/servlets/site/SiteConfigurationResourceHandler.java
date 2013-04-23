@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.internal.server.servlets.hosting.*;
+import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
@@ -124,8 +125,7 @@ public class SiteConfigurationResourceHandler extends ServletResourceHandler<Sit
 	private boolean handlePost(HttpServletRequest req, HttpServletResponse resp, SiteInfo site) throws CoreException, IOException, JSONException {
 		if (site != null)
 			throw new IllegalArgumentException("Can't POST to an existing site");
-
-		UserInfo user = Activator.getDefault().getMetastore().readUser(getUserName(req));
+		UserInfo user = OrionConfiguration.getMetaStore().readUser(getUserName(req));
 		JSONObject requestJson = getRequestJson(req);
 		try {
 			site = doCreateSiteConfiguration(req, requestJson, user);
@@ -149,7 +149,7 @@ public class SiteConfigurationResourceHandler extends ServletResourceHandler<Sit
 	}
 
 	private boolean handlePut(HttpServletRequest req, HttpServletResponse resp, SiteInfo site) throws IOException, CoreException, JSONException {
-		UserInfo user = Activator.getDefault().getMetastore().readUser(getUserName(req));
+		UserInfo user = OrionConfiguration.getMetaStore().readUser(getUserName(req));
 		JSONObject requestJson = OrionServlet.readJSONRequest(req);
 		copyProperties(requestJson, site, true);
 
@@ -169,15 +169,14 @@ public class SiteConfigurationResourceHandler extends ServletResourceHandler<Sit
 	}
 
 	private boolean handleDelete(HttpServletRequest req, HttpServletResponse resp, SiteInfo site) throws CoreException {
-		UserInfo user = Activator.getDefault().getMetastore().readUser(getUserName(req));
+		UserInfo user = OrionConfiguration.getMetaStore().readUser(getUserName(req));
 		ISiteHostingService hostingService = Activator.getDefault().getSiteHostingService();
-		IHostedSite runningSite = (IHostedSite) hostingService.get(site, user);
+		IHostedSite runningSite = hostingService.get(site, user);
 		if (runningSite != null) {
 			String msg = NLS.bind("Site configuration is running at {0}. Must be stopped before it can be deleted", runningSite.getHost());
 			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_CONFLICT, msg, null));
-		} else {
-			site.delete(user);
 		}
+		site.delete(user);
 		return true;
 	}
 
