@@ -77,7 +77,7 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 			resp.setContentType(ProtocolConstants.CONTENT_TYPE_JSON);
 			JSONObject result = new JSONObject();
 			try {
-				result.put("SignInLocation", "/mixloginstatic/LoginWindow.html");
+				result.put("SignInLocation", req.getContextPath() + "/mixloginstatic/LoginWindow.html");
 				result.put("label", "Orion workspace server");
 				result.put("SignInKey", "FORMOpenIdUser");
 			} catch (JSONException e) {

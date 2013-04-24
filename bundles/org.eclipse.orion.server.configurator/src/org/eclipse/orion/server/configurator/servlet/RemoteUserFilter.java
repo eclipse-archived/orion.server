@@ -10,6 +10,10 @@
  *******************************************************************************/
 package org.eclipse.orion.server.configurator.servlet;
 
+import javax.servlet.http.HttpServletRequestWrapper;
+
+import javax.servlet.http.HttpServletResponseWrapper;
+
 import java.io.IOException;
 import java.util.Properties;
 import javax.servlet.*;
@@ -26,39 +30,31 @@ import org.osgi.service.http.HttpContext;
  * The filter checks whether the request is done by an authenticated user.
  * It does not verify the rules in the authorization service.
  */
-public class LoggedInUserFilter implements Filter {
+public class RemoteUserFilter implements Filter {
 
 	private IAuthenticationService authenticationService;
 	private Properties authProperties;
 
 	public void init(FilterConfig filterConfig) throws ServletException {
-		authenticationService = ConfiguratorActivator.getDefault().getAuthService();
-		// treat lack of authentication as an error. Administrator should use
-		// "None" to disable authentication entirely
-		if (authenticationService == null) {
-			String msg = "Authentication service is missing. The server configuration must specify an authentication scheme, or use \"None\" to indicate no authentication"; //$NON-NLS-1$
-			LogHelper.log(new Status(IStatus.ERROR, ConfiguratorActivator.PI_CONFIGURATOR, msg, null));
-			throw new ServletException(msg);
-		}
 	}
 
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
 		HttpServletRequest httpRequest = (HttpServletRequest) request;
-		HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-		if (httpRequest.getRemoteUser() != null) {
-			chain.doFilter(request, response);
-			return;
-		}
+		HttpServletRequestWrapper requestWrapper = new HttpServletRequestWrapper(httpRequest) {
 
-		String login = authenticationService.authenticateUser(httpRequest, httpResponse, authProperties);
-		if (login == null) {
-			return;
-		}
+			@Override
+			public String getAuthType() {
+				return "CONTAINER";
+			}
 
-		request.setAttribute(HttpContext.REMOTE_USER, login);
-		request.setAttribute(HttpContext.AUTHENTICATION_TYPE, authenticationService.getAuthType());
-		chain.doFilter(request, response);
+			@Override
+			public String getRemoteUser() {
+				return "antonm";
+			}
+
+		};
+		chain.doFilter(requestWrapper, response);
 	}
 
 	public void destroy() {

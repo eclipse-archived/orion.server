@@ -80,9 +80,12 @@ public class UserAuthFilter implements Filter {
 			}
 		}
 
-		String login = authenticationService.authenticateUser(httpRequest, httpResponse, authProperties);
-		if (login == null)
-			return;
+		String login = httpRequest.getRemoteUser();
+		if (login == null) {
+			login = authenticationService.getAuthenticatedUser(httpRequest, httpResponse, authProperties);
+			if (login == null)
+				return;
+		}
 
 		request.setAttribute(HttpContext.REMOTE_USER, login);
 		request.setAttribute(HttpContext.AUTHENTICATION_TYPE, authenticationService.getAuthType());

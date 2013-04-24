@@ -30,6 +30,7 @@ import org.eclipse.orion.server.authentication.openid.OpenIdException;
 import org.eclipse.orion.server.authentication.openid.OpenIdHelper;
 import org.eclipse.orion.server.authentication.openid.OpenidConsumer;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.authentication.IAuthenticationService;
 import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.orion.server.useradmin.UnsupportedUserStoreException;
@@ -146,8 +147,12 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 			return;
 		}
 
-		String user;
-		if ((user = authenticationService.getAuthenticatedUser(req, resp, authenticationService.getDefaultAuthenticationProperties())) != null) {
+		String user = req.getRemoteUser();
+		if (user == null) {
+			user = authenticationService.getAuthenticatedUser(req, resp, authenticationService.getDefaultAuthenticationProperties());
+		}
+		
+		if (user != null) {
 			resp.setStatus(HttpServletResponse.SC_OK);
 			try {
 				resp.getWriter().print(FormAuthHelper.getUserJson(user, req.getContextPath()));
