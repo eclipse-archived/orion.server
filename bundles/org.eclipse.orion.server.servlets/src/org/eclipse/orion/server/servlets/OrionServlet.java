@@ -59,8 +59,10 @@ public abstract class OrionServlet extends HttpServlet {
 		resp.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 		resp.setHeader("Cache-Control", "no-store"); //$NON-NLS-1$ //$NON-NLS-2$
 		if (result instanceof JSONObject) {
-			decorateResponse(req, (JSONObject) result, strategy);
+			decorateResponse(req, (JSONObject) result);
 		}
+		strategy.run(req, result);
+
 		//TODO look at accept header and chose appropriate response representation
 		resp.setContentType(ProtocolConstants.CONTENT_TYPE_JSON);
 		String response = prettyPrint(result);

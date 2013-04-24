@@ -53,7 +53,7 @@ public abstract class JsonURIUnqualificationStrategy {
 		}
 	};
 
-	public void run(HttpServletRequest req, JSONObject result) {
+	public void run(HttpServletRequest req, Object result) {
 		rewrite(result, req.getScheme(), req.getServerName(), req.getServerPort(), req.getContextPath());
 	}
 
