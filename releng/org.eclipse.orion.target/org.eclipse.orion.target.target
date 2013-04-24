@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="UTF-8"?><?pde version="3.8"?><target name="org.eclipse.orion" sequenceNumber="3">
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?pde version="3.8"?><target name="org.eclipse.orion" sequenceNumber="4">
 <locations>
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.jgit" version="0.0.0"/>
@@ -146,15 +147,12 @@
 <repository location="http://download.eclipse.org/eclipse/updates/4.3-I-builds"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
-<unit id="org.eclipse.emf.ecore.feature.group" version="0.0.0"/>
-<unit id="org.eclipse.emf.common.feature.group" version="0.0.0"/>
-<unit id="org.eclipse.emf.ecore.source.feature.group" version="0.0.0"/>
-<unit id="org.eclipse.emf.common.source.feature.group" version="0.0.0"/>
-<repository location="http://download.eclipse.org/modeling/emf/emf/updates/2.8milestones/base"/>
-</location>
-<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.jetty.bundles.f.feature.group" version="8.1.3.201302042259"/>
 <repository location="http://download.eclipse.org/jetty/updates/jetty-bundles-8.x/8.1.9.v20130131"/>
+</location>
+<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
+<unit id="org.eclipse.emf.base.feature.group" version="2.9.0.v20130314-0814"/>
+<repository location="http://download.eclipse.org/modeling/emf/emf/updates/2.9milestones/base"/>
 </location>
 </locations>
 <targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
