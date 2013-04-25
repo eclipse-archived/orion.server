@@ -12,7 +12,13 @@ package org.eclipse.orion.internal.server.user.ldap;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
+
+import javax.naming.Context;
+import javax.naming.NamingException;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.server.useradmin.EmptyAuthorization;
@@ -73,10 +79,8 @@ public class LDAPCredentialsService implements IOrionCredentialsService {
 	}
 
 	public User getUser(String key, String value) {
-		if (key.equals(USER_LOGIN)) {
-			return new LDAPUser(value);
-		} else if (key.equals(USER_UID)) {
-			return new LDAPUser(value);
+		if (key.equals(USER_LOGIN) || key.equals(USER_UID)) {
+			return new LDAPUser(value, this);
 		}
 		return null;
 	}
@@ -90,6 +94,49 @@ public class LDAPCredentialsService implements IOrionCredentialsService {
 
 	public Set<User> getUsersByProperty(String key, String value, boolean regExp, boolean ignoreCase) {
 		return new HashSet<User>();
+	}
+
+	public boolean hasCredentials(String login, Object credentials) {
+		String providerURL = Activator.bundleContext.getProperty("orion.ldap.provider.url");
+		if (providerURL == null) {
+			return true;
+		}
+		
+		String initialContextFactory = Activator.bundleContext.getProperty("orion.ldap.factory.initial");
+		if (initialContextFactory == null) {
+			initialContextFactory = "com.sun.jndi.ldap.LdapCtxFactory";
+		}
+		String ldapVersion = Activator.bundleContext.getProperty("orion.ldap.version");
+		String authentication = Activator.bundleContext.getProperty("orion.ldap.security.authentication");
+		String principle = Activator.bundleContext.getProperty("orion.ldap.security.principal");
+		if (principle == null) {
+			principle = login;
+		} else {
+			principle = principle.replace("{uid}", login);
+		}
+
+		Properties environment = new Properties();
+		environment.put(Context.INITIAL_CONTEXT_FACTORY, initialContextFactory);
+		environment.put(Context.PROVIDER_URL, providerURL);
+		if (ldapVersion != null) {
+			environment.put("java.naming.ldap.version", ldapVersion);
+		}
+		if (authentication != null) {
+			environment.put(Context.SECURITY_AUTHENTICATION, authentication);
+		}
+		environment.put(Context.SECURITY_PRINCIPAL, principle);
+		environment.put(Context.SECURITY_CREDENTIALS, credentials);
+		
+		try 
+		{
+			DirContext userContext = new InitialDirContext(environment);
+			return true;
+		} 
+		catch (NamingException e) 
+		{
+			e.printStackTrace();
+			return false;
+		}
 	}
 
 }

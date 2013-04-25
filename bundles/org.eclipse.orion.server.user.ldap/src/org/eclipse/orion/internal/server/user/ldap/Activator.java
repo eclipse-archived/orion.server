@@ -10,14 +10,12 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.user.ldap;
 
-import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
-import org.osgi.framework.*;
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
 
 public class Activator implements BundleActivator {
 
-	public static final String PI_USER_SECURESTORAGE = "org.eclipse.orion.server.user.ldap"; //$NON-NLS-1$
 	static BundleContext bundleContext;
-	private ServiceRegistration<IOrionCredentialsService> registerService;
 
 	public static BundleContext getContext() {
 		return bundleContext;
@@ -32,7 +30,6 @@ public class Activator implements BundleActivator {
 	 */
 	public void start(BundleContext bundleContext) throws Exception {
 		Activator.bundleContext = bundleContext;
-		registerService = bundleContext.registerService(IOrionCredentialsService.class, new LDAPCredentialsService(), null);
 	}
 
 	/*
@@ -42,8 +39,6 @@ public class Activator implements BundleActivator {
 	 * org.osgi.framework.BundleActivator#stop(org.osgi.framework.BundleContext)
 	 */
 	public void stop(BundleContext bundleContext) throws Exception {
-		if (registerService != null)
-			registerService.unregister();
 		Activator.bundleContext = null;
 	}
 
