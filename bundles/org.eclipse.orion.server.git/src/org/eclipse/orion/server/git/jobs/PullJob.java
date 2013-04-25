@@ -21,7 +21,8 @@ import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.*;
-import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.git.servlets.GitUtils;
@@ -36,14 +37,28 @@ public class PullJob extends GitJob {
 	private String projectName;
 
 	public PullJob(String userRunningTask, CredentialsProvider credentials, Path path, boolean force) {
-		super(userRunningTask, true, (GitCredentialsProvider) credentials); //$NON-NLS-1$
+		super(userRunningTask, true, (GitCredentialsProvider) credentials);
 		// path: file/{...}
 		this.path = path;
-		this.projectName = path.segmentCount() == 2 ? WebProject.fromId(path.segment(1)).getName() : path.lastSegment();
+		this.projectName = computeProjectName(path);
 		// this.force = force; // TODO: enable when JGit starts to support this option
 		setName(NLS.bind("Pulling {0}", projectName));
 		setFinalMessage(NLS.bind("Pulling {0} done", projectName));
 		setTaskExpirationTime(TimeUnit.DAYS.toMillis(7));
+	}
+
+	private String computeProjectName(Path requestPath) {
+		if (requestPath.segmentCount() == 2) {
+			//path format is /file/projectId
+			try {
+				ProjectInfo info = OrionConfiguration.getMetaStore().readProject(requestPath.segment(1));
+				if (info != null)
+					return info.getFullName();
+			} catch (CoreException e) {
+				//fall through and use path segment below
+			}
+		}
+		return requestPath.lastSegment();
 	}
 
 	private IStatus doPull() throws IOException, GitAPIException, CoreException {

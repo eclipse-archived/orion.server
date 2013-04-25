@@ -10,9 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.useradmin.servlets;
 
-import org.eclipse.orion.internal.server.servlets.Activator;
-import org.eclipse.orion.server.core.OrionConfiguration;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -20,14 +17,12 @@ import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.*;
-import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
-import org.eclipse.orion.internal.server.servlets.workspace.WebWorkspace;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.*;
-import org.eclipse.orion.server.core.metastore.IMetaStore;
-import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.metastore.*;
 import org.eclipse.orion.server.core.resources.Base64Counter;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.orion.server.user.profile.*;
@@ -395,19 +390,16 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	 * <code>user</code> is the sole owner of the workspaces and projects they have access to.
 	 * If workspaces or projects are shared among users, this method should not be called.
 	 * @param user The user to delete.
-	 * 
-	 * TODO Move into WebUser?
 	 */
 	private void deleteUserArtifacts(UserInfo user) throws CoreException {
-		// Delete filesystem contents
+		// Delete filesystem contents for all of this user's projects
+		IMetaStore store = OrionConfiguration.getMetaStore();
 		for (String workspaceId : user.getWorkspaceIds()) {
-			WebWorkspace webWorkspace = WebWorkspace.fromId(workspaceId);
-			for (WebProject project : webWorkspace.getProjects()) {
-				project.deleteContents();
-				webWorkspace.removeProject(project);
-				project.removeNode();
+			WorkspaceInfo workspace = store.readWorkspace(workspaceId);
+			for (String projectId : workspace.getProjectIds()) {
+				ProjectInfo project = store.readProject(projectId);
+				project.getProjectStore().delete(EFS.NONE, null);
 			}
-			webWorkspace.removeNode();
 		}
 	}
 

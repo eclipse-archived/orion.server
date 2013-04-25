@@ -301,8 +301,14 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		//null result means there was an error and we already handled it
 		if (sourceId == null)
 			return true;
-		boolean sourceExists = WebProject.exists(sourceId);
-		if (!sourceExists) {
+		ProjectInfo sourceProject = null;
+		try {
+			sourceProject = getMetaStore().readProject(sourceId);
+		} catch (CoreException e) {
+			handleError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), e);
+			return true;
+		}
+		if (sourceProject == null) {
 			handleError(request, response, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Source does not exist: {0}", sourceId));
 			return true;
 		}
@@ -314,7 +320,7 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		String destinationName = request.getHeader(ProtocolConstants.HEADER_SLUG);
 		//If the data has a name then it must be used due to UTF-8 issues with names Bug 376671
 		try {
-			if (data != null && data.has("Name")) {
+			if (data.has("Name")) {
 				destinationName = data.getString("Name");
 			}
 		} catch (JSONException e) {
@@ -322,12 +328,6 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 
 		if (!validateProjectName(workspace, destinationName, request, response))
 			return true;
-		ProjectInfo sourceProject = null;
-		try {
-			sourceProject = getMetaStore().readProject(sourceId);
-		} catch (CoreException e) {
-			handleError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), e);
-		}
 
 		if ((options & CREATE_MOVE) != 0) {
 			return handleMoveProject(request, response, workspace, sourceProject, sourceLocation, destinationName);
@@ -340,14 +340,12 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 
 	/**
 	 * Implementation of project copy
-	 * Returns <code>false</code> if this method doesn't know how to intepret the request.
+	 * Returns <code>false</code> if this method doesn't know how to interpret the request.
 	 */
 	private boolean handleCopyProject(HttpServletRequest request, HttpServletResponse response, WorkspaceInfo workspace, ProjectInfo sourceProject, String destinationName) throws IOException, ServletException {
 		//first create the destination project
-		String destinationId = WebProject.nextProjectId();
 		JSONObject projectObject = new JSONObject();
 		try {
-			projectObject.put(ProtocolConstants.KEY_ID, destinationId);
 			projectObject.put(ProtocolConstants.KEY_NAME, destinationName);
 		} catch (JSONException e) {
 			//should never happen

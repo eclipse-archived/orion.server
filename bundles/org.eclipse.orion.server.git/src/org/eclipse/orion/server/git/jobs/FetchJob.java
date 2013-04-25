@@ -21,7 +21,7 @@ import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.lib.RefUpdate.Result;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.*;
-import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
+import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.git.servlets.GitUtils;
@@ -63,14 +63,16 @@ public class FetchJob extends GitJob {
 
 	private String computeCloneName() {
 		// path: {remote}/file/{projectId}
-		if (path.segment(1).equals("file") && path.segmentCount() == 3) {
-			WebProject webProject = WebProject.fromId(path.segment(2));
-			return webProject.getName();
-		}
-		// path: {remote}/{branch}/file/{projectId}
-		if (path.segment(2).equals("file") && path.segmentCount() == 4) {
-			WebProject webProject = WebProject.fromId(path.segment(3));
-			return webProject.getName();
+		try {
+			if (path.segment(1).equals("file") && path.segmentCount() == 3) {
+				return OrionConfiguration.getMetaStore().readProject(path.segment(2)).getFullName();
+			}
+			// path: {remote}/{branch}/file/{projectId}
+			if (path.segment(2).equals("file") && path.segmentCount() == 4) {
+				return OrionConfiguration.getMetaStore().readProject(path.segment(3)).getFullName();
+			}
+		} catch (CoreException e) {
+			//this is just for messages, fall through and use the path segment below
 		}
 		return path.lastSegment();
 	}

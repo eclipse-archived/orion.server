@@ -16,44 +16,20 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
-import java.io.Writer;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import com.meterware.httpunit.*;
+import java.io.*;
+import java.net.*;
+import java.util.*;
 import junit.framework.Assert;
-
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.RebaseCommand.Operation;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.Ref;
-import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.lib.RepositoryCache;
+import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileBasedConfig;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.URIish;
@@ -64,38 +40,19 @@ import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
 import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
-import org.eclipse.orion.internal.server.servlets.workspace.WebWorkspace;
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.ServerConstants;
-import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.metastore.*;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.git.objects.Branch;
-import org.eclipse.orion.server.git.objects.Clone;
-import org.eclipse.orion.server.git.objects.Commit;
-import org.eclipse.orion.server.git.objects.ConfigOption;
-import org.eclipse.orion.server.git.objects.Remote;
-import org.eclipse.orion.server.git.objects.RemoteBranch;
+import org.eclipse.orion.server.git.objects.*;
 import org.eclipse.orion.server.git.objects.Status;
-import org.eclipse.orion.server.git.objects.Tag;
 import org.eclipse.orion.server.git.servlets.GitServlet;
 import org.eclipse.orion.server.tests.AbstractServerTest;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import org.json.*;
+import org.junit.*;
 import org.xml.sax.SAXException;
-
-import com.meterware.httpunit.GetMethodWebRequest;
-import com.meterware.httpunit.PostMethodWebRequest;
-import com.meterware.httpunit.PutMethodWebRequest;
-import com.meterware.httpunit.WebConversation;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 
 public abstract class GitTest extends FileSystemTest {
 
@@ -328,9 +285,10 @@ public abstract class GitTest extends FileSystemTest {
 		}
 
 		//path format is /file/{workspaceId}/{projectName}[/path]
-		assertTrue(WebWorkspace.exists(path.segment(1)));
-		WebWorkspace workspace = WebWorkspace.fromId(path.segment(1));
-		WebProject wp = workspace.getProjectByName(path.segment(2));
+		final IMetaStore metaStore = OrionConfiguration.getMetaStore();
+		WorkspaceInfo workspace = metaStore.readWorkspace(path.segment(1));
+		assertNotNull(workspace);
+		ProjectInfo wp = metaStore.readProject(workspace.getUniqueId(), path.segment(2));
 		assertNotNull(wp);
 		IFileStore fsStore = getProjectStore(wp, "test");
 		fsStore = fsStore.getFileStore(path.removeFirstSegments(3));
@@ -347,7 +305,7 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	// see org.eclipse.orion.internal.server.servlets.workspace.WorkspaceResourceHandler.generateProjectLocation(WebProject, String)
-	private static IFileStore getProjectStore(WebProject project, String user) throws CoreException {
+	private static IFileStore getProjectStore(ProjectInfo project, String user) throws CoreException {
 		URI platformLocationURI = Activator.getDefault().getRootLocationURI();
 		IFileStore root = EFS.getStore(platformLocationURI);
 
@@ -359,10 +317,10 @@ public abstract class GitTest extends FileSystemTest {
 		if ("usertree".equals(layout) && user != null) { //$NON-NLS-1$
 			//the user-tree layout organises projects by the user who created it
 			String userPrefix = user.substring(0, Math.min(2, user.length()));
-			projectStore = root.getChild(userPrefix).getChild(user).getChild(project.getId());
+			projectStore = root.getChild(userPrefix).getChild(user).getChild(project.getUniqueId());
 		} else {
 			//default layout is a flat list of projects at the root
-			projectStore = root.getChild(project.getId());
+			projectStore = root.getChild(project.getUniqueId());
 		}
 		projectStore.mkdir(EFS.NONE, null);
 		return projectStore;
@@ -1494,12 +1452,13 @@ public abstract class GitTest extends FileSystemTest {
 	 * has a clone location in a folder below the root. This method creates
 	 * the projects and returns the path for creating the clones, but does
 	 * not actually create the git clones.
+	 * @throws CoreException 
 	 */
-	protected IPath[] createTestProjects(URI workspaceLocation) throws JSONException, IOException, SAXException {
+	protected IPath[] createTestProjects(URI workspaceLocation) throws JSONException, IOException, SAXException, CoreException {
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		WebWorkspace workspace = WebWorkspace.fromId(workspaceId);
+		WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(workspaceId);
 		assertNotNull(workspace);
-		String name = workspace.getName();
+		String name = workspace.getFullName();
 		JSONObject projectTop = createProjectOrLink(workspaceLocation, name + "-top", null);
 		IPath clonePathTop = getClonePath(workspaceId, projectTop);
 		JSONObject projectFolder = createProjectOrLink(workspaceLocation, name + "-folder", null);
@@ -1515,11 +1474,11 @@ public abstract class GitTest extends FileSystemTest {
 	 *  - In second pair, both clones are in folders below the project root
 	 *  - In third pair, one clone is at the root and the other clone is within a child folder
 	 */
-	protected IPath[][] createTestClonePairs(URI workspaceLocation) throws IOException, SAXException, JSONException {
+	protected IPath[][] createTestClonePairs(URI workspaceLocation) throws IOException, SAXException, JSONException, CoreException {
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		WebWorkspace workspace = WebWorkspace.fromId(workspaceId);
+		WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(workspaceId);
 		assertNotNull(workspace);
-		String name = workspace.getName();
+		String name = workspace.getFullName();
 		JSONObject projectTop1 = createProjectOrLink(workspaceLocation, name + "-top1", null);
 		IPath clonePathTop1 = getClonePath(workspaceId, projectTop1);
 

@@ -29,7 +29,6 @@ import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;
-import org.eclipse.orion.internal.server.servlets.workspace.WebWorkspace;
 import org.eclipse.orion.internal.server.servlets.workspace.WorkspaceResourceHandler;
 import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.core.metastore.*;
@@ -240,8 +239,8 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		// expected path format is 'workspace/{workspaceId}' or 'file/{workspaceId}/{projectName}/{path}]'
 		if ("workspace".equals(path.segment(0)) && path.segmentCount() == 2) { //$NON-NLS-1$
 			// all clones in the workspace
-			if (WebWorkspace.exists(path.segment(1))) {
-				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(1));
+			WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(1));
+			if (workspace != null) {
 				JSONObject result = new JSONObject();
 				JSONArray children = new JSONArray();
 				for (String projectId : workspace.getProjectIds()) {

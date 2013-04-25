@@ -26,8 +26,8 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler.Method;
-import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.git.objects.*;
 import org.eclipse.orion.server.git.objects.Status;
 import org.eclipse.orion.server.git.servlets.GitServlet;
@@ -200,7 +200,8 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		if (!"git".equals(scm)) //$NON-NLS-1$
 			return;
 		try {
-			IFileStore store = WebProject.fromId(representation.optString(ProtocolConstants.KEY_ID)).getProjectStore();
+			ProjectInfo project = OrionConfiguration.getMetaStore().readProject(representation.optString(ProtocolConstants.KEY_ID));
+			IFileStore store = project.getProjectStore();
 			//create repository in each project if it doesn't already exist
 			File localFile = store.toLocalFile(EFS.NONE, null);
 			File gitDir = GitUtils.getGitDir(localFile);

@@ -38,6 +38,12 @@ public class CompatibilityMetaStore implements IMetaStore {
 	}
 
 	public void createUser(UserInfo info) throws CoreException {
+		//assign a unique user id if caller hasn't done so already
+		if (info.getUniqueId() == null)
+			info.setUniqueId(WebUser.nextUserId());
+		//cause user to be created first
+		WebUser.fromUserId(info.getUniqueId());
+		//now update other user info
 		updateUser(info);
 	}
 
@@ -63,8 +69,32 @@ public class CompatibilityMetaStore implements IMetaStore {
 		workspace.save();
 	}
 
-	public void deleteUser(String uid) throws CoreException {
-		WebUser.fromUserId(uid).delete();
+	public void deleteUser(String userId) throws CoreException {
+		WebUser user = WebUser.fromUserId(userId);
+		//first delete workspaces
+		JSONArray workspaces = user.getWorkspacesJSON();
+		for (int i = 0; i < workspaces.length(); i++) {
+			try {
+				String workspaceId = workspaces.getJSONObject(i).getString(ProtocolConstants.KEY_ID);
+				deleteWorkspace(userId, workspaceId);
+			} catch (JSONException e) {
+				//ignore malformed metadata
+			}
+		}
+		//only delete user if we succeeded  to delete everything else
+		user.delete();
+	}
+
+	public void deleteWorkspace(String userId, String workspaceId) throws CoreException {
+		if (!WebWorkspace.exists(workspaceId))
+			return;
+		WebWorkspace workspace = WebWorkspace.fromId(workspaceId);
+		//first delete projects
+		for (WebProject project : workspace.getProjects()) {
+			deleteProject(workspaceId, project.getName());
+		}
+		//finally delete the workspace metadata
+		workspace.removeNode();
 	}
 
 	public List<String> readAllUsers() throws CoreException {
@@ -208,9 +238,14 @@ public class CompatibilityMetaStore implements IMetaStore {
 		String userId = info.getUniqueId();
 		if (userId == null)
 			throw new IllegalArgumentException("User id not provided"); //$NON-NLS-1$
+		if (!WebUser.exists(userId)) {
+			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "Cannot update non-existent user: " + userId));
+		}
 		WebUser webUser = WebUser.fromUserId(userId);
-		webUser.setUserName(info.getUserName());
-		webUser.setName(info.getFullName());
+		if (info.getUserName() != null)
+			webUser.setUserName(info.getUserName());
+		if (info.getFullName() != null)
+			webUser.setName(info.getFullName());
 		webUser.setGuest(info.isGuest());
 
 		//authorization info

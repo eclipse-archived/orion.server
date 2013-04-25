@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others.
+ * Copyright (c) 2010, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -22,12 +22,15 @@ import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.core.metastore.IMetaStore;
+import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.core.resources.Base64Counter;
 import org.osgi.service.prefs.BackingStoreException;
 
 /**
  * An Eclipse web project.
+ * @deprecated Use {@link IMetaStore} and {@link ProjectInfo}.
  */
 public class WebProject extends WebElement {
 	public static final String PROJECT_NODE_NAME = "Projects"; //$NON-NLS-1$
@@ -113,15 +116,6 @@ public class WebProject extends WebElement {
 		} catch (BackingStoreException e) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "Error removing project", e));
 		}
-	}
-
-	/**
-	 * Deletes this project's contents and directory.
-	 * 
-	 * @throws CoreException
-	 */
-	public void deleteContents() throws CoreException {
-		getProjectStore().delete(EFS.NONE, null);
 	}
 
 	/**

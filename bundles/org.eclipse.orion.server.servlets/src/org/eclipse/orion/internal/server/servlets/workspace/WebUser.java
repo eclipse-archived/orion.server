@@ -20,6 +20,7 @@ import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.resources.Base64Counter;
 import org.eclipse.orion.server.core.users.OrionScope;
 import org.json.*;
 import org.osgi.service.prefs.BackingStoreException;
@@ -29,6 +30,7 @@ import org.osgi.service.prefs.BackingStoreException;
  * @deprecated replaced by {@link IMetaStore} and {@link UserInfo}.
  */
 public class WebUser extends WebElement {
+	private static final Base64Counter userCounter = new Base64Counter();
 
 	static final String USERS_NODE = "Users"; //$NON-NLS-1$
 
@@ -74,6 +76,29 @@ public class WebUser extends WebElement {
 		} catch (Exception e) {
 			return null;
 		}
+	}
+
+	/**
+	 * Returns whether a user with the given id already exists.
+	 */
+	static boolean exists(String userId) {
+		if (userId == null)
+			return false;
+		try {
+			return scope.getNode(USERS_NODE).nodeExists(userId);
+		} catch (Exception e) {
+			return false;
+		}
+	}
+
+	/**
+	 * Returns the next available user id.
+	 */
+	static synchronized String nextUserId() {
+		while (exists(userCounter.toString())) {
+			userCounter.increment();
+		}
+		return userCounter.toString();
 	}
 
 	/**
