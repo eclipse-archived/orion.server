@@ -50,10 +50,14 @@ public class AuthorizedUserFilter implements Filter {
 		HttpServletRequest httpRequest = (HttpServletRequest) request;
 		HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-		String userName = authenticationService.getAuthenticatedUser(httpRequest, httpResponse, authProperties);
+		String remoteUser = httpRequest.getRemoteUser();
 
-		if (userName == null)
-			userName = IAuthenticationService.ANONYMOUS_LOGIN_VALUE;
+		String userName = remoteUser;
+		if (userName == null) {
+			userName = authenticationService.getAuthenticatedUser(httpRequest, httpResponse, authProperties);
+			if (userName == null)
+				userName = IAuthenticationService.ANONYMOUS_LOGIN_VALUE;
+		}
 
 		try {
 			String requestPath = httpRequest.getServletPath() + (httpRequest.getPathInfo() == null ? "" : httpRequest.getPathInfo());
@@ -63,18 +67,15 @@ public class AuthorizedUserFilter implements Filter {
 					userName = authenticationService.authenticateUser(httpRequest, httpResponse, authProperties);
 					if (userName == null)
 						return;
-
-					request.setAttribute(HttpContext.REMOTE_USER, userName);
-					request.setAttribute(HttpContext.AUTHENTICATION_TYPE, authenticationService.getAuthType());
 				} else {
 					setNotAuthorized(httpRequest, httpResponse);
 					return;
 				}
-			} else {
-				if (!IAuthenticationService.ANONYMOUS_LOGIN_VALUE.equals(userName)) {
-					request.setAttribute(HttpContext.REMOTE_USER, userName);
-					request.setAttribute(HttpContext.AUTHENTICATION_TYPE, authenticationService.getAuthType());
-				}
+			}
+
+			if (remoteUser == null && !IAuthenticationService.ANONYMOUS_LOGIN_VALUE.equals(userName)) {
+				request.setAttribute(HttpContext.REMOTE_USER, userName);
+				request.setAttribute(HttpContext.AUTHENTICATION_TYPE, authenticationService.getAuthType());
 			}
 		} catch (JSONException e) {
 			httpResponse.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);

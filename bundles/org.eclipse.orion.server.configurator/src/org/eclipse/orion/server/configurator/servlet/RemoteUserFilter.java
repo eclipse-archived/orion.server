@@ -50,7 +50,7 @@ public class RemoteUserFilter implements Filter {
 
 			@Override
 			public String getRemoteUser() {
-				return "antonm";
+				return "REMOTE_USER";
 			}
 
 		};
