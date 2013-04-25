@@ -12,6 +12,8 @@ package org.eclipse.orion.internal.server.servlets.workspace;
 
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.metastore.MetadataInfo;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -30,6 +32,10 @@ public abstract class MetadataInfoResourceHandler<T extends MetadataInfo> extend
 			//cannot happen, we know keys and values are valid
 		}
 		return result;
+	}
+
+	protected IMetaStore getMetaStore() {
+		return OrionConfiguration.getMetaStore();
 	}
 
 }

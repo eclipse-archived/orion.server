@@ -12,17 +12,19 @@ package org.eclipse.orion.internal.server.servlets.file;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Locale;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
-import org.eclipse.orion.internal.server.servlets.workspace.WebWorkspace;
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.metastore.ProjectInfo;
+import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 
@@ -95,16 +97,53 @@ public class NewFileServlet extends OrionServlet {
 		//path format is /workspaceId/projectName/[suffix]
 		if (path.segmentCount() <= 1)
 			return null;
-		WebWorkspace workspace = WebWorkspace.fromId(path.segment(0));
-		WebProject project = workspace.getProjectByName(path.segment(1));
-		if (project == null)
-			return null;
 		try {
-			return project.getProjectStore(request).getFileStore(path.removeFirstSegments(2));
+			ProjectInfo project = OrionConfiguration.getMetaStore().readProject(path.segment(0), path.segment(1));
+			if (project == null)
+				return null;
+			return getFileStore(request, project).getFileStore(path.removeFirstSegments(2));
 		} catch (CoreException e) {
 			LogHelper.log(new Status(IStatus.WARNING, Activator.PI_SERVER_SERVLETS, 1, NLS.bind("An error occurred when getting file store for path {0}", path), e));
 			// fallback and return null
 		}
 		return null;
 	}
+
+	/**
+	 * Returns the store representing the file to be retrieved for the given
+	 * request or <code>null</code> if an error occurred.
+	 * @param request The current servlet request, or <code>null</code> if unknown
+	 * @param project The project to obtain the store for.
+	 */
+	public static IFileStore getFileStore(HttpServletRequest request, ProjectInfo project) throws CoreException {
+		URI location = project.getContentLocation();
+		if (location.isAbsolute()) {
+			//insert authentication details from request if available
+			if (request != null && !EFS.SCHEME_FILE.equals(location.getScheme()) && location.getUserInfo() == null) {
+				String authHead = request.getHeader("Authorization"); //$NON-NLS-1$
+				if (authHead != null && authHead.toUpperCase(Locale.ENGLISH).startsWith("BASIC")) { //$NON-NLS-1$
+					String base64 = authHead.substring(6);
+					String authString = new String(Base64.decode(base64.getBytes()));
+					if (authString.length() > 0) {
+						try {
+							location = new URI(location.getScheme(), authString, location.getHost(), location.getPort(), location.getPath(), location.getQuery(), location.getFragment());
+						} catch (URISyntaxException e) {
+							//just fall through and use original location
+						}
+					}
+				}
+			}
+			return EFS.getStore(location);
+		}
+		//there is no scheme but it could still be an absolute path
+		IPath localPath = new Path(location.getPath());
+		if (localPath.isAbsolute()) {
+			return EFS.getLocalFileSystem().getStore(localPath);
+		}
+		//treat relative location as relative to the file system root
+		URI rootLocation = Activator.getDefault().getRootLocationURI();
+		IFileStore root = EFS.getStore(rootLocation);
+		return root.getChild(location.toString());
+	}
+
 }

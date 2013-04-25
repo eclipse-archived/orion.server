@@ -22,8 +22,9 @@ import org.eclipse.jgit.lib.RepositoryCache;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
-import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
-import org.eclipse.orion.internal.server.servlets.workspace.WebWorkspace;
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.metastore.ProjectInfo;
+import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.json.JSONObject;
@@ -213,14 +214,16 @@ public class GitUtils {
 	 * @param path path in the form /file/{workspaceId}/{projectName}/[filePath]
 	 * @return the web project, or <code>null</code>
 	 */
-	public static WebProject projectFromPath(IPath path) {
+	public static ProjectInfo projectFromPath(IPath path) {
 		if (path == null || path.segmentCount() < 3)
 			return null;
 		String workspaceId = path.segment(1);
-		if (!WebWorkspace.exists(workspaceId))
+		String projectName = path.segment(2);
+		try {
+			return OrionConfiguration.getMetaStore().readProject(workspaceId, projectName);
+		} catch (CoreException e) {
 			return null;
-		WebWorkspace workspace = WebWorkspace.fromId(workspaceId);
-		return workspace.getProjectByName(path.segment(2));
+		}
 	}
 
 	/**
@@ -229,8 +232,8 @@ public class GitUtils {
 	 * @param project The web project 
 	 * @return the HTTP path of the project content resource
 	 */
-	public static IPath pathFromProject(WebWorkspace workspace, WebProject project) {
-		return new Path(Activator.LOCATION_FILE_SERVLET).append(workspace.getId()).append(project.getName());
+	public static IPath pathFromProject(WorkspaceInfo workspace, ProjectInfo project) {
+		return new Path(Activator.LOCATION_FILE_SERVLET).append(workspace.getUniqueId()).append(project.getFullName());
 
 	}
 }

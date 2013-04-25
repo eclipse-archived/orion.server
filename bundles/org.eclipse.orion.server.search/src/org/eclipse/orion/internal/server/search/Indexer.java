@@ -25,11 +25,9 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
-import org.eclipse.orion.internal.server.servlets.workspace.WebWorkspace;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
-import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.metastore.*;
 import org.eclipse.osgi.util.NLS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -123,11 +121,12 @@ public class Indexer extends Job {
 	private int indexUser(String userId, IProgressMonitor monitor, List<SolrInputDocument> documents) {
 		int indexed = 0;
 		try {
-			UserInfo user = OrionConfiguration.getMetaStore().readUser(userId);
+			final IMetaStore store = OrionConfiguration.getMetaStore();
+			UserInfo user = store.readUser(userId);
 			List<String> workspaceIds = user.getWorkspaceIds();
 			SubMonitor progress = SubMonitor.convert(monitor, workspaceIds.size());
 			for (String workspaceId : workspaceIds) {
-				WebWorkspace workspace = WebWorkspace.fromId(workspaceId);
+				WorkspaceInfo workspace = store.readWorkspace(workspaceId);
 				indexed += indexWorkspace(user, workspace, progress.newChild(1), documents);
 			}
 		} catch (CoreException e) {
@@ -139,18 +138,24 @@ public class Indexer extends Job {
 	/**
 	 * Runs an indexer pass over a workspace. Returns the number of documents indexed.
 	 */
-	private int indexWorkspace(UserInfo user, WebWorkspace workspace, SubMonitor monitor, List<SolrInputDocument> documents) {
+	private int indexWorkspace(UserInfo user, WorkspaceInfo workspace, SubMonitor monitor, List<SolrInputDocument> documents) {
 		int indexed = 0;
-		for (WebProject project : workspace.getProjects()) {
-			indexed += indexProject(user, workspace, project, monitor, documents);
+		IMetaStore store = OrionConfiguration.getMetaStore();
+		for (String projectId : workspace.getProjectIds()) {
+			try {
+				indexed += indexProject(user, workspace, store.readProject(projectId), monitor, documents);
+			} catch (CoreException e) {
+				handleIndexingFailure(e, null);
+				//continue to next project
+			}
 		}
 		return indexed;
 	}
 
-	private int indexProject(UserInfo user, WebWorkspace workspace, WebProject project, SubMonitor monitor, List<SolrInputDocument> documents) {
+	private int indexProject(UserInfo user, WorkspaceInfo workspace, ProjectInfo project, SubMonitor monitor, List<SolrInputDocument> documents) {
 		Logger logger = LoggerFactory.getLogger(Indexer.class);
 		if (logger.isDebugEnabled())
-			logger.debug("Indexing project id: " + project.getId() + " name: " + project.getName()); //$NON-NLS-1$ //$NON-NLS-2$
+			logger.debug("Indexing project id: " + project.getUniqueId() + " name: " + project.getFullName()); //$NON-NLS-1$ //$NON-NLS-2$
 		checkCanceled(monitor);
 		IFileStore projectStore;
 		try {
@@ -166,12 +171,12 @@ public class Indexer extends Job {
 		String encodedProjectName;
 		try {
 			//project location field is an encoded URI
-			encodedProjectName = new URI(null, project.getName(), null).toString();
+			encodedProjectName = new URI(null, project.getFullName(), null).toString();
 		} catch (URISyntaxException e) {
 			//UTF-8 should never be unsupported
 			throw new RuntimeException(e);
 		}
-		IPath projectLocation = new Path(Activator.LOCATION_FILE_SERVLET).append(workspace.getId()).append(encodedProjectName).addTrailingSeparator();
+		IPath projectLocation = new Path(Activator.LOCATION_FILE_SERVLET).append(workspace.getUniqueId()).append(encodedProjectName).addTrailingSeparator();
 		//gather all files
 		int projectLocationLength = projectStore.toURI().toString().length();
 		final List<IFileStore> toIndex = new ArrayList<IFileStore>();
@@ -197,7 +202,7 @@ public class Indexer extends Job {
 			String projectRelativePath = file.toURI().toString().substring(projectLocationLength);
 			IPath fileLocation = projectLocation.append(projectRelativePath);
 			doc.addField(ProtocolConstants.KEY_LOCATION, fileLocation.toString());
-			String projectName = project.getName();
+			String projectName = project.getFullName();
 			//Projects with no name are due to an old bug where project metadata was not deleted  see bug 367333.
 			if (projectName == null)
 				continue;

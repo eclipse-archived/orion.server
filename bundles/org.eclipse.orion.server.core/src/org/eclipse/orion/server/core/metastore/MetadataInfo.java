@@ -19,6 +19,8 @@ import java.util.*;
  */
 public class MetadataInfo {
 
+	protected static final List<String> EMPTY = Collections.emptyList();
+
 	private String fullName;
 	private String id;
 

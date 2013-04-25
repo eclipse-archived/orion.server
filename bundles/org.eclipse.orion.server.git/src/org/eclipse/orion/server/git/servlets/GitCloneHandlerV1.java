@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -29,9 +29,10 @@ import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;
-import org.eclipse.orion.internal.server.servlets.workspace.*;
+import org.eclipse.orion.internal.server.servlets.workspace.WebWorkspace;
+import org.eclipse.orion.internal.server.servlets.workspace.WorkspaceResourceHandler;
 import org.eclipse.orion.server.core.*;
-import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.metastore.*;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.git.jobs.*;
@@ -127,55 +128,60 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			return true;
 
 		// prepare the WebClone object, create a new project if necessary
-		WebProject webProject = null;
+		ProjectInfo project = null;
 		boolean webProjectExists = false;
 		if (filePath != null) {
 			//path format is /file/{workspaceId}/{projectName}/[filePath]
 			clone.setId(filePath.toString());
-			webProject = GitUtils.projectFromPath(filePath);
+			project = GitUtils.projectFromPath(filePath);
 			//workspace path format needs to be used if project does not exist
-			if (webProject == null) {
+			if (project == null) {
 				String msg = NLS.bind("Specified project does not exist: {0}", filePath.segment(2));
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 			}
 			webProjectExists = true;
-			clone.setContentLocation(webProject.getProjectStore().getFileStore(filePath.removeFirstSegments(3)).toURI());
+			clone.setContentLocation(project.getProjectStore().getFileStore(filePath.removeFirstSegments(3)).toURI());
 			if (cloneName == null)
-				cloneName = filePath.segmentCount() > 2 ? filePath.lastSegment() : webProject.getName();
+				cloneName = filePath.segmentCount() > 2 ? filePath.lastSegment() : project.getFullName();
 		} else if (workspacePath != null) {
 			IPath path = new Path(workspacePath);
 			// TODO: move this to CloneJob
 			// if so, modify init part to create a new project if necessary
-			WebWorkspace workspace = WebWorkspace.fromId(path.segment(1));
-			String id = WebProject.nextProjectId();
+			final IMetaStore metaStore = OrionConfiguration.getMetaStore();
+			WorkspaceInfo workspace = metaStore.readWorkspace(path.segment(1));
 			if (cloneName == null)
 				cloneName = new URIish(url).getHumanishName();
 			cloneName = getUniqueProjectName(workspace, cloneName);
 			webProjectExists = false;
-			webProject = WebProject.fromId(id);
-			webProject.setName(cloneName);
+			project = new ProjectInfo();
+			project.setFullName(cloneName);
 
 			try {
-				WorkspaceResourceHandler.computeProjectLocation(request, webProject, null, false);
+				//creating project in the backing store will assign a project id
+				metaStore.createProject(workspace.getUniqueId(), project);
 			} catch (CoreException e) {
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error persisting project state", e));
+			}
+			try {
+				WorkspaceResourceHandler.computeProjectLocation(request, project, null, false);
+				metaStore.updateProject(project);
+			} catch (CoreException e) {
+				//delete the project so we don't end up with a project in a bad location
+				try {
+					metaStore.deleteProject(workspace.getUniqueId(), project.getFullName());
+				} catch (CoreException e1) {
+					//swallow secondary error
+					LogHelper.log(e1);
+				}
 				//we are unable to write in the platform location!
 				String msg = NLS.bind("Server content location could not be written: {0}", Activator.getDefault().getRootLocationURI());
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
-			} catch (URISyntaxException e) {
-				// should not happen, we do not allow linking at this point
-			}
-
-			try {
-				//If all went well, add project to workspace
-				WorkspaceResourceHandler.addProject(request.getRemoteUser(), workspace, webProject);
-			} catch (CoreException e) {
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error persisting project state", e));
 			}
 
 			URI baseLocation = getURI(request);
 			baseLocation = new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), workspacePath, baseLocation.getQuery(), baseLocation.getFragment());
-			clone.setId(GitUtils.pathFromProject(workspace, webProject).toString());
-			clone.setContentLocation(webProject.getProjectStore().toURI());
+			clone.setId(GitUtils.pathFromProject(workspace, project).toString());
+			clone.setContentLocation(project.getProjectStore().toURI());
 		}
 		clone.setName(cloneName);
 		clone.setBaseLocation(getURI(request));
@@ -193,7 +199,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		cp.setUri(new URIish(clone.getUrl()));
 
 		// if all went well, clone
-		CloneJob job = new CloneJob(clone, TaskJobHandler.getUserId(request), cp, request.getRemoteUser(), cloneLocation, webProjectExists ? null : webProject /* used for cleaning up, so null when not needed */);
+		CloneJob job = new CloneJob(clone, TaskJobHandler.getUserId(request), cp, request.getRemoteUser(), cloneLocation, webProjectExists ? null : project /* used for cleaning up, so null when not needed */);
 		return TaskJobHandler.handleTaskJob(request, response, job, statusHandler);
 	}
 
@@ -201,12 +207,17 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 	 * Returns a unique project name that does not exist in the given workspace,
 	 * for the given clone name.
 	 */
-	private String getUniqueProjectName(WebWorkspace workspace, String cloneName) {
+	private String getUniqueProjectName(WorkspaceInfo workspace, String cloneName) {
 		int i = 1;
 		String uniqueName = cloneName;
-		while (workspace.getProjectByName(uniqueName) != null) {
-			//add an incrementing counter suffix until we arrive at a unique name
-			uniqueName = cloneName + '-' + ++i;
+		IMetaStore store = OrionConfiguration.getMetaStore();
+		try {
+			while (store.readProject(workspace.getUniqueId(), uniqueName) != null) {
+				//add an incrementing counter suffix until we arrive at a unique name
+				uniqueName = cloneName + '-' + ++i;
+			}
+		} catch (CoreException e) {
+			//let it proceed with current name
 		}
 		return uniqueName;
 	}
@@ -230,13 +241,14 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		if ("workspace".equals(path.segment(0)) && path.segmentCount() == 2) { //$NON-NLS-1$
 			// all clones in the workspace
 			if (WebWorkspace.exists(path.segment(1))) {
-				WebWorkspace workspace = WebWorkspace.fromId(path.segment(1));
+				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(1));
 				JSONObject result = new JSONObject();
 				JSONArray children = new JSONArray();
-				for (WebProject webProject : workspace.getProjects()) {
+				for (String projectId : workspace.getProjectIds()) {
+					ProjectInfo project = OrionConfiguration.getMetaStore().readProject(projectId);
 					//this is the location of the project metadata
-					if (isAccessAllowed(user, webProject)) {
-						IPath projectPath = GitUtils.pathFromProject(workspace, webProject);
+					if (isAccessAllowed(user, project)) {
+						IPath projectPath = GitUtils.pathFromProject(workspace, project);
 						Map<IPath, File> gitDirs = GitUtils.getGitDirs(projectPath, Traverse.GO_DOWN);
 						for (Map.Entry<IPath, File> entry : gitDirs.entrySet()) {
 							children.put(new Clone().toJSON(entry, baseLocation));
@@ -252,7 +264,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
 		} else if ("file".equals(path.segment(0)) && path.segmentCount() > 1) { //$NON-NLS-1$
 			// clones under given path
-			WebProject webProject = GitUtils.projectFromPath(path);
+			ProjectInfo webProject = GitUtils.projectFromPath(path);
 			IPath projectRelativePath = path.removeFirstSegments(3);
 			if (webProject != null && isAccessAllowed(user, webProject) && webProject.getProjectStore().getFileStore(projectRelativePath).fetchInfo().exists()) {
 				Map<IPath, File> gitDirs = GitUtils.getGitDirs(path, Traverse.GO_DOWN);
@@ -279,7 +291,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		if (path.segment(0).equals("file") && path.segmentCount() > 1) { //$NON-NLS-1$
 
 			// make sure a clone is addressed
-			WebProject webProject = GitUtils.projectFromPath(path);
+			ProjectInfo webProject = GitUtils.projectFromPath(path);
 			if (isAccessAllowed(request.getRemoteUser(), webProject)) {
 				Map<IPath, File> gitDirs = GitUtils.getGitDirs(path, Traverse.CURRENT);
 				if (gitDirs.isEmpty()) {
@@ -376,7 +388,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		if (path.segment(0).equals("file") && path.segmentCount() > 2) { //$NON-NLS-1$
 
 			// make sure a clone is addressed
-			WebProject webProject = GitUtils.projectFromPath(path);
+			ProjectInfo webProject = GitUtils.projectFromPath(path);
 			if (webProject != null && isAccessAllowed(request.getRemoteUser(), webProject)) {
 				File gitDir = GitUtils.getGitDirs(path, Traverse.CURRENT).values().iterator().next();
 				Repository repo = new FileRepository(gitDir);
@@ -396,18 +408,13 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 	/**
 	 * Returns whether the user can access the given project
 	 */
-	private boolean isAccessAllowed(String userName, WebProject webProject) {
+	private boolean isAccessAllowed(String userName, ProjectInfo webProject) {
 		try {
 			UserInfo user = OrionConfiguration.getMetaStore().readUser(userName);
 			for (String workspaceId : user.getWorkspaceIds()) {
-				WebWorkspace webWorkspace = WebWorkspace.fromId(workspaceId);
-				JSONArray projectsJSON = webWorkspace.getProjectsJSON();
-				for (int j = 0; j < projectsJSON.length(); j++) {
-					JSONObject project = projectsJSON.getJSONObject(j);
-					String projectId = project.getString(ProtocolConstants.KEY_ID);
-					if (projectId.equals(webProject.getId()))
-						return true;
-				}
+				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(workspaceId);
+				if (workspace.getProjectIds().contains(webProject.getUniqueId()))
+					return true;
 			}
 		} catch (Exception e) {
 			// fall through and deny access
@@ -419,26 +426,23 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 	/**
 	 * Looks for the project in all workspaces of the user and removes it when found.
 	 * 
-	 * @see WorkspaceResourceHandler#handleRemoveProject(HttpServletRequest, HttpServletResponse, WebWorkspace)
+	 * @see WorkspaceResourceHandler#handleRemoveProject(HttpServletRequest, HttpServletResponse, WorkspaceInfo)
 	 * 
 	 * @param userId the user name
-	 * @param webProject the project to remove
+	 * @param project the project to remove
 	 * @return ServerStatus <code>OK</code> if the project has been found and successfully removed,
 	 * <code>ERROR</code> if an error occurred or the project couldn't be found
 	 */
-	public static ServerStatus removeProject(String userId, WebProject webProject) {
+	public static ServerStatus removeProject(String userId, ProjectInfo project) {
 		try {
 			UserInfo user = OrionConfiguration.getMetaStore().readUser(userId);
 			for (String workspaceId : user.getWorkspaceIds()) {
-				WebWorkspace webWorkspace = WebWorkspace.fromId(workspaceId);
-				JSONArray projectsJSON = webWorkspace.getProjectsJSON();
-				for (int j = 0; j < projectsJSON.length(); j++) {
-					JSONObject project = projectsJSON.getJSONObject(j);
-					String projectId = project.getString(ProtocolConstants.KEY_ID);
-					if (projectId.equals(webProject.getId())) {
+				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(workspaceId);
+				for (String projectId : workspace.getProjectIds()) {
+					if (projectId.equals(project.getUniqueId())) {
 						//If found, remove project from workspace
 						try {
-							WorkspaceResourceHandler.removeProject(userId, webWorkspace, webProject);
+							WorkspaceResourceHandler.removeProject(userId, workspace, project);
 						} catch (CoreException e) {
 							//we are unable to write in the platform location!
 							String msg = NLS.bind("Server content location could not be written: {0}", Activator.getDefault().getRootLocationURI());

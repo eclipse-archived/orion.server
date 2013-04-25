@@ -23,11 +23,9 @@ import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.file.ServletFileStoreHandler;
 import org.eclipse.orion.internal.server.servlets.hosting.IHostedSite;
-import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
-import org.eclipse.orion.internal.server.servlets.workspace.WebWorkspace;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 
@@ -303,11 +301,10 @@ public class HostedSiteServlet extends OrionServlet {
 		//path format is /workspaceId/projectName/[suffix]
 		if (path.segmentCount() <= 1)
 			return null;
-		WebWorkspace workspace = WebWorkspace.fromId(path.segment(0));
-		WebProject project = workspace.getProjectByName(path.segment(1));
-		if (project == null)
-			return null;
 		try {
+			ProjectInfo project = OrionConfiguration.getMetaStore().readProject(path.segment(0), path.segment(1));
+			if (project == null)
+				return null;
 			return project.getProjectStore().getFileStore(path.removeFirstSegments(2));
 		} catch (CoreException e) {
 			LogHelper.log(new Status(IStatus.WARNING, Activator.PI_SERVER_SERVLETS, 1, NLS.bind("An error occurred when getting file store for path {0}", path), e));

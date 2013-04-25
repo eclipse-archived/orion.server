@@ -1,28 +1,32 @@
+/*******************************************************************************
+ * Copyright (c) 2013 IBM Corporation and others
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ * IBM Corporation - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.orion.server.tests.servlets.site;
 
 import static org.junit.Assert.assertEquals;
 
+import com.meterware.httpunit.*;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
-
+import junit.framework.Assert;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
-import org.eclipse.orion.server.core.users.OrionScope;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import org.eclipse.orion.internal.server.servlets.site.SiteInfo;
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.json.*;
+import org.junit.*;
 import org.junit.Test;
-import org.osgi.service.prefs.BackingStoreException;
 import org.xml.sax.SAXException;
-
-import com.meterware.httpunit.WebConversation;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 
 /**
  * Tests for the site configurations API.
@@ -169,7 +173,7 @@ public class SiteTest extends CoreSiteTest {
 	/**
 	 * Create a site, then delete it and make sure it's gone.
 	 */
-	public void testDeleteSite() throws SAXException, JSONException, IOException, URISyntaxException, BackingStoreException {
+	public void testDeleteSite() throws SAXException, JSONException, IOException, URISyntaxException, CoreException {
 		// Create site
 		final String name = "A site to delete";
 		final String workspaceId = workspaceObject.getString(ProtocolConstants.KEY_ID);
@@ -178,12 +182,9 @@ public class SiteTest extends CoreSiteTest {
 		final String siteId = site.getString(ProtocolConstants.KEY_ID);
 		String location = site.getString(ProtocolConstants.HEADER_LOCATION);
 
-		OrionScope prefs = new OrionScope();
-		IEclipsePreferences userSites = prefs.getNode("Users" + "/" + testUserId + "/" + SITE_CONFIG_PREF_NODE);
-		IEclipsePreferences sites = prefs.getNode(SITE_CONFIG_PREF_NODE);
-
-		assertEquals(true, sites.nodeExists(siteId));
-		assertEquals(true, userSites.nodeExists(siteId));
+		UserInfo user = OrionConfiguration.getMetaStore().readUser(testUserId);
+		SiteInfo siteInfo = SiteInfo.getSite(user, siteId);
+		Assert.assertNotNull(siteInfo);
 
 		// Delete site
 		WebRequest deleteReq = getDeleteSiteRequest(location);
@@ -195,8 +196,9 @@ public class SiteTest extends CoreSiteTest {
 		WebResponse getResp = webConversation.getResponse(getReq);
 		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, getResp.getResponseCode());
 
-		assertEquals(false, sites.nodeExists(siteId));
-		assertEquals(false, userSites.nodeExists(siteId));
+		user = OrionConfiguration.getMetaStore().readUser(testUserId);
+		siteInfo = SiteInfo.getSite(user, siteId);
+		Assert.assertNull(siteInfo);
 
 		// GET all sites should not include the deleted site
 		WebRequest getAllReq = getRetrieveAllSitesRequest(null);

@@ -28,14 +28,63 @@ import org.osgi.service.prefs.BackingStoreException;
  */
 public class CompatibilityMetaStore implements IMetaStore {
 
+	public void createProject(String workspaceId, ProjectInfo info) throws CoreException {
+		WebWorkspace workspace = WebWorkspace.fromId(workspaceId);
+		WebProject project = WebProject.fromId(WebProject.nextProjectId());
+		info.setUniqueId(project.getId());
+		updateProject(info);
+		workspace.addProject(project);
+		workspace.save();
+	}
+
 	public void createUser(UserInfo info) throws CoreException {
 		updateUser(info);
 	}
 
-	public void createWorkspace(WorkspaceInfo info) throws CoreException {
+	public void createWorkspace(String userId, WorkspaceInfo info) throws CoreException {
+		WebWorkspace workspace = WebUser.fromUserId(userId).createWorkspace(info.getFullName());
+		info.setUniqueId(workspace.getId());
 	}
 
-	public void createProject(ProjectInfo info) throws CoreException {
+	public void deleteProject(String workspaceId, String projectName) throws CoreException {
+		WebWorkspace workspace = WebWorkspace.fromId(workspaceId);
+		WebProject project = workspace.getProjectByName(projectName);
+		//if no such project exists, we have nothing to do here
+		if (project == null)
+			return;
+		//If all went well, remove project from workspace
+		workspace.removeProject(project);
+
+		//remove project metadata
+		project.remove();
+
+		//save the workspace and project metadata
+		project.save();
+		workspace.save();
+	}
+
+	public void deleteUser(String uid) throws CoreException {
+		WebUser.fromUserId(uid).delete();
+	}
+
+	public List<String> readAllUsers() throws CoreException {
+		try {
+			String[] children = new OrionScope().getNode(WebUser.USERS_NODE).childrenNames();
+			return Arrays.asList(children);
+		} catch (BackingStoreException e) {
+			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "Unable to retrieve metadata", e));
+		}
+	}
+
+	public ProjectInfo readProject(String projectId) throws CoreException {
+		if (!WebProject.exists(projectId))
+			return null;
+		return toProjectInfo(WebProject.fromId(projectId));
+	}
+
+	public ProjectInfo readProject(String workspaceId, String projectName) throws CoreException {
+		WebWorkspace workspace = WebWorkspace.fromId(workspaceId);
+		return toProjectInfo(workspace.getProjectByName(projectName));
 	}
 
 	public UserInfo readUser(String uid) throws CoreException {
@@ -77,27 +126,35 @@ public class CompatibilityMetaStore implements IMetaStore {
 		return info;
 	}
 
-	public void updateUser(UserInfo info) throws CoreException {
-		String userId = info.getUniqueId();
-		if (userId == null)
-			throw new IllegalArgumentException("User id not provided"); //$NON-NLS-1$
-		WebUser webUser = WebUser.fromUserId(userId);
-		webUser.setUserName(info.getUserName());
-		webUser.setName(info.getFullName());
-		webUser.setGuest(info.isGuest());
+	public WorkspaceInfo readWorkspace(String workspaceId) throws CoreException {
+		if (!WebWorkspace.exists(workspaceId))
+			return null;
+		WebWorkspace workspace = WebWorkspace.fromId(workspaceId);
+		WorkspaceInfo info = new WorkspaceInfo();
+		info.setUniqueId(workspaceId);
+		info.setFullName(workspace.getName());
+		List<String> projectIds = new ArrayList<String>();
+		for (WebProject project : workspace.getProjects())
+			projectIds.add(project.getId());
+		info.setProjectIds(projectIds);
+		return info;
+	}
 
-		//authorization info
-		IEclipsePreferences store = webUser.getStore();
-		String prop = info.getProperty(ProtocolConstants.KEY_USER_RIGHTS_VERSION);
-		if (prop != null)
-			store.put(ProtocolConstants.KEY_USER_RIGHTS_VERSION, prop);
-		prop = info.getProperty(ProtocolConstants.KEY_USER_RIGHTS);
-		if (prop != null)
-			store.put(ProtocolConstants.KEY_USER_RIGHTS, prop);
+	private ProjectInfo toProjectInfo(WebProject project) {
+		if (project == null)
+			return null;
+		ProjectInfo info = new ProjectInfo();
+		info.setUniqueId(project.getId());
+		info.setFullName(project.getName());
+		info.setContentLocation(project.getContentLocation());
+		return info;
+	}
 
-		updateSites(info, webUser);
-
-		webUser.save();
+	public void updateProject(ProjectInfo projectInfo) throws CoreException {
+		WebProject project = WebProject.fromId(projectInfo.getUniqueId());
+		project.setContentLocation(projectInfo.getContentLocation());
+		project.setName(projectInfo.getFullName());
+		project.save();
 	}
 
 	/**
@@ -147,16 +204,26 @@ public class CompatibilityMetaStore implements IMetaStore {
 		}
 	}
 
-	public void deleteUser(String uid) throws CoreException {
-		WebUser.fromUserId(uid).delete();
-	}
+	public void updateUser(UserInfo info) throws CoreException {
+		String userId = info.getUniqueId();
+		if (userId == null)
+			throw new IllegalArgumentException("User id not provided"); //$NON-NLS-1$
+		WebUser webUser = WebUser.fromUserId(userId);
+		webUser.setUserName(info.getUserName());
+		webUser.setName(info.getFullName());
+		webUser.setGuest(info.isGuest());
 
-	public List<String> readAllUsers() throws CoreException {
-		try {
-			String[] children = new OrionScope().getNode(WebUser.USERS_NODE).childrenNames();
-			return Arrays.asList(children);
-		} catch (BackingStoreException e) {
-			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "Unable to retrieve metadata", e));
-		}
+		//authorization info
+		IEclipsePreferences store = webUser.getStore();
+		String prop = info.getProperty(ProtocolConstants.KEY_USER_RIGHTS_VERSION);
+		if (prop != null)
+			store.put(ProtocolConstants.KEY_USER_RIGHTS_VERSION, prop);
+		prop = info.getProperty(ProtocolConstants.KEY_USER_RIGHTS);
+		if (prop != null)
+			store.put(ProtocolConstants.KEY_USER_RIGHTS, prop);
+
+		updateSites(info, webUser);
+
+		webUser.save();
 	}
 }

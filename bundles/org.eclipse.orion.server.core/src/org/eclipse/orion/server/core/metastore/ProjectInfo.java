@@ -10,9 +10,51 @@
  *******************************************************************************/
 package org.eclipse.orion.server.core.metastore;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.runtime.CoreException;
+
 /**
  * A snapshot of information about a single project.
  */
 public class ProjectInfo extends MetadataInfo {
+	private URI contentLocation;
 
+	/**
+	 * Returns the absolute location of the contents of this project.
+	 * <p>
+	 * This method never returns null.
+	 * </p>
+	 * @return The location of the contents of this project
+	 */
+	public URI getContentLocation() {
+		return contentLocation;
+	}
+
+	/**
+	 * TODO Inline
+	 * @throws CoreException 
+	 */
+	public IFileStore getProjectStore() throws CoreException {
+		return EFS.getStore(getContentLocation());
+	}
+
+	/**
+	 * Sets the absolute location of the contents of this project.
+	 */
+	public void setContentLocation(URI contentURI) {
+		if (contentURI.getUserInfo() == null) {
+			contentLocation = contentURI;
+		} else {
+			try {
+				//strip out credential information
+				contentLocation = new URI(contentURI.getScheme(), null, contentURI.getHost(), contentURI.getPort(), contentURI.getPath(), contentURI.getQuery(), contentURI.getFragment());
+			} catch (URISyntaxException e) {
+				//should never happen because we are stripping info from a valid URI
+				throw new RuntimeException(e);
+			}
+		}
+	}
 }

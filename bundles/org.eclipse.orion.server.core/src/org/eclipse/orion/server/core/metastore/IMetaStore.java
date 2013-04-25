@@ -29,14 +29,24 @@ public interface IMetaStore {
 
 	/**
 	 * Creates a new user in the backing store containing the provided user information.
-	 * @param info
-	 * @throws CoreException
+	 * @param info the information about the user to create
+	 * @throws CoreException if the user could not be created
 	 */
 	public void createUser(UserInfo info) throws CoreException;
 
-	public void createWorkspace(WorkspaceInfo info) throws CoreException;
+	/**
+	 * Creates a new workspace in the backing store containing the provided workspace information.
+	 * @param info the information about the workspace to create
+	 * @throws CoreException if the workspace could not be created
+	 */
+	public void createWorkspace(String userId, WorkspaceInfo info) throws CoreException;
 
-	public void createProject(ProjectInfo info) throws CoreException;
+	/**
+	 * Creates a new user in the backing store containing the provided project information.
+	 * @param info the information about the project to create
+	 * @throws CoreException if the project could not be created
+	 */
+	public void createProject(String workspaceId, ProjectInfo info) throws CoreException;
 
 	/**
 	 * Returns a list of all user ids in this store. Manipulating the returned
@@ -46,9 +56,68 @@ public interface IMetaStore {
 	 */
 	public List<String> readAllUsers() throws CoreException;
 
-	public UserInfo readUser(String uid) throws CoreException;
+	/**
+	 * Obtains information about a single user from the backing storage and returns it.
+	 * Returns <code>null</code> if there is no such project in the backing store.
+	 * @param userId The unique id of the user to return
+	 * @return the user information or <code>null</code>
+	 * @throws CoreException If there was a failure obtaining metadata from the backing store.
+	 */
+	public UserInfo readUser(String userId) throws CoreException;
+
+	/**
+	 * Obtains information about a single workspace from the backing storage and returns it.
+	 * Returns <code>null</code> if there is no such workspace in the backing store.
+	 * @param workspaceId The unique id of the workspace to return
+	 * @return the workspace information or <code>null</code>
+	 * @throws CoreException If there was a failure obtaining metadata from the backing store.
+	 */
+	public WorkspaceInfo readWorkspace(String workspaceId) throws CoreException;
+
+	/**
+	 * Obtains information about a single project from the backing storage and returns it.
+	 * Returns <code>null</code> if there is no such project in the backing store.
+	 * @param projectId The unique id of the project to return
+	 * @return the project information, or <code>null</code>
+	 * @throws CoreException If there was a failure obtaining metadata from the backing store.
+	 */
+	public ProjectInfo readProject(String projectId) throws CoreException;
+
+	/**
+	 * Obtains information about a single project from the backing storage and returns it.
+	 * Returns <code>null</code> if there is no such project in the backing store.
+	 * @param workspaceId The unique id of the workspace containing the project
+	 * @param projectName The full name of the project
+	 * @return the project information, or <code>null</code>
+	 * @throws CoreException If there was a failure obtaining metadata from the backing store.
+	 */
+	public ProjectInfo readProject(String workspaceId, String projectName) throws CoreException;
 
 	public void updateUser(UserInfo info) throws CoreException;
 
-	public void deleteUser(String uid) throws CoreException;
+	/**
+	 * Deletes the user metadata corresponding to the given id. All artifacts in the backing store
+	 * uniquely owned by this user are also deleted from the backing store (such as workspaces
+	 * and projects).
+	 * <p>
+	 * If no such user exists, this method has no effect. 
+	 * </p>
+	 * @param userId The id of the user to delete
+	 * @throws CoreException
+	 */
+	public void deleteUser(String userId) throws CoreException;
+
+	public void updateProject(ProjectInfo project) throws CoreException;
+
+	/**
+	 * Deletes the project metadata corresponding to the given project name in the given
+	 * workspace.
+	 * <p>
+	 * If no such project exists, this method has no effect.
+	 * </p>
+	 * @param workspaceId the unique id of the workspace containing the project
+	 * @param projectName the full name of the project to delete
+	 * @throws CoreException If the project could not be deleted
+	 */
+	public void deleteProject(String workspaceId, String projectName) throws CoreException;
 }

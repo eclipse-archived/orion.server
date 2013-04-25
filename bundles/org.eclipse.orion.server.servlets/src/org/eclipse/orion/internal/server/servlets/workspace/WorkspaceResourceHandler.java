@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2012 IBM Corporation and others.
+ * Copyright (c) 2010, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -22,7 +22,9 @@ import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.*;
+import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.metastore.*;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
@@ -30,7 +32,7 @@ import org.json.*;
 /**
  * Handles requests against a single workspace.
  */
-public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorkspace> {
+public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<WorkspaceInfo> {
 	static final int CREATE_COPY = 0x1;
 	static final int CREATE_MOVE = 0x2;
 	static final int CREATE_NO_OVERWRITE = 0x4;
@@ -40,8 +42,8 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 	/**
 	 * Returns the location of the project's content (conforming to File REST API).
 	 */
-	static URI computeProjectURI(URI parentLocation, WebWorkspace workspace, WebProject project) {
-		return URIUtil.append(parentLocation, ".." + Activator.LOCATION_FILE_SERVLET + '/' + workspace.getId() + '/' + project.getName() + '/'); //$NON-NLS-1$
+	static URI computeProjectURI(URI parentLocation, WorkspaceInfo workspace, ProjectInfo project) {
+		return URIUtil.append(parentLocation, ".." + Activator.LOCATION_FILE_SERVLET + '/' + workspace.getUniqueId() + '/' + project.getFullName() + '/'); //$NON-NLS-1$
 	}
 
 	/**
@@ -51,21 +53,22 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 	 * @param requestLocation The location of the current request
 	 * @param baseLocation The base location for the workspace servlet
 	 */
-	public static JSONObject toJSON(WebWorkspace workspace, URI requestLocation, URI baseLocation) {
-		JSONObject result = WebElementResourceHandler.toJSON(workspace);
-		JSONArray projects = workspace.getProjectsJSON();
-		URI workspaceLocation = URIUtil.append(baseLocation, workspace.getId());
+	public static JSONObject toJSON(WorkspaceInfo workspace, URI requestLocation, URI baseLocation) {
+		JSONObject result = MetadataInfoResourceHandler.toJSON(workspace);
+		JSONArray projects = new JSONArray();
+		URI workspaceLocation = URIUtil.append(baseLocation, workspace.getUniqueId());
 		URI projectBaseLocation = URIUtil.append(workspaceLocation, "project"); //$NON-NLS-1$
-		if (projects == null)
-			projects = new JSONArray();
 		//augment project objects with their location
-		for (int i = 0; i < projects.length(); i++) {
+		for (String projectId : workspace.getProjectIds()) {
 			try {
-				JSONObject project = (JSONObject) projects.get(i);
+				JSONObject project = new JSONObject();
+				project.put(ProtocolConstants.KEY_ID, projectId);
 				//this is the location of the project metadata
-				project.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(projectBaseLocation, project.getString(ProtocolConstants.KEY_ID)));
+				project.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(projectBaseLocation, projectId));
+				projects.put(project);
 			} catch (JSONException e) {
-				//ignore malformed children
+				//keys are valid so this should never happen
+				throw new RuntimeException(e);
 			}
 		}
 
@@ -83,9 +86,10 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		boolean requestLocal = !ProtocolConstants.PATH_DRIVE.equals(URIUtil.lastSegment(requestLocation));
 		//add children element to conform to file API structure
 		JSONArray children = new JSONArray();
-		for (int i = 0; i < projects.length(); i++) {
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
+		for (String projectId : workspace.getProjectIds()) {
 			try {
-				WebProject project = WebProject.fromId(projects.getJSONObject(i).getString(ProtocolConstants.KEY_ID));
+				ProjectInfo project = metaStore.readProject(projectId);
 				//remote folders are listed separately
 				boolean isLocal = true;
 				IFileStore projectStore = null;
@@ -105,7 +109,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 						continue;
 				}
 				JSONObject child = new JSONObject();
-				child.put(ProtocolConstants.KEY_NAME, project.getName());
+				child.put(ProtocolConstants.KEY_NAME, project.getFullName());
 				child.put(ProtocolConstants.KEY_DIRECTORY, true);
 				//this is the location of the project file contents
 				URI contentLocation = computeProjectURI(baseLocation, workspace, project);
@@ -121,9 +125,9 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 				} catch (URISyntaxException e) {
 					throw new RuntimeException(e);
 				}
-				child.put(ProtocolConstants.KEY_ID, project.getId());
+				child.put(ProtocolConstants.KEY_ID, project.getUniqueId());
 				children.put(child);
-			} catch (JSONException e) {
+			} catch (Exception e) {
 				//ignore malformed children
 			}
 		}
@@ -140,7 +144,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		this.statusHandler = statusHandler;
 	}
 
-	public static void computeProjectLocation(HttpServletRequest request, WebProject project, String location, boolean init) throws URISyntaxException, CoreException {
+	public static void computeProjectLocation(HttpServletRequest request, ProjectInfo project, String location, boolean init) throws CoreException {
 		String user = request.getRemoteUser();
 		URI contentURI;
 		if (location == null) {
@@ -156,7 +160,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 			}
 			if (init) {
 				project.setContentLocation(contentURI);
-				IFileStore child = project.getProjectStore(request);
+				IFileStore child = NewFileServlet.getFileStore(request, project);
 				child.mkdir(EFS.NONE, null);
 			}
 		}
@@ -167,7 +171,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 	 * Generates a file system location for newly created project. Creates a new
 	 * folder in the file system and ensures it is empty.
 	 */
-	private static URI generateProjectLocation(WebProject project, String user) throws CoreException, URISyntaxException {
+	private static URI generateProjectLocation(ProjectInfo project, String user) throws CoreException {
 		URI platformLocationURI = Activator.getDefault().getRootLocationURI();
 		IFileStore root = EFS.getStore(platformLocationURI);
 
@@ -179,12 +183,12 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		if ("usertree".equals(layout) && user != null) { //$NON-NLS-1$
 			//the user-tree layout organises projects by the user who created it
 			String userPrefix = user.substring(0, Math.min(2, user.length()));
-			projectStore = root.getChild(userPrefix).getChild(user).getChild(project.getId());
+			projectStore = root.getChild(userPrefix).getChild(user).getChild(project.getUniqueId());
 			location = projectStore.toURI();
 		} else {
 			//default layout is a flat list of projects at the root
-			projectStore = root.getChild(project.getId());
-			location = new URI(null, projectStore.getName(), null);
+			projectStore = root.getChild(project.getUniqueId());
+			location = projectStore.toURI();
 		}
 		//This folder must be empty initially or we risk showing another user's old private data
 		projectStore.delete(EFS.NONE, null);
@@ -215,7 +219,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		return Boolean.valueOf(toAdd.optBoolean(ProtocolConstants.KEY_CREATE_IF_DOESNT_EXIST));
 	}
 
-	private boolean handleAddOrRemoveProject(HttpServletRequest request, HttpServletResponse response, WebWorkspace workspace) throws IOException, JSONException, ServletException {
+	private boolean handleAddOrRemoveProject(HttpServletRequest request, HttpServletResponse response, WorkspaceInfo workspace) throws IOException, JSONException, ServletException {
 		//make sure required fields are set
 		JSONObject data = OrionServlet.readJSONRequest(request);
 		if (!data.isNull("Remove")) //$NON-NLS-1$
@@ -223,10 +227,11 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		int options = getCreateOptions(request);
 		if ((options & (CREATE_COPY | CREATE_MOVE)) != 0)
 			return handleCopyMoveProject(request, response, workspace, data);
-		return handleAddProject(request, response, workspace, data);
+		handleAddProject(request, response, workspace, data);
+		return true;
 	}
 
-	private boolean handleAddProject(HttpServletRequest request, HttpServletResponse response, WebWorkspace workspace, JSONObject data) throws IOException, ServletException {
+	private ProjectInfo handleAddProject(HttpServletRequest request, HttpServletResponse response, WorkspaceInfo workspace, JSONObject data) throws IOException, ServletException {
 		//make sure required fields are set
 		JSONObject toAdd = data;
 		String id = toAdd.optString(ProtocolConstants.KEY_ID, null);
@@ -234,34 +239,42 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		if (name == null)
 			name = request.getHeader(ProtocolConstants.HEADER_SLUG);
 		if (!validateProjectName(workspace, name, request, response))
-			return true;
-		if (id == null)
-			id = WebProject.nextProjectId();
-		WebProject project = WebProject.fromId(id);
-		project.setName(name);
+			return null;
+		ProjectInfo project = new ProjectInfo();
+		if (id != null)
+			project.setUniqueId(id);
+		project.setFullName(name);
 		String content = toAdd.optString(ProtocolConstants.KEY_CONTENT_LOCATION, null);
 		if (!isAllowedLinkDestination(content, request.getRemoteUser())) {
 			String msg = NLS.bind("Cannot link to server path {0}. Use the orion.file.allowedPaths property to specify server locations where content can be linked.", content);
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, msg, null));
+			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, msg, null));
+			return null;
+		}
+		try {
+			//project creation will assign unique project id
+			getMetaStore().createProject(workspace.getUniqueId(), project);
+		} catch (CoreException e) {
+			String msg = "Error persisting project state";
+			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+			return null;
 		}
 		try {
 			computeProjectLocation(request, project, content, getInit(toAdd));
+			getMetaStore().updateProject(project);
 		} catch (CoreException e) {
 			if (handleAuthFailure(request, response, e))
-				return true;
+				return null;
+			//delete the project so we don't end up with a project in a bad location
+			try {
+				getMetaStore().deleteProject(workspace.getUniqueId(), project.getFullName());
+			} catch (CoreException e1) {
+				//swallow secondary error
+				LogHelper.log(e1);
+			}
 			//we are unable to write in the platform location!
 			String msg = NLS.bind("Server content location could not be written: {0}", Activator.getDefault().getRootLocationURI());
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
-		} catch (URISyntaxException e) {
-			String msg = NLS.bind("Invalid project location: {0}", content);
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, e));
-		}
-		try {
-			//If all went well, add project to workspace
-			addProject(request.getRemoteUser(), workspace, project);
-		} catch (CoreException e) {
-			String msg = "Error persisting project state";
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+			return null;
 		}
 		//serialize the new project in the response
 
@@ -274,7 +287,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		response.setHeader(ProtocolConstants.HEADER_LOCATION, result.optString(ProtocolConstants.KEY_LOCATION));
 		response.setStatus(HttpServletResponse.SC_CREATED);
 
-		return true;
+		return project;
 	}
 
 	/**
@@ -282,7 +295,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 	 * was handled (either success or failure). Returns <code>false</code> if this method
 	 * does not know how to handle the request.
 	 */
-	private boolean handleCopyMoveProject(HttpServletRequest request, HttpServletResponse response, WebWorkspace workspace, JSONObject data) throws ServletException, IOException {
+	private boolean handleCopyMoveProject(HttpServletRequest request, HttpServletResponse response, WorkspaceInfo workspace, JSONObject data) throws ServletException, IOException {
 		String sourceLocation = data.optString(ProtocolConstants.HEADER_LOCATION);
 		String sourceId = projectForLocation(request, response, sourceLocation);
 		//null result means there was an error and we already handled it
@@ -309,7 +322,13 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 
 		if (!validateProjectName(workspace, destinationName, request, response))
 			return true;
-		WebProject sourceProject = WebProject.fromId(sourceId);
+		ProjectInfo sourceProject = null;
+		try {
+			sourceProject = getMetaStore().readProject(sourceId);
+		} catch (CoreException e) {
+			handleError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), e);
+		}
+
 		if ((options & CREATE_MOVE) != 0) {
 			return handleMoveProject(request, response, workspace, sourceProject, sourceLocation, destinationName);
 		} else if ((options & CREATE_COPY) != 0) {
@@ -323,21 +342,21 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 	 * Implementation of project copy
 	 * Returns <code>false</code> if this method doesn't know how to intepret the request.
 	 */
-	private boolean handleCopyProject(HttpServletRequest request, HttpServletResponse response, WebWorkspace workspace, WebProject sourceProject, String destinationName) throws IOException, ServletException {
+	private boolean handleCopyProject(HttpServletRequest request, HttpServletResponse response, WorkspaceInfo workspace, ProjectInfo sourceProject, String destinationName) throws IOException, ServletException {
 		//first create the destination project
 		String destinationId = WebProject.nextProjectId();
-		JSONObject projectInfo = new JSONObject();
+		JSONObject projectObject = new JSONObject();
 		try {
-			projectInfo.put(ProtocolConstants.KEY_ID, destinationId);
-			projectInfo.put(ProtocolConstants.KEY_NAME, destinationName);
+			projectObject.put(ProtocolConstants.KEY_ID, destinationId);
+			projectObject.put(ProtocolConstants.KEY_NAME, destinationName);
 		} catch (JSONException e) {
 			//should never happen
 			throw new RuntimeException(e);
 		}
-		handleAddProject(request, response, workspace, projectInfo);
+
 		//copy the project data from source
-		WebProject destinationProject = WebProject.fromId(destinationId);
-		String sourceName = sourceProject.getName();
+		ProjectInfo destinationProject = handleAddProject(request, response, workspace, projectObject);
+		String sourceName = sourceProject.getFullName();
 		try {
 			copyProjectContents(sourceProject, destinationProject);
 		} catch (CoreException e) {
@@ -356,12 +375,12 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 	 * Implementation of project move. Returns whether the move requested was handled.
 	 * Returns <code>false</code> if this method doesn't know how to interpret the request.
 	 */
-	private boolean handleMoveProject(HttpServletRequest request, HttpServletResponse response, WebWorkspace workspace, WebProject sourceProject, String sourceLocation, String destinationName) throws ServletException, IOException {
-		String sourceName = sourceProject.getName();
+	private boolean handleMoveProject(HttpServletRequest request, HttpServletResponse response, WorkspaceInfo workspace, ProjectInfo sourceProject, String sourceLocation, String destinationName) throws ServletException, IOException {
+		String sourceName = sourceProject.getFullName();
 		//a project move is simply a rename
-		sourceProject.setName(destinationName);
+		sourceProject.setFullName(destinationName);
 		try {
-			sourceProject.save();
+			getMetaStore().updateProject(sourceProject);
 		} catch (CoreException e) {
 			String msg = NLS.bind("Error persisting project state: {0}", sourceName);
 			return handleError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
@@ -378,7 +397,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 	/**
 	 * Copies the content of one project to the location of a second project. 
 	 */
-	private void copyProjectContents(WebProject sourceProject, WebProject destinationProject) throws CoreException {
+	private void copyProjectContents(ProjectInfo sourceProject, ProjectInfo destinationProject) throws CoreException {
 		sourceProject.getProjectStore().copy(destinationProject.getProjectStore(), EFS.OVERWRITE, null);
 	}
 
@@ -390,7 +409,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, httpCode, message, cause));
 	}
 
-	private boolean handleGetWorkspaceMetadata(HttpServletRequest request, HttpServletResponse response, WebWorkspace workspace) throws IOException {
+	private boolean handleGetWorkspaceMetadata(HttpServletRequest request, HttpServletResponse response, WorkspaceInfo workspace) throws IOException {
 		//we need the base location for the workspace servlet. Since this is a GET 
 		//on workspace servlet we need to strip off all but the first segment of the request path
 		URI requestLocation = getURI(request);
@@ -406,23 +425,23 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 
 	}
 
-	private boolean handlePutWorkspaceMetadata(HttpServletRequest request, HttpServletResponse response, WebWorkspace workspace) {
+	private boolean handlePutWorkspaceMetadata(HttpServletRequest request, HttpServletResponse response, WorkspaceInfo workspace) {
 		return false;
 	}
 
-	private boolean handleRemoveProject(HttpServletRequest request, HttpServletResponse response, WebWorkspace workspace) throws IOException, JSONException, ServletException {
+	private boolean handleRemoveProject(HttpServletRequest request, HttpServletResponse response, WorkspaceInfo workspace) throws IOException, JSONException, ServletException {
 		IPath path = new Path(request.getPathInfo());
 		//format is /workspaceId/project/<projectId>
 		if (path.segmentCount() != 3)
 			return false;
 		String projectId = path.segment(2);
-		if (!WebProject.exists(projectId)) {
-			//nothing to do
-			return true;
-		}
-		WebProject project = WebProject.fromId(projectId);
-
 		try {
+			ProjectInfo project = getMetaStore().readProject(projectId);
+			if (project == null) {
+				//nothing to do if project does not exist
+				return true;
+			}
+
 			removeProject(request.getRemoteUser(), workspace, project);
 		} catch (CoreException e) {
 			ServerStatus error = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error removing project", e);
@@ -434,7 +453,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 	}
 
 	@Override
-	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, WebWorkspace workspace) throws ServletException {
+	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, WorkspaceInfo workspace) throws ServletException {
 		if (workspace == null)
 			return statusHandler.handleRequest(request, response, new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "Workspace not specified"));
 		//we could split and handle different API versions here if needed
@@ -453,7 +472,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 					//fall through
 			}
 		} catch (IOException e) {
-			String msg = NLS.bind("Error handling request against workspace {0}", workspace.getId());
+			String msg = NLS.bind("Error handling request against workspace {0}", workspace.getUniqueId());
 			statusHandler.handleRequest(request, response, new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, msg, e));
 		} catch (JSONException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Syntax error in request", e));
@@ -533,6 +552,9 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		return null;
 	}
 
+	/**
+	 * @deprecated Use {@link IMetaStore#createProject(String, org.eclipse.orion.server.core.metastore.ProjectInfo)}
+	 */
 	public static void addProject(String user, WebWorkspace workspace, WebProject project) throws CoreException {
 		//add project to workspace
 		workspace.addProject(project);
@@ -541,30 +563,22 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 		workspace.save();
 	}
 
-	public static void removeProject(String user, WebWorkspace workspace, WebProject project) throws CoreException {
+	public static void removeProject(String user, WorkspaceInfo workspace, ProjectInfo project) throws CoreException {
 		// remove the project folder
 		URI contentURI = project.getContentLocation();
 
 		// don't remove linked projects
-		if (project.getId().equals(contentURI.toString())) {
+		//TODO This is wrong because ProjectInfo never returns relative URI
+		if (project.getUniqueId().equals(contentURI.toString())) {
 			URI platformLocationURI = Activator.getDefault().getRootLocationURI();
 			IFileStore child;
-			child = EFS.getStore(platformLocationURI).getChild(project.getId());
+			child = EFS.getStore(platformLocationURI).getChild(project.getUniqueId());
 			if (child.fetchInfo(EFS.NONE, null).exists()) {
 				child.delete(EFS.NONE, null);
 			}
 		}
 
-		//If all went well, remove project from workspace
-		workspace.removeProject(project);
-
-		//remove project metadata
-		project.remove();
-
-		//save the workspace and project metadata
-		project.save();
-		workspace.save();
-
+		OrionConfiguration.getMetaStore().deleteProject(workspace.getUniqueId(), project.getFullName());
 	}
 
 	/**
@@ -586,7 +600,7 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 	 * project name is valid, and <code>false</code> otherwise. This method takes care of
 	 * setting the error response when the project name is not valid.
 	 */
-	private boolean validateProjectName(WebWorkspace workspace, String name, HttpServletRequest request, HttpServletResponse response) throws ServletException {
+	private boolean validateProjectName(WorkspaceInfo workspace, String name, HttpServletRequest request, HttpServletResponse response) throws ServletException {
 		if (name == null || name.trim().length() == 0) {
 			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Project name cannot be empty", null));
 			return false;
@@ -595,9 +609,14 @@ public class WorkspaceResourceHandler extends WebElementResourceHandler<WebWorks
 			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Invalid project name: {0}", name), null));
 			return false;
 		}
-		if (workspace.getProjectByName(name) != null) {
-			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Duplicate project name: {0}", name), null));
-			return false;
+		try {
+			if (getMetaStore().readProject(workspace.getUniqueId(), name) != null) {
+				statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Duplicate project name: {0}", name), null));
+				return false;
+			}
+		} catch (CoreException e) {
+			LogHelper.log(e);
+			//this is just pre-validation so let it continue and fail in the actual creation
 		}
 		return true;
 	}

@@ -20,7 +20,7 @@ public class UserInfo extends MetadataInfo {
 
 	private String userName;
 
-	private List<String> workspaceIds;
+	private List<String> workspaceIds = EMPTY;
 
 	/**
 	 * Returns the username for this user. A username is a short handle typically
@@ -61,9 +61,18 @@ public class UserInfo extends MetadataInfo {
 		this.userName = userName;
 	}
 
+	/**
+	 * Sets the list of unique workspace ids associated with this user. Note
+	 * callers should not use this method to create or delete workspaces.
+	 * @param ids the unique ids of all the workspaces associated with this user
+	 */
 	public void setWorkspaceIds(List<String> ids) {
-		//copy and wrap read only 
-		this.workspaceIds = Collections.unmodifiableList(new ArrayList<String>(ids));
+		if (ids == null || ids.isEmpty()) {
+			this.workspaceIds = EMPTY;
+		} else {
+			//copy and wrap read only 
+			this.workspaceIds = Collections.unmodifiableList(new ArrayList<String>(ids));
+		}
 	}
 
 }

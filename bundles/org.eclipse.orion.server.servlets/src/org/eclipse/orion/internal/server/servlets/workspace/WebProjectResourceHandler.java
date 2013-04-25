@@ -16,21 +16,23 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.metastore.ProjectInfo;
+import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
  * Handles serialization of {@link WebElement} objects.
  */
-public class WebProjectResourceHandler extends WebElementResourceHandler<WebProject> {
+public class WebProjectResourceHandler extends MetadataInfoResourceHandler<ProjectInfo> {
 	public WebProjectResourceHandler() {
 		super();
 	}
 
-	public static JSONObject toJSON(WebWorkspace workspace, WebProject project, URI parentLocation) {
-		JSONObject result = WebElementResourceHandler.toJSON(project);
+	public static JSONObject toJSON(WorkspaceInfo workspace, ProjectInfo project, URI parentLocation) {
+		JSONObject result = MetadataInfoResourceHandler.toJSON(project);
 		try {
-			result.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(parentLocation, "project/" + project.getId())); //$NON-NLS-1$
+			result.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(parentLocation, "project/" + project.getUniqueId())); //$NON-NLS-1$
 			URI base = parentLocation.resolve(""); //$NON-NLS-1$
 			result.put(ProtocolConstants.KEY_CONTENT_LOCATION, WorkspaceResourceHandler.computeProjectURI(base, workspace, project));
 		} catch (JSONException e) {
@@ -40,7 +42,7 @@ public class WebProjectResourceHandler extends WebElementResourceHandler<WebProj
 	}
 
 	@Override
-	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, WebProject object) throws ServletException {
+	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, ProjectInfo object) throws ServletException {
 		return false;
 	}
 

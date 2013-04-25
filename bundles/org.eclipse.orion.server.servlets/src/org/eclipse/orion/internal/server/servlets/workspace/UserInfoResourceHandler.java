@@ -45,7 +45,6 @@ public class UserInfoResourceHandler extends MetadataInfoResourceHandler<UserInf
 				JSONObject workspace = new JSONObject();
 				workspace.put(ProtocolConstants.KEY_ID, workspaceId);
 				workspace.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(baseLocation, workspaceId));
-				workspace.put(ProtocolConstants.KEY_NAME, WebWorkspace.fromId(workspaceId).getName());
 				workspacesJSON.put(workspace);
 			}
 			result.put(ProtocolConstants.KEY_WORKSPACES, workspacesJSON);
