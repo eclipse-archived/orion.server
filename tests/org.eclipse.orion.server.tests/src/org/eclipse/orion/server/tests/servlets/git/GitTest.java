@@ -24,8 +24,6 @@ import junit.framework.Assert;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.RebaseCommand.Operation;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -36,7 +34,6 @@ import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.core.IOUtilities;
-import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
 import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
@@ -306,22 +303,8 @@ public abstract class GitTest extends FileSystemTest {
 
 	// see org.eclipse.orion.internal.server.servlets.workspace.WorkspaceResourceHandler.generateProjectLocation(WebProject, String)
 	private static IFileStore getProjectStore(ProjectInfo project, String user) throws CoreException {
-		URI platformLocationURI = Activator.getDefault().getRootLocationURI();
-		IFileStore root = EFS.getStore(platformLocationURI);
-
-		//consult layout preference
-		IEclipsePreferences preferences = InstanceScope.INSTANCE.getNode("org.eclipse.orion.server.configurator"); //$NON-NLS-1$
-		String layout = preferences.get(ServerConstants.CONFIG_FILE_LAYOUT, "flat").toLowerCase(); //$NON-NLS-1$
-
-		IFileStore projectStore;
-		if ("usertree".equals(layout) && user != null) { //$NON-NLS-1$
-			//the user-tree layout organises projects by the user who created it
-			String userPrefix = user.substring(0, Math.min(2, user.length()));
-			projectStore = root.getChild(userPrefix).getChild(user).getChild(project.getUniqueId());
-		} else {
-			//default layout is a flat list of projects at the root
-			projectStore = root.getChild(project.getUniqueId());
-		}
+		IFileStore root = OrionConfiguration.getUserHome(user);
+		IFileStore projectStore = root.getChild(project.getUniqueId());
 		projectStore.mkdir(EFS.NONE, null);
 		return projectStore;
 	}

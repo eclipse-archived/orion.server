@@ -11,8 +11,11 @@
 package org.eclipse.orion.internal.server.core;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 import java.util.Collection;
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IPreferencesService;
 import org.eclipse.orion.internal.server.core.tasks.TaskService;
@@ -33,6 +36,7 @@ import org.slf4j.LoggerFactory;
 public class Activator implements BundleActivator {
 
 	public static volatile BundleContext bundleContext;
+	public static final String PROP_USER_AREA = "org.eclipse.orion.server.core.userArea"; //$NON-NLS-1$
 
 	static Activator singleton;
 	ServiceTracker<FrameworkLog, FrameworkLog> logTracker;
@@ -40,6 +44,7 @@ public class Activator implements BundleActivator {
 	private ServiceRegistration<ITaskService> taskServiceRegistration;
 	private IMetaStore metastore;
 	private ServiceReference<IMetaStore> metastoreServiceReference;
+	private URI rootStoreURI;
 
 	public static Activator getDefault() {
 		return singleton;
@@ -166,6 +171,7 @@ public class Activator implements BundleActivator {
 	public void start(BundleContext context) throws Exception {
 		singleton = this;
 		bundleContext = context;
+		initializeFileSystem();
 		registerServices();
 	}
 
@@ -200,10 +206,65 @@ public class Activator implements BundleActivator {
 		bundleContext = null;
 	}
 
+	/**
+	 * Returns the root file system location for the workspace.
+	 */
+	public IPath getPlatformLocation() {
+		BundleContext context = Activator.getDefault().getContext();
+		Collection<ServiceReference<Location>> refs;
+		try {
+			refs = context.getServiceReferences(Location.class, Location.INSTANCE_FILTER);
+		} catch (InvalidSyntaxException e) {
+			// we know the instance location filter syntax is valid
+			throw new RuntimeException(e);
+		}
+		if (refs.isEmpty())
+			return null;
+		ServiceReference<Location> ref = refs.iterator().next();
+		Location location = context.getService(ref);
+		try {
+			if (location == null)
+				return null;
+			URL root = location.getURL();
+			if (root == null)
+				return null;
+			// strip off file: prefix from URL
+			return new Path(root.toExternalForm().substring(5));
+		} finally {
+			context.ungetService(ref);
+		}
+	}
+
+	private void initializeFileSystem() {
+		IPath location = getPlatformLocation();
+		if (location == null)
+			throw new RuntimeException("Unable to compute base file system location"); //$NON-NLS-1$
+
+		IFileStore rootStore = EFS.getLocalFileSystem().getStore(location);
+		try {
+			rootStore.mkdir(EFS.NONE, null);
+			rootStoreURI = rootStore.toURI();
+		} catch (CoreException e) {
+			throw new RuntimeException("Instance location is read only: " + rootStore, e); //$NON-NLS-1$
+		}
+
+		//initialize user area if not specified
+		if (System.getProperty(PROP_USER_AREA) == null) {
+			System.setProperty(PROP_USER_AREA, rootStore.getFileStore(new Path(".metadata/.plugins/org.eclipse.orion.server.core/userArea")).toString()); //$NON-NLS-1$
+		}
+	}
+
 	private void stopTaskService() {
 		ServiceRegistration<ITaskService> reg = taskServiceRegistration;
 		taskServiceRegistration = null;
 		if (reg != null)
 			reg.unregister();
+	}
+
+	/**
+	 * Returns the root location for storing content and metadata on this server.
+	 */
+	public URI getRootLocationURI() {
+		return rootStoreURI;
 	}
 }

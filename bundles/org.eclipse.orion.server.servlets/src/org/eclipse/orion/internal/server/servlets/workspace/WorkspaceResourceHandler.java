@@ -172,28 +172,12 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 	 * folder in the file system and ensures it is empty.
 	 */
 	private static URI generateProjectLocation(ProjectInfo project, String user) throws CoreException {
-		URI platformLocationURI = Activator.getDefault().getRootLocationURI();
-		IFileStore root = EFS.getStore(platformLocationURI);
-
-		//consult layout preference
-		String layout = PreferenceHelper.getString(ServerConstants.CONFIG_FILE_LAYOUT, "flat").toLowerCase(); //$NON-NLS-1$
-
-		IFileStore projectStore;
-		URI location;
-		if ("usertree".equals(layout) && user != null) { //$NON-NLS-1$
-			//the user-tree layout organises projects by the user who created it
-			String userPrefix = user.substring(0, Math.min(2, user.length()));
-			projectStore = root.getChild(userPrefix).getChild(user).getChild(project.getUniqueId());
-			location = projectStore.toURI();
-		} else {
-			//default layout is a flat list of projects at the root
-			projectStore = root.getChild(project.getUniqueId());
-			location = projectStore.toURI();
-		}
+		IFileStore root = OrionConfiguration.getUserHome(user);
+		IFileStore projectStore = root.getChild(project.getUniqueId());
 		//This folder must be empty initially or we risk showing another user's old private data
 		projectStore.delete(EFS.NONE, null);
 		projectStore.mkdir(EFS.NONE, null);
-		return location;
+		return projectStore.toURI();
 	}
 
 	/**
@@ -272,7 +256,7 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 				LogHelper.log(e1);
 			}
 			//we are unable to write in the platform location!
-			String msg = NLS.bind("Server content location could not be written: {0}", Activator.getDefault().getRootLocationURI());
+			String msg = NLS.bind("Cannot create project: {0}", project.getFullName());
 			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
 			return null;
 		}
@@ -568,9 +552,8 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		// don't remove linked projects
 		//TODO This is wrong because ProjectInfo never returns relative URI
 		if (project.getUniqueId().equals(contentURI.toString())) {
-			URI platformLocationURI = Activator.getDefault().getRootLocationURI();
-			IFileStore child;
-			child = EFS.getStore(platformLocationURI).getChild(project.getUniqueId());
+			IFileStore root = OrionConfiguration.getUserHome(user);
+			IFileStore child = root.getChild(project.getUniqueId());
 			if (child.fetchInfo(EFS.NONE, null).exists()) {
 				child.delete(EFS.NONE, null);
 			}

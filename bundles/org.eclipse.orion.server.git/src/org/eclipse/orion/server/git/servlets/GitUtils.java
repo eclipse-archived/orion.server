@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -20,7 +20,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.RepositoryCache;
 import org.eclipse.jgit.util.FS;
-import org.eclipse.orion.internal.server.servlets.Activator;
+import org.eclipse.orion.internal.server.core.Activator;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
@@ -109,7 +109,7 @@ public class GitUtils {
 
 	private static void getGitDirsInParents(File file, Map<IPath, File> gitDirs) {
 		int levelUp = 0;
-		File workspaceRoot = org.eclipse.orion.internal.server.servlets.Activator.getDefault().getPlatformLocation().toFile();
+		File workspaceRoot = Activator.getDefault().getPlatformLocation().toFile();
 		while (file != null && !file.getAbsolutePath().equals(workspaceRoot.getAbsolutePath())) {
 			if (file.exists()) {
 				if (RepositoryCache.FileKey.isGitRepository(file, FS.DETECTED)) {
@@ -233,7 +233,7 @@ public class GitUtils {
 	 * @return the HTTP path of the project content resource
 	 */
 	public static IPath pathFromProject(WorkspaceInfo workspace, ProjectInfo project) {
-		return new Path(Activator.LOCATION_FILE_SERVLET).append(workspace.getUniqueId()).append(project.getFullName());
+		return new Path(org.eclipse.orion.internal.server.servlets.Activator.LOCATION_FILE_SERVLET).append(workspace.getUniqueId()).append(project.getFullName());
 
 	}
 }

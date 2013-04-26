@@ -18,10 +18,8 @@ import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.resources.Base64;
@@ -175,16 +173,8 @@ public class WebProject extends WebElement {
 			return result;
 		}
 		//treat relative location as relative to the file system root
-		URI rootLocation = Activator.getDefault().getRootLocationURI();
-		try {
-			IFileStore root = EFS.getStore(rootLocation);
-			return root.getChild(result.toString()).toURI();
-		} catch (CoreException e) {
-			//malformed metadata
-			LogHelper.log(e);
-			return result;
-		}
-
+		IFileStore root = OrionConfiguration.getUserHome(null);
+		return root.getChild(result.toString()).toURI();
 	}
 
 	/**
@@ -219,8 +209,7 @@ public class WebProject extends WebElement {
 			return EFS.getLocalFileSystem().getStore(localPath);
 		}
 		//treat relative location as relative to the file system root
-		URI rootLocation = Activator.getDefault().getRootLocationURI();
-		IFileStore root = EFS.getStore(rootLocation);
+		IFileStore root = OrionConfiguration.getUserHome(null);
 		return root.getChild(location.toString());
 	}
 

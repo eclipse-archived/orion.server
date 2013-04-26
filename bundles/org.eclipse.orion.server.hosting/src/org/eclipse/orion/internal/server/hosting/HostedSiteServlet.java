@@ -103,16 +103,15 @@ public class HostedSiteServlet extends OrionServlet {
 
 	// FIXME these variables are copied from fileservlet
 	private ServletResourceHandler<IFileStore> fileSerializer;
-	private final URI rootStoreURI;
 
 	public HostedSiteServlet() {
-		rootStoreURI = Activator.getDefault().getRootLocationURI();
+		super();
 	}
 
 	@Override
 	public void init() throws ServletException {
 		super.init();
-		fileSerializer = new ServletFileStoreHandler(rootStoreURI, getStatusHandler(), getServletContext());
+		fileSerializer = new ServletFileStoreHandler(getStatusHandler(), getServletContext());
 	}
 
 	@Override

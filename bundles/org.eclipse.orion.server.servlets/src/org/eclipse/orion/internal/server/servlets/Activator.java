@@ -11,18 +11,18 @@
 package org.eclipse.orion.internal.server.servlets;
 
 import java.net.URI;
-import java.net.URL;
 import java.util.*;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
 import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
 import org.eclipse.orion.internal.server.servlets.workspace.CompatibilityMetaStore;
 import org.eclipse.orion.internal.server.servlets.workspace.ProjectParentDecorator;
 import org.eclipse.orion.internal.server.servlets.xfer.TransferResourceDecorator;
+import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
-import org.eclipse.osgi.service.datalocation.Location;
 import org.osgi.framework.*;
 import org.osgi.util.tracker.ServiceTracker;
 
@@ -51,7 +51,6 @@ public class Activator implements BundleActivator {
 	private ServiceTracker<IWebResourceDecorator, IWebResourceDecorator> decoratorTracker;
 	private ServiceTracker<ISiteHostingService, ISiteHostingService> siteHostingTracker;
 
-	private URI rootStoreURI;
 	private ServiceRegistration<IWebResourceDecorator> transferDecoratorRegistration;
 	private ServiceRegistration<IWebResourceDecorator> parentDecoratorRegistration;
 
@@ -81,42 +80,6 @@ public class Activator implements BundleActivator {
 		return siteHostingTracker;
 	}
 
-	/**
-	 * Returns the root file system location for the workspace.
-	 */
-	public IPath getPlatformLocation() {
-		BundleContext context = Activator.getDefault().getContext();
-		Collection<ServiceReference<Location>> refs;
-		try {
-			refs = context.getServiceReferences(Location.class, Location.INSTANCE_FILTER);
-		} catch (InvalidSyntaxException e) {
-			// we know the instance location filter syntax is valid
-			throw new RuntimeException(e);
-		}
-		if (refs.isEmpty())
-			return null;
-		ServiceReference<Location> ref = refs.iterator().next();
-		Location location = context.getService(ref);
-		try {
-			if (location == null)
-				return null;
-			URL root = location.getURL();
-			if (root == null)
-				return null;
-			// strip off file: prefix from URL
-			return new Path(root.toExternalForm().substring(5));
-		} finally {
-			context.ungetService(ref);
-		}
-	}
-
-	/**
-	 * Returns the root location for storing content and metadata on this server.
-	 */
-	public URI getRootLocationURI() {
-		return rootStoreURI;
-	}
-
 	public Collection<IWebResourceDecorator> getWebResourceDecorators() {
 		ServiceTracker<IWebResourceDecorator, IWebResourceDecorator> tracker = getDecoratorTracker();
 		return tracker.getTracked().values();
@@ -129,14 +92,9 @@ public class Activator implements BundleActivator {
 	}
 
 	private void initializeFileSystem() {
-		IPath location = getPlatformLocation();
-		if (location == null)
-			throw new RuntimeException("Unable to compute base file system location"); //$NON-NLS-1$
-
-		IFileStore rootStore = EFS.getLocalFileSystem().getStore(location);
+		IFileStore rootStore = OrionConfiguration.getUserHome(null);
 		try {
 			rootStore.mkdir(EFS.NONE, null);
-			rootStoreURI = rootStore.toURI();
 		} catch (CoreException e) {
 			throw new RuntimeException("Instance location is read only: " + rootStore, e); //$NON-NLS-1$
 		}

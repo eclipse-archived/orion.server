@@ -116,11 +116,11 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 		return attributes;
 	}
 
-	public ServletFileStoreHandler(URI rootStoreURI, ServletResourceHandler<IStatus> statusHandler, ServletContext context) {
+	public ServletFileStoreHandler(ServletResourceHandler<IStatus> statusHandler, ServletContext context) {
 		this.statusHandler = statusHandler;
 		fileSerializerV1 = new FileHandlerV1(statusHandler, context);
 		genericFileSerializer = new GenericFileHandler(context);
-		directorySerializerV1 = new DirectoryHandlerV1(rootStoreURI, statusHandler);
+		directorySerializerV1 = new DirectoryHandlerV1(statusHandler);
 		genericDirectorySerializer = new GenericDirectoryHandler();
 	}
 

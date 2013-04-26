@@ -27,7 +27,8 @@ import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FileUtils;
-import org.eclipse.orion.internal.server.servlets.*;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;
 import org.eclipse.orion.internal.server.servlets.workspace.WorkspaceResourceHandler;
 import org.eclipse.orion.server.core.*;
@@ -173,7 +174,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 					LogHelper.log(e1);
 				}
 				//we are unable to write in the platform location!
-				String msg = NLS.bind("Server content location could not be written: {0}", Activator.getDefault().getRootLocationURI());
+				String msg = NLS.bind("Failed to create project: {0}", project.getFullName());
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
 			}
 
@@ -444,7 +445,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 							WorkspaceResourceHandler.removeProject(userId, workspace, project);
 						} catch (CoreException e) {
 							//we are unable to write in the platform location!
-							String msg = NLS.bind("Server content location could not be written: {0}", Activator.getDefault().getRootLocationURI());
+							String msg = NLS.bind("Failed to remove project: {0}", project.getFullName());
 							return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 						}
 

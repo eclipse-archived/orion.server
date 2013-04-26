@@ -39,16 +39,15 @@ public class NewFileServlet extends OrionServlet {
 	private static final long serialVersionUID = 1L;
 
 	private ServletResourceHandler<IFileStore> fileSerializer;
-	private final URI rootStoreURI;
 
 	public NewFileServlet() {
-		rootStoreURI = Activator.getDefault().getRootLocationURI();
+		super();
 	}
 
 	@Override
 	public void init() throws ServletException {
 		super.init();
-		fileSerializer = new ServletFileStoreHandler(rootStoreURI, getStatusHandler(), getServletContext());
+		fileSerializer = new ServletFileStoreHandler(getStatusHandler(), getServletContext());
 	}
 
 	@Override
@@ -141,8 +140,7 @@ public class NewFileServlet extends OrionServlet {
 			return EFS.getLocalFileSystem().getStore(localPath);
 		}
 		//treat relative location as relative to the file system root
-		URI rootLocation = Activator.getDefault().getRootLocationURI();
-		IFileStore root = EFS.getStore(rootLocation);
+		IFileStore root = OrionConfiguration.getUserHome(request.getRemoteUser());
 		return root.getChild(location.toString());
 	}
 
