@@ -33,11 +33,9 @@ public class WorkspaceServlet extends OrionServlet {
 	private static final long serialVersionUID = 1L;
 
 	private ServletResourceHandler<WorkspaceInfo> workspaceResourceHandler;
-	private ServletResourceHandler<ProjectInfo> projectResourceHandler;
 
 	public WorkspaceServlet() {
 		workspaceResourceHandler = new WorkspaceResourceHandler(getStatusHandler());
-		projectResourceHandler = new WebProjectResourceHandler();
 	}
 
 	/**
@@ -69,10 +67,12 @@ public class WorkspaceServlet extends OrionServlet {
 				if (workspaceResourceHandler.handleRequest(req, resp, workspace))
 					return;
 			} else if (segmentCount == 3) {
-				//path format is /<wsId>/project/<projectId>
-				ProjectInfo project = OrionConfiguration.getMetaStore().readProject(path.segment(2));
-				if (projectResourceHandler.handleRequest(req, resp, project))
-					return;
+				//path format is /<wsId>/project/<projectName>
+				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(0));
+				ProjectInfo project = OrionConfiguration.getMetaStore().readProject(path.segment(0), path.segment(2));
+				URI baseLocation = ServletResourceHandler.getURI(req);
+				OrionServlet.writeJSONResponse(req, resp, WebProjectResourceHandler.toJSON(workspace, project, baseLocation));
+				return;
 			}
 		} catch (CoreException e) {
 			handleException(resp, "Error reading workspace metadata", e);

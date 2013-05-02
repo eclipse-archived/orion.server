@@ -141,9 +141,9 @@ public class Indexer extends Job {
 	private int indexWorkspace(UserInfo user, WorkspaceInfo workspace, SubMonitor monitor, List<SolrInputDocument> documents) {
 		int indexed = 0;
 		IMetaStore store = OrionConfiguration.getMetaStore();
-		for (String projectId : workspace.getProjectIds()) {
+		for (String projectName : workspace.getProjectNames()) {
 			try {
-				indexed += indexProject(user, workspace, store.readProject(projectId), monitor, documents);
+				indexed += indexProject(user, workspace, store.readProject(workspace.getUniqueId(), projectName), monitor, documents);
 			} catch (CoreException e) {
 				handleIndexingFailure(e, null);
 				//continue to next project

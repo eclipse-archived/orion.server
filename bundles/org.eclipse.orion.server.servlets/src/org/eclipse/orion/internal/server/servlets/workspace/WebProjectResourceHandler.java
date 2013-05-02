@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2012 IBM Corporation and others.
+ * Copyright (c) 2010, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -22,9 +22,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * Handles serialization of {@link WebElement} objects.
+ * Handles serialization of {@link ProjectInfo} objects.
  */
 public class WebProjectResourceHandler extends MetadataInfoResourceHandler<ProjectInfo> {
+
 	public WebProjectResourceHandler() {
 		super();
 	}
@@ -32,7 +33,7 @@ public class WebProjectResourceHandler extends MetadataInfoResourceHandler<Proje
 	public static JSONObject toJSON(WorkspaceInfo workspace, ProjectInfo project, URI parentLocation) {
 		JSONObject result = MetadataInfoResourceHandler.toJSON(project);
 		try {
-			result.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(parentLocation, "project/" + project.getUniqueId())); //$NON-NLS-1$
+			result.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(parentLocation, "project/" + project.getFullName())); //$NON-NLS-1$
 			URI base = parentLocation.resolve(""); //$NON-NLS-1$
 			result.put(ProtocolConstants.KEY_CONTENT_LOCATION, WorkspaceResourceHandler.computeProjectURI(base, workspace, project));
 		} catch (JSONException e) {
@@ -42,7 +43,7 @@ public class WebProjectResourceHandler extends MetadataInfoResourceHandler<Proje
 	}
 
 	@Override
-	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, ProjectInfo object) throws ServletException {
+	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, ProjectInfo project) throws ServletException {
 		return false;
 	}
 

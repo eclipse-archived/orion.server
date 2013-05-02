@@ -106,12 +106,6 @@ public class CompatibilityMetaStore implements IMetaStore {
 		}
 	}
 
-	public ProjectInfo readProject(String projectId) throws CoreException {
-		if (!WebProject.exists(projectId))
-			return null;
-		return toProjectInfo(WebProject.fromId(projectId));
-	}
-
 	public ProjectInfo readProject(String workspaceId, String projectName) throws CoreException {
 		WebWorkspace workspace = WebWorkspace.fromId(workspaceId);
 		return toProjectInfo(workspace.getProjectByName(projectName));
@@ -163,10 +157,10 @@ public class CompatibilityMetaStore implements IMetaStore {
 		WorkspaceInfo info = new WorkspaceInfo();
 		info.setUniqueId(workspaceId);
 		info.setFullName(workspace.getName());
-		List<String> projectIds = new ArrayList<String>();
+		List<String> projectNames = new ArrayList<String>();
 		for (WebProject project : workspace.getProjects())
-			projectIds.add(project.getId());
-		info.setProjectIds(projectIds);
+			projectNames.add(project.getName());
+		info.setProjectNames(projectNames);
 		return info;
 	}
 

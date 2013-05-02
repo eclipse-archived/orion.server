@@ -396,8 +396,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		IMetaStore store = OrionConfiguration.getMetaStore();
 		for (String workspaceId : user.getWorkspaceIds()) {
 			WorkspaceInfo workspace = store.readWorkspace(workspaceId);
-			for (String projectId : workspace.getProjectIds()) {
-				ProjectInfo project = store.readProject(projectId);
+			for (String projectName : workspace.getProjectNames()) {
+				ProjectInfo project = store.readProject(workspace.getUniqueId(), projectName);
 				project.getProjectStore().delete(EFS.NONE, null);
 			}
 		}

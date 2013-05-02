@@ -244,8 +244,8 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			if (workspace != null) {
 				JSONObject result = new JSONObject();
 				JSONArray children = new JSONArray();
-				for (String projectId : workspace.getProjectIds()) {
-					ProjectInfo project = OrionConfiguration.getMetaStore().readProject(projectId);
+				for (String projectName : workspace.getProjectNames()) {
+					ProjectInfo project = OrionConfiguration.getMetaStore().readProject(workspace.getUniqueId(), projectName);
 					//this is the location of the project metadata
 					if (isAccessAllowed(user, project)) {
 						IPath projectPath = GitUtils.pathFromProject(workspace, project);
@@ -413,7 +413,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			UserInfo user = OrionConfiguration.getMetaStore().readUser(userName);
 			for (String workspaceId : user.getWorkspaceIds()) {
 				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(workspaceId);
-				if (workspace.getProjectIds().contains(webProject.getUniqueId()))
+				if (workspace.getProjectNames().contains(webProject.getFullName()))
 					return true;
 			}
 		} catch (Exception e) {
@@ -438,8 +438,8 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			UserInfo user = OrionConfiguration.getMetaStore().readUser(userId);
 			for (String workspaceId : user.getWorkspaceIds()) {
 				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(workspaceId);
-				for (String projectId : workspace.getProjectIds()) {
-					if (projectId.equals(project.getUniqueId())) {
+				for (String projectName : workspace.getProjectNames()) {
+					if (projectName.equals(project.getFullName())) {
 						//If found, remove project from workspace
 						try {
 							WorkspaceResourceHandler.removeProject(userId, workspace, project);

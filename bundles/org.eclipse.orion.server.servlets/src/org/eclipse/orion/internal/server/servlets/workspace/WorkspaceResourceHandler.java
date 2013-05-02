@@ -40,10 +40,102 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 	private final ServletResourceHandler<IStatus> statusHandler;
 
 	/**
+	 * @deprecated Use {@link IMetaStore#createProject(String, org.eclipse.orion.server.core.metastore.ProjectInfo)}
+	 */
+	public static void addProject(String user, WebWorkspace workspace, WebProject project) throws CoreException {
+		//add project to workspace
+		workspace.addProject(project);
+		//save the workspace and project metadata
+		project.save();
+		workspace.save();
+	}
+
+	public static void computeProjectLocation(HttpServletRequest request, ProjectInfo project, String location, boolean init) throws CoreException {
+		String user = request.getRemoteUser();
+		URI contentURI;
+		if (location == null) {
+			contentURI = generateProjectLocation(project, user);
+		} else {
+			//use the content location specified by the user
+			try {
+				contentURI = new URI(location);
+				EFS.getFileSystem(contentURI.getScheme());//check if we support this scheme
+			} catch (Exception e) {
+				//if this is not a valid URI or scheme try to parse it as file path
+				contentURI = new File(location).toURI();
+			}
+			if (init) {
+				project.setContentLocation(contentURI);
+				IFileStore child = NewFileServlet.getFileStore(request, project);
+				child.mkdir(EFS.NONE, null);
+			}
+		}
+		project.setContentLocation(contentURI);
+	}
+
+	/**
 	 * Returns the location of the project's content (conforming to File REST API).
 	 */
 	static URI computeProjectURI(URI parentLocation, WorkspaceInfo workspace, ProjectInfo project) {
 		return URIUtil.append(parentLocation, ".." + Activator.LOCATION_FILE_SERVLET + '/' + workspace.getUniqueId() + '/' + project.getFullName() + '/'); //$NON-NLS-1$
+	}
+
+	/**
+	 * Generates a file system location for newly created project. Creates a new
+	 * folder in the file system and ensures it is empty.
+	 */
+	private static URI generateProjectLocation(ProjectInfo project, String user) throws CoreException {
+		IFileStore root = OrionConfiguration.getUserHome(user);
+		IFileStore projectStore = root.getChild(project.getUniqueId());
+		//This folder must be empty initially or we risk showing another user's old private data
+		projectStore.delete(EFS.NONE, null);
+		projectStore.mkdir(EFS.NONE, null);
+		return projectStore.toURI();
+	}
+
+	/**
+	 * Returns the project for the given project metadata location. The expected format of the
+	 * location is a URI whose path is of the form /workspace/workspaceId/project/projectName.
+	 * Returns <code>null</code> if there was no such project corresponding to the given location.
+	 * @throws CoreException If there was an error reading the project metadata
+	 */
+	public static ProjectInfo projectForMetadataLocation(IMetaStore store, String sourceLocation) throws CoreException {
+		if (sourceLocation == null)
+			return null;
+		URI sourceURI;
+		try {
+			sourceURI = new URI(sourceLocation);
+		} catch (URISyntaxException e) {
+			//bad location
+			return null;
+		}
+		String pathString = sourceURI.getPath();
+		if (pathString == null)
+			return null;
+		IPath path = new Path(pathString);
+		//path format is /workspace/<workspaceId>/project/<projectName>
+		if (path.segmentCount() < 4)
+			return null;
+		String workspaceId = path.segment(1);
+		String projectName = path.segment(3);
+		return store.readProject(workspaceId, projectName);
+	}
+
+	public static void removeProject(String user, WorkspaceInfo workspace, ProjectInfo project) throws CoreException {
+		// remove the project folder
+		URI contentURI = project.getContentLocation();
+
+		// don't remove linked projects
+		//TODO This is wrong because ProjectInfo never returns relative URI
+		if (project.getUniqueId().equals(contentURI.toString())) {
+			IFileStore root = OrionConfiguration.getUserHome(user);
+			IFileStore child = root.getChild(project.getUniqueId());
+			if (child.fetchInfo(EFS.NONE, null).exists()) {
+				child.delete(EFS.NONE, null);
+			}
+		}
+
+		OrionConfiguration.getMetaStore().deleteProject(workspace.getUniqueId(), project.getFullName());
 	}
 
 	/**
@@ -58,38 +150,21 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		JSONArray projects = new JSONArray();
 		URI workspaceLocation = URIUtil.append(baseLocation, workspace.getUniqueId());
 		URI projectBaseLocation = URIUtil.append(workspaceLocation, "project"); //$NON-NLS-1$
-		//augment project objects with their location
-		for (String projectId : workspace.getProjectIds()) {
-			try {
-				JSONObject project = new JSONObject();
-				project.put(ProtocolConstants.KEY_ID, projectId);
-				//this is the location of the project metadata
-				project.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(projectBaseLocation, projectId));
-				projects.put(project);
-			} catch (JSONException e) {
-				//keys are valid so this should never happen
-				throw new RuntimeException(e);
-			}
-		}
-
-		//add basic fields to workspace result
-		try {
-			result.put(ProtocolConstants.KEY_LOCATION, workspaceLocation);
-			result.put(ProtocolConstants.KEY_CHILDREN_LOCATION, workspaceLocation);
-			result.put(ProtocolConstants.KEY_DRIVE_LOCATION, URIUtil.append(workspaceLocation, ProtocolConstants.PATH_DRIVE));
-			result.put(ProtocolConstants.KEY_PROJECTS, projects);
-			result.put(ProtocolConstants.KEY_DIRECTORY, "true"); //$NON-NLS-1$
-		} catch (JSONException e) {
-			//can't happen because key and value are well-formed
-		}
 		//is caller requesting local children
 		boolean requestLocal = !ProtocolConstants.PATH_DRIVE.equals(URIUtil.lastSegment(requestLocation));
 		//add children element to conform to file API structure
 		JSONArray children = new JSONArray();
 		IMetaStore metaStore = OrionConfiguration.getMetaStore();
-		for (String projectId : workspace.getProjectIds()) {
+		for (String projectName : workspace.getProjectNames()) {
 			try {
-				ProjectInfo project = metaStore.readProject(projectId);
+				ProjectInfo project = metaStore.readProject(workspace.getUniqueId(), projectName);
+				//augment project objects with their location
+				JSONObject projectObject = new JSONObject();
+				projectObject.put(ProtocolConstants.KEY_ID, project.getUniqueId());
+				//this is the location of the project metadata
+				projectObject.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(projectBaseLocation, projectName));
+				projects.put(projectObject);
+
 				//remote folders are listed separately
 				boolean isLocal = true;
 				IFileStore projectStore = null;
@@ -132,6 +207,13 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 			}
 		}
 		try {
+			//add basic fields to workspace result
+			result.put(ProtocolConstants.KEY_LOCATION, workspaceLocation);
+			result.put(ProtocolConstants.KEY_CHILDREN_LOCATION, workspaceLocation);
+			result.put(ProtocolConstants.KEY_DRIVE_LOCATION, URIUtil.append(workspaceLocation, ProtocolConstants.PATH_DRIVE));
+			result.put(ProtocolConstants.KEY_PROJECTS, projects);
+			result.put(ProtocolConstants.KEY_DIRECTORY, "true"); //$NON-NLS-1$
+			//add children to match file API
 			result.put(ProtocolConstants.KEY_CHILDREN, children);
 		} catch (JSONException e) {
 			//cannot happen
@@ -144,40 +226,11 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		this.statusHandler = statusHandler;
 	}
 
-	public static void computeProjectLocation(HttpServletRequest request, ProjectInfo project, String location, boolean init) throws CoreException {
-		String user = request.getRemoteUser();
-		URI contentURI;
-		if (location == null) {
-			contentURI = generateProjectLocation(project, user);
-		} else {
-			//use the content location specified by the user
-			try {
-				contentURI = new URI(location);
-				EFS.getFileSystem(contentURI.getScheme());//check if we support this scheme
-			} catch (Exception e) {
-				//if this is not a valid URI or scheme try to parse it as file path
-				contentURI = new File(location).toURI();
-			}
-			if (init) {
-				project.setContentLocation(contentURI);
-				IFileStore child = NewFileServlet.getFileStore(request, project);
-				child.mkdir(EFS.NONE, null);
-			}
-		}
-		project.setContentLocation(contentURI);
-	}
-
 	/**
-	 * Generates a file system location for newly created project. Creates a new
-	 * folder in the file system and ensures it is empty.
+	 * Copies the content of one project to the location of a second project. 
 	 */
-	private static URI generateProjectLocation(ProjectInfo project, String user) throws CoreException {
-		IFileStore root = OrionConfiguration.getUserHome(user);
-		IFileStore projectStore = root.getChild(project.getUniqueId());
-		//This folder must be empty initially or we risk showing another user's old private data
-		projectStore.delete(EFS.NONE, null);
-		projectStore.mkdir(EFS.NONE, null);
-		return projectStore.toURI();
+	private void copyProjectContents(ProjectInfo sourceProject, ProjectInfo destinationProject) throws CoreException {
+		sourceProject.getProjectStore().copy(destinationProject.getProjectStore(), EFS.OVERWRITE, null);
 	}
 
 	/**
@@ -281,19 +334,16 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 	 */
 	private boolean handleCopyMoveProject(HttpServletRequest request, HttpServletResponse response, WorkspaceInfo workspace, JSONObject data) throws ServletException, IOException {
 		String sourceLocation = data.optString(ProtocolConstants.HEADER_LOCATION);
-		String sourceId = projectForLocation(request, response, sourceLocation);
-		//null result means there was an error and we already handled it
-		if (sourceId == null)
-			return true;
-		ProjectInfo sourceProject = null;
+		ProjectInfo sourceProject;
 		try {
-			sourceProject = getMetaStore().readProject(sourceId);
-		} catch (CoreException e) {
-			handleError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), e);
+			sourceProject = projectForMetadataLocation(getMetaStore(), sourceLocation);
+		} catch (CoreException e1) {
+			handleError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, NLS.bind("Error accessing project: {0}", sourceLocation));
 			return true;
 		}
+		//null result means we didn't find a matching project
 		if (sourceProject == null) {
-			handleError(request, response, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Source does not exist: {0}", sourceId));
+			handleError(request, response, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Source does not exist: {0}", sourceLocation));
 			return true;
 		}
 		int options = getCreateOptions(request);
@@ -304,10 +354,11 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		String destinationName = request.getHeader(ProtocolConstants.HEADER_SLUG);
 		//If the data has a name then it must be used due to UTF-8 issues with names Bug 376671
 		try {
-			if (data.has("Name")) {
-				destinationName = data.getString("Name");
+			if (data.has(ProtocolConstants.KEY_NAME)) {
+				destinationName = data.getString(ProtocolConstants.KEY_NAME);
 			}
 		} catch (JSONException e) {
+			//key is valid so cannot happen
 		}
 
 		if (!validateProjectName(workspace, destinationName, request, response))
@@ -353,36 +404,6 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		return true;
 	}
 
-	/**
-	 * Implementation of project move. Returns whether the move requested was handled.
-	 * Returns <code>false</code> if this method doesn't know how to interpret the request.
-	 */
-	private boolean handleMoveProject(HttpServletRequest request, HttpServletResponse response, WorkspaceInfo workspace, ProjectInfo sourceProject, String sourceLocation, String destinationName) throws ServletException, IOException {
-		String sourceName = sourceProject.getFullName();
-		//a project move is simply a rename
-		sourceProject.setFullName(destinationName);
-		try {
-			getMetaStore().updateProject(sourceProject);
-		} catch (CoreException e) {
-			String msg = NLS.bind("Error persisting project state: {0}", sourceName);
-			return handleError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
-		}
-		//location doesn't change on move project
-		URI baseLocation = getURI(request);
-		JSONObject result = WebProjectResourceHandler.toJSON(workspace, sourceProject, baseLocation);
-		OrionServlet.writeJSONResponse(request, response, result);
-		response.setHeader(ProtocolConstants.HEADER_LOCATION, sourceLocation);
-		response.setStatus(HttpServletResponse.SC_OK);
-		return true;
-	}
-
-	/**
-	 * Copies the content of one project to the location of a second project. 
-	 */
-	private void copyProjectContents(ProjectInfo sourceProject, ProjectInfo destinationProject) throws CoreException {
-		sourceProject.getProjectStore().copy(destinationProject.getProjectStore(), EFS.OVERWRITE, null);
-	}
-
 	private boolean handleError(HttpServletRequest request, HttpServletResponse response, int httpCode, String message) throws ServletException {
 		return handleError(request, response, httpCode, message, null);
 	}
@@ -407,6 +428,29 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 
 	}
 
+	/**
+	 * Implementation of project move. Returns whether the move requested was handled.
+	 * Returns <code>false</code> if this method doesn't know how to interpret the request.
+	 */
+	private boolean handleMoveProject(HttpServletRequest request, HttpServletResponse response, WorkspaceInfo workspace, ProjectInfo sourceProject, String sourceLocation, String destinationName) throws ServletException, IOException {
+		String sourceName = sourceProject.getFullName();
+		//a project move is simply a rename
+		sourceProject.setFullName(destinationName);
+		try {
+			getMetaStore().updateProject(sourceProject);
+		} catch (CoreException e) {
+			String msg = NLS.bind("Error persisting project state: {0}", sourceName);
+			return handleError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
+		}
+		//location doesn't change on move project
+		URI baseLocation = getURI(request);
+		JSONObject result = WebProjectResourceHandler.toJSON(workspace, sourceProject, baseLocation);
+		OrionServlet.writeJSONResponse(request, response, result);
+		response.setHeader(ProtocolConstants.HEADER_LOCATION, sourceLocation);
+		response.setStatus(HttpServletResponse.SC_OK);
+		return true;
+	}
+
 	private boolean handlePutWorkspaceMetadata(HttpServletRequest request, HttpServletResponse response, WorkspaceInfo workspace) {
 		return false;
 	}
@@ -416,9 +460,10 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		//format is /workspaceId/project/<projectId>
 		if (path.segmentCount() != 3)
 			return false;
-		String projectId = path.segment(2);
+		String workspaceId = path.segment(0);
+		String projectName = path.segment(2);
 		try {
-			ProjectInfo project = getMetaStore().readProject(projectId);
+			ProjectInfo project = getMetaStore().readProject(workspaceId, projectName);
 			if (project == null) {
 				//nothing to do if project does not exist
 				return true;
@@ -509,57 +554,6 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		if (contentURI.toString().startsWith(path.toFile().toURI().toString()))
 			return true;
 		return false;
-	}
-
-	/**
-	 * Returns the project id for the given project location. If the project id cannot
-	 * be determined, this method will handle setting an appropriate HTTP response
-	 * and return <code>null</code>.
-	 */
-	private String projectForLocation(HttpServletRequest request, HttpServletResponse response, String sourceLocation) throws ServletException {
-		try {
-			if (sourceLocation != null) {
-				URI sourceURI = new URI(sourceLocation);
-				String path = sourceURI.getPath();
-				if (path != null) {
-					String id = new Path(path).lastSegment();
-					if (id != null)
-						return id;
-				}
-			}
-		} catch (URISyntaxException e) {
-			//fall through and fail below
-		}
-		handleError(request, response, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Invalid source location for copy/move request: {0}", sourceLocation));
-		return null;
-	}
-
-	/**
-	 * @deprecated Use {@link IMetaStore#createProject(String, org.eclipse.orion.server.core.metastore.ProjectInfo)}
-	 */
-	public static void addProject(String user, WebWorkspace workspace, WebProject project) throws CoreException {
-		//add project to workspace
-		workspace.addProject(project);
-		//save the workspace and project metadata
-		project.save();
-		workspace.save();
-	}
-
-	public static void removeProject(String user, WorkspaceInfo workspace, ProjectInfo project) throws CoreException {
-		// remove the project folder
-		URI contentURI = project.getContentLocation();
-
-		// don't remove linked projects
-		//TODO This is wrong because ProjectInfo never returns relative URI
-		if (project.getUniqueId().equals(contentURI.toString())) {
-			IFileStore root = OrionConfiguration.getUserHome(user);
-			IFileStore child = root.getChild(project.getUniqueId());
-			if (child.fetchInfo(EFS.NONE, null).exists()) {
-				child.delete(EFS.NONE, null);
-			}
-		}
-
-		OrionConfiguration.getMetaStore().deleteProject(workspace.getUniqueId(), project.getFullName());
 	}
 
 	/**

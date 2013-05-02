@@ -93,15 +93,6 @@ public interface IMetaStore {
 	public List<String> readAllUsers() throws CoreException;
 
 	/**
-	 * Obtains information about a single project from the backing storage and returns it.
-	 * Returns <code>null</code> if there is no such project in the backing store.
-	 * @param projectId The unique id of the project to return
-	 * @return the project information, or <code>null</code>
-	 * @throws CoreException If there was a failure obtaining metadata from the backing store.
-	 */
-	public ProjectInfo readProject(String projectId) throws CoreException;
-
-	/**
 	 * Obtains information about a single project from this store and returns it.
 	 * Returns <code>null</code> if there is no such project in the metadata store.
 	 * @param workspaceId The unique id of the workspace containing the project
