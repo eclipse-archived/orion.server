@@ -216,7 +216,7 @@ public abstract class GitTest extends FileSystemTest {
 			if (!running)
 				break;
 			//timeout after reasonable time to avoid hanging tests
-			if (System.currentTimeMillis() - start > 10000)
+			if (System.currentTimeMillis() - start > 15000)
 				assertTrue("The operation took too long", false);
 			try {
 				Thread.sleep(200);

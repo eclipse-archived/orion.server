@@ -56,6 +56,13 @@ public class MetadataInfo {
 	}
 
 	/**
+	 * Returns a read-only map of the keys and values stored in this object.
+	 */
+	public Map<String, String> getProperties() {
+		return Collections.unmodifiableMap(properties);
+	}
+
+	/**
 	 * Returns the globally unique id of this metadata object.
 	 * @return the id of this object
 	 */
@@ -87,9 +94,11 @@ public class MetadataInfo {
 	 * @param key the qualified name of the property
 	 * @param value the string value of the property, 
 	 *     or <code>null</code> if the property is to be removed
+	 * @return The previous value associated with this key, or <code>null</code>
+	 *   if there was previously no value associated with the key.
 	 */
-	public void setProperty(String key, String value) {
-		properties.put(key, value);
+	public String setProperty(String key, String value) {
+		return value == null ? properties.remove(key) : properties.put(key, value);
 	}
 
 	/**

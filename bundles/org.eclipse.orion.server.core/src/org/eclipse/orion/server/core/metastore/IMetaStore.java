@@ -130,6 +130,14 @@ public interface IMetaStore {
 
 	/**
 	 * Updates the metadata in this store based on the provided data.
+	 * @param info The new workspace data
+	 * @throws CoreException If the new data could not be stored, or if
+	 * no such workspace exists
+	 */
+	public void updateWorkspace(WorkspaceInfo info) throws CoreException;
+
+	/**
+	 * Updates the metadata in this store based on the provided data.
 	 * @param info The new user data
 	 * @throws CoreException If the new data could not be stored, or if
 	 * no such user exists

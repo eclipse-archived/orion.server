@@ -28,6 +28,12 @@ import org.osgi.service.prefs.BackingStoreException;
  */
 public class CompatibilityMetaStore implements IMetaStore {
 
+	/**
+	 * Properties in the preference store that require special processing when reading/writing
+	 * and can't be passed directly to the meta store.
+	 */
+	private static List<String> INTERNAL_PROPERTIES = Arrays.asList(new String[] {ProtocolConstants.KEY_NAME, ProtocolConstants.KEY_ID, ProtocolConstants.KEY_GUEST, ProtocolConstants.KEY_USER_NAME, ProtocolConstants.KEY_CONTENT_LOCATION, SiteConfigurationConstants.KEY_SITE_CONFIGURATIONS});
+
 	public void createProject(String workspaceId, ProjectInfo info) throws CoreException {
 		WebWorkspace workspace = WebWorkspace.fromId(workspaceId);
 		WebProject project = WebProject.fromId(WebProject.nextProjectId());
@@ -97,18 +103,43 @@ public class CompatibilityMetaStore implements IMetaStore {
 		workspace.removeNode();
 	}
 
+	/**
+	 * Return true if the given key represents a special property that requires special serialization.
+	 */
+	private boolean isInternalProperty(String key) {
+		return INTERNAL_PROPERTIES.contains(key);
+	}
+
 	public List<String> readAllUsers() throws CoreException {
 		try {
 			String[] children = new OrionScope().getNode(WebUser.USERS_NODE).childrenNames();
 			return Arrays.asList(children);
 		} catch (BackingStoreException e) {
-			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "Unable to retrieve metadata", e));
+			throw toCoreException(e);
 		}
+	}
+
+	private CoreException toCoreException(BackingStoreException e) {
+		return new CoreException(new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "Error accessing preference store", e));
 	}
 
 	public ProjectInfo readProject(String workspaceId, String projectName) throws CoreException {
 		WebWorkspace workspace = WebWorkspace.fromId(workspaceId);
 		return toProjectInfo(workspace.getProjectByName(projectName));
+	}
+
+	/**
+	 * Reads properties from the provided store and adds them to the given info object.
+	 */
+	private void readProperties(MetadataInfo info, IEclipsePreferences store) throws CoreException {
+		try {
+			for (String key : store.keys()) {
+				if (!isInternalProperty(key))
+					info.setProperty(key, store.get(key, null));
+			}
+		} catch (BackingStoreException e) {
+			throw toCoreException(e);
+		}
 	}
 
 	public UserInfo readUser(String uid) throws CoreException {
@@ -121,6 +152,7 @@ public class CompatibilityMetaStore implements IMetaStore {
 		info.setGuest(webUser.isGuest());
 		//authorization info
 		IEclipsePreferences store = webUser.getStore();
+		readProperties(info, store);
 		info.setProperty(ProtocolConstants.KEY_USER_RIGHTS_VERSION, store.get(ProtocolConstants.KEY_USER_RIGHTS_VERSION, null));
 		info.setProperty(ProtocolConstants.KEY_USER_RIGHTS, store.get(ProtocolConstants.KEY_USER_RIGHTS, null));
 		//workspaces
@@ -157,20 +189,24 @@ public class CompatibilityMetaStore implements IMetaStore {
 		WorkspaceInfo info = new WorkspaceInfo();
 		info.setUniqueId(workspaceId);
 		info.setFullName(workspace.getName());
+		//projects
 		List<String> projectNames = new ArrayList<String>();
 		for (WebProject project : workspace.getProjects())
 			projectNames.add(project.getName());
 		info.setProjectNames(projectNames);
+		//other properties
+		readProperties(info, workspace.getStore());
 		return info;
 	}
 
-	private ProjectInfo toProjectInfo(WebProject project) {
+	private ProjectInfo toProjectInfo(WebProject project) throws CoreException {
 		if (project == null)
 			return null;
 		ProjectInfo info = new ProjectInfo();
 		info.setUniqueId(project.getId());
 		info.setFullName(project.getName());
 		info.setContentLocation(project.getContentLocation());
+		readProperties(info, project.getStore());
 		return info;
 	}
 
@@ -178,7 +214,31 @@ public class CompatibilityMetaStore implements IMetaStore {
 		WebProject project = WebProject.fromId(projectInfo.getUniqueId());
 		project.setContentLocation(projectInfo.getContentLocation());
 		project.setName(projectInfo.getFullName());
+		updateProperties(projectInfo, project.getStore());
 		project.save();
+	}
+
+	/**
+	 * Writes all properties from the provided info into the preference store.
+	 */
+	private void updateProperties(MetadataInfo info, IEclipsePreferences store) throws CoreException {
+		Map<String, String> newProperties = info.getProperties();
+		List<String> toRemove = new ArrayList<String>();
+		try {
+			toRemove.addAll(Arrays.asList(store.keys()));
+		} catch (BackingStoreException e) {
+			throw toCoreException(e);
+		}
+		for (String key : newProperties.keySet()) {
+			toRemove.remove(key);
+			if (!isInternalProperty(key))
+				store.put(key, newProperties.get(key));
+		}
+		//remove properties no longer defined
+		for (String key : toRemove) {
+			if (!isInternalProperty(key))
+				store.remove(key);
+		}
 	}
 
 	/**
@@ -188,43 +248,43 @@ public class CompatibilityMetaStore implements IMetaStore {
 	private void updateSites(UserInfo info, WebUser webUser) throws CoreException {
 		//site configurations
 		String sitesString = info.getProperty(SiteConfigurationConstants.KEY_SITE_CONFIGURATIONS);
-		if (sitesString != null) {
-			JSONArray currentSites = webUser.getSiteConfigurationsJSON(null);
-			try {
-				JSONObject newSites = new JSONObject(sitesString);
-				List<String> sitesToAdd = new ArrayList<String>();
-				for (@SuppressWarnings("unchecked")
-				Iterator<String> it = newSites.keys(); it.hasNext();) {
-					sitesToAdd.add(it.next());
-				}
-				//iterate over existing site and check if it is changed or removed
-				for (int i = 0; i < currentSites.length(); i++) {
-					JSONObject currentSite = currentSites.getJSONObject(i);
-					final String currentSiteId = currentSite.getString(ProtocolConstants.KEY_ID);
-					JSONObject newSite = newSites.optJSONObject(currentSiteId);
-					if (newSite == null) {
-						//remove existing site because it is not found in new user info
-						webUser.removeSiteConfiguration(webUser.getSiteConfiguration(currentSiteId));
-					} else {
-						//existing site that may need to be updated
-						SiteConfiguration currentSiteConfig = webUser.getSiteConfiguration(currentSiteId);
-						SiteInfo newSiteInfo = SiteInfo.getSite(info, currentSiteId);
-						currentSiteConfig.update(newSiteInfo);
-					}
-					//if site already exists then it's not an addition
-					sitesToAdd.remove(currentSiteId);
-				}
-				//add any new sites
-				for (String newSiteId : sitesToAdd) {
-					SiteInfo newSiteInfo = SiteInfo.getSite(info, newSiteId);
-					SiteConfiguration newSiteConfig = webUser.createSiteConfiguration(newSiteId, newSiteInfo.getName(), newSiteInfo.getWorkspace());
-					newSiteConfig.update(newSiteInfo);
-				}
-
-			} catch (JSONException e) {
-				//malformed input
-				throw new CoreException(new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "Malformed site configuration data", e));
+		if (sitesString == null)
+			return;
+		JSONArray currentSites = webUser.getSiteConfigurationsJSON(null);
+		try {
+			JSONObject newSites = new JSONObject(sitesString);
+			List<String> sitesToAdd = new ArrayList<String>();
+			for (@SuppressWarnings("unchecked")
+			Iterator<String> it = newSites.keys(); it.hasNext();) {
+				sitesToAdd.add(it.next());
 			}
+			//iterate over existing site and check if it is changed or removed
+			for (int i = 0; i < currentSites.length(); i++) {
+				JSONObject currentSite = currentSites.getJSONObject(i);
+				final String currentSiteId = currentSite.getString(ProtocolConstants.KEY_ID);
+				JSONObject newSite = newSites.optJSONObject(currentSiteId);
+				if (newSite == null) {
+					//remove existing site because it is not found in new user info
+					webUser.removeSiteConfiguration(webUser.getSiteConfiguration(currentSiteId));
+				} else {
+					//existing site that may need to be updated
+					SiteConfiguration currentSiteConfig = webUser.getSiteConfiguration(currentSiteId);
+					SiteInfo newSiteInfo = SiteInfo.getSite(info, currentSiteId);
+					currentSiteConfig.update(newSiteInfo);
+				}
+				//if site already exists then it's not an addition
+				sitesToAdd.remove(currentSiteId);
+			}
+			//add any new sites
+			for (String newSiteId : sitesToAdd) {
+				SiteInfo newSiteInfo = SiteInfo.getSite(info, newSiteId);
+				SiteConfiguration newSiteConfig = webUser.createSiteConfiguration(newSiteId, newSiteInfo.getName(), newSiteInfo.getWorkspace());
+				newSiteConfig.update(newSiteInfo);
+			}
+
+		} catch (JSONException e) {
+			//malformed input
+			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "Malformed site configuration data", e));
 		}
 	}
 
@@ -242,17 +302,19 @@ public class CompatibilityMetaStore implements IMetaStore {
 			webUser.setName(info.getFullName());
 		webUser.setGuest(info.isGuest());
 
-		//authorization info
+		//user properties
 		IEclipsePreferences store = webUser.getStore();
-		String prop = info.getProperty(ProtocolConstants.KEY_USER_RIGHTS_VERSION);
-		if (prop != null)
-			store.put(ProtocolConstants.KEY_USER_RIGHTS_VERSION, prop);
-		prop = info.getProperty(ProtocolConstants.KEY_USER_RIGHTS);
-		if (prop != null)
-			store.put(ProtocolConstants.KEY_USER_RIGHTS, prop);
+		updateProperties(info, store);
 
+		//site configurations
 		updateSites(info, webUser);
 
 		webUser.save();
+	}
+
+	public void updateWorkspace(WorkspaceInfo info) throws CoreException {
+		WebWorkspace workspace = WebWorkspace.fromId(info.getUniqueId());
+		updateProperties(info, workspace.getStore());
+		workspace.save();
 	}
 }

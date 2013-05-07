@@ -14,38 +14,32 @@ import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
+import com.meterware.httpunit.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.List;
-
-import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.server.core.users.OrionScope;
-import org.eclipse.orion.server.tests.AbstractServerTest;
+import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.osgi.service.prefs.BackingStoreException;
 
-import com.meterware.httpunit.GetMethodWebRequest;
-import com.meterware.httpunit.PutMethodWebRequest;
-import com.meterware.httpunit.WebConversation;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
-
 /**
  * Tests for the preference servlet.
  */
-public class PreferenceTest extends AbstractServerTest {
-	WebConversation webConversation;
+public class PreferenceTest extends FileSystemTest {
 
 	@Before
-	public void setUp() throws BackingStoreException, CoreException {
+	public void setUp() throws Exception {
 		OrionScope prefs = new OrionScope();
 		clearPreferences(prefs.getNode("Users"));
 		clearPreferences(prefs.getNode("Workspaces"));
@@ -53,6 +47,7 @@ public class PreferenceTest extends AbstractServerTest {
 		webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 		setUpAuthorization();
+		createTestProject("PreferenceTest");
 	}
 
 	private void clearPreferences(IEclipsePreferences prefs) throws BackingStoreException {
@@ -72,27 +67,27 @@ public class PreferenceTest extends AbstractServerTest {
 			WebRequest request = new GetMethodWebRequest(location + "?key=Name");
 			setAuthentication(request);
 			WebResponse response = webConversation.getResource(request);
-			assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
+			assertEquals("1." + location, HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 
 			//put a value
 			request = createSetPreferenceRequest(location, "Name", "Frodo");
 			setAuthentication(request);
 			response = webConversation.getResource(request);
-			assertEquals("1." + location, HttpURLConnection.HTTP_NO_CONTENT, response.getResponseCode());
+			assertEquals("2." + location, HttpURLConnection.HTTP_NO_CONTENT, response.getResponseCode());
 
 			//now doing a get should succeed
 			request = new GetMethodWebRequest(location + "?key=Name");
 			setAuthentication(request);
 			response = webConversation.getResource(request);
-			assertEquals("2." + location, HttpURLConnection.HTTP_OK, response.getResponseCode());
+			assertEquals("3." + location, HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject result = new JSONObject(response.getText());
-			assertEquals("3." + location, "Frodo", result.optString("Name"));
+			assertEquals("4." + location, "Frodo", result.optString("Name"));
 
 			//getting another key on the same resource should still 404
 			request = new GetMethodWebRequest(location + "?key=Address");
 			setAuthentication(request);
 			response = webConversation.getResource(request);
-			assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
+			assertEquals("5." + location, HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 		}
 	}
 
@@ -307,8 +302,18 @@ public class PreferenceTest extends AbstractServerTest {
 		return new PutMethodWebRequest(location, new ByteArrayInputStream(body.getBytes()), "application/x-www-form-urlencoded");
 	}
 
+	/**
+	 * Create locations of preference HTTP resources corresponding to our test user, workspace, and project.
+	 */
 	private List<String> getTestPreferenceNodes() {
-		return Arrays.asList(toAbsoluteURI("prefs/user/testprefs"), toAbsoluteURI("prefs/workspace/myworkspace/testprefs"), toAbsoluteURI("prefs/project/myproject/testprefs"));
+		IPath projectPath = new Path(testProjectBaseLocation);
+		String userId = getTestUserId();
+		String workspaceId = projectPath.segment(0);
+		String projectName = projectPath.segment(1);
+		String userPref = toAbsoluteURI("prefs/user/" + userId + "/testprefs");
+		String workspacePref = toAbsoluteURI("prefs/workspace/" + workspaceId + "/testprefs");
+		String projectPref = toAbsoluteURI("prefs/project/" + workspaceId + '/' + projectName + "/testprefs");
+		return Arrays.asList(userPref, workspacePref, projectPref);
 	}
 
 	/**
