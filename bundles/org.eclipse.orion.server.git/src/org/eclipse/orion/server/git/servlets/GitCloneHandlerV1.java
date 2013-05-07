@@ -214,9 +214,9 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 	public static void doConfigureClone(Git git, String user) throws IOException, CoreException {
 		StoredConfig config = git.getRepository().getConfig();
 		IOrionUserProfileNode userNode = UserServiceHelper.getDefault().getUserProfileService().getUserProfileNode(user, true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
-		if (userNode.get(GitConstants.KEY_NAME, null) != null)
+		if (userNode != null && userNode.get(GitConstants.KEY_NAME, null) != null)
 			config.setString(ConfigConstants.CONFIG_USER_SECTION, null, ConfigConstants.CONFIG_KEY_NAME, userNode.get(GitConstants.KEY_NAME, null));
-		if (userNode.get(GitConstants.KEY_MAIL, null) != null)
+		if (userNode != null && userNode.get(GitConstants.KEY_MAIL, null) != null)
 			config.setString(ConfigConstants.CONFIG_USER_SECTION, null, ConfigConstants.CONFIG_KEY_EMAIL, userNode.get(GitConstants.KEY_MAIL, null));
 		config.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_FILEMODE, false);
 		config.save();
