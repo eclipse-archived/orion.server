@@ -10,8 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.workspace.authorization;
 
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.json.JSONArray;
 import org.json.JSONException;
 
@@ -20,7 +20,8 @@ import org.json.JSONException;
  */
 public class AuthorizationReaderV3 extends AuthorizationReader {
 	@Override
-	JSONArray readAuthorizationInfo(String userId, IEclipsePreferences preferences) throws JSONException {
-		return new JSONArray(preferences.get(ProtocolConstants.KEY_USER_RIGHTS, "[]")); //$NON-NLS-1$
+	JSONArray readAuthorizationInfo(UserInfo user) throws JSONException {
+		String property = user.getProperty(ProtocolConstants.KEY_USER_RIGHTS);
+		return property == null ? new JSONArray() : new JSONArray(property);
 	}
 }

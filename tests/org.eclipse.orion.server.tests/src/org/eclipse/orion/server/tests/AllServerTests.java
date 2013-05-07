@@ -28,7 +28,7 @@ import org.junit.runners.Suite.SuiteClasses;
  * Runs all automated server tests.
  */
 @RunWith(Suite.class)
-@SuiteClasses({SearchTest.class, TransferTest.class, Base64Test.class, CoreFilesTest.class, AdvancedFilesTest.class, PreferenceTest.class, BasicUsersTest.class, WorkspaceServiceTest.class, AllSiteTests.class, AllGitTests.class, AllTaskTests.class, WebElementTest.class})
+@SuiteClasses({SearchTest.class, TransferTest.class, Base64Test.class, CoreFilesTest.class, AdvancedFilesTest.class, PreferenceTest.class, BasicUsersTest.class, WorkspaceServiceTest.class, AllSiteTests.class, AllGitTests.class, AllTaskTests.class, MetaStoreTest.class})
 public class AllServerTests {
 	//goofy junit4, no class body needed
 }

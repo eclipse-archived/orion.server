@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2012 IBM Corporation and others.
+ * Copyright (c) 2010, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -15,8 +15,9 @@ import java.util.List;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.core.metastore.IMetaStore;
+import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.core.resources.Base64Counter;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
@@ -24,26 +25,11 @@ import org.osgi.service.prefs.BackingStoreException;
 
 /**
  * An Eclipse web workspace.
+ * @deprecated Use {@link IMetaStore} and {@link WorkspaceInfo}.
  */
 public class WebWorkspace extends WebElement {
 	private static final String WORKSPACE_NODE_NAME = "Workspaces";//$NON-NLS-1$
 	private static final Base64Counter workspaceCounter = new Base64Counter();
-
-	/**
-	 * Returns a list of all known web workspaces.
-	 */
-	public static List<WebWorkspace> allWorkspaces() {
-		List<WebWorkspace> result = new ArrayList<WebWorkspace>();
-		IEclipsePreferences workspaceRoot = scope.getNode(WORKSPACE_NODE_NAME);
-		try {
-			String[] ids = workspaceRoot.childrenNames();
-			for (String id : ids)
-				result.add(WebWorkspace.fromId(id));
-		} catch (BackingStoreException e) {
-			LogHelper.log(e);
-		}
-		return result;
-	}
 
 	/**
 	 * Returns whether a workspace with the given id already exists.

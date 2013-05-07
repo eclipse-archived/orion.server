@@ -21,7 +21,6 @@ import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.*;
-import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.git.servlets.GitUtils;
@@ -36,10 +35,10 @@ public class PullJob extends GitJob {
 	private String projectName;
 
 	public PullJob(String userRunningTask, CredentialsProvider credentials, Path path, boolean force) {
-		super(userRunningTask, true, (GitCredentialsProvider) credentials); //$NON-NLS-1$
+		super(userRunningTask, true, (GitCredentialsProvider) credentials);
 		// path: file/{...}
 		this.path = path;
-		this.projectName = path.segmentCount() == 2 ? WebProject.fromId(path.segment(1)).getName() : path.lastSegment();
+		this.projectName = path.lastSegment();
 		// this.force = force; // TODO: enable when JGit starts to support this option
 		setName(NLS.bind("Pulling {0}", projectName));
 		setFinalMessage(NLS.bind("Pulling {0} done", projectName));
@@ -63,22 +62,18 @@ public class PullJob extends GitJob {
 		// handle result
 		if (pullResult.isSuccessful()) {
 			return Status.OK_STATUS;
-		} else {
-
-			FetchResult fetchResult = pullResult.getFetchResult();
-
-			IStatus fetchStatus = FetchJob.handleFetchResult(fetchResult);
-			if (!fetchStatus.isOK()) {
-				return fetchStatus;
-			}
-
-			MergeStatus mergeStatus = pullResult.getMergeResult().getMergeStatus();
-			if (mergeStatus.isSuccessful()) {
-				return Status.OK_STATUS;
-			} else {
-				return new Status(IStatus.ERROR, GitActivator.PI_GIT, mergeStatus.name());
-			}
 		}
+		FetchResult fetchResult = pullResult.getFetchResult();
+
+		IStatus fetchStatus = FetchJob.handleFetchResult(fetchResult);
+		if (!fetchStatus.isOK()) {
+			return fetchStatus;
+		}
+
+		MergeStatus mergeStatus = pullResult.getMergeResult().getMergeStatus();
+		if (!mergeStatus.isSuccessful())
+			return new Status(IStatus.ERROR, GitActivator.PI_GIT, mergeStatus.name());
+		return Status.OK_STATUS;
 	}
 
 	@Override

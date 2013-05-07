@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2012 IBM Corporation and others.
+ * Copyright (c) 2010, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,43 +13,22 @@ package org.eclipse.orion.server.useradmin.servlets;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.Iterator;
-
+import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.URIUtil;
-import org.eclipse.orion.internal.server.servlets.Activator;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
-import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
-import org.eclipse.orion.internal.server.servlets.workspace.WebWorkspace;
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.runtime.*;
+import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.PreferenceHelper;
-import org.eclipse.orion.server.core.ServerConstants;
-import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.metastore.*;
+import org.eclipse.orion.server.core.resources.Base64Counter;
 import org.eclipse.orion.server.servlets.OrionServlet;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
-import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
-import org.eclipse.orion.server.useradmin.User;
-import org.eclipse.orion.server.useradmin.UserConstants;
-import org.eclipse.orion.server.useradmin.UserEmailUtil;
-import org.eclipse.orion.server.useradmin.UserServiceHelper;
+import org.eclipse.orion.server.user.profile.*;
+import org.eclipse.orion.server.useradmin.*;
 import org.eclipse.osgi.util.NLS;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,9 +45,12 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	 * The maximum length of a username.
 	 */
 	private static final int USERNAME_MAX_LENGTH = 20;
-	private static final String PATH_EMAIL_CONFIRMATION = "../useremailconfirmation";
+	private static final String PATH_EMAIL_CONFIRMATION = "../useremailconfirmation"; //$NON-NLS-1$
+	private static final String GUEST_UID_PREFIX = "user"; //$NON-NLS-1$
 	private static final boolean requirePassword = false;
-	
+
+	private static final Base64Counter guestUserCounter = new Base64Counter();
+
 	private ServletResourceHandler<IStatus> statusHandler;
 
 	UserHandlerV1(UserServiceHelper userServiceHelper, ServletResourceHandler<IStatus> statusHandler) {
@@ -250,11 +232,11 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 			}
 			isPasswordRequired = false;
 			isEmailRequired = false;
-			uid = login = WebUser.nextGuestUserUid();
 			userAdmin = getGuestUserAdmin();
 			if (userAdmin == null) {
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Cannot create guest users. Contact your server administrator.", null));
 			}
+			uid = login = nextGuestUserUid(userAdmin);
 		} else {
 			userAdmin = getUserAdmin();
 		}
@@ -283,11 +265,11 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Email address already in use: {0}.", email), null));
 		}
 
-		if (isGuestUser) {
-			// Before creating a new guest user, remove any excess guest accounts
-			int maxGuestAccounts = Math.max(0, PreferenceHelper.getInt(ServerConstants.CONFIG_AUTH_USER_CREATION_GUEST_LIMIT, 100) - 1);
-			deleteGuestAccounts(WebUser.getGuestAccountsToDelete(maxGuestAccounts));
-		}
+		//		if (isGuestUser) {
+		//			// Before creating a new guest user, remove any excess guest accounts
+		//			int maxGuestAccounts = Math.max(0, PreferenceHelper.getInt(ServerConstants.CONFIG_AUTH_USER_CREATION_GUEST_LIMIT, 100) - 1);
+		//			deleteGuestAccounts(WebUser.getGuestAccountsToDelete(maxGuestAccounts));
+		//		}
 
 		User newUser;
 		if (isGuestUser) {
@@ -310,14 +292,22 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Error creating user: {0}", login), null));
 		}
 
-		//create user object for workspace service
-		WebUser webUser = WebUser.fromUserId(newUser.getUid());
-		webUser.setUserName(login);
-		webUser.setName(name);
-		webUser.setGuest(isGuestUser);
-		webUser.save();
+		//persist new user in metadata store
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUniqueId(newUser.getUid());
+		userInfo.setUserName(login);
+		userInfo.setFullName(name);
+		userInfo.setGuest(isGuestUser);
+		Activator r = Activator.getDefault();
+		OrionConfiguration.getMetaStore().createUser(userInfo);
 
 		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.account"); //$NON-NLS-1$
+		//TODO Don't do cleanup as part of creation, it can be separate op (command line tool, etc)
+		//		if (isGuestUser) {
+		//			// Remove excess guest accounts
+		//			int maxGuestAccounts = PreferenceHelper.getInt(ServerConstants.CONFIG_AUTH_USER_CREATION_GUEST_LIMIT, 100);
+		//			deleteGuestAccounts(WebUser.getGuestAccountsToDelete(maxGuestAccounts));
+		//		}
 
 		if (logger.isInfoEnabled())
 			logger.info("Account created: " + login); //$NON-NLS-1$ 
@@ -353,34 +343,45 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private void deleteGuestAccounts(Collection<String> uids) {
-		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.account");
-		IOrionCredentialsService userAdmin = getGuestUserAdmin();
-		for (String uid : uids) {
-			try {
-				User user = userAdmin.getUser(UserConstants.KEY_UID, uid);
-				WebUser webUser = WebUser.fromUserId(uid);
-				if (webUser == null) {
-					if (logger.isInfoEnabled())
-						logger.info("WebUser " + uid + " could not be found in backing store");
-				}
-				if (!userAdmin.deleteUser(user)) {
-					// This is expected if the server is restarted. The guest user then exists on disk (WebUser) 
-					// but doesn't exist in the transient guest credential store (User).
-					if (webUser == null && logger.isInfoEnabled())
-						logger.info("Guest user " + uid + " doesn't exist in backing store or credential store.");
-				}
-				if (webUser != null) {
-					deleteUserAndArtifacts(webUser);
-					if (logger.isInfoEnabled())
-						logger.info("Removed user " + uid + " (too many guest accounts).");
-				}
-			} catch (CoreException e) {
-				if (logger.isInfoEnabled())
-					logger.info("Removing " + uid + " failed.");
-			}
+	/**
+	 * Returns the next available guest user id.
+	 */
+	private String nextGuestUserUid(IOrionCredentialsService userAdmin) {
+		synchronized (guestUserCounter) {
+			String candidate;
+			do {
+				candidate = GUEST_UID_PREFIX + guestUserCounter.toString();
+				guestUserCounter.increment();
+			} while (userAdmin.getUser("key", candidate) == null);
+			return candidate;
 		}
+
 	}
+
+	//	private void deleteGuestAccounts(Collection<String> uids) {
+	//		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.account");
+	//		IOrionCredentialsService userAdmin = getGuestUserAdmin();
+	//		for (String uid : uids) {
+	//			try {
+	//				User user = userAdmin.getUser(UserConstants.KEY_UID, uid);
+	//				WebUser webUser = WebUser.fromUserId(uid);
+	//				if (webUser == null) {
+	//					if (logger.isInfoEnabled())
+	//						logger.info("WebUser " + uid + " could not be found in backing store");
+	//				}
+	//				if (!userAdmin.deleteUser(user)) {
+	//					if (logger.isInfoEnabled())
+	//						logger.info("User " + uid + " could not be found in the credential store");
+	//				}
+	//				deleteUserAndArtifacts(webUser);
+	//				if (logger.isInfoEnabled())
+	//					logger.info("Removed user " + uid + " (too many guest accounts).");
+	//			} catch (CoreException e) {
+	//				if (logger.isInfoEnabled())
+	//					logger.info("Removing " + uid + " failed.");
+	//			}
+	//		}
+	//	}
 
 	/**
 	 * Helper for deleting a WebUser leaving no traces. Removes the WebUser, and all WebWorkspaces 
@@ -389,37 +390,17 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	 * <code>user</code> is the sole owner of the workspaces and projects they have access to.
 	 * If workspaces or projects are shared among users, this method should not be called.
 	 * @param user The user to delete.
-	 * 
-	 * TODO Move into WebUser?
 	 */
-	private void deleteUserAndArtifacts(WebUser user) throws CoreException {
-		try {
-			// Delete filesystem contents
-			JSONArray workspaces = user.getWorkspacesJSON();
-			for (int i = 0; i < workspaces.length(); i++) {
-				JSONObject workspace = workspaces.getJSONObject(i);
-				WebWorkspace webWorkspace = WebWorkspace.fromId(workspace.getString(ProtocolConstants.KEY_ID));
-				for (WebProject project : webWorkspace.getProjects()) {
-					project.deleteContents();
-					webWorkspace.removeProject(project);
-					project.removeNode();
-				}
-				webWorkspace.removeNode();
+	private void deleteUserArtifacts(UserInfo user) throws CoreException {
+		// Delete filesystem contents for all of this user's projects
+		IMetaStore store = OrionConfiguration.getMetaStore();
+		for (String workspaceId : user.getWorkspaceIds()) {
+			WorkspaceInfo workspace = store.readWorkspace(workspaceId);
+			for (String projectName : workspace.getProjectNames()) {
+				ProjectInfo project = store.readProject(workspace.getUniqueId(), projectName);
+				project.getProjectStore().delete(EFS.NONE, null);
 			}
-			// Delete site configurations
-			JSONArray sites = user.getSiteConfigurationsJSON(new URI("")); //$NON-NLS-1$
-			for (int i = 0; i < sites.length(); i++) {
-				JSONObject site = sites.getJSONObject(i);
-				String id = site.getString(ProtocolConstants.KEY_ID);
-				user.removeSiteConfiguration(user.getSiteConfiguration(id));
-			}
-			// TODO delete Git clones
-		} catch (URISyntaxException e) {
-			LogHelper.log(e);
-		} catch (JSONException e) {
-			LogHelper.log(e);
 		}
-		user.delete();
 	}
 
 	/**
@@ -514,7 +495,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 				UserEmailUtil.getUtil().sendEmailConfirmation(getURI(req).resolve(PATH_EMAIL_CONFIRMATION), user);
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.INFO, HttpServletResponse.SC_OK, "Confirmation email has been sent to " + user.getEmail(), null));
 			} catch (Exception e) {
-				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "Error while sending email" + (e.getMessage()==null ? "" : ": "+ e.getMessage()) +". See http://wiki.eclipse.org/Orion/Server_admin_guide#Email_configuration for email configuration guide."));
+				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "Error while sending email" + (e.getMessage() == null ? "" : ": " + e.getMessage()) + ". See http://wiki.eclipse.org/Orion/Server_admin_guide#Email_configuration for email configuration guide."));
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Could not send confirmation email to " + user.getEmail(), null));
 			}
 		}
@@ -558,13 +539,13 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + userId + " could not be found.", null));
 			}
 		}
-		// Delete WebUser
-		WebUser webUser = WebUser.fromUserId(userId);
+		// Delete user from metadata store
 		try {
-			if (webUser.isGuest())
-				deleteUserAndArtifacts(webUser);
-			else
-				webUser.delete();
+			Activator r = Activator.getDefault();
+			final IMetaStore metastore = OrionConfiguration.getMetaStore();
+			if (isGuest)
+				deleteUserArtifacts(metastore.readUser(userId));
+			metastore.deleteUser(userId);
 		} catch (CoreException e) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Removing " + userId + " failed.", e));
 		}
@@ -598,7 +579,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 			json.put("GitMail", userProfile.get("GitMail", null));
 			json.put("GitName", userProfile.get("GitName", null));
 		}
-		
+
 		JSONArray plugins = new JSONArray();
 		try {
 			JSONObject plugin = new JSONObject();
@@ -615,7 +596,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	private IOrionCredentialsService getUserAdmin() {
 		return UserServiceHelper.getDefault().getUserStore();
 	}
-	
+
 	private IOrionCredentialsService getGuestUserAdmin() {
 		return UserServiceHelper.getDefault().getGuestUserStore();
 	}

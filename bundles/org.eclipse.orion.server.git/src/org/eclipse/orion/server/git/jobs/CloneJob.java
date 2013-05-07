@@ -24,8 +24,8 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.git.objects.Clone;
@@ -38,13 +38,13 @@ import org.json.JSONObject;
  */
 public class CloneJob extends GitJob {
 
-	private final WebProject project;
+	private final ProjectInfo project;
 	private final Clone clone;
 	private final String user;
 	private String cloneLocation;
 
-	public CloneJob(Clone clone, String userRunningTask, CredentialsProvider credentials, String user, String cloneLocation, WebProject project) {
-		super(userRunningTask, true, (GitCredentialsProvider) credentials); //$NON-NLS-1$
+	public CloneJob(Clone clone, String userRunningTask, CredentialsProvider credentials, String user, String cloneLocation, ProjectInfo project) {
+		super(userRunningTask, true, (GitCredentialsProvider) credentials);
 		this.clone = clone;
 		this.user = user;
 		this.project = project;

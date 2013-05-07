@@ -42,6 +42,13 @@ public class WebElement {
 	}
 
 	/**
+	 * Back door for use by {@link CompatibilityMetaStore}.
+	 */
+	IEclipsePreferences getStore() {
+		return store;
+	}
+
+	/**
 	 * Returns the name of this element
 	 * @return the element name
 	 */

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,9 +12,9 @@ package org.eclipse.orion.internal.server.hosting;
 
 import java.util.*;
 import org.eclipse.orion.internal.server.servlets.hosting.IHostedSite;
-import org.eclipse.orion.internal.server.servlets.site.SiteConfiguration;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
-import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
+import org.eclipse.orion.internal.server.servlets.site.SiteInfo;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.json.*;
 
 class HostedSite implements IHostedSite {
@@ -26,10 +26,10 @@ class HostedSite implements IHostedSite {
 	private String host;
 	private String editServer;
 
-	public HostedSite(SiteConfiguration siteConfig, WebUser user, String host, String editServer) {
+	public HostedSite(SiteInfo siteConfig, UserInfo user, String host, String editServer) {
 		this.siteConfigurationId = siteConfig.getId();
 		this.mappings = Collections.unmodifiableMap(createMap(siteConfig));
-		this.userId = user.getId();
+		this.userId = user.getUniqueId();
 		this.workspaceId = siteConfig.getWorkspace();
 		this.host = host;
 		this.editServer = editServer;
@@ -39,7 +39,7 @@ class HostedSite implements IHostedSite {
 		}
 	}
 
-	private static Map<String, List<String>> createMap(SiteConfiguration siteConfig) {
+	private static Map<String, List<String>> createMap(SiteInfo siteConfig) {
 		Map<String, List<String>> map = new HashMap<String, List<String>>();
 		JSONArray mappingsJson = siteConfig.getMappingsJSON();
 		for (int i = 0; i < mappingsJson.length(); i++) {

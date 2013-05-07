@@ -26,8 +26,10 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler.Method;
-import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
+import org.eclipse.orion.internal.server.servlets.workspace.WorkspaceResourceHandler;
 import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.metastore.IMetaStore;
+import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.git.objects.*;
 import org.eclipse.orion.server.git.objects.Status;
 import org.eclipse.orion.server.git.servlets.GitServlet;
@@ -200,7 +202,10 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		if (!"git".equals(scm)) //$NON-NLS-1$
 			return;
 		try {
-			IFileStore store = WebProject.fromId(representation.optString(ProtocolConstants.KEY_ID)).getProjectStore();
+			ProjectInfo project = getProjectForLocation(representation.getString(ProtocolConstants.KEY_LOCATION));
+			if (project == null)
+				return;
+			IFileStore store = project.getProjectStore();
 			//create repository in each project if it doesn't already exist
 			File localFile = store.toLocalFile(EFS.NONE, null);
 			File gitDir = GitUtils.getGitDir(localFile);
@@ -217,5 +222,15 @@ public class GitFileDecorator implements IWebResourceDecorator {
 			//just log it - this is not the purpose of the file decorator
 			LogHelper.log(e);
 		}
+	}
+
+	/**
+	 * Returns the project for the given metadata location, or <code>null</code>.
+	 * @throws CoreException 
+	 */
+	private ProjectInfo getProjectForLocation(String location) throws CoreException {
+		//location is URI of the form protocol:/workspace/workspaceId/project/projectName
+		IMetaStore store = OrionConfiguration.getMetaStore();
+		return WorkspaceResourceHandler.projectForMetadataLocation(store, location);
 	}
 }
