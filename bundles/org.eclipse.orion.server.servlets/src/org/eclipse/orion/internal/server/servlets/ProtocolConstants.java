@@ -161,6 +161,12 @@ public class ProtocolConstants {
 	public static final String KEY_EXCLUDED_IN_EXPORT = "excludedInExport"; //$NON-NLS-1$
 
 	/**
+	 * JSON representation key indicating what files should be excluded in Zip import.
+	 * This key will be removed by TransferResourceDecorator when the correct {@link #KEY_IMPORT_LOCATION} will be added
+	 */
+	public static final String KEY_EXCLUDED_IN_IMPORT = "excludedInImport"; //$NON-NLS-1$
+
+	/**
 	 * JSON representation key for an object's id. The value's data type is a String.
 	 */
 	public static final String KEY_ID = "Id"; //$NON-NLS-1$

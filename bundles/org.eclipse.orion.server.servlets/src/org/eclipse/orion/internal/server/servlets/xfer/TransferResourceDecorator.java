@@ -57,6 +57,16 @@ public class TransferResourceDecorator implements IWebResourceDecorator {
 		IPath targetPath = new Path(location.getPath()).removeFirstSegments(1).removeTrailingSeparator();
 		IPath path = new Path("/xfer/import").append(targetPath); //$NON-NLS-1$
 		URI link = new URI(resource.getScheme(), resource.getAuthority(), path.toString(), null, null);
+		if (representation.has(ProtocolConstants.KEY_EXCLUDED_IN_IMPORT)) {
+			String linkString = link.toString();
+			if (linkString.contains("?")) {
+				linkString += "&" + ProtocolConstants.PARAM_EXCLUDE + "=" + URLEncoder.encode(representation.getString(ProtocolConstants.KEY_EXCLUDED_IN_IMPORT), "UTF-8");
+			} else {
+				linkString += "?" + ProtocolConstants.PARAM_EXCLUDE + "=" + URLEncoder.encode(representation.getString(ProtocolConstants.KEY_EXCLUDED_IN_IMPORT), "UTF-8");
+			}
+			link = new URI(linkString);
+			representation.remove(ProtocolConstants.KEY_EXCLUDED_IN_IMPORT);
+		}
 		representation.put(ProtocolConstants.KEY_IMPORT_LOCATION, link);
 		path = new Path("/xfer/export").append(targetPath).addFileExtension("zip"); //$NON-NLS-1$ //$NON-NLS-2$
 		link = new URI(resource.getScheme(), resource.getAuthority(), path.toString(), null, null);
