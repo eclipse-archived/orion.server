@@ -11,6 +11,7 @@
 package org.eclipse.orion.internal.server.servlets.xfer;
 
 import java.io.IOException;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.servlet.ServletException;
@@ -19,6 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.filesystem.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.core.IOUtilities;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 
@@ -28,6 +30,7 @@ import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 public class ClientExport {
 
 	private final IPath sourcePath;
+	private List<String> excludedFiles = new ArrayList<String>();
 
 	public ClientExport(IPath path, ServletResourceHandler<IStatus> statusHandler) {
 		this.sourcePath = path;
@@ -36,6 +39,9 @@ public class ClientExport {
 
 	public void doExport(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
 		IFileStore source = NewFileServlet.getFileStore(req, sourcePath);
+		if (req.getParameter(ProtocolConstants.PARAM_EXCLUDE) != null) {
+			excludedFiles = Arrays.asList(req.getParameter(ProtocolConstants.PARAM_EXCLUDE).split(","));
+		}
 
 		try {
 			if (source.fetchInfo(EFS.NONE, null).isDirectory() && source.childNames(EFS.NONE, null).length == 0) {
@@ -55,8 +61,11 @@ public class ClientExport {
 	private void write(IFileStore source, IPath path, ZipOutputStream zout) throws IOException, CoreException {
 		IFileInfo info = source.fetchInfo(EFS.NONE, null);
 		if (info.isDirectory()) {
-			for (IFileStore child : source.childStores(EFS.NONE, null))
-				write(child, path.append(child.getName()), zout);
+			for (IFileStore child : source.childStores(EFS.NONE, null)) {
+				if (!excludedFiles.contains(child.getName())) {
+					write(child, path.append(child.getName()), zout);
+				}
+			}
 		} else {
 			ZipEntry entry = new ZipEntry(path.toString());
 			zout.putNextEntry(entry);
