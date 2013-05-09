@@ -298,7 +298,6 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		userInfo.setUserName(login);
 		userInfo.setFullName(name);
 		userInfo.setGuest(isGuestUser);
-		Activator r = Activator.getDefault();
 		OrionConfiguration.getMetaStore().createUser(userInfo);
 
 		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.account"); //$NON-NLS-1$

@@ -190,7 +190,11 @@ public class WebUser extends WebElement {
 	}
 
 	public void setGuest(boolean isGuest) {
-		this.store.putBoolean(ProtocolConstants.KEY_GUEST, isGuest);
+		//default is false so we don't need to store that
+		if (isGuest)
+			this.store.putBoolean(ProtocolConstants.KEY_GUEST, isGuest);
+		else
+			this.store.remove(ProtocolConstants.KEY_GUEST);
 	}
 
 	/**

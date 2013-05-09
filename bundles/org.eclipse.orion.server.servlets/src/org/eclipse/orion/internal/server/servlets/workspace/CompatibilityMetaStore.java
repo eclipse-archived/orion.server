@@ -16,10 +16,12 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.site.*;
+import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.metastore.*;
 import org.eclipse.orion.server.core.users.OrionScope;
 import org.json.*;
 import org.osgi.service.prefs.BackingStoreException;
+import org.osgi.service.prefs.Preferences;
 
 /**
  * A meta store implementation that is backed by the legacy Orion 1.0 back end
@@ -133,9 +135,15 @@ public class CompatibilityMetaStore implements IMetaStore {
 	 */
 	private void readProperties(MetadataInfo info, IEclipsePreferences store) throws CoreException {
 		try {
+			Preferences operationsNode = new OrionScope().getNode("Operations").node(info.getUniqueId()); //$NON-NLS-1$
+			//read regular properties from user store
 			for (String key : store.keys()) {
 				if (!isInternalProperty(key))
 					info.setProperty(key, store.get(key, null));
+			}
+			//read task properties from separate store
+			for (String key : operationsNode.keys()) {
+				info.setProperty(key, operationsNode.get(key, null));
 			}
 		} catch (BackingStoreException e) {
 			throw toCoreException(e);
@@ -229,10 +237,28 @@ public class CompatibilityMetaStore implements IMetaStore {
 		} catch (BackingStoreException e) {
 			throw toCoreException(e);
 		}
+		Preferences operationsNode = new OrionScope().getNode("Operations").node(info.getUniqueId()); //$NON-NLS-1$
 		for (String key : newProperties.keySet()) {
 			toRemove.remove(key);
-			if (!isInternalProperty(key))
-				store.put(key, newProperties.get(key));
+			if (isInternalProperty(key))
+				continue;
+			//check for task data
+			if (key.indexOf('/') >= 0) {
+				IPath keyPath = new Path(key);
+				if ("operations".equals(keyPath.segment(0))) { //$NON-NLS-1$
+					//store task info separately (client should migrate to tasks servlet)
+					operationsNode.put(key, newProperties.get(key));
+					continue;
+				}
+			}
+			//otherwise a regular property
+			store.put(key, newProperties.get(key));
+		}
+		try {
+			operationsNode.flush();
+		} catch (BackingStoreException e) {
+			//not critical - this is transient data
+			LogHelper.log(e);
 		}
 		//remove properties no longer defined
 		for (String key : toRemove) {
