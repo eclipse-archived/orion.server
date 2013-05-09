@@ -63,8 +63,11 @@ public class CacheFilter implements Filter {
 		HttpServletRequest httpRequest = (HttpServletRequest) request;
 		HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-		String requestURI = httpRequest.getRequestURI();
-		if ((includeMatches == null || includeMatches.matcher(requestURI).matches()) && (excludeMatches == null || !excludeMatches.matcher(requestURI).matches())) {
+		String pathInfo = httpRequest.getPathInfo();
+		if (pathInfo == null) {
+			pathInfo = "";
+		}
+		if ((includeMatches == null || includeMatches.matcher(pathInfo).matches()) && (excludeMatches == null || !excludeMatches.matcher(pathInfo).matches())) {
 			if (maxAge != -1) {
 				httpResponse.setDateHeader("Expires", System.currentTimeMillis() + maxAge * 1000);
 			}
