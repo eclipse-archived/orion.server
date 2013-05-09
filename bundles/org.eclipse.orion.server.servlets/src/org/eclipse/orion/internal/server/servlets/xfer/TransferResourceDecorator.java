@@ -10,8 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.xfer;
 
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.io.UnsupportedEncodingException;
+import java.net.*;
 import javax.servlet.http.HttpServletRequest;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
@@ -52,14 +52,34 @@ public class TransferResourceDecorator implements IWebResourceDecorator {
 		}
 	}
 
-	private void addTransferLinks(HttpServletRequest request, URI resource, JSONObject representation) throws URISyntaxException, JSONException {
+	private void addTransferLinks(HttpServletRequest request, URI resource, JSONObject representation) throws URISyntaxException, JSONException, UnsupportedEncodingException {
 		URI location = new URI(representation.getString(ProtocolConstants.KEY_LOCATION));
 		IPath targetPath = new Path(location.getPath()).removeFirstSegments(1).removeTrailingSeparator();
 		IPath path = new Path("/xfer/import").append(targetPath); //$NON-NLS-1$
 		URI link = new URI(resource.getScheme(), resource.getAuthority(), path.toString(), null, null);
+		if (representation.has(ProtocolConstants.KEY_EXCLUDED_IN_IMPORT)) {
+			String linkString = link.toString();
+			if (linkString.contains("?")) {
+				linkString += "&" + ProtocolConstants.PARAM_EXCLUDE + "=" + URLEncoder.encode(representation.getString(ProtocolConstants.KEY_EXCLUDED_IN_IMPORT), "UTF-8");
+			} else {
+				linkString += "?" + ProtocolConstants.PARAM_EXCLUDE + "=" + URLEncoder.encode(representation.getString(ProtocolConstants.KEY_EXCLUDED_IN_IMPORT), "UTF-8");
+			}
+			link = new URI(linkString);
+			representation.remove(ProtocolConstants.KEY_EXCLUDED_IN_IMPORT);
+		}
 		representation.put(ProtocolConstants.KEY_IMPORT_LOCATION, link);
 		path = new Path("/xfer/export").append(targetPath).addFileExtension("zip"); //$NON-NLS-1$ //$NON-NLS-2$
 		link = new URI(resource.getScheme(), resource.getAuthority(), path.toString(), null, null);
+		if (representation.has(ProtocolConstants.KEY_EXCLUDED_IN_EXPORT)) {
+			String linkString = link.toString();
+			if (linkString.contains("?")) {
+				linkString += "&" + ProtocolConstants.PARAM_EXCLUDE + "=" + URLEncoder.encode(representation.getString(ProtocolConstants.KEY_EXCLUDED_IN_EXPORT), "UTF-8");
+			} else {
+				linkString += "?" + ProtocolConstants.PARAM_EXCLUDE + "=" + URLEncoder.encode(representation.getString(ProtocolConstants.KEY_EXCLUDED_IN_EXPORT), "UTF-8");
+			}
+			link = new URI(linkString);
+			representation.remove(ProtocolConstants.KEY_EXCLUDED_IN_EXPORT);
+		}
 		representation.put(ProtocolConstants.KEY_EXPORT_LOCATION, link);
 	}
 }

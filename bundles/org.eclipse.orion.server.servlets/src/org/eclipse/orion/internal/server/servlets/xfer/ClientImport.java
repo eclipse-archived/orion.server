@@ -29,6 +29,7 @@ import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
+import org.json.JSONObject;
 import org.osgi.framework.FrameworkUtil;
 
 /**
@@ -103,6 +104,16 @@ class ClientImport {
 		}
 	}
 
+	private static boolean hasExcludedParent(IFileStore destination, IFileStore destinationRoot, List<String> excludedFiles) {
+		if (destination.equals(destinationRoot)) {
+			return false;
+		}
+		if (excludedFiles.contains(destination.getName())) {
+			return true;
+		}
+		return hasExcludedParent(destination.getParent(), destinationRoot, excludedFiles);
+	}
+
 	/**
 	 * Unzips the transferred file. Returns <code>true</code> if the unzip was
 	 * successful, and <code>false</code> otherwise. In case of failure, this method
@@ -110,6 +121,15 @@ class ClientImport {
 	 */
 	private boolean completeUnzip(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
 		IPath destPath = new Path(getPath());
+		boolean force = false;
+		List<String> filesFailed = new ArrayList<String>();
+		if (req.getParameter("force") != null) {
+			force = req.getParameter("force").equals("true");
+		}
+		List<String> excludedFiles = new ArrayList<String>();
+		if (req.getParameter(ProtocolConstants.PARAM_EXCLUDE) != null) {
+			excludedFiles = Arrays.asList(req.getParameter(ProtocolConstants.PARAM_EXCLUDE).split(","));
+		}
 		try {
 			ZipFile source = new ZipFile(new File(getStorageDirectory(), FILE_DATA));
 			IFileStore destinationRoot = NewFileServlet.getFileStore(req, destPath);
@@ -117,14 +137,38 @@ class ClientImport {
 			while (entries.hasMoreElements()) {
 				ZipEntry entry = entries.nextElement();
 				IFileStore destination = destinationRoot.getChild(entry.getName());
+				if (hasExcludedParent(destination, destinationRoot, excludedFiles)) {
+					//file should not be imported
+					continue;
+				}
 				if (entry.isDirectory())
 					destination.mkdir(EFS.NONE, null);
 				else {
+					if (!force && destination.fetchInfo().exists()) {
+						filesFailed.add(entry.getName());
+						continue;
+					}
 					destination.getParent().mkdir(EFS.NONE, null);
 					IOUtilities.pipe(source.getInputStream(entry), destination.openOutputStream(EFS.NONE, null), false, true);
 				}
 			}
 			source.close();
+
+			if (!filesFailed.isEmpty()) {
+				String failedFilesList = "";
+				for (String file : filesFailed) {
+					if (failedFilesList.length() > 0) {
+						failedFilesList += ", ";
+					}
+					failedFilesList += file;
+				}
+				String msg = NLS.bind("Failed to transfer all files to {0}, the following files could not be overwritten {1}", destPath.toString(), failedFilesList);
+				JSONObject jsonData = new JSONObject();
+				jsonData.put("ExistingFiles", filesFailed);
+				statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, jsonData, null));
+				return false;
+			}
+
 		} catch (ZipException e) {
 			//zip exception implies client sent us invalid input
 			String msg = NLS.bind("Failed to complete file transfer on {0}", destPath.toString());

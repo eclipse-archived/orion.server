@@ -155,6 +155,18 @@ public class ProtocolConstants {
 	public static final String KEY_EXPORT_LOCATION = "ExportLocation"; //$NON-NLS-1$
 
 	/**
+	 * JSON representation key indicating what files should be excluded in Zip export.
+	 * This key will be removed by TransferResourceDecorator when the correct {@link #KEY_EXPORT_LOCATION} will be added
+	 */
+	public static final String KEY_EXCLUDED_IN_EXPORT = "excludedInExport"; //$NON-NLS-1$
+
+	/**
+	 * JSON representation key indicating what files should be excluded in Zip import.
+	 * This key will be removed by TransferResourceDecorator when the correct {@link #KEY_IMPORT_LOCATION} will be added
+	 */
+	public static final String KEY_EXCLUDED_IN_IMPORT = "excludedInImport"; //$NON-NLS-1$
+
+	/**
 	 * JSON representation key for an object's id. The value's data type is a String.
 	 */
 	public static final String KEY_ID = "Id"; //$NON-NLS-1$
@@ -261,6 +273,13 @@ public class ProtocolConstants {
 	 * type is a JSON array of workspace objects.
 	 */
 	public static final String KEY_WORKSPACES = "Workspaces"; //$NON-NLS-1$
+
+	/**
+	 * Query parameter on HTTP requests for exporting files in Zip format.
+	 * It should contain the comma separated list of files that should be excluded in zip export.
+	 * It should be added to {@link #KEY_EXPORT_LOCATION}
+	 */
+	public static final String PARAM_EXCLUDE = "exclude"; //$NON-NLS-1$
 
 	/**
 	 * Query parameter on HTTP requests for directories, indicating the depth
