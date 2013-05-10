@@ -13,9 +13,10 @@ package org.eclipse.orion.server.core.users;
 import org.eclipse.core.internal.preferences.AbstractScope;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.orion.server.core.metastore.IMetaStore;
 
 /**
- * 
+ * @deprecated Use {@link IMetaStore} instead.
  */
 public class OrionScope extends AbstractScope {
 	/**

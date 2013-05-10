@@ -70,4 +70,7 @@ public class SimpleMetaStore implements IMetaStore {
 	public void updateUser(UserInfo info) throws CoreException {
 	}
 
+	public void updateWorkspace(WorkspaceInfo info) throws CoreException {
+	}
+
 }

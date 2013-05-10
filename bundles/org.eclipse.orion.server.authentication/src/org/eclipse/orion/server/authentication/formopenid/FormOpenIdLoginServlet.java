@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2012 IBM Corporation and others.
+ * Copyright (c) 2010, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,25 +12,18 @@ package org.eclipse.orion.server.authentication.formopenid;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.authentication.Activator;
 import org.eclipse.orion.server.authentication.form.FormAuthHelper;
 import org.eclipse.orion.server.authentication.form.FormAuthHelper.LoginResult;
-import org.eclipse.orion.server.authentication.formpersona.PersonaConstants;
-import org.eclipse.orion.server.authentication.formpersona.PersonaException;
-import org.eclipse.orion.server.authentication.formpersona.PersonaHelper;
-import org.eclipse.orion.server.authentication.openid.OpenIdException;
-import org.eclipse.orion.server.authentication.openid.OpenIdHelper;
-import org.eclipse.orion.server.authentication.openid.OpenidConsumer;
+import org.eclipse.orion.server.authentication.formpersona.*;
+import org.eclipse.orion.server.authentication.openid.*;
 import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.authentication.IAuthenticationService;
 import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.orion.server.useradmin.UnsupportedUserStoreException;
@@ -60,7 +53,7 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 
 		if (pathInfo.startsWith("/form")) { //$NON-NLS-1$
 			try {
-				LoginResult authResult = FormAuthHelper.performAuthentication(req, resp); 
+				LoginResult authResult = FormAuthHelper.performAuthentication(req, resp);
 				if (authResult == LoginResult.OK) {
 					// redirection from
 					// FormAuthenticationService.setNotAuthenticated
@@ -88,7 +81,7 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 						}
 					}
 					resp.flushBuffer();
-				} else if(authResult == LoginResult.BLOCKED){
+				} else if (authResult == LoginResult.BLOCKED) {
 					displayError("Your account is not active. Please confirm your email before logging in.", req, resp);
 				} else {
 					displayError("Invalid user or password", req, resp);
@@ -151,7 +144,7 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 		if (user == null) {
 			user = authenticationService.getAuthenticatedUser(req, resp, authenticationService.getDefaultAuthenticationProperties());
 		}
-		
+
 		if (user != null) {
 			resp.setStatus(HttpServletResponse.SC_OK);
 			try {
