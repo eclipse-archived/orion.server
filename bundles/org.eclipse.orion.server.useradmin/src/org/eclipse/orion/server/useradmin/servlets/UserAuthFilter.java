@@ -11,30 +11,16 @@
 package org.eclipse.orion.server.useradmin.servlets;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
-
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import java.util.*;
+import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.PreferenceHelper;
-import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.core.authentication.IAuthenticationService;
 import org.eclipse.orion.server.useradmin.UserAdminActivator;
 import org.eclipse.orion.server.useradmin.UserConstants;
-import org.json.JSONException;
 import org.osgi.service.http.HttpContext;
 
 public class UserAuthFilter implements Filter {
@@ -96,7 +82,7 @@ public class UserAuthFilter implements Filter {
 				httpResponse.sendError(HttpServletResponse.SC_FORBIDDEN);
 				return;
 			}
-		} catch (JSONException e) {
+		} catch (CoreException e) {
 			httpResponse.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			return;
 		}

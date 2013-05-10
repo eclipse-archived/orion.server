@@ -21,7 +21,6 @@ import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.lib.RefUpdate.Result;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.transport.*;
-import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.git.servlets.GitUtils;
@@ -49,7 +48,9 @@ public class FetchJob extends GitJob {
 	}
 
 	private void builtMessages() {
-		String cloneName = computeCloneName();
+		// path is either : {remote}/file/{workspaceId}/{projectName}
+		// or {remote}/{branch}/file/{workspaceId}/{projectName}
+		String cloneName = path.lastSegment();
 		if (branch == null) {
 			Object[] bindings = new String[] {remote, cloneName};
 			setName(NLS.bind("Fetching {0} for {1}", bindings));
@@ -59,20 +60,6 @@ public class FetchJob extends GitJob {
 			setName(NLS.bind("Fetching {0}/{1} for {2}", bindings));
 			setFinalMessage(NLS.bind("Fetching {0}/{1} for {2} done.", bindings));
 		}
-	}
-
-	private String computeCloneName() {
-		// path: {remote}/file/{projectId}
-		if (path.segment(1).equals("file") && path.segmentCount() == 3) {
-			WebProject webProject = WebProject.fromId(path.segment(2));
-			return webProject.getName();
-		}
-		// path: {remote}/{branch}/file/{projectId}
-		if (path.segment(2).equals("file") && path.segmentCount() == 4) {
-			WebProject webProject = WebProject.fromId(path.segment(3));
-			return webProject.getName();
-		}
-		return path.lastSegment();
 	}
 
 	private IStatus doFetch() throws IOException, CoreException, URISyntaxException, GitAPIException {

@@ -10,23 +10,44 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.site;
 
+import java.net.URI;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.WebElement;
+import org.eclipse.orion.internal.server.servlets.workspace.WebElementResourceHandler;
 import org.eclipse.orion.server.core.ServerConstants;
-import org.eclipse.orion.server.core.resources.Base64Counter;
-import org.json.JSONArray;
-import org.json.JSONException;
+import org.json.*;
 import org.osgi.service.prefs.BackingStoreException;
 
 /**
  * Configuration details for a site that can be hosted on an Orion server.
+ * @deprecated replaced by {@link SiteInfo}.
  */
 public class SiteConfiguration extends WebElement {
 
 	public static final String SITE_CONFIGURATIONS_NODE_NAME = "SiteConfigurations"; //$NON-NLS-1$
 
-	private static final Base64Counter siteConfigCounter = new Base64Counter();
+	/**
+	 * @param baseLocation The URI of the SiteConfigurationServlet.
+	 * @return Representation of <code>site</code> as a JSONObject.
+	 */
+	public static JSONObject toJSON(SiteConfiguration site, URI baseLocation) {
+		JSONObject result = WebElementResourceHandler.toJSON(site);
+		try {
+			if (baseLocation != null)
+				result.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(baseLocation, site.getId()));
+			result.putOpt(SiteConfigurationConstants.KEY_HOST_HINT, site.getHostHint());
+			result.putOpt(SiteConfigurationConstants.KEY_WORKSPACE, site.getWorkspace());
+			result.put(SiteConfigurationConstants.KEY_MAPPINGS, site.getMappingsJSON());
+
+			// Note: The SiteConfigurationConstants.KEY_HOSTING_STATUS field will be contributed to the result
+			// by the site-hosting bundle (if present) via an IWebResourceDecorator
+		} catch (JSONException e) {
+			// Can't happen
+		}
+		return result;
+	}
 
 	/**
 	 * Creates a new SiteConfiguration instance with the given backing store.
@@ -44,20 +65,6 @@ public class SiteConfiguration extends WebElement {
 		SiteConfiguration siteConfiguration = new SiteConfiguration((IEclipsePreferences) scope.getNode(SITE_CONFIGURATIONS_NODE_NAME).node(id));
 		siteConfiguration.setId(id);
 		return siteConfiguration;
-	}
-
-	/**
-	 * @return The next available site configuration id. The id is guaranteed to be globally unique on this server.
-	 */
-	public static String nextSiteConfigurationId() {
-		synchronized (siteConfigCounter) {
-			String candidate;
-			do {
-				candidate = siteConfigCounter.toString();
-				siteConfigCounter.increment();
-			} while (siteConfigExists(candidate));
-			return candidate;
-		}
 	}
 
 	/**
@@ -110,5 +117,18 @@ public class SiteConfiguration extends WebElement {
 
 	public void setMappings(JSONArray mappings) {
 		store.put(SiteConfigurationConstants.KEY_MAPPINGS, mappings.toString());
+	}
+
+	/**
+	 * Update this configuration with all the information from the provided site info.
+	 * @throws CoreException 
+	 */
+	public void update(SiteInfo siteInfo) throws CoreException {
+		setId(siteInfo.getId());
+		setName(siteInfo.getName());
+		setHostHint(siteInfo.getHostHint());
+		setMappings(siteInfo.getMappingsJSON());
+		setWorkspace(siteInfo.getWorkspace());
+		save();
 	}
 }

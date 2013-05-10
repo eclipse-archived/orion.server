@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2012 IBM Corporation and others.
+ * Copyright (c) 2010, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,13 +11,15 @@
 package org.eclipse.orion.internal.server.servlets.workspace;
 
 import java.net.URI;
-import java.util.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.site.*;
+import org.eclipse.orion.internal.server.servlets.site.SiteConfiguration;
+import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.core.metastore.IMetaStore;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.resources.Base64Counter;
 import org.eclipse.orion.server.core.users.OrionScope;
 import org.json.*;
@@ -25,72 +27,48 @@ import org.osgi.service.prefs.BackingStoreException;
 
 /**
  * Represents a single Orion user.
+ * @deprecated replaced by {@link IMetaStore} and {@link UserInfo}.
  */
 public class WebUser extends WebElement {
+	private static final Base64Counter userCounter = new Base64Counter();
 
-	private static final String USERS_NODE = "Users"; //$NON-NLS-1$
-	private static final String GUEST_UID_PREFIX = "user"; //$NON-NLS-1$
-	private static final Base64Counter guestUserCounter = new Base64Counter();
+	static final String USERS_NODE = "Users"; //$NON-NLS-1$
 
 	public WebUser(IEclipsePreferences store) {
 		super(store);
 	}
 
-	public static String nextGuestUserUid() {
-		synchronized (guestUserCounter) {
-			String candidate;
-			do {
-				candidate = GUEST_UID_PREFIX + guestUserCounter.toString();
-				guestUserCounter.increment();
-			} while (exists(candidate));
-			return candidate;
-		}
-	}
-
-	public static Collection<String> getGuestAccountsToDelete(int limit) {
-		List<String> uids = new ArrayList<String>();
-		try {
-			int excess = guestUserCount() - limit;
-			Base64Counter count = new Base64Counter();
-			while (excess-- > 0) {
-				// Deletes oldest ones first
-				String uid;
-				do {
-					uid = GUEST_UID_PREFIX + count.toString();
-					count.increment();
-				} while (!exists(uid));
-				uids.add(uid);
-			}
-		} catch (BackingStoreException e) {
-			LogHelper.log(e);
-		}
-		return uids;
-	}
-
-	private static int guestUserCount() throws BackingStoreException {
-		// FIXME probably slow
-		int count = 0;
-		IEclipsePreferences usersNode = new OrionScope().getNode(USERS_NODE);
-		for (String uid : usersNode.childrenNames()) {
-			if (uid.startsWith(GUEST_UID_PREFIX)) {
-				count++;
-			}
-		}
-		return count;
-	}
-
-	/**
-	 * Returns whether a user with the given id already exists.
-	 * @param uid The id of the user
-	 * @return <code>true</code> if the user already exists, and <code>false</code> otherwise.
-	 */
-	private static boolean exists(String uid) {
-		try {
-			return new OrionScope().getNode(USERS_NODE).nodeExists(uid);
-		} catch (Exception e) {
-			return false;
-		}
-	}
+	//	public static Collection<String> getGuestAccountsToDelete(int limit) {
+	//		List<String> uids = new ArrayList<String>();
+	//		try {
+	//			int excess = guestUserCount() - limit;
+	//			Base64Counter count = new Base64Counter();
+	//			while (excess-- > 0) {
+	//				// Deletes oldest ones first
+	//				String uid;
+	//				do {
+	//					uid = GUEST_UID_PREFIX + count.toString();
+	//					count.increment();
+	//				} while (!exists(uid));
+	//				uids.add(uid);
+	//			}
+	//		} catch (BackingStoreException e) {
+	//			LogHelper.log(e);
+	//		}
+	//		return uids;
+	//	}
+	//
+	//	private static int guestUserCount() throws BackingStoreException {
+	//		// FIXME probably slow
+	//		int count = 0;
+	//		IEclipsePreferences usersNode = new OrionScope().getNode(USERS_NODE);
+	//		for (String uid : usersNode.childrenNames()) {
+	//			if (uid.startsWith(GUEST_UID_PREFIX)) {
+	//				count++;
+	//			}
+	//		}
+	//		return count;
+	//	}
 
 	private static IEclipsePreferences getUserNode(String uid) {
 		try {
@@ -98,6 +76,29 @@ public class WebUser extends WebElement {
 		} catch (Exception e) {
 			return null;
 		}
+	}
+
+	/**
+	 * Returns whether a user with the given id already exists.
+	 */
+	static boolean exists(String userId) {
+		if (userId == null)
+			return false;
+		try {
+			return scope.getNode(USERS_NODE).nodeExists(userId);
+		} catch (Exception e) {
+			return false;
+		}
+	}
+
+	/**
+	 * Returns the next available user id.
+	 */
+	static synchronized String nextUserId() {
+		while (exists(userCounter.toString())) {
+			userCounter.increment();
+		}
+		return userCounter.toString();
 	}
 
 	/**
@@ -189,7 +190,11 @@ public class WebUser extends WebElement {
 	}
 
 	public void setGuest(boolean isGuest) {
-		this.store.putBoolean(ProtocolConstants.KEY_GUEST, isGuest);
+		//default is false so we don't need to store that
+		if (isGuest)
+			this.store.putBoolean(ProtocolConstants.KEY_GUEST, isGuest);
+		else
+			this.store.remove(ProtocolConstants.KEY_GUEST);
 	}
 
 	/**
@@ -198,8 +203,7 @@ public class WebUser extends WebElement {
 	 * @param workspace
 	 * @return The created SiteConfiguration.
 	 */
-	public SiteConfiguration createSiteConfiguration(String name, String workspace) throws CoreException {
-		String id = SiteConfiguration.nextSiteConfigurationId();
+	public SiteConfiguration createSiteConfiguration(String id, String name, String workspace) throws CoreException {
 		SiteConfiguration siteConfig = SiteConfiguration.fromId(id);
 		siteConfig.setName(name);
 		siteConfig.setWorkspace(workspace);
@@ -245,7 +249,7 @@ public class WebUser extends WebElement {
 				// Get the actual site configuration this points to
 				SiteConfiguration siteConfig = getExistingSiteConfiguration(id);
 				if (siteConfig != null) {
-					JSONObject siteConfigJson = SiteConfigurationResourceHandler.toJSON(siteConfig, baseLocation);
+					JSONObject siteConfigJson = SiteConfiguration.toJSON(siteConfig, baseLocation);
 					jsonArray.put(siteConfigJson);
 				}
 			}
@@ -300,7 +304,6 @@ public class WebUser extends WebElement {
 	public void delete() throws CoreException {
 		try {
 			IEclipsePreferences parent = (IEclipsePreferences) store.parent();
-			boolean isGuest = this.isGuest();
 			store.clear();
 			store.removeNode();
 			// TODO: consider removing user's Workspaces, Projects, Clones, SiteConfigs if no one else is using them

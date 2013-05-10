@@ -23,14 +23,11 @@ import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.file.ServletFileStoreHandler;
 import org.eclipse.orion.internal.server.servlets.hosting.IHostedSite;
-import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
-import org.eclipse.orion.internal.server.servlets.workspace.WebWorkspace;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
-import org.json.JSONException;
 
 /**
  * Handles requests for URIs that are part of a running hosted site.
@@ -106,16 +103,15 @@ public class HostedSiteServlet extends OrionServlet {
 
 	// FIXME these variables are copied from fileservlet
 	private ServletResourceHandler<IFileStore> fileSerializer;
-	private final URI rootStoreURI;
 
 	public HostedSiteServlet() {
-		rootStoreURI = Activator.getDefault().getRootLocationURI();
+		super();
 	}
 
 	@Override
 	public void init() throws ServletException {
 		super.init();
-		fileSerializer = new ServletFileStoreHandler(rootStoreURI, getStatusHandler(), getServletContext());
+		fileSerializer = new ServletFileStoreHandler(getStatusHandler(), getServletContext());
 	}
 
 	@Override
@@ -256,7 +252,7 @@ public class HostedSiteServlet extends OrionServlet {
 			} else {
 				handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, NLS.bind("No rights to access {0}", fileURI), null));
 			}
-		} catch (JSONException e) {
+		} catch (CoreException e) {
 			throw new ServletException(e);
 		}
 
@@ -304,11 +300,10 @@ public class HostedSiteServlet extends OrionServlet {
 		//path format is /workspaceId/projectName/[suffix]
 		if (path.segmentCount() <= 1)
 			return null;
-		WebWorkspace workspace = WebWorkspace.fromId(path.segment(0));
-		WebProject project = workspace.getProjectByName(path.segment(1));
-		if (project == null)
-			return null;
 		try {
+			ProjectInfo project = OrionConfiguration.getMetaStore().readProject(path.segment(0), path.segment(1));
+			if (project == null)
+				return null;
 			return project.getProjectStore().getFileStore(path.removeFirstSegments(2));
 		} catch (CoreException e) {
 			LogHelper.log(new Status(IStatus.WARNING, Activator.PI_SERVER_SERVLETS, 1, NLS.bind("An error occurred when getting file store for path {0}", path), e));

@@ -38,7 +38,7 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 
 	private final ServletResourceHandler<IStatus> statusHandler;
 
-	public DirectoryHandlerV1(URI rootStoreURI, ServletResourceHandler<IStatus> statusHandler) {
+	public DirectoryHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
 		this.statusHandler = statusHandler;
 	}
 

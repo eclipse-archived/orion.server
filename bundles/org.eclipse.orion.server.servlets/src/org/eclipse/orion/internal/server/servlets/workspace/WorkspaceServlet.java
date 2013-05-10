@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2012 IBM Corporation and others.
+ * Copyright (c) 2010, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -18,6 +18,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.metastore.*;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.JSONObject;
 
@@ -30,12 +32,10 @@ public class WorkspaceServlet extends OrionServlet {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private ServletResourceHandler<WebWorkspace> workspaceResourceHandler;
-	private ServletResourceHandler<WebProject> projectResourceHandler;
+	private ServletResourceHandler<WorkspaceInfo> workspaceResourceHandler;
 
 	public WorkspaceServlet() {
 		workspaceResourceHandler = new WorkspaceResourceHandler(getStatusHandler());
-		projectResourceHandler = new WebProjectResourceHandler();
 	}
 
 	/**
@@ -61,15 +61,22 @@ public class WorkspaceServlet extends OrionServlet {
 		}
 		IPath path = new Path(pathString);
 		int segmentCount = path.segmentCount();
-		if (segmentCount > 0 && segmentCount < 3) {
-			WebWorkspace workspace = WebWorkspace.fromId(path.segment(0));
-			if (workspaceResourceHandler.handleRequest(req, resp, workspace))
+		try {
+			if (segmentCount > 0 && segmentCount < 3) {
+				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(0));
+				if (workspaceResourceHandler.handleRequest(req, resp, workspace))
+					return;
+			} else if (segmentCount == 3) {
+				//path format is /<wsId>/project/<projectName>
+				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(0));
+				ProjectInfo project = OrionConfiguration.getMetaStore().readProject(path.segment(0), path.segment(2));
+				URI baseLocation = ServletResourceHandler.getURI(req);
+				OrionServlet.writeJSONResponse(req, resp, WebProjectResourceHandler.toJSON(workspace, project, baseLocation));
 				return;
-		} else if (segmentCount == 3) {
-			//path format is /<wsId>/project/<projectId>
-			WebProject project = WebProject.fromId(path.segment(2));
-			if (projectResourceHandler.handleRequest(req, resp, project))
-				return;
+			}
+		} catch (CoreException e) {
+			handleException(resp, "Error reading workspace metadata", e);
+			return;
 		}
 		super.doGet(req, resp);
 	}
@@ -80,9 +87,14 @@ public class WorkspaceServlet extends OrionServlet {
 		String pathString = req.getPathInfo();
 		IPath path = new Path(pathString == null ? "" : pathString); //$NON-NLS-1$
 		if (path.segmentCount() > 0) {
-			WebWorkspace workspace = WebWorkspace.fromId(path.segment(0));
-			if (workspaceResourceHandler.handleRequest(req, resp, workspace))
+			try {
+				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(0));
+				if (workspaceResourceHandler.handleRequest(req, resp, workspace))
+					return;
+			} catch (CoreException e) {
+				handleException(resp, "Error reading workspace metadata", e);
 				return;
+			}
 		}
 		super.doDelete(req, resp);
 	}
@@ -93,12 +105,13 @@ public class WorkspaceServlet extends OrionServlet {
 	 * or <code>false</code> if the request could not be handled by this servlet.
 	 */
 	private boolean doGetWorkspaces(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
-		String userName = getUserId(req);
-		if (!checkUser(userName, resp))
+		String userId = getUserId(req);
+		if (!checkUser(userId, resp))
 			return true;
 		try {
-			WebUser user = WebUser.fromUserId(userName);
-			writeJSONResponse(req, resp, WebUserResourceHandler.toJSON(user, ServletResourceHandler.getURI(req)));
+			Activator r = Activator.getDefault();
+			UserInfo user = OrionConfiguration.getMetaStore().readUser(userId);
+			writeJSONResponse(req, resp, UserInfoResourceHandler.toJSON(user, ServletResourceHandler.getURI(req)));
 		} catch (Exception e) {
 			handleException(resp, "An error occurred while obtaining workspace data", e);
 		}
@@ -115,9 +128,14 @@ public class WorkspaceServlet extends OrionServlet {
 		}
 		IPath path = new Path(pathString);
 		if (path.segmentCount() == 1) {
-			WebWorkspace workspace = WebWorkspace.fromId(path.segment(0));
-			if (workspaceResourceHandler.handleRequest(req, resp, workspace))
+			try {
+				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(0));
+				if (workspaceResourceHandler.handleRequest(req, resp, workspace))
+					return;
+			} catch (CoreException e) {
+				handleException(resp, "An error occurred while obtaining workspace data", e);
 				return;
+			}
 		}
 		super.doPost(req, resp);
 	}
@@ -132,8 +150,9 @@ public class WorkspaceServlet extends OrionServlet {
 			return;
 		}
 		try {
-			WebUser user = WebUser.fromUserId(userId);
-			WebWorkspace workspace = user.createWorkspace(workspaceName);
+			WorkspaceInfo workspace = new WorkspaceInfo();
+			workspace.setFullName(workspaceName);
+			OrionConfiguration.getMetaStore().createWorkspace(userId, workspace);
 			URI requestLocation = ServletResourceHandler.getURI(req);
 			JSONObject result = WorkspaceResourceHandler.toJSON(workspace, requestLocation, requestLocation);
 			writeJSONResponse(req, resp, result);
@@ -141,11 +160,11 @@ public class WorkspaceServlet extends OrionServlet {
 			resp.setHeader(ProtocolConstants.KEY_LOCATION, resultLocation);
 
 			// add user rights for the workspace
-			String workspacePath = Activator.LOCATION_WORKSPACE_SERVLET + '/' + workspace.getId();
+			String workspacePath = Activator.LOCATION_WORKSPACE_SERVLET + '/' + workspace.getUniqueId();
 			AuthorizationService.addUserRight(req.getRemoteUser(), workspacePath);
 			AuthorizationService.addUserRight(req.getRemoteUser(), workspacePath + "/*"); //$NON-NLS-1$
 			// add user rights for file servlet location
-			String filePath = Activator.LOCATION_FILE_SERVLET + '/' + workspace.getId();
+			String filePath = Activator.LOCATION_FILE_SERVLET + '/' + workspace.getUniqueId();
 			AuthorizationService.addUserRight(req.getRemoteUser(), filePath);
 			AuthorizationService.addUserRight(req.getRemoteUser(), filePath + "/*"); //$NON-NLS-1$
 		} catch (CoreException e) {
@@ -161,9 +180,14 @@ public class WorkspaceServlet extends OrionServlet {
 		if (pathString != null) {
 			IPath path = new Path(pathString);
 			if (path.segmentCount() == 1) {
-				WebWorkspace workspace = WebWorkspace.fromId(path.segment(0));
-				if (workspaceResourceHandler.handleRequest(req, resp, workspace))
+				try {
+					WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(0));
+					if (workspaceResourceHandler.handleRequest(req, resp, workspace))
+						return;
+				} catch (CoreException e) {
+					handleException(resp, "An error occurred while obtaining workspace data", e);
 					return;
+				}
 			}
 		}
 		super.doPut(req, resp);

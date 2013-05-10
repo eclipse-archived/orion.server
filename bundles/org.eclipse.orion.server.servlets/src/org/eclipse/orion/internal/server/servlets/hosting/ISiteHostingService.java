@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,8 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.hosting;
 
-import org.eclipse.orion.internal.server.servlets.site.SiteConfiguration;
-import org.eclipse.orion.internal.server.servlets.workspace.WebUser;
+import org.eclipse.orion.internal.server.servlets.site.SiteInfo;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 
 /**
  * API for a service that can launch hosted sites from a site configuration, and query hosted 
@@ -32,7 +32,7 @@ public interface ISiteHostingService {
 	 * @param editServer
 	 * @throws SiteHostingException If starting failed.
 	 */
-	public void start(SiteConfiguration siteConfig, WebUser user, String editServer) throws SiteHostingException;
+	public void start(SiteInfo siteConfig, UserInfo user, String editServer) throws SiteHostingException;
 
 	/**
 	 * Stops the user's hosted site which was launched from the site configuration.
@@ -40,15 +40,15 @@ public interface ISiteHostingService {
 	 * @param user
 	 * @throws SiteHostingException If stopping failed.
 	 */
-	public void stop(SiteConfiguration siteConfig, WebUser user) throws SiteHostingException;
+	public void stop(SiteInfo siteConfig, UserInfo user) throws SiteHostingException;
 
 	/**
-	 * @param host A host name.
+	 * Returns the hosted site matching the given configuration.
 	 * @param user 
 	 * @return The hosted site launched by <code>user</code> from <code>siteConfig</code>, or
 	 * <code>null</code> if there is no such hosted site.
 	 */
-	public IHostedSite get(SiteConfiguration siteConfig, WebUser user);
+	public IHostedSite get(SiteInfo siteConfig, UserInfo user);
 
 	/**
 	 * @param host A host name.
