@@ -143,6 +143,21 @@
 
 	<build>
 		<plugins>
+		    <plugin>
+				<groupId>org.eclipse.tycho</groupId>
+	   			<artifactId>target-platform-configuration</artifactId>
+	   			<version>${tycho-version}</version>
+				<configuration>
+					<filters>
+						<!-- work around Equinox bug 348045 -->
+						<filter>
+							<type>p2-installable-unit</type>
+							<id>org.eclipse.equinox.servletbridge.extensionbundle</id>
+				            <removeAll />
+						</filter>
+					</filters>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
