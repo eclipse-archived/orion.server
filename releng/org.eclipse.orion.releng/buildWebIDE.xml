@@ -3,7 +3,7 @@
 	<target name="main">
 		<tstamp/>
 		<property name="timestamp" value="${DSTAMP}${TSTAMP}" />
-		<property name="cvsuser" value=":ext:aniefer" />		
+		<property name="cvsuser" value=":ext:johna" />		
 		<property name="builder" value="${basedir}/builder" />
 
 		<!-- Add build id to orion.product before invoking product build -->

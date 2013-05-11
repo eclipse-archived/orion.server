@@ -20,7 +20,7 @@ supportDir=$writableBuildRoot/support
 builderDir=$supportDir/org.eclipse.orion.releng
 basebuilderBranch=R3_8
 publish=""
-user=aniefer
+user=johna
 resultsEmail=orion-releng@eclipse.org
 
 buildType=I
