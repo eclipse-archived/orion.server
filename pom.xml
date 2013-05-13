@@ -120,7 +120,7 @@
 		<module>doc/org.eclipse.orion.doc.isv</module>
 		<module>doc/org.eclipse.orion.doc.user</module>
 
-		<!-- <module>tests/org.eclipse.orion.server.tests</module> -->
+		<module>tests/org.eclipse.orion.server.tests</module>
 
 
 		<module>features/org.eclipse.orion.base-feature</module>
@@ -129,8 +129,8 @@
 		<module>features/org.eclipse.orion.server.search-feature</module>
 		<module>features/org.eclipse.orion.server.ui-feature</module>
 		<module>features/org.eclipse.orion.client-feature</module>
-		<!-- <module>features/org.eclipse.orion.releng.test.master-feature</module>
-		<module>features/org.eclipse.orion.server.tests-feature</module> -->
+		<module>features/org.eclipse.orion.releng.test.master-feature</module>
+		<module>features/org.eclipse.orion.server.tests-feature</module>
 		<module>features/org.eclipse.orion-feature</module>
 		<module>features/org.eclipse.license</module>
 
@@ -147,21 +147,6 @@
 
 	<build>
 		<plugins>
-		    <plugin>
-				<groupId>org.eclipse.tycho</groupId>
-	   			<artifactId>target-platform-configuration</artifactId>
-	   			<version>${tycho-version}</version>
-				<configuration>
-					<filters>
-						<!-- work around Equinox bug 348045 -->
-						<filter>
-							<type>p2-installable-unit</type>
-							<id>org.eclipse.equinox.servletbridge.extensionbundle</id>
-				            <removeAll />
-						</filter>
-					</filters>
-				</configuration>
-			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -194,7 +179,15 @@
 				<version>${tycho-version}</version>
 				<configuration>
 					<target>
-						<artifact>
+					<filters>
+						<!-- work around Equinox bug 348045 -->
+						<filter>
+							<type>p2-installable-unit</type>
+							<id>org.eclipse.equinox.servletbridge.extensionbundle</id>
+				            <removeAll />
+						</filter>
+					</filters>
+					<artifact>
 							<groupId>org.eclipse.orion</groupId>
 							<artifactId>org.eclipse.orion.target</artifactId>
 							<version>${orion-version}</version>
@@ -332,7 +325,7 @@
 				<plugin>
 					<groupId>org.codehaus.mojo</groupId>
 					<artifactId>build-helper-maven-plugin</artifactId>
-					<version>1.7</version>
+					<version>1.8</version>
 				</plugin>
 			</plugins>
 		</pluginManagement>

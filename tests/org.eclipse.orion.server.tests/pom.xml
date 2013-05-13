@@ -28,14 +28,30 @@
     </parent>
 
 	<properties>
-		<uitest.vmparams>-Declipse.log.level=WARNING\
-		    -Dorg.eclipse.equinox.http.jetty.http.port=7070\
-		    -Dorg.eclipse.equinox.http.jetty.autostart=false\
-		    -Dorion.tests.authtype="Basic"</uitest.vmparams>
+		<uitest.vmparams></uitest.vmparams>
 	</properties>
 
 	<build>
 		<plugins>
+            <!-- use the build helper plugin to find random, unused TCP/IP ports -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>reserve-network-port</id>
+                        <goals>
+                            <goal>reserve-network-port</goal>
+                        </goals>
+                        <phase>process-resources</phase>
+                        <configuration>
+                            <portNames>
+                                <portName>http.port</portName>
+                            </portNames>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
 			<plugin>
 				<groupId>org.eclipse.tycho</groupId>
 				<artifactId>tycho-surefire-plugin</artifactId>
@@ -46,8 +62,14 @@
 					<argLine>${ui.test.vmargs}</argLine>
 <!--					<product>orion.product</product>
 					<application>org.eclipse.orion.application</application>-->
-                    <testSuite>org.eclipse.orion.server.tests</testSuite>
-                    <testClass>org.eclipse.orion.server.tests.AllServerTests</testClass>
+					<systemProperties>
+					   <eclipse.log.level>WARNING</eclipse.log.level>
+					    <org.eclipse.equinox.http.jetty.http.port>${http.port}</org.eclipse.equinox.http.jetty.http.port>
+					    <org.eclipse.equinox.http.jetty.autostart>false</org.eclipse.equinox.http.jetty.autostart>
+					    <orion.tests.authtype>"Basic"</orion.tests.authtype>
+					</systemProperties>
+					<testSuite>org.eclipse.orion.server.tests</testSuite>
+					<testClass>org.eclipse.orion.server.tests.AllServerTests</testClass>
 					<dependencies>
 						<dependency>
 							<type>eclipse-feature</type>
