@@ -133,6 +133,7 @@ public class SiteConfigurationServlet extends OrionServlet {
 			jsonResponse.put(SiteConfigurationConstants.KEY_SITE_CONFIGURATIONS, configurations);
 			writeJSONResponse(req, resp, jsonResponse, JsonURIUnqualificationStrategy.LOCATION_ONLY);
 		} catch (Exception e) {
+			LogHelper.log(e);
 			handleException(resp, "An error occurred while obtaining site configurations", e);
 		}
 		return true;
