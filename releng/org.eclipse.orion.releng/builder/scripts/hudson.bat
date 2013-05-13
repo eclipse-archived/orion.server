@@ -1,5 +1,3 @@
-IF NOT EXIST %WORKSPACE%\org.eclipse.releng.basebuilder cvs -Q -d :pserver:anonymous@dev.eclipse.org:/cvsroot/eclipse ex -r v20110302 -d org.eclipse.releng.basebuilder org.eclipse.releng.basebuilder
-
 cd %WORKSPACE%
 
 set java.home=%JAVA_HOME%
