@@ -11,10 +11,12 @@
 package org.eclipse.orion.internal.server.servlets.site;
 
 import java.io.IOException;
+import java.net.URI;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.core.metastore.UserInfo;
@@ -124,12 +126,16 @@ public class SiteConfigurationServlet extends OrionServlet {
 		try {
 			UserInfo user = OrionConfiguration.getMetaStore().readUser(userName);
 			//user info stores an object where key is site id, value is site info, but we just want the values
+			URI base = ServletResourceHandler.getURI(req);
 			JSONArray configurations = new JSONArray();
 			JSONObject sites = SiteInfo.getSites(user);
 			final String[] names = JSONObject.getNames(sites);
 			if (names != null) {
-				for (String site : names) {
-					configurations.put(sites.getJSONObject(site));
+				for (String siteId : names) {
+					//add site resource location based on current request URI
+					final JSONObject siteInfo = sites.getJSONObject(siteId);
+					siteInfo.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(base, siteId));
+					configurations.put(siteInfo);
 				}
 			}
 			JSONObject jsonResponse = new JSONObject();
