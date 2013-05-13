@@ -126,8 +126,11 @@ public class SiteConfigurationServlet extends OrionServlet {
 			//user info stores an object where key is site id, value is site info, but we just want the values
 			JSONArray configurations = new JSONArray();
 			JSONObject sites = SiteInfo.getSites(user);
-			for (String site : JSONObject.getNames(sites)) {
-				configurations.put(sites.getJSONObject(site));
+			final String[] names = JSONObject.getNames(sites);
+			if (names != null) {
+				for (String site : names) {
+					configurations.put(sites.getJSONObject(site));
+				}
 			}
 			JSONObject jsonResponse = new JSONObject();
 			jsonResponse.put(SiteConfigurationConstants.KEY_SITE_CONFIGURATIONS, configurations);
