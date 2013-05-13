@@ -82,7 +82,7 @@
 		
 		<subant target="run">
 			<property name="junit-stylesheet" value="${buildDirectory}/test/eclipse/plugins/${testLibrary}/JUNIT.XSL" />
-            <property name="library-file" value="${buildDirectory}/test/eclipse/plugins/${testLibrary}/library.xml" />
+            <property name="library-file" value="${builder}/library.xml" />
 			<property name="eclipse-home" value="${buildDirectory}/test/eclipse" />
 			<fileset dir="${buildDirectory}/test/eclipse/plugins" includes="*/test.xml" excludes="org.eclipse.core.tests.resources_*/*" />
 			<property name="os" value="${osgi.os}" />
@@ -103,7 +103,7 @@
 		
 		<subant target="performance">
 			<property name="junit-stylesheet" value="${buildDirectory}/test/eclipse/plugins/${testLibrary}/JUNIT.XSL" />
-	        <property name="library-file" value="${buildDirectory}/test/eclipse/plugins/${testLibrary}/library.xml" />
+	        <property name="library-file" value="${builder}/library.xml" />
 			<property name="eclipse-home" value="${buildDirectory}/test/eclipse" />
 			<fileset dir="${buildDirectory}/test/eclipse/plugins" includes="*/test.xml" excludes="org.eclipse.core.tests.resources_*/*" />
 			<property name="os" value="${osgi.os}" />
