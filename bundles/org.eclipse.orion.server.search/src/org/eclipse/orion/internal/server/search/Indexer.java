@@ -266,9 +266,20 @@ public class Indexer extends Job {
 	@Override
 	protected IStatus run(IProgressMonitor monitor) {
 		long start = System.currentTimeMillis();
+		Logger logger = LoggerFactory.getLogger(Indexer.class);
+		IMetaStore metaStore;
+		try {
+			metaStore = OrionConfiguration.getMetaStore();
+		} catch (IllegalStateException e) {
+			//bundle providing metastore might not have started yet
+			if (logger.isDebugEnabled())
+				logger.debug("Search indexer waiting for metadata service");
+			schedule(5000);
+			return Status.OK_STATUS;
+		}
 		int indexed = 0;
 		try {
-			List<String> userIds = OrionConfiguration.getMetaStore().readAllUsers();
+			List<String> userIds = metaStore.readAllUsers();
 			SubMonitor progress = SubMonitor.convert(monitor, userIds.size());
 			List<SolrInputDocument> documents = new ArrayList<SolrInputDocument>();
 			indexed = 0;
@@ -279,7 +290,6 @@ public class Indexer extends Job {
 			handleIndexingFailure(e, null);
 		}
 		long duration = System.currentTimeMillis() - start;
-		Logger logger = LoggerFactory.getLogger(Indexer.class);
 		if (logger.isDebugEnabled())
 			logger.debug("Indexed " + indexed + " documents in " + duration + "ms"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		//reschedule the indexing - throttle so the job never runs more than 10% of the time

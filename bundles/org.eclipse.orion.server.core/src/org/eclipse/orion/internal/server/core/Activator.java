@@ -69,6 +69,9 @@ public class Activator implements BundleActivator {
 	 * @throws IllegalStateException if the server is not properly configured to have an @link {@link IMetaStore}. 
 	 */
 	public synchronized IMetaStore getMetastore() {
+		//note we intentionally only initialize this once rather than dynamically reacting
+		//to further service changes at runtime. If the backing metastore were to switch dynamically
+		//after this point it would break everything because the metadata would be lost
 		if (metastore == null) {
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 			logger.info("Initializing server metadata store"); //$NON-NLS-1$
