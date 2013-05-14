@@ -39,9 +39,6 @@ import org.eclipse.orion.server.git.jobs.*;
 import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
 import org.eclipse.orion.server.servlets.OrionServlet;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
-import org.eclipse.orion.server.useradmin.UserServiceHelper;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
 
@@ -188,9 +185,11 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		JSONObject cloneObject = clone.toJSON();
 		String cloneLocation = cloneObject.getString(ProtocolConstants.KEY_LOCATION);
 
+		String gitUserName = toAdd.optString(GitConstants.KEY_NAME, null);
+		String gitUserMail = toAdd.optString(GitConstants.KEY_MAIL, null);
 		if (initOnly) {
 			// git init
-			InitJob job = new InitJob(clone, TaskJobHandler.getUserId(request), request.getRemoteUser(), cloneLocation);
+			InitJob job = new InitJob(clone, TaskJobHandler.getUserId(request), request.getRemoteUser(), cloneLocation, gitUserName, gitUserMail);
 			return TaskJobHandler.handleTaskJob(request, response, job, statusHandler);
 		}
 		// git clone
@@ -199,7 +198,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		cp.setUri(new URIish(clone.getUrl()));
 
 		// if all went well, clone
-		CloneJob job = new CloneJob(clone, TaskJobHandler.getUserId(request), cp, request.getRemoteUser(), cloneLocation, webProjectExists ? null : project /* used for cleaning up, so null when not needed */);
+		CloneJob job = new CloneJob(clone, TaskJobHandler.getUserId(request), cp, request.getRemoteUser(), cloneLocation, webProjectExists ? null : project /* used for cleaning up, so null when not needed */, gitUserName, gitUserMail);
 		return TaskJobHandler.handleTaskJob(request, response, job, statusHandler);
 	}
 
@@ -222,13 +221,19 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		return uniqueName;
 	}
 
-	public static void doConfigureClone(Git git, String user) throws IOException, CoreException {
+	public static void doConfigureClone(Git git, String user, String gitUserName, String gitUserMail) throws IOException, CoreException {
 		StoredConfig config = git.getRepository().getConfig();
+		if (gitUserName != null)
+			config.setString(ConfigConstants.CONFIG_USER_SECTION, null, ConfigConstants.CONFIG_KEY_NAME, gitUserName);
+		if (gitUserMail != null)
+			config.setString(ConfigConstants.CONFIG_USER_SECTION, null, ConfigConstants.CONFIG_KEY_EMAIL, gitUserMail);
+		/*
 		IOrionUserProfileNode userNode = UserServiceHelper.getDefault().getUserProfileService().getUserProfileNode(user, true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
 		if (userNode != null && userNode.get(GitConstants.KEY_NAME, null) != null)
 			config.setString(ConfigConstants.CONFIG_USER_SECTION, null, ConfigConstants.CONFIG_KEY_NAME, userNode.get(GitConstants.KEY_NAME, null));
 		if (userNode != null && userNode.get(GitConstants.KEY_MAIL, null) != null)
 			config.setString(ConfigConstants.CONFIG_USER_SECTION, null, ConfigConstants.CONFIG_KEY_EMAIL, userNode.get(GitConstants.KEY_MAIL, null));
+		*/
 		config.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_FILEMODE, false);
 		config.save();
 	}

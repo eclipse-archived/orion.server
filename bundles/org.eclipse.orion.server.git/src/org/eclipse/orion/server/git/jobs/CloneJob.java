@@ -41,13 +41,17 @@ public class CloneJob extends GitJob {
 	private final ProjectInfo project;
 	private final Clone clone;
 	private final String user;
+	private final String gitUserName;
+	private final String gitUserMail;
 	private String cloneLocation;
 
-	public CloneJob(Clone clone, String userRunningTask, CredentialsProvider credentials, String user, String cloneLocation, ProjectInfo project) {
+	public CloneJob(Clone clone, String userRunningTask, CredentialsProvider credentials, String user, String cloneLocation, ProjectInfo project, String gitUserName, String gitUserMail) {
 		super(userRunningTask, true, (GitCredentialsProvider) credentials);
 		this.clone = clone;
 		this.user = user;
 		this.project = project;
+		this.gitUserName = gitUserName;
+		this.gitUserMail = gitUserMail;
 		this.cloneLocation = cloneLocation;
 		setFinalMessage("Clone complete.");
 		setTaskExpirationTime(TimeUnit.DAYS.toMillis(7));
@@ -68,7 +72,7 @@ public class CloneJob extends GitJob {
 			Git git = cc.call();
 
 			// Configure the clone, see Bug 337820
-			GitCloneHandlerV1.doConfigureClone(git, user);
+			GitCloneHandlerV1.doConfigureClone(git, user, gitUserName, gitUserMail);
 			git.getRepository().close();
 		} catch (IOException e) {
 			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error cloning git repository", e);

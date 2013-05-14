@@ -35,12 +35,16 @@ public class InitJob extends GitJob {
 
 	private final Clone clone;
 	private final String user;
+	private final String gitUserName;
+	private final String gitUserMail;
 	private String cloneLocation;
 
-	public InitJob(Clone clone, String userRunningTask, String user, String cloneLocation) {
+	public InitJob(Clone clone, String userRunningTask, String user, String cloneLocation, String gitUserName, String gitUserMail) {
 		super(userRunningTask, true);
 		this.clone = clone;
 		this.user = user;
+		this.gitUserName = gitUserName;
+		this.gitUserMail = gitUserMail;
 		this.cloneLocation = cloneLocation;
 		setFinalMessage("Init complete.");
 		setTaskExpirationTime(TimeUnit.DAYS.toMillis(7));
@@ -55,7 +59,7 @@ public class InitJob extends GitJob {
 			Git git = new Git(repository);
 
 			// configure the repo
-			GitCloneHandlerV1.doConfigureClone(git, user);
+			GitCloneHandlerV1.doConfigureClone(git, user, gitUserName, gitUserMail);
 
 			// we need to perform an initial commit to workaround JGit bug 339610
 			git.commit().setMessage("Initial commit").call();
