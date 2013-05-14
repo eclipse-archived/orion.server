@@ -336,7 +336,7 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		String sourceLocation = data.optString(ProtocolConstants.HEADER_LOCATION);
 		ProjectInfo sourceProject;
 		try {
-			sourceProject = projectForMetadataLocation(getMetaStore(), sourceLocation);
+			sourceProject = projectForMetadataLocation(getMetaStore(), toOrionLocation(request, sourceLocation));
 		} catch (CoreException e1) {
 			handleError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, NLS.bind("Error accessing project: {0}", sourceLocation));
 			return true;
