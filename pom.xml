@@ -178,16 +178,16 @@
 				<artifactId>target-platform-configuration</artifactId>
 				<version>${tycho-version}</version>
 				<configuration>
-					<target>
 					<filters>
 						<!-- work around Equinox bug 348045 -->
 						<filter>
 							<type>p2-installable-unit</type>
 							<id>org.eclipse.equinox.servletbridge.extensionbundle</id>
-				            <removeAll />
+					           <removeAll />
 						</filter>
 					</filters>
-					<artifact>
+					<target>
+						<artifact>
 							<groupId>org.eclipse.orion</groupId>
 							<artifactId>org.eclipse.orion.target</artifactId>
 							<version>${orion-version}</version>
