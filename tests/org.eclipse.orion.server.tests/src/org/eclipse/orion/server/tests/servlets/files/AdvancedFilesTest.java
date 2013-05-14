@@ -13,13 +13,17 @@ package org.eclipse.orion.server.tests.servlets.files;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import com.meterware.httpunit.*;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.util.HashMap;
 import java.util.Map;
 import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -54,6 +58,70 @@ public class AdvancedFilesTest extends FileSystemTest {
 	}
 
 	@Test
+	public void testETagDeletedFile() throws JSONException, IOException, SAXException, CoreException {
+		String fileName = "testfile.txt";
+
+		//setup: create a file
+		WebRequest request = getPostFilesRequest("", getNewFileJSON(fileName).toString(), fileName);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+		//obtain file metadata and ensure data is correct
+		request = getGetFilesRequest(fileName + "?parts=meta");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		String etag = response.getHeaderField(ProtocolConstants.KEY_ETAG);
+		assertNotNull(etag);
+
+		//delete the file on disk
+		IFileStore fileStore = EFS.getStore(makeLocalPathAbsolute(fileName));
+		fileStore.delete(EFS.NONE, null);
+
+		//now a PUT should fail
+		request = getPutFileRequest(fileName, "something");
+		request.setHeaderField(ProtocolConstants.HEADER_IF_MATCH, etag);
+		try {
+			response = webConversation.getResponse(request);
+		} catch (IOException e) {
+			//inexplicably HTTPUnit throws IOException on PRECON_FAILED rather than just giving us response
+			assertTrue(e.getMessage().indexOf(Integer.toString(HttpURLConnection.HTTP_PRECON_FAILED)) > 0);
+		}
+	}
+
+	@Test
+	public void testETagPutNotMatch() throws JSONException, IOException, SAXException, CoreException {
+		String fileName = "testfile.txt";
+
+		//setup: create a file
+		WebRequest request = getPostFilesRequest("", getNewFileJSON(fileName).toString(), fileName);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+		//obtain file metadata and ensure data is correct
+		request = getGetFilesRequest(fileName + "?parts=meta");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		String etag = response.getHeaderField(ProtocolConstants.KEY_ETAG);
+		assertNotNull(etag);
+
+		//change the file on disk
+		IFileStore fileStore = EFS.getStore(makeLocalPathAbsolute(fileName));
+		OutputStream out = fileStore.openOutputStream(EFS.NONE, null);
+		out.write("New Contents".getBytes());
+		out.close();
+
+		//now a PUT should fail
+		request = getPutFileRequest(fileName, "something");
+		request.setHeaderField("If-Match", etag);
+		try {
+			response = webConversation.getResponse(request);
+		} catch (IOException e) {
+			//inexplicably HTTPUnit throws IOException on PRECON_FAILED rather than just giving us response
+			assertTrue(e.getMessage().indexOf(Integer.toString(HttpURLConnection.HTTP_PRECON_FAILED)) > 0);
+		}
+	}
+
+	@Test
 	public void testETagHandling() throws JSONException, IOException, SAXException {
 		String fileName = "testfile.txt";
 
@@ -74,6 +142,7 @@ public class AdvancedFilesTest extends FileSystemTest {
 
 		//modify file
 		request = getPutFileRequest(fileName, "something");
+		request.setHeaderField("If-Match", etag1);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		responseObject = new JSONObject(response.getText());

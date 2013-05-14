@@ -36,11 +36,11 @@ class GenericFileHandler extends ServletResourceHandler<IFileStore> {
 		this.context = context;
 	}
 
-	protected void handleFileContents(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws CoreException, IOException, NoSuchAlgorithmException {
-		String receivedETag = request.getHeader("If-Match");
+	protected boolean handleFileContents(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws CoreException, IOException, NoSuchAlgorithmException {
+		String receivedETag = request.getHeader(ProtocolConstants.HEADER_IF_MATCH);
 		if (receivedETag != null && !receivedETag.equals(generateFileETag(file))) {
 			response.setStatus(HttpServletResponse.SC_PRECONDITION_FAILED);
-			return;
+			return true;
 		}
 		switch (getMethod(request)) {
 			case GET :
@@ -50,9 +50,12 @@ class GenericFileHandler extends ServletResourceHandler<IFileStore> {
 			case PUT :
 				IOUtilities.pipe(request.getInputStream(), file.openOutputStream(EFS.NONE, null), false, true);
 				break;
+			default :
+				return false;
 		}
 		response.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 		response.setHeader(ProtocolConstants.KEY_ETAG, generateFileETag(file));
+		return true;
 	}
 
 	@Override
@@ -62,7 +65,7 @@ class GenericFileHandler extends ServletResourceHandler<IFileStore> {
 		//	if (request.getQueryString() != null)
 		//		return false;
 		try {
-			handleFileContents(request, response, file);
+			return handleFileContents(request, response, file);
 		} catch (Exception e) {
 			if (!handleAuthFailure(request, response, e))
 				throw new ServletException(NLS.bind("Error retrieving file: {0}", file), e);
@@ -74,6 +77,9 @@ class GenericFileHandler extends ServletResourceHandler<IFileStore> {
 	 * Returns an ETag calculated using SHA-1 hash function.
 	 */
 	public static String generateFileETag(IFileStore file) throws NoSuchAlgorithmException, IOException, CoreException {
+		//give empty ETag if file does not exist
+		if (!file.fetchInfo().exists())
+			return ""; //$NON-NLS-1$
 		return HashUtilities.getHash(file.openInputStream(EFS.NONE, null), true, HashUtilities.SHA_1);
 	}
 }

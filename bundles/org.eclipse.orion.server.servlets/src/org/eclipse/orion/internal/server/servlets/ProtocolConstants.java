@@ -52,6 +52,11 @@ public class ProtocolConstants {
 	public static final String HEADER_CREATE_OPTIONS = "X-Create-Options"; //$NON-NLS-1$
 
 	/**
+	 * Standard HTTP request header indicating an expected entity tag.
+	 */
+	public static final String HEADER_IF_MATCH = "If-Match"; //$NON-NLS-1$
+
+	/**
 	 * Standard HTTP response header indicating location of the created resource.
 	 */
 	public static final String HEADER_LOCATION = "Location"; //$NON-NLS-1$

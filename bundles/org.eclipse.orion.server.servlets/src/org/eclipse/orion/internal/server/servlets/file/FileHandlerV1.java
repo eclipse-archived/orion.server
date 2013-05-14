@@ -129,7 +129,7 @@ class FileHandlerV1 extends GenericFileHandler {
 	@Override
 	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws ServletException {
 		try {
-			String receivedETag = request.getHeader("If-Match");
+			String receivedETag = request.getHeader(ProtocolConstants.HEADER_IF_MATCH);
 			if (receivedETag != null && !receivedETag.equals(generateFileETag(file))) {
 				response.setStatus(HttpServletResponse.SC_PRECONDITION_FAILED);
 				return true;
@@ -144,7 +144,7 @@ class FileHandlerV1 extends GenericFileHandler {
 						handlePutContents(request, request.getReader(), response, file);
 						break;
 					default :
-						handleFileContents(request, response, file);
+						return handleFileContents(request, response, file);
 				}
 				return true;
 			}
