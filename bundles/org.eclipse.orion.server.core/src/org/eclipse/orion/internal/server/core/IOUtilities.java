@@ -10,21 +10,9 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.core;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
-import java.io.Writer;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
-
 import javax.servlet.http.HttpServletRequest;
 
 /**
@@ -81,20 +69,19 @@ public class IOUtilities {
 		String queryString = request.getQueryString();
 		if (queryString == null)
 			return null;
-		
-		for (String paramString : queryString.split("&")) {  //$NON-NLS-1$
+
+		for (String paramString : queryString.split("&")) { //$NON-NLS-1$
 			if (paramString.startsWith(name)) {
 				String[] nameAndValue = paramString.split("=", 2); //$NON-NLS-1$
 				if (nameAndValue.length == 2)
 					return nameAndValue[1];
-				else
-					return ""; // parameter has no value //$NON-NLS-1$
+				return ""; // parameter has no value //$NON-NLS-1$
 			}
 		}
 		// parameter not found
 		return null;
 	}
-	
+
 	/**
 	 * Closes a stream or reader and ignores any resulting exception. This is useful
 	 * when doing cleanup in a finally block where secondary exceptions

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others.
+ * Copyright (c) 2010, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,7 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.core;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -18,7 +19,7 @@ import java.security.NoSuchAlgorithmException;
  * Various static helper methods for hash calculations.
  */
 public class HashUtilities {
-	public static final String SHA_1 = "SHA-1";
+	public static final String SHA_1 = "SHA-1"; //$NON-NLS-1$
 
 	/**
 	 * Returns the hash of data read from the given input stream.
@@ -43,7 +44,7 @@ public class HashUtilities {
 	 */
 	public static String getHash(InputStream inputStream, boolean closeIn, String hashFunction) throws IOException, NoSuchAlgorithmException {
 		MessageDigest md = MessageDigest.getInstance(hashFunction);
-		
+
 		byte[] buffer = new byte[4096];
 		int read = 0;
 		try {
@@ -58,17 +59,17 @@ public class HashUtilities {
 
 		return bytesToHex(mdbytes);
 	}
-	
+
 	/**
 	 * Returns the hash of the given input String.
-	 * @param inputStream input stream
+	 * @param data string to compute hash for
 	 * @param hashFunction desired hash function (i.e. SHA-1)
 	 * @return text representation of the hash
 	 * @throws NoSuchAlgorithmException 
 	 */
 	public static String getHash(String data, String hashFunction) throws NoSuchAlgorithmException {
 		MessageDigest md = MessageDigest.getInstance(hashFunction);
-		
+
 		md.update(data.getBytes());
 		byte[] mdbytes = md.digest();
 
@@ -77,11 +78,11 @@ public class HashUtilities {
 
 	//convert the byte to hex format
 	private static String bytesToHex(byte[] bytes) {
-	    StringBuffer sb = new StringBuffer("");
-	    for (int i = 0; i < bytes.length; i++) {
-	    	sb.append(Integer.toHexString(0xFF & bytes[i]));
-	    }
-	    
-	    return sb.toString();
+		StringBuffer sb = new StringBuffer();
+		for (int i = 0; i < bytes.length; i++) {
+			sb.append(Integer.toHexString(0xFF & bytes[i]));
+		}
+
+		return sb.toString();
 	}
 }

@@ -10,15 +10,9 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.core.tasks;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.internal.server.core.IOUtilities;
@@ -34,7 +28,7 @@ import org.eclipse.orion.server.core.resources.Base64;
  */
 public class TaskStore {
 	private final File root;
-	private static final String tempDirectory = "temp";
+	private static final String tempDirectory = "temp"; //$NON-NLS-1$
 
 	public TaskStore(File root) {
 		this.root = root;
@@ -146,11 +140,11 @@ public class TaskStore {
 				delete(c);
 		}
 		if (!f.delete())
-			LogHelper.log(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "Cannot delete file " + f.getName()));
+			LogHelper.log(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "Cannot delete file " + f.getName())); //$NON-NLS-1$
 
 	}
-	
-	public synchronized void removeAllTempTasks(){
+
+	public synchronized void removeAllTempTasks() {
 		for (File userDirectory : root.listFiles()) {
 			if (userDirectory.isDirectory()) {
 				removeAllTempTasks(userDirectory);
