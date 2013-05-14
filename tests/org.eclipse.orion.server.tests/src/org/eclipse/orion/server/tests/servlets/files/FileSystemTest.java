@@ -28,6 +28,8 @@ import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.metastore.IMetaStore;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.tests.AbstractServerTest;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
@@ -107,9 +109,13 @@ public abstract class FileSystemTest extends AbstractServerTest {
 		}
 		assertTrue("Unable to clear workspace", success);
 		//delete workspace metadata
-		IFileStore metaDir = workspaceDir.getFileStore(new Path(".metadata/.plugins/org.eclipse.orion.server.core/.settings"));
-		metaDir.delete(EFS.NONE, null);
-		workspaceDir.mkdir(EFS.NONE, null);
+		IMetaStore store = OrionConfiguration.getMetaStore();
+		UserInfo user = store.readUser(testUserLogin);
+		if (user != null) {
+			for (String workspaceId : user.getWorkspaceIds()) {
+				store.deleteWorkspace(testUserLogin, workspaceId);
+			}
+		}
 	}
 
 	/**

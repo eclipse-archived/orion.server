@@ -66,7 +66,7 @@ public class CompatibilityMetaStore implements IMetaStore {
 		//if no such project exists, we have nothing to do here
 		if (project == null)
 			return;
-		//If all went well, remove project from workspace
+		//first remove project from workspace
 		workspace.removeProject(project);
 
 		//remove project metadata

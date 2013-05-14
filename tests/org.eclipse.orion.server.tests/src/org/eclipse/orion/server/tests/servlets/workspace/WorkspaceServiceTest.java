@@ -391,7 +391,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		String workspaceId = workspace.getString(ProtocolConstants.KEY_ID);
 
 		//get workspace metadata and ensure it is correct
-		WebRequest request = new GetMethodWebRequest(addSchemeHostPort(workspaceLocation).toString());
+		WebRequest request = getGetRequest(workspaceLocation.toString());
 		setAuthentication(request);
 		response = webConversation.getResponse(request);
 		workspace = new JSONObject(response.getText());
@@ -402,7 +402,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	}
 
 	@Test
-	public void testGetProjectMetadata() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testGetProjectMetadata() throws IOException, SAXException, JSONException {
 		//create workspace
 		String workspaceName = WorkspaceServiceTest.class.getName() + "#testGetProjectMetadata";
 		URI workspaceLocation = createWorkspace(workspaceName);
