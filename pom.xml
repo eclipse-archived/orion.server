@@ -61,7 +61,21 @@
 		<tycho.scmUrl>scm:git:http://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git</tycho.scmUrl>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<java-version>1.6</java-version>
+		<orion-repository>https://repo.eclipse.org/content/repositories/orion/</orion-repository>
 	</properties>
+
+	<distributionManagement>
+		<repository>
+			<id>repo.eclipse.org</id>
+			<name>Orion Repository - Releases</name>
+			<url>https://repo.eclipse.org/content/repositories/orion-releases/</url>
+		</repository>
+		<snapshotRepository>
+			<id>repo.eclipse.org</id>
+			<name>Orion Repository - Snapshots</name>
+			<url>https://repo.eclipse.org/content/repositories/orion-snapshots/</url>
+		</snapshotRepository>
+	</distributionManagement>
 
 	<profiles>
 		<profile>
@@ -97,6 +111,17 @@
 			<modules>
 				<module>../org.eclipse.orion.client</module>
 			</modules>
+		</profile>
+		<profile>
+			<id>build-server</id>
+			<repositories>
+				<!-- download orion.client artifacts from Nexus -->
+				<repository>
+					<id>repo.eclipse.org</id>
+					<layout>p2</layout>
+					<url>${orion-repository}</url>
+				</repository>
+			</repositories>
 		</profile>
 	</profiles>
 
