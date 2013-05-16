@@ -22,9 +22,6 @@ import java.net.URI;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.lib.ConfigConstants;
-import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -46,7 +43,7 @@ import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
 
 public class GitConfigTest extends GitTest {
-
+	/*
 	private static final String GIT_NAME = "test";
 	private static final String GIT_MAIL = "test mail";
 	private static final String GIT_COMMIT_MESSAGE = "message";
@@ -98,7 +95,7 @@ public class GitConfigTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// commit all
-		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri /* all */, GIT_COMMIT_MESSAGE, false);
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, GIT_COMMIT_MESSAGE, false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -161,7 +158,7 @@ public class GitConfigTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// commit all
-		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri /* all */, GIT_COMMIT_MESSAGE, false);
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, GIT_COMMIT_MESSAGE, false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -175,7 +172,7 @@ public class GitConfigTest extends GitTest {
 			}
 		}
 	}
-
+	*/
 	@Test
 	public void testGetListOfConfigEntries() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
@@ -634,6 +631,7 @@ public class GitConfigTest extends GitTest {
 		return request;
 	}
 
+	/*
 	// TODO: should be moved to User tests as a static method
 	private WebRequest getPutUserRequest() throws JSONException, UnsupportedEncodingException {
 		String requestURI = SERVER_LOCATION + "/users/" + testUserId;
@@ -645,7 +643,7 @@ public class GitConfigTest extends GitTest {
 		setAuthentication(request);
 		return request;
 	}
-
+	*/
 	private void assertConfigOption(final JSONObject cfg, final String k, final String v) throws JSONException, CoreException, IOException {
 		assertEquals(k, cfg.getString(GitConstants.KEY_CONFIG_ENTRY_KEY));
 		assertEquals(v, cfg.getString(GitConstants.KEY_CONFIG_ENTRY_VALUE));
