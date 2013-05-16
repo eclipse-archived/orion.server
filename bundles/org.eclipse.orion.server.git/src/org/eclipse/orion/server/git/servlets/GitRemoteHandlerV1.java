@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -172,6 +172,19 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		if (remoteURI == null || remoteURI.isEmpty()) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Remote URI must be provided", null));
 		}
+
+		try {
+			URIish uri = new URIish(remoteURI);
+			String scheme = uri.getScheme();
+			if (GitUtils.isForbiddenUriSchem(scheme)) {
+				statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Remote URI {0} cannot use prohibited scheme {1}", remoteURI, scheme), null)); //$NON-NLS-1$
+				return false;
+			}
+		} catch (URISyntaxException e) {
+			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Invalid remote URI: {0}", remoteURI), e)); //$NON-NLS-1$
+			return false;
+		}
+
 		String fetchRefSpec = toPut.optString(GitConstants.KEY_REMOTE_FETCH_REF, null);
 		String remotePushURI = toPut.optString(GitConstants.KEY_REMOTE_PUSH_URI, null);
 		String pushRefSpec = toPut.optString(GitConstants.KEY_REMOTE_PUSH_REF, null);

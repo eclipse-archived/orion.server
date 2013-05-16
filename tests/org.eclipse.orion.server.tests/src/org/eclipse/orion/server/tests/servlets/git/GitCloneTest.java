@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  * IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -260,6 +260,18 @@ public class GitCloneTest extends GitTest {
 		IPath clonePath = getClonePath(workspaceId, project);
 
 		WebRequest request = new PostGitCloneRequest().setURIish("I'm//bad!").setFilePath(clonePath).getWebRequest();
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
+	}
+
+	@Test
+	public void testCloneBadUrlScheme() throws Exception {
+		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		IPath clonePath = getClonePath(workspaceId, project);
+
+		WebRequest request = new PostGitCloneRequest().setURIish("file:///path/to/other/users.git").setFilePath(clonePath).getWebRequest();
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
 	}
@@ -791,7 +803,7 @@ public class GitCloneTest extends GitTest {
 	/**
 	 * Get list of clones for the given workspace or path. When <code>path</code> is
 	 * not <code>null</code> the result is narrowed to clones under the <code>path</code>.
-	 * 
+	 *
 	 * @param workspaceId the workspace ID. Must be null if path is provided.
 	 * @param path path under the workspace starting with project ID. Must be null if workspaceId is provided.
 	 * @return the request

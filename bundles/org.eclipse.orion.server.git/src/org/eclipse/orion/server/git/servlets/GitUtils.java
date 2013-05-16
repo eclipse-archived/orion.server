@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -35,8 +35,15 @@ public class GitUtils {
 		GO_UP, GO_DOWN, CURRENT
 	}
 
+	/*
+	 * White list for URL schemes we can allow since they can't be used to gain access to git repositories
+	 * in another Orion workspace since they require a daemon to serve them. Especially file protocol needs
+	 * to be prohibited (bug 408270).
+	 */
+	private static Set<String> uriSchemeWhitelist = new HashSet<String>(Arrays.asList("ftp", "git", "http", "https", "sftp", "ssh"));
+
 	/**
-	 * Returns the file representing the Git repository directory for the given 
+	 * Returns the file representing the Git repository directory for the given
 	 * file path or any of its parent in the filesystem. If the file doesn't exits,
 	 * is not a Git repository or an error occurred while transforming the given
 	 * path into a store <code>null</code> is returned.
@@ -73,7 +80,7 @@ public class GitUtils {
 	/**
 	 * Returns the existing git repositories for the given file path, following
 	 * the given traversal rule.
-	 * 
+	 *
 	 * @param path expected format /file/{Workspace}/{projectName}[/{path}]
 	 * @return a map of all git repositories found, or <code>null</code>
 	 * if the provided path format doesn't match the expected format.
@@ -209,7 +216,7 @@ public class GitUtils {
 	}
 
 	/**
-	 * Returns the existing WebProject corresponding to the provided path, 
+	 * Returns the existing WebProject corresponding to the provided path,
 	 * or <code>null</code> if no such project exists.
 	 * @param path path in the form /file/{workspaceId}/{projectName}/[filePath]
 	 * @return the web project, or <code>null</code>
@@ -229,11 +236,15 @@ public class GitUtils {
 	/**
 	 * Returns the HTTP path for the content resource of the given project.
 	 * @param workspace The web workspace
-	 * @param project The web project 
+	 * @param project The web project
 	 * @return the HTTP path of the project content resource
 	 */
 	public static IPath pathFromProject(WorkspaceInfo workspace, ProjectInfo project) {
 		return new Path(org.eclipse.orion.internal.server.servlets.Activator.LOCATION_FILE_SERVLET).append(workspace.getUniqueId()).append(project.getFullName());
 
+	}
+
+	public static boolean isForbiddenUriSchem(String scheme) {
+		return !uriSchemeWhitelist.contains(scheme);
 	}
 }

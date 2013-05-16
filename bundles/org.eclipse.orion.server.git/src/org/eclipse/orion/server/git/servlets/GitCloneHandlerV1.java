@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -91,7 +91,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		Clone clone = new Clone();
 		String url = toAdd.optString(GitConstants.KEY_URL, null);
 		// method handles repository clone or just repository init
-		// decision is based on existence of GitUrl argument 
+		// decision is based on existence of GitUrl argument
 		boolean initOnly;
 		if (url == null || url.isEmpty())
 			initOnly = true;
@@ -430,9 +430,9 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 
 	/**
 	 * Looks for the project in all workspaces of the user and removes it when found.
-	 * 
+	 *
 	 * @see WorkspaceResourceHandler#handleRemoveProject(HttpServletRequest, HttpServletResponse, WorkspaceInfo)
-	 * 
+	 *
 	 * @param userId the user name
 	 * @param project the project to remove
 	 * @return ServerStatus <code>OK</code> if the project has been found and successfully removed,
@@ -482,7 +482,12 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			return false;
 		}
 		try {
-			new URIish(url);
+			URIish uri = new URIish(url);
+			String scheme = uri.getScheme();
+			if (GitUtils.isForbiddenUriSchem(scheme)) {
+				statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Clone URL {0} cannot use prohibited scheme {1}", uri, scheme), null)); //$NON-NLS-1$
+				return false;
+			}
 		} catch (URISyntaxException e) {
 			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Invalid clone URL: {0}", url), e)); //$NON-NLS-1$
 			return false;
