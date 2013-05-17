@@ -244,7 +244,15 @@ public class GitUtils {
 
 	}
 
-	public static boolean isForbiddenUriSchem(String scheme) {
+	public static boolean isForbiddenUriScheme(String scheme) {
 		return !uriSchemeWhitelist.contains(scheme);
+	}
+
+	public static void _testAllowFileScheme(boolean allow) {
+		if (allow) {
+			uriSchemeWhitelist.add("file"); //$NON-NLS-1$
+		} else {
+			uriSchemeWhitelist.remove("file"); //$NON-NLS-1$
+		}
 	}
 }

@@ -176,7 +176,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		try {
 			URIish uri = new URIish(remoteURI);
 			String scheme = uri.getScheme();
-			if (GitUtils.isForbiddenUriSchem(scheme)) {
+			if (GitUtils.isForbiddenUriScheme(scheme)) {
 				statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Remote URI {0} cannot use prohibited scheme {1}", remoteURI, scheme), null)); //$NON-NLS-1$
 				return false;
 			}

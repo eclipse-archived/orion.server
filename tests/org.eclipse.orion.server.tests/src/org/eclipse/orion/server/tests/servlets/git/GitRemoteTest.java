@@ -329,9 +329,9 @@ public class GitRemoteTest extends GitTest {
 
 		// create remote
 		final String remoteName = "remote1";
-		final String remoteUri = "remote1.com";
+		final String remoteUri = "http://remote1.com";
 		final String fetchRefSpec = "+refs/heads/*:refs/remotes/%s/*";
-		final String pushUri = "remote2.com";
+		final String pushUri = "http://remote2.com";
 		final String pushRefSpec = "refs/heads/*:refs/heads/*";
 		addRemote(remotesLocation, remoteName, remoteUri, fetchRefSpec, pushUri, pushRefSpec);
 
@@ -342,13 +342,13 @@ public class GitRemoteTest extends GitTest {
 		assertNotNull(rc);
 		// main uri
 		assertEquals(1, rc.getURIs().size());
-		assertEquals(new URIish(remoteUri), rc.getURIs().get(0));
+		assertEquals(new URIish(remoteUri).toString(), rc.getURIs().get(0).toString());
 		// fetchRefSpec
 		assertEquals(1, rc.getFetchRefSpecs().size());
 		assertEquals(new RefSpec(fetchRefSpec), rc.getFetchRefSpecs().get(0));
 		// pushUri
 		assertEquals(1, rc.getPushURIs().size());
-		assertEquals(new URIish(pushUri), rc.getPushURIs().get(0));
+		assertEquals(new URIish(pushUri).toString(), rc.getPushURIs().get(0).toString());
 		// pushRefSpec
 		assertEquals(1, rc.getPushRefSpecs().size());
 		assertEquals(new RefSpec(pushRefSpec), rc.getPushRefSpecs().get(0));

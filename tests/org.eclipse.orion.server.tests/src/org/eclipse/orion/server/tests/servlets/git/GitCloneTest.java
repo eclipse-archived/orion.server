@@ -266,6 +266,7 @@ public class GitCloneTest extends GitTest {
 
 	@Test
 	public void testCloneBadUrlScheme() throws Exception {
+		GitUtils._testAllowFileScheme(false);
 		URI workspaceLocation = createWorkspace(getMethodName());
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
@@ -306,7 +307,7 @@ public class GitCloneTest extends GitTest {
 		// clone
 		IPath randomLocation = AllGitTests.getRandomLocation();
 		assertNull(GitUtils.getGitDir(randomLocation.toFile()));
-		WebRequest request = getPostGitCloneRequest(randomLocation.toString(), clonePath);
+		WebRequest request = getPostGitCloneRequest(randomLocation.toFile().toURI().toString(), clonePath);
 		WebResponse response = webConversation.getResponse(request);
 		ServerStatus status = waitForTask(response);
 		assertFalse(status.toString(), status.isOK());
