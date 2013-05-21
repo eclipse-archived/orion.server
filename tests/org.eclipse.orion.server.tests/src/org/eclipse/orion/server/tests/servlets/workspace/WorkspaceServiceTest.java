@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others.
+ * Copyright (c) 2010, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,6 +13,7 @@ package org.eclipse.orion.server.tests.servlets.workspace;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import com.meterware.httpunit.*;
 import java.io.*;
@@ -92,7 +93,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	}
 
 	@Test
-	public void testCreateProject() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testCreateProject() throws Exception {
 		//create workspace
 		String workspaceName = WorkspaceServiceTest.class.getName() + "#testCreateProject";
 		URI workspaceLocation = createWorkspace(workspaceName);
@@ -139,6 +140,10 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		assertEquals("true", child.optString(ProtocolConstants.KEY_DIRECTORY));
 		String contentLocation = child.optString(ProtocolConstants.KEY_LOCATION);
 		assertNotNull(contentLocation);
+
+		//ensure project content exists
+		IFileStore projectStore = EFS.getStore(makeLocalPathAbsolute(projectId));
+		assertTrue(projectStore.fetchInfo().exists());
 
 		//add a file in the project
 		String fileName = "file.txt";
@@ -451,6 +456,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		String projectLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		JSONObject project = new JSONObject(response.getText());
 
 		//delete project
 		request = new DeleteMethodWebRequest(toAbsoluteURI(projectLocation));
@@ -468,6 +474,11 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		JSONArray projects = workspace.getJSONArray(ProtocolConstants.KEY_PROJECTS);
 		assertEquals(0, projects.length());
 
+		//ensure project content is deleted
+		String projectId = project.getString(ProtocolConstants.KEY_ID);
+		IFileStore projectStore = EFS.getStore(makeLocalPathAbsolute(projectId));
+		assertFalse(projectStore.fetchInfo().exists());
+
 		//deleting again should be safe (DELETE is idempotent)
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
@@ -481,10 +492,10 @@ public class WorkspaceServiceTest extends FileSystemTest {
 			AuthorizationService.removeUserRight(testUser, "/*");
 
 			IPath path = new Path(new URI(projectLocation).getPath());
-			//project location format is /workspace/<workspaceId>/project/<projectId>
-			String project = path.segment(3);
-			assertFalse(AuthorizationService.checkRights(testUser, "/file/" + project, "PUT"));
-			assertFalse(AuthorizationService.checkRights(testUser, "/file/" + project + "/*", "PUT"));
+			//project location format is /workspace/<workspaceId>/project/<projectName>
+			projectName = path.segment(3);
+			assertFalse(AuthorizationService.checkRights(testUser, "/file/" + projectName, "PUT"));
+			assertFalse(AuthorizationService.checkRights(testUser, "/file/" + projectName + "/*", "PUT"));
 		} finally {
 			//give test user global rights again
 			AuthorizationService.addUserRight(testUser, "/");

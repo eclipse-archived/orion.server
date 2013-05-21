@@ -125,14 +125,12 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		// remove the project folder
 		URI contentURI = project.getContentLocation();
 
-		// don't remove linked projects
-		//TODO This is wrong because ProjectInfo never returns relative URI
-		if (project.getUniqueId().equals(contentURI.toString())) {
-			IFileStore root = OrionConfiguration.getUserHome(user);
-			IFileStore child = root.getChild(project.getUniqueId());
-			if (child.fetchInfo(EFS.NONE, null).exists()) {
-				child.delete(EFS.NONE, null);
-			}
+		// only delete projects if they are in default location
+		IFileStore root = OrionConfiguration.getUserHome(user);
+		final IFileStore projectStore = root.getChild(project.getUniqueId());
+		URI defaultLocation = projectStore.toURI();
+		if (URIUtil.sameURI(defaultLocation, contentURI)) {
+			projectStore.delete(EFS.NONE, null);
 		}
 
 		OrionConfiguration.getMetaStore().deleteProject(workspace.getUniqueId(), project.getFullName());
