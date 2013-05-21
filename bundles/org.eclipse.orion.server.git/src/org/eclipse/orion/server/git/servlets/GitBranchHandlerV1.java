@@ -24,6 +24,7 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;
+import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.eclipse.orion.server.git.GitConstants;
@@ -63,27 +64,27 @@ public class GitBranchHandlerV1 extends AbstractGitHandler {
 					job = new ListBranchesJob(TaskJobHandler.getUserId(request), filePath, BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.BRANCH_LIST), commitsNumber);
 				}
 				return TaskJobHandler.handleTaskJob(request, response, job, statusHandler);
-
-			} else {
-				// branch details: expected path /git/branch/{name}/file/{filePath}
-				List<Ref> branches = new Git(db).branchList().call();
-				JSONObject result = null;
-				URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.BRANCH);
-				for (Ref ref : branches) {
-					if (Repository.shortenRefName(ref.getName()).equals(gitSegment)) {
-						result = new Branch(cloneLocation, db, ref).toJSON();
-						break;
-					}
-				}
-				if (result == null) {
-					String msg = NLS.bind("Branch {0} not found", gitSegment);
-					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
-				}
-				OrionServlet.writeJSONResponse(request, response, result);
-				return true;
 			}
+			// branch details: expected path /git/branch/{name}/file/{filePath}
+			List<Ref> branches = new Git(db).branchList().call();
+			JSONObject result = null;
+			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.BRANCH);
+			for (Ref ref : branches) {
+				if (Repository.shortenRefName(ref.getName()).equals(gitSegment)) {
+					result = new Branch(cloneLocation, db, ref).toJSON();
+					break;
+				}
+			}
+			if (result == null) {
+				String msg = NLS.bind("Branch {0} not found", gitSegment);
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
+			}
+			OrionServlet.writeJSONResponse(request, response, result);
+			return true;
 		} catch (Exception e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when looking for a branch.", e));
+			final ServerStatus error = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when looking for a branch.", e);
+			LogHelper.log(error);
+			return statusHandler.handleRequest(request, response, error);
 		}
 	}
 
