@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 IBM Corporation and others.
+ * Copyright (c) 2012, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -165,7 +165,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 			if (userEmail != null && userEmail.trim().length() > 0) {
 				if(!user.isEmailConfirmed()){
 					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User " + userLogin + " email has not been yet confirmed."
-							+ " Please follow the instructions from the confirmation email in your inbox and then reuest password reset again.");
+							+ " Please follow the instructions from the confirmation email in your inbox and then request a password reset again.");
 					return;
 				}
 				if (!userEmail.equals(user.getEmail())) {
@@ -184,7 +184,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 					resp.sendError(HttpServletResponse.SC_NOT_FOUND, "User with email " + userEmail + " not found.");
 				}else{
 					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Email " + userLogin + " has not been yet confirmed."
-							+ " Please follow the instructions from the confirmation email in your inbox and then reuest password reset again.");
+							+ " Please follow the instructions from the confirmation email in your inbox and then request a password reset again.");
 				}
 				return;
 			}
@@ -219,7 +219,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 		
 		if(!user.isEmailConfirmed()){
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Your email has not been yet confirmed."
-					+ " Please follow the instructions from the confirmation email in your inbox and then reuest password reset again.", null);
+					+ " Please follow the instructions from the confirmation email in your inbox and then request a password reset again.", null);
 		}
 
 		IOrionCredentialsService userAdmin = getUserAdmin();
