@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -164,6 +164,11 @@ public class SearchServlet extends OrionServlet {
 		//this seems to be the only way to obtain the JSON response representation
 		SolrQueryRequest solrRequest = new LocalSolrQueryRequest(core, query.toNamedList());
 		SolrQueryResponse solrResponse = new SolrQueryResponse();
+		// Added encoding check as per Bugzilla 406757
+		if (httpRequest.getCharacterEncoding() == null) {
+			httpRequest.setCharacterEncoding("UTF-8"); //$NON-NLS-1$
+			httpResponse.setCharacterEncoding("UTF-8"); //$NON-NLS-1$
+		}
 		//bash the query in the response to remove user info
 		NamedList<Object> params = (NamedList<Object>) queryResponse.getHeader().get("params"); //$NON-NLS-1$
 		params.remove(CommonParams.Q);
