@@ -246,7 +246,7 @@ public class SearchTest extends FileSystemTest {
 	/**
 	 * Tests finding search results in a directory with double byte character set folder name.
 	 */
-	public void _testPathWithDBCS() throws Exception {
+	public void testPathWithDBCS() throws Exception {
 		//TODO: Commented out until bug 406757 is fixed
 
 		//simple word
@@ -259,7 +259,7 @@ public class SearchTest extends FileSystemTest {
 
 		//query with location
 		String location = match.getString("Location");
-		searchResult = doSearch("oryx+Location:" + location);
+		searchResult = doSearch("badger+Location:" + location);
 		match = assertOneMatch(searchResult, "dbcs-folder.txt");
 	}
 
