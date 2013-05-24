@@ -80,6 +80,12 @@ public class SearchServlet extends OrionServlet {
 					continue;
 				if (isSearchField(term)) {
 					if (term.startsWith("NameLower:")) { //$NON-NLS-1$
+						//decode the search term, we do not want to decode the location
+						try {
+							term = URLDecoder.decode(term, "UTF-8");
+						} catch (UnsupportedEncodingException e) {
+							//try with encoded term
+						}
 						//solr does not lowercase queries containing wildcards
 						//https://issues.apache.org/jira/browse/SOLR-219
 						processedQuery += "NameLower:" + term.substring(10).toLowerCase(); //$NON-NLS-1$

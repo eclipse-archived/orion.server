@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 IBM Corporation and others.
+ * Copyright (c) 2012, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,20 +13,42 @@ package org.eclipse.orion.server.tests.search;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import com.meterware.httpunit.*;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import org.eclipse.core.runtime.*;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.search.SearchActivator;
 import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.eclipse.orion.server.tests.servlets.xfer.TransferTest;
-import org.json.*;
-import org.junit.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.xml.sax.SAXException;
+
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.HttpUnitOptions;
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.PutMethodWebRequest;
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 /**
  * Tests for the search servlet.
@@ -126,6 +148,7 @@ public class SearchTest extends FileSystemTest {
 
 	@Before
 	public void setUp() throws Exception {
+		HttpUnitOptions.setDefaultCharacterSet("UTF-8");
 		webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 		//use a different user to avoid search result contamination from other tests
@@ -164,6 +187,11 @@ public class SearchTest extends FileSystemTest {
 	@Test
 	public void testPartialWord() throws Exception {
 		JSONObject searchResult = doSearch("ErrorMess");
+		JSONObject match = assertOneMatch(searchResult, "script.js");
+
+		//query with location
+		String location = match.getString("Location");
+		searchResult = doSearch("ErrorMess+Location:" + location);
 		assertOneMatch(searchResult, "script.js");
 	}
 
@@ -246,8 +274,8 @@ public class SearchTest extends FileSystemTest {
 	/**
 	 * Tests finding search results in a directory with double byte character set folder name.
 	 */
+	@Test
 	public void testPathWithDBCS() throws Exception {
-		//TODO: Commented out until bug 406757 is fixed
 
 		//simple word
 		JSONObject searchResult = doSearch("badger");
@@ -261,6 +289,46 @@ public class SearchTest extends FileSystemTest {
 		String location = match.getString("Location");
 		searchResult = doSearch("badger+Location:" + location);
 		match = assertOneMatch(searchResult, "dbcs-folder.txt");
+	}
+
+	/**
+	 * Tests finding search results with both the file and directory with double byte characters in the name.
+	 */
+	@Test
+	public void testFileWithDBCS() throws Exception {
+
+		//simple word
+		JSONObject searchResult = doSearch("gazelle");
+		assertOneMatch(searchResult, "\u65e5\u672c\u8a9e.txt");
+
+		//wildcard
+		searchResult = doSearch("ga?elle");
+		JSONObject match = assertOneMatch(searchResult, "\u65e5\u672c\u8a9e.txt");
+
+		//query with location
+		String location = match.getString("Location");
+		searchResult = doSearch("gazelle+Location:" + location);
+		match = assertOneMatch(searchResult, "\u65e5\u672c\u8a9e.txt");
+	}
+
+	/**
+	 * Tests finding search results of double byte characters.
+	 */
+	@Test
+	public void testSearchDBCS() throws Exception {
+
+		//simple word
+		JSONObject searchResult = doSearch("\u4e56\u4e56");
+		assertOneMatch(searchResult, "DBCS.txt");
+
+		//wildcard
+		searchResult = doSearch("\u65e5?\u8a9e");
+		JSONObject match = assertOneMatch(searchResult, "DBCS.txt");
+
+		//query with location
+		String location = match.getString("Location");
+		searchResult = doSearch("\u4e56+Location:" + location);
+		match = assertOneMatch(searchResult, "DBCS.txt");
 	}
 
 	/**
