@@ -256,7 +256,10 @@ public class Commit extends GitObject {
 	}
 
 	private Map<String, Ref> getTagsForCommit() throws MissingObjectException, IOException, GitAPIException, JSONException, URISyntaxException, CoreException {
-		return getCommitToTagMap().get(revCommit.getId());
+		Map<String, Ref> tags = getCommitToTagMap().get(revCommit.getId());
+		if (tags == null)
+			tags = new HashMap<String, Ref>();
+		return tags;
 	}
 
 	private URI createDiffLocation(String toRefId, String fromRefId, String path) throws URISyntaxException {
