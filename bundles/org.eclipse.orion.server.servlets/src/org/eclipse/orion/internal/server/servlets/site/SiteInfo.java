@@ -73,11 +73,14 @@ public class SiteInfo {
 	 */
 	private static String nextSiteId(UserInfo user) {
 		Base64Counter counter = new Base64Counter();
+		String userName = user.getUserName();
 		JSONObject sitesObject = getSites(user);
-		while (sitesObject.has(counter.toString())) {
+		String candidate = userName + '-' + counter.toString();
+		while (sitesObject.has(candidate)) {
 			counter.increment();
+			candidate = userName + '-' + counter.toString();
 		}
-		return counter.toString();
+		return candidate;
 	}
 
 	private SiteInfo() {
