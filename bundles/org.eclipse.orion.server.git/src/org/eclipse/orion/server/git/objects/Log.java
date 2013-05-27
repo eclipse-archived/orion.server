@@ -14,10 +14,12 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
+import java.util.Map.Entry;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ListBranchCommand.ListMode;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.RemoteConfig;
@@ -92,11 +94,13 @@ public class Log extends GitObject {
 	@PropertyDescription(name = ProtocolConstants.KEY_CHILDREN)
 	private JSONArray getChildren() throws GitAPIException, JSONException, URISyntaxException, IOException, CoreException {
 		Map<ObjectId, JSONArray> commitToBranchMap = getCommitToBranchMap(cloneLocation, db);
+		Map<ObjectId, Map<String, Ref>> commitToTagMap = getCommitToTagMap(cloneLocation, db);
 		JSONArray children = new JSONArray();
 		int i = 0;
 		for (RevCommit revCommit : commits) {
 			Commit commit = new Commit(cloneLocation, db, revCommit, pattern);
 			commit.setCommitToBranchMap(commitToBranchMap);
+			commit.setCommitToTagMap(commitToTagMap);
 			children.put(commit.toJSON());
 			if (i++ == pageSize - 1)
 				break;
@@ -227,5 +231,25 @@ public class Log extends GitObject {
 			}
 		}
 		return commitToBranch;
+	}
+
+	static Map<ObjectId, Map<String, Ref>> getCommitToTagMap(URI cloneLocation, Repository db) throws MissingObjectException, IOException {
+		HashMap<ObjectId, Map<String, Ref>> commitToTag = new HashMap<ObjectId, Map<String, Ref>>();
+		for (Entry<String, Ref> tag : db.getTags().entrySet()) {
+			Ref ref = db.peel(tag.getValue());
+			ObjectId commitId = ref.getPeeledObjectId();
+			if (commitId == null)
+				commitId = ref.getObjectId();
+
+			Map<String, Ref> tags = commitToTag.get(commitId);
+			if (tags != null) {
+				tags.put(tag.getKey(), tag.getValue());
+			} else {
+				tags = new HashMap<String, Ref>();
+				tags.put(tag.getKey(), tag.getValue());
+				commitToTag.put(commitId, tags);
+			}
+		}
+		return commitToTag;
 	}
 }

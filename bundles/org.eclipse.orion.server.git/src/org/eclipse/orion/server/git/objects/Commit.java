@@ -74,6 +74,7 @@ public class Commit extends GitObject {
 	 */
 	private boolean isRoot = true;
 	private Map<ObjectId, JSONArray> commitToBranchMap;
+	private Map<ObjectId, Map<String, Ref>> commitToTagMap;
 
 	public Commit(URI cloneLocation, Repository db, RevCommit revCommit, String pattern) {
 		super(cloneLocation, db);
@@ -89,10 +90,20 @@ public class Commit extends GitObject {
 		this.commitToBranchMap = map;
 	}
 
+	public void setCommitToTagMap(Map<ObjectId, Map<String, Ref>> map) {
+		this.commitToTagMap = map;
+	}
+
 	public Map<ObjectId, JSONArray> getCommitToBranchMap() throws GitAPIException, JSONException, URISyntaxException, IOException, CoreException {
 		if (commitToBranchMap == null)
 			commitToBranchMap = Log.getCommitToBranchMap(cloneLocation, db);
 		return commitToBranchMap;
+	}
+
+	public Map<ObjectId, Map<String, Ref>> getCommitToTagMap() throws GitAPIException, JSONException, URISyntaxException, IOException, CoreException {
+		if (commitToTagMap == null)
+			commitToTagMap = Log.getCommitToTagMap(cloneLocation, db);
+		return commitToTagMap;
 	}
 
 	/**
@@ -175,7 +186,7 @@ public class Commit extends GitObject {
 
 	// TODO: expandable
 	@PropertyDescription(name = GitConstants.KEY_TAGS)
-	private JSONArray getTags() throws MissingObjectException, JSONException, URISyntaxException, CoreException, IOException {
+	private JSONArray getTags() throws MissingObjectException, JSONException, URISyntaxException, CoreException, IOException, GitAPIException {
 		return toJSON(getTagsForCommit());
 	}
 
@@ -244,18 +255,8 @@ public class Commit extends GitObject {
 		return BaseToCommitConverter.getCommitLocation(cloneLocation, revCommit.getName(), pattern, BaseToCommitConverter.REMOVE_FIRST_2);
 	}
 
-	private Map<String, Ref> getTagsForCommit() throws MissingObjectException, IOException {
-		final Map<String, Ref> tags = new HashMap<String, Ref>();
-		for (final Entry<String, Ref> tag : db.getTags().entrySet()) {
-			Ref ref = db.peel(tag.getValue());
-			ObjectId refId = ref.getPeeledObjectId();
-			if (refId == null)
-				refId = ref.getObjectId();
-			if (!AnyObjectId.equals(refId, revCommit))
-				continue;
-			tags.put(tag.getKey(), tag.getValue());
-		}
-		return tags;
+	private Map<String, Ref> getTagsForCommit() throws MissingObjectException, IOException, GitAPIException, JSONException, URISyntaxException, CoreException {
+		return getCommitToTagMap().get(revCommit.getId());
 	}
 
 	private URI createDiffLocation(String toRefId, String fromRefId, String path) throws URISyntaxException {
