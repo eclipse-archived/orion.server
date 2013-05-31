@@ -45,7 +45,10 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	 * The maximum length of a username.
 	 */
 	private static final int USERNAME_MAX_LENGTH = 20;
-	private static final String PATH_EMAIL_CONFIRMATION = "../useremailconfirmation"; //$NON-NLS-1$
+	/**
+	 * The name of the servlet handling email configuration.
+	 */
+	private static final String PATH_EMAIL_CONFIRMATION = "useremailconfirmation"; //$NON-NLS-1$
 	private static final String GUEST_UID_PREFIX = "user"; //$NON-NLS-1$
 	private static final boolean requirePassword = false;
 
@@ -323,7 +326,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 		if (newUser.getBlocked()) {
 			try {
-				UserEmailUtil.getUtil().sendEmailConfirmation(getURI(req).resolve(PATH_EMAIL_CONFIRMATION), newUser);
+				URI baseURI = URI.create(req.getRequestURL().toString());
+				UserEmailUtil.getUtil().sendEmailConfirmation(baseURI.resolve(PATH_EMAIL_CONFIRMATION), newUser);
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_CREATED, NLS.bind("User {0} has been succesfully created. To log in please confirm your email first.", login), null));
 			} catch (URISyntaxException e) {
 				LogHelper.log(e);
@@ -333,7 +337,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		OrionServlet.writeJSONResponse(req, resp, formJson(newUser, userNode, userLocation, req.getContextPath()));
 		if (email != null && email.length() > 0 && UserEmailUtil.getUtil().isEmailConfigured()) {
 			try {
-				UserEmailUtil.getUtil().sendEmailConfirmation(getURI(req).resolve(PATH_EMAIL_CONFIRMATION), newUser);
+				URI baseURI = URI.create(req.getRequestURL().toString());
+				UserEmailUtil.getUtil().sendEmailConfirmation(baseURI.resolve(PATH_EMAIL_CONFIRMATION), newUser);
 			} catch (URISyntaxException e) {
 				LogHelper.log(e);
 			}
@@ -491,7 +496,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 		if (user.getConfirmationId() != null && !user.getConfirmationId().equals(emailConfirmationid)) {
 			try {
-				UserEmailUtil.getUtil().sendEmailConfirmation(getURI(req).resolve(PATH_EMAIL_CONFIRMATION), user);
+				URI baseURI = URI.create(req.getRequestURI());
+				UserEmailUtil.getUtil().sendEmailConfirmation(baseURI.resolve(PATH_EMAIL_CONFIRMATION), user);
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.INFO, HttpServletResponse.SC_OK, "Confirmation email has been sent to " + user.getEmail(), null));
 			} catch (Exception e) {
 				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "Error while sending email" + (e.getMessage() == null ? "" : ": " + e.getMessage()) + ". See http://wiki.eclipse.org/Orion/Server_admin_guide#Email_configuration for email configuration guide."));
