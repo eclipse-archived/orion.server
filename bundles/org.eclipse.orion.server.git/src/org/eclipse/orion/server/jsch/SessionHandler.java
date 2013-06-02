@@ -37,7 +37,7 @@ public class SessionHandler {
 		jSch = new JSch();
 		JSchUtil.knownHosts(jSch, knownHosts);
 		JSchUtil.identity(jSch, privateKey, publicKey, passphrase);
-		this.session = jSch.getSession(user, host);
+		this.session = jSch.getSession(user, host, port);
 		//we don't prompt for password on the server so we never want to retry on authorization failure
 		this.session.setConfig("MaxAuthTries", "1"); //$NON-NLS-1$ //$NON-NLS-2$
 	}
