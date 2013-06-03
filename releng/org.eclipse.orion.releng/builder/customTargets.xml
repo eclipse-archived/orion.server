@@ -150,6 +150,19 @@ lastMapTag=${mapsTagTag}
 				<arg value="dir=" />
 			</java>
 
+			<!-- optimize the page css -->
+			<java classname="org.mozilla.javascript.tools.shell.Main" fork="true" dir="${buildDirectory}/optimization">
+				<classpath>
+					<pathelement location="${requirejsHome}/lib/rhino/js.jar" />
+					<pathelement location="${requirejsHome}/lib/closure/compiler.jar" />
+				</classpath>
+				<arg value="${requirejsHome}/dist/r.js"/>
+				<arg value="-o" />
+				<arg value="./orion.build.js"/>
+				<arg value="cssIn=@{pageDir}/@{name}.css" />
+				<arg value="out=@{pageDir}/@{name}.css" />
+			</java>
+
 			<antcall target="updateHTML">
 				<param name="minifiedScript" value="${buildDirectory}/optimization/@{pageDir}/built-@{name}.js" />
 				<param name="pageDir" value="@{pageDir}" />
@@ -277,6 +290,8 @@ lastMapTag=${mapsTagTag}
 		<optimize pageDir="profile" name="userservicePlugin" bundle="org.eclipse.orion.client.users" />
 
 		<!-- build CSS -->
+		<!-- this is now handled inside the "optimize" target for each page-->
+		<!--
 		<java classname="org.mozilla.javascript.tools.shell.Main">
 			<classpath>
 				<pathelement location="${requirejsHome}/lib/rhino/js.jar" />
@@ -289,6 +304,7 @@ lastMapTag=${mapsTagTag}
 			<arg value="appDir=${buildDirectory}/optimization" />
 			<arg value="dir=${buildDirectory}/optimization" />
 		</java>
+		-->
 
 		<!-- copy css back -->
 		<copy todir="${buildDirectory}/plugins/org.eclipse.orion.client.ui/web" >
