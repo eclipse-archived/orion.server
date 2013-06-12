@@ -21,6 +21,7 @@ import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.List;
+import junit.framework.Assert;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
@@ -57,6 +58,30 @@ public class PreferenceTest extends FileSystemTest {
 		}
 		prefs.clear();
 		prefs.flush();
+	}
+
+	/**
+	 * Tests corruption of preference keys containing URLS.
+	 */
+	@Test
+	public void testBug409792() throws JSONException, IOException {
+		String location = toAbsoluteURI("prefs/user/" + getTestUserId() + "/testBug409792");
+		//put a value containing a URL in the key
+		JSONObject prefs = new JSONObject();
+		final String key = "http://127.0.0.2:8080/plugins/samplePlugin.html";
+		prefs.put(key, true);
+		WebRequest request = new PutMethodWebRequest(location, IOUtilities.toInputStream(prefs.toString()), "application/json");
+		setAuthentication(request);
+		WebResponse response = webConversation.getResource(request);
+		assertEquals("1.1", HttpURLConnection.HTTP_NO_CONTENT, response.getResponseCode());
+
+		//attempt to retrieve the preference
+		request = new GetMethodWebRequest(location);
+		setAuthentication(request);
+		response = webConversation.getResource(request);
+		assertEquals("1.2", HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject result = new JSONObject(response.getText());
+		Assert.assertTrue("1.3", result.optBoolean(key));
 	}
 
 	@Test

@@ -47,12 +47,12 @@ public class PreferencesServlet extends OrionServlet {
 			return;
 		String key = req.getParameter("key"); //$NON-NLS-1$
 		try {
-			IPath prefix = getPrefix(req);
+			String prefix = getPrefix(req);
 
 			//if a key is specified get that single value, otherwise get the entire node
 			JSONObject result = null;
 			if (key != null) {
-				prefix = prefix.append(key);
+				prefix = prefix + '/' + key;
 				String value = node.getProperty(prefix.toString());
 				if (value == null) {
 					handleNotFound(req, resp, HttpServletResponse.SC_NOT_FOUND);
@@ -77,7 +77,7 @@ public class PreferencesServlet extends OrionServlet {
 	/**
 	 * Returns the prefix for the preference to be retrieved or manipulated.
 	 */
-	private IPath getPrefix(HttpServletRequest req) {
+	private String getPrefix(HttpServletRequest req) {
 		String pathString = req.getPathInfo();
 		if (pathString == null)
 			pathString = ""; //$NON-NLS-1$
@@ -93,7 +93,7 @@ public class PreferencesServlet extends OrionServlet {
 			//format is /project/{workspaceId}/{projectName}/prefix
 			path = path.removeFirstSegments(3);
 		}
-		return path;
+		return path.toString();
 	}
 
 	@Override
@@ -107,15 +107,15 @@ public class PreferencesServlet extends OrionServlet {
 		}
 		String key = req.getParameter("key");
 		try {
-			IPath prefix = getPrefix(req);
+			String prefix = getPrefix(req);
 			//if a key is specified write that single value, otherwise write the entire node
 			boolean changed = false;
 			if (key != null) {
-				prefix = prefix.append(key);
+				prefix = prefix + '/' + key;
 				changed = info.setProperty(prefix.toString(), null) != null;
 			} else {
 				//can't overwrite base user settings via preference servlet
-				if (prefix.segmentCount() > 2) {
+				if (prefix.startsWith("user/")) {
 					resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
 					return;
 				}
@@ -183,18 +183,18 @@ public class PreferencesServlet extends OrionServlet {
 		if (info == null)
 			return;
 		String key = req.getParameter("key"); //$NON-NLS-1$
-		IPath prefix = getPrefix(req);
+		String prefix = getPrefix(req);
 		try {
 			boolean changed = false;
 			if (key != null) {
-				prefix = prefix.append(key);
+				prefix = prefix + '/' + key;
 				String newValue = req.getParameter("value"); //$NON-NLS-1$
 				String oldValue = info.setProperty(prefix.toString(), newValue);
 				changed = !newValue.equals(oldValue);
 			} else {
 				JSONObject newNode = new JSONObject(new JSONTokener(req.getReader()));
 				//can't overwrite base user settings via preference servlet
-				if (prefix.segmentCount() > 2) {
+				if (prefix.startsWith("user/")) {
 					resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
 					return;
 				}
@@ -203,7 +203,8 @@ public class PreferencesServlet extends OrionServlet {
 				for (Iterator<String> it = newNode.keys(); it.hasNext();) {
 					key = it.next();
 					String newValue = newNode.getString(key);
-					String oldValue = info.setProperty(prefix.append(key).toString(), newValue);
+					String qualifiedKey = prefix + '/' + key;
+					String oldValue = info.setProperty(qualifiedKey, newValue);
 					changed |= !newValue.equals(oldValue);
 				}
 			}
