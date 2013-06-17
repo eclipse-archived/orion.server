@@ -1,5 +1,5 @@
 <!--
- Copyright (c) 2011, 2012 IBM Corporation and others.
+ Copyright (c) 2011, 2013 IBM Corporation and others.
  All rights reserved. This program and the accompanying materials
  are made available under the terms of the Eclipse Public License v1.0
  which accompanies this distribution, and is available at
@@ -19,7 +19,7 @@
 		
 		<antcall target="prepareJsTests"/>
 		<parallel>
-			<antcall target="triggerHudsonTests"/>
+<!--			<antcall target="triggerHudsonTests"/> -->
 			<antcall target="jsTests" />
 		</parallel>
 		
@@ -357,7 +357,7 @@
 		<updateTestResult testFile="Chrome-12.0-testResults.html" token="@JS-CHROME12@"/>
 		<updateTestResult testFile="Firefox-17.0-testResults.html" token="@JS-FIREFOX17@"/>
 <!--		<updateTestResult testFile="IE-9.0-testResults.html" token="@JS-IE9@"/> -->
-		<updateTestResult testFile="Chrome-testResults.html" token="@JS-WIN-CHROME@"/>
+<!--		<updateTestResult testFile="Chrome-testResults.html" token="@JS-WIN-CHROME@"/> -->
 		<updateTestResult testFile="Performance-testResults.html" token="@PERFORMANCE@"/>
 		<updateTestResult testFile="org.eclipse.orion.server.tests.AllServerTests.html" token="@SERVER-TESTS@"/>
 		<updateTestResult testFile="org.eclipse.orion.server.tests.performance.AllPerformanceTests.html" token="@JUNIT_PERF_BASELINE@"/>
