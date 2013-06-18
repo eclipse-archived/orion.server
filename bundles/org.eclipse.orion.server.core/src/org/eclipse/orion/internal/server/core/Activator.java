@@ -93,8 +93,9 @@ public class Activator implements BundleActivator {
 			if (metastore == null) {
 				//if we still don't have a store then something is wrong with server configuration
 				final String msg = "Invalid server configuration. Failed to initialize a metadata store"; //$NON-NLS-1$
-				logger.error(msg);
-				throw new IllegalStateException(msg);
+				final IllegalStateException failure = new IllegalStateException(msg);
+				logger.error(msg, failure);
+				throw failure;
 			}
 		}
 		return metastore;
