@@ -56,7 +56,7 @@ public class Indexer extends Job {
 		super("Indexing"); //$NON-NLS-1$
 		this.server = server;
 		setSystem(true);
-		INDEXED_FILE_TYPES = Arrays.asList("css", "js", "html", "txt", "xml", "java", "properties", "php", "htm", "project", "conf", "pl", "sh", "text", "xhtml", "mf", "manifest");
+		INDEXED_FILE_TYPES = Arrays.asList("css", "js", "html", "txt", "xml", "java", "properties", "php", "htm", "project", "conf", "pl", "sh", "text", "xhtml", "mf", "manifest", "md", "yaml", "yml");
 		Collections.sort(INDEXED_FILE_TYPES);
 	}
 
