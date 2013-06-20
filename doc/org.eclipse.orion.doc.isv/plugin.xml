@@ -28,7 +28,7 @@
        <toc file="WikiDoc/Orion-Documentation-Developer-Guide-Plugging-into-the-navigator-toc.xml" />
        <toc file="WikiDoc/Orion-Documentation-Developer-Guide-Plugging-into-the-shell-toc.xml"/>
        <toc file="WikiDoc/Orion-Server-admin-guide-toc.xml" />
-	   <toc file="WikiDoc/Orion-Getting-Started-with-Orion-node-toc.xml" />
+	   <toc file="WikiDoc/Orion-Node-Getting-started-toc.xml" />
        <toc file="WikiDoc/Orion-Server-API-toc.xml" />
    </extension>
    

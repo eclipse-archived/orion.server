@@ -184,7 +184,7 @@ jetty.ssl.protocol = SSLv3
 			<a href="Configuring-the-server.html#Hosting_locally">Hosting locally</a> below).
 		</p>
 		<h4 id="Defaults">Defaults</h4>
-		<p>If you don't supply the <tt>orion.site.virtualHosts</tt> property, Orion will use a default setting. On Windows and Linux, the default assigns up to 16 addresses in the range 127.0.0.2 to 127.0.0.254. On Mac OS X, there are no default addresses, so you will receive an error when you attempt to start a site.</p>
+		<p>If you don't supply the <tt>orion.site.virtualHosts</tt> property, Orion will use a default setting. On Windows and Linux, the default assigns up to 16 addresses in the range 127.0.0.2 to 127.0.0.254. On Mac OS X, there are no default addresses, so you will receive an error ("No more hosts available") when you attempt to start a site.</p>
 		<h3 id="Examples">Examples</h3>
 		<dl>
 			<dt><code>orion.site.virtualHosts=site.myhost.net</code></dt>
