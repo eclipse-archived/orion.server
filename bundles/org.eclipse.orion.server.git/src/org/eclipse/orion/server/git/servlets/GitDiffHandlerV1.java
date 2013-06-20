@@ -13,6 +13,7 @@ package org.eclipse.orion.server.git.servlets;
 import java.io.*;
 import java.net.URI;
 import java.util.*;
+import java.util.regex.Pattern;
 import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
@@ -21,6 +22,7 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.PatchApplyException;
 import org.eclipse.jgit.api.errors.PatchFormatException;
@@ -39,6 +41,7 @@ import org.eclipse.orion.server.git.objects.Diff;
 import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
@@ -50,8 +53,6 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 	 * The end of line sequence expected by HTTP.
 	 */
 	private static final String EOL = "\r\n"; //$NON-NLS-1$
-
-	private ServletResourceHandler<IStatus> statusHandler;
 
 	private HttpClient httpClient;
 
@@ -193,6 +194,10 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 		}
 	}
 
+	private String stripGlobalPaths(Repository db, String message) {
+		return message.replaceAll("(?i)" + Pattern.quote(db.getDirectory().getParentFile().getAbsolutePath().toLowerCase()), "");
+	}
+
 	private boolean applyPatch(HttpServletRequest request, HttpServletResponse response, Repository db, String contentType) throws ServletException {
 		try {
 			String patch = readPatch(request.getInputStream(), contentType);
@@ -201,17 +206,22 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 			applyCommand.setPatch(IOUtilities.toInputStream(patch));
 			// TODO: ignore all errors for now, see bug 366008
 			try {
-				/*ApplyResult applyResult = */applyCommand.call();
+				ApplyResult applyResult = applyCommand.call();
+				JSONObject resp = new JSONObject();
+				JSONArray modifiedFieles = new JSONArray();
+				for (File file : applyResult.getUpdatedFiles()) {
+					modifiedFieles.put(stripGlobalPaths(db, file.getAbsolutePath()));
+				}
+				resp.put("modifiedFieles", modifiedFieles);
+				return statusHandler.handleRequest(request, response, new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, resp));
 				// OrionServlet.writeJSONResponse(request, response, toJSON(applyResult));
 			} catch (PatchFormatException e) {
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, stripGlobalPaths(db, e.getMessage()), null));
 			} catch (PatchApplyException e) {
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, stripGlobalPaths(db, e.getMessage()), null));
 			}
-			response.setStatus(HttpServletResponse.SC_CREATED);
-			response.setContentType(ProtocolConstants.CONTENT_TYPE_HTML);
-			response.getOutputStream().write(new String("<head></head><body><textarea>{}</textarea></body>").getBytes()); //$NON-NLS-1$
-			return true;
 		} catch (Exception e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when applying a patch.", e));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when reading the patch.", e));
 		}
 	}
 
