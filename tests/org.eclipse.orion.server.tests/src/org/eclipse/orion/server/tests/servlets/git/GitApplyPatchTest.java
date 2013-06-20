@@ -24,6 +24,7 @@ import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.git.GitConstants;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -67,8 +68,8 @@ public class GitApplyPatchTest extends GitTest {
 		sb.append("+newborn").append("\n");
 		sb.append("\\ No newline at end of file").append("\n");
 
-		/*JSONObject patchResult = */patch(gitDiffUri, sb.toString());
-		//		assertEquals("Ok", patchResult.getString(GitConstants.KEY_RESULT));
+		JSONObject patchResult = patch(gitDiffUri, sb.toString());
+		assertEquals("200", patchResult.getString("HttpCode"));
 
 		JSONObject newTxt = getChild(project, "new.txt");
 		assertEquals("newborn", getFileContent(newTxt));
@@ -105,8 +106,8 @@ public class GitApplyPatchTest extends GitTest {
 		sb.append("@@ -1 +0,0 @@").append("\n");
 		sb.append("-test").append("\n");
 
-		/*JSONObject patchResult =*/patch(gitDiffUri, sb.toString());
-		//		assertEquals("Ok", patchResult.getString(GitConstants.KEY_RESULT));
+		JSONObject patchResult = patch(gitDiffUri, sb.toString());
+		assertEquals("200", patchResult.getString("HttpCode"));
 
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 		assertStatus(new StatusResult().setMissingNames("test.txt"), gitStatusUri);
@@ -143,8 +144,8 @@ public class GitApplyPatchTest extends GitTest {
 		sb.append("+patched").append("\n");
 		sb.append("\\ No newline at end of file").append("\n");
 
-		/*JSONObject patchResult = */patch(gitDiffUri, sb.toString());
-		//		assertEquals("Ok", patchResult.getString(GitConstants.KEY_RESULT));
+		JSONObject patchResult = patch(gitDiffUri, sb.toString());
+		assertEquals("200", patchResult.getString("HttpCode"));
 
 		JSONObject testTxt = getChild(project, "test.txt");
 		assertEquals("patched", getFileContent(testTxt));
@@ -177,9 +178,8 @@ public class GitApplyPatchTest extends GitTest {
 		sb.append("diff --git a/test.txt b/test.txt").append("\n");
 		sb.append("malformed patch").append("\n");
 
-		/*JSONObject patchResult =*/patch(gitDiffUri, sb.toString());
-		//		assertNull(patchResult.optString(GitConstants.KEY_RESULT, null));
-		//		assertNotNull(patchResult.getJSONArray("FormatErrors"));
+		JSONObject patchResult = patch(gitDiffUri, sb.toString());
+		assertEquals("400", patchResult.getString("HttpCode"));
 
 		// nothing has changed
 		JSONObject testTxt = getChild(project, "test.txt");
@@ -219,9 +219,8 @@ public class GitApplyPatchTest extends GitTest {
 		sb.append("+patched").append("\n");
 		sb.append("\\ No newline at end of file").append("\n");
 
-		/*JSONObject patchResult =*/patch(gitDiffUri, sb.toString());
-		//		assertNull(patchResult.optString(GitConstants.KEY_RESULT, null));
-		//		assertNotNull(patchResult.getJSONArray("ApplyErrors"));
+		JSONObject patchResult = patch(gitDiffUri, sb.toString());
+		assertEquals("400", patchResult.getString("HttpCode"));
 
 		// nothing has changed
 		JSONObject testTxt = getChild(project, "test.txt");
@@ -230,12 +229,10 @@ public class GitApplyPatchTest extends GitTest {
 		assertStatus(StatusResult.CLEAN, gitStatusUri);
 	}
 
-	private void patch(final String gitDiffUri, String patch) throws IOException, SAXException {
+	private JSONObject patch(final String gitDiffUri, String patch) throws IOException, SAXException, JSONException {
 		WebRequest request = getPostGitDiffRequest(gitDiffUri, patch);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		// TODO: see bug 366008
-		// return new JSONObject(response.getText());
+		return new JSONObject(response.getText());
 	}
 
 	private static WebRequest getPostGitDiffRequest(String location, String patch) throws UnsupportedEncodingException {
