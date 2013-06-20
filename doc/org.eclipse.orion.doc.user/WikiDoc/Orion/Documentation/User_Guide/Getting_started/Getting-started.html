@@ -62,8 +62,8 @@
 		<p>
 			<img title="Navigator Toolbar" alt="Navigator Toolbar" border="0" src="images/Orion-navbreadcommands.png"/>
 		</p>
-		<p>To navigate the files, you can either expand the folders (using the twisties), or you can click on the folder links to drill into that folder. After you have drilled into a folder, you can use the breadcrumb at the top of the page, or your browser's 
-			<b>Back</b> button, or a keyboard command Alt+&#8593; to navigate back up the tree.
+		<p>To navigate the files, you can either expand the folders (using the &#9658; twisties), or you can click on the folder's name to drill into that folder. After you have drilled into a folder, you can use the breadcrumb at the top of the page, or your browser's 
+			<b>Back</b> button, or a keyboard command (Alt+&#8593;) to navigate back up the tree.
 		</p>
 		<p>
 			<img title="Navigator Breadcrumbs" alt="Navigator Breadcrumbs" border="0" src="images/Orion-navbreadcrumb.png"/>
@@ -77,7 +77,7 @@
 			<i>resource</i> you're currently viewing) as a favorite.  The 
 			<b>search box</b> allows you to quickly search the contents of the current folder. Next to the search box is the 
 			<b>search options</b> menu, which lets you set advanced options such as regular expression search and access saved searches. The 
-			<b>Related pages</b> menu allow you to quickly navigate to another Orion page relevant to the folder you're viewing (for example, if you're viewing a folder inside a Git repository, you can navigate straight to the Git Log page for the folder).
+			<b>Related pages</b> menu lets you quickly navigate to another Orion page relevant to the folder you're viewing (for example, if you're viewing a folder inside a Git repository, you can navigate straight to the Git Log page for the folder).
 		</p>
 		<p>Below the banner, the content of the page appears. The page toolbar contains commands. The 
 			<b>New File</b> and 
@@ -179,31 +179,43 @@
 		<h2 id="Searching">Searching</h2>
 		<p>Once you are actively using Orion, you'll find that you want to move quickly between different files and folders.  There are several ways to go about this.  Orion uses Apache Lucene search to provide several different search functions.</p>
 		<h3 id="Searching_for_file_content">Searching for file content</h3>
-		<p>The search box in the Orion navigator will perform a search for content inside your files.  The scope of the search depends on what page you are on.  In the navigator, the search is scoped to your navigator root.  </p>
+		<p>The search page is designed to perform a search for content inside your files.  The scope of the search depends on how you open the search page. There are 3 ways to open the search page with a search scope.</p>
+		<ul>
+			<li>In any Orion page, clicking on the 
+				<a href="Navigation">Menu</a>
+				<a href="Main">Pages</a>
+				<a href="Search">Search</a> link will bring up the search page with the global scope. The search page will search all the files without a scope.
+			</li>
+			<li>In the pages that contain the current directory information(e.g., the navigator and editor page), clicking on 
+				<a href="Navigation">Menu</a>
+				<a href="Related">Links</a>
+				<a href="Scope">Search</a> link will bring up the search page with the current directory as the scope. The search page will then search all the files under the directory.
+			</li>
+			<li>In the navigator pages with a single directory selected, clicking on 
+				<a href="Actions">Actions</a>
+				<a href="Scope">Search</a> link will bring up the search page with the selected directory as the scope. The search page will then search all the files under the selected directory.
+			</li>
+		</ul>
 		<p>
-			<img title="Scoped search box" alt="Scoped search box" border="0" src="images/Orion-scopedsearchbox.png"/>
+			<img title="Search page" alt="Search page" border="0" src="images/Orion-search-page-overall.png"/>
 		</p>
-		<p>When a scope cannot be inferred from your current page, a global search is performed. </p>
-		<p>Results are shown in a 
-			<a href="../../../../Orion/Documentation/User_Guide/Reference/Search_Results_page/Search-Results-page.html" title="Orion/Documentation/User_Guide/Reference/Search_Results_page">Search Results page</a>. From this page you can sort and filter the results, broaden or narrow your search results, and perform a global replace operation.
-		</p>
-		<p>
-			<img title="Search results page" alt="Search results page" border="0" src="images/Orion-globalsearch.png"/>
+		<p>Once the 
+			<a href="../../../../Orion/Documentation/User_Guide/Reference/Search_Results_page/Search-Results-page.html" title="Orion/Documentation/User_Guide/Reference/Search_Results_page">Search page</a> is loaded, you can start to search on all criteria available on the left hand side of the page. The search result is displayed on the right hand side.
 		</p>
 		<h3 id="Finding_a_file_by_name">Finding a file by name</h3>
 		<p>The 
 			<b>Find File Named</b> dialog can be opened by pressing 
-			<b>Ctrl+Shift+F</b> on your keyboard.  This dialog lets you search for a file by name.  Simple wildcard characters are supported. Matching files in your favorites list are shown first in the results list.
+			<b>Ctrl+Shift+F</b> on your keyboard.  This dialog lets you search for a file by name.  Simple wildcard characters are supported.
 		</p>
 		<p>
-			<img title="Open resource dialog" alt="Open resource dialog" border="0" src="images/Orion-openresource.png"/>
+			<img title="Open resource dialog" alt="Open resource dialog" border="0" src="images/Orion-findFileName-overal.png"/>
 		</p>
 		<h3 id="Searching_inside_the_editor">Searching inside the editor</h3>
 		<p>You can also perform a global search on a highlighted phrase from inside the editor using the 
-			<b>Ctrl + H</b> shortcut.
+			<b>Ctrl + H</b> shortcut. You can also type other keywords to search the file contents on-the-fly.
 		</p>
 		<p>
-			<img title="Global search in editor" alt="Global search in editor" border="0" src="images/Orion-searchineditor.png"/>
+			<img title="Global search in editor" alt="Global search in editor" border="0" src="images/Orion-searchineditor-overall.png"/>
 		</p>
 		<p>A nice side effect of editing source code in browser pages is being able to use browser mechanisms, such as the history, to quickly find files.  If you find yourself working in the same handful of files, opening a new browser tab and typing in the filename will quickly get you there.</p>
 		<p>
@@ -221,7 +233,7 @@
 			<img title="Git commands in the Related pages menu" alt="Git commands in the Related pages menu" border="0" src="images/Orion-relatedpages-git.png"/>
 		</p>
 		<p>The 
-			<b>Git Status</b> page shows you all the files in your git repository that have changed, and allows you to stage, unstage, and commit changes. 
+			<b>Git Status</b> page shows you all the files in your git repository that have changed, and allows you to stage, unstage, and commit changes. You can multi-select files to stage/unstage/commit using shift or ctrl.
 		</p>
 		<p>
 			<img title="Git status page" alt="Git status page" border="0" src="images/Orion-status-page-overview.png"/>
