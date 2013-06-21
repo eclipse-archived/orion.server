@@ -12,28 +12,28 @@
 			<a href="../../../../../Orion/Documentation/User_Guide/Reference/Coding_page/Coding-page.html" title="Orion/Documentation/User_Guide/Reference/Coding_page">Coding page</a> on that file. If there is only a single match, simply press 'Enter' to open that file.
 		</p>
 		<h2 id="Searching_for_text_within_files">Searching for text within files</h2>
-		<p>Type search terms in the search box in the upper right corner of the title area of any page to search for terms across all files in the folder you are viewing. Matches will be displayed in the 
-			<a href="../../../../../Orion/Documentation/User_Guide/Reference/Search_Results_page/Search-Results-page.html" title="Orion/Documentation/User_Guide/Reference/Search_Results_page">Search Results page</a>.
+		<p>Once you launch the 
+			<a href="../../../../../Orion/Documentation/User_Guide/Reference/Search_Results_page/Search-Results-page.html" title="Orion/Documentation/User_Guide/Reference/Search_Results_page">Search page</a> you can type search terms in the search box on the left hand side to search for terms across all files in the current scope. Matches will be displayed on the right hand side of the page.
 		</p>
-		<p>Both literal and wild card search are supported. For example, "fo*ar" will hit all the files containing "foobar" while "fo??ar" will hit the same files. Please also note that the search ignores case.</p>
+		<p>Both literal and wild card search are supported. For example, "fo*ar" will hit all the files containing "foobar" while "fo??ar" will hit the same files.</p>
 		<p>
-			<img title="Search bar" alt="Search bar" border="0" src="images/Search_starting_search.png"/>
+			<img title="Search pane" alt="Search pane" border="0" src="images/NavAndSearch-search.png"/>
 		</p>
-		<p>The drop-down menu next to the search bar allows you to configure search options, and browse recent or saved searches.</p>
+		<p>When you type, the drop down completion box allows you to browse recent or saved searches. The options under the search and replace boxes allows you to narrow down your search.</p>
 		<p>Read the 
-			<a href="../../../../../Orion/Documentation/User_Guide/Reference/Search_Results_page/Search-Results-page.html" title="Orion/Documentation/User_Guide/Reference/Search_Results_page">Search Results page</a> documentation for more details on how to browse, filter, and process search results.
+			<a href="../../../../../Orion/Documentation/User_Guide/Reference/Search_Results_page/Search-Results-page.html" title="Orion/Documentation/User_Guide/Reference/Search_Results_page">Search page</a> documentation for more details on how to browse, filter, and process search results.
+		</p>
+		<p>In addition to the search page, there is also a convenient in-editor search, which is triggered by CTRL+H. Refer to 
+			<a href="../../../../../Orion/Documentation/User_Guide/Reference/Coding_page/Coding-page.html#Searching" title="Orion/Documentation/User_Guide/Reference/Coding_page#Searching">Searching section in the coding page</a> for details.
 		</p>
 		<h2 id="Search_and_replace_across_files">Search and replace across files</h2>
 		<ol>
-			<li>Enter the search term to be replaced in the global search bar on any page.</li>
-			<li>In the 
-				<a href="../../../../../Orion/Documentation/User_Guide/Reference/Search_Results_page/Search-Results-page.html" title="Orion/Documentation/User_Guide/Reference/Search_Results_page">Search Results page</a>, click on <b>Replace</b> on the tool bar to bring up the slide out. 
-				<img title="Invoking replace" alt="Invoking replace" border="0" src="images/Search_invoke_replace.png"/>
-			</li>
-			<li>Type the replacing string and press <b>Preview Changes</b>. You can also press <b>Enter</b> to replace without preview, or press Esc to cancel the replace.</li>
+			<li>Enter the search term to be replaced in the search field.</li>
+			<li>Enter the replace term that will replace the search term in the replace field.</li>
+			<li>Click on the <b>Replace</b> button. This will bring up the replace preview on right hand side. </li>
 			<li>Browse the changes, and use the check boxes to select the files and matches you want to replace. Note that if there are multiple matches in a single line, it will be <b>split</b> to multiple lines where each line represents one match. There are 3 levels of check box.
 				<br/> 
-				<img title="Filtering matches" alt="Filtering matches" border="0" src="images/Search_replace_filtering.png"/> 
+				<img title="Filtering matches" alt="Filtering matches" border="0" src="images/NavAndSearch-replace.png"/> 
 				<ul>
 					<li>Overall: this allows you to toggle all the files and matches on the current page.</li>
 					<li>File level: this allows you to toggle all the matches in a file.</li>
@@ -42,15 +42,16 @@
 			</li>
 			<li>Once you have selected all the matches that you want to replace, click on Commit on the tool bar. This will write all the replacement on the server. </li>
 			<li>After the changes are committed, the replace page displays a list of files indicating the success or failure of the replacement. It also reports on how many matches were replaced on each file. You can click on any file to see the new content in a new tab. If some body else has changed the same file while you are replacing, a failure is generated and you have to refresh the page to redo it. 
-				<img title="Search replace report" alt="Search replace report" border="0" src="images/Search_replace_report.png"/> 
+				<img title="Search replace report" alt="Search replace report" border="0" src="images/NavAndSearch-report.png"/> 
 			</li>
 			<li>If there is more than one page of search results, click on <b>Next Page</b> or <b>Previous Page</b> to repeat the process on the next set of results.</li>
 		</ol>
 		<h2 id="Example:_refactor_a_function_name">Example: refactor a function name</h2>
+		<p>This example explains a work flow where a user tries to refactor something while another user already changed the same file at the same time. It covers all the features from search, replace to the replace report.</p>
 		<p>Lets say there is a function called <b>foo</b> that is used in 60 files. User <b>A</b> creates a new function called <b>bar</b> and wants to replace the function name in 5 files. Meanwhile, user <b>B</b> modified and saved one of the files. The steps below describes the complete workflow:</p>
 		<ol>
-			<li>User A searches on keyword <b>foo</b>. In the first result page, there are 3 files that user A wants to replace.</li>
-			<li>User A clicks on <b>Replace</b> and types <b>bar</b> and presses Enter.</li>
+			<li>User A types the keyword <b>foo</b> in the search field and  <b>bar</b> in the replace field. </li>
+			<li>User A clicks on <b>Replace</b> button. There are 3 files hit.</li>
 			<li>User A selects the 3 files and relative matches that will be replaced.</li>
 			<li>User A compares and confirms the differences between the original and replaced lines.</li>
 			<li>User A commits the new contents of the 3 files to the server.</li>

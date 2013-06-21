@@ -25,7 +25,7 @@
 		<h2 id="Adding_repositories">Adding repositories</h2>
 		<p>Create a new empty repository by clicking <b>Init Repository</b> on the tool bar, or click <b>Clone Repository</b> to clone an existing Git repository. Cloning will produce a dialog where you enter the Git repository URL, and optionally any credentials required to access or modify the repository.</p>
 		<h2 id="Actions_on_a_repository">Actions on a repository</h2>
-		<p>You can pull the latest content, apply a patch, or delete an existing repository from the main toolbar on the page.  The <b>Related</b> menu allows you to navigate to other views on the repository, such as viewing the repository content on the 
+		<p>You can pull the latest content, apply a patch, or delete an existing repository from the main toolbar on the page.  The <b>Related Links</b> menu allows you to navigate to other views on the repository, such as viewing the repository content on the 
 			<a href="../../../../../Orion/Documentation/User_Guide/Reference/Navigator_page/Navigator-page.html" title="Orion/Documentation/User Guide/Reference/Navigator page">Navigator page</a> or working with the repository changes on the 
 			<a href="../../../../../Orion/Documentation/User_Guide/Reference/Git_Status_page/Git-Status-page.html" title="Orion/Documentation/User Guide/Reference/Git Status page">Git Status page</a>.
 		</p>
@@ -91,15 +91,8 @@
 		<p>
 			<img title="Remote branches" alt="Remote branches" border="0" src="images/Orion-repository-page-remotebranches.png"/>
 		</p>
-		<p>If you have trouble finding a particular branch in the list, you can type in the filter box to find the branch.</p>
-		<p>
-			<img title="Remote branch filter" alt="Remote branch filter" border="0" src="images/Orion-repository-page-remotebranchfilter.png"/>
-		</p>
 		<h3 id="Updating_the_list_of_remote_branches">Updating the list of remote branches</h3>
 		<p>When someone creates a new remote branch in a repository, the branch will not appear in the branch list for other users until the repository is <b>fetched</b> or <b>pulled</b>.  For example, if you ask another developer to check out your "newFeature" branch, the branch will not appear if the repository hasn't been fetched or pulled since you created the branch.</p>
-		<p>
-			<img title="Branch list without new branch" alt="Branch list without new branch" border="0" src="images/Orion-repository-nobranch.png"/>
-		</p>
 		<p>You can click <b>Pull</b> in the main toolbar, and enter your credentials if required to access the repository. The remote branches will be updated.</p>
 		<h3 id="Actions_on_a_remote_branch">Actions on a remote branch</h3>
 		<p>Many of the actions on a remote branch are different from those on a local branch, but the <b>Git Log</b> and <b>Merge</b> actions are the same. The <b>Git Log</b> action will navigate to the same log page but with the remote branch content. (You can switch to the local branch content from the log page). All of the actions applicable to remote branches appear in the remote branch list, adjacent to the branch.</p>
