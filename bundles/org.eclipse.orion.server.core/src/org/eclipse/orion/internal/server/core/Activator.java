@@ -87,14 +87,14 @@ public class Activator implements BundleActivator {
 			}
 			if (services.size() == 1) {
 				metastoreServiceReference = services.iterator().next();
-				logger.info("Found metastore service: " + metastoreServiceReference); //$NON-NLS-1$
+				logger.debug("Found metastore service: " + metastoreServiceReference); //$NON-NLS-1$
 				metastore = bundleContext.getService(metastoreServiceReference);
 			}
 			if (metastore == null) {
 				//if we still don't have a store then something is wrong with server configuration
 				final String msg = "Invalid server configuration. Failed to initialize a metadata store"; //$NON-NLS-1$
 				final IllegalStateException failure = new IllegalStateException(msg);
-				logger.info(msg, failure);
+				logger.debug(msg, failure);
 				throw failure;
 			}
 		}
