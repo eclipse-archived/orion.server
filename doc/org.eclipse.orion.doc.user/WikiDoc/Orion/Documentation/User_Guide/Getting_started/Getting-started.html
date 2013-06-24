@@ -49,64 +49,68 @@
 			<a href="../../../../Orion/Documentation/User_Guide/Reference/Navigator_page/Navigator-page.html" title="Orion/Documentation/User_Guide/Reference/Navigator_page">Navigator page</a> is used to browse and modify your files.
 		</p>
 		<h3 id="Creating_folders_and_files">Creating folders and files</h3>
-		<p>Once you've successfully logged into Orion, make sure you're at the 
-			<a href="../../../../Orion/Documentation/User_Guide/Reference/Navigator_page/Navigator-page.html" title="Orion/Documentation/User_Guide/Reference/Navigator_page">Navigator page</a> by clicking 
-			<b>Navigator</b> in the banner at the top of any page. This is where your files and folders will be shown. Because you haven't created any files or folders yet, the navigator is initially empty.
+		<p>First, make sure you're at the 
+			<a href="../../../../Orion/Documentation/User_Guide/Reference/Navigator_page/Navigator-page.html" title="Orion/Documentation/User_Guide/Reference/Navigator_page">Navigator page</a> by clicking the "hamburger" menu (
+			<img title="&quot;Hamburger&quot; menu" alt="&quot;Hamburger&quot; menu" border="0" src="images/Orion-hamburger-invert.png"/>), and then clicking 
+			<b>Navigator</b>. The Navigator is the primary place where your files and folders will be shown. Because you haven't created any files or folders yet, the navigator is initially empty:
 		</p>
 		<p>
-			<img title="Orion Initial Navigator State" alt="Orion Initial Navigator State" border="0" src="images/Orion-navinitial.png"/>
+			<img title="Orion Navigator, initial state" alt="Orion Navigator, initial state" border="0" src="images/Orion-navinitial.png"/>
 		</p>
-		<p>To start working with files and folders in Orion, create a folder using the 
-			<b>New &gt; Folder</b> action in the navigator toolbar:
+		<p>To start working with files and folders in Orion, create a folder by clicking the 
+			<img title="&quot;New&quot; menu" alt="&quot;New&quot; menu" border="0" src="images/Orion-new-menu.png"/> menu and clicking 
+			<b>New Folder</b>:
 		</p>
 		<p>
 			<img title="Navigator Toolbar" alt="Navigator Toolbar" border="0" src="images/Orion-navbreadcommands.png"/>
 		</p>
-		<p>To navigate the files, you can either expand the folders (using the &#9658; twisties), or you can click on the folder's name to drill into that folder. After you have drilled into a folder, you can use the breadcrumb at the top of the page, or your browser's 
-			<b>Back</b> button, or a keyboard command (Alt+&#8593;) to navigate back up the tree.
+		<p>To navigate, you can either expand the folders in-place (using the &#9658; twisties), or you can click on the folder's name to drill into that folder. After you have drilled into a folder, you can navigate back up using the breadcrumb at the top of the page (pictured below). You can also use your browser's 
+			<b>Back</b> button, or a keyboard command (Alt+&#8593;) to navigate up.
 		</p>
 		<p>
 			<img title="Navigator Breadcrumbs" alt="Navigator Breadcrumbs" border="0" src="images/Orion-navbreadcrumb.png"/>
 		</p>
 		<h3 id="Using_the_common_banner">Using the common banner</h3>
-		<p>The banner provides access to common operations in Orion.  The main 
-			<b>navigation links</b> appear at the top left of the page banner, next to the Orion logo.  The right side of the banner provides a 
-			<b>user options menu</b> containing Settings, Help, and other commonly used actions.  Underneath, the page header describes the title of the page, the 
-			<b>breadcrumb</b>, and the name of the resource being manipulated.  On the right of the page header are items that let you quickly find and mark pages that you commonly use.  The 
-			<b>star icon</b> allows you to mark the current folder (or in general, the 
-			<i>resource</i> you're currently viewing) as a favorite.  The 
-			<b>search box</b> allows you to quickly search the contents of the current folder. Next to the search box is the 
-			<b>search options</b> menu, which lets you set advanced options such as regular expression search and access saved searches. The 
-			<b>Related pages</b> menu lets you quickly navigate to another Orion page relevant to the folder you're viewing (for example, if you're viewing a folder inside a Git repository, you can navigate straight to the Git Log page for the folder).
+		<p>The banner provides access to common operations in Orion.  The 
+			<b>navigation menu</b> (sometimes called the "hamburger") appears in the left side of the banner, and provides access to 
+			<b>navigation links</b> that take you to various pages in Orion, as well as related resources or tasks that are relevant to your current context. (For example, if you're viewing a folder inside a Git repository, a Git Log link will be shown. Clicking it takes you straight to the Git Log page for the folder.)
 		</p>
-		<p>Below the banner, the content of the page appears. The page toolbar contains commands. The 
-			<b>New File</b> and 
-			<b>New Folder</b> act on the current folder (unless you've made a selection in the file tree).
+		<p>The right side of the banner provides a 
+			<b>user menu</b> containing Settings, Help, and other actions vaguely related to your user identity.
 		</p>
+		<p>In the center of the banner, you'll find the 
+			<b>breadcrumb</b>, and the name of the resource being manipulated. (Some Orion pages will show a simple static title here, if you're not currently targeting any particular resource.)
+		</p>
+		<p>Below the banner, the content of the page appears. The page toolbar contains commands. The commands act upon the current folder (unless you've made a selection in the file tree).</p>
 		<p>
 			<img title="Common Banner" alt="Common Banner" border="0" src="images/Orion-topbanner.png"/>
 		</p>
-		<p>Commands that apply to an individual file or folder are located in the 
-			<b>Actions</b> menu next to the item in the navigator.
+		<p>Here is a picture of the banner with the navigation and user menus expanded, to show the various links they offer:</p>
+		<p>
+			<img title="Common banner with menus expanded" alt="Common banner with menus expanded" border="0" src="images/Orion-banner-expanded.png"/>
 		</p>
+		<p>The 
+			<b>New</b> menu (
+			<img title="New menu" alt="New menu" border="0" src="images/Orion-new-menu.png"/>) contains commands for creating new files or folders, and the 
+			<b>Actions</b> menu (
+			<img title="Actions menu" alt="Actions menu" border="0" src="images/Orion-actions-menu.png"/>) contains commands that apply to existing files or folders. The Go Up command lets you navigate up to the parent folder.
+		</p>
+		<p>Files and folders may be selected by clicking their row in the tree, or by using the Ctrl and arrow keys on the keyboard. Once a selection has been made, the Actions menu will show commands that operate on the selected items (such as move, copy, and delete). If you have not made a selection, the Actions menu will show commands that act upon the folder you're currently viewing.</p>
 		<p>
 			<img title="Navigator actions" alt="Navigator actions" border="0" src="images/Orion-navactions.png"/>
 		</p>
-		<p>Files and folders may be selected by clicking their row, or by using the Ctrl and arrow keys on the keyboard. Once a selection has been made, commands that operate on the selected items (such as move, copy, and delete) will be available in the Actions menu.</p>
 		<h3 id="Importing_folders_and_files">Importing folders and files</h3>
 		<p>There are many ways to import your files into Orion. You can upload a zip file, import via SFTP, or clone a Git repository.</p>
 		<p>
 			<img title="Import files" alt="Import files" border="0" src="images/Orion-navimport.png"/>
 		</p>
-		<p>To import files from your local file system into Orion, select one or more files on your computer and drag them on to the Import dialog:</p>
+		<p>To import files from your local file system into Orion, select one or more files on your computer and simply drag them into the file tree.</p>
 		<p>
-			<img title="Import from zip dialog" alt="Import from zip dialog" border="0" src="images/Orion-navimportdialog.png"/>
+			<img title="Import by drag and drop" alt="Import by drag and drop" border="0" src="images/Orion-navimport-dnd.png"/>
 		</p>
-		<p>The dialog only accepts files, not folders, so to import a folder, you'll have to zip it first. Then drag the .zip file into the dialog, ensuring that the 
-			<b>Unzip *.zip files</b> option is checked, and the contents of the zip file will appear in your folder in the navigator, like this:
-		</p>
+		<p>You can also drag Zip files into the navigator. Orion will ask you if you want to unzip the folder. This is convenient for backing up and restoring your work. If your browser supports it, you can drag and drop an entire folder from your OS file explorer into Orion:</p>
 		<p>
-			<img title="Imported zip contents" alt="Imported zip contents" border="0" src="images/Orion-navimportcontent.png"/>
+			<img title="Drag and drop a folder" alt="Drag and drop a folder" border="0" src="images/Orion-navimport-dnd-folder.png"/>
 		</p>
 		<h3 id="Exporting_folders_and_files">Exporting folders and files</h3>
 		<p>When you have worked with your code on Orion and are ready to export your work back to your local workstation, navigate to the folder you wish to export and choose the 
@@ -116,23 +120,6 @@
 			<img title="Export as zip" alt="Export as zip" border="0" src="images/Orion-navexport.png"/>
 		</p>
 		<p>The contents of the folder will be placed in a zip file, and that zip file will be downloaded using your browser's download manager.</p>
-		<h3 id="Creating_favorites">Creating favorites</h3>
-		<p>You can use the 
-			<b>Favorites</b> icon in the page header or the favorites menu item to bookmark a folder or file in your navigator. A link to this folder or file will appear in your favorites list and can be used to navigate quickly to that file or folder. 
-		</p>
-		<p>
-			<img title="Favorites" alt="Favorites" border="0" src="images/Orion-favorites.png"/>
-		</p>
-		<p>Favorites are also suggested as move/copy targets.</p>
-		<p>
-			<img title="Favorites as copy / move targets" alt="Favorites as copy / move targets" border="0" src="images/Orion-copymove.png"/>
-		</p>
-		<p>They also appear in the 
-			<b>Find File</b> dialog.
-		</p>
-		<p>
-			<img title="Favorites in find file" alt="Favorites in find file" border="0" src="images/Orion-findfile.png"/>
-		</p>
 		<h2 id="Editing_code">Editing code</h2>
 		<p>Once you've navigated to the file you want to work with, click on its link to open the 
 			<a href="../../../../Orion/Documentation/User_Guide/Reference/Coding_page/Coding-page.html" title="Orion/Documentation/User_Guide/Reference/Coding_page">Coding page</a>.  You'll find that the editor supports the basics (cut/copy/paste, undo/redo) as well as your favorite text-editing features from Eclipse desktop (move up/down, copy up/down, go to line, find, incremental find). For now, most of these commands are accessible only through keyboard shortcuts, using the default key bindings in Eclipse desktop. To see a full list of available keyboard commands in the editor, press 
