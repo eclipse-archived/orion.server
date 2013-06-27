@@ -37,4 +37,7 @@ Bundle-ClassPath: .,
  lib/httpunit.jar,
  lib/nekohtml-0.9.5.jar,
  lib/xercesImpl-2.6.1.jar
-Export-Package: org.eclipse.orion.server.authentication.basic
+Export-Package: com.meterware.httpunit,
+ org.eclipse.orion.server.authentication.basic,
+ org.eclipse.orion.server.tests,
+ org.eclipse.orion.server.tests.servlets.files
