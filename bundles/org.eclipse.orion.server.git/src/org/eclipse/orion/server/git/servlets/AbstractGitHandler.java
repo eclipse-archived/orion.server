@@ -20,7 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -98,7 +98,7 @@ public abstract class AbstractGitHandler extends ServletResourceHandler<String> 
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 			}
 			String relativePath = GitUtils.getRelativePath(filePath, firstGitDir.getKey());
-			db = new FileRepository(gitDir);
+			db = FileRepositoryBuilder.create(gitDir);
 			RequestInfo requestInfo = new RequestInfo(request, response, db, gitSegment, relativePath, filePath);
 			switch (getMethod(request)) {
 				case GET :

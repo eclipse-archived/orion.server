@@ -21,7 +21,6 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -186,7 +185,7 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		if (gitDir == null)
 			return null;
 
-		Repository db = new FileRepository(gitDir);
+		Repository db = FileRepositoryBuilder.create(gitDir);
 		return db;
 	}
 
@@ -211,7 +210,7 @@ public class GitFileDecorator implements IWebResourceDecorator {
 			File gitDir = GitUtils.getGitDir(localFile);
 			if (gitDir == null) {
 				gitDir = new File(localFile, Constants.DOT_GIT);
-				FileRepository repo = new FileRepositoryBuilder().setGitDir(gitDir).build();
+				Repository repo = FileRepositoryBuilder.create(gitDir);
 				repo.create();
 				//we need to perform an initial commit to workaround JGit bug 339610.
 				Git git = new Git(repo);

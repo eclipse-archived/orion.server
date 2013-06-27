@@ -22,7 +22,7 @@ import java.net.URI;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
@@ -550,7 +550,7 @@ public class GitConfigTest extends GitTest {
 
 	@Test
 	public void testKeyToSegmentsMethod() throws Exception {
-		Object configOption = ReflectionUtils.callConstructor(ConfigOption.class, new Object[] {new URI(""), new FileRepository(new File(""))});
+		Object configOption = ReflectionUtils.callConstructor(ConfigOption.class, new Object[] {new URI(""), FileRepositoryBuilder.create(new File(""))});
 
 		String[] segments = (String[]) ReflectionUtils.callMethod(configOption, "keyToSegments", new Object[] {"a.b.c"});
 		assertArrayEquals(new String[] {"a", "b", "c"}, segments);
@@ -567,7 +567,7 @@ public class GitConfigTest extends GitTest {
 
 	@Test
 	public void testSegmentsToKeyMethod() throws Exception {
-		Object configOption = ReflectionUtils.callConstructor(ConfigOption.class, new Object[] {new URI(""), new FileRepository(new File(""))});
+		Object configOption = ReflectionUtils.callConstructor(ConfigOption.class, new Object[] {new URI(""), FileRepositoryBuilder.create(new File(""))});
 
 		String key = (String) ReflectionUtils.callMethod(configOption, "segmentsToKey", new Object[] {new String[] {"a", "b", "c"}});
 		assertEquals("a.b.c", key);

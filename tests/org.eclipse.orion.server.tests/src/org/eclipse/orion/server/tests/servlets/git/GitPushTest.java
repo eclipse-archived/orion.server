@@ -26,8 +26,8 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.storage.file.FileBasedConfig;
-import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.lib.StoredConfig;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.RemoteRefUpdate.Status;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FileUtils;
@@ -663,7 +663,7 @@ public class GitPushTest extends GitTest {
 	@Test
 	public void testForcedPush() throws Exception {
 		// overwrite system settings, allow forced pushes, see bug 371881
-		FileBasedConfig cfg = db.getConfig();
+		StoredConfig cfg = db.getConfig();
 		cfg.setBoolean("receive", null, "denyNonFastforwards", false);
 		cfg.save();
 
@@ -829,7 +829,7 @@ public class GitPushTest extends GitTest {
 			IPath randomLocation = AllGitTests.getRandomLocation();
 			randomLocation = randomLocation.addTrailingSeparator().append(Constants.DOT_GIT);
 			File dotGitDir = randomLocation.toFile().getCanonicalFile();
-			Repository db2 = new FileRepository(dotGitDir);
+			Repository db2 = FileRepositoryBuilder.create(gitDir);
 			assertFalse(dotGitDir.exists());
 			db2.create(false /* non bare */);
 

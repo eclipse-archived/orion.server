@@ -19,7 +19,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.*;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.lib.RefUpdate.Result;
-import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.*;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
@@ -113,7 +113,7 @@ public class FetchJob extends GitJob {
 			p = path.removeFirstSegments(1);
 		else
 			p = path.removeFirstSegments(2);
-		return new FileRepository(GitUtils.getGitDir(p));
+		return FileRepositoryBuilder.create(GitUtils.getGitDir(p));
 	}
 
 	@Override

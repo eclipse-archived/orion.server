@@ -24,7 +24,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.*;
 import org.eclipse.jgit.dircache.DirCache;
 import org.eclipse.jgit.lib.*;
-import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -316,7 +316,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 				}
 
-				Git git = new Git(new FileRepository(gitDir));
+				Git git = new Git(FileRepositoryBuilder.create(gitDir));
 				if (paths != null) {
 					Set<String> toRemove = new HashSet<String>();
 					CheckoutCommand checkout = git.checkout();
@@ -396,7 +396,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			ProjectInfo webProject = GitUtils.projectFromPath(path);
 			if (webProject != null && isAccessAllowed(request.getRemoteUser(), webProject)) {
 				File gitDir = GitUtils.getGitDirs(path, Traverse.CURRENT).values().iterator().next();
-				Repository repo = new FileRepository(gitDir);
+				Repository repo = FileRepositoryBuilder.create(gitDir);
 				repo.close();
 				FileUtils.delete(repo.getWorkTree(), FileUtils.RECURSIVE | FileUtils.RETRY);
 				if (path.segmentCount() == 3)

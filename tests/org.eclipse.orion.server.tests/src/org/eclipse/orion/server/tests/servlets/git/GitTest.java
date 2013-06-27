@@ -52,8 +52,8 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.RepositoryCache;
-import org.eclipse.jgit.storage.file.FileBasedConfig;
-import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.lib.StoredConfig;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.jgit.util.FileUtils;
@@ -103,7 +103,7 @@ public abstract class GitTest extends FileSystemTest {
 
 	File gitDir;
 	File testFile;
-	protected FileRepository db;
+	protected Repository db;
 
 	@BeforeClass
 	public static void setupWorkspace() {
@@ -223,7 +223,7 @@ public abstract class GitTest extends FileSystemTest {
 		gitDir = randomLocation.toFile();
 		randomLocation = randomLocation.addTrailingSeparator().append(Constants.DOT_GIT);
 		File dotGitDir = randomLocation.toFile().getCanonicalFile();
-		db = new FileRepository(dotGitDir);
+		db = FileRepositoryBuilder.create(dotGitDir);
 		assertFalse(dotGitDir.exists());
 		db.create(false /* non bare */);
 
@@ -242,7 +242,7 @@ public abstract class GitTest extends FileSystemTest {
 
 		// The system settings on eclipse.org was changed to receive.denyNonFastForward=true, see bug 343150.
 		// Imitate the same setup when running tests locally, see bug 371881.
-		FileBasedConfig cfg = db.getConfig();
+		StoredConfig cfg = db.getConfig();
 		cfg.setBoolean("receive", null, "denyNonFastforwards", true);
 		cfg.save();
 	}
@@ -345,7 +345,7 @@ public abstract class GitTest extends FileSystemTest {
 		} else {
 			fail(fileLocation + " is not a repository");
 		}
-		return new FileRepository(file);
+		return FileRepositoryBuilder.create(file);
 	}
 
 	// see org.eclipse.orion.internal.server.servlets.workspace.WorkspaceResourceHandler.generateProjectLocation(WebProject, String)

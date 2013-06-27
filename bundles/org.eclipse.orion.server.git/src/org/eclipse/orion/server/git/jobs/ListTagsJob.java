@@ -23,7 +23,7 @@ import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitActivator;
@@ -104,7 +104,7 @@ public class ListTagsJob extends GitJob {
 		try {
 			// list all tags
 			File gitDir = GitUtils.getGitDir(path);
-			Repository db = new FileRepository(gitDir);
+			Repository db = FileRepositoryBuilder.create(gitDir);
 			Git git = new Git(db);
 			List<Ref> refs = git.tagList().call();
 			JSONObject result = new JSONObject();

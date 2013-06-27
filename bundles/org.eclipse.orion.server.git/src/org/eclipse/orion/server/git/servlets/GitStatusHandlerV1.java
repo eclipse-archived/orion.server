@@ -20,7 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.objects.Status;
@@ -51,7 +51,7 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 			File gitDir = set.iterator().next().getValue();
 			if (gitDir == null)
 				return false; // TODO: or an error response code, 405?
-			Repository db = new FileRepository(gitDir);
+			Repository db = FileRepositoryBuilder.create(gitDir);
 			Git git = new Git(db);
 			org.eclipse.jgit.api.Status gitStatus = git.status().call();
 

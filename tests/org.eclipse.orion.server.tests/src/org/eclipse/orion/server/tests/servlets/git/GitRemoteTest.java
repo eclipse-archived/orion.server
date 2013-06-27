@@ -28,7 +28,7 @@ import org.eclipse.jgit.api.ListBranchCommand.ListMode;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.StoredConfig;
-import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.URIish;
@@ -335,7 +335,7 @@ public class GitRemoteTest extends GitTest {
 		final String pushRefSpec = "refs/heads/*:refs/heads/*";
 		addRemote(remotesLocation, remoteName, remoteUri, fetchRefSpec, pushUri, pushRefSpec);
 
-		Repository db2 = new FileRepository(GitUtils.getGitDir(new Path(toRelativeURI(clonePath.toString()))));
+		Repository db2 = FileRepositoryBuilder.create(GitUtils.getGitDir(new Path(toRelativeURI(clonePath.toString()))));
 		StoredConfig config = db2.getConfig();
 		RemoteConfig rc = new RemoteConfig(config, remoteName);
 

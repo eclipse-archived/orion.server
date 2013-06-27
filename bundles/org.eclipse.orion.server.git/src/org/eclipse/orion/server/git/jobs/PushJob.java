@@ -22,7 +22,7 @@ import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.errors.*;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.*;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
@@ -56,7 +56,7 @@ public class PushJob extends GitJob {
 	private IStatus doPush() throws IOException, CoreException, URISyntaxException, GitAPIException {
 		// /git/remote/{remote}/{branch}/file/{path}
 		File gitDir = GitUtils.getGitDir(path.removeFirstSegments(2));
-		Repository db = new FileRepository(gitDir);
+		Repository db = FileRepositoryBuilder.create(gitDir);
 		Git git = new Git(db);
 
 		PushCommand pushCommand = git.push();

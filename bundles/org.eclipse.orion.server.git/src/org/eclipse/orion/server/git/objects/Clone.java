@@ -17,10 +17,8 @@ import java.net.URISyntaxException;
 import java.util.Map.Entry;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.jgit.lib.ConfigConstants;
-import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.storage.file.FileBasedConfig;
-import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -45,7 +43,7 @@ public class Clone {
 	private URI contentLocation;
 	private URIish uriish;
 	private String name;
-	private FileRepository db;
+	private Repository db;
 	private URI baseLocation;
 
 	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
@@ -127,9 +125,9 @@ public class Clone {
 		return this.name;
 	}
 
-	private FileRepository getRepository() throws IOException {
+	private Repository getRepository() throws IOException {
 		if (db == null)
-			db = new FileRepository(new File(new File(getContentLocation()), Constants.DOT_GIT));
+			db = FileRepositoryBuilder.create(new File(new File(getContentLocation()), Constants.DOT_GIT));
 		return db;
 	}
 
@@ -226,7 +224,7 @@ public class Clone {
 	@PropertyDescription(name = GitConstants.KEY_URL)
 	private String getCloneUrl() {
 		try {
-			FileBasedConfig config = getRepository().getConfig();
+			StoredConfig config = getRepository().getConfig();
 			String remoteUri = config.getString(ConfigConstants.CONFIG_REMOTE_SECTION, Constants.DEFAULT_REMOTE_NAME, ConfigConstants.CONFIG_KEY_URL);
 			if (remoteUri != null)
 				return remoteUri;
@@ -243,7 +241,7 @@ public class Clone {
 	public JSONObject toJSON(Entry<IPath, File> entry, URI aBaseLocation) throws IOException, URISyntaxException {
 		id = Activator.LOCATION_FILE_SERVLET + '/' + entry.getKey().toString();
 		name = entry.getKey().lastSegment();
-		db = new FileRepository(entry.getValue());
+		db = FileRepositoryBuilder.create(entry.getValue());
 		this.baseLocation = aBaseLocation;
 		return toJSON();
 	}

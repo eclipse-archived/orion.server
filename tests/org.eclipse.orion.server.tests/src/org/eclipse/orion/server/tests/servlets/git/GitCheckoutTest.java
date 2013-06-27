@@ -25,7 +25,7 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -541,7 +541,7 @@ public class GitCheckoutTest extends GitTest {
 			IPath randomLocation = AllGitTests.getRandomLocation();
 			randomLocation = randomLocation.addTrailingSeparator().append(Constants.DOT_GIT);
 			File dotGitDir = randomLocation.toFile().getCanonicalFile();
-			Repository db2 = new FileRepository(dotGitDir);
+			Repository db2 = FileRepositoryBuilder.create(dotGitDir);
 			assertFalse(dotGitDir.exists());
 			db2.create(false /* non bare */);
 

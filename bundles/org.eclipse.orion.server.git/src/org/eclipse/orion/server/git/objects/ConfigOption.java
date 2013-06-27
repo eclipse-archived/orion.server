@@ -16,9 +16,9 @@ import java.net.URISyntaxException;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jgit.errors.ConfigInvalidException;
+import org.eclipse.jgit.internal.storage.file.FileRepository;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileBasedConfig;
-import org.eclipse.jgit.storage.file.FileRepository;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.Property;
@@ -123,6 +123,7 @@ public class ConfigOption extends GitObject {
 	 * Retrieves local config without any base config.
 	 */
 	private FileBasedConfig getLocalConfig() throws IOException {
+		// TODO: remove usage of internal type
 		if (db instanceof FileRepository) {
 			FileRepository fr = (FileRepository) db;
 			FileBasedConfig config = new FileBasedConfig(fr.getConfig().getFile(), FS.detect());

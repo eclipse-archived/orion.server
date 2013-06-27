@@ -20,7 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.errors.ConfigInvalidException;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -72,7 +72,7 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(1));
 			if (gitDir == null)
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("No repository found under {0}", p.removeFirstSegments(1)), null));
-			Repository db = new FileRepository(gitDir);
+			Repository db = FileRepositoryBuilder.create(gitDir);
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(baseLocation, BaseToCloneConverter.CONFIG);
 			ConfigOption configOption = new ConfigOption(cloneLocation, db);
 			OrionServlet.writeJSONResponse(request, response, configOption.toJSON(/* all */));
@@ -82,7 +82,7 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2));
 			if (gitDir == null)
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("No repository found under {0}", p.removeFirstSegments(2)), null));
-			Repository db = new FileRepository(gitDir);
+			Repository db = FileRepositoryBuilder.create(gitDir);
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(baseLocation, BaseToCloneConverter.CONFIG_OPTION);
 			try {
 				ConfigOption configOption = new ConfigOption(cloneLocation, db, p.segment(0));
@@ -104,7 +104,7 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(1));
 			if (gitDir == null)
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("No repository found under {0}", p.removeFirstSegments(1)), null));
-			Repository db = new FileRepository(gitDir);
+			Repository db = FileRepositoryBuilder.create(gitDir);
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.CONFIG);
 			JSONObject toPost = OrionServlet.readJSONRequest(request);
 			String key = toPost.optString(GitConstants.KEY_CONFIG_ENTRY_KEY, null);
@@ -139,7 +139,7 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2));
 			if (gitDir == null)
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("No repository found under {0}", p.removeFirstSegments(2)), null));
-			Repository db = new FileRepository(gitDir);
+			Repository db = FileRepositoryBuilder.create(gitDir);
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.CONFIG_OPTION);
 			try {
 				ConfigOption configOption = new ConfigOption(cloneLocation, db, p.segment(0));
@@ -175,7 +175,7 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2));
 			if (gitDir == null)
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("No repository found under {0}", p.removeFirstSegments(2)), null));
-			Repository db = new FileRepository(gitDir);
+			Repository db = FileRepositoryBuilder.create(gitDir);
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.CONFIG_OPTION);
 			try {
 				ConfigOption configOption = new ConfigOption(cloneLocation, db, GitUtils.decode(p.segment(0)));

@@ -23,7 +23,7 @@ import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoFilepatternException;
 import org.eclipse.jgit.lib.*;
-import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
@@ -62,7 +62,7 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 			File gitDir = set.iterator().next().getValue();
 			if (gitDir == null)
 				return false; // TODO: or an error response code, 405?
-			db = new FileRepository(gitDir);
+			db = FileRepositoryBuilder.create(gitDir);
 			switch (getMethod(request)) {
 				case GET :
 					return handleGet(request, response, db, GitUtils.getRelativePath(p, set.iterator().next().getKey()));

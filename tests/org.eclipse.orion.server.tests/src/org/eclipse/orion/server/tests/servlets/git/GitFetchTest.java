@@ -25,8 +25,8 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.storage.file.FileBasedConfig;
 import org.eclipse.jgit.transport.RemoteRefUpdate.Status;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.orion.internal.server.core.IOUtilities;
@@ -516,7 +516,7 @@ public class GitFetchTest extends GitTest {
 	@Test
 	public void testForcedFetch() throws Exception {
 		// overwrite system settings, allow forced pushes, see bug 371881
-		FileBasedConfig cfg = db.getConfig();
+		StoredConfig cfg = db.getConfig();
 		cfg.setBoolean("receive", null, "denyNonFastforwards", false);
 		cfg.save();
 

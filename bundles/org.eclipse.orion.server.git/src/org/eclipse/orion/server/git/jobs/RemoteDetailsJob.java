@@ -23,7 +23,7 @@ import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitActivator;
@@ -101,7 +101,7 @@ public class RemoteDetailsJob extends GitJob {
 
 		try {
 			File gitDir = GitUtils.getGitDir(path);
-			Repository db = new FileRepository(gitDir);
+			Repository db = FileRepositoryBuilder.create(gitDir);
 			Git git = new Git(db);
 			Set<String> configNames = db.getConfig().getSubsections(ConfigConstants.CONFIG_REMOTE_SECTION);
 			for (String configN : configNames) {

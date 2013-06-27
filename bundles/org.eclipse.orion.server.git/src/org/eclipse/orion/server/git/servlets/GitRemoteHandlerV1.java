@@ -20,7 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.lib.*;
-import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
@@ -67,7 +67,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		if (p.segment(0).equals("file")) { //$NON-NLS-1$
 			// /git/remote/file/{path}
 			File gitDir = GitUtils.getGitDir(p);
-			Repository db = new FileRepository(gitDir);
+			Repository db = FileRepositoryBuilder.create(gitDir);
 			Set<String> configNames = db.getConfig().getSubsections(ConfigConstants.CONFIG_REMOTE_SECTION);
 			JSONObject result = new JSONObject();
 			JSONArray children = new JSONArray();
@@ -97,7 +97,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		} else if (p.segment(2).equals("file")) { //$NON-NLS-1$
 			// /git/remote/{remote}/{branch}/file/{path}
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2));
-			Repository db = new FileRepository(gitDir);
+			Repository db = FileRepositoryBuilder.create(gitDir);
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.REMOTE_BRANCH);
 			Remote remote = new Remote(cloneLocation, db, p.segment(0));
 			RemoteBranch remoteBranch = new RemoteBranch(cloneLocation, db, remote, GitUtils.decode(p.segment(1)));
@@ -121,7 +121,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			String remoteName = p.segment(0);
 
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(1));
-			Repository db = new FileRepository(gitDir);
+			Repository db = FileRepositoryBuilder.create(gitDir);
 			StoredConfig config = db.getConfig();
 			config.unsetSection(ConfigConstants.CONFIG_REMOTE_SECTION, remoteName);
 			config.save();
@@ -190,7 +190,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		String pushRefSpec = toPut.optString(GitConstants.KEY_REMOTE_PUSH_REF, null);
 
 		File gitDir = GitUtils.getGitDir(p);
-		Repository db = new FileRepository(gitDir);
+		Repository db = FileRepositoryBuilder.create(gitDir);
 		StoredConfig config = db.getConfig();
 
 		RemoteConfig rc = new RemoteConfig(config, remoteName);
