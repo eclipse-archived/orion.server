@@ -30,7 +30,7 @@ public class ServerStatus extends Status {
 	 * An integer status code. The value is specific to the component returning
 	 * the exception.
 	 */
-	private static final String PROP_CODE = "Code"; //$NON-NLS-1$
+	static final String PROP_CODE = "Code"; //$NON-NLS-1$
 	/**
 	 * A detailed human readable error message string.
 	 */
@@ -38,7 +38,7 @@ public class ServerStatus extends Status {
 	/**
 	 * The integer HTTP response code.
 	 */
-	private static final String PROP_HTTP_CODE = "HttpCode"; //$NON-NLS-1$
+	static final String PROP_HTTP_CODE = "HttpCode"; //$NON-NLS-1$
 	/**
 	 * A high level error message string, suitable for display to a user.
 	 */
@@ -47,7 +47,7 @@ public class ServerStatus extends Status {
 	/**
 	 * A property containing JSON object with data needed to handle exception
 	 */
-	private static final String JSON_DATA = "JsonData"; //$NON-NLS-1$
+	static final String JSON_DATA = "JsonData"; //$NON-NLS-1$
 	
 	/**
 	 * A property defining a URL of a page with further details about the
@@ -58,12 +58,12 @@ public class ServerStatus extends Status {
 	 * A string representing the status severity. The value is one of the 
 	 * <code>SEVERITY_*</code> constants defined in this class.
 	 */
-	private static final String PROP_SEVERITY = "Severity"; //$NON-NLS-1$
-	private static final String SEVERITY_CANCEL = "Cancel"; //$NON-NLS-1$
-	private static final String SEVERITY_ERROR = "Error"; //$NON-NLS-1$
-	private static final String SEVERITY_INFO = "Info"; //$NON-NLS-1$
-	private static final String SEVERITY_OK = "Ok"; //$NON-NLS-1$
-	private static final String SEVERITY_WARNING = "Warning"; //$NON-NLS-1$
+	static final String PROP_SEVERITY = "Severity"; //$NON-NLS-1$
+	static final String SEVERITY_CANCEL = "Cancel"; //$NON-NLS-1$
+	static final String SEVERITY_ERROR = "Error"; //$NON-NLS-1$
+	static final String SEVERITY_INFO = "Info"; //$NON-NLS-1$
+	static final String SEVERITY_OK = "Ok"; //$NON-NLS-1$
+	static final String SEVERITY_WARNING = "Warning"; //$NON-NLS-1$
 
 	private int httpCode;
 	private JSONObject jsonData;
@@ -96,6 +96,9 @@ public class ServerStatus extends Status {
 	 */
 	public static ServerStatus fromJSON(String string) throws JSONException {
 		JSONObject object = new JSONObject(string);
+		if(object.has(PlainTextServerStatus.PLAIN_TEXT_STATUS)){
+			return PlainTextServerStatus.fromJSON(string);
+		}
 		int httpCode = object.getInt(PROP_HTTP_CODE);
 		int code = object.getInt(PROP_CODE);
 		String message = object.getString(PROP_MESSAGE);
@@ -162,7 +165,7 @@ public class ServerStatus extends Status {
 		return null;
 	}
 	
-	private static int fromSeverityString(String s) {
+	static int fromSeverityString(String s) {
 		if (SEVERITY_ERROR.equals(s)) {
 			return ERROR;
 		} else if (SEVERITY_WARNING.equals(s)) {

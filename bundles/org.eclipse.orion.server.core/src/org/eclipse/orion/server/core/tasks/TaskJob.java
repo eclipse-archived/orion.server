@@ -110,7 +110,8 @@ public abstract class TaskJob extends Job implements ITaskCanceller {
 		if(!task.isRunning()){
 			return;
 		}
-		task.done(result);
+		this.realResult = result;
+		task.done(getRealResult());
 		if(taskExpirationTime!=null){
 			task.setExpires(new Date().getTime() + taskExpirationTime);
 		}
