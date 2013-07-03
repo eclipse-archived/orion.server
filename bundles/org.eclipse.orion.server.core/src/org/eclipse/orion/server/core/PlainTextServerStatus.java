@@ -66,8 +66,11 @@ public class PlainTextServerStatus extends ServerStatus {
 		int severity = fromSeverityString(object.getString(PROP_SEVERITY));
 		String detailMessage = object.optString(PROP_DETAILED_MESSAGE, null);
 		Exception cause = detailMessage == null ? null : new Exception(detailMessage);
-		String jsonDataString = object.getString(JSON_DATA);
-		JSONObject jsonData = new JSONObject(jsonDataString);
+		JSONObject jsonData = null;
+		if (object.has(JSON_DATA)) {
+			String jsonDataString = object.getString(JSON_DATA);
+			jsonData = new JSONObject(jsonDataString);
+		}
 		return new PlainTextServerStatus(new Status(severity, ServerConstants.PI_SERVER_CORE, code, message, cause), httpCode, jsonData);
 	}
 
