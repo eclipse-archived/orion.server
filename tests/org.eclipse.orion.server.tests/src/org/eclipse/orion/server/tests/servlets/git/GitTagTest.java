@@ -15,10 +15,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 import java.io.File;
 import java.net.HttpURLConnection;
 import java.net.URI;
-
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -28,9 +29,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Assume;
 import org.junit.Test;
-
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 
 public class GitTagTest extends GitTest {
 	@Test
@@ -189,7 +187,7 @@ public class GitTagTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, result.getInt("HttpCode"));
 			assertEquals("Error", result.getString("Severity"));
 			assertEquals("An error occured when tagging.", result.getString("Message"));
-			assertTrue(result.toString(), result.getString("DetailedMessage").endsWith("REJECTED"));
+			assertTrue(result.toString(), result.getString("DetailedMessage").endsWith("already exists"));
 
 			// tag HEAD with 'tag' again (CommitHandler) - should fail
 			request = getPutGitCommitRequest(gitHeadUri, "tag");
@@ -199,7 +197,7 @@ public class GitTagTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, result.getInt("HttpCode"));
 			assertEquals("Error", result.getString("Severity"));
 			assertEquals("An error occured when tagging.", result.getString("Message"));
-			assertTrue(result.toString(), result.getString("DetailedMessage").endsWith("REJECTED"));
+			assertTrue(result.toString(), result.getString("DetailedMessage").endsWith("already exists"));
 		}
 	}
 
