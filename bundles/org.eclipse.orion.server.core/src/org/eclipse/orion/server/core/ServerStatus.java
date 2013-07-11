@@ -96,9 +96,7 @@ public class ServerStatus extends Status {
 	 */
 	public static ServerStatus fromJSON(String string) throws JSONException {
 		JSONObject object = new JSONObject(string);
-		if(object.has(PlainTextServerStatus.PLAIN_TEXT_STATUS)){
-			return PlainTextServerStatus.fromJSON(string);
-		}
+
 		int httpCode = object.getInt(PROP_HTTP_CODE);
 		int code = object.getInt(PROP_CODE);
 		String message = object.getString(PROP_MESSAGE);

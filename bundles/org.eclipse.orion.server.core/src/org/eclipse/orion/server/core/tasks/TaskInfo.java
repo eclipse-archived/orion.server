@@ -38,6 +38,8 @@ public class TaskInfo {
 	private static final String STATUS_ABORT = "abort";
 	private static final String STATUS_LOAD = "load";
 	private static final String STATUS_LOADEND = "loadend";
+	
+	private static final String KEY_LOCATION_ONLY = "LocationOnly"; //TODO this is temporary
 
 	public enum TaskStatus {
 
@@ -84,6 +86,7 @@ public class TaskInfo {
 	private int total = 0;
 	private IStatus result;
 	private boolean cancelable = false;
+	private boolean locationOnly = false; //TODO this is walkaround for tasks containing URL that should not be changed, should be removed when strategy problems are changed
 
 	/**
 	 * Returns a task object based on its JSON representation. Returns
@@ -114,6 +117,9 @@ public class TaskInfo {
 
 			if (json.has(KEY_RESULT))
 				info.result = ServerStatus.fromJSON(json.optString(KEY_RESULT));
+			if(json.has(KEY_LOCATION_ONLY)){
+				info.locationOnly = json.optBoolean(KEY_LOCATION_ONLY);
+			}
 
 			return info;
 		} catch (JSONException e) {
@@ -254,6 +260,9 @@ public class TaskInfo {
 			if(getExpires()!=null)
 				resultObject.put(KEY_EXPIRES, getExpires());
 			resultObject.put(KEY_TYPE, getStatus().toString());
+			if(locationOnly){
+				resultObject.put(KEY_LOCATION_ONLY, locationOnly);
+			}
 		} catch (JSONException e) {
 			//can only happen if key is null
 		}
@@ -280,10 +289,18 @@ public class TaskInfo {
 			if(isCancelable())
 				resultObject.put(KEY_CANCELABLE, isCancelable());
 			resultObject.put(KEY_TYPE, getStatus().toString());
+			
+			if(locationOnly){
+				resultObject.put(KEY_LOCATION_ONLY, locationOnly);
+			}
 		} catch (JSONException e) {
 			//can only happen if key is null
 		}
 		return resultObject;
+	}
+	
+	public void setLocationOnly(boolean locationOnly){
+		this.locationOnly = locationOnly;
 	}
 
 	@Override

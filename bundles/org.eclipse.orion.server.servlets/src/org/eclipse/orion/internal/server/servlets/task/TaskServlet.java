@@ -22,6 +22,7 @@ import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.*;
 import org.eclipse.orion.server.core.tasks.TaskInfo.TaskStatus;
+import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.*;
 import org.osgi.util.tracker.ServiceTracker;
@@ -210,5 +211,16 @@ public class TaskServlet extends OrionServlet {
 			}
 		}
 		writeJSONResponse(req, resp, result);
+	}
+
+	public static void writeJSONResponse(HttpServletRequest req, HttpServletResponse resp, Object result) throws IOException {
+		if (result instanceof JSONObject) {
+			JSONObject jsonResult = (JSONObject) result;
+			if (jsonResult.optBoolean("LocationOnly")) {
+				writeJSONResponse(req, resp, result, JsonURIUnqualificationStrategy.LOCATION_ONLY);
+				return;
+			}
+		}
+		writeJSONResponse(req, resp, result, JsonURIUnqualificationStrategy.ALL);
 	}
 }
