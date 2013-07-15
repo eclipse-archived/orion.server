@@ -166,6 +166,11 @@ public class WebProject extends WebElement {
 		if (result == null)
 			result = URI.create(getId());
 
+		if (!EFS.SCHEME_FILE.equals(result.getScheme())) {
+			// bug 412344 do not apply URI workaround to remote locations like sftp://
+			return result;
+		}
+
 		//always return an absolute URI - previous metadata could store relative path so
 		//this compatibility code cares care of always returning an absolute value
 		IPath localPath = new Path(result.getPath());
