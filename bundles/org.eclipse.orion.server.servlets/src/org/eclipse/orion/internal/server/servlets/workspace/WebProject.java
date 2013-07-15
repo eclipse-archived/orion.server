@@ -166,7 +166,7 @@ public class WebProject extends WebElement {
 		if (result == null)
 			result = URI.create(getId());
 
-		if (!EFS.SCHEME_FILE.equals(result.getScheme())) {
+		if ("sftp".equals(result.getScheme())) {
 			// bug 412344 do not apply URI workaround to remote locations like sftp://
 			return result;
 		}
