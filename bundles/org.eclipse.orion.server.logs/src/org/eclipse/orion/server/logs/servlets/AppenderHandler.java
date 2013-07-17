@@ -11,12 +11,9 @@
 
 package org.eclipse.orion.server.logs.servlets;
 
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
-import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
@@ -26,17 +23,16 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;
+import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.logs.ILogService;
+import org.eclipse.orion.server.logs.jobs.AppenderJob;
 import org.eclipse.osgi.util.NLS;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.FileAppender;
-import ch.qos.logback.core.rolling.RollingFileAppender;
 
 public class AppenderHandler extends AbstractLogHandler {
 	/* 4KB default buffer size */
@@ -50,7 +46,15 @@ public class AppenderHandler extends AbstractLogHandler {
 	 * Handles the download request for a single file appender log file.
 	 */
 	private boolean downloadLog(HttpServletRequest request, HttpServletResponse response,
-			ILogService logService, FileAppender<ILoggingEvent> appender) throws ServletException {
+			ILogService logService, String appenderName) throws ServletException {
+
+		FileAppender<ILoggingEvent> appender = logService.getFileAppender(appenderName);
+		if (appender == null) {
+			String msg = NLS.bind("Appender not found: {0}", appenderName);
+			final ServerStatus error = new ServerStatus(IStatus.ERROR,
+					HttpServletResponse.SC_NOT_FOUND, msg, null);
+			return statusHandler.handleRequest(request, response, error);
+		}
 
 		File logFile = new File(appender.getFile());
 		DataInputStream in = null;
@@ -73,8 +77,11 @@ public class AppenderHandler extends AbstractLogHandler {
 
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when looking for log {0}.", logFile.getName());
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR,
-					HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+			final ServerStatus error = new ServerStatus(IStatus.ERROR,
+					HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
+
+			LogHelper.log(error);
+			return statusHandler.handleRequest(request, response, error);
 		} finally {
 			try {
 				if (in != null)
@@ -85,6 +92,10 @@ public class AppenderHandler extends AbstractLogHandler {
 			} catch (Exception e) {
 				String msg = NLS.bind("An error occured when looking for log {0}.",
 						logFile.getName());
+				final ServerStatus error = new ServerStatus(IStatus.ERROR,
+						HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
+
+				LogHelper.log(error);
 				return statusHandler.handleRequest(request, response, new ServerStatus(
 						IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
 			}
@@ -99,51 +110,20 @@ public class AppenderHandler extends AbstractLogHandler {
 	private boolean handleSingleGet(HttpServletRequest request, HttpServletResponse response,
 			ILogService logService, String appenderName, IPath arguments) throws ServletException {
 
+		if (arguments.segmentCount() == 1 && "download".equals(arguments.segment(0)))
+			return downloadLog(request, response, logService, appenderName);
+
 		try {
-			FileAppender<ILoggingEvent> appender = logService.getFileAppender(appenderName);
-			if (appender == null) {
-				String msg = NLS.bind("Appender not found: {0}", appenderName);
-				return statusHandler.handleRequest(request, response, new ServerStatus(
-						IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
-			}
-
-			if (arguments.segmentCount() == 1 && "download".equals(arguments.segment(0)))
-				return downloadLog(request, response, logService, appender);
-
-			JSONObject logJSON = new JSONObject();
-			if (appender instanceof RollingFileAppender) {
-				RollingFileAppender<ILoggingEvent> rollingAppender = (RollingFileAppender<ILoggingEvent>) appender;
-				logJSON.put("type", rollingAppender.getClass().getName());
-			} else {
-				logJSON.put("type", appender.getClass().getName());
-			}
-
-			logJSON.put("file", appender.getFile());
-			logJSON.put("isAppend", appender.isAppend());
-			logJSON.put("isPrudent", appender.isPrudent());
-			logJSON.put("isStarted", appender.isStarted());
-			logJSON.put("content", new JSONArray());
-
-			File appenderFile = new File(appender.getFile());
-			BufferedReader br = new BufferedReader(new FileReader(appenderFile));
-
-			try {
-				String line = br.readLine();
-				while (line != null) {
-					logJSON.append("content", line);
-					line = br.readLine();
-				}
-			} finally {
-				br.close();
-			}
-
-			return statusHandler.handleRequest(request, response, new ServerStatus(
-					Status.OK_STATUS, HttpServletResponse.SC_OK, logJSON));
-
+			return TaskJobHandler.handleTaskJob(request, response,
+					new AppenderJob(TaskJobHandler.getUserId(request), logService, appenderName),
+					statusHandler);
 		} catch (Exception e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR,
+			final ServerStatus error = new ServerStatus(IStatus.ERROR,
 					HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-					"An error occured when looking for an appender.", e));
+					"An error occured when looking for appenders.", e);
+
+			LogHelper.log(error);
+			return statusHandler.handleRequest(request, response, error);
 		}
 	}
 
@@ -157,35 +137,15 @@ public class AppenderHandler extends AbstractLogHandler {
 					path.removeFirstSegments(1));
 
 		try {
-			List<FileAppender<ILoggingEvent>> appenders = logService.getFileAppenders();
-
-			JSONObject appendersJSON = new JSONObject();
-			appendersJSON.put("appenders", new JSONArray());
-
-			for (FileAppender<ILoggingEvent> appender : appenders) {
-				JSONObject appenderJSON = new JSONObject();
-
-				if (appender instanceof RollingFileAppender) {
-					RollingFileAppender<ILoggingEvent> rollingAppender = (RollingFileAppender<ILoggingEvent>) appender;
-					appenderJSON.put("type", rollingAppender.getClass().getName());
-				} else {
-					appenderJSON.put("type", appender.getClass().getName());
-				}
-
-				appenderJSON.put("name", appender.getName());
-				appenderJSON.put("isAppend", appender.isAppend());
-				appenderJSON.put("isPrudent", appender.isPrudent());
-				appenderJSON.put("isStarted", appender.isStarted());
-				appendersJSON.append("appenders", appenderJSON);
-			}
-
-			return statusHandler.handleRequest(request, response, new ServerStatus(
-					Status.OK_STATUS, HttpServletResponse.SC_OK, appendersJSON));
-
+			return TaskJobHandler.handleTaskJob(request, response,
+					new AppenderJob(TaskJobHandler.getUserId(request), logService), statusHandler);
 		} catch (Exception e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR,
+			final ServerStatus error = new ServerStatus(IStatus.ERROR,
 					HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-					"An error occured when looking for appenders.", e));
+					"An error occured when looking for appenders.", e);
+
+			LogHelper.log(error);
+			return statusHandler.handleRequest(request, response, error);
 		}
 	}
 }
