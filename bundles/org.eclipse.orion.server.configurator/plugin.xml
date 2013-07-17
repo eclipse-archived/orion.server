@@ -81,6 +81,10 @@
                value="Orion Help">
          </init-param>
       </servlet>
+      <servlet
+            alias="/logs"
+            class="org.eclipse.orion.server.logs.servlets.LogServlet">
+      </servlet>
       <serviceSelector
             filter="(other.info=org.eclipse.orion)">
       </serviceSelector>
@@ -166,6 +170,10 @@
       </filter>
       <filter
             alias="/gitapi"
+            class="org.eclipse.orion.server.configurator.servlet.LoggedInUserFilter">
+      </filter>
+      <filter
+            alias="/logs"
             class="org.eclipse.orion.server.configurator.servlet.LoggedInUserFilter">
       </filter>
       <filter

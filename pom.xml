@@ -132,6 +132,7 @@
 		<module>bundles/org.eclipse.orion.server.useradmin</module>
 		<module>bundles/org.eclipse.orion.server.authentication</module>
 		<module>bundles/org.eclipse.orion.server.git</module>
+		<module>bundles/org.eclipse.orion.server.logs</module>
 		<module>bundles/org.eclipse.orion.server.hosting</module>
 		<module>bundles/org.eclipse.orion.server.search</module>
 		<module>bundles/org.eclipse.orion.server.npm</module>
