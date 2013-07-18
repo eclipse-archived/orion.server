@@ -1,11 +1,6 @@
 <configuration>
   <!-- See documentation at http://logback.qos.ch/manual/joran.html -->
   
-  <!-- address performance concern with jul-to-slf4j -->
-  <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
-    <resetJUL>true</resetJUL>
-  </contextListener>
-  
   <!-- Import custom properties from the Orion configuration file -->
   <property file="${orion.core.configFile}" />
   
@@ -30,9 +25,6 @@
   
   <!-- Prints successful and failed logins -->
   <logger name="org.eclipse.orion.server.login" level="INFO"/>
-  
-  <!-- Override the openid4java default logging level -->
-  <logger name="org.openid4java" level="WARN" />
 
   <!-- Prints user account creations and deletions -->
   <logger name="org.eclipse.orion.server.account" level="INFO"/>

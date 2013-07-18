@@ -1,11 +1,6 @@
 <configuration>
   <!-- See documentation at http://logback.qos.ch/manual/joran.html -->
   
-  <!-- address performance concern with jul-to-slf4j -->
-  <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
-    <resetJUL>true</resetJUL>
-  </contextListener>
-  
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <layout class="ch.qos.logback.classic.PatternLayout">
       <Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</Pattern>
@@ -28,9 +23,6 @@
 
   <!-- Prints details on openid handshakes -->
   <!--   <logger name="org.eclipse.orion.server.openid" level="INFO"/> -->
-
-  <!-- Override the openid4java default logging level -->
-  <logger name="org.openid4java" level="WARN" />
 
   <!-- Prints details on sftp connections -->
   <!--   <logger name="org.eclipse.orion.server.sftp" level="INFO"/> -->
