@@ -48,6 +48,8 @@ plugin@org.mozilla.javascript.source,1.7.2=p2IU,id=org.mozilla.javascript.source
 
 plugin@org.slf4j.api,1.6.4=p2IU,id=org.slf4j.api,version=1.6.4.v20120130-2120,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130118183705/repository
 plugin@org.slf4j.jcl,1.6.4=p2IU,id=org.slf4j.jcl,version=1.6.4.v20120130-2120,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130118183705/repository
+plugin@org.slf4j.log4j,1.6.4=p2IU,id=org.slf4j.log4j,version=1.6.4.v20120130-2120,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
+plugin@org.slf4j.jul,1.6.4=p2IU,id=org.slf4j.jul,version=1.6.4.v20120130-2120,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
 
 plugin@javax.mail.glassfish,1.4.1=p2IU,id=javax.mail.glassfish,version=1.4.1.v201108011116,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130118183705/repository
 plugin@javax.activation,1.1.0=p2IU,id=javax.activation,version=1.1.0.v201108011116,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130118183705/repository
