@@ -10,12 +10,13 @@
  *******************************************************************************/
 package org.eclipse.orion.server.logs;
 
+import org.eclipse.orion.server.core.PreferenceHelper;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.util.tracker.ServiceTracker;
 
 public class LogsActivator implements BundleActivator {
-	public static final String LOG_PROVIDER_ENABLED_FLAG = "ENABLE_LOG_PROVIDER";
+	public static final String CONFIG_FILE_LOG_PROVIDER_ENABLED = "orion.logs.logProviderEnabled";
 
 	private static BundleContext context;
 	private static LogsActivator instance;
@@ -46,7 +47,8 @@ public class LogsActivator implements BundleActivator {
 		 * /* privileged users (e. g. admin). Currently, all logged users have
 		 * /* access if the flag is present and set to true.
 		 */
-		boolean enabled = Boolean.parseBoolean(context.getProperty(LOG_PROVIDER_ENABLED_FLAG));
+		boolean enabled = Boolean.parseBoolean(PreferenceHelper
+				.getString(CONFIG_FILE_LOG_PROVIDER_ENABLED));
 
 		if (!enabled)
 			return;
