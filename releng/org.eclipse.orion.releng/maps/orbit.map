@@ -1,7 +1,7 @@
 	
 plugin@ch.qos.logback.classic,1.0.0=p2IU,id=ch.qos.logback.classic,version=1.0.0.v20111214-2030,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
 plugin@ch.qos.logback.core,1.0.0=p2IU,id=ch.qos.logback.core,version=1.0.0.v20111214-2030,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
-fragment@ch.qos.logback.slf4j,1.0.0=p2IU,id=ch.qos.logback.slf4j,version=1.0.0.v20120123-1500,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
+fragment@ch.qos.logback.slf4j,1.0.0=p2IU,id=ch.qos.logback.slf4j,version=1.0.0.v20121205-1250,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
 
 plugin@com.ibm.icu,4.2.1=p2IU,id=com.ibm.icu,version=4.2.1.v20100412,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
 plugin@com.ibm.icu.source,4.2.1=p2IU,id=com.ibm.icu.source,version=4.2.1.v20100412,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
