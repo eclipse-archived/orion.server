@@ -40,12 +40,13 @@ public class SimpleLinuxMetaStoreTests {
 		return simpleLinuxMetaStore;
 	}
 
-	private ProjectInfo createProject(IMetaStore metaStore, String workspaceId) throws CoreException {
-		// create the WorkspaceInfo
+	private ProjectInfo createProject(IMetaStore metaStore, String workspaceId, String projectName) throws CoreException, URISyntaxException {
+		// create the ProjectInfo
 		ProjectInfo projectInfo = new ProjectInfo();
-		projectInfo.setFullName(workspaceId);
+		projectInfo.setFullName(projectName);
+		projectInfo.setContentLocation(new URI("File://test.com"));
 
-		// create the user
+		// create the project
 		metaStore.createProject(workspaceId, projectInfo);
 		return projectInfo;
 	}
@@ -84,12 +85,31 @@ public class SimpleLinuxMetaStoreTests {
 		assertFalse(workspaceIds.contains(workspaceId));
 	}
 
+	private void deleteProject(IMetaStore metaStore, String workspaceId, String projectId) throws CoreException {
+		metaStore.deleteProject(workspaceId, projectId);
+		WorkspaceInfo workspaceInfo = metaStore.readWorkspace(workspaceId);
+		List<String> projectIds = workspaceInfo.getProjectNames();
+		assertFalse(projectIds.contains(projectId));
+	}
+
+	@Test
 	public void testCreateProject() throws URISyntaxException, CoreException {
 		// create the MetaStore
 		IMetaStore metaStore = createMetaStore();
 
-		String workspaceId = "workspace";
-		ProjectInfo projectInfo = createProject(metaStore, workspaceId);
+		// create the user
+		String userName = "anthony";
+		UserInfo userInfo = createUser(metaStore, userName);
+		assertNotNull(userInfo);
+
+		// create the workspace
+		String workspaceName = "Orion Content";
+		WorkspaceInfo workspaceInfo = createWorkspace(metaStore, userInfo.getUniqueId(), workspaceName);
+		assertNotNull(workspaceInfo);
+
+		// create the project
+		String projectName = "Orion Project";
+		ProjectInfo projectInfo = createProject(metaStore, workspaceInfo.getUniqueId(), projectName);
 		assertNotNull(projectInfo);
 	}
 
@@ -135,13 +155,41 @@ public class SimpleLinuxMetaStoreTests {
 		assertNotNull(workspaceInfo);
 	}
 
+	@Test
 	public void testDeleteProject() throws URISyntaxException, CoreException {
 		// create the MetaStore
 		IMetaStore metaStore = createMetaStore();
 
-		//ProjectInfo projectInfo = new ProjectInfo();
-		//String workspaceId = "workspace";
-		//simpleLinuxMetaStore.createProject(workspaceId, projectInfo);
+		// create the user
+		String userName = "anthony";
+		UserInfo userInfo = createUser(metaStore, userName);
+		assertNotNull(userInfo);
+
+		// create a workspace
+		String workspaceName = "Orion Content";
+		WorkspaceInfo workspaceInfo = createWorkspace(metaStore, userInfo.getUniqueId(), workspaceName);
+		assertNotNull(workspaceInfo);
+
+		// create the project
+		String projectName1 = "Orion Project";
+		ProjectInfo projectInfo1 = createProject(metaStore, workspaceInfo.getUniqueId(), projectName1);
+		assertNotNull(projectInfo1);
+
+		// create another project
+		String projectName2 = "Another Project";
+		ProjectInfo projectInfo2 = createProject(metaStore, workspaceInfo.getUniqueId(), projectName2);
+		assertNotNull(projectInfo2);
+
+		// delete the first project
+		deleteProject(metaStore, workspaceInfo.getUniqueId(), projectInfo1.getUniqueId());
+
+		// read the workspace
+		WorkspaceInfo readWorkspaceInfo = metaStore.readWorkspace(workspaceInfo.getUniqueId());
+		assertNotNull(readWorkspaceInfo);
+		assertEquals(readWorkspaceInfo.getFullName(), workspaceInfo.getFullName());
+		assertEquals(readWorkspaceInfo.getProjectNames().size(), 1);
+		assertFalse(readWorkspaceInfo.getProjectNames().contains(projectInfo1.getUniqueId()));
+		assertTrue(readWorkspaceInfo.getProjectNames().contains(projectInfo2.getUniqueId()));
 	}
 
 	@Test
@@ -188,7 +236,6 @@ public class SimpleLinuxMetaStoreTests {
 		assertEquals(readUserInfo.getWorkspaceIds().size(), 1);
 		assertFalse(readUserInfo.getWorkspaceIds().contains(workspaceInfo1.getUniqueId()));
 		assertTrue(readUserInfo.getWorkspaceIds().contains(workspaceInfo2.getUniqueId()));
-
 	}
 
 	@Test
@@ -212,13 +259,43 @@ public class SimpleLinuxMetaStoreTests {
 		assertTrue(allUsers.contains(userInfo2.getUniqueId()));
 	}
 
+	@Test
 	public void testReadProject() throws URISyntaxException, CoreException {
 		// create the MetaStore
 		IMetaStore metaStore = createMetaStore();
 
-		//ProjectInfo projectInfo = new ProjectInfo();
-		//String workspaceId = "workspace";
-		//simpleLinuxMetaStore.createProject(workspaceId, projectInfo);
+		// create the user
+		String userName = "anthony";
+		UserInfo userInfo = createUser(metaStore, userName);
+		assertNotNull(userInfo);
+
+		// create a workspace
+		String workspaceName = "Orion Content";
+		WorkspaceInfo workspaceInfo = createWorkspace(metaStore, userInfo.getUniqueId(), workspaceName);
+		assertNotNull(workspaceInfo);
+
+		// create the project
+		String projectName1 = "Orion Project";
+		ProjectInfo projectInfo1 = createProject(metaStore, workspaceInfo.getUniqueId(), projectName1);
+		assertNotNull(projectInfo1);
+
+		// create another project
+		String projectName2 = "Another Project";
+		ProjectInfo projectInfo2 = createProject(metaStore, workspaceInfo.getUniqueId(), projectName2);
+		assertNotNull(projectInfo2);
+
+		// read the workspace
+		WorkspaceInfo readWorkspaceInfo = metaStore.readWorkspace(workspaceInfo.getUniqueId());
+		assertNotNull(readWorkspaceInfo);
+		assertEquals(readWorkspaceInfo.getFullName(), workspaceInfo.getFullName());
+		assertEquals(readWorkspaceInfo.getProjectNames().size(), 2);
+		assertTrue(readWorkspaceInfo.getProjectNames().contains(projectInfo1.getUniqueId()));
+		assertTrue(readWorkspaceInfo.getProjectNames().contains(projectInfo2.getUniqueId()));
+
+		// read the project
+		ProjectInfo readProjectInfo = metaStore.readProject(workspaceInfo.getUniqueId(), projectInfo2.getUniqueId());
+		assertNotNull(readProjectInfo);
+		assertEquals(readProjectInfo.getFullName(), projectInfo2.getFullName());
 	}
 
 	@Test
@@ -265,15 +342,43 @@ public class SimpleLinuxMetaStoreTests {
 		assertTrue(readUserInfo.getWorkspaceIds().contains(workspaceInfo1.getUniqueId()));
 		assertTrue(readUserInfo.getWorkspaceIds().contains(workspaceInfo2.getUniqueId()));
 
+		// read the workspace
+		WorkspaceInfo readWorkspaceInfo = metaStore.readWorkspace(workspaceInfo2.getUniqueId());
+		assertNotNull(readWorkspaceInfo);
+		assertEquals(readWorkspaceInfo.getFullName(), workspaceInfo2.getFullName());
 	}
 
+	@Test
 	public void testUpdateProject() throws URISyntaxException, CoreException {
 		// create the MetaStore
 		IMetaStore metaStore = createMetaStore();
 
-		//ProjectInfo projectInfo = new ProjectInfo();
-		//String workspaceId = "workspace";
-		//simpleLinuxMetaStore.createProject(workspaceId, projectInfo);
+		// create the user
+		String userName = "anthony";
+		UserInfo userInfo = createUser(metaStore, userName);
+		assertNotNull(userInfo);
+
+		// create the workspace
+		String workspaceName = "Orion Content";
+		WorkspaceInfo workspaceInfo = createWorkspace(metaStore, userInfo.getUniqueId(), workspaceName);
+		assertNotNull(workspaceInfo);
+
+		// create the project
+		String projectName = "Orion Project";
+		ProjectInfo projectInfo = createProject(metaStore, workspaceInfo.getUniqueId(), projectName);
+		assertNotNull(projectInfo);
+
+		// update with a dummy project id
+		URI newURI = new URI("file:/workspace/foo");
+		projectInfo.setContentLocation(newURI);
+
+		// update the project
+		metaStore.updateProject(projectInfo);
+
+		// read the project back again
+		ProjectInfo readProjectInfo = metaStore.readProject(workspaceInfo.getUniqueId(), projectInfo.getUniqueId());
+		assertNotNull(readProjectInfo);
+		assertTrue(readProjectInfo.getContentLocation().equals(newURI));
 	}
 
 	@Test
