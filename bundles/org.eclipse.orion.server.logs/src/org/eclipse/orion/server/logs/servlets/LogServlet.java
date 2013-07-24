@@ -18,36 +18,31 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-import org.eclipse.orion.server.logs.ILogService;
-import org.eclipse.orion.server.logs.LogsActivator;
 import org.eclipse.orion.server.servlets.OrionServlet;
 
 public class LogServlet extends OrionServlet {
+	public static final String LOG_URI = "/logs"; //$NON-NLS-1$
+
 	private static final long serialVersionUID = 1L;
 	private ServletResourceHandler<String> logHandler;
 
 	public LogServlet() {
-		logHandler = new ServletLogHandler(getStatusHandler());
+		logHandler = new LogHandler(getStatusHandler());
 	}
 
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 
-		ILogService logService = LogsActivator.getDefault().getLogService();
-		if (logService == null) {
-			/* not supported functionality */
-			response.sendError(HttpServletResponse.SC_FORBIDDEN);
-			return;
-		}
-
 		/* supported functionality */
 		String pathInfo = request.getPathInfo();
 		if (logHandler.handleRequest(request, response, pathInfo))
 			return;
 
-		// finally invoke super to return an error for
-		// requests we don't know how to handle
+		/*
+		 * finally invoke super to return an error for requests we don't know
+		 * how to handle
+		 */
 		super.doGet(request, response);
 	}
 

@@ -20,7 +20,7 @@ import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.logs.ILogService;
 import org.eclipse.orion.server.logs.LogsActivator;
 
-public class AbstractLogHandler extends ServletResourceHandler<String> {
+public class AbstractLogHandler<T> extends ServletResourceHandler<T> {
 	protected final ServletResourceHandler<IStatus> statusHandler;
 
 	public AbstractLogHandler(ServletResourceHandler<IStatus> statusHandler) {
@@ -28,42 +28,45 @@ public class AbstractLogHandler extends ServletResourceHandler<String> {
 	}
 
 	@Override
-	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response,
-			String path) throws ServletException {
+	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, T object)
+			throws ServletException {
 
 		ILogService logService = LogsActivator.getDefault().getLogService();
+		if (logService == null)
+			/* unsupported functionality */
+			return false;
 
 		switch (getMethod(request)) {
 		case GET:
-			return handleGet(request, response, logService, path);
+			return handleGet(request, response, logService, object);
 		case POST:
-			return handlePost(request, response, logService, path);
+			return handlePost(request, response, logService, object);
 		case PUT:
-			return handlePut(request, response, logService, path);
+			return handlePut(request, response, logService, object);
 		case DELETE:
-			return handleDelete(request, response, logService, path);
+			return handleDelete(request, response, logService, object);
 		default:
 			return false;
 		}
 	}
 
 	protected boolean handleGet(HttpServletRequest request, HttpServletResponse response,
-			ILogService logService, String path) throws ServletException {
+			ILogService logService, T object) throws ServletException {
 		return false;
 	}
 
 	protected boolean handlePost(HttpServletRequest request, HttpServletResponse response,
-			ILogService logService, String path) throws ServletException {
+			ILogService logService, T object) throws ServletException {
 		return false;
 	}
 
 	protected boolean handlePut(HttpServletRequest request, HttpServletResponse response,
-			ILogService logService, String path) throws ServletException {
+			ILogService logService, T object) throws ServletException {
 		return false;
 	}
 
 	protected boolean handleDelete(HttpServletRequest request, HttpServletResponse response,
-			ILogService logService, String path) throws ServletException {
+			ILogService logService, T object) throws ServletException {
 		return false;
 	}
 }

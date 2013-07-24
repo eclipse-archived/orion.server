@@ -16,8 +16,6 @@ import org.osgi.framework.BundleContext;
 import org.osgi.util.tracker.ServiceTracker;
 
 public class LogsActivator implements BundleActivator {
-	public static final String CONFIG_FILE_LOG_PROVIDER_ENABLED = "orion.logs.logProviderEnabled";
-
 	private static BundleContext context;
 	private static LogsActivator instance;
 
@@ -48,7 +46,7 @@ public class LogsActivator implements BundleActivator {
 		 * /* access if the flag is present and set to true.
 		 */
 		boolean enabled = Boolean.parseBoolean(PreferenceHelper
-				.getString(CONFIG_FILE_LOG_PROVIDER_ENABLED));
+				.getString(LogConstants.CONFIG_FILE_LOG_PROVIDER_ENABLED));
 
 		if (!enabled)
 			return;

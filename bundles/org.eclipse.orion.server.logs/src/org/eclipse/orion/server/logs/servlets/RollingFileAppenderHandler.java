@@ -26,19 +26,27 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.logs.ILogService;
-import org.eclipse.orion.server.logs.jobs.AppenderJob;
+import org.eclipse.orion.server.logs.LogConstants;
+import org.eclipse.orion.server.logs.jobs.RollingFileAppenderJob;
+import org.eclipse.orion.server.logs.objects.FileAppenderResource;
 import org.eclipse.osgi.util.NLS;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.FileAppender;
 
-public class AppenderHandler extends AbstractLogHandler {
-	/* 4KB default buffer size */
-	private static final int BUFFERSIZE = 4096;
+/* 
+ * TODO: Distinguish this implementation form the FileAppenderHandler
+ *  adding custom RollingFileAppender capabilities
+ */
+public class RollingFileAppenderHandler extends AbstractLogHandler<String> {
+	/* 64KB default buffer size */
+	private static final int BUFFERSIZE = Integer.parseInt(PreferenceHelper.getString(
+			LogConstants.CONFIG_FILE_LOG_BUFFER_SIZE, String.valueOf(64 * 1024)));
 
-	public AppenderHandler(ServletResourceHandler<IStatus> statusHandler) {
+	public RollingFileAppenderHandler(ServletResourceHandler<IStatus> statusHandler) {
 		super(statusHandler);
 	}
 
@@ -46,11 +54,11 @@ public class AppenderHandler extends AbstractLogHandler {
 	 * Handles the download request for a single file appender log file.
 	 */
 	private boolean downloadLog(HttpServletRequest request, HttpServletResponse response,
-			ILogService logService, String appenderName) throws ServletException {
+			ILogService logService, FileAppenderResource appenderObj) throws ServletException {
 
-		FileAppender<ILoggingEvent> appender = logService.getFileAppender(appenderName);
+		FileAppender<ILoggingEvent> appender = logService.getFileAppender(appenderObj.getName());
 		if (appender == null) {
-			String msg = NLS.bind("Appender not found: {0}", appenderName);
+			String msg = NLS.bind("Appender not found: {0}", appenderObj.getName());
 			final ServerStatus error = new ServerStatus(IStatus.ERROR,
 					HttpServletResponse.SC_NOT_FOUND, msg, null);
 			return statusHandler.handleRequest(request, response, error);
@@ -104,41 +112,26 @@ public class AppenderHandler extends AbstractLogHandler {
 		return true;
 	}
 
-	/*
-	 * Handles a single appender GET request.
-	 */
-	private boolean handleSingleGet(HttpServletRequest request, HttpServletResponse response,
-			ILogService logService, String appenderName, IPath arguments) throws ServletException {
-
-		if (arguments.segmentCount() == 1 && "download".equals(arguments.segment(0)))
-			return downloadLog(request, response, logService, appenderName);
-
-		try {
-			return TaskJobHandler.handleTaskJob(request, response,
-					new AppenderJob(TaskJobHandler.getUserId(request), logService, appenderName),
-					statusHandler);
-		} catch (Exception e) {
-			final ServerStatus error = new ServerStatus(IStatus.ERROR,
-					HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-					"An error occured when looking for appenders.", e);
-
-			LogHelper.log(error);
-			return statusHandler.handleRequest(request, response, error);
-		}
-	}
-
 	@Override
 	protected boolean handleGet(HttpServletRequest request, HttpServletResponse response,
 			ILogService logService, String pathInfo) throws ServletException {
 
 		IPath path = new Path(pathInfo);
-		if (path.segmentCount() > 0)
-			return handleSingleGet(request, response, logService, path.segment(0),
-					path.removeFirstSegments(1));
+		String appenderName = path.segment(0);
+
+		FileAppenderResource appender = new FileAppenderResource();
+		appender.setBaseLocation(getURI(request));
+		appender.setName(appenderName);
+
+		IPath arguments = path.removeFirstSegments(1);
+		if (arguments.segmentCount() == 1
+				&& LogConstants.KEY_APPENDER_DOWNLOAD.equals(arguments.segment(0)))
+			return downloadLog(request, response, logService, appender);
 
 		try {
-			return TaskJobHandler.handleTaskJob(request, response,
-					new AppenderJob(TaskJobHandler.getUserId(request), logService), statusHandler);
+			return TaskJobHandler.handleTaskJob(request, response, new RollingFileAppenderJob(
+					TaskJobHandler.getUserId(request), logService, getURI(request), appenderName),
+					statusHandler);
 		} catch (Exception e) {
 			final ServerStatus error = new ServerStatus(IStatus.ERROR,
 					HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
