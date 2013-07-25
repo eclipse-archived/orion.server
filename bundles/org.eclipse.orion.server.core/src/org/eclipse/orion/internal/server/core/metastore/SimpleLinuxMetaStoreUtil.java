@@ -136,6 +136,7 @@ public class SimpleLinuxMetaStoreUtil {
 		}
 		return true;
 	}
+
 	public static boolean deleteMetaFolder(URI parent) {
 		File parentFolder = new File(parent);
 		String[] files = parentFolder.list();
@@ -189,10 +190,17 @@ public class SimpleLinuxMetaStoreUtil {
 		}
 		return true;
 	}
+
 	public static boolean isMetaFolder(URI parent) {
-		File parentFile = new File(parent);
+		File parentFolder = new File(parent);
+		if (!parentFolder.exists()) {
+			return false;
+		}
+		if (!parentFolder.isDirectory()) {
+			return false;
+		}
 		String metaDataName = ".json";
-		for (File file : parentFile.listFiles()) {
+		for (File file : parentFolder.listFiles()) {
 			if (file.isDirectory()) {
 				// directory, so continue
 				continue;
@@ -205,9 +213,16 @@ public class SimpleLinuxMetaStoreUtil {
 		}
 		return true;
 	}
+
 	public static boolean isMetaStoreRoot(URI parent) {
 		return isMetaFile(parent, ROOT);
 	}
+
+	/**
+	 * Determines if the name is a valid Linux username.
+	 * @param name The name to validate.
+	 * @return true if the if the name is a valid Linux username.
+	 */
 	public static boolean isNameValid(String name) {
 		boolean valid = false;
 		if (name != null) {
@@ -218,6 +233,7 @@ public class SimpleLinuxMetaStoreUtil {
 		}
 		return valid;
 	}
+
 	public static List<String> listMetaFiles(URI parent) {
 		File parentFile = new File(parent);
 		String metaDataName = ".json";
@@ -236,6 +252,7 @@ public class SimpleLinuxMetaStoreUtil {
 		}
 		return savedFiles;
 	}
+
 	public static JSONObject retrieveMetaFile(URI parent, String name) {
 		JSONObject jsonObject;
 		try {
@@ -259,6 +276,7 @@ public class SimpleLinuxMetaStoreUtil {
 		}
 		return jsonObject;
 	}
+
 	public static URI retrieveMetaFileURI(URI parent, String name) {
 		URI metaFileURI;
 		try {
@@ -268,6 +286,7 @@ public class SimpleLinuxMetaStoreUtil {
 		}
 		return metaFileURI;
 	}
+
 	public static URI retrieveMetaFolderURI(URI parent, String name) {
 		URI metaFileURI;
 		try {
@@ -277,12 +296,14 @@ public class SimpleLinuxMetaStoreUtil {
 		}
 		return metaFileURI;
 	}
+
 	public static JSONObject retrieveMetaStoreRoot(URI parent) {
 		if (isMetaStoreRoot(parent)) {
 			return retrieveMetaFile(parent, ROOT);
 		}
 		return null;
 	}
+
 	public static boolean updateMetaFile(URI parent, String name, JSONObject jsonObject) {
 		try {
 			if (!isMetaFile(parent, name)) {
@@ -303,5 +324,5 @@ public class SimpleLinuxMetaStoreUtil {
 		}
 		return true;
 	}
-	
+
 }

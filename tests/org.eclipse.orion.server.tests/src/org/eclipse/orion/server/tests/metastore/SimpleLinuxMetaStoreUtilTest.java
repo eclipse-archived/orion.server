@@ -33,8 +33,13 @@ public class SimpleLinuxMetaStoreUtilTest {
 
 	public final static String TEST_META_STORE = "file:/tmp/org.eclipse.orion.server.tests.metastore";
 
-	public static URI createTestMetaStoreFolder() throws URISyntaxException {
-		URI parent = new URI(TEST_META_STORE);
+	public static URI createTestMetaStoreFolder() {
+		URI parent = null;
+		try {
+			parent = new URI(TEST_META_STORE);
+		} catch (URISyntaxException e) {
+			// Should not fail
+		}
 		File parentFile = new File(parent);
 		if (parentFile.exists()) {
 			// file must exist from a failed JUnit test, delete
@@ -63,7 +68,7 @@ public class SimpleLinuxMetaStoreUtilTest {
 	}
 
 	@Test
-	public void testCreateMetaFile() throws JSONException, URISyntaxException {
+	public void testCreateMetaFile() throws JSONException {
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put("int", 1);
 		jsonObject.put("boolean", true);
@@ -93,7 +98,7 @@ public class SimpleLinuxMetaStoreUtilTest {
 	}
 
 	@Test(expected = RuntimeException.class)
-	public void testCreateMetaFileWithBadName() throws JSONException, URISyntaxException {
+	public void testCreateMetaFileWithBadName() throws JSONException {
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put("int", 1);
 		URI parent = createTestMetaStoreFolder();
@@ -111,7 +116,7 @@ public class SimpleLinuxMetaStoreUtilTest {
 	}
 
 	@Test
-	public void testCreateMetaRoot() throws URISyntaxException, JSONException {
+	public void testCreateMetaRoot() throws JSONException {
 		URI parent = createTestMetaStoreFolder();
 		// the root is not there at the start
 		assertFalse(SimpleLinuxMetaStoreUtil.isMetaStoreRoot(parent));
@@ -127,7 +132,7 @@ public class SimpleLinuxMetaStoreUtilTest {
 	}
 
 	@Test
-	public void testDeleteTree() throws URISyntaxException {
+	public void testDeleteTree() {
 		URI parent = createTestMetaStoreFolder();
 		// the root is not there at the start
 		assertFalse(SimpleLinuxMetaStoreUtil.isMetaStoreRoot(parent));
@@ -215,7 +220,7 @@ public class SimpleLinuxMetaStoreUtilTest {
 	}
 
 	@Test
-	public void testListMetaFiles() throws JSONException, URISyntaxException {
+	public void testListMetaFiles() throws JSONException {
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put("int", 1);
 		URI parent = createTestMetaStoreFolder();
@@ -268,7 +273,7 @@ public class SimpleLinuxMetaStoreUtilTest {
 	}
 
 	@Test
-	public void testRetrieveMetaFile() throws JSONException, URISyntaxException {
+	public void testRetrieveMetaFile() throws JSONException {
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put("int", 1);
 		jsonObject.put("boolean", true);
@@ -298,7 +303,7 @@ public class SimpleLinuxMetaStoreUtilTest {
 	}
 
 	@Test
-	public void testUpdateMetaFile() throws JSONException, URISyntaxException {
+	public void testUpdateMetaFile() throws JSONException {
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put("int", 1);
 		jsonObject.put("boolean", true);

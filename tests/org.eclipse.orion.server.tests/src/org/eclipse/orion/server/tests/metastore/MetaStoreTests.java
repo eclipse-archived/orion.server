@@ -11,235 +11,481 @@
 package org.eclipse.orion.server.tests.metastore;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.NameValuePair;
-import org.apache.http.ParseException;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.protocol.HTTP;
-import org.apache.http.util.EntityUtils;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.orion.server.core.metastore.IMetaStore;
+import org.eclipse.orion.server.core.metastore.ProjectInfo;
+import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
+/**
+ * Abstract class to test an implementation of an {@link IMetaStore}.
+ *   
+ * @author Anthony Hunter
+ */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class MetaStoreTests {
+public abstract class MetaStoreTests {
 
-	protected static String orionTestName = null;
+	/**
+	 * Get the {@link IMetaStore} to test. 
+	 * 
+	 * @return an instance of the IMetaStore to test.
+	 */
+	public abstract IMetaStore getMetaStore();
 
-	protected HttpClient createHttpClient() {
-		ThreadSafeClientConnManager cm = new ThreadSafeClientConnManager();
-		cm.setMaxTotal(100);
-		return new DefaultHttpClient(cm);
-	}
+	@Test
+	public void testCreateProject() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = getMetaStore();
 
-	protected URI getOrionServerURI(String path) throws URISyntaxException {
-		//String orionServerHostname = "vottachrh6x64.ottawa.ibm.com";
-		String orionServerHostname = "localhost";
-		int orionServerPort = 8080;
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName("anthony");
+		userInfo.setFullName("Anthony Hunter");
+		metaStore.createUser(userInfo);
 
-		return new URI("http", null, orionServerHostname, orionServerPort, path, null, null);
-	}
+		// create the workspace
+		String workspaceName = "Orion Content";
+		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
+		workspaceInfo.setFullName(workspaceName);
+		metaStore.createWorkspace(userInfo.getUniqueId(), workspaceInfo);
 
-	protected String getOrionTestName() {
-		if (orionTestName == null) {
-			orionTestName = "test" + System.currentTimeMillis();
+		// create the project
+		String projectName = "Orion Project";
+		ProjectInfo projectInfo = new ProjectInfo();
+		projectInfo.setFullName(projectName);
+		try {
+			projectInfo.setContentLocation(new URI("file://test.com"));
+		} catch (URISyntaxException e) {
+			// should not get an exception here, simple URI
 		}
-		return orionTestName;
-	}
+		metaStore.createProject(workspaceInfo.getUniqueId(), projectInfo);
 
-	protected int login(HttpClient httpClient) throws ClientProtocolException, IOException, URISyntaxException {
-		HttpPost httpPost = new HttpPost(getOrionServerURI("/login/form"));
-		httpPost.setHeader(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		List<NameValuePair> nvps = new ArrayList<NameValuePair>();
-		nvps.add(new BasicNameValuePair("login", getOrionTestName()));
-		nvps.add(new BasicNameValuePair("password", getOrionTestName()));
-		httpPost.setEntity(new UrlEncodedFormEntity(nvps, "UTF-8"));
-
-		HttpResponse httpResponse = httpClient.execute(httpPost);
-		EntityUtils.consume(httpResponse.getEntity());
-		return httpResponse.getStatusLine().getStatusCode();
+		// delete the user
+		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
-	public void testCreateAUser() throws URISyntaxException, ParseException, IOException, JSONException {
+	public void testCreateUser() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = getMetaStore();
 
-		HttpClient httpClient = createHttpClient();
-		try {
-			HttpPost httpPost = new HttpPost(getOrionServerURI("/users"));
-			httpPost.setHeader(ProtocolConstants.HEADER_ORION_VERSION, "1");
-			List<NameValuePair> nvps = new ArrayList<NameValuePair>();
-			nvps.add(new BasicNameValuePair("login", getOrionTestName()));
-			nvps.add(new BasicNameValuePair("password", getOrionTestName()));
-			nvps.add(new BasicNameValuePair("email", getOrionTestName() + "@test.com"));
-			httpPost.setEntity(new UrlEncodedFormEntity(nvps, "UTF-8"));
-			HttpResponse httpResponse = httpClient.execute(httpPost);
-			HttpEntity httpEntity = httpResponse.getEntity();
-			if (httpEntity != null) {
-				String result = EntityUtils.toString(httpEntity);
-				JSONObject jsonObject = new JSONObject(result);
-				String location = jsonObject.getString("Location");
-				String name = jsonObject.getString("Name");
-				System.out.println("Created User: " + name + " at Location: " + location);
-			}
-			assertEquals(HttpStatus.SC_OK, httpResponse.getStatusLine().getStatusCode());
-		} finally {
-			httpClient.getConnectionManager().shutdown();
-		}
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName("anthony");
+		userInfo.setFullName("Anthony Hunter");
+		metaStore.createUser(userInfo);
+
+		// read the user back again
+		UserInfo readUserInfo = metaStore.readUser(userInfo.getUniqueId());
+		assertNotNull(readUserInfo);
+		assertEquals(readUserInfo.getUniqueId(), userInfo.getUniqueId());
+		assertEquals(readUserInfo.getUserName(), userInfo.getUserName());
+
+		// make sure the user is in the list of all users
+		List<String> allUsers = metaStore.readAllUsers();
+		assertTrue(allUsers.contains(userInfo.getUniqueId()));
+
+		// delete the user
+		metaStore.deleteUser(userInfo.getUniqueId());
+
+		// make sure the user is not the list of all users
+		allUsers = metaStore.readAllUsers();
+		assertFalse(allUsers.contains(userInfo.getUniqueId()));
 	}
 
 	@Test
-	public void testCreateAWorkspace() throws URISyntaxException, ParseException, IOException, JSONException {
+	public void testCreateWorkspace() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = getMetaStore();
 
-		HttpClient httpClient = createHttpClient();
-		try {
-			assertEquals(HttpStatus.SC_OK, login(httpClient));
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName("anthony");
+		userInfo.setFullName("Anthony Hunter");
+		metaStore.createUser(userInfo);
 
-			HttpPost httpPost = new HttpPost(getOrionServerURI("/workspace"));
-			httpPost.setHeader(ProtocolConstants.HEADER_ORION_VERSION, "1");
-			httpPost.setHeader(ProtocolConstants.HEADER_SLUG, "Orion Content");
-			HttpResponse httpResponse = httpClient.execute(httpPost);
-			HttpEntity httpEntity = httpResponse.getEntity();
-			if (httpEntity != null) {
-				String result = EntityUtils.toString(httpEntity);
-				JSONObject jsonObject = new JSONObject(result);
-				String location = jsonObject.getString("Location");
-				String name = jsonObject.getString("Name");
-				System.out.println("Created Workspace: " + name + " at Location: " + location);
-			}
-			assertEquals(HttpStatus.SC_OK, httpResponse.getStatusLine().getStatusCode());
-		} finally {
-			httpClient.getConnectionManager().shutdown();
-		}
+		// create the workspace
+		String workspaceName = "Orion Content";
+		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
+		workspaceInfo.setFullName(workspaceName);
+		metaStore.createWorkspace(userInfo.getUniqueId(), workspaceInfo);
+
+		// delete the user
+		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
-	public void testCreateProject() throws ClientProtocolException, IOException, JSONException, URISyntaxException {
+	public void testDeleteProject() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = getMetaStore();
 
-		HttpClient httpClient = createHttpClient();
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName("anthony");
+		userInfo.setFullName("Anthony Hunter");
+		metaStore.createUser(userInfo);
+
+		// create the workspace
+		String workspaceName = "Orion Content";
+		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
+		workspaceInfo.setFullName(workspaceName);
+		metaStore.createWorkspace(userInfo.getUniqueId(), workspaceInfo);
+
+		// create the project
+		String projectName1 = "Orion Project";
+		ProjectInfo projectInfo1 = new ProjectInfo();
+		projectInfo1.setFullName(projectName1);
 		try {
-			assertEquals(HttpStatus.SC_OK, login(httpClient));
-
-			HttpPost httpPost = new HttpPost(getOrionServerURI("/workspace/" + getOrionTestName()));
-			httpPost.setHeader(ProtocolConstants.HEADER_ORION_VERSION, "1");
-			httpPost.setHeader(HTTP.CONTENT_TYPE, "application/json");
-			JSONObject jsonObject = new JSONObject();
-			jsonObject.put("Name", getOrionTestName());
-			StringEntity stringEntity = new StringEntity(jsonObject.toString());
-			stringEntity.setContentType("application/json");
-			httpPost.setEntity(stringEntity);
-			HttpResponse httpResponse = httpClient.execute(httpPost);
-			HttpEntity httpEntity = httpResponse.getEntity();
-			if (httpEntity != null) {
-				String result = EntityUtils.toString(httpEntity);
-				jsonObject = new JSONObject(result);
-				String location = jsonObject.getString("Location");
-				String name = jsonObject.getString("Name");
-				System.out.println("Created Project: " + name + " at Location: " + location);
-			}
-			assertEquals(HttpStatus.SC_CREATED, httpResponse.getStatusLine().getStatusCode());
-		} finally {
-			httpClient.getConnectionManager().shutdown();
+			projectInfo1.setContentLocation(new URI("file://root/folder/orion"));
+		} catch (URISyntaxException e) {
+			// should not get an exception here, simple URI
 		}
+		metaStore.createProject(workspaceInfo.getUniqueId(), projectInfo1);
+
+		// create another project
+		String projectName2 = "Another Project";
+		ProjectInfo projectInfo2 = new ProjectInfo();
+		projectInfo2.setFullName(projectName2);
+		try {
+			projectInfo2.setContentLocation(new URI("file://root/folder/another"));
+		} catch (URISyntaxException e) {
+			// should not get an exception here, simple URI
+		}
+		metaStore.createProject(workspaceInfo.getUniqueId(), projectInfo2);
+
+		// delete the first project
+		metaStore.deleteProject(workspaceInfo.getUniqueId(), projectInfo1.getFullName());
+
+		// read the workspace
+		WorkspaceInfo readWorkspaceInfo = metaStore.readWorkspace(workspaceInfo.getUniqueId());
+		assertNotNull(readWorkspaceInfo);
+		assertEquals(readWorkspaceInfo.getFullName(), workspaceInfo.getFullName());
+		assertFalse(readWorkspaceInfo.getProjectNames().contains(projectInfo1.getFullName()));
+		assertTrue(readWorkspaceInfo.getProjectNames().contains(projectInfo2.getFullName()));
+
+		// delete the user
+		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
-	public void testGetProjects() throws ClientProtocolException, IOException, URISyntaxException, JSONException {
+	public void testDeleteUser() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = getMetaStore();
 
-		HttpClient httpClient = createHttpClient();
-		try {
-			assertEquals(HttpStatus.SC_OK, login(httpClient));
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName("anthony");
+		userInfo.setFullName("Anthony Hunter");
+		metaStore.createUser(userInfo);
 
-			HttpGet httpGet = new HttpGet(getOrionServerURI("/workspace/" + getOrionTestName()));
-			httpGet.setHeader(ProtocolConstants.HEADER_ORION_VERSION, "1");
-			HttpResponse httpResponse = httpClient.execute(httpGet);
-			HttpEntity httpEntity = httpResponse.getEntity();
-			if (httpEntity != null) {
-				String result = EntityUtils.toString(httpEntity);
-				JSONObject jsonObject = new JSONObject(result);
-				JSONArray projects = jsonObject.getJSONArray("Projects");
-				String name = jsonObject.getString("Name");
-				if (projects.length() == 0) {
-					System.out.println("Found zero Projects in workspace named: " + name);
-				} else {
-					System.out.print("Found Projects in workspace named: " + name + " at locations: [ ");
-					for (int i = 0; i < projects.length(); i++) {
-						JSONObject project = projects.getJSONObject(i);
-						System.out.print(project.getString("Location") + " ");
-					}
-					System.out.println("]");
-				}
-			}
-			assertEquals(HttpStatus.SC_OK, httpResponse.getStatusLine().getStatusCode());
+		// delete the user
+		metaStore.deleteUser(userInfo.getUniqueId());
 
-		} finally {
-			httpClient.getConnectionManager().shutdown();
-		}
+		// make sure the user is not the list of all users
+		List<String> allUsers = metaStore.readAllUsers();
+		assertFalse(allUsers.contains(userInfo.getUniqueId()));
 	}
 
 	@Test
-	public void testGetWorkspaces() throws ClientProtocolException, IOException, URISyntaxException, JSONException {
+	public void testDeleteWorkspace() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = getMetaStore();
 
-		HttpClient httpClient = createHttpClient();
-		try {
-			assertEquals(HttpStatus.SC_OK, login(httpClient));
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName("anthony");
+		userInfo.setFullName("Anthony Hunter");
+		metaStore.createUser(userInfo);
 
-			HttpGet httpGet = new HttpGet(getOrionServerURI("/workspace"));
-			httpGet.setHeader(ProtocolConstants.HEADER_ORION_VERSION, "1");
-			HttpResponse httpResponse = httpClient.execute(httpGet);
-			HttpEntity httpEntity = httpResponse.getEntity();
-			if (httpEntity != null) {
-				String result = EntityUtils.toString(httpEntity);
-				JSONObject jsonObject = new JSONObject(result);
-				JSONArray workspaces = jsonObject.getJSONArray("Workspaces");
-				String name = jsonObject.getString("Name");
-				if (workspaces.length() == 0) {
-					System.out.println("Found zero Workspaces for user: " + name);
-				} else {
-					System.out.print("Found Workspaces for user: " + name + " at locations: [ ");
-					for (int i = 0; i < workspaces.length(); i++) {
-						JSONObject workspace = workspaces.getJSONObject(i);
-						System.out.print(workspace.getString("Location") + " ");
-					}
-					System.out.println("]");
-				}
-			}
-			assertEquals(HttpStatus.SC_OK, httpResponse.getStatusLine().getStatusCode());
+		// create the workspace
+		String workspaceName1 = "Orion Content";
+		WorkspaceInfo workspaceInfo1 = new WorkspaceInfo();
+		workspaceInfo1.setFullName(workspaceName1);
+		metaStore.createWorkspace(userInfo.getUniqueId(), workspaceInfo1);
 
-		} finally {
-			httpClient.getConnectionManager().shutdown();
-		}
+		// create another workspace
+		String workspaceName2 = "Workspace2";
+		WorkspaceInfo workspaceInfo2 = new WorkspaceInfo();
+		workspaceInfo2.setFullName(workspaceName2);
+		metaStore.createWorkspace(userInfo.getUniqueId(), workspaceInfo2);
+
+		// delete the first workspace
+		metaStore.deleteWorkspace(userInfo.getUniqueId(), workspaceInfo1.getUniqueId());
+
+		// read the user
+		UserInfo readUserInfo = metaStore.readUser(userInfo.getUniqueId());
+		assertNotNull(readUserInfo);
+		assertEquals(readUserInfo.getUserName(), userInfo.getUserName());
+		assertEquals("Should only be one workspace", 1, readUserInfo.getWorkspaceIds().size());
+		assertFalse(readUserInfo.getWorkspaceIds().contains(workspaceInfo1.getUniqueId()));
+		assertTrue(readUserInfo.getWorkspaceIds().contains(workspaceInfo2.getUniqueId()));
+
+		// delete the user
+		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
-	public void testVerifyFormBasedLogin() throws ClientProtocolException, IOException, URISyntaxException {
+	public void testReadAllUsers() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = getMetaStore();
 
-		HttpClient httpClient = createHttpClient();
-		try {
-			assertEquals(HttpStatus.SC_OK, login(httpClient));
-		} finally {
-			httpClient.getConnectionManager().shutdown();
-		}
+		// create the user
+		UserInfo userInfo1 = new UserInfo();
+		userInfo1.setUserName("anthony");
+		userInfo1.setFullName("Anthony Hunter");
+		metaStore.createUser(userInfo1);
+
+		// create a second user
+		UserInfo userInfo2 = new UserInfo();
+		userInfo2.setUserName("john");
+		userInfo2.setFullName("John Doe");
+		metaStore.createUser(userInfo2);
+
+		// both user should be in the users list
+		List<String> allUsers = metaStore.readAllUsers();
+		assertNotNull(allUsers);
+		assertTrue(allUsers.contains(userInfo1.getUniqueId()));
+		assertTrue(allUsers.contains(userInfo2.getUniqueId()));
+
+		// delete the first user
+		metaStore.deleteUser(userInfo1.getUniqueId());
+
+		// delete the second user
+		metaStore.deleteUser(userInfo2.getUniqueId());
 	}
 
+	@Test
+	public void testReadProject() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = getMetaStore();
+
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName("anthony");
+		userInfo.setFullName("Anthony Hunter");
+		metaStore.createUser(userInfo);
+
+		// create the workspace
+		String workspaceName = "Orion Content";
+		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
+		workspaceInfo.setFullName(workspaceName);
+		metaStore.createWorkspace(userInfo.getUniqueId(), workspaceInfo);
+
+		// create the project
+		String projectName1 = "Orion Project";
+		ProjectInfo projectInfo1 = new ProjectInfo();
+		projectInfo1.setFullName(projectName1);
+		try {
+			projectInfo1.setContentLocation(new URI("file://root/folder/orion"));
+		} catch (URISyntaxException e) {
+			// should not get an exception here, simple URI
+		}
+		metaStore.createProject(workspaceInfo.getUniqueId(), projectInfo1);
+
+		// create another project
+		String projectName2 = "Another Project";
+		ProjectInfo projectInfo2 = new ProjectInfo();
+		projectInfo2.setFullName(projectName2);
+		try {
+			projectInfo2.setContentLocation(new URI("file://root/folder/another"));
+		} catch (URISyntaxException e) {
+			// should not get an exception here, simple URI
+		}
+		metaStore.createProject(workspaceInfo.getUniqueId(), projectInfo2);
+
+		// read the workspace
+		WorkspaceInfo readWorkspaceInfo = metaStore.readWorkspace(workspaceInfo.getUniqueId());
+		assertNotNull(readWorkspaceInfo);
+		assertEquals(readWorkspaceInfo.getFullName(), workspaceInfo.getFullName());
+		assertEquals(2, readWorkspaceInfo.getProjectNames().size());
+		assertTrue(readWorkspaceInfo.getProjectNames().contains(projectInfo1.getFullName()));
+		assertTrue(readWorkspaceInfo.getProjectNames().contains(projectInfo2.getFullName()));
+
+		// read the project
+		ProjectInfo readProjectInfo = metaStore.readProject(workspaceInfo.getUniqueId(), projectInfo2.getFullName());
+		assertNotNull(readProjectInfo);
+		assertEquals(readProjectInfo.getFullName(), projectInfo2.getFullName());
+
+		// delete the user
+		metaStore.deleteUser(userInfo.getUniqueId());
+	}
+
+	@Test
+	public void testReadUser() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = getMetaStore();
+
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName("anthony");
+		userInfo.setFullName("Anthony Hunter");
+		metaStore.createUser(userInfo);
+
+		// read the user
+		UserInfo readUserInfo = metaStore.readUser(userInfo.getUniqueId());
+		assertNotNull(readUserInfo);
+		assertEquals(readUserInfo.getUniqueId(), userInfo.getUniqueId());
+
+		// delete the user
+		metaStore.deleteUser(userInfo.getUniqueId());
+	}
+
+	@Test
+	public void testReadWorkspace() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = getMetaStore();
+
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName("anthony");
+		userInfo.setFullName("Anthony Hunter");
+		metaStore.createUser(userInfo);
+
+		// create the workspace
+		String workspaceName1 = "Orion Content";
+		WorkspaceInfo workspaceInfo1 = new WorkspaceInfo();
+		workspaceInfo1.setFullName(workspaceName1);
+		metaStore.createWorkspace(userInfo.getUniqueId(), workspaceInfo1);
+
+		// create another workspace
+		String workspaceName2 = "Workspace2";
+		WorkspaceInfo workspaceInfo2 = new WorkspaceInfo();
+		workspaceInfo2.setFullName(workspaceName2);
+		metaStore.createWorkspace(userInfo.getUniqueId(), workspaceInfo2);
+
+		// read the user
+		UserInfo readUserInfo = metaStore.readUser(userInfo.getUniqueId());
+		assertNotNull(readUserInfo);
+		assertEquals(readUserInfo.getUserName(), userInfo.getUserName());
+		assertEquals(2, readUserInfo.getWorkspaceIds().size());
+		assertTrue(readUserInfo.getWorkspaceIds().contains(workspaceInfo1.getUniqueId()));
+		assertTrue(readUserInfo.getWorkspaceIds().contains(workspaceInfo2.getUniqueId()));
+
+		// read the workspace
+		WorkspaceInfo readWorkspaceInfo = metaStore.readWorkspace(workspaceInfo2.getUniqueId());
+		assertNotNull(readWorkspaceInfo);
+		assertEquals(readWorkspaceInfo.getFullName(), workspaceInfo2.getFullName());
+
+		// delete the user
+		metaStore.deleteUser(userInfo.getUniqueId());
+	}
+
+	@Test
+	public void testUpdateProject() throws URISyntaxException, CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = getMetaStore();
+
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName("anthony");
+		userInfo.setFullName("Anthony Hunter");
+		metaStore.createUser(userInfo);
+
+		// create the workspace
+		String workspaceName = "Orion Content";
+		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
+		workspaceInfo.setFullName(workspaceName);
+		metaStore.createWorkspace(userInfo.getUniqueId(), workspaceInfo);
+
+		// create the project
+		String projectName = "Orion Project";
+		ProjectInfo projectInfo = new ProjectInfo();
+		projectInfo.setFullName(projectName);
+		try {
+			projectInfo.setContentLocation(new URI("file://test.com"));
+		} catch (URISyntaxException e) {
+			// should not get an exception here, simple URI
+		}
+		metaStore.createProject(workspaceInfo.getUniqueId(), projectInfo);
+
+		// update the project
+		URI newURI = new URI("file:/workspace/foo");
+		projectInfo.setContentLocation(newURI);
+		projectInfo.setProperty("New", "Property");
+
+		// update the project
+		metaStore.updateProject(projectInfo);
+
+		// read the project back again
+		ProjectInfo readProjectInfo = metaStore.readProject(workspaceInfo.getUniqueId(), projectInfo.getFullName());
+		assertNotNull(readProjectInfo);
+		assertTrue(readProjectInfo.getContentLocation().equals(newURI));
+		assertEquals(readProjectInfo.getProperty("New"), "Property");
+
+		// delete the user
+		metaStore.deleteUser(userInfo.getUniqueId());
+	}
+
+	@Test
+	public void testUpdateUser() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = getMetaStore();
+
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName("anthony");
+		userInfo.setFullName("Anthony Hunter");
+		metaStore.createUser(userInfo);
+
+		// update the UserInfo
+		String fullName = "Anthony Hunter";
+		userInfo.setProperty("New", "Property");
+		userInfo.setFullName(fullName);
+
+		// update the user
+		metaStore.updateUser(userInfo);
+
+		// read the user back again
+		UserInfo readUserInfo = metaStore.readUser(userInfo.getUniqueId());
+		assertNotNull(readUserInfo);
+		assertEquals(readUserInfo.getFullName(), fullName);
+		assertEquals(readUserInfo.getFullName(), userInfo.getFullName());
+		assertEquals(readUserInfo.getProperty("New"), "Property");
+
+		// delete the user
+		metaStore.deleteUser(userInfo.getUniqueId());
+		List<String> allUsers = metaStore.readAllUsers();
+		assertFalse(allUsers.contains(userInfo.getUniqueId()));
+	}
+
+	@Test
+	public void testUpdateWorkspace() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = getMetaStore();
+
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName("anthony");
+		userInfo.setFullName("Anthony Hunter");
+		metaStore.createUser(userInfo);
+
+		// create the workspace
+		String workspaceName = "Orion Content";
+		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
+		workspaceInfo.setFullName(workspaceName);
+		metaStore.createWorkspace(userInfo.getUniqueId(), workspaceInfo);
+
+		// update the workspace
+		workspaceInfo.setProperty("New", "Property");
+		metaStore.updateWorkspace(workspaceInfo);
+
+		// read the workspace back again
+		WorkspaceInfo readWorkspaceInfo = metaStore.readWorkspace(workspaceInfo.getUniqueId());
+		assertNotNull(readWorkspaceInfo);
+		assertEquals(readWorkspaceInfo.getProperty("New"), "Property");
+
+		// delete the user
+		metaStore.deleteUser(userInfo.getUniqueId());
+	}
 }

@@ -21,6 +21,11 @@ import java.util.List;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.junit.Test;
 
+/**
+ * Simple class to test out each of the methods on a {@link WorkspaceInfo}.
+ * 
+ * @author Anthony Hunter
+ */
 public class WorkspaceInfoTests {
 
 	@Test

@@ -19,6 +19,11 @@ import java.net.URISyntaxException;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.junit.Test;
 
+/**
+ * Simple class to test out each of the methods on a {@link ProjectInfo}.
+ * 
+ * @author Anthony Hunter
+ */
 public class ProjectInfoTests {
 
 	@Test

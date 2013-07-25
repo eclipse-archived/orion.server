@@ -21,6 +21,11 @@ import java.util.List;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.junit.Test;
 
+/**
+ * Simple class to test out each of the methods on a {@link UserInfo}.
+ * 
+ * @author Anthony Hunter
+ */
 public class UserInfoTests {
 
 	@Test
