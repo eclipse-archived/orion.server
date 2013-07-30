@@ -69,6 +69,7 @@ import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.objects.Blame;
 import org.eclipse.orion.server.git.objects.Branch;
 import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.git.objects.Commit;
@@ -808,6 +809,26 @@ public abstract class GitTest extends FileSystemTest {
 		return webConversation.getResponse(request);
 	}
 
+	protected WebResponse getPostGitBlame(String blameUri, String commitId) throws JSONException, IOException, SAXException {
+		assertBlameUri(blameUri);
+		String requestURI = toAbsoluteURI(blameUri);
+		JSONObject body = new JSONObject();
+		body.put(GitConstants.KEY_COMMIT, commitId);
+		WebRequest request = new PutMethodWebRequest(requestURI, IOUtilities.toInputStream(body.toString()), "application/json");
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		return webConversation.getResponse(request);
+	}
+
+	protected WebResponse getGetGitBlame(String blameUri) throws IOException, SAXException {
+		assertBlameUri(blameUri);
+		String requestURI = toAbsoluteURI(blameUri);
+		WebRequest request = new GetMethodWebRequest(requestURI);
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		return webConversation.getResponse(request);
+	}
+
 	/**
 	 * Return commits for the given URI.
 	 * 
@@ -1035,11 +1056,22 @@ public abstract class GitTest extends FileSystemTest {
 		assertEquals("file", path.segment(0));
 	}
 
+	protected static void assertBlameUri(String fileUri) {
+		URI uri = URI.create(toRelativeURI(fileUri));
+		IPath path = new Path(uri.getPath());
+		// /gitapi/blame/file/{id}/workspace/{path}
+		System.out.println(uri.toString());
+		assertTrue(path.segmentCount() > 4);
+		assertEquals(Blame.RESOURCE, path.segment(1));
+		assertTrue("file".equals(path.segment(2)) || "file".equals(path.segment(3)));
+	}
+
 	protected static void assertBranchUri(String branchUri) {
 		URI uri = URI.create(toRelativeURI(branchUri));
 		IPath path = new Path(uri.getPath());
 		// /git/branch/[{name}/]file/{path}
 		assertTrue(path.segmentCount() > 3);
+		assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
 		assertEquals(GitServlet.GIT_URI.substring(1), path.segment(0));
 		assertEquals(Branch.RESOURCE, path.segment(1));
 		assertTrue("file".equals(path.segment(2)) || "file".equals(path.segment(3)));

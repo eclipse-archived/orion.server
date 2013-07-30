@@ -20,7 +20,7 @@ import org.junit.runners.Suite.SuiteClasses;
  * Runs all automated server tests for git support.
  */
 @RunWith(Suite.class)
-@SuiteClasses({GitUriTest.class, //
+@SuiteClasses({GitUriTest.class, GitBlameTest.class,//
 		GitCloneTest.class, //
 		GitInitTest.class, //
 		GitDiffTest.class, //
