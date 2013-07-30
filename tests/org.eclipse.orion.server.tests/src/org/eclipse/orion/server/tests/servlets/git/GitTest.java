@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others 
+ * Copyright (c) 2011, 2013 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -1059,11 +1059,11 @@ public abstract class GitTest extends FileSystemTest {
 	protected static void assertBlameUri(String fileUri) {
 		URI uri = URI.create(toRelativeURI(fileUri));
 		IPath path = new Path(uri.getPath());
-		// /gitapi/blame/file/{id}/workspace/{path}
+		// /gitapi/commit/{ref}/file/{path}
 		System.out.println(uri.toString());
 		assertTrue(path.segmentCount() > 4);
 		assertEquals(Blame.RESOURCE, path.segment(1));
-		assertTrue("file".equals(path.segment(2)) || "file".equals(path.segment(3)));
+		assertTrue(/*"file".equals(path.segment(2)) || */"file".equals(path.segment(3)));
 	}
 
 	protected static void assertBranchUri(String branchUri) {

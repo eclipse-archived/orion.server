@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others
+ * Copyright (c) 2011, 2013 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -62,9 +62,8 @@ public class GitBlameTest extends GitTest {
 
 			// test
 			JSONObject blameObject = new JSONObject(response.getText());
-			assertEquals(blameObject.length(), 1);
+			assertEquals(blameObject.length(), 2);
 			assertEquals(blameObject.getString(ProtocolConstants.KEY_TYPE), "Blame");
-
 		}
 	}
 
@@ -111,14 +110,13 @@ public class GitBlameTest extends GitTest {
 			//Test
 			assertEquals(blameObject.getString(ProtocolConstants.KEY_TYPE), "Blame");
 
-			JSONArray blame = blameObject.getJSONArray(GitConstants.KEY_BLAME_INFO);
-			assertNotNull(blameObject.get(GitConstants.KEY_BLAME_INFO));
+			JSONArray blame = blameObject.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+			assertNotNull(blameObject.get(ProtocolConstants.KEY_CHILDREN));
 			assertEquals(blame.length(), 1);
 			blameObject = blame.getJSONObject(0);
 			assertEquals(blameObject.getInt(GitConstants.KEY_START_RANGE), 1);
 			assertEquals(blameObject.getInt(GitConstants.KEY_END_RANGE), 4);
 			assertCommitUri(blameObject.getString(GitConstants.KEY_COMMIT));
-
 		}
 	}
 
@@ -163,13 +161,13 @@ public class GitBlameTest extends GitTest {
 			JSONObject blameObject = new JSONObject(response.getText());
 
 			// non blame info tests
-			assertEquals(blameObject.length(), 3);
+			assertEquals(blameObject.length(), 4);
 			assertEquals(blameObject.getString(ProtocolConstants.KEY_TYPE), "Blame");
-			assertEquals(blameObject.getString(GitConstants.KEY_BLAME_LOCATION), blameUri);
+			assertEquals(blameObject.getString(ProtocolConstants.KEY_LOCATION), blameUri);
 
 			// blame info tests
-			JSONArray blame = blameObject.getJSONArray(GitConstants.KEY_BLAME_INFO);
-			assertNotNull(blameObject.get(GitConstants.KEY_BLAME_INFO));
+			JSONArray blame = blameObject.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+			assertNotNull(blameObject.get(ProtocolConstants.KEY_CHILDREN));
 			assertEquals(blame.length(), 1);
 			blameObject = blame.getJSONObject(0);
 			assertEquals(blameObject.getInt(GitConstants.KEY_START_RANGE), 1);
@@ -197,13 +195,13 @@ public class GitBlameTest extends GitTest {
 			blameObject = new JSONObject(response.getText());
 
 			// non blame info tests
-			assertEquals(blameObject.length(), 3);
+			assertEquals(blameObject.length(), 4);
 			assertEquals(blameObject.getString(ProtocolConstants.KEY_TYPE), "Blame");
-			assertEquals(blameObject.getString(GitConstants.KEY_BLAME_LOCATION), blameUri);
+			assertEquals(blameObject.getString(ProtocolConstants.KEY_LOCATION), blameUri);
 
 			// blame info tests
-			blame = blameObject.getJSONArray(GitConstants.KEY_BLAME_INFO);
-			assertNotNull(blameObject.get(GitConstants.KEY_BLAME_INFO));
+			blame = blameObject.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+			assertNotNull(blameObject.get(ProtocolConstants.KEY_CHILDREN));
 			assertEquals(blame.length(), 2);
 
 			// test object 1 from the first commit
@@ -221,7 +219,6 @@ public class GitBlameTest extends GitTest {
 			// make sure commits are not the same
 			assertNotSame(blame.getJSONObject(0).get(GitConstants.KEY_COMMIT), blame.getJSONObject(1).get(GitConstants.KEY_COMMIT));
 			assertNotSame(blame.getJSONObject(0).get(GitConstants.KEY_END_RANGE), blame.getJSONObject(1).get(GitConstants.KEY_START_RANGE));
-
 		}
 	}
 
@@ -268,11 +265,11 @@ public class GitBlameTest extends GitTest {
 			// test
 			JSONObject blameObject = new JSONObject(response.getText());
 			assertEquals(blameObject.getString(ProtocolConstants.KEY_TYPE), "Blame");
-			assertEquals(blameObject.getString(GitConstants.KEY_BLAME_LOCATION), blameUri);
+			assertEquals(blameObject.getString(ProtocolConstants.KEY_LOCATION), blameUri);
 
 			//test blameInfo
-			JSONArray blame = blameObject.getJSONArray(GitConstants.KEY_BLAME_INFO);
-			assertNotNull(blameObject.get(GitConstants.KEY_BLAME_INFO));
+			JSONArray blame = blameObject.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+			assertNotNull(blameObject.get(ProtocolConstants.KEY_CHILDREN));
 			assertEquals(blame.length(), 1);
 			blameObject = blame.getJSONObject(0);
 			assertEquals(blameObject.getInt(GitConstants.KEY_START_RANGE), 1);
@@ -303,11 +300,11 @@ public class GitBlameTest extends GitTest {
 			 */
 			blameObject = new JSONObject(response.getText());
 			assertEquals(blameObject.getString(ProtocolConstants.KEY_TYPE), "Blame");
-			assertEquals(blameObject.getString(GitConstants.KEY_BLAME_LOCATION), blameUri);
+			assertEquals(blameObject.getString(ProtocolConstants.KEY_LOCATION), blameUri);
 
 			//test blameInfo
-			blame = blameObject.getJSONArray(GitConstants.KEY_BLAME_INFO);
-			assertNotNull(blameObject.get(GitConstants.KEY_BLAME_INFO));
+			blame = blameObject.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+			assertNotNull(blameObject.get(ProtocolConstants.KEY_CHILDREN));
 			assertEquals(blame.length(), 1);
 			blameObject = blame.getJSONObject(0);
 			assertEquals(blameObject.getInt(GitConstants.KEY_START_RANGE), 1);
@@ -339,11 +336,11 @@ public class GitBlameTest extends GitTest {
 			// non blame info tests
 			//assertEquals(blameObject.length(), 3);
 			assertEquals(blameObject.getString(ProtocolConstants.KEY_TYPE), "Blame");
-			assertEquals(blameObject.getString(GitConstants.KEY_BLAME_LOCATION), blameUri);
+			assertEquals(blameObject.getString(ProtocolConstants.KEY_LOCATION), blameUri);
 
 			// blame info tests
-			blame = blameObject.getJSONArray(GitConstants.KEY_BLAME_INFO);
-			assertNotNull(blameObject.get(GitConstants.KEY_BLAME_INFO));
+			blame = blameObject.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+			assertNotNull(blameObject.get(ProtocolConstants.KEY_CHILDREN));
 			assertEquals(blame.length(), 2);
 
 			// test object 1 from the first commit
@@ -361,7 +358,6 @@ public class GitBlameTest extends GitTest {
 			// make sure commits are not the same
 			assertNotSame(blame.getJSONObject(0).get(GitConstants.KEY_COMMIT), blame.getJSONObject(1).get(GitConstants.KEY_COMMIT));
 			assertNotSame(blame.getJSONObject(0).get(GitConstants.KEY_END_RANGE), blame.getJSONObject(1).get(GitConstants.KEY_START_RANGE));
-
 		}
 	}
 
@@ -406,9 +402,8 @@ public class GitBlameTest extends GitTest {
 
 			//Test
 
-			assertEquals(blameObject.length(), 1);
+			assertEquals(blameObject.length(), 2);
 			assertEquals(blameObject.getString(ProtocolConstants.KEY_TYPE), "Blame");
-
 		}
 	}
 

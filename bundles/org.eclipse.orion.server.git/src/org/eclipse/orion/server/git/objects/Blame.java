@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.*;
 import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
@@ -31,8 +32,6 @@ public class Blame extends GitObject {
 
 	public static final String TYPE = "Blame"; //$NON-NLS-1$
 
-	private Repository db = null;
-
 	private List<String> lines = new ArrayList<String>();
 
 	private String filePath = null;
@@ -41,20 +40,19 @@ public class Blame extends GitObject {
 
 	protected Serializer<JSONObject> jsonSerializer = new JSONSerializer();
 
-	private URI cloneLocation;
-
-	private String blameLocation = null;
+	private URI blameLocation = null;
 
 	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
 	{
-		Property[] defaultProperties = new Property[] {new Property(GitConstants.KEY_BLAME_LOCATION), new Property(GitConstants.KEY_BLAME_INFO)};
+		Property[] defaultProperties = new Property[] { //
+		new Property(ProtocolConstants.KEY_LOCATION), // super
+				new Property(GitConstants.KEY_CLONE), // super
+				new Property(ProtocolConstants.KEY_CHILDREN)};
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
 
 	public Blame(URI cloneLocation, Repository db) {
 		super(cloneLocation, db);
-		this.setRepository(db);
-		this.setCloneLocation(cloneLocation);
 	}
 
 	/*
@@ -68,42 +66,6 @@ public class Blame extends GitObject {
 	 */
 	public void addLine(String line) {
 		this.lines.add(line);
-	}
-
-	/**
-	 * Returns a list of commitIds that correspond to each line in a file
-	 * 
-	 * @return lines list
-	 */
-	public List<String> getLines() {
-		return this.lines;
-	}
-
-	/**
-	 * Get a specific commit Id for a line
-	 * 
-	 * @param index
-	 * @return String of list element
-	 * 
-	 */
-	public String getLine(int index) {
-		return this.lines.get(index);
-	}
-
-	/**
-	 * 
-	 * @param repo
-	 */
-	public void setRepository(Repository repo) {
-		this.db = repo;
-	}
-
-	/**
-	 * 
-	 * @return repository
-	 */
-	public Repository getRepository() {
-		return this.db;
 	}
 
 	/**
@@ -149,36 +111,11 @@ public class Blame extends GitObject {
 	}
 
 	/**
-	 * Set cloneLocation for BaseToCommitConverter
-	 */
-
-	public void setCloneLocation(URI uri) {
-		cloneLocation = uri;
-	}
-
-	/**
-	 * Get cloneLocation for BaseToCommitConverter
-	 * 
-	 * @return URI
-	 */
-	public URI getCloneLocation() {
-		return cloneLocation;
-	}
-
-	/**
 	 * Set the URI for the blame for this file
 	 * @param location
 	 */
-	public void setBlameLocation(String location) {
+	public void setBlameLocation(URI location) {
 		this.blameLocation = location;
-	}
-
-	/**
-	 * Returns the URI of the blame location
-	 * @return blameLocation
-	 */
-	public String getBlameLocation() {
-		return this.blameLocation;
 	}
 
 	/**
@@ -189,15 +126,12 @@ public class Blame extends GitObject {
 		return jsonSerializer.serialize(this, DEFAULT_RESOURCE_SHAPE);
 	}
 
-	@PropertyDescription(name = GitConstants.KEY_BLAME_LOCATION)
-	private String getLocatJSON() throws JSONException {
-		if (this.getBlameLocation() != null) {
-			return this.getBlameLocation();
-		}
-		return null;
+	@Override
+	protected URI getLocation() throws URISyntaxException {
+		return blameLocation;
 	}
 
-	@PropertyDescription(name = GitConstants.KEY_BLAME_INFO)
+	@PropertyDescription(name = ProtocolConstants.KEY_CHILDREN)
 	private JSONArray getBlameJSON() throws URISyntaxException, JSONException, IOException {
 		JSONArray LinesJSON = new JSONArray();
 		if (lines.size() > 0) {
@@ -216,22 +150,12 @@ public class Blame extends GitObject {
 					tempObj.put(GitConstants.KEY_START_RANGE, i + 1);
 					URI commit = BaseToCommitConverter.getCommitLocation(cloneLocation, line, BaseToCommitConverter.REMOVE_FIRST_2);
 					tempObj.put(GitConstants.KEY_COMMIT, commit);
-					tempObj.put(GitConstants.KEY_OBJECTID, line);
 				}
-
 			}
 			tempObj.put(GitConstants.KEY_END_RANGE, lines.size());
 			LinesJSON.put(tempObj);
-
 			return LinesJSON;
 		}
-
-		return null;
-	}
-
-	@Override
-	protected URI getLocation() throws URISyntaxException {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -239,9 +163,10 @@ public class Blame extends GitObject {
 	 *
 	 * JSON STRUCTURE
 	 * {
-	 * 	"Location": "file.java",
+	 * 	"Location": Blame URI
+	 *  "Clone Location" : Clone URI
 	 *  "Type": "Blame"
-	 *  "Blame":
+	 *  "Children":
 	 *  {
 	 * 	 	{
 	 *     		"CommitLocation":"/gitapi/commit/2b3a36c1b2f0064216a871740bd6906b6af7434a/file/C/",

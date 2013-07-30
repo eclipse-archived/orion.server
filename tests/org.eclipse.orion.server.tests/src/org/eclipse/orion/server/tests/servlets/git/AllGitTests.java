@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c)  2011, 2012 IBM Corporation and others.
+ * Copyright (c)  2011, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -20,7 +20,8 @@ import org.junit.runners.Suite.SuiteClasses;
  * Runs all automated server tests for git support.
  */
 @RunWith(Suite.class)
-@SuiteClasses({GitUriTest.class, GitBlameTest.class,//
+@SuiteClasses({GitUriTest.class, //
+		GitBlameTest.class, //
 		GitCloneTest.class, //
 		GitInitTest.class, //
 		GitDiffTest.class, //
