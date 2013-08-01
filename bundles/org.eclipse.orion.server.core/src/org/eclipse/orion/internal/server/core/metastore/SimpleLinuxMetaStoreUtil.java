@@ -15,14 +15,14 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.eclipse.orion.server.core.resources.Base64;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -33,24 +33,23 @@ public class SimpleLinuxMetaStoreUtil {
 	private static final int MINIMUM_LENGTH = 1;
 	private static final int MAXIMUM_LENGTH = 31;
 	public static final String ROOT = "metastore";
+	public static final String SEPARATOR = "/";
+	public static final String METAFILE_EXTENSION = ".json";
+	public static final String UTF8 = "UTF-8";
 
-	public static boolean createMetaFile(URI parent, String name, JSONObject jsonObject) {
+
+	public static boolean createMetaFile(File parent, String name, JSONObject jsonObject) {
 		try {
-			if (!isNameValid(name)) {
-				throw new RuntimeException("Meta File Error, name does not follow naming rules " + name);
-			}
 			if (isMetaFile(parent, name)) {
 				throw new RuntimeException("Meta File Error, already exists, use update");
 			}
-			File parentFile = new File(parent);
-			if (!parentFile.exists()) {
+			if (!parent.exists()) {
 				throw new RuntimeException("Meta File Error, parent folder does not exist");
 			}
-			if (!parentFile.isDirectory()) {
+			if (!parent.isDirectory()) {
 				throw new RuntimeException("Meta File Error, parent is not a folder");
 			}
-			URI fileURI = retrieveMetaFileURI(parent, name);
-			File newFile = new File(fileURI);
+			File newFile = retrieveMetaFile(parent, name);
 			FileWriter fileWriter = new FileWriter(newFile);
 			fileWriter.write(jsonObject.toString());
 			fileWriter.write("\n");
@@ -64,18 +63,14 @@ public class SimpleLinuxMetaStoreUtil {
 		return true;
 	}
 
-	public static boolean createMetaFolder(URI parent, String name) {
-		if (!isNameValid(name)) {
-			throw new RuntimeException("Meta File Error, name does not follow naming rules " + name);
-		}
-		File parentFolder = new File(parent);
-		if (!parentFolder.exists()) {
+	public static boolean createMetaFolder(File parent, String name) {
+		if (!parent.exists()) {
 			throw new RuntimeException("Meta File Error, parent folder does not exist");
 		}
-		if (!parentFolder.isDirectory()) {
+		if (!parent.isDirectory()) {
 			throw new RuntimeException("Meta File Error, parent is not a folder");
 		}
-		File newFolder = new File(parentFolder, name);
+		File newFolder = new File(parent, name);
 		if (newFolder.exists()) {
 			throw new RuntimeException("Meta File Error, folder already exists");
 		}
@@ -85,103 +80,141 @@ public class SimpleLinuxMetaStoreUtil {
 		return true;
 	}
 
-	public static boolean createMetaStoreRoot(URI parent, JSONObject jsonObject) {
-		return createMetaFile(parent, ROOT, jsonObject);
+	public static boolean createMetaStoreRoot(File parent, JSONObject jsonObject) {
+		if (!createMetaFolder(parent, ROOT)) {
+			throw new RuntimeException("Meta File Error, cannot create root folder " + ROOT + " under " + parent.getAbsolutePath());
+		}
+		File metaStoreRootFolder = SimpleLinuxMetaStoreUtil.retrieveMetaFolder(parent, ROOT);
+		return createMetaFile(metaStoreRootFolder, ROOT, jsonObject);
 	}
 
-	public static String decodeProjectNameFromProjectId(String workspaceId) {
-		byte[] decoded = Base64.decode(workspaceId.getBytes());
-		String decodedString = new String(decoded);
-		return decodedString.substring(decodedString.lastIndexOf(':') + 1);
+	public static String decodeProjectNameFromProjectId(String projectId) {
+		String decoded = null;
+		try {
+			decoded = URLDecoder.decode(projectId.replace("%20", "+"), UTF8);
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException("Meta File Error, could not decode:" + projectId);
+		}
+		if (decoded.indexOf(SEPARATOR) == -1) {
+			return null;
+		}
+		return decoded.substring(decoded.lastIndexOf(SEPARATOR) + 1);
 	}
 
-	public static String decodeUserNameFromProjectId(String workspaceId) {
-		byte[] decoded = Base64.decode(workspaceId.getBytes());
-		String decodedString = new String(decoded);
-		return decodedString.substring(0, decodedString.indexOf(':'));
+	public static String decodeUserNameFromProjectId(String projectId) {
+		String decoded = null;
+		try {
+			decoded = URLDecoder.decode(projectId.replace("%20", "+"), UTF8);
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException("Meta File Error, could not decode:" + projectId);
+		}
+		if (decoded.indexOf(SEPARATOR) == -1) {
+			return null;
+		}
+		return decoded.substring(0, decoded.indexOf(SEPARATOR));
 	}
 
 	public static String decodeUserNameFromUserId(String userId) {
-		byte[] decoded = Base64.decode(userId.getBytes());
-		String decodedString = new String(decoded);
-		return decodedString.substring(0, decodedString.indexOf(':'));
+		return userId;
 	}
 
 	public static String decodeUserNameFromWorkspaceId(String workspaceId) {
-		byte[] decoded = Base64.decode(workspaceId.getBytes());
-		String decodedString = new String(decoded);
-		return decodedString.substring(0, decodedString.indexOf(':'));
+		String decoded = null;
+		try {
+			decoded = URLDecoder.decode(workspaceId.replace("%20", "+"), UTF8);
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException("Meta File Error, could not decode:" + workspaceId);
+		}
+		if (decoded.indexOf(SEPARATOR) == -1) {
+			return null;
+		}
+		return decoded.substring(0, decoded.indexOf(SEPARATOR));
 	}
 
-	public static String decodeWorkspaceNameFromProjectId(String workspaceId) {
-		byte[] decoded = Base64.decode(workspaceId.getBytes());
-		String decodedString = new String(decoded);
-		return decodedString.substring(decodedString.indexOf(':') + 1, decodedString.lastIndexOf(':'));
+	public static String decodeWorkspaceNameFromProjectId(String projectId) {
+		String decoded = null;
+		try {
+			decoded = URLDecoder.decode(projectId.replace("%20", "+"), UTF8);
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException("Meta File Error, could not decode:" + projectId);
+		}
+		if (decoded.indexOf(SEPARATOR) == -1 || decoded.lastIndexOf(SEPARATOR) == decoded.indexOf(SEPARATOR)) {
+			return null;
+		}
+		return decoded.substring(decoded.indexOf(SEPARATOR) + 1, decoded.lastIndexOf(SEPARATOR));
 	}
 
 	public static String decodeWorkspaceNameFromWorkspaceId(String workspaceId) {
-		byte[] decoded = Base64.decode(workspaceId.getBytes());
-		String decodedString = new String(decoded);
-		return decodedString.substring(decodedString.indexOf(':') + 1);
+		String decoded = null;
+		try {
+			decoded = URLDecoder.decode(workspaceId.replace("%20", "+"), UTF8);
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException("Meta File Error, could not decode:" + workspaceId);
+		}
+		if (decoded.indexOf(SEPARATOR) == -1) {
+			return null;
+		}
+		return decoded.substring(decoded.indexOf(SEPARATOR) + 1);
 	}
 
-	public static boolean deleteMetaFile(URI parent, String name) {
+	public static boolean deleteMetaFile(File parent, String name) {
 		if (!isMetaFile(parent, name)) {
 			throw new RuntimeException("Meta File Error, cannot delete, does not exist.");
 		}
-		URI fileURI = retrieveMetaFileURI(parent, name);
-		File savedFile = new File(fileURI);
+		File savedFile = retrieveMetaFile(parent, name);
 		if (!savedFile.delete()) {
 			throw new RuntimeException("Meta File Error, cannot delete file.");
 		}
 		return true;
 	}
 
-	public static boolean deleteMetaFolder(URI parent) {
-		File parentFolder = new File(parent);
-		String[] files = parentFolder.list();
+	public static boolean deleteMetaFolder(File parent) {
+		String[] files = parent.list();
 		if (files.length != 0) {
 			throw new RuntimeException("Meta File Error, cannot delete, not empty.");
 		}
-		if (!parentFolder.delete()) {
+		if (!parent.delete()) {
 			throw new RuntimeException("Meta File Error, cannot delete folder.");
 		}
 		return true;
 
 	}
 
-	public static boolean deleteMetaStoreRoot(URI parent) {
-		return deleteMetaFile(parent, ROOT);
+	public static boolean deleteMetaStoreRoot(File parent) {
+		File metaStoreRootFolder = SimpleLinuxMetaStoreUtil.retrieveMetaFolder(parent, ROOT);
+		return deleteMetaFile(metaStoreRootFolder, ROOT);
 	}
 
 	public static String encodeProjectId(String userName, String workspaceName, String projectName) {
-		String id = userName + ":" + workspaceName + ":" + projectName;
-		byte[] encoded = Base64.encode(id.getBytes());
-		return new String(encoded);
+		String id = userName + SEPARATOR + workspaceName + SEPARATOR + projectName;
+		try {
+			return URLEncoder.encode(id, UTF8).replace("+", "%20");
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException("Meta File Error, could not encode:" + id);
+		}
 	}
 
 	public static String encodeUserId(String userName) {
-		String id = userName + ":";
-		byte[] encoded = Base64.encode(id.getBytes());
-		return new String(encoded);
+		return userName;
 	}
 
 	public static String encodeWorkspaceId(String userName, String workspaceName) {
-		String id = userName + ":" + workspaceName;
-		byte[] encoded = Base64.encode(id.getBytes());
-		return new String(encoded);
+		String id = userName + SEPARATOR + workspaceName;
+		try {
+			return URLEncoder.encode(id, UTF8).replace("+", "%20");
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException("Meta File Error, could not encode:" + id);
+		}
 	}
 
-	public static boolean isMetaFile(URI parent, String name) {
-		File parentFolder = new File(parent);
-		if (!parentFolder.exists()) {
+	public static boolean isMetaFile(File parent, String name) {
+		if (!parent.exists()) {
 			return false;
 		}
-		if (!parentFolder.isDirectory()) {
+		if (!parent.isDirectory()) {
 			return false;
 		}
-		URI metaFileURI = retrieveMetaFileURI(parent, name);
-		File savedFile = new File(metaFileURI);
+		File savedFile = retrieveMetaFile(parent, name);
 		if (!savedFile.exists()) {
 			return false;
 		}
@@ -191,21 +224,19 @@ public class SimpleLinuxMetaStoreUtil {
 		return true;
 	}
 
-	public static boolean isMetaFolder(URI parent) {
-		File parentFolder = new File(parent);
-		if (!parentFolder.exists()) {
+	public static boolean isMetaFolder(File parent) {
+		if (!parent.exists()) {
 			return false;
 		}
-		if (!parentFolder.isDirectory()) {
+		if (!parent.isDirectory()) {
 			return false;
 		}
-		String metaDataName = ".json";
-		for (File file : parentFolder.listFiles()) {
+		for (File file : parent.listFiles()) {
 			if (file.isDirectory()) {
 				// directory, so continue
 				continue;
 			}
-			if (file.isFile() && file.getName().endsWith(metaDataName)) {
+			if (file.isFile() && file.getName().endsWith(METAFILE_EXTENSION)) {
 				// meta file, so continue
 				continue;
 			}
@@ -214,8 +245,9 @@ public class SimpleLinuxMetaStoreUtil {
 		return true;
 	}
 
-	public static boolean isMetaStoreRoot(URI parent) {
-		return isMetaFile(parent, ROOT);
+	public static boolean isMetaStoreRoot(File parent) {
+		File metaStoreRootFolder = SimpleLinuxMetaStoreUtil.retrieveMetaFolder(parent, ROOT);
+		return isMetaFile(metaStoreRootFolder, ROOT);
 	}
 
 	/**
@@ -234,17 +266,15 @@ public class SimpleLinuxMetaStoreUtil {
 		return valid;
 	}
 
-	public static List<String> listMetaFiles(URI parent) {
-		File parentFile = new File(parent);
-		String metaDataName = ".json";
+	public static List<String> listMetaFiles(File parent) {
 		List<String> savedFiles = new ArrayList<String>();
-		for (File file : parentFile.listFiles()) {
+		for (File file : parent.listFiles()) {
 			if (file.isDirectory()) {
 				// directory, so add to list and continue
 				savedFiles.add(file.getName());
 				continue;
 			}
-			if (file.isFile() && file.getName().endsWith(metaDataName)) {
+			if (file.isFile() && file.getName().endsWith(METAFILE_EXTENSION)) {
 				// meta file, so continue
 				continue;
 			}
@@ -253,14 +283,13 @@ public class SimpleLinuxMetaStoreUtil {
 		return savedFiles;
 	}
 
-	public static JSONObject retrieveMetaFile(URI parent, String name) {
+	public static JSONObject retrieveMetaFileJSON(File parent, String name) {
 		JSONObject jsonObject;
 		try {
 			if (!isMetaFile(parent, name)) {
 				return null;
 			}
-			URI fileURI = retrieveMetaFileURI(parent, name);
-			File savedFile = new File(fileURI);
+			File savedFile = retrieveMetaFile(parent, name);
 
 			FileReader fileReader = new FileReader(savedFile);
 			char[] chars = new char[(int) savedFile.length()];
@@ -277,40 +306,28 @@ public class SimpleLinuxMetaStoreUtil {
 		return jsonObject;
 	}
 
-	public static URI retrieveMetaFileURI(URI parent, String name) {
-		URI metaFileURI;
-		try {
-			metaFileURI = new URI(parent.toString() + "/" + name + ".json");
-		} catch (URISyntaxException e) {
-			throw new RuntimeException("Meta File Error, could not build URI", e);
-		}
-		return metaFileURI;
+	public static File retrieveMetaFile(File parent, String name) {
+		return new File(parent, name + ".json");
 	}
 
-	public static URI retrieveMetaFolderURI(URI parent, String name) {
-		URI metaFileURI;
-		try {
-			metaFileURI = new URI(parent.toString() + "/" + name);
-		} catch (URISyntaxException e) {
-			throw new RuntimeException("Meta File Error, could not build URI", e);
-		}
-		return metaFileURI;
+	public static File retrieveMetaFolder(File parent, String name) {
+		return new File(parent, name);
 	}
 
-	public static JSONObject retrieveMetaStoreRoot(URI parent) {
+	public static JSONObject retrieveMetaStoreRootJSON(File parent) {
 		if (isMetaStoreRoot(parent)) {
-			return retrieveMetaFile(parent, ROOT);
+			File metaStoreRootFolder = SimpleLinuxMetaStoreUtil.retrieveMetaFolder(parent, ROOT);
+			return retrieveMetaFileJSON(metaStoreRootFolder, ROOT);
 		}
 		return null;
 	}
 
-	public static boolean updateMetaFile(URI parent, String name, JSONObject jsonObject) {
+	public static boolean updateMetaFile(File parent, String name, JSONObject jsonObject) {
 		try {
 			if (!isMetaFile(parent, name)) {
 				throw new RuntimeException("Meta File Error, cannot delete, does not exist.");
 			}
-			URI fileURI = retrieveMetaFileURI(parent, name);
-			File savedFile = new File(fileURI);
+			File savedFile = retrieveMetaFile(parent, name); 
 
 			FileWriter fileWriter = new FileWriter(savedFile);
 			fileWriter.write(jsonObject.toString());

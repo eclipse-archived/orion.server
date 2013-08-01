@@ -12,7 +12,7 @@ package org.eclipse.orion.server.tests.metastore;
 
 import static org.junit.Assert.assertNotNull;
 
-import java.net.URI;
+import java.io.File;
 
 import org.eclipse.orion.internal.server.core.metastore.SimpleLinuxMetaStore;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
@@ -23,7 +23,7 @@ import org.junit.runners.MethodSorters;
 public class SimpleLinuxMetaStoreTests extends MetaStoreTests {
 
 	public IMetaStore getMetaStore() {
-		URI metaStoreRoot = SimpleLinuxMetaStoreUtilTest.createTestMetaStoreFolder();
+		File metaStoreRoot = SimpleLinuxMetaStoreUtilTest.createTestMetaStoreFolder();
 		IMetaStore simpleLinuxMetaStore = new SimpleLinuxMetaStore(metaStoreRoot);
 		assertNotNull(simpleLinuxMetaStore);
 		return simpleLinuxMetaStore;

@@ -16,8 +16,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.List;
 
 import org.eclipse.orion.internal.server.core.metastore.SimpleLinuxMetaStoreUtil;
@@ -31,21 +29,15 @@ import org.junit.runners.MethodSorters;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class SimpleLinuxMetaStoreUtilTest {
 
-	public final static String TEST_META_STORE = "file:/tmp/org.eclipse.orion.server.tests.metastore";
+	public final static String TEST_META_STORE = "/tmp/org.eclipse.orion.server.tests.metastore";
 
-	public static URI createTestMetaStoreFolder() {
-		URI parent = null;
-		try {
-			parent = new URI(TEST_META_STORE);
-		} catch (URISyntaxException e) {
-			// Should not fail
-		}
-		File parentFile = new File(parent);
-		if (parentFile.exists()) {
+	public static File createTestMetaStoreFolder() {
+		File parent = new File(TEST_META_STORE);
+		if (parent.exists()) {
 			// file must exist from a failed JUnit test, delete
-			deleteFile(parentFile);
+			deleteFile(parent);
 		}
-		if (!parentFile.mkdir()) {
+		if (!parent.mkdir()) {
 			throw new RuntimeException("Could not create JUnit Temp Folder, something is wrong:" + parent.toString());
 		}
 		return parent;
@@ -78,7 +70,7 @@ public class SimpleLinuxMetaStoreUtilTest {
 		jsonArray.put("two");
 		jsonArray.put("three");
 		jsonObject.put("Array", jsonArray);
-		URI parent = createTestMetaStoreFolder();
+		File parent = createTestMetaStoreFolder();
 		String name = "test";
 		// the folder is not there at the start
 		assertFalse("MetaFile already exists", SimpleLinuxMetaStoreUtil.isMetaFile(parent, name));
@@ -90,10 +82,10 @@ public class SimpleLinuxMetaStoreUtilTest {
 	}
 
 	@Test
-	public void testCreateMetaFileURI() throws URISyntaxException {
-		URI parent = createTestMetaStoreFolder();
-		URI shouldGet = new URI(parent.toString() + "/name.json");
-		URI result = SimpleLinuxMetaStoreUtil.retrieveMetaFileURI(parent, "name");
+	public void testCreateMetaFileURI() {
+		File parent = createTestMetaStoreFolder();
+		File shouldGet = new File(parent, "name.json");
+		File result = SimpleLinuxMetaStoreUtil.retrieveMetaFile(parent, "name");
 		assertEquals(shouldGet, result);
 	}
 
@@ -101,29 +93,29 @@ public class SimpleLinuxMetaStoreUtilTest {
 	public void testCreateMetaFileWithBadName() throws JSONException {
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put("int", 1);
-		URI parent = createTestMetaStoreFolder();
-		String name = "this is bad";
+		File parent = createTestMetaStoreFolder();
+		String name = "this//is//bad";
 		// try to create the file
 		assertTrue(SimpleLinuxMetaStoreUtil.createMetaFile(parent, name, jsonObject));
 	}
 
 	@Test
-	public void testCreateMetaFolderURI() throws URISyntaxException {
-		URI parent = createTestMetaStoreFolder();
-		URI shouldGet = new URI(parent.toString() + "/name");
-		URI result = SimpleLinuxMetaStoreUtil.retrieveMetaFolderURI(parent, "name");
+	public void testCreateMetaFolderURI() {
+		File parent = createTestMetaStoreFolder();
+		File shouldGet = new File(parent, "name");
+		File result = SimpleLinuxMetaStoreUtil.retrieveMetaFolder(parent, "name");
 		assertEquals(shouldGet, result);
 	}
 
 	@Test
 	public void testCreateMetaRoot() throws JSONException {
-		URI parent = createTestMetaStoreFolder();
+		File parent = createTestMetaStoreFolder();
 		// the root is not there at the start
 		assertFalse(SimpleLinuxMetaStoreUtil.isMetaStoreRoot(parent));
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put("Version", 1);
 		assertTrue(SimpleLinuxMetaStoreUtil.createMetaStoreRoot(parent, jsonObject));
-		JSONObject jsonObjectNew = SimpleLinuxMetaStoreUtil.retrieveMetaStoreRoot(parent);
+		JSONObject jsonObjectNew = SimpleLinuxMetaStoreUtil.retrieveMetaStoreRootJSON(parent);
 		assertNotNull(jsonObjectNew);
 		assertEquals(jsonObjectNew.getInt("Version"), 1);
 		assertTrue(SimpleLinuxMetaStoreUtil.deleteMetaStoreRoot(parent));
@@ -133,16 +125,16 @@ public class SimpleLinuxMetaStoreUtilTest {
 
 	@Test
 	public void testDeleteTree() {
-		URI parent = createTestMetaStoreFolder();
+		File parent = createTestMetaStoreFolder();
 		// the root is not there at the start
 		assertFalse(SimpleLinuxMetaStoreUtil.isMetaStoreRoot(parent));
 		JSONObject jsonObject = new JSONObject();
 		assertTrue(SimpleLinuxMetaStoreUtil.createMetaStoreRoot(parent, jsonObject));
 		String folder = "folder";
 		assertTrue(SimpleLinuxMetaStoreUtil.createMetaFolder(parent, folder));
-		URI uri = SimpleLinuxMetaStoreUtil.retrieveMetaFolderURI(parent, folder);
-		assertTrue(SimpleLinuxMetaStoreUtil.createMetaFile(uri, "name1", jsonObject));
-		assertTrue(SimpleLinuxMetaStoreUtil.createMetaFile(uri, "name2", jsonObject));
+		File file = SimpleLinuxMetaStoreUtil.retrieveMetaFolder(parent, folder);
+		assertTrue(SimpleLinuxMetaStoreUtil.createMetaFile(file, "name1", jsonObject));
+		assertTrue(SimpleLinuxMetaStoreUtil.createMetaFile(file, "name2", jsonObject));
 		// the meta store is not empty, delete fails
 		SimpleLinuxMetaStoreUtil.deleteMetaStoreRoot(parent);
 	}
@@ -150,8 +142,8 @@ public class SimpleLinuxMetaStoreUtilTest {
 	@Test
 	public void testEncodedProjectId() {
 		String userName = "anthony";
-		String workspaceName = "workspace1";
-		String projectName = "project1";
+		String workspaceName = "Workspace One";
+		String projectName = "Project One";
 		String encoded = SimpleLinuxMetaStoreUtil.encodeProjectId(userName, workspaceName, projectName);
 		assertTrue(userName.equals(SimpleLinuxMetaStoreUtil.decodeUserNameFromProjectId(encoded)));
 		assertTrue(workspaceName.equals(SimpleLinuxMetaStoreUtil.decodeWorkspaceNameFromProjectId(encoded)));
@@ -168,7 +160,7 @@ public class SimpleLinuxMetaStoreUtilTest {
 	@Test
 	public void testEncodedWorkspaceId() {
 		String userName = "anthony";
-		String workspaceName = "workspace1";
+		String workspaceName = "Workspace One";
 		String encoded = SimpleLinuxMetaStoreUtil.encodeWorkspaceId(userName, workspaceName);
 		assertTrue(userName.equals(SimpleLinuxMetaStoreUtil.decodeUserNameFromWorkspaceId(encoded)));
 		assertTrue(workspaceName.equals(SimpleLinuxMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(encoded)));
@@ -223,14 +215,15 @@ public class SimpleLinuxMetaStoreUtilTest {
 	public void testListMetaFiles() throws JSONException {
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put("int", 1);
-		URI parent = createTestMetaStoreFolder();
+		File parent = createTestMetaStoreFolder();
 
 		assertTrue(SimpleLinuxMetaStoreUtil.createMetaStoreRoot(parent, jsonObject));
+		File metaStoreRootFolder = SimpleLinuxMetaStoreUtil.retrieveMetaFolder(parent, SimpleLinuxMetaStoreUtil.ROOT);
 
 		// create the folder
 		String name1 = "name1";
-		assertTrue(SimpleLinuxMetaStoreUtil.createMetaFolder(parent, name1));
-		URI folder1 = SimpleLinuxMetaStoreUtil.retrieveMetaFolderURI(parent, name1);
+		assertTrue(SimpleLinuxMetaStoreUtil.createMetaFolder(metaStoreRootFolder, name1));
+		File folder1 = SimpleLinuxMetaStoreUtil.retrieveMetaFolder(metaStoreRootFolder, name1);
 
 		// the meta file is not there at the start
 		assertFalse(SimpleLinuxMetaStoreUtil.isMetaFile(folder1, name1));
@@ -243,8 +236,8 @@ public class SimpleLinuxMetaStoreUtilTest {
 
 		// create the folder
 		String name2 = "name2";
-		assertTrue(SimpleLinuxMetaStoreUtil.createMetaFolder(parent, name2));
-		URI folder2 = SimpleLinuxMetaStoreUtil.retrieveMetaFolderURI(parent, name2);
+		assertTrue(SimpleLinuxMetaStoreUtil.createMetaFolder(metaStoreRootFolder, name2));
+		File folder2 = SimpleLinuxMetaStoreUtil.retrieveMetaFolder(metaStoreRootFolder, name2);
 
 		// the meta file is not there at the start
 		assertFalse(SimpleLinuxMetaStoreUtil.isMetaFile(folder2, name2));
@@ -256,7 +249,7 @@ public class SimpleLinuxMetaStoreUtilTest {
 		assertTrue(SimpleLinuxMetaStoreUtil.isMetaFile(folder2, name2));
 
 		// get the list of files
-		List<String> savedFiles = SimpleLinuxMetaStoreUtil.listMetaFiles(parent);
+		List<String> savedFiles = SimpleLinuxMetaStoreUtil.listMetaFiles(metaStoreRootFolder);
 		assertEquals(savedFiles.size(), 2);
 		assertTrue(savedFiles.contains(name1));
 		assertTrue(savedFiles.contains(name2));
@@ -268,7 +261,7 @@ public class SimpleLinuxMetaStoreUtilTest {
 		assertTrue(SimpleLinuxMetaStoreUtil.deleteMetaFile(folder2, name2));
 		assertTrue(SimpleLinuxMetaStoreUtil.deleteMetaFolder(folder2));
 
-		// delete the folder
+		// delete the root folder
 		assertTrue(SimpleLinuxMetaStoreUtil.deleteMetaStoreRoot(parent));
 	}
 
@@ -283,7 +276,7 @@ public class SimpleLinuxMetaStoreUtilTest {
 		jsonArray.put("two");
 		jsonArray.put("three");
 		jsonObject.put("Array", jsonArray);
-		URI parent = createTestMetaStoreFolder();
+		File parent = createTestMetaStoreFolder();
 		String name = "test";
 		// the folder is not there at the start
 		assertFalse("MetaFile already exists", SimpleLinuxMetaStoreUtil.isMetaFile(parent, name));
@@ -292,7 +285,7 @@ public class SimpleLinuxMetaStoreUtilTest {
 		// the folder is now there
 		assertTrue(SimpleLinuxMetaStoreUtil.isMetaFile(parent, name));
 		// retrieve the JSON
-		JSONObject jsonObjectNew = SimpleLinuxMetaStoreUtil.retrieveMetaFile(parent, name);
+		JSONObject jsonObjectNew = SimpleLinuxMetaStoreUtil.retrieveMetaFileJSON(parent, name);
 		assertNotNull(jsonObjectNew);
 		assertTrue(jsonObjectNew.getBoolean("boolean"));
 		assertEquals(jsonObjectNew.getInt("int"), 1);
@@ -313,7 +306,7 @@ public class SimpleLinuxMetaStoreUtilTest {
 		jsonArray.put("two");
 		jsonArray.put("three");
 		jsonObject.put("Array", jsonArray);
-		URI parent = createTestMetaStoreFolder();
+		File parent = createTestMetaStoreFolder();
 		String name = "test";
 		// the folder is not there at the start
 		assertFalse("MetaFile already exists", SimpleLinuxMetaStoreUtil.isMetaFile(parent, name));
@@ -327,7 +320,7 @@ public class SimpleLinuxMetaStoreUtilTest {
 		// update with new JSON.
 		assertTrue(SimpleLinuxMetaStoreUtil.updateMetaFile(parent, name, jsonObject));
 		// retrieve the JSON
-		JSONObject jsonObjectNew = SimpleLinuxMetaStoreUtil.retrieveMetaFile(parent, name);
+		JSONObject jsonObjectNew = SimpleLinuxMetaStoreUtil.retrieveMetaFileJSON(parent, name);
 		assertNotNull(jsonObjectNew);
 		assertFalse(jsonObjectNew.getBoolean("boolean"));
 		assertEquals(jsonObjectNew.getInt("int"), 100);
