@@ -40,4 +40,10 @@ public class WorkspaceInfo extends MetadataInfo {
 		}
 	}
 
+
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + "(Id=" + getUniqueId() + ", fullName=" + getFullName() + ")";
+		
+	}
 }

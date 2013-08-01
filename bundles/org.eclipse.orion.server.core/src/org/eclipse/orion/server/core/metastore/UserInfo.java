@@ -75,4 +75,9 @@ public class UserInfo extends MetadataInfo {
 		}
 	}
 
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + "(Id=" + getUniqueId() + ", fullName=" + getFullName() + ", userName=" + getUserName() + ")";
+		
+	}
 }

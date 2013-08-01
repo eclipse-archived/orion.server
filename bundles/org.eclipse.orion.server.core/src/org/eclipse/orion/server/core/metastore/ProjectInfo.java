@@ -12,6 +12,7 @@ package org.eclipse.orion.server.core.metastore;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
@@ -56,5 +57,11 @@ public class ProjectInfo extends MetadataInfo {
 				throw new RuntimeException(e);
 			}
 		}
+	}
+
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + "(Id=" + getUniqueId() + ", fullName=" + getFullName() + ", contentLocation=" + getContentLocation() + ")";
+		
 	}
 }
