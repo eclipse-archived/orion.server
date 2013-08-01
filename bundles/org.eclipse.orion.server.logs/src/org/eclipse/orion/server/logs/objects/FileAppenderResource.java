@@ -32,7 +32,7 @@ public class FileAppenderResource {
 	public static final String RESOURCE = "fileAppender"; //$NON-NLS-1$
 	public static final String TYPE = "FileAppender"; //$NON-NLS-1$
 
-	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
+	protected static ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
 	{
 		Property[] defaultProperties = new Property[] { //
 				new Property(ProtocolConstants.KEY_NAME), //
@@ -53,9 +53,8 @@ public class FileAppenderResource {
 	protected boolean isStarted;
 
 	protected URI createUriWithPath(final IPath path) throws URISyntaxException {
-		return new URI(baseLocation.getScheme(), baseLocation.getUserInfo(),
-				baseLocation.getHost(), baseLocation.getPort(), path.toString(),
-				baseLocation.getQuery(), baseLocation.getFragment());
+		return new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(),
+				baseLocation.getPort(), path.toString(), baseLocation.getQuery(), baseLocation.getFragment());
 	}
 
 	public JSONObject toJSON() throws URISyntaxException {
@@ -104,15 +103,14 @@ public class FileAppenderResource {
 
 	@PropertyDescription(name = ProtocolConstants.KEY_LOCATION)
 	public URI getLocation() throws URISyntaxException {
-		IPath path = new Path(LogServlet.LOG_URI).append(FileAppenderResource.RESOURCE).append(
-				getName());
+		IPath path = new Path(LogServlet.LOG_URI).append(FileAppenderResource.RESOURCE).append(getName());
 		return createUriWithPath(path);
 	}
 
 	@PropertyDescription(name = LogConstants.KEY_APPENDER_DOWNLOAD_LOCATION)
 	public URI getDownloadLocation() throws URISyntaxException {
-		IPath path = new Path(LogServlet.LOG_URI).append(FileAppenderResource.RESOURCE)
-				.append(getName()).append(LogConstants.KEY_APPENDER_DOWNLOAD);
+		IPath path = new Path(LogServlet.LOG_URI).append(FileAppenderResource.RESOURCE).append(getName())
+				.append(LogConstants.KEY_APPENDER_DOWNLOAD);
 		return createUriWithPath(path);
 	}
 }
