@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets;
 
+import java.io.File;
 import java.net.URI;
 import java.util.*;
 import org.eclipse.core.filesystem.EFS;
@@ -17,8 +18,8 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
+import org.eclipse.orion.internal.server.core.metastore.SimpleLinuxMetaStore;
 import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
-import org.eclipse.orion.internal.server.servlets.workspace.CompatibilityMetaStore;
 import org.eclipse.orion.internal.server.servlets.workspace.ProjectParentDecorator;
 import org.eclipse.orion.internal.server.servlets.xfer.TransferResourceDecorator;
 import org.eclipse.orion.server.core.OrionConfiguration;
@@ -114,7 +115,8 @@ public class Activator implements BundleActivator {
 		//adds parent links to representations
 		parentDecoratorRegistration = bundleContext.registerService(IWebResourceDecorator.class, new ProjectParentDecorator(), null);
 		//legacy metadata store implementation
-		compatibleMetastoreRegistration = bundleContext.registerService(IMetaStore.class, new CompatibilityMetaStore(), null);
+		//compatibleMetastoreRegistration = bundleContext.registerService(IMetaStore.class, new CompatibilityMetaStore(), null);
+		compatibleMetastoreRegistration = bundleContext.registerService(IMetaStore.class, new SimpleLinuxMetaStore(new File("/workspace/foo")), null);
 	}
 
 	public void start(BundleContext context) throws Exception {

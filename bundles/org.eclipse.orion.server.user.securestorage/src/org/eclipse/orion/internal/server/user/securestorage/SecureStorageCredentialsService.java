@@ -14,12 +14,15 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 import java.util.regex.Pattern;
+
 import javax.crypto.spec.PBEKeySpec;
+
 import org.eclipse.core.runtime.*;
 import org.eclipse.equinox.security.storage.*;
 import org.eclipse.equinox.security.storage.provider.IProviderHints;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.resources.Base64Counter;
 import org.eclipse.orion.server.useradmin.*;
 import org.eclipse.orion.server.useradmin.servlets.UserServlet;
@@ -62,7 +65,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 		initStorage();
 	}
 
-	private String nextUserId() {
+	private String nextUserId_delete() {
 		synchronized (userCounter) {
 			String candidate;
 			do {
@@ -93,6 +96,14 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 		// TODO: see bug 335699, the user storage should not configure authorization rules
 		// it should add Admin role, which will be used during authorization process
 		try {
+			UserInfo userInfo = OrionConfiguration.getMetaStore().readUser(admin.getUid());
+			if (userInfo == null) {
+				// initialize the admin account in the IMetaStore
+				userInfo = new UserInfo();
+				userInfo.setUserName(admin.getUid());
+				userInfo.setFullName("Administrative User");
+				OrionConfiguration.getMetaStore().createUser(userInfo);
+			}
 			AuthorizationService.addUserRight(admin.getUid(), UserServlet.USERS_URI);
 			AuthorizationService.addUserRight(admin.getUid(), UserServlet.USERS_URI + "/*"); //$NON-NLS-1$
 		} catch (CoreException e) {
@@ -299,7 +310,11 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 			if (node != null)
 				return null;
 
-			String uid = user.getUid() == null ? nextUserId() : user.getUid();
+			//String uid = user.getUid() == null ? nextUserId() : user.getUid();
+			String uid = user.getUid();
+			if (uid == null) {
+				uid = user.getLogin();
+			}
 
 			return internalCreateOrUpdateUser(storage.node(USERS + '/' + uid), user);
 
