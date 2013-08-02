@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,7 +11,7 @@
 package org.eclipse.orion.server.git;
 
 /**
- * Constants used by Git.
+ * Constants used by Git. 
  */
 public class GitConstants {
 
@@ -184,4 +184,10 @@ public class GitConstants {
 	public static final String KEY_REVIEW_REQ_AUTHOR_NAME = "ReviewReqAuthorName"; //$NON-NLS-1$
 
 	public static final String KEY_REVIEW_REQ_MESSAGE = "ReviewMessage"; //$NON-NLS-1$
+
+	public static final String KEY_BLAME = "BlameLocation";
+
+	public static final String KEY_START_RANGE = "Start";
+
+	public static final String KEY_END_RANGE = "End";
 }

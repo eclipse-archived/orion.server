@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -59,6 +59,8 @@ public abstract class BaseToCloneConverter {
 	public static final BaseToCloneConverter DIFF = REMOTE;
 
 	public static final BaseToCloneConverter TAG = REMOTE;
+
+	public static final BaseToCloneConverter BLAME = REMOTE;
 
 	public static final BaseToCloneConverter REMOTE_BRANCH = new BaseToCloneConverter() {
 		@Override

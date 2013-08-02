@@ -95,6 +95,20 @@
          unpack="false"/>
 
    <plugin
+         id="org.slf4j.log4j"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.slf4j.jul"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
          id="org.json"
          download-size="0"
          install-size="0"
@@ -215,6 +229,13 @@
 
    <plugin
          id="javaewah"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.orion.server.logs"
          download-size="0"
          install-size="0"
          version="0.0.0"
