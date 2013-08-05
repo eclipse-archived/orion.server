@@ -43,6 +43,7 @@ import org.junit.runners.Suite.SuiteClasses;
 		GitCheckoutTest.class, //
 		GitBranchTest.class, //
 		GitCherryPickTest.class, //
+		GitRevertTest.class, //
 		GitPullTest.class, //
 		GitApplyPatchTest.class})
 public class AllGitTests {

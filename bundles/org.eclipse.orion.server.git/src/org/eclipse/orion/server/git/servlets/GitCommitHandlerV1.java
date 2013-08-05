@@ -274,6 +274,11 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 				return cherryPick(request, response, db, commitToCherryPick);
 			}
 
+			String commitToRevert = requestObject.optString(GitConstants.KEY_REVERT, null);
+			if (commitToRevert != null) {
+				return revert(request, response, db, commitToRevert);
+			}
+
 			String newCommit = requestObject.optString(GitConstants.KEY_COMMIT_NEW, null);
 			if (newCommit != null)
 				return identifyNewCommitResource(request, response, db, newCommit);
@@ -451,6 +456,40 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when cherry-picking.", e));
 		} catch (GitAPIException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when cherry-picking.", e));
+		} finally {
+			revWalk.release();
+		}
+	}
+
+	private boolean revert(HttpServletRequest request, HttpServletResponse response, Repository db, String commitToRevert) throws ServletException, JSONException {
+		RevWalk revWalk = new RevWalk(db);
+		try {
+
+			Ref headRef = db.getRef(Constants.HEAD);
+			if (headRef == null)
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when reverting.", null));
+
+			ObjectId objectId = db.resolve(commitToRevert);
+			Git git = new Git(db);
+
+			RevertCommand revertCommand = git.revert().include(objectId);
+			RevCommit revertedCommit = revertCommand.call();
+
+			if (revertedCommit == null) {
+				JSONObject result = new JSONObject();
+				result.put(GitConstants.KEY_RESULT, "FAILURE"); //$NON-NLS-1$
+				OrionServlet.writeJSONResponse(request, response, result);
+				return true;
+			}
+
+			JSONObject result = new JSONObject();
+			result.put(GitConstants.KEY_RESULT, "OK"); //$NON-NLS-1$
+			OrionServlet.writeJSONResponse(request, response, result);
+			return true;
+		} catch (IOException e) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when reverting.", e));
+		} catch (GitAPIException e) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when reverting.", e));
 		} finally {
 			revWalk.release();
 		}
