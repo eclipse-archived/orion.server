@@ -198,8 +198,12 @@ public class PreferencesServlet extends OrionServlet {
 					resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
 					return;
 				}
-				//clear existing values matching prefix
-				changed |= removeMatchingProperties(info, prefix.toString());
+				//operations should not be removed by PUT
+				if (!prefix.equals("operations")) {
+					
+					//clear existing values matching prefix
+					changed |= removeMatchingProperties(info, prefix.toString());
+				}
 				for (Iterator<String> it = newNode.keys(); it.hasNext();) {
 					key = it.next();
 					String newValue = newNode.getString(key);
