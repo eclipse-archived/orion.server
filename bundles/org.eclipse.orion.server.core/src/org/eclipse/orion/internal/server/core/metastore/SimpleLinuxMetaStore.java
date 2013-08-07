@@ -90,11 +90,13 @@ public class SimpleLinuxMetaStore implements IMetaStore {
 		if (!SimpleLinuxMetaStoreUtil.isNameValid(userInfo.getUserName())) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleLinuxMetaStore.createUser: userName is not valid: " + userInfo.getUserName(), null));
 		}
+		if (userInfo.getUniqueId() == null) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleLinuxMetaStore.createUser: could not create user: " + userInfo.getUserName() + ", did not provide a userId", null));
+		}
 		File userMetaFolder = SimpleLinuxMetaStoreUtil.retrieveMetaFolder(metaStoreRoot, userInfo.getUserName());
 		if (SimpleLinuxMetaStoreUtil.isMetaFolder(userMetaFolder)) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleLinuxMetaStore.createUser: could not create user: " + userInfo.getUserName() + ", user already exists", null));
 		}
-		userInfo.setUniqueId(SimpleLinuxMetaStoreUtil.encodeUserId(userInfo.getUserName()));
 		JSONObject jsonObject = new JSONObject();
 		try {
 			jsonObject.put(NAME, VERSION);
@@ -298,7 +300,7 @@ public class SimpleLinuxMetaStore implements IMetaStore {
 	}
 
 	public UserInfo readUser(String userId) throws CoreException {
-		String userName = SimpleLinuxMetaStoreUtil.decodeUserNameFromUserId(userId);
+		String userName = findUserNameFromUserId(userId);
 		if (userName == null) {
 			return null;
 		}
@@ -327,6 +329,22 @@ public class SimpleLinuxMetaStore implements IMetaStore {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleLinuxMetaStore.readUser: could not read user " + userName, e));
 		}
 		return userInfo;
+	}
+
+	private String findUserNameFromUserId(String userId) {
+		List<String> userNames = SimpleLinuxMetaStoreUtil.listMetaFiles(metaStoreRoot);
+		for (String userName : userNames) {
+			File userMetaFolder = SimpleLinuxMetaStoreUtil.retrieveMetaFolder(metaStoreRoot, userName);
+			JSONObject jsonObject = SimpleLinuxMetaStoreUtil.retrieveMetaFileJSON(userMetaFolder, USER);
+			try {
+				String uniqueId = jsonObject.getString("UniqueId");
+				if (uniqueId != null && uniqueId.equals(userId)) {
+					return userName;
+				}
+			} catch (JSONException e) {
+			}
+		}
+		return null;
 	}
 
 	public WorkspaceInfo readWorkspace(String workspaceId) throws CoreException {

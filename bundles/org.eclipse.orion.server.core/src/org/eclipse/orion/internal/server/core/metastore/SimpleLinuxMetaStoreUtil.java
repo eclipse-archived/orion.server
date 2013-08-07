@@ -15,14 +15,12 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.eclipse.orion.server.core.resources.Base64;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -33,10 +31,9 @@ public class SimpleLinuxMetaStoreUtil {
 	private static final int MINIMUM_LENGTH = 1;
 	private static final int MAXIMUM_LENGTH = 31;
 	public static final String ROOT = "metastore";
-	public static final String SEPARATOR = "/";
+	public static final String SEPARATOR = ":";
 	public static final String METAFILE_EXTENSION = ".json";
-	public static final String UTF8 = "UTF-8";
-
+	public static final String UTF8_delete = "UTF-8";
 
 	public static boolean createMetaFile(File parent, String name, JSONObject jsonObject) {
 		try {
@@ -88,73 +85,34 @@ public class SimpleLinuxMetaStoreUtil {
 		return createMetaFile(metaStoreRootFolder, ROOT, jsonObject);
 	}
 
-	public static String decodeProjectNameFromProjectId(String projectId) {
-		String decoded = null;
-		try {
-			decoded = URLDecoder.decode(projectId.replace("%20", "+"), UTF8);
-		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException("Meta File Error, could not decode:" + projectId);
-		}
-		if (decoded.indexOf(SEPARATOR) == -1) {
-			return null;
-		}
-		return decoded.substring(decoded.lastIndexOf(SEPARATOR) + 1);
+	public static String decodeProjectNameFromProjectId(String workspaceId) {
+		byte[] decoded = Base64.decode(workspaceId.getBytes());
+		String decodedString = new String(decoded);
+		return decodedString.substring(decodedString.lastIndexOf(':') + 1);
 	}
 
-	public static String decodeUserNameFromProjectId(String projectId) {
-		String decoded = null;
-		try {
-			decoded = URLDecoder.decode(projectId.replace("%20", "+"), UTF8);
-		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException("Meta File Error, could not decode:" + projectId);
-		}
-		if (decoded.indexOf(SEPARATOR) == -1) {
-			return null;
-		}
-		return decoded.substring(0, decoded.indexOf(SEPARATOR));
-	}
-
-	public static String decodeUserNameFromUserId(String userId) {
-		return userId;
+	public static String decodeUserNameFromProjectId(String workspaceId) {
+		byte[] decoded = Base64.decode(workspaceId.getBytes());
+		String decodedString = new String(decoded);
+		return decodedString.substring(0, decodedString.indexOf(':'));
 	}
 
 	public static String decodeUserNameFromWorkspaceId(String workspaceId) {
-		String decoded = null;
-		try {
-			decoded = URLDecoder.decode(workspaceId.replace("%20", "+"), UTF8);
-		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException("Meta File Error, could not decode:" + workspaceId);
-		}
-		if (decoded.indexOf(SEPARATOR) == -1) {
-			return null;
-		}
-		return decoded.substring(0, decoded.indexOf(SEPARATOR));
+		byte[] decoded = Base64.decode(workspaceId.getBytes());
+		String decodedString = new String(decoded);
+		return decodedString.substring(0, decodedString.indexOf(':'));
 	}
 
-	public static String decodeWorkspaceNameFromProjectId(String projectId) {
-		String decoded = null;
-		try {
-			decoded = URLDecoder.decode(projectId.replace("%20", "+"), UTF8);
-		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException("Meta File Error, could not decode:" + projectId);
-		}
-		if (decoded.indexOf(SEPARATOR) == -1 || decoded.lastIndexOf(SEPARATOR) == decoded.indexOf(SEPARATOR)) {
-			return null;
-		}
-		return decoded.substring(decoded.indexOf(SEPARATOR) + 1, decoded.lastIndexOf(SEPARATOR));
+	public static String decodeWorkspaceNameFromProjectId(String workspaceId) {
+		byte[] decoded = Base64.decode(workspaceId.getBytes());
+		String decodedString = new String(decoded);
+		return decodedString.substring(decodedString.indexOf(':') + 1, decodedString.lastIndexOf(':'));
 	}
 
 	public static String decodeWorkspaceNameFromWorkspaceId(String workspaceId) {
-		String decoded = null;
-		try {
-			decoded = URLDecoder.decode(workspaceId.replace("%20", "+"), UTF8);
-		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException("Meta File Error, could not decode:" + workspaceId);
-		}
-		if (decoded.indexOf(SEPARATOR) == -1) {
-			return null;
-		}
-		return decoded.substring(decoded.indexOf(SEPARATOR) + 1);
+		byte[] decoded = Base64.decode(workspaceId.getBytes());
+		String decodedString = new String(decoded);
+		return decodedString.substring(decodedString.indexOf(':') + 1);
 	}
 
 	public static boolean deleteMetaFile(File parent, String name) {
@@ -187,24 +145,14 @@ public class SimpleLinuxMetaStoreUtil {
 
 	public static String encodeProjectId(String userName, String workspaceName, String projectName) {
 		String id = userName + SEPARATOR + workspaceName + SEPARATOR + projectName;
-		try {
-			return URLEncoder.encode(id, UTF8).replace("+", "%20");
-		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException("Meta File Error, could not encode:" + id);
-		}
-	}
-
-	public static String encodeUserId(String userName) {
-		return userName;
+		byte[] encoded = Base64.encode(id.getBytes());
+		return new String(encoded);
 	}
 
 	public static String encodeWorkspaceId(String userName, String workspaceName) {
 		String id = userName + SEPARATOR + workspaceName;
-		try {
-			return URLEncoder.encode(id, UTF8).replace("+", "%20");
-		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException("Meta File Error, could not encode:" + id);
-		}
+		byte[] encoded = Base64.encode(id.getBytes());
+		return new String(encoded);
 	}
 
 	public static boolean isMetaFile(File parent, String name) {
@@ -327,7 +275,7 @@ public class SimpleLinuxMetaStoreUtil {
 			if (!isMetaFile(parent, name)) {
 				throw new RuntimeException("Meta File Error, cannot delete, does not exist.");
 			}
-			File savedFile = retrieveMetaFile(parent, name); 
+			File savedFile = retrieveMetaFile(parent, name);
 
 			FileWriter fileWriter = new FileWriter(savedFile);
 			fileWriter.write(jsonObject.toString());
