@@ -331,9 +331,9 @@ public abstract class GitTest extends FileSystemTest {
 
 		//path format is /file/{workspaceId}/{projectName}[/path]
 		final IMetaStore metaStore = OrionConfiguration.getMetaStore();
-		WorkspaceInfo workspace = metaStore.readWorkspace(path.segment(1));
+		WorkspaceInfo workspace = metaStore.readWorkspace(testUserLogin, path.segment(1));
 		assertNotNull(workspace);
-		ProjectInfo wp = metaStore.readProject(workspace.getUniqueId(), path.segment(2));
+		ProjectInfo wp = metaStore.readProject(workspace.getUserId(), workspace.getUniqueId(), path.segment(2));
 		assertNotNull(wp);
 		IFileStore fsStore = getProjectStore(wp, "test");
 		fsStore = fsStore.getFileStore(path.removeFirstSegments(3));
@@ -1518,7 +1518,7 @@ public abstract class GitTest extends FileSystemTest {
 	 */
 	protected IPath[] createTestProjects(URI workspaceLocation) throws JSONException, IOException, SAXException, CoreException {
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(workspaceId);
+		WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(testUserLogin, workspaceId);
 		assertNotNull(workspace);
 		String name = workspace.getFullName();
 		JSONObject projectTop = createProjectOrLink(workspaceLocation, name + "-top", null);
@@ -1538,7 +1538,7 @@ public abstract class GitTest extends FileSystemTest {
 	 */
 	protected IPath[][] createTestClonePairs(URI workspaceLocation) throws IOException, SAXException, JSONException, CoreException {
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(workspaceId);
+		WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(testUserLogin, workspaceId);
 		assertNotNull(workspace);
 		String name = workspace.getFullName();
 		JSONObject projectTop1 = createProjectOrLink(workspaceLocation, name + "-top1", null);

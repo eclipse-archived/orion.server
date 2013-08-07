@@ -206,7 +206,7 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		if (!"git".equals(scm)) //$NON-NLS-1$
 			return;
 		try {
-			ProjectInfo project = getProjectForLocation(representation.getString(ProtocolConstants.KEY_LOCATION));
+			ProjectInfo project = getProjectForLocation(request.getRemoteUser(), representation.getString(ProtocolConstants.KEY_LOCATION));
 			if (project == null)
 				return;
 			IFileStore store = project.getProjectStore();
@@ -232,9 +232,9 @@ public class GitFileDecorator implements IWebResourceDecorator {
 	 * Returns the project for the given metadata location, or <code>null</code>.
 	 * @throws CoreException 
 	 */
-	private ProjectInfo getProjectForLocation(String location) throws CoreException {
+	private ProjectInfo getProjectForLocation(String userId, String location) throws CoreException {
 		//location is URI of the form protocol:/workspace/workspaceId/project/projectName
 		IMetaStore store = OrionConfiguration.getMetaStore();
-		return WorkspaceResourceHandler.projectForMetadataLocation(store, location);
+		return WorkspaceResourceHandler.projectForMetadataLocation(userId, store, location);
 	}
 }

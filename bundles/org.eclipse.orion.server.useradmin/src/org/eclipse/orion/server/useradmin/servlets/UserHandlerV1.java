@@ -399,9 +399,9 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		// Delete filesystem contents for all of this user's projects
 		IMetaStore store = OrionConfiguration.getMetaStore();
 		for (String workspaceId : user.getWorkspaceIds()) {
-			WorkspaceInfo workspace = store.readWorkspace(workspaceId);
+			WorkspaceInfo workspace = store.readWorkspace(user.getUniqueId(), workspaceId);
 			for (String projectName : workspace.getProjectNames()) {
-				ProjectInfo project = store.readProject(workspace.getUniqueId(), projectName);
+				ProjectInfo project = store.readProject(user.getUniqueId(), workspace.getUniqueId(), projectName);
 				project.getProjectStore().delete(EFS.NONE, null);
 			}
 		}

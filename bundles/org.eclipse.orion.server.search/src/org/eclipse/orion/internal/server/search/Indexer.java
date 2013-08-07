@@ -10,24 +10,44 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.search;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
-import org.apache.solr.client.solrj.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.CommonParams;
-import org.eclipse.core.filesystem.*;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileInfo;
+import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
-import org.eclipse.orion.server.core.metastore.*;
+import org.eclipse.orion.server.core.metastore.IMetaStore;
+import org.eclipse.orion.server.core.metastore.ProjectInfo;
+import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.osgi.util.NLS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -126,7 +146,7 @@ public class Indexer extends Job {
 			List<String> workspaceIds = user.getWorkspaceIds();
 			SubMonitor progress = SubMonitor.convert(monitor, workspaceIds.size());
 			for (String workspaceId : workspaceIds) {
-				WorkspaceInfo workspace = store.readWorkspace(workspaceId);
+				WorkspaceInfo workspace = store.readWorkspace(userId, workspaceId);
 				indexed += indexWorkspace(user, workspace, progress.newChild(1), documents);
 			}
 		} catch (CoreException e) {
@@ -143,7 +163,7 @@ public class Indexer extends Job {
 		IMetaStore store = OrionConfiguration.getMetaStore();
 		for (String projectName : workspace.getProjectNames()) {
 			try {
-				indexed += indexProject(user, workspace, store.readProject(workspace.getUniqueId(), projectName), monitor, documents);
+				indexed += indexProject(user, workspace, store.readProject(workspace.getUserId(), workspace.getUniqueId(), projectName), monitor, documents);
 			} catch (CoreException e) {
 				handleIndexingFailure(e, null);
 				//continue to next project

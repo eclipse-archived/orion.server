@@ -26,16 +26,16 @@ public class SimpleMetaStore implements IMetaStore {
 	//				- projectA/
 	//					- 
 
-	public void createProject(String workspaceId, ProjectInfo info) throws CoreException {
+	public void createProject(ProjectInfo info) throws CoreException {
 	}
 
 	public void createUser(UserInfo info) throws CoreException {
 	}
 
-	public void createWorkspace(String userId, WorkspaceInfo info) throws CoreException {
+	public void createWorkspace(WorkspaceInfo info) throws CoreException {
 	}
 
-	public void deleteProject(String workspaceId, String projectName) throws CoreException {
+	public void deleteProject(String userId, String workspaceId, String projectName) throws CoreException {
 	}
 
 	public void deleteUser(String userId) throws CoreException {
@@ -48,11 +48,11 @@ public class SimpleMetaStore implements IMetaStore {
 		return null;
 	}
 
-	public ProjectInfo readProject(String projectId) throws CoreException {
+	public ProjectInfo readProject(ProjectInfo project) throws CoreException {
 		return null;
 	}
 
-	public ProjectInfo readProject(String workspaceId, String projectName) throws CoreException {
+	public ProjectInfo readProject(String userId, String workspaceId, String projectName) throws CoreException {
 		return null;
 	}
 
@@ -60,7 +60,7 @@ public class SimpleMetaStore implements IMetaStore {
 		return null;
 	}
 
-	public WorkspaceInfo readWorkspace(String workspaceId) throws CoreException {
+	public WorkspaceInfo readWorkspace(String userId, String workspaceId) throws CoreException {
 		return null;
 	}
 

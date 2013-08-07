@@ -99,7 +99,7 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 	 * Returns <code>null</code> if there was no such project corresponding to the given location.
 	 * @throws CoreException If there was an error reading the project metadata
 	 */
-	public static ProjectInfo projectForMetadataLocation(IMetaStore store, String sourceLocation) throws CoreException {
+	public static ProjectInfo projectForMetadataLocation(String userId, IMetaStore store, String sourceLocation) throws CoreException {
 		if (sourceLocation == null)
 			return null;
 		URI sourceURI;
@@ -118,7 +118,7 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 			return null;
 		String workspaceId = path.segment(1);
 		String projectName = path.segment(3);
-		return store.readProject(workspaceId, projectName);
+		return store.readProject(userId, workspaceId, projectName);
 	}
 
 	public static void removeProject(String user, WorkspaceInfo workspace, ProjectInfo project) throws CoreException {
@@ -133,7 +133,7 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 			projectStore.delete(EFS.NONE, null);
 		}
 
-		OrionConfiguration.getMetaStore().deleteProject(workspace.getUniqueId(), project.getFullName());
+		OrionConfiguration.getMetaStore().deleteProject(workspace.getUserId(), workspace.getUniqueId(), project.getFullName());
 	}
 
 	/**
@@ -155,7 +155,7 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 		for (String projectName : workspace.getProjectNames()) {
 			try {
-				ProjectInfo project = metaStore.readProject(workspace.getUniqueId(), projectName);
+				ProjectInfo project = metaStore.readProject(workspace.getUserId(), workspace.getUniqueId(), projectName);
 				//augment project objects with their location
 				JSONObject projectObject = new JSONObject();
 				projectObject.put(ProtocolConstants.KEY_ID, project.getUniqueId());
@@ -279,6 +279,8 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		if (id != null)
 			project.setUniqueId(id);
 		project.setFullName(name);
+		project.setWorkspaceId(workspace.getUniqueId());
+		project.setUserId(workspace.getUserId());
 		String content = toAdd.optString(ProtocolConstants.KEY_CONTENT_LOCATION, null);
 		if (!isAllowedLinkDestination(content, request.getRemoteUser())) {
 			String msg = NLS.bind("Cannot link to server path {0}. Use the orion.file.allowedPaths property to specify server locations where content can be linked.", content);
@@ -287,7 +289,7 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		}
 		try {
 			//project creation will assign unique project id
-			getMetaStore().createProject(workspace.getUniqueId(), project);
+			getMetaStore().createProject(project);
 		} catch (CoreException e) {
 			String msg = "Error persisting project state";
 			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
@@ -301,7 +303,7 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 				return null;
 			//delete the project so we don't end up with a project in a bad location
 			try {
-				getMetaStore().deleteProject(workspace.getUniqueId(), project.getFullName());
+				getMetaStore().deleteProject(workspace.getUserId(), workspace.getUniqueId(), project.getFullName());
 			} catch (CoreException e1) {
 				//swallow secondary error
 				LogHelper.log(e1);
@@ -334,7 +336,7 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		String sourceLocation = data.optString(ProtocolConstants.HEADER_LOCATION);
 		ProjectInfo sourceProject;
 		try {
-			sourceProject = projectForMetadataLocation(getMetaStore(), toOrionLocation(request, sourceLocation));
+			sourceProject = projectForMetadataLocation(request.getRemoteUser(), getMetaStore(), toOrionLocation(request, sourceLocation));
 		} catch (CoreException e1) {
 			handleError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, NLS.bind("Error accessing project: {0}", sourceLocation));
 			return true;
@@ -461,7 +463,7 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		String workspaceId = path.segment(0);
 		String projectName = path.segment(2);
 		try {
-			ProjectInfo project = getMetaStore().readProject(workspaceId, projectName);
+			ProjectInfo project = getMetaStore().readProject(request.getRemoteUser(), workspaceId, projectName);
 			if (project == null) {
 				//nothing to do if project does not exist
 				return true;
@@ -583,7 +585,7 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 			return false;
 		}
 		try {
-			if (getMetaStore().readProject(workspace.getUniqueId(), name) != null) {
+			if (getMetaStore().readProject(request.getRemoteUser(), workspace.getUniqueId(), name) != null) {
 				statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Duplicate project name: {0}", name), null));
 				return false;
 			}

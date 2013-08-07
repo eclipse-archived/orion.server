@@ -218,16 +218,17 @@ public class GitUtils {
 	/**
 	 * Returns the existing WebProject corresponding to the provided path,
 	 * or <code>null</code> if no such project exists.
+	 * @param the userId owning the web project.
 	 * @param path path in the form /file/{workspaceId}/{projectName}/[filePath]
 	 * @return the web project, or <code>null</code>
 	 */
-	public static ProjectInfo projectFromPath(IPath path) {
+	public static ProjectInfo projectFromPath(String userId, IPath path) {
 		if (path == null || path.segmentCount() < 3)
 			return null;
 		String workspaceId = path.segment(1);
 		String projectName = path.segment(2);
 		try {
-			return OrionConfiguration.getMetaStore().readProject(workspaceId, projectName);
+			return OrionConfiguration.getMetaStore().readProject(userId, workspaceId, projectName);
 		} catch (CoreException e) {
 			return null;
 		}

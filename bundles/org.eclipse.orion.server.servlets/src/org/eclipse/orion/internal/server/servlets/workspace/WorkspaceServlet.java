@@ -63,13 +63,13 @@ public class WorkspaceServlet extends OrionServlet {
 		int segmentCount = path.segmentCount();
 		try {
 			if (segmentCount > 0 && segmentCount < 3) {
-				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(0));
+				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(req.getRemoteUser(), path.segment(0));
 				if (workspaceResourceHandler.handleRequest(req, resp, workspace))
 					return;
 			} else if (segmentCount == 3) {
 				//path format is /<wsId>/project/<projectName>
-				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(0));
-				ProjectInfo project = OrionConfiguration.getMetaStore().readProject(path.segment(0), path.segment(2));
+				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(req.getRemoteUser(), path.segment(0));
+				ProjectInfo project = OrionConfiguration.getMetaStore().readProject(req.getRemoteUser(), path.segment(0), path.segment(2));
 				URI baseLocation = ServletResourceHandler.getURI(req);
 				OrionServlet.writeJSONResponse(req, resp, WebProjectResourceHandler.toJSON(workspace, project, baseLocation));
 				return;
@@ -88,7 +88,7 @@ public class WorkspaceServlet extends OrionServlet {
 		IPath path = new Path(pathString == null ? "" : pathString); //$NON-NLS-1$
 		if (path.segmentCount() > 0) {
 			try {
-				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(0));
+				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(req.getRemoteUser(), path.segment(0));
 				if (workspaceResourceHandler.handleRequest(req, resp, workspace))
 					return;
 			} catch (CoreException e) {
@@ -129,7 +129,7 @@ public class WorkspaceServlet extends OrionServlet {
 		IPath path = new Path(pathString);
 		if (path.segmentCount() == 1) {
 			try {
-				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(0));
+				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(req.getRemoteUser(), path.segment(0));
 				if (workspaceResourceHandler.handleRequest(req, resp, workspace))
 					return;
 			} catch (CoreException e) {
@@ -152,7 +152,8 @@ public class WorkspaceServlet extends OrionServlet {
 		try {
 			WorkspaceInfo workspace = new WorkspaceInfo();
 			workspace.setFullName(workspaceName);
-			OrionConfiguration.getMetaStore().createWorkspace(userId, workspace);
+			workspace.setUserId(userId);
+			OrionConfiguration.getMetaStore().createWorkspace(workspace);
 			URI requestLocation = ServletResourceHandler.getURI(req);
 			JSONObject result = WorkspaceResourceHandler.toJSON(workspace, requestLocation, requestLocation);
 			writeJSONResponse(req, resp, result);
@@ -181,7 +182,7 @@ public class WorkspaceServlet extends OrionServlet {
 			IPath path = new Path(pathString);
 			if (path.segmentCount() == 1) {
 				try {
-					WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(0));
+					WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(req.getRemoteUser(), path.segment(0));
 					if (workspaceResourceHandler.handleRequest(req, resp, workspace))
 						return;
 				} catch (CoreException e) {

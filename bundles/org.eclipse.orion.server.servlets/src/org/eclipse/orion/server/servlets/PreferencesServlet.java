@@ -155,10 +155,10 @@ public class PreferencesServlet extends OrionServlet {
 				return OrionConfiguration.getMetaStore().readUser(username);
 			} else if ("workspace".equalsIgnoreCase(scope) && segmentCount > 1) { //$NON-NLS-1$
 				//format is /workspace/{workspaceId}
-				return OrionConfiguration.getMetaStore().readWorkspace(path.segment(1));
+				return OrionConfiguration.getMetaStore().readWorkspace(req.getRemoteUser(), path.segment(1));
 			} else if ("project".equalsIgnoreCase(scope) && segmentCount > 2) { //$NON-NLS-1$
 				//format is /project/{workspaceId}/{projectName}
-				return OrionConfiguration.getMetaStore().readProject(path.segment(1), path.segment(2));
+				return OrionConfiguration.getMetaStore().readProject(req.getRemoteUser(), path.segment(1), path.segment(2));
 			}
 		} catch (CoreException e) {
 			handleException(resp, "Internal error obtaining preferences", e, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -200,7 +200,7 @@ public class PreferencesServlet extends OrionServlet {
 				}
 				//operations should not be removed by PUT
 				if (!prefix.equals("operations")) {
-					
+
 					//clear existing values matching prefix
 					changed |= removeMatchingProperties(info, prefix.toString());
 				}
