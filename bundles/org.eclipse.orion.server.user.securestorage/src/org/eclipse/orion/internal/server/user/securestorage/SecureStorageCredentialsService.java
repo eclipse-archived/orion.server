@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others
+ * Copyright (c) 2011, 2013 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,12 +14,15 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 import java.util.regex.Pattern;
+
 import javax.crypto.spec.PBEKeySpec;
+
 import org.eclipse.core.runtime.*;
 import org.eclipse.equinox.security.storage.*;
 import org.eclipse.equinox.security.storage.provider.IProviderHints;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.resources.Base64Counter;
 import org.eclipse.orion.server.useradmin.*;
 import org.eclipse.orion.server.useradmin.servlets.UserServlet;
@@ -84,6 +87,16 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 		User admin = getUser(USER_LOGIN, ADMIN_LOGIN_VALUE);
 		if (admin == null && adminDefaultPassword != null) {
 			admin = createUser(new User(ADMIN_LOGIN_VALUE, ADMIN_LOGIN_VALUE, ADMIN_NAME_VALUE, adminDefaultPassword));
+			// initialize the admin account in the IMetaStore
+			UserInfo userInfo = new UserInfo();
+			userInfo.setUniqueId(admin.getUid());
+			userInfo.setUserName(ADMIN_LOGIN_VALUE);
+			userInfo.setFullName("Administrative User");
+			try {
+				OrionConfiguration.getMetaStore().createUser(userInfo);
+			} catch (CoreException e) {
+				LogHelper.log(e);
+			}
 		}
 
 		if (admin == null) {
