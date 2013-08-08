@@ -152,10 +152,11 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			webProjectExists = false;
 			project = new ProjectInfo();
 			project.setFullName(cloneName);
+			project.setWorkspaceId(workspace.getUniqueId());
 
 			try {
 				//creating project in the backing store will assign a project id
-				metaStore.createProject(workspace.getUniqueId(), project);
+				metaStore.createProject(project);
 			} catch (CoreException e) {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error persisting project state", e));
 			}

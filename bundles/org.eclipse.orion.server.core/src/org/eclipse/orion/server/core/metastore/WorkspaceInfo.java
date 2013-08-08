@@ -10,7 +10,9 @@
  *******************************************************************************/
 package org.eclipse.orion.server.core.metastore;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * A structure containing a snapshot of information about a single workspace.
@@ -18,12 +20,21 @@ import java.util.*;
 public class WorkspaceInfo extends MetadataInfo {
 
 	private List<String> projectNames = EMPTY;
+	private String userId;
 
 	/**
 	 * Returns the names of all the projects in this workspace
 	 */
 	public List<String> getProjectNames() {
 		return projectNames;
+	}
+
+	/**
+	 * Returns the user id of the user that owns this workspace.
+	 * @return the user id.
+	 */
+	public String getUserId() {
+		return userId;
 	}
 
 	/**
@@ -38,6 +49,14 @@ public class WorkspaceInfo extends MetadataInfo {
 			//copy and wrap read only 
 			this.projectNames = Collections.unmodifiableList(new ArrayList<String>(names));
 		}
+	}
+
+	/**
+	 * Sets the user id of the user that owns this workspace.
+	 * @param userId the user id.
+	 */
+	public void setUserId(String userId) {
+		this.userId = userId;
 	}
 
 

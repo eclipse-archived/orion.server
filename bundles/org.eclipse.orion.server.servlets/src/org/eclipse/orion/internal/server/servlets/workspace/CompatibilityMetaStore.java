@@ -36,8 +36,8 @@ public class CompatibilityMetaStore implements IMetaStore {
 	 */
 	private static List<String> INTERNAL_PROPERTIES = Arrays.asList(new String[] {ProtocolConstants.KEY_NAME, ProtocolConstants.KEY_ID, ProtocolConstants.KEY_GUEST, ProtocolConstants.KEY_USER_NAME, ProtocolConstants.KEY_CONTENT_LOCATION, SiteConfigurationConstants.KEY_SITE_CONFIGURATIONS});
 
-	public void createProject(String workspaceId, ProjectInfo info) throws CoreException {
-		WebWorkspace workspace = WebWorkspace.fromId(workspaceId);
+	public void createProject(ProjectInfo info) throws CoreException {
+		WebWorkspace workspace = WebWorkspace.fromId(info.getWorkspaceId());
 		WebProject project = WebProject.fromId(WebProject.nextProjectId());
 		info.setUniqueId(project.getId());
 		updateProject(info);
@@ -55,8 +55,8 @@ public class CompatibilityMetaStore implements IMetaStore {
 		updateUser(info);
 	}
 
-	public void createWorkspace(String userId, WorkspaceInfo info) throws CoreException {
-		WebWorkspace workspace = WebUser.fromUserId(userId).createWorkspace(info.getFullName());
+	public void createWorkspace(WorkspaceInfo info) throws CoreException {
+		WebWorkspace workspace = WebUser.fromUserId(info.getUserId()).createWorkspace(info.getFullName());
 		info.setUniqueId(workspace.getId());
 	}
 

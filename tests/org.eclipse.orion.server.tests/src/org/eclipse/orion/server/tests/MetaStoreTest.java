@@ -14,10 +14,15 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import junit.framework.Assert;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.server.core.OrionConfiguration;
-import org.eclipse.orion.server.core.metastore.*;
+import org.eclipse.orion.server.core.metastore.IMetaStore;
+import org.eclipse.orion.server.core.metastore.ProjectInfo;
+import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.junit.Test;
 
 public class MetaStoreTest extends AbstractServerTest {
@@ -28,7 +33,8 @@ public class MetaStoreTest extends AbstractServerTest {
 		store.createUser(user);
 		WorkspaceInfo workspace = new WorkspaceInfo();
 		workspace.setFullName("MetaStoreTestWorkspace");
-		store.createWorkspace(user.getUniqueId(), workspace);
+		workspace.setUserId(user.getUniqueId());
+		store.createWorkspace(workspace);
 		return workspace;
 	}
 
@@ -58,7 +64,8 @@ public class MetaStoreTest extends AbstractServerTest {
 		for (int i = 0; i < 100; i++) {
 			ProjectInfo project = new ProjectInfo();
 			project.setFullName("Project " + i);
-			store.createProject(workspace.getUniqueId(), project);
+			project.setWorkspaceId(workspace.getUniqueId());
+			store.createProject(project);
 			String projectId = project.getUniqueId();
 			final java.io.File currentProject = new java.io.File(projectId);
 			for (String id : ids) {
