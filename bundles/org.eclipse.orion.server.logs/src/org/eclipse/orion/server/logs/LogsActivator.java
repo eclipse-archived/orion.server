@@ -42,8 +42,8 @@ public class LogsActivator implements BundleActivator {
 	private void registerLogService() {
 		/*
 		 * TODO: The log provider service should be enabled by default for all
-		 * /* privileged users (e. g. administrator). Currently, all logged
-		 * users have /* access if the flag is present and set to true.
+		 * /* privileged users (e. g. admin). Currently, all logged users have
+		 * /* access if the flag is present and set to true.
 		 */
 		boolean enabled = Boolean.parseBoolean(PreferenceHelper
 				.getString(LogConstants.CONFIG_FILE_LOG_PROVIDER_ENABLED));
@@ -62,7 +62,6 @@ public class LogsActivator implements BundleActivator {
 	 * org.osgi.framework.BundleActivator#start(org.osgi.framework.BundleContext
 	 * )
 	 */
-	@Override
 	public void start(BundleContext bundleContext) throws Exception {
 		LogsActivator.context = bundleContext;
 		LogsActivator.instance = this;
@@ -71,7 +70,8 @@ public class LogsActivator implements BundleActivator {
 		registerLogService();
 
 		LogServiceTracker customer = new LogServiceTracker(context);
-		serviceTracker = new ServiceTracker<LogService, ILogService>(context, ILogService.class.getName(), customer);
+		serviceTracker = new ServiceTracker<LogService, ILogService>(context,
+				ILogService.class.getName(), customer);
 
 		serviceTracker.open();
 	}
@@ -82,7 +82,6 @@ public class LogsActivator implements BundleActivator {
 	 * @see
 	 * org.osgi.framework.BundleActivator#stop(org.osgi.framework.BundleContext)
 	 */
-	@Override
 	public void stop(BundleContext bundleContext) throws Exception {
 		LogsActivator.context = null;
 		LogsActivator.instance = null;

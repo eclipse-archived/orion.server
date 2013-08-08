@@ -23,9 +23,9 @@ import org.eclipse.orion.server.logs.objects.FileAppenderResource;
 import org.eclipse.orion.server.logs.objects.RollingFileAppenderResource;
 
 public class LogHandler extends ServletResourceHandler<String> {
-	private final ServletResourceHandler<String> logApiHandler;
-	private final ServletResourceHandler<String> fileAppenderHandler;
-	private final ServletResourceHandler<String> rollingFileAppenderHandler;
+	private ServletResourceHandler<String> logApiHandler;
+	private ServletResourceHandler<String> fileAppenderHandler;
+	private ServletResourceHandler<String> rollingFileAppenderHandler;
 
 	public LogHandler(ServletResourceHandler<IStatus> statusHandler) {
 		this.logApiHandler = new LogApiHandler(statusHandler);
@@ -34,21 +34,23 @@ public class LogHandler extends ServletResourceHandler<String> {
 	}
 
 	@Override
-	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String pathInfo)
-			throws ServletException {
+	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response,
+			String pathInfo) throws ServletException {
 
 		/*
 		 * Dispatch the request.
 		 */
-		if (pathInfo == null || "/".equals(pathInfo)) //$NON-NLS-1$
+		if (pathInfo == null || "/".equals(pathInfo))
 			return logApiHandler.handleRequest(request, response, pathInfo);
 
 		IPath path = new Path(pathInfo);
 		if (FileAppenderResource.RESOURCE.equals(path.segment(0)))
-			return fileAppenderHandler.handleRequest(request, response, path.removeFirstSegments(1).toString());
+			return fileAppenderHandler.handleRequest(request, response, path.removeFirstSegments(1)
+					.toString());
 
 		if (RollingFileAppenderResource.RESOURCE.equals(path.segment(0)))
-			return rollingFileAppenderHandler.handleRequest(request, response, path.removeFirstSegments(1).toString());
+			return rollingFileAppenderHandler.handleRequest(request, response, path
+					.removeFirstSegments(1).toString());
 
 		/* unsupported request */
 		return false;
