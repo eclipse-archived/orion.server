@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.eclipse.orion.server.core.resources.Base64;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -31,9 +30,8 @@ public class SimpleLinuxMetaStoreUtil {
 	private static final int MINIMUM_LENGTH = 1;
 	private static final int MAXIMUM_LENGTH = 31;
 	public static final String ROOT = "metastore";
-	public static final String SEPARATOR = ":";
+	public static final String SEPARATOR = "-";
 	public static final String METAFILE_EXTENSION = ".json";
-	public static final String UTF8_delete = "UTF-8";
 
 	public static boolean createMetaFile(File parent, String name, JSONObject jsonObject) {
 		try {
@@ -85,34 +83,16 @@ public class SimpleLinuxMetaStoreUtil {
 		return createMetaFile(metaStoreRootFolder, ROOT, jsonObject);
 	}
 
-	public static String decodeProjectNameFromProjectId(String workspaceId) {
-		byte[] decoded = Base64.decode(workspaceId.getBytes());
-		String decodedString = new String(decoded);
-		return decodedString.substring(decodedString.lastIndexOf(':') + 1);
-	}
-
-	public static String decodeUserNameFromProjectId(String workspaceId) {
-		byte[] decoded = Base64.decode(workspaceId.getBytes());
-		String decodedString = new String(decoded);
-		return decodedString.substring(0, decodedString.indexOf(':'));
+	public static String decodeProjectNameFromProjectId(String projectId) {
+		return projectId;
 	}
 
 	public static String decodeUserNameFromWorkspaceId(String workspaceId) {
-		byte[] decoded = Base64.decode(workspaceId.getBytes());
-		String decodedString = new String(decoded);
-		return decodedString.substring(0, decodedString.indexOf(':'));
-	}
-
-	public static String decodeWorkspaceNameFromProjectId(String workspaceId) {
-		byte[] decoded = Base64.decode(workspaceId.getBytes());
-		String decodedString = new String(decoded);
-		return decodedString.substring(decodedString.indexOf(':') + 1, decodedString.lastIndexOf(':'));
+		return workspaceId.substring(0, workspaceId.indexOf(SEPARATOR));
 	}
 
 	public static String decodeWorkspaceNameFromWorkspaceId(String workspaceId) {
-		byte[] decoded = Base64.decode(workspaceId.getBytes());
-		String decodedString = new String(decoded);
-		return decodedString.substring(decodedString.indexOf(':') + 1);
+		return workspaceId.substring(workspaceId.indexOf(SEPARATOR) + 1);
 	}
 
 	public static boolean deleteMetaFile(File parent, String name) {
@@ -143,16 +123,12 @@ public class SimpleLinuxMetaStoreUtil {
 		return deleteMetaFile(metaStoreRootFolder, ROOT);
 	}
 
-	public static String encodeProjectId(String userName, String workspaceName, String projectName) {
-		String id = userName + SEPARATOR + workspaceName + SEPARATOR + projectName;
-		byte[] encoded = Base64.encode(id.getBytes());
-		return new String(encoded);
+	public static String encodeProjectId(String projectName) {
+		return projectName;
 	}
 
 	public static String encodeWorkspaceId(String userName, String workspaceName) {
-		String id = userName + SEPARATOR + workspaceName;
-		byte[] encoded = Base64.encode(id.getBytes());
-		return new String(encoded);
+		return userName + SEPARATOR + workspaceName;
 	}
 
 	public static boolean isMetaFile(File parent, String name) {

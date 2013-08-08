@@ -59,6 +59,14 @@ public class SimpleLinuxMetaStoreUtilTest {
 		}
 	}
 
+	public static File deleteTestMetaStoreFolder() {
+		File parent = new File(TEST_META_STORE);
+		if (parent.exists()) {
+			deleteFile(parent);
+		}
+		return parent;
+	}
+
 	@Test
 	public void testCreateMetaFile() throws JSONException {
 		JSONObject jsonObject = new JSONObject();
@@ -320,5 +328,7 @@ public class SimpleLinuxMetaStoreUtilTest {
 		assertTrue(jsonObjectNew.has("String"));
 		// delete the file
 		assertTrue(SimpleLinuxMetaStoreUtil.deleteMetaFile(parent, name));
+		// delete the root
+		deleteTestMetaStoreFolder();
 	}
 }

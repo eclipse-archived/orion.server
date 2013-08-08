@@ -55,7 +55,7 @@ public class SimpleLinuxMetaStore implements IMetaStore {
 		}
 		String userName = SimpleLinuxMetaStoreUtil.decodeUserNameFromWorkspaceId(workspaceId);
 		String workspaceName = SimpleLinuxMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
-		String projectId = SimpleLinuxMetaStoreUtil.encodeProjectId(userName, workspaceName, projectInfo.getFullName());
+		String projectId = SimpleLinuxMetaStoreUtil.encodeProjectId(projectInfo.getFullName());
 		projectInfo.setUniqueId(projectId);
 
 		JSONObject jsonObject = new JSONObject();
@@ -373,8 +373,8 @@ public class SimpleLinuxMetaStore implements IMetaStore {
 	}
 
 	public void updateProject(ProjectInfo projectInfo) throws CoreException {
-		String userName = SimpleLinuxMetaStoreUtil.decodeUserNameFromProjectId(projectInfo.getUniqueId());
-		String workspaceName = SimpleLinuxMetaStoreUtil.decodeWorkspaceNameFromProjectId(projectInfo.getUniqueId());
+		String userName = SimpleLinuxMetaStoreUtil.decodeUserNameFromWorkspaceId(workspaceId);
+		String workspaceName = SimpleLinuxMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
 		String projectName = SimpleLinuxMetaStoreUtil.decodeProjectNameFromProjectId(projectInfo.getUniqueId());
 		JSONObject jsonObject = new JSONObject();
 		try {

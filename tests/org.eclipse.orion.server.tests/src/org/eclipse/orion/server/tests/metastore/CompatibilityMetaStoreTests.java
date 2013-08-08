@@ -47,10 +47,10 @@ public class CompatibilityMetaStoreTests extends MetaStoreTests {
 		IMetaStore metaStore = getMetaStore();
 
 		// create the user
-		String userName = "anthony";
 		UserInfo userInfo = new UserInfo();
-		userInfo.setUserName(userName);
-		userInfo.setFullName(userName);
+		userInfo.setUserName("anthony");
+		userInfo.setUniqueId("1");
+		userInfo.setFullName("Anthony Hunter");
 		metaStore.createUser(userInfo);
 
 		// create the workspace
