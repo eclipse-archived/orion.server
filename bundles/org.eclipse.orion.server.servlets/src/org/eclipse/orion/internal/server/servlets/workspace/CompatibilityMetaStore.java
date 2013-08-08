@@ -60,7 +60,7 @@ public class CompatibilityMetaStore implements IMetaStore {
 		info.setUniqueId(workspace.getId());
 	}
 
-	public void deleteProject(String userId, String workspaceId, String projectName) throws CoreException {
+	public void deleteProject(String workspaceId, String projectName) throws CoreException {
 		WebWorkspace workspace = WebWorkspace.fromId(workspaceId);
 		WebProject project = workspace.getProjectByName(projectName);
 		//if no such project exists, we have nothing to do here
@@ -99,7 +99,7 @@ public class CompatibilityMetaStore implements IMetaStore {
 		WebWorkspace workspace = WebWorkspace.fromId(workspaceId);
 		//first delete projects
 		for (WebProject project : workspace.getProjects()) {
-			deleteProject(userId, workspaceId, project.getName());
+			deleteProject(workspaceId, project.getName());
 		}
 		//finally delete the workspace metadata
 		workspace.removeNode();
@@ -125,7 +125,7 @@ public class CompatibilityMetaStore implements IMetaStore {
 		return new CoreException(new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "Error accessing preference store", e));
 	}
 
-	public ProjectInfo readProject(String userId, String workspaceId, String projectName) throws CoreException {
+	public ProjectInfo readProject(String workspaceId, String projectName) throws CoreException {
 		WebWorkspace workspace = WebWorkspace.fromId(workspaceId);
 		return toProjectInfo(workspace.getProjectByName(projectName));
 	}
@@ -190,7 +190,7 @@ public class CompatibilityMetaStore implements IMetaStore {
 		return info;
 	}
 
-	public WorkspaceInfo readWorkspace(String userId, String workspaceId) throws CoreException {
+	public WorkspaceInfo readWorkspace(String workspaceId) throws CoreException {
 		if (!WebWorkspace.exists(workspaceId))
 			return null;
 		WebWorkspace workspace = WebWorkspace.fromId(workspaceId);

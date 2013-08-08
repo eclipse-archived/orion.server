@@ -130,7 +130,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		if (filePath != null) {
 			//path format is /file/{workspaceId}/{projectName}/[filePath]
 			clone.setId(filePath.toString());
-			project = GitUtils.projectFromPath(request.getRemoteUser(), filePath);
+			project = GitUtils.projectFromPath(filePath);
 			//workspace path format needs to be used if project does not exist
 			if (project == null) {
 				String msg = NLS.bind("Specified project does not exist: {0}", filePath.segment(2));
@@ -145,14 +145,13 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			// TODO: move this to CloneJob
 			// if so, modify init part to create a new project if necessary
 			final IMetaStore metaStore = OrionConfiguration.getMetaStore();
-			WorkspaceInfo workspace = metaStore.readWorkspace(request.getRemoteUser(), path.segment(1));
+			WorkspaceInfo workspace = metaStore.readWorkspace(path.segment(1));
 			if (cloneName == null)
 				cloneName = new URIish(url).getHumanishName();
 			cloneName = getUniqueProjectName(workspace, cloneName);
 			webProjectExists = false;
 			project = new ProjectInfo();
 			project.setFullName(cloneName);
-			project.setUserId(workspace.getUserId());
 			project.setWorkspaceId(workspace.getUniqueId());
 
 			try {
@@ -167,7 +166,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			} catch (CoreException e) {
 				//delete the project so we don't end up with a project in a bad location
 				try {
-					metaStore.deleteProject(workspace.getUserId(), workspace.getUniqueId(), project.getFullName());
+					metaStore.deleteProject(workspace.getUniqueId(), project.getFullName());
 				} catch (CoreException e1) {
 					//swallow secondary error
 					LogHelper.log(e1);
@@ -213,7 +212,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		String uniqueName = cloneName;
 		IMetaStore store = OrionConfiguration.getMetaStore();
 		try {
-			while (store.readProject(workspace.getUserId(), workspace.getUniqueId(), uniqueName) != null) {
+			while (store.readProject(workspace.getUniqueId(), uniqueName) != null) {
 				//add an incrementing counter suffix until we arrive at a unique name
 				uniqueName = cloneName + '-' + ++i;
 			}
@@ -247,12 +246,12 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		// expected path format is 'workspace/{workspaceId}' or 'file/{workspaceId}/{projectName}/{path}]'
 		if ("workspace".equals(path.segment(0)) && path.segmentCount() == 2) { //$NON-NLS-1$
 			// all clones in the workspace
-			WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(user, path.segment(1));
+			WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(1));
 			if (workspace != null) {
 				JSONObject result = new JSONObject();
 				JSONArray children = new JSONArray();
 				for (String projectName : workspace.getProjectNames()) {
-					ProjectInfo project = OrionConfiguration.getMetaStore().readProject(user, workspace.getUniqueId(), projectName);
+					ProjectInfo project = OrionConfiguration.getMetaStore().readProject(workspace.getUniqueId(), projectName);
 					//this is the location of the project metadata
 					if (isAccessAllowed(user, project)) {
 						IPath projectPath = GitUtils.pathFromProject(workspace, project);
@@ -271,7 +270,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
 		} else if ("file".equals(path.segment(0)) && path.segmentCount() > 1) { //$NON-NLS-1$
 			// clones under given path
-			ProjectInfo webProject = GitUtils.projectFromPath(request.getRemoteUser(), path);
+			ProjectInfo webProject = GitUtils.projectFromPath(path);
 			IPath projectRelativePath = path.removeFirstSegments(3);
 			if (webProject != null && isAccessAllowed(user, webProject) && webProject.getProjectStore().getFileStore(projectRelativePath).fetchInfo().exists()) {
 				Map<IPath, File> gitDirs = GitUtils.getGitDirs(path, Traverse.GO_DOWN);
@@ -298,7 +297,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		if (path.segment(0).equals("file") && path.segmentCount() > 1) { //$NON-NLS-1$
 
 			// make sure a clone is addressed
-			ProjectInfo webProject = GitUtils.projectFromPath(request.getRemoteUser(), path);
+			ProjectInfo webProject = GitUtils.projectFromPath(path);
 			if (isAccessAllowed(request.getRemoteUser(), webProject)) {
 				Map<IPath, File> gitDirs = GitUtils.getGitDirs(path, Traverse.CURRENT);
 				if (gitDirs.isEmpty()) {
@@ -395,7 +394,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		if (path.segment(0).equals("file") && path.segmentCount() > 2) { //$NON-NLS-1$
 
 			// make sure a clone is addressed
-			ProjectInfo webProject = GitUtils.projectFromPath(request.getRemoteUser(), path);
+			ProjectInfo webProject = GitUtils.projectFromPath(path);
 			if (webProject != null && isAccessAllowed(request.getRemoteUser(), webProject)) {
 				File gitDir = GitUtils.getGitDirs(path, Traverse.CURRENT).values().iterator().next();
 				Repository repo = FileRepositoryBuilder.create(gitDir);
@@ -419,7 +418,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		try {
 			UserInfo user = OrionConfiguration.getMetaStore().readUser(userName);
 			for (String workspaceId : user.getWorkspaceIds()) {
-				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(userName, workspaceId);
+				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(workspaceId);
 				if (workspace.getProjectNames().contains(webProject.getFullName()))
 					return true;
 			}
@@ -444,7 +443,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		try {
 			UserInfo user = OrionConfiguration.getMetaStore().readUser(userId);
 			for (String workspaceId : user.getWorkspaceIds()) {
-				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(userId, workspaceId);
+				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(workspaceId);
 				for (String projectName : workspace.getProjectNames()) {
 					if (projectName.equals(project.getFullName())) {
 						//If found, remove project from workspace

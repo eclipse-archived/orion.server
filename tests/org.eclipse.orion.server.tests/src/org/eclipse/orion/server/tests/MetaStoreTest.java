@@ -64,7 +64,6 @@ public class MetaStoreTest extends AbstractServerTest {
 		for (int i = 0; i < 100; i++) {
 			ProjectInfo project = new ProjectInfo();
 			project.setFullName("Project " + i);
-			project.setUserId(workspace.getUserId());
 			project.setWorkspaceId(workspace.getUniqueId());
 			store.createProject(project);
 			String projectId = project.getUniqueId();

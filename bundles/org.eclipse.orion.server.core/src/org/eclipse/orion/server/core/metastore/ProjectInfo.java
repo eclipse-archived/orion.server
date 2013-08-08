@@ -22,9 +22,7 @@ import org.eclipse.core.runtime.CoreException;
  */
 public class ProjectInfo extends MetadataInfo {
 	private URI contentLocation;
-	private String userId;
 	private String workspaceId;
-
 
 	/**
 	 * Returns the absolute location of the contents of this project.
@@ -43,14 +41,6 @@ public class ProjectInfo extends MetadataInfo {
 	 */
 	public IFileStore getProjectStore() throws CoreException {
 		return EFS.getStore(getContentLocation());
-	}
-
-	/**
-	 * Returns the user id of the user that owns this project.
-	 * @return the user id.
-	 */
-	public String getUserId() {
-		return userId;
 	}
 
 	/**
@@ -77,15 +67,6 @@ public class ProjectInfo extends MetadataInfo {
 			}
 		}
 	}
-	
-	/**
-	 * Sets the user id of the user that owns this project.
-	 * @param userId the user id.
-	 */
-	public void setUserId(String userId) {
-		this.userId = userId;
-	}
-
 	
 	/**
 	 * Sets the workspace id of the workspace that owns this project.

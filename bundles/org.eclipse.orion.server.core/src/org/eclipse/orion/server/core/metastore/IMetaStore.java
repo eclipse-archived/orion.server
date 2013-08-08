@@ -54,12 +54,11 @@ public interface IMetaStore {
 	 * <p>
 	 * If no such project exists, this method has no effect.
 	 * </p>
-	 * @param userId The id of the user to delete the project for
 	 * @param workspaceId the unique id of the workspace containing the project
 	 * @param projectName the full name of the project to delete
 	 * @throws CoreException If the project could not be deleted
 	 */
-	public void deleteProject(String userId, String workspaceId, String projectName) throws CoreException;
+	public void deleteProject(String workspaceId, String projectName) throws CoreException;
 
 	/**
 	 * Deletes the user metadata corresponding to the given id. All artifacts in the backing store
@@ -96,13 +95,12 @@ public interface IMetaStore {
 	/**
 	 * Obtains information about a single project from this store and returns it.
 	 * Returns <code>null</code> if there is no such project in the metadata store.
-	 * @param userId The unique id of the user who owns the project
 	 * @param workspaceId The unique id of the workspace containing the project
 	 * @param projectName The full name of the project
 	 * @return the project information, or <code>null</code>
 	 * @throws CoreException If there was a failure obtaining metadata from the backing store.
 	 */
-	public ProjectInfo readProject(String userId, String workspaceId, String projectName) throws CoreException;
+	public ProjectInfo readProject(String workspaceId, String projectName) throws CoreException;
 
 	/**
 	 * Obtains information about a single user from the backing storage and returns it.
@@ -116,12 +114,11 @@ public interface IMetaStore {
 	/**
 	 * Obtains information about a single workspace from the backing storage and returns it.
 	 * Returns <code>null</code> if there is no such workspace in the backing store.
-	 * @param userId The unique id of the user who owns the project
 	 * @param workspaceId The unique id of the workspace to return
 	 * @return the workspace information or <code>null</code>
 	 * @throws CoreException If there was a failure obtaining metadata from the backing store.
 	 */
-	public WorkspaceInfo readWorkspace(String userId, String workspaceId) throws CoreException;
+	public WorkspaceInfo readWorkspace(String workspaceId) throws CoreException;
 
 	/**
 	 * Updates the metadata in this store based on the provided data.
