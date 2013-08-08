@@ -97,7 +97,7 @@ public class NewFileServlet extends OrionServlet {
 		if (path.segmentCount() <= 1)
 			return null;
 		try {
-			ProjectInfo project = OrionConfiguration.getMetaStore().readProject(request.getRemoteUser(), path.segment(0), path.segment(1));
+			ProjectInfo project = OrionConfiguration.getMetaStore().readProject(path.segment(0), path.segment(1));
 			if (project == null)
 				return null;
 			return getFileStore(request, project).getFileStore(path.removeFirstSegments(2));

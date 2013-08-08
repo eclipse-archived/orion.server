@@ -261,7 +261,7 @@ public class HostedSiteServlet extends OrionServlet {
 			// start copied
 			String pathInfo = path.toString();
 			IPath filePath = pathInfo == null ? Path.ROOT : new Path(pathInfo);
-			IFileStore file = tempGetFileStore(userId, filePath);
+			IFileStore file = tempGetFileStore(filePath);
 			if (file == null || !file.fetchInfo().exists()) {
 				if (failEarlyOn404) {
 					return false;
@@ -296,12 +296,12 @@ public class HostedSiteServlet extends OrionServlet {
 	}
 
 	// temp code for grabbing files from filesystem
-	protected IFileStore tempGetFileStore(String userId, IPath path) {
+	protected IFileStore tempGetFileStore(IPath path) {
 		//path format is /workspaceId/projectName/[suffix]
 		if (path.segmentCount() <= 1)
 			return null;
 		try {
-			ProjectInfo project = OrionConfiguration.getMetaStore().readProject(userId, path.segment(0), path.segment(1));
+			ProjectInfo project = OrionConfiguration.getMetaStore().readProject(path.segment(0), path.segment(1));
 			if (project == null)
 				return null;
 			return project.getProjectStore().getFileStore(path.removeFirstSegments(2));
