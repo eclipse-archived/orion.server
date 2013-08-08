@@ -1,7 +1,7 @@
 	
-plugin@ch.qos.logback.classic,1.0.0=p2IU,id=ch.qos.logback.classic,version=1.0.0.v20111214-2030,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
-plugin@ch.qos.logback.core,1.0.0=p2IU,id=ch.qos.logback.core,version=1.0.0.v20111214-2030,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
-fragment@ch.qos.logback.slf4j,1.0.0=p2IU,id=ch.qos.logback.slf4j,version=1.0.0.v20121205-1250,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
+plugin@ch.qos.logback.classic,1.0.7=p2IU,id=ch.qos.logback.classic,version=1.0.7.v20121108-1250,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
+plugin@ch.qos.logback.core,1.0.7=p2IU,id=ch.qos.logback.core,version=1.0.7.v20121108-1250,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
+fragment@ch.qos.logback.slf4j,1.0.7=p2IU,id=ch.qos.logback.slf4j,version=1.0.7.v20121108-1250,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
 
 plugin@com.ibm.icu,4.2.1=p2IU,id=com.ibm.icu,version=4.2.1.v20100412,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
 plugin@com.ibm.icu.source,4.2.1=p2IU,id=com.ibm.icu.source,version=4.2.1.v20100412,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
@@ -46,10 +46,10 @@ plugin@org.junit.source,4.8.2=p2IU,id=org.junit.source,version=4.8.2.v4_8_2_v201
 plugin@org.mozilla.javascript,1.7.2=p2IU,id=org.mozilla.javascript,version=1.7.2.v201005080400,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
 plugin@org.mozilla.javascript.source,1.7.2=p2IU,id=org.mozilla.javascript.source,version=1.7.2.v201005080400,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
 
-plugin@org.slf4j.api,1.6.4=p2IU,id=org.slf4j.api,version=1.6.4.v20120130-2120,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
-plugin@org.slf4j.jcl,1.6.4=p2IU,id=org.slf4j.jcl,version=1.6.4.v20120130-2120,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
-plugin@org.slf4j.log4j,1.6.4=p2IU,id=org.slf4j.log4j,version=1.6.4.v20120130-2120,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
-plugin@org.slf4j.jul,1.6.4=p2IU,id=org.slf4j.jul,version=1.6.4.v20120130-2120,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
+plugin@org.slf4j.api,1.7.2=p2IU,id=org.slf4j.api,version=1.7.2.v20121108-1250,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
+plugin@org.slf4j.jcl,1.7.2=p2IU,id=org.slf4j.jcl,version=1.7.2.v20130115-1340,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
+plugin@org.slf4j.log4j,1.7.2=p2IU,id=org.slf4j.log4j,version=1.7.2.v20130115-1340,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
+plugin@org.slf4j.jul,1.7.2=p2IU,id=org.slf4j.jul,version=1.7.2.v20121108-1250,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
 
 plugin@javax.mail.glassfish,1.4.1=p2IU,id=javax.mail.glassfish,version=1.4.1.v201108011116,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
 plugin@javax.activation,1.1.0=p2IU,id=javax.activation,version=1.1.0.v201211130549,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
