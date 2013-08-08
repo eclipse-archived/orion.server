@@ -232,12 +232,18 @@ public class CompatibilityMetaStore implements IMetaStore {
 	private void updateProperties(MetadataInfo info, IEclipsePreferences store) throws CoreException {
 		Map<String, String> newProperties = info.getProperties();
 		List<String> toRemove = new ArrayList<String>();
+		List<String> toRemoveOperations = new ArrayList<String>();
 		try {
 			toRemove.addAll(Arrays.asList(store.keys()));
 		} catch (BackingStoreException e) {
 			throw toCoreException(e);
 		}
 		Preferences operationsNode = new OrionScope().getNode("Operations").node(info.getUniqueId()); //$NON-NLS-1$
+		try {
+			toRemoveOperations.addAll(Arrays.asList(operationsNode.keys()));
+		} catch (BackingStoreException e) {
+			throw toCoreException(e);
+		}
 		for (String key : newProperties.keySet()) {
 			toRemove.remove(key);
 			if (isInternalProperty(key))
@@ -247,12 +253,17 @@ public class CompatibilityMetaStore implements IMetaStore {
 				IPath keyPath = new Path(key);
 				if ("operations".equals(keyPath.segment(0))) { //$NON-NLS-1$
 					//store task info separately (client should migrate to tasks servlet)
+					toRemoveOperations.remove(key);
 					operationsNode.put(key, newProperties.get(key));
 					continue;
 				}
 			}
 			//otherwise a regular property
 			store.put(key, newProperties.get(key));
+		}
+		//remove operations no longer defined
+		for (String key : toRemoveOperations) {
+			operationsNode.remove(key);
 		}
 		try {
 			operationsNode.flush();
