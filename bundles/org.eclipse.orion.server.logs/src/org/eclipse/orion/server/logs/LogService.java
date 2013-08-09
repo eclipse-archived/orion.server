@@ -38,11 +38,25 @@ import ch.qos.logback.core.rolling.helper.FileNamePattern;
 public class LogService implements ILogService {
 
 	@Override
+	public List<Logger> getLoggers() {
+		LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+		return loggerContext.getLoggerList();
+	}
+
+	@Override
+	public Logger getLogger(String name) {
+		if (name == null)
+			return null;
+
+		LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+		return loggerContext.getLogger(name);
+	}
+
+	@Override
 	public List<FileAppender<ILoggingEvent>> getFileAppenders() {
 		List<FileAppender<ILoggingEvent>> fileAppenders = new LinkedList<FileAppender<ILoggingEvent>>();
-		LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
 
-		for (Logger logger : loggerContext.getLoggerList()) {
+		for (Logger logger : getLoggers()) {
 			for (Iterator<Appender<ILoggingEvent>> index = logger.iteratorForAppenders(); index.hasNext();) {
 
 				Appender<ILoggingEvent> appender = index.next();
@@ -59,15 +73,12 @@ public class LogService implements ILogService {
 		if (name == null)
 			return null;
 
-		LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-
-		for (Logger logger : loggerContext.getLoggerList()) {
+		for (Logger logger : getLoggers()) {
 			for (Iterator<Appender<ILoggingEvent>> index = logger.iteratorForAppenders(); index.hasNext();) {
 
 				Appender<ILoggingEvent> appender = index.next();
-				if (appender instanceof FileAppender && name.equals(appender.getName())) {
+				if (appender instanceof FileAppender && name.equals(appender.getName()))
 					return (FileAppender<ILoggingEvent>) appender;
-				}
 			}
 		}
 
@@ -105,7 +116,7 @@ public class LogService implements ILogService {
 			Path path = new Path(pattern.toRegex(new Date()));
 
 			if (!path.isAbsolute())
-				dir = new File(".");
+				dir = new File("."); //$NON-NLS-1$
 			else {
 				dir = path.removeLastSegments(1).toFile();
 

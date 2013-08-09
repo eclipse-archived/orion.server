@@ -14,6 +14,7 @@ package org.eclipse.orion.server.logs;
 import java.io.File;
 import java.util.List;
 
+import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.FileAppender;
 import ch.qos.logback.core.rolling.RollingFileAppender;
@@ -24,6 +25,19 @@ import ch.qos.logback.core.rolling.RollingFileAppender;
  * context.
  */
 public interface ILogService {
+
+	/**
+	 * @return All Loggers in the current context.
+	 */
+	public List<Logger> getLoggers();
+
+	/**
+	 * @param name
+	 *            Logback Logger name property.
+	 * @return Appropriate Logger or <code>null</code> if not present in the
+	 *         current logger context.
+	 */
+	public Logger getLogger(String name);
 
 	/**
 	 * @return All FileAppenders in the current context.

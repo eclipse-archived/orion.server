@@ -15,6 +15,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;
@@ -23,22 +24,22 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.logs.ILogService;
 import org.eclipse.orion.server.logs.jobs.ListFileAppendersJob;
 
-public class LogApiHandler extends AbstractLogHandler<String> {
+public class LogApiHandler extends AbstractLogHandler {
 
 	public LogApiHandler(ServletResourceHandler<IStatus> statusHandler) {
 		super(statusHandler);
 	}
 
 	@Override
-	protected boolean handleGet(HttpServletRequest request, HttpServletResponse response,
-			ILogService logService, String pathInfo) throws ServletException {
+	protected boolean handleGet(HttpServletRequest request, HttpServletResponse response, ILogService logService,
+			IPath path) throws ServletException {
 
 		try {
-			return TaskJobHandler.handleTaskJob(request, response, new ListFileAppendersJob(
-					TaskJobHandler.getUserId(request), logService, getURI(request)), statusHandler);
+			return TaskJobHandler.handleTaskJob(request, response,
+					new ListFileAppendersJob(TaskJobHandler.getUserId(request), logService, getURI(request)),
+					statusHandler);
 		} catch (Exception e) {
-			final ServerStatus error = new ServerStatus(IStatus.ERROR,
-					HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+			final ServerStatus error = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
 					"An error occured when looking for appenders.", e);
 
 			LogHelper.log(error);

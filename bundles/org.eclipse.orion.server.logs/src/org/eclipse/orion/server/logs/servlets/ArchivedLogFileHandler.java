@@ -19,7 +19,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -30,7 +29,7 @@ import org.eclipse.osgi.util.NLS;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.rolling.RollingFileAppender;
 
-public class ArchivedLogFileHandler extends AbstractLogHandler<String> {
+public class ArchivedLogFileHandler extends AbstractLogHandler {
 
 	public ArchivedLogFileHandler(ServletResourceHandler<IStatus> statusHandler) {
 		super(statusHandler);
@@ -38,9 +37,7 @@ public class ArchivedLogFileHandler extends AbstractLogHandler<String> {
 
 	@Override
 	protected boolean handleGet(HttpServletRequest request, HttpServletResponse response, ILogService logService,
-			String pathInfo) throws ServletException {
-
-		IPath path = new Path(pathInfo);
+			IPath path) throws ServletException {
 
 		String appenderName = path.segment(0);
 		RollingFileAppender<ILoggingEvent> appender = logService.getRollingFileAppender(appenderName);
