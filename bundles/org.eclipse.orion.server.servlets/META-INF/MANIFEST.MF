@@ -23,6 +23,7 @@ Export-Package: org.eclipse.orion.internal.server.servlets;
    org.eclipse.orion.server.logs",
  org.eclipse.orion.internal.server.servlets.file;x-friends:="org.eclipse.orion.server.configurator,org.eclipse.orion.server.npm",
  org.eclipse.orion.internal.server.servlets.hosting;uses:="org.eclipse.orion.internal.server.servlets.site,org.eclipse.orion.internal.server.servlets.workspace",
+ org.eclipse.orion.internal.server.servlets.project,
  org.eclipse.orion.internal.server.servlets.site;x-friends:="org.eclipse.orion.server.configurator,org.eclipse.orion.server.hosting",
  org.eclipse.orion.internal.server.servlets.task;x-internal:=true,
  org.eclipse.orion.internal.server.servlets.workspace;
