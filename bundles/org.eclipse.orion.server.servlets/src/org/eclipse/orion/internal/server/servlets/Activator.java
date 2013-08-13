@@ -17,7 +17,7 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
-import org.eclipse.orion.internal.server.core.metastore.SimpleLinuxMetaStore;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
 import org.eclipse.orion.internal.server.servlets.project.ProjectDecorator;
 import org.eclipse.orion.internal.server.servlets.workspace.ProjectParentDecorator;
@@ -120,7 +120,7 @@ public class Activator implements BundleActivator {
 		//legacy metadata store implementation
 		//compatibleMetastoreRegistration = bundleContext.registerService(IMetaStore.class, new CompatibilityMetaStore(), null);
 		try {
-			compatibleMetastoreRegistration = bundleContext.registerService(IMetaStore.class, new SimpleLinuxMetaStore(OrionConfiguration.getUserHome(null).toLocalFile(EFS.NONE, null)), null);
+			compatibleMetastoreRegistration = bundleContext.registerService(IMetaStore.class, new SimpleMetaStore(OrionConfiguration.getUserHome(null).toLocalFile(EFS.NONE, null)), null);
 		} catch (CoreException e) {
 			throw new RuntimeException("Cannot initialize MetaStore", e); //$NON-NLS-1$
 		}

@@ -14,17 +14,17 @@ import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
 
-import org.eclipse.orion.internal.server.core.metastore.SimpleLinuxMetaStore;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.junit.FixMethodOrder;
 import org.junit.runners.MethodSorters;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class SimpleLinuxMetaStoreTests extends MetaStoreTests {
+public class SimpleMetaStoreTests extends MetaStoreTests {
 
 	public IMetaStore getMetaStore() {
-		File metaStoreRoot = SimpleLinuxMetaStoreUtilTest.createTestMetaStoreFolder();
-		IMetaStore simpleLinuxMetaStore = new SimpleLinuxMetaStore(metaStoreRoot);
+		File metaStoreRoot = SimpleMetaStoreUtilTest.createTestMetaStoreFolder();
+		IMetaStore simpleLinuxMetaStore = new SimpleMetaStore(metaStoreRoot);
 		assertNotNull(simpleLinuxMetaStore);
 		return simpleLinuxMetaStore;
 	}
