@@ -26,13 +26,13 @@ public class SimpleMetaStore implements IMetaStore {
 	//				- projectA/
 	//					- 
 
-	public void createProject(String workspaceId, ProjectInfo info) throws CoreException {
+	public void createProject(ProjectInfo info) throws CoreException {
 	}
 
 	public void createUser(UserInfo info) throws CoreException {
 	}
 
-	public void createWorkspace(String userId, WorkspaceInfo info) throws CoreException {
+	public void createWorkspace(WorkspaceInfo info) throws CoreException {
 	}
 
 	public void deleteProject(String workspaceId, String projectName) throws CoreException {
@@ -45,10 +45,6 @@ public class SimpleMetaStore implements IMetaStore {
 	}
 
 	public List<String> readAllUsers() throws CoreException {
-		return null;
-	}
-
-	public ProjectInfo readProject(String projectId) throws CoreException {
 		return null;
 	}
 

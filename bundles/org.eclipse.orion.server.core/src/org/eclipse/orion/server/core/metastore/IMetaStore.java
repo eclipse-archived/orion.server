@@ -29,10 +29,14 @@ public interface IMetaStore {
 
 	/**
 	 * Creates a new user in the backing store containing the provided project information.
+	 * <p>
+	 * It is required the the project information contains the workspaceId of the workspace that owns the
+	 * project and a project name.
+	 * </p>
 	 * @param info the information about the project to create
 	 * @throws CoreException if the project could not be created
 	 */
-	public void createProject(String workspaceId, ProjectInfo info) throws CoreException;
+	public void createProject(ProjectInfo info) throws CoreException;
 
 	/**
 	 * Creates a new user in the backing store containing the provided user information.
@@ -43,10 +47,14 @@ public interface IMetaStore {
 
 	/**
 	 * Creates a new workspace in the backing store containing the provided workspace information.
+	 * <p>
+	 * It is required the the workspace information contains the userId of the user that owns the
+	 * workspace and a workspace name.
+	 * </p>
 	 * @param info the information about the workspace to create
 	 * @throws CoreException if the workspace could not be created
 	 */
-	public void createWorkspace(String userId, WorkspaceInfo info) throws CoreException;
+	public void createWorkspace(WorkspaceInfo info) throws CoreException;
 
 	/**
 	 * Deletes the project metadata corresponding to the given project name in the given
@@ -73,7 +81,7 @@ public interface IMetaStore {
 	public void deleteUser(String userId) throws CoreException;
 
 	/**
-	 * Deletes the workspace metadata corresponding to the given id. All artifacts in this store
+	 * Deletes the workspace metadata corresponding to the given information. All artifacts in this store
 	 * uniquely owned by this user are also deleted from the backing store (such as projects).
 	 * <p>
 	 * If no such workspace exists, this method has no effect. 
@@ -124,7 +132,7 @@ public interface IMetaStore {
 	 * Updates the metadata in this store based on the provided data.
 	 * @param project The new project data
 	 * @throws CoreException If the new data could not be stored, or if
-	 * no such project  exists
+	 * no such project exists
 	 */
 	public void updateProject(ProjectInfo project) throws CoreException;
 

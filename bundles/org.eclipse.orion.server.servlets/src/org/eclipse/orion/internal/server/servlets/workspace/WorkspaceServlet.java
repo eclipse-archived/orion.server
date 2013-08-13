@@ -152,7 +152,8 @@ public class WorkspaceServlet extends OrionServlet {
 		try {
 			WorkspaceInfo workspace = new WorkspaceInfo();
 			workspace.setFullName(workspaceName);
-			OrionConfiguration.getMetaStore().createWorkspace(userId, workspace);
+			workspace.setUserId(userId);
+			OrionConfiguration.getMetaStore().createWorkspace(workspace);
 			URI requestLocation = ServletResourceHandler.getURI(req);
 			JSONObject result = WorkspaceResourceHandler.toJSON(workspace, requestLocation, requestLocation);
 			writeJSONResponse(req, resp, result);

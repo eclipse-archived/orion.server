@@ -279,6 +279,7 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		if (id != null)
 			project.setUniqueId(id);
 		project.setFullName(name);
+		project.setWorkspaceId(workspace.getUniqueId());
 		String content = toAdd.optString(ProtocolConstants.KEY_CONTENT_LOCATION, null);
 		if (!isAllowedLinkDestination(content, request.getRemoteUser())) {
 			String msg = NLS.bind("Cannot link to server path {0}. Use the orion.file.allowedPaths property to specify server locations where content can be linked.", content);
@@ -287,7 +288,7 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		}
 		try {
 			//project creation will assign unique project id
-			getMetaStore().createProject(workspace.getUniqueId(), project);
+			getMetaStore().createProject(project);
 		} catch (CoreException e) {
 			String msg = "Error persisting project state";
 			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));

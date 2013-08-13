@@ -12,6 +12,7 @@ package org.eclipse.orion.server.core.metastore;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
@@ -21,6 +22,7 @@ import org.eclipse.core.runtime.CoreException;
  */
 public class ProjectInfo extends MetadataInfo {
 	private URI contentLocation;
+	private String workspaceId;
 
 	/**
 	 * Returns the absolute location of the contents of this project.
@@ -42,6 +44,14 @@ public class ProjectInfo extends MetadataInfo {
 	}
 
 	/**
+	 * Returns the workspace id of the workspace that owns this project.
+	 * @return the workspace id.
+	 */
+	public String getWorkspaceId() {
+		return workspaceId;
+	}
+
+	/**
 	 * Sets the absolute location of the contents of this project.
 	 */
 	public void setContentLocation(URI contentURI) {
@@ -56,5 +66,13 @@ public class ProjectInfo extends MetadataInfo {
 				throw new RuntimeException(e);
 			}
 		}
+	}
+	
+	/**
+	 * Sets the workspace id of the workspace that owns this project.
+	 * @param userId the workspace id.
+	 */
+	public void setWorkspaceId(String workspaceId) {
+		this.workspaceId = workspaceId;
 	}
 }
