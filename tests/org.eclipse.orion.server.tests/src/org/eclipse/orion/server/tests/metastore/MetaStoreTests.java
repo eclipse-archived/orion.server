@@ -30,6 +30,7 @@ import org.junit.runners.MethodSorters;
 
 /**
  * Abstract class to test an implementation of an {@link IMetaStore}.
+ * This class has all the test that tests the "happy" code paths.
  *   
  * @author Anthony Hunter
  */
@@ -382,7 +383,7 @@ public abstract class MetaStoreTests {
 		metaStore.createWorkspace(workspaceInfo1);
 
 		// create another workspace
-		String workspaceName2 = "Orion Content";
+		String workspaceName2 = "Workspace2";
 		WorkspaceInfo workspaceInfo2 = new WorkspaceInfo();
 		workspaceInfo2.setFullName(workspaceName2);
 		workspaceInfo2.setUserId(userInfo.getUniqueId());

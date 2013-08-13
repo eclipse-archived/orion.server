@@ -25,12 +25,12 @@ import org.junit.runners.MethodSorters;
 
 /**
  * Test the implementation of an {@link IMetaStore}. 
- * Two tests fail so those methods are overridden.
+ * One test fails so this method is overridden.
  *   
  * @author Anthony Hunter
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class CompatibilityMetaStoreTests extends MetaStoreTests {
+public class CompatibilityMetaStoreTests extends ExtendedMetaStoreTests {
 
 	@Override
 	public IMetaStore getMetaStore() {

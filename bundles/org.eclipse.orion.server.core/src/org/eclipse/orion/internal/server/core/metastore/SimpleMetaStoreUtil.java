@@ -125,6 +125,9 @@ public class SimpleMetaStoreUtil {
 	 * @return The user name.
 	 */
 	public static String decodeUserNameFromWorkspaceId(String workspaceId) {
+		if (workspaceId.indexOf(SEPARATOR) == -1) {
+			return null;
+		}
 		return workspaceId.substring(0, workspaceId.indexOf(SEPARATOR));
 	}
 
@@ -135,6 +138,9 @@ public class SimpleMetaStoreUtil {
 	 * @return The workspace name.
 	 */
 	public static String decodeWorkspaceNameFromWorkspaceId(String workspaceId) {
+		if (workspaceId.indexOf(SEPARATOR) == -1) {
+			return null;
+		}
 		return workspaceId.substring(workspaceId.indexOf(SEPARATOR) + 1);
 	}
 

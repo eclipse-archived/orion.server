@@ -20,7 +20,7 @@ import org.junit.FixMethodOrder;
 import org.junit.runners.MethodSorters;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class SimpleMetaStoreTests extends MetaStoreTests {
+public class SimpleMetaStoreTests extends ExtendedMetaStoreTests {
 
 	public IMetaStore getMetaStore() {
 		File metaStoreRoot = SimpleMetaStoreUtilTest.createTestMetaStoreFolder();
