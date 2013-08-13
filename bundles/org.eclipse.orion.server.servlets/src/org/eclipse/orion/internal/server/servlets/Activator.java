@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets;
 
-import java.io.File;
 import java.net.URI;
 import java.util.*;
 import org.eclipse.core.filesystem.EFS;
@@ -116,7 +115,11 @@ public class Activator implements BundleActivator {
 		parentDecoratorRegistration = bundleContext.registerService(IWebResourceDecorator.class, new ProjectParentDecorator(), null);
 		//legacy metadata store implementation
 		//compatibleMetastoreRegistration = bundleContext.registerService(IMetaStore.class, new CompatibilityMetaStore(), null);
-		compatibleMetastoreRegistration = bundleContext.registerService(IMetaStore.class, new SimpleLinuxMetaStore(new File("/workspace/foo")), null);
+		try {
+			compatibleMetastoreRegistration = bundleContext.registerService(IMetaStore.class, new SimpleLinuxMetaStore(OrionConfiguration.getUserHome(null).toLocalFile(EFS.NONE, null)), null);
+		} catch (CoreException e) {
+			throw new RuntimeException("Cannot initialize MetaStore", e); //$NON-NLS-1$
+		}
 	}
 
 	public void start(BundleContext context) throws Exception {

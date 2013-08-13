@@ -57,13 +57,15 @@ public class CompatibilityMetaStoreTests extends MetaStoreTests {
 		String workspaceName1 = "Orion Content";
 		WorkspaceInfo workspaceInfo1 = new WorkspaceInfo();
 		workspaceInfo1.setFullName(workspaceName1);
-		metaStore.createWorkspace(userInfo.getUniqueId(), workspaceInfo1);
+		workspaceInfo1.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo1);
 
 		// create another workspace
 		String workspaceName2 = "Workspace2";
 		WorkspaceInfo workspaceInfo2 = new WorkspaceInfo();
 		workspaceInfo2.setFullName(workspaceName2);
-		metaStore.createWorkspace(userInfo.getUniqueId(), workspaceInfo2);
+		workspaceInfo2.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo2);
 
 		// delete the first workspace
 		metaStore.deleteWorkspace(userInfo.getUniqueId(), workspaceInfo1.getUniqueId());

@@ -46,15 +46,18 @@ public class SimpleLinuxMetaStore implements IMetaStore {
 		initializeMetaStore(rootLocation);
 	}
 
-	public void createProject(String workspaceId, ProjectInfo projectInfo) throws CoreException {
+	public void createProject(ProjectInfo projectInfo) throws CoreException {
+		if (projectInfo.getWorkspaceId() == null) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleLinuxMetaStore.createProject: workspace id is null.", null));
+		}
 		WorkspaceInfo workspaceInfo;
 		try {
-			workspaceInfo = readWorkspace(workspaceId);
+			workspaceInfo = readWorkspace(projectInfo.getWorkspaceId());
 		} catch (CoreException exception) {
-			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleLinuxMetaStore.createProject: could not find workspace with id:" + workspaceId + ", workspace does not exist.", null));
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleLinuxMetaStore.createProject: could not find workspace with id:" + projectInfo.getWorkspaceId() + ", workspace does not exist.", null));
 		}
-		String userName = SimpleLinuxMetaStoreUtil.decodeUserNameFromWorkspaceId(workspaceId);
-		String workspaceName = SimpleLinuxMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
+		String userName = SimpleLinuxMetaStoreUtil.decodeUserNameFromWorkspaceId(projectInfo.getWorkspaceId());
+		String workspaceName = SimpleLinuxMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(projectInfo.getWorkspaceId());
 		String projectId = SimpleLinuxMetaStoreUtil.encodeProjectId(projectInfo.getFullName());
 		projectInfo.setUniqueId(projectId);
 
@@ -116,14 +119,28 @@ public class SimpleLinuxMetaStore implements IMetaStore {
 		}
 	}
 
-	public void createWorkspace(String userId, WorkspaceInfo workspaceInfo) throws CoreException {
+	public void createWorkspace(WorkspaceInfo workspaceInfo) throws CoreException {
+		if (workspaceInfo.getUserId() == null) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleLinuxMetaStore.createWorkspace: user id is null.", null));
+		}
 		UserInfo userInfo;
 		try {
-			userInfo = readUser(userId);
+			userInfo = readUser(workspaceInfo.getUserId());
 		} catch (CoreException exception) {
-			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleLinuxMetaStore.createWorkspace: could not find user with id:" + userId + ", user does not exist.", null));
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleLinuxMetaStore.createWorkspace: could not find user with id:" + workspaceInfo.getUserId() + ", user does not exist.", null));
 		}
-		String workspaceId = SimpleLinuxMetaStoreUtil.encodeWorkspaceId(userInfo.getUserName(), workspaceInfo.getFullName());
+		// We create a meta folder for the workspace using the workspace name
+		// It is possible to have two workspaces with the same getFullName, so append an integer to it if this is a duplicate name.
+		File userMetaFolder = SimpleLinuxMetaStoreUtil.retrieveMetaFolder(metaStoreRoot, userInfo.getUserName());
+		File workspaceMetaFolder = SimpleLinuxMetaStoreUtil.retrieveMetaFolder(userMetaFolder, workspaceInfo.getFullName());
+		String newFullName = workspaceInfo.getFullName();
+		int suffix = 0;
+		while (SimpleLinuxMetaStoreUtil.isMetaFolder(workspaceMetaFolder)) {
+			suffix++;
+			newFullName = workspaceInfo.getFullName() + suffix;
+			workspaceMetaFolder = SimpleLinuxMetaStoreUtil.retrieveMetaFolder(userMetaFolder, newFullName);
+		}
+		String workspaceId = SimpleLinuxMetaStoreUtil.encodeWorkspaceId(userInfo.getUserName(), newFullName);
 		workspaceInfo.setUniqueId(workspaceId);
 		JSONObject jsonObject = new JSONObject();
 		try {
@@ -135,13 +152,11 @@ public class SimpleLinuxMetaStore implements IMetaStore {
 			jsonObject.put("Properties", properties);
 		} catch (JSONException e) {
 		}
-		File userMetaFolder = SimpleLinuxMetaStoreUtil.retrieveMetaFolder(metaStoreRoot, userInfo.getUserName());
-		if (!SimpleLinuxMetaStoreUtil.createMetaFolder(userMetaFolder, workspaceInfo.getFullName())) {
-			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleLinuxMetaStore.createWorkspace: could not create workspace: " + workspaceInfo.getFullName() + " for user " + userInfo.getUserName(), null));
+		if (!SimpleLinuxMetaStoreUtil.createMetaFolder(userMetaFolder, newFullName)) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleLinuxMetaStore.createWorkspace: could not create workspace: " + newFullName + " for user " + userInfo.getUserName(), null));
 		}
-		File workspaceMetaFolder = SimpleLinuxMetaStoreUtil.retrieveMetaFolder(userMetaFolder, workspaceInfo.getFullName());
 		if (!SimpleLinuxMetaStoreUtil.createMetaFile(workspaceMetaFolder, WORKSPACE, jsonObject)) {
-			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleLinuxMetaStore.createWorkspace: could not create workspace: " + workspaceInfo.getFullName() + " for user " + userInfo.getUserName(), null));
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleLinuxMetaStore.createWorkspace: could not create workspace: " + newFullName + " for user " + userInfo.getUserName(), null));
 		}
 
 		// Update the user with the new workspaceId
@@ -373,8 +388,8 @@ public class SimpleLinuxMetaStore implements IMetaStore {
 	}
 
 	public void updateProject(ProjectInfo projectInfo) throws CoreException {
-		String userName = SimpleLinuxMetaStoreUtil.decodeUserNameFromWorkspaceId(workspaceId);
-		String workspaceName = SimpleLinuxMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
+		String userName = SimpleLinuxMetaStoreUtil.decodeUserNameFromWorkspaceId(projectInfo.getWorkspaceId());
+		String workspaceName = SimpleLinuxMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(projectInfo.getWorkspaceId());
 		String projectName = SimpleLinuxMetaStoreUtil.decodeProjectNameFromProjectId(projectInfo.getUniqueId());
 		JSONObject jsonObject = new JSONObject();
 		try {

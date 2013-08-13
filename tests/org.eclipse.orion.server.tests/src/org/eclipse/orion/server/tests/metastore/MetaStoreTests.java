@@ -59,7 +59,8 @@ public abstract class MetaStoreTests {
 		String workspaceName = "Orion Content";
 		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
 		workspaceInfo.setFullName(workspaceName);
-		metaStore.createWorkspace(userInfo.getUniqueId(), workspaceInfo);
+		workspaceInfo.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo);
 
 		// create the project
 		String projectName = "Orion Project";
@@ -70,7 +71,8 @@ public abstract class MetaStoreTests {
 		} catch (URISyntaxException e) {
 			// should not get an exception here, simple URI
 		}
-		metaStore.createProject(workspaceInfo.getUniqueId(), projectInfo);
+		projectInfo.setWorkspaceId(workspaceInfo.getUniqueId());
+		metaStore.createProject(projectInfo);
 
 		// delete the user
 		metaStore.deleteUser(userInfo.getUniqueId());
@@ -122,7 +124,8 @@ public abstract class MetaStoreTests {
 		String workspaceName = "Orion Content";
 		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
 		workspaceInfo.setFullName(workspaceName);
-		metaStore.createWorkspace(userInfo.getUniqueId(), workspaceInfo);
+		workspaceInfo.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo);
 
 		// delete the user
 		metaStore.deleteUser(userInfo.getUniqueId());
@@ -144,7 +147,8 @@ public abstract class MetaStoreTests {
 		String workspaceName = "Orion Content";
 		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
 		workspaceInfo.setFullName(workspaceName);
-		metaStore.createWorkspace(userInfo.getUniqueId(), workspaceInfo);
+		workspaceInfo.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo);
 
 		// create the project
 		String projectName1 = "Orion Project";
@@ -155,7 +159,8 @@ public abstract class MetaStoreTests {
 		} catch (URISyntaxException e) {
 			// should not get an exception here, simple URI
 		}
-		metaStore.createProject(workspaceInfo.getUniqueId(), projectInfo1);
+		projectInfo1.setWorkspaceId(workspaceInfo.getUniqueId());
+		metaStore.createProject(projectInfo1);
 
 		// create another project
 		String projectName2 = "Another Project";
@@ -166,7 +171,8 @@ public abstract class MetaStoreTests {
 		} catch (URISyntaxException e) {
 			// should not get an exception here, simple URI
 		}
-		metaStore.createProject(workspaceInfo.getUniqueId(), projectInfo2);
+		projectInfo2.setWorkspaceId(workspaceInfo.getUniqueId());
+		metaStore.createProject(projectInfo2);
 
 		// delete the first project
 		metaStore.deleteProject(workspaceInfo.getUniqueId(), projectInfo1.getFullName());
@@ -218,13 +224,15 @@ public abstract class MetaStoreTests {
 		String workspaceName1 = "Orion Content";
 		WorkspaceInfo workspaceInfo1 = new WorkspaceInfo();
 		workspaceInfo1.setFullName(workspaceName1);
-		metaStore.createWorkspace(userInfo.getUniqueId(), workspaceInfo1);
+		workspaceInfo1.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo1);
 
 		// create another workspace
 		String workspaceName2 = "Workspace2";
 		WorkspaceInfo workspaceInfo2 = new WorkspaceInfo();
 		workspaceInfo2.setFullName(workspaceName2);
-		metaStore.createWorkspace(userInfo.getUniqueId(), workspaceInfo2);
+		workspaceInfo2.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo2);
 
 		// delete the first workspace
 		metaStore.deleteWorkspace(userInfo.getUniqueId(), workspaceInfo1.getUniqueId());
@@ -289,7 +297,8 @@ public abstract class MetaStoreTests {
 		String workspaceName = "Orion Content";
 		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
 		workspaceInfo.setFullName(workspaceName);
-		metaStore.createWorkspace(userInfo.getUniqueId(), workspaceInfo);
+		workspaceInfo.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo);
 
 		// create the project
 		String projectName1 = "Orion Project";
@@ -300,7 +309,8 @@ public abstract class MetaStoreTests {
 		} catch (URISyntaxException e) {
 			// should not get an exception here, simple URI
 		}
-		metaStore.createProject(workspaceInfo.getUniqueId(), projectInfo1);
+		projectInfo1.setWorkspaceId(workspaceInfo.getUniqueId());
+		metaStore.createProject(projectInfo1);
 
 		// create another project
 		String projectName2 = "Another Project";
@@ -311,7 +321,8 @@ public abstract class MetaStoreTests {
 		} catch (URISyntaxException e) {
 			// should not get an exception here, simple URI
 		}
-		metaStore.createProject(workspaceInfo.getUniqueId(), projectInfo2);
+		projectInfo2.setWorkspaceId(workspaceInfo.getUniqueId());
+		metaStore.createProject(projectInfo2);
 
 		// read the workspace
 		WorkspaceInfo readWorkspaceInfo = metaStore.readWorkspace(workspaceInfo.getUniqueId());
@@ -367,13 +378,15 @@ public abstract class MetaStoreTests {
 		String workspaceName1 = "Orion Content";
 		WorkspaceInfo workspaceInfo1 = new WorkspaceInfo();
 		workspaceInfo1.setFullName(workspaceName1);
-		metaStore.createWorkspace(userInfo.getUniqueId(), workspaceInfo1);
+		workspaceInfo1.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo1);
 
 		// create another workspace
-		String workspaceName2 = "Workspace2";
+		String workspaceName2 = "Orion Content";
 		WorkspaceInfo workspaceInfo2 = new WorkspaceInfo();
 		workspaceInfo2.setFullName(workspaceName2);
-		metaStore.createWorkspace(userInfo.getUniqueId(), workspaceInfo2);
+		workspaceInfo2.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo2);
 
 		// read the user
 		UserInfo readUserInfo = metaStore.readUser(userInfo.getUniqueId());
@@ -408,7 +421,8 @@ public abstract class MetaStoreTests {
 		String workspaceName = "Orion Content";
 		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
 		workspaceInfo.setFullName(workspaceName);
-		metaStore.createWorkspace(userInfo.getUniqueId(), workspaceInfo);
+		workspaceInfo.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo);
 
 		// create the project
 		String projectName = "Orion Project";
@@ -419,7 +433,8 @@ public abstract class MetaStoreTests {
 		} catch (URISyntaxException e) {
 			// should not get an exception here, simple URI
 		}
-		metaStore.createProject(workspaceInfo.getUniqueId(), projectInfo);
+		projectInfo.setWorkspaceId(workspaceInfo.getUniqueId());
+		metaStore.createProject(projectInfo);
 
 		// update the project
 		URI newURI = new URI("file:/workspace/foo");
@@ -488,7 +503,8 @@ public abstract class MetaStoreTests {
 		String workspaceName = "Orion Content";
 		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
 		workspaceInfo.setFullName(workspaceName);
-		metaStore.createWorkspace(userInfo.getUniqueId(), workspaceInfo);
+		workspaceInfo.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo);
 
 		// update the workspace
 		workspaceInfo.setProperty("New", "Property");

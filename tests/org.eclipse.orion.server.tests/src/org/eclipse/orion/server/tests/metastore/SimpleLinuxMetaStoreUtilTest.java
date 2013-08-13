@@ -149,12 +149,8 @@ public class SimpleLinuxMetaStoreUtilTest {
 
 	@Test
 	public void testEncodedProjectId() {
-		String userName = "anthony";
-		String workspaceName = "Workspace One";
 		String projectName = "Project One";
-		String encoded = SimpleLinuxMetaStoreUtil.encodeProjectId(userName, workspaceName, projectName);
-		assertTrue(userName.equals(SimpleLinuxMetaStoreUtil.decodeUserNameFromProjectId(encoded)));
-		assertTrue(workspaceName.equals(SimpleLinuxMetaStoreUtil.decodeWorkspaceNameFromProjectId(encoded)));
+		String encoded = SimpleLinuxMetaStoreUtil.encodeProjectId(projectName);
 		assertTrue(projectName.equals(SimpleLinuxMetaStoreUtil.decodeProjectNameFromProjectId(encoded)));
 	}
 
