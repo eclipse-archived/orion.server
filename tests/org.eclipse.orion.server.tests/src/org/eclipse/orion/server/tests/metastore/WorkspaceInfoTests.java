@@ -94,4 +94,13 @@ public class WorkspaceInfoTests {
 		assertFalse(workspaceInfo.getProjectNames().contains(id2));
 		assertEquals(0, workspaceInfo.getProjectNames().size());
 	}
+
+	@Test
+	public void testUserId() {
+		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
+		String userId = "id";
+		workspaceInfo.setUserId(userId);
+		assertEquals(userId, workspaceInfo.getUserId());
+	}
+
 }

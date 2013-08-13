@@ -75,4 +75,11 @@ public class ProjectInfoTests {
 		assertEquals(0, projectInfo.getProperties().size());
 	}
 
+	@Test
+	public void testUserId() {
+		ProjectInfo projectInfo = new ProjectInfo();
+		String workspaceId = "id";
+		projectInfo.setWorkspaceId(workspaceId);
+		assertEquals(workspaceId, projectInfo.getWorkspaceId());
+	}
 }
