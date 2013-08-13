@@ -24,6 +24,10 @@ public class ProjectServlet extends OrionServlet {
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
 		String pathInfo = req.getPathInfo();
+		if (pathInfo == null) {
+			projectHandlerV1.handleRequest(req, resp, null);
+			return;
+		}
 		Path path = new Path(pathInfo);
 		if (path == null || path.segmentCount() != 2) {
 			handleException(resp, new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "Invalid project request"), HttpServletResponse.SC_BAD_REQUEST);
