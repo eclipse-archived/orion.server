@@ -30,4 +30,36 @@ public final class LogConstants {
 	public static final String KEY_APPENDER_DOWNLOAD = "Download"; //$NON-NLS-1$
 
 	public static final String KEY_APPENDER_DOWNLOAD_LOCATION = "DownloadLocation"; //$NON-NLS-1$
+
+	public static final String KEY_APPENDER_ROLLING_POLICY = "RollingPolicy"; //$NON-NLS-1$
+
+	public static final String KEY_APPENDER_TRIGGERING_POLICY = "TriggeringPolicy"; //$NON-NLS-1$
+
+	public static final String KEY_APPENDER_ARCHIVED_LOG_FILES = "ArchivedLogFiles"; //$NON-NLS-1$
+
+	public static final String KEY_ROLLING_POLICY_FILE_NAME_PATTERN = "FileNamePattern"; //$NON-NLS-1$
+
+	public static final String KEY_ROLLING_POLICY_MAX_HISTORY = "MaxHistory"; //$NON-NLS-1$
+
+	public static final String KEY_ROLLING_POLICY_CLEAN_HISTORY_ON_START = "CleanHistoryOnStart"; //$NON-NLS-1$
+
+	public static final String KEY_ROLLING_POLICY_COMPRESSION_MODE = "CompressionMode"; //$NON-NLS-1$
+
+	public static final String KEY_ROLLING_POLICY_MIN_INDEX = "MinIndex"; //$NON-NLS-1$
+
+	public static final String KEY_ROLLING_POLICY_MAX_INDEX = "MaxIndex"; //$NON-NLS-1$
+
+	public static final String KEY_TRIGGERING_POLICY_MAX_FILE_SIZE = "MaxFileSize"; //$NON-NLS-1$
+
+	public static final String KEY_ARCHIVE_LOG_FILE_DOWNLOAD_LOCATION = "DownloadLocation"; //$NON-NLS-1$
+
+	public static final String CONTENT_TYPE_PLAIN_TEXT = "text/plain"; //$NON-NLS-1$
+
+	public static final String CONTENT_TYPE_GZIP = "application/x-gzip"; //$NON-NLS-1$
+
+	public static final String CONTENT_TYPE_ZIP = "application/zip"; //$NON-NLS-1$
+
+	public static final String KEY_LOGGER_LEVEL = "Level"; //$NON-NLS-1$
+
+	public static final String KEY_LOGGER_EFFECTIVE_LEVEL = "EffectiveLevel"; //$NON-NLS-1$
 }

@@ -17,8 +17,7 @@ import java.util.Locale;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.core.filesystem.EFS;
-import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.filesystem.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
@@ -61,6 +60,20 @@ public class NewFileServlet extends OrionServlet {
 			return;
 		}
 		IFileStore file = getFileStore(req, path);
+		IFileStore testLink = file;
+		while (testLink != null) {
+			IFileInfo info = testLink.fetchInfo();
+			if (info.getAttribute(EFS.ATTRIBUTE_SYMLINK)) {
+				if (file == testLink) {
+					handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, NLS.bind("Forbidden: {0}", path), null));
+				} else {
+					handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("File not found: {0}", path), null));
+				}
+				return;
+			}
+			testLink = testLink.getParent();
+		}
+
 		if (file == null) {
 			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("File not found: {0}", path), null));
 			return;

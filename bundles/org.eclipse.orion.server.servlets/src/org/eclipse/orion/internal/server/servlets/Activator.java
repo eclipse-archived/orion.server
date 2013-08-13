@@ -19,6 +19,7 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
 import org.eclipse.orion.internal.server.core.metastore.SimpleLinuxMetaStore;
 import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
+import org.eclipse.orion.internal.server.servlets.project.ProjectDecorator;
 import org.eclipse.orion.internal.server.servlets.workspace.ProjectParentDecorator;
 import org.eclipse.orion.internal.server.servlets.xfer.TransferResourceDecorator;
 import org.eclipse.orion.server.core.OrionConfiguration;
@@ -53,6 +54,7 @@ public class Activator implements BundleActivator {
 
 	private ServiceRegistration<IWebResourceDecorator> transferDecoratorRegistration;
 	private ServiceRegistration<IWebResourceDecorator> parentDecoratorRegistration;
+	private ServiceRegistration<IWebResourceDecorator> projectDecoratorRegistration;
 
 	private ServiceRegistration<IMetaStore> compatibleMetastoreRegistration;
 
@@ -113,6 +115,8 @@ public class Activator implements BundleActivator {
 		transferDecoratorRegistration = bundleContext.registerService(IWebResourceDecorator.class, new TransferResourceDecorator(), null);
 		//adds parent links to representations
 		parentDecoratorRegistration = bundleContext.registerService(IWebResourceDecorator.class, new ProjectParentDecorator(), null);
+		//adds project information to representations
+		projectDecoratorRegistration = bundleContext.registerService(IWebResourceDecorator.class, new ProjectDecorator(), null);
 		//legacy metadata store implementation
 		//compatibleMetastoreRegistration = bundleContext.registerService(IMetaStore.class, new CompatibilityMetaStore(), null);
 		try {
@@ -154,6 +158,10 @@ public class Activator implements BundleActivator {
 		if (parentDecoratorRegistration != null) {
 			parentDecoratorRegistration.unregister();
 			parentDecoratorRegistration = null;
+		}
+		if (projectDecoratorRegistration != null) {
+			projectDecoratorRegistration.unregister();
+			projectDecoratorRegistration = null;
 		}
 		if (compatibleMetastoreRegistration != null) {
 			compatibleMetastoreRegistration.unregister();

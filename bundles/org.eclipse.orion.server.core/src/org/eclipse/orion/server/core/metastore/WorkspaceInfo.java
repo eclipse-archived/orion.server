@@ -59,10 +59,10 @@ public class WorkspaceInfo extends MetadataInfo {
 		this.userId = userId;
 	}
 
-
 	@Override
 	public String toString() {
 		return getClass().getSimpleName() + "(Id=" + getUniqueId() + ", fullName=" + getFullName() + ")";
 		
 	}
+
 }

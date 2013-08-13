@@ -27,30 +27,28 @@ import org.eclipse.orion.server.logs.LogConstants;
 import org.eclipse.orion.server.logs.servlets.LogServlet;
 import org.json.JSONObject;
 
-@ResourceDescription(type = FileAppenderResource.TYPE)
-public class FileAppenderResource {
-	public static final String RESOURCE = "fileAppender"; //$NON-NLS-1$
-	public static final String TYPE = "FileAppender"; //$NON-NLS-1$
+import ch.qos.logback.classic.Level;
+
+@ResourceDescription(type = LoggerResource.TYPE)
+public class LoggerResource {
+	public static final String RESOURCE = "logger"; //$NON-NLS-1$
+	public static final String TYPE = "Logger"; //$NON-NLS-1$
 
 	protected static ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
 	{
 		Property[] defaultProperties = new Property[] { //
-				new Property(ProtocolConstants.KEY_NAME), //
+		new Property(ProtocolConstants.KEY_NAME), //
 				new Property(ProtocolConstants.KEY_LOCATION), //
-				new Property(LogConstants.KEY_APPENDER_NAME), //
-				new Property(LogConstants.KEY_APPENDER_IS_APPEND), //
-				new Property(LogConstants.KEY_APPENDER_IS_PRUDENT), //
-				new Property(LogConstants.KEY_APPENDER_IS_STARTED),
-				new Property(LogConstants.KEY_APPENDER_DOWNLOAD_LOCATION) };
+				new Property(LogConstants.KEY_LOGGER_LEVEL), //
+				new Property(LogConstants.KEY_LOGGER_EFFECTIVE_LEVEL) };
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
 	protected Serializer<JSONObject> jsonSerializer = new JSONSerializer();
 	protected URI baseLocation;
 
 	protected String name;
-	protected boolean isAppend;
-	protected boolean isPrudent;
-	protected boolean isStarted;
+	protected Level level;
+	protected Level effectiveLevel;
 
 	protected URI createUriWithPath(final IPath path) throws URISyntaxException {
 		return new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(),
@@ -70,31 +68,22 @@ public class FileAppenderResource {
 		this.name = name;
 	}
 
-	@PropertyDescription(name = LogConstants.KEY_APPENDER_IS_APPEND)
-	public boolean isAppend() {
-		return isAppend;
+	@PropertyDescription(name = LogConstants.KEY_LOGGER_LEVEL)
+	public Level getLevel() {
+		return level;
 	}
 
-	public void setAppend(boolean isAppend) {
-		this.isAppend = isAppend;
+	public void setLevel(Level level) {
+		this.level = level;
 	}
 
-	@PropertyDescription(name = LogConstants.KEY_APPENDER_IS_PRUDENT)
-	public boolean isPrudent() {
-		return isPrudent;
+	@PropertyDescription(name = LogConstants.KEY_LOGGER_EFFECTIVE_LEVEL)
+	public Level getEffectiveLevel() {
+		return effectiveLevel;
 	}
 
-	public void setPrudent(boolean isPrudent) {
-		this.isPrudent = isPrudent;
-	}
-
-	@PropertyDescription(name = LogConstants.KEY_APPENDER_IS_STARTED)
-	public boolean isStarted() {
-		return isStarted;
-	}
-
-	public void setStarted(boolean isStarted) {
-		this.isStarted = isStarted;
+	public void setEffectiveLevel(Level effectiveLevel) {
+		this.effectiveLevel = effectiveLevel;
 	}
 
 	public void setBaseLocation(URI baseLocation) {
@@ -103,14 +92,7 @@ public class FileAppenderResource {
 
 	@PropertyDescription(name = ProtocolConstants.KEY_LOCATION)
 	public URI getLocation() throws URISyntaxException {
-		IPath path = new Path(LogServlet.LOG_URI).append(FileAppenderResource.RESOURCE).append(getName());
-		return createUriWithPath(path);
-	}
-
-	@PropertyDescription(name = LogConstants.KEY_APPENDER_DOWNLOAD_LOCATION)
-	public URI getDownloadLocation() throws URISyntaxException {
-		IPath path = new Path(LogServlet.LOG_URI).append(FileAppenderResource.RESOURCE).append(getName())
-				.append(LogConstants.KEY_APPENDER_DOWNLOAD);
+		IPath path = new Path(LogServlet.LOG_URI).append(LoggerResource.RESOURCE).append(getName());
 		return createUriWithPath(path);
 	}
 }

@@ -81,4 +81,5 @@ public class ProjectInfo extends MetadataInfo {
 		return getClass().getSimpleName() + "(Id=" + getUniqueId() + ", fullName=" + getFullName() + ", contentLocation=" + getContentLocation() + ")";
 		
 	}
+
 }

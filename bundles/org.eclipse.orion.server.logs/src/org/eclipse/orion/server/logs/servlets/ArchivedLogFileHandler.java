@@ -11,6 +11,8 @@
 
 package org.eclipse.orion.server.logs.servlets;
 
+import java.io.File;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -18,15 +20,18 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.logs.ILogService;
-import org.eclipse.orion.server.logs.jobs.ListFileAppendersJob;
+import org.eclipse.orion.server.logs.LogUtils;
+import org.eclipse.osgi.util.NLS;
 
-public class LogApiHandler extends AbstractLogHandler {
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.rolling.RollingFileAppender;
 
-	public LogApiHandler(ServletResourceHandler<IStatus> statusHandler) {
+public class ArchivedLogFileHandler extends AbstractLogHandler {
+
+	public ArchivedLogFileHandler(ServletResourceHandler<IStatus> statusHandler) {
 		super(statusHandler);
 	}
 
@@ -34,16 +39,34 @@ public class LogApiHandler extends AbstractLogHandler {
 	protected boolean handleGet(HttpServletRequest request, HttpServletResponse response, ILogService logService,
 			IPath path) throws ServletException {
 
+		String appenderName = path.segment(0);
+		RollingFileAppender<ILoggingEvent> appender = logService.getRollingFileAppender(appenderName);
+		if (appender == null) {
+			String msg = NLS.bind("Appender not found: {0}", appenderName);
+			final ServerStatus error = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null);
+			return statusHandler.handleRequest(request, response, error);
+		}
+
+		String logFileName = path.segment(2);
+		File logFile = logService.getArchivedLogFile(appender, logFileName);
+
+		if (logFile == null) {
+			String msg = NLS.bind("Log file not found: {0}", logFileName);
+			final ServerStatus error = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null);
+			return statusHandler.handleRequest(request, response, error);
+		}
+
 		try {
-			return TaskJobHandler.handleTaskJob(request, response,
-					new ListFileAppendersJob(TaskJobHandler.getUserId(request), logService, getURI(request)),
-					statusHandler);
-		} catch (Exception e) {
+			LogUtils.provideLogFile(logFile, response);
+		} catch (Exception ex) {
+			String msg = NLS.bind("An error occured when looking for log {0}.", logFile.getName());
 			final ServerStatus error = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-					"An error occured when looking for appenders.", e);
+					msg, ex);
 
 			LogHelper.log(error);
 			return statusHandler.handleRequest(request, response, error);
 		}
+
+		return true;
 	}
 }

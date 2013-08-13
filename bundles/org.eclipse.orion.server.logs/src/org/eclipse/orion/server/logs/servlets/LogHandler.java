@@ -20,37 +20,41 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.logs.objects.FileAppenderResource;
+import org.eclipse.orion.server.logs.objects.LoggerResource;
 import org.eclipse.orion.server.logs.objects.RollingFileAppenderResource;
 
 public class LogHandler extends ServletResourceHandler<String> {
-	private ServletResourceHandler<String> logApiHandler;
-	private ServletResourceHandler<String> fileAppenderHandler;
-	private ServletResourceHandler<String> rollingFileAppenderHandler;
+	private final ServletResourceHandler<IPath> logApiHandler;
+	private final ServletResourceHandler<IPath> fileAppenderHandler;
+	private final ServletResourceHandler<IPath> rollingFileAppenderHandler;
+	private final ServletResourceHandler<IPath> loggerHandler;
 
 	public LogHandler(ServletResourceHandler<IStatus> statusHandler) {
 		this.logApiHandler = new LogApiHandler(statusHandler);
 		this.fileAppenderHandler = new FileAppenderHandler(statusHandler);
 		this.rollingFileAppenderHandler = new RollingFileAppenderHandler(statusHandler);
+		this.loggerHandler = new LoggerHandler(statusHandler);
 	}
 
 	@Override
-	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response,
-			String pathInfo) throws ServletException {
+	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String pathInfo)
+			throws ServletException {
 
 		/*
 		 * Dispatch the request.
 		 */
-		if (pathInfo == null || "/".equals(pathInfo))
-			return logApiHandler.handleRequest(request, response, pathInfo);
+		if (pathInfo == null || "/".equals(pathInfo)) //$NON-NLS-1$
+			return logApiHandler.handleRequest(request, response, new Path("/")); //$NON-NLS-1$
 
 		IPath path = new Path(pathInfo);
 		if (FileAppenderResource.RESOURCE.equals(path.segment(0)))
-			return fileAppenderHandler.handleRequest(request, response, path.removeFirstSegments(1)
-					.toString());
+			return fileAppenderHandler.handleRequest(request, response, path.removeFirstSegments(1));
 
 		if (RollingFileAppenderResource.RESOURCE.equals(path.segment(0)))
-			return rollingFileAppenderHandler.handleRequest(request, response, path
-					.removeFirstSegments(1).toString());
+			return rollingFileAppenderHandler.handleRequest(request, response, path.removeFirstSegments(1));
+
+		if (LoggerResource.RESOURCE.equals(path.segment(0)))
+			return loggerHandler.handleRequest(request, response, path.removeFirstSegments(1));
 
 		/* unsupported request */
 		return false;
