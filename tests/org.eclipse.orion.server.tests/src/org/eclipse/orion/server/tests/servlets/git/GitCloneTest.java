@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others
+ * Copyright (c) 2011, 2013 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -128,8 +128,8 @@ public class GitCloneTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		IPath clonePath = new Path("workspace").append(getWorkspaceId(workspaceLocation)).makeAbsolute();
 
-		AuthorizationService.removeUserRight("test", "/");
-		AuthorizationService.removeUserRight("test", "/*");
+		AuthorizationService.removeUserRight(testUserId, "/");
+		AuthorizationService.removeUserRight(testUserId, "/*");
 
 		// /workspace/{id} + {methodName}
 		JSONObject clone = clone(clonePath, null, getMethodName());
@@ -207,8 +207,8 @@ public class GitCloneTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		IPath clonePath = new Path("workspace").append(getWorkspaceId(workspaceLocation)).makeAbsolute();
 
-		AuthorizationService.removeUserRight("test", "/");
-		AuthorizationService.removeUserRight("test", "/*");
+		AuthorizationService.removeUserRight(testUserId, "/");
+		AuthorizationService.removeUserRight(testUserId, "/*");
 
 		// /workspace/{id}
 		JSONObject clone = clone(clonePath, null, null);
@@ -236,8 +236,8 @@ public class GitCloneTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		IPath workspacePath = new Path("workspace").append(getWorkspaceId(workspaceLocation)).makeAbsolute();
 
-		AuthorizationService.removeUserRight("test", "/");
-		AuthorizationService.removeUserRight("test", "/*");
+		AuthorizationService.removeUserRight(testUserId, "/");
+		AuthorizationService.removeUserRight(testUserId, "/*");
 
 		// /workspace/{id} + {methodName}
 		WebRequest request = new PostGitCloneRequest().setURIish("I'm//bad!").setWorkspacePath(workspacePath).setName(getMethodName()).getWebRequest();

@@ -19,7 +19,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;
 import org.eclipse.orion.server.core.LogHelper;
@@ -36,7 +35,7 @@ import org.eclipse.osgi.util.NLS;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.rolling.RollingFileAppender;
 
-public class RollingFileAppenderHandler extends AbstractLogHandler<String> {
+public class RollingFileAppenderHandler extends AbstractLogHandler {
 	private final ArchivedLogFileHandler archivedLogFileHandler;
 
 	public RollingFileAppenderHandler(ServletResourceHandler<IStatus> statusHandler) {
@@ -80,9 +79,8 @@ public class RollingFileAppenderHandler extends AbstractLogHandler<String> {
 
 	@Override
 	protected boolean handleGet(HttpServletRequest request, HttpServletResponse response, ILogService logService,
-			String pathInfo) throws ServletException {
+			IPath path) throws ServletException {
 
-		IPath path = new Path(pathInfo);
 		String appenderName = path.segment(0);
 
 		RollingFileAppenderResource appender = new RollingFileAppenderResource();
@@ -94,7 +92,7 @@ public class RollingFileAppenderHandler extends AbstractLogHandler<String> {
 			return downloadLog(request, response, logService, appender);
 
 		if (arguments.segmentCount() > 1 && ArchivedLogFileResource.RESOURCE.equals(arguments.segment(0)))
-			return archivedLogFileHandler.handleRequest(request, response, pathInfo);
+			return archivedLogFileHandler.handleRequest(request, response, path);
 
 		try {
 			return TaskJobHandler.handleTaskJob(request, response,

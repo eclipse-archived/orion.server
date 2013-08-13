@@ -58,4 +58,8 @@ public final class LogConstants {
 	public static final String CONTENT_TYPE_GZIP = "application/x-gzip"; //$NON-NLS-1$
 
 	public static final String CONTENT_TYPE_ZIP = "application/zip"; //$NON-NLS-1$
+
+	public static final String KEY_LOGGER_LEVEL = "Level"; //$NON-NLS-1$
+
+	public static final String KEY_LOGGER_EFFECTIVE_LEVEL = "EffectiveLevel"; //$NON-NLS-1$
 }

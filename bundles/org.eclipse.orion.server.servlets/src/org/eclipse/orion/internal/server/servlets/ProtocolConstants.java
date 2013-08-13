@@ -130,6 +130,11 @@ public class ProtocolConstants {
 	public static final String KEY_CHILDREN_LOCATION = "ChildrenLocation"; //$NON-NLS-1$
 
 	/**
+	 * JSON representation of Project information. Should contain at least Location.
+	 */
+	public static final String KEY_PROJECT_INFO = "ProjectInfo"; //$NON-NLS-1$
+
+	/**
 	 * JSON representation key for the server location of an object's drives. Performing
 	 * a GET on this location should return an object containing children objects.
 	 * The value's data type is a String.

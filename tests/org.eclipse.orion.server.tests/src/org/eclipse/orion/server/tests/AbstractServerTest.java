@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others.
+ * Copyright (c) 2010, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -18,6 +18,8 @@ import junit.framework.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.User;
@@ -70,6 +72,17 @@ public class AbstractServerTest {
 		User newUser = new User(login, "", password);
 		newUser = userAdmin.createUser(newUser);
 		Assert.assertNotNull(newUser);
+		//persist new user in metadata store
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUniqueId(newUser.getUid());
+		userInfo.setUserName(login);
+		userInfo.setFullName(login);
+		try {
+			OrionConfiguration.getMetaStore().createUser(userInfo);
+		} catch (CoreException e) {
+			// this should never happen
+			e.printStackTrace();
+		}
 		return newUser;
 	}
 

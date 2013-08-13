@@ -92,6 +92,10 @@
             alias="/useremailconfirmation"
             class="org.eclipse.orion.server.useradmin.servlets.EmailConfirmationServlet">
       </servlet>
+      <servlet
+            alias="/project"
+            class="org.eclipse.orion.internal.server.servlets.project.ProjectServlet">
+      </servlet>
    </extension>
    <extension
          point="org.eclipse.equinox.http.registry.filters">
