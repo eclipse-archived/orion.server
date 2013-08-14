@@ -20,9 +20,10 @@ import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
 import org.eclipse.orion.internal.server.servlets.project.ProjectDecorator;
+import org.eclipse.orion.internal.server.servlets.workspace.CompatibilityMetaStore;
 import org.eclipse.orion.internal.server.servlets.workspace.ProjectParentDecorator;
 import org.eclipse.orion.internal.server.servlets.xfer.TransferResourceDecorator;
-import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.osgi.framework.*;
 import org.osgi.util.tracker.ServiceTracker;
@@ -56,7 +57,7 @@ public class Activator implements BundleActivator {
 	private ServiceRegistration<IWebResourceDecorator> parentDecoratorRegistration;
 	private ServiceRegistration<IWebResourceDecorator> projectDecoratorRegistration;
 
-	private ServiceRegistration<IMetaStore> compatibleMetastoreRegistration;
+	private ServiceRegistration<IMetaStore> metastoreRegistration;
 
 	public static Activator getDefault() {
 		return singleton;
@@ -107,6 +108,22 @@ public class Activator implements BundleActivator {
 		}
 	}
 
+	private void initializeMetaStore() {
+		//consult metastore preference
+		String metastore = PreferenceHelper.getString(ServerConstants.CONFIG_META_STORE, "legacy").toLowerCase(); //$NON-NLS-1$
+
+		if ("simple".equals(metastore)) {
+			try {
+				metastoreRegistration = bundleContext.registerService(IMetaStore.class, new SimpleMetaStore(OrionConfiguration.getUserHome(null).toLocalFile(EFS.NONE, null)), null);
+			} catch (CoreException e) {
+				throw new RuntimeException("Cannot initialize MetaStore", e); //$NON-NLS-1$
+			}
+		} else {
+			//legacy metadata store implementation is the default
+			metastoreRegistration = bundleContext.registerService(IMetaStore.class, new CompatibilityMetaStore(), null);
+		}
+	}
+
 	/**
 	 * Registers services supplied by this bundle
 	 */
@@ -117,18 +134,12 @@ public class Activator implements BundleActivator {
 		parentDecoratorRegistration = bundleContext.registerService(IWebResourceDecorator.class, new ProjectParentDecorator(), null);
 		//adds project information to representations
 		projectDecoratorRegistration = bundleContext.registerService(IWebResourceDecorator.class, new ProjectDecorator(), null);
-		//legacy metadata store implementation
-		//compatibleMetastoreRegistration = bundleContext.registerService(IMetaStore.class, new CompatibilityMetaStore(), null);
-		try {
-			compatibleMetastoreRegistration = bundleContext.registerService(IMetaStore.class, new SimpleMetaStore(OrionConfiguration.getUserHome(null).toLocalFile(EFS.NONE, null)), null);
-		} catch (CoreException e) {
-			throw new RuntimeException("Cannot initialize MetaStore", e); //$NON-NLS-1$
-		}
 	}
 
 	public void start(BundleContext context) throws Exception {
 		singleton = this;
 		bundleContext = context;
+		initializeMetaStore();
 		initializeFileSystem();
 		registerServices();
 	}
@@ -163,9 +174,9 @@ public class Activator implements BundleActivator {
 			projectDecoratorRegistration.unregister();
 			projectDecoratorRegistration = null;
 		}
-		if (compatibleMetastoreRegistration != null) {
-			compatibleMetastoreRegistration.unregister();
-			compatibleMetastoreRegistration = null;
+		if (metastoreRegistration != null) {
+			metastoreRegistration.unregister();
+			metastoreRegistration = null;
 		}
 	}
 

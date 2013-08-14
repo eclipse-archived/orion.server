@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -114,6 +114,11 @@ public class ServerConstants {
 	 * The name of configuration property specifying if TLS should be enabled
 	 */
 	public static final String CONFIG_MAIL_SMTP_STARTTLS = "mail.smtp.starttls.enable"; //$NON-NLS-1$
+
+	/**
+	 * The name of configuration property specifying which meta store should be enabled
+	 */
+	public static final String CONFIG_META_STORE = "orion.core.metastore"; //$NON-NLS-1$
 
 	/**
 	 * The bundle ID of the server core. 
