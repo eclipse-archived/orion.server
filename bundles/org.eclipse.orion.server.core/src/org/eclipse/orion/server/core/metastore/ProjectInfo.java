@@ -75,11 +75,4 @@ public class ProjectInfo extends MetadataInfo {
 	public void setWorkspaceId(String workspaceId) {
 		this.workspaceId = workspaceId;
 	}
-
-	@Override
-	public String toString() {
-		return getClass().getSimpleName() + "(Id=" + getUniqueId() + ", fullName=" + getFullName() + ", contentLocation=" + getContentLocation() + ")";
-		
-	}
-
 }
