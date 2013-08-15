@@ -200,7 +200,7 @@ public class PreferencesServlet extends OrionServlet {
 				}
 				//operations should not be removed by PUT
 				if (!prefix.equals("operations")) {
-
+					
 					//clear existing values matching prefix
 					changed |= removeMatchingProperties(info, prefix.toString());
 				}
