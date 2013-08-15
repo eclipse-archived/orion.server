@@ -23,9 +23,21 @@ public class ProtocolConstants {
 
 	/**
 	 * Standard HTTP request or response value for the Content-Type header,
+	 * indicating that the request or response body consists of a generic JSON patch object.
+	 */
+	public static final String CONTENT_TYPE_JSON_PATCH = "application/json-patch; charset=UTF-8";//$NON-NLS-1$
+
+	/**
+	 * Standard HTTP request or response value for the Content-Type header,
 	 * indicating that the request or response body consists of HTML.
 	 */
 	public static final String CONTENT_TYPE_HTML = "text/html;charset=UTF-8";//$NON-NLS-1$
+
+	/**
+	 * Standard HTTP request or response header indicating what kind of patch a server
+	 * supports.
+	 */
+	public static final String HEADER_ACCEPT_PATCH = "Accept-Patch"; //$NON-NLS-1$
 
 	/**
 	 * Standard HTTP request or response header indicating the content length of the request
@@ -50,6 +62,12 @@ public class ProtocolConstants {
 	 * a resource during post.
 	 */
 	public static final String HEADER_CREATE_OPTIONS = "X-Create-Options"; //$NON-NLS-1$
+
+	/**
+	 * Non-standard HTTP request header indicating a different method overriding the current
+	 * operation.
+	 */
+	public static final String HEADER_METHOD_OVERRIDE = "X-HTTP-Method-Override"; //$NON-NLS-1$
 
 	/**
 	 * Standard HTTP request header indicating an expected entity tag.

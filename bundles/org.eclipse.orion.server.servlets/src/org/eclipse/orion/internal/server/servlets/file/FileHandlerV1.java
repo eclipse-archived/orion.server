@@ -32,8 +32,7 @@ import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.*;
 
 /**
  * Handles files in version 1 of eclipse web protocol syntax.
@@ -64,6 +63,7 @@ class FileHandlerV1 extends GenericFileHandler {
 
 	private void handleMultiPartGet(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws IOException, CoreException, NoSuchAlgorithmException, JSONException {
 		String boundary = createBoundaryString();
+		response.setHeader(ProtocolConstants.HEADER_ACCEPT_PATCH, ProtocolConstants.CONTENT_TYPE_JSON_PATCH);
 		response.setHeader(ProtocolConstants.HEADER_CONTENT_TYPE, "multipart/related; boundary=\"" + boundary + '"'); //$NON-NLS-1$
 		OutputStream outputStream = response.getOutputStream();
 		Writer out = new OutputStreamWriter(outputStream);
@@ -94,6 +94,36 @@ class FileHandlerV1 extends GenericFileHandler {
 			IOUtilities.pipe(requestReader, fileWriter, false, true);
 		}
 
+		// return metadata with the new Etag
+		handleGetMetadata(request, response, response.getWriter(), file);
+	}
+
+	private void handlePatchContents(HttpServletRequest request, BufferedReader requestReader, HttpServletResponse response, IFileStore file) throws IOException, CoreException, NoSuchAlgorithmException, JSONException {
+		//read from the request stream
+		StringBuffer buf = new StringBuffer();
+		String line;
+		while ((line = requestReader.readLine()) != null)
+			buf.append(line);
+		JSONObject changes = new JSONObject(buf.toString());
+		Reader fileReader = new BufferedReader(new InputStreamReader(file.openInputStream(EFS.NONE, null)));
+		StringBuffer oldFile = new StringBuffer();
+
+		char[] buffer = new char[4096];
+		int read = 0;
+		while ((read = fileReader.read(buffer)) != -1)
+			oldFile.append(buffer, 0, read);
+
+		JSONArray changeList = changes.getJSONArray("diff");
+		for (int i = 0; i < changeList.length(); i++) {
+			JSONObject change = changeList.getJSONObject(i);
+			long start = change.getLong("start");
+			long end = change.getLong("end");
+			String text = change.getString("text");
+			oldFile.replace((int) start, (int) end, text);
+		}
+
+		Writer fileWriter = new BufferedWriter(new OutputStreamWriter(file.openOutputStream(EFS.NONE, null), "UTF-8"));
+		IOUtilities.pipe(new StringReader(oldFile.toString()), fileWriter, false, true);
 		// return metadata with the new Etag
 		handleGetMetadata(request, response, response.getWriter(), file);
 	}
@@ -142,6 +172,11 @@ class FileHandlerV1 extends GenericFileHandler {
 						break;
 					case PUT :
 						handlePutContents(request, request.getReader(), response, file);
+						break;
+					case POST :
+						if ("PATCH".equals(request.getHeader(ProtocolConstants.HEADER_METHOD_OVERRIDE))) {
+							handlePatchContents(request, request.getReader(), response, file);
+						}
 						break;
 					default :
 						return handleFileContents(request, response, file);

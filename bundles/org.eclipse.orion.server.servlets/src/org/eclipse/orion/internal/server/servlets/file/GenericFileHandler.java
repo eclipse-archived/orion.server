@@ -46,6 +46,7 @@ class GenericFileHandler extends ServletResourceHandler<IFileStore> {
 			case GET :
 				IOUtilities.pipe(file.openInputStream(EFS.NONE, null), response.getOutputStream(), true, false);
 				response.setHeader(ProtocolConstants.HEADER_CONTENT_TYPE, context.getMimeType(file.getName()));
+				response.setHeader(ProtocolConstants.HEADER_ACCEPT_PATCH, ProtocolConstants.CONTENT_TYPE_JSON_PATCH);
 				break;
 			case PUT :
 				IOUtilities.pipe(request.getInputStream(), file.openOutputStream(EFS.NONE, null), false, true);
