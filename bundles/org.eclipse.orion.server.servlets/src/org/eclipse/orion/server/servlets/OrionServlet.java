@@ -101,12 +101,15 @@ public abstract class OrionServlet extends HttpServlet {
 	 * empty JSON object if the request body is empty. Never returns null.
 	 */
 	public static JSONObject readJSONRequest(HttpServletRequest request) throws IOException, JSONException {
-		StringWriter writer = new StringWriter();
-		IOUtilities.pipe(request.getReader(), writer, false, false);
-		String resultString = writer.toString();
-		if (resultString.length() == 0)
-			return new JSONObject();
-		return new JSONObject(resultString);
+		JSONObject jsonRequest = (JSONObject) request.getAttribute("JSONRequest");
+		if (jsonRequest == null) {
+			StringWriter writer = new StringWriter();
+			IOUtilities.pipe(request.getReader(), writer, false, false);
+			String resultString = writer.toString();
+			jsonRequest = (resultString.length() == 0) ? new JSONObject() : new JSONObject(resultString);
+			request.setAttribute("JSONRequest", jsonRequest);
+		}
+		return jsonRequest;
 	}
 
 	protected ServletResourceHandler<IStatus> getStatusHandler() {
