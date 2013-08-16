@@ -10,6 +10,11 @@
  *******************************************************************************/
 package org.eclipse.orion.server.configurator.servlet;
 
+import javax.servlet.http.HttpServlet;
+
+import org.json.JSONException;
+import org.eclipse.orion.server.servlets.OrionServlet;
+import org.json.JSONObject;
 import java.io.IOException;
 import java.util.Properties;
 import javax.servlet.*;
@@ -59,15 +64,29 @@ public class AuthorizedUserFilter implements Filter {
 
 		try {
 			String requestPath = httpRequest.getServletPath() + (httpRequest.getPathInfo() == null ? "" : httpRequest.getPathInfo());
-
 			if (!AuthorizationService.checkRights(userName, requestPath, httpRequest.getMethod())) {
 				if (IAuthenticationService.ANONYMOUS_LOGIN_VALUE.equals(userName)) {
 					userName = authenticationService.authenticateUser(httpRequest, httpResponse, authProperties);
 					if (userName == null)
 						return;
 				} else {
-					setNotAuthorized(httpRequest, httpResponse);
+					setNotAuthorized(httpRequest, httpResponse, requestPath);
 					return;
+				}
+			}
+
+			String xCreateOptions = httpRequest.getHeader("X-Create-Options");
+			if (xCreateOptions != null) {
+				try {
+					JSONObject requestObject = OrionServlet.readJSONRequest(httpRequest);
+					String sourceLocation = requestObject.getString("Location");
+					String method = xCreateOptions.contains("move") ? "POST" : "GET";
+					if (!AuthorizationService.checkRights(userName, sourceLocation, method)) {
+						setNotAuthorized(httpRequest, httpResponse, sourceLocation);
+						return;
+					}
+				} catch (JSONException e) {
+					// ignore, and fall through
 				}
 			}
 
@@ -83,7 +102,7 @@ public class AuthorizedUserFilter implements Filter {
 		chain.doFilter(request, response);
 	}
 
-	private void setNotAuthorized(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+	private void setNotAuthorized(HttpServletRequest req, HttpServletResponse resp, String resourceURL) throws IOException {
 		String versionString = req.getHeader("Orion-Version"); //$NON-NLS-1$
 		Version version = versionString == null ? null : new Version(versionString);
 
@@ -91,7 +110,7 @@ public class AuthorizedUserFilter implements Filter {
 		// that does not include the WebEclipse version header
 		String xRequestedWith = req.getHeader("X-Requested-With"); //$NON-NLS-1$
 
-		String msg = "You are not authorized to access " + req.getRequestURL();
+		String msg = "You are not authorized to access " + resourceURL;
 		if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) { //$NON-NLS-1$
 			resp.sendError(HttpServletResponse.SC_FORBIDDEN, msg);
 		} else {
