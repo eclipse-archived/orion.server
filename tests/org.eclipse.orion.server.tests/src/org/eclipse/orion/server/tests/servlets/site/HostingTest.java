@@ -12,20 +12,35 @@ package org.eclipse.orion.server.tests.servlets.site;
 
 import static org.junit.Assert.assertEquals;
 
-import com.meterware.httpunit.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.net.*;
-import org.eclipse.core.runtime.*;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLEncoder;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.useradmin.User;
-import org.json.*;
-import org.junit.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.xml.sax.SAXException;
+
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PutMethodWebRequest;
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 /**
  * Basic tests:
@@ -110,7 +125,7 @@ public class HostingTest extends CoreSiteTest {
 		// Create file in workspace
 		final String filename = "foo.html";
 		final String fileContent = "<html><body>This is a test file</body></html>";
-		createFileOnServer(filename, fileContent);
+		createFileOnServer("", filename, fileContent);
 
 		// Create a site that exposes the workspace file
 		final String siteName = "My hosted site";
@@ -170,7 +185,7 @@ public class HostingTest extends CoreSiteTest {
 		final String fileContent = "<html><body>This is a test file</body></html>";
 		final String dirName = "my.css";
 		createDirectoryOnServer(dirName);
-		createFileOnServer(dirName + "/" + filename, fileContent);
+		createFileOnServer(dirName + "/", filename, fileContent);
 
 		IPath path = new Path(URI.create(makeResourceURIAbsolute(filename)).getPath());
 		while (path.segmentCount() != 0 && !path.segment(0).equals("file")) {
@@ -218,7 +233,7 @@ public class HostingTest extends CoreSiteTest {
 		// User "test": create file in test's workspace
 		final String filename = "foo.html";
 		final String fileContent = "<html><body>This is a test file</body></html>";
-		WebResponse createdFile = createFileOnServer(filename, fileContent);
+		WebResponse createdFile = createFileOnServer("", filename, fileContent);
 		URL fileLocation = createdFile.getURL();
 		IPath filepath = new Path(fileLocation.getPath());
 		filepath = filepath.removeFirstSegments(new Path(FILE_SERVLET_LOCATION).segmentCount()); // chop off leading /file/
@@ -355,15 +370,6 @@ public class HostingTest extends CoreSiteTest {
 		JSONObject siteObject = new JSONObject(stopResp.getText());
 		hostingStatus = siteObject.getJSONObject(SiteConfigurationConstants.KEY_HOSTING_STATUS);
 		assertEquals("stopped", hostingStatus.getString(SiteConfigurationConstants.KEY_HOSTING_STATUS_STATUS));
-	}
-
-	/**
-	 * Creates a file using the file POST API, then sets its contents with PUT.
-	 * @param filename
-	 * @param fileContent
-	 */
-	private WebResponse createFileOnServer(String filename, String fileContent) throws SAXException, IOException, JSONException, URISyntaxException {
-		return createFileOnServer("", filename, fileContent);
 	}
 
 	private void createDirectoryOnServer(String dirname) throws SAXException, IOException, JSONException {

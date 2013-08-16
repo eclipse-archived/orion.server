@@ -10,8 +10,10 @@
  *******************************************************************************/
 package org.eclipse.orion.server.configurator.servlet;
 
-import javax.servlet.http.HttpServlet;
+import java.net.URISyntaxException;
 
+import java.net.URI;
+import javax.servlet.http.HttpServlet;
 import org.json.JSONException;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.JSONObject;
@@ -77,14 +79,19 @@ public class AuthorizedUserFilter implements Filter {
 
 			String xCreateOptions = httpRequest.getHeader("X-Create-Options");
 			if (xCreateOptions != null) {
+				String sourceLocation = null;;
 				try {
-					JSONObject requestObject = OrionServlet.readJSONRequest(httpRequest);
-					String sourceLocation = requestObject.getString("Location");
 					String method = xCreateOptions.contains("move") ? "POST" : "GET";
-					if (!AuthorizationService.checkRights(userName, sourceLocation, method)) {
+					JSONObject requestObject = OrionServlet.readJSONRequest(httpRequest);
+					sourceLocation = requestObject.getString("Location");
+					String normalizedLocation = new URI(sourceLocation).normalize().getPath();
+					if (!AuthorizationService.checkRights(userName, normalizedLocation, method)) {
 						setNotAuthorized(httpRequest, httpResponse, sourceLocation);
 						return;
 					}
+				} catch (URISyntaxException e) {
+					setNotAuthorized(httpRequest, httpResponse, sourceLocation);
+					return;
 				} catch (JSONException e) {
 					// ignore, and fall through
 				}
