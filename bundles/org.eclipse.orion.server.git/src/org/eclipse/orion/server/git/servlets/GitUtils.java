@@ -19,6 +19,7 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.RepositoryCache;
+import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.core.Activator;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
@@ -244,8 +245,31 @@ public class GitUtils {
 
 	}
 
-	public static boolean isForbiddenUriScheme(String scheme) {
-		return !uriSchemeWhitelist.contains(scheme);
+	/**
+	 * Returns whether or not the git repository URI is forbidden. If a scheme of the URI is matched, check if the scheme
+	 * is a supported protocol. Otherwise, match for a scp-like ssh URI: [user@]host.xz:path/to/repo.git/ and ensure the URI
+	 * does not represent a local file path.
+	 * @param uri A git repository URI
+	 * @return a boolean of whether or not the git repository URI is forbidden.
+	 */
+	public static boolean isForbiddenGitUri(URIish uri) {
+		String scheme = uri.getScheme();
+		String host = uri.getHost();
+		String path = uri.getPath();
+		boolean isForbidden = false;
+
+		if (scheme != null) {
+			isForbidden = !uriSchemeWhitelist.contains(scheme);
+		} else {
+			// match for a scp-like ssh URI
+			if (host != null) {
+				isForbidden = host.length() == 1 || path == null;
+			} else {
+				isForbidden = true;
+			}
+		}
+
+		return isForbidden;
 	}
 
 	public static void _testAllowFileScheme(boolean allow) {

@@ -228,7 +228,6 @@ public class GitCloneTest extends GitTest {
 		request = getGetRequest(childrenLocation);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
 	}
 
 	@Test
@@ -254,27 +253,57 @@ public class GitCloneTest extends GitTest {
 
 	@Test
 	public void testCloneBadUrl() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = getClonePath(workspaceId, project);
-
-		WebRequest request = new PostGitCloneRequest().setURIish("I'm//bad!").setFilePath(clonePath).getWebRequest();
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
+		testUriCheck("I'm//bad!", HttpURLConnection.HTTP_BAD_REQUEST);
 	}
 
 	@Test
 	public void testCloneBadUrlScheme() throws Exception {
-		GitUtils._testAllowFileScheme(false);
-		URI workspaceLocation = createWorkspace(getMethodName());
-		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = getClonePath(workspaceId, project);
+		testUriCheck("file:///path/to/other/users.git", HttpURLConnection.HTTP_BAD_REQUEST);
+	}
 
-		WebRequest request = new PostGitCloneRequest().setURIish("file:///path/to/other/users.git").setFilePath(clonePath).getWebRequest();
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
+	@Test
+	/**
+	 * Test for a bad scp-like git repository URI. 
+	 * @throws Exception
+	 */
+	public void testCloneBadUrlBadScpUri() throws Exception {
+		testUriCheck("host.xz/path/to/repo.git", HttpURLConnection.HTTP_BAD_REQUEST);
+	}
+
+	@Test
+	/**
+	 * Test for a local file path as the git repository URI.
+	 * @throws Exception
+	 */
+	public void testCloneLocalFilePath() throws Exception {
+		testUriCheck("c:/path/to/repo.git", HttpURLConnection.HTTP_BAD_REQUEST);
+	}
+
+	@Test
+	/**
+	 * Test for a git repository URI with an empty scheme and host.
+	 * @throws Exception
+	 */
+	public void testCloneEmptySchemeAndHost() throws Exception {
+		testUriCheck(":path/to/repo.git/", HttpURLConnection.HTTP_BAD_REQUEST);
+	}
+
+	@Test
+	/**
+	 * Test for a git repository URI with an empty scheme and path.
+	 * @throws Exception
+	 */
+	public void testCloneEmptySchemeAndPath() throws Exception {
+		testUriCheck("host.xz:", HttpURLConnection.HTTP_BAD_REQUEST);
+	}
+
+	@Test
+	/**
+	 * Test for a valid scp-like ssh URI.
+	 * @throws Exception
+	 */
+	public void testCloneValidScpSshUri() throws Exception {
+		testUriCheck("git@github.com:eclipse/orion.server.git", HttpURLConnection.HTTP_ACCEPTED);
 	}
 
 	@Test
@@ -816,6 +845,18 @@ public class GitCloneTest extends GitTest {
 		response = webConversation.getResponse(request);
 		JSONObject workspace = new JSONObject(response.getText());
 		assertEquals(1, workspace.getJSONArray(ProtocolConstants.KEY_CHILDREN).length());
+	}
+
+	public void testUriCheck(String uri, int expectedResult) throws Exception {
+		GitUtils._testAllowFileScheme(false);
+		URI workspaceLocation = createWorkspace(getMethodName());
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		IPath clonePath = getClonePath(workspaceId, project);
+
+		WebRequest request = new PostGitCloneRequest().setURIish(uri).setFilePath(clonePath).getWebRequest();
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(expectedResult, response.getResponseCode());
 	}
 
 	/**
