@@ -11,7 +11,8 @@
 package org.eclipse.orion.internal.server.servlets.workspace.authorization;
 
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.*;
@@ -63,7 +64,6 @@ public class AuthorizationService {
 	}
 
 	public static boolean checkRights(String userId, String uri, String method) throws CoreException {
-		uri = new Path(uri).toString(); // normalize uri
 		if (uri.equals(Activator.LOCATION_WORKSPACE_SERVLET) && !IAuthenticationService.ANONYMOUS_LOGIN_VALUE.equals(userId))
 			return true;
 
