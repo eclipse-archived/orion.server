@@ -30,7 +30,7 @@ import org.junit.runners.MethodSorters;
  * @author Anthony Hunter
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class CompatibilityMetaStoreTests extends ExtendedMetaStoreTests {
+public class CompatibilityMetaStoreTests extends MetaStoreTests {
 
 	@Override
 	public IMetaStore getMetaStore() {

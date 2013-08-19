@@ -75,8 +75,8 @@ public class RemoteMetaStoreTests {
 	 * @throws URISyntaxException
 	 */
 	protected URI getOrionServerURI(String path) throws URISyntaxException {
-		String orionServerHostname = "vottachrh6x64.ottawa.ibm.com";
-		//String orionServerHostname = "localhost";
+		//String orionServerHostname = "vottachrh6x64.ottawa.ibm.com";
+		String orionServerHostname = "localhost";
 		int orionServerPort = 8080;
 
 		return new URI("http", null, orionServerHostname, orionServerPort, path, null, null);
