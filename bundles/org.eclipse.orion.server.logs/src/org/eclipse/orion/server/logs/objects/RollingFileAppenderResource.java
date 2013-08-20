@@ -26,10 +26,50 @@ import org.eclipse.orion.server.logs.servlets.LogServlet;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.FileAppender;
+import ch.qos.logback.core.rolling.FixedWindowRollingPolicy;
+import ch.qos.logback.core.rolling.RollingFileAppender;
+import ch.qos.logback.core.rolling.RollingPolicy;
+import ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy;
+import ch.qos.logback.core.rolling.TimeBasedRollingPolicy;
+import ch.qos.logback.core.rolling.TriggeringPolicy;
+
 @ResourceDescription(type = RollingFileAppenderResource.TYPE)
 public class RollingFileAppenderResource extends FileAppenderResource {
 	public static final String RESOURCE = "rollingFileAppender"; //$NON-NLS-1$
 	public static final String TYPE = "RollingFileAppender"; //$NON-NLS-1$
+
+	public RollingFileAppenderResource(
+			FileAppender<ILoggingEvent> fileAppender, URI baseLocation) {
+		super(fileAppender, baseLocation);
+	}
+
+	public RollingFileAppenderResource(
+			RollingFileAppender<ILoggingEvent> rollingFileAppender,
+			URI baseLocation) {
+
+		super(rollingFileAppender, baseLocation);
+		RollingPolicy rollingPolicy = rollingFileAppender.getRollingPolicy();
+		TriggeringPolicy<ILoggingEvent> triggeringPolicy = rollingFileAppender
+				.getTriggeringPolicy();
+
+		if (rollingPolicy instanceof TimeBasedRollingPolicy<?>) {
+			TimeBasedRollingPolicy<ILoggingEvent> policy = (TimeBasedRollingPolicy<ILoggingEvent>) rollingPolicy;
+			this.rollingPolicy = new TimeBasedRollingPolicyResource(policy);
+		}
+
+		if (rollingPolicy instanceof FixedWindowRollingPolicy) {
+			FixedWindowRollingPolicy policy = (FixedWindowRollingPolicy) rollingPolicy;
+			this.rollingPolicy = new FixedWindowRollingPolicyResource(policy);
+		}
+
+		if (triggeringPolicy instanceof SizeBasedTriggeringPolicy) {
+			SizeBasedTriggeringPolicy policy = (SizeBasedTriggeringPolicy) triggeringPolicy;
+			this.triggeringPolicy = new SizeBasedTriggeringPolicyResource(
+					policy);
+		}
+	}
 
 	{
 		/* extend base properties */
@@ -39,7 +79,8 @@ public class RollingFileAppenderResource extends FileAppenderResource {
 				new Property(LogConstants.KEY_APPENDER_ARCHIVED_LOG_FILES) };
 
 		Property[] baseProperties = DEFAULT_RESOURCE_SHAPE.getProperties();
-		Property[] extendedProperties = new Property[baseProperties.length + defaultProperties.length];
+		Property[] extendedProperties = new Property[baseProperties.length
+				+ defaultProperties.length];
 
 		for (int i = 0; i < baseProperties.length; ++i)
 			extendedProperties[i] = baseProperties[i];
@@ -82,7 +123,8 @@ public class RollingFileAppenderResource extends FileAppenderResource {
 		return logFiles;
 	}
 
-	public void setArchivedLogFiles(List<ArchivedLogFileResource> archivedLogFiles) {
+	public void setArchivedLogFiles(
+			List<ArchivedLogFileResource> archivedLogFiles) {
 		this.archivedLogFiles = archivedLogFiles;
 	}
 
@@ -109,15 +151,8 @@ public class RollingFileAppenderResource extends FileAppenderResource {
 	@Override
 	@PropertyDescription(name = ProtocolConstants.KEY_LOCATION)
 	public URI getLocation() throws URISyntaxException {
-		IPath path = new Path(LogServlet.LOG_URI).append(RollingFileAppenderResource.RESOURCE).append(getName());
-		return createUriWithPath(path);
-	}
-
-	@Override
-	@PropertyDescription(name = LogConstants.KEY_APPENDER_DOWNLOAD_LOCATION)
-	public URI getDownloadLocation() throws URISyntaxException {
-		IPath path = new Path(LogServlet.LOG_URI).append(RollingFileAppenderResource.RESOURCE).append(getName())
-				.append(LogConstants.KEY_APPENDER_DOWNLOAD);
+		IPath path = new Path(LogServlet.LOGAPI_URI).append(
+				RollingFileAppenderResource.RESOURCE).append(getName());
 		return createUriWithPath(path);
 	}
 }

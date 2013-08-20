@@ -21,20 +21,19 @@ import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.servlets.OrionServlet;
 
 public class LogServlet extends OrionServlet {
-	public static final String LOG_URI = "/logs"; //$NON-NLS-1$
+	public static final String LOGAPI_URI = "/logapi"; //$NON-NLS-1$
 
 	private static final long serialVersionUID = 1L;
-	private ServletResourceHandler<String> logHandler;
+	private final ServletResourceHandler<String> logHandler;
 
 	public LogServlet() {
 		logHandler = new LogHandler(getStatusHandler());
 	}
 
 	@Override
-	protected void doGet(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
+	protected void doGet(HttpServletRequest request,
+			HttpServletResponse response) throws ServletException, IOException {
 
-		/* supported functionality */
 		String pathInfo = request.getPathInfo();
 		if (logHandler.handleRequest(request, response, pathInfo))
 			return;
@@ -47,20 +46,20 @@ public class LogServlet extends OrionServlet {
 	}
 
 	@Override
-	protected void doPut(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
+	protected void doPut(HttpServletRequest request,
+			HttpServletResponse response) throws ServletException, IOException {
 		doGet(request, response);
 	}
 
 	@Override
-	protected void doPost(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
+	protected void doPost(HttpServletRequest request,
+			HttpServletResponse response) throws ServletException, IOException {
 		doGet(request, response);
 	}
 
 	@Override
-	protected void doDelete(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
+	protected void doDelete(HttpServletRequest request,
+			HttpServletResponse response) throws ServletException, IOException {
 		doGet(request, response);
 	}
 }

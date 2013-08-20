@@ -15,7 +15,8 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 import org.osgi.util.tracker.ServiceTrackerCustomizer;
 
-public class LogServiceTracker implements ServiceTrackerCustomizer<LogService, ILogService> {
+public class LogServiceTracker implements
+		ServiceTrackerCustomizer<LogService, ILogService> {
 
 	private final BundleContext context;
 
@@ -30,14 +31,16 @@ public class LogServiceTracker implements ServiceTrackerCustomizer<LogService, I
 	}
 
 	@Override
-	public void modifiedService(ServiceReference<LogService> reference, ILogService service) {
+	public void modifiedService(ServiceReference<LogService> reference,
+			ILogService service) {
 		/* replace the service */
 		removedService(reference, service);
 		addingService(reference);
 	}
 
 	@Override
-	public void removedService(ServiceReference<LogService> reference, ILogService service) {
+	public void removedService(ServiceReference<LogService> reference,
+			ILogService service) {
 		context.ungetService(reference);
 	}
 }

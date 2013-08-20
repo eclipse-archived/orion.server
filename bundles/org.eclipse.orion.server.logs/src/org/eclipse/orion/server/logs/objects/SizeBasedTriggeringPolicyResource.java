@@ -16,10 +16,16 @@ import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.eclipse.orion.server.logs.LogConstants;
 
+import ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy;
+
 @ResourceDescription(type = SizeBasedTriggeringPolicyResource.TYPE)
 public class SizeBasedTriggeringPolicyResource extends TriggeringPolicyResource {
 	public static final String RESOURCE = "sizeBasedTriggeringPolicy"; //$NON-NLS-1$
 	public static final String TYPE = "SizeBasedTriggeringPolicy"; //$NON-NLS-1$
+
+	public SizeBasedTriggeringPolicyResource(SizeBasedTriggeringPolicy<?> policy) {
+		this.maxFileSize = policy.getMaxFileSize();
+	}
 
 	{
 		/* extend base properties */
@@ -27,7 +33,8 @@ public class SizeBasedTriggeringPolicyResource extends TriggeringPolicyResource 
 		new Property(LogConstants.KEY_TRIGGERING_POLICY_MAX_FILE_SIZE) };
 
 		Property[] baseProperties = DEFAULT_RESOURCE_SHAPE.getProperties();
-		Property[] extendedProperties = new Property[baseProperties.length + defaultProperties.length];
+		Property[] extendedProperties = new Property[baseProperties.length
+				+ defaultProperties.length];
 
 		for (int i = 0; i < baseProperties.length; ++i)
 			extendedProperties[i] = baseProperties[i];

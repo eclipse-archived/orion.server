@@ -37,37 +37,23 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 
 public class LoggerHandler extends AbstractLogHandler {
-
 	public LoggerHandler(ServletResourceHandler<IStatus> statusHandler) {
 		super(statusHandler);
 	}
 
 	@Override
-	protected boolean handleGet(HttpServletRequest request, HttpServletResponse response, ILogService logService,
-			IPath path) throws ServletException {
-
-		if (path.isEmpty()) {
-			try {
-				return TaskJobHandler.handleTaskJob(request, response,
-						new ListLoggersJob(TaskJobHandler.getUserId(request), logService, getURI(request)),
-						statusHandler);
-			} catch (Exception e) {
-				final ServerStatus error = new ServerStatus(IStatus.ERROR,
-						HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when looking for appenders.", e);
-
-				LogHelper.log(error);
-				return statusHandler.handleRequest(request, response, error);
-			}
-		}
-
-		String loggerName = path.segment(0);
+	protected boolean handleGet(HttpServletRequest request,
+			HttpServletResponse response, ILogService logService)
+			throws ServletException {
 
 		try {
-			return TaskJobHandler.handleTaskJob(request, response, new LoggerJob(TaskJobHandler.getUserId(request),
-					logService, getURI(request), loggerName), statusHandler);
+			return TaskJobHandler.handleTaskJob(request, response,
+					new ListLoggersJob(TaskJobHandler.getUserId(request),
+							logService, getURI(request)), statusHandler);
 		} catch (Exception e) {
-			final ServerStatus error = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-					"An error occured when looking for appenders.", e);
+			final ServerStatus error = new ServerStatus(IStatus.ERROR,
+					HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+					"An error occured when looking for loggers.", e);
 
 			LogHelper.log(error);
 			return statusHandler.handleRequest(request, response, error);
@@ -75,11 +61,31 @@ public class LoggerHandler extends AbstractLogHandler {
 	}
 
 	@Override
-	protected boolean handlePut(HttpServletRequest request, HttpServletResponse response, ILogService logService,
-			IPath path) throws ServletException {
+	protected boolean handleGet(HttpServletRequest request,
+			HttpServletResponse response, ILogService logService, IPath path)
+			throws ServletException {
 
-		if (path.isEmpty())
-			return false;
+		String loggerName = path.segment(0);
+
+		try {
+			return TaskJobHandler.handleTaskJob(request, response,
+					new LoggerJob(TaskJobHandler.getUserId(request),
+							logService, getURI(request), loggerName),
+					statusHandler);
+		} catch (Exception e) {
+			final ServerStatus error = new ServerStatus(IStatus.ERROR,
+					HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+					"An error occured when looking for logger.", e);
+
+			LogHelper.log(error);
+			return statusHandler.handleRequest(request, response, error);
+		}
+	}
+
+	@Override
+	protected boolean handlePut(HttpServletRequest request,
+			HttpServletResponse response, ILogService logService, IPath path)
+			throws ServletException {
 
 		URI baseLocation = getURI(request);
 
@@ -89,8 +95,10 @@ public class LoggerHandler extends AbstractLogHandler {
 
 			Logger logger = logService.getLogger(loggerName);
 			if (logger == null) {
-				final String msg = NLS.bind("Logger not found: {0}", loggerName);
-				final ServerStatus error = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null);
+				final String msg = NLS
+						.bind("Logger not found: {0}", loggerName);
+				final ServerStatus error = new ServerStatus(IStatus.ERROR,
+						HttpServletResponse.SC_NOT_FOUND, msg, null);
 				return statusHandler.handleRequest(request, response, error);
 			}
 
@@ -106,12 +114,15 @@ public class LoggerHandler extends AbstractLogHandler {
 
 			JSONObject result = loggerResource.toJSON();
 			OrionServlet.writeJSONResponse(request, response, result);
-			response.setHeader(ProtocolConstants.HEADER_LOCATION, result.getString(ProtocolConstants.KEY_LOCATION));
+			response.setHeader(ProtocolConstants.HEADER_LOCATION,
+					result.getString(ProtocolConstants.KEY_LOCATION));
 			return true;
 
 		} catch (Exception e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR,
-					HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), e));
+			return statusHandler.handleRequest(request, response,
+					new ServerStatus(IStatus.ERROR,
+							HttpServletResponse.SC_BAD_REQUEST, e.getMessage(),
+							e));
 		}
 	}
 }

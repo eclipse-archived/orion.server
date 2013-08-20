@@ -32,7 +32,9 @@ public class ListLoggersJob extends TaskJob {
 	private final ILogService logService;
 	private final URI baseLocation;
 
-	public ListLoggersJob(String userRunningTask, ILogService logService, URI baseLocation) {
+	public ListLoggersJob(String userRunningTask, ILogService logService,
+			URI baseLocation) {
+
 		super(userRunningTask, false);
 		this.logService = logService;
 		this.baseLocation = baseLocation;
@@ -53,14 +55,17 @@ public class ListLoggersJob extends TaskJob {
 				loggerResource.setLevel(logger.getLevel());
 				loggerResource.setEffectiveLevel(logger.getEffectiveLevel());
 
-				loggersJSON.append(ProtocolConstants.KEY_CHILDREN, loggerResource.toJSON());
+				loggersJSON.append(ProtocolConstants.KEY_CHILDREN,
+						loggerResource.toJSON());
 			}
 
-			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, loggersJSON);
+			return new ServerStatus(Status.OK_STATUS,
+					HttpServletResponse.SC_OK, loggersJSON);
 
 		} catch (Exception e) {
-			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-					"An error occured when listing file appenders", e);
+			return new ServerStatus(IStatus.ERROR,
+					HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+					"An error occured when listing loggers", e);
 		}
 	}
 }

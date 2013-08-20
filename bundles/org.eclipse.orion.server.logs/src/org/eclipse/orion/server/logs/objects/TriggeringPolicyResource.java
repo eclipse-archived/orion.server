@@ -30,6 +30,7 @@ public class TriggeringPolicyResource {
 		Property[] defaultProperties = new Property[] {};
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
+
 	protected Serializer<JSONObject> jsonSerializer = new JSONSerializer();
 
 	public JSONObject toJSON() throws URISyntaxException {

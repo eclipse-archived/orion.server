@@ -32,10 +32,12 @@ import ch.qos.logback.core.FileAppender;
 import ch.qos.logback.core.rolling.RollingFileAppender;
 
 public class ListFileAppendersJob extends TaskJob {
-	private ILogService logService;
-	private URI baseLocation;
+	private final ILogService logService;
+	private final URI baseLocation;
 
-	public ListFileAppendersJob(String userRunningTask, ILogService logService, URI baseLocation) {
+	public ListFileAppendersJob(String userRunningTask, ILogService logService,
+			URI baseLocation) {
+
 		super(userRunningTask, false);
 		this.logService = logService;
 		this.baseLocation = baseLocation;
@@ -44,7 +46,8 @@ public class ListFileAppendersJob extends TaskJob {
 	@Override
 	protected IStatus performJob() {
 		try {
-			List<FileAppender<ILoggingEvent>> appenders = logService.getFileAppenders();
+			List<FileAppender<ILoggingEvent>> appenders = logService
+					.getFileAppenders();
 
 			JSONObject appendersJSON = new JSONObject();
 			appendersJSON.put(ProtocolConstants.KEY_CHILDREN, new JSONArray());
@@ -52,24 +55,22 @@ public class ListFileAppendersJob extends TaskJob {
 
 				FileAppenderResource fileAppender = null;
 				if (appender instanceof RollingFileAppender<?>)
-					fileAppender = new RollingFileAppenderResource();
+					fileAppender = new RollingFileAppenderResource(appender,
+							baseLocation);
 				else
-					fileAppender = new FileAppenderResource();
+					fileAppender = new FileAppenderResource(appender,
+							baseLocation);
 
-				fileAppender.setBaseLocation(baseLocation);
-				fileAppender.setName(appender.getName());
-
-				fileAppender.setAppend(appender.isAppend());
-				fileAppender.setPrudent(appender.isPrudent());
-				fileAppender.setStarted(appender.isStarted());
-
-				appendersJSON.append(ProtocolConstants.KEY_CHILDREN, fileAppender.toJSON());
+				appendersJSON.append(ProtocolConstants.KEY_CHILDREN,
+						fileAppender.toJSON());
 			}
 
-			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, appendersJSON);
+			return new ServerStatus(Status.OK_STATUS,
+					HttpServletResponse.SC_OK, appendersJSON);
 
 		} catch (Exception e) {
-			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+			return new ServerStatus(IStatus.ERROR,
+					HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
 					"An error occured when listing file appenders", e);
 		}
 	}

@@ -30,7 +30,9 @@ public class LoggerJob extends TaskJob {
 	private final URI baseLocation;
 	private final String loggerName;
 
-	public LoggerJob(String userRunningTask, ILogService logService, URI baseLocation, String loggerName) {
+	public LoggerJob(String userRunningTask, ILogService logService,
+			URI baseLocation, String loggerName) {
+
 		super(userRunningTask, false);
 		this.logService = logService;
 		this.baseLocation = baseLocation;
@@ -44,7 +46,8 @@ public class LoggerJob extends TaskJob {
 
 			if (logger == null) {
 				String msg = NLS.bind("Logger not found: {0}", loggerName);
-				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null);
+				return new ServerStatus(IStatus.ERROR,
+						HttpServletResponse.SC_NOT_FOUND, msg, null);
 			}
 
 			LoggerResource loggerResource = new LoggerResource();
@@ -54,10 +57,14 @@ public class LoggerJob extends TaskJob {
 			loggerResource.setLevel(logger.getLevel());
 			loggerResource.setEffectiveLevel(logger.getEffectiveLevel());
 
-			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, loggerResource.toJSON());
+			return new ServerStatus(Status.OK_STATUS,
+					HttpServletResponse.SC_OK, loggerResource.toJSON());
 		} catch (Exception e) {
-			String msg = NLS.bind("An error occured when looking for an appender: {0}", loggerName);
-			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
+			String msg = NLS
+					.bind("An error occured when looking for logger: {0}",
+							loggerName);
+			return new ServerStatus(IStatus.ERROR,
+					HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 		}
 	}
 }

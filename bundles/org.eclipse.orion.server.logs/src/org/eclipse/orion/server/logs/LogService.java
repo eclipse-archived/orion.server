@@ -39,7 +39,8 @@ public class LogService implements ILogService {
 
 	@Override
 	public List<Logger> getLoggers() {
-		LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+		LoggerContext loggerContext = (LoggerContext) LoggerFactory
+				.getILoggerFactory();
 		return loggerContext.getLoggerList();
 	}
 
@@ -48,7 +49,8 @@ public class LogService implements ILogService {
 		if (name == null)
 			return null;
 
-		LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+		LoggerContext loggerContext = (LoggerContext) LoggerFactory
+				.getILoggerFactory();
 		return loggerContext.getLogger(name);
 	}
 
@@ -57,7 +59,8 @@ public class LogService implements ILogService {
 		List<FileAppender<ILoggingEvent>> fileAppenders = new LinkedList<FileAppender<ILoggingEvent>>();
 
 		for (Logger logger : getLoggers()) {
-			for (Iterator<Appender<ILoggingEvent>> index = logger.iteratorForAppenders(); index.hasNext();) {
+			for (Iterator<Appender<ILoggingEvent>> index = logger
+					.iteratorForAppenders(); index.hasNext();) {
 
 				Appender<ILoggingEvent> appender = index.next();
 				if (appender instanceof FileAppender)
@@ -74,10 +77,12 @@ public class LogService implements ILogService {
 			return null;
 
 		for (Logger logger : getLoggers()) {
-			for (Iterator<Appender<ILoggingEvent>> index = logger.iteratorForAppenders(); index.hasNext();) {
+			for (Iterator<Appender<ILoggingEvent>> index = logger
+					.iteratorForAppenders(); index.hasNext();) {
 
 				Appender<ILoggingEvent> appender = index.next();
-				if (appender instanceof FileAppender && name.equals(appender.getName()))
+				if (appender instanceof FileAppender
+						&& name.equals(appender.getName()))
 					return (FileAppender<ILoggingEvent>) appender;
 			}
 		}
@@ -98,7 +103,8 @@ public class LogService implements ILogService {
 	}
 
 	@Override
-	public File[] getArchivedLogFiles(RollingFileAppender<ILoggingEvent> rollingFileAppender) {
+	public File[] getArchivedLogFiles(
+			RollingFileAppender<ILoggingEvent> rollingFileAppender) {
 		if (rollingFileAppender == null)
 			return null;
 
@@ -112,7 +118,8 @@ public class LogService implements ILogService {
 			Context context = rollingFileAppender.getContext();
 
 			File dir = null;
-			FileNamePattern pattern = new FileNamePattern(fileNamePattern, context);
+			FileNamePattern pattern = new FileNamePattern(fileNamePattern,
+					context);
 			Path path = new Path(pattern.toRegex(new Date()));
 
 			if (!path.isAbsolute())
@@ -140,7 +147,9 @@ public class LogService implements ILogService {
 	}
 
 	@Override
-	public File getArchivedLogFile(RollingFileAppender<ILoggingEvent> rollingFileAppender, String logFileName) {
+	public File getArchivedLogFile(
+			RollingFileAppender<ILoggingEvent> rollingFileAppender,
+			String logFileName) {
 		if (rollingFileAppender == null || logFileName == null)
 			return null;
 
@@ -153,5 +162,23 @@ public class LogService implements ILogService {
 				return logFile;
 
 		return null;
+	}
+
+	@Override
+	public List<RollingFileAppender<ILoggingEvent>> getRollingFileAppenders() {
+		List<RollingFileAppender<ILoggingEvent>> rollingFileAppenders = new LinkedList<RollingFileAppender<ILoggingEvent>>();
+
+		for (Logger logger : getLoggers()) {
+			for (Iterator<Appender<ILoggingEvent>> index = logger
+					.iteratorForAppenders(); index.hasNext();) {
+
+				Appender<ILoggingEvent> appender = index.next();
+				if (appender instanceof RollingFileAppender)
+					rollingFileAppenders
+							.add((RollingFileAppender<ILoggingEvent>) appender);
+			}
+		}
+
+		return rollingFileAppenders;
 	}
 }

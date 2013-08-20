@@ -36,32 +36,37 @@ public class ArchivedLogFileHandler extends AbstractLogHandler {
 	}
 
 	@Override
-	protected boolean handleGet(HttpServletRequest request, HttpServletResponse response, ILogService logService,
-			IPath path) throws ServletException {
+	protected boolean handleGet(HttpServletRequest request,
+			HttpServletResponse response, ILogService logService, IPath path)
+			throws ServletException {
 
 		String appenderName = path.segment(0);
-		RollingFileAppender<ILoggingEvent> appender = logService.getRollingFileAppender(appenderName);
+		String logFileName = path.segment(1);
+
+		RollingFileAppender<ILoggingEvent> appender = logService
+				.getRollingFileAppender(appenderName);
 		if (appender == null) {
 			String msg = NLS.bind("Appender not found: {0}", appenderName);
-			final ServerStatus error = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null);
+			final ServerStatus error = new ServerStatus(IStatus.ERROR,
+					HttpServletResponse.SC_NOT_FOUND, msg, null);
 			return statusHandler.handleRequest(request, response, error);
 		}
 
-		String logFileName = path.segment(2);
 		File logFile = logService.getArchivedLogFile(appender, logFileName);
-
 		if (logFile == null) {
 			String msg = NLS.bind("Log file not found: {0}", logFileName);
-			final ServerStatus error = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null);
+			final ServerStatus error = new ServerStatus(IStatus.ERROR,
+					HttpServletResponse.SC_NOT_FOUND, msg, null);
 			return statusHandler.handleRequest(request, response, error);
 		}
 
 		try {
 			LogUtils.provideLogFile(logFile, response);
 		} catch (Exception ex) {
-			String msg = NLS.bind("An error occured when looking for log {0}.", logFile.getName());
-			final ServerStatus error = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-					msg, ex);
+			String msg = NLS.bind("An error occured when looking for log {0}.",
+					logFile.getName());
+			final ServerStatus error = new ServerStatus(IStatus.ERROR,
+					HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, ex);
 
 			LogHelper.log(error);
 			return statusHandler.handleRequest(request, response, error);

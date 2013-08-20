@@ -22,12 +22,18 @@ import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.eclipse.orion.server.logs.LogConstants;
 import org.json.JSONObject;
 
+import ch.qos.logback.core.rolling.RollingPolicyBase;
 import ch.qos.logback.core.rolling.helper.CompressionMode;
 
 @ResourceDescription(type = RollingPolicyResource.TYPE)
 public class RollingPolicyResource {
 	public static final String RESOURCE = "rollingPolicy"; //$NON-NLS-1$
 	public static final String TYPE = "RollingPolicy"; //$NON-NLS-1$
+
+	public RollingPolicyResource(RollingPolicyBase policy) {
+		fileNamePattern = policy.getFileNamePattern();
+		compressionMode = policy.getCompressionMode();
+	}
 
 	protected static ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
 	{

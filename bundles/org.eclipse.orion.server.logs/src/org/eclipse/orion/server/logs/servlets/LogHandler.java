@@ -24,37 +24,40 @@ import org.eclipse.orion.server.logs.objects.LoggerResource;
 import org.eclipse.orion.server.logs.objects.RollingFileAppenderResource;
 
 public class LogHandler extends ServletResourceHandler<String> {
-	private final ServletResourceHandler<IPath> logApiHandler;
 	private final ServletResourceHandler<IPath> fileAppenderHandler;
 	private final ServletResourceHandler<IPath> rollingFileAppenderHandler;
 	private final ServletResourceHandler<IPath> loggerHandler;
 
 	public LogHandler(ServletResourceHandler<IStatus> statusHandler) {
-		this.logApiHandler = new LogApiHandler(statusHandler);
-		this.fileAppenderHandler = new FileAppenderHandler(statusHandler);
-		this.rollingFileAppenderHandler = new RollingFileAppenderHandler(statusHandler);
-		this.loggerHandler = new LoggerHandler(statusHandler);
+		fileAppenderHandler = new FileAppenderHandler(statusHandler);
+		loggerHandler = new LoggerHandler(statusHandler);
+		rollingFileAppenderHandler = new RollingFileAppenderHandler(
+				statusHandler);
 	}
 
 	@Override
-	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String pathInfo)
+	public boolean handleRequest(HttpServletRequest request,
+			HttpServletResponse response, String pathInfo)
 			throws ServletException {
+
+		if (pathInfo == null)
+			return false;
 
 		/*
 		 * Dispatch the request.
 		 */
-		if (pathInfo == null || "/".equals(pathInfo)) //$NON-NLS-1$
-			return logApiHandler.handleRequest(request, response, new Path("/")); //$NON-NLS-1$
-
 		IPath path = new Path(pathInfo);
 		if (FileAppenderResource.RESOURCE.equals(path.segment(0)))
-			return fileAppenderHandler.handleRequest(request, response, path.removeFirstSegments(1));
+			return fileAppenderHandler.handleRequest(request, response,
+					path.removeFirstSegments(1));
 
 		if (RollingFileAppenderResource.RESOURCE.equals(path.segment(0)))
-			return rollingFileAppenderHandler.handleRequest(request, response, path.removeFirstSegments(1));
+			return rollingFileAppenderHandler.handleRequest(request, response,
+					path.removeFirstSegments(1));
 
 		if (LoggerResource.RESOURCE.equals(path.segment(0)))
-			return loggerHandler.handleRequest(request, response, path.removeFirstSegments(1));
+			return loggerHandler.handleRequest(request, response,
+					path.removeFirstSegments(1));
 
 		/* unsupported request */
 		return false;

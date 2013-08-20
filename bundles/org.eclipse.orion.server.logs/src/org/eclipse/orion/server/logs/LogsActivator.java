@@ -52,7 +52,8 @@ public class LogsActivator implements BundleActivator {
 			return;
 
 		/* register the service */
-		context.registerService(ILogService.class.getName(), new LogService(), null);
+		context.registerService(ILogService.class.getName(), new LogService(),
+				null);
 	}
 
 	/*
@@ -71,7 +72,8 @@ public class LogsActivator implements BundleActivator {
 		registerLogService();
 
 		LogServiceTracker customer = new LogServiceTracker(context);
-		serviceTracker = new ServiceTracker<LogService, ILogService>(context, ILogService.class.getName(), customer);
+		serviceTracker = new ServiceTracker<LogService, ILogService>(context,
+				ILogService.class.getName(), customer);
 
 		serviceTracker.open();
 	}

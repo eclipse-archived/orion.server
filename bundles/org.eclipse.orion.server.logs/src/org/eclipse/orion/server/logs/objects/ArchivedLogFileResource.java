@@ -11,6 +11,7 @@
 
 package org.eclipse.orion.server.logs.objects;
 
+import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -32,11 +33,20 @@ public class ArchivedLogFileResource {
 	public static final String RESOURCE = "archivedLogFile"; //$NON-NLS-1$
 	public static final String TYPE = "ArchivedLogFile"; //$NON-NLS-1$
 
+	public ArchivedLogFileResource(
+			RollingFileAppenderResource rollingFileAppender, File logFile) {
+
+		this.rollingFileAppender = rollingFileAppender;
+		this.baseLocation = rollingFileAppender.baseLocation;
+		this.name = logFile.getName();
+	}
+
 	protected static ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
 	{
 		Property[] defaultProperties = new Property[] { //
 		new Property(ProtocolConstants.KEY_NAME), //
-				new Property(LogConstants.KEY_ARCHIVE_LOG_FILE_DOWNLOAD_LOCATION) };
+				new Property(ProtocolConstants.KEY_LOCATION), //
+				new Property(LogConstants.KEY_ROLLING_FILE_APPENDER_LOCATION) };
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
 
@@ -59,13 +69,16 @@ public class ArchivedLogFileResource {
 		return rollingFileAppender;
 	}
 
-	public void setRollingFileAppender(RollingFileAppenderResource rollingFileAppender) {
+	public void setRollingFileAppender(
+			RollingFileAppenderResource rollingFileAppender) {
 		this.rollingFileAppender = rollingFileAppender;
 	}
 
 	protected URI createUriWithPath(final IPath path) throws URISyntaxException {
-		return new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(),
-				baseLocation.getPort(), path.toString(), baseLocation.getQuery(), baseLocation.getFragment());
+		return new URI(baseLocation.getScheme(), baseLocation.getUserInfo(),
+				baseLocation.getHost(), baseLocation.getPort(),
+				path.toString(), baseLocation.getQuery(),
+				baseLocation.getFragment());
 	}
 
 	public JSONObject toJSON() throws URISyntaxException {
@@ -76,11 +89,16 @@ public class ArchivedLogFileResource {
 		this.baseLocation = baseLocation;
 	}
 
-	@PropertyDescription(name = LogConstants.KEY_ARCHIVE_LOG_FILE_DOWNLOAD_LOCATION)
-	public URI getDownloadLocation() throws URISyntaxException {
-		IPath path = new Path(LogServlet.LOG_URI).append(RollingFileAppenderResource.RESOURCE)
-				.append(getRollingFileAppender().getName()).append(ArchivedLogFileResource.RESOURCE).append(getName())
-				.append(LogConstants.KEY_APPENDER_DOWNLOAD);
+	@PropertyDescription(name = LogConstants.KEY_ROLLING_FILE_APPENDER_LOCATION)
+	public URI getRollingFileAppenderLocation() throws URISyntaxException {
+		return getRollingFileAppender().getLocation();
+	}
+
+	@PropertyDescription(name = ProtocolConstants.KEY_LOCATION)
+	public URI getLocation() throws URISyntaxException {
+		IPath path = new Path(LogServlet.LOGAPI_URI)
+				.append(RollingFileAppenderResource.RESOURCE)
+				.append(getRollingFileAppender().getName()).append(getName());
 		return createUriWithPath(path);
 	}
 }

@@ -16,10 +16,19 @@ import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.eclipse.orion.server.logs.LogConstants;
 
+import ch.qos.logback.core.rolling.FixedWindowRollingPolicy;
+
 @ResourceDescription(type = FixedWindowRollingPolicyResource.TYPE)
 public class FixedWindowRollingPolicyResource extends RollingPolicyResource {
 	public static final String RESOURCE = "fixedWindowRollingPolicy"; //$NON-NLS-1$
 	public static final String TYPE = "FixedWindowRollingPolicy"; //$NON-NLS-1$
+
+	public FixedWindowRollingPolicyResource(FixedWindowRollingPolicy policy) {
+		super(policy);
+
+		minIndex = policy.getMinIndex();
+		maxIndex = policy.getMaxIndex();
+	}
 
 	{
 		/* extend base properties */
@@ -28,7 +37,8 @@ public class FixedWindowRollingPolicyResource extends RollingPolicyResource {
 				new Property(LogConstants.KEY_ROLLING_POLICY_MAX_INDEX) };
 
 		Property[] baseProperties = DEFAULT_RESOURCE_SHAPE.getProperties();
-		Property[] extendedProperties = new Property[baseProperties.length + defaultProperties.length];
+		Property[] extendedProperties = new Property[baseProperties.length
+				+ defaultProperties.length];
 
 		for (int i = 0; i < baseProperties.length; ++i)
 			extendedProperties[i] = baseProperties[i];

@@ -53,6 +53,11 @@ public interface ILogService {
 	public FileAppender<ILoggingEvent> getFileAppender(String name);
 
 	/**
+	 * @return All RollingFileAppenders in the current context.
+	 */
+	public List<RollingFileAppender<ILoggingEvent>> getRollingFileAppenders();
+
+	/**
 	 * @param name
 	 *            Logback RollingFileAppender name property.
 	 * @return Appropriate RollingFileAppender or <code>null</code> if not
@@ -69,7 +74,8 @@ public interface ILogService {
 	 *         also in case if the rollingFileAppender has no rolling policy
 	 *         defined.
 	 */
-	public File[] getArchivedLogFiles(RollingFileAppender<ILoggingEvent> rollingFileAppender);
+	public File[] getArchivedLogFiles(
+			RollingFileAppender<ILoggingEvent> rollingFileAppender);
 
 	/**
 	 * @param rollingFileAppender
@@ -80,5 +86,7 @@ public interface ILogService {
 	 * @return Appropriate File or <code>null</code> if not present in the
 	 *         current logger context.
 	 */
-	public File getArchivedLogFile(RollingFileAppender<ILoggingEvent> rollingFileAppender, String logFileName);
+	public File getArchivedLogFile(
+			RollingFileAppender<ILoggingEvent> rollingFileAppender,
+			String logFileName);
 }

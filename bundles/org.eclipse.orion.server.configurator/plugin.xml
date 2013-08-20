@@ -82,7 +82,7 @@
          </init-param>
       </servlet>
       <servlet
-            alias="/logs"
+            alias="/logapi"
             class="org.eclipse.orion.server.logs.servlets.LogServlet">
       </servlet>
       <serviceSelector
@@ -177,7 +177,7 @@
             class="org.eclipse.orion.server.configurator.servlet.LoggedInUserFilter">
       </filter>
       <filter
-            alias="/logs"
+            alias="/logapi"
             class="org.eclipse.orion.server.configurator.servlet.LoggedInUserFilter">
       </filter>
       <filter

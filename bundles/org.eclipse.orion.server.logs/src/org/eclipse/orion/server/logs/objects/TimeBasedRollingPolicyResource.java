@@ -16,10 +16,21 @@ import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.eclipse.orion.server.logs.LogConstants;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.rolling.TimeBasedRollingPolicy;
+
 @ResourceDescription(type = TimeBasedRollingPolicyResource.TYPE)
 public class TimeBasedRollingPolicyResource extends RollingPolicyResource {
 	public static final String RESOURCE = "timeBasedRollingPolicy"; //$NON-NLS-1$
 	public static final String TYPE = "TimeBasedRollingPolicy"; //$NON-NLS-1$
+
+	public TimeBasedRollingPolicyResource(
+			TimeBasedRollingPolicy<ILoggingEvent> policy) {
+
+		super(policy);
+		maxHistory = policy.getMaxHistory();
+		cleanHistoryOnStart = policy.isCleanHistoryOnStart();
+	}
 
 	{
 		/* extend base properties */
@@ -28,7 +39,8 @@ public class TimeBasedRollingPolicyResource extends RollingPolicyResource {
 				new Property(LogConstants.KEY_ROLLING_POLICY_MAX_HISTORY) };
 
 		Property[] baseProperties = DEFAULT_RESOURCE_SHAPE.getProperties();
-		Property[] extendedProperties = new Property[baseProperties.length + defaultProperties.length];
+		Property[] extendedProperties = new Property[baseProperties.length
+				+ defaultProperties.length];
 
 		for (int i = 0; i < baseProperties.length; ++i)
 			extendedProperties[i] = baseProperties[i];

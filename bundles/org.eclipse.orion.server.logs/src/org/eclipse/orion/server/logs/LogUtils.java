@@ -14,19 +14,27 @@ package org.eclipse.orion.server.logs;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.logs.objects.ArchivedLogFileResource;
+import org.eclipse.orion.server.logs.objects.RollingFileAppenderResource;
+
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.rolling.RollingFileAppender;
 
 /**
  * Utility class for common log operations.
  */
 public class LogUtils {
 	/* 64KB default buffer size */
-	private static final int BUFFER_SIZE = Integer.parseInt(PreferenceHelper.getString(
-			LogConstants.CONFIG_FILE_LOG_BUFFER_SIZE, String.valueOf(64 * 1024)));
+	private static final int BUFFER_SIZE = Integer.parseInt(PreferenceHelper
+			.getString(LogConstants.CONFIG_FILE_LOG_BUFFER_SIZE,
+					String.valueOf(64 * 1024)));
 
 	/**
 	 * Retrieves the appropriate content type header for the given log file.
@@ -71,7 +79,8 @@ public class LogUtils {
 	 * @param response
 	 *            Client response used to send the file.
 	 */
-	public static void provideLogFile(File logFile, HttpServletResponse response) throws Exception {
+	public static void provideLogFile(File logFile, HttpServletResponse response)
+			throws Exception {
 		DataInputStream in = null;
 		ServletOutputStream output = null;
 
@@ -82,12 +91,12 @@ public class LogUtils {
 
 			response.setContentType(LogUtils.getContentType(logFile));
 			response.setContentLength((int) logFile.length());
-			response.setHeader("Content-Disposition", "attachment; filename=\"" + logFile.getName() + "\""); //$NON-NLS-1$//$NON-NLS-2$//$NON-NLS-3$
+			response.setHeader(
+					"Content-Disposition", "attachment; filename=\"" + logFile.getName() + "\""); //$NON-NLS-1$//$NON-NLS-2$//$NON-NLS-3$
 
 			int length = 0;
-			while (in != null && (length = in.read(byteBuffer)) != -1) {
+			while (in != null && (length = in.read(byteBuffer)) != -1)
 				output.write(byteBuffer, 0, length);
-			}
 
 		} finally {
 			if (in != null)
@@ -96,5 +105,37 @@ public class LogUtils {
 			if (output != null)
 				output.close();
 		}
+	}
+
+	/**
+	 * Attaches archived log files to a given rolling file appender.
+	 * 
+	 * @param appender
+	 *            Logback rollingFileAppender
+	 * @param rollingFileAppenderResource
+	 *            Resource which should have attached archived log files.
+	 * @param logService
+	 *            Log service which should be use to retrieve archived log
+	 *            files.
+	 */
+	public static void attachArchivedLogFiles(
+			RollingFileAppender<ILoggingEvent> appender,
+			RollingFileAppenderResource rollingFileAppenderResource,
+			ILogService logService) {
+
+		File[] files = logService.getArchivedLogFiles(appender);
+		if (files == null)
+			return;
+
+		List<ArchivedLogFileResource> logFiles = new ArrayList<ArchivedLogFileResource>(
+				files.length);
+
+		for (File file : files) {
+			ArchivedLogFileResource resource = new ArchivedLogFileResource(
+					rollingFileAppenderResource, file);
+			logFiles.add(resource);
+		}
+
+		rollingFileAppenderResource.setArchivedLogFiles(logFiles);
 	}
 }

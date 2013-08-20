@@ -27,21 +27,33 @@ import org.eclipse.orion.server.logs.LogConstants;
 import org.eclipse.orion.server.logs.servlets.LogServlet;
 import org.json.JSONObject;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.FileAppender;
+
 @ResourceDescription(type = FileAppenderResource.TYPE)
 public class FileAppenderResource {
 	public static final String RESOURCE = "fileAppender"; //$NON-NLS-1$
 	public static final String TYPE = "FileAppender"; //$NON-NLS-1$
 
+	public FileAppenderResource(FileAppender<ILoggingEvent> fileAppender,
+			URI baseLocation) {
+
+		this.baseLocation = baseLocation;
+		this.name = fileAppender.getName();
+		this.isAppend = fileAppender.isAppend();
+		this.isPrudent = fileAppender.isPrudent();
+		this.isStarted = fileAppender.isStarted();
+	}
+
 	protected static ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
 	{
 		Property[] defaultProperties = new Property[] { //
-				new Property(ProtocolConstants.KEY_NAME), //
+		new Property(ProtocolConstants.KEY_NAME), //
 				new Property(ProtocolConstants.KEY_LOCATION), //
 				new Property(LogConstants.KEY_APPENDER_NAME), //
 				new Property(LogConstants.KEY_APPENDER_IS_APPEND), //
 				new Property(LogConstants.KEY_APPENDER_IS_PRUDENT), //
-				new Property(LogConstants.KEY_APPENDER_IS_STARTED),
-				new Property(LogConstants.KEY_APPENDER_DOWNLOAD_LOCATION) };
+				new Property(LogConstants.KEY_APPENDER_IS_STARTED) };
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
 	protected Serializer<JSONObject> jsonSerializer = new JSONSerializer();
@@ -53,8 +65,10 @@ public class FileAppenderResource {
 	protected boolean isStarted;
 
 	protected URI createUriWithPath(final IPath path) throws URISyntaxException {
-		return new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(),
-				baseLocation.getPort(), path.toString(), baseLocation.getQuery(), baseLocation.getFragment());
+		return new URI(baseLocation.getScheme(), baseLocation.getUserInfo(),
+				baseLocation.getHost(), baseLocation.getPort(),
+				path.toString(), baseLocation.getQuery(),
+				baseLocation.getFragment());
 	}
 
 	public JSONObject toJSON() throws URISyntaxException {
@@ -103,14 +117,8 @@ public class FileAppenderResource {
 
 	@PropertyDescription(name = ProtocolConstants.KEY_LOCATION)
 	public URI getLocation() throws URISyntaxException {
-		IPath path = new Path(LogServlet.LOG_URI).append(FileAppenderResource.RESOURCE).append(getName());
-		return createUriWithPath(path);
-	}
-
-	@PropertyDescription(name = LogConstants.KEY_APPENDER_DOWNLOAD_LOCATION)
-	public URI getDownloadLocation() throws URISyntaxException {
-		IPath path = new Path(LogServlet.LOG_URI).append(FileAppenderResource.RESOURCE).append(getName())
-				.append(LogConstants.KEY_APPENDER_DOWNLOAD);
+		IPath path = new Path(LogServlet.LOGAPI_URI).append(
+				FileAppenderResource.RESOURCE).append(getName());
 		return createUriWithPath(path);
 	}
 }

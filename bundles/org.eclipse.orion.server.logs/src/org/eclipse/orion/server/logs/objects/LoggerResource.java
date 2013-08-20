@@ -43,6 +43,7 @@ public class LoggerResource {
 				new Property(LogConstants.KEY_LOGGER_EFFECTIVE_LEVEL) };
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
+
 	protected Serializer<JSONObject> jsonSerializer = new JSONSerializer();
 	protected URI baseLocation;
 
@@ -51,8 +52,10 @@ public class LoggerResource {
 	protected Level effectiveLevel;
 
 	protected URI createUriWithPath(final IPath path) throws URISyntaxException {
-		return new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(),
-				baseLocation.getPort(), path.toString(), baseLocation.getQuery(), baseLocation.getFragment());
+		return new URI(baseLocation.getScheme(), baseLocation.getUserInfo(),
+				baseLocation.getHost(), baseLocation.getPort(),
+				path.toString(), baseLocation.getQuery(),
+				baseLocation.getFragment());
 	}
 
 	public JSONObject toJSON() throws URISyntaxException {
@@ -92,7 +95,8 @@ public class LoggerResource {
 
 	@PropertyDescription(name = ProtocolConstants.KEY_LOCATION)
 	public URI getLocation() throws URISyntaxException {
-		IPath path = new Path(LogServlet.LOG_URI).append(LoggerResource.RESOURCE).append(getName());
+		IPath path = new Path(LogServlet.LOGAPI_URI).append(
+				LoggerResource.RESOURCE).append(getName());
 		return createUriWithPath(path);
 	}
 }
