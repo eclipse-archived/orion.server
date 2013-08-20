@@ -11,9 +11,6 @@
 package org.eclipse.orion.server.core.project;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.nio.charset.CoderMalfunctionError;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -25,7 +22,6 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -37,7 +33,6 @@ public class Project {
 	private ProjectInfo directory;
 	private IFileStore projectInfoFile;
 	private String name;
-	private JSONArray dependencies;
 	/**
 	 * Name of the file that should be situated in the top level folder to indicate that this folder is a project.
 	 * This file contains project metadata in form of {@link JSONObject}.
@@ -51,7 +46,7 @@ public class Project {
 		super();
 		this.directory = directory;
 		this.projectInfoFile = projectInfoFile;
-		if (projectInfoFile == null) {
+		if(projectInfoFile==null){
 			return;
 		}
 		try {
@@ -66,49 +61,6 @@ public class Project {
 
 	public boolean exists() {
 		return projectInfoFile != null;
-	}
-
-	public void initialize() throws CoreException {
-		IFileStore projectInfoFile = directory.getProjectStore().getChild(ORION_PROJECT_FILE);
-		IFileInfo childInfo = projectInfoFile.fetchInfo();
-		if (childInfo.exists()) {
-			this.projectInfoFile = projectInfoFile;
-		} else {
-			try {
-				projectInfoFile.openOutputStream(EFS.APPEND, null).close();
-			} catch (IOException e) {
-				throw new CoderMalfunctionError(e);
-			}
-		}
-	}
-
-	private synchronized void flushInfo() throws JSONException, CoreException, IOException {
-		JSONObject projectJson = toJson();
-		if (directory.getFullName().equals(name)) {
-			projectJson.remove("Name");
-		}
-		OutputStreamWriter sw = null;
-		try {
-			sw = new OutputStreamWriter(this.projectInfoFile.openOutputStream(EFS.OVERWRITE, null));
-			sw.write(projectJson.toString());
-			
-		} finally {
-			if (sw != null) {
-				sw.close();
-			}
-		}
-	}
-
-	public void addDependency(String name, String type, String location) throws JSONException, CoreException, IOException {
-		if(dependencies==null){
-			dependencies = new JSONArray();
-		}
-		JSONObject depenency = new JSONObject();
-		depenency.put("Name", name);
-		depenency.put("Type", type);
-		depenency.put("Location", location);
-		dependencies.put(depenency);
-		flushInfo();
 	}
 
 	public ProjectInfo getDirectory() {
@@ -129,16 +81,12 @@ public class Project {
 
 	private void initFromJson(JSONObject projectInfo) {
 		String name = projectInfo.optString("Name");
-		this.name = name.length() == 0 ? directory.getFullName() : name;
-		dependencies = projectInfo.optJSONArray("Dependencies");
+		this.name = name.length()==0 ? directory.getFullName() : name;
 	}
 
 	public JSONObject toJson() throws JSONException {
 		JSONObject projectJson = new JSONObject();
 		projectJson.put("Name", name);
-		if (dependencies != null) {
-			projectJson.put("Dependencies", dependencies);
-		}
 		return projectJson;
 	}
 }
