@@ -598,10 +598,12 @@ public class GitCloneTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+
 		IPath clonePath = getClonePath(workspaceId, project).append("clone").makeAbsolute();
 		JSONObject clone = clone(clonePath);
 		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
 		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		String projectLocation = project.getString(ProtocolConstants.KEY_LOCATION);
 
 		// delete clone
 		WebRequest request = getDeleteCloneRequest(cloneLocation);
@@ -619,8 +621,9 @@ public class GitCloneTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 
 		// but the project is still there
-		request = getGetRequest("");
+		request = getGetRequest(projectLocation);
 		response = webConversation.getResponse(request);
+
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 	}
 

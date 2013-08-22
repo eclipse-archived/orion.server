@@ -305,7 +305,7 @@ public abstract class GitTest extends FileSystemTest {
 
 	protected static String getMethodName() {
 		final StackTraceElement[] ste = Thread.currentThread().getStackTrace();
-		return ste[2].getMethodName();
+		return ste[3].getMethodName();
 	}
 
 	protected static JSONObject getChildByKey(List<JSONObject> children, String key, String value) throws JSONException {
