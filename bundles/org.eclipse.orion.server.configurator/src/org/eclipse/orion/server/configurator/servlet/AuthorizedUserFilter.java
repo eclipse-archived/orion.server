@@ -85,7 +85,8 @@ public class AuthorizedUserFilter implements Filter {
 					JSONObject requestObject = OrionServlet.readJSONRequest(httpRequest);
 					sourceLocation = requestObject.getString("Location");
 					String normalizedLocation = new URI(sourceLocation).normalize().getPath();
-					if (!AuthorizationService.checkRights(userName, normalizedLocation, method)) {
+					normalizedLocation = normalizedLocation.startsWith(httpRequest.getContextPath()) ? normalizedLocation.substring(httpRequest.getContextPath().length()) : null;
+					if (normalizedLocation == null || !AuthorizationService.checkRights(userName, normalizedLocation, method)) {
 						setNotAuthorized(httpRequest, httpResponse, sourceLocation);
 						return;
 					}
