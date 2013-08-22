@@ -294,9 +294,8 @@ public class HostingTest extends CoreSiteTest {
 		// Access the remote URL through the site
 		WebRequest getRemoteUrlReq = new GetMethodWebRequest(hostedURL + remoteRoot);
 		WebResponse getRemoteUrlResp = webConversation.getResource(getRemoteUrlReq);
-		assertEquals("GET " + getRemoteUrlReq.getURL() + " succeeds", HttpURLConnection.HTTP_OK, getRemoteUrlResp.getResponseCode());
-		final String content = getRemoteUrlResp.getText();
-		assertEquals("Looks like Orion", true, content.contains("Orion") && content.contains("<script"));
+		final String lowerCaseContent = getRemoteUrlResp.getText().toLowerCase();
+		assertEquals("Looks like our orion jetty server", true, lowerCaseContent.contains("orion") || lowerCaseContent.contains("jetty"));
 
 		// Test that we can invoke the Orion file API through the site, to create a file
 		final String fileName = "fizz.txt";
