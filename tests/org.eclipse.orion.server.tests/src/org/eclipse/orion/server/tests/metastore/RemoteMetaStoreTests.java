@@ -45,12 +45,20 @@ import org.junit.runners.MethodSorters;
 /**
  * Test the MetaStore API on a remote Orion server by creating users, workspaces and projects.
  * This test is not intended to be added to the nightly Orion JUnit tests, 
- * it is a debugging tool for the server API.
+ * it is a test tool for the server API as well as being useful to create test data for migration
+ * tests.
  *  
  * @author Anthony Hunter
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class RemoteMetaStoreTests {
+
+	/**
+	 * The metastore is either legacy or simple. The values in orion.conf are:
+	 * orion.core.metastore=legacy (Orion 3.0)
+	 * orion.core.metastore=simple (Orion 4.0)
+	 */
+	protected final static boolean orionMetastoreLegacy = true;
 
 	protected static String orionTestName = null;
 
@@ -65,6 +73,106 @@ public class RemoteMetaStoreTests {
 		ThreadSafeClientConnManager cm = new ThreadSafeClientConnManager();
 		cm.setMaxTotal(100);
 		return new DefaultHttpClient(cm);
+	}
+
+	/**
+	 * Create a project on the Orion server for the test user.
+	 * 
+	 * @param httpClient
+	 * @param login
+	 * @param password
+	 * @param projectName
+	 * @return
+	 * @throws ClientProtocolException
+	 * @throws IOException
+	 * @throws JSONException
+	 * @throws URISyntaxException
+	 */
+	protected int createProject(HttpClient httpClient, String login, String password, String projectName) throws ClientProtocolException, IOException, JSONException, URISyntaxException {
+		assertEquals(HttpStatus.SC_OK, login(httpClient, login, password));
+
+		HttpPost httpPost = new HttpPost(getOrionServerURI("/workspace/" + getWorkspaceId(login)));
+		httpPost.setHeader(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		httpPost.setHeader(HTTP.CONTENT_TYPE, "application/json");
+		JSONObject jsonObject = new JSONObject();
+		jsonObject.put("Name", projectName);
+		StringEntity stringEntity = new StringEntity(jsonObject.toString());
+		stringEntity.setContentType("application/json");
+		httpPost.setEntity(stringEntity);
+		HttpResponse httpResponse = httpClient.execute(httpPost);
+		assertEquals(HttpStatus.SC_CREATED, httpResponse.getStatusLine().getStatusCode());
+		HttpEntity httpEntity = httpResponse.getEntity();
+		if (httpEntity != null) {
+			String result = EntityUtils.toString(httpEntity);
+			jsonObject = new JSONObject(result);
+			String location = jsonObject.getString("ContentLocation");
+			String name = jsonObject.getString("Name");
+			System.out.println("Created Project: " + name + " at Location: " + location);
+		}
+		return httpResponse.getStatusLine().getStatusCode();
+	}
+
+	/**
+	 * Create a test user on the Orion server.
+	 * 
+	 * @param httpClient
+	 * @param login
+	 * @param password
+	 * @return
+	 * @throws ClientProtocolException
+	 * @throws IOException
+	 * @throws URISyntaxException
+	 * @throws JSONException
+	 */
+	protected int createUser(HttpClient httpClient, String login, String password) throws ClientProtocolException, IOException, URISyntaxException, JSONException {
+		HttpPost httpPost = new HttpPost(getOrionServerURI("/users"));
+		httpPost.setHeader(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		List<NameValuePair> nvps = new ArrayList<NameValuePair>();
+		nvps.add(new BasicNameValuePair("login", login));
+		nvps.add(new BasicNameValuePair("password", password));
+		httpPost.setEntity(new UrlEncodedFormEntity(nvps, "UTF-8"));
+		HttpResponse httpResponse = httpClient.execute(httpPost);
+		assertEquals(HttpStatus.SC_OK, httpResponse.getStatusLine().getStatusCode());
+		HttpEntity httpEntity = httpResponse.getEntity();
+		if (httpEntity != null) {
+			String result = EntityUtils.toString(httpEntity);
+			JSONObject jsonObject = new JSONObject(result);
+			String location = jsonObject.getString("Location");
+			String name = jsonObject.getString("Name");
+			System.out.println("Created User: " + name + " at Location: " + location);
+		}
+		return httpResponse.getStatusLine().getStatusCode();
+	}
+
+	/**
+	 * Create a workspace on the Orion server for the test user.
+	 * 
+	 * @param httpClient
+	 * @param login
+	 * @param password
+	 * @return
+	 * @throws URISyntaxException
+	 * @throws ParseException
+	 * @throws IOException
+	 * @throws JSONException
+	 */
+	protected int createWorkspace(HttpClient httpClient, String login, String password) throws URISyntaxException, ParseException, IOException, JSONException {
+		assertEquals(HttpStatus.SC_OK, login(httpClient, login, password));
+
+		HttpPost httpPost = new HttpPost(getOrionServerURI("/workspace"));
+		httpPost.setHeader(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		httpPost.setHeader(ProtocolConstants.HEADER_SLUG, "Orion Content");
+		HttpResponse httpResponse = httpClient.execute(httpPost);
+		assertEquals(HttpStatus.SC_OK, httpResponse.getStatusLine().getStatusCode());
+		HttpEntity httpEntity = httpResponse.getEntity();
+		if (httpEntity != null) {
+			String result = EntityUtils.toString(httpEntity);
+			JSONObject jsonObject = new JSONObject(result);
+			String location = jsonObject.getString("Location");
+			String name = jsonObject.getString("Name");
+			System.out.println("Created Workspace: " + name + " at Location: " + location);
+		}
+		return httpResponse.getStatusLine().getStatusCode();
 	}
 
 	/**
@@ -83,21 +191,35 @@ public class RemoteMetaStoreTests {
 	}
 
 	/**
-	 * Get the test name used for all these tests. The username and password will be this name, 
+	 * Get the test name used for several tests. The username and password will be this name, 
 	 * as well as the workspace name and project name. It is meant to be a unique name so the tests
-	 * can be repeated a number of times on the same server.
+	 * can be repeated a number of times on the same server without having to delete content.
 	 * 
 	 * @return The test name.
 	 */
 	protected String getOrionTestName() {
 		if (orionTestName == null) {
 			orionTestName = "test" + System.currentTimeMillis();
+			//orionTestName = "test" + "123456";
 		}
 		return orionTestName;
 	}
 
 	/**
-	 * Login to the Orion server.
+	 * Get the workspace id based on the login name. The legacy metastore uses the login name, the
+	 * simple metastore uses the login name and workspace name.
+	 * @param login
+	 * @return
+	 */
+	protected String getWorkspaceId(String login) {
+		if (orionMetastoreLegacy) {
+			return login;
+		}
+		return login + "-Orion Content";
+	}
+
+	/**
+	 * Login to the Orion server with the provided login and password.
 	 * 
 	 * @param httpClient
 	 * @return The status code returned by the httpClient.
@@ -105,12 +227,12 @@ public class RemoteMetaStoreTests {
 	 * @throws IOException
 	 * @throws URISyntaxException
 	 */
-	protected int login(HttpClient httpClient) throws ClientProtocolException, IOException, URISyntaxException {
+	protected int login(HttpClient httpClient, String login, String password) throws ClientProtocolException, IOException, URISyntaxException {
 		HttpPost httpPost = new HttpPost(getOrionServerURI("/login/form"));
 		httpPost.setHeader(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		List<NameValuePair> nvps = new ArrayList<NameValuePair>();
-		nvps.add(new BasicNameValuePair("login", getOrionTestName()));
-		nvps.add(new BasicNameValuePair("password", getOrionTestName()));
+		nvps.add(new BasicNameValuePair("login", login));
+		nvps.add(new BasicNameValuePair("password", login));
 		httpPost.setEntity(new UrlEncodedFormEntity(nvps, "UTF-8"));
 
 		HttpResponse httpResponse = httpClient.execute(httpPost);
@@ -128,26 +250,9 @@ public class RemoteMetaStoreTests {
 	 */
 	@Test
 	public void testACreateUser() throws URISyntaxException, ParseException, IOException, JSONException {
-
 		HttpClient httpClient = createHttpClient();
 		try {
-			HttpPost httpPost = new HttpPost(getOrionServerURI("/users"));
-			httpPost.setHeader(ProtocolConstants.HEADER_ORION_VERSION, "1");
-			List<NameValuePair> nvps = new ArrayList<NameValuePair>();
-			nvps.add(new BasicNameValuePair("login", getOrionTestName()));
-			nvps.add(new BasicNameValuePair("password", getOrionTestName()));
-			nvps.add(new BasicNameValuePair("email", getOrionTestName() + "@test.com"));
-			httpPost.setEntity(new UrlEncodedFormEntity(nvps, "UTF-8"));
-			HttpResponse httpResponse = httpClient.execute(httpPost);
-			HttpEntity httpEntity = httpResponse.getEntity();
-			if (httpEntity != null) {
-				String result = EntityUtils.toString(httpEntity);
-				JSONObject jsonObject = new JSONObject(result);
-				String location = jsonObject.getString("Location");
-				String name = jsonObject.getString("Name");
-				System.out.println("Created User: " + name + " at Location: " + location);
-			}
-			assertEquals(HttpStatus.SC_OK, httpResponse.getStatusLine().getStatusCode());
+			assertEquals(HttpStatus.SC_OK, createUser(httpClient, getOrionTestName(), getOrionTestName()));
 		} finally {
 			httpClient.getConnectionManager().shutdown();
 		}
@@ -166,7 +271,7 @@ public class RemoteMetaStoreTests {
 
 		HttpClient httpClient = createHttpClient();
 		try {
-			assertEquals(HttpStatus.SC_OK, login(httpClient));
+			assertEquals(HttpStatus.SC_OK, login(httpClient, getOrionTestName(), getOrionTestName()));
 		} finally {
 			httpClient.getConnectionManager().shutdown();
 		}
@@ -185,21 +290,7 @@ public class RemoteMetaStoreTests {
 
 		HttpClient httpClient = createHttpClient();
 		try {
-			assertEquals(HttpStatus.SC_OK, login(httpClient));
-
-			HttpPost httpPost = new HttpPost(getOrionServerURI("/workspace"));
-			httpPost.setHeader(ProtocolConstants.HEADER_ORION_VERSION, "1");
-			httpPost.setHeader(ProtocolConstants.HEADER_SLUG, "Orion Content");
-			HttpResponse httpResponse = httpClient.execute(httpPost);
-			HttpEntity httpEntity = httpResponse.getEntity();
-			if (httpEntity != null) {
-				String result = EntityUtils.toString(httpEntity);
-				JSONObject jsonObject = new JSONObject(result);
-				String location = jsonObject.getString("Location");
-				String name = jsonObject.getString("Name");
-				System.out.println("Created Workspace: " + name + " at Location: " + location);
-			}
-			assertEquals(HttpStatus.SC_OK, httpResponse.getStatusLine().getStatusCode());
+			assertEquals(HttpStatus.SC_OK, createWorkspace(httpClient, getOrionTestName(), getOrionTestName()));
 		} finally {
 			httpClient.getConnectionManager().shutdown();
 		}
@@ -218,26 +309,7 @@ public class RemoteMetaStoreTests {
 
 		HttpClient httpClient = createHttpClient();
 		try {
-			assertEquals(HttpStatus.SC_OK, login(httpClient));
-
-			HttpPost httpPost = new HttpPost(getOrionServerURI("/workspace/" + getOrionTestName()));
-			httpPost.setHeader(ProtocolConstants.HEADER_ORION_VERSION, "1");
-			httpPost.setHeader(HTTP.CONTENT_TYPE, "application/json");
-			JSONObject jsonObject = new JSONObject();
-			jsonObject.put("Name", getOrionTestName());
-			StringEntity stringEntity = new StringEntity(jsonObject.toString());
-			stringEntity.setContentType("application/json");
-			httpPost.setEntity(stringEntity);
-			HttpResponse httpResponse = httpClient.execute(httpPost);
-			HttpEntity httpEntity = httpResponse.getEntity();
-			if (httpEntity != null) {
-				String result = EntityUtils.toString(httpEntity);
-				jsonObject = new JSONObject(result);
-				String location = jsonObject.getString("Location");
-				String name = jsonObject.getString("Name");
-				System.out.println("Created Project: " + name + " at Location: " + location);
-			}
-			assertEquals(HttpStatus.SC_CREATED, httpResponse.getStatusLine().getStatusCode());
+			assertEquals(HttpStatus.SC_CREATED, createProject(httpClient, getOrionTestName(), getOrionTestName(), getOrionTestName()));
 		} finally {
 			httpClient.getConnectionManager().shutdown();
 		}
@@ -256,11 +328,12 @@ public class RemoteMetaStoreTests {
 
 		HttpClient httpClient = createHttpClient();
 		try {
-			assertEquals(HttpStatus.SC_OK, login(httpClient));
+			assertEquals(HttpStatus.SC_OK, login(httpClient, getOrionTestName(), getOrionTestName()));
 
-			HttpGet httpGet = new HttpGet(getOrionServerURI("/workspace/" + getOrionTestName()));
+			HttpGet httpGet = new HttpGet(getOrionServerURI("/workspace/" + getWorkspaceId(getOrionTestName())));
 			httpGet.setHeader(ProtocolConstants.HEADER_ORION_VERSION, "1");
 			HttpResponse httpResponse = httpClient.execute(httpGet);
+			assertEquals(HttpStatus.SC_OK, httpResponse.getStatusLine().getStatusCode());
 			HttpEntity httpEntity = httpResponse.getEntity();
 			if (httpEntity != null) {
 				String result = EntityUtils.toString(httpEntity);
@@ -278,8 +351,6 @@ public class RemoteMetaStoreTests {
 					System.out.println("]");
 				}
 			}
-			assertEquals(HttpStatus.SC_OK, httpResponse.getStatusLine().getStatusCode());
-
 		} finally {
 			httpClient.getConnectionManager().shutdown();
 		}
@@ -298,11 +369,12 @@ public class RemoteMetaStoreTests {
 
 		HttpClient httpClient = createHttpClient();
 		try {
-			assertEquals(HttpStatus.SC_OK, login(httpClient));
+			assertEquals(HttpStatus.SC_OK, login(httpClient, getOrionTestName(), getOrionTestName()));
 
 			HttpGet httpGet = new HttpGet(getOrionServerURI("/workspace"));
 			httpGet.setHeader(ProtocolConstants.HEADER_ORION_VERSION, "1");
 			HttpResponse httpResponse = httpClient.execute(httpGet);
+			assertEquals(HttpStatus.SC_OK, httpResponse.getStatusLine().getStatusCode());
 			HttpEntity httpEntity = httpResponse.getEntity();
 			if (httpEntity != null) {
 				String result = EntityUtils.toString(httpEntity);
@@ -320,11 +392,40 @@ public class RemoteMetaStoreTests {
 					System.out.println("]");
 				}
 			}
-			assertEquals(HttpStatus.SC_OK, httpResponse.getStatusLine().getStatusCode());
-
 		} finally {
 			httpClient.getConnectionManager().shutdown();
 		}
 	}
 
+	/**
+	 * Create additional users, workspaces and projects to test migration.
+	 * 
+	 * @throws ClientProtocolException
+	 * @throws IOException
+	 * @throws URISyntaxException
+	 * @throws JSONException
+	 */
+	@Test
+	public void testZCreateMigrationContent() throws ClientProtocolException, IOException, URISyntaxException, JSONException {
+		HttpClient httpClient = createHttpClient();
+		try {
+			// a user with no workspace or projects
+			String none = "n" + getOrionTestName();
+			assertEquals(HttpStatus.SC_OK, createUser(httpClient, none, none));
+
+			// a user with no projects
+			String noprojects = "np" + getOrionTestName();
+			assertEquals(HttpStatus.SC_OK, createUser(httpClient, noprojects, noprojects));
+			assertEquals(HttpStatus.SC_OK, createWorkspace(httpClient, noprojects, noprojects));
+
+			// a user with two projects
+			String twoprojects = "tp" + getOrionTestName();
+			assertEquals(HttpStatus.SC_OK, createUser(httpClient, twoprojects, twoprojects));
+			assertEquals(HttpStatus.SC_OK, createWorkspace(httpClient, twoprojects, twoprojects));
+			assertEquals(HttpStatus.SC_CREATED, createProject(httpClient, twoprojects, twoprojects, twoprojects + 1));
+			assertEquals(HttpStatus.SC_CREATED, createProject(httpClient, twoprojects, twoprojects, twoprojects + 2));
+		} finally {
+			httpClient.getConnectionManager().shutdown();
+		}
+	}
 }
