@@ -560,16 +560,25 @@ public class GitCloneTest extends GitTest {
 	@Test
 	public void testDeleteInProject() throws Exception {
 		URI workspaceLocation = createWorkspace(getMethodName());
+
+		/* assume there are no projects in the workspace */
+		WebRequest request = getGetRequest(workspaceLocation.toString());
+		WebResponse response = webConversation.getResponse(request);
+		JSONObject workspace = new JSONObject(response.getText());
+		JSONArray projects = workspace.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		Assume.assumeTrue(projects.length() == 0);
+
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
+
 		JSONObject clone = clone(workspaceId, project);
 		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
 		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		// delete clone
-		WebRequest request = getDeleteCloneRequest(cloneLocation);
-		WebResponse response = webConversation.getResponse(request);
+		request = getDeleteCloneRequest(cloneLocation);
+		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// the clone is gone
@@ -585,8 +594,9 @@ public class GitCloneTest extends GitTest {
 		// make sure the project doesn't exist
 		request = getGetRequest(workspaceLocation.toString());
 		response = webConversation.getResponse(request);
-		JSONObject workspace = new JSONObject(response.getText());
-		JSONArray projects = workspace.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		workspace = new JSONObject(response.getText());
+		projects = workspace.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+
 		for (int i = 0; i < projects.length(); i++) {
 			JSONObject p = projects.getJSONObject(i);
 			assertFalse(projectId.equals(p.getString(ProtocolConstants.KEY_ID)));
