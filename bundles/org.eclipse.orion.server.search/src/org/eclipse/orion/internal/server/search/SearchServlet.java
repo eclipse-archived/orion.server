@@ -13,14 +13,10 @@ package org.eclipse.orion.internal.server.search;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
+import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -42,6 +38,10 @@ import org.eclipse.orion.server.servlets.OrionServlet;
  * Servlet for performing searches against files in the workspace.
  */
 public class SearchServlet extends OrionServlet {
+	/**
+	 * Separator between query terms
+	 */
+	private static final String AND = " AND "; //$NON-NLS-1$
 	private static final long serialVersionUID = 1L;
 	private static final String FIELD_NAMES = "Id,Name,NameLower,Length,Directory,LastModified,Location,Path"; //$NON-NLS-1$
 	private static final List<String> FIELD_LIST = Arrays.asList(FIELD_NAMES.split(",")); //$NON-NLS-1$
@@ -82,7 +82,7 @@ public class SearchServlet extends OrionServlet {
 					if (term.startsWith("NameLower:")) { //$NON-NLS-1$
 						//decode the search term, we do not want to decode the location
 						try {
-							term = URLDecoder.decode(term, "UTF-8");
+							term = URLDecoder.decode(term, "UTF-8"); //$NON-NLS-1$
 						} catch (UnsupportedEncodingException e) {
 							//try with encoded term
 						}
@@ -91,7 +91,7 @@ public class SearchServlet extends OrionServlet {
 						processedQuery += "NameLower:" + term.substring(10).toLowerCase(); //$NON-NLS-1$
 					} else if (term.startsWith("Location:")) { //$NON-NLS-1${
 						//all other field searches are case sensitive
-						processedQuery += "Location:" + term.substring(9 + req.getContextPath().length());
+						processedQuery += "Location:" + term.substring(9 + req.getContextPath().length()); //$NON-NLS-1$
 					} else {
 						//all other field searches are case sensitive
 						processedQuery += term;
@@ -99,7 +99,7 @@ public class SearchServlet extends OrionServlet {
 				} else {
 					//decode the term string now
 					try {
-						term = URLDecoder.decode(term, "UTF-8");
+						term = URLDecoder.decode(term, "UTF-8"); //$NON-NLS-1$
 					} catch (UnsupportedEncodingException e) {
 						//try with encoded term
 					}
@@ -116,12 +116,18 @@ public class SearchServlet extends OrionServlet {
 					}
 					processedQuery += processedTerm;
 				}
-				processedQuery += " AND "; //$NON-NLS-1$
+				processedQuery += AND;
 			}
 			queryString = processedQuery;
 		}
-		queryString += ProtocolConstants.KEY_USER_NAME + ':' + ClientUtils.escapeQueryChars(req.getRemoteUser());
+		//remove trailing AND
+		if (queryString.endsWith(AND))
+			queryString = queryString.substring(0, queryString.length() - AND.length());
 		query.setQuery(queryString);
+
+		//filter to search only documents belonging to current user
+		query.setFilterQueries(ProtocolConstants.KEY_USER_NAME + ':' + ClientUtils.escapeQueryChars(req.getRemoteUser()));
+
 		//other common fields
 		setField(req, query, CommonParams.ROWS);
 		setField(req, query, CommonParams.START);
