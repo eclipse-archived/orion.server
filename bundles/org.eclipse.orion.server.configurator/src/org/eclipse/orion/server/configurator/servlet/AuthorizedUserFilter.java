@@ -10,14 +10,9 @@
  *******************************************************************************/
 package org.eclipse.orion.server.configurator.servlet;
 
-import java.net.URISyntaxException;
-
-import java.net.URI;
-import javax.servlet.http.HttpServlet;
-import org.json.JSONException;
-import org.eclipse.orion.server.servlets.OrionServlet;
-import org.json.JSONObject;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Properties;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
@@ -29,6 +24,9 @@ import org.eclipse.orion.server.configurator.ConfiguratorActivator;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.authentication.IAuthenticationService;
+import org.eclipse.orion.server.servlets.OrionServlet;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.osgi.framework.Version;
 import org.osgi.service.http.HttpContext;
 
