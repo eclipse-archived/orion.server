@@ -15,6 +15,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
@@ -128,7 +129,7 @@ public class SimpleMetaStore implements IMetaStore {
 			jsonObject.put("UserName", userInfo.getUserName());
 			jsonObject.put("FullName", userInfo.getFullName());
 			jsonObject.put("WorkspaceIds", new JSONArray());
-			JSONObject properties = new JSONObject(userInfo.getProperties());
+			JSONObject properties = getUserProperties(userInfo);
 			jsonObject.put("Properties", properties);
 		} catch (JSONException e) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createUser: could not create user: " + userInfo.getUserName(), e));
@@ -282,6 +283,49 @@ public class SimpleMetaStore implements IMetaStore {
 	}
 
 	/**
+	 * Find the user with the specified user Id. See Bug 414592 on why we need this lookup.
+	 * @param userId The userId of the user.
+	 * @return The user name.
+	 */
+	private String findUserNameFromUserId(String userId) {
+		List<String> userNames = SimpleMetaStoreUtil.listMetaFiles(metaStoreRoot);
+		for (String userName : userNames) {
+			File userMetaFolder = SimpleMetaStoreUtil.retrieveMetaFolder(metaStoreRoot, userName);
+			JSONObject jsonObject = SimpleMetaStoreUtil.retrieveMetaFileJSON(userMetaFolder, USER);
+			try {
+				String uniqueId = jsonObject.getString("UniqueId");
+				if (uniqueId != null && uniqueId.equals(userId)) {
+					return userName;
+				}
+			} catch (JSONException e) {
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Gets the properties in the provided MetaDataInfo.
+	 * @param metadataInfo The MetaData info
+	 * @return the JSON with a list of properties.
+	 * @throws JSONException
+	 */
+	private JSONObject getUserProperties(UserInfo userInfo) throws JSONException {
+		JSONObject jsonObject = new JSONObject();
+		Map<String, String> properties = userInfo.getProperties();
+		for (String key : properties.keySet()) {
+			String value = properties.get(key);
+			if ("UserRights".equals(key)) {
+				// UserRights needs to be handled specifically since it is a JSONArray and not a string.
+				JSONArray userRights = new JSONArray(value);
+				jsonObject.put("UserRights", userRights);
+			} else {
+				jsonObject.put(key, value);
+			}
+		}
+		return jsonObject;
+	}
+
+	/**
 	 * Initialize the simple meta store.
 	 * @param rootLocation The root location, a folder on the server.
 	 */
@@ -382,27 +426,6 @@ public class SimpleMetaStore implements IMetaStore {
 		return userInfo;
 	}
 
-	/**
-	 * Find the user with the specified user Id. See Bug 414592 on why we need this lookup.
-	 * @param userId The userId of the user.
-	 * @return The user name.
-	 */
-	private String findUserNameFromUserId(String userId) {
-		List<String> userNames = SimpleMetaStoreUtil.listMetaFiles(metaStoreRoot);
-		for (String userName : userNames) {
-			File userMetaFolder = SimpleMetaStoreUtil.retrieveMetaFolder(metaStoreRoot, userName);
-			JSONObject jsonObject = SimpleMetaStoreUtil.retrieveMetaFileJSON(userMetaFolder, USER);
-			try {
-				String uniqueId = jsonObject.getString("UniqueId");
-				if (uniqueId != null && uniqueId.equals(userId)) {
-					return userName;
-				}
-			} catch (JSONException e) {
-			}
-		}
-		return null;
-	}
-
 	public WorkspaceInfo readWorkspace(String workspaceId) throws CoreException {
 		if (workspaceId == null) {
 			return null;
@@ -435,6 +458,22 @@ public class SimpleMetaStore implements IMetaStore {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.readWorkspace: could not read workspace " + workspaceName, e));
 		}
 		return workspaceInfo;
+	}
+
+	/**
+	 * Sets all the properties in the provided JSON into the MetaDataInfo.
+	 * @param metadataInfo The MetaData info
+	 * @param jsonObject the JSON with a list of properties.
+	 * @throws JSONException
+	 */
+	private void setProperties(MetadataInfo metadataInfo, JSONObject jsonObject) throws JSONException {
+		String[] properties = JSONObject.getNames(jsonObject);
+		if (properties != null) {
+			for (String key : properties) {
+				Object value = jsonObject.get(key);
+				metadataInfo.setProperty(key, value.toString());
+			}
+		}
 	}
 
 	public void updateProject(ProjectInfo projectInfo) throws CoreException {
@@ -471,7 +510,7 @@ public class SimpleMetaStore implements IMetaStore {
 			jsonObject.put("FullName", userInfo.getFullName());
 			JSONArray workspaceIds = new JSONArray(userInfo.getWorkspaceIds());
 			jsonObject.put("WorkspaceIds", workspaceIds);
-			JSONObject properties = new JSONObject(userInfo.getProperties());
+			JSONObject properties = getUserProperties(userInfo);
 			jsonObject.put("Properties", properties);
 		} catch (JSONException e) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.updateUser: could not update user: " + userInfo.getUserName(), e));
@@ -502,21 +541,4 @@ public class SimpleMetaStore implements IMetaStore {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.updateWorkspace: could not update workspace: " + workspaceName + " for user " + userName, null));
 		}
 	}
-
-	/**
-	 * Sets all the properties in the provided JSON into the MetaDataInfo.
-	 * @param metadataInfo The MetaData info
-	 * @param jsonObject the JSON with a list of properties.
-	 * @throws JSONException
-	 */
-	private void setProperties(MetadataInfo metadataInfo, JSONObject jsonObject) throws JSONException {
-		String[] properties = JSONObject.getNames(jsonObject);
-		if (properties != null) {
-			for (String key : properties) {
-				String value = jsonObject.getString(key);
-				metadataInfo.setProperty(key, value);
-			}
-		}
-	}
-
 }
