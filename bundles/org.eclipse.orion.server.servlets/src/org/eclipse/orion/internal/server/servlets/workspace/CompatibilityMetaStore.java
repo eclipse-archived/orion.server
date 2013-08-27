@@ -103,6 +103,9 @@ public class CompatibilityMetaStore implements IMetaStore {
 		}
 		//finally delete the workspace metadata
 		workspace.removeNode();
+
+		// delete the workspace from the user
+		WebUser.fromUserId(userId).deleteWorkspace(workspaceId);
 	}
 
 	/**

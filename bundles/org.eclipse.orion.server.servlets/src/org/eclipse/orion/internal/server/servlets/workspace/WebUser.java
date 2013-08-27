@@ -312,4 +312,34 @@ public class WebUser extends WebElement {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "Error removing user", e));
 		}
 	}
+
+	public void deleteWorkspace(String workspaceId) throws CoreException {
+		String workspaces = store.get(ProtocolConstants.KEY_WORKSPACES, null);
+		JSONArray workspaceArray = null;
+		if (workspaces != null) {
+			try {
+				workspaceArray = new JSONArray(workspaces);
+			} catch (JSONException e) {
+				//ignore and create a new one
+			}
+		}
+		if (workspaceArray == null) {
+			workspaceArray = new JSONArray();
+		}
+		for (int i = 0; i < workspaceArray.length(); i++) {
+			String workspace = null;
+			try {
+				String jsonString = workspaceArray.getString(i);
+				JSONObject jsonObject = new JSONObject(jsonString);
+				workspace = jsonObject.getString("Id");
+			} catch (JSONException e) {
+				// should not occur, we are reading in valid JSON
+			}
+			if (workspaceId.equals(workspace)) {
+				workspaceArray.remove(i);
+			}
+		}
+		store.put(ProtocolConstants.KEY_WORKSPACES, workspaceArray.toString());
+		save();
+	}
 }
