@@ -204,9 +204,11 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		// create the MetaStore
 		IMetaStore metaStore = getMetaStore();
 
-		// read the user
-		UserInfo readUserInfo = metaStore.readUser("77");
-		assertNull(readUserInfo);
+		// read the user, it will be created
+		UserInfo readUserInfo = metaStore.readUser("anthony");
+		assertNotNull(readUserInfo);
+		assertEquals("Unnamed User", readUserInfo.getFullName());
+		assertEquals("anthony", readUserInfo.getUserName());
 	}
 
 	@Test

@@ -397,7 +397,13 @@ public class SimpleMetaStore implements IMetaStore {
 	public UserInfo readUser(String userId) throws CoreException {
 		String userName = findUserNameFromUserId(userId);
 		if (userName == null) {
-			return null;
+			// if user does not exist for this userId, create it ( see Bug 415505 )
+			UserInfo userInfo = new UserInfo();
+			userInfo.setUniqueId(userId);
+			userInfo.setUserName(userId);
+			userInfo.setFullName("Unnamed User");
+			createUser(userInfo);
+			return userInfo;
 		}
 		File userMetaFolder = SimpleMetaStoreUtil.retrieveMetaFolder(metaStoreRoot, userName);
 		JSONObject jsonObject = SimpleMetaStoreUtil.retrieveMetaFileJSON(userMetaFolder, USER);
@@ -433,7 +439,8 @@ public class SimpleMetaStore implements IMetaStore {
 		String userName = SimpleMetaStoreUtil.decodeUserNameFromWorkspaceId(workspaceId);
 		String workspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
 		if (userName == null || workspaceName == null) {
-			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.readWorkspace: could not read workspace for " + workspaceId, null));
+			// could not decode, so cannot find workspace
+			return null;
 		}
 		File userMetaFolder = SimpleMetaStoreUtil.retrieveMetaFolder(metaStoreRoot, userName);
 		File workspaceMetaFolder = SimpleMetaStoreUtil.retrieveMetaFolder(userMetaFolder, workspaceName);

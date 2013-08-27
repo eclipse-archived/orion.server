@@ -112,7 +112,7 @@ public interface IMetaStore {
 
 	/**
 	 * Obtains information about a single user from the backing storage and returns it.
-	 * Returns <code>null</code> if there is no such project in the backing store.
+	 * If there is no such user in the backing store, create the user.
 	 * @param userId The unique id of the user to return
 	 * @return the user information or <code>null</code>
 	 * @throws CoreException If there was a failure obtaining metadata from the backing store.
