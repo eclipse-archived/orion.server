@@ -60,7 +60,6 @@ import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
-import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -424,7 +423,7 @@ public abstract class GitTest extends FileSystemTest {
 		JSONObject clone = clonesArray.getJSONObject(0);
 		String n = clone.getString(ProtocolConstants.KEY_NAME);
 		if (filePath != null)
-			assertTrue(filePath.segmentCount() == 2 && n.equals(WebProject.fromId(filePath.segment(1)).getName()) || n.equals(filePath.lastSegment()));
+			assertTrue(n.equals(filePath.lastSegment()));
 		if (workspacePath != null && name != null)
 			assertEquals(name, n);
 		assertCloneUri(clone.getString(ProtocolConstants.KEY_LOCATION));

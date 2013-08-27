@@ -19,7 +19,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.search.SearchActivator;
-import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.metastore.IMetaStore;
+import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.eclipse.orion.server.tests.servlets.xfer.TransferTest;
@@ -134,8 +137,8 @@ public class SearchTest extends FileSystemTest {
 		testUserLogin = "SearchTestUser";
 		setUpAuthorization();
 		//search tests don't damage files, so only need to do this once per suite
-		if (!testProjectExists("Search TestProject")) {
-			createTestProject("Search Test");
+		if (!testProjectExists("SearchTestProject")) {
+			createTestProject("SearchTest");
 			createTestData();
 			//wait for indexer to finish
 			SearchActivator.getInstance().testWaitForIndex();
@@ -150,10 +153,18 @@ public class SearchTest extends FileSystemTest {
 
 	/**
 	 * Returns whether a project already exists with the given name.
+	 * @throws CoreException 
 	 */
-	private boolean testProjectExists(String name) {
-		for (WebProject project : WebProject.allProjects()) {
-			if (name.equals(project.getName()))
+	private boolean testProjectExists(String name) throws CoreException {
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
+		UserInfo userInfo = metaStore.readUser(testUserId);
+		if (userInfo.getWorkspaceIds().isEmpty()) {
+			return false;
+		}
+		String workspaceId = userInfo.getWorkspaceIds().get(0);
+		WorkspaceInfo workspaceInfo = metaStore.readWorkspace(workspaceId);
+		for (String project : workspaceInfo.getProjectNames()) {
+			if (name.equals(project))
 				return true;
 		}
 		return false;

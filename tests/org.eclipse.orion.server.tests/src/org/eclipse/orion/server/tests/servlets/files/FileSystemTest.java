@@ -10,11 +10,11 @@
  *******************************************************************************/
 package org.eclipse.orion.server.tests.servlets.files;
 
-import static junit.framework.Assert.fail;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import com.meterware.httpunit.*;
 import java.io.*;
@@ -63,8 +63,7 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	 */
 	protected void createTestProject(String name) throws Exception {
 		//create workspace
-		String workspaceName = getClass().getName() + "#" + name;
-		URI workspaceLocation = createWorkspace(workspaceName);
+		URI workspaceLocation = createWorkspace(name);
 
 		//create a project
 		String projectName = name + "Project";
@@ -99,8 +98,9 @@ public abstract class FileSystemTest extends AbstractServerTest {
 		boolean success = true;
 		for (IFileStore child : workspaceDir.childStores(EFS.NONE, null)) {
 			try {
-				if (!".metadata".equals(child.getName()))
+				if (!".metadata".equals(child.getName()) && !"metastore".equals(child.getName())) {
 					child.delete(EFS.NONE, null);
+				}
 			} catch (CoreException e) {
 				System.err.println("Error deleting " + child);
 				e.printStackTrace();
