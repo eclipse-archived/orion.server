@@ -113,6 +113,16 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
+	 * Decode the user name from the user id. In the current implementation, the user id and
+	 * user name are the same value. 
+	 * @param userId The user id.
+	 * @return The decoded user name.
+	 */
+	public static String decodeUserNameFromUserId(String userId) {
+		return userId;
+	}
+
+	/**
 	 * Decode the user name from the workspace id. In the current implementation, the user name and
 	 * workspace name, joined with a dash, is the workspaceId. 
 	 * @param workspaceId The workspace id.
@@ -185,11 +195,21 @@ public class SimpleMetaStoreUtil {
 	/**
 	 * Encode the project id from the project name. In the current implementation, the project id and
 	 * project name are the same value. 
-	 * @param projectId The project name.
+	 * @param projectName The project name.
 	 * @return The decoded project id.
 	 */
 	public static String encodeProjectId(String projectName) {
 		return projectName;
+	}
+
+	/**
+	 * Encode the user id from the user name. In the current implementation, the user id and
+	 * user name are the same value. 
+	 * @param userName The user name.
+	 * @return The decoded user id.
+	 */
+	public static String encodeUserId(String userName) {
+		return userName;
 	}
 
 	/**
