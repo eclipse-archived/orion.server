@@ -164,51 +164,6 @@ public class SimpleMetaStoreUtilTest {
 	}
 
 	@Test
-	public void testIsNameValid() {
-		assertTrue(SimpleMetaStoreUtil.isNameValid("test"));
-	}
-
-	@Test
-	public void testIsNameValidAsterixCharacterFail() {
-		assertFalse(SimpleMetaStoreUtil.isNameValid("asterisk-is-bad*"));
-	}
-
-	@Test
-	public void testIsNameValidBackSlashFail() {
-		assertFalse(SimpleMetaStoreUtil.isNameValid("back-slash-is-bad\\"));
-	}
-
-	@Test
-	public void testIsNameValidForwardSlashFail() {
-		assertFalse(SimpleMetaStoreUtil.isNameValid("forward-slash-is-bad/"));
-	}
-
-	@Test
-	public void testIsNameValidSingleCharacterPass() {
-		assertTrue(SimpleMetaStoreUtil.isNameValid("a"));
-	}
-
-	@Test
-	public void testIsNameValidSpaceCharacterFail() {
-		assertFalse(SimpleMetaStoreUtil.isNameValid("space-is-bad "));
-	}
-
-	@Test
-	public void testIsNameValidThirtyOneCharactersPass() {
-		assertTrue(SimpleMetaStoreUtil.isNameValid("thirty-one-characters-just-fine"));
-	}
-
-	@Test
-	public void testIsNameValidThirtyTwoCharactersFail() {
-		assertFalse(SimpleMetaStoreUtil.isNameValid("thirty-two-characters-is-toolong"));
-	}
-
-	@Test
-	public void testIsNameValidUpperCaseCharactersFail() {
-		assertFalse(SimpleMetaStoreUtil.isNameValid("A"));
-	}
-
-	@Test
 	public void testListMetaFiles() throws JSONException {
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put("int", 1);

@@ -17,8 +17,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -31,10 +29,6 @@ import org.json.JSONObject;
  */
 public class SimpleMetaStoreUtil {
 
-	private static final String REGEX = "^[a-z][a-z0-9_-]*$";
-	private static final Pattern PATTERN = Pattern.compile(REGEX);
-	private static final int MINIMUM_LENGTH = 1;
-	private static final int MAXIMUM_LENGTH = 31;
 	public static final String ROOT = "metastore";
 	public static final String SEPARATOR = "-";
 	public static final String METAFILE_EXTENSION = ".json";
@@ -266,22 +260,6 @@ public class SimpleMetaStoreUtil {
 	public static boolean isMetaStoreRoot(File parent) {
 		File metaStoreRootFolder = SimpleMetaStoreUtil.retrieveMetaFolder(parent, ROOT);
 		return isMetaFile(metaStoreRootFolder, ROOT);
-	}
-
-	/**
-	 * Determines if the name is a valid user name (based on standard Linux naming rules).
-	 * @param name The name to validate.
-	 * @return true if the if the name is a valid.
-	 */
-	public static boolean isNameValid(String name) {
-		boolean valid = false;
-		if (name != null) {
-			if ((name.length() >= MINIMUM_LENGTH) && (name.length() <= MAXIMUM_LENGTH)) {
-				Matcher matcher = PATTERN.matcher(name);
-				valid = matcher.find();
-			}
-		}
-		return valid;
 	}
 
 	/**

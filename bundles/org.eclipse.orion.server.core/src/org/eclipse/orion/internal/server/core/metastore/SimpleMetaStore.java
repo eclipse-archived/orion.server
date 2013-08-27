@@ -115,9 +115,6 @@ public class SimpleMetaStore implements IMetaStore {
 	}
 
 	public void createUser(UserInfo userInfo) throws CoreException {
-		if (!SimpleMetaStoreUtil.isNameValid(userInfo.getUserName())) {
-			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createUser: userName is not valid: " + userInfo.getUserName(), null));
-		}
 		if (userInfo.getUniqueId() == null) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createUser: could not create user: " + userInfo.getUserName() + ", did not provide a userId", null));
 		}
