@@ -10,10 +10,10 @@
  *******************************************************************************/
 package org.eclipse.orion.server.tests;
 
+import static org.junit.Assert.assertNotNull;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
-
-import junit.framework.Assert;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -66,23 +66,25 @@ public class AbstractServerTest {
 	 * one is created with the provided id and password.
 	 */
 	protected User createUser(String login, String password) {
+		// see if the user exists already
 		IOrionCredentialsService userAdmin = UserServiceHelper.getDefault().getUserStore();
 		if (userAdmin.getUser("login", login) != null)
 			return userAdmin.getUser("login", login);
-		User newUser = new User(login, "", password);
-		newUser = userAdmin.createUser(newUser);
-		Assert.assertNotNull(newUser);
-		//persist new user in metadata store
+
+		// create new user in metadata store
 		UserInfo userInfo = new UserInfo();
-		userInfo.setUniqueId(newUser.getUid());
 		userInfo.setUserName(login);
 		userInfo.setFullName(login);
 		try {
 			OrionConfiguration.getMetaStore().createUser(userInfo);
 		} catch (CoreException e) {
-			// this should never happen
-			e.printStackTrace();
+			return null;
 		}
+
+		// create new user in the user store
+		User newUser = new User(userInfo.getUniqueId(), login, "", password);
+		newUser = userAdmin.createUser(newUser);
+		assertNotNull(newUser);
 		return newUser;
 	}
 

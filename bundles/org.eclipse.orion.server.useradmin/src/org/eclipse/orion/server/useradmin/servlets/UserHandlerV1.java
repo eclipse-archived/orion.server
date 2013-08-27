@@ -289,19 +289,21 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (isGuestUser)
 			newUser.addProperty(UserConstants.KEY_GUEST, Boolean.TRUE.toString());
 
+		//persist new user in metadata store first
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName(login);
+		userInfo.setFullName(name);
+		userInfo.setGuest(isGuestUser);
+		OrionConfiguration.getMetaStore().createUser(userInfo);
+		if (newUser.getUid() == null) {
+			newUser.setUid(userInfo.getUniqueId());
+		}
+
 		newUser = userAdmin.createUser(newUser);
 
 		if (newUser == null) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Error creating user: {0}", login), null));
 		}
-
-		//persist new user in metadata store
-		UserInfo userInfo = new UserInfo();
-		userInfo.setUniqueId(newUser.getUid());
-		userInfo.setUserName(login);
-		userInfo.setFullName(name);
-		userInfo.setGuest(isGuestUser);
-		OrionConfiguration.getMetaStore().createUser(userInfo);
 
 		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.account"); //$NON-NLS-1$
 		//TODO Don't do cleanup as part of creation, it can be separate op (command line tool, etc)

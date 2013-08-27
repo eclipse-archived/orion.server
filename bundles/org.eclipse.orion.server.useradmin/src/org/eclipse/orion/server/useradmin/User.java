@@ -96,6 +96,10 @@ public class User implements org.osgi.service.useradmin.User {
 		userCredentials.setProperty(NAME, name);
 	}
 
+	public void setUid(String uid) {
+		userCredentials.setProperty(UID, uid);
+	}
+
 	public String getPassword() {
 		return userCredentials.getProperty(PASSWORD);
 	}
