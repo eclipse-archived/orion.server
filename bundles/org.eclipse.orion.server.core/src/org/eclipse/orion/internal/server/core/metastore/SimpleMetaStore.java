@@ -74,6 +74,9 @@ public class SimpleMetaStore implements IMetaStore {
 		} catch (CoreException exception) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createProject: could not find workspace with id:" + projectInfo.getWorkspaceId() + ", workspace does not exist.", null));
 		}
+		if (workspaceInfo == null) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createProject: could not find workspace with id:" + projectInfo.getWorkspaceId() + ", workspace does not exist.", null));
+		}
 		String userName = SimpleMetaStoreUtil.decodeUserNameFromWorkspaceId(projectInfo.getWorkspaceId());
 		String workspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(projectInfo.getWorkspaceId());
 		String projectId = SimpleMetaStoreUtil.encodeProjectId(projectInfo.getFullName());
