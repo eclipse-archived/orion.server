@@ -143,19 +143,18 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		fail("Should not be able to create the user without a user name.");
 	}
 
-	@Test(expected = CoreException.class)
+	@Test
 	public void testCreateWorkspaceWithAnInvalidUserId() throws CoreException {
 		// create the MetaStore
 		IMetaStore metaStore = getMetaStore();
 
 		// create the workspace without specifying an existing userid.
+		// the user with id '77' is created at the readUser() API.
 		String workspaceName = "Orion Content";
 		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
 		workspaceInfo.setUserId("77");
 		workspaceInfo.setFullName(workspaceName);
 		metaStore.createWorkspace(workspaceInfo);
-
-		fail("Should not be able to create the workspace without an existing userid.");
 	}
 
 	@Test(expected = CoreException.class)
@@ -200,28 +199,12 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 	}
 
 	@Test
-	public void testReadUserThatDoesNotExist() throws CoreException {
-		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
-
-		// read the user, it will be created
-		UserInfo readUserInfo = metaStore.readUser("anthony");
-		assertNotNull(readUserInfo);
-		assertEquals("Unnamed User", readUserInfo.getFullName());
-		assertEquals("anthony", readUserInfo.getUserName());
-	}
-
-	@Test
 	public void testReadProjectThatDoesNotExist() throws CoreException {
 		// create the MetaStore
 		IMetaStore metaStore = getMetaStore();
 
-		// create the user
-		UserInfo userInfo = new UserInfo();
-		userInfo.setUserName("anthony");
-		userInfo.setUniqueId("1");
-		userInfo.setFullName("Anthony Hunter");
-		metaStore.createUser(userInfo);
+		// read the user from the previous test
+		UserInfo userInfo = metaStore.readUser("1");
 
 		// create the workspace
 		String workspaceName = "Orion Content";
@@ -233,6 +216,24 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		// read the project
 		ProjectInfo readProjectInfo = metaStore.readProject(workspaceInfo1.getUniqueId(), "Project Zero");
 		assertNull(readProjectInfo);
+
+		// delete the user
+		metaStore.deleteUser(userInfo.getUniqueId());
+	}
+
+	@Test
+	public void testReadUserThatDoesNotExist() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = getMetaStore();
+
+		// read the user, it will be created
+		UserInfo userInfo = metaStore.readUser("anthony");
+		assertNotNull(userInfo);
+		assertEquals("Unnamed User", userInfo.getFullName());
+		assertEquals("anthony", userInfo.getUserName());
+
+		// delete the user
+		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
@@ -274,6 +275,9 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		// read the workspace that does not exist
 		WorkspaceInfo readWorkspaceInfo = metaStore.readWorkspace("anthony-Workspace77");
 		assertNull(readWorkspaceInfo);
+
+		// delete the user
+		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 }

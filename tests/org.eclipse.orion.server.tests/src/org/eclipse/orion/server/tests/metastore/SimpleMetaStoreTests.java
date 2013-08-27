@@ -15,6 +15,7 @@ import static org.junit.Assert.assertNotNull;
 import java.io.File;
 
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
+import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.junit.FixMethodOrder;
 import org.junit.runners.MethodSorters;
@@ -23,6 +24,11 @@ import org.junit.runners.MethodSorters;
 public class SimpleMetaStoreTests extends ExtendedMetaStoreTests {
 
 	public IMetaStore getMetaStore() {
+		// use the currently configured metastore if it is an SimpleMetaStore 
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
+		if (metaStore instanceof SimpleMetaStore) {
+			return metaStore;
+		}
 		File metaStoreRoot = SimpleMetaStoreUtilTest.createTestMetaStoreFolder();
 		IMetaStore simpleLinuxMetaStore = new SimpleMetaStore(metaStoreRoot);
 		assertNotNull(simpleLinuxMetaStore);
