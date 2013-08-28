@@ -40,8 +40,8 @@ plugin@org.cyberneko.html,1.9.14=p2IU,id=org.cyberneko.html,version=1.9.14.v2011
 plugin@org.hamcrest.core,1.1.0=p2IU,id=org.hamcrest.core,version=1.1.0.v20090501071000,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
 plugin@org.hamcrest.core.source,1.1.0=p2IU,id=org.hamcrest.core.source,version=1.1.0.v20090501071000,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
 
-plugin@org.junit,4.8.2=p2IU,id=org.junit,version=4.8.2.v4_8_2_v20130308-0413,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
-plugin@org.junit.source,4.8.2=p2IU,id=org.junit.source,version=4.8.2.v4_8_2_v20130308-0413,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
+plugin@org.junit,4.11.0=p2IU,id=org.junit,version=4.11.0.v201303080030,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
+plugin@org.junit.source,4.11.0=p2IU,id=org.junit.source,version=4.11.0.v201303080030,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
 
 plugin@org.mozilla.javascript,1.7.2=p2IU,id=org.mozilla.javascript,version=1.7.2.v201005080400,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
 plugin@org.mozilla.javascript.source,1.7.2=p2IU,id=org.mozilla.javascript.source,version=1.7.2.v201005080400,repository=http://download.eclipse.org/tools/orbit/downloads/drops/R20130517111416/repository
