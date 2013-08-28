@@ -98,7 +98,7 @@ class FileHandlerV1 extends GenericFileHandler {
 		handleGetMetadata(request, response, response.getWriter(), file);
 	}
 
-	private void handlePatchContents(HttpServletRequest request, BufferedReader requestReader, HttpServletResponse response, IFileStore file) throws IOException, CoreException, NoSuchAlgorithmException, JSONException {
+	private void handlePatchContents(HttpServletRequest request, BufferedReader requestReader, HttpServletResponse response, IFileStore file) throws IOException, CoreException, NoSuchAlgorithmException, JSONException, ServletException {
 		//read from the request stream
 		StringBuffer buf = new StringBuffer();
 		String line;
@@ -122,8 +122,22 @@ class FileHandlerV1 extends GenericFileHandler {
 			oldFile.replace((int) start, (int) end, text);
 		}
 
+		String newContents = oldFile.toString();
+		boolean failed = false;
+		if (changes.has("contents")) {
+			String contents = changes.getString("contents");
+			if (!newContents.equals(contents)) {
+				failed = true;
+				newContents = contents;
+			}
+		}
 		Writer fileWriter = new BufferedWriter(new OutputStreamWriter(file.openOutputStream(EFS.NONE, null), "UTF-8"));
-		IOUtilities.pipe(new StringReader(oldFile.toString()), fileWriter, false, true);
+		IOUtilities.pipe(new StringReader(newContents), fileWriter, false, true);
+		if (failed) {
+			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_ACCEPTABLE, "Bad File Diffs. Please paste this content in a bug report: \u00A0\u00A0 	" + changes.toString(), null));
+			return;
+		}
+
 		// return metadata with the new Etag
 		handleGetMetadata(request, response, response.getWriter(), file);
 	}
