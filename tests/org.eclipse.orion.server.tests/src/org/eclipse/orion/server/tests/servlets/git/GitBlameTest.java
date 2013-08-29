@@ -58,12 +58,15 @@ public class GitBlameTest extends GitTest {
 			// blame request
 			request = getGetGitBlameRequest(gitBlameUri);
 			response = webConversation.getResource(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
 
 			// test
 			JSONObject blameObject = new JSONObject(response.getText());
-			assertEquals(blameObject.length(), 2);
-			assertEquals(blameObject.getString(ProtocolConstants.KEY_TYPE), "Blame");
+
+			assertEquals(blameObject.length(), 4);
+			assertEquals(blameObject.get("Severity"), "Error");
+			assertEquals(blameObject.get("HttpCode"), 400);
+			assertEquals(blameObject.get("Code"), 0);
 		}
 	}
 
@@ -114,9 +117,21 @@ public class GitBlameTest extends GitTest {
 			assertNotNull(blameObject.get(ProtocolConstants.KEY_CHILDREN));
 			assertEquals(blame.length(), 1);
 			blameObject = blame.getJSONObject(0);
-			assertEquals(blameObject.getInt(GitConstants.KEY_START_RANGE), 1);
-			assertEquals(blameObject.getInt(GitConstants.KEY_END_RANGE), 4);
-			assertCommitUri(blameObject.getString(GitConstants.KEY_COMMIT));
+			assertNotNull(blameObject.get(GitConstants.KEY_AUTHOR_EMAIL));
+			assertNotNull(blameObject.get(GitConstants.KEY_AUTHOR_NAME));
+			assertNotNull(blameObject.get(GitConstants.KEY_AUTHOR_IMAGE));
+			assertNotNull(blameObject.get(GitConstants.KEY_COMMITTER_EMAIL));
+			assertNotNull(blameObject.get(GitConstants.KEY_COMMITTER_NAME));
+			assertNotNull(blameObject.get(GitConstants.KEY_COMMIT_MESSAGE));
+			assertNotNull(blameObject.get(GitConstants.KEY_COMMIT_TIME));
+			assertNotNull(blameObject.get(GitConstants.KEY_COMMIT));
+			assertNotNull(blameObject.get(ProtocolConstants.KEY_NAME));
+			JSONArray children = blameObject.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+			JSONObject child = children.getJSONObject(0);
+			assertEquals(children.length(), 1);
+			assertEquals(child.get(GitConstants.KEY_START_RANGE), 1);
+			assertEquals(child.get(GitConstants.KEY_END_RANGE), 4);
+
 		}
 	}
 
@@ -161,21 +176,32 @@ public class GitBlameTest extends GitTest {
 			JSONObject blameObject = new JSONObject(response.getText());
 
 			// non blame info tests
-			assertEquals(blameObject.length(), 4);
-			assertEquals(blameObject.getString(ProtocolConstants.KEY_TYPE), "Blame");
-			assertEquals(blameObject.getString(ProtocolConstants.KEY_LOCATION), blameUri);
-
-			// blame info tests
 			JSONArray blame = blameObject.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 			assertNotNull(blameObject.get(ProtocolConstants.KEY_CHILDREN));
 			assertEquals(blame.length(), 1);
 			blameObject = blame.getJSONObject(0);
-			assertEquals(blameObject.getInt(GitConstants.KEY_START_RANGE), 1);
-			assertEquals(blameObject.getInt(GitConstants.KEY_END_RANGE), 4);
-			//	assertCommitUri(blameObject.getString(GitConstants.KEY_COMMIT));
+			assertNotNull(blameObject.get(GitConstants.KEY_AUTHOR_EMAIL));
+			assertNotNull(blameObject.get(GitConstants.KEY_AUTHOR_NAME));
+			assertNotNull(blameObject.get(GitConstants.KEY_AUTHOR_IMAGE));
+			assertNotNull(blameObject.get(GitConstants.KEY_COMMITTER_EMAIL));
+			assertNotNull(blameObject.get(GitConstants.KEY_COMMITTER_NAME));
+			assertNotNull(blameObject.get(GitConstants.KEY_COMMIT_MESSAGE));
+			assertNotNull(blameObject.get(GitConstants.KEY_COMMIT_TIME));
+			assertNotNull(blameObject.get(GitConstants.KEY_COMMIT));
+			assertNotNull(blameObject.get(ProtocolConstants.KEY_NAME));
+			JSONArray children = blameObject.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+			JSONObject child = children.getJSONObject(0);
+			assertEquals(children.length(), 1);
+			assertEquals(child.get(GitConstants.KEY_START_RANGE), 1);
+			assertEquals(child.get(GitConstants.KEY_END_RANGE), 4);
+
+			//save commit info to test
+			String commitLocation1 = blameObject.getString(GitConstants.KEY_COMMIT);
+			int commitTime1 = blameObject.getInt(GitConstants.KEY_COMMIT_TIME);
+			String commitId1 = blameObject.getString(ProtocolConstants.KEY_NAME);
 
 			// modify the file
-			modifyFile(testTxt, "line one \n line two \n line 3 \n LINE FOUR \n LINE FIVE");
+			modifyFile(testTxt, "LINE ONE \n LINE TWO \n LINE THREE \n LINE FOUR \n LINE FIVE");
 			addFile(testTxt);
 
 			//commit the new changes
@@ -199,26 +225,40 @@ public class GitBlameTest extends GitTest {
 			assertEquals(blameObject.getString(ProtocolConstants.KEY_TYPE), "Blame");
 			assertEquals(blameObject.getString(ProtocolConstants.KEY_LOCATION), blameUri);
 
-			// blame info tests
 			blame = blameObject.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 			assertNotNull(blameObject.get(ProtocolConstants.KEY_CHILDREN));
-			assertEquals(blame.length(), 2);
 
-			// test object 1 from the first commit
+			// test first commit
+			assertEquals(blame.length(), 1);
 			blameObject = blame.getJSONObject(0);
-			assertEquals(blameObject.getInt(GitConstants.KEY_START_RANGE), 1);
-			assertEquals(blameObject.getInt(GitConstants.KEY_END_RANGE), 3);
-			assertCommitUri(blameObject.getString(GitConstants.KEY_COMMIT));
 
-			//test object 2 from the second commit
-			blameObject = blame.getJSONObject(1);
-			assertEquals(blameObject.getInt(GitConstants.KEY_START_RANGE), 4);
-			assertEquals(blameObject.getInt(GitConstants.KEY_END_RANGE), 5);
-			assertCommitUri(blameObject.getString(GitConstants.KEY_COMMIT));
+			//test second commit
+			blameObject = blame.getJSONObject(0);
 
-			// make sure commits are not the same
-			assertNotSame(blame.getJSONObject(0).get(GitConstants.KEY_COMMIT), blame.getJSONObject(1).get(GitConstants.KEY_COMMIT));
-			assertNotSame(blame.getJSONObject(0).get(GitConstants.KEY_END_RANGE), blame.getJSONObject(1).get(GitConstants.KEY_START_RANGE));
+			assertNotNull(blameObject.get(GitConstants.KEY_AUTHOR_EMAIL));
+			assertNotNull(blameObject.get(GitConstants.KEY_AUTHOR_NAME));
+			assertNotNull(blameObject.get(GitConstants.KEY_AUTHOR_IMAGE));
+			assertNotNull(blameObject.get(GitConstants.KEY_COMMITTER_EMAIL));
+			assertNotNull(blameObject.get(GitConstants.KEY_COMMITTER_NAME));
+			assertNotNull(blameObject.get(GitConstants.KEY_COMMIT_MESSAGE));
+			assertNotNull(blameObject.get(GitConstants.KEY_COMMIT_TIME));
+			assertNotNull(blameObject.get(GitConstants.KEY_COMMIT));
+			assertNotNull(blameObject.get(ProtocolConstants.KEY_NAME));
+			children = blameObject.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+			child = children.getJSONObject(0);
+			assertEquals(children.length(), 1);
+			assertEquals(child.get(GitConstants.KEY_START_RANGE), 1);
+			assertEquals(child.get(GitConstants.KEY_END_RANGE), 5);
+
+			String commitLocation2 = blameObject.getString(GitConstants.KEY_COMMIT);
+			int commitTime2 = blameObject.getInt(GitConstants.KEY_COMMIT_TIME);
+			String commitId2 = blameObject.getString(ProtocolConstants.KEY_NAME);
+
+			// test that there are not duplicates of the same commit
+			assertNotSame(commitId1, commitId2);
+			assertNotSame(commitLocation1, commitLocation2);
+			assertNotSame(commitTime1, commitTime2);
+
 		}
 	}
 
@@ -272,9 +312,20 @@ public class GitBlameTest extends GitTest {
 			assertNotNull(blameObject.get(ProtocolConstants.KEY_CHILDREN));
 			assertEquals(blame.length(), 1);
 			blameObject = blame.getJSONObject(0);
-			assertEquals(blameObject.getInt(GitConstants.KEY_START_RANGE), 1);
-			assertEquals(blameObject.getInt(GitConstants.KEY_END_RANGE), 4);
-			assertCommitUri(blameObject.getString(GitConstants.KEY_COMMIT));
+			assertNotNull(blameObject.get(GitConstants.KEY_AUTHOR_EMAIL));
+			assertNotNull(blameObject.get(GitConstants.KEY_AUTHOR_NAME));
+			assertNotNull(blameObject.get(GitConstants.KEY_AUTHOR_IMAGE));
+			assertNotNull(blameObject.get(GitConstants.KEY_COMMITTER_EMAIL));
+			assertNotNull(blameObject.get(GitConstants.KEY_COMMITTER_NAME));
+			assertNotNull(blameObject.get(GitConstants.KEY_COMMIT_MESSAGE));
+			assertNotNull(blameObject.get(GitConstants.KEY_COMMIT_TIME));
+			assertNotNull(blameObject.get(GitConstants.KEY_COMMIT));
+			assertNotNull(blameObject.get(ProtocolConstants.KEY_NAME));
+			JSONArray children = blameObject.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+			JSONObject child = children.getJSONObject(0);
+			assertEquals(children.length(), 1);
+			assertEquals(child.get(GitConstants.KEY_START_RANGE), 1);
+			assertEquals(child.get(GitConstants.KEY_END_RANGE), 4);
 
 			/*
 			 * commit 2 - different file
@@ -297,6 +348,7 @@ public class GitBlameTest extends GitTest {
 
 			/*
 			 * These tests should produce the same results as the above tests
+			 * They should be not affected by the recent commit
 			 */
 			blameObject = new JSONObject(response.getText());
 			assertEquals(blameObject.getString(ProtocolConstants.KEY_TYPE), "Blame");
@@ -307,16 +359,27 @@ public class GitBlameTest extends GitTest {
 			assertNotNull(blameObject.get(ProtocolConstants.KEY_CHILDREN));
 			assertEquals(blame.length(), 1);
 			blameObject = blame.getJSONObject(0);
-			assertEquals(blameObject.getInt(GitConstants.KEY_START_RANGE), 1);
-			assertEquals(blameObject.getInt(GitConstants.KEY_END_RANGE), 4);
-			assertCommitUri(blameObject.getString(GitConstants.KEY_COMMIT));
+			assertNotNull(blameObject.get(GitConstants.KEY_AUTHOR_EMAIL));
+			assertNotNull(blameObject.get(GitConstants.KEY_AUTHOR_NAME));
+			assertNotNull(blameObject.get(GitConstants.KEY_AUTHOR_IMAGE));
+			assertNotNull(blameObject.get(GitConstants.KEY_COMMITTER_EMAIL));
+			assertNotNull(blameObject.get(GitConstants.KEY_COMMITTER_NAME));
+			assertNotNull(blameObject.get(GitConstants.KEY_COMMIT_MESSAGE));
+			assertNotNull(blameObject.get(GitConstants.KEY_COMMIT_TIME));
+			assertNotNull(blameObject.get(GitConstants.KEY_COMMIT));
+			assertNotNull(blameObject.get(ProtocolConstants.KEY_NAME));
+			children = blameObject.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+			child = children.getJSONObject(0);
+			assertEquals(children.length(), 1);
+			assertEquals(child.get(GitConstants.KEY_START_RANGE), 1);
+			assertEquals(child.get(GitConstants.KEY_END_RANGE), 4);
 
 			/*
 			 * commit 3 - original file
 			 */
 
 			// modify original file
-			modifyFile(testTxt, "line one \n line two \n line 3 \n LINE FOUR \n LINE FIVE");
+			modifyFile(testTxt, "LINE ONE \n LINE TWO \n LINE THREE \n LINE FOUR \n LINE FIVE");
 
 			//commit the changes
 			addFile(testTxt);
@@ -330,34 +393,30 @@ public class GitBlameTest extends GitTest {
 			request = getGetGitBlameRequest(blameUri);
 			response = webConversation.getResource(request);
 
-			// test
 			blameObject = new JSONObject(response.getText());
-
-			// non blame info tests
-			//assertEquals(blameObject.length(), 3);
 			assertEquals(blameObject.getString(ProtocolConstants.KEY_TYPE), "Blame");
 			assertEquals(blameObject.getString(ProtocolConstants.KEY_LOCATION), blameUri);
 
-			// blame info tests
+			// test
 			blame = blameObject.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 			assertNotNull(blameObject.get(ProtocolConstants.KEY_CHILDREN));
-			assertEquals(blame.length(), 2);
-
-			// test object 1 from the first commit
+			assertEquals(blame.length(), 1);
 			blameObject = blame.getJSONObject(0);
-			assertEquals(blameObject.getInt(GitConstants.KEY_START_RANGE), 1);
-			assertEquals(blameObject.getInt(GitConstants.KEY_END_RANGE), 3);
-			assertCommitUri(blameObject.getString(GitConstants.KEY_COMMIT));
+			assertNotNull(blameObject.get(GitConstants.KEY_AUTHOR_EMAIL));
+			assertNotNull(blameObject.get(GitConstants.KEY_AUTHOR_NAME));
+			assertNotNull(blameObject.get(GitConstants.KEY_AUTHOR_IMAGE));
+			assertNotNull(blameObject.get(GitConstants.KEY_COMMITTER_EMAIL));
+			assertNotNull(blameObject.get(GitConstants.KEY_COMMITTER_NAME));
+			assertNotNull(blameObject.get(GitConstants.KEY_COMMIT_MESSAGE));
+			assertNotNull(blameObject.get(GitConstants.KEY_COMMIT_TIME));
+			assertNotNull(blameObject.get(GitConstants.KEY_COMMIT));
+			assertNotNull(blameObject.get(ProtocolConstants.KEY_NAME));
+			children = blameObject.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+			child = children.getJSONObject(0);
+			assertEquals(children.length(), 1);
+			assertEquals(child.get(GitConstants.KEY_START_RANGE), 1);
+			assertEquals(child.get(GitConstants.KEY_END_RANGE), 5);
 
-			//test object 2 from the second commit
-			blameObject = blame.getJSONObject(1);
-			assertEquals(blameObject.getInt(GitConstants.KEY_START_RANGE), 4);
-			assertEquals(blameObject.getInt(GitConstants.KEY_END_RANGE), 5);
-			assertCommitUri(blameObject.getString(GitConstants.KEY_COMMIT));
-
-			// make sure commits are not the same
-			assertNotSame(blame.getJSONObject(0).get(GitConstants.KEY_COMMIT), blame.getJSONObject(1).get(GitConstants.KEY_COMMIT));
-			assertNotSame(blame.getJSONObject(0).get(GitConstants.KEY_END_RANGE), blame.getJSONObject(1).get(GitConstants.KEY_START_RANGE));
 		}
 	}
 
@@ -402,8 +461,12 @@ public class GitBlameTest extends GitTest {
 
 			//Test
 
-			assertEquals(blameObject.length(), 2);
-			assertEquals(blameObject.getString(ProtocolConstants.KEY_TYPE), "Blame");
+			assertEquals(blameObject.length(), 4);
+
+			assertEquals(blameObject.get("Severity"), "Error");
+			assertEquals(blameObject.get("HttpCode"), 400);
+			assertEquals(blameObject.get("Code"), 0);
+
 		}
 	}
 
