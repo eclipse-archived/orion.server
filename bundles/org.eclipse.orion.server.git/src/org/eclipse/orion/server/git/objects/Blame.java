@@ -15,12 +15,13 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.*;
 import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
+import org.eclipse.orion.server.core.users.UserUtilities;
 import org.eclipse.orion.server.git.BaseToCommitConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.*;
@@ -34,11 +35,13 @@ public class Blame extends GitObject {
 
 	private List<String> lines = new ArrayList<String>();
 
+	private List<RevCommit> commits = new ArrayList<RevCommit>();
+
 	private String filePath = null;
 
 	private ObjectId startCommit = null;
 
-	protected Serializer<JSONObject> jsonSerializer = new JSONSerializer();
+	protected JSONSerializer jsonSerializer = new JSONSerializer();
 
 	private URI blameLocation = null;
 
@@ -75,6 +78,24 @@ public class Blame extends GitObject {
 	 */
 	public void setFilePath(String path) {
 		this.filePath = path;
+	}
+
+	/**
+	 * Add RevCommit to needed commits 
+	 * @param commit
+	 */
+	public void addCommit(RevCommit commit) {
+		this.commits.add(commit);
+	}
+
+	/**
+	 * Check is commit is in the list
+	 * 
+	 * @param commit
+	 * @return boolean if exists
+	 */
+	public boolean commitExists(RevCommit commit) {
+		return this.commits.contains(commit);
 	}
 
 	/**
@@ -133,28 +154,67 @@ public class Blame extends GitObject {
 
 	@PropertyDescription(name = ProtocolConstants.KEY_CHILDREN)
 	private JSONArray getBlameJSON() throws URISyntaxException, JSONException, IOException {
-		JSONArray LinesJSON = new JSONArray();
-		if (lines.size() > 0) {
-
+		if (lines.size() > 0 && commits.size() > 0) {
+			ArrayList<JSONArray> commitRanges = new ArrayList<JSONArray>();
 			JSONObject tempObj = null;
-			String tempPath = null;
-			for (int i = 0; i < lines.size(); i++) {
-				String line = lines.get(i);
-				if (!line.equalsIgnoreCase(tempPath)) {
-					tempPath = line;
-					if (i > 0) {
-						tempObj.put(GitConstants.KEY_END_RANGE, i);
-						LinesJSON.put(tempObj);
-					}
-					tempObj = new JSONObject();
-					tempObj.put(GitConstants.KEY_START_RANGE, i + 1);
-					URI commit = BaseToCommitConverter.getCommitLocation(cloneLocation, line, BaseToCommitConverter.REMOVE_FIRST_2);
-					tempObj.put(GitConstants.KEY_COMMIT, commit);
-				}
+			String lineId = null;
+			String currentCommitId = null;
+			for (int i = 0; i < commits.size(); i++) {
+				commitRanges.add(new JSONArray());
 			}
-			tempObj.put(GitConstants.KEY_END_RANGE, lines.size());
-			LinesJSON.put(tempObj);
-			return LinesJSON;
+			try {
+				for (int i = 0; i < lines.size(); i++) {
+					lineId = lines.get(i);
+					if (!lineId.equals(currentCommitId)) {
+						if (i > 0) {
+							tempObj.put(GitConstants.KEY_END_RANGE, i);
+							for (int j = 0; j < commits.size(); j++) {
+								if (commits.get(j).getId().getName().equals(currentCommitId)) {
+									commitRanges.get(j).put(tempObj);
+									break;
+								}
+							}
+
+						}
+						tempObj = new JSONObject();
+						tempObj.put(GitConstants.KEY_START_RANGE, i + 1);
+						currentCommitId = lineId;
+					}
+				}
+				tempObj.put(GitConstants.KEY_END_RANGE, lines.size());
+				for (int j = 0; j < commits.size(); j++) {
+					if (commits.get(j).getId().getName().equals(lineId)) {
+						commitRanges.get(j).put(tempObj);
+						break;
+					}
+				}
+			} catch (NullPointerException e) {
+
+			}
+			JSONArray returnJSON = new JSONArray();
+			RevCommit tempCommit;
+			PersonIdent person;
+			for (int i = 0; i < commitRanges.size(); i++) {
+				tempObj = new JSONObject();
+				tempCommit = commits.get(i);
+				person = tempCommit.getAuthorIdent();
+				URI commitURI = BaseToCommitConverter.getCommitLocation(cloneLocation, tempCommit.getId().getName(), BaseToCommitConverter.REMOVE_FIRST_2);
+				tempObj = new JSONObject();
+				tempObj.put(GitConstants.KEY_COMMIT_TIME, (long) tempCommit.getCommitTime() * 1000);
+				tempObj.put(GitConstants.KEY_AUTHOR_EMAIL, person.getEmailAddress());
+				tempObj.put(GitConstants.KEY_AUTHOR_NAME, person.getName());
+				tempObj.put(GitConstants.KEY_AUTHOR_IMAGE, UserUtilities.getImageLink(person.getEmailAddress()));
+				person = tempCommit.getCommitterIdent();
+				tempObj.put(GitConstants.KEY_COMMITTER_EMAIL, person.getEmailAddress());
+				tempObj.put(GitConstants.KEY_COMMITTER_NAME, person.getName());
+				tempObj.put(GitConstants.KEY_COMMIT, commitURI);
+				tempObj.put(ProtocolConstants.KEY_CHILDREN, commitRanges.get(i));
+				tempObj.put(GitConstants.KEY_COMMIT_MESSAGE, tempCommit.getFullMessage());
+				tempObj.put(ProtocolConstants.KEY_NAME, tempCommit.getId().getName());
+				returnJSON.put(tempObj);
+			}
+			return returnJSON;
+
 		}
 		return null;
 	}
@@ -170,15 +230,28 @@ public class Blame extends GitObject {
 	 *  {
 	 * 	 	{
 	 *     		"CommitLocation":"/gitapi/commit/2b3a36c1b2f0064216a871740bd6906b6af7434a/file/C/",
-	 *     		"Start": 0,
-	 *     		"End": 7
-	 *   	},
-	 *   	{
-	 *     		"CommitLocation":"/gitapi/commit/fb774ffe5b1bbfbe80ac9afb5263901afdc12874/file/C/",
-	 *     		"Start": 8,
-	 *     		"End": 13
-	 *   	{
-	 *   }
+	 *     		"Name":"2b3a36c1b2f0064216a871740bd6906b6af7434a",
+	 *     		"Time":1234567890,
+	 *     		"AuthorName": Author Name,
+	 *     		"AuthorEmail": Author Email,
+	 *     		"AuthorImage": Gravatar URL,
+	 *     		"Message": Commit Message,
+	 *     		"Children":{
+	 *     						{
+	 *     							"Start":0,
+	 *     							"End":5
+	 *     						},
+	 *     						{
+	 *     							"Start":6,
+	 *     							"End":8
+	 *     						},
+	 *     					...
+	 *     					...
+	 *    					}
+	 *   },
+	 *   ...
+	 *   ...
+	 * }
 	 *   
 	 */
 

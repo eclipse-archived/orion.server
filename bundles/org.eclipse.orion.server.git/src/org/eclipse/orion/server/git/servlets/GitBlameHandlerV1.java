@@ -16,6 +16,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.BlameCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.blame.BlameResult;
@@ -24,11 +25,11 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.BaseToCloneConverter;
-import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Blame;
 import org.eclipse.orion.server.servlets.OrionServlet;
-import org.json.JSONObject;
+import org.eclipse.osgi.util.NLS;
 
 public class GitBlameHandlerV1 extends AbstractGitHandler {
 
@@ -38,68 +39,40 @@ public class GitBlameHandlerV1 extends AbstractGitHandler {
 
 	@Override
 	protected boolean handleGet(RequestInfo requestInfo) throws ServletException {
-		try {
+		HttpServletRequest request = requestInfo.request;
+		HttpServletResponse response = requestInfo.response;
 
-			HttpServletRequest request = requestInfo.request;
-			HttpServletResponse response = requestInfo.response;
+		try {
 
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.BLAME);
 
-			String path = requestInfo.relativePath;
-			Blame blame = new Blame(cloneLocation, requestInfo.db);
-
-			if (path.length() != 0) {
-				// check that path isnt for a folder
-				String file = path.substring(path.length() - 1);
-				if (!file.endsWith("/") && !file.endsWith("\"")) {
-					blame.setFilePath(path);
-					blame.setBlameLocation(getURI(request));
-				}
+			Path Filepath = new Path(requestInfo.filePath.toString());
+			if (Filepath.hasTrailingSeparator()) {
+				String msg = NLS.bind("Cannot get blame Information on a folder: {0}", requestInfo.filePath.toString());
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 			}
 
+			Blame blame = new Blame(cloneLocation, requestInfo.db);
+
+			String gitSegment = requestInfo.gitSegment;
+			if (!gitSegment.equalsIgnoreCase("HEAD") && !gitSegment.equalsIgnoreCase("master")) {
+				ObjectId id = ObjectId.fromString(requestInfo.gitSegment);
+				blame.setStartCommit(id);
+			}
+
+			String path = requestInfo.relativePath;
+			blame.setFilePath(path);
+			blame.setBlameLocation(getURI(request));
 			doBlame(blame, requestInfo.db);
 			OrionServlet.writeJSONResponse(request, response, blame.toJSON());
 			return true;
 		} catch (Exception e) {
-			return false;
-		}
-	}
-
-	@Override
-	protected boolean handlePost(RequestInfo requestInfo) throws ServletException {
-		try {
-
-			HttpServletRequest request = requestInfo.request;
-			HttpServletResponse response = requestInfo.response;
-
-			JSONObject obj = requestInfo.getJSONRequest();
-			String commitString = obj.getString(GitConstants.KEY_COMMIT);
-			ObjectId id = ObjectId.fromString(commitString);
-
-			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.BLAME);
-
-			String path = requestInfo.relativePath;
-			Blame blame = new Blame(cloneLocation, requestInfo.db);
-
-			if (path.length() != 0) {
-				// check that path isnt for a folder
-				String file = path.substring(path.length() - 1);
-				if (!file.endsWith("/") && !file.endsWith("\"")) {
-					blame.setFilePath(path);
-					blame.setBlameLocation(getURI(request));
-				}
-			}
-
-			blame.setStartCommit(id);
-			doBlame(blame, requestInfo.db);
-			OrionServlet.writeJSONResponse(request, response, blame.toJSON());
-			return true;
-		} catch (Exception e) {
-			return false;
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error generating blame response", e));
 		}
 	}
 
 	public void doBlame(Blame blame, Repository db) throws GitAPIException, IOException {
+
 		String filePath = blame.getFilePath();
 
 		if (db != null && filePath != null) {
@@ -121,11 +94,30 @@ public class GitBlameHandlerV1 extends AbstractGitHandler {
 			}
 			if (result != null) {
 				blame.clearLines();
-				RevCommit commitPath;
+				RevCommit commit;
+				RevCommit prevCommit = null;
 				String path;
+				String prevPath = null;
 				for (int i = 0; i < result.getResultContents().size(); i++) {
-					commitPath = result.getSourceCommit(i);
-					path = commitPath.getId().getName();
+					try {
+						commit = result.getSourceCommit(i);
+						prevCommit = commit;
+					} catch (NullPointerException e) {
+						commit = prevCommit;
+					}
+
+					if (!blame.commitExists(commit)) {
+						if (commit != null) {
+							blame.addCommit(commit);
+						}
+					}
+
+					try {
+						path = commit.getId().getName();
+						prevPath = path;
+					} catch (NullPointerException e) {
+						path = prevPath;
+					}
 					blame.addLine(path);
 				}
 			}
