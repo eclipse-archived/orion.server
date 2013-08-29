@@ -603,6 +603,7 @@ public class GitCloneTest extends GitTest {
 		JSONObject clone = clone(workspaceId, project);
 		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
 		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		String projectLocation = project.getString(ProtocolConstants.KEY_LOCATION);
 
 		// make sure there's one project in the workspace
 		request = getGetRequest(workspaceLocation.toString());
@@ -629,11 +630,9 @@ public class GitCloneTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 
 		// make sure the project doesn't exist
-		request = getGetRequest(workspaceLocation.toString());
+		request = getGetRequest(projectLocation);
 		response = webConversation.getResponse(request);
-		workspace = new JSONObject(response.getText());
-		projects = workspace.getJSONArray(ProtocolConstants.KEY_CHILDREN);
-		assertEquals(0, projects.length());
+		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 	}
 
 	@Test

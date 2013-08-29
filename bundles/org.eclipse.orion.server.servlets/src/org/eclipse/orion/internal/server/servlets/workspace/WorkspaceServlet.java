@@ -70,6 +70,14 @@ public class WorkspaceServlet extends OrionServlet {
 				//path format is /<wsId>/project/<projectName>
 				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(0));
 				ProjectInfo project = OrionConfiguration.getMetaStore().readProject(path.segment(0), path.segment(2));
+
+				// check if both workspace and project are present
+				if (workspace == null || project == null) {
+					String msg = workspace == null ? "Workspace not found" : "Project not found";
+					handleException(resp, msg, null, HttpServletResponse.SC_NOT_FOUND);
+					return;
+				}
+
 				URI baseLocation = ServletResourceHandler.getURI(req);
 				OrionServlet.writeJSONResponse(req, resp, WebProjectResourceHandler.toJSON(workspace, project, baseLocation));
 				return;
