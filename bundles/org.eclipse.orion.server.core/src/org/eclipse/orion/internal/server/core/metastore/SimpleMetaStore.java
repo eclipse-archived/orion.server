@@ -320,6 +320,10 @@ public class SimpleMetaStore implements IMetaStore {
 				// UserRights needs to be handled specifically since it is a JSONArray and not a string.
 				JSONArray userRights = new JSONArray(value);
 				jsonObject.put("UserRights", userRights);
+			} else if ("SiteConfigurations".equals(key)) {
+					// UserRights needs to be handled specifically since it is a JSONObject and not a string.
+					JSONObject siteConfigurations = new JSONObject(value);
+					jsonObject.put("SiteConfigurations", siteConfigurations);
 			} else {
 				jsonObject.put(key, value);
 			}
