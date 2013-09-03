@@ -17,9 +17,11 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Iterator;
 
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -30,6 +32,7 @@ import org.xml.sax.SAXException;
 
 import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.PutMethodWebRequest;
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
@@ -50,9 +53,97 @@ public class RemoteMetaStoreTests {
 	 * orion.core.metastore=legacy (Orion 3.0)
 	 * orion.core.metastore=simple (Orion 4.0)
 	 */
-	protected final static boolean orionMetastoreLegacy = true;
+	protected final static boolean orionMetastoreLegacy = false;
 
 	protected static String orionTestName = null;
+
+	/**
+	 * Create a file in a project on the Orion server for the test user.
+	 * 
+	 * @param webConversation
+	 * @param login
+	 * @param password
+	 * @param projectName
+	 * @return
+	 * @throws IOException
+	 * @throws JSONException
+	 * @throws URISyntaxException
+	 * @throws SAXException 
+	 */
+	protected int createFile(WebConversation webConversation, String login, String password, String project) throws IOException, JSONException, URISyntaxException, SAXException {
+		assertEquals(HttpURLConnection.HTTP_OK, login(webConversation, login, password));
+
+		JSONObject jsonObject = new JSONObject();
+		jsonObject.put("Directory", "false");
+		jsonObject.put("Name", "file.json");
+		jsonObject.put("LocalTimeStamp", "0");
+		String parent = "/file/" + getWorkspaceId(login) + "/" + project + "/folder/";
+		WebRequest request = new PostMethodWebRequest(getOrionServerURI(parent), IOUtilities.toInputStream(jsonObject.toString()), "application/json");
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		request.setHeaderField(ProtocolConstants.HEADER_SLUG, "file.json");
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+		System.out.println("Created File: " + parent + "file.json");
+		return response.getResponseCode();
+	}
+
+	/**
+	 * Create a folder in a project on the Orion server for the test user.
+	 * 
+	 * @param webConversation
+	 * @param login
+	 * @param password
+	 * @param projectName
+	 * @return
+	 * @throws IOException
+	 * @throws JSONException
+	 * @throws URISyntaxException
+	 * @throws SAXException 
+	 */
+	protected int createFolder(WebConversation webConversation, String login, String password, String project) throws IOException, JSONException, URISyntaxException, SAXException {
+		assertEquals(HttpURLConnection.HTTP_OK, login(webConversation, login, password));
+
+		JSONObject jsonObject = new JSONObject();
+		jsonObject.put("Directory", "true");
+		jsonObject.put("Name", "folder");
+		jsonObject.put("LocalTimeStamp", "0");
+		String parent = "/file/" + getWorkspaceId(login) + "/" + project;
+		WebRequest request = new PostMethodWebRequest(getOrionServerURI(parent), IOUtilities.toInputStream(jsonObject.toString()), "application/json");
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+		System.out.println("Created Folder: " + parent + "/folder");
+		return response.getResponseCode();
+	}
+
+	/**
+	 * Create a plugins preference on the Orion server for the test user.
+	 * 
+	 * @param webConversation
+	 * @param login
+	 * @param password
+	 * @param projectName
+	 * @return
+	 * @throws IOException
+	 * @throws JSONException
+	 * @throws URISyntaxException
+	 * @throws SAXException 
+	 */
+	protected int createPluginsPref(WebConversation webConversation, String login, String password) throws IOException, JSONException, URISyntaxException, SAXException {
+		assertEquals(HttpURLConnection.HTTP_OK, login(webConversation, login, password));
+
+		JSONObject jsonObject = new JSONObject();
+		jsonObject.put("http://mamacdon.github.io/0.3/plugins/bugzilla/plugin.html", true);
+		WebRequest request = new PutMethodWebRequest(getOrionServerURI("/prefs/user/plugins"), IOUtilities.toInputStream(jsonObject.toString()), "application/json");
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_NO_CONTENT, response.getResponseCode());
+
+		System.out.println("Created Preference /prefs/user/plugins");
+		return response.getResponseCode();
+	}
 
 	/**
 	 * Create a project on the Orion server for the test user.
@@ -82,6 +173,38 @@ public class RemoteMetaStoreTests {
 		String location = jsonObject.getString("ContentLocation");
 		String name = jsonObject.getString("Name");
 		System.out.println("Created Project: " + name + " at Location: " + location);
+		return response.getResponseCode();
+	}
+
+	/**
+	 * Create a workspace on the Orion server for the test user.
+	 * 
+	 * @param webConversation
+	 * @param login
+	 * @param password
+	 * @param site
+	 * @return
+	 * @throws URISyntaxException
+	 * @throws IOException
+	 * @throws JSONException
+	 * @throws SAXException 
+	 */
+	protected int createSite(WebConversation webConversation, String login, String password, String site) throws URISyntaxException, IOException, JSONException, SAXException {
+		assertEquals(HttpURLConnection.HTTP_OK, login(webConversation, login, password));
+
+		JSONObject json = new JSONObject();
+		json.put(SiteConfigurationConstants.KEY_WORKSPACE, getWorkspaceId(login));
+		json.put(ProtocolConstants.KEY_NAME, site);
+		json.put(SiteConfigurationConstants.KEY_HOST_HINT, site.toLowerCase().replaceAll(" ", "-"));
+		WebRequest request = new PostMethodWebRequest(getOrionServerURI("/site"), IOUtilities.toInputStream(json.toString()), "application/json");
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+		JSONObject jsonObject = new JSONObject(response.getText());
+		String location = jsonObject.getString("Location");
+		String name = jsonObject.getString("Name");
+		System.out.println("Created Site: " + name + " at Location: " + location);
 		return response.getResponseCode();
 	}
 
@@ -261,6 +384,93 @@ public class RemoteMetaStoreTests {
 	}
 
 	/**
+	 * Create a site on the Orion server for the test user.
+	 * 
+	 * @throws URISyntaxException
+	 * @throws IOException
+	 * @throws JSONException
+	 * @throws SAXException 
+	 */
+	@Test
+	public void testCreateSite() throws URISyntaxException, IOException, JSONException, SAXException {
+		WebConversation webConversation = new WebConversation();
+		assertEquals(HttpURLConnection.HTTP_CREATED, createSite(webConversation, getOrionTestName(), getOrionTestName(), "First Site"));
+	}
+
+	/**
+	 * Create a plugins preference on the Orion server for the test user.
+	 * 
+	 * @throws URISyntaxException
+	 * @throws IOException
+	 * @throws JSONException
+	 * @throws SAXException 
+	 */
+	@Test
+	public void testCreateTPluginsPref() throws URISyntaxException, IOException, JSONException, SAXException {
+		WebConversation webConversation = new WebConversation();
+		assertEquals(HttpURLConnection.HTTP_NO_CONTENT, createPluginsPref(webConversation, getOrionTestName(), getOrionTestName()));
+	}
+
+	/**
+	 * Create a folder in a project on the Orion server for the test user.
+	 * 
+	 * @throws URISyntaxException
+	 * @throws IOException
+	 * @throws JSONException
+	 * @throws SAXException 
+	 */
+	@Test
+	public void testCreateUFolder() throws URISyntaxException, IOException, JSONException, SAXException {
+		WebConversation webConversation = new WebConversation();
+		assertEquals(HttpURLConnection.HTTP_CREATED, createFolder(webConversation, getOrionTestName(), getOrionTestName(), getOrionTestName()));
+	}
+
+	/**
+	 * Create a file in a project on the Orion server for the test user.
+	 * 
+	 * @throws URISyntaxException
+	 * @throws IOException
+	 * @throws JSONException
+	 * @throws SAXException 
+	 */
+	@Test
+	public void testCreateVFile() throws URISyntaxException, IOException, JSONException, SAXException {
+		WebConversation webConversation = new WebConversation();
+		assertEquals(HttpURLConnection.HTTP_CREATED, createFile(webConversation, getOrionTestName(), getOrionTestName(), getOrionTestName()));
+	}
+
+	/**
+	 * Get the plugins preference for the test user.
+	 * 
+	 * @throws IOException
+	 * @throws URISyntaxException
+	 * @throws JSONException
+	 * @throws SAXException 
+	 */
+	@Test
+	public void testGetPluginsPref() throws IOException, URISyntaxException, JSONException, SAXException {
+		WebConversation webConversation = new WebConversation();
+		assertEquals(HttpURLConnection.HTTP_OK, login(webConversation, getOrionTestName(), getOrionTestName()));
+
+		WebRequest request = new GetMethodWebRequest(getOrionServerURI("/prefs/user/plugins"));
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		JSONObject jsonObject = new JSONObject(response.getText());
+		if (jsonObject.length() == 0) {
+			System.out.println("Found zero plugin preferences for user: " + getOrionTestName());
+		} else {
+			System.out.print("Found plugin preferences for user: " + getOrionTestName() + " values: [ ");
+			for (@SuppressWarnings("unchecked")
+			Iterator<String> iterator = jsonObject.keys(); iterator.hasNext();) {
+				System.out.print(iterator.next() + " ");
+			}
+			System.out.println("]");
+		}
+	}
+
+	/**
 	 * Get the list of projects for the test user.
 	 * 
 	 * @throws IOException
@@ -288,6 +498,38 @@ public class RemoteMetaStoreTests {
 			for (int i = 0; i < projects.length(); i++) {
 				JSONObject project = projects.getJSONObject(i);
 				System.out.print(project.getString("Location") + " ");
+			}
+			System.out.println("]");
+		}
+	}
+
+	/**
+	 * Get the list of workspaces for the test user.
+	 * 
+	 * @throws IOException
+	 * @throws URISyntaxException
+	 * @throws JSONException
+	 * @throws SAXException 
+	 */
+	@Test
+	public void testGetSites() throws IOException, URISyntaxException, JSONException, SAXException {
+		WebConversation webConversation = new WebConversation();
+		assertEquals(HttpURLConnection.HTTP_OK, login(webConversation, getOrionTestName(), getOrionTestName()));
+
+		WebRequest request = new GetMethodWebRequest(getOrionServerURI("/site"));
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		JSONObject jsonObject = new JSONObject(response.getText());
+		JSONArray siteConfigurations = jsonObject.getJSONArray("SiteConfigurations");
+		if (siteConfigurations.length() == 0) {
+			System.out.println("Found zero Sites for user: " + getOrionTestName());
+		} else {
+			System.out.print("Found Sites for user: " + getOrionTestName() + " at locations: [ ");
+			for (int i = 0; i < siteConfigurations.length(); i++) {
+				JSONObject workspace = siteConfigurations.getJSONObject(i);
+				System.out.print(workspace.getString("Location") + " ");
 			}
 			System.out.println("]");
 		}
@@ -353,6 +595,19 @@ public class RemoteMetaStoreTests {
 		assertEquals(HttpURLConnection.HTTP_OK, createUser(webConversation, twoprojects, twoprojects));
 		assertEquals(HttpURLConnection.HTTP_OK, createWorkspace(webConversation, twoprojects, twoprojects));
 		assertEquals(HttpURLConnection.HTTP_CREATED, createProject(webConversation, twoprojects, twoprojects, twoprojects + 1));
+		assertEquals(HttpURLConnection.HTTP_CREATED, createFolder(webConversation, twoprojects, twoprojects, twoprojects + 1));
+		assertEquals(HttpURLConnection.HTTP_CREATED, createFile(webConversation, twoprojects, twoprojects, twoprojects + 1));
 		assertEquals(HttpURLConnection.HTTP_CREATED, createProject(webConversation, twoprojects, twoprojects, twoprojects + 2));
+		assertEquals(HttpURLConnection.HTTP_CREATED, createFolder(webConversation, twoprojects, twoprojects, twoprojects + 2));
+		assertEquals(HttpURLConnection.HTTP_CREATED, createFile(webConversation, twoprojects, twoprojects, twoprojects + 2));
+
+		// a user with a project with two sites
+		String twosites = "ts" + getOrionTestName();
+		webConversation = new WebConversation();
+		assertEquals(HttpURLConnection.HTTP_OK, createUser(webConversation, twosites, twosites));
+		assertEquals(HttpURLConnection.HTTP_OK, createWorkspace(webConversation, twosites, twosites));
+		assertEquals(HttpURLConnection.HTTP_CREATED, createProject(webConversation, twosites, twosites, twosites));
+		assertEquals(HttpURLConnection.HTTP_CREATED, createSite(webConversation, twosites, twosites, twosites + 1));
+		assertEquals(HttpURLConnection.HTTP_CREATED, createSite(webConversation, twosites, twosites, twosites + 2));
 	}
 }
