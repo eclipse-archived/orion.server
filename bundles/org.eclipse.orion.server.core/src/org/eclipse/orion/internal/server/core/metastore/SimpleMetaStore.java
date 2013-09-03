@@ -115,12 +115,11 @@ public class SimpleMetaStore implements IMetaStore {
 	}
 
 	public void createUser(UserInfo userInfo) throws CoreException {
-		if (userInfo.getUniqueId() == null) {
-			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createUser: could not create user: " + userInfo.getUserName() + ", did not provide a userId", null));
-		}
 		if (userInfo.getUserName() == null) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createUser: could not create user: " + userInfo.getUniqueId() + ", did not provide a userName", null));
 		}
+		String userId = SimpleMetaStoreUtil.encodeUserId(userInfo.getUserName());
+		userInfo.setUniqueId(userId);
 		File userMetaFolder = SimpleMetaStoreUtil.retrieveMetaFolder(metaStoreRoot, userInfo.getUserName());
 		if (SimpleMetaStoreUtil.isMetaFolder(userMetaFolder)) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createUser: could not create user: " + userInfo.getUserName() + ", user already exists", null));

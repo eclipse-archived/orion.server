@@ -25,7 +25,12 @@ public class SimpleMetaStoreTests extends ExtendedMetaStoreTests {
 
 	public IMetaStore getMetaStore() {
 		// use the currently configured metastore if it is an SimpleMetaStore 
-		IMetaStore metaStore = OrionConfiguration.getMetaStore();
+		IMetaStore metaStore = null;
+		try {
+			metaStore = OrionConfiguration.getMetaStore();
+		} catch (NullPointerException e) {
+			// expected when the workbench is not running
+		}
 		if (metaStore instanceof SimpleMetaStore) {
 			return metaStore;
 		}

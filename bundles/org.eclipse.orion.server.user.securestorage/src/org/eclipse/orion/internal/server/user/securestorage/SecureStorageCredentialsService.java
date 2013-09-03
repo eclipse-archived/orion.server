@@ -86,10 +86,8 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 		String adminDefaultPassword = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_ADMIN_DEFAULT_PASSWORD);
 		User admin = getUser(USER_LOGIN, ADMIN_LOGIN_VALUE);
 		if (admin == null && adminDefaultPassword != null) {
-			admin = createUser(new User(ADMIN_LOGIN_VALUE, ADMIN_LOGIN_VALUE, ADMIN_NAME_VALUE, adminDefaultPassword));
 			// initialize the admin account in the IMetaStore
 			UserInfo userInfo = new UserInfo();
-			userInfo.setUniqueId(admin.getUid());
 			userInfo.setUserName(ADMIN_LOGIN_VALUE);
 			userInfo.setFullName("Administrative User");
 			try {
@@ -97,6 +95,7 @@ public class SecureStorageCredentialsService implements IOrionCredentialsService
 			} catch (CoreException e) {
 				LogHelper.log(e);
 			}
+			admin = createUser(new User(userInfo.getUniqueId(), ADMIN_LOGIN_VALUE, ADMIN_NAME_VALUE, adminDefaultPassword));
 		}
 
 		if (admin == null) {

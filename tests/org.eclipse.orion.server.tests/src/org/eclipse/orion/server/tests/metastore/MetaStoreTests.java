@@ -52,7 +52,6 @@ public abstract class MetaStoreTests {
 		// create the user
 		UserInfo userInfo = new UserInfo();
 		userInfo.setUserName("anthony");
-		userInfo.setUniqueId("1");
 		userInfo.setFullName("Anthony Hunter");
 		metaStore.createUser(userInfo);
 
@@ -87,7 +86,6 @@ public abstract class MetaStoreTests {
 		// create the user
 		UserInfo userInfo = new UserInfo();
 		userInfo.setUserName("anthony");
-		userInfo.setUniqueId("1");
 		userInfo.setFullName("Anthony Hunter");
 		metaStore.createUser(userInfo);
 
@@ -117,7 +115,6 @@ public abstract class MetaStoreTests {
 		// create the user
 		UserInfo userInfo = new UserInfo();
 		userInfo.setUserName("anthony");
-		userInfo.setUniqueId("1");
 		userInfo.setFullName("Anthony Hunter");
 		metaStore.createUser(userInfo);
 
@@ -140,7 +137,6 @@ public abstract class MetaStoreTests {
 		// create the user
 		UserInfo userInfo = new UserInfo();
 		userInfo.setUserName("anthony");
-		userInfo.setUniqueId("1");
 		userInfo.setFullName("Anthony Hunter");
 		metaStore.createUser(userInfo);
 
@@ -197,7 +193,6 @@ public abstract class MetaStoreTests {
 		// create the user
 		UserInfo userInfo = new UserInfo();
 		userInfo.setUserName("anthony");
-		userInfo.setUniqueId("1");
 		userInfo.setFullName("Anthony Hunter");
 		metaStore.createUser(userInfo);
 
@@ -217,7 +212,6 @@ public abstract class MetaStoreTests {
 		// create the user
 		UserInfo userInfo = new UserInfo();
 		userInfo.setUserName("anthony");
-		userInfo.setUniqueId("1");
 		userInfo.setFullName("Anthony Hunter");
 		metaStore.createUser(userInfo);
 
@@ -258,14 +252,12 @@ public abstract class MetaStoreTests {
 		// create the user
 		UserInfo userInfo1 = new UserInfo();
 		userInfo1.setUserName("anthony");
-		userInfo1.setUniqueId("1");
 		userInfo1.setFullName("Anthony Hunter");
 		metaStore.createUser(userInfo1);
 
 		// create a second user
 		UserInfo userInfo2 = new UserInfo();
 		userInfo2.setUserName("john");
-		userInfo2.setUniqueId("2");
 		userInfo2.setFullName("John Doe");
 		metaStore.createUser(userInfo2);
 
@@ -290,7 +282,6 @@ public abstract class MetaStoreTests {
 		// create the user
 		UserInfo userInfo = new UserInfo();
 		userInfo.setUserName("anthony");
-		userInfo.setUniqueId("1");
 		userInfo.setFullName("Anthony Hunter");
 		metaStore.createUser(userInfo);
 
@@ -350,7 +341,6 @@ public abstract class MetaStoreTests {
 		// create the user
 		UserInfo userInfo = new UserInfo();
 		userInfo.setUserName("anthony");
-		userInfo.setUniqueId("1");
 		userInfo.setFullName("Anthony Hunter");
 		metaStore.createUser(userInfo);
 
@@ -371,7 +361,6 @@ public abstract class MetaStoreTests {
 		// create the user
 		UserInfo userInfo = new UserInfo();
 		userInfo.setUserName("anthony");
-		userInfo.setUniqueId("1");
 		userInfo.setFullName("Anthony Hunter");
 		metaStore.createUser(userInfo);
 
@@ -414,7 +403,6 @@ public abstract class MetaStoreTests {
 		// create the user
 		UserInfo userInfo = new UserInfo();
 		userInfo.setUserName("anthony");
-		userInfo.setUniqueId("1");
 		userInfo.setFullName("Anthony Hunter");
 		metaStore.createUser(userInfo);
 
@@ -463,7 +451,6 @@ public abstract class MetaStoreTests {
 		// create the user
 		UserInfo userInfo = new UserInfo();
 		userInfo.setUserName("anthony");
-		userInfo.setUniqueId("1");
 		userInfo.setFullName("Anthony Hunter");
 		metaStore.createUser(userInfo);
 
@@ -496,7 +483,6 @@ public abstract class MetaStoreTests {
 		// create the user
 		UserInfo userInfo = new UserInfo();
 		userInfo.setUserName("anthony");
-		userInfo.setUniqueId("1");
 		userInfo.setFullName("Anthony Hunter");
 		metaStore.createUser(userInfo);
 

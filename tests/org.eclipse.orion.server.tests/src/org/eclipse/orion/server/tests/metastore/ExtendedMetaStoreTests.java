@@ -80,7 +80,6 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		// create the user
 		UserInfo userInfo = new UserInfo();
 		userInfo.setUserName("anthony");
-		userInfo.setUniqueId("1");
 		userInfo.setFullName("Anthony Hunter");
 		metaStore.createUser(userInfo);
 
@@ -116,27 +115,12 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 	}
 
 	@Test(expected = CoreException.class)
-	public void testCreateUserWithNoUserId() throws CoreException {
-		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
-
-		// create the user and do not provide a userId
-		UserInfo userInfo = new UserInfo();
-		userInfo.setUserName("anthony");
-		userInfo.setFullName("Anthony Hunter");
-		metaStore.createUser(userInfo);
-
-		fail("Should not be able to create the user without a userId.");
-	}
-
-	@Test(expected = CoreException.class)
 	public void testCreateUserWithNoUserName() throws CoreException {
 		// create the MetaStore
 		IMetaStore metaStore = getMetaStore();
 
 		// create the user and do not provide a userId
 		UserInfo userInfo = new UserInfo();
-		userInfo.setUniqueId("1");
 		userInfo.setFullName("Anthony Hunter");
 		metaStore.createUser(userInfo);
 
@@ -165,7 +149,6 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		// create the user
 		UserInfo userInfo = new UserInfo();
 		userInfo.setUserName("anthony");
-		userInfo.setUniqueId("1");
 		userInfo.setFullName("Anthony Hunter");
 		metaStore.createUser(userInfo);
 
@@ -186,7 +169,6 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		// create the user
 		UserInfo userInfo = new UserInfo();
 		userInfo.setUserName("anthony");
-		userInfo.setUniqueId("1");
 		userInfo.setFullName("Anthony Hunter");
 		metaStore.createUser(userInfo);
 
@@ -254,7 +236,6 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		// create the user
 		UserInfo userInfo = new UserInfo();
 		userInfo.setUserName("anthony");
-		userInfo.setUniqueId("1");
 		userInfo.setFullName("Anthony Hunter");
 		metaStore.createUser(userInfo);
 
