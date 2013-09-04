@@ -63,7 +63,7 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	 */
 	protected void createTestProject(String name) throws Exception {
 		//create workspace
-		String workspaceName = getClass().getName() + "#" + name;
+		String workspaceName = getClass().getName() + name.replace(" ", "") + "Workspace";
 		URI workspaceLocation = createWorkspace(workspaceName);
 
 		//create a project
