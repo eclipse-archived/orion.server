@@ -148,19 +148,12 @@ public class SimpleMetaStoreUtilTest {
 	}
 
 	@Test
-	public void testEncodedProjectId() {
-		String projectName = "Project One";
-		String encoded = SimpleMetaStoreUtil.encodeProjectId(projectName);
-		assertTrue(projectName.equals(SimpleMetaStoreUtil.decodeProjectNameFromProjectId(encoded)));
-	}
-
-	@Test
 	public void testEncodedWorkspaceId() {
 		String userName = "anthony";
 		String workspaceName = "Workspace One";
 		String encoded = SimpleMetaStoreUtil.encodeWorkspaceId(userName, workspaceName);
-		assertTrue(userName.equals(SimpleMetaStoreUtil.decodeUserNameFromWorkspaceId(encoded)));
-		assertTrue(workspaceName.equals(SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(encoded)));
+		assertTrue(userName.equals(SimpleMetaStoreUtil.decodeUserIdFromWorkspaceId(encoded)));
+		assertTrue(workspaceName.replaceAll(" ", "").equals(SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(encoded)));
 	}
 
 	@Test

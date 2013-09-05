@@ -139,6 +139,9 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		workspaceInfo.setUserId("77");
 		workspaceInfo.setFullName(workspaceName);
 		metaStore.createWorkspace(workspaceInfo);
+
+		// delete the user
+		metaStore.deleteUser(workspaceInfo.getUserId());
 	}
 
 	@Test(expected = CoreException.class)
@@ -186,7 +189,7 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		IMetaStore metaStore = getMetaStore();
 
 		// read the user from the previous test
-		UserInfo userInfo = metaStore.readUser("1");
+		UserInfo userInfo = metaStore.readUser("anthony");
 
 		// create the workspace
 		String workspaceName = "Orion Content";

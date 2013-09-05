@@ -18,6 +18,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -53,7 +55,7 @@ public class SimpleMetaStoreUtil {
 			}
 			File newFile = retrieveMetaFile(parent, name);
 			FileWriter fileWriter = new FileWriter(newFile);
-			fileWriter.write(jsonObject.toString());
+			fileWriter.write(jsonObject.toString(4));
 			fileWriter.write("\n");
 			fileWriter.flush();
 			fileWriter.close();
@@ -61,6 +63,8 @@ public class SimpleMetaStoreUtil {
 			throw new RuntimeException("Meta File Error, file not found", e);
 		} catch (IOException e) {
 			throw new RuntimeException("Meta File Error, file IO error", e);
+		} catch (JSONException e) {
+			throw new RuntimeException("Meta File Error, JSON error", e);
 		}
 		return true;
 	}
@@ -103,32 +107,44 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
-	 * Decode the project name from the project id. In the current implementation, the project id and
-	 * project name are the same value. 
-	 * @param projectId The project id.
-	 * @return The decoded project name.
+	 * Create a new user folder with the provided name under the provided parent folder.
+	 * The file layout settings are consulted to determine if a flat layout or a usertree layout is used. 
+	 * @param parent the parent folder.
+	 * @param userName the user name.
+	 * @return true if the creation was successful.
 	 */
-	public static String decodeProjectNameFromProjectId(String projectId) {
-		return projectId;
+	public static boolean createMetaUserFolder(File parent, String userName) {
+		if (!parent.exists()) {
+			throw new RuntimeException("Meta File Error, parent folder does not exist");
+		}
+		if (!parent.isDirectory()) {
+			throw new RuntimeException("Meta File Error, parent is not a folder");
+		}
+		//consult layout preference
+		String layout = PreferenceHelper.getString(ServerConstants.CONFIG_FILE_LAYOUT, "flat").toLowerCase(); //$NON-NLS-1$
+
+		if ("usertree".equals(layout)) { //$NON-NLS-1$
+			//the user-tree layout organises projects by the user who created it: metastore/an/anthony
+			String userPrefix = userName.substring(0, Math.min(2, userName.length()));
+			File orgFolder = new File(parent, userPrefix);
+			if (!orgFolder.exists()) {
+				if (!orgFolder.mkdir()) {
+					throw new RuntimeException("Meta File Error, cannot create folder");
+				}
+			}
+			return createMetaFolder(orgFolder, userName);
+		}
+		//default layout is a flat list of user at the root
+		return createMetaFolder(parent, userName);
 	}
 
 	/**
-	 * Decode the user name from the user id. In the current implementation, the user id and
-	 * user name are the same value. 
-	 * @param userId The user id.
-	 * @return The decoded user name.
-	 */
-	public static String decodeUserNameFromUserId(String userId) {
-		return userId;
-	}
-
-	/**
-	 * Decode the user name from the workspace id. In the current implementation, the user name and
+	 * Decode the user id from the workspace id. In the current implementation, the user id and
 	 * workspace name, joined with a dash, is the workspaceId. 
 	 * @param workspaceId The workspace id.
-	 * @return The user name.
+	 * @return The user id.
 	 */
-	public static String decodeUserNameFromWorkspaceId(String workspaceId) {
+	public static String decodeUserIdFromWorkspaceId(String workspaceId) {
 		if (workspaceId.indexOf(SEPARATOR) == -1) {
 			return null;
 		}
@@ -137,7 +153,8 @@ public class SimpleMetaStoreUtil {
 
 	/**
 	 * Decode the workspace name from the workspace id. In the current implementation, the user name and
-	 * workspace name, joined with a dash, is the workspaceId. 
+	 * workspace name, joined with a dash, is the workspaceId. The workspace name is not the actual workspace
+	 * name as we have removed spaces and pound during the encoding.
 	 * @param workspaceId The workspace id.
 	 * @return The workspace name.
 	 */
@@ -179,7 +196,6 @@ public class SimpleMetaStoreUtil {
 			throw new RuntimeException("Meta File Error, cannot delete folder.");
 		}
 		return true;
-
 	}
 
 	/**
@@ -193,34 +209,52 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
-	 * Encode the project id from the project name. In the current implementation, the project id and
-	 * project name are the same value. 
-	 * @param projectName The project name.
-	 * @return The decoded project id.
+	 * Delete the user folder with the provided name under the provided parent folder.
+	 * The file layout settings are consulted to determine if a flat layout or a usertree layout is used. 
+	 * @param parent the parent folder.
+	 * @param userName the user name.
+	 * @return true if the creation was successful.
 	 */
-	public static String encodeProjectId(String projectName) {
-		return projectName;
-	}
+	public static boolean deleteMetaUserFolder(File parent, String userName) {
+		String[] files = parent.list();
+		if (files.length != 0) {
+			throw new RuntimeException("Meta File Error, cannot delete, not empty.");
+		}
+		if (!parent.delete()) {
+			throw new RuntimeException("Meta File Error, cannot delete folder.");
+		}
+		
+		//consult layout preference
+		String layout = PreferenceHelper.getString(ServerConstants.CONFIG_FILE_LAYOUT, "flat").toLowerCase(); //$NON-NLS-1$
 
-	/**
-	 * Encode the user id from the user name. In the current implementation, the user id and
-	 * user name are the same value. 
-	 * @param userName The user name.
-	 * @return The decoded user id.
-	 */
-	public static String encodeUserId(String userName) {
-		return userName;
+		if ("flat".equals(layout)) { //$NON-NLS-1$
+			//default layout is a flat list of user at the root
+			return true;
+		}
+		
+		//the user-tree layout organises projects by the user who created it: metastore/an/anthony
+		File orgFolder = parent.getParentFile();
+		files = orgFolder.list();
+		if (files.length != 0) {
+			return true;
+		}
+		if (!orgFolder.delete()) {
+			throw new RuntimeException("Meta File Error, cannot delete folder.");
+		}
+		return true;
 	}
 
 	/**
 	 * Encode the workspace id from the user id and workspace id. In the current implementation, the 
-	 * user name and workspace name, joined with a dash, is the workspaceId. 
+	 * user name and workspace name, joined with a dash, is the workspaceId. The workspaceId also cannot 
+	 * contain spaces or pound.
 	 * @param userName The user name id.
 	 * @param workspaceName The workspace name.
 	 * @return The workspace id.
 	 */
 	public static String encodeWorkspaceId(String userName, String workspaceName) {
-		return userName + SEPARATOR + workspaceName;
+		String workspaceId = workspaceName.replace(" ", "").replace("#", "");
+		return userName + SEPARATOR + workspaceId;
 	}
 
 	/**
@@ -305,6 +339,53 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
+	 * Retrieve the list of user folders under the parent folder.
+	 * @param parent The parent folder.
+	 * @return list of user folders.
+	 */
+	public static List<String> listMetaUserFolders(File parent) {
+		//consult layout preference
+		String layout = PreferenceHelper.getString(ServerConstants.CONFIG_FILE_LAYOUT, "flat").toLowerCase(); //$NON-NLS-1$
+
+		if ("flat".equals(layout)) { //$NON-NLS-1$
+			//default layout is a flat list of user at the root
+			return listMetaFiles(parent);
+		}
+
+		//the user-tree layout organises projects by the user who created it: metastore/an/anthony
+		List<String> userMetaFolders = new ArrayList<String>();
+		for (File file : parent.listFiles()) {
+			if (file.isDirectory()) {
+				// org folder directory, so go into for users
+				for (File userFolder : file.listFiles()) {
+					if (userFolder.isDirectory()) {
+						// user folder directory
+						userMetaFolders.add(userFolder.getName());
+						continue;
+					}
+					throw new RuntimeException("Meta File Error, contains invalid metadata:" + file.toString() + " at " + userFolder.getName());
+				}
+				continue;
+			} else if (file.isFile() && file.getName().endsWith(METAFILE_EXTENSION)) {
+				// meta file, so continue
+				continue;
+			}
+			throw new RuntimeException("Meta File Error, contains invalid metadata:" + parent.toString() + " at " + file.getName());
+		}
+		return userMetaFolders;
+	}
+
+	/**
+	 * Retrieve the MetaFile with the provided name under the parent folder.
+	 * @param parent The parent folder.
+	 * @param name The name of the MetaFile
+	 * @return The MetaFile.
+	 */
+	public static File retrieveMetaFile(File parent, String name) {
+		return new File(parent, name + ".json");
+	}
+
+	/**
 	 * Retrieve the MetaFile with the provided name under the provided parent folder. 
 	 * @param parent The parent folder.
 	 * @param name The name of the MetaFile
@@ -334,16 +415,6 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
-	 * Retrieve the MetaFile with the provided name under the parent folder.
-	 * @param parent The parent folder.
-	 * @param name The name of the MetaFile
-	 * @return The MetaFile.
-	 */
-	public static File retrieveMetaFile(File parent, String name) {
-		return new File(parent, name + ".json");
-	}
-
-	/**
 	 * Retrieve the folder with the provided name under the provided parent folder. 
 	 * @param parent The parent folder.
 	 * @param name The name of the folder.
@@ -367,6 +438,27 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
+	 * Retrieve the user folder with the provided name under the provided parent folder.
+	 * The file layout settings are consulted to determine if a flat layout or a usertree layout is used. 
+	 * @param parent the parent folder.
+	 * @param userName the user name.
+	 * @return the folder.
+	 */
+	public static File retrieveMetaUserFolder(File parent, String userName) {
+		//consult layout preference
+		String layout = PreferenceHelper.getString(ServerConstants.CONFIG_FILE_LAYOUT, "flat").toLowerCase(); //$NON-NLS-1$
+
+		if ("usertree".equals(layout)) { //$NON-NLS-1$
+			//the user-tree layout organises projects by the user who created it: metastore/an/anthony
+			String userPrefix = userName.substring(0, Math.min(2, userName.length()));
+			File orgFolder = new File(parent, userPrefix);
+			return new File(orgFolder, userName);
+		}
+		//default layout is a flat list of user at the root
+		return retrieveMetaFolder(parent, userName);
+	}
+
+	/**
 	 * Update the existing MetaFile with the provided name under the provided parent folder. 
 	 * @param parent The parent folder.
 	 * @param name The name of the MetaFile
@@ -381,7 +473,7 @@ public class SimpleMetaStoreUtil {
 			File savedFile = retrieveMetaFile(parent, name);
 
 			FileWriter fileWriter = new FileWriter(savedFile);
-			fileWriter.write(jsonObject.toString());
+			fileWriter.write(jsonObject.toString(4));
 			fileWriter.write("\n");
 			fileWriter.flush();
 			fileWriter.close();
@@ -389,6 +481,8 @@ public class SimpleMetaStoreUtil {
 			throw new RuntimeException("Meta File Error, file not found", e);
 		} catch (IOException e) {
 			throw new RuntimeException("Meta File Error, file IO error", e);
+		} catch (JSONException e) {
+			throw new RuntimeException("Meta File Error, JSON error", e);
 		}
 		return true;
 	}
