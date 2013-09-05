@@ -27,25 +27,31 @@ import org.eclipse.orion.tools.json.JSONException;
 import org.eclipse.orion.tools.json.JSONObject;
 
 public class ProjectMigration {
-	private static final String WORKSPACE_ROOT = "/workspace/foo.legacy";
-	private static final String METADATA_DIR = WORKSPACE_ROOT + "/.metadata/.plugins/org.eclipse.orion.server.core/.settings/";
-	private static final String PROJECT_PREFS = METADATA_DIR + "Projects.prefs";
-	private static final String WORKSPACE_PREFS = METADATA_DIR + "Workspaces.prefs";
-	private static final String USER_PREFS = METADATA_DIR + "Users.prefs";
-
-	//private static final String CONTENT_LOCATION = "/home/data/nfs/serverworkspace";
-	private static final String CONTENT_LOCATION = WORKSPACE_ROOT;
-
-	private static final boolean ORION_FILE_LAYOUT_USERTREE = false;
-
+	private static final String METADATA_DIR = "/.metadata/.plugins/org.eclipse.orion.server.core/.settings/";
 	private final static String ORION_METASTORE_VERSION = "OrionMetastoreVersion";
+	private static boolean orionFileLayoutUsertree = false;
+	private static String orionProjectPrefsFile = METADATA_DIR + "Projects.prefs";
+	private static String orionSitesPrefsFile = METADATA_DIR + "SiteConfigurations.prefs";
+	private static String orionUserPrefsFile = METADATA_DIR + "Users.prefs";
+
+	private static String orionWorkspacePrefsFile = METADATA_DIR + "Workspaces.prefs";
+
+	private static String orionWorkspaceRoot = null;
 	private final static int VERSION = 1;
 
 	public static void main(String[] arguments) throws IOException, JSONException {
-		new ProjectMigration().run();
+		new ProjectMigration(arguments).run();
 	}
-	
+
 	private PrintStream migrationLog;
+
+	/**
+	 * Constructor for a new ProjectMigration
+	 * @param arguments command line arguments.
+	 */
+	public ProjectMigration(String[] arguments) {
+		parseArgs(arguments);
+	}
 
 	private void createFolder(File newFolder, String message) {
 		if (!newFolder.isDirectory() || !newFolder.exists()) {
@@ -66,7 +72,7 @@ public class ProjectMigration {
 	}
 
 	private File createOrUpdateMetaStoreRoot() {
-		File metaStoreRootFolder = new File(CONTENT_LOCATION + File.separator + "metastore");
+		File metaStoreRootFolder = new File(orionWorkspaceRoot + File.separator + "metastore");
 		createFolder(metaStoreRootFolder, "Root");
 		File metaStoreRootFile = new File(metaStoreRootFolder, "metastore.json");
 		JSONObject metaStoreRootJSON = new JSONObject();
@@ -75,28 +81,20 @@ public class ProjectMigration {
 		return metaStoreRootFolder;
 	}
 
-	private File createOrUpdateUser(File metaStoreRootFolder, String userId, Map<String, String> userProperties) {
+	private File createOrUpdateUser(File metaStoreRootFolder, String userId, Map<String, String> userProperties, Map<String, Map<String, String>> sites) {
 		String userName = userProperties.get("UserName");
-		
-		if (ORION_FILE_LAYOUT_USERTREE) {
-			String currentUserPrefix = userId.substring(0, Math.min(2, userId.length()));
-			File currentUserHome = new File(CONTENT_LOCATION + File.separator + currentUserPrefix + File.separator + userId);
-			if (!currentUserHome.isDirectory() || !currentUserHome.exists()) {
-				System.out.print(" NO HOME DIR");
-			}
-		}
 
 		File newUserHome = new File(metaStoreRootFolder + File.separator + userName);
-		if (ORION_FILE_LAYOUT_USERTREE) {
+		if (orionFileLayoutUsertree) {
 			String newUserPrefix = userName.substring(0, Math.min(2, userName.length()));
 			newUserHome = new File(metaStoreRootFolder + File.separator + newUserPrefix + File.separator + userName);
 		}
 		createFolder(newUserHome, "User");
 
-		JSONObject newUserJSON = getUserJSONfromProperties(userProperties);
+		JSONObject newUserJSON = getUserJSONfromProperties(userProperties, sites);
 		File newUserMetaFile = new File(newUserHome, "user.json");
 		createOrUpdateMetaFile(newUserMetaFile, newUserJSON, "user MetaData");
-		
+
 		return newUserHome;
 	}
 
@@ -122,6 +120,7 @@ public class ProjectMigration {
 		}
 		return metaData;
 	}
+
 	private JSONObject getProjectJSONfromProperties(Map<String, String> projectProperties) {
 		JSONObject projectJSON = new JSONObject();
 		projectJSON.put(ORION_METASTORE_VERSION, VERSION);
@@ -134,7 +133,7 @@ public class ProjectMigration {
 		projectJSON.put("Properties", new JSONObject());
 		return projectJSON;
 	}
-	
+
 	private Properties getPropertiesFromFile(String file) {
 		Properties properties = new Properties();
 		BufferedInputStream inStream;
@@ -159,71 +158,89 @@ public class ProjectMigration {
 		}
 		return properties;
 	}
-	
-	private JSONObject getUserJSONfromProperties(Map<String, String> userProperties) {
+
+	private JSONObject getUserJSONfromProperties(Map<String, String> userProperties, Map<String, Map<String, String>> sites) {
 		JSONObject userJSON = new JSONObject();
 		userJSON.put(ORION_METASTORE_VERSION, VERSION);
+		String oldUserId = userProperties.get("Id");
 		String userName = userProperties.get("UserName");
-		String fullName = userProperties.get("Name");
 		userJSON.put("UniqueId", userName);
 		userJSON.put("UserName", userName);
+		String fullName = userProperties.get("Name");
 		userJSON.put("FullName", fullName);
+		userJSON.put("WorkspaceIds", new JSONArray());
 		JSONObject properties = new JSONObject();
-		JSONArray userRights = new JSONArray(userProperties.get("UserRights"));
-		properties.put("UserRights", userRights);
-		properties.put("UserRightsVersion", userProperties.get("UserRightsVersion"));
-		userJSON.put("Properties", properties);
-		String workspaces = userProperties.get("Workspaces");
-		if (workspaces == null) {
-			userJSON.put("WorkspaceIds", new JSONArray());
-		} else {
-			JSONArray currentWorkspacesJSON = new JSONArray(workspaces);
-			JSONArray newWorkspacesJSON = new JSONArray();
-			for (int i = 0; i < currentWorkspacesJSON.length(); i++) {
-				// legacy workspace property looks like [{"Id"\:"anthony","LastModified"\:1351775348697}]
-				JSONObject object = currentWorkspacesJSON.getJSONObject(i);
-				String workspaceId = object.getString("Id");
-				if (workspaceId != null) {
-					// Add the default workspace name here
-					newWorkspacesJSON.put(workspaceId + "-Orion Content");
-					break;
-				}
-			}
-			userJSON.put("WorkspaceIds", newWorkspacesJSON);
-		}
-		return userJSON;
-	}
-
-	protected void getUsersFromMetadata(Map<String, Map<String, String>> users) {
-		int userNumber = 1;
-		for (String userId : users.keySet()) {
-			//System.out.print("User: " + userId + " (" + userNumber++ + " of " + allUsers.size() + ") ");
-			Map<String, String> properties = users.get(userId);
-			String workspaces = properties.get("Workspaces");
-			if (workspaces == null) {
-				System.out.println("ERROR userId " + userId + " (" + userNumber++ + " of " + users.size() + ") has no workspaces");
+		for (String propertyKey : userProperties.keySet()) {
+			String propertyValue = userProperties.get(propertyKey);
+			if (propertyKey.equals("Id") || propertyKey.equals("UserName") || propertyKey.equals("Name") || propertyKey.equals("Guest")) {
 				continue;
-			}
-			for (String propertyKey : properties.keySet()) {
-				if (propertyKey.equals("UserRightsVersion")) {
-					continue;
-				} else if (propertyKey.equals("Workspaces")) {
-					continue;
-				} else if (propertyKey.equals("UserName")) {
-					continue;
-				} else if (propertyKey.equals("Name")) {
-					continue;
-				} else if (propertyKey.equals("Id")) {
-					continue;
-				} else if (propertyKey.equals("Guest")) {
-					continue;
-				} else if (propertyKey.equals("UserRights") || propertyKey.startsWith("operations///task") || propertyKey.startsWith("operations///gitapi") || propertyKey.startsWith("edit/outline") || propertyKey.startsWith("/edit/outline") || propertyKey.startsWith("/editor/settings") || propertyKey.startsWith("/git/config") || propertyKey.startsWith("cm/configurations") || propertyKey.startsWith("/cm/configurations") || propertyKey.startsWith("window/favorites") || propertyKey.startsWith("/window/favorites") || propertyKey.startsWith("window/views") || propertyKey.startsWith("/window/views") || propertyKey.startsWith("/plugins/http:") || propertyKey.startsWith("plugins///file") || propertyKey.startsWith("plugins/https:") || propertyKey.startsWith("plugins//https:")
-						|| propertyKey.startsWith("plugins//http:") || propertyKey.startsWith("plugins/http:") || propertyKey.startsWith("/plugins/https:") || propertyKey.startsWith("/plugins//https:") || propertyKey.startsWith("/plugins//http:") || propertyKey.startsWith("/plugins/http:") || propertyKey.startsWith("SiteConfigurations")) {
-					continue;
+			} else if (propertyKey.equals("UserRights")) {
+				JSONArray userRights = new JSONArray(propertyValue);
+				for (int i = 0; i < userRights.length(); i++) {
+					JSONObject userRight = userRights.getJSONObject(i);
+					String uri = userRight.getString("Uri");
+					if (uri.equals("/users/" + oldUserId)) {
+						// update the userId in the UserRight
+						userRight.put("Uri", "/users/" + userName);
+					} else if (uri.equals("/workspace/" + userName)) {
+						// update the workspaceId in the UserRight
+						userRight.put("Uri", "/workspace/" + userName + "-OrionContent");
+					} else if (uri.equals("/workspace/" + userName + "/*")) {
+						// update the workspaceId in the UserRight
+						userRight.put("Uri", "/workspace/" + userName + "-OrionContent/*");
+					} else if (uri.equals("/file/" + userName)) {
+						// update the workspaceId in the UserRight
+						userRight.put("Uri", "/file/" + userName + "-OrionContent");
+					} else if (uri.equals("/file/" + userName + "/*")) {
+						// update the workspaceId in the UserRight
+						userRight.put("Uri", "/file/" + userName + "-OrionContent/*");
+					}
 				}
-				System.out.println(userId + " " + propertyKey + "=" + properties.get(propertyKey) + " ");
+				properties.put("UserRights", userRights);
+			} else if (propertyKey.equals("Workspaces")) {
+				JSONArray currentWorkspacesJSON = new JSONArray(propertyValue);
+				JSONArray newWorkspacesJSON = new JSONArray();
+				for (int i = 0; i < currentWorkspacesJSON.length(); i++) {
+					// legacy workspace property looks like [{"Id"\:"anthony","LastModified"\:1351775348697}]
+					JSONObject object = currentWorkspacesJSON.getJSONObject(i);
+					String workspaceId = object.getString("Id");
+					if (workspaceId != null) {
+						// Add the default workspace name here
+						newWorkspacesJSON.put(workspaceId + "-OrionContent");
+						break;
+					}
+				}
+				userJSON.put("WorkspaceIds", newWorkspacesJSON);
+			} else if (propertyKey.equals("UserRightsVersion")) {
+				properties.put("UserRightsVersion", propertyValue);
+			} else if (propertyKey.startsWith("SiteConfigurations")) {
+				// value is a site id
+				JSONObject siteConfigurations;
+				if (properties.has("SiteConfigurations")) {
+					siteConfigurations = properties.getJSONObject("SiteConfigurations");
+				} else {
+					siteConfigurations = new JSONObject();
+				}
+				JSONObject newSite = new JSONObject();
+				Map<String, String> siteProperties = sites.get(propertyValue);
+				for (String sitePropertyKey : siteProperties.keySet()) {
+					String sitePropertyValue = siteProperties.get(sitePropertyKey);
+					if (sitePropertyKey.equals("Workspace")) {
+						newSite.put(sitePropertyKey, sitePropertyValue + "-OrionContent");
+					} else {
+						newSite.put(sitePropertyKey, sitePropertyValue);
+					}
+				}
+				siteConfigurations.put(propertyValue, newSite);
+				properties.put("SiteConfigurations", siteConfigurations);
+			} else {
+				// simple property
+				properties.put(propertyKey, propertyValue);
 			}
+
 		}
+		userJSON.put("Properties", properties);
+		return userJSON;
 	}
 
 	private JSONObject getWorkspaceJSONfromProperties(Map<String, String> workspaceProperties) {
@@ -246,6 +263,7 @@ public class ProjectMigration {
 	private void migrationLogOpen(File workspaceRoot) throws FileNotFoundException {
 		File logFile = new File(workspaceRoot, "migration.log");
 		FileOutputStream stream = new FileOutputStream(logFile);
+		System.err.println("ProjectMigration: migration log is at " + logFile.getAbsolutePath());
 		migrationLog = new PrintStream(stream);
 	}
 
@@ -254,18 +272,51 @@ public class ProjectMigration {
 	}
 
 	/**
+	 * Parse the project migration application command line arguments.
+	 * @param arguments command line arguments.
+	 * @return true if the command line arguments are acceptable.
+	 */
+	private void parseArgs(String[] arguments) {
+		if (arguments.length == 0) {
+			usage();
+		}
+		for (int i = 0; i < arguments.length; i++) {
+			if ("-flat".equals(arguments[i])) {
+				//the flat layout organises projects at the root /project
+				orionFileLayoutUsertree = false;
+			} else if ("-usertree".equals(arguments[i])) {
+				//the user-tree layout organises projects by the user who created it: pr/project
+				orionFileLayoutUsertree = false;
+			} else if ("-root".equals(arguments[i])) {
+				//the workspace root to migrate
+				orionWorkspaceRoot = arguments[++i];
+			} else {
+				usage();
+			}
+		}
+		if (orionWorkspaceRoot == null) {
+			usage();
+		}
+		orionProjectPrefsFile = orionWorkspaceRoot + METADATA_DIR + "Projects.prefs";
+		orionWorkspacePrefsFile = orionWorkspaceRoot + METADATA_DIR + "Workspaces.prefs";
+		orionUserPrefsFile = orionWorkspaceRoot + METADATA_DIR + "Users.prefs";
+		orionSitesPrefsFile = orionWorkspaceRoot + METADATA_DIR + "SiteConfigurations.prefs";
+	}
+
+	/**
 	 * Executes the project migration.
 	 * @throws IOException 
 	 * @throws JSONException 
 	 */
 	public void run() throws IOException, JSONException {
-		File workspaceRoot = new File(WORKSPACE_ROOT);
+		File workspaceRoot = new File(orionWorkspaceRoot);
 		migrationLogOpen(workspaceRoot);
 		migrationLogPrint("Migrating MetaStore from legacy to simple.");
 
-		Map<String, Map<String, String>> users = getMetadataFromFile(USER_PREFS);
-		Map<String, Map<String, String>> workspaces = getMetadataFromFile(WORKSPACE_PREFS);
-		Map<String, Map<String, String>> projects = getMetadataFromFile(PROJECT_PREFS);
+		Map<String, Map<String, String>> users = getMetadataFromFile(orionUserPrefsFile);
+		Map<String, Map<String, String>> workspaces = getMetadataFromFile(orionWorkspacePrefsFile);
+		Map<String, Map<String, String>> projects = getMetadataFromFile(orionProjectPrefsFile);
+		Map<String, Map<String, String>> sites = getMetadataFromFile(orionSitesPrefsFile);
 
 		File metaStoreRootFolder = createOrUpdateMetaStoreRoot();
 
@@ -276,8 +327,8 @@ public class ProjectMigration {
 			String userName = userProperties.get("UserName");
 			migrationLogPrint("Processing UserId " + userId + " (" + userCount++ + " of " + userSize + ") UserName " + userName);
 
-			File newUserHome = createOrUpdateUser(metaStoreRootFolder, userId, userProperties);
-			
+			File newUserHome = createOrUpdateUser(metaStoreRootFolder, userId, userProperties, sites);
+
 			String userWorkspaceProperty = userProperties.get("Workspaces");
 			if (userWorkspaceProperty == null) {
 				migrationLogPrint("User " + userName + " has no workspaces.");
@@ -288,7 +339,7 @@ public class ProjectMigration {
 				String workspaceName = workspaceProperties.get("Name");
 				File newWorkspaceHome = new File(newUserHome + File.separator + workspaceName);
 				createFolder(newWorkspaceHome, "Workspace");
-				
+
 				String workspaceProjectProperty = workspaceProperties.get("Projects");
 				if (workspaceProjectProperty == null || workspaceProjectProperty.equals("[]")) {
 					migrationLogPrint("User " + userName + " has no projects.");
@@ -320,10 +371,18 @@ public class ProjectMigration {
 		migrationLogClose();
 	}
 
+	/**
+	 * Print the usage and exit;
+	 */
+	private void usage() {
+		System.err.println("ProjectMigration: Usage: java -jar ProjectMigration.jar [ -flat | -usertree ] -root folder");
+		System.exit(1);
+	}
+
 	private void writeMetaFile(File file, JSONObject jsonObject) {
 		try {
 			FileWriter fileWriter = new FileWriter(file);
-			fileWriter.write(jsonObject.toString());
+			fileWriter.write(jsonObject.toString(4));
 			fileWriter.write("\n");
 			fileWriter.flush();
 			fileWriter.close();
