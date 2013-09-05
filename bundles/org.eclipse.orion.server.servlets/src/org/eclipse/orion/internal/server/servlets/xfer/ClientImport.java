@@ -137,7 +137,7 @@ class ClientImport {
 			while (entries.hasMoreElements()) {
 				ZipEntry entry = entries.nextElement();
 				IFileStore destination = destinationRoot.getChild(entry.getName());
-				if (hasExcludedParent(destination, destinationRoot, excludedFiles)) {
+				if (!destinationRoot.isParentOf(destination) || hasExcludedParent(destination, destinationRoot, excludedFiles)) {
 					//file should not be imported
 					continue;
 				}
@@ -149,7 +149,49 @@ class ClientImport {
 						continue;
 					}
 					destination.getParent().mkdir(EFS.NONE, null);
-					IOUtilities.pipe(source.getInputStream(entry), destination.openOutputStream(EFS.NONE, null), false, true);
+					// this filter will throw an IOException if a zip entry is larger than 100MB
+					FilterInputStream maxBytesReadInputStream = new FilterInputStream(source.getInputStream(entry)) {
+						private static final int maxBytes = 0x6400000; // 100MB
+						private int totalBytes;
+
+						private void addByteCount(int count) throws IOException {
+							totalBytes += count;
+							if (totalBytes > maxBytes) {
+								throw new IOException("Zip file entry too large");
+							}
+						}
+
+						@Override
+						public int read() throws IOException {
+							int c = super.read();
+							if (c != -1) {
+								addByteCount(1);
+							}
+							return c;
+						}
+
+						@Override
+						public int read(byte[] b, int off, int len) throws IOException {
+							int read = super.read(b, off, len);
+							if (read != -1) {
+								addByteCount(read);
+							}
+							return read;
+						}
+					};
+					boolean fileWritten = false;
+					try {
+						IOUtilities.pipe(maxBytesReadInputStream, destination.openOutputStream(EFS.NONE, null), false, true);
+						fileWritten = true;
+					} finally {
+						if (!fileWritten) {
+							try {
+								destination.delete(EFS.NONE, null);
+							} catch (CoreException ce) {
+								// best effort
+							}
+						}
+					}
 				}
 			}
 			source.close();
