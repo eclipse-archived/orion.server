@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -26,15 +26,21 @@ import org.eclipse.orion.tools.json.JSONArray;
 import org.eclipse.orion.tools.json.JSONException;
 import org.eclipse.orion.tools.json.JSONObject;
 
+/**
+ * Migrate the Orion metadata from the legacy metadata storage (Orion 3.0 CompatibilityMetaStore) to the new 
+ * simple metadata storage (Orion 4.0 SimpleMetaStore).
+ * 
+ * @author Anthony Hunter
+ */
 public class ProjectMigration {
 	private static final String METADATA_DIR = "/.metadata/.plugins/org.eclipse.orion.server.core/.settings/";
 	private final static String ORION_METASTORE_VERSION = "OrionMetastoreVersion";
 	private static boolean orionFileLayoutUsertree = false;
-	private static String orionProjectPrefsFile = METADATA_DIR + "Projects.prefs";
-	private static String orionSitesPrefsFile = METADATA_DIR + "SiteConfigurations.prefs";
-	private static String orionUserPrefsFile = METADATA_DIR + "Users.prefs";
-
-	private static String orionWorkspacePrefsFile = METADATA_DIR + "Workspaces.prefs";
+	private static String orionOperationsFile = null;
+	private static String orionProjectPrefsFile = null;
+	private static String orionSitesPrefsFile = null;
+	private static String orionUserPrefsFile = null;
+	private static String orionWorkspacePrefsFile = null;
 
 	private static String orionWorkspaceRoot = null;
 	private final static int VERSION = 1;
@@ -53,6 +59,11 @@ public class ProjectMigration {
 		parseArgs(arguments);
 	}
 
+	/**
+	 * Creates a folder, handling the case that the folder may already be there.
+	 * @param newFolder The folder to create
+	 * @param message String to add to the message logged.
+	 */
 	private void createFolder(File newFolder, String message) {
 		if (!newFolder.isDirectory() || !newFolder.exists()) {
 			newFolder.mkdirs();
@@ -62,6 +73,12 @@ public class ProjectMigration {
 		}
 	}
 
+	/**
+	 * Create or update the meta file (file.json) with the provided JSON object. 
+	 * @param metaFile The folder to contain the meta file.
+	 * @param jsonObject The JSON object.
+	 * @param message String to add to the message logged.
+	 */
 	private void createOrUpdateMetaFile(File metaFile, JSONObject jsonObject, String message) {
 		if (metaFile.exists()) {
 			migrationLogPrint("Updated existing " + message + " file: " + metaFile.getAbsolutePath());
@@ -71,6 +88,10 @@ public class ProjectMigration {
 		writeMetaFile(metaFile, jsonObject);
 	}
 
+	/**
+	 * Create or update the root folder of the meta store. The result will be a root folder and a metastore.json.
+	 * @return the root metadata folder.
+	 */
 	private File createOrUpdateMetaStoreRoot() {
 		File metaStoreRootFolder = new File(orionWorkspaceRoot + File.separator + "metastore");
 		createFolder(metaStoreRootFolder, "Root");
@@ -81,7 +102,16 @@ public class ProjectMigration {
 		return metaStoreRootFolder;
 	}
 
-	private File createOrUpdateUser(File metaStoreRootFolder, String userId, Map<String, String> userProperties, Map<String, Map<String, String>> sites) {
+	/**
+	 * Create or update the metadata for a user. The result will be a user folder and a user.json.
+	 * @param metaStoreRootFolder The root of the meta store.
+	 * @param userId The userId of the user.
+	 * @param userProperties properties for a user.
+	 * @param sites list of site configuration properties.
+	 * @param operations list of operations properties.
+	 * @return the user metadata folder.
+	 */
+	private File createOrUpdateUser(File metaStoreRootFolder, String userId, Map<String, String> userProperties, Map<String, Map<String, String>> sites, Map<String, Map<String, String>> operations) {
 		String userName = userProperties.get("UserName");
 
 		File newUserHome = new File(metaStoreRootFolder + File.separator + userName);
@@ -91,13 +121,19 @@ public class ProjectMigration {
 		}
 		createFolder(newUserHome, "User");
 
-		JSONObject newUserJSON = getUserJSONfromProperties(userProperties, sites);
+		JSONObject newUserJSON = getUserJSONfromProperties(userProperties, sites, operations);
 		File newUserMetaFile = new File(newUserHome, "user.json");
 		createOrUpdateMetaFile(newUserMetaFile, newUserJSON, "user MetaData");
 
 		return newUserHome;
 	}
 
+	/**
+	 * Get a metadata list from the provided file containing properties. The metadata is stored in a Map
+	 * with the key being the id and the value being a list of properties.
+	 * @param file file containing properties.
+	 * @return metadata list.
+	 */
 	private Map<String, Map<String, String>> getMetadataFromFile(String file) {
 		Map<String, Map<String, String>> metaData = new HashMap<String, Map<String, String>>();
 		Properties properties = getPropertiesFromFile(file);
@@ -121,6 +157,11 @@ public class ProjectMigration {
 		return metaData;
 	}
 
+	/**
+	 * Get a project JSON object from the list of properties for a project.
+	 * @param projectProperties properties for a project.
+	 * @return the JSON object (project.json).
+	 */
 	private JSONObject getProjectJSONfromProperties(Map<String, String> projectProperties) {
 		JSONObject projectJSON = new JSONObject();
 		projectJSON.put(ORION_METASTORE_VERSION, VERSION);
@@ -134,6 +175,11 @@ public class ProjectMigration {
 		return projectJSON;
 	}
 
+	/**
+	 * Get all the properties from the provided file containing properties.
+	 * @param file file containing properties.
+	 * @return properties list.
+	 */
 	private Properties getPropertiesFromFile(String file) {
 		Properties properties = new Properties();
 		BufferedInputStream inStream;
@@ -159,7 +205,15 @@ public class ProjectMigration {
 		return properties;
 	}
 
-	private JSONObject getUserJSONfromProperties(Map<String, String> userProperties, Map<String, Map<String, String>> sites) {
+	/**
+	 * Get a user JSON object from the list of properties for a user. The site configuration and operations for a user also 
+	 * are loaded into the JSON object.
+	 * @param userProperties properties for a user.
+	 * @param sites list of site configuration properties.
+	 * @param operations list of operations properties.
+	 * @return the JSON object (user.json).
+	 */
+	private JSONObject getUserJSONfromProperties(Map<String, String> userProperties, Map<String, Map<String, String>> sites, Map<String, Map<String, String>> operations) {
 		JSONObject userJSON = new JSONObject();
 		userJSON.put(ORION_METASTORE_VERSION, VERSION);
 		String oldUserId = userProperties.get("Id");
@@ -221,6 +275,7 @@ public class ProjectMigration {
 				} else {
 					siteConfigurations = new JSONObject();
 				}
+				// get the rest of the site configuration properties for this user
 				JSONObject newSite = new JSONObject();
 				Map<String, String> siteProperties = sites.get(propertyValue);
 				for (String sitePropertyKey : siteProperties.keySet()) {
@@ -237,12 +292,25 @@ public class ProjectMigration {
 				// simple property
 				properties.put(propertyKey, propertyValue);
 			}
-
 		}
+		// get the operation properties for this user
+		Map<String, String> operationProperties = operations.get(oldUserId);
+		if (operationProperties != null) {
+			for (String operationPropertyKey : operationProperties.keySet()) {
+				String operationPropertyValue = operationProperties.get(operationPropertyKey);
+				properties.put(operationPropertyKey, operationPropertyValue);
+			}
+		}
+
 		userJSON.put("Properties", properties);
 		return userJSON;
 	}
 
+	/**
+	 * Get a workspace JSON object from the list of properties for a workspace.
+	 * @param workspaceProperties properties for a workspace.
+	 * @return the JSON object (workspace.json).
+	 */
 	private JSONObject getWorkspaceJSONfromProperties(Map<String, String> workspaceProperties) {
 		JSONObject workspaceJSON = new JSONObject();
 		workspaceJSON.put(ORION_METASTORE_VERSION, VERSION);
@@ -256,10 +324,18 @@ public class ProjectMigration {
 		return workspaceJSON;
 	}
 
+	/**
+	 * Close the migration log.
+	 */
 	private void migrationLogClose() {
 		migrationLog.close();
 	}
 
+	/** 
+	 * Open the migration log, the log is stored at the user provided workspace root.
+	 * @param workspaceRoot the workspace root.
+	 * @throws FileNotFoundException
+	 */
 	private void migrationLogOpen(File workspaceRoot) throws FileNotFoundException {
 		File logFile = new File(workspaceRoot, "migration.log");
 		FileOutputStream stream = new FileOutputStream(logFile);
@@ -267,6 +343,10 @@ public class ProjectMigration {
 		migrationLog = new PrintStream(stream);
 	}
 
+	/**
+	 * Print a message to the migration log.
+	 * @param message the message.
+	 */
 	private void migrationLogPrint(String message) {
 		migrationLog.println(message);
 	}
@@ -286,7 +366,7 @@ public class ProjectMigration {
 				orionFileLayoutUsertree = false;
 			} else if ("-usertree".equals(arguments[i])) {
 				//the user-tree layout organises projects by the user who created it: pr/project
-				orionFileLayoutUsertree = false;
+				orionFileLayoutUsertree = true;
 			} else if ("-root".equals(arguments[i])) {
 				//the workspace root to migrate
 				orionWorkspaceRoot = arguments[++i];
@@ -301,6 +381,7 @@ public class ProjectMigration {
 		orionWorkspacePrefsFile = orionWorkspaceRoot + METADATA_DIR + "Workspaces.prefs";
 		orionUserPrefsFile = orionWorkspaceRoot + METADATA_DIR + "Users.prefs";
 		orionSitesPrefsFile = orionWorkspaceRoot + METADATA_DIR + "SiteConfigurations.prefs";
+		orionOperationsFile = orionWorkspaceRoot + METADATA_DIR + "Operations.prefs";
 	}
 
 	/**
@@ -317,6 +398,7 @@ public class ProjectMigration {
 		Map<String, Map<String, String>> workspaces = getMetadataFromFile(orionWorkspacePrefsFile);
 		Map<String, Map<String, String>> projects = getMetadataFromFile(orionProjectPrefsFile);
 		Map<String, Map<String, String>> sites = getMetadataFromFile(orionSitesPrefsFile);
+		Map<String, Map<String, String>> operations = getMetadataFromFile(orionOperationsFile);
 
 		File metaStoreRootFolder = createOrUpdateMetaStoreRoot();
 
@@ -327,7 +409,7 @@ public class ProjectMigration {
 			String userName = userProperties.get("UserName");
 			migrationLogPrint("Processing UserId " + userId + " (" + userCount++ + " of " + userSize + ") UserName " + userName);
 
-			File newUserHome = createOrUpdateUser(metaStoreRootFolder, userId, userProperties, sites);
+			File newUserHome = createOrUpdateUser(metaStoreRootFolder, userId, userProperties, sites, operations);
 
 			String userWorkspaceProperty = userProperties.get("Workspaces");
 			if (userWorkspaceProperty == null) {
@@ -379,6 +461,11 @@ public class ProjectMigration {
 		System.exit(1);
 	}
 
+	/**
+	 * Write the JSON object to the provided file.
+	 * @param file The file to write to.
+	 * @param jsonObject the JSON object.
+	 */
 	private void writeMetaFile(File file, JSONObject jsonObject) {
 		try {
 			FileWriter fileWriter = new FileWriter(file);
