@@ -11,10 +11,12 @@
 package org.eclipse.orion.tools;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -38,11 +40,13 @@ public class ProjectMigration {
 	private static boolean orionFileLayoutUsertree = false;
 	private static String orionOperationsFile = null;
 	private static String orionProjectPrefsFile = null;
+	private static String orionSecureStorageFile = null;
 	private static String orionSitesPrefsFile = null;
 	private static String orionUserPrefsFile = null;
 	private static String orionWorkspacePrefsFile = null;
-
 	private static String orionWorkspaceRoot = null;
+
+	private static final String SECURESTORAGE = "/.metadata/.plugins/org.eclipse.orion.server.user.securestorage/user_store";
 	private final static int VERSION = 1;
 
 	public static void main(String[] arguments) throws IOException, JSONException {
@@ -78,8 +82,9 @@ public class ProjectMigration {
 	 * @param metaFile The folder to contain the meta file.
 	 * @param jsonObject The JSON object.
 	 * @param message String to add to the message logged.
+	 * @throws IOException 
 	 */
-	private void createOrUpdateMetaFile(File metaFile, JSONObject jsonObject, String message) {
+	private void createOrUpdateMetaFile(File metaFile, JSONObject jsonObject, String message) throws IOException {
 		if (metaFile.exists()) {
 			migrationLogPrint("Updated existing " + message + " file: " + metaFile.getAbsolutePath());
 		} else {
@@ -91,8 +96,9 @@ public class ProjectMigration {
 	/**
 	 * Create or update the root folder of the meta store. The result will be a root folder and a metastore.json.
 	 * @return the root metadata folder.
+	 * @throws IOException 
 	 */
-	private File createOrUpdateMetaStoreRoot() {
+	private File createOrUpdateMetaStoreRoot() throws IOException {
 		File metaStoreRootFolder = new File(orionWorkspaceRoot + File.separator + "metastore");
 		createFolder(metaStoreRootFolder, "Root");
 		File metaStoreRootFile = new File(metaStoreRootFolder, "metastore.json");
@@ -110,8 +116,9 @@ public class ProjectMigration {
 	 * @param sites list of site configuration properties.
 	 * @param operations list of operations properties.
 	 * @return the user metadata folder.
+	 * @throws IOException 
 	 */
-	private File createOrUpdateUser(File metaStoreRootFolder, String userId, Map<String, String> userProperties, Map<String, Map<String, String>> sites, Map<String, Map<String, String>> operations) {
+	private File createOrUpdateUser(File metaStoreRootFolder, String userId, Map<String, String> userProperties, Map<String, Map<String, String>> sites, Map<String, Map<String, String>> operations) throws IOException {
 		String userName = userProperties.get("UserName");
 
 		File newUserHome = new File(metaStoreRootFolder + File.separator + userName);
@@ -138,10 +145,10 @@ public class ProjectMigration {
 		Map<String, Map<String, String>> metaData = new HashMap<String, Map<String, String>>();
 		Properties properties = getPropertiesFromFile(file);
 		for (Object key : properties.keySet()) {
-			if (key.equals("eclipse.preferences.version")) {
+			String keyString = (String) key;
+			if (keyString.equals("eclipse.preferences.version")) {
 				continue;
 			}
-			String keyString = (String) key;
 			String uniqueId = keyString.substring(0, keyString.indexOf("/"));
 			String propertyKey = keyString.substring(keyString.indexOf("/") + 1);
 			String propertyValue = properties.getProperty(keyString);
@@ -203,6 +210,54 @@ public class ProjectMigration {
 			}
 		}
 		return properties;
+	}
+
+	/**
+	 * Get a metadata list from the provided secure storage file containing properties. The metadata is stored in a Map
+	 * with the key being the id and the value being a list of properties.
+	 * @param file secure storage file containing properties.
+	 * @return metadata list.
+	 * @throws IOException 
+	 */
+	private Map<String, Map<String, String>> getSecureStorageMetadataFromFile(String file) throws IOException {
+		Map<String, Map<String, String>> metaData = new HashMap<String, Map<String, String>>();
+
+		// read the secure storage file
+		FileReader fileReader = new FileReader(file);
+		BufferedReader bufferedReader = new BufferedReader(fileReader);
+		String line = null;
+		while ((line = bufferedReader.readLine()) != null) {
+
+			//process a line in the file
+			if (line.startsWith("#") && line.indexOf("/") == -1) {
+				// Skip these lines:
+				// #Equinox secure storage version 1.0
+				// #Fri Sep 06 12:42:13 EDT 2013
+				continue;
+			}
+			if (line.startsWith("org.eclipse.equinox.security.preferences")) {
+				// Skip these lines:
+				// org.eclipse.equinox.security.preferences.cipher=PBEWithMD5AndDES
+				// org.eclipse.equinox.security.preferences.keyFactory=PBEWithMD5AndDES
+				// org.eclipse.equinox.security.preferences.version=1
+				continue;
+			}
+			String keyString = line.substring(0, line.indexOf("="));
+			String propertyValue = line.substring(line.indexOf("=") + 1);
+			String userString = keyString.replace("/users/", "");
+			String uniqueId = userString.substring(0, userString.indexOf("/"));
+			String propertyKey = userString.substring(userString.indexOf("/") + 1);
+			if (metaData.containsKey(uniqueId)) {
+				Map<String, String> propertyMap = metaData.get(uniqueId);
+				propertyMap.put(propertyKey, propertyValue);
+			} else {
+				Map<String, String> propertyMap = new HashMap<String, String>();
+				propertyMap.put(propertyKey, propertyValue);
+				metaData.put(uniqueId, propertyMap);
+			}
+		}
+		bufferedReader.close();
+		return metaData;
 	}
 
 	/**
@@ -316,7 +371,7 @@ public class ProjectMigration {
 		workspaceJSON.put(ORION_METASTORE_VERSION, VERSION);
 		String name = workspaceProperties.get("Name");
 		String id = workspaceProperties.get("Id");
-		workspaceJSON.put("UniqueId", id + "-" + name);
+		workspaceJSON.put("UniqueId", id + "-" + name.replace(" ", "").replace("#", ""));
 		workspaceJSON.put("FullName", name);
 		workspaceJSON.put("Properties", new JSONObject());
 		JSONArray projectNames = new JSONArray(workspaceProperties.get("ProjectNames"));
@@ -382,6 +437,7 @@ public class ProjectMigration {
 		orionUserPrefsFile = orionWorkspaceRoot + METADATA_DIR + "Users.prefs";
 		orionSitesPrefsFile = orionWorkspaceRoot + METADATA_DIR + "SiteConfigurations.prefs";
 		orionOperationsFile = orionWorkspaceRoot + METADATA_DIR + "Operations.prefs";
+		orionSecureStorageFile = orionWorkspaceRoot + SECURESTORAGE;
 	}
 
 	/**
@@ -401,6 +457,7 @@ public class ProjectMigration {
 		Map<String, Map<String, String>> operations = getMetadataFromFile(orionOperationsFile);
 
 		File metaStoreRootFolder = createOrUpdateMetaStoreRoot();
+		Map<String, String> secureStoreUsers = new HashMap<String, String>();
 
 		int userSize = users.size();
 		int userCount = 1;
@@ -408,6 +465,7 @@ public class ProjectMigration {
 			Map<String, String> userProperties = users.get(userId);
 			String userName = userProperties.get("UserName");
 			migrationLogPrint("Processing UserId " + userId + " (" + userCount++ + " of " + userSize + ") UserName " + userName);
+			secureStoreUsers.put(userId, userName);
 
 			File newUserHome = createOrUpdateUser(metaStoreRootFolder, userId, userProperties, sites, operations);
 
@@ -418,8 +476,8 @@ public class ProjectMigration {
 				JSONObject workspaceObject = new JSONArray(userWorkspaceProperty).getJSONObject(0);
 				String workspaceId = workspaceObject.getString("Id");
 				Map<String, String> workspaceProperties = workspaces.get(workspaceId);
-				String workspaceName = workspaceProperties.get("Name");
-				File newWorkspaceHome = new File(newUserHome + File.separator + workspaceName);
+				String encodedWorkspaceName = workspaceProperties.get("Name").replace(" ", "").replace("#", "");
+				File newWorkspaceHome = new File(newUserHome + File.separator + encodedWorkspaceName);
 				createFolder(newWorkspaceHome, "Workspace");
 
 				String workspaceProjectProperty = workspaceProperties.get("Projects");
@@ -450,7 +508,37 @@ public class ProjectMigration {
 
 			}
 		}
+
+		// handle the secure storage
+		Map<String, Map<String, String>> secureStore = getSecureStorageMetadataFromFile(orionSecureStorageFile);
+		writeSecureStorage(secureStore, secureStoreUsers);
 		migrationLogClose();
+	}
+
+	private void writeSecureStorage(Map<String, Map<String, String>> secureStore, Map<String, String> secureStoreUsers) throws IOException {
+		migrationLogPrint("Processing Secure Storage");
+		FileWriter fileWriter = new FileWriter(orionSecureStorageFile);
+		fileWriter.write("#Equinox secure storage version 1.0");
+		fileWriter.write("#Fri Sep 06 12:42:13 EDT 2013");
+		fileWriter.write("org.eclipse.equinox.security.preferences.cipher=PBEWithMD5AndDES");
+		fileWriter.write("org.eclipse.equinox.security.preferences.keyFactory=PBEWithMD5AndDES");
+		fileWriter.write("org.eclipse.equinox.security.preferences.version=1");
+
+		for (String userId : secureStore.keySet()) {
+			String userName = secureStoreUsers.get(userId);
+			migrationLogPrint("Processing UserId " + userId + " change to " + userName);
+			Map<String, String> properties = secureStore.get(userId);
+			for (String key : properties.keySet()) {
+				String value = properties.get(key);
+				String newKey = "/users/" + userName + "/" + key;
+				String newLine = newKey + "=" + value;
+				migrationLogPrint(newLine);
+				fileWriter.write(newLine);
+				fileWriter.write("\n");
+			}
+		}
+		fileWriter.flush();
+		fileWriter.close();
 	}
 
 	/**
@@ -465,16 +553,13 @@ public class ProjectMigration {
 	 * Write the JSON object to the provided file.
 	 * @param file The file to write to.
 	 * @param jsonObject the JSON object.
+	 * @throws IOException 
 	 */
-	private void writeMetaFile(File file, JSONObject jsonObject) {
-		try {
-			FileWriter fileWriter = new FileWriter(file);
-			fileWriter.write(jsonObject.toString(4));
-			fileWriter.write("\n");
-			fileWriter.flush();
-			fileWriter.close();
-		} catch (IOException e) {
-			throw new RuntimeException("Meta File Error, file IO error", e);
-		}
+	private void writeMetaFile(File file, JSONObject jsonObject) throws IOException {
+		FileWriter fileWriter = new FileWriter(file);
+		fileWriter.write(jsonObject.toString(4));
+		fileWriter.write("\n");
+		fileWriter.flush();
+		fileWriter.close();
 	}
 }
