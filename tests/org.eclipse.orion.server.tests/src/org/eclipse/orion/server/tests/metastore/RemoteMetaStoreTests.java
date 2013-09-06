@@ -38,10 +38,10 @@ import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
 
 /**
- * Test the MetaStore API on a remote Orion server by creating users, workspaces and projects.
+ * Create a data set on a remote Orion server by creating users, workspaces, projects, 
+ * site configurations and operations. The end result is a set of data that can be used to test
+ * migration.  
  * This test is not intended to be added to the nightly Orion JUnit tests, 
- * it is a test tool for the server API as well as being useful to create test data for migration
- * tests.
  *  
  * @author Anthony Hunter
  */
@@ -115,6 +115,48 @@ public class RemoteMetaStoreTests {
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
 		System.out.println("Created Folder: " + parent + "/folder");
+		return response.getResponseCode();
+	}
+
+	/**
+	 * Create a git close on the Orion server for the test user. Also creates an operation in the metastore for the user.
+	 * 
+	 * @param webConversation
+	 * @param login
+	 * @param password
+	 * @param project
+	 * @return
+	 * @throws URISyntaxException
+	 * @throws IOException
+	 * @throws JSONException
+	 * @throws SAXException 
+	 */
+	protected int createGitClone(WebConversation webConversation, String login, String password, String project) throws URISyntaxException, IOException, JSONException, SAXException {
+		assertEquals(HttpURLConnection.HTTP_OK, login(webConversation, login, password));
+
+		String name = "ahunter orion";
+		JSONObject json = new JSONObject();
+		json.put("GitUrl", "https://github.com/ahunter-orion/ahunter-orion.github.com.git");
+		json.put("Location", "/workspace/" + getWorkspaceId(login));
+		json.put("Name", name);
+		WebRequest request = new PostMethodWebRequest(getOrionServerURI("/gitapi/clone/"), IOUtilities.toInputStream(json.toString()), "application/json");
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_ACCEPTED, response.getResponseCode());
+
+		JSONObject responseJsonObject = new JSONObject(response.getText());
+		String location = responseJsonObject.getString("Location");
+		JSONObject task = new JSONObject();
+		task.put("expires", System.currentTimeMillis() + 86400000);
+		task.put("Name", "Cloning repository " + name);
+		json = new JSONObject();
+		json.put(location, task);
+		request = new PutMethodWebRequest(getOrionServerURI("/prefs/user/operations/"), IOUtilities.toInputStream(json.toString()), "application/json");
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_NO_CONTENT, response.getResponseCode());
+
+		System.out.println("Created Git Clone: " + name + " at Location: " + location);
 		return response.getResponseCode();
 	}
 
@@ -289,7 +331,7 @@ public class RemoteMetaStoreTests {
 	protected String getOrionTestName() {
 		if (orionTestName == null) {
 			orionTestName = "test" + System.currentTimeMillis();
-			//orionTestName = "test" + "123456";
+			//orionTestName = "test";
 		}
 		return orionTestName;
 	}
@@ -437,6 +479,20 @@ public class RemoteMetaStoreTests {
 	public void testCreateVFile() throws URISyntaxException, IOException, JSONException, SAXException {
 		WebConversation webConversation = new WebConversation();
 		assertEquals(HttpURLConnection.HTTP_CREATED, createFile(webConversation, getOrionTestName(), getOrionTestName(), "Project" + getOrionTestName()));
+	}
+
+	/**
+	 * Create a git clone in a project on the Orion server for the test user.
+	 * 
+	 * @throws URISyntaxException
+	 * @throws IOException
+	 * @throws JSONException
+	 * @throws SAXException 
+	 */
+	@Test
+	public void testCreateWGitClone() throws URISyntaxException, IOException, JSONException, SAXException {
+		WebConversation webConversation = new WebConversation();
+		assertEquals(HttpURLConnection.HTTP_NO_CONTENT, createGitClone(webConversation, getOrionTestName(), getOrionTestName(), "Project" + getOrionTestName()));
 	}
 
 	/**
