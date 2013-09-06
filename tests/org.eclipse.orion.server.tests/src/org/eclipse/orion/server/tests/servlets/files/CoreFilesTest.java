@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2012 IBM Corporation and others 
+ * Copyright (c) 2010, 2013 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -15,33 +15,22 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import com.meterware.httpunit.*;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.List;
-
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.server.core.ServerConstants;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import org.json.*;
+import org.junit.*;
 import org.junit.Test;
 import org.osgi.service.prefs.BackingStoreException;
 import org.xml.sax.SAXException;
-
-import com.meterware.httpunit.GetMethodWebRequest;
-import com.meterware.httpunit.WebConversation;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 
 /**
  * Basic tests for {@link NewFileServlet}.
@@ -190,6 +179,48 @@ public class CoreFilesTest extends FileSystemTest {
 		responseObject = new JSONObject(response.getText());
 		assertNotNull("No direcory information in response", responseObject);
 		checkFileMetadata(responseObject, fileName, null, null, null, null, null, null, null, null);
+	}
+
+	/**
+	 * Tests creating a file whose name is an encoded URL.
+	 */
+	@Test
+	public void testCreateFileEncodedName() throws CoreException, IOException, SAXException, JSONException {
+		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+		createDirectory(directoryPath);
+		String fileName = "http%2525253A%2525252F%2525252Fwww.example.org%2525252Fwinery%2525252FTEST%2525252Fjclouds1";
+
+		WebRequest request = getPostFilesRequest(directoryPath, getNewFileJSON(fileName).toString(), fileName);
+		WebResponse response = webConversation.getResponse(request);
+
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		assertTrue("Create file response was OK, but the file does not exist", checkFileExists(directoryPath + "/" + fileName));
+		assertEquals("Response should contain file metadata in JSON, but was " + response.getText(), "application/json", response.getContentType());
+		JSONObject responseObject = new JSONObject(response.getText());
+		assertNotNull("No file information in response", responseObject);
+		checkFileMetadata(responseObject, fileName, null, null, null, null, null, null, null, null);
+
+		//should be able to perform GET on location header to obtain metadata
+		String location = response.getHeaderField("Location");
+		request = getGetRequest(location + "?parts=meta");
+		response = webConversation.getResource(request);
+		assertNotNull(location);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		responseObject = new JSONObject(response.getText());
+		assertNotNull("No directory information in response", responseObject);
+		checkFileMetadata(responseObject, fileName, null, null, null, null, null, null, null, null);
+
+		//a GET on the parent folder should return a file with that name
+		request = getGetFilesRequest(directoryPath + "?depth=1");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		responseObject = new JSONObject(response.getText());
+		System.out.println(responseObject);
+		JSONArray children = responseObject.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		assertEquals(1, children.length());
+		JSONObject child = children.getJSONObject(0);
+		assertEquals(fileName, child.getString(ProtocolConstants.KEY_NAME));
+
 	}
 
 	@Test
