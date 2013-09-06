@@ -43,7 +43,7 @@ public class SearchServlet extends OrionServlet {
 	 */
 	private static final String AND = " AND "; //$NON-NLS-1$
 	private static final long serialVersionUID = 1L;
-	private static final String FIELD_NAMES = "Id,Name,NameLower,Length,Directory,LastModified,Location,Path"; //$NON-NLS-1$
+	private static final String FIELD_NAMES = "Name,NameLower,Length,Directory,LastModified,Location,Path"; //$NON-NLS-1$
 	private static final List<String> FIELD_LIST = Arrays.asList(FIELD_NAMES.split(",")); //$NON-NLS-1$
 
 	@Override
