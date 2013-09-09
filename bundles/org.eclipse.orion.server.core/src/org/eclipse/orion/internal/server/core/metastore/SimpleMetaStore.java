@@ -86,6 +86,7 @@ public class SimpleMetaStore implements IMetaStore {
 		try {
 			jsonObject.put(ORION_METASTORE_VERSION, VERSION);
 			jsonObject.put("UniqueId", projectInfo.getUniqueId());
+			jsonObject.put("WorkspaceId", projectInfo.getWorkspaceId());
 			jsonObject.put("FullName", projectInfo.getFullName());
 			jsonObject.put("ContentLocation", projectInfo.getContentLocation());
 			JSONObject properties = new JSONObject(projectInfo.getProperties());
@@ -177,6 +178,7 @@ public class SimpleMetaStore implements IMetaStore {
 		try {
 			jsonObject.put(ORION_METASTORE_VERSION, VERSION);
 			jsonObject.put("UniqueId", workspaceInfo.getUniqueId());
+			jsonObject.put("UserId", workspaceInfo.getUserId());
 			jsonObject.put("FullName", workspaceInfo.getFullName());
 			jsonObject.put("ProjectNames", new JSONArray());
 			JSONObject properties = new JSONObject(workspaceInfo.getProperties());
@@ -356,6 +358,7 @@ public class SimpleMetaStore implements IMetaStore {
 		ProjectInfo projectInfo = new ProjectInfo();
 		try {
 			projectInfo.setUniqueId(jsonObject.getString("UniqueId"));
+			projectInfo.setWorkspaceId(jsonObject.getString("WorkspaceId"));
 			projectInfo.setFullName(jsonObject.getString("FullName"));
 			projectInfo.setContentLocation(new URI(jsonObject.getString("ContentLocation")));
 			setProperties(projectInfo, jsonObject.getJSONObject("Properties"));
@@ -423,6 +426,7 @@ public class SimpleMetaStore implements IMetaStore {
 		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
 		try {
 			workspaceInfo.setUniqueId(jsonObject.getString("UniqueId"));
+			workspaceInfo.setUserId(jsonObject.getString("UserId"));
 			workspaceInfo.setFullName(jsonObject.getString("FullName"));
 			List<String> workspaceProjectNames = new ArrayList<String>();
 			JSONArray projectNames = jsonObject.getJSONArray("ProjectNames");
@@ -462,6 +466,7 @@ public class SimpleMetaStore implements IMetaStore {
 		try {
 			jsonObject.put(ORION_METASTORE_VERSION, VERSION);
 			jsonObject.put("UniqueId", projectInfo.getUniqueId());
+			jsonObject.put("WorkspaceId", projectInfo.getWorkspaceId());
 			jsonObject.put("FullName", projectInfo.getFullName());
 			jsonObject.put("ContentLocation", projectInfo.getContentLocation());
 			JSONObject properties = new JSONObject(projectInfo.getProperties());
@@ -505,6 +510,7 @@ public class SimpleMetaStore implements IMetaStore {
 		try {
 			jsonObject.put(ORION_METASTORE_VERSION, VERSION);
 			jsonObject.put("UniqueId", workspaceInfo.getUniqueId());
+			jsonObject.put("UserId", workspaceInfo.getUserId());
 			jsonObject.put("FullName", workspaceInfo.getFullName());
 			JSONArray projectNames = new JSONArray(workspaceInfo.getProjectNames());
 			jsonObject.put("ProjectNames", projectNames);
