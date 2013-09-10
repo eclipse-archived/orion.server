@@ -10,12 +10,11 @@
  *******************************************************************************/
 package org.eclipse.orion.server.tests;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import junit.framework.Assert;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.server.core.OrionConfiguration;
@@ -29,7 +28,7 @@ public class MetaStoreTest extends AbstractServerTest {
 	private WorkspaceInfo createWorkspace() throws CoreException {
 		IMetaStore store = getMetaStore();
 		UserInfo user = new UserInfo();
-		user.setFullName("MetaStoreTestUser");
+		user.setUserName("MetaStoreTestUser");
 		store.createUser(user);
 		WorkspaceInfo workspace = new WorkspaceInfo();
 		workspace.setFullName("MetaStoreTestWorkspace");
@@ -50,9 +49,9 @@ public class MetaStoreTest extends AbstractServerTest {
 	public void testCreateUser() throws CoreException {
 		IMetaStore store = getMetaStore();
 		UserInfo user = new UserInfo();
-		user.setFullName("testCreateUser");
+		user.setUserName("testCreateUser");
 		store.createUser(user);
-		Assert.assertNotNull(user.getUniqueId());
+		assertNotNull(user.getUniqueId());
 	}
 
 	@Test
@@ -80,11 +79,11 @@ public class MetaStoreTest extends AbstractServerTest {
 	public void testUpdateUser() throws CoreException {
 		IMetaStore store = getMetaStore();
 		UserInfo user = new UserInfo();
-		user.setFullName("testUpdateUser");
+		user.setUserName("testUpdateUser");
 		//should not be able to update user that does not exist
 		try {
 			store.updateUser(user);
-			Assert.assertTrue("Update should have failed", false);
+			assertTrue("Update should have failed", false);
 		} catch (Exception e) {
 			//expected
 		}
@@ -93,13 +92,13 @@ public class MetaStoreTest extends AbstractServerTest {
 		try {
 			store.updateUser(user);
 		} catch (Exception e) {
-			Assert.assertTrue("Update should have succeeded", false);
+			assertTrue("Update should have succeeded", false);
 		}
 		store.deleteUser(user.getUniqueId());
 		//should not be able to update user that does not exist
 		try {
 			store.updateUser(user);
-			Assert.assertTrue("Update should have failed", false);
+			assertTrue("Update should have failed", false);
 		} catch (Exception e) {
 			//expected
 		}

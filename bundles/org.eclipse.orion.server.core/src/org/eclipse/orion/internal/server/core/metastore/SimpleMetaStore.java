@@ -348,6 +348,9 @@ public class SimpleMetaStore implements IMetaStore {
 	public ProjectInfo readProject(String workspaceId, String projectName) throws CoreException {
 		String userName = SimpleMetaStoreUtil.decodeUserIdFromWorkspaceId(workspaceId);
 		String workspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
+		if (userName == null || workspaceName == null) {
+			return null;
+		}
 		File userMetaFolder = SimpleMetaStoreUtil.retrieveMetaUserFolder(metaStoreRoot, userName);
 		File workspaceMetaFolder = SimpleMetaStoreUtil.retrieveMetaFolder(userMetaFolder, workspaceName);
 		File projectMetaFolder = SimpleMetaStoreUtil.retrieveMetaFolder(workspaceMetaFolder, projectName);
@@ -391,7 +394,11 @@ public class SimpleMetaStore implements IMetaStore {
 		try {
 			userInfo.setUniqueId(jsonObject.getString("UniqueId"));
 			userInfo.setUserName(jsonObject.getString("UserName"));
-			userInfo.setFullName(jsonObject.getString("FullName"));
+			if (jsonObject.isNull("FullName")) {
+				userInfo.setFullName("Unnamed User");
+			} else {
+				userInfo.setFullName(jsonObject.getString("FullName"));
+			}
 			List<String> userWorkspaceIds = new ArrayList<String>();
 			JSONArray workspaceIds = jsonObject.getJSONArray("WorkspaceIds");
 			if (workspaceIds.length() > 0) {
@@ -482,6 +489,9 @@ public class SimpleMetaStore implements IMetaStore {
 	}
 
 	public void updateUser(UserInfo userInfo) throws CoreException {
+		if (userInfo.getUserName() == null) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.updateUser: user name is null.", null));
+		}
 		File userMetaFolder = SimpleMetaStoreUtil.retrieveMetaUserFolder(metaStoreRoot, userInfo.getUserName());
 		JSONObject jsonObject = SimpleMetaStoreUtil.retrieveMetaFileJSON(userMetaFolder, USER);
 		if (jsonObject == null) {
