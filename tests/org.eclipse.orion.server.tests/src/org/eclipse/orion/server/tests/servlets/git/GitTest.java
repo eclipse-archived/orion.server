@@ -10,11 +10,11 @@
  *******************************************************************************/
 package org.eclipse.orion.server.tests.servlets.git;
 
-import static junit.framework.Assert.fail;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -35,8 +35,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import junit.framework.Assert;
 
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
@@ -65,6 +63,7 @@ import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitConstants;
@@ -257,7 +256,7 @@ public abstract class GitTest extends FileSystemTest {
 			String text = response.getText();
 			status = new JSONObject(text);
 			if (status.isNull(TaskInfo.KEY_TYPE))
-				Assert.fail("Unexpected task format: " + text);
+				fail("Unexpected task format: " + text);
 			String type = status.getString(TaskInfo.KEY_TYPE);
 			boolean running = "loadstart".equals(type) || "progress".equals(type);
 			if (!running)
@@ -334,7 +333,17 @@ public abstract class GitTest extends FileSystemTest {
 		assertNotNull(workspace);
 		ProjectInfo wp = metaStore.readProject(workspace.getUniqueId(), path.segment(2));
 		assertNotNull(wp);
-		IFileStore fsStore = getProjectStore(wp, "test");
+		// find the userId for user name "test"
+		List<String> users = metaStore.readAllUsers();
+		String userId = null;
+		for (String id : users) {
+			UserInfo userInfo = metaStore.readUser(id);
+			if (userInfo.getUserName().equals("test")) {
+				userId = userInfo.getUniqueId();
+				break;
+			}
+		}
+		IFileStore fsStore = getProjectStore(wp, userId);
 		fsStore = fsStore.getFileStore(path.removeFirstSegments(3));
 
 		File file = new File(fsStore.toURI());
@@ -781,7 +790,7 @@ public abstract class GitTest extends FileSystemTest {
 		assertTagListUri(gitTagUri);
 		WebRequest request = getGetGitTagRequest(gitTagUri);
 		WebResponse response = webConversation.getResponse(request);
-		ServerStatus status = waitForTask(webConversation.getResponse(request));
+		ServerStatus status = waitForTask(response);
 		assertTrue(status.toString(), status.isOK());
 		JSONObject tags = status.getJsonData();
 		assertEquals(Tag.TYPE, tags.getString(ProtocolConstants.KEY_TYPE));
@@ -911,7 +920,7 @@ public abstract class GitTest extends FileSystemTest {
 	JSONObject listBranches(final String branchesLocation) throws IOException, SAXException, JSONException {
 		WebRequest request = getGetRequest(branchesLocation);
 		WebResponse response = webConversation.getResponse(request);
-		ServerStatus status = waitForTask(webConversation.getResponse(request));
+		ServerStatus status = waitForTask(response);
 		assertTrue(status.toString(), status.isOK());
 		JSONObject branches = status.getJsonData();
 		assertEquals(Branch.TYPE, branches.getString(ProtocolConstants.KEY_TYPE));
