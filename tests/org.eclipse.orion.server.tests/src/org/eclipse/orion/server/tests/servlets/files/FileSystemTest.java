@@ -167,7 +167,8 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	}
 
 	protected URI makeLocalPathAbsolute(String path) {
-		String absolutePath = new Path(FILESTORE_PREFIX).append(getTestBaseFileSystemLocation()).append(path).toString();
+		String userRoot = OrionConfiguration.getUserHome(testUserId).toURI().toString() + "/";
+		String absolutePath = new Path(userRoot).append(getTestBaseFileSystemLocation()).append(path).toString();
 		try {
 			return URIUtil.fromString(absolutePath);
 		} catch (URISyntaxException e) {
@@ -181,8 +182,10 @@ public abstract class FileSystemTest extends AbstractServerTest {
 		FILESTORE_PREFIX = root.toURI().toString() + "/";
 	}
 
-	protected static void remove(String path) throws CoreException {
-		IFileStore outputFile = EFS.getStore(URI.create(FILESTORE_PREFIX + path));
+	protected void remove(String path) throws CoreException {
+		String userRoot = OrionConfiguration.getUserHome(testUserId).toURI().toString() + "/";
+		String absolutePath = new Path(userRoot).append(getTestBaseFileSystemLocation()).append(path).toString();
+		IFileStore outputFile = EFS.getStore(URI.create(absolutePath));
 		outputFile.delete(EFS.NONE, null);
 	}
 
