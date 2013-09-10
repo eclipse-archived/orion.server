@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others.
+ * Copyright (c) 2010, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,29 +10,34 @@
  *******************************************************************************/
 package org.eclipse.orion.server.tests.prefs;
 
-import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.List;
-import junit.framework.Assert;
+
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.core.IOUtilities;
-import org.eclipse.orion.server.core.users.OrionScope;
+import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
-import org.osgi.service.prefs.BackingStoreException;
+
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PutMethodWebRequest;
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 /**
  * Tests for the preference servlet.
@@ -41,23 +46,14 @@ public class PreferenceTest extends FileSystemTest {
 
 	@Before
 	public void setUp() throws Exception {
-		OrionScope prefs = new OrionScope();
-		clearPreferences(prefs.getNode("Users"));
-		clearPreferences(prefs.getNode("Workspaces"));
-		clearPreferences(prefs.getNode("Projects"));
+		List<String> userIds = OrionConfiguration.getMetaStore().readAllUsers();
+		for (String userId : userIds) {
+			OrionConfiguration.getMetaStore().deleteUser(userId);
+		}
 		webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 		setUpAuthorization();
 		createTestProject("PreferenceTest");
-	}
-
-	private void clearPreferences(IEclipsePreferences prefs) throws BackingStoreException {
-		//clear  children
-		for (String child : prefs.childrenNames()) {
-			prefs.node(child).removeNode();
-		}
-		prefs.clear();
-		prefs.flush();
 	}
 
 	/**
@@ -81,7 +77,7 @@ public class PreferenceTest extends FileSystemTest {
 		response = webConversation.getResource(request);
 		assertEquals("1.2", HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject result = new JSONObject(response.getText());
-		Assert.assertTrue("1.3", result.optBoolean(key));
+		assertTrue("1.3", result.optBoolean(key));
 	}
 
 	@Test
@@ -246,14 +242,14 @@ public class PreferenceTest extends FileSystemTest {
 		}
 	}
 
-	@Test
+	@Ignore
 	public void testDeleteSingle() {
 		//TODO not implemented
 	}
 
-	@Test
+	@Ignore
 	public void testDeleteNode() {
-
+		//TODO not implemented
 	}
 
 	@Test
@@ -322,8 +318,8 @@ public class PreferenceTest extends FileSystemTest {
 		}
 	}
 
-	private WebRequest createSetPreferenceRequest(String location, String key, String value) {
-		String body = "key=" + URLEncoder.encode(key) + "&value=" + URLEncoder.encode(value);
+	private WebRequest createSetPreferenceRequest(String location, String key, String value) throws UnsupportedEncodingException {
+		String body = "key=" + URLEncoder.encode(key, "UTF-8") + "&value=" + URLEncoder.encode(value, "UTF-8");
 		return new PutMethodWebRequest(location, new ByteArrayInputStream(body.getBytes()), "application/x-www-form-urlencoded");
 	}
 
