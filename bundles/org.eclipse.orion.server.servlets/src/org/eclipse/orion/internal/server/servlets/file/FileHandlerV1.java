@@ -105,13 +105,14 @@ class FileHandlerV1 extends GenericFileHandler {
 		while ((line = requestReader.readLine()) != null)
 			buf.append(line);
 		JSONObject changes = new JSONObject(buf.toString());
+		//read file to memory
 		Reader fileReader = new BufferedReader(new InputStreamReader(file.openInputStream(EFS.NONE, null)));
 		StringBuffer oldFile = new StringBuffer();
-
 		char[] buffer = new char[4096];
 		int read = 0;
 		while ((read = fileReader.read(buffer)) != -1)
 			oldFile.append(buffer, 0, read);
+		IOUtilities.safeClose(fileReader);
 
 		JSONArray changeList = changes.getJSONArray("diff");
 		for (int i = 0; i < changeList.length(); i++) {
