@@ -99,11 +99,7 @@ public class SimpleMetaStoreUtil {
 	 * @return true if the creation was successful.
 	 */
 	public static boolean createMetaStoreRoot(File parent, JSONObject jsonObject) {
-		if (!createMetaFolder(parent, ROOT)) {
-			throw new RuntimeException("Meta File Error, cannot create root folder " + ROOT + " under " + parent.getAbsolutePath());
-		}
-		File metaStoreRootFolder = SimpleMetaStoreUtil.retrieveMetaFolder(parent, ROOT);
-		return createMetaFile(metaStoreRootFolder, ROOT, jsonObject);
+		return createMetaFile(parent, ROOT, jsonObject);
 	}
 
 	/**
@@ -183,14 +179,18 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
-	 * Delete the provided folder. The folder should be empty. 
+	 * Delete the provided folder. The folder should be empty. If the exceptionWhenNotEmpty is false, then do not throw
+	 * an exception when the folder is not empty, just return false. 
 	 * @param parent The parent folder.
 	 * @return true of the creation was successful.
 	 */
-	public static boolean deleteMetaFolder(File parent) {
+	public static boolean deleteMetaFolder(File parent, boolean exceptionWhenNotEmpty) {
 		String[] files = parent.list();
 		if (files.length != 0) {
-			throw new RuntimeException("Meta File Error, cannot delete, not empty.");
+			if (exceptionWhenNotEmpty) {
+				throw new RuntimeException("Meta File Error, cannot delete, not empty.");
+			}
+			return false;
 		}
 		if (!parent.delete()) {
 			throw new RuntimeException("Meta File Error, cannot delete folder.");
@@ -204,8 +204,7 @@ public class SimpleMetaStoreUtil {
 	 * @return true of the creation was successful.
 	 */
 	public static boolean deleteMetaStoreRoot(File parent) {
-		File metaStoreRootFolder = SimpleMetaStoreUtil.retrieveMetaFolder(parent, ROOT);
-		return deleteMetaFile(metaStoreRootFolder, ROOT);
+		return deleteMetaFile(parent, ROOT);
 	}
 
 	/**
@@ -312,8 +311,7 @@ public class SimpleMetaStoreUtil {
 	 * @return true if the parent is a folder with a MetaFile.
 	 */
 	public static boolean isMetaStoreRoot(File parent) {
-		File metaStoreRootFolder = SimpleMetaStoreUtil.retrieveMetaFolder(parent, ROOT);
-		return isMetaFile(metaStoreRootFolder, ROOT);
+		return isMetaFile(parent, ROOT);
 	}
 
 	/**
@@ -355,7 +353,13 @@ public class SimpleMetaStoreUtil {
 		//the user-tree layout organises projects by the user who created it: metastore/an/anthony
 		List<String> userMetaFolders = new ArrayList<String>();
 		for (File file : parent.listFiles()) {
-			if (file.isDirectory()) {
+			if (file.getName().equals(".metadata")) {
+				// skip the eclipse workspace metadata folder
+				continue;
+			} else if (file.isFile() && file.getName().endsWith(METAFILE_EXTENSION)) {
+				// skip the meta file
+				continue;
+			} else if (file.isDirectory()) {
 				// org folder directory, so go into for users
 				for (File userFolder : file.listFiles()) {
 					if (userFolder.isDirectory()) {
@@ -363,14 +367,11 @@ public class SimpleMetaStoreUtil {
 						userMetaFolders.add(userFolder.getName());
 						continue;
 					}
-					throw new RuntimeException("Meta File Error, contains invalid metadata:" + file.toString() + " at " + userFolder.getName());
+					throw new RuntimeException("Meta File Error, root contains invalid metadata:" + file.toString() + " at " + userFolder.getName());
 				}
 				continue;
-			} else if (file.isFile() && file.getName().endsWith(METAFILE_EXTENSION)) {
-				// meta file, so continue
-				continue;
 			}
-			throw new RuntimeException("Meta File Error, contains invalid metadata:" + parent.toString() + " at " + file.getName());
+			throw new RuntimeException("Meta File Error, root contains invalid metadata:" + parent.toString() + " at " + file.getName());
 		}
 		return userMetaFolders;
 	}
@@ -431,8 +432,7 @@ public class SimpleMetaStoreUtil {
 	 */
 	public static JSONObject retrieveMetaStoreRootJSON(File parent) {
 		if (isMetaStoreRoot(parent)) {
-			File metaStoreRootFolder = SimpleMetaStoreUtil.retrieveMetaFolder(parent, ROOT);
-			return retrieveMetaFileJSON(metaStoreRootFolder, ROOT);
+			return retrieveMetaFileJSON(parent, ROOT);
 		}
 		return null;
 	}
@@ -468,7 +468,7 @@ public class SimpleMetaStoreUtil {
 	public static boolean updateMetaFile(File parent, String name, JSONObject jsonObject) {
 		try {
 			if (!isMetaFile(parent, name)) {
-				throw new RuntimeException("Meta File Error, cannot delete, does not exist.");
+				throw new RuntimeException("Meta File Error, cannot update, does not exist.");
 			}
 			File savedFile = retrieveMetaFile(parent, name);
 

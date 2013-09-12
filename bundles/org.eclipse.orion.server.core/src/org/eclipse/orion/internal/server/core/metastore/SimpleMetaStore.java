@@ -53,11 +53,11 @@ public class SimpleMetaStore implements IMetaStore {
 	public final static String PROJECT = "project";
 	public final static String WORKSPACE = "workspace";
 
-	private File metaStoreRoot = null;
+	private File rootLocation = null;
 
 	/**
 	 * Create an instance of a SimpleMetaStore under the provided folder.
-	 * @param rootLocation The root location, a folder on the server.
+	 * @param rootLocation The root location for storing content and metadata on this server.
 	 */
 	public SimpleMetaStore(File rootLocation) {
 		super();
@@ -94,7 +94,7 @@ public class SimpleMetaStore implements IMetaStore {
 		} catch (JSONException e) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createProject: could not create project: " + projectInfo.getFullName() + " for user " + userId, e));
 		}
-		File userMetaFolder = SimpleMetaStoreUtil.retrieveMetaUserFolder(metaStoreRoot, userId);
+		File userMetaFolder = SimpleMetaStoreUtil.retrieveMetaUserFolder(rootLocation, userId);
 		File workspaceMetaFolder = SimpleMetaStoreUtil.retrieveMetaFolder(userMetaFolder, workspaceId);
 		if (!SimpleMetaStoreUtil.isMetaFolder(workspaceMetaFolder)) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createProject: could not create project: " + projectInfo.getFullName() + ", cannot find workspace " + projectInfo.getWorkspaceId(), null));
@@ -120,7 +120,7 @@ public class SimpleMetaStore implements IMetaStore {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createUser: could not create user: " + userInfo.getUniqueId() + ", did not provide a userName", null));
 		}
 		userInfo.setUniqueId(userInfo.getUserName());
-		File userMetaFolder = SimpleMetaStoreUtil.retrieveMetaUserFolder(metaStoreRoot, userInfo.getUserName());
+		File userMetaFolder = SimpleMetaStoreUtil.retrieveMetaUserFolder(rootLocation, userInfo.getUserName());
 		if (SimpleMetaStoreUtil.isMetaFolder(userMetaFolder)) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createUser: could not create user: " + userInfo.getUserName() + ", user already exists", null));
 		}
@@ -136,7 +136,7 @@ public class SimpleMetaStore implements IMetaStore {
 		} catch (JSONException e) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createUser: could not create user: " + userInfo.getUserName(), e));
 		}
-		if (!SimpleMetaStoreUtil.createMetaUserFolder(metaStoreRoot, userInfo.getUserName())) {
+		if (!SimpleMetaStoreUtil.createMetaUserFolder(rootLocation, userInfo.getUserName())) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createUser: could not create user: " + userInfo.getUserName(), null));
 		}
 		if (!SimpleMetaStoreUtil.createMetaFile(userMetaFolder, USER, jsonObject)) {
@@ -164,7 +164,7 @@ public class SimpleMetaStore implements IMetaStore {
 		String workspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(workspaceInfo.getUserId(), workspaceInfo.getFullName());
 		String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
 		// It is possible to have two workspaces with the same name, so append an integer to it if this is a duplicate name.
-		File userMetaFolder = SimpleMetaStoreUtil.retrieveMetaUserFolder(metaStoreRoot, userInfo.getUniqueId());
+		File userMetaFolder = SimpleMetaStoreUtil.retrieveMetaUserFolder(rootLocation, userInfo.getUniqueId());
 		File workspaceMetaFolder = SimpleMetaStoreUtil.retrieveMetaFolder(userMetaFolder, encodedWorkspaceName);
 		int suffix = 0;
 		while (SimpleMetaStoreUtil.isMetaFolder(workspaceMetaFolder)) {
@@ -204,7 +204,7 @@ public class SimpleMetaStore implements IMetaStore {
 	public void deleteProject(String workspaceId, String projectName) throws CoreException {
 		String userName = SimpleMetaStoreUtil.decodeUserIdFromWorkspaceId(workspaceId);
 		String workspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
-		File userMetaFolder = SimpleMetaStoreUtil.retrieveMetaUserFolder(metaStoreRoot, userName);
+		File userMetaFolder = SimpleMetaStoreUtil.retrieveMetaUserFolder(rootLocation, userName);
 		File workspaceMetaFolder = SimpleMetaStoreUtil.retrieveMetaFolder(userMetaFolder, workspaceName);
 		File projectMetaFolder = SimpleMetaStoreUtil.retrieveMetaFolder(workspaceMetaFolder, projectName);
 
@@ -221,13 +221,9 @@ public class SimpleMetaStore implements IMetaStore {
 		workspaceInfo.setProjectNames(newProjectIds);
 		updateWorkspace(workspaceInfo);
 
-		// delete the meta file and folder
-		if (!SimpleMetaStoreUtil.deleteMetaFile(projectMetaFolder, PROJECT)) {
-			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.deleteProject: could not delete project: " + projectName, null));
-		}
-		if (!SimpleMetaStoreUtil.deleteMetaFolder(projectMetaFolder)) {
-			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.deleteProject: could not delete project: " + projectName, null));
-		}
+		// delete the meta file and folder, do not check whether the delete was successful, as the files could already have been deleted. 
+		SimpleMetaStoreUtil.deleteMetaFile(projectMetaFolder, PROJECT);
+		SimpleMetaStoreUtil.deleteMetaFolder(projectMetaFolder, true);
 	}
 
 	public void deleteUser(String userId) throws CoreException {
@@ -243,7 +239,7 @@ public class SimpleMetaStore implements IMetaStore {
 			deleteWorkspace(userId, workspaceId);
 		}
 
-		File userMetaFolder = SimpleMetaStoreUtil.retrieveMetaUserFolder(metaStoreRoot, userInfo.getUserName());
+		File userMetaFolder = SimpleMetaStoreUtil.retrieveMetaUserFolder(rootLocation, userInfo.getUserName());
 		if (!SimpleMetaStoreUtil.deleteMetaFile(userMetaFolder, USER)) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.deleteUser: could not delete user: " + userInfo.getUserName(), null));
 		}
@@ -254,7 +250,7 @@ public class SimpleMetaStore implements IMetaStore {
 
 	public void deleteWorkspace(String userId, String workspaceId) throws CoreException {
 		String workspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
-		File userMetaFolder = SimpleMetaStoreUtil.retrieveMetaUserFolder(metaStoreRoot, userId);
+		File userMetaFolder = SimpleMetaStoreUtil.retrieveMetaUserFolder(rootLocation, userId);
 		File workspaceMetaFolder = SimpleMetaStoreUtil.retrieveMetaFolder(userMetaFolder, workspaceName);
 
 		// Delete the projects in the workspace
@@ -280,7 +276,7 @@ public class SimpleMetaStore implements IMetaStore {
 		if (!SimpleMetaStoreUtil.deleteMetaFile(workspaceMetaFolder, WORKSPACE)) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.deleteWorkspace: could not delete workspace: " + workspaceName, null));
 		}
-		if (!SimpleMetaStoreUtil.deleteMetaFolder(workspaceMetaFolder)) {
+		if (!SimpleMetaStoreUtil.deleteMetaFolder(workspaceMetaFolder, true)) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.deleteWorkspace: could not delete workspace: " + workspaceName, null));
 		}
 	}
@@ -338,11 +334,11 @@ public class SimpleMetaStore implements IMetaStore {
 				throw new RuntimeException("SimpleMetaStore.initializeMetaStore: could not read MetaStore");
 			}
 		}
-		this.metaStoreRoot = new File(rootLocation, SimpleMetaStoreUtil.ROOT);
+		this.rootLocation = rootLocation;
 	}
 
 	public List<String> readAllUsers() throws CoreException {
-		return SimpleMetaStoreUtil.listMetaUserFolders(metaStoreRoot);
+		return SimpleMetaStoreUtil.listMetaUserFolders(rootLocation);
 	}
 
 	public ProjectInfo readProject(String workspaceId, String projectName) throws CoreException {
@@ -351,7 +347,7 @@ public class SimpleMetaStore implements IMetaStore {
 		if (userName == null || workspaceName == null) {
 			return null;
 		}
-		File userMetaFolder = SimpleMetaStoreUtil.retrieveMetaUserFolder(metaStoreRoot, userName);
+		File userMetaFolder = SimpleMetaStoreUtil.retrieveMetaUserFolder(rootLocation, userName);
 		File workspaceMetaFolder = SimpleMetaStoreUtil.retrieveMetaFolder(userMetaFolder, workspaceName);
 		File projectMetaFolder = SimpleMetaStoreUtil.retrieveMetaFolder(workspaceMetaFolder, projectName);
 		JSONObject jsonObject = SimpleMetaStoreUtil.retrieveMetaFileJSON(projectMetaFolder, PROJECT);
@@ -374,7 +370,7 @@ public class SimpleMetaStore implements IMetaStore {
 	}
 
 	public UserInfo readUser(String userId) throws CoreException {
-		File userMetaFolder = SimpleMetaStoreUtil.retrieveMetaUserFolder(metaStoreRoot, userId);
+		File userMetaFolder = SimpleMetaStoreUtil.retrieveMetaUserFolder(rootLocation, userId);
 		if (!SimpleMetaStoreUtil.isMetaFolder(userMetaFolder)) {
 			// user does not exist for this userId, create it ( see Bug 415505 )
 			UserInfo userInfo = new UserInfo();
@@ -424,7 +420,7 @@ public class SimpleMetaStore implements IMetaStore {
 			// could not decode, so cannot find workspace
 			return null;
 		}
-		File userMetaFolder = SimpleMetaStoreUtil.retrieveMetaUserFolder(metaStoreRoot, userName);
+		File userMetaFolder = SimpleMetaStoreUtil.retrieveMetaUserFolder(rootLocation, userName);
 		File workspaceMetaFolder = SimpleMetaStoreUtil.retrieveMetaFolder(userMetaFolder, workspaceName);
 		JSONObject jsonObject = SimpleMetaStoreUtil.retrieveMetaFileJSON(workspaceMetaFolder, WORKSPACE);
 		if (jsonObject == null) {
@@ -480,7 +476,7 @@ public class SimpleMetaStore implements IMetaStore {
 			jsonObject.put("Properties", properties);
 		} catch (JSONException e) {
 		}
-		File userMetaFolder = SimpleMetaStoreUtil.retrieveMetaUserFolder(metaStoreRoot, userId);
+		File userMetaFolder = SimpleMetaStoreUtil.retrieveMetaUserFolder(rootLocation, userId);
 		File workspaceMetaFolder = SimpleMetaStoreUtil.retrieveMetaFolder(userMetaFolder, workspaceName);
 		File projectMetaFolder = SimpleMetaStoreUtil.retrieveMetaFolder(workspaceMetaFolder, projectInfo.getUniqueId());
 		if (!SimpleMetaStoreUtil.updateMetaFile(projectMetaFolder, PROJECT, jsonObject)) {
@@ -492,7 +488,7 @@ public class SimpleMetaStore implements IMetaStore {
 		if (userInfo.getUserName() == null) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.updateUser: user name is null.", null));
 		}
-		File userMetaFolder = SimpleMetaStoreUtil.retrieveMetaUserFolder(metaStoreRoot, userInfo.getUserName());
+		File userMetaFolder = SimpleMetaStoreUtil.retrieveMetaUserFolder(rootLocation, userInfo.getUserName());
 		JSONObject jsonObject = SimpleMetaStoreUtil.retrieveMetaFileJSON(userMetaFolder, USER);
 		if (jsonObject == null) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.updateUser: could not find user " + userInfo.getUserName(), null));
@@ -529,7 +525,7 @@ public class SimpleMetaStore implements IMetaStore {
 		} catch (JSONException e) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.updateWorkspace: could not update workspace: " + workspaceName + " for user " + userName, e));
 		}
-		File userMetaFolder = SimpleMetaStoreUtil.retrieveMetaUserFolder(metaStoreRoot, userName);
+		File userMetaFolder = SimpleMetaStoreUtil.retrieveMetaUserFolder(rootLocation, userName);
 		File workspaceMetaFolder = SimpleMetaStoreUtil.retrieveMetaFolder(userMetaFolder, workspaceName);
 		if (!SimpleMetaStoreUtil.updateMetaFile(workspaceMetaFolder, WORKSPACE, jsonObject)) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.updateWorkspace: could not update workspace: " + workspaceName + " for user " + userName, null));

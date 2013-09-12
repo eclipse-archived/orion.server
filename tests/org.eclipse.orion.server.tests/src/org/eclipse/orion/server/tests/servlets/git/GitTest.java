@@ -56,6 +56,8 @@ import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.core.IOUtilities;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
 import org.eclipse.orion.server.core.LogHelper;
@@ -360,8 +362,16 @@ public abstract class GitTest extends FileSystemTest {
 	// see org.eclipse.orion.internal.server.servlets.workspace.WorkspaceResourceHandler.generateProjectLocation(WebProject, String)
 	private static IFileStore getProjectStore(ProjectInfo project, String user) throws CoreException {
 		IFileStore root = OrionConfiguration.getUserHome(user);
-		IFileStore projectStore = root.getChild(project.getUniqueId());
-		projectStore.mkdir(EFS.NONE, null);
+		IFileStore projectStore = null;
+		if (OrionConfiguration.getMetaStore() instanceof SimpleMetaStore) {
+			// simple metastore, projects located in user/workspace/project
+			String workspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(project.getWorkspaceId());
+			projectStore = root.getChild(workspaceName).getChild(project.getUniqueId());
+		} else {
+			// legacy metastore, projects located in user/project
+			projectStore = root.getChild(project.getUniqueId());
+			projectStore.mkdir(EFS.NONE, null);
+		}
 		return projectStore;
 	}
 

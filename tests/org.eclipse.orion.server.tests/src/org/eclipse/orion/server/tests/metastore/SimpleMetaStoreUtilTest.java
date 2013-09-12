@@ -160,10 +160,9 @@ public class SimpleMetaStoreUtilTest {
 	public void testListMetaFiles() throws JSONException {
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put("int", 1);
-		File parent = createTestMetaStoreFolder();
+		File metaStoreRootFolder = createTestMetaStoreFolder();
 
-		assertTrue(SimpleMetaStoreUtil.createMetaStoreRoot(parent, jsonObject));
-		File metaStoreRootFolder = SimpleMetaStoreUtil.retrieveMetaFolder(parent, SimpleMetaStoreUtil.ROOT);
+		assertTrue(SimpleMetaStoreUtil.createMetaStoreRoot(metaStoreRootFolder, jsonObject));
 
 		// create the folder
 		String name1 = "name1";
@@ -201,13 +200,13 @@ public class SimpleMetaStoreUtilTest {
 
 		// delete the files
 		assertTrue(SimpleMetaStoreUtil.deleteMetaFile(folder1, name1));
-		assertTrue(SimpleMetaStoreUtil.deleteMetaFolder(folder1));
+		assertTrue(SimpleMetaStoreUtil.deleteMetaFolder(folder1, true));
 
 		assertTrue(SimpleMetaStoreUtil.deleteMetaFile(folder2, name2));
-		assertTrue(SimpleMetaStoreUtil.deleteMetaFolder(folder2));
+		assertTrue(SimpleMetaStoreUtil.deleteMetaFolder(folder2, true));
 
 		// delete the root folder
-		assertTrue(SimpleMetaStoreUtil.deleteMetaStoreRoot(parent));
+		assertTrue(SimpleMetaStoreUtil.deleteMetaStoreRoot(metaStoreRootFolder));
 	}
 
 	@Test

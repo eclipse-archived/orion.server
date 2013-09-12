@@ -32,10 +32,12 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.core.IOUtilities;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
 import org.eclipse.orion.internal.server.servlets.workspace.WorkspaceServlet;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
+import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.users.OrionScope;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
@@ -216,7 +218,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	}
 
 	@Test
-	public void testCopyProjectNonDefaultLocation() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testCopyProjectNonDefaultLocation() throws IOException, SAXException, JSONException {
 		//create workspace
 		String workspaceName = WorkspaceServiceTest.class.getName() + "#testCopyProjectNonDefaultLocation";
 		URI workspaceLocation = createWorkspace(workspaceName);
@@ -282,7 +284,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	}
 
 	@Test
-	public void testCopyProject() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testCopyProject() throws IOException, SAXException, JSONException {
 		//create workspace
 		String workspaceName = WorkspaceServiceTest.class.getName() + "#testCopyProject";
 		URI workspaceLocation = createWorkspace(workspaceName);
@@ -322,7 +324,12 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		resultObject = new JSONObject(response.getText());
 		assertEquals(sourceName, resultObject.getString(ProtocolConstants.KEY_NAME));
 		JSONArray children = resultObject.getJSONArray(ProtocolConstants.KEY_CHILDREN);
-		assertEquals(1, children.length());
+		if (OrionConfiguration.getMetaStore() instanceof SimpleMetaStore) {
+			// simple meta store source project includes the the project.json.
+			assertEquals(2, children.length());
+		} else {
+			assertEquals(1, children.length());
+		}
 		JSONObject child = children.getJSONObject(0);
 		assertEquals(fileName, child.getString(ProtocolConstants.KEY_NAME));
 
@@ -332,7 +339,13 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		resultObject = new JSONObject(response.getText());
 		assertEquals(sourceName, resultObject.getString(ProtocolConstants.KEY_NAME));
 		children = resultObject.getJSONArray(ProtocolConstants.KEY_CHILDREN);
-		assertEquals(1, children.length());
+		if (OrionConfiguration.getMetaStore() instanceof SimpleMetaStore) {
+			// The destination includes the the project.json.
+			// It is additionally copied into the destination overriting the file in the destination.
+			assertEquals(2, children.length());
+		} else {
+			assertEquals(1, children.length());
+		}
 		child = children.getJSONObject(0);
 		assertEquals(fileName, child.getString(ProtocolConstants.KEY_NAME));
 	}

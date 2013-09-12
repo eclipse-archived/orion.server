@@ -21,6 +21,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
 import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.server.core.*;
@@ -86,10 +88,18 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 	 */
 	private static URI generateProjectLocation(ProjectInfo project, String user) throws CoreException {
 		IFileStore root = OrionConfiguration.getUserHome(user);
-		IFileStore projectStore = root.getChild(project.getUniqueId());
-		//This folder must be empty initially or we risk showing another user's old private data
-		projectStore.delete(EFS.NONE, null);
-		projectStore.mkdir(EFS.NONE, null);
+		IFileStore projectStore = null;
+		if (OrionConfiguration.getMetaStore() instanceof SimpleMetaStore) {
+			// simple metastore, projects located in user/workspace/project
+			String workspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(project.getWorkspaceId());
+			projectStore = root.getChild(workspaceName).getChild(project.getUniqueId());
+		} else {
+			// legacy metastore, projects under the user home
+			projectStore = root.getChild(project.getUniqueId());
+			//This folder must be empty initially or we risk showing another user's old private data
+			projectStore.delete(EFS.NONE, null);
+			projectStore.mkdir(EFS.NONE, null);
+		}
 		return projectStore.toURI();
 	}
 
