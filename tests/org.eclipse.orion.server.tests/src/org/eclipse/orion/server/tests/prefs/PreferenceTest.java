@@ -46,6 +46,7 @@ public class PreferenceTest extends FileSystemTest {
 
 	@Before
 	public void setUp() throws Exception {
+		clearWorkspace();
 		List<String> userIds = OrionConfiguration.getMetaStore().readAllUsers();
 		for (String userId : userIds) {
 			OrionConfiguration.getMetaStore().deleteUser(userId);
