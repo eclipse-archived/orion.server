@@ -188,6 +188,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 
 		String gitUserName = toAdd.optString(GitConstants.KEY_NAME, null);
 		String gitUserMail = toAdd.optString(GitConstants.KEY_MAIL, null);
+		Boolean initProject = toAdd.optBoolean(GitConstants.KEY_INIT_PROJECT, false);
 		if (initOnly) {
 			// git init
 			InitJob job = new InitJob(clone, TaskJobHandler.getUserId(request), request.getRemoteUser(), cloneLocation, gitUserName, gitUserMail);
@@ -199,7 +200,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		cp.setUri(new URIish(clone.getUrl()));
 
 		// if all went well, clone
-		CloneJob job = new CloneJob(clone, TaskJobHandler.getUserId(request), cp, request.getRemoteUser(), cloneLocation, webProjectExists ? null : project /* used for cleaning up, so null when not needed */, gitUserName, gitUserMail);
+		CloneJob job = new CloneJob(clone, TaskJobHandler.getUserId(request), cp, request.getRemoteUser(), cloneLocation, webProjectExists ? null : project /* used for cleaning up, so null when not needed */, gitUserName, gitUserMail, initProject);
 		return TaskJobHandler.handleTaskJob(request, response, job, statusHandler);
 	}
 

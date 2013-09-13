@@ -192,4 +192,6 @@ public class GitConstants {
 	public static final String KEY_START_RANGE = "Start";
 
 	public static final String KEY_END_RANGE = "End";
+
+	public static final String KEY_INIT_PROJECT = "initProject"; //$NON-NLS-1$
 }

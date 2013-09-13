@@ -10,8 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.jobs;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
 import javax.servlet.http.HttpServletResponse;
@@ -44,8 +43,9 @@ public class CloneJob extends GitJob {
 	private final String gitUserName;
 	private final String gitUserMail;
 	private String cloneLocation;
+	private final boolean initProject;
 
-	public CloneJob(Clone clone, String userRunningTask, CredentialsProvider credentials, String user, String cloneLocation, ProjectInfo project, String gitUserName, String gitUserMail) {
+	public CloneJob(Clone clone, String userRunningTask, CredentialsProvider credentials, String user, String cloneLocation, ProjectInfo project, String gitUserName, String gitUserMail, boolean initProject) {
 		super(userRunningTask, true, (GitCredentialsProvider) credentials);
 		this.clone = clone;
 		this.user = user;
@@ -53,8 +53,13 @@ public class CloneJob extends GitJob {
 		this.gitUserName = gitUserName;
 		this.gitUserMail = gitUserMail;
 		this.cloneLocation = cloneLocation;
+		this.initProject = initProject;
 		setFinalMessage("Clone complete.");
 		setTaskExpirationTime(TimeUnit.DAYS.toMillis(7));
+	}
+
+	public CloneJob(Clone clone, String userRunningTask, CredentialsProvider credentials, String user, String cloneLocation, ProjectInfo project, String gitUserName, String gitUserMail) {
+		this(clone, userRunningTask, credentials, user, cloneLocation, project, gitUserName, gitUserMail, false);
 	}
 
 	private IStatus doClone() {
@@ -74,6 +79,38 @@ public class CloneJob extends GitJob {
 			// Configure the clone, see Bug 337820
 			GitCloneHandlerV1.doConfigureClone(git, user, gitUserName, gitUserMail);
 			git.getRepository().close();
+
+			if (initProject) {
+				File projectJsonFile = new File(cloneFolder.getPath() + File.separator + "project.json");
+				if (!projectJsonFile.exists()) {
+					PrintStream out = null;
+					try {
+						out = new PrintStream(new FileOutputStream(projectJsonFile));
+						JSONObject projectjson = new JSONObject();
+						projectjson.put("type", "git");
+
+						String gitPath = clone.getUrl();
+						if (gitPath.indexOf("://") > 0) {
+							gitPath = gitPath.substring(gitPath.indexOf("://") + 3);
+						}
+						String[] segments = gitPath.split("/");
+						String serverName = segments[0];
+						if (serverName.indexOf("@") > 0) {
+							serverName = serverName.substring(serverName.indexOf("@") + 1);
+						}
+						String repoName = segments[segments.length - 1];
+						if (repoName.indexOf(".git") > 0) {
+							repoName = repoName.substring(0, repoName.lastIndexOf(".git"));
+						}
+						projectjson.put("Name", repoName + " at " + serverName);
+						out.print(projectjson.toString());
+					} finally {
+						if (out != null)
+							out.close();
+					}
+				}
+			}
+
 		} catch (IOException e) {
 			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error cloning git repository", e);
 		} catch (CoreException e) {
@@ -91,6 +128,7 @@ public class CloneJob extends GitJob {
 		} catch (JSONException e) {
 			// Should not happen
 		}
+
 		return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, jsonData);
 	}
 
