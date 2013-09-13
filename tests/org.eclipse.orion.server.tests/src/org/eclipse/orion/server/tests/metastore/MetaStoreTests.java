@@ -67,7 +67,7 @@ public abstract class MetaStoreTests {
 		ProjectInfo projectInfo = new ProjectInfo();
 		projectInfo.setFullName(projectName);
 		try {
-			projectInfo.setContentLocation(new URI("file://test.com"));
+			projectInfo.setContentLocation(new URI("file:/home/anthony/orion/project"));
 		} catch (URISyntaxException e) {
 			// should not get an exception here, simple URI
 		}
@@ -418,7 +418,7 @@ public abstract class MetaStoreTests {
 		ProjectInfo projectInfo = new ProjectInfo();
 		projectInfo.setFullName(projectName);
 		try {
-			projectInfo.setContentLocation(new URI("file://test.com"));
+			projectInfo.setContentLocation(new URI("file:/home/anthony/orion/project"));
 		} catch (URISyntaxException e) {
 			// should not get an exception here, simple URI
 		}

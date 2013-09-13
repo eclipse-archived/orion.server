@@ -31,9 +31,8 @@ import org.json.JSONObject;
  */
 public class SimpleMetaStoreUtil {
 
-	public static final String ROOT = "metastore";
-	public static final String SEPARATOR = "-";
 	public static final String METAFILE_EXTENSION = ".json";
+	public static final String SEPARATOR = "-";
 
 	/**
 	 * Create a new MetaFile with the provided name under the provided parent folder. 
@@ -93,16 +92,6 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
-	 * Create a new root MetaFile under the provided parent folder. 
-	 * @param parent The parent folder.
-	 * @param jsonObject The JSON containing the data to save in the MetaFile.
-	 * @return true if the creation was successful.
-	 */
-	public static boolean createMetaStoreRoot(File parent, JSONObject jsonObject) {
-		return createMetaFile(parent, ROOT, jsonObject);
-	}
-
-	/**
 	 * Create a new user folder with the provided name under the provided parent folder.
 	 * The file layout settings are consulted to determine if a flat layout or a usertree layout is used. 
 	 * @param parent the parent folder.
@@ -117,7 +106,7 @@ public class SimpleMetaStoreUtil {
 			throw new RuntimeException("Meta File Error, parent is not a folder");
 		}
 		//consult layout preference
-		String layout = PreferenceHelper.getString(ServerConstants.CONFIG_FILE_LAYOUT, "flat").toLowerCase(); //$NON-NLS-1$
+		String layout = getLayoutPreference();
 
 		if ("usertree".equals(layout)) { //$NON-NLS-1$
 			//the user-tree layout organises projects by the user who created it: metastore/an/anthony
@@ -165,7 +154,7 @@ public class SimpleMetaStoreUtil {
 	 * Delete the MetaFile with the provided name under the provided parent folder. 
 	 * @param parent The parent folder.
 	 * @param name The name of the MetaFile
-	 * @return true of the creation was successful.
+	 * @return true if the deletion was successful.
 	 */
 	public static boolean deleteMetaFile(File parent, String name) {
 		if (!isMetaFile(parent, name)) {
@@ -182,29 +171,21 @@ public class SimpleMetaStoreUtil {
 	 * Delete the provided folder. The folder should be empty. If the exceptionWhenNotEmpty is false, then do not throw
 	 * an exception when the folder is not empty, just return false. 
 	 * @param parent The parent folder.
-	 * @return true of the creation was successful.
+	 * @param name The name of the folder
+	 * @return true if the deletion was successful.
 	 */
-	public static boolean deleteMetaFolder(File parent, boolean exceptionWhenNotEmpty) {
-		String[] files = parent.list();
-		if (files.length != 0) {
+	public static boolean deleteMetaFolder(File parent, String name, boolean exceptionWhenNotEmpty) {
+		if (!isMetaFolder(parent, name)) {
+			throw new RuntimeException("Meta File Error, cannot delete, does not exist.");
+		}
+		File folder = retrieveMetaFolder(parent, name);
+		if (!folder.delete()) {
 			if (exceptionWhenNotEmpty) {
 				throw new RuntimeException("Meta File Error, cannot delete, not empty.");
 			}
 			return false;
 		}
-		if (!parent.delete()) {
-			throw new RuntimeException("Meta File Error, cannot delete folder.");
-		}
 		return true;
-	}
-
-	/**
-	 * Delete the MetaStore root folder. 
-	 * @param parent The parent folder.
-	 * @return true of the creation was successful.
-	 */
-	public static boolean deleteMetaStoreRoot(File parent) {
-		return deleteMetaFile(parent, ROOT);
 	}
 
 	/**
@@ -222,15 +203,15 @@ public class SimpleMetaStoreUtil {
 		if (!parent.delete()) {
 			throw new RuntimeException("Meta File Error, cannot delete folder.");
 		}
-		
+
 		//consult layout preference
-		String layout = PreferenceHelper.getString(ServerConstants.CONFIG_FILE_LAYOUT, "flat").toLowerCase(); //$NON-NLS-1$
+		String layout = getLayoutPreference();
 
 		if ("flat".equals(layout)) { //$NON-NLS-1$
 			//default layout is a flat list of user at the root
 			return true;
 		}
-		
+
 		//the user-tree layout organises projects by the user who created it: metastore/an/anthony
 		File orgFolder = parent.getParentFile();
 		files = orgFolder.list();
@@ -257,10 +238,24 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
+	 * Consult the file layout setting to determine if a flat layout or a usertree layout is used. 
+	 * @return
+	 */
+	private static String getLayoutPreference() {
+		//consult layout preference
+		String layout = "flat";
+		String preference = PreferenceHelper.getString(ServerConstants.CONFIG_FILE_LAYOUT, "flat");
+		if (preference != null) {
+			layout = preference.toLowerCase();
+		}
+		return layout;
+	}
+
+	/**
 	 * Determine if the provided name is a MetaFile under the provided parent folder.
 	 * @param parent The parent folder.
 	 * @param name The name of the MetaFile
-	 * @return true if the parent and name is a MetaFile.
+	 * @return true if the name is a MetaFile.
 	 */
 	public static boolean isMetaFile(File parent, String name) {
 		if (!parent.exists()) {
@@ -280,38 +275,56 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
-	 * Determine if the provided parent folder contains a MetaFile.
+	 * Determine if the provided parent folder contains a MetaFile with the provided name
 	 * @param parent The parent folder.
+	 * @param name The name of the MetaFile
 	 * @return true if the parent is a folder with a MetaFile.
 	 */
-	public static boolean isMetaFolder(File parent) {
+	public static boolean isMetaFolder(File parent, String name) {
 		if (!parent.exists()) {
 			return false;
 		}
 		if (!parent.isDirectory()) {
 			return false;
 		}
-		for (File file : parent.listFiles()) {
-			if (file.isDirectory()) {
-				// directory, so continue
-				continue;
-			}
-			if (file.isFile() && file.getName().endsWith(METAFILE_EXTENSION)) {
-				// meta file, so continue
-				continue;
-			}
-			throw new RuntimeException("Meta File Error, contains invalid metadata:" + parent.toString() + " at " + file.getName());
+		File savedFolder = retrieveMetaFolder(parent, name);
+		if (!savedFolder.exists()) {
+			return false;
+		}
+		if (!savedFolder.isDirectory()) {
+			return false;
 		}
 		return true;
 	}
 
 	/**
-	 * Determine if the provided folder is a folder with a root MetaFile. 
-	 * @param parent The parent folder.
-	 * @return true if the parent is a folder with a MetaFile.
+	 * Determine if the provided user name is a MetaFolder under the provided parent folder.
+	 * The file layout settings are consulted to determine if a flat layout or a usertree layout is used. 
+	 * @param parent the parent folder.
+	 * @param userName the user name.
+	 * @return true if the parent is a folder with a user MetaFile.
 	 */
-	public static boolean isMetaStoreRoot(File parent) {
-		return isMetaFile(parent, ROOT);
+	public static boolean isMetaUserFolder(File parent, String userName) {
+		if (!parent.exists()) {
+			throw new RuntimeException("Meta File Error, parent folder does not exist");
+		}
+		if (!parent.isDirectory()) {
+			throw new RuntimeException("Meta File Error, parent is not a folder");
+		}
+		//consult layout preference
+		String layout = getLayoutPreference();
+
+		if ("usertree".equals(layout)) { //$NON-NLS-1$
+			//the user-tree layout organises projects by the user who created it: metastore/an/anthony
+			String userPrefix = userName.substring(0, Math.min(2, userName.length()));
+			File orgFolder = new File(parent, userPrefix);
+			if (!orgFolder.exists()) {
+				return false;
+			}
+			return isMetaFolder(orgFolder, userName);
+		}
+		//default layout is a flat list of user at the root
+		return isMetaFolder(parent, userName);
 	}
 
 	/**
@@ -343,7 +356,7 @@ public class SimpleMetaStoreUtil {
 	 */
 	public static List<String> listMetaUserFolders(File parent) {
 		//consult layout preference
-		String layout = PreferenceHelper.getString(ServerConstants.CONFIG_FILE_LAYOUT, "flat").toLowerCase(); //$NON-NLS-1$
+		String layout = getLayoutPreference();
 
 		if ("flat".equals(layout)) { //$NON-NLS-1$
 			//default layout is a flat list of user at the root
@@ -377,22 +390,44 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
-	 * Retrieve the MetaFile with the provided name under the parent folder.
+	 * Move the MetaFile in the provided parent folder. 
 	 * @param parent The parent folder.
-	 * @param name The name of the MetaFile
-	 * @return The MetaFile.
+	 * @param oldName The old name of the MetaFile
+	 * @param newName The new name of the MetaFile
+	 * @return true if the move was successful.
 	 */
-	public static File retrieveMetaFile(File parent, String name) {
-		return new File(parent, name + ".json");
+	public static boolean moveMetaFile(File parent, String oldName, String newName) {
+		if (!isMetaFile(parent, oldName)) {
+			return false;
+		}
+		File oldFile = retrieveMetaFile(parent, oldName);
+		File newFile = retrieveMetaFile(parent, newName);
+		return oldFile.renameTo(newFile);
 	}
 
 	/**
-	 * Retrieve the MetaFile with the provided name under the provided parent folder. 
+	 * Move the MetaFolder in the provided parent folder. 
+	 * @param parent The parent folder.
+	 * @param oldName The old name of the MetaFile
+	 * @param newName The new name of the MetaFile
+	 * @return true if the move was successful.
+	 */
+	public static boolean moveMetaFolder(File parent, String oldName, String newName) {
+		if (!isMetaFolder(parent, oldName)) {
+			return false;
+		}
+		File oldFolder = retrieveMetaFolder(parent, oldName);
+		File newFolder = retrieveMetaFolder(parent, newName);
+		return oldFolder.renameTo(newFolder);
+	}
+
+	/**
+	 * Get the JSON from the MetaFile in the provided parent folder. 
 	 * @param parent The parent folder.
 	 * @param name The name of the MetaFile
 	 * @return The JSON containing the data in the MetaFile.
 	 */
-	public static JSONObject retrieveMetaFileJSON(File parent, String name) {
+	public static JSONObject readMetaFile(File parent, String name) {
 		JSONObject jsonObject;
 		try {
 			if (!isMetaFile(parent, name)) {
@@ -416,37 +451,28 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
-	 * Retrieve the folder with the provided name under the provided parent folder. 
+	 * Get the MetaFolder in the provided parent folder. 
 	 * @param parent The parent folder.
-	 * @param name The name of the folder.
-	 * @return The folder.
+	 * @param name The name of the MetaFolder
+	 * @return The JSON containing the data in the MetaFile.
 	 */
-	public static File retrieveMetaFolder(File parent, String name) {
-		return new File(parent, name);
-	}
-
-	/**
-	 * Retrieve the JSON containing the data in the root MetaFile under the parent folder.
-	 * @param parent The parent folder.
-	 * @return The JSON containing the data in the root MetaFile.
-	 */
-	public static JSONObject retrieveMetaStoreRootJSON(File parent) {
-		if (isMetaStoreRoot(parent)) {
-			return retrieveMetaFileJSON(parent, ROOT);
+	public static File readMetaFolder(File parent, String name) {
+		if (!isMetaFolder(parent, name)) {
+			return null;
 		}
-		return null;
+		return retrieveMetaFolder(parent, name);
 	}
 
 	/**
-	 * Retrieve the user folder with the provided name under the provided parent folder.
+	 * Get the user folder with the provided name under the provided parent folder.
 	 * The file layout settings are consulted to determine if a flat layout or a usertree layout is used. 
 	 * @param parent the parent folder.
 	 * @param userName the user name.
 	 * @return the folder.
 	 */
-	public static File retrieveMetaUserFolder(File parent, String userName) {
+	public static File readMetaUserFolder(File parent, String userName) {
 		//consult layout preference
-		String layout = PreferenceHelper.getString(ServerConstants.CONFIG_FILE_LAYOUT, "flat").toLowerCase(); //$NON-NLS-1$
+		String layout = getLayoutPreference();
 
 		if ("usertree".equals(layout)) { //$NON-NLS-1$
 			//the user-tree layout organises projects by the user who created it: metastore/an/anthony
@@ -456,6 +482,26 @@ public class SimpleMetaStoreUtil {
 		}
 		//default layout is a flat list of user at the root
 		return retrieveMetaFolder(parent, userName);
+	}
+
+	/**
+	 * Retrieve the MetaFile with the provided name under the parent folder.
+	 * @param parent The parent folder.
+	 * @param name The name of the MetaFile
+	 * @return The MetaFile.
+	 */
+	private static File retrieveMetaFile(File parent, String name) {
+		return new File(parent, name + ".json");
+	}
+
+	/**
+	 * Retrieve the folder with the provided name under the provided parent folder. 
+	 * @param parent The parent folder.
+	 * @param name The name of the folder.
+	 * @return The folder.
+	 */
+	private static File retrieveMetaFolder(File parent, String name) {
+		return new File(parent, name);
 	}
 
 	/**

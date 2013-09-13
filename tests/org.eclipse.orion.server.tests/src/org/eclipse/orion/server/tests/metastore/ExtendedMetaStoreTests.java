@@ -47,7 +47,7 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		ProjectInfo projectInfo = new ProjectInfo();
 		projectInfo.setFullName(projectName);
 		try {
-			projectInfo.setContentLocation(new URI("file://test.com"));
+			projectInfo.setContentLocation(new URI("file:/home/anthony/orion/project"));
 		} catch (URISyntaxException e) {
 			// should not get an exception here, simple URI
 		}
@@ -65,7 +65,7 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		ProjectInfo projectInfo = new ProjectInfo();
 		projectInfo.setFullName(projectName);
 		try {
-			projectInfo.setContentLocation(new URI("file://test.com"));
+			projectInfo.setContentLocation(new URI("file:/home/anthony/orion/project"));
 		} catch (URISyntaxException e) {
 			// should not get an exception here, simple URI
 		}
@@ -169,11 +169,8 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		// create the MetaStore
 		IMetaStore metaStore = getMetaStore();
 
-		// create the user
-		UserInfo userInfo = new UserInfo();
-		userInfo.setUserName("anthony");
-		userInfo.setFullName("Anthony Hunter");
-		metaStore.createUser(userInfo);
+		// read the user from the previous test
+		UserInfo userInfo = metaStore.readUser("anthony");
 
 		// create the workspace without specifying a workspace name.
 		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
@@ -184,12 +181,58 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 	}
 
 	@Test
-	public void testReadProjectThatDoesNotExist() throws CoreException {
+	public void testMoveProject() throws CoreException {
 		// create the MetaStore
 		IMetaStore metaStore = getMetaStore();
 
 		// read the user from the previous test
 		UserInfo userInfo = metaStore.readUser("anthony");
+
+		// create the workspace
+		String workspaceName = "Orion Content";
+		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
+		workspaceInfo.setFullName(workspaceName);
+		workspaceInfo.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo);
+
+		// create the project
+		String projectName = "Orion Project";
+		ProjectInfo projectInfo = new ProjectInfo();
+		projectInfo.setFullName(projectName);
+		try {
+			projectInfo.setContentLocation(new URI("file:/home/anthony/orion/project"));
+		} catch (URISyntaxException e) {
+			// should not get an exception here, simple URI
+		}
+		projectInfo.setWorkspaceId(workspaceInfo.getUniqueId());
+		metaStore.createProject(projectInfo);
+
+		// move the project by renaming the project by changing the projectName
+		String movedProjectName = "Moved Orion Project";
+		projectInfo.setFullName(movedProjectName);
+
+		// update the project
+		metaStore.updateProject(projectInfo);
+
+		// read the project back again
+		ProjectInfo readProjectInfo = metaStore.readProject(workspaceInfo.getUniqueId(), projectInfo.getFullName());
+		assertNotNull(readProjectInfo);
+		assertTrue(readProjectInfo.getFullName().equals(movedProjectName));
+
+		// delete the user
+		metaStore.deleteUser(userInfo.getUniqueId());
+	}
+
+	@Test
+	public void testReadProjectThatDoesNotExist() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = getMetaStore();
+
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName("anthony");
+		userInfo.setFullName("Anthony Hunter");
+		metaStore.createUser(userInfo);
 
 		// create the workspace
 		String workspaceName = "Orion Content";
@@ -248,13 +291,6 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		workspaceInfo1.setFullName(workspaceName1);
 		workspaceInfo1.setUserId(userInfo.getUniqueId());
 		metaStore.createWorkspace(workspaceInfo1);
-
-		// create another workspace
-		String workspaceName2 = "Workspace2";
-		WorkspaceInfo workspaceInfo2 = new WorkspaceInfo();
-		workspaceInfo2.setFullName(workspaceName2);
-		workspaceInfo2.setUserId(userInfo.getUniqueId());
-		metaStore.createWorkspace(workspaceInfo2);
 
 		// read the workspace that does not exist
 		WorkspaceInfo readWorkspaceInfo = metaStore.readWorkspace("anthony-Workspace77");
