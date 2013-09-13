@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2012 IBM Corporation and others.
+ * Copyright (c) 2010, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -99,20 +99,12 @@ class FileHandlerV1 extends GenericFileHandler {
 	}
 
 	private void handlePatchContents(HttpServletRequest request, BufferedReader requestReader, HttpServletResponse response, IFileStore file) throws IOException, CoreException, NoSuchAlgorithmException, JSONException, ServletException {
-		//read from the request stream
-		StringBuffer buf = new StringBuffer();
-		String line;
-		while ((line = requestReader.readLine()) != null)
-			buf.append(line);
-		JSONObject changes = new JSONObject(buf.toString());
+		JSONObject changes = OrionServlet.readJSONRequest(request);
 		//read file to memory
-		Reader fileReader = new BufferedReader(new InputStreamReader(file.openInputStream(EFS.NONE, null)));
-		StringBuffer oldFile = new StringBuffer();
-		char[] buffer = new char[4096];
-		int read = 0;
-		while ((read = fileReader.read(buffer)) != -1)
-			oldFile.append(buffer, 0, read);
-		IOUtilities.safeClose(fileReader);
+		Reader fileReader = new InputStreamReader(file.openInputStream(EFS.NONE, null));
+		StringWriter oldFile = new StringWriter();
+		IOUtilities.pipe(fileReader, oldFile, true, false);
+		StringBuffer oldContents = oldFile.getBuffer();
 
 		JSONArray changeList = changes.getJSONArray("diff");
 		for (int i = 0; i < changeList.length(); i++) {
@@ -120,10 +112,10 @@ class FileHandlerV1 extends GenericFileHandler {
 			long start = change.getLong("start");
 			long end = change.getLong("end");
 			String text = change.getString("text");
-			oldFile.replace((int) start, (int) end, text);
+			oldContents.replace((int) start, (int) end, text);
 		}
 
-		String newContents = oldFile.toString();
+		String newContents = oldContents.toString();
 		boolean failed = false;
 		if (changes.has("contents")) {
 			String contents = changes.getString("contents");
@@ -132,7 +124,7 @@ class FileHandlerV1 extends GenericFileHandler {
 				newContents = contents;
 			}
 		}
-		Writer fileWriter = new BufferedWriter(new OutputStreamWriter(file.openOutputStream(EFS.NONE, null), "UTF-8"));
+		Writer fileWriter = new OutputStreamWriter(file.openOutputStream(EFS.NONE, null), "UTF-8");
 		IOUtilities.pipe(new StringReader(newContents), fileWriter, false, true);
 		if (failed) {
 			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_ACCEPTABLE, "Bad File Diffs. Please paste this content in a bug report: \u00A0\u00A0 	" + changes.toString(), null));
