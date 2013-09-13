@@ -20,9 +20,7 @@ import java.net.URL;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.search.SearchActivator;
 import org.eclipse.orion.server.core.OrionConfiguration;
-import org.eclipse.orion.server.core.metastore.IMetaStore;
-import org.eclipse.orion.server.core.metastore.UserInfo;
-import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
+import org.eclipse.orion.server.core.metastore.*;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.eclipse.orion.server.tests.servlets.xfer.TransferTest;
@@ -225,6 +223,22 @@ public class SearchTest extends FileSystemTest {
 		//these same words appear in a.txt in a different order
 		JSONObject searchResult = doSearch("%22Eclipse Public License%22");
 		assertOneMatch(searchResult, "script.js");
+	}
+
+	/**
+	 * Tests searching in a project whose name starts with square bracket.
+	 * This is a regression test for bug 417124.
+	 */
+	@Test
+	public void testSearchInProjectWithURLName() throws Exception {
+		final String projectName = "[breakme]";
+		createTestProject(projectName);
+		createFile("smaug.txt", "Chiefest and Greatest of Calamities");
+		SearchActivator.getInstance().testWaitForIndex();
+
+		JSONObject searchResult = doSearch("Calamities");
+		assertOneMatch(searchResult, "smaug.txt");
+
 	}
 
 	/**
