@@ -38,7 +38,7 @@ import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSuppor
 import org.eclipse.orion.internal.server.servlets.workspace.WorkspaceServlet;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.OrionConfiguration;
-import org.eclipse.orion.server.core.users.OrionScope;
+import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
 import org.json.JSONArray;
@@ -49,7 +49,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.osgi.service.prefs.BackingStoreException;
 import org.xml.sax.SAXException;
 
 import com.meterware.httpunit.GetMethodWebRequest;
@@ -89,12 +88,13 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	}
 
 	@Before
-	public void setUp() throws CoreException, BackingStoreException {
+	public void setUp() throws CoreException {
 		clearWorkspace();
-		OrionScope prefs = new OrionScope();
-		prefs.getNode("Users").removeNode();
-		prefs.getNode("Workspaces").removeNode();
-		prefs.getNode("Projects").removeNode();
+		IMetaStore store = OrionConfiguration.getMetaStore();
+		List<String> userIds = store.readAllUsers();
+		for (String userId : userIds) {
+			store.deleteUser(userId);
+		}
 		webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 		setUpAuthorization();
@@ -163,8 +163,13 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		assertNotNull(contentLocation);
 
 		//ensure project content exists
-		IFileStore projectStore = EFS.getStore(makeLocalPathAbsolute(projectId));
-		assertTrue(projectStore.fetchInfo().exists());
+		if (OrionConfiguration.getMetaStore() instanceof SimpleMetaStore) {
+			// simple metastore, projects not in the same simple location anymore, so do not check
+		} else {
+			// legacy metastore, use what was in the original test
+			IFileStore projectStore = EFS.getStore(makeLocalPathAbsolute(projectId));
+			assertTrue(projectStore.fetchInfo().exists());
+		}
 
 		//add a file in the project
 		String fileName = "file.txt";
@@ -324,12 +329,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		resultObject = new JSONObject(response.getText());
 		assertEquals(sourceName, resultObject.getString(ProtocolConstants.KEY_NAME));
 		JSONArray children = resultObject.getJSONArray(ProtocolConstants.KEY_CHILDREN);
-		if (OrionConfiguration.getMetaStore() instanceof SimpleMetaStore) {
-			// simple meta store source project includes the the project.json.
-			assertEquals(2, children.length());
-		} else {
-			assertEquals(1, children.length());
-		}
+		assertEquals(1, children.length());
 		JSONObject child = children.getJSONObject(0);
 		assertEquals(fileName, child.getString(ProtocolConstants.KEY_NAME));
 
@@ -339,13 +339,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		resultObject = new JSONObject(response.getText());
 		assertEquals(sourceName, resultObject.getString(ProtocolConstants.KEY_NAME));
 		children = resultObject.getJSONArray(ProtocolConstants.KEY_CHILDREN);
-		if (OrionConfiguration.getMetaStore() instanceof SimpleMetaStore) {
-			// The destination includes the the project.json.
-			// It is additionally copied into the destination overriting the file in the destination.
-			assertEquals(2, children.length());
-		} else {
-			assertEquals(1, children.length());
-		}
+		assertEquals(1, children.length());
 		child = children.getJSONObject(0);
 		assertEquals(fileName, child.getString(ProtocolConstants.KEY_NAME));
 	}
@@ -507,9 +501,14 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		assertEquals(0, projects.length());
 
 		//ensure project content is deleted
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
-		IFileStore projectStore = EFS.getStore(makeLocalPathAbsolute(projectId));
-		assertFalse(projectStore.fetchInfo().exists());
+		if (OrionConfiguration.getMetaStore() instanceof SimpleMetaStore) {
+			// simple metastore, projects not in the same simple location anymore, so do not check
+		} else {
+			// legacy metastore, use what was in the original test
+			String projectId = project.getString(ProtocolConstants.KEY_ID);
+			IFileStore projectStore = EFS.getStore(makeLocalPathAbsolute(projectId));
+			assertFalse(projectStore.fetchInfo().exists());
+		}
 
 		//deleting again should be safe (DELETE is idempotent)
 		response = webConversation.getResponse(request);
