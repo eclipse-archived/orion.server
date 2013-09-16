@@ -20,6 +20,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -37,7 +39,6 @@ import org.eclipse.orion.tools.json.JSONObject;
 public class ProjectMigration {
 	private static final String METADATA_DIR = "/.metadata/.plugins/org.eclipse.orion.server.core/.settings/";
 	private final static String ORION_METASTORE_VERSION = "OrionMetastoreVersion";
-	private static boolean orionFileLayoutUsertree = false;
 	private static String orionOperationsFile = null;
 	private static String orionProjectPrefsFile = null;
 	private static String orionSecureStorageFile = null;
@@ -49,8 +50,18 @@ public class ProjectMigration {
 	private static final String SECURESTORAGE = "/.metadata/.plugins/org.eclipse.orion.server.user.securestorage/user_store";
 	private final static int VERSION = 1;
 
-	public static void main(String[] arguments) throws IOException, JSONException {
+	public static void main(String[] arguments) throws IOException, JSONException, URISyntaxException {
 		new ProjectMigration(arguments).run();
+	}
+
+	/**
+	 * Retrieve the folder with the provided name under the provided parent folder. 
+	 * @param parent The parent folder.
+	 * @param name The name of the folder.
+	 * @return The folder.
+	 */
+	private static File retrieveMetaFolder(File parent, String name) {
+		return new File(parent, name);
 	}
 
 	private PrintStream migrationLog;
@@ -64,33 +75,89 @@ public class ProjectMigration {
 	}
 
 	/**
-	 * Creates a folder, handling the case that the folder may already be there.
-	 * @param newFolder The folder to create
+	 * Create a new MetaFile with the provided name under the provided parent folder. 
+	 * @param parent The parent folder.
+	 * @param name The name of the MetaFile
+	 * @param jsonObject The JSON containing the data to save in the MetaFile.
 	 * @param message String to add to the message logged.
+	 * @return true if the creation was successful.
 	 */
-	private void createFolder(File newFolder, String message) {
-		if (!newFolder.isDirectory() || !newFolder.exists()) {
-			newFolder.mkdirs();
-			migrationLogPrint("Created " + message + " folder: " + newFolder.getAbsolutePath());
-		} else {
-			migrationLogPrint(message + " folder exists: " + newFolder.getAbsolutePath());
+	private boolean createMetaFile(File parent, String name, JSONObject jsonObject, String message) {
+		try {
+			if (isMetaFile(parent, name)) {
+				throw new RuntimeException("Meta File Error, already exists, use update");
+			}
+			if (!parent.exists()) {
+				throw new RuntimeException("Meta File Error, parent folder does not exist");
+			}
+			if (!parent.isDirectory()) {
+				throw new RuntimeException("Meta File Error, parent is not a folder");
+			}
+			File newFile = retrieveMetaFile(parent, name);
+			FileWriter fileWriter = new FileWriter(newFile);
+			fileWriter.write(jsonObject.toString(4));
+			fileWriter.write("\n");
+			fileWriter.flush();
+			fileWriter.close();
+			migrationLogPrint("Created " + message + " file: " + newFile.getAbsolutePath());
+		} catch (FileNotFoundException e) {
+			throw new RuntimeException("Meta File Error, file not found", e);
+		} catch (IOException e) {
+			throw new RuntimeException("Meta File Error, file IO error", e);
+		} catch (JSONException e) {
+			throw new RuntimeException("Meta File Error, JSON error", e);
 		}
+		return true;
 	}
 
 	/**
-	 * Create or update the meta file (file.json) with the provided JSON object. 
-	 * @param metaFile The folder to contain the meta file.
-	 * @param jsonObject The JSON object.
-	 * @param message String to add to the message logged.
-	 * @throws IOException 
+	 * Create a new folder with the provided name under the provided parent folder. 
+	 * @param parent The parent folder.
+	 * @param name The name of the folder.
+	 * @return true if the creation was successful.
 	 */
-	private void createOrUpdateMetaFile(File metaFile, JSONObject jsonObject, String message) throws IOException {
-		if (metaFile.exists()) {
-			migrationLogPrint("Updated existing " + message + " file: " + metaFile.getAbsolutePath());
-		} else {
-			migrationLogPrint("Created " + message + " file: " + metaFile.getAbsolutePath());
+	private boolean createMetaFolder(File parent, String name, String message) {
+		if (!parent.exists()) {
+			throw new RuntimeException("Meta File Error, parent folder does not exist");
 		}
-		writeMetaFile(metaFile, jsonObject);
+		if (!parent.isDirectory()) {
+			throw new RuntimeException("Meta File Error, parent is not a folder");
+		}
+		File newFolder = new File(parent, name);
+		if (newFolder.exists()) {
+			throw new RuntimeException("Meta File Error, folder already exists");
+		}
+		if (!newFolder.mkdir()) {
+			throw new RuntimeException("Meta File Error, cannot create folder");
+		}
+		migrationLogPrint("Created " + message + " folder: " + newFolder.getAbsolutePath());
+		return true;
+	}
+
+	/**
+	 * Create a new user folder with the provided name under the provided parent folder.
+	 * The file layout settings are consulted to determine if a flat layout or a usertree layout is used. 
+	 * @param parent the parent folder.
+	 * @param userName the user name.
+	 * @return true if the creation was successful.
+	 */
+	private boolean createMetaUserFolder(File parent, String userName) {
+		if (!parent.exists()) {
+			throw new RuntimeException("Meta File Error, parent folder does not exist");
+		}
+		if (!parent.isDirectory()) {
+			throw new RuntimeException("Meta File Error, parent is not a folder");
+		}
+
+		//the user-tree layout organises projects by the user who created it: metastore/an/anthony
+		String userPrefix = userName.substring(0, Math.min(2, userName.length()));
+		File orgFolder = new File(parent, userPrefix);
+		if (!orgFolder.exists()) {
+			if (!orgFolder.mkdir()) {
+				throw new RuntimeException("Meta File Error, cannot create folder");
+			}
+		}
+		return createMetaFolder(orgFolder, userName, "User");
 	}
 
 	/**
@@ -99,12 +166,12 @@ public class ProjectMigration {
 	 * @throws IOException 
 	 */
 	private File createOrUpdateMetaStoreRoot() throws IOException {
-		File metaStoreRootFolder = new File(orionWorkspaceRoot + File.separator + "metastore");
-		createFolder(metaStoreRootFolder, "Root");
-		File metaStoreRootFile = new File(metaStoreRootFolder, "metastore.json");
-		JSONObject metaStoreRootJSON = new JSONObject();
-		metaStoreRootJSON.put(ORION_METASTORE_VERSION, VERSION);
-		createOrUpdateMetaFile(metaStoreRootFile, metaStoreRootJSON, "root MetaData");
+		File metaStoreRootFolder = new File(orionWorkspaceRoot);
+		if (!isMetaFile(metaStoreRootFolder, "metastore")) {
+			JSONObject metaStoreRootJSON = new JSONObject();
+			metaStoreRootJSON.put(ORION_METASTORE_VERSION, VERSION);
+			createMetaFile(metaStoreRootFolder, "metastore", metaStoreRootJSON, "root MetaData");
+		}
 		return metaStoreRootFolder;
 	}
 
@@ -121,18 +188,19 @@ public class ProjectMigration {
 	private File createOrUpdateUser(File metaStoreRootFolder, String userId, Map<String, String> userProperties, Map<String, Map<String, String>> sites, Map<String, Map<String, String>> operations) throws IOException {
 		String userName = userProperties.get("UserName");
 
-		File newUserHome = new File(metaStoreRootFolder + File.separator + userName);
-		if (orionFileLayoutUsertree) {
-			String newUserPrefix = userName.substring(0, Math.min(2, userName.length()));
-			newUserHome = new File(metaStoreRootFolder + File.separator + newUserPrefix + File.separator + userName);
+		if (!isMetaUserFolder(metaStoreRootFolder, userName)) {
+			createMetaUserFolder(metaStoreRootFolder, userName);
 		}
-		createFolder(newUserHome, "User");
+		File userMetaFolder = readMetaUserFolder(metaStoreRootFolder, userName);
 
 		JSONObject newUserJSON = getUserJSONfromProperties(userProperties, sites, operations);
-		File newUserMetaFile = new File(newUserHome, "user.json");
-		createOrUpdateMetaFile(newUserMetaFile, newUserJSON, "user MetaData");
+		if (isMetaFile(userMetaFolder, "user")) {
+			updateMetaFile(userMetaFolder, "user", newUserJSON, "user MetaData");
+		} else {
+			createMetaFile(userMetaFolder, "user", newUserJSON, "user MetaData");
+		}
 
-		return newUserHome;
+		return userMetaFolder;
 	}
 
 	/**
@@ -174,8 +242,7 @@ public class ProjectMigration {
 		projectJSON.put(ORION_METASTORE_VERSION, VERSION);
 		String contentLocation = projectProperties.get("ContentLocation");
 		String name = projectProperties.get("Name");
-		String id = projectProperties.get("Id");
-		projectJSON.put("UniqueId", id + "-" + name);
+		projectJSON.put("UniqueId", name);
 		projectJSON.put("FullName", name);
 		projectJSON.put("ContentLocation", contentLocation);
 		projectJSON.put("Properties", new JSONObject());
@@ -373,10 +440,81 @@ public class ProjectMigration {
 		String id = workspaceProperties.get("Id");
 		workspaceJSON.put("UniqueId", id + "-" + name.replace(" ", "").replace("#", ""));
 		workspaceJSON.put("FullName", name);
+		workspaceJSON.put("UserId", id);
 		workspaceJSON.put("Properties", new JSONObject());
 		JSONArray projectNames = new JSONArray(workspaceProperties.get("ProjectNames"));
 		workspaceJSON.put("ProjectNames", projectNames);
 		return workspaceJSON;
+	}
+
+	/**
+	 * Determine if the provided name is a MetaFile under the provided parent folder.
+	 * @param parent The parent folder.
+	 * @param name The name of the MetaFile
+	 * @return true if the name is a MetaFile.
+	 */
+	private boolean isMetaFile(File parent, String name) {
+		if (!parent.exists()) {
+			return false;
+		}
+		if (!parent.isDirectory()) {
+			return false;
+		}
+		File savedFile = retrieveMetaFile(parent, name);
+		if (!savedFile.exists()) {
+			return false;
+		}
+		if (!savedFile.isFile()) {
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Determine if the provided parent folder contains a MetaFile with the provided name
+	 * @param parent The parent folder.
+	 * @param name The name of the MetaFile
+	 * @return true if the parent is a folder with a MetaFile.
+	 */
+	private boolean isMetaFolder(File parent, String name) {
+		if (!parent.exists()) {
+			return false;
+		}
+		if (!parent.isDirectory()) {
+			return false;
+		}
+		File savedFolder = retrieveMetaFolder(parent, name);
+		if (!savedFolder.exists()) {
+			return false;
+		}
+		if (!savedFolder.isDirectory()) {
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Determine if the provided user name is a MetaFolder under the provided parent folder.
+	 * The file layout settings are consulted to determine if a flat layout or a usertree layout is used. 
+	 * @param parent the parent folder.
+	 * @param userName the user name.
+	 * @return true if the parent is a folder with a user MetaFile.
+	 */
+	private boolean isMetaUserFolder(File parent, String userName) {
+		if (!parent.exists()) {
+			throw new RuntimeException("Meta File Error, parent folder does not exist");
+		}
+		if (!parent.isDirectory()) {
+			throw new RuntimeException("Meta File Error, parent is not a folder");
+		}
+
+		//the user-tree layout organises projects by the user who created it: metastore/an/anthony
+		String userPrefix = userName.substring(0, Math.min(2, userName.length()));
+		File orgFolder = new File(parent, userPrefix);
+		if (!orgFolder.exists()) {
+			return false;
+		}
+		return isMetaFolder(orgFolder, userName);
 	}
 
 	/**
@@ -392,7 +530,8 @@ public class ProjectMigration {
 	 * @throws FileNotFoundException
 	 */
 	private void migrationLogOpen(File workspaceRoot) throws FileNotFoundException {
-		File logFile = new File(workspaceRoot, "migration.log");
+		File metadataFolder = new File(workspaceRoot, ".metadata");
+		File logFile = new File(metadataFolder, "migration.log");
 		FileOutputStream stream = new FileOutputStream(logFile);
 		System.err.println("ProjectMigration: migration log is at " + logFile.getAbsolutePath());
 		migrationLog = new PrintStream(stream);
@@ -416,13 +555,7 @@ public class ProjectMigration {
 			usage();
 		}
 		for (int i = 0; i < arguments.length; i++) {
-			if ("-flat".equals(arguments[i])) {
-				//the flat layout organises projects at the root /project
-				orionFileLayoutUsertree = false;
-			} else if ("-usertree".equals(arguments[i])) {
-				//the user-tree layout organises projects by the user who created it: pr/project
-				orionFileLayoutUsertree = true;
-			} else if ("-root".equals(arguments[i])) {
+			if ("-root".equals(arguments[i])) {
 				//the workspace root to migrate
 				orionWorkspaceRoot = arguments[++i];
 			} else {
@@ -441,11 +574,36 @@ public class ProjectMigration {
 	}
 
 	/**
+	 * Get the user folder with the provided name under the provided parent folder.
+	 * The file layout settings are consulted to determine if a flat layout or a usertree layout is used. 
+	 * @param parent the parent folder.
+	 * @param userName the user name.
+	 * @return the folder.
+	 */
+	private File readMetaUserFolder(File parent, String userName) {
+		//the user-tree layout organises projects by the user who created it: metastore/an/anthony
+		String userPrefix = userName.substring(0, Math.min(2, userName.length()));
+		File orgFolder = new File(parent, userPrefix);
+		return new File(orgFolder, userName);
+	}
+
+	/**
+	 * Retrieve the MetaFile with the provided name under the parent folder.
+	 * @param parent The parent folder.
+	 * @param name The name of the MetaFile
+	 * @return The MetaFile.
+	 */
+	private File retrieveMetaFile(File parent, String name) {
+		return new File(parent, name + ".json");
+	}
+
+	/**
 	 * Executes the project migration.
 	 * @throws IOException 
 	 * @throws JSONException 
+	 * @throws URISyntaxException 
 	 */
-	public void run() throws IOException, JSONException {
+	public void run() throws IOException, JSONException, URISyntaxException {
 		File workspaceRoot = new File(orionWorkspaceRoot);
 		migrationLogOpen(workspaceRoot);
 		migrationLogPrint("Migrating MetaStore from legacy to simple.");
@@ -477,8 +635,10 @@ public class ProjectMigration {
 				String workspaceId = workspaceObject.getString("Id");
 				Map<String, String> workspaceProperties = workspaces.get(workspaceId);
 				String encodedWorkspaceName = workspaceProperties.get("Name").replace(" ", "").replace("#", "");
-				File newWorkspaceHome = new File(newUserHome + File.separator + encodedWorkspaceName);
-				createFolder(newWorkspaceHome, "Workspace");
+				if (!isMetaFolder(newUserHome, encodedWorkspaceName)) {
+					createMetaFolder(newUserHome, encodedWorkspaceName, "Workspace");
+				}
+				File newWorkspaceHome = retrieveMetaFolder(newUserHome, encodedWorkspaceName);
 
 				String workspaceProjectProperty = workspaceProperties.get("Projects");
 				if (workspaceProjectProperty == null || workspaceProjectProperty.equals("[]")) {
@@ -492,19 +652,43 @@ public class ProjectMigration {
 						String projectId = projectObject.getString("Id");
 						Map<String, String> projectProperties = projects.get(projectId);
 						String projectName = projectProperties.get("Name");
-						File newProjectHome = new File(newWorkspaceHome + File.separator + projectName);
-						createFolder(newProjectHome, "Project");
 						projectNamesJSON.put(projectName);
 						JSONObject newProjectJSON = getProjectJSONfromProperties(projectProperties);
-						File newProjectMetaFile = new File(newProjectHome, "project.json");
-						createOrUpdateMetaFile(newProjectMetaFile, newProjectJSON, "project MetaData");
+
+						// if the content location is local, update the content location with the new name
+						URI contentLocation = new URI(newProjectJSON.getString("ContentLocation"));
+						if (contentLocation.getScheme().equals("file")) {
+							File oldContentLocation = new File(contentLocation);
+							if (oldContentLocation.toString().startsWith(workspaceRoot.toString())) {
+								File newContentLocation = retrieveMetaFolder(newWorkspaceHome, projectName);
+								newProjectJSON.put("ContentLocation", newContentLocation.toURI());
+								oldContentLocation.renameTo(newContentLocation);
+								migrationLogPrint("Moved Project folder: " + oldContentLocation.getAbsolutePath() + " to: " + newContentLocation.getAbsolutePath());
+							}
+						}
+
+						// Add the WorkspaceId to the projectJSON
+						String name = workspaceProperties.get("Name");
+						String id = workspaceProperties.get("Id");
+						newProjectJSON.put("WorkspaceId", id + "-" + name.replace(" ", "").replace("#", ""));
+
+						// save projectJSON
+						if (isMetaFile(newWorkspaceHome, projectName)) {
+							updateMetaFile(newWorkspaceHome, projectName, newProjectJSON, "project MetaData");
+						} else {
+							createMetaFile(newWorkspaceHome, projectName, newProjectJSON, "project MetaData");
+						}
 					}
+
 					workspaceProperties.put("ProjectNames", projectNamesJSON.toString());
 				}
 
 				JSONObject newWorkspaceJSON = getWorkspaceJSONfromProperties(workspaceProperties);
-				File newWorkspaceMetaFile = new File(newWorkspaceHome, "workspace.json");
-				createOrUpdateMetaFile(newWorkspaceMetaFile, newWorkspaceJSON, "workspace MetaData");
+				if (isMetaFile(newWorkspaceHome, "workspace")) {
+					updateMetaFile(newWorkspaceHome, "workspace", newWorkspaceJSON, "workspace MetaData");
+				} else {
+					createMetaFile(newWorkspaceHome, "workspace", newWorkspaceJSON, "workspace MetaData");
+				}
 
 			}
 		}
@@ -513,6 +697,45 @@ public class ProjectMigration {
 		Map<String, Map<String, String>> secureStore = getSecureStorageMetadataFromFile(orionSecureStorageFile);
 		writeSecureStorage(secureStore, secureStoreUsers);
 		migrationLogClose();
+	}
+
+	/**
+	 * Update the existing MetaFile with the provided name under the provided parent folder. 
+	 * @param parent The parent folder.
+	 * @param name The name of the MetaFile
+	 * @param jsonObject The JSON containing the data to update in the MetaFile.
+	 * @param message String to add to the message logged.
+	 * @return
+	 */
+	private boolean updateMetaFile(File parent, String name, JSONObject jsonObject, String message) {
+		try {
+			if (!isMetaFile(parent, name)) {
+				throw new RuntimeException("Meta File Error, cannot update, does not exist.");
+			}
+			File savedFile = retrieveMetaFile(parent, name);
+
+			FileWriter fileWriter = new FileWriter(savedFile);
+			fileWriter.write(jsonObject.toString(4));
+			fileWriter.write("\n");
+			fileWriter.flush();
+			fileWriter.close();
+			migrationLogPrint("Updated existing " + message + " file: " + savedFile.getAbsolutePath());
+		} catch (FileNotFoundException e) {
+			throw new RuntimeException("Meta File Error, file not found", e);
+		} catch (IOException e) {
+			throw new RuntimeException("Meta File Error, file IO error", e);
+		} catch (JSONException e) {
+			throw new RuntimeException("Meta File Error, JSON error", e);
+		}
+		return true;
+	}
+
+	/**
+	 * Print the usage and exit;
+	 */
+	private void usage() {
+		System.err.println("ProjectMigration: Usage: java -jar ProjectMigration.jar -root folder");
+		System.exit(1);
 	}
 
 	private void writeSecureStorage(Map<String, Map<String, String>> secureStore, Map<String, String> secureStoreUsers) throws IOException {
@@ -541,25 +764,4 @@ public class ProjectMigration {
 		fileWriter.close();
 	}
 
-	/**
-	 * Print the usage and exit;
-	 */
-	private void usage() {
-		System.err.println("ProjectMigration: Usage: java -jar ProjectMigration.jar [ -flat | -usertree ] -root folder");
-		System.exit(1);
-	}
-
-	/**
-	 * Write the JSON object to the provided file.
-	 * @param file The file to write to.
-	 * @param jsonObject the JSON object.
-	 * @throws IOException 
-	 */
-	private void writeMetaFile(File file, JSONObject jsonObject) throws IOException {
-		FileWriter fileWriter = new FileWriter(file);
-		fileWriter.write(jsonObject.toString(4));
-		fileWriter.write("\n");
-		fileWriter.flush();
-		fileWriter.close();
-	}
 }
