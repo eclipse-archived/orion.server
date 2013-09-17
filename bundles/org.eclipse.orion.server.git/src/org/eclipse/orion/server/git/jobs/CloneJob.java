@@ -87,7 +87,6 @@ public class CloneJob extends GitJob {
 					try {
 						out = new PrintStream(new FileOutputStream(projectJsonFile));
 						JSONObject projectjson = new JSONObject();
-						projectjson.put("type", "git");
 
 						String gitPath = clone.getUrl();
 						if (gitPath.indexOf("://") > 0) {
