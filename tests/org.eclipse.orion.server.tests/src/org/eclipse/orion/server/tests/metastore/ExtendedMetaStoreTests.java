@@ -11,6 +11,7 @@
 package org.eclipse.orion.server.tests.metastore;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -19,7 +20,12 @@ import static org.junit.Assert.fail;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
+import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.UserInfo;
@@ -36,6 +42,49 @@ import org.junit.runners.MethodSorters;
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
+
+	@Test
+	public void testCreateProjectUsingFileAPI() throws CoreException {
+		IMetaStore metaStore = null;
+		try {
+			metaStore = OrionConfiguration.getMetaStore();
+		} catch (NullPointerException e) {
+			// expected when the workbench is not running
+		}
+		if (!(metaStore instanceof SimpleMetaStore)) {
+			// the workbench is not running, just pass the test
+			return;
+		}
+
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName("anthony");
+		userInfo.setFullName("Anthony Hunter");
+		metaStore.createUser(userInfo);
+
+		// create the workspace
+		String workspaceName = "Orion Content";
+		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
+		workspaceInfo.setFullName(workspaceName);
+		workspaceInfo.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo);
+
+		// create a folder under the user on the filesystem
+		IFileStore userHome = OrionConfiguration.getUserHome(userInfo.getUniqueId());
+		String workspaceFolder = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceInfo.getUniqueId());
+		String projectName = "Orion Project";
+		IFileStore projectFolder = userHome.getChild(workspaceFolder).getChild(projectName);
+		assertFalse(projectFolder.fetchInfo().exists());
+		projectFolder.mkdir(EFS.NONE, null);
+		assertTrue(projectFolder.fetchInfo().exists() && projectFolder.fetchInfo().isDirectory());
+
+		// read the project, project json will be created
+		ProjectInfo readProjectInfo = metaStore.readProject(workspaceInfo.getUniqueId(), projectName);
+		assertNotNull(readProjectInfo);
+
+		// delete the user
+		metaStore.deleteUser(userInfo.getUniqueId());
+	}
 
 	@Test(expected = CoreException.class)
 	public void testCreateProjectWithAnInvalidWorkspaceId() throws CoreException {

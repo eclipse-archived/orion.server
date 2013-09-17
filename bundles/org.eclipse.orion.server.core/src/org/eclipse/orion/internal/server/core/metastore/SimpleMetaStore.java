@@ -97,8 +97,11 @@ public class SimpleMetaStore implements IMetaStore {
 		}
 		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(rootLocation, userId);
 		File workspaceMetaFolder = SimpleMetaStoreUtil.readMetaFolder(userMetaFolder, encodedWorkspaceName);
-		if (!SimpleMetaStoreUtil.createMetaFolder(workspaceMetaFolder, projectInfo.getFullName())) {
-			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createProject: could not create project: " + projectInfo.getFullName() + " for user " + userId, null));
+		if (!SimpleMetaStoreUtil.isMetaFolder(workspaceMetaFolder, projectInfo.getFullName())) {
+			// try to create the project folder since it does not exist
+			if (!SimpleMetaStoreUtil.createMetaFolder(workspaceMetaFolder, projectInfo.getFullName())) {
+				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createProject: could not create project: " + projectInfo.getFullName() + " for user " + userId, null));
+			}
 		}
 		if (!SimpleMetaStoreUtil.createMetaFile(workspaceMetaFolder, projectInfo.getFullName(), jsonObject)) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createProject: could not create project: " + projectInfo.getFullName() + " for user " + userId, null));
@@ -348,10 +351,22 @@ public class SimpleMetaStore implements IMetaStore {
 		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(rootLocation, userId);
 		File workspaceMetaFolder = SimpleMetaStoreUtil.readMetaFolder(userMetaFolder, encodedWorkspaceName);
 		JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(workspaceMetaFolder, projectName);
-		if (jsonObject == null) {
-			return null;
-		}
 		ProjectInfo projectInfo = new ProjectInfo();
+		if (jsonObject == null) {
+			if (SimpleMetaStoreUtil.isMetaFolder(workspaceMetaFolder, projectName)) {
+				// the project folder exists but the project json file does not, so create it
+				File projectMetaFolder = SimpleMetaStoreUtil.readMetaFolder(workspaceMetaFolder, projectName);
+				URI projectLocation = projectMetaFolder.toURI();
+				projectInfo.setFullName(projectName);
+				projectInfo.setWorkspaceId(workspaceId);
+				projectInfo.setContentLocation(projectLocation);
+				createProject(projectInfo);
+				jsonObject = SimpleMetaStoreUtil.readMetaFile(workspaceMetaFolder, projectName);
+			} else {
+				// both the project folder and project json do not exist, no project
+				return null;
+			}
+		}
 		try {
 			projectInfo.setUniqueId(jsonObject.getString("UniqueId"));
 			projectInfo.setWorkspaceId(jsonObject.getString("WorkspaceId"));

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2012 IBM Corporation and others.
+ * Copyright (c) 2010, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -19,10 +19,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.filesystem.*;
 import org.eclipse.core.runtime.*;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
+import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
@@ -106,17 +109,53 @@ public class NewFileServlet extends OrionServlet {
 	 * @param path The path of the file resource to obtain the store for
 	 */
 	public static IFileStore getFileStore(HttpServletRequest request, IPath path) {
-		//path format is /workspaceId/projectName/[suffix]
-		if (path.segmentCount() <= 1)
-			return null;
 		try {
-			ProjectInfo project = OrionConfiguration.getMetaStore().readProject(path.segment(0), path.segment(1));
-			if (project == null)
+			if (path.segmentCount() == 0) {
 				return null;
-			return getFileStore(request, project).getFileStore(path.removeFirstSegments(2));
+			} else if (path.segmentCount() == 1) {
+				if (OrionConfiguration.getMetaStore() instanceof SimpleMetaStore) {
+					// Bug 415700: handle path format /workspaceId, only supported by SimpleMetaStore 
+					WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(0));
+					if (workspace != null) {
+						return getFileStore(request, workspace);
+					}
+				}
+				return null;
+			}
+			//path format is /workspaceId/projectName/[suffix]
+			ProjectInfo project = OrionConfiguration.getMetaStore().readProject(path.segment(0), path.segment(1));
+			if (project != null) {
+				return getFileStore(request, project).getFileStore(path.removeFirstSegments(2));
+			}
+			// Bug 415700: handle path format /workspaceId/[file] only supported by SimpleMetaStore 
+			if (path.segmentCount() == 2 && OrionConfiguration.getMetaStore() instanceof SimpleMetaStore) {
+				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(0));
+				if (workspace != null) {
+					return getFileStore(request, workspace).getChild(path.segment(1));
+				}
+			}
+			return null;
 		} catch (CoreException e) {
 			LogHelper.log(new Status(IStatus.WARNING, Activator.PI_SERVER_SERVLETS, 1, NLS.bind("An error occurred when getting file store for path {0}", path), e));
 			// fallback and return null
+		}
+		return null;
+	}
+
+	/**
+	 * Returns the store representing the file to be retrieved for the given
+	 * request or <code>null</code> if an error occurred.
+	 * @param request The current servlet request.
+	 * @param project The workspace to obtain the store for.
+	 */
+	public static IFileStore getFileStore(HttpServletRequest request, WorkspaceInfo workspace) {
+		if (OrionConfiguration.getMetaStore() instanceof SimpleMetaStore) {
+			if (workspace.getUserId() == null) {
+				return null;
+			}
+			IFileStore userHome = OrionConfiguration.getUserHome(workspace.getUserId());
+			String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspace.getUniqueId());
+			return userHome.getChild(encodedWorkspaceName);
 		}
 		return null;
 	}

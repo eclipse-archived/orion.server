@@ -15,22 +15,42 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.*;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
-import org.eclipse.core.runtime.*;
+
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
+import org.eclipse.orion.internal.server.core.IOUtilities;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
+import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ServerConstants;
-import org.json.*;
-import org.junit.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.osgi.service.prefs.BackingStoreException;
 import org.xml.sax.SAXException;
+
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 /**
  * Basic tests for {@link NewFileServlet}.
@@ -270,6 +290,89 @@ public class CoreFilesTest extends FileSystemTest {
 		responseObject = new JSONObject(response.getText());
 		assertNotNull("No direcory information in response", responseObject);
 		checkFileMetadata(responseObject, fileName, null, null, null, null, null, null, null, null);
+	}
+
+	/**
+	 * Test the creation of a folder at the workspace root level /file/workspace, see Bug 415700.
+	 * @throws CoreException
+	 * @throws IOException
+	 * @throws SAXException
+	 * @throws JSONException
+	 * @throws URISyntaxException
+	 */
+	@Test
+	public void testCreateWorkspaceLevelFolder() throws CoreException, IOException, SAXException, JSONException, URISyntaxException {
+		if (!(OrionConfiguration.getMetaStore() instanceof SimpleMetaStore)) {
+			// This test is only supported by a SimpleMetaStore
+			return;
+		}
+		String newDirectoryName = "sample" + System.currentTimeMillis();
+
+		webConversation.setExceptionsThrownOnErrorStatus(false);
+
+		IPath projectLocation = new Path(getTestBaseResourceURILocation());
+		String workspaceId = projectLocation.segment(0);
+		String path = new Path(FILE_SERVLET_LOCATION).append(workspaceId).toString();
+		String uriPath = URIUtil.fromString(SERVER_LOCATION + path).toString();
+
+		WebRequest request = new PostMethodWebRequest(uriPath, IOUtilities.toInputStream(getNewDirJSON(newDirectoryName).toString()), "application/json");
+		request.setHeaderField(ProtocolConstants.HEADER_SLUG, newDirectoryName);
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		WebResponse response = webConversation.getResponse(request);
+
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		assertEquals("Response should contain directory metadata in JSON, but was " + response.getText(), "application/json", response.getContentType());
+		JSONObject responseObject = new JSONObject(response.getText());
+		assertNotNull("No directory information in response", responseObject);
+
+		String userRoot = OrionConfiguration.getUserHome(testUserId).toURI().toString();
+		String workspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
+		URI localFolderURI = new URI(new Path(userRoot).append(workspaceName).append(newDirectoryName).toString());
+		IFileStore localFolder = EFS.getStore(localFolderURI);
+		assertTrue("Create directory response was OK, but the directory does not exist", localFolder.fetchInfo().exists() && localFolder.fetchInfo().isDirectory());
+		checkDirectoryMetadata(responseObject, newDirectoryName, null, null, null, null, null);
+
+		//should be able to perform GET on location header to obtain metadata
+		String location = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		request = getGetRequest(location);
+		response = webConversation.getResource(request);
+		assertNotNull(location);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		responseObject = new JSONObject(response.getText());
+		assertNotNull("No direcory information in response", responseObject);
+		checkDirectoryMetadata(responseObject, newDirectoryName, null, null, null, null, null);
+	}
+
+	/**
+	 * Test to read the workspace.json at the /file/workspace top level, see Bug 415700.
+	 * @throws IOException
+	 * @throws SAXException
+	 * @throws URISyntaxException
+	 * @throws JSONException
+	 */
+	@Test
+	public void testReadWorkspaceJsonTopLevelFile() throws IOException, SAXException, URISyntaxException, JSONException {
+		if (!(OrionConfiguration.getMetaStore() instanceof SimpleMetaStore)) {
+			// This test is only supported by a SimpleMetaStore
+			return;
+		}
+		String workspaceJSONFileName = "workspace.json";
+
+		IPath projectLocation = new Path(getTestBaseResourceURILocation());
+		String workspaceId = projectLocation.segment(0);
+		String uriPath = new Path(FILE_SERVLET_LOCATION).append(workspaceId).append(workspaceJSONFileName).toString();
+		String requestPath = URIUtil.fromString(SERVER_LOCATION + uriPath).toString();
+
+		WebRequest request = new GetMethodWebRequest(requestPath);
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		JSONObject responseObject = new JSONObject(response.getText());
+		assertNotNull(responseObject.get("UniqueId"));
+		assertNotNull(responseObject.get("ProjectNames"));
 	}
 
 	@Test
