@@ -84,6 +84,15 @@ public class RemoteMetaStoreTests {
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
+		String file = "/file/" + getWorkspaceId(login) + "/" + project + "/folder/file.json";
+		jsonObject = new JSONObject();
+		jsonObject.put("Description", "This is a simple JSON file");
+		String fileContent = jsonObject.toString(4);
+		request = new PutMethodWebRequest(getOrionServerURI(file), IOUtilities.toInputStream(fileContent), "application/json");
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
 		System.out.println("Created File: " + parent + "file.json");
 		return response.getResponseCode();
 	}
@@ -477,7 +486,7 @@ public class RemoteMetaStoreTests {
 	@Test
 	public void testCreateVFile() throws URISyntaxException, IOException, JSONException, SAXException {
 		WebConversation webConversation = new WebConversation();
-		assertEquals(HttpURLConnection.HTTP_CREATED, createFile(webConversation, getOrionTestName(), getOrionTestName(), "Project"));
+		assertEquals(HttpURLConnection.HTTP_OK, createFile(webConversation, getOrionTestName(), getOrionTestName(), "Project"));
 	}
 
 	/**
@@ -651,10 +660,10 @@ public class RemoteMetaStoreTests {
 		assertEquals(HttpURLConnection.HTTP_OK, createWorkspace(webConversation, twoprojects, twoprojects));
 		assertEquals(HttpURLConnection.HTTP_CREATED, createProject(webConversation, twoprojects, twoprojects, "Project One"));
 		assertEquals(HttpURLConnection.HTTP_CREATED, createFolder(webConversation, twoprojects, twoprojects, "Project One"));
-		assertEquals(HttpURLConnection.HTTP_CREATED, createFile(webConversation, twoprojects, twoprojects, "Project One"));
+		assertEquals(HttpURLConnection.HTTP_OK, createFile(webConversation, twoprojects, twoprojects, "Project One"));
 		assertEquals(HttpURLConnection.HTTP_CREATED, createProject(webConversation, twoprojects, twoprojects, "Project Two"));
 		assertEquals(HttpURLConnection.HTTP_CREATED, createFolder(webConversation, twoprojects, twoprojects, "Project Two"));
-		assertEquals(HttpURLConnection.HTTP_CREATED, createFile(webConversation, twoprojects, twoprojects, "Project Two"));
+		assertEquals(HttpURLConnection.HTTP_OK, createFile(webConversation, twoprojects, twoprojects, "Project Two"));
 
 		// a user with a project with two sites
 		String twosites = "ts" + getOrionTestName();
