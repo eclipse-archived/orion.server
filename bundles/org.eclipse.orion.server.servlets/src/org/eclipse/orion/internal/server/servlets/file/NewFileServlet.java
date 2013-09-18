@@ -57,9 +57,15 @@ public class NewFileServlet extends OrionServlet {
 		traceRequest(req);
 		String pathInfo = req.getPathInfo();
 		IPath path = pathInfo == null ? Path.ROOT : new Path(pathInfo);
+
+		// prevent path canonicalization hacks
+		if (!pathInfo.equals(path.toString())) {
+			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, NLS.bind("Forbidden: {0}", pathInfo), null));
+			return;
+		}
 		//don't allow anyone to mess with metadata
 		if (path.segmentCount() > 0 && ".metadata".equals(path.segment(0))) { //$NON-NLS-1$
-			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, NLS.bind("Forbidden: {0}", path), null));
+			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, NLS.bind("Forbidden: {0}", pathInfo), null));
 			return;
 		}
 		IFileStore file = getFileStore(req, path);
@@ -68,9 +74,9 @@ public class NewFileServlet extends OrionServlet {
 			IFileInfo info = testLink.fetchInfo();
 			if (info.getAttribute(EFS.ATTRIBUTE_SYMLINK)) {
 				if (file == testLink) {
-					handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, NLS.bind("Forbidden: {0}", path), null));
+					handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, NLS.bind("Forbidden: {0}", pathInfo), null));
 				} else {
-					handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("File not found: {0}", path), null));
+					handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("File not found: {0}", pathInfo), null));
 				}
 				return;
 			}
@@ -78,7 +84,7 @@ public class NewFileServlet extends OrionServlet {
 		}
 
 		if (file == null) {
-			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("File not found: {0}", path), null));
+			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("File not found: {0}", pathInfo), null));
 			return;
 		}
 		if (fileSerializer.handleRequest(req, resp, file))
