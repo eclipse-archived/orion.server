@@ -16,26 +16,13 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URISyntaxException;
+import com.meterware.httpunit.*;
+import java.io.*;
+import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.eclipse.core.filesystem.EFS;
-import org.eclipse.core.filesystem.IFileInfo;
-import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.Status;
+import org.eclipse.core.filesystem.*;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
@@ -43,24 +30,12 @@ import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
-import org.eclipse.orion.server.core.metastore.IMetaStore;
-import org.eclipse.orion.server.core.metastore.ProjectInfo;
-import org.eclipse.orion.server.core.metastore.UserInfo;
-import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
+import org.eclipse.orion.server.core.metastore.*;
 import org.eclipse.orion.server.tests.AbstractServerTest;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.*;
 import org.xml.sax.SAXException;
-
-import com.meterware.httpunit.GetMethodWebRequest;
-import com.meterware.httpunit.PostMethodWebRequest;
-import com.meterware.httpunit.PutMethodWebRequest;
-import com.meterware.httpunit.WebConversation;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 
 /**
  * Common base class for file system tests.
@@ -407,7 +382,8 @@ public abstract class FileSystemTest extends AbstractServerTest {
 
 	/**
 	 * Makes a URI absolute. If the provided URI is relative, it is assumed to be relative to the workspace location (file servlet location).
-	 * If the provided URI is already absolute it is returned as-is
+	 * If the provided URI is already absolute it is returned as-is.
+	 * The provided URI must be correctly encoded.
 	 */
 	protected String makeResourceURIAbsolute(String uriString) {
 		try {
@@ -427,7 +403,7 @@ public abstract class FileSystemTest extends AbstractServerTest {
 			if (uriString.startsWith("/"))
 				uriString = uriString.substring(1);
 			String path = new Path(FILE_SERVLET_LOCATION).append(getTestBaseResourceURILocation()).append(uriString).toString();
-			return URIUtil.fromString(SERVER_LOCATION + path).toString();
+			return new URI(SERVER_LOCATION + path).toString();
 		} catch (URISyntaxException e) {
 			fail(e.getMessage());
 			return null;

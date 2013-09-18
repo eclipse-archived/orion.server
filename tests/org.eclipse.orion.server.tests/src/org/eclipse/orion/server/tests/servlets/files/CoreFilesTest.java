@@ -482,10 +482,10 @@ public class CoreFilesTest extends FileSystemTest {
 
 	@Test
 	public void testDirectoryWithSpaces() throws CoreException, IOException, SAXException {
-		String basePath = "sampe/dir with spaces/long" + System.currentTimeMillis();
+		String basePath = "sampe/dir withspaces/long" + System.currentTimeMillis();
 		createDirectory(basePath);
-
-		WebRequest request = getGetFilesRequest(basePath);
+		String encodedPath = basePath.replace(" ", "%20");
+		WebRequest request = getGetFilesRequest(encodedPath);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 	}
@@ -676,6 +676,39 @@ public class CoreFilesTest extends FileSystemTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		assertEquals("Invalid file content", fileContent, response.getText());
+	}
+
+	/**
+	 * Tests fetching file metadata within a folder whose name looks like an IPv6 host name.
+	 * This is a regression test for bug https://bugs.eclipse.org/bugs/show_bug.cgi?id=417219
+	 */
+	@Test
+	public void testFolderWithIPv6Name() throws Exception {
+		String directoryPath = "sample/[bork]/path" + System.currentTimeMillis();
+		createDirectory(directoryPath);
+		String fileName = "sampleFile" + System.currentTimeMillis() + ".txt";
+		String fileContent = "Sample File Contents " + System.currentTimeMillis();
+		createFile(directoryPath + "/" + fileName, fileContent);
+
+		String encodedPath = directoryPath.replace("[", "%5B").replace("]", "%5D");
+		WebRequest request = getGetFilesRequest(encodedPath + "/" + fileName + "?parts=meta");
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject result = new JSONObject(response.getText());
+
+		assertEquals(fileName, result.optString(ProtocolConstants.KEY_NAME));
+
+		JSONArray parents = result.optJSONArray(ProtocolConstants.KEY_PARENTS);
+		assertNotNull(parents);
+		assertEquals(4, parents.length());
+		IPath parentPath = new Path(directoryPath);
+		//immediate parent
+		JSONObject parent = parents.getJSONObject(0);
+		assertEquals(parentPath.segment(2), parent.getString(ProtocolConstants.KEY_NAME));
+		//grandparent
+		parent = parents.getJSONObject(1);
+		assertEquals(parentPath.segment(1), parent.getString(ProtocolConstants.KEY_NAME));
+
 	}
 
 	@Test
