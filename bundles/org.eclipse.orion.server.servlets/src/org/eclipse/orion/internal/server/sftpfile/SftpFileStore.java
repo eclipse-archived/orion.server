@@ -136,6 +136,9 @@ public class SftpFileStore extends FileStore {
 
 	@Override
 	public IFileStore getParent() {
+		if (path.equals(HOME)) {
+			return null;
+		}
 		return new SftpFileStore(host, path.removeLastSegments(1));
 	}
 

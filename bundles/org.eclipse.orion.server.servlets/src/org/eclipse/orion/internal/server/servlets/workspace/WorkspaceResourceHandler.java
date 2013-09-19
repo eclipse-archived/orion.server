@@ -308,14 +308,17 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 			computeProjectLocation(request, project, content, getInit(toAdd));
 			getMetaStore().updateProject(project);
 		} catch (CoreException e) {
-			if (handleAuthFailure(request, response, e))
-				return null;
+			boolean authFail = handleAuthFailure(request, response, e);
+
 			//delete the project so we don't end up with a project in a bad location
 			try {
 				getMetaStore().deleteProject(workspace.getUniqueId(), project.getFullName());
 			} catch (CoreException e1) {
 				//swallow secondary error
 				LogHelper.log(e1);
+			}
+			if (authFail) {
+				return null;
 			}
 			//we are unable to write in the platform location!
 			String msg = NLS.bind("Cannot create project: {0}", project.getFullName());
