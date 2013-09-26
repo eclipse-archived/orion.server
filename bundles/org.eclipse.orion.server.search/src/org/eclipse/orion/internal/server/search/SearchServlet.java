@@ -13,10 +13,14 @@ package org.eclipse.orion.internal.server.search;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -90,8 +94,11 @@ public class SearchServlet extends OrionServlet {
 						//https://issues.apache.org/jira/browse/SOLR-219
 						processedQuery += "NameLower:" + term.substring(10).toLowerCase(); //$NON-NLS-1$
 					} else if (term.startsWith("Location:")) { //$NON-NLS-1${
-						//all other field searches are case sensitive
-						processedQuery += "Location:" + term.substring(9 + req.getContextPath().length()); //$NON-NLS-1$
+						//Use Location as a filter query to improve query performence
+						//See https://bugs.eclipse.org/bugs/show_bug.cgi?id=415874
+						//processedQuery += "Location:" + term.substring(9 + req.getContextPath().length()); //$NON-NLS-1$
+						query.addFilterQuery("Location:" + term.substring(9 + req.getContextPath().length()));
+						continue;
 					} else {
 						//all other field searches are case sensitive
 						processedQuery += term;
@@ -104,12 +111,19 @@ public class SearchServlet extends OrionServlet {
 						//try with encoded term
 					}
 					boolean isPhrase = term.charAt(0) == '"';
+					boolean leadingWildCard = term.charAt(0) == '*';
+					//see https://bugs.eclipse.org/bugs/show_bug.cgi?id=415874#c12
+					//For a term starting with "*" we are using the leading wild card. 
+					//Otherwise we only use tailing wild card to improve performance.
+					if (leadingWildCard) {
+						term = term.substring(1);
+					}
 					//solr does not lowercase queries containing wildcards
 					//see https://bugs.eclipse.org/bugs/show_bug.cgi?id=359766
 					String processedTerm = ClientUtils.escapeQueryChars(term.toLowerCase());
 					//add leading and trailing wildcards to match word segments
 					if (!isPhrase) {
-						if (processedTerm.charAt(0) != '*')
+						if (leadingWildCard)
 							processedTerm = '*' + processedTerm;
 						if (processedTerm.charAt(processedTerm.length() - 1) != '*')
 							processedTerm += '*';
@@ -126,7 +140,7 @@ public class SearchServlet extends OrionServlet {
 		query.setQuery(queryString);
 
 		//filter to search only documents belonging to current user
-		query.setFilterQueries(ProtocolConstants.KEY_USER_NAME + ':' + ClientUtils.escapeQueryChars(req.getRemoteUser()));
+		query.addFilterQuery(ProtocolConstants.KEY_USER_NAME + ':' + ClientUtils.escapeQueryChars(req.getRemoteUser()));
 
 		//other common fields
 		setField(req, query, CommonParams.ROWS);
