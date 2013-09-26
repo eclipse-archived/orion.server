@@ -173,12 +173,12 @@ public class SearchTest extends FileSystemTest {
 	 */
 	@Test
 	public void testPartialWord() throws Exception {
-		JSONObject searchResult = doSearch("ErrorMess");
+		JSONObject searchResult = doSearch("*ErrorMess");
 		JSONObject match = assertOneMatch(searchResult, "script.js");
 
 		//query with location
 		String location = match.getString("Location");
-		searchResult = doSearch("ErrorMess+Location:" + location);
+		searchResult = doSearch("*ErrorMess+Location:" + location);
 		assertOneMatch(searchResult, "script.js");
 	}
 
@@ -285,7 +285,7 @@ public class SearchTest extends FileSystemTest {
 		assertOneMatch(searchResult, "dbcs-folder.txt");
 
 		//wildcard
-		searchResult = doSearch("badg?r");
+		searchResult = doSearch("*badg?r");
 		JSONObject match = assertOneMatch(searchResult, "dbcs-folder.txt");
 
 		//query with location
@@ -305,7 +305,7 @@ public class SearchTest extends FileSystemTest {
 		assertOneMatch(searchResult, "\u65e5\u672c\u8a9e.txt");
 
 		//wildcard
-		searchResult = doSearch("ga?elle");
+		searchResult = doSearch("*ga?elle");
 		JSONObject match = assertOneMatch(searchResult, "\u65e5\u672c\u8a9e.txt");
 
 		//query with location
@@ -345,7 +345,7 @@ public class SearchTest extends FileSystemTest {
 		assertOneMatch(searchResult, "file with spaces.txt");
 
 		//wildcard
-		searchResult = doSearch("lem?r");
+		searchResult = doSearch("*lem?r");
 		JSONObject match = assertOneMatch(searchResult, "file with spaces.txt");
 
 		//query with location
