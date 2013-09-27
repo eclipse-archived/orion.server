@@ -125,6 +125,14 @@
 		</profile>
 	</profiles>
 
+	<repositories>
+		<repository>
+			<id>eclipse-license</id>
+			<layout>p2</layout>
+			<url>http://download.eclipse.org/eclipse/updates/license/</url>
+		</repository>
+	</repositories>
+
 	<modules>
 		<module>releng/org.eclipse.orion.target</module>
 		<module>bundles/org.eclipse.orion.server.core</module>
