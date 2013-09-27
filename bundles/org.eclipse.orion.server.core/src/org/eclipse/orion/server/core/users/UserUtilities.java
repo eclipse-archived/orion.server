@@ -31,7 +31,7 @@ public class UserUtilities {
 		}
 		digest.update(emailAddress.trim().toLowerCase().getBytes());
 		byte[] digestValue = digest.digest();
-		StringBuffer result = new StringBuffer("http://www.gravatar.com/avatar/"); //$NON-NLS-1$
+		StringBuffer result = new StringBuffer("https://www.gravatar.com/avatar/"); //$NON-NLS-1$
 		for (int i = 0; i < digestValue.length; i++) {
 			String current = Integer.toHexString((digestValue[i] & 0xFF));
 			//left pad with zero
