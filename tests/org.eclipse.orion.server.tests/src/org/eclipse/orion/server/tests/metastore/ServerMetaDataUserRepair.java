@@ -38,7 +38,7 @@ import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 
 /**
- * Test class that I used to recover the server metadata in the Users.pref file.
+ * Temporary test class that I used to recover the server metadata in the Users.pref file.
  * 
  * @author Anthony Hunter
  */
