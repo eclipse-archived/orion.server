@@ -1,4 +1,3 @@
-#******************************************************************************
 # Copyright (c) 2010, 2013 IBM Corporation and others.
 # All rights reserved. This program and the accompanying materials
 # are made available under the terms of the Eclipse Public License v1.0
@@ -12,6 +11,7 @@
 #
 
 serverHome=/home/admin/current
+workspaceHome=/home/data/nfs/serverworkspace
 
 while [ $# -gt 0 ]
 do
@@ -43,13 +43,15 @@ then
         let "runningPID += 1"
         kill -15 $runningPID
         rm $serverHome/current.pid
+        echo Sleeping for 5 seconds to allow NFS mount to release
+        sleep 5
 fi
 
 #delete old search index to save space
 echo Deleting old search index
-rm -fr $serverHome/eclipse/serverworkspace/.metadata/.plugins/org.eclipse.orion.server.core.search/
+rm -fr $workspaceHome/.metadata/.plugins/org.eclipse.orion.server.core.search/
 echo Deleting old tasks
-rm -fr $serverHome/eclipse/serverworkspace/.metadata/.plugins/org.eclipse.orion.server.core/tasks/
+rm -fr $workspaceHome/.metadata/.plugins/org.eclipse.orion.server.core/tasks/
 
 #back-up the current server using a folder based on date
 dateString=`date +%Y%m%d-%H%M`
@@ -64,16 +66,13 @@ echo Unzipping $newBuildArchive
 unzip -q $newBuildArchive
 popd
 
-#move server workspace to new install
-echo Moving server workspace
-mv $serverHome/$oldBuildDir/serverworkspace $serverHome/eclipse/
-
 #increase heap size in ini
 echo Configuring server
-sed -i 's/384m/800m/g' $serverHome/eclipse/orion.ini
+sed -i 's/384m/5000m/g' $serverHome/eclipse/orion.ini
 #remove console
 sed -i '/^-console$/ d' $serverHome/eclipse/orion.ini
-
+#set workspace location
+sed -i 's/serverworkspace/\/home\/data\/nfs\/serverworkspace/g' $serverHome/eclipse/orion.ini
 
 #copy orion.conf file into server
 cp $serverHome/orion.conf $serverHome/eclipse/orion.conf
