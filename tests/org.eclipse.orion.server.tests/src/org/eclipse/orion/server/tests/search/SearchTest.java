@@ -316,8 +316,8 @@ public class SearchTest extends FileSystemTest {
 
 	/**
 	 * Tests finding search results of double byte characters.
-	 * TODO commented out until fixed.
 	 */
+	@Test
 	public void testSearchDBCS() throws Exception {
 
 		//simple word
