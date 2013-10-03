@@ -53,6 +53,7 @@ TODO: fix maven build so that this can be used
       <plugin id="org.eclipse.orion.server.search" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.orion.server.servlets" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.orion.server.user.securestorage" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.orion.server.useradmin.simple" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.orion.server.useradmin.xml" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.osgi" autoStart="true" startLevel="-1" />
       <property name="eclipse.buildId" value="@qualifier@" />
