@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2012 IBM Corporation and others
+ * Copyright (c) 2010, 2013 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -24,8 +24,10 @@ import java.util.Set;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
+import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.User;
@@ -488,6 +490,11 @@ public class BasicUsersTest extends UsersTest {
 		request = getAuthenticatedRequest(location, METHOD_PUT, true, null, updateBody);
 		response = webConversation.getResponse(request);
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		if (OrionConfiguration.getMetaStore() instanceof SimpleMetaStore) {
+			// When you rename the user, the location becomes /users/{newUser}
+			location = "/users/" + login2;
+		}
 
 		request = getAuthenticatedRequest(location, METHOD_GET, true);
 		setAuthentication(request, login2, password);

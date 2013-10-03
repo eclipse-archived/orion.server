@@ -22,6 +22,7 @@ import java.util.Iterator;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
+import org.eclipse.orion.server.useradmin.UserConstants;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -273,7 +274,7 @@ public class RemoteMetaStoreTests {
 	protected int createUser(WebConversation webConversation, String login, String password) throws IOException, URISyntaxException, SAXException, JSONException {
 		WebRequest request = new PostMethodWebRequest(getOrionServerURI("/users"));
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		request.setParameter("login", login);
+		request.setParameter(UserConstants.KEY_LOGIN, login);
 		request.setParameter("password", password);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
@@ -371,7 +372,7 @@ public class RemoteMetaStoreTests {
 	protected int login(WebConversation webConversation, String login, String password) throws URISyntaxException, IOException, SAXException {
 		WebRequest request = new PostMethodWebRequest(getOrionServerURI("/login/form"));
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		request.setParameter("login", login);
+		request.setParameter(UserConstants.KEY_LOGIN, login);
 		request.setParameter("password", password);
 		WebResponse response = webConversation.getResponse(request);
 		return response.getResponseCode();

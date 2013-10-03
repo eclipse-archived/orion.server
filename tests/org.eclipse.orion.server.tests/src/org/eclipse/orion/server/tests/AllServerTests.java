@@ -14,6 +14,7 @@ import org.eclipse.orion.server.tests.metastore.CompatibilityMetaStoreTests;
 import org.eclipse.orion.server.tests.metastore.ProjectInfoTests;
 import org.eclipse.orion.server.tests.metastore.SimpleMetaStoreTests;
 import org.eclipse.orion.server.tests.metastore.SimpleMetaStoreUtilTest;
+import org.eclipse.orion.server.tests.metastore.SimpleUserPasswordUtilTests;
 import org.eclipse.orion.server.tests.metastore.UserInfoTests;
 import org.eclipse.orion.server.tests.metastore.WorkspaceInfoTests;
 import org.eclipse.orion.server.tests.prefs.PreferenceTest;
@@ -34,7 +35,7 @@ import org.junit.runners.Suite.SuiteClasses;
  * Runs all automated server tests.
  */
 @RunWith(Suite.class)
-@SuiteClasses({SearchTest.class, TransferTest.class, Base64Test.class, CoreFilesTest.class, AdvancedFilesTest.class, PreferenceTest.class, BasicUsersTest.class, WorkspaceServiceTest.class, AllSiteTests.class, AllGitTests.class, AllTaskTests.class, MetaStoreTest.class, CompatibilityMetaStoreTests.class, ProjectInfoTests.class, SimpleMetaStoreTests.class, SimpleMetaStoreUtilTest.class, UserInfoTests.class, WorkspaceInfoTests.class})
+@SuiteClasses({SearchTest.class, TransferTest.class, Base64Test.class, CoreFilesTest.class, AdvancedFilesTest.class, PreferenceTest.class, BasicUsersTest.class, WorkspaceServiceTest.class, AllSiteTests.class, AllGitTests.class, AllTaskTests.class, MetaStoreTest.class, CompatibilityMetaStoreTests.class, ProjectInfoTests.class, SimpleMetaStoreTests.class, SimpleMetaStoreUtilTest.class, UserInfoTests.class, WorkspaceInfoTests.class, SimpleUserPasswordUtilTests.class})
 public class AllServerTests {
 	//goofy junit4, no class body needed
 }

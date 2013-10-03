@@ -19,6 +19,7 @@ import static org.junit.Assert.fail;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
@@ -267,6 +268,80 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		ProjectInfo readProjectInfo = metaStore.readProject(workspaceInfo.getUniqueId(), projectInfo.getFullName());
 		assertNotNull(readProjectInfo);
 		assertTrue(readProjectInfo.getFullName().equals(movedProjectName));
+
+		// delete the user
+		metaStore.deleteUser(userInfo.getUniqueId());
+	}
+
+	@Test
+	public void testMoveUser() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = getMetaStore();
+
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		String userName = "anthony";
+		userInfo.setUserName(userName);
+		userInfo.setFullName("Anthony Hunter");
+		metaStore.createUser(userInfo);
+
+		// create the workspace
+		String workspaceName = "Orion Content";
+		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
+		workspaceInfo.setFullName(workspaceName);
+		workspaceInfo.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo);
+
+		// create the project
+		String projectName = "Orion Project";
+		ProjectInfo projectInfo = new ProjectInfo();
+		projectInfo.setFullName(projectName);
+		try {
+			if (metaStore instanceof SimpleMetaStore) {
+				String projectLocation = "file:" + ((SimpleMetaStore) metaStore).getRootLocation().toString() + "/an/anthony/OrionContent/Orion%20Project";
+				projectInfo.setContentLocation(new URI(projectLocation));
+			} else {
+				projectInfo.setContentLocation(new URI("file:/net/external/anthony/project"));
+			}
+		} catch (URISyntaxException e) {
+			fail("URISyntaxException with the project content location.");
+		}
+		projectInfo.setWorkspaceId(workspaceInfo.getUniqueId());
+		metaStore.createProject(projectInfo);
+
+		// read the user back again
+		userInfo = metaStore.readUser(userName);
+		assertNotNull(userInfo);
+		assertTrue(userInfo.getUserName().equals(userName));
+
+		// move the user by changing the userName
+		String newUserName = "ahunter";
+		userInfo.setUserName(newUserName);
+
+		// update the user
+		metaStore.updateUser(userInfo);
+
+		// read the user back again
+		UserInfo readUserInfo = metaStore.readUser(newUserName);
+		assertNotNull(readUserInfo);
+		assertTrue(readUserInfo.getUserName().equals(newUserName));
+
+		// read the moved workspace
+		List<String> workspaceIds = userInfo.getWorkspaceIds();
+		assertNotNull(workspaceIds);
+		assertEquals(1, workspaceIds.size());
+		String readWorkspaceId = workspaceIds.get(0);
+		assertTrue(readWorkspaceId.startsWith(newUserName));
+		WorkspaceInfo readWorkspaceInfo = metaStore.readWorkspace(readWorkspaceId);
+		assertNotNull(readWorkspaceInfo);
+		assertEquals(1, readWorkspaceInfo.getProjectNames().size());
+
+		// read the moved project
+		String readProjectName = readWorkspaceInfo.getProjectNames().get(0);
+		assertEquals(readProjectName, projectName);
+		ProjectInfo readProjectInfo = metaStore.readProject(readWorkspaceId, readProjectName);
+		assertNotNull(readProjectInfo);
+		assertEquals(readWorkspaceInfo.getUniqueId(), readProjectInfo.getWorkspaceId());
 
 		// delete the user
 		metaStore.deleteUser(userInfo.getUniqueId());

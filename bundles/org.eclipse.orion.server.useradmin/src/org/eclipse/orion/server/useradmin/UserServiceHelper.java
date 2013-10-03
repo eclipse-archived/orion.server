@@ -15,6 +15,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
 
 public class UserServiceHelper {
@@ -48,10 +50,17 @@ public class UserServiceHelper {
 
 	public void setUserAdmin(IOrionCredentialsService userAdmin) {
 		if (userAdmin instanceof IOrionCredentialsService) {
-			IOrionCredentialsService eclipseWebUserAdmin = (IOrionCredentialsService) userAdmin;
-			userStores.put(eclipseWebUserAdmin.getStoreName(), eclipseWebUserAdmin);
-			if (defaultUserAdmin == null || UserAdminActivator.eclipseWebUsrAdminName.equals(eclipseWebUserAdmin.getStoreName())) {
-				defaultUserAdmin = eclipseWebUserAdmin;
+			//consult metastore preference
+			String metastore = PreferenceHelper.getString(ServerConstants.CONFIG_META_STORE, "legacy").toLowerCase(); //$NON-NLS-1$
+			String instance = userAdmin.getClass().getName();
+
+			if (("simple".equals(metastore) && instance.equals("SimpleUserCredentialsService")) || 
+					("legacy".equals(metastore) && !instance.equals("SimpleUserCredentialsService"))) {
+				IOrionCredentialsService eclipseWebUserAdmin = (IOrionCredentialsService) userAdmin;
+				userStores.put(eclipseWebUserAdmin.getStoreName(), eclipseWebUserAdmin);
+				if (defaultUserAdmin == null || UserAdminActivator.eclipseWebUsrAdminName.equals(eclipseWebUserAdmin.getStoreName())) {
+					defaultUserAdmin = eclipseWebUserAdmin;
+				}
 			}
 		}
 	}
