@@ -72,7 +72,7 @@ public abstract class FileSystemTest extends AbstractServerTest {
 		WebRequest request = getCreateProjectRequest(workspaceLocation, projectName, null);
 		WebResponse response = webConversation.getResponse(request);
 		if (response.getResponseCode() != HttpURLConnection.HTTP_CREATED) {
-			String msg = "Unexpected " + response.getResponseCode() + " response creating project" + projectName + ": " + response.getText();
+			String msg = "Unexpected " + response.getResponseCode() + " response creating project " + projectName + ": " + response.getText();
 			System.out.println(msg);
 			LogHelper.log(new Status(IStatus.ERROR, ServerTestsActivator.PI_TESTS, msg));
 			fail(msg);
