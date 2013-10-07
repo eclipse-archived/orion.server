@@ -43,8 +43,6 @@ import org.eclipse.orion.server.useradmin.WebIdeAuthorization;
 import org.eclipse.orion.server.useradmin.servlets.UserServlet;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.service.useradmin.Authorization;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of the Orion credentials service on top of the simple meta store.
@@ -63,8 +61,6 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 
 	public SimpleUserCredentialsService() {
 		super();
-		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-		logger.debug("Starting simple user credentials service."); //$NON-NLS-1$
 		initStorage();
 	}
 

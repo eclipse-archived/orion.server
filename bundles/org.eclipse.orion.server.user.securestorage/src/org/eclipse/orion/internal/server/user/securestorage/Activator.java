@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others 
+ * Copyright (c) 2011, 2013 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,8 +10,15 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.user.securestorage;
 
+import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
-import org.osgi.framework.*;
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceRegistration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Activator implements BundleActivator {
 
@@ -22,7 +29,8 @@ public class Activator implements BundleActivator {
 	public static final String ORION_STORAGE_PASSWORD = "orion.storage.password"; //$NON-NLS-1$
 
 	static BundleContext bundleContext;
-	private ServiceRegistration<IOrionCredentialsService> registerService;
+	private ServiceRegistration<IOrionCredentialsService> userCredentialsService;
+	private ServiceRegistration<IOrionUserProfileService> userProfileService;
 
 	public static BundleContext getContext() {
 		return bundleContext;
@@ -36,8 +44,16 @@ public class Activator implements BundleActivator {
 	 * )
 	 */
 	public void start(BundleContext bundleContext) throws Exception {
-		Activator.bundleContext = bundleContext;
-//		registerService = bundleContext.registerService(IOrionCredentialsService.class, new SecureStorageCredentialsService(), null);
+		String metastore = PreferenceHelper.getString(ServerConstants.CONFIG_META_STORE, "legacy").toLowerCase(); //$NON-NLS-1$
+
+		if ("legacy".equals(metastore)) {
+			Activator.bundleContext = bundleContext;
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+			userCredentialsService = bundleContext.registerService(IOrionCredentialsService.class, new SecureStorageCredentialsService(), null);
+			logger.debug("Started legacy user credentials service."); //$NON-NLS-1$
+			userProfileService = bundleContext.registerService(IOrionUserProfileService.class, new SecureStorageUserProfileService(), null);
+			logger.debug("Started legacy user profile service."); //$NON-NLS-1$
+		}
 	}
 
 	/*
@@ -47,8 +63,12 @@ public class Activator implements BundleActivator {
 	 * org.osgi.framework.BundleActivator#stop(org.osgi.framework.BundleContext)
 	 */
 	public void stop(BundleContext bundleContext) throws Exception {
-		if (registerService != null)
-			registerService.unregister();
+		if (userCredentialsService != null) {
+			userCredentialsService.unregister();
+		}
+		if (userProfileService != null) {
+			userProfileService.unregister();
+		}
 		Activator.bundleContext = null;
 	}
 

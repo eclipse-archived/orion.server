@@ -15,6 +15,7 @@ import java.io.File;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
@@ -32,13 +33,21 @@ public class SimpleUserProfileService implements IOrionUserProfileService {
 
 	private IOrionUserProfileNode root = null;
 
-	public SimpleUserProfileService() throws CoreException {
+	public SimpleUserProfileService() {
 		super();
+		initStorage();
+	}
+
+	private void initStorage() {
+		try {
+			IFileStore fileStore = OrionConfiguration.getUserHome(null);
+			File rootLocation = fileStore.toLocalFile(EFS.NONE, null);
+			root = new SimpleUserProfileRoot(rootLocation);
+		} catch (CoreException e) {
+			LogHelper.log(e);
+		}
 		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 		logger.debug("Started simple user profile service."); //$NON-NLS-1$
-		IFileStore fileStore = OrionConfiguration.getUserHome(null);
-		File rootLocation = fileStore.toLocalFile(EFS.NONE, null);
-		root = new SimpleUserProfileRoot(rootLocation);
 	}
 
 	public IOrionUserProfileNode getUserProfileNode(String userName, String partId) {

@@ -10,11 +10,15 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.useradmin.simple;
 
+import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Activator for the Simple User Storage.
@@ -25,20 +29,27 @@ public class Activator implements BundleActivator {
 
 	public static final String PI_USER_SIMPLE = "org.eclipse.orion.server.useradmin.simple"; //$NON-NLS-1$
 
-	private ServiceRegistration<IOrionCredentialsService> registerOrionCredentialsService;
-	private ServiceRegistration<IOrionUserProfileService> registerOrionUserProfileService;
+	private ServiceRegistration<IOrionCredentialsService> userCredentialsService;
+	private ServiceRegistration<IOrionUserProfileService> userProfileService;
 
 	public void start(BundleContext bundleContext) throws Exception {
-		//registerOrionCredentialsService = bundleContext.registerService(IOrionCredentialsService.class, new SimpleUserCredentialsService(), null);
-		//registerOrionUserProfileService = bundleContext.registerService(IOrionUserProfileService.class, new SimpleUserProfileService(), null);
+		String metastore = PreferenceHelper.getString(ServerConstants.CONFIG_META_STORE, "legacy").toLowerCase(); //$NON-NLS-1$
+
+		if ("simple".equals(metastore)) {
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+			userCredentialsService = bundleContext.registerService(IOrionCredentialsService.class, new SimpleUserCredentialsService(), null);
+			logger.debug("Started simple user credentials service."); //$NON-NLS-1$
+			userProfileService = bundleContext.registerService(IOrionUserProfileService.class, new SimpleUserProfileService(), null);
+			logger.debug("Started simple user profile service."); //$NON-NLS-1$
+		}
 	}
 
 	public void stop(BundleContext bundleContext) throws Exception {
-		if (registerOrionUserProfileService != null) {
-			registerOrionUserProfileService.unregister();
+		if (userCredentialsService != null) {
+			userCredentialsService.unregister();
 		}
-		if (registerOrionCredentialsService != null) {
-			registerOrionCredentialsService.unregister();
+		if (userProfileService != null) {
+			userProfileService.unregister();
 		}
 	}
 
