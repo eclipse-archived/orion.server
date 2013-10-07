@@ -446,7 +446,7 @@ public class SimpleMetaStoreMigration {
 			userJSON.put("password", secureStoragePassword);
 			userJSON.put("WorkspaceIds", new JSONArray());
 			if (usersSecureStorageProperties.containsKey("profileProperties")) {
-				String secureStorageProfileProperties = usersSecureStorageProperties.get("password");
+				String secureStorageProfileProperties = usersSecureStorageProperties.get("profileProperties");
 				JSONObject jsonObject = new JSONObject(secureStorageProfileProperties);
 				userJSON.put("profileProperties", jsonObject);
 			}
