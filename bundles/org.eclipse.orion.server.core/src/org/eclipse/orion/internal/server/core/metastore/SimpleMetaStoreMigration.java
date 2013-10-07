@@ -375,7 +375,7 @@ public class SimpleMetaStoreMigration {
 		try {
 			if (!SimpleMetaStoreUtil.isMetaFile(metaStoreRootFolder, SimpleMetaStore.ROOT)) {
 				JSONObject metaStoreRootJSON = new JSONObject();
-				metaStoreRootJSON.put(SimpleMetaStore.ORION_METASTORE_VERSION, SimpleMetaStore.VERSION);
+				metaStoreRootJSON.put(SimpleMetaStore.ORION_VERSION, SimpleMetaStore.VERSION);
 				SimpleMetaStoreUtil.createMetaFile(metaStoreRootFolder, SimpleMetaStore.ROOT, metaStoreRootJSON);
 				File rootMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(metaStoreRootFolder, SimpleMetaStore.ROOT);
 				migrationLogPrint("Created root MetaData file: " + rootMetaFile.getAbsolutePath());
@@ -432,7 +432,7 @@ public class SimpleMetaStoreMigration {
 	private JSONObject getUserJSONfromProperties(Map<String, String> userProperties, Map<String, Map<String, String>> usersSecureStorage, Map<String, Map<String, String>> sites, Map<String, Map<String, String>> operations) {
 		try {
 			JSONObject userJSON = new JSONObject();
-			userJSON.put(SimpleMetaStore.ORION_METASTORE_VERSION, SimpleMetaStore.VERSION);
+			userJSON.put(SimpleMetaStore.ORION_VERSION, SimpleMetaStore.VERSION);
 			String oldUserId = userProperties.get("Id");
 			String userName = userProperties.get("UserName");
 			userJSON.put("UserName", userName);
@@ -546,7 +546,7 @@ public class SimpleMetaStoreMigration {
 	private JSONObject getWorkspaceJSONfromProperties(Map<String, String> workspaceProperties) {
 		try {
 			JSONObject workspaceJSON = new JSONObject();
-			workspaceJSON.put(SimpleMetaStore.ORION_METASTORE_VERSION, SimpleMetaStore.VERSION);
+			workspaceJSON.put(SimpleMetaStore.ORION_VERSION, SimpleMetaStore.VERSION);
 			String name = workspaceProperties.get("Name");
 			String id = workspaceProperties.get("Id");
 			workspaceJSON.put("UniqueId", id + "-" + name.replace(" ", "").replace("#", ""));
@@ -570,7 +570,7 @@ public class SimpleMetaStoreMigration {
 	private JSONObject getProjectJSONfromProperties(Map<String, String> projectProperties) {
 		try {
 			JSONObject projectJSON = new JSONObject();
-			projectJSON.put(SimpleMetaStore.ORION_METASTORE_VERSION, SimpleMetaStore.VERSION);
+			projectJSON.put(SimpleMetaStore.ORION_VERSION, SimpleMetaStore.VERSION);
 			String contentLocation = projectProperties.get("ContentLocation");
 			String name = projectProperties.get("Name");
 			projectJSON.put("UniqueId", name);

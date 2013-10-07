@@ -37,8 +37,8 @@ import org.slf4j.LoggerFactory;
  */
 public class SimpleMetaStore implements IMetaStore {
 
-	public final static String ORION_METASTORE_VERSION = "OrionMetastoreVersion";
-	public final static int VERSION = 1;
+	public final static String ORION_VERSION = "OrionVersion";
+	public final static int VERSION = 4;
 	public final static String USER = "user";
 	public final static String PROJECT = "project";
 	public final static String WORKSPACE = "workspace";
@@ -75,7 +75,7 @@ public class SimpleMetaStore implements IMetaStore {
 
 		JSONObject jsonObject = new JSONObject();
 		try {
-			jsonObject.put(ORION_METASTORE_VERSION, VERSION);
+			jsonObject.put(ORION_VERSION, VERSION);
 			jsonObject.put("UniqueId", projectInfo.getUniqueId());
 			jsonObject.put("WorkspaceId", projectInfo.getWorkspaceId());
 			jsonObject.put("FullName", projectInfo.getFullName());
@@ -116,7 +116,7 @@ public class SimpleMetaStore implements IMetaStore {
 		}
 		JSONObject jsonObject = new JSONObject();
 		try {
-			jsonObject.put(ORION_METASTORE_VERSION, VERSION);
+			jsonObject.put(ORION_VERSION, VERSION);
 			jsonObject.put("UniqueId", userInfo.getUniqueId());
 			jsonObject.put("UserName", userInfo.getUserName());
 			jsonObject.put("FullName", userInfo.getFullName());
@@ -166,7 +166,7 @@ public class SimpleMetaStore implements IMetaStore {
 		workspaceInfo.setUniqueId(workspaceId);
 		JSONObject jsonObject = new JSONObject();
 		try {
-			jsonObject.put(ORION_METASTORE_VERSION, VERSION);
+			jsonObject.put(ORION_VERSION, VERSION);
 			jsonObject.put("UniqueId", workspaceInfo.getUniqueId());
 			jsonObject.put("UserId", workspaceInfo.getUserId());
 			jsonObject.put("FullName", workspaceInfo.getFullName());
@@ -323,7 +323,7 @@ public class SimpleMetaStore implements IMetaStore {
 				// Create a new MetaStore
 				JSONObject jsonObject = new JSONObject();
 				try {
-					jsonObject.put(ORION_METASTORE_VERSION, VERSION);
+					jsonObject.put(ORION_VERSION, VERSION);
 				} catch (JSONException e) {
 					throw new RuntimeException("SimpleMetaStore.initializeMetaStore: could not create MetaStore");
 				}
@@ -338,7 +338,7 @@ public class SimpleMetaStore implements IMetaStore {
 		// Now verify we have a valid MetaStore
 		JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(rootLocation, ROOT);
 		try {
-			if (jsonObject == null || jsonObject.getInt(ORION_METASTORE_VERSION) != VERSION) {
+			if (jsonObject == null || jsonObject.getInt(ORION_VERSION) != VERSION) {
 				throw new RuntimeException("SimpleMetaStore.initializeMetaStore: could not read MetaStore");
 			}
 		} catch (JSONException e) {
@@ -557,7 +557,7 @@ public class SimpleMetaStore implements IMetaStore {
 			projectInfo.setProperty("newWorkspaceId", null);
 		}
 		try {
-			jsonObject.put(ORION_METASTORE_VERSION, VERSION);
+			jsonObject.put(ORION_VERSION, VERSION);
 			jsonObject.put("UniqueId", projectInfo.getUniqueId());
 			jsonObject.put("WorkspaceId", projectInfo.getWorkspaceId());
 			jsonObject.put("FullName", projectInfo.getFullName());
@@ -670,7 +670,7 @@ public class SimpleMetaStore implements IMetaStore {
 		}
 		JSONObject jsonObject = new JSONObject();
 		try {
-			jsonObject.put(ORION_METASTORE_VERSION, VERSION);
+			jsonObject.put(ORION_VERSION, VERSION);
 			if (renameUser) {
 				jsonObject.put("UniqueId", newWorkspaceId);
 			} else {
