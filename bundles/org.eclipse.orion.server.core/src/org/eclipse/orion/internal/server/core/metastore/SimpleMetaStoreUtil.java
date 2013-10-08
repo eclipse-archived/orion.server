@@ -10,14 +10,9 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.core.metastore;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -392,11 +387,11 @@ public class SimpleMetaStoreUtil {
 		}
 		File orgFolder = newUserMetaFolder.getParentFile();
 		if (!orgFolder.exists()) {
-			if (! orgFolder.mkdir()) {
+			if (!orgFolder.mkdir()) {
 				throw new RuntimeException("Meta File Error, mkdir failed for " + orgFolder.toString());
 			}
 		}
-		if (! oldUserMetaFolder.renameTo(newUserMetaFolder)) {
+		if (!oldUserMetaFolder.renameTo(newUserMetaFolder)) {
 			throw new RuntimeException("Meta File Error, renameTo failed");
 		}
 		//the user-tree layout organises projects by the user who created it: metastore/an/anthony
