@@ -52,7 +52,7 @@ public class SimpleMetaStoreMigration {
 	private static final String METADATA_DIR = "/.metadata/.plugins/org.eclipse.orion.server.core/.settings/";
 	private static final String SECURESTORAGE = "/.metadata/.plugins/org.eclipse.orion.server.user.securestorage/user_store";
 	public static final String ORION_STORAGE_PASSWORD = "orion.storage.password"; //$NON-NLS-1$
-	
+
 	/**
 	 * Specifies if it is possible to prompt user. Expected value: {@link Boolean}.
 	 */
@@ -133,9 +133,20 @@ public class SimpleMetaStoreMigration {
 			for (String userId : users.keySet()) {
 				Map<String, String> userProperties = users.get(userId);
 				String userName = userProperties.get("UserName");
+				if (userName.equals(userId) && userName.length() <= 2) {
+					// the userId and userName are both A in the users.pref, use the login value in the secure store.
+					Map<String, String> usersSecureStorageProperties = usersSecureStorage.get(userId);
+					String login = usersSecureStorageProperties.get("login");
+					userName = login;
+					userProperties.put("UserName", login);
+				}
 				migrationLogPrint("Processing UserId " + userId + " (" + userCount++ + " of " + userSize + ") UserName " + userName);
 
 				File newUserHome = createOrUpdateUser(metaStoreRootFolder, userId, userProperties, usersSecureStorage, sites, operations);
+				if (newUserHome == null) {
+					migrationLogPrint("Did not migrate user: " + userName);
+					continue;
+				}
 
 				String userWorkspaceProperty = userProperties.get("Workspaces");
 				if (userWorkspaceProperty == null) {
@@ -167,25 +178,27 @@ public class SimpleMetaStoreMigration {
 							JSONObject newProjectJSON = getProjectJSONfromProperties(projectProperties);
 
 							// if the content location is local, update the content location with the new name
-							URI contentLocation = new URI(newProjectJSON.getString("ContentLocation"));
-							if (contentLocation.getScheme().equals("file")) {
-								File oldContentLocation = new File(contentLocation);
-								if (oldContentLocation.toString().startsWith(rootLocation.toString())) {
-									File newContentLocation = SimpleMetaStoreUtil.retrieveMetaFolder(newWorkspaceHome, projectName);
-									newProjectJSON.put("ContentLocation", newContentLocation.toURI());
-									oldContentLocation.renameTo(newContentLocation);
-									migrationLogPrint("Moved Project folder: " + oldContentLocation.getAbsolutePath() + " to: " + newContentLocation.getAbsolutePath());
-									// delete the old folder if it is empty
-									File orgFolder = oldContentLocation.getParentFile();
-									String[] files = orgFolder.list();
-									if (files.length == 0) {
-										orgFolder.delete();
-										migrationLogPrint("Deleted empty parent folder: " + orgFolder.getAbsolutePath());
-										orgFolder = orgFolder.getParentFile();
-										files = orgFolder.list();
+							if (newProjectJSON.has("ContentLocation")) {
+								URI contentLocation = new URI(newProjectJSON.getString("ContentLocation"));
+								if (contentLocation.getScheme().equals("file")) {
+									File oldContentLocation = new File(contentLocation);
+									if (oldContentLocation.toString().startsWith(rootLocation.toString())) {
+										File newContentLocation = SimpleMetaStoreUtil.retrieveMetaFolder(newWorkspaceHome, projectName);
+										newProjectJSON.put("ContentLocation", newContentLocation.toURI());
+										oldContentLocation.renameTo(newContentLocation);
+										migrationLogPrint("Moved Project folder: " + oldContentLocation.getAbsolutePath() + " to: " + newContentLocation.getAbsolutePath());
+										// delete the old folder if it is empty
+										File orgFolder = oldContentLocation.getParentFile();
+										String[] files = orgFolder.list();
 										if (files.length == 0) {
 											orgFolder.delete();
 											migrationLogPrint("Deleted empty parent folder: " + orgFolder.getAbsolutePath());
+											orgFolder = orgFolder.getParentFile();
+											files = orgFolder.list();
+											if (files.length == 0) {
+												orgFolder.delete();
+												migrationLogPrint("Deleted empty parent folder: " + orgFolder.getAbsolutePath());
+											}
 										}
 									}
 								}
@@ -401,12 +414,16 @@ public class SimpleMetaStoreMigration {
 	private File createOrUpdateUser(File metaStoreRootFolder, String userId, Map<String, String> userProperties, Map<String, Map<String, String>> usersSecureStorage, Map<String, Map<String, String>> sites, Map<String, Map<String, String>> operations) {
 		String userName = userProperties.get("UserName");
 
+		JSONObject newUserJSON = getUserJSONfromProperties(userProperties, usersSecureStorage, sites, operations);
+		if (newUserJSON == null) {
+			return null;
+		}
+
 		if (!SimpleMetaStoreUtil.isMetaUserFolder(metaStoreRootFolder, userName)) {
 			SimpleMetaStoreUtil.createMetaUserFolder(metaStoreRootFolder, userName);
 		}
 		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(metaStoreRootFolder, userName);
 
-		JSONObject newUserJSON = getUserJSONfromProperties(userProperties, usersSecureStorage, sites, operations);
 		if (SimpleMetaStoreUtil.isMetaFile(userMetaFolder, SimpleMetaStore.USER)) {
 			SimpleMetaStoreUtil.updateMetaFile(userMetaFolder, SimpleMetaStore.USER, newUserJSON);
 			File userMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(userMetaFolder, SimpleMetaStore.USER);
@@ -438,6 +455,10 @@ public class SimpleMetaStoreMigration {
 			userJSON.put("UserName", userName);
 			userJSON.put("UniqueId", userName);
 			Map<String, String> usersSecureStorageProperties = usersSecureStorage.get(oldUserId);
+			if (usersSecureStorageProperties == null) {
+				// There is no secure storage entry, so return null
+				return null;
+			}
 			String secureStorageFullName = usersSecureStorageProperties.get("name");
 			userJSON.put("FullName", secureStorageFullName);
 			String secureStorageEmail = usersSecureStorageProperties.get("email");
@@ -505,12 +526,14 @@ public class SimpleMetaStoreMigration {
 					// get the rest of the site configuration properties for this user
 					JSONObject newSite = new JSONObject();
 					Map<String, String> siteProperties = sites.get(propertyValue);
-					for (String sitePropertyKey : siteProperties.keySet()) {
-						String sitePropertyValue = siteProperties.get(sitePropertyKey);
-						if (sitePropertyKey.equals("Workspace")) {
-							newSite.put(sitePropertyKey, sitePropertyValue + "-OrionContent");
-						} else {
-							newSite.put(sitePropertyKey, sitePropertyValue);
+					if (siteProperties != null) {
+						for (String sitePropertyKey : siteProperties.keySet()) {
+							String sitePropertyValue = siteProperties.get(sitePropertyKey);
+							if (sitePropertyKey.equals("Workspace")) {
+								newSite.put(sitePropertyKey, sitePropertyValue + "-OrionContent");
+							} else {
+								newSite.put(sitePropertyKey, sitePropertyValue);
+							}
 						}
 					}
 					siteConfigurations.put(propertyValue, newSite);
