@@ -14,22 +14,11 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
+import java.util.*;
+import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.core.ServerConstants;
-import org.eclipse.orion.server.core.metastore.IMetaStore;
-import org.eclipse.orion.server.core.metastore.MetadataInfo;
-import org.eclipse.orion.server.core.metastore.ProjectInfo;
-import org.eclipse.orion.server.core.metastore.UserInfo;
-import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.eclipse.orion.server.core.metastore.*;
+import org.json.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
