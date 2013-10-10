@@ -32,7 +32,14 @@ public class Activator implements BundleActivator {
 	private ServiceRegistration<IOrionCredentialsService> userCredentialsService;
 	private ServiceRegistration<IOrionUserProfileService> userProfileService;
 
+	public static Activator singleton;
+
+	public static Activator getDefault() {
+		return singleton;
+	}
+
 	public void start(BundleContext bundleContext) throws Exception {
+		singleton = this;
 		String metastore = PreferenceHelper.getString(ServerConstants.CONFIG_META_STORE, "legacy").toLowerCase(); //$NON-NLS-1$
 
 		if ("simple".equals(metastore)) {
