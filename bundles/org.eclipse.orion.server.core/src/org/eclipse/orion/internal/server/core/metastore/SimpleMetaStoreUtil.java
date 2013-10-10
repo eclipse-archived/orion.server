@@ -13,8 +13,11 @@ package org.eclipse.orion.internal.server.core.metastore;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A utility class to help with the create, read, update and delete of the files and folders
@@ -26,6 +29,7 @@ public class SimpleMetaStoreUtil {
 
 	public static final String METAFILE_EXTENSION = ".json";
 	public static final String SEPARATOR = "-";
+	public final static String USER = "user";
 
 	/**
 	 * Create a new MetaFile with the provided name under the provided parent folder. 
@@ -280,7 +284,11 @@ public class SimpleMetaStoreUtil {
 		if (!orgFolder.exists()) {
 			return false;
 		}
-		return isMetaFolder(orgFolder, userName);
+		if (!isMetaFolder(orgFolder, userName)) {
+			return false;
+		}
+		File userFolder = retrieveMetaFolder(orgFolder, userName);
+		return isMetaFile(userFolder, USER);
 	}
 
 	/**
@@ -323,16 +331,18 @@ public class SimpleMetaStoreUtil {
 			} else if (file.isDirectory()) {
 				// org folder directory, so go into for users
 				for (File userFolder : file.listFiles()) {
-					if (userFolder.isDirectory()) {
+					if (isMetaUserFolder(parent, userFolder.getName())) {
 						// user folder directory
 						userMetaFolders.add(userFolder.getName());
 						continue;
 					}
-					throw new RuntimeException("Meta File Error, root contains invalid metadata:" + file.toString() + " at " + userFolder.getName());
+					Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+					logger.warn("Meta File Error, root contains invalid metadata:" + file.toString() + " at " + userFolder.getName()); //$NON-NLS-1$
 				}
 				continue;
 			}
-			throw new RuntimeException("Meta File Error, root contains invalid metadata:" + parent.toString() + " at " + file.getName());
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+			logger.warn("Meta File Error, root contains invalid metadata:" + file.toString() + " at " + file.getName()); //$NON-NLS-1$
 		}
 		return userMetaFolders;
 	}
