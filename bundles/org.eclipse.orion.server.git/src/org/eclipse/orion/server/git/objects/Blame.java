@@ -165,8 +165,8 @@ public class Blame extends GitObject {
 			try {
 				for (int i = 0; i < lines.size(); i++) {
 					lineId = lines.get(i);
-					if (!lineId.equals(currentCommitId)) {
-						if (i > 0) {
+					if (lineId != null && !lineId.equals(currentCommitId)) {
+						if (tempObj != null) {
 							tempObj.put(GitConstants.KEY_END_RANGE, i);
 							for (int j = 0; j < commits.size(); j++) {
 								if (commits.get(j).getId().getName().equals(currentCommitId)) {
@@ -189,7 +189,7 @@ public class Blame extends GitObject {
 					}
 				}
 			} catch (NullPointerException e) {
-
+				e.printStackTrace();
 			}
 			JSONArray returnJSON = new JSONArray();
 			RevCommit tempCommit;
