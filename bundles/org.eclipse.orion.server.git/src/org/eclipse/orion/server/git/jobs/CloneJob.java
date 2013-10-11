@@ -23,6 +23,7 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.git.GitActivator;
@@ -142,8 +143,9 @@ public class CloneJob extends GitJob {
 			else
 				FileUtils.delete(URIUtil.toFile(clone.getContentLocation()), FileUtils.RECURSIVE);
 		} catch (IOException e) {
-			String msg = "An error occured when cleaning up after a clone failure";
-			result = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
+			//log the secondary failure and return the original failure
+			String msg = "An error occurred when cleaning up after a clone failure"; //$NON-NLS-1$
+			LogHelper.log(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
 		}
 		return result;
 	}
