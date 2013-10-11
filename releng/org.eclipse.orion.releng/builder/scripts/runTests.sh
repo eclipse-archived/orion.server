@@ -84,7 +84,7 @@ fi
 
 browsers=(\
         firefox-17.0.1/firefox,firefox-17.0.1/firefox-bin \
-        chrome-12.0.742.60/google-chrome,chrome-12.0.742.60/chrome)
+        firefox-23.0.1/firefox,firefox-23.0.1/firefox-bin)
 
 export DISPLAY=:63		# set display to use that of the xvfb
 
