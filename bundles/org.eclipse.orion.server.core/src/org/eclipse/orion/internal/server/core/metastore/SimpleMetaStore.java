@@ -14,11 +14,22 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
-import org.eclipse.core.runtime.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.core.ServerConstants;
-import org.eclipse.orion.server.core.metastore.*;
-import org.json.*;
+import org.eclipse.orion.server.core.metastore.IMetaStore;
+import org.eclipse.orion.server.core.metastore.MetadataInfo;
+import org.eclipse.orion.server.core.metastore.ProjectInfo;
+import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -129,8 +140,15 @@ public class SimpleMetaStore implements IMetaStore {
 		if (!SimpleMetaStoreUtil.createMetaUserFolder(rootLocation, userInfo.getUserName())) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createUser: could not create user: " + userInfo.getUserName(), null));
 		}
-		if (!SimpleMetaStoreUtil.createMetaFile(userMetaFolder, USER, jsonObject)) {
-			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createUser: could not create user: " + userInfo.getUserName(), null));
+		if (SimpleMetaStoreUtil.isMetaFile(userMetaFolder, USER)) {
+			// If the file already exists then update with the new contents
+			if (!SimpleMetaStoreUtil.updateMetaFile(userMetaFolder, USER, jsonObject)) {
+				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createUser: could not create user: " + userInfo.getUserName(), null));
+			}
+		} else {
+			if (!SimpleMetaStoreUtil.createMetaFile(userMetaFolder, USER, jsonObject)) {
+				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createUser: could not create user: " + userInfo.getUserName(), null));
+			}
 		}
 		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 		logger.debug("Created new user " + userInfo.getUserName() + "."); //$NON-NLS-1$
@@ -386,9 +404,9 @@ public class SimpleMetaStore implements IMetaStore {
 			projectInfo.setContentLocation(new URI(jsonObject.getString("ContentLocation")));
 			setProperties(projectInfo, jsonObject.getJSONObject("Properties"));
 		} catch (JSONException e) {
-			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.readProject: could not read project " + projectName, e));
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.readProject: could not read project " + projectName + " for userId " + userId, e));
 		} catch (URISyntaxException e) {
-			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.readProject: could not read project " + projectName, e));
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.readProject: could not read project " + projectName + " for userId " + userId, e));
 		}
 		return projectInfo;
 	}
