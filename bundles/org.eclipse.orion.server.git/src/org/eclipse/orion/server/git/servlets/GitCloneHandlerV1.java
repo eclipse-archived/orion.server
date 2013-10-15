@@ -31,6 +31,7 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;
 import org.eclipse.orion.internal.server.servlets.workspace.WorkspaceResourceHandler;
+import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.core.metastore.*;
 import org.eclipse.orion.server.git.GitConstants;
@@ -56,6 +57,12 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 	@Override
 	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String path) throws ServletException {
 		try {
+			IPath filePath = new Path(path);
+			if (filePath.segmentCount() > 0 && filePath.segment(0).equals("file") && !AuthorizationService.checkRights(request.getRemoteUser(), "/" + filePath.toString(), request.getMethod())) {
+				response.sendError(HttpServletResponse.SC_FORBIDDEN);
+				return true;
+			}
+
 			switch (getMethod(request)) {
 				case GET :
 					return handleGet(request, response, path);

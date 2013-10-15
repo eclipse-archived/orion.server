@@ -27,6 +27,7 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
@@ -58,6 +59,10 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 		try {
 			IPath p = new Path(path);
 			IPath filePath = p.hasTrailingSeparator() ? p : p.removeLastSegments(1);
+			if (!AuthorizationService.checkRights(request.getRemoteUser(), "/" + filePath.toString(), request.getMethod())) {
+				response.sendError(HttpServletResponse.SC_FORBIDDEN);
+				return true;
+			}
 			Set<Entry<IPath, File>> set = GitUtils.getGitDirs(filePath, Traverse.GO_UP).entrySet();
 			File gitDir = set.iterator().next().getValue();
 			if (gitDir == null)

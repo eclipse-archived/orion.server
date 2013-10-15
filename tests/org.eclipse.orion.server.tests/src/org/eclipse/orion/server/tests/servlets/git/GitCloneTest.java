@@ -128,8 +128,8 @@ public class GitCloneTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		IPath clonePath = new Path("workspace").append(getWorkspaceId(workspaceLocation)).makeAbsolute();
 
-		AuthorizationService.removeUserRight(testUserId, "/");
-		AuthorizationService.removeUserRight(testUserId, "/*");
+		//AuthorizationService.removeUserRight(testUserId, "/");
+		//AuthorizationService.removeUserRight(testUserId, "/*");
 
 		// /workspace/{id} + {methodName}
 		JSONObject clone = clone(clonePath, null, getMethodName());
@@ -207,8 +207,8 @@ public class GitCloneTest extends GitTest {
 		URI workspaceLocation = createWorkspace(getMethodName());
 		IPath clonePath = new Path("workspace").append(getWorkspaceId(workspaceLocation)).makeAbsolute();
 
-		AuthorizationService.removeUserRight(testUserId, "/");
-		AuthorizationService.removeUserRight(testUserId, "/*");
+		//AuthorizationService.removeUserRight(testUserId, "/");
+		//AuthorizationService.removeUserRight(testUserId, "/*");
 
 		// /workspace/{id}
 		JSONObject clone = clone(clonePath, null, null);

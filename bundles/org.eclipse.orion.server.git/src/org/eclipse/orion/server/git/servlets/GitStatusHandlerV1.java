@@ -22,6 +22,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.objects.Status;
 import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
@@ -46,6 +47,10 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 			if (!path.hasTrailingSeparator()) {
 				String msg = NLS.bind("Cannot get status on a file: {0}", gitPathInfo);
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+			}
+			if (!AuthorizationService.checkRights(request.getRemoteUser(), "/" + path.toString(), request.getMethod())) {
+				response.sendError(HttpServletResponse.SC_FORBIDDEN);
+				return true;
 			}
 			Set<Entry<IPath, File>> set = GitUtils.getGitDirs(path, Traverse.GO_UP).entrySet();
 			File gitDir = set.iterator().next().getValue();

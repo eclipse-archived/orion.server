@@ -23,6 +23,7 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.eclipse.orion.server.git.GitConstants;
@@ -47,6 +48,18 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 	@Override
 	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String path) throws ServletException {
 		try {
+			Path p = new Path(path);
+			IPath filePath = p;
+			if (p.segment(0).equals(Clone.RESOURCE) && p.segment(1).equals("file")) { //$NON-NLS-1$
+				filePath = p.removeFirstSegments(1);
+			} else if (p.segment(1).equals(Clone.RESOURCE) && p.segment(2).equals("file")) { //$NON-NLS-1$
+				filePath = p.removeFirstSegments(2);
+			}
+			if (!AuthorizationService.checkRights(request.getRemoteUser(), "/" + filePath.toString(), request.getMethod())) {
+				response.sendError(HttpServletResponse.SC_FORBIDDEN);
+				return true;
+			}
+
 			switch (getMethod(request)) {
 				case GET :
 					return handleGet(request, response, path);

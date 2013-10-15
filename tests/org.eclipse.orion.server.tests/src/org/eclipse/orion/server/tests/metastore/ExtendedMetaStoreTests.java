@@ -298,7 +298,7 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		projectInfo.setFullName(projectName);
 		try {
 			if (metaStore instanceof SimpleMetaStore) {
-				String projectLocation = "file:" + ((SimpleMetaStore) metaStore).getRootLocation().toString() + "/an/anthony/OrionContent/Orion%20Project";
+				String projectLocation = ((SimpleMetaStore) metaStore).getRootLocation().toURI().toString() + "/an/anthony/OrionContent/Orion%20Project";
 				projectInfo.setContentLocation(new URI(projectLocation));
 			} else {
 				projectInfo.setContentLocation(new URI("file:/net/external/anthony/project"));

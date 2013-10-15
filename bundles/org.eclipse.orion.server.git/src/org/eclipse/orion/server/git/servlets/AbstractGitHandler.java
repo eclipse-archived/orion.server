@@ -22,6 +22,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitActivator;
@@ -89,6 +90,10 @@ public abstract class AbstractGitHandler extends ServletResourceHandler<String> 
 				p = p.removeFirstSegments(1);
 			}
 			IPath filePath = p;
+			if (!AuthorizationService.checkRights(request.getRemoteUser(), "/" + filePath.toString(), request.getMethod())) {
+				response.sendError(HttpServletResponse.SC_FORBIDDEN);
+				return true;
+			}
 			IPath gitSearchPath = filePath.hasTrailingSeparator() ? filePath : filePath.removeLastSegments(1);
 			Set<Entry<IPath, File>> gitDirsFound = GitUtils.getGitDirs(gitSearchPath, Traverse.GO_UP).entrySet();
 			Entry<IPath, File> firstGitDir = gitDirsFound.iterator().next();
