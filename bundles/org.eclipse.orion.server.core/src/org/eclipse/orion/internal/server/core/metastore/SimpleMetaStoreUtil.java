@@ -10,7 +10,11 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.core.metastore;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -80,7 +84,7 @@ public class SimpleMetaStoreUtil {
 		}
 		File newFolder = new File(parent, name);
 		if (newFolder.exists()) {
-			throw new RuntimeException("Meta File Error, folder already exists");
+			return true;
 		}
 		if (!newFolder.mkdir()) {
 			throw new RuntimeException("Meta File Error, cannot create folder");
@@ -337,12 +341,12 @@ public class SimpleMetaStoreUtil {
 						continue;
 					}
 					Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-					logger.warn("Meta File Error, root contains invalid metadata:" + file.toString() + " at " + userFolder.getName()); //$NON-NLS-1$
+					logger.warn("Meta File Error, root contains invalid metadata: folder " + file.toString() + "/" + userFolder.getName()); //$NON-NLS-1$
 				}
 				continue;
 			}
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-			logger.warn("Meta File Error, root contains invalid metadata:" + file.toString() + " at " + file.getName()); //$NON-NLS-1$
+			logger.warn("Meta File Error, root contains invalid metadata: file " + file.toString()); //$NON-NLS-1$
 		}
 		return userMetaFolders;
 	}
