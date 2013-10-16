@@ -60,7 +60,9 @@ public class SimpleMetaStoreUtil {
 			fileWriter.flush();
 			fileWriter.close();
 		} catch (FileNotFoundException e) {
-			throw new RuntimeException("Meta File Error, file not found", e);
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+			logger.warn("Meta File Error, cannot create file under " + parent.toString() + ": invalid file name: " + name); //$NON-NLS-1$
+			return false;
 		} catch (IOException e) {
 			throw new RuntimeException("Meta File Error, file IO error", e);
 		} catch (JSONException e) {
@@ -87,7 +89,9 @@ public class SimpleMetaStoreUtil {
 			return true;
 		}
 		if (!newFolder.mkdir()) {
-			throw new RuntimeException("Meta File Error, cannot create folder");
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+			logger.warn("Meta File Error, cannot create folder under " + newFolder.toString() + ": invalid folder name: " + name); //$NON-NLS-1$
+			return false;
 		}
 		return true;
 	}
