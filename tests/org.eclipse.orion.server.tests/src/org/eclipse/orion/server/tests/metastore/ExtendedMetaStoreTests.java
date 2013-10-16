@@ -122,23 +122,49 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		metaStore.createProject(projectInfo);
 	}
 
+	@Test(expected = CoreException.class)
+	public void testCreateProjectWithURLAsName() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = getMetaStore();
+
+		// read the user from the previous test
+		UserInfo userInfo = metaStore.readUser("anthony");
+
+		// create the workspace
+		String workspaceName = "Orion Content";
+		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
+		workspaceInfo.setFullName(workspaceName);
+		workspaceInfo.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo);
+
+		// create the project, specify a URL as the name, which is not a valid project name.
+		String badProjectName = "http://orion.eclipse.org/";
+		ProjectInfo projectInfo = new ProjectInfo();
+		projectInfo.setFullName(badProjectName);
+		try {
+			projectInfo.setContentLocation(new URI("file:/home/anthony/orion/project"));
+		} catch (URISyntaxException e) {
+			// should not get an exception here, simple URI
+		}
+		projectInfo.setWorkspaceId(workspaceInfo.getUniqueId());
+		metaStore.createProject(projectInfo);
+	}
+
 	@Test
 	public void testCreateTwoWorkspacesWithSameName() throws CoreException {
 		// create the MetaStore
 		IMetaStore metaStore = getMetaStore();
 
-		// create the user
-		UserInfo userInfo = new UserInfo();
-		userInfo.setUserName("anthony");
-		userInfo.setFullName("Anthony Hunter");
-		metaStore.createUser(userInfo);
+		// read the user from the previous test
+		UserInfo userInfo = metaStore.readUser("anthony");
+		assertEquals(1, userInfo.getWorkspaceIds().size());
+		String workspaceId1 = userInfo.getWorkspaceIds().get(0);
 
-		// create the workspace
+		// read the workspace from the previous test
 		String workspaceName1 = "Orion Content";
-		WorkspaceInfo workspaceInfo1 = new WorkspaceInfo();
-		workspaceInfo1.setFullName(workspaceName1);
-		workspaceInfo1.setUserId(userInfo.getUniqueId());
-		metaStore.createWorkspace(workspaceInfo1);
+		WorkspaceInfo workspaceInfo1 = metaStore.readWorkspace(workspaceId1);
+		assertNotNull(workspaceInfo1);
+		assertEquals(workspaceName1, workspaceInfo1.getFullName());
 
 		// create another workspace with the same workspace name
 		String workspaceName2 = "Orion Content";
