@@ -190,6 +190,12 @@ public class SimpleMetaStoreMigration {
 							String projectId = projectObject.getString("Id");
 							Map<String, String> projectProperties = projects.get(projectId);
 							String projectName = projectProperties.get("Name");
+							if (projectName.equals("workspace")) {
+								// you cannot name a project "workspace", simply append a number to the name.
+								migrationLogPrint("Changed project name from: workspace to: workspace1 .");
+								projectName = "workspace1";
+								projectProperties.put("Name", projectName);
+							}
 							JSONObject newProjectJSON = getProjectJSONfromProperties(projectProperties);
 
 							// if the content location is local, update the content location with the new name
