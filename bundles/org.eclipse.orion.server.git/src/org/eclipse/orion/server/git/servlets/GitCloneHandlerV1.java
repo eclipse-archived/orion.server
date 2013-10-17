@@ -481,7 +481,14 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 	 * clone name is not valid.
 	 */
 	private boolean validateCloneName(String name, HttpServletRequest request, HttpServletResponse response) throws ServletException {
-		// TODO: implement
+		if (name == null || name.trim().length() == 0) {
+			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Repository name cannot be empty", null));
+			return false;
+		}
+		if (name.contains("/")) { //$NON-NLS-1$
+			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Invalid repository name: {0}", name), null));
+			return false;
+		}
 		return true;
 	}
 
