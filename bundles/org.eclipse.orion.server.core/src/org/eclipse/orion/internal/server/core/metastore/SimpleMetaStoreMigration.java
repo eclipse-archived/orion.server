@@ -271,33 +271,41 @@ public class SimpleMetaStoreMigration {
 				}
 			}
 
-			// delete old folders under the metastore root if they are empty
-			String[] files = metaStoreRootFolder.list();
-			for (int i = 0; i < files.length; i++) {
-				if (files[i].equals(".metadata")) {
-					// skip the server metadata folder
-					continue;
-				}
-				File orgFolder = new File(metaStoreRootFolder, files[i]);
+			// delete empty orphaned folders under the metastore root
+			String[] metaStoreRootfiles = metaStoreRootFolder.list();
+			for (int i = 0; i < metaStoreRootfiles.length; i++) {
+				File orgFolder = new File(metaStoreRootFolder, metaStoreRootfiles[i]);
 				if (!orgFolder.isDirectory()) {
 					continue;
 				}
 				String[] orgFolderFiles = orgFolder.list();
 				for (int o = 0; o < orgFolderFiles.length; o++) {
-					File childFolder = new File(orgFolder, orgFolderFiles[o]);
-					if (!childFolder.isDirectory()) {
+					File userFolder = new File(orgFolder, orgFolderFiles[o]);
+					if (!userFolder.isDirectory()) {
 						continue;
 					}
-					String[] childFolderFiles = childFolder.list();
-					if (childFolderFiles.length == 0) {
-						childFolder.delete();
-						migrationLogPrint("Deleted empty folder: " + childFolder.getAbsolutePath());
+					String[] userFolderFiles = userFolder.list();
+					for (int u = 0; u < userFolderFiles.length; u++) {
+						File workspaceFolder = new File(userFolder, userFolderFiles[u]);
+						if (!workspaceFolder.isDirectory()) {
+							continue;
+						}
+						String[] workspaceFolderFiles = workspaceFolder.list();
+						if (workspaceFolderFiles.length == 0) {
+							workspaceFolder.delete();
+							migrationLogPrint("Deleted empty workspace folder: " + workspaceFolder.getAbsolutePath());
+						}
+					}
+					userFolderFiles = userFolder.list();
+					if (userFolderFiles.length == 0) {
+						userFolder.delete();
+						migrationLogPrint("Deleted empty user folder: " + userFolder.getAbsolutePath());
 					}
 				}
 				orgFolderFiles = orgFolder.list();
 				if (orgFolderFiles.length == 0) {
 					orgFolder.delete();
-					migrationLogPrint("Deleted empty folder: " + orgFolder.getAbsolutePath());
+					migrationLogPrint("Deleted empty organization folder: " + orgFolder.getAbsolutePath());
 				}
 			}
 
