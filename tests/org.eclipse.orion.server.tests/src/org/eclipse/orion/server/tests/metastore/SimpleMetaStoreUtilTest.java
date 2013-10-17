@@ -143,14 +143,14 @@ public class SimpleMetaStoreUtilTest {
 		assertFalse(files.contains(name));
 	}
 
-	@Test(expected = RuntimeException.class)
+	@Test
 	public void testCreateMetaFileWithBadName() throws JSONException {
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put("int", 1);
 		File parent = getTempDir();
 		String name = "this//is//bad";
 		// try to create the file
-		assertTrue(SimpleMetaStoreUtil.createMetaFile(parent, name, jsonObject));
+		assertFalse(SimpleMetaStoreUtil.createMetaFile(parent, name, jsonObject));
 	}
 
 	@Test
