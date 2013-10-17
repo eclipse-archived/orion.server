@@ -11,8 +11,8 @@
 package org.eclipse.orion.internal.server.servlets.file;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.io.UnsupportedEncodingException;
+import java.net.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -183,21 +183,26 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 		return NewFileServlet.getFileStore(request, path);
 	}
 
+	private static String decodeSlug(String slug) {
+		if (slug == null)
+			return null;
+		try {
+			return URLDecoder.decode(slug.replace("+", "%2B"), "UTF-8");
+		} catch (IllegalArgumentException e) {
+			// Malformed Slug
+		} catch (UnsupportedEncodingException e) {
+			// Should not happen
+		}
+		return null;
+	}
+
 	/**
 	 * Computes the name of the resource to be created by a POST operation. Returns
 	 * an empty string if the name was not specified.
 	 */
 	private String computeName(HttpServletRequest request, JSONObject requestObject) {
-		//get the slug first
-		String name = request.getHeader(ProtocolConstants.HEADER_SLUG);
-		//If the requestObject has a name then it must be used due to UTF-8 issues with names Bug 376671
-		if (requestObject.has("Name")) { //$NON-NLS-1$
-			try {
-				name = requestObject.getString("Name"); //$NON-NLS-1$
-			} catch (JSONException e) {
-				//can't happen because we checked for key
-			}
-		}
+		String name = decodeSlug(request.getHeader(ProtocolConstants.HEADER_SLUG));
+
 		//next comes the source location for a copy/move
 		if (name == null || name.length() == 0) {
 			String location = requestObject.optString(ProtocolConstants.KEY_LOCATION);
