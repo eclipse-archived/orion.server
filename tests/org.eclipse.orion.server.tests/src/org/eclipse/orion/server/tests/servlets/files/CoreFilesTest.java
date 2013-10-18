@@ -243,6 +243,48 @@ public class CoreFilesTest extends FileSystemTest {
 
 	}
 
+	/**
+	 * Tests creating a file whose name is an encoded URL provided in the Slug header only.
+	 */
+	@Test
+	public void testCreateFileEncodedNameSlug() throws CoreException, IOException, SAXException, JSONException {
+		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+		createDirectory(directoryPath);
+		String fileName = "a++b http%2525253A%2525252F%2525252Fwww.example.org%2525252Fwinery%2525252FTEST%2525252Fjclouds1";
+
+		WebRequest request = getPostFilesRequest(directoryPath, getNewFileJSON(null /* skip Name field*/).toString(), fileName);
+		WebResponse response = webConversation.getResponse(request);
+
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		assertTrue("Create file response was OK, but the file does not exist", checkFileExists(directoryPath + "/" + fileName));
+		assertEquals("Response should contain file metadata in JSON, but was " + response.getText(), "application/json", response.getContentType());
+		JSONObject responseObject = new JSONObject(response.getText());
+		assertNotNull("No file information in response", responseObject);
+		checkFileMetadata(responseObject, fileName, null, null, null, null, null, null, null, null);
+
+		//should be able to perform GET on location header to obtain metadata
+		String location = response.getHeaderField("Location");
+		request = getGetRequest(location + "?parts=meta");
+		response = webConversation.getResource(request);
+		assertNotNull(location);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		responseObject = new JSONObject(response.getText());
+		assertNotNull("No directory information in response", responseObject);
+		checkFileMetadata(responseObject, fileName, null, null, null, null, null, null, null, null);
+
+		//a GET on the parent folder should return a file with that name
+		request = getGetFilesRequest(directoryPath + "?depth=1");
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		responseObject = new JSONObject(response.getText());
+		System.out.println(responseObject);
+		JSONArray children = responseObject.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		assertEquals(1, children.length());
+		JSONObject child = children.getJSONObject(0);
+		assertEquals(fileName, child.getString(ProtocolConstants.KEY_NAME));
+
+	}
+
 	@Test
 	public void testCreateFileOverwrite() throws CoreException, IOException, SAXException, JSONException {
 		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
