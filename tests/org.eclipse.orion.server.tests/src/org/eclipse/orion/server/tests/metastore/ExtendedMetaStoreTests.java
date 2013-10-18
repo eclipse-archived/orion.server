@@ -44,7 +44,7 @@ import org.junit.runners.MethodSorters;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 
-	@Test
+	@Test(expected = CoreException.class)
 	public void testCreateProjectNamedWorkspace() throws CoreException {
 		// create the MetaStore
 		IMetaStore metaStore = getMetaStore();
@@ -73,15 +73,6 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		}
 		projectInfo.setWorkspaceId(workspaceInfo.getUniqueId());
 		metaStore.createProject(projectInfo);
-
-		// read the workspace
-		WorkspaceInfo readWorkspaceInfo = metaStore.readWorkspace(workspaceInfo.getUniqueId());
-		assertNotNull(readWorkspaceInfo);
-		assertEquals(workspaceName, readWorkspaceInfo.getFullName());
-		assertEquals(userInfo.getUniqueId(), readWorkspaceInfo.getUserId());
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
@@ -97,18 +88,16 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 			return;
 		}
 
-		// create the user
-		UserInfo userInfo = new UserInfo();
-		userInfo.setUserName("anthony");
-		userInfo.setFullName("Anthony Hunter");
-		metaStore.createUser(userInfo);
+		// read the user from the previous test
+		UserInfo userInfo = metaStore.readUser("anthony");
+		assertEquals(1, userInfo.getWorkspaceIds().size());
+		String workspaceId = userInfo.getWorkspaceIds().get(0);
 
-		// create the workspace
+		// read the workspace from the previous test
 		String workspaceName = "Orion Content";
-		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
-		workspaceInfo.setFullName(workspaceName);
-		workspaceInfo.setUserId(userInfo.getUniqueId());
-		metaStore.createWorkspace(workspaceInfo);
+		WorkspaceInfo workspaceInfo = metaStore.readWorkspace(workspaceId);
+		assertNotNull(workspaceInfo);
+		assertEquals(workspaceName, workspaceInfo.getFullName());
 
 		// create a folder under the user on the filesystem
 		IFileStore userHome = OrionConfiguration.getUserHome(userInfo.getUniqueId());
@@ -169,13 +158,14 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 
 		// read the user from the previous test
 		UserInfo userInfo = metaStore.readUser("anthony");
+		assertEquals(1, userInfo.getWorkspaceIds().size());
+		String workspaceId = userInfo.getWorkspaceIds().get(0);
 
-		// create the workspace
+		// read the workspace from the previous test
 		String workspaceName = "Orion Content";
-		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
-		workspaceInfo.setFullName(workspaceName);
-		workspaceInfo.setUserId(userInfo.getUniqueId());
-		metaStore.createWorkspace(workspaceInfo);
+		WorkspaceInfo workspaceInfo = metaStore.readWorkspace(workspaceId);
+		assertNotNull(workspaceInfo);
+		assertEquals(workspaceName, workspaceInfo.getFullName());
 
 		// create the project, specify a URL as the name, which is not a valid project name.
 		String badProjectName = "http://orion.eclipse.org/";

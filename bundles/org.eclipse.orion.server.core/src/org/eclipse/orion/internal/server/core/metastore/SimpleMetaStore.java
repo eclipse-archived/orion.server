@@ -73,6 +73,10 @@ public class SimpleMetaStore implements IMetaStore {
 		if (projectInfo.getFullName() == null) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createProject: project name is null.", null));
 		}
+		if (projectInfo.getFullName().equals(WORKSPACE)) {
+			// you cannot name a project "workspace".
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createProject: cannot create a project named \"worksspace\".", null));
+		}
 		WorkspaceInfo workspaceInfo;
 		try {
 			workspaceInfo = readWorkspace(projectInfo.getWorkspaceId());
@@ -84,10 +88,6 @@ public class SimpleMetaStore implements IMetaStore {
 		}
 		String userId = SimpleMetaStoreUtil.decodeUserIdFromWorkspaceId(projectInfo.getWorkspaceId());
 		String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(projectInfo.getWorkspaceId());
-		if (projectInfo.getFullName().equals(WORKSPACE)) {
-			// you cannot name a project "workspace", simply append a number to the name.
-			projectInfo.setFullName(WORKSPACE + "1");
-		}
 		String projectId = projectInfo.getFullName();
 		projectInfo.setUniqueId(projectId);
 
