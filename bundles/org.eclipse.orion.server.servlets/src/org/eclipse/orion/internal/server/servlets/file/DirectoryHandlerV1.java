@@ -118,12 +118,22 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 	private boolean performPost(HttpServletRequest request, HttpServletResponse response, JSONObject requestObject, IFileStore toCreate, int options) throws CoreException, IOException, ServletException {
 		boolean isCopy = (options & CREATE_COPY) != 0;
 		boolean isMove = (options & CREATE_MOVE) != 0;
-		if (isCopy || isMove)
-			return performCopyMove(request, response, requestObject, toCreate, isCopy, options);
-		if (requestObject.optBoolean(ProtocolConstants.KEY_DIRECTORY))
-			toCreate.mkdir(EFS.NONE, null);
-		else
-			toCreate.openOutputStream(EFS.NONE, null).close();
+		try {
+			if (isCopy || isMove)
+				return performCopyMove(request, response, requestObject, toCreate, isCopy, options);
+			if (requestObject.optBoolean(ProtocolConstants.KEY_DIRECTORY))
+				toCreate.mkdir(EFS.NONE, null);
+			else
+				toCreate.openOutputStream(EFS.NONE, null).close();
+		} catch (CoreException e) {
+			IStatus status = e.getStatus();
+			if (status != null && status.getCode() == EFS.ERROR_WRITE && status.getMessage().contains(toCreate.toString())) {
+				// Sanitize message, as it contains the filepath.
+				statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occurred while writing the file: " + toCreate.getName(), null));
+				return false;
+			}
+			throw e;
+		}
 		return true;
 	}
 
