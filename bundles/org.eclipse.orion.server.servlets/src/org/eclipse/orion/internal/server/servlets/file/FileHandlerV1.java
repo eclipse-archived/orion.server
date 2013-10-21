@@ -57,6 +57,7 @@ class FileHandlerV1 extends GenericFileHandler {
 		String etag = generateFileETag(file);
 		result.put(ProtocolConstants.KEY_ETAG, etag);
 		response.setHeader(ProtocolConstants.KEY_ETAG, etag);
+		response.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 		OrionServlet.decorateResponse(request, result, JsonURIUnqualificationStrategy.ALL);
 		responseWriter.append(result.toString());
 	}
