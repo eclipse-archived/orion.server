@@ -91,7 +91,7 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 		if (name.length() == 0)
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "File name not specified.", null));
 		IFileStore toCreate = dir.getChild(name);
-		if (!name.equals(toCreate.getName()))
+		if (!name.equals(toCreate.getName()) || name.contains(":"))
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Bad file name: " + name, null));
 		int options = getCreateOptions(request);
 		boolean destinationExists = toCreate.fetchInfo(EFS.NONE, null).exists();

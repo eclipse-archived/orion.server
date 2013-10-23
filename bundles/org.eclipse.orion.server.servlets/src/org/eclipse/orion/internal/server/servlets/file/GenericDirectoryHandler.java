@@ -11,6 +11,7 @@
 package org.eclipse.orion.internal.server.servlets.file;
 
 import java.io.PrintWriter;
+import java.net.URLEncoder;
 import java.sql.Date;
 import java.text.SimpleDateFormat;
 import javax.servlet.ServletException;
@@ -52,7 +53,7 @@ public class GenericDirectoryHandler extends ServletResourceHandler<IFileStore> 
 				String childName = child.getName();
 				if (childInfo.isDirectory())
 					childName += '/';
-				writer.print("<a href=\"" + childName + "\">" + childName + "</a>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+				writer.print("<a href=\"" + URLEncoder.encode(childName, "UTF8") + "\">" + childName + "</a>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 				for (int i = childName.length(); i < 30; i++)
 					writer.print(' ');
 				String formattedLastModified = dateFormat.format(new Date(childInfo.getLastModified()));
