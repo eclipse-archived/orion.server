@@ -51,9 +51,12 @@ public class GenericDirectoryHandler extends ServletResourceHandler<IFileStore> 
 			for (IFileStore child : children) {
 				IFileInfo childInfo = child.fetchInfo(EFS.NONE, null);
 				String childName = child.getName();
-				if (childInfo.isDirectory())
+				String encodedChildName = URLEncoder.encode(childName, "UTF8").replace("+", "%20");
+				if (childInfo.isDirectory()) {
 					childName += '/';
-				writer.print("<a href=\"" + URLEncoder.encode(childName, "UTF8") + "\">" + childName + "</a>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+					encodedChildName += '/';
+				}
+				writer.print("<a href=\"" + encodedChildName + "\">" + childName + "</a>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 				for (int i = childName.length(); i < 30; i++)
 					writer.print(' ');
 				String formattedLastModified = dateFormat.format(new Date(childInfo.getLastModified()));
