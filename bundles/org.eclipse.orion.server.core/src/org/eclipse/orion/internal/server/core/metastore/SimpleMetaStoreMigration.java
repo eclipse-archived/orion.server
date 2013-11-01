@@ -143,7 +143,7 @@ public class SimpleMetaStoreMigration {
 				}
 
 				String userName = userProperties.get("UserName");
-				if (userName == null || (userName.equals(userId) && userName.length() <= 2)) {
+				if (userName == null || userName.equals("") || (userName.equals(userId) && userName.length() <= 2)) {
 					// the userId and userName are both A in the users.pref, use the login value in the secure store.
 					String login = usersSecureStorageProperties.get("login");
 					userName = login;
