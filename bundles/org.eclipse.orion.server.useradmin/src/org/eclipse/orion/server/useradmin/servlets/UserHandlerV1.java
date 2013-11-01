@@ -14,9 +14,11 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.*;
@@ -541,6 +543,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		}
 		// Delete user from metadata store
 		try {
+			@SuppressWarnings("unused")
 			Activator r = Activator.getDefault();
 			final IMetaStore metastore = OrionConfiguration.getMetaStore();
 			if (isGuest)

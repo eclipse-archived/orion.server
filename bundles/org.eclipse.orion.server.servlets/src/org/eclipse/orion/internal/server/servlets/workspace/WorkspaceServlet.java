@@ -117,6 +117,7 @@ public class WorkspaceServlet extends OrionServlet {
 		if (!checkUser(userId, resp))
 			return true;
 		try {
+			@SuppressWarnings("unused")
 			Activator r = Activator.getDefault();
 			UserInfo user = OrionConfiguration.getMetaStore().readUser(userId);
 			writeJSONResponse(req, resp, UserInfoResourceHandler.toJSON(user, ServletResourceHandler.getURI(req)));

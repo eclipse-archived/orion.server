@@ -145,6 +145,7 @@ public class AuthorizationService {
 	 */
 	public static void removeUserRight(String userId, String uri) throws CoreException {
 		try {
+			@SuppressWarnings("unused")
 			Activator r = Activator.getDefault();
 			UserInfo user = OrionConfiguration.getMetaStore().readUser(userId);
 			JSONArray userRightArray = AuthorizationReader.getAuthorizationData(user);
