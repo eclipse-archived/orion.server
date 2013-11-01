@@ -99,6 +99,16 @@ public class ServerConstants {
 	public static final String CONFIG_FILE_LAYOUT = "orion.file.layout"; //$NON-NLS-1$
 
 	/**
+	 * The name of a configuration property specifying a flat layout format for user data files.
+	 */
+	public static final String CONFIG_FILE_LAYOUT_FLAT = "flat"; //$NON-NLS-1$
+
+	/**
+	 * The name of a configuration property specifying that user data files are organized in a 
+	 * hierarchy by the user who created it.
+	 */
+	public static final String CONFIG_FILE_LAYOUT_USERTREE = "usertree"; //$NON-NLS-1$
+	/**
 	 * The name of a configuration property specifying the virtual hosts to use for
 	 * test sites launched by this server. The property value is a comma-separated 
 	 * list of host names.
@@ -119,6 +129,16 @@ public class ServerConstants {
 	 * The name of configuration property specifying which meta store should be enabled
 	 */
 	public static final String CONFIG_META_STORE = "orion.core.metastore"; //$NON-NLS-1$
+
+	/**
+	 * The name of configuration property specifying the legacy meta store
+	 */
+	public static final String CONFIG_META_STORE_LEGACY = "legacy"; //$NON-NLS-1$
+
+	/**
+	 * The name of configuration property specifying the simple meta store
+	 */
+	public static final String CONFIG_META_STORE_SIMPLE = "simple"; //$NON-NLS-1$
 
 	/**
 	 * The bundle ID of the server core. 

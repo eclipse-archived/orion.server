@@ -45,16 +45,32 @@ public class OrionConfiguration {
 			throw new Error("Failed to access platform instance location", e); //$NON-NLS-1$
 		}
 
-		//consult layout preference
-		String layout = PreferenceHelper.getString(ServerConstants.CONFIG_FILE_LAYOUT, "flat").toLowerCase(); //$NON-NLS-1$
+		String layout = getFileLayout();
 
-		if ("usertree".equals(layout) && userId != null) { //$NON-NLS-1$
+		if (ServerConstants.CONFIG_FILE_LAYOUT_USERTREE.equals(layout) && userId != null) { //$NON-NLS-1$
 			//the user-tree layout organises projects by the user who created it
 			String userPrefix = userId.substring(0, Math.min(2, userId.length()));
 			return root.getChild(userPrefix).getChild(userId);
 		}
-		//default layout is a flat list of projects at the root
+		//the layout is a flat list of projects at the root
 		return root;
 	}
 
+	/**
+	 * Returns the file layout used on the Orion server. The legacy meta store supports flat 
+	 * or userTree file layout. The simple meta store only supports userTree file layout.
+	 * @return either {@link ServerConstants#CONFIG_FILE_LAYOUT_FLAT} or {@link ServerConstants#CONFIG_FILE_LAYOUT_USERTREE}
+	 */
+	public static String getFileLayout() {
+		// consult layout preference
+		String layout = PreferenceHelper.getString(ServerConstants.CONFIG_FILE_LAYOUT, ServerConstants.CONFIG_FILE_LAYOUT_FLAT).toLowerCase(); //$NON-NLS-1$
+		// consult the metastore preference 
+		String metastore = PreferenceHelper.getString(ServerConstants.CONFIG_META_STORE, ServerConstants.CONFIG_META_STORE_LEGACY).toLowerCase(); //$NON-NLS-1$
+
+		if (metastore.equals(ServerConstants.CONFIG_META_STORE_SIMPLE) || layout.equals(ServerConstants.CONFIG_FILE_LAYOUT_USERTREE)) {
+			return ServerConstants.CONFIG_FILE_LAYOUT_USERTREE;
+		} else {
+			return ServerConstants.CONFIG_FILE_LAYOUT_FLAT;
+		}
+	}
 }
