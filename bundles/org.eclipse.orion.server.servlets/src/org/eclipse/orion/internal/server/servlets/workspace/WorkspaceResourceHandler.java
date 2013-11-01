@@ -137,8 +137,18 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 
 		// only delete projects if they are in default location
 		IFileStore root = OrionConfiguration.getUserHome(user);
-		final IFileStore projectStore = root.getChild(project.getUniqueId());
-		URI defaultLocation = projectStore.toURI();
+		IFileStore projectStore = null;
+		URI defaultLocation = null;
+		if (OrionConfiguration.getMetaStore() instanceof SimpleMetaStore) {
+			// simple metastore, projects located in user/workspace/project
+			String workspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspace.getUniqueId());
+			projectStore = root.getChild(workspaceName).getChild(project.getUniqueId());
+			defaultLocation = projectStore.toURI();
+		} else {
+			// legacy metastore, projects under the user home
+			projectStore = root.getChild(project.getUniqueId());
+			defaultLocation = projectStore.toURI();
+		}
 		if (URIUtil.sameURI(defaultLocation, contentURI)) {
 			projectStore.delete(EFS.NONE, null);
 		}

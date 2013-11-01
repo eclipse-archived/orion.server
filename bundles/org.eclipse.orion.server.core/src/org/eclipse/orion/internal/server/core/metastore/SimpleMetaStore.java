@@ -237,10 +237,13 @@ public class SimpleMetaStore implements IMetaStore {
 		updateWorkspace(workspaceInfo);
 
 		if (!SimpleMetaStoreUtil.deleteMetaFile(workspaceMetaFolder, projectName)) {
-			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createProject: could not create project: " + projectName + " for user " + userId, null));
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.deleteProject: could not delete project: " + projectName + " for user " + userId, null));
 		}
-		if (!SimpleMetaStoreUtil.deleteMetaFolder(workspaceMetaFolder, projectName, true)) {
-			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createProject: could not create project: " + projectName + " for user " + userId, null));
+		if (SimpleMetaStoreUtil.isMetaFolder(workspaceMetaFolder, projectName)) {
+			// delete the project folder since it still exists
+			if (!SimpleMetaStoreUtil.deleteMetaFolder(workspaceMetaFolder, projectName, true)) {
+				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.deleteProject: could not delete project: " + projectName + " for user " + userId, null));
+			}
 		}
 	}
 
