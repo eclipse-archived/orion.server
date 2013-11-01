@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others.
+ * Copyright (c) 2010, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,6 +13,7 @@ package org.eclipse.orion.server.core.users;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
+
 import org.eclipse.core.internal.preferences.EclipsePreferences;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
@@ -26,6 +27,7 @@ import org.osgi.framework.*;
  * A local file system implementation of storage for the eclipse web preference
  * scope.
  */
+@SuppressWarnings("restriction")
 public class OrionPreferencesLocal extends EclipsePreferences {
 
 	// cached values

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -33,6 +33,7 @@ import org.json.JSONObject;
  * Base class for all Git jobs.
  *
  */
+@SuppressWarnings("restriction")
 public abstract class GitJob extends TaskJob {
 
 	private static final String KEY_SCHEME = "Scheme"; //$NON-NLS-1$

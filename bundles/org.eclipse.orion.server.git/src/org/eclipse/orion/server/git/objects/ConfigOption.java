@@ -31,6 +31,7 @@ import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.json.*;
 
 @ResourceDescription(type = ConfigOption.TYPE)
+@SuppressWarnings("restriction")
 public class ConfigOption extends GitObject {
 
 	public static final String RESOURCE = "config"; //$NON-NLS-1$

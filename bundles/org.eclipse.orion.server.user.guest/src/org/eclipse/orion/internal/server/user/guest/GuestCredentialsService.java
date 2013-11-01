@@ -31,7 +31,6 @@ import org.osgi.service.useradmin.Authorization;
 /**
  * An implementation of User Service that stores guest users in memory.
  */
-@SuppressWarnings("restriction")
 public class GuestCredentialsService implements IOrionGuestCredentialsService {
 
 	// TODO can get these be gotten from UserConstants instead?
