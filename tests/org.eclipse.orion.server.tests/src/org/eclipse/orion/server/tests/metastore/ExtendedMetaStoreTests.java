@@ -17,6 +17,9 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -456,6 +459,134 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		ProjectInfo readProjectInfo = metaStore.readProject(readWorkspaceId, readProjectName);
 		assertNotNull(readProjectInfo);
 		assertEquals(readWorkspaceInfo.getUniqueId(), readProjectInfo.getWorkspaceId());
+
+		// delete the user
+		metaStore.deleteUser(userInfo.getUniqueId());
+	}
+
+	@Test
+	public void testReadCorruptedProjectJson() throws IOException, CoreException {
+		IMetaStore metaStore = null;
+		try {
+			metaStore = OrionConfiguration.getMetaStore();
+		} catch (NullPointerException e) {
+			// expected when the workbench is not running
+		}
+		if (!(metaStore instanceof SimpleMetaStore)) {
+			// the workbench is not running, just pass the test
+			return;
+		}
+
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName("badproject");
+		userInfo.setFullName("Bad Project");
+		metaStore.createUser(userInfo);
+
+		// create the workspace
+		String workspaceName = "Orion Content";
+		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
+		workspaceInfo.setFullName(workspaceName);
+		workspaceInfo.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo);
+
+		// create a folder and project.json for the bad project on the filesystem
+		String projectName = "Bad Project";
+		File rootLocation = OrionConfiguration.getUserHome(null).toLocalFile(EFS.NONE, null);
+		String workspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(userInfo.getUniqueId(), workspaceName);
+		String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
+		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(rootLocation, userInfo.getUniqueId());
+		File workspaceMetaFolder = SimpleMetaStoreUtil.readMetaFolder(userMetaFolder, encodedWorkspaceName);
+
+		assertTrue(SimpleMetaStoreUtil.createMetaFolder(workspaceMetaFolder, projectName));
+		String corruptedProjectJson = "{\n\"OrionVersion\": 4,";
+		File newFile = SimpleMetaStoreUtil.retrieveMetaFile(workspaceMetaFolder, projectName);
+		FileWriter fileWriter = new FileWriter(newFile);
+		fileWriter.write(corruptedProjectJson);
+		fileWriter.write("\n");
+		fileWriter.flush();
+		fileWriter.close();
+
+		// read the project, should return null as the project is corrupted on disk
+		ProjectInfo readProjectInfo = metaStore.readProject(workspaceInfo.getUniqueId(), projectName);
+		assertNull(readProjectInfo);
+
+		// delete the user
+		metaStore.deleteUser(userInfo.getUniqueId());
+	}
+
+	@Test
+	public void testReadCorruptedUserJson() throws IOException, CoreException {
+		IMetaStore metaStore = null;
+		try {
+			metaStore = OrionConfiguration.getMetaStore();
+		} catch (NullPointerException e) {
+			// expected when the workbench is not running
+		}
+		if (!(metaStore instanceof SimpleMetaStore)) {
+			// the workbench is not running, just pass the test
+			return;
+		}
+
+		// create a folder and user.json for the bad user on the filesystem
+		String baduser = "baduser";
+		File rootLocation = OrionConfiguration.getUserHome(null).toLocalFile(EFS.NONE, null);
+		assertTrue(SimpleMetaStoreUtil.createMetaUserFolder(rootLocation, baduser));
+		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(rootLocation, baduser);
+		String corruptedUserJson = "{\n\"FullName\": \"Administrator\",\n\"OrionVersion\": 4,";
+		File newFile = SimpleMetaStoreUtil.retrieveMetaFile(userMetaFolder, SimpleMetaStore.USER);
+		FileWriter fileWriter = new FileWriter(newFile);
+		fileWriter.write(corruptedUserJson);
+		fileWriter.write("\n");
+		fileWriter.flush();
+		fileWriter.close();
+
+		// read the user, should return null as the user is corrupted on disk
+		UserInfo readUserInfo = metaStore.readUser(baduser);
+		assertNull(readUserInfo);
+
+		// delete the user
+		metaStore.deleteUser(baduser);
+	}
+
+	@Test
+	public void testReadCorruptedWorkspaceJson() throws IOException, CoreException {
+		IMetaStore metaStore = null;
+		try {
+			metaStore = OrionConfiguration.getMetaStore();
+		} catch (NullPointerException e) {
+			// expected when the workbench is not running
+		}
+		if (!(metaStore instanceof SimpleMetaStore)) {
+			// the workbench is not running, just pass the test
+			return;
+		}
+
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName("badworkspace");
+		userInfo.setFullName("Bad Workspace");
+		metaStore.createUser(userInfo);
+
+		// create a folder and workspace.json for the bad workspace on the filesystem
+		File rootLocation = OrionConfiguration.getUserHome(null).toLocalFile(EFS.NONE, null);
+		String workspaceName = "Orion Content";
+		String workspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(userInfo.getUniqueId(), workspaceName);
+		String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
+		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(rootLocation, userInfo.getUniqueId());
+		assertTrue(SimpleMetaStoreUtil.createMetaFolder(userMetaFolder, encodedWorkspaceName));
+		File workspaceMetaFolder = SimpleMetaStoreUtil.readMetaFolder(userMetaFolder, encodedWorkspaceName);
+		String corruptedWorkspaceJson = "{\n\"OrionVersion\": 4,";
+		File newFile = SimpleMetaStoreUtil.retrieveMetaFile(workspaceMetaFolder, SimpleMetaStore.WORKSPACE);
+		FileWriter fileWriter = new FileWriter(newFile);
+		fileWriter.write(corruptedWorkspaceJson);
+		fileWriter.write("\n");
+		fileWriter.flush();
+		fileWriter.close();
+
+		// read the workspace, should return null as the workspace is corrupted on disk
+		WorkspaceInfo readWorkspaceInfo = metaStore.readWorkspace(workspaceId);
+		assertNull(readWorkspaceInfo);
 
 		// delete the user
 		metaStore.deleteUser(userInfo.getUniqueId());

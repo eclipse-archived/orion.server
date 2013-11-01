@@ -75,7 +75,7 @@ public class SimpleMetaStore implements IMetaStore {
 		}
 		if (projectInfo.getFullName().equals(WORKSPACE)) {
 			// you cannot name a project "workspace".
-			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createProject: cannot create a project named \"worksspace\".", null));
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createProject: cannot create a project named \"workspace\".", null));
 		}
 		WorkspaceInfo workspaceInfo;
 		try {
