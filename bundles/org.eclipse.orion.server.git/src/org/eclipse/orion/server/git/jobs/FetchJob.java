@@ -80,6 +80,7 @@ public class FetchJob extends GitJob {
 			fc.setRefSpecs(spec);
 		}
 		FetchResult fetchResult = fc.call();
+		git.getRepository().close();
 		return handleFetchResult(fetchResult);
 	}
 

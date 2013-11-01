@@ -97,6 +97,10 @@ public class GitFileDecorator implements IWebResourceDecorator {
 						}
 					}
 				}
+				if (db != null) {
+					// close the git repository
+					db.close();
+				}
 			}
 		} catch (Exception e) {
 			// log and continue
@@ -113,6 +117,8 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		Remote defaultRemote = new Remote(cloneLocation, db, Constants.DEFAULT_REMOTE_NAME);
 		RemoteBranch defaultRemoteBranch = new RemoteBranch(cloneLocation, db, defaultRemote, branch);
 		addGitLinks(request, location, representation, cloneLocation, db, defaultRemoteBranch, branch);
+		// close the git repository
+		db.close();
 	}
 
 	private void addGitLinks(HttpServletRequest request, URI location, JSONObject representation, URI cloneLocation, Repository db, RemoteBranch defaultRemoteBranch, String branchName) throws URISyntaxException, JSONException {
@@ -221,6 +227,8 @@ public class GitFileDecorator implements IWebResourceDecorator {
 				Git git = new Git(repo);
 				git.add().addFilepattern(".").call(); //$NON-NLS-1$
 				git.commit().setMessage("Initial commit").call();
+				// close the git repository
+				repo.close();
 			}
 		} catch (Exception e) {
 			//just log it - this is not the purpose of the file decorator

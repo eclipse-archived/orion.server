@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -36,7 +36,6 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.*;
 import org.eclipse.orion.server.git.jobs.LogJob;
 import org.eclipse.orion.server.git.objects.Commit;
-import org.eclipse.orion.server.git.objects.Log;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.orion.server.useradmin.*;
 import org.eclipse.osgi.util.NLS;
@@ -126,10 +125,11 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 		HttpServletResponse response = requestInfo.response;
 		Repository db = requestInfo.db;
 		String pattern = requestInfo.relativePath;
+		IPath filePath = requestInfo.filePath;
 		try {
 			if (gitSegment == null) {
 				// special case for git log --all
-				return handleGetCommitLog(request, response, db, null, pattern);
+				return handleGetCommitLog(request, response, filePath, db, null, pattern);
 			} else {
 				// git log <ref>
 				String parts = request.getParameter("parts"); //$NON-NLS-1$
@@ -137,7 +137,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 				if ("body".equals(parts)) { //$NON-NLS-1$
 					return handleGetCommitBody(request, response, db, gitSegment, pattern);
 				} else if (parts == null || "log".equals(parts)) { //$NON-NLS-1$
-					return handleGetCommitLog(request, response, db, gitSegment, pattern);
+					return handleGetCommitLog(request, response, filePath, db, gitSegment, pattern);
 				}
 			}
 			return false;
@@ -155,6 +155,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 		RevWalk walk = new RevWalk(db);
 		walk.setTreeFilter(AndTreeFilter.create(PathFilterGroup.createFromStrings(Collections.singleton(pattern)), TreeFilter.ANY_DIFF));
 		RevCommit revCommit = walk.parseCommit(refId);
+		walk.dispose();
 
 		Commit commit = new Commit(null /* not needed */, db, revCommit, pattern);
 		ObjectStream stream = commit.toObjectStream();
@@ -167,7 +168,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 		return true;
 	}
 
-	private boolean handleGetCommitLog(HttpServletRequest request, HttpServletResponse response, Repository db, String refIdsRange, String pattern) throws AmbiguousObjectException, IOException, ServletException, JSONException, URISyntaxException, CoreException {
+	private boolean handleGetCommitLog(HttpServletRequest request, HttpServletResponse response, IPath filePath, Repository db, String refIdsRange, String pattern) throws AmbiguousObjectException, IOException, ServletException, JSONException, URISyntaxException, CoreException {
 		int page = request.getParameter("page") != null ? new Integer(request.getParameter("page")).intValue() : 0; //$NON-NLS-1$ //$NON-NLS-2$
 		int pageSize = request.getParameter("pageSize") != null ? new Integer(request.getParameter("pageSize")).intValue() : PAGE_SIZE; //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -178,7 +179,6 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 		Ref fromRefId = null;
 
 		Git git = new Git(db);
-		LogCommand logCommand = git.log();
 
 		if (refIdsRange != null) {
 			// git log <since>..<until>
@@ -211,31 +211,12 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 				}
 			}
 			toObjectId = getCommitObjectId(db, toObjectId);
-			// set the commit range
-			logCommand.add(toObjectId);
-
-			if (fromObjectId != null)
-				logCommand.not(fromObjectId);
-		} else {
-			// git log --all
-			logCommand.all();
-		}
-
-		if (page > 0) {
-			logCommand.setSkip((page - 1) * pageSize);
-			logCommand.setMaxCount(pageSize + 1); // to check if next page link is needed
-		}
-
-		if (pattern != null && !pattern.isEmpty()) {
-			logCommand.addPath(pattern);
 		}
 
 		URI baseLocation = getURI(request);
 		URI cloneLocation = BaseToCloneConverter.getCloneLocation(baseLocation, refIdsRange == null ? BaseToCloneConverter.COMMIT : BaseToCloneConverter.COMMIT_REFRANGE);
-		Log log = new Log(cloneLocation, db, null /* collected by the job */, pattern, toRefId, fromRefId);
-		log.setPaging(page, pageSize);
 
-		LogJob job = new LogJob(TaskJobHandler.getUserId(request), logCommand, log, baseLocation);
+		LogJob job = new LogJob(TaskJobHandler.getUserId(request), filePath, cloneLocation, page, pageSize, toObjectId, fromObjectId, toRefId, fromRefId, refIdsRange, pattern);
 		return TaskJobHandler.handleTaskJob(request, response, job, statusHandler);
 	}
 

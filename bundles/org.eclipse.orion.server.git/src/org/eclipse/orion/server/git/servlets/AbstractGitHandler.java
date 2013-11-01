@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 IBM Corporation and others.
+ * Copyright (c) 2012, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -126,8 +126,10 @@ public abstract class AbstractGitHandler extends ServletResourceHandler<String> 
 			String msg = NLS.bind("Failed to process a git request for {0}", path);
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
 		} finally {
-			if (db != null)
+			if (db != null) {
+				// close the git repository
 				db.close();
+			}
 		}
 	}
 
