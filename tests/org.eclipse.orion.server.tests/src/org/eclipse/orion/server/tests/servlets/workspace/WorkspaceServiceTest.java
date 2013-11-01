@@ -482,7 +482,23 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		String projectLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		// update the global variables for the test
+		IPath workspacePath = new Path(workspaceLocation.getPath());
+		String workspaceId = new Path(workspaceLocation.getPath()).segment(workspacePath.segmentCount() - 1);
+		testProjectBaseLocation = "/" + workspaceId + '/' + projectName;
 		JSONObject project = new JSONObject(response.getText());
+		testProjectLocalFileLocation = "/" + project.optString(ProtocolConstants.KEY_ID, null);
+		String contentLocation = project.optString(ProtocolConstants.KEY_CONTENT_LOCATION);
+
+		//add a file in the project
+		String fileName = "file.txt";
+		request = getPostFilesRequest(contentLocation, getNewFileJSON(fileName).toString(), fileName);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		assertEquals("Response should contain file metadata in JSON, but was " + response.getText(), "application/json", response.getContentType());
+		JSONObject responseObject = new JSONObject(response.getText());
+		assertNotNull("No file information in response", responseObject);
+		checkFileMetadata(responseObject, fileName, null, null, null, null, null, null, null, projectName);
 
 		//delete project
 		request = new DeleteMethodWebRequest(toAbsoluteURI(projectLocation));
@@ -503,6 +519,8 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		//ensure project content is deleted
 		if (OrionConfiguration.getMetaStore() instanceof SimpleMetaStore) {
 			// simple metastore, projects not in the same simple location anymore, so do not check
+			IFileStore projectStore = EFS.getStore(makeLocalPathAbsolute(""));
+			assertFalse(projectStore.fetchInfo().exists());
 		} else {
 			// legacy metastore, use what was in the original test
 			String projectId = project.getString(ProtocolConstants.KEY_ID);
