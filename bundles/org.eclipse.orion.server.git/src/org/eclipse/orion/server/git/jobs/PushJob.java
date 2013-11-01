@@ -87,6 +87,8 @@ public class PushJob extends GitJob {
 			}
 			// TODO: return results for all updated branches once push is available for remote, see bug 352202
 		}
+		// close the git repository
+		db.close();
 		if (statusSet.contains(RemoteRefUpdate.Status.OK))
 			// if there is OK status in the set -> something was updated
 			return Status.OK_STATUS;
