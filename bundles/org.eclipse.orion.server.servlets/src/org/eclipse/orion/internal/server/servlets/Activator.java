@@ -32,6 +32,7 @@ import org.osgi.util.tracker.ServiceTracker;
  * Activator for the server servlet bundle. Responsible for tracking required services
  * and registering/unregistering servlets.
  */
+@SuppressWarnings("deprecation")
 public class Activator implements BundleActivator {
 
 	public static volatile BundleContext bundleContext;
