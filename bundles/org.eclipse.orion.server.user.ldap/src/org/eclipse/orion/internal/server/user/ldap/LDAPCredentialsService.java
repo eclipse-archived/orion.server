@@ -129,6 +129,7 @@ public class LDAPCredentialsService implements IOrionCredentialsService {
 		
 		try 
 		{
+			@SuppressWarnings("unused")
 			DirContext userContext = new InitialDirContext(environment);
 			return true;
 		} 

@@ -196,6 +196,7 @@ public class SearchServlet extends OrionServlet {
 			httpResponse.setCharacterEncoding("UTF-8"); //$NON-NLS-1$
 		}
 		//bash the query in the response to remove user info
+		@SuppressWarnings("unchecked")
 		NamedList<Object> params = (NamedList<Object>) queryResponse.getHeader().get("params"); //$NON-NLS-1$
 		params.remove(CommonParams.Q);
 		params.add(CommonParams.Q, httpRequest.getParameter(CommonParams.Q));

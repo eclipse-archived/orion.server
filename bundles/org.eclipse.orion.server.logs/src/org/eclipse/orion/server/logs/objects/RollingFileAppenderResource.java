@@ -45,6 +45,7 @@ public class RollingFileAppenderResource extends FileAppenderResource {
 		super(fileAppender, baseLocation);
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public RollingFileAppenderResource(
 			RollingFileAppender<ILoggingEvent> rollingFileAppender,
 			URI baseLocation) {

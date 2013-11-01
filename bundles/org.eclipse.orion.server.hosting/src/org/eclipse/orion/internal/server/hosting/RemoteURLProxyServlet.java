@@ -87,7 +87,7 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 
 			// copy headers
 			boolean xForwardedFor = false;
-			Enumeration enm = request.getHeaderNames();
+			Enumeration<String> enm = request.getHeaderNames();
 			while (enm.hasMoreElements()) {
 				// TODO could be better than this!
 				String hdr = (String) enm.nextElement();
@@ -109,7 +109,7 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 				if (connectionHdr != null && connectionHdr.indexOf(lhdr) >= 0)
 					continue;
 
-				Enumeration vals = request.getHeaders(hdr);
+				Enumeration<String> vals = request.getHeaders(hdr);
 				while (vals.hasMoreElements()) {
 					String val = (String) vals.nextElement();
 					if (val != null) {
@@ -125,7 +125,7 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 				connection.addRequestProperty("X-Forwarded-For", request.getRemoteAddr());
 
 			// Bug 346139: prevent an infinite proxy loop by decrementing the Max-Forwards header
-			Enumeration maxForwardsHeaders = request.getHeaders("Max-Forwards");
+			Enumeration<String> maxForwardsHeaders = request.getHeaders("Max-Forwards");
 			String maxForwardsHeader = null;
 			while (maxForwardsHeaders.hasMoreElements()) {
 				maxForwardsHeader = (String) maxForwardsHeaders.nextElement();
@@ -178,7 +178,7 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 					// make sure this is thrown only in the "fail early on 404" case
 					throw new NotFoundException();
 				}
-				response.setStatus(code, http.getResponseMessage());
+				response.sendError(code, http.getResponseMessage());
 			}
 
 			if (proxy_in == null) {

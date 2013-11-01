@@ -16,7 +16,6 @@ import org.eclipse.orion.server.useradmin.UserConstants;
 /**
  * Guest user, distinguished from a normal user by having the UserConstants.KEY_GUEST property
  */
-@SuppressWarnings("restriction")
 public class GuestUser extends User {
 	public GuestUser(String uid, String login, String name, String password) {
 		super(uid, login, name, password);

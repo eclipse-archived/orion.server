@@ -178,8 +178,6 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 		Ref toRefId = null;
 		Ref fromRefId = null;
 
-		Git git = new Git(db);
-
 		if (refIdsRange != null) {
 			// git log <since>..<until>
 			if (refIdsRange.contains("..")) { //$NON-NLS-1$
@@ -476,7 +474,6 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 		}
 	}
 
-	@SuppressWarnings({"restriction"})
 	private boolean sendNotification(HttpServletRequest request, HttpServletResponse response, Repository db, String login, String commit, String url, String authorName, String message) throws ServletException, URISyntaxException, IOException, JSONException, CoreException, Exception {
 		UserEmailUtil util = UserEmailUtil.getUtil();
 		if (!util.isEmailConfigured()) {

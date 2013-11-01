@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2006, 2012 Sxip Identity Corporation and others
+ * Copyright 2006, 2013 Sxip Identity Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,7 +14,9 @@ package org.eclipse.orion.server.authentication.openid;
 import java.io.IOException;
 import java.net.URL;
 import java.util.List;
+
 import javax.servlet.http.*;
+
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.authentication.Activator;
 import org.openid4java.OpenIDException;
@@ -51,6 +53,7 @@ public class OpenidConsumer {
 	}
 
 	// --- placing the authentication request ---
+	@SuppressWarnings("unchecked")
 	public String authRequest(String userSuppliedString, HttpServletRequest httpReq, HttpServletResponse httpResp) throws CoreException {
 		AuthRequest authReq = null;
 

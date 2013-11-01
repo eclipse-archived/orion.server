@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2012 IBM Corporation, Cognos Incorporated and others
+ * Copyright (c) 2010, 2013 IBM Corporation, Cognos Incorporated and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -19,6 +19,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.osgi.framework.Bundle;
 import org.osgi.service.http.HttpContext;
 
+@SuppressWarnings("rawtypes")
 public class BundleEntryHttpContext implements HttpContext {
 	private Bundle bundle;
 	private String bundlePath;
@@ -70,6 +71,7 @@ public class BundleEntryHttpContext implements HttpContext {
 		return null;
 	}
 
+	@SuppressWarnings("unchecked")
 	public Set getResourcePaths(String path) {
 		if (bundlePath != null)
 			path = bundlePath + path;
