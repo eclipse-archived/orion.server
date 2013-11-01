@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others 
+ * Copyright (c) 2010, 2013 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -104,14 +104,15 @@ public class BasicAuthenticationService implements IAuthenticationService {
 	}
 
 	public void configure(Properties properties) {
+		// empty block
 	}
 
-	public void bindUserAdmin(IOrionCredentialsService userAdmin) {
-		BasicAuthenticationService.userAdmin = userAdmin;
+	public void bindUserAdmin(IOrionCredentialsService newUserAdmin) {
+		BasicAuthenticationService.userAdmin = newUserAdmin;
 	}
 
-	public void unbindUserAdmin(IOrionCredentialsService userAdmin) {
-		if (userAdmin.equals(BasicAuthenticationService.userAdmin)) {
+	public void unbindUserAdmin(IOrionCredentialsService newUserAdmin) {
+		if (newUserAdmin.equals(BasicAuthenticationService.userAdmin)) {
 			BasicAuthenticationService.userAdmin = null;
 		}
 	}
@@ -144,7 +145,7 @@ public class BasicAuthenticationService implements IAuthenticationService {
 		userProfileService = _userProfileService;
 	}
 
-	public void unbindUserProfileService(IOrionUserProfileService userProfileService) {
+	public void unbindUserProfileService(IOrionUserProfileService newUserProfileService) {
 		userProfileService = null;
 	}
 

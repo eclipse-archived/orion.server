@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others
+ * Copyright (c) 2011, 2012 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,13 +11,12 @@
 package org.eclipse.orion.server.tests.servlets.site;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
-
-import junit.framework.Assert;
 
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -101,9 +100,9 @@ public abstract class CoreSiteTest extends FileSystemTest {
 			setAuthentication(request);
 			return request;
 		} catch (UnsupportedEncodingException e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		} catch (JSONException e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 		return null;
 	}
@@ -136,7 +135,7 @@ public abstract class CoreSiteTest extends FileSystemTest {
 		return request;
 	}
 
-	protected WebRequest getRetrieveAllSitesRequest(String user) throws URISyntaxException {
+	protected WebRequest getRetrieveAllSitesRequest(String user) {
 		WebRequest request = new GetMethodWebRequest(toAbsoluteURI(SITE_SERVLET_LOCATION));
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		if (user == null)
@@ -168,9 +167,9 @@ public abstract class CoreSiteTest extends FileSystemTest {
 			setAuthentication(request);
 			return request;
 		} catch (UnsupportedEncodingException e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		} catch (JSONException e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 		return null;
 	}

@@ -80,8 +80,8 @@ public class TransferTest extends FileSystemTest {
 				String range = putResponse.getHeaderField("Range");
 				assertEquals("bytes 0-" + (totalTransferred - 1), range);
 			}
-
 		}
+		in.close();
 	}
 
 	/**

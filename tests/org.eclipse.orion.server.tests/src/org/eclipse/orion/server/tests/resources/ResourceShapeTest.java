@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 IBM Corporation and others.
+ * Copyright (c) 2012, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,7 +11,7 @@
 package org.eclipse.orion.server.tests.resources;
 
 import static org.junit.Assert.assertEquals;
-import junit.framework.Assert;
+import static org.junit.Assert.fail;
 
 import org.eclipse.orion.server.core.resources.Property;
 import org.eclipse.orion.server.core.resources.ResourceShape;
@@ -49,7 +49,7 @@ public class ResourceShapeTest {
 			if (toContain.getName().equals(testProp.getName()))
 				return;
 		}
-		Assert.fail("Missing expected property: " + toContain.getName());
+		fail("Missing expected property: " + toContain.getName());
 	}
 
 	@Test(expected = IllegalArgumentException.class)

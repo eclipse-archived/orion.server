@@ -14,6 +14,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -313,7 +314,7 @@ public class HostingTest extends CoreSiteTest {
 		assertEquals(HttpURLConnection.HTTP_NO_CONTENT, putPrefResp.getResponseCode());
 
 		// Check pref value
-		WebRequest getPrefReq = new GetMethodWebRequest(remotePrefUrl + "?key=" + URLEncoder.encode(prefKey));
+		WebRequest getPrefReq = new GetMethodWebRequest(remotePrefUrl + "?key=" + URLEncoder.encode(prefKey, "UTF-8"));
 		setAuthentication(getPrefReq);
 		WebResponse getPrefResp = webConversation.getResponse(getPrefReq);
 		assertEquals(HttpURLConnection.HTTP_OK, getPrefResp.getResponseCode());
@@ -378,7 +379,7 @@ public class HostingTest extends CoreSiteTest {
 		assertEquals(HttpURLConnection.HTTP_CREATED, createDirResp.getResponseCode());
 	}
 
-	private WebResponse createFileOnServer(String fileServletLocation, String filename, String fileContent) throws SAXException, IOException, JSONException, URISyntaxException {
+	private WebResponse createFileOnServer(String fileServletLocation, String filename, String fileContent) throws SAXException, IOException, JSONException {
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 		WebRequest createFileReq = getPostFilesRequest(fileServletLocation, getNewFileJSON(filename).toString(), filename);
 		WebResponse createFileResp = webConversation.getResponse(createFileReq);
@@ -389,8 +390,8 @@ public class HostingTest extends CoreSiteTest {
 		return createFileResp;
 	}
 
-	private WebRequest createSetPreferenceRequest(String location, String key, String value) {
-		String body = "key=" + URLEncoder.encode(key) + "&value=" + URLEncoder.encode(value);
+	private WebRequest createSetPreferenceRequest(String location, String key, String value) throws UnsupportedEncodingException {
+		String body = "key=" + URLEncoder.encode(key, "UTF-8") + "&value=" + URLEncoder.encode(value, "UTF-8");
 		return new PutMethodWebRequest(location, new ByteArrayInputStream(body.getBytes()), "application/x-www-form-urlencoded");
 	}
 }

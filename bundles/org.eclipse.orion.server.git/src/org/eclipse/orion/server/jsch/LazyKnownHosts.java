@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,7 +11,6 @@
 package org.eclipse.orion.server.jsch;
 
 import com.jcraft.jsch.*;
-import java.io.*;
 
 /**
  * Use this repository instead of standard {@link HostKeyRepository} to record the last checked host fingerprint.
@@ -29,16 +28,7 @@ public class LazyKnownHosts implements HostKeyRepository {
 
 	LazyKnownHosts(JSch jsch, String knownHosts) throws JSchException {
 		if (knownHosts != null) {
-			try {
-				final InputStream in = new StringBufferInputStream(knownHosts);
-				try {
-					jsch.setKnownHosts(in);
-				} finally {
-					in.close();
-				}
-			} catch (IOException e) {
-				// no known hosts
-			}
+			jsch.setKnownHosts(knownHosts);
 		}
 		this.repo = jsch.getHostKeyRepository();
 

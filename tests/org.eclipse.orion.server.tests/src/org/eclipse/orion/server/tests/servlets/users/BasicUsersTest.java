@@ -16,7 +16,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -161,7 +160,7 @@ public class BasicUsersTest extends UsersTest {
 	}
 
 	@Test
-	public void testCreateDuplicateUser() throws IOException, SAXException, JSONException {
+	public void testCreateDuplicateUser() throws IOException, SAXException {
 		WebConversation webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 
@@ -181,7 +180,7 @@ public class BasicUsersTest extends UsersTest {
 	}
 
 	@Test
-	public void testCreateUserDuplicateEmail() throws IOException, SAXException, JSONException {
+	public void testCreateUserDuplicateEmail() throws IOException, SAXException {
 		WebConversation webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 
@@ -255,7 +254,7 @@ public class BasicUsersTest extends UsersTest {
 	}
 
 	@Test
-	public void testCreateDeleteUsers() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testCreateDeleteUsers() throws IOException, SAXException, JSONException {
 		WebConversation webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 
@@ -354,7 +353,7 @@ public class BasicUsersTest extends UsersTest {
 	}
 
 	@Test
-	public void testUpdateUsers() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testUpdateUsers() throws IOException, SAXException, JSONException {
 		WebConversation webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 
@@ -415,7 +414,7 @@ public class BasicUsersTest extends UsersTest {
 	}
 
 	@Test
-	public void testResetUser() throws IOException, SAXException, JSONException, URISyntaxException {
+	public void testResetUser() throws IOException, SAXException, JSONException {
 		WebConversation webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 
@@ -462,7 +461,7 @@ public class BasicUsersTest extends UsersTest {
 	}
 
 	@Test
-	public void testChangeUserLogin() throws JSONException, IOException, SAXException, URISyntaxException {
+	public void testChangeUserLogin() throws JSONException, IOException, SAXException {
 		WebConversation webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 

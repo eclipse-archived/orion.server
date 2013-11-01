@@ -22,6 +22,8 @@ import org.osgi.service.http.HttpService;
 import org.osgi.service.packageadmin.PackageAdmin;
 import org.osgi.util.tracker.ServiceTracker;
 
+@SuppressWarnings("deprecation")
+// PackageAdmin is deprecated but is not being removed during Luna
 public class ServerTestsActivator implements BundleActivator {
 	private static final String EQUINOX_HTTP_JETTY = "org.eclipse.equinox.http.jetty"; //$NON-NLS-1$
 	private static final String EQUINOX_HTTP_REGISTRY = "org.eclipse.equinox.http.registry"; //$NON-NLS-1$

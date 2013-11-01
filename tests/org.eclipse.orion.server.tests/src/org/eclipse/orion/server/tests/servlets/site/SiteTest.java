@@ -11,22 +11,30 @@
 package org.eclipse.orion.server.tests.servlets.site;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
-import com.meterware.httpunit.*;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
-import junit.framework.Assert;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
 import org.eclipse.orion.internal.server.servlets.site.SiteInfo;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.UserInfo;
-import org.json.*;
-import org.junit.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.xml.sax.SAXException;
+
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 /**
  * Tests for the site configurations API.
@@ -184,7 +192,7 @@ public class SiteTest extends CoreSiteTest {
 
 		UserInfo user = OrionConfiguration.getMetaStore().readUser(testUserId);
 		SiteInfo siteInfo = SiteInfo.getSite(user, siteId);
-		Assert.assertNotNull(siteInfo);
+		assertNotNull(siteInfo);
 
 		// Delete site
 		WebRequest deleteReq = getDeleteSiteRequest(location);
@@ -198,7 +206,7 @@ public class SiteTest extends CoreSiteTest {
 
 		user = OrionConfiguration.getMetaStore().readUser(testUserId);
 		siteInfo = SiteInfo.getSite(user, siteId);
-		Assert.assertNull(siteInfo);
+		assertNull(siteInfo);
 
 		// GET all sites should not include the deleted site
 		WebRequest getAllReq = getRetrieveAllSitesRequest(null);

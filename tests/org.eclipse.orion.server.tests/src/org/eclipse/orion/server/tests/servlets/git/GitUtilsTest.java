@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -46,7 +46,7 @@ public class GitUtilsTest extends GitTest {
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		URI uri = URI.create(location);
 		File dir = GitUtils.getGitDir(new Path(uri.getPath()));
-		assertNull(dir == null ? "N/A" : dir.toURL().toString(), dir);
+		assertNull(dir == null ? "N/A" : dir.toURI().toURL().toString(), dir);
 	}
 
 	@Test
@@ -79,7 +79,7 @@ public class GitUtilsTest extends GitTest {
 	@Test
 	public void testGitDirEmptyPath() throws Exception {
 		File emptyPathFile = GitUtils.getGitDir(new Path(""));
-		assertNull(emptyPathFile == null ? "N/A" : emptyPathFile.toURL().toString(), emptyPathFile);
+		assertNull(emptyPathFile == null ? "N/A" : emptyPathFile.toURI().toURL().toString(), emptyPathFile);
 	}
 
 	private boolean deleteDir(File dir) {

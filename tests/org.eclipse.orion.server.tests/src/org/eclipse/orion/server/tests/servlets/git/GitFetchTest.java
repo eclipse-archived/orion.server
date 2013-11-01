@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others
+ * Copyright (c) 2011, 2013 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -153,7 +153,6 @@ public class GitFetchTest extends GitTest {
 
 		// clone2
 		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
-		String projectId2 = project2.getString(ProtocolConstants.KEY_ID);
 		IPath clonePath2 = getClonePath(workspaceId, project2);
 		clone(clonePath2);
 
@@ -314,7 +313,6 @@ public class GitFetchTest extends GitTest {
 
 		// clone1: create
 		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
-		String projectId1 = project1.getString(ProtocolConstants.KEY_ID);
 		IPath clonePath1 = getClonePath(workspaceId, project1);
 		JSONObject clone1 = clone(clonePath1);
 		String cloneContentLocation1 = clone1.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
