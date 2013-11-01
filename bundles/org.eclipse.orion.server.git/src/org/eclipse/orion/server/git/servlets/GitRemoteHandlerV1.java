@@ -65,13 +65,14 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 					return handlePost(request, response, path);
 				case DELETE :
 					return handleDelete(request, response, path);
+				default :
+					return false;
 			}
 
 		} catch (Exception e) {
 			String msg = NLS.bind("Failed to handle /git/remote request for {0}", path); //$NON-NLS-1$
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
 		}
-		return false;
 	}
 
 	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, String path) throws IOException, JSONException, ServletException, URISyntaxException, CoreException {

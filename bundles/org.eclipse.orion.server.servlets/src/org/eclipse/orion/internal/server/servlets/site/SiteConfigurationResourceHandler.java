@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -195,6 +195,8 @@ public class SiteConfigurationResourceHandler extends ServletResourceHandler<Sit
 					return handlePost(req, resp, site);
 				case DELETE :
 					return handleDelete(req, resp, site);
+				default :
+					return false;
 			}
 		} catch (IOException e) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), e));
@@ -203,7 +205,6 @@ public class SiteConfigurationResourceHandler extends ServletResourceHandler<Sit
 		} catch (CoreException e) {
 			return statusHandler.handleRequest(req, resp, e.getStatus());
 		}
-		return false;
 	}
 
 	private static JSONObject getRequestJson(HttpServletRequest req) throws IOException, JSONException {

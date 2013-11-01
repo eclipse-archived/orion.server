@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2012 IBM Corporation and others.
+ * Copyright (c) 2010, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -289,6 +289,8 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 					return handlePost(request, response, dir);
 				case DELETE :
 					return handleDelete(request, response, dir);
+				default :
+					return false;
 			}
 		} catch (JSONException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Syntax error in request", e));
@@ -302,6 +304,5 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 			LogHelper.log(e);
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An unknown failure occurred. Consult your server log or contact your system administrator.", e));
 		}
-		return false;
 	}
 }

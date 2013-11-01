@@ -201,8 +201,9 @@ class FileHandlerV1 extends GenericFileHandler {
 						handlePutMetadata(request.getReader(), null, file);
 						response.setStatus(HttpServletResponse.SC_NO_CONTENT);
 						return true;
+					default :
+						return false;
 				}
-				return false;
 			}
 			if ("meta,body".equals(parts) || "body,meta".equals(parts)) { //$NON-NLS-1$ //$NON-NLS-2$
 				switch (getMethod(request)) {
@@ -212,8 +213,9 @@ class FileHandlerV1 extends GenericFileHandler {
 					case PUT :
 						handleMultiPartPut(request, response, file);
 						return true;
+					default :
+						return false;
 				}
-				return false;
 			}
 		} catch (JSONException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Syntax error in request", e));
