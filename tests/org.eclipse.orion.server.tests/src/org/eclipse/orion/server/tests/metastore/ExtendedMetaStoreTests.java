@@ -44,7 +44,7 @@ import org.junit.runners.MethodSorters;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 
-	@Test(expected = CoreException.class)
+	@Test
 	public void testCreateProjectNamedWorkspace() throws CoreException {
 		// create the MetaStore
 		IMetaStore metaStore = getMetaStore();
@@ -70,9 +70,19 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 			projectInfo.setContentLocation(new URI("file:/home/anthony/orion/project"));
 		} catch (URISyntaxException e) {
 			// should not get an exception here, simple URI
+			fail("URISyntaxException: " + e.getLocalizedMessage());
 		}
 		projectInfo.setWorkspaceId(workspaceInfo.getUniqueId());
-		metaStore.createProject(projectInfo);
+		try {
+			metaStore.createProject(projectInfo);
+		} catch (CoreException e) {
+			// we expect to get a core exception here
+			String message = e.getMessage();
+			assertTrue(message.contains("cannot create a project named \"workspace\""));
+		}
+
+		// delete the user
+		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
@@ -88,16 +98,18 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 			return;
 		}
 
-		// read the user from the previous test
-		UserInfo userInfo = metaStore.readUser("anthony");
-		assertEquals(1, userInfo.getWorkspaceIds().size());
-		String workspaceId = userInfo.getWorkspaceIds().get(0);
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName("anthony");
+		userInfo.setFullName("Anthony Hunter");
+		metaStore.createUser(userInfo);
 
-		// read the workspace from the previous test
+		// create the workspace
 		String workspaceName = "Orion Content";
-		WorkspaceInfo workspaceInfo = metaStore.readWorkspace(workspaceId);
-		assertNotNull(workspaceInfo);
-		assertEquals(workspaceName, workspaceInfo.getFullName());
+		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
+		workspaceInfo.setFullName(workspaceName);
+		workspaceInfo.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo);
 
 		// create a folder under the user on the filesystem
 		IFileStore userHome = OrionConfiguration.getUserHome(userInfo.getUniqueId());
@@ -116,8 +128,8 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
-	@Test(expected = CoreException.class)
-	public void testCreateProjectWithAnInvalidWorkspaceId() throws CoreException {
+	@Test
+	public void testCreateProjectWithAnInvalidWorkspaceId() {
 		// create the MetaStore
 		IMetaStore metaStore = getMetaStore();
 
@@ -131,11 +143,17 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 			// should not get an exception here, simple URI
 		}
 		projectInfo.setWorkspaceId("77");
-		metaStore.createProject(projectInfo);
+		try {
+			metaStore.createProject(projectInfo);
+		} catch (CoreException e) {
+			// we expect to get a core exception here
+			String message = e.getMessage();
+			assertTrue(message.contains("could not find workspace"));
+		}
 	}
 
-	@Test(expected = CoreException.class)
-	public void testCreateProjectWithNoWorkspaceId() throws CoreException {
+	@Test
+	public void testCreateProjectWithNoWorkspaceId() {
 		// create the MetaStore
 		IMetaStore metaStore = getMetaStore();
 
@@ -148,24 +166,32 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		} catch (URISyntaxException e) {
 			// should not get an exception here, simple URI
 		}
-		metaStore.createProject(projectInfo);
+		try {
+			metaStore.createProject(projectInfo);
+		} catch (CoreException e) {
+			// we expect to get a core exception here
+			String message = e.getMessage();
+			assertTrue(message.contains("workspace id is null"));
+		}
 	}
 
-	@Test(expected = CoreException.class)
+	@Test
 	public void testCreateProjectWithURLAsName() throws CoreException {
 		// create the MetaStore
 		IMetaStore metaStore = getMetaStore();
 
-		// read the user from the previous test
-		UserInfo userInfo = metaStore.readUser("anthony");
-		assertEquals(1, userInfo.getWorkspaceIds().size());
-		String workspaceId = userInfo.getWorkspaceIds().get(0);
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName("anthony");
+		userInfo.setFullName("Anthony Hunter");
+		metaStore.createUser(userInfo);
 
-		// read the workspace from the previous test
+		// create the workspace
 		String workspaceName = "Orion Content";
-		WorkspaceInfo workspaceInfo = metaStore.readWorkspace(workspaceId);
-		assertNotNull(workspaceInfo);
-		assertEquals(workspaceName, workspaceInfo.getFullName());
+		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
+		workspaceInfo.setFullName(workspaceName);
+		workspaceInfo.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo);
 
 		// create the project, specify a URL as the name, which is not a valid project name.
 		String badProjectName = "http://orion.eclipse.org/";
@@ -177,7 +203,16 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 			// should not get an exception here, simple URI
 		}
 		projectInfo.setWorkspaceId(workspaceInfo.getUniqueId());
-		metaStore.createProject(projectInfo);
+		try {
+			metaStore.createProject(projectInfo);
+		} catch (CoreException e) {
+			// we expect to get a core exception here
+			String message = e.getMessage();
+			assertTrue(message.contains("could not create project"));
+		}
+
+		// delete the user
+		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
@@ -185,16 +220,18 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		// create the MetaStore
 		IMetaStore metaStore = getMetaStore();
 
-		// read the user from the previous test
-		UserInfo userInfo = metaStore.readUser("anthony");
-		assertEquals(1, userInfo.getWorkspaceIds().size());
-		String workspaceId1 = userInfo.getWorkspaceIds().get(0);
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName("anthony");
+		userInfo.setFullName("Anthony Hunter");
+		metaStore.createUser(userInfo);
 
-		// read the workspace from the previous test
+		// create the workspace
 		String workspaceName1 = "Orion Content";
-		WorkspaceInfo workspaceInfo1 = metaStore.readWorkspace(workspaceId1);
-		assertNotNull(workspaceInfo1);
-		assertEquals(workspaceName1, workspaceInfo1.getFullName());
+		WorkspaceInfo workspaceInfo1 = new WorkspaceInfo();
+		workspaceInfo1.setFullName(workspaceName1);
+		workspaceInfo1.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo1);
 
 		// create another workspace with the same workspace name
 		String workspaceName2 = "Orion Content";
@@ -220,17 +257,21 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
-	@Test(expected = CoreException.class)
-	public void testCreateUserWithNoUserName() throws CoreException {
+	@Test
+	public void testCreateUserWithNoUserName() {
 		// create the MetaStore
 		IMetaStore metaStore = getMetaStore();
 
 		// create the user and do not provide a userId
 		UserInfo userInfo = new UserInfo();
 		userInfo.setFullName("Anthony Hunter");
-		metaStore.createUser(userInfo);
-
-		fail("Should not be able to create the user without a user name.");
+		try {
+			metaStore.createUser(userInfo);
+		} catch (CoreException e) {
+			// we expect to get a core exception here
+			String message = e.getMessage();
+			assertTrue(message.contains("could not create user"));
+		}
 	}
 
 	@Test
@@ -250,7 +291,7 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		metaStore.deleteUser(workspaceInfo.getUserId());
 	}
 
-	@Test(expected = CoreException.class)
+	@Test
 	public void testCreateWorkspaceWithNoUserId() throws CoreException {
 		// create the MetaStore
 		IMetaStore metaStore = getMetaStore();
@@ -265,25 +306,42 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		String workspaceName = "Orion Content";
 		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
 		workspaceInfo.setFullName(workspaceName);
-		metaStore.createWorkspace(workspaceInfo);
+		try {
+			metaStore.createWorkspace(workspaceInfo);
+		} catch (CoreException e) {
+			// we expect to get a core exception here
+			String message = e.getMessage();
+			assertTrue(message.contains("user id is null"));
+		}
 
-		fail("Should not be able to create the workspace without a user id.");
+		// delete the user
+		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
-	@Test(expected = CoreException.class)
+	@Test
 	public void testCreateWorkspaceWithNoWorkspaceName() throws CoreException {
 		// create the MetaStore
 		IMetaStore metaStore = getMetaStore();
 
-		// read the user from the previous test
-		UserInfo userInfo = metaStore.readUser("anthony");
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName("anthony");
+		userInfo.setFullName("Anthony Hunter");
+		metaStore.createUser(userInfo);
 
 		// create the workspace without specifying a workspace name.
 		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
 		workspaceInfo.setUserId(userInfo.getUniqueId());
-		metaStore.createWorkspace(workspaceInfo);
+		try {
+			metaStore.createWorkspace(workspaceInfo);
+		} catch (CoreException e) {
+			// we expect to get a core exception here
+			String message = e.getMessage();
+			assertTrue(message.contains("workspace name is null"));
+		}
 
-		fail("Should not be able to create the workspace without a workspace name.");
+		// delete the user
+		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
