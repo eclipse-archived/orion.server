@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 IBM Corporation and others.
+ * Copyright (c) 2012, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -101,10 +101,11 @@ public class ListTagsJob extends GitJob {
 
 	@Override
 	protected IStatus performJob() {
+		Repository db = null;
 		try {
 			// list all tags
 			File gitDir = GitUtils.getGitDir(path);
-			Repository db = FileRepositoryBuilder.create(gitDir);
+			db = FileRepositoryBuilder.create(gitDir);
 			Git git = new Git(db);
 			List<Ref> refs = git.tagList().call();
 			JSONObject result = new JSONObject();
@@ -157,6 +158,11 @@ public class ListTagsJob extends GitJob {
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when listing tags for {0}", path);
 			return new Status(IStatus.ERROR, GitActivator.PI_GIT, msg, e);
+		} finally {
+			if (db != null) {
+				// close the git repository
+				db.close();
+			}
 		}
 	}
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 IBM Corporation and others.
+ * Copyright (c) 2012, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -101,9 +101,10 @@ public class ListBranchesJob extends GitJob {
 
 	@Override
 	protected IStatus performJob() {
+		Repository db = null;
 		try {
 			File gitDir = GitUtils.getGitDir(path);
-			Repository db = FileRepositoryBuilder.create(gitDir);
+			db = FileRepositoryBuilder.create(gitDir);
 			Git git = new Git(db);
 			List<Ref> branchRefs = git.branchList().call();
 			List<Branch> branches = new ArrayList<Branch>(branchRefs.size());
@@ -166,6 +167,11 @@ public class ListBranchesJob extends GitJob {
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when listing branches for {0}", path);
 			return new Status(IStatus.ERROR, GitActivator.PI_GIT, msg, e);
+		} finally {
+			if (db != null) {
+				// close the git repository
+				db.close();
+			}
 		}
 	}
 

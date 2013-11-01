@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -42,6 +42,7 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 
 	@Override
 	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String gitPathInfo) throws ServletException {
+		Repository db = null;
 		try {
 			Path path = new Path(gitPathInfo);
 			if (!path.hasTrailingSeparator()) {
@@ -56,7 +57,7 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 			File gitDir = set.iterator().next().getValue();
 			if (gitDir == null)
 				return false; // TODO: or an error response code, 405?
-			Repository db = FileRepositoryBuilder.create(gitDir);
+			db = FileRepositoryBuilder.create(gitDir);
 			Git git = new Git(db);
 			org.eclipse.jgit.api.Status gitStatus = git.status().call();
 
@@ -69,6 +70,11 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 
 		} catch (Exception e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error generating status response", e));
+		} finally {
+			if (db != null) {
+				// close the git repository
+				db.close();
+			}
 		}
 	}
 }

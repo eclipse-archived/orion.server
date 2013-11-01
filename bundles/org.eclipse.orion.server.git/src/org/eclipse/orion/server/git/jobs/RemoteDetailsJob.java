@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 IBM Corporation and others
+ * Copyright (c) 2012, 2013 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -98,10 +98,10 @@ public class RemoteDetailsJob extends GitJob {
 
 	@Override
 	protected IStatus performJob() {
-
+		Repository db = null;
 		try {
 			File gitDir = GitUtils.getGitDir(path);
-			Repository db = FileRepositoryBuilder.create(gitDir);
+			db = FileRepositoryBuilder.create(gitDir);
 			Git git = new Git(db);
 			Set<String> configNames = db.getConfig().getSubsections(ConfigConstants.CONFIG_REMOTE_SECTION);
 			for (String configN : configNames) {
@@ -171,8 +171,12 @@ public class RemoteDetailsJob extends GitJob {
 		} catch (Exception e) {
 			String msg = NLS.bind("Couldn't get remote details : {0}", configName);
 			return new Status(IStatus.ERROR, GitActivator.PI_GIT, msg, e);
+		} finally {
+			if (db != null) {
+				// close the git repository
+				db.close();
+			}
 		}
-
 	}
 
 }
