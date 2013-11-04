@@ -11,6 +11,7 @@
 package org.eclipse.orion.server.jsch;
 
 import com.jcraft.jsch.*;
+import java.io.*;
 
 /**
  * Use this repository instead of standard {@link HostKeyRepository} to record the last checked host fingerprint.
@@ -28,7 +29,16 @@ public class LazyKnownHosts implements HostKeyRepository {
 
 	LazyKnownHosts(JSch jsch, String knownHosts) throws JSchException {
 		if (knownHosts != null) {
-			jsch.setKnownHosts(knownHosts);
+			try {
+				final InputStream in = new ByteArrayInputStream(knownHosts.getBytes("UTF8"));
+				try {
+					jsch.setKnownHosts(in);
+				} finally {
+					in.close();
+				}
+			} catch (IOException e) {
+				// no known hosts
+			}
 		}
 		this.repo = jsch.getHostKeyRepository();
 
