@@ -178,7 +178,7 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 					// make sure this is thrown only in the "fail early on 404" case
 					throw new NotFoundException();
 				}
-				response.sendError(code, http.getResponseMessage());
+				response.setStatus(code);
 			}
 
 			if (proxy_in == null) {
