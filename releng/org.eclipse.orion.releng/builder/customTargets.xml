@@ -123,6 +123,7 @@ lastMapTag=${mapsTagTag}
 			<arg value="${buildDirectory}/plugins/org.eclipse.orion.client.ui/web/orion/" />
 			<arg value="${buildDirectory}/plugins/org.eclipse.orion.client.editor/web/orion/" />
 			<arg value="${buildDirectory}/plugins/org.eclipse.orion.client.git/web/orion/" />
+			<arg value="${buildDirectory}/plugins/org.eclipse.orion.client.javascript/web/orion/" />
 			<arg value="${buildDirectory}/plugins/org.eclipse.orion.client.users/web/orion/" />
 		</java>
 	</target>
@@ -251,6 +252,7 @@ lastMapTag=${mapsTagTag}
 			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.ui/web" includes="**"/>
 			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.editor/web" includes="**"/>
 			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.git/web" includes="**"/>
+			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.javascript/web" includes="**"/>
 			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.users/web" includes="**"/>
 		</copy>
 		
