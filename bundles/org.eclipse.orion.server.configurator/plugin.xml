@@ -224,6 +224,10 @@
                extension="webapp"
                mime-type="application/x-web-app-manifest+json">
          </mime-mapping>
+         <resource-mapping
+               bundle="org.eclipse.orion.client.javascript"
+               path="/web">
+         </resource-mapping>
       </httpcontext>
       <httpcontext
             id="org.eclipse.orion.server.configurator.httpcontext.git">
@@ -309,13 +313,6 @@
                mime-type="application/x-web-app-manifest+json">
          </mime-mapping>
       </httpcontext>
-      <httpcontext
-            id="org.eclipse.orion.server.configurator.httpcontext.javascript">
-         <resource-mapping
-               bundle="org.eclipse.orion.client.javascript"
-               path="/web">
-         </resource-mapping>
-      </httpcontext>      
    </extension>
    <extension
          point="org.eclipse.equinox.http.registry.resources">
