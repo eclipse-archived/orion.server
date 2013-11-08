@@ -27,13 +27,13 @@
          id="org.cyberneko.html"
          download-size="0"
          install-size="0"
-         version="1.9.14.qualifier"/>
+         version="0.0.0"/>
 
    <plugin
          id="org.openid4java"
          download-size="0"
          install-size="0"
-         version="0.9.5.qualifier"/>
+         version="0.0.0"/>
 
    <plugin
          id="org.eclipse.orion.server.authentication"
