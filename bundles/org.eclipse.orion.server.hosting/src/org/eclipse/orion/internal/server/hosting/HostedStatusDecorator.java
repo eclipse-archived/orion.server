@@ -11,6 +11,7 @@
 package org.eclipse.orion.internal.server.hosting;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import javax.servlet.http.HttpServletRequest;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
@@ -88,15 +89,22 @@ public class HostedStatusDecorator implements IWebResourceDecorator {
 		JSONObject hostingStatus = new JSONObject();
 		if (site != null) {
 			hostingStatus.put(SiteConfigurationConstants.KEY_HOSTING_STATUS_STATUS, "started"); //$NON-NLS-1$
-			String portSuffix = ":" + req.getLocalPort(); //$NON-NLS-1$
-			// Whatever scheme was used to access the resource, assume it's used for the sites too
-			// Hosted site also shares same contextPath 
-			String hostedUrl = req.getScheme() + "://" + site.getHost() + portSuffix + req.getContextPath(); //$NON-NLS-1$
-			hostingStatus.put(SiteConfigurationConstants.KEY_HOSTING_STATUS_URL, hostedUrl);
+			String scheme = req.getScheme();
+			int port = req.getServerPort();
+			if (("https".equals(scheme) && port == 443) || ("http".equals(scheme) && port == 80)) { //$NON-NLS-1$ //$NON-NLS-2$
+				// Omit the default port for a nicer URL
+				port = -1;
+			}
+			try {
+				// Hosted site shares the same scheme, port and contextPath that the client is accessing Orion with
+				URI uri = new URI(scheme, null, site.getHost(), port, req.getContextPath(), null, null);
+				hostingStatus.put(SiteConfigurationConstants.KEY_HOSTING_STATUS_URL, uri.toString());
+			} catch (URISyntaxException e) {
+				LogHelper.log(e);
+			}
 		} else {
 			hostingStatus.put(SiteConfigurationConstants.KEY_HOSTING_STATUS_STATUS, "stopped"); //$NON-NLS-1$
 		}
 		siteConfigJson.put(SiteConfigurationConstants.KEY_HOSTING_STATUS, hostingStatus);
 	}
-
 }
