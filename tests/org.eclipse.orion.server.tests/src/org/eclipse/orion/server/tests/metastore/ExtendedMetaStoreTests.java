@@ -499,6 +499,7 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		File workspaceMetaFolder = SimpleMetaStoreUtil.readMetaFolder(userMetaFolder, encodedWorkspaceName);
 
 		assertTrue(SimpleMetaStoreUtil.createMetaFolder(workspaceMetaFolder, projectName));
+		File newFolder = SimpleMetaStoreUtil.retrieveMetaFolder(workspaceMetaFolder, projectName);
 		String corruptedProjectJson = "{\n\"OrionVersion\": 4,";
 		File newFile = SimpleMetaStoreUtil.retrieveMetaFile(workspaceMetaFolder, projectName);
 		FileWriter fileWriter = new FileWriter(newFile);
@@ -510,6 +511,10 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		// read the project, should return null as the project is corrupted on disk
 		ProjectInfo readProjectInfo = metaStore.readProject(workspaceInfo.getUniqueId(), projectName);
 		assertNull(readProjectInfo);
+
+		// delete a folder and project.json for the bad project on the filesystem 
+		newFile.delete();
+		newFolder.delete();
 
 		// delete the user
 		metaStore.deleteUser(userInfo.getUniqueId());
@@ -545,8 +550,9 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		UserInfo readUserInfo = metaStore.readUser(baduser);
 		assertNull(readUserInfo);
 
-		// delete the user
-		metaStore.deleteUser(baduser);
+		// delete the folder and user.json for the bad user on the filesystem
+		newFile.delete();
+		userMetaFolder.delete();
 	}
 
 	@Test
@@ -587,6 +593,10 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		// read the workspace, should return null as the workspace is corrupted on disk
 		WorkspaceInfo readWorkspaceInfo = metaStore.readWorkspace(workspaceId);
 		assertNull(readWorkspaceInfo);
+
+		// delete the folder and workspace.json for the bad workspace on the filesystem
+		newFile.delete();
+		workspaceMetaFolder.delete();
 
 		// delete the user
 		metaStore.deleteUser(userInfo.getUniqueId());

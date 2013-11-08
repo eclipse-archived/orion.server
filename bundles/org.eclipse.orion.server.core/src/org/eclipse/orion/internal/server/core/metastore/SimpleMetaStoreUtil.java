@@ -448,7 +448,9 @@ public class SimpleMetaStoreUtil {
 		} catch (IOException e) {
 			throw new RuntimeException("Meta File Error, file IO error", e);
 		} catch (JSONException e) {
-			throw new RuntimeException("Meta File Error, could not build JSON", e);
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+			logger.error("Meta File Error, cannot read JSON file " + parent.toString() + "/" + name + ".json: " + e.getLocalizedMessage()); //$NON-NLS-1$
+			return null;
 		}
 		return jsonObject;
 	}

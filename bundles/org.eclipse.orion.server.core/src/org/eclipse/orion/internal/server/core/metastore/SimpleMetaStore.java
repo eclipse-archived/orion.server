@@ -393,7 +393,8 @@ public class SimpleMetaStore implements IMetaStore {
 		JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(workspaceMetaFolder, projectName);
 		ProjectInfo projectInfo = new ProjectInfo();
 		if (jsonObject == null) {
-			if (SimpleMetaStoreUtil.isMetaFolder(workspaceMetaFolder, projectName)) {
+			if (SimpleMetaStoreUtil.isMetaFolder(workspaceMetaFolder, projectName) && 
+					! SimpleMetaStoreUtil.isMetaFile(workspaceMetaFolder, projectName)) {
 				// the project folder exists but the project json file does not, so create it
 				File projectMetaFolder = SimpleMetaStoreUtil.readMetaFolder(workspaceMetaFolder, projectName);
 				URI projectLocation = projectMetaFolder.toURI();
@@ -404,6 +405,7 @@ public class SimpleMetaStore implements IMetaStore {
 				jsonObject = SimpleMetaStoreUtil.readMetaFile(workspaceMetaFolder, projectName);
 			} else {
 				// both the project folder and project json do not exist, no project
+				// OR both the project folder and project json exist, but bad project JSON file == no project
 				return null;
 			}
 		}
