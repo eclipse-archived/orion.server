@@ -19,7 +19,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.filesystem.*;
 import org.eclipse.core.runtime.*;
-import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
@@ -119,7 +118,7 @@ public class NewFileServlet extends OrionServlet {
 			if (path.segmentCount() == 0) {
 				return null;
 			} else if (path.segmentCount() == 1) {
-				if (OrionConfiguration.getMetaStore() instanceof SimpleMetaStore) {
+				if (OrionConfiguration.getMetaStorePreference().equals(ServerConstants.CONFIG_META_STORE_SIMPLE)) {
 					// Bug 415700: handle path format /workspaceId, only supported by SimpleMetaStore 
 					WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(0));
 					if (workspace != null) {
@@ -134,7 +133,7 @@ public class NewFileServlet extends OrionServlet {
 				return getFileStore(request, project).getFileStore(path.removeFirstSegments(2));
 			}
 			// Bug 415700: handle path format /workspaceId/[file] only supported by SimpleMetaStore 
-			if (path.segmentCount() == 2 && OrionConfiguration.getMetaStore() instanceof SimpleMetaStore) {
+			if (path.segmentCount() == 2 && OrionConfiguration.getMetaStorePreference().equals(ServerConstants.CONFIG_META_STORE_SIMPLE)) {
 				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(0));
 				if (workspace != null) {
 					return getFileStore(request, workspace).getChild(path.segment(1));
@@ -155,7 +154,7 @@ public class NewFileServlet extends OrionServlet {
 	 * @param project The workspace to obtain the store for.
 	 */
 	public static IFileStore getFileStore(HttpServletRequest request, WorkspaceInfo workspace) {
-		if (OrionConfiguration.getMetaStore() instanceof SimpleMetaStore) {
+		if (OrionConfiguration.getMetaStorePreference().equals(ServerConstants.CONFIG_META_STORE_SIMPLE)) {
 			if (workspace.getUserId() == null) {
 				return null;
 			}

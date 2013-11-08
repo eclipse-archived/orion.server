@@ -21,7 +21,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
-import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
 import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
@@ -89,7 +88,7 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 	private static URI generateProjectLocation(ProjectInfo project, String user) throws CoreException {
 		IFileStore root = OrionConfiguration.getUserHome(user);
 		IFileStore projectStore = null;
-		if (OrionConfiguration.getMetaStore() instanceof SimpleMetaStore) {
+		if (OrionConfiguration.getMetaStorePreference().equals(ServerConstants.CONFIG_META_STORE_SIMPLE)) {
 			// simple metastore, projects located in user/workspace/project
 			String workspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(project.getWorkspaceId());
 			projectStore = root.getChild(workspaceName).getChild(project.getUniqueId());
@@ -139,7 +138,7 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		IFileStore root = OrionConfiguration.getUserHome(user);
 		IFileStore projectStore = null;
 		URI defaultLocation = null;
-		if (OrionConfiguration.getMetaStore() instanceof SimpleMetaStore) {
+		if (OrionConfiguration.getMetaStorePreference().equals(ServerConstants.CONFIG_META_STORE_SIMPLE)) {
 			// simple metastore, projects located in user/workspace/project
 			String workspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspace.getUniqueId());
 			projectStore = root.getChild(workspaceName).getChild(project.getUniqueId());

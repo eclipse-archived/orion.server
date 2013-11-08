@@ -23,7 +23,8 @@ import org.eclipse.orion.internal.server.servlets.project.ProjectDecorator;
 import org.eclipse.orion.internal.server.servlets.workspace.CompatibilityMetaStore;
 import org.eclipse.orion.internal.server.servlets.workspace.ProjectParentDecorator;
 import org.eclipse.orion.internal.server.servlets.xfer.TransferResourceDecorator;
-import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.osgi.framework.*;
 import org.osgi.util.tracker.ServiceTracker;
@@ -110,17 +111,16 @@ public class Activator implements BundleActivator {
 	}
 
 	private void initializeMetaStore() {
-		//consult metastore preference
-		String metastore = PreferenceHelper.getString(ServerConstants.CONFIG_META_STORE, "legacy").toLowerCase(); //$NON-NLS-1$
+		String metastore = OrionConfiguration.getMetaStorePreference();
 
-		if ("simple".equals(metastore)) {
+		if (ServerConstants.CONFIG_META_STORE_SIMPLE.equals(metastore)) {
 			try {
 				metastoreRegistration = bundleContext.registerService(IMetaStore.class, new SimpleMetaStore(OrionConfiguration.getUserHome(null).toLocalFile(EFS.NONE, null)), null);
 			} catch (CoreException e) {
 				throw new RuntimeException("Cannot initialize MetaStore", e); //$NON-NLS-1$
 			}
 		} else {
-			//legacy metadata store implementation is the default
+			//legacy metadata store implementation
 			metastoreRegistration = bundleContext.registerService(IMetaStore.class, new CompatibilityMetaStore(), null);
 		}
 	}

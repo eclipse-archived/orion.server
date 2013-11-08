@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.useradmin.simple;
 
-import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
@@ -40,9 +40,9 @@ public class Activator implements BundleActivator {
 
 	public void start(BundleContext bundleContext) throws Exception {
 		singleton = this;
-		String metastore = PreferenceHelper.getString(ServerConstants.CONFIG_META_STORE, "legacy").toLowerCase(); //$NON-NLS-1$
+		String metastore = OrionConfiguration.getMetaStorePreference();
 
-		if ("simple".equals(metastore)) {
+		if (ServerConstants.CONFIG_META_STORE_SIMPLE.equals(metastore)) {
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 			userCredentialsService = bundleContext.registerService(IOrionCredentialsService.class, new SimpleUserCredentialsService(), null);
 			logger.debug("Started simple user credentials service."); //$NON-NLS-1$

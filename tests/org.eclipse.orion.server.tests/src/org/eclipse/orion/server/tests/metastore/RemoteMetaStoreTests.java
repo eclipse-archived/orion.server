@@ -22,6 +22,7 @@ import java.util.Iterator;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.useradmin.UserConstants;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -54,7 +55,7 @@ public class RemoteMetaStoreTests {
 	 * orion.core.metastore=legacy (Orion 3.0)
 	 * orion.core.metastore=simple (Orion 4.0)
 	 */
-	protected final static String orionMetastore = "simple";
+	protected final static String orionMetastore = ServerConstants.CONFIG_META_STORE_SIMPLE;
 
 	protected static String orionTestName = null;
 
@@ -352,7 +353,7 @@ public class RemoteMetaStoreTests {
 	 * @return
 	 */
 	protected String getWorkspaceId(String login) {
-		if ("legacy".equals(orionMetastore)) {
+		if (ServerConstants.CONFIG_META_STORE_LEGACY.equals(orionMetastore)) {
 			return login;
 		}
 		return login + "-OrionContent";

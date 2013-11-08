@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.user.securestorage;
 
-import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
@@ -44,9 +44,9 @@ public class Activator implements BundleActivator {
 	 * )
 	 */
 	public void start(BundleContext bundleContext) throws Exception {
-		String metastore = PreferenceHelper.getString(ServerConstants.CONFIG_META_STORE, "legacy").toLowerCase(); //$NON-NLS-1$
+		String metastore = OrionConfiguration.getMetaStorePreference();
 
-		if ("legacy".equals(metastore)) {
+		if (ServerConstants.CONFIG_META_STORE_LEGACY.equals(metastore)) {
 			Activator.bundleContext = bundleContext;
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 			userCredentialsService = bundleContext.registerService(IOrionCredentialsService.class, new SecureStorageCredentialsService(), null);
