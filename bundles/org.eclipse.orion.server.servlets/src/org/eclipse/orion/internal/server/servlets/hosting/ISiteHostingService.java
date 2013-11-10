@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.hosting;
 
+import java.net.URI;
 import org.eclipse.orion.internal.server.servlets.site.SiteInfo;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 
@@ -30,9 +31,10 @@ public interface ISiteHostingService {
 	 * @param siteConfig
 	 * @param user
 	 * @param editServer
+	 * @param requestURI
 	 * @throws SiteHostingException If starting failed.
 	 */
-	public void start(SiteInfo siteConfig, UserInfo user, String editServer) throws SiteHostingException;
+	public void start(SiteInfo siteConfig, UserInfo user, String editServer, URI requestURI) throws SiteHostingException;
 
 	/**
 	 * Stops the user's hosted site which was launched from the site configuration.

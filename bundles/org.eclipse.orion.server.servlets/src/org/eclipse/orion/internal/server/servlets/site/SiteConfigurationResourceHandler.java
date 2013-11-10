@@ -12,6 +12,7 @@ package org.eclipse.orion.internal.server.servlets.site;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -238,7 +239,7 @@ public class SiteConfigurationResourceHandler extends ServletResourceHandler<Sit
 		try {
 			if ("started".equalsIgnoreCase(status)) { //$NON-NLS-1$
 				String editServer = req.getScheme() + "://" + req.getHeader("Host"); //$NON-NLS-1$ //$NON-NLS-2$
-				getHostingService().start(site, user, editServer);
+				getHostingService().start(site, user, editServer, new URI(req.getRequestURL().toString()));
 			} else if ("stopped".equalsIgnoreCase(status)) { //$NON-NLS-1$
 				getHostingService().stop(site, user);
 			} else if (status == null) {
@@ -250,6 +251,9 @@ public class SiteConfigurationResourceHandler extends ServletResourceHandler<Sit
 		} catch (NoMoreHostsException e) {
 			// Give a JSON response object instead of stack trace
 			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), e));
+		} catch (URISyntaxException e) {
+			// Should not happen
+			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Error parsing request URL \"{0}\"", status), null));
 		}
 	}
 

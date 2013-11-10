@@ -10,12 +10,15 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.hosting;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import org.eclipse.orion.internal.server.servlets.hosting.*;
 import org.eclipse.orion.internal.server.servlets.site.SiteInfo;
+import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 
 /**
@@ -54,22 +57,23 @@ public class SiteHostingService implements ISiteHostingService {
 	 * @see org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService#start(org.eclipse.orion.internal.server.servlets.site.SiteConfiguration, org.eclipse.orion.internal.server.servlets.workspace.WebUser, java.lang.String)
 	 */
 	@Override
-	public void start(SiteInfo siteConfig, UserInfo user, String editServer) throws SiteHostingException {
+	public void start(SiteInfo siteConfig, UserInfo user, String editServer, URI requestURI) throws SiteHostingException {
 		synchronized (sites) {
 			if (get(siteConfig, user) != null) {
 				return; // Already started; nothing to do
 			}
-
-			String host = getNextHost(siteConfig.getHostHint());
-
+			String host = null;
 			try {
-				IHostedSite result = sites.putIfAbsent(host, new HostedSite(siteConfig, user, host, editServer));
+				URI url = acquireURL(siteConfig.getHostHint(), requestURI);
+				host = url.getHost();
+				IHostedSite result = sites.putIfAbsent(host, new HostedSite(siteConfig, user, host, editServer, url.toString()));
 				if (result != null) {
 					// Should never happen, since writes are done serially by start()/stop()
 					throw new ConcurrentModificationException("Table was modified concurrently");
 				}
 			} catch (Exception e) {
-				sites.remove(host);
+				if (host != null)
+					sites.remove(host);
 				throw new SiteHostingException(e.getMessage(), e);
 			}
 		}
@@ -150,45 +154,137 @@ public class SiteHostingService implements ISiteHostingService {
 	}
 
 	/**
-	 * Gets the next available host to use.
+	 * Gets the next available URL where a site may be hosted.
 	 * 
-	 * @param hint A hint to use for determining the hostname when subdomains are available. 
-	 * May be <code>null</code>.
+	 * @param hint A hint to use for determining the hostname when subdomains are available. May be <code>null</code>.
+	 * @param requestURI The incoming request URI
 	 * @return The host, which will have the form <code>hostname:port</code>.
 	 * @throws NoMoreHostsException If no more hosts are available (meaning all IPs and domains 
 	 * from the hosting configuration have been allocated).
 	 */
-	private String getNextHost(String hint) throws NoMoreHostsException {
+	private URI acquireURL(String hint, URI requestURI) throws NoMoreHostsException {
 		hint = hint == null || hint.equals("") ? "site" : hint; //$NON-NLS-1$ //$NON-NLS-2$
 		synchronized (sites) {
-			String host = null;
-
+			URI result = null;
 			for (String value : config.getHosts()) {
-				int pos = value.lastIndexOf("*"); //$NON-NLS-1$
-				if (pos != -1) {
-					// It's a domain wildcard
-					final String rest = value.substring(pos + 1);
+				try {
+					HostPattern pattern = getHostPattern(value, requestURI);
+					String host = pattern.getHost();
+					if (pattern.isWildcard()) { //$NON-NLS-1$
+						// It's a domain wildcard
+						final String rest = pattern.getWildcardDomain();
 
-					// Append digits if necessary to get a unique hostname
-					String candidate = hint + rest;
-					for (int i = 0; isHosted(candidate); i++) {
-						candidate = hint + (Integer.toString(i)) + rest;
-					}
-					host = candidate;
-					break;
-				} else {
-					if (!isHosted(value)) {
-						host = value;
+						// Append digits if necessary to get a unique hostname
+						String candidate = hint + "." + rest;
+						for (int i = 0; isHosted(candidate); i++) {
+							candidate = hint + (Integer.toString(i)) + rest;
+						}
+						result = new URI(pattern.getScheme(), null, candidate, pattern.getPort(), null, null, null);
 						break;
+					} else {
+						if (!isHosted(host)) {
+							result = new URI(pattern.getScheme(), null, host, pattern.getPort(), null, null, null);
+							break;
+						}
 					}
+				} catch (URISyntaxException e) {
+					LogHelper.log(e);
+					continue;
 				}
 			}
 
-			if (host == null) {
+			if (result == null) {
 				throw new NoMoreHostsException("No more hosts available");
 			}
-			return host;
+			return result;
 		}
 	}
 
+	/**
+	 * @param pattern
+	 * @param requestURI Used as a fallback to assign scheme and port when the pattern does not specify them.
+	 * @return
+	 */
+	private HostPattern getHostPattern(String pattern, URI requestURI) {
+		String scheme = null;
+		int port = -1;
+		// Parse scheme
+		if (pattern.startsWith("http://") || pattern.startsWith("https://")) {
+			int schemeEnd = pattern.indexOf("://");
+			scheme = pattern.substring(0, schemeEnd);
+			pattern = pattern.substring(schemeEnd + "://".length(), pattern.length());
+			if ("https".equals(scheme))
+				port = 443;
+			else if ("http".equals(scheme))
+				port = 80;
+		}
+		// Parse host and port (if present)
+		String hostPart = pattern;
+		int pos;
+		if ((pos = pattern.lastIndexOf(":")) != -1 && pos < pattern.length() - 1) { //$NON-NLS-1$
+			hostPart = pattern.substring(0, pos);
+			try {
+				port = Integer.parseInt(pattern.substring(pos + 1, pattern.length()));
+			} catch (NumberFormatException e) {
+			}
+		}
+
+		if (scheme == null) {
+			scheme = requestURI.getScheme();
+		}
+		if (port == -1) {
+			port = requestURI.getPort();
+		}
+		return new HostPattern(scheme, hostPart, defaultPort(scheme, port));
+	}
+
+	private int defaultPort(String scheme, int port) {
+		if (("https".equals(scheme) && port == 443) || ("http".equals(scheme) && port == 80))
+			return -1;
+		return port;
+	}
+
+	/**
+	 * Represents a parsed entry from the orion.core.virtualHosts setting.
+	 */
+	private class HostPattern {
+		private String scheme;
+		private String host;
+		private int port;
+		private boolean isWildcard = false;
+		private String wildcardDomain = null;
+
+		public HostPattern(String scheme, String host, int port) {
+			this.scheme = scheme;
+			this.host = host;
+			this.port = port;
+			if (host != null) {
+				int pos = host.lastIndexOf("*");
+				isWildcard = (pos >= 0 && pos < host.length() - 2 && host.charAt(pos + 1) == '.');
+				if (isWildcard) {
+					wildcardDomain = host.substring(pos + 2, host.length());
+				}
+			}
+		}
+
+		String getScheme() {
+			return scheme;
+		}
+
+		String getHost() {
+			return host;
+		}
+
+		String getWildcardDomain() {
+			return wildcardDomain;
+		}
+
+		int getPort() {
+			return port;
+		}
+
+		boolean isWildcard() {
+			return isWildcard;
+		}
+	}
 }

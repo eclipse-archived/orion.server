@@ -25,14 +25,16 @@ class HostedSite implements IHostedSite {
 	private String workspaceId;
 	private String host;
 	private String editServer;
+	private String url;
 
-	public HostedSite(SiteInfo siteConfig, UserInfo user, String host, String editServer) {
+	public HostedSite(SiteInfo siteConfig, UserInfo user, String host, String editServer, String url) {
 		this.siteConfigurationId = siteConfig.getId();
 		this.mappings = Collections.unmodifiableMap(createMap(siteConfig));
 		this.userId = user.getUniqueId();
 		this.workspaceId = siteConfig.getWorkspace();
 		this.host = host;
 		this.editServer = editServer;
+		this.url = url;
 
 		if (this.userId == null || this.workspaceId == null || this.host == null || this.editServer == null) {
 			throw new IllegalArgumentException("Parameters must be nonnull");
@@ -85,6 +87,11 @@ class HostedSite implements IHostedSite {
 	@Override
 	public String getHost() {
 		return host;
+	}
+
+	@Override
+	public String getUrl() {
+		return url;
 	}
 
 	@Override

@@ -36,9 +36,14 @@ public interface IHostedSite {
 	public String getWorkspaceId();
 
 	/**
-	 * @return The hostname where this site is accessible.
+	 * @return The hostname of this site.
 	 */
 	public String getHost();
+
+	/**
+	 * @return The URL where this site is accessible.
+	 */
+	public String getUrl();
 
 	/**
 	 * @return The URL of the Orion server where the hosted files can be edited.

@@ -88,17 +88,12 @@ public class HostedStatusDecorator implements IWebResourceDecorator {
 		IHostedSite site = HostingActivator.getDefault().getHostingService().get(siteConfiguration, user);
 		JSONObject hostingStatus = new JSONObject();
 		if (site != null) {
-			hostingStatus.put(SiteConfigurationConstants.KEY_HOSTING_STATUS_STATUS, "started"); //$NON-NLS-1$
-			String scheme = req.getScheme();
-			int port = req.getServerPort();
-			if (("https".equals(scheme) && port == 443) || ("http".equals(scheme) && port == 80)) { //$NON-NLS-1$ //$NON-NLS-2$
-				// Omit the default port for a nicer URL
-				port = -1;
-			}
 			try {
-				// Hosted site shares the same scheme, port and contextPath that the client is accessing Orion with
-				URI uri = new URI(scheme, null, site.getHost(), port, req.getContextPath(), null, null);
-				hostingStatus.put(SiteConfigurationConstants.KEY_HOSTING_STATUS_URL, uri.toString());
+				hostingStatus.put(SiteConfigurationConstants.KEY_HOSTING_STATUS_STATUS, "started"); //$NON-NLS-1$
+				// Site generates a root URL, need to add contextPath
+				URI uri = new URI(site.getUrl());
+				URI newURI = new URI(uri.getScheme(), null, uri.getHost(), uri.getPort(), req.getContextPath(), null, null);
+				hostingStatus.put(SiteConfigurationConstants.KEY_HOSTING_STATUS_URL, newURI.toString());
 			} catch (URISyntaxException e) {
 				LogHelper.log(e);
 			}
