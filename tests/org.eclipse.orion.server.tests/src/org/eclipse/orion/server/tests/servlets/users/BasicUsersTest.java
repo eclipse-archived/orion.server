@@ -21,13 +21,10 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.OrionConfiguration;
-import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.User;
 import org.eclipse.orion.server.useradmin.UserConstants;
@@ -36,7 +33,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Test;
-import org.osgi.service.prefs.BackingStoreException;
 import org.xml.sax.SAXException;
 
 import com.meterware.httpunit.WebConversation;
@@ -73,90 +69,6 @@ public class BasicUsersTest extends UsersTest {
 			wasJson = false;
 		}
 		assertFalse("Returned a jsonObject in reponse where FORBIDDEN should be returned", wasJson);
-	}
-
-	//	@Test
-	public void testCreateGuestUser() throws IOException, SAXException, JSONException, BackingStoreException, Exception {
-		// Enable guest user creation
-		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(ServerConstants.PREFERENCE_SCOPE);
-		String oldValue = prefs.get(ServerConstants.CONFIG_AUTH_USER_CREATION_GUEST, "false");
-		prefs.put(ServerConstants.CONFIG_AUTH_USER_CREATION_GUEST, "true");
-		prefs.flush();
-		try {
-			WebConversation webConversation = new WebConversation();
-			webConversation.setExceptionsThrownOnErrorStatus(false);
-
-			// Create guest user with only a Name
-			Map<String, String> params = new HashMap<String, String>();
-			params.put("Name", "some_guest_user");
-			params.put("guest", null);
-			WebRequest request = getPostUsersRequest("", params, true);
-			WebResponse response = webConversation.getResponse(request);
-			assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
-			JSONObject createdUser = new JSONObject(response.getText());
-
-			// Get by location
-			request = getAuthenticatedRequest(createdUser.getString(ProtocolConstants.KEY_LOCATION), METHOD_GET, true);
-			response = webConversation.getResource(request);
-			assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-			// Delete
-			request = getAuthenticatedRequest(createdUser.getString(ProtocolConstants.KEY_LOCATION), METHOD_DELETE, true);
-			response = webConversation.getResource(request);
-			assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
-		} finally {
-			// reset the pref value we changed
-			prefs.put(ServerConstants.CONFIG_AUTH_USER_CREATION_GUEST, oldValue);
-		}
-	}
-
-	//	@Test
-	public void testCreateTooManyGuestUsers() throws IOException, Exception {
-		// Limit to 2 guest users
-		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(ServerConstants.PREFERENCE_SCOPE);
-		int oldLimitValue = prefs.getInt(ServerConstants.CONFIG_AUTH_USER_CREATION_GUEST_LIMIT, 100);
-		String oldGuestValue = prefs.get(ServerConstants.CONFIG_AUTH_USER_CREATION_GUEST, null);
-		prefs.put(ServerConstants.CONFIG_AUTH_USER_CREATION_GUEST, "true");
-		prefs.putInt(ServerConstants.CONFIG_AUTH_USER_CREATION_GUEST_LIMIT, 2);
-		prefs.flush();
-		try {
-			WebConversation webConversation = new WebConversation();
-			webConversation.setExceptionsThrownOnErrorStatus(false);
-			JSONObject[] guests = {null, null, null};
-
-			// Create guest user with only a Name
-			Map<String, String> params = new HashMap<String, String>();
-			params.put("guest", null);
-			WebRequest request = getPostUsersRequest("", params, true);
-
-			WebResponse response = webConversation.getResponse(request);
-			assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
-			guests[0] = new JSONObject(response.getText());
-
-			response = webConversation.getResponse(request);
-			assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
-			guests[1] = new JSONObject(response.getText());
-
-			// This POST should cause the 0th guest to be deleted
-			response = webConversation.getResponse(request);
-			assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
-			guests[2] = new JSONObject(response.getText());
-
-			// Try to get the 0th guest -- should be gone
-			request = getAuthenticatedRequest(guests[0].getString(ProtocolConstants.KEY_LOCATION), METHOD_GET, true);
-			response = webConversation.getResource(request);
-			assertEquals(response.getText(), HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
-
-			// Delete remaining users
-			for (int i = 1; i < guests.length; i++) {
-				request = getAuthenticatedRequest(guests[i].getString(ProtocolConstants.KEY_LOCATION), METHOD_DELETE, true);
-				response = webConversation.getResource(request);
-				assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
-			}
-		} finally {
-			prefs.put(ServerConstants.CONFIG_AUTH_USER_CREATION_GUEST, oldGuestValue);
-			prefs.putInt(ServerConstants.CONFIG_AUTH_USER_CREATION_GUEST_LIMIT, oldLimitValue);
-		}
 	}
 
 	@Test

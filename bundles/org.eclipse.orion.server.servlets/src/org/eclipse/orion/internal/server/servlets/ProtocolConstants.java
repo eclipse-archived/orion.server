@@ -414,12 +414,6 @@ public class ProtocolConstants {
 	public static final String KEY_NEXT_LOCATION = "NextLocation"; //$NON-NLS-1$
 
 	/**
-	 * JSON representation key for whether a user is a guest user.
-	 * The value's data type is a Boolean.
-	 */
-	public static final String KEY_GUEST = "Guest"; //$NON-NLS-1$
-
-	/**
 	 * The URL path of a workspace drive resource.
 	 */
 	public static final String PATH_DRIVE = "drive"; //$NON-NLS-1$

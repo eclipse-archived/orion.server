@@ -16,8 +16,6 @@ import java.util.*;
  * Information about a single user.
  */
 public class UserInfo extends MetadataInfo {
-	private boolean isGuest;
-
 	private String userName;
 
 	private List<String> workspaceIds = EMPTY;
@@ -37,21 +35,6 @@ public class UserInfo extends MetadataInfo {
 	 */
 	public List<String> getWorkspaceIds() {
 		return workspaceIds;
-	}
-
-	/** 
-	 * @return the isGuest
-	 *TODO Should this just be a generic property?
-	 */
-	public boolean isGuest() {
-		return isGuest;
-	}
-
-	/**
-	 * @param isGuest the isGuest to set
-	 */
-	public void setGuest(boolean isGuest) {
-		this.isGuest = isGuest;
 	}
 
 	/**

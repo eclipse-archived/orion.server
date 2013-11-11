@@ -29,18 +29,6 @@ public class ServerConstants {
 	public static final String CONFIG_AUTH_USER_CREATION = "orion.auth.user.creation"; //$NON-NLS-1$
 
 	/**
-	 * The name of a configuration property giving whether short-lived guest user accounts can be created.
-	 * If unspecified, guest user accounts are not allowed to be created. 
-	 */
-	public static final String CONFIG_AUTH_USER_CREATION_GUEST = "orion.auth.user.creation.guest"; //$NON-NLS-1$
-
-	/**
-	 * The maximum number of guest accounts that may exist at any given time.
-	 * If unspecified, defaults to <code>100</code>.
-	 */
-	public static final String CONFIG_AUTH_USER_CREATION_GUEST_LIMIT = "orion.auth.user.creation.guest.limit"; //$NON-NLS-1$
-
-	/**
 	 * The name of a configuration property specifying is user email is mandatory while user creation.
 	 * If <code>true</code> user will be forced to add email while creating account. Account will be blocked
 	 * until user email is confirmed.

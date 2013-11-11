@@ -38,38 +38,6 @@ public class WebUser extends WebElement {
 		super(store);
 	}
 
-	//	public static Collection<String> getGuestAccountsToDelete(int limit) {
-	//		List<String> uids = new ArrayList<String>();
-	//		try {
-	//			int excess = guestUserCount() - limit;
-	//			Base64Counter count = new Base64Counter();
-	//			while (excess-- > 0) {
-	//				// Deletes oldest ones first
-	//				String uid;
-	//				do {
-	//					uid = GUEST_UID_PREFIX + count.toString();
-	//					count.increment();
-	//				} while (!exists(uid));
-	//				uids.add(uid);
-	//			}
-	//		} catch (BackingStoreException e) {
-	//			LogHelper.log(e);
-	//		}
-	//		return uids;
-	//	}
-	//
-	//	private static int guestUserCount() throws BackingStoreException {
-	//		// FIXME probably slow
-	//		int count = 0;
-	//		IEclipsePreferences usersNode = new OrionScope().getNode(USERS_NODE);
-	//		for (String uid : usersNode.childrenNames()) {
-	//			if (uid.startsWith(GUEST_UID_PREFIX)) {
-	//				count++;
-	//			}
-	//		}
-	//		return count;
-	//	}
-
 	private static IEclipsePreferences getUserNode(String uid) {
 		try {
 			return (IEclipsePreferences) new OrionScope().getNode(USERS_NODE).node(uid);
@@ -183,18 +151,6 @@ public class WebUser extends WebElement {
 	 */
 	public void setUserName(String name) {
 		store.put(ProtocolConstants.KEY_USER_NAME, name);
-	}
-
-	public boolean isGuest() {
-		return this.store.getBoolean(ProtocolConstants.KEY_GUEST, false);
-	}
-
-	public void setGuest(boolean isGuest) {
-		//default is false so we don't need to store that
-		if (isGuest)
-			this.store.putBoolean(ProtocolConstants.KEY_GUEST, isGuest);
-		else
-			this.store.remove(ProtocolConstants.KEY_GUEST);
 	}
 
 	/**

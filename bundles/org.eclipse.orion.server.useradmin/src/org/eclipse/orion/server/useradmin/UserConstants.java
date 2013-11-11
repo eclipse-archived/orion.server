@@ -37,8 +37,6 @@ public interface UserConstants {
 	
 	public static final String KEY_EMAIL = "email"; //$NON-NLS-1$
 	
-	public static final String KEY_GUEST = "guest"; //$NON-NLS-1$
-	
 	public static final String KEY_EMAIL_CONFIRMED = "emailConfirmed"; //$NON-NLS-1$
 	
 	public static final String KEY_OLD_PASSWORD = "oldPassword"; //$NON-NLS-1$

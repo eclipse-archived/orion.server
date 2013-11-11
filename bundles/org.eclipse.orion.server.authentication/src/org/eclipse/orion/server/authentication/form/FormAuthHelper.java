@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 public class FormAuthHelper {
 
 	private static IOrionCredentialsService userAdmin;
-	private static IOrionGuestCredentialsService guestUserAdmin;
 
 	private static IOrionUserProfileService userProfileService;
 
@@ -80,13 +79,6 @@ public class FormAuthHelper {
 
 	private static User getUserForCredentials(String login, String password) throws UnsupportedUserStoreException {
 		User user;
-		// First try authenticating them against the guest user service
-		if (getGuestUserAdmin() != null) {
-			user = getGuestUserAdmin().getUser("login", login); //$NON-NLS-1$
-			if (user != null)
-				return user;
-		}
-		// Now try default credentials service
 		if (userAdmin == null) {
 			throw new UnsupportedUserStoreException();
 		}
@@ -95,10 +87,6 @@ public class FormAuthHelper {
 			return user;
 		}
 		return null;
-	}
-
-	private static boolean isGuestUser(User user) {
-		return Boolean.TRUE.toString().equals(user.getProperty(UserConstants.KEY_GUEST));
 	}
 
 	/**
@@ -138,31 +126,11 @@ public class FormAuthHelper {
 		}
 	}
 
-	public static IOrionCredentialsService getGuestUserAdmin() {
-		return guestUserAdmin;
-	}
-
-	public void setGuestUserAdmin(IOrionGuestCredentialsService service) {
-		guestUserAdmin = service;
-	}
-
-	public void unsetGuestUserAdmin(IOrionGuestCredentialsService service) {
-		if (service.equals(guestUserAdmin)) {
-			guestUserAdmin = null;
-		}
-	}
-
 	public static JSONObject getUserJson(String uid, String contextPath) throws JSONException {
 		JSONObject obj = new JSONObject();
 		obj.put("login", uid); //$NON-NLS-1$
 		try {
-			User user = null;
-			// Try guest login first
-			if (getGuestUserAdmin() != null) {
-				user = getGuestUserAdmin().getUser(UserConstants.KEY_UID, uid);
-			}
-			if (user == null)
-				user = userAdmin.getUser(UserConstants.KEY_UID, uid);
+			User user = userAdmin.getUser(UserConstants.KEY_UID, uid);
 
 			if (user == null) {
 				return null;
@@ -177,9 +145,6 @@ public class FormAuthHelper {
 				Long lastLogin = Long.parseLong(generalUserProfile.get(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, ""));
 
 				obj.put(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, lastLogin);
-			}
-			if (isGuestUser(user)) {
-				obj.put(UserConstants.KEY_GUEST, true);
 			}
 		} catch (IllegalArgumentException e) {
 			LogHelper.log(e);

@@ -34,7 +34,7 @@ public class CompatibilityMetaStore implements IMetaStore {
 	 * Properties in the preference store that require special processing when reading/writing
 	 * and can't be passed directly to the meta store.
 	 */
-	private static List<String> INTERNAL_PROPERTIES = Arrays.asList(new String[] {ProtocolConstants.KEY_NAME, ProtocolConstants.KEY_ID, ProtocolConstants.KEY_GUEST, ProtocolConstants.KEY_USER_NAME, ProtocolConstants.KEY_CONTENT_LOCATION, SiteConfigurationConstants.KEY_SITE_CONFIGURATIONS});
+	private static List<String> INTERNAL_PROPERTIES = Arrays.asList(new String[] {ProtocolConstants.KEY_NAME, ProtocolConstants.KEY_ID, ProtocolConstants.KEY_USER_NAME, ProtocolConstants.KEY_CONTENT_LOCATION, SiteConfigurationConstants.KEY_SITE_CONFIGURATIONS});
 
 	public void createProject(ProjectInfo info) throws CoreException {
 		WebWorkspace workspace = WebWorkspace.fromId(info.getWorkspaceId());
@@ -160,7 +160,6 @@ public class CompatibilityMetaStore implements IMetaStore {
 		info.setUniqueId(webUser.getId());
 		info.setFullName(webUser.getName());
 		info.setUserName(webUser.getUserName());
-		info.setGuest(webUser.isGuest());
 		//authorization info
 		IEclipsePreferences store = webUser.getStore();
 		readProperties(info, store);
@@ -340,7 +339,6 @@ public class CompatibilityMetaStore implements IMetaStore {
 			webUser.setUserName(info.getUserName());
 		if (info.getFullName() != null)
 			webUser.setName(info.getFullName());
-		webUser.setGuest(info.isGuest());
 
 		//user properties
 		IEclipsePreferences store = webUser.getStore();

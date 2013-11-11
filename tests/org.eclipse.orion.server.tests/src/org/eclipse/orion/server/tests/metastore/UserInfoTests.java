@@ -53,15 +53,6 @@ public class UserInfoTests {
 	}
 
 	@Test
-	public void testIsGuest() {
-		UserInfo userInfo = new UserInfo();
-		userInfo.setGuest(true);
-		assertTrue(userInfo.isGuest());
-		userInfo.setGuest(false);
-		assertFalse(userInfo.isGuest());
-	}
-
-	@Test
 	public void testProperties() {
 		UserInfo userInfo = new UserInfo();
 		String key1 = "key1";

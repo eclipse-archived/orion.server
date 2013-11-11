@@ -13,24 +13,43 @@ package org.eclipse.orion.server.useradmin.servlets;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.Iterator;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.eclipse.core.filesystem.EFS;
-import org.eclipse.core.runtime.*;
-import org.eclipse.orion.internal.server.servlets.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.orion.internal.server.servlets.Activator;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
-import org.eclipse.orion.server.core.*;
-import org.eclipse.orion.server.core.metastore.*;
-import org.eclipse.orion.server.core.resources.Base64Counter;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.metastore.IMetaStore;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.servlets.OrionServlet;
-import org.eclipse.orion.server.user.profile.*;
-import org.eclipse.orion.server.useradmin.*;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
+import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
+import org.eclipse.orion.server.useradmin.User;
+import org.eclipse.orion.server.useradmin.UserConstants;
+import org.eclipse.orion.server.useradmin.UserEmailUtil;
+import org.eclipse.orion.server.useradmin.UserServiceHelper;
 import org.eclipse.osgi.util.NLS;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,10 +66,6 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	 * The maximum length of a username.
 	 */
 	private static final int USERNAME_MAX_LENGTH = 20;
-	private static final String GUEST_UID_PREFIX = "user"; //$NON-NLS-1$
-	private static final boolean requirePassword = false;
-
-	private static final Base64Counter guestUserCounter = new Base64Counter();
 
 	private ServletResourceHandler<IStatus> statusHandler;
 
@@ -107,12 +122,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 	private Collection<User> getAllUsers() {
 		// For Bug 372270 - changing the admin getUsers() to return a sorted list.
-		Collection<User> users = getUserAdmin().getUsers();
-		IOrionCredentialsService guestUserAdmin = getGuestUserAdmin();
-		if (guestUserAdmin != null) {
-			users.addAll(guestUserAdmin.getUsers());
-		}
-		return users;
+		return getUserAdmin().getUsers();
 	}
 
 	private boolean handleUsersGet(HttpServletRequest req, HttpServletResponse resp) throws IOException, JSONException, CoreException {
@@ -162,13 +172,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	private boolean handleUserGet(HttpServletRequest req, HttpServletResponse resp, String userId) throws IOException, JSONException, ServletException, CoreException {
-		User user = null;
-		// Try guest user admin first
-		if (getGuestUserAdmin() != null)
-			user = getGuestUserAdmin().getUser(UserConstants.KEY_UID, userId);
-		// Fallback to regular user admin
-		if (user == null)
-			user = getUserAdmin().getUser(UserConstants.KEY_UID, userId);
+		User user = getUserAdmin().getUser(UserConstants.KEY_UID, userId);
 
 		if (user == null)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "User not found " + userId, null));
@@ -186,13 +190,6 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 		if (login == null || login.length() == 0)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User login not specified.", null));
-
-		// If it's a guest user, do not allow their password to be reset.
-		if (getGuestUserAdmin() != null) {
-			User user = getGuestUserAdmin().getUser(UserConstants.KEY_LOGIN, login);
-			if (user != null)
-				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "User " + login + "is a guest, cannot reset password.", null));
-		}
 
 		IOrionCredentialsService userAdmin = getUserAdmin();
 
@@ -216,40 +213,22 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 	private boolean handleUserCreate(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, JSONException, CoreException {
 		//		String store = req.getParameter(UserConstants.KEY_STORE);
-		String uid = null;
 		String login = req.getParameter(UserConstants.KEY_LOGIN);
 		String name = req.getParameter(ProtocolConstants.KEY_NAME);
 		String email = req.getParameter(UserConstants.KEY_EMAIL);
 		String password = req.getParameter(UserConstants.KEY_PASSWORD);
 
-		boolean isGuestUser = req.getParameter(UserConstants.KEY_GUEST) != null;
-		boolean isPasswordRequired = requirePassword;
 		boolean isEmailRequired = Boolean.TRUE.toString().equalsIgnoreCase(PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION_FORCE_EMAIL));
 
-		IOrionCredentialsService userAdmin;
-		if (isGuestUser) {
-			if (!Boolean.TRUE.toString().equals(PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION_GUEST, Boolean.FALSE.toString()))) {
-				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Guest user creation is not allowed on this server.", null));
-			}
-			isPasswordRequired = false;
-			isEmailRequired = false;
-			userAdmin = getGuestUserAdmin();
-			if (userAdmin == null) {
-				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Cannot create guest users. Contact your server administrator.", null));
-			}
-			uid = login = nextGuestUserUid(userAdmin);
-		} else {
-			userAdmin = getUserAdmin();
-		}
-
+		IOrionCredentialsService userAdmin = getUserAdmin();
 		if (name == null)
 			name = login;
 
-		String msg = validateLogin(login, isGuestUser);
+		String msg = validateLogin(login);
 		if (msg != null)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 
-		if (isPasswordRequired && (password == null || password.length() == 0)) {
+		if ((password == null || password.length() == 0)) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Cannot create user with empty password.", null));
 		}
 
@@ -266,32 +245,17 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Email address already in use: {0}.", email), null));
 		}
 
-		//		if (isGuestUser) {
-		//			// Before creating a new guest user, remove any excess guest accounts
-		//			int maxGuestAccounts = Math.max(0, PreferenceHelper.getInt(ServerConstants.CONFIG_AUTH_USER_CREATION_GUEST_LIMIT, 100) - 1);
-		//			deleteGuestAccounts(WebUser.getGuestAccountsToDelete(maxGuestAccounts));
-		//		}
-
-		User newUser;
-		if (isGuestUser) {
-			// Guest users get distinctive UIDs
-			newUser = new User(uid, login, name, password);
-		} else {
-			newUser = new User(login, name, password);
-		}
+		User newUser = new User(login, name, password);
 		if (email != null && email.length() > 0) {
 			newUser.setEmail(email);
 		}
 		if (isEmailRequired)
 			newUser.setBlocked(true);
-		if (isGuestUser)
-			newUser.addProperty(UserConstants.KEY_GUEST, Boolean.TRUE.toString());
 
 		//persist new user in metadata store first
 		UserInfo userInfo = new UserInfo();
 		userInfo.setUserName(login);
 		userInfo.setFullName(name);
-		userInfo.setGuest(isGuestUser);
 		OrionConfiguration.getMetaStore().createUser(userInfo);
 		if (newUser.getUid() == null) {
 			newUser.setUid(userInfo.getUniqueId());
@@ -304,12 +268,6 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		}
 
 		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.account"); //$NON-NLS-1$
-		//TODO Don't do cleanup as part of creation, it can be separate op (command line tool, etc)
-		//		if (isGuestUser) {
-		//			// Remove excess guest accounts
-		//			int maxGuestAccounts = PreferenceHelper.getInt(ServerConstants.CONFIG_AUTH_USER_CREATION_GUEST_LIMIT, 100);
-		//			deleteGuestAccounts(WebUser.getGuestAccountsToDelete(maxGuestAccounts));
-		//		}
 
 		if (logger.isInfoEnabled())
 			logger.info("Account created: " + login); //$NON-NLS-1$ 
@@ -346,71 +304,11 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	/**
-	 * Returns the next available guest user id.
-	 */
-	private String nextGuestUserUid(IOrionCredentialsService userAdmin) {
-		synchronized (guestUserCounter) {
-			String candidate;
-			do {
-				candidate = GUEST_UID_PREFIX + guestUserCounter.toString();
-				guestUserCounter.increment();
-			} while (userAdmin.getUser("key", candidate) == null);
-			return candidate;
-		}
-
-	}
-
-	//	private void deleteGuestAccounts(Collection<String> uids) {
-	//		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.account");
-	//		IOrionCredentialsService userAdmin = getGuestUserAdmin();
-	//		for (String uid : uids) {
-	//			try {
-	//				User user = userAdmin.getUser(UserConstants.KEY_UID, uid);
-	//				WebUser webUser = WebUser.fromUserId(uid);
-	//				if (webUser == null) {
-	//					if (logger.isInfoEnabled())
-	//						logger.info("WebUser " + uid + " could not be found in backing store");
-	//				}
-	//				if (!userAdmin.deleteUser(user)) {
-	//					if (logger.isInfoEnabled())
-	//						logger.info("User " + uid + " could not be found in the credential store");
-	//				}
-	//				deleteUserAndArtifacts(webUser);
-	//				if (logger.isInfoEnabled())
-	//					logger.info("Removed user " + uid + " (too many guest accounts).");
-	//			} catch (CoreException e) {
-	//				if (logger.isInfoEnabled())
-	//					logger.info("Removing " + uid + " failed.");
-	//			}
-	//		}
-	//	}
-
-	/**
-	 * Helper for deleting a WebUser leaving no traces. Removes the WebUser, and all WebWorkspaces 
-	 * the user has access to, and any WebProjects therein. All files in the projects are
-	 * deleted from the filesystem.<p>This method only produces a consistent backing store when
-	 * <code>user</code> is the sole owner of the workspaces and projects they have access to.
-	 * If workspaces or projects are shared among users, this method should not be called.
-	 * @param user The user to delete.
-	 */
-	private void deleteUserArtifacts(UserInfo user) throws CoreException {
-		// Delete filesystem contents for all of this user's projects
-		IMetaStore store = OrionConfiguration.getMetaStore();
-		for (String workspaceId : user.getWorkspaceIds()) {
-			WorkspaceInfo workspace = store.readWorkspace(workspaceId);
-			for (String projectName : workspace.getProjectNames()) {
-				ProjectInfo project = store.readProject(workspace.getUniqueId(), projectName);
-				project.getProjectStore().delete(EFS.NONE, null);
-			}
-		}
-	}
-
-	/**
 	 * Validates that the provided login is valid. Login must consistent of alphanumeric characters only for now.
 	 * @return <code>null</code> if the login is valid, and otherwise a string message stating the reason
 	 * why it is not valid.
 	 */
-	private String validateLogin(String login, boolean isGuest) {
+	private String validateLogin(String login) {
 		if (login == null || login.length() == 0)
 			return "User login not specified";
 		int length = login.length();
@@ -421,12 +319,9 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (login.equals("ultramegatron"))
 			return "Nice try, Mark";
 
-		// Guest usernames can contain a few special characters (eg. +, /)
-		if (!isGuest) {
-			for (int i = 0; i < length; i++) {
-				if (!Character.isLetterOrDigit(login.charAt(i)))
-					return NLS.bind("Username {0} contains invalid character ''{1}''", login, login.charAt(i));
-			}
+		for (int i = 0; i < length; i++) {
+			if (!Character.isLetterOrDigit(login.charAt(i)))
+				return NLS.bind("Username {0} contains invalid character ''{1}''", login, login.charAt(i));
 		}
 		return null;
 	}
@@ -434,17 +329,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	private boolean handleUserPut(HttpServletRequest req, HttpServletResponse resp, String userId) throws ServletException, IOException, CoreException, JSONException {
 		JSONObject data = OrionServlet.readJSONRequest(req);
 
-		IOrionCredentialsService userAdmin = null;
-		User user = null;
-		if (getGuestUserAdmin() != null) {
-			userAdmin = getGuestUserAdmin();
-			user = userAdmin.getUser(UserConstants.KEY_UID, userId);
-		}
-		// Fallback to regular user admin
-		if (user == null) {
-			userAdmin = getUserAdmin();
-			user = userAdmin.getUser(UserConstants.KEY_UID, userId);
-		}
+		IOrionCredentialsService userAdmin = getUserAdmin();
+		User user = userAdmin.getUser(UserConstants.KEY_UID, userId);
 
 		if (user == null)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + userId + " could not be found.", null));
@@ -521,33 +407,18 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	private boolean handleUserDelete(HttpServletRequest req, HttpServletResponse resp, String userId) throws ServletException {
-		IOrionCredentialsService userAdmin = null;
-		User user = null;
-
-		boolean isGuest = false;
-		if (getGuestUserAdmin() != null) {
-			userAdmin = getGuestUserAdmin();
-			user = userAdmin.getUser(UserConstants.KEY_UID, userId);
-			isGuest = (user != null);
-		}
-		if (user == null) {
-			userAdmin = getUserAdmin();
-			user = userAdmin.getUser(UserConstants.KEY_UID, userId);
-		}
+		IOrionCredentialsService userAdmin = getUserAdmin();
+		User user = userAdmin.getUser(UserConstants.KEY_UID, userId);
 
 		// Delete user from credential store
 		if (!userAdmin.deleteUser(user)) {
-			if (!isGuest) {
-				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + userId + " could not be found.", null));
-			}
+			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + userId + " could not be found.", null));
 		}
 		// Delete user from metadata store
 		try {
 			@SuppressWarnings("unused")
 			Activator r = Activator.getDefault();
 			final IMetaStore metastore = OrionConfiguration.getMetaStore();
-			if (isGuest)
-				deleteUserArtifacts(metastore.readUser(userId));
 			metastore.deleteUser(userId);
 		} catch (CoreException e) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Removing " + userId + " failed.", e));
@@ -598,10 +469,6 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 	private IOrionCredentialsService getUserAdmin() {
 		return UserServiceHelper.getDefault().getUserStore();
-	}
-
-	private IOrionCredentialsService getGuestUserAdmin() {
-		return UserServiceHelper.getDefault().getGuestUserStore();
 	}
 
 	private IOrionUserProfileService getUserProfileService() {
