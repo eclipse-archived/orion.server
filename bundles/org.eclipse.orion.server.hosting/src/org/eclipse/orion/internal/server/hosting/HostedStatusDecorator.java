@@ -81,7 +81,10 @@ public class HostedStatusDecorator implements IWebResourceDecorator {
 	 * @param resource The original request passed to the decorator.
 	 */
 	private void addStatus(HttpServletRequest req, JSONObject siteConfigJson, UserInfo user, URI resource) throws JSONException {
-		String id = siteConfigJson.getString(ProtocolConstants.KEY_ID);
+		String id = siteConfigJson.optString(ProtocolConstants.KEY_ID);
+		if (id == null) {
+			return;
+		}
 		SiteInfo siteConfiguration = SiteInfo.getSite(user, id);
 		if (siteConfiguration == null)
 			return;
