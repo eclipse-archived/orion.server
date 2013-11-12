@@ -1,6 +1,6 @@
 #client
 plugin@org.eclipse.orion.client.core=GIT,tag=v20131110-2056,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.core
-plugin@org.eclipse.orion.client.ui=GIT,tag=v20131111-2342,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.ui
+plugin@org.eclipse.orion.client.ui=GIT,tag=v20131112-1837,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.ui
 plugin@org.eclipse.orion.client.editor=GIT,tag=v20131112-1516,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.editor
 plugin@org.eclipse.orion.client.users=GIT,tag=v20131101-1801,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.users
 plugin@org.eclipse.orion.client.git=GIT,tag=v20131107-1000,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.git
@@ -21,7 +21,7 @@ plugin@org.eclipse.orion.server.useradmin.simple=GIT,tag=v20131108-1929,repo=git
 plugin@org.eclipse.orion.server.useradmin.xml=GIT,tag=v20110412-0931,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.useradmin.xml
 plugin@org.eclipse.orion.server.search=GIT,tag=v20131108-1926,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.search
 fragment@org.eclipse.orion.server.logback.config=GIT,tag=v20130723-1219,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.logback.config
-plugin@org.eclipse.orion.server.hosting=GIT,tag=v20131110-2037,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.hosting
+plugin@org.eclipse.orion.server.hosting=GIT,tag=v20131112-1843,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.hosting
 plugin@org.eclipse.orion.server.npm=GIT,tag=v20131105-2019,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.npm
 plugin@org.eclipse.orion.server.logs=GIT,tag=v20131101-2200,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.logs
 
@@ -33,7 +33,7 @@ plugin@org.eclipse.orion.doc.isv=GIT,tag=v20131030-2056,repo=git://git.eclipse.o
 plugin@org.eclipse.orion.doc.user=GIT,tag=v20131025-2056,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=doc/org.eclipse.orion.doc.user
 
 #tests
-plugin@org.eclipse.orion.server.tests=GIT,tag=v20131112-1440,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=tests/org.eclipse.orion.server.tests
+plugin@org.eclipse.orion.server.tests=GIT,tag=v20131112-1543,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=tests/org.eclipse.orion.server.tests
 plugin@org.eclipse.orion.server.sshconfig.home=GIT,tag=v20110420-1839,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=bundles/org.eclipse.orion.server.sshconfig.home
 
 #git
@@ -42,7 +42,7 @@ plugin@org.eclipse.jgit=p2IU,id=org.eclipse.jgit,repository=http://download.ecli
 
 #features
 feature@org.eclipse.orion.base.feature=GIT,tag=v20130826-2010,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=features/org.eclipse.orion.base-feature
-feature@org.eclipse.orion.server.feature=GIT,tag=v20131004-1421,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=features/org.eclipse.orion.server-feature
+feature@org.eclipse.orion.server.feature=GIT,tag=v20131112-1842,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=features/org.eclipse.orion.server-feature
 feature@org.eclipse.orion.server.search.feature=GIT,tag=v20130826-2010,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=features/org.eclipse.orion.server.search-feature
 feature@org.eclipse.orion.server.authentication.feature=GIT,tag=v20131108-1937,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=features/org.eclipse.orion.server.authentication-feature
 feature@org.eclipse.orion.server.ui.feature=GIT,tag=v20130826-2010,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=features/org.eclipse.orion.server.ui-feature
