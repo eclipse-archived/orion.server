@@ -218,7 +218,7 @@ public class SimpleMetaStoreMigration {
 												// could not move to the new content location, old content folder is missing
 												migrationLogPrint("ERROR: Could not handle project folder: " + oldContentLocation.getAbsolutePath() + ": the folder does not exist.");
 												continue;
-											} else if (! oldContentLocation.renameTo(newContentLocation)) {
+											} else if (!oldContentLocation.renameTo(newContentLocation)) {
 												// could not move to the new content location, likely an invalid project name
 												migrationLogPrint("ERROR: Could not move project folder: " + oldContentLocation.getAbsolutePath() + " to: " + newContentLocation.getAbsolutePath() + ": bad project name: " + projectName);
 												continue;
@@ -600,18 +600,32 @@ public class SimpleMetaStoreMigration {
 					// get the rest of the site configuration properties for this user
 					JSONObject newSite = new JSONObject();
 					Map<String, String> siteProperties = sites.get(propertyValue);
+					// if siteProperties is null then this site is not in SiteConfigurations.conf and should be dropped.
 					if (siteProperties != null) {
 						for (String sitePropertyKey : siteProperties.keySet()) {
 							String sitePropertyValue = siteProperties.get(sitePropertyKey);
 							if (sitePropertyKey.equals("Workspace")) {
 								newSite.put(sitePropertyKey, sitePropertyValue + "-OrionContent");
+							} else if (sitePropertyKey.equals("Mappings")) {
+								JSONArray mappings = new JSONArray(sitePropertyValue);
+								for (int i = 0, size = mappings.length(); i < size; i++) {
+									JSONObject mapping = mappings.getJSONObject(i);
+									String target = mapping.getString("Target");
+									if (target.startsWith("/" + userName + "/")) {
+										// next need to correct the workspace id in the mapping
+										target = target.replace("/" + userName + "/", "/" + userName + "-OrionContent/");
+										mapping.put("Target", target);
+										mappings.put(mapping);
+									}
+								}
+								newSite.put(sitePropertyKey, mappings);
 							} else {
 								newSite.put(sitePropertyKey, sitePropertyValue);
 							}
 						}
+						siteConfigurations.put(propertyValue, newSite);
+						properties.put("SiteConfigurations", siteConfigurations);
 					}
-					siteConfigurations.put(propertyValue, newSite);
-					properties.put("SiteConfigurations", siteConfigurations);
 				} else {
 					// simple property
 					if (propertyKey.startsWith("/")) {
