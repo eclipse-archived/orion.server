@@ -19,8 +19,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.filesystem.*;
 import org.eclipse.core.filesystem.provider.FileInfo;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -88,6 +88,9 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 			result.put(ProtocolConstants.KEY_DIRECTORY, info.isDirectory());
 			result.put(ProtocolConstants.KEY_LENGTH, info.getLength());
 			if (location != null) {
+				if (info.isDirectory() && !location.getPath().endsWith("/")) {
+					location = URIUtil.append(location, "");
+				}
 				result.put(ProtocolConstants.KEY_LOCATION, location);
 				if (info.isDirectory())
 					try {
