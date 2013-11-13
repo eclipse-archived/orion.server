@@ -342,13 +342,13 @@ public class SimpleMetaStore implements IMetaStore {
 	 */
 	private void initializeMetaStore(File rootLocation) {
 		if (!SimpleMetaStoreUtil.isMetaFile(rootLocation, ROOT)) {
-			// See if migration is required
+			// the root metastore.json file does not exist, see if migration is required
 			SimpleMetaStoreMigration migration = new SimpleMetaStoreMigration();
 			if (migration.isMigrationRequired(rootLocation)) {
-				// Migration is required since a secure store exists
+				// Migration is required
 				migration.doMigration(rootLocation);
 			} else {
-				// Create a new MetaStore
+				// create a new root metastore.json file
 				JSONObject jsonObject = new JSONObject();
 				try {
 					jsonObject.put(ORION_VERSION, VERSION);
