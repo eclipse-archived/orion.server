@@ -266,7 +266,6 @@ public class Indexer extends Job {
 
 	@Override
 	protected IStatus run(IProgressMonitor monitor) {
-		long start = System.currentTimeMillis();
 		Logger logger = LoggerFactory.getLogger(Indexer.class);
 		IMetaStore metaStore;
 		try {
@@ -278,6 +277,7 @@ public class Indexer extends Job {
 			schedule(5000);
 			return Status.OK_STATUS;
 		}
+		long start = System.currentTimeMillis();
 		int indexed = 0;
 		try {
 			List<String> userIds = metaStore.readAllUsers();
