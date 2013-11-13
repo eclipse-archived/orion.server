@@ -149,7 +149,6 @@
 		<module>bundles/org.eclipse.orion.server.logback.config</module>
 		<module>bundles/org.eclipse.orion.server.ui</module>
 		<module>bundles/org.eclipse.orion.server.user.securestorage</module>
-		<module>bundles/org.eclipse.orion.server.user.guest</module>
 		<module>bundles/org.eclipse.orion.server.user.ldap</module>
 
 		<module>tests/org.eclipse.orion.server.tests</module>
