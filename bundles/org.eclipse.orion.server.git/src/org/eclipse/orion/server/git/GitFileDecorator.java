@@ -68,6 +68,10 @@ public class GitFileDecorator implements IWebResourceDecorator {
 					for (int i = 0; i < children.length(); i++) {
 						JSONObject child = children.getJSONObject(i);
 						String location = child.getString(ProtocolConstants.KEY_LOCATION);
+						if (location == null || location.length() == 0) {
+							String childName = child.optString(ProtocolConstants.KEY_NAME);
+							LogHelper.log(new RuntimeException("Unexpected null location for child" + childName + " of resource " + resource));
+						}
 						addGitLinks(request, new URI(location), child);
 					}
 				}
