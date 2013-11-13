@@ -152,6 +152,9 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 			if (source == null) {
 				statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("Source does not exist: ", locationString), null));
 				return false;
+			} else if (source.isParentOf(toCreate)) {
+				statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "The destination cannot be a descendent of the source location", null));
+				return false;
 			}
 			boolean allowOverwrite = (options & CREATE_NO_OVERWRITE) == 0;
 			int efsOptions = allowOverwrite ? EFS.OVERWRITE : EFS.NONE;
