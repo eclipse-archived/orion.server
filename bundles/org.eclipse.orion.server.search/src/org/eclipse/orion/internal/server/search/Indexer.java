@@ -295,9 +295,10 @@ public class Indexer extends Job {
 			logger.debug("Indexed " + indexed + " documents in " + duration + "ms"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		//reschedule the indexing - throttle so the job never runs more than 10% of the time
 		long delay = Math.max(DEFAULT_DELAY, duration * 10);
+		//never wait longer than max idle delay
+		delay = Math.min(delay, IDLE_DELAY);
 		//if there was nothing to index then back off for awhile
-		if (indexed == 0)
-			delay = Math.max(delay, IDLE_DELAY);
+		delay = Math.max(delay, IDLE_DELAY);
 		if (logger.isDebugEnabled())
 			logger.debug("Rescheduling indexing in " + delay + "ms"); //$NON-NLS-1$//$NON-NLS-2$
 		schedule(delay);
