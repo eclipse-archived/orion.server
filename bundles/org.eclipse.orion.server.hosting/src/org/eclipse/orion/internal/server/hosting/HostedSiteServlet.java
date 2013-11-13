@@ -19,20 +19,23 @@ import javax.servlet.http.*;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jetty.servlets.ProxyServlet;
-import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.file.ServletFileStoreHandler;
 import org.eclipse.orion.internal.server.servlets.hosting.IHostedSite;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
-import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Handles requests for URIs that are part of a running hosted site.
  */
 public class HostedSiteServlet extends OrionServlet {
+	private final Logger logger = LoggerFactory.getLogger(HostingActivator.PI_SERVER_HOSTING); //$NON-NLS-1$;
 
 	static class LocationHeaderServletResponseWrapper extends HttpServletResponseWrapper {
 
@@ -150,7 +153,9 @@ public class HostedSiteServlet extends OrionServlet {
 				try {
 					mappedPaths = getMapped(site, contextlessPath, req.getQueryString());
 				} catch (URISyntaxException e) {
-					handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Could not create target URI	", e));
+					String message = "Could not create target URI";
+					logger.error(message, e);
+					handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, message, e));
 					return;
 				}
 				if (mappedPaths != null) {
@@ -306,7 +311,7 @@ public class HostedSiteServlet extends OrionServlet {
 				return null;
 			return project.getProjectStore().getFileStore(path.removeFirstSegments(2));
 		} catch (CoreException e) {
-			LogHelper.log(new Status(IStatus.WARNING, Activator.PI_SERVER_SERVLETS, 1, NLS.bind("An error occurred when getting file store for path {0}", path), e));
+			logger.error(NLS.bind("An error occurred when getting file store for path {0}", path), e);
 			// fallback and return null
 		}
 		return null;
@@ -320,12 +325,15 @@ public class HostedSiteServlet extends OrionServlet {
 			return proxyRemoteUrl(req, resp, new URL(remoteURI.toString()), failEarlyOn404);
 		} catch (MalformedURLException e) {
 			String message = NLS.bind("Malformed remote URL: {0}", remoteURI.toString());
+			logger.error(message, e);
 			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, message, e));
 		} catch (UnknownHostException e) {
 			String message = NLS.bind("Unknown host {0}", e.getMessage());
+			logger.error(message, e);
 			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, message, e));
 		} catch (Exception e) {
 			String message = NLS.bind("An error occurred while retrieving {0}", remoteURI.toString());
+			logger.error(message, e);
 			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, e));
 		}
 		return true;
