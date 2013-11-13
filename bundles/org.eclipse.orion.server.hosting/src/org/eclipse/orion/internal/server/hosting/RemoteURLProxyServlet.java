@@ -20,12 +20,16 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.http.HttpURI;
 import org.eclipse.jetty.servlets.ProxyServlet;
 import org.eclipse.jetty.util.IO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Override the Jetty ProxyServlet implementation. Do this to tolerate some unusual 
  * HTTP practices that Ajax libraries are using (see NOTE: below.) 
  */
 public class RemoteURLProxyServlet extends ProxyServlet {
+
+	private final Logger logger = LoggerFactory.getLogger(HostingActivator.PI_SERVER_HOSTING);
 
 	{
 		// Bug 346139
@@ -163,7 +167,7 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 				connection.connect();
 			} catch (Exception e) {
 				if (!(e instanceof UnknownHostException))
-					_context.log("proxy", e);
+					logger.error("Error connecting to " + url, e);
 			}
 
 			InputStream proxy_in = null;
@@ -186,7 +190,7 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 					proxy_in = connection.getInputStream();
 				} catch (Exception e) {
 					if (!(e instanceof IOException))
-						_context.log("stream", e);
+						logger.error("Error reading input from " + url, e);
 					if (http != null)
 						proxy_in = http.getErrorStream();
 				}
