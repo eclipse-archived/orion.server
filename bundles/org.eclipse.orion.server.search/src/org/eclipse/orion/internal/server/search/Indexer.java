@@ -143,7 +143,12 @@ public class Indexer extends Job {
 		IMetaStore store = OrionConfiguration.getMetaStore();
 		for (String projectName : workspace.getProjectNames()) {
 			try {
-				indexed += indexProject(user, workspace, store.readProject(workspace.getUniqueId(), projectName), monitor, documents);
+				final ProjectInfo project = store.readProject(workspace.getUniqueId(), projectName);
+				if (project != null) {
+					indexed += indexProject(user, workspace, project, monitor, documents);
+				} else {
+					handleIndexingFailure(new RuntimeException("Unexpected missing project with name " + projectName + " in workspace " + workspace.getUniqueId()), null); //$NON-NLS-1$ //$NON-NLS-2$
+				}
 			} catch (CoreException e) {
 				handleIndexingFailure(e, null);
 				//continue to next project
