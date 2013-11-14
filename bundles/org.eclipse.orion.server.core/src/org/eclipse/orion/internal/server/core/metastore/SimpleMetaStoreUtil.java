@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 public class SimpleMetaStoreUtil {
 
 	public static final String METAFILE_EXTENSION = ".json";
+	private static String OPERATING_SYSTEM_NAME = System.getProperty("os.name").toLowerCase();
 	public static final String SEPARATOR = "-";
 	public final static String USER = "user";
 
@@ -119,6 +120,21 @@ public class SimpleMetaStoreUtil {
 			}
 		}
 		return createMetaFolder(orgFolder, userName);
+	}
+
+	/**
+	 * Decode the project name from the project id. In the current implementation, the project id and
+	 * workspace name are the same value. However, on Windows, we replace the bar character in the project name 
+	 * with three dashes since bar is a reserved character on Windows and cannot be used to save a project to disk. 
+	 * @param projectId The project id.
+	 * @return The project id.
+	 */
+	public static String decodeProjectNameFromProjectId(String projectId) {
+		if (OPERATING_SYSTEM_NAME.contains("windows")) {
+			// only do the decoding of the reserved bar character on Windows
+			return projectId.replaceAll("---", "\\|");
+		}
+		return projectId;
 	}
 
 	/**
@@ -211,6 +227,21 @@ public class SimpleMetaStoreUtil {
 			throw new RuntimeException("Meta File Error, cannot delete folder.");
 		}
 		return true;
+	}
+
+	/**
+	 * Encode the project id from the project name. In the current implementation, the project id and
+	 * workspace name are the same value. However, on Windows, we replace the bar character in the project name 
+	 * with three dashes since bar is a reserved character on Windows and cannot be used to save a project to disk. 
+	 * @param projectName The project name.
+	 * @return The project id.
+	 */
+	public static String encodeProjectIdFromProjectName(String projectName) {
+		if (OPERATING_SYSTEM_NAME.contains("windows")) {
+			// only do the encoding of the reserved bar character on Windows
+			return projectName.replaceAll("\\|", "---");
+		}
+		return projectName;
 	}
 
 	/**
