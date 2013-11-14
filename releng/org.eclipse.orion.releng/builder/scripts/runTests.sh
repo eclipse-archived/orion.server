@@ -83,8 +83,7 @@ mkdir $testDir
 fi
 
 browsers=(\
-        firefox-17.0.1/firefox,firefox-17.0.1/firefox-bin \
-        firefox-23.0.1/firefox,firefox-23.0.1/firefox-bin)
+       firefox-23.0.1/firefox,firefox-23.0.1/firefox-bin)
 
 export DISPLAY=:63		# set display to use that of the xvfb
 
