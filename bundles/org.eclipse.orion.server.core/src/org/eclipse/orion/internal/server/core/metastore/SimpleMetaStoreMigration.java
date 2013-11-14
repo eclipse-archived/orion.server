@@ -210,6 +210,7 @@ public class SimpleMetaStoreMigration {
 								projectProperties.put("Name", projectName);
 							}
 							JSONObject newProjectJSON = getProjectJSONfromProperties(projectProperties);
+							String newProjectId = newProjectJSON.getString("UniqueId");
 
 							// if the content location is local, update the content location with the new name
 							if (newProjectJSON.has("ContentLocation")) {
@@ -217,7 +218,7 @@ public class SimpleMetaStoreMigration {
 								if (contentLocation.equals(projectId)) {
 									// This is the Orion 0.2 storage format
 									File oldContentLocation = new File(metaStoreRootFolder, contentLocation);
-									File newContentLocation = SimpleMetaStoreUtil.retrieveMetaFolder(newWorkspaceHome, projectName);
+									File newContentLocation = SimpleMetaStoreUtil.retrieveMetaFolder(newWorkspaceHome, newProjectId);
 									newProjectJSON.put("ContentLocation", newContentLocation.toURI());
 									oldContentLocation.renameTo(newContentLocation);
 									migrationLogPrint("Moved Project folder: " + oldContentLocation.getAbsolutePath() + " to: " + newContentLocation.getAbsolutePath());
@@ -226,7 +227,7 @@ public class SimpleMetaStoreMigration {
 									if (contentLocationURI.getScheme().equals("file")) {
 										File oldContentLocation = new File(contentLocationURI);
 										if (oldContentLocation.toString().startsWith(rootLocation.toString())) {
-											File newContentLocation = SimpleMetaStoreUtil.retrieveMetaFolder(newWorkspaceHome, projectName);
+											File newContentLocation = SimpleMetaStoreUtil.retrieveMetaFolder(newWorkspaceHome, newProjectId);
 											if (!oldContentLocation.exists() || !oldContentLocation.isDirectory()) {
 												// could not move to the new content location, old content folder is missing
 												migrationLogPrint("ERROR: Could not handle project folder: " + oldContentLocation.getAbsolutePath() + ": the folder does not exist.");
@@ -251,18 +252,18 @@ public class SimpleMetaStoreMigration {
 							newProjectJSON.put("WorkspaceId", userName + "-OrionContent");
 
 							// save projectJSON
-							if (SimpleMetaStoreUtil.isMetaFile(newWorkspaceHome, projectName)) {
-								SimpleMetaStoreUtil.updateMetaFile(newWorkspaceHome, projectName, newProjectJSON);
-								File userMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(newWorkspaceHome, projectName);
-								migrationLogPrint("Updated project MetaData file: " + userMetaFile.getAbsolutePath());
+							if (SimpleMetaStoreUtil.isMetaFile(newWorkspaceHome, newProjectId)) {
+								SimpleMetaStoreUtil.updateMetaFile(newWorkspaceHome, newProjectId, newProjectJSON);
+								File projectMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(newWorkspaceHome, newProjectId);
+								migrationLogPrint("Updated project MetaData file: " + projectMetaFile.getAbsolutePath());
 								projectNamesJSON.put(projectName);
 							} else {
-								if (!SimpleMetaStoreUtil.createMetaFile(newWorkspaceHome, projectName, newProjectJSON)) {
+								if (!SimpleMetaStoreUtil.createMetaFile(newWorkspaceHome, newProjectId, newProjectJSON)) {
 									migrationLogPrint("ERROR: Skipped Project : " + projectName + ", could not save project json file, likely bad project name: " + projectName + ".");
 									continue;
 								}
-								File userMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(newWorkspaceHome, projectName);
-								migrationLogPrint("Created project MetaData file: " + userMetaFile.getAbsolutePath());
+								File projectMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(newWorkspaceHome, newProjectId);
+								migrationLogPrint("Created project MetaData file: " + projectMetaFile.getAbsolutePath());
 								projectNamesJSON.put(projectName);
 							}
 						}
@@ -701,7 +702,7 @@ public class SimpleMetaStoreMigration {
 			projectJSON.put(SimpleMetaStore.ORION_VERSION, SimpleMetaStore.VERSION);
 			String contentLocation = projectProperties.get("ContentLocation");
 			String name = projectProperties.get("Name");
-			projectJSON.put("UniqueId", name);
+			projectJSON.put("UniqueId", SimpleMetaStoreUtil.encodeProjectIdFromProjectName(name));
 			projectJSON.put("FullName", name);
 			projectJSON.put("ContentLocation", contentLocation);
 			projectJSON.put("Properties", new JSONObject());
