@@ -170,12 +170,12 @@ public class SiteHostingService implements ISiteHostingService {
 				try {
 					HostPattern pattern = getHostPattern(value, requestURI);
 					String host = pattern.getHost();
-					if (pattern.isWildcard()) { //$NON-NLS-1$
+					if (pattern.isWildcard()) {
 						// It's a domain wildcard
-						final String rest = pattern.getWildcardDomain();
+						final String rest = "." + pattern.getWildcardDomain(); //$NON-NLS-1$
 
 						// Append digits if necessary to get a unique hostname
-						String candidate = hint + "." + rest;
+						String candidate = hint + rest;
 						for (int i = 0; isHosted(candidate); i++) {
 							candidate = hint + (Integer.toString(i)) + rest;
 						}
