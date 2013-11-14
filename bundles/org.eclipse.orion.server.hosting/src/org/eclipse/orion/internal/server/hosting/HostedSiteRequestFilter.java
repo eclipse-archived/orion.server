@@ -39,7 +39,9 @@ public class HostedSiteRequestFilter implements Filter {
 				String requestUri = httpReq.getRequestURI();
 				String service = httpReq.getServletPath();
 				boolean isForSite = siteHostingService.isHosted(host) || siteHostingService.matchesVirtualHost(host);
-				if (isForSite && !service.equals(HOSTED_SITE_ALIAS)) {
+				// If the HostedSite handler has already forwarded this request, do not attempt to forward it again
+				boolean alreadyForwarded = httpReq.getAttribute(HostingConstants.REQUEST_ATTRIBUTE_HOSTING_FORWARDED) != null;
+				if (isForSite && !service.equals(HOSTED_SITE_ALIAS) && !alreadyForwarded) {
 					// Forward to /hosted/<host>
 					RequestDispatcher rd = httpReq.getRequestDispatcher(HOSTED_SITE_ALIAS + "/" + host + requestUri); //$NON-NLS-1$
 					rd.forward(req, resp);

@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.net.*;
 import java.util.*;
 import java.util.Map.Entry;
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
 import org.eclipse.core.filesystem.IFileStore;
@@ -35,7 +36,7 @@ import org.slf4j.LoggerFactory;
  * Handles requests for URIs that are part of a running hosted site.
  */
 public class HostedSiteServlet extends OrionServlet {
-	private final Logger logger = LoggerFactory.getLogger(HostingActivator.PI_SERVER_HOSTING); //$NON-NLS-1$;
+	private final Logger logger = LoggerFactory.getLogger(HostingActivator.PI_SERVER_HOSTING);
 
 	static class LocationHeaderServletResponseWrapper extends HttpServletResponseWrapper {
 
@@ -237,7 +238,7 @@ public class HostedSiteServlet extends OrionServlet {
 					return;
 				}
 			} else {
-				if (proxyRemotePath(req, new LocationHeaderServletResponseWrapper(req, resp, site), uri, failEarlyOn404))
+				if (serveURI(req, new LocationHeaderServletResponseWrapper(req, resp, site), uri, failEarlyOn404))
 					return;
 			}
 		}
@@ -320,8 +321,23 @@ public class HostedSiteServlet extends OrionServlet {
 	/**
 	 * @return true if the request was served.
 	 */
-	private boolean proxyRemotePath(HttpServletRequest req, HttpServletResponse resp, URI remoteURI, boolean failEarlyOn404) throws IOException, ServletException, UnknownHostException {
+	private boolean serveURI(final HttpServletRequest req, HttpServletResponse resp, URI remoteURI, boolean failEarlyOn404) throws IOException, ServletException, UnknownHostException {
 		try {
+			// Special case: remote URI with host name "localhost" is deemed to refer to a resource on this server,
+			// so we simply forward the URI within the servlet container.
+			// Rewrite request URI from "/cc/hosted/siteName/resource" to "/resource"
+			if ("localhost".equals(remoteURI.getHost())) { //$NON-NLS-1$
+				req.setAttribute(HostingConstants.REQUEST_ATTRIBUTE_HOSTING_FORWARDED, ""); //$NON-NLS-1$
+
+				// Remove contextPath from the siteURI's path as the CP does not appear in request params
+				String cp = req.getContextPath();
+				IPath newPath = new Path(remoteURI.getPath().substring(cp.length())).makeAbsolute();
+				RequestDispatcher dispatcher = getServletContext().getRequestDispatcher(newPath.toString());
+				dispatcher.forward(req, resp);
+				return true;
+			}
+
+			// Otherwise proxy as a remote URL.
 			return proxyRemoteUrl(req, resp, new URL(remoteURI.toString()), failEarlyOn404);
 		} catch (MalformedURLException e) {
 			String message = NLS.bind("Malformed remote URL: {0}", remoteURI.toString());
