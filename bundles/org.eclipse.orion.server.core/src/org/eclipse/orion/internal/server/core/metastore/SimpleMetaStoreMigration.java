@@ -291,6 +291,9 @@ public class SimpleMetaStoreMigration {
 				File orgFolder = new File(metaStoreRootFolder, metaStoreRootfiles[i]);
 				if (!orgFolder.isDirectory()) {
 					continue;
+				} else if (orgFolder.getName().equals(".metadata")) {
+					// skip the eclipse workspace metadata folder
+					continue;
 				}
 				String[] orgFolderFiles = orgFolder.list();
 				for (int o = 0; o < orgFolderFiles.length; o++) {
