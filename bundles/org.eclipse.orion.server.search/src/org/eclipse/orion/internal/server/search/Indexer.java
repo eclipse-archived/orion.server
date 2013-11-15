@@ -277,8 +277,8 @@ public class Indexer extends Job {
 			metaStore = OrionConfiguration.getMetaStore();
 		} catch (IllegalStateException e) {
 			//bundle providing metastore might not have started yet
-			if (logger.isDebugEnabled())
-				logger.debug("Search indexer waiting for metadata service");
+			if (logger.isInfoEnabled())
+				logger.info("Search indexer waiting for metadata service");
 			schedule(5000);
 			return Status.OK_STATUS;
 		}
@@ -296,16 +296,16 @@ public class Indexer extends Job {
 			handleIndexingFailure(e, null);
 		}
 		long duration = System.currentTimeMillis() - start;
-		if (logger.isDebugEnabled())
-			logger.debug("Indexed " + indexed + " documents in " + duration + "ms"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		if (logger.isInfoEnabled())
+			logger.info("Indexed " + indexed + " documents in " + duration + "ms"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		//reschedule the indexing - throttle so the job never runs more than 10% of the time
 		long delay = Math.max(DEFAULT_DELAY, duration * 10);
 		//never wait longer than max idle delay
 		delay = Math.min(delay, IDLE_DELAY);
 		//if there was nothing to index then back off for awhile
 		delay = Math.max(delay, IDLE_DELAY);
-		if (logger.isDebugEnabled())
-			logger.debug("Rescheduling indexing in " + delay + "ms"); //$NON-NLS-1$//$NON-NLS-2$
+		if (logger.isInfoEnabled())
+			logger.info("Rescheduling indexing in " + delay + "ms"); //$NON-NLS-1$//$NON-NLS-2$
 		schedule(delay);
 		return Status.OK_STATUS;
 	}
