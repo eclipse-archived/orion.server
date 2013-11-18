@@ -313,6 +313,20 @@
                mime-type="application/x-web-app-manifest+json">
          </mime-mapping>
       </httpcontext>
+      <httpcontext
+            id="org.eclipse.orion.server.configurator.httpcontext.cf">
+         <resource-mapping
+               bundle="org.eclipse.orion.client.cf"
+               path="/web/cfui">
+         </resource-mapping>
+      </httpcontext>
+      <httpcontext
+            id="org.eclipse.orion.server.configurator.httpcontext.cf.components">
+         <resource-mapping
+               bundle="org.eclipse.orion.client.cf"
+               path="/web/orion/cfui">
+         </resource-mapping>
+      </httpcontext>
    </extension>
    <extension
          point="org.eclipse.equinox.http.registry.resources">
@@ -359,6 +373,14 @@
       <resource
             alias="/orion/git"
             httpcontextId="org.eclipse.orion.server.configurator.httpcontext.git.components">
+      </resource>
+      <resource
+            alias="/cfui"
+            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.cf">
+      </resource>
+      <resource
+            alias="/orion/cfui"
+            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.cf.components">
       </resource>
       <serviceSelector
             filter="(other.info=org.eclipse.orion)">
