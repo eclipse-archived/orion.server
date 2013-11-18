@@ -20,9 +20,9 @@ import org.osgi.service.prefs.BackingStoreException;
 
 /**
  * Base class for Eclipse web users, workspaces, and projects.
+ * @deprecated Exists only for compatibility and migration of old workspaces
  */
-@SuppressWarnings("deprecation")
-public class WebElement {
+class WebElement {
 	protected static final IScopeContext scope = new OrionScope();
 	protected IEclipsePreferences store;
 	protected static final boolean caseSensitive = "macosx".equals(System.getProperty("osgi.os")) ? false : new java.io.File("a").compareTo(new java.io.File("A")) != 0; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -8,23 +8,23 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.internal.server.servlets.site;
+package org.eclipse.orion.internal.server.servlets.workspace;
 
 import java.net.URI;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.workspace.WebElement;
-import org.eclipse.orion.internal.server.servlets.workspace.WebElementResourceHandler;
+import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
+import org.eclipse.orion.internal.server.servlets.site.SiteInfo;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.json.*;
 import org.osgi.service.prefs.BackingStoreException;
 
 /**
  * Configuration details for a site that can be hosted on an Orion server.
- * @deprecated replaced by {@link SiteInfo}.
+ * @deprecated replaced by {@link SiteInfo}. Exists only for compatibility and migration of old workspaces.
  */
-public class SiteConfiguration extends WebElement {
+class SiteConfiguration extends WebElement {
 
 	public static final String SITE_CONFIGURATIONS_NODE_NAME = "SiteConfigurations"; //$NON-NLS-1$
 
@@ -33,7 +33,13 @@ public class SiteConfiguration extends WebElement {
 	 * @return Representation of <code>site</code> as a JSONObject.
 	 */
 	public static JSONObject toJSON(SiteConfiguration site, URI baseLocation) {
-		JSONObject result = WebElementResourceHandler.toJSON(site);
+		JSONObject result = new JSONObject();
+		try {
+			result.put(ProtocolConstants.KEY_ID, site.getId());
+			result.put(ProtocolConstants.KEY_NAME, site.getName());
+		} catch (JSONException e1) {
+			//cannot happen, we know keys and values are valid
+		}
 		try {
 			if (baseLocation != null)
 				result.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(baseLocation, site.getId()));

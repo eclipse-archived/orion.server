@@ -14,7 +14,6 @@ import java.net.URI;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.site.SiteConfiguration;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerConstants;
@@ -29,7 +28,7 @@ import org.osgi.service.prefs.BackingStoreException;
  * Represents a single Orion user.
  * @deprecated replaced by {@link IMetaStore} and {@link UserInfo}.
  */
-public class WebUser extends WebElement {
+class WebUser extends WebElement {
 	private static final Base64Counter userCounter = new Base64Counter();
 
 	static final String USERS_NODE = "Users"; //$NON-NLS-1$

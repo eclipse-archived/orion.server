@@ -12,14 +12,15 @@ package org.eclipse.orion.internal.server.servlets.workspace;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.Locale;
 import javax.servlet.http.HttpServletRequest;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.resources.Base64;
@@ -30,7 +31,7 @@ import org.osgi.service.prefs.BackingStoreException;
  * An Eclipse web project.
  * @deprecated Use {@link IMetaStore} and {@link ProjectInfo}.
  */
-public class WebProject extends WebElement {
+class WebProject extends WebElement {
 	public static final String PROJECT_NODE_NAME = "Projects"; //$NON-NLS-1$
 	private static final Base64Counter projectCounter = new Base64Counter();
 
@@ -73,22 +74,6 @@ public class WebProject extends WebElement {
 		} catch (Exception e) {
 			return false;
 		}
-	}
-
-	/**
-	 * Returns a list of all known web projects.
-	 */
-	public static List<WebProject> allProjects() {
-		List<WebProject> result = new ArrayList<WebProject>();
-		IEclipsePreferences projectRoot = scope.getNode(PROJECT_NODE_NAME);
-		try {
-			String[] ids = projectRoot.childrenNames();
-			for (String id : ids)
-				result.add(WebProject.fromId(id));
-		} catch (BackingStoreException e) {
-			LogHelper.log(e);
-		}
-		return result;
 	}
 
 	public WebProject(IEclipsePreferences store) {

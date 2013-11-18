@@ -24,9 +24,9 @@ import org.json.JSONObject;
 /**
  * Handles serialization of {@link ProjectInfo} objects.
  */
-public class WebProjectResourceHandler extends MetadataInfoResourceHandler<ProjectInfo> {
+public class ProjectInfoResourceHandler extends MetadataInfoResourceHandler<ProjectInfo> {
 
-	public WebProjectResourceHandler() {
+	public ProjectInfoResourceHandler() {
 		super();
 	}
 

@@ -79,7 +79,7 @@ public class WorkspaceServlet extends OrionServlet {
 				}
 
 				URI baseLocation = ServletResourceHandler.getURI(req);
-				OrionServlet.writeJSONResponse(req, resp, WebProjectResourceHandler.toJSON(workspace, project, baseLocation));
+				OrionServlet.writeJSONResponse(req, resp, ProjectInfoResourceHandler.toJSON(workspace, project, baseLocation));
 				return;
 			}
 		} catch (CoreException e) {
