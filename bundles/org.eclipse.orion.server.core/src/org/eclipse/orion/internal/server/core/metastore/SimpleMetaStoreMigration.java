@@ -631,6 +631,10 @@ public class SimpleMetaStoreMigration {
 						siteConfigurations.put(propertyValue, newSite);
 						properties.put("SiteConfigurations", siteConfigurations);
 					}
+				} else if (propertyKey.startsWith("plugins//")) {
+					// remove the extra slash from the plugins property
+					propertyKey = propertyKey.replace("plugins//", "plugins/");
+					properties.put(propertyKey, propertyValue);
 				} else {
 					// simple property
 					if (propertyKey.startsWith("/")) {
