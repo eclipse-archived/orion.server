@@ -136,19 +136,7 @@ public class SimpleMetaStoreMigration {
 			int userCount = 1;
 			for (String userId : users.keySet()) {
 				Map<String, String> userProperties = users.get(userId);
-				Map<String, String> usersSecureStorageProperties = null;
-				if (usersSecureStorage.isEmpty()) {
-					// not using a secure storage for users.
-					usersSecureStorageProperties = null;
-				} else {
-					// if we are using secure storage then the user needs to be in the store. 
-					usersSecureStorageProperties = usersSecureStorage.get(userId);
-					if (usersSecureStorageProperties == null) {
-						migrationLogPrint("Processing UserId " + userId + " (" + userCount++ + " of " + userSize + ") ");
-						migrationLogPrint("ERROR: Did not migrate user: no entry in secure storage for userId: " + userId);
-						continue;
-					}
-				}
+				Map<String, String> usersSecureStorageProperties = usersSecureStorage.get(userId);
 
 				String userName = userProperties.get("UserName");
 				if (userName == null || userName.equals("") || (userName.equals(userId) && userName.length() <= 2)) {
