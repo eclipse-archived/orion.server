@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 public class SimpleMetaStoreUtil {
 
 	public static final String METAFILE_EXTENSION = ".json";
-	private static String OPERATING_SYSTEM_NAME = System.getProperty("os.name").toLowerCase();
+	public static String OPERATING_SYSTEM_NAME = System.getProperty("os.name").toLowerCase();
 	public static final String SEPARATOR = "-";
 	public final static String USER = "user";
 

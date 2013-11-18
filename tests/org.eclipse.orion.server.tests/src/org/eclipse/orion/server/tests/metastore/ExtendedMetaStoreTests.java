@@ -196,6 +196,11 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 
 	@Test
 	public void testCreateProjectWithEmojiChactersInName() throws CoreException {
+		if (SimpleMetaStoreUtil.OPERATING_SYSTEM_NAME.contains("windows")) {
+			// Bugzilla 421776 fails with Emoji characters on windows.
+			return;
+		}
+
 		// create the MetaStore
 		IMetaStore metaStore = getMetaStore();
 
