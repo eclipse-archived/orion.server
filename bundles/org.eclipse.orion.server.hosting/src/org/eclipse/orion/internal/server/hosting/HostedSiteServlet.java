@@ -331,7 +331,7 @@ public class HostedSiteServlet extends OrionServlet {
 
 				// Remove contextPath from the siteURI's path as the CP does not appear in request params
 				String cp = req.getContextPath();
-				IPath newPath = new Path(remoteURI.getPath().substring(cp.length())).makeAbsolute();
+				IPath newPath = new Path(remoteURI.getRawPath().substring(cp.length())).makeAbsolute();
 				RequestDispatcher dispatcher = getServletContext().getRequestDispatcher(newPath.toString());
 				dispatcher.forward(req, resp);
 				return true;

@@ -330,6 +330,41 @@ public class HostingTest extends CoreSiteTest {
 		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, getRemoteUrl404Resp.getResponseCode());
 	}
 
+	@Test
+	public void testRemoteProxyRequestPathEncoding() throws SAXException, IOException, JSONException, URISyntaxException {
+		final String siteName = "Site";
+		final String remoteFilePath = "/file";
+
+		final JSONArray mappings = makeMappings(new String[][] {{remoteFilePath, SERVER_LOCATION + FILE_SERVLET_LOCATION}});
+		WebRequest createSiteReq = getCreateSiteRequest(siteName, workspaceId, mappings, null);
+		WebResponse createSiteResp = webConversation.getResponse(createSiteReq);
+		assertEquals(HttpURLConnection.HTTP_CREATED, createSiteResp.getResponseCode());
+		JSONObject siteObject = new JSONObject(createSiteResp.getText());
+
+		// Start the site
+		String location = siteObject.getString(ProtocolConstants.HEADER_LOCATION);
+		siteObject = startSite(location);
+
+		final JSONObject hostingStatus = siteObject.getJSONObject(SiteConfigurationConstants.KEY_HOSTING_STATUS);
+		final String hostedURL = hostingStatus.getString(SiteConfigurationConstants.KEY_HOSTING_STATUS_URL);
+
+		// Test that we can invoke the Orion file API through the site, to create a file with a funny name
+		final String fileName = "a%b.txt";
+		final String fileContent = "Created through a site";
+		createFileOnServer(hostedURL + remoteFilePath + testProjectBaseLocation, fileName, fileContent);
+
+		// Bug 421995 test that file contents can be got
+		String fileURLOnSite = hostedURL + remoteFilePath + testProjectBaseLocation + "/" + URLEncoder.encode(fileName, "UTF-8");
+		WebRequest getFileReq = getGetFilesRequest(fileURLOnSite);
+		setAuthentication(getFileReq);
+		WebResponse getContentsResp = webConversation.getResponse(getFileReq);
+		assertEquals(HttpURLConnection.HTTP_OK, getContentsResp.getResponseCode());
+		assertEquals(fileContent, getContentsResp.getText());
+
+		// Stop the site
+		stopSite(location);
+	}
+
 	/**
 	 * Starts the site at <code>siteLocation</code>, and asserts that it was started.
 	 * @throws URISyntaxException 
