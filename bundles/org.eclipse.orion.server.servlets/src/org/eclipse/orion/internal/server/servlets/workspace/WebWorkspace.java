@@ -24,10 +24,10 @@ import org.json.*;
 import org.osgi.service.prefs.BackingStoreException;
 
 /**
- * An Eclipse web workspace.
+ * Legacy metadata representing a workspace. Exists only for compatibility and migration.
  * @deprecated Use {@link IMetaStore} and {@link WorkspaceInfo}.
  */
-public class WebWorkspace extends WebElement {
+class WebWorkspace extends WebElement {
 	private static final String WORKSPACE_NODE_NAME = "Workspaces";//$NON-NLS-1$
 	private static final Base64Counter workspaceCounter = new Base64Counter();
 

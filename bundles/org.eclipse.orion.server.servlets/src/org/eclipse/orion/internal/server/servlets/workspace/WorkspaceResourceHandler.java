@@ -40,17 +40,6 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 
 	private final ServletResourceHandler<IStatus> statusHandler;
 
-	/**
-	 * @deprecated Use {@link IMetaStore#createProject(String, org.eclipse.orion.server.core.metastore.ProjectInfo)}
-	 */
-	public static void addProject(String user, WebWorkspace workspace, WebProject project) throws CoreException {
-		//add project to workspace
-		workspace.addProject(project);
-		//save the workspace and project metadata
-		project.save();
-		workspace.save();
-	}
-
 	public static void computeProjectLocation(HttpServletRequest request, ProjectInfo project, String location, boolean init) throws CoreException {
 		String user = request.getRemoteUser();
 		URI contentURI;
@@ -338,7 +327,7 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 
 		//the baseLocation should be the workspace location
 		URI baseLocation = getURI(request);
-		JSONObject result = WebProjectResourceHandler.toJSON(workspace, project, baseLocation);
+		JSONObject result = ProjectInfoResourceHandler.toJSON(workspace, project, baseLocation);
 		OrionServlet.writeJSONResponse(request, response, result);
 
 		//add project location to response header
@@ -418,7 +407,7 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 			return true;
 		}
 		URI baseLocation = getURI(request);
-		JSONObject result = WebProjectResourceHandler.toJSON(workspace, destinationProject, baseLocation);
+		JSONObject result = ProjectInfoResourceHandler.toJSON(workspace, destinationProject, baseLocation);
 		OrionServlet.writeJSONResponse(request, response, result);
 		response.setHeader(ProtocolConstants.HEADER_LOCATION, result.optString(ProtocolConstants.KEY_LOCATION, "")); //$NON-NLS-1$
 		response.setStatus(HttpServletResponse.SC_CREATED);
@@ -465,7 +454,7 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		}
 		//location doesn't change on move project
 		URI baseLocation = getURI(request);
-		JSONObject result = WebProjectResourceHandler.toJSON(workspace, sourceProject, baseLocation);
+		JSONObject result = ProjectInfoResourceHandler.toJSON(workspace, sourceProject, baseLocation);
 		OrionServlet.writeJSONResponse(request, response, result);
 		response.setHeader(ProtocolConstants.HEADER_LOCATION, sourceLocation);
 		response.setStatus(HttpServletResponse.SC_OK);
