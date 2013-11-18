@@ -195,6 +195,49 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 	}
 
 	@Test
+	public void testCreateProjectWithEmojiChactersInName() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = getMetaStore();
+
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName("anthony");
+		userInfo.setFullName("Anthony Hunter");
+		metaStore.createUser(userInfo);
+
+		// create the workspace
+		String workspaceName = "Orion Content";
+		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
+		workspaceInfo.setFullName(workspaceName);
+		workspaceInfo.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo);
+
+		// create the project with Emoji characters in the project name.
+		// U+1F60A: SMILING FACE WITH SMILING EYES ("\ud83d\ude0a")
+		// U+1F431: CAT FACE ("\ud83d\udc31")
+		// U+1F435: MONKEY FACE ("\ud83d\udc35")
+		String projectName = "Project \ud83d\ude0a\ud83d\udc31\ud83d\udc35";
+		ProjectInfo projectInfo = new ProjectInfo();
+		projectInfo.setFullName(projectName);
+		try {
+			projectInfo.setContentLocation(new URI("file:/home/anthony/orion/project"));
+		} catch (URISyntaxException e) {
+			// should not get an exception here, simple URI
+		}
+		projectInfo.setWorkspaceId(workspaceInfo.getUniqueId());
+		metaStore.createProject(projectInfo);
+
+		// read the project
+		ProjectInfo readProjectInfo = metaStore.readProject(workspaceInfo.getUniqueId(), projectInfo.getFullName());
+		assertNotNull(readProjectInfo);
+		assertEquals(projectName, readProjectInfo.getFullName());
+		assertEquals(readProjectInfo.getFullName(), projectInfo.getFullName());
+
+		// delete the user
+		metaStore.deleteUser(userInfo.getUniqueId());
+	}
+
+	@Test
 	public void testCreateProjectWithNoWorkspaceId() {
 		// create the MetaStore
 		IMetaStore metaStore = getMetaStore();
