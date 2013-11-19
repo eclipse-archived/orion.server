@@ -11,10 +11,13 @@
 package org.eclipse.orion.internal.server.core.metastore;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,11 +58,13 @@ public class SimpleMetaStoreUtil {
 				throw new RuntimeException("Meta File Error, parent is not a folder");
 			}
 			File newFile = retrieveMetaFile(parent, name);
-			FileWriter fileWriter = new FileWriter(newFile);
-			fileWriter.write(jsonObject.toString(4));
-			fileWriter.write("\n");
-			fileWriter.flush();
-			fileWriter.close();
+			FileOutputStream fileOutputStream = new FileOutputStream(newFile);
+			Charset utf8 = Charset.forName("UTF-8");
+			OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, utf8);
+			outputStreamWriter.write(jsonObject.toString(4));
+			outputStreamWriter.write("\n");
+			outputStreamWriter.flush();
+			outputStreamWriter.close();
 		} catch (FileNotFoundException e) {
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 			logger.warn("Meta File Error, cannot create file under " + parent.toString() + ": invalid file name: " + name); //$NON-NLS-1$
@@ -469,10 +474,12 @@ public class SimpleMetaStoreUtil {
 			}
 			File savedFile = retrieveMetaFile(parent, name);
 
-			FileReader fileReader = new FileReader(savedFile);
+			FileInputStream fileInputStream = new FileInputStream(savedFile);
 			char[] chars = new char[(int) savedFile.length()];
-			fileReader.read(chars);
-			fileReader.close();
+			Charset utf8 = Charset.forName("UTF-8");
+			InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, utf8);
+			inputStreamReader.read(chars);
+			fileInputStream.close();
 			jsonObject = new JSONObject(new String(chars));
 		} catch (FileNotFoundException e) {
 			throw new RuntimeException("Meta File Error, file not found", e);
@@ -546,11 +553,13 @@ public class SimpleMetaStoreUtil {
 			}
 			File savedFile = retrieveMetaFile(parent, name);
 
-			FileWriter fileWriter = new FileWriter(savedFile);
-			fileWriter.write(jsonObject.toString(4));
-			fileWriter.write("\n");
-			fileWriter.flush();
-			fileWriter.close();
+			FileOutputStream fileOutputStream = new FileOutputStream(savedFile);
+			Charset utf8 = Charset.forName("UTF-8");
+			OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, utf8);
+			outputStreamWriter.write(jsonObject.toString(4));
+			outputStreamWriter.write("\n");
+			outputStreamWriter.flush();
+			outputStreamWriter.close();
 		} catch (FileNotFoundException e) {
 			throw new RuntimeException("Meta File Error, file not found", e);
 		} catch (IOException e) {

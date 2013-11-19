@@ -295,10 +295,12 @@ public class SimpleMetaStoreUtilTest {
 
 	@Test
 	public void testUpdateMetaFile() throws JSONException {
+		// Emoji character: U+1F435: MONKEY FACE ("\ud83d\udc35")
+		String monkeyFace = "monkey face \ud83d\udc35";
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put("int", 1);
 		jsonObject.put("boolean", true);
-		jsonObject.put("String", "String");
+		jsonObject.put("String", monkeyFace);
 		JSONArray jsonArray = new JSONArray();
 		jsonArray.put("one");
 		jsonArray.put("two");
@@ -328,6 +330,7 @@ public class SimpleMetaStoreUtilTest {
 		assertFalse(jsonObjectNew.getBoolean("boolean"));
 		assertEquals(jsonObjectNew.getInt("int"), 100);
 		assertTrue(jsonObjectNew.has("String"));
+		assertEquals(monkeyFace, jsonObjectNew.getString("String"));
 		// delete the file
 		assertTrue(SimpleMetaStoreUtil.deleteMetaFile(parent, name));
 	}
