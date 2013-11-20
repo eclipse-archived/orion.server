@@ -58,7 +58,7 @@ public class NewFileServlet extends OrionServlet {
 		IPath path = pathInfo == null ? Path.ROOT : new Path(pathInfo);
 
 		// prevent path canonicalization hacks
-		if (!pathInfo.equals(path.toString())) {
+		if (pathInfo != null && !pathInfo.equals(path.toString())) {
 			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, NLS.bind("Forbidden: {0}", pathInfo), null));
 			return;
 		}
