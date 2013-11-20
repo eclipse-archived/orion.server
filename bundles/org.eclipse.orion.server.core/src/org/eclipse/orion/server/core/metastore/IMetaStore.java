@@ -28,7 +28,7 @@ import org.eclipse.core.runtime.CoreException;
 public interface IMetaStore {
 
 	/**
-	 * Creates a new user in the backing store containing the provided project information.
+	 * Creates a new project in the backing store containing the provided project information.
 	 * <p>
 	 * It is required the the project information contains the workspaceId of the workspace that owns the
 	 * project and a project name.
