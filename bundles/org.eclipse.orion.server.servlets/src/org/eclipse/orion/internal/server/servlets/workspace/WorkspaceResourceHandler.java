@@ -233,13 +233,6 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 	}
 
 	/**
-	 * Copies the content of one project to the location of a second project. 
-	 */
-	private void copyProjectContents(ProjectInfo sourceProject, ProjectInfo destinationProject) throws CoreException {
-		sourceProject.getProjectStore().copy(destinationProject.getProjectStore(), EFS.OVERWRITE, null);
-	}
-
-	/**
 	 * Returns a bit-mask of create options as specified by the request.
 	 */
 	private int getCreateOptions(HttpServletRequest request) {
@@ -268,14 +261,114 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		if (!data.isNull("Remove")) //$NON-NLS-1$
 			return handleRemoveProject(request, response, workspace);
 		int options = getCreateOptions(request);
-		if ((options & (CREATE_COPY | CREATE_MOVE)) != 0)
+		if ((options & (CREATE_COPY | CREATE_MOVE)) != 0) {
 			return handleCopyMoveProject(request, response, workspace, data);
+		}
 		handleAddProject(request, response, workspace, data);
 		return true;
 	}
 
+	private boolean handleCopyMoveProject(HttpServletRequest request, HttpServletResponse response, WorkspaceInfo workspace, JSONObject data) throws ServletException, IOException {
+		//resolve the source location to a file system location
+		String sourceLocation = data.optString(ProtocolConstants.HEADER_LOCATION);
+		IFileStore source = null;
+		try {
+			if (sourceLocation != null) {
+				//could be either a workspace or file location
+				if (sourceLocation.startsWith(Activator.LOCATION_WORKSPACE_SERVLET)) {
+					ProjectInfo sourceProject = projectForMetadataLocation(getMetaStore(), toOrionLocation(request, sourceLocation));
+					if (sourceProject != null)
+						source = sourceProject.getProjectStore();
+				} else {
+					//file location - remove servlet name prefix
+					source = resolveSourceLocation(request, sourceLocation);
+				}
+			}
+		} catch (Exception e) {
+			handleError(request, response, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Invalid source location: {0}", sourceLocation), e);
+			return true;
+		}
+		//null result means we didn't find a matching project
+		if (source == null) {
+			handleError(request, response, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Source does not exist: {0}", sourceLocation));
+			return true;
+		}
+		int options1 = getCreateOptions(request);
+		if (!validateOptions(request, response, options1))
+			return true;
+
+		//get the slug first
+		String destinationName = request.getHeader(ProtocolConstants.HEADER_SLUG);
+		//If the data has a name then it must be used due to UTF-8 issues with names Bug 376671
+		try {
+			if (data.has(ProtocolConstants.KEY_NAME)) {
+				destinationName = data.getString(ProtocolConstants.KEY_NAME);
+			}
+		} catch (JSONException e) {
+			//key is valid so cannot happen
+		}
+
+		if (!validateProjectName(workspace, destinationName, request, response))
+			return true;
+
+		if ((options1 & CREATE_MOVE) != 0) {
+			return handleMoveProject(request, response, workspace, source, sourceLocation, destinationName);
+		} else if ((options1 & CREATE_COPY) != 0) {
+			//first create the destination project
+			JSONObject projectObject = new JSONObject();
+			try {
+				projectObject.put(ProtocolConstants.KEY_NAME, destinationName);
+			} catch (JSONException e) {
+				//should never happen
+				throw new RuntimeException(e);
+			}
+
+			//copy the project data from source
+			ProjectInfo destinationProject = handleAddProject(request, response, workspace, projectObject);
+			String sourceName = source.getName();
+			try {
+				source.copy(destinationProject.getProjectStore(), EFS.OVERWRITE, null);
+			} catch (CoreException e) {
+				handleError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, NLS.bind("Error copying project {0} to {1}", sourceName, destinationName));
+				return true;
+			}
+			URI baseLocation = getURI(request);
+			JSONObject result = ProjectInfoResourceHandler.toJSON(workspace, destinationProject, baseLocation);
+			OrionServlet.writeJSONResponse(request, response, result);
+			response.setHeader(ProtocolConstants.HEADER_LOCATION, result.optString(ProtocolConstants.KEY_LOCATION, "")); //$NON-NLS-1$
+			response.setStatus(HttpServletResponse.SC_CREATED);
+			return true;
+		}
+		//if we got here, it isn't a copy or a move, so we don't know how to handle the request
+		return false;
+	}
+
 	private ProjectInfo handleAddProject(HttpServletRequest request, HttpServletResponse response, WorkspaceInfo workspace, JSONObject data) throws IOException, ServletException {
 		//make sure required fields are set
+		ProjectInfo project = createProject(request, response, workspace, data);
+		if (project == null)
+			return null;
+
+		//serialize the new project in the response
+
+		//the baseLocation should be the workspace location
+		URI baseLocation = getURI(request);
+		JSONObject result = ProjectInfoResourceHandler.toJSON(workspace, project, baseLocation);
+		OrionServlet.writeJSONResponse(request, response, result);
+
+		//add project location to response header
+		response.setHeader(ProtocolConstants.HEADER_LOCATION, result.optString(ProtocolConstants.KEY_LOCATION));
+		response.setStatus(HttpServletResponse.SC_CREATED);
+
+		return project;
+	}
+
+	/**
+	 * Creates a new project and returns the metadata of the created project. Returns <code>null</code>
+	 * if there was an error creating the project. In the case of an error this method will handle setting an appropriate response
+	 * to the servlet.
+	 */
+	private ProjectInfo createProject(HttpServletRequest request, HttpServletResponse response, WorkspaceInfo workspace, JSONObject data) throws ServletException {
 		JSONObject toAdd = data;
 		String id = toAdd.optString(ProtocolConstants.KEY_ID, null);
 		String name = toAdd.optString(ProtocolConstants.KEY_NAME, null);
@@ -323,95 +416,7 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
 			return null;
 		}
-		//serialize the new project in the response
-
-		//the baseLocation should be the workspace location
-		URI baseLocation = getURI(request);
-		JSONObject result = ProjectInfoResourceHandler.toJSON(workspace, project, baseLocation);
-		OrionServlet.writeJSONResponse(request, response, result);
-
-		//add project location to response header
-		response.setHeader(ProtocolConstants.HEADER_LOCATION, result.optString(ProtocolConstants.KEY_LOCATION));
-		response.setStatus(HttpServletResponse.SC_CREATED);
-
 		return project;
-	}
-
-	/**
-	 * Handle a project copy or move request. Returns <code>true</code> if the request
-	 * was handled (either success or failure). Returns <code>false</code> if this method
-	 * does not know how to handle the request.
-	 */
-	private boolean handleCopyMoveProject(HttpServletRequest request, HttpServletResponse response, WorkspaceInfo workspace, JSONObject data) throws ServletException, IOException {
-		String sourceLocation = data.optString(ProtocolConstants.HEADER_LOCATION);
-		ProjectInfo sourceProject;
-		try {
-			sourceProject = projectForMetadataLocation(getMetaStore(), toOrionLocation(request, sourceLocation));
-		} catch (CoreException e1) {
-			handleError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, NLS.bind("Error accessing project: {0}", sourceLocation));
-			return true;
-		}
-		//null result means we didn't find a matching project
-		if (sourceProject == null) {
-			handleError(request, response, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Source does not exist: {0}", sourceLocation));
-			return true;
-		}
-		int options = getCreateOptions(request);
-		if (!validateOptions(request, response, options))
-			return true;
-
-		//get the slug first
-		String destinationName = request.getHeader(ProtocolConstants.HEADER_SLUG);
-		//If the data has a name then it must be used due to UTF-8 issues with names Bug 376671
-		try {
-			if (data.has(ProtocolConstants.KEY_NAME)) {
-				destinationName = data.getString(ProtocolConstants.KEY_NAME);
-			}
-		} catch (JSONException e) {
-			//key is valid so cannot happen
-		}
-
-		if (!validateProjectName(workspace, destinationName, request, response))
-			return true;
-
-		if ((options & CREATE_MOVE) != 0) {
-			return handleMoveProject(request, response, workspace, sourceProject, sourceLocation, destinationName);
-		} else if ((options & CREATE_COPY) != 0) {
-			return handleCopyProject(request, response, workspace, sourceProject, destinationName);
-		}
-		//if we got here, it isn't a copy or a move, so we don't know how to handle the request
-		return false;
-	}
-
-	/**
-	 * Implementation of project copy
-	 * Returns <code>false</code> if this method doesn't know how to interpret the request.
-	 */
-	private boolean handleCopyProject(HttpServletRequest request, HttpServletResponse response, WorkspaceInfo workspace, ProjectInfo sourceProject, String destinationName) throws IOException, ServletException {
-		//first create the destination project
-		JSONObject projectObject = new JSONObject();
-		try {
-			projectObject.put(ProtocolConstants.KEY_NAME, destinationName);
-		} catch (JSONException e) {
-			//should never happen
-			throw new RuntimeException(e);
-		}
-
-		//copy the project data from source
-		ProjectInfo destinationProject = handleAddProject(request, response, workspace, projectObject);
-		String sourceName = sourceProject.getFullName();
-		try {
-			copyProjectContents(sourceProject, destinationProject);
-		} catch (CoreException e) {
-			handleError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, NLS.bind("Error copying project {0} to {1}", sourceName, destinationName));
-			return true;
-		}
-		URI baseLocation = getURI(request);
-		JSONObject result = ProjectInfoResourceHandler.toJSON(workspace, destinationProject, baseLocation);
-		OrionServlet.writeJSONResponse(request, response, result);
-		response.setHeader(ProtocolConstants.HEADER_LOCATION, result.optString(ProtocolConstants.KEY_LOCATION, "")); //$NON-NLS-1$
-		response.setStatus(HttpServletResponse.SC_CREATED);
-		return true;
 	}
 
 	private boolean handleError(HttpServletRequest request, HttpServletResponse response, int httpCode, String message) throws ServletException {
@@ -442,22 +447,42 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 	 * Implementation of project move. Returns whether the move requested was handled.
 	 * Returns <code>false</code> if this method doesn't know how to interpret the request.
 	 */
-	private boolean handleMoveProject(HttpServletRequest request, HttpServletResponse response, WorkspaceInfo workspace, ProjectInfo sourceProject, String sourceLocation, String destinationName) throws ServletException, IOException {
-		String sourceName = sourceProject.getFullName();
-		//a project move is simply a rename
-		sourceProject.setFullName(destinationName);
+	private boolean handleMoveProject(HttpServletRequest request, HttpServletResponse response, WorkspaceInfo workspace, IFileStore source, String sourceLocation, String destinationName) throws ServletException, IOException {
+		String sourceName = source.getName();
 		try {
-			getMetaStore().updateProject(sourceProject);
+			final IMetaStore metaStore = getMetaStore();
+			ProjectInfo projectInfo = metaStore.readProject(workspace.getUniqueId(), sourceName);
+			boolean created = false;
+			if (projectInfo == null) {
+				//moving a folder to become a project
+				JSONObject data = new JSONObject();
+				try {
+					data.put(ProtocolConstants.KEY_NAME, destinationName);
+				} catch (JSONException e) {
+					//cannot happen
+				}
+				projectInfo = createProject(request, response, workspace, data);
+				if (projectInfo == null)
+					return true;
+				//move the contents
+				source.move(projectInfo.getProjectStore(), EFS.OVERWRITE, null);
+				created = true;
+			} else {
+				//a project move is simply a rename
+				projectInfo.setFullName(destinationName);
+				metaStore.updateProject(projectInfo);
+			}
+
+			//location doesn't change on move project
+			URI baseLocation = getURI(request);
+			JSONObject result = ProjectInfoResourceHandler.toJSON(workspace, projectInfo, baseLocation);
+			OrionServlet.writeJSONResponse(request, response, result);
+			response.setHeader(ProtocolConstants.HEADER_LOCATION, sourceLocation);
+			response.setStatus(created ? HttpServletResponse.SC_CREATED : HttpServletResponse.SC_OK);
 		} catch (CoreException e) {
 			String msg = NLS.bind("Error persisting project state: {0}", sourceName);
 			return handleError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 		}
-		//location doesn't change on move project
-		URI baseLocation = getURI(request);
-		JSONObject result = ProjectInfoResourceHandler.toJSON(workspace, sourceProject, baseLocation);
-		OrionServlet.writeJSONResponse(request, response, result);
-		response.setHeader(ProtocolConstants.HEADER_LOCATION, sourceLocation);
-		response.setStatus(HttpServletResponse.SC_OK);
 		return true;
 	}
 

@@ -16,6 +16,10 @@ import java.net.URISyntaxException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.internal.server.sftpfile.AuthCoreException;
 
 /**
@@ -126,5 +130,19 @@ public abstract class ServletResourceHandler<T> {
 		}
 		//not an authentication failure
 		return false;
+	}
+
+	/**
+	 * Maps the client-facing location URL of a file or directory back to the local
+	 * file system path on the server. Returns <code>null</code> if the
+	 * location could not be resolved to a local file system location.
+	 */
+	protected IFileStore resolveSourceLocation(HttpServletRequest request, String locationString) throws URISyntaxException {
+		URI sourceLocation = new URI(locationString);
+		//resolve relative URI against request URI
+		String sourcePath = sourceLocation.getPath().substring(request.getContextPath().length());
+		//first segment is the servlet path
+		IPath path = new Path(sourcePath).removeFirstSegments(1);
+		return NewFileServlet.getFileStore(request, path);
 	}
 }

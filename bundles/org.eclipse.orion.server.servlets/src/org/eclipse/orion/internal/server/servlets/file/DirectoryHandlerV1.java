@@ -182,20 +182,6 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 		return true;
 	}
 
-	/**
-	 * Maps the client-facing location URL of a file or directory back to the local
-	 * file system path on the server. Returns <code>null</code> if the
-	 * location could not be resolved to a local file system location.
-	 */
-	private IFileStore resolveSourceLocation(HttpServletRequest request, String locationString) throws URISyntaxException, CoreException {
-		URI sourceLocation = new URI(locationString);
-		//resolve relative URI against request URI
-		String sourcePath = sourceLocation.getPath().substring(request.getContextPath().length());
-		//first segment is the servlet path
-		IPath path = new Path(sourcePath).removeFirstSegments(1);
-		return NewFileServlet.getFileStore(request, path);
-	}
-
 	private static String decodeSlug(String slug) {
 		if (slug == null)
 			return null;
