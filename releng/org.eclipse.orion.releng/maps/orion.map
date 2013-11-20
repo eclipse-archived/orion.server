@@ -4,7 +4,7 @@ plugin@org.eclipse.orion.client.ui=GIT,tag=v20131119-2259,repo=git://git.eclipse
 plugin@org.eclipse.orion.client.editor=GIT,tag=v20131118-2055,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.editor
 plugin@org.eclipse.orion.client.users=GIT,tag=v20131101-1801,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.users
 plugin@org.eclipse.orion.client.git=GIT,tag=v20131118-1954,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.git
-plugin@org.eclipse.orion.client.cf=GIT,tag=v20131113-1516,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.cf,path=bundles/org.eclipse.orion.client.cf
+plugin@org.eclipse.orion.client.cf=GIT,tag=v20131113-1516,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.cf
 plugin@org.eclipse.orion.client.javascript=GIT,tag=v20131115-2213,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=bundles/org.eclipse.orion.client.javascript
 
 #server
