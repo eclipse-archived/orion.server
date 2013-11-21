@@ -96,6 +96,10 @@
             alias="/project"
             class="org.eclipse.orion.internal.server.servlets.project.ProjectServlet">
       </servlet>
+      <servlet
+            alias="/docker"
+            class="org.eclipse.orion.internal.server.servlets.docker.DockerServlet">
+      </servlet>
    </extension>
    <extension
          point="org.eclipse.equinox.http.registry.filters">
@@ -120,7 +124,7 @@
          </init-param>
          <init-param
                name="excludeMatches"
-               value="^/(file|hosted|gitapi)/.*">
+               value="^/(file|hosted|gitapi|docker)/.*">
          </init-param>
       </filter>
       <filter
@@ -145,7 +149,7 @@
          </init-param>
          <init-param
                name="excludeMatches"
-               value="^/(file|hosted|gitapi|requirejs)/.*">
+               value="^/(file|hosted|gitapi|requirejs|docker)/.*">
          </init-param>
       </filter>
       <filter
@@ -203,6 +207,10 @@
       <filter
             alias="/task"
             class="org.eclipse.orion.server.configurator.servlet.AuthorizedUserFilter">
+      </filter>
+      <filter
+            alias="/docker"
+            class="org.eclipse.orion.server.configurator.servlet.LoggedInUserFilter">
       </filter>
       <serviceSelector
             filter="(other.info=org.eclipse.orion)">
@@ -391,5 +399,5 @@
       <initializer
             class="org.eclipse.orion.server.configurator.configuration.OrionPreferenceInitializer">
       </initializer>
-   </extension>   
+   </extension>
 </plugin>
