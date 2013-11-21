@@ -12,7 +12,6 @@ package org.eclipse.orion.internal.server.useradmin.simple;
 
 import java.io.File;
 import java.util.List;
-
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
@@ -49,7 +48,7 @@ public class SimpleUserProfileRoot implements IOrionUserProfileNode {
 	}
 
 	public String[] keys() {
-		String[] keys = new String[] { USER };
+		String[] keys = new String[] {USER};
 		return keys;
 	}
 
@@ -61,7 +60,7 @@ public class SimpleUserProfileRoot implements IOrionUserProfileNode {
 		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(rootLocation, pathName);
 		if (SimpleMetaStoreUtil.isMetaFile(userMetaFolder, USER)) {
 			JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, USER);
-			if (jsonObject.has(UserConstants.KEY_PASSWORD)) {
+			if (jsonObject != null && jsonObject.has(UserConstants.KEY_PASSWORD)) {
 				return true;
 			}
 		}
