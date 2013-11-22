@@ -26,7 +26,7 @@ import org.junit.Test;
  * @author Anthony Hunter
  */
 public class DockerServerTests {
-	protected final static String dockerLocation = "http://localhost:9442";
+	protected final static String dockerLocation = "http://localhost:9443";
 
 	/**
 	 * Test the docker version, if this test fails docker is not running.
