@@ -23,6 +23,8 @@ public class DockerVersion extends DockerResponse {
 
 	public static final String VERSION = "Version";
 
+	public static final String VERSION_PATH = "version";
+
 	private String gitCommit = null;
 
 	private String goVersion = null;
