@@ -32,6 +32,18 @@
         i18n: 'requirejs/i18n',
         domReady: 'requirejs/domReady',
         gcli: 'gcli/gcli',
-        util: 'gcli/util'
-    }
+        util: 'gcli/util',
+        estraverse: 'estraverse/estraverse',
+        escope: 'escope/escope'
+    },
+    packages: [
+       {
+           name: "eslint",
+           location: "eslint/lib",
+           main: "eslint"
+       },
+       {
+           name: "eslint/conf",
+           main: "eslint/conf"
+       }]
 })
