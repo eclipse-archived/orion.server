@@ -78,11 +78,35 @@ public class DockerHandler extends ServletResourceHandler<String> {
 		return false;
 	}
 
+	private boolean handlePostRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException {
+		String dockerRequest = "";
+		try {
+			JSONObject requestObject = OrionServlet.readJSONRequest(request);
+			dockerRequest = (String) requestObject.get("dockerCmd");
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		if (dockerRequest.equals("start")) {
+			//start up container
+			System.out.println("START CONTAINER");
+			return true;
+		} else if (dockerRequest.equals("stop")) {
+			//stop container
+			System.out.println("STOP CONTAINER");
+			return true;
+		}
+		return false;
+	}
+
 	@Override
 	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String path) throws ServletException {
 		switch (getMethod(request)) {
 			case GET :
 				return handleGetRequest(request, response, path);
+			case POST :
+				return handlePostRequest(request, response);
 			default :
 				return false;
 		}
