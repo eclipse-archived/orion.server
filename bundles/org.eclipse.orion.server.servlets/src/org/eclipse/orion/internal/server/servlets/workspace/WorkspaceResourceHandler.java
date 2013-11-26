@@ -324,7 +324,7 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 			}
 
 			//copy the project data from source
-			ProjectInfo destinationProject = handleAddProject(request, response, workspace, projectObject);
+			ProjectInfo destinationProject = createProject(request, response, workspace, projectObject);
 			String sourceName = source.getName();
 			try {
 				source.copy(destinationProject.getProjectStore(), EFS.OVERWRITE, null);
