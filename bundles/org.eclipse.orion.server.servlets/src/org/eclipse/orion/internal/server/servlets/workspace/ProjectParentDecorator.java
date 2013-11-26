@@ -46,6 +46,9 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 				resourcePath = resourcePath.append(representation.getString(ProtocolConstants.KEY_NAME));
 			}
 			IPath path = resourcePath.makeRelativeTo(basePath);
+			//nothing to do if request is not a folder or file
+			if (path.segmentCount() < 2)
+				return;
 			ProjectInfo project = OrionConfiguration.getMetaStore().readProject(path.segment(0), path.segment(1));
 			addParents(base, representation, project, path);
 			//set the name of the project file to be the project name
