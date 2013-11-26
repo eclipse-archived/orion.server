@@ -80,9 +80,13 @@ public class DockerHandler extends ServletResourceHandler<String> {
 
 	private boolean handlePostRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException {
 		String dockerRequest = "";
+		String line = "";
 		try {
 			JSONObject requestObject = OrionServlet.readJSONRequest(request);
 			dockerRequest = (String) requestObject.get("dockerCmd");
+			if (dockerRequest.equals("process")) {
+				line = (String) requestObject.get("line");
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (JSONException e) {
@@ -95,6 +99,10 @@ public class DockerHandler extends ServletResourceHandler<String> {
 		} else if (dockerRequest.equals("stop")) {
 			//stop container
 			System.out.println("STOP CONTAINER");
+			return true;
+		} else if (dockerRequest.equals("process")) {
+			System.out.print("PROCESS LINE: ");
+			System.out.println(line);
 			return true;
 		}
 		return false;
