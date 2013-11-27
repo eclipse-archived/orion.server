@@ -22,6 +22,8 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Handler for requests to the docker server.
@@ -79,31 +81,86 @@ public class DockerHandler extends ServletResourceHandler<String> {
 	}
 
 	private boolean handlePostRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException {
-		String dockerRequest = "";
-		String line = "";
 		try {
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+
+			String command = "";
 			JSONObject requestObject = OrionServlet.readJSONRequest(request);
-			dockerRequest = (String) requestObject.get("dockerCmd");
+			String dockerRequest = (String) requestObject.get("dockerCmd");
 			if (dockerRequest.equals("process")) {
-				line = (String) requestObject.get("line");
+				command = (String) requestObject.get("line");
 			}
+
+			String user = request.getRemoteUser();
+			URI dockerLocationURI = new URI("http://localhost:9443");
+			DockerServer dockerServer = new DockerServer(dockerLocationURI);
+
+			// make sure docker is running
+			DockerVersion dockerVersion = dockerServer.getDockerVersion();
+			if (dockerVersion.getStatusCode() != DockerResponse.StatusCode.OK) {
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Docker is not running at " + dockerLocationURI.toString(), null));
+			}
+			logger.debug("Docker Server " + dockerLocationURI.toString() + " is running version " + dockerVersion.getVersion());
+
+			if (dockerRequest.equals("start")) {
+				// get the container for the user
+				DockerContainer dockerContainer = dockerServer.getDockerContainer(user);
+				if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.OK) {
+					// user does not have a container, create one
+					dockerContainer = dockerServer.createDockerContainer("ubuntu", user);
+					if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.CREATED) {
+						return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
+					}
+					logger.debug("Created Docker Container " + dockerContainer.getId() + " for user " + user);
+				}
+
+				// start the container for the user
+				dockerContainer = dockerServer.startDockerContainer(user);
+				if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.STARTED) {
+					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
+				}
+				logger.debug("Started Docker Container " + dockerContainer.getId() + " for user " + user);
+
+				return true;
+			} else if (dockerRequest.equals("stop")) {
+				// get the container for the user
+				DockerContainer dockerContainer = dockerServer.getDockerContainer(user);
+				if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.OK) {
+					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
+				}
+
+				// stop the container for the user
+				dockerContainer = dockerServer.stopDockerContainer(user);
+				if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.STOPPED) {
+					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
+				}
+				logger.debug("Stopped Docker Container " + dockerContainer.getId() + " for user " + user);
+
+				return true;
+			} else if (dockerRequest.equals("process")) {
+				// get the container for the user
+				DockerContainer dockerContainer = dockerServer.getDockerContainer(user);
+				if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.OK) {
+					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
+				}
+
+				// stop the container for the user
+				DockerResponse dockerResponse = dockerServer.attachDockerContainer(user, command);
+				if (dockerResponse.getStatusCode() != DockerResponse.StatusCode.OK) {
+					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
+				}
+				logger.debug("Attach Docker Container " + dockerContainer.getId() + "successful, result is");
+				logger.debug(dockerResponse.getStatusMessage());
+				JSONObject jsonObject = new JSONObject();
+				jsonObject.put("result", dockerResponse.getStatusMessage());
+				return true;
+			}
+		} catch (URISyntaxException e) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "URISyntaxException with request", e));
 		} catch (IOException e) {
-			e.printStackTrace();
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "IOException with request", e));
 		} catch (JSONException e) {
-			e.printStackTrace();
-		}
-		if (dockerRequest.equals("start")) {
-			//start up container
-			System.out.println("START CONTAINER");
-			return true;
-		} else if (dockerRequest.equals("stop")) {
-			//stop container
-			System.out.println("STOP CONTAINER");
-			return true;
-		} else if (dockerRequest.equals("process")) {
-			System.out.print("PROCESS LINE: ");
-			System.out.println(line);
-			return true;
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "JSONException with request", e));
 		}
 		return false;
 	}
