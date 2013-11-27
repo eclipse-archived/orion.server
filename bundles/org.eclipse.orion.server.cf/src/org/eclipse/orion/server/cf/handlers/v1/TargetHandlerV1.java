@@ -23,12 +23,10 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 
-	private final Logger logger = LoggerFactory.getLogger("com.ibm.cf.orion.server"); //$NON-NLS-1$
+	//	private final Logger logger = LoggerFactory.getLogger("com.ibm.cf.orion.server"); //$NON-NLS-1$
 
 	public TargetHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
 		super(statusHandler);
@@ -55,7 +53,7 @@ public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 				} catch (JSONException e) {
 					String msg = NLS.bind("Failed to handle request for {0}", path); //$NON-NLS-1$
 					ServerStatus status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
-					logger.error(msg, e);
+					//					logger.error(msg, e);
 					return status;
 				}
 			}
