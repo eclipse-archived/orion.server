@@ -107,12 +107,21 @@ updateRelengProject () {
 		pushd $writableBuildRoot/gitClones/org.eclipse.orion.server
 		git pull
 		popd
+
+		# Pull from client repo as well
+		pushd $writableBuildRoot/gitClones/org.eclipse.orion.client
+		git pull
+		popd
 	fi
 	
 	echo "[`date +%H\:%M\:%S`] Get org.eclipse.orion.releng"
 	cp -r $writableBuildRoot/gitClones/org.eclipse.orion.server/releng/org.eclipse.orion.releng .
-	
 	echo "[`date +%H\:%M\:%S`] Done getting org.eclipse.orion.releng"
+
+	echo "[`date +%H\:%M\:%S`] Get org.eclipse.orion.client.releng"
+	cp -r $writableBuildRoot/gitClones/org.eclipse.orion.client/releng/org.eclipse.orion.client.releng/* org.eclipse.orion.releng
+	echo "[`date +%H\:%M\:%S`] Done getting org.eclipse.client.releng"
+
 	popd
 }
 
