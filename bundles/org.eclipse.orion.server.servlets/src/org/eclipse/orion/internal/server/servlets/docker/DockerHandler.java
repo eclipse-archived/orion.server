@@ -13,12 +13,23 @@ package org.eclipse.orion.internal.server.servlets.docker;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.metastore.IMetaStore;
+import org.eclipse.orion.server.core.metastore.ProjectInfo;
+import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -82,7 +93,7 @@ public class DockerHandler extends ServletResourceHandler<String> {
 
 	private boolean handlePostRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException {
 		try {
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
 
 			String command = "";
 			JSONObject requestObject = OrionServlet.readJSONRequest(request);
@@ -92,6 +103,7 @@ public class DockerHandler extends ServletResourceHandler<String> {
 			}
 
 			String user = request.getRemoteUser();
+
 			URI dockerLocationURI = new URI(dockerLocation);
 			DockerServer dockerServer = new DockerServer(dockerLocationURI);
 
@@ -103,11 +115,13 @@ public class DockerHandler extends ServletResourceHandler<String> {
 			logger.debug("Docker Server " + dockerLocation + " is running version " + dockerVersion.getVersion());
 
 			if (dockerRequest.equals("start")) {
+				// get the volumes (projects) for the user
+				List<String> volumes = getDockerVolumes(user);
 				// get the container for the user
 				DockerContainer dockerContainer = dockerServer.getDockerContainer(user);
 				if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.OK) {
 					// user does not have a container, create one
-					dockerContainer = dockerServer.createDockerContainer("ubuntu", user);
+					dockerContainer = dockerServer.createDockerContainer("ubuntu", user, volumes);
 					if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.CREATED) {
 						return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
 					}
@@ -115,7 +129,7 @@ public class DockerHandler extends ServletResourceHandler<String> {
 				}
 
 				// start the container for the user
-				dockerContainer = dockerServer.startDockerContainer(user);
+				dockerContainer = dockerServer.startDockerContainer(user, volumes);
 				if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.STARTED) {
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
 				}
@@ -163,6 +177,37 @@ public class DockerHandler extends ServletResourceHandler<String> {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "JSONException with request", e));
 		}
 		return false;
+	}
+
+	private List<String> getDockerVolumes(String user) {
+		try {
+			List<String> volumes = new ArrayList<String>();
+			IMetaStore metaStore = OrionConfiguration.getMetaStore();
+			UserInfo userInfo = metaStore.readUser(user);
+			List<String> workspaceIds = userInfo.getWorkspaceIds();
+			if (workspaceIds.isEmpty()) {
+				// the user has no workspaces so no projects
+				return volumes;
+			}
+			String workspaceId = workspaceIds.get(0);
+			WorkspaceInfo workspaceInfo = metaStore.readWorkspace(workspaceId);
+			List<String> projectNames = workspaceInfo.getProjectNames();
+			for (String projectName : projectNames) {
+				ProjectInfo projectInfo = metaStore.readProject(workspaceId, projectName);
+				URI contentLocation = projectInfo.getContentLocation();
+				if (contentLocation.getScheme().equals(EFS.SCHEME_FILE)) {
+					// the orion volume /OrionContent/project mounts /serverworkspace/us/user/OrionContent/project
+					String localVolume = EFS.getStore(contentLocation).toLocalFile(EFS.NONE, null).getAbsolutePath();
+					String orionVolume = localVolume.substring(localVolume.indexOf("/OrionContent"));
+					String volume = localVolume + ":" + orionVolume + ":rw";
+					volumes.add(volume);
+				}
+			}
+			return volumes;
+		} catch (CoreException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 	@Override

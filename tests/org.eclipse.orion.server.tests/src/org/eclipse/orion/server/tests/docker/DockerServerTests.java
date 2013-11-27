@@ -44,7 +44,7 @@ public class DockerServerTests {
 		String containerName = "testCreateDockerContainer";
 
 		// create the container
-		DockerContainer dockerContainer = dockerServer.createDockerContainer("ubuntu", containerName);
+		DockerContainer dockerContainer = dockerServer.createDockerContainer("ubuntu", containerName, null);
 		assertEquals(dockerContainer.getStatusMessage(), DockerResponse.StatusCode.CREATED, dockerContainer.getStatusCode());
 		//System.out.println("Created Docker Container: Container Id " + dockerContainer.getId() + " Name " + dockerContainer.getName());
 
@@ -77,12 +77,12 @@ public class DockerServerTests {
 		System.out.println("Docker Container " + containerName + " does not exist");
 
 		// create the container
-		dockerContainer = dockerServer.createDockerContainer("ubuntu", containerName);
+		dockerContainer = dockerServer.createDockerContainer("ubuntu", containerName, null);
 		assertEquals(dockerContainer.getStatusMessage(), DockerResponse.StatusCode.CREATED, dockerContainer.getStatusCode());
 		System.out.println("Docker Container " + containerName + " status is " + dockerContainer.getStatus());
 
 		// start the container
-		dockerContainer = dockerServer.startDockerContainer(dockerContainer.getId());
+		dockerContainer = dockerServer.startDockerContainer(dockerContainer.getId(), null);
 		assertEquals(dockerContainer.getStatusMessage(), DockerResponse.StatusCode.STARTED, dockerContainer.getStatusCode());
 		System.out.println("Docker Container " + containerName + " status is " + dockerContainer.getStatus());
 

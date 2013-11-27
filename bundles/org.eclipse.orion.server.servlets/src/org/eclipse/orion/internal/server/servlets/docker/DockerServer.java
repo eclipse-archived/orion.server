@@ -22,6 +22,7 @@ import java.nio.charset.Charset;
 import java.text.Format;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -115,7 +116,7 @@ public class DockerServer {
 		return dockerResponse;
 	}
 
-	public DockerContainer createDockerContainer(String imageName, String containerName) {
+	public DockerContainer createDockerContainer(String imageName, String containerName, List<String> volumes) {
 		DockerContainer dockerContainer = new DockerContainer();
 		HttpURLConnection httpURLConnection = null;
 		try {
@@ -130,7 +131,15 @@ public class DockerServer {
 			requestJSONObject.put("Tty", true);
 			requestJSONObject.put("OpenStdin", true);
 			requestJSONObject.put("StdinOnce", true);
-
+			if (volumes != null && !volumes.isEmpty()) {
+				// volumes in create are in the format :  "Volumes": { "/OrionContent/project": {} }
+				JSONObject volumesObject = new JSONObject();
+				for (String volume : volumes) {
+					String orionVolume = volume.substring(volume.indexOf(':') + 1, volume.lastIndexOf(':'));
+					volumesObject.put(orionVolume, new JSONObject());
+				}
+				requestJSONObject.put("Volumes", volumesObject);
+			}
 			byte[] outputBytes = requestJSONObject.toString().getBytes("UTF-8");
 
 			URL dockerVersionURL = new URL(dockerServer.toString() + "/containers/create?name=" + containerName);
@@ -444,12 +453,12 @@ public class DockerServer {
 			dockerVersion.setStatusCode(DockerResponse.StatusCode.SERVER_ERROR);
 			dockerVersion.setStatusMessage(e.getLocalizedMessage());
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-			logger.error(e.getLocalizedMessage(), e); //$NON-NLS-1$
+			logger.error(e.getLocalizedMessage(), e);
 		} catch (JSONException e) {
 			dockerVersion.setStatusCode(DockerResponse.StatusCode.SERVER_ERROR);
 			dockerVersion.setStatusMessage(e.getLocalizedMessage());
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-			logger.error(e.getLocalizedMessage(), e); //$NON-NLS-1$
+			logger.error(e.getLocalizedMessage(), e);
 		} finally {
 			httpURLConnection.disconnect();
 		}
@@ -465,7 +474,7 @@ public class DockerServer {
 			dockerResponse.setStatusCode(DockerResponse.StatusCode.SERVER_ERROR);
 			dockerResponse.setStatusMessage(e.getLocalizedMessage());
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-			logger.error(e.getLocalizedMessage(), e); //$NON-NLS-1$
+			logger.error(e.getLocalizedMessage(), e);
 		}
 		return new JSONArray();
 	}
@@ -479,7 +488,7 @@ public class DockerServer {
 			dockerResponse.setStatusCode(DockerResponse.StatusCode.SERVER_ERROR);
 			dockerResponse.setStatusMessage(e.getLocalizedMessage());
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-			logger.error(e.getLocalizedMessage(), e); //$NON-NLS-1$
+			logger.error(e.getLocalizedMessage(), e);
 		}
 		return new JSONObject();
 	}
@@ -501,7 +510,7 @@ public class DockerServer {
 			dockerResponse.setStatusCode(DockerResponse.StatusCode.SERVER_ERROR);
 			dockerResponse.setStatusMessage(e.getLocalizedMessage());
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-			logger.error(e.getLocalizedMessage(), e); //$NON-NLS-1$
+			logger.error(e.getLocalizedMessage(), e);
 		}
 		return "{}";
 	}
@@ -509,25 +518,44 @@ public class DockerServer {
 	private void setDockerResponse(DockerResponse dockerResponse, Exception e) {
 		dockerResponse.setStatusCode(DockerResponse.StatusCode.SERVER_ERROR);
 		dockerResponse.setStatusMessage(e.getLocalizedMessage());
-		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-		logger.error(e.getLocalizedMessage(), e); //$NON-NLS-1$
+		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
+		logger.error(e.getLocalizedMessage(), e);
 	}
 
-	public DockerContainer startDockerContainer(String containerId) {
+	public DockerContainer startDockerContainer(String containerId, List<String> binds) {
 		DockerContainer dockerContainer = new DockerContainer();
 		HttpURLConnection httpURLConnection = null;
 		try {
+			JSONObject requestJSONObject = new JSONObject();
+			if (binds != null && !binds.isEmpty()) {
+				// binds are in the format : "Binds": [ "/host/path/serverworkspace/us/user/OrionContent/project:/OrionContent/project:rw" ]
+				JSONArray bindsArray = new JSONArray();
+				for (String volume : binds) {
+					bindsArray.put(volume);
+				}
+				requestJSONObject.put("Binds", bindsArray);
+			}
+			byte[] outputBytes = requestJSONObject.toString().getBytes("UTF-8");
+
 			URL dockerStartURL = new URL(dockerServer.toString() + "/containers/" + containerId + "/start");
 			httpURLConnection = (HttpURLConnection) dockerStartURL.openConnection();
+			httpURLConnection.setDoOutput(true);
+			httpURLConnection.setRequestProperty("Content-Type", "application/json");
+			httpURLConnection.setRequestProperty("Accept", "application/json");
 			httpURLConnection.setRequestMethod("POST");
 			httpURLConnection.connect();
+			OutputStream outputStream = httpURLConnection.getOutputStream();
+			outputStream.write(outputBytes);
 
 			if (getDockerResponse(dockerContainer, httpURLConnection).equals(DockerResponse.StatusCode.STARTED)) {
 				// return the docker container with updated status information.
 				dockerContainer = getDockerContainer(containerId);
 				dockerContainer.setStatusCode(DockerResponse.StatusCode.STARTED);
 			}
+			outputStream.close();
 		} catch (IOException e) {
+			setDockerResponse(dockerContainer, e);
+		} catch (JSONException e) {
 			setDockerResponse(dockerContainer, e);
 		} finally {
 			httpURLConnection.disconnect();
