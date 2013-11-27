@@ -30,7 +30,7 @@ import org.junit.Test;
  * @author Anthony Hunter
  */
 public class DockerServerTests {
-	protected final static String dockerLocation = "http://localhost:9443";
+	private final static String dockerLocation = "http://localhost:4243";
 
 	/**
 	 * Test create docker container.

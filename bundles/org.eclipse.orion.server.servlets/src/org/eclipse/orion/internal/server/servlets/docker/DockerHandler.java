@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 public class DockerHandler extends ServletResourceHandler<String> {
 
 	// TODO: need a proper way to setup the docker location
-	protected final static String dockerLocation = "http://localhost:9443";
+	private final static String dockerLocation = "http://localhost:4243";
 
 	protected ServletResourceHandler<IStatus> statusHandler;
 
@@ -92,7 +92,7 @@ public class DockerHandler extends ServletResourceHandler<String> {
 			}
 
 			String user = request.getRemoteUser();
-			URI dockerLocationURI = new URI("http://localhost:9443");
+			URI dockerLocationURI = new URI(dockerLocation);
 			DockerServer dockerServer = new DockerServer(dockerLocationURI);
 
 			// make sure docker is running
@@ -100,7 +100,7 @@ public class DockerHandler extends ServletResourceHandler<String> {
 			if (dockerVersion.getStatusCode() != DockerResponse.StatusCode.OK) {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Docker is not running at " + dockerLocationURI.toString(), null));
 			}
-			logger.debug("Docker Server " + dockerLocationURI.toString() + " is running version " + dockerVersion.getVersion());
+			logger.debug("Docker Server " + dockerLocation + " is running version " + dockerVersion.getVersion());
 
 			if (dockerRequest.equals("start")) {
 				// get the container for the user
