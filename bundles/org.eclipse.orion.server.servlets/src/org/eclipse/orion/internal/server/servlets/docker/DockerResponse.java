@@ -21,12 +21,13 @@ public class DockerResponse {
 	 * Http status code returned from Docker
 	 * 200 - no error, OK
 	 * 201 - no error, created
+	 * 204 - no error, started or stopped
 	 * 400 - bad parameter
 	 * 404 - no such image or container
 	 * 500 - server error
 	 */
 	public enum StatusCode {
-		BAD_PARAMETER, CREATED, OK, SERVER_ERROR, NO_SUCH_CONTAINER, NO_SUCH_IMAGE
+		BAD_PARAMETER, CREATED, DELETED, NO_SUCH_CONTAINER, NO_SUCH_IMAGE, OK, SERVER_ERROR, STARTED, STOPPED
 	};
 
 	private StatusCode statusCode;

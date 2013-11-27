@@ -34,10 +34,81 @@ public class DockerServer {
 		this.dockerServer = dockerServer;
 	}
 
+	public DockerResponse attachDockerContainer(String containerId, String command) {
+		DockerResponse dockerResponse = new DockerResponse();
+		HttpURLConnection httpURLConnection = null;
+		StringBuilder stringBuilder = new StringBuilder();
+		try {
+			URL dockerAttachURL = new URL(dockerServer.toString() + "/containers/" + containerId + "/attach?stream=1&stdout=1&stdin=1&stderr=1");
+			httpURLConnection = (HttpURLConnection) dockerAttachURL.openConnection();
+			httpURLConnection.setDoOutput(true);
+			httpURLConnection.setDoInput(true);
+			httpURLConnection.setConnectTimeout(10 * 1000);
+			httpURLConnection.setReadTimeout(5 * 1000);
+			httpURLConnection.setAllowUserInteraction(false);
+			//httpURLConnection.setRequestProperty("Content-Type", "application/vnd.docker.raw-stream");
+			httpURLConnection.setRequestProperty("Content-Type", "text/plain; charset=utf-8");
+			httpURLConnection.setRequestMethod("POST");
+			httpURLConnection.connect();
+			OutputStream outputStream = httpURLConnection.getOutputStream();
+			outputStream.write(command.getBytes());
+			outputStream.flush();
+			outputStream.close();
+
+			getDockerResponse(dockerResponse, httpURLConnection);
+
+			InputStream inputStream = httpURLConnection.getInputStream();
+			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+			String line = null;
+			while ((line = bufferedReader.readLine()) != null) {
+				stringBuilder.append(line).append("\n");
+			}
+			inputStream.close();
+			dockerResponse.setStatusMessage(stringBuilder.toString());
+			/*
+			// first read the 8 byte header
+			byte[] header = new byte[8];
+			int count = inputStream.read(header);
+			if (count != 8) {
+				System.err.println("something is wrong, cannot read first 8 bytes");
+			}
+			System.out.println(new String(header));
+
+			// get the size of the characters in the response
+			long uint32 = ((header[4] & 0xFF) << 24) | ((header[5] & 0xFF) << 16) | ((header[6] & 0xFF) << 8) | (header[7] & 0xFF);
+			if (uint32 > Integer.MAX_VALUE) {
+				System.err.println("buffer is too big, something is wrong");
+			}
+			int size = (int) uint32;
+
+			// get the rest of the response
+			byte[] chars = new byte[size];
+			count = inputStream.read(chars);
+			if (count != size) {
+				System.err.println("something is wrong, size is not right");
+			}
+
+			inputStream.close();
+			String result = new String(chars);
+			System.out.print(result);
+			*/
+			inputStream.close();
+		} catch (IOException e) {
+			if (stringBuilder.length() > 0) {
+				// the input stream is hanging, put what we have received in the response.
+				dockerResponse.setStatusMessage(stringBuilder.toString());
+			} else {
+				setDockerResponse(dockerResponse, e);
+			}
+		} finally {
+			httpURLConnection.disconnect();
+		}
+		return dockerResponse;
+	}
+
 	public DockerContainer createDockerContainer(String imageName, String containerName) {
 		DockerContainer dockerContainer = new DockerContainer();
 		HttpURLConnection httpURLConnection = null;
-		OutputStream outputStream = null;
 		try {
 			JSONObject requestJSONObject = new JSONObject();
 			JSONArray cmdArray = new JSONArray();
@@ -60,7 +131,7 @@ public class DockerServer {
 			httpURLConnection.setRequestProperty("Accept", "application/json");
 			httpURLConnection.setRequestMethod("POST");
 			httpURLConnection.connect();
-			outputStream = httpURLConnection.getOutputStream();
+			OutputStream outputStream = httpURLConnection.getOutputStream();
 			outputStream.write(outputBytes);
 
 			if (getDockerResponse(dockerContainer, httpURLConnection).equals(DockerResponse.StatusCode.CREATED)) {
@@ -80,6 +151,27 @@ public class DockerServer {
 		return dockerContainer;
 	}
 
+	public DockerResponse deleteDockerContainer(String containerId) {
+		DockerResponse dockerResponse = new DockerResponse();
+		HttpURLConnection httpURLConnection = null;
+		try {
+			URL dockerDeleteURL = new URL(dockerServer.toString() + "/containers/" + containerId);
+			httpURLConnection = (HttpURLConnection) dockerDeleteURL.openConnection();
+			httpURLConnection.setRequestMethod("DELETE");
+			httpURLConnection.connect();
+
+			if (getDockerResponse(dockerResponse, httpURLConnection).equals(DockerResponse.StatusCode.STARTED)) {
+				// generic method returns 204 - no error, change to deleted
+				dockerResponse.setStatusCode(DockerResponse.StatusCode.DELETED);
+			}
+		} catch (IOException e) {
+			setDockerResponse(dockerResponse, e);
+		} finally {
+			httpURLConnection.disconnect();
+		}
+		return dockerResponse;
+	}
+
 	public DockerContainer getDockerContainer(String name) {
 		DockerContainer dockerContainer = new DockerContainer();
 		HttpURLConnection httpURLConnection = null;
@@ -97,12 +189,28 @@ public class DockerServer {
 				}
 				if (jsonObject.has(DockerContainer.COMMAND)) {
 					dockerContainer.setCommand(jsonObject.getString(DockerContainer.COMMAND));
+				} else if (jsonObject.has("Config")) {
+					JSONObject config = jsonObject.getJSONObject("Config");
+					JSONArray command = config.getJSONArray("Cmd");
+					dockerContainer.setCommand(command.getString(0));
 				}
 				if (jsonObject.has(DockerContainer.CREATED)) {
 					dockerContainer.setCreated(jsonObject.getString(DockerContainer.CREATED));
 				}
 				if (jsonObject.has(DockerContainer.STATUS)) {
 					dockerContainer.setStatus(jsonObject.getString(DockerContainer.STATUS));
+				} else if (jsonObject.has("State")) {
+					JSONObject state = jsonObject.getJSONObject("State");
+					Boolean running = state.getBoolean("Running");
+					String startedAt = state.getString("StartedAt");
+					String finishedAt = state.getString("FinishedAt");
+					if (!running && finishedAt.endsWith("00Z")) {
+						dockerContainer.setStatus("Created at " + dockerContainer.getCreated());
+					} else if (running) {
+						dockerContainer.setStatus("Started at " + startedAt);
+					} else if (!running) {
+						dockerContainer.setStatus("Stopped at " + finishedAt);
+					}
 				}
 				if (jsonObject.has(DockerContainer.PORTS)) {
 					dockerContainer.setPorts(jsonObject.getString(DockerContainer.PORTS));
@@ -272,6 +380,9 @@ public class DockerServer {
 			} else if (responseCode == HttpURLConnection.HTTP_CREATED) {
 				dockerResponse.setStatusCode(DockerResponse.StatusCode.CREATED);
 				return DockerResponse.StatusCode.CREATED;
+			} else if (responseCode == HttpURLConnection.HTTP_NO_CONTENT) {
+				dockerResponse.setStatusCode(DockerResponse.StatusCode.STARTED);
+				return DockerResponse.StatusCode.STARTED;
 			} else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
 				dockerResponse.setStatusCode(DockerResponse.StatusCode.BAD_PARAMETER);
 				dockerResponse.setStatusMessage(httpURLConnection.getResponseMessage());
@@ -391,5 +502,50 @@ public class DockerServer {
 		dockerResponse.setStatusMessage(e.getLocalizedMessage());
 		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 		logger.error(e.getLocalizedMessage(), e); //$NON-NLS-1$
+	}
+
+	public DockerContainer startDockerContainer(String containerId) {
+		DockerContainer dockerContainer = new DockerContainer();
+		HttpURLConnection httpURLConnection = null;
+		try {
+			URL dockerStartURL = new URL(dockerServer.toString() + "/containers/" + containerId + "/start");
+			httpURLConnection = (HttpURLConnection) dockerStartURL.openConnection();
+			httpURLConnection.setRequestMethod("POST");
+			httpURLConnection.connect();
+
+			if (getDockerResponse(dockerContainer, httpURLConnection).equals(DockerResponse.StatusCode.STARTED)) {
+				// return the docker container with updated status information.
+				dockerContainer = getDockerContainer(containerId);
+				dockerContainer.setStatusCode(DockerResponse.StatusCode.STARTED);
+			}
+		} catch (IOException e) {
+			setDockerResponse(dockerContainer, e);
+		} finally {
+			httpURLConnection.disconnect();
+		}
+		return dockerContainer;
+	}
+
+	public DockerContainer stopDockerContainer(String containerId) {
+		DockerContainer dockerContainer = new DockerContainer();
+		HttpURLConnection httpURLConnection = null;
+		try {
+			URL dockerStartURL = new URL(dockerServer.toString() + "/containers/" + containerId + "/stop");
+			httpURLConnection = (HttpURLConnection) dockerStartURL.openConnection();
+			httpURLConnection.setRequestMethod("POST");
+			httpURLConnection.connect();
+
+			if (getDockerResponse(dockerContainer, httpURLConnection).equals(DockerResponse.StatusCode.STARTED)) {
+				// return the docker container with updated status information.
+				dockerContainer = getDockerContainer(containerId);
+				// generic method returns 204 - no error, change to stopped
+				dockerContainer.setStatusCode(DockerResponse.StatusCode.STOPPED);
+			}
+		} catch (IOException e) {
+			setDockerResponse(dockerContainer, e);
+		} finally {
+			httpURLConnection.disconnect();
+		}
+		return dockerContainer;
 	}
 }
