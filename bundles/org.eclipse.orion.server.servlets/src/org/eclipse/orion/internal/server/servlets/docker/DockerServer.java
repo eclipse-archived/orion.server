@@ -10,13 +10,22 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.docker;
 
-import java.io.*;
-import java.net.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.text.Format;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import org.json.*;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -530,7 +539,7 @@ public class DockerServer {
 		DockerContainer dockerContainer = new DockerContainer();
 		HttpURLConnection httpURLConnection = null;
 		try {
-			URL dockerStartURL = new URL(dockerServer.toString() + "/containers/" + containerId + "/stop");
+			URL dockerStartURL = new URL(dockerServer.toString() + "/containers/" + containerId + "/stop?t=0");
 			httpURLConnection = (HttpURLConnection) dockerStartURL.openConnection();
 			httpURLConnection.setRequestMethod("POST");
 			httpURLConnection.connect();
