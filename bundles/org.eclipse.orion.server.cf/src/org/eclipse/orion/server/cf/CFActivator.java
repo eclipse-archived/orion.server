@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf;
 
+import org.eclipse.orion.server.cf.utils.TargetMap;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
@@ -26,9 +27,8 @@ public class CFActivator implements BundleActivator {
 
 	private BundleContext bundleContext;
 
-	/**
-	 * The constructor
-	 */
+	private TargetMap targetMap = new TargetMap();
+
 	public CFActivator() {
 	}
 
@@ -54,16 +54,15 @@ public class CFActivator implements BundleActivator {
 		plugin = null;
 	}
 
-	/**
-	 * Returns the shared instance
-	 * 
-	 * @return the shared instance
-	 */
 	public static CFActivator getDefault() {
 		return plugin;
 	}
 
-	public BundleContext getBundleContext() {
+	public BundleContext getContext() {
 		return bundleContext;
+	}
+
+	public TargetMap getTargetMap() {
+		return targetMap;
 	}
 }

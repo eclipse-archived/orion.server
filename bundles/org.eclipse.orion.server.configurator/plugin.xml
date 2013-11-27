@@ -55,6 +55,10 @@
             class="org.eclipse.orion.server.git.servlets.GitServlet">
       </servlet>
       <servlet
+            alias="/cfapi"
+            class="org.eclipse.orion.server.cf.servlets.CFServlet">
+      </servlet>
+      <servlet
             alias="/site"
             class="org.eclipse.orion.internal.server.servlets.site.SiteConfigurationServlet">
       </servlet>
@@ -178,6 +182,10 @@
       </filter>
       <filter
             alias="/gitapi"
+            class="org.eclipse.orion.server.configurator.servlet.LoggedInUserFilter">
+      </filter>
+      <filter
+            alias="/cfapi"
             class="org.eclipse.orion.server.configurator.servlet.LoggedInUserFilter">
       </filter>
       <filter
