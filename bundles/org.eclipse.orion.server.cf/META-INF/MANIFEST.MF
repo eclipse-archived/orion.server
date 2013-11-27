@@ -7,3 +7,5 @@ Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-Vendor: %Bundle-Vendor
 Bundle-Localization: bundle
+Bundle-Activator: org.eclipse.orion.server.cf.CFActivator
+Require-Bundle: org.eclipse.osgi
