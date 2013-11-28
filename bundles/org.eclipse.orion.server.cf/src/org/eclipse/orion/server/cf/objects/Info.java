@@ -14,15 +14,14 @@ import java.net.*;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.core.resources.Property;
 import org.eclipse.orion.server.core.resources.ResourceShape;
-import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-@ResourceDescription(type = Target.TYPE)
-public class Target extends CFObject {
-	public static final String RESOURCE = "Target"; //$NON-NLS-1$
-	public static final String TYPE = "Target"; //$NON-NLS-1$
+@ResourceDescription(type = Info.TYPE)
+public class Info extends CFObject {
+	public static final String RESOURCE = "Info"; //$NON-NLS-1$
+	public static final String TYPE = "Info"; //$NON-NLS-1$
 
 	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
 	{
@@ -47,8 +46,7 @@ public class Target extends CFObject {
 		return name;
 	}
 
-	@PropertyDescription(name = CFProtocolConstants.KEY_URL)
-	public URL getUrl() {
+	public URL getURL() {
 		return url;
 	}
 
@@ -60,7 +58,7 @@ public class Target extends CFObject {
 		this.name = name;
 	}
 
-	public void setUrl(URL url) {
+	public void setURL(URL url) {
 		this.url = url;
 	}
 

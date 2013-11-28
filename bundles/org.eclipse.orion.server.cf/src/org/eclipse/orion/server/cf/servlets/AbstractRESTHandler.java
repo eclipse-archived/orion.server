@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.servlets;
 
-import org.eclipse.orion.server.cf.TaskHandler;
-
 import java.io.InputStreamReader;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -19,22 +17,23 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.server.cf.TaskHandler;
 import org.eclipse.orion.server.cf.jobs.CFJob;
 import org.eclipse.orion.server.cf.objects.CFObject;
 import org.eclipse.orion.server.core.ServerStatus;
-import org.eclipse.orion.server.core.project.Project;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONObject;
 import org.json.JSONTokener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * An abstract REST jazz object handler. The class contains a set of default helper methods
+ * An abstract REST object handler. The class contains a set of default helper methods
  * for common functions, e. g. resource extraction, error handing, etc.
- * @param <T> A jazz object, e. g. ChangeSet, Project to be handled.
  */
 public abstract class AbstractRESTHandler<T extends CFObject> extends ServletResourceHandler<String> {
 
-	//	private final Logger logger = LoggerFactory.getLogger("com.ibm.team.scm.orion.server"); //$NON-NLS-1$
+	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	protected ServletResourceHandler<IStatus> statusHandler;
 
@@ -52,74 +51,6 @@ public abstract class AbstractRESTHandler<T extends CFObject> extends ServletRes
 	protected abstract T buildResource(HttpServletRequest request, String path) throws CoreException;
 
 	/**
-	 * Helper method for resource ids extraction.
-	 * @param path The path to be processed.
-	 * @return The extracted resource ids or null if none provided.
-	 */
-	protected String[] extractResourceIds(String path) {
-		//		IPath p = new Path(path);
-		//		Vector<String> vec = new Vector<String>();
-		//
-		//		for (String seg : p.segments()) {
-		//			if ("file".equals(seg)) //$NON-NLS-1$
-		//				return vec.toArray(new String[vec.size()]);
-		//
-		//			vec.add(JazzUtils.decode(seg));
-		//		}
-
-		return null;
-	}
-
-	/**
-	 * Helper method for project extraction.
-	 * @param path The path to be processed.
-	 * @return The extracted project or null if none provided.
-	 */
-	protected Project extractProject(String path) {
-		//		try {
-		//			IPath p = new Path(path);
-		//			while (p.segmentCount() > 0) {
-		//				if (!p.segment(0).equals("file")) //$NON-NLS-1$
-		//					p = p.removeFirstSegments(1);
-		//				else
-		//					break;
-		//			}
-		//
-		//			if (p.segmentCount() == 0)
-		//				return null;
-		//
-		//			if (!p.segment(0).equals("file")) //$NON-NLS-1$
-		//				return null;
-		//
-		//			ProjectInfo projectInfo = JazzUtils.projectFromPath(p);
-		//
-		//			if (projectInfo == null)
-		//				return null;
-		//
-		//			JSONObject projectInfoJSON = new JSONObject();
-		//			JazzUtils.addJazzProjectInfo(projectInfo, projectInfoJSON);
-		//
-		//			String repositoryUrl = JazzUtils.normalizeRepositoryUrl(projectInfoJSON.optString("repositoryUrl", null)); //$NON-NLS-1$
-		//			String repositoryName = projectInfoJSON.optString("repositoryName", null); //$NON-NLS-1$
-		//			String projectName = projectInfoJSON.optString("Project", null); //$NON-NLS-1$
-		//			String uuid = projectInfoJSON.optString("uuid", null); //$NON-NLS-1$
-		//			String user = projectInfoJSON.optString("user", null); //$NON-NLS-1$
-		//			String workspaceId = projectInfoJSON.optString("workspaceId", null); //$NON-NLS-1$
-		//
-		//			Project project = new Project(repositoryUrl, repositoryName, projectName, uuid, user, workspaceId);
-		//			project.setFolderLocation(projectInfo.getContentLocation());
-		//			project.setId(p.toString());
-		//
-		//			return project;
-		//
-		//		} catch (Exception ex) {
-		//			return null;
-		//		}
-
-		return null;
-	}
-
-	/**
 	 * Helper method for PUT data extraction.
 	 * @param request The PUT requested to be processed.
 	 * @return The extracted data JSON or null if none provided or invalid JSON format.
@@ -131,23 +62,6 @@ public abstract class AbstractRESTHandler<T extends CFObject> extends ServletRes
 		} catch (Exception ex) {
 			return null;
 		}
-	}
-
-	/**
-	 * Handles a list GET request. Note this method is meant to be overridden in descendant classes.
-	 * @param request The GET request being handled.
-	 * @param response The response associated with the request.
-	 * @param path Path suffix required to handle the request.
-	 * @return A {@link JazzJob} which returns the list of requested resources on completion.
-	 */
-	protected CFJob handleList(final HttpServletRequest request, final HttpServletResponse response, final String path) {
-		return new CFJob(request, false) {
-			@Override
-			protected IStatus performJob() {
-				String msg = NLS.bind("Failed to handle request for {0}", path); //$NON-NLS-1$
-				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_IMPLEMENTED, msg, null);
-			}
-		};
 	}
 
 	/**
@@ -253,19 +167,10 @@ public abstract class AbstractRESTHandler<T extends CFObject> extends ServletRes
 
 			switch (getMethod(request)) {
 				case GET :
-					/* list get */
-					if (resource == null) {
-						CFJob getJob = handleList(request, response, path);
-						return TaskHandler.handleTaskJob(request, response, getJob, statusHandler);
-					}
-
 					CFJob getJob = handleGet(resource, request, response, path);
 					return TaskHandler.handleTaskJob(request, response, getJob, statusHandler);
 
 				case PUT :
-					if (resource == null)
-						return handleConflictingResource(request, response, path);
-
 					CFJob putJob = handlePut(resource, request, response, path);
 					return TaskHandler.handleTaskJob(request, response, putJob, statusHandler);
 
@@ -287,7 +192,7 @@ public abstract class AbstractRESTHandler<T extends CFObject> extends ServletRes
 		} catch (Exception e) {
 			String msg = NLS.bind("Failed to handle request for {0}", path); //$NON-NLS-1$
 			ServerStatus status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
-			//			logger.error(msg, e);
+			logger.error(msg, e);
 			return statusHandler.handleRequest(request, response, status);
 		}
 	}

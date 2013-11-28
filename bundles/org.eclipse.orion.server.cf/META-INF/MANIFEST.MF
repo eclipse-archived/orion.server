@@ -13,9 +13,13 @@ Require-Bundle: org.eclipse.osgi,
  org.eclipse.core.runtime,
  org.eclipse.orion.server.core,
  org.json,
- org.eclipse.core.filesystem;bundle-version="1.4.0"
+ org.eclipse.core.filesystem;bundle-version="1.4.0",
+ ch.qos.logback.classic,
+ org.apache.httpcomponents.httpclient,
+ org.apache.commons.httpclient
 Import-Package: javax.servlet;version="2.6.0",
- javax.servlet.http;version="2.6.0"
+ javax.servlet.http;version="2.6.0",
+ org.slf4j
 Export-Package: org.eclipse.orion.server.cf;x-internal:=true,
  org.eclipse.orion.server.cf.handlers.v1;x-internal:=true,
  org.eclipse.orion.server.cf.jobs;x-internal:=true,

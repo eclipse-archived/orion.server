@@ -10,6 +10,9 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf;
 
+import java.security.Security;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.eclipse.orion.server.cf.utils.TargetMap;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
@@ -64,5 +67,19 @@ public class CFActivator implements BundleActivator {
 
 	public TargetMap getTargetMap() {
 		return targetMap;
+	}
+
+	/**
+	 * Returns an HTTPClient instance that is configured to support multiple connections
+	 * in different threads. Callers must explicitly release any connections made using this
+	 * client.
+	 */
+	public synchronized HttpClient getHttpClient() {
+		//TODO this is temporary until proper configuration is implemented on servers
+		Security.setProperty("ssl.SocketFactory.provider", "com.ibm.jsse2.SSLSocketFactoryImpl");
+		Security.setProperty("ssl.ServerSocketFactory.provider", "com.ibm.jsse2.SSLServerSocketFactoryImpl");
+		//see http://hc.apache.org/httpclient-3.x/threading.html
+		MultiThreadedHttpConnectionManager connectionManager = new MultiThreadedHttpConnectionManager();
+		return new HttpClient(connectionManager);
 	}
 }

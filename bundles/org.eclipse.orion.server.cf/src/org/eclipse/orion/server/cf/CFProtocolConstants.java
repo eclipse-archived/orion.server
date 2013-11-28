@@ -32,7 +32,7 @@ public class CFProtocolConstants {
 	/**
 	 * JSON representation key for a target's URL. The value's data type is a String.
 	 */
-	public static final String KEY_URL = "URL"; //$NON-NLS-1$
+	public static final String KEY_URL = "Url"; //$NON-NLS-1$
 
 	/**
 	 * JSON representation key for a target's user id. The value's data type is a String.
