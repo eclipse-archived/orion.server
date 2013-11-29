@@ -16,12 +16,10 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.servlets.AbstractRESTHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class AppsHandlerV1 extends AbstractRESTHandler<Target> {
 
-	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
+	//	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	public AppsHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
 		super(statusHandler);
