@@ -15,37 +15,20 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.StringTokenizer;
-
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
-import org.eclipse.orion.internal.server.servlets.Activator;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.OrionConfiguration;
-import org.eclipse.orion.server.core.PreferenceHelper;
-import org.eclipse.orion.server.core.ServerConstants;
-import org.eclipse.orion.server.core.ServerStatus;
-import org.eclipse.orion.server.core.metastore.IMetaStore;
-import org.eclipse.orion.server.core.metastore.ProjectInfo;
-import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
+import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.metastore.*;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.*;
 
 /**
  * Handles requests against a single workspace.
@@ -348,7 +331,6 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 	}
 
 	private ProjectInfo handleAddProject(HttpServletRequest request, HttpServletResponse response, WorkspaceInfo workspace, JSONObject data) throws IOException, ServletException {
-		//make sure required fields are set
 		ProjectInfo project = createProject(request, response, workspace, data);
 		if (project == null)
 			return null;
@@ -376,6 +358,7 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		JSONObject toAdd = data;
 		String id = toAdd.optString(ProtocolConstants.KEY_ID, null);
 		String name = toAdd.optString(ProtocolConstants.KEY_NAME, null);
+		//make sure required fields are set
 		if (name == null)
 			name = request.getHeader(ProtocolConstants.HEADER_SLUG);
 		if (!validateProjectName(workspace, name, request, response))
@@ -546,10 +529,14 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		return false;
 	}
 
+	/**
+	 * Returns <code>true</code> if the provided content location URI is a valid
+	 * place to store project data for the given user. Returns <code>false</code>
+	 * otherwise.
+	 */
 	private boolean isAllowedLinkDestination(String content, String user) {
-		if (content == null) {
+		if (content == null)
 			return true;
-		}
 
 		String prefixes = PreferenceHelper.getString(ServerConstants.CONFIG_FILE_ALLOWED_PATHS);
 		if (prefixes == null)
@@ -563,12 +550,6 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 				}
 			}
 		}
-
-		String userArea = System.getProperty(Activator.PROP_USER_AREA);
-		if (userArea == null)
-			return false;
-
-		IPath path = new Path(userArea).append(user);
 
 		URI contentURI = null;
 		//use the content location specified by the user
@@ -588,10 +569,14 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		} catch (CoreException e) {
 			//if we don't support given scheme try to parse as location as a file path below
 		}
-		if (contentURI == null)
-			contentURI = new File(content).toURI();
-		if (contentURI.toString().startsWith(path.toFile().toURI().toString()))
-			return true;
+		String userArea = System.getProperty(Activator.PROP_USER_AREA);
+		if (userArea != null) {
+			IPath path = new Path(userArea).append(user);
+			if (contentURI == null)
+				contentURI = new File(content).toURI();
+			if (contentURI.toString().startsWith(path.toFile().toURI().toString()))
+				return true;
+		}
 		return false;
 	}
 
