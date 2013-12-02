@@ -21,7 +21,7 @@ import org.json.JSONObject;
 
 @ResourceDescription(type = Target.TYPE)
 public class Target extends CFObject {
-	public static final String RESOURCE = "Target"; //$NON-NLS-1$
+	public static final String RESOURCE = "target"; //$NON-NLS-1$
 	public static final String TYPE = "Target"; //$NON-NLS-1$
 
 	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
@@ -38,6 +38,8 @@ public class Target extends CFObject {
 
 	private URL url;
 
+	private JSONObject accessToken;
+
 	@Override
 	protected URI getLocation() throws URISyntaxException {
 		return null;
@@ -47,25 +49,33 @@ public class Target extends CFObject {
 		return name;
 	}
 
-	@PropertyDescription(name = CFProtocolConstants.KEY_URL)
-	public URL getUrl() {
-		return url;
+	public void setName(String name) {
+		this.name = name;
 	}
 
 	public String getUser() {
 		return user;
 	}
 
-	public void setName(String name) {
-		this.name = name;
+	public void setUser(String user) {
+		this.user = user;
+	}
+
+	@PropertyDescription(name = CFProtocolConstants.KEY_URL)
+	public URL getUrl() {
+		return url;
 	}
 
 	public void setUrl(URL url) {
 		this.url = url;
 	}
 
-	public void setUser(String user) {
-		this.user = user;
+	public JSONObject getAccessToken() {
+		return accessToken;
+	}
+
+	public void setAccessToken(JSONObject accessToken) {
+		this.accessToken = accessToken;
 	}
 
 	@Override

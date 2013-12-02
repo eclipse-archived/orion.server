@@ -20,7 +20,7 @@ import org.json.JSONObject;
 
 @ResourceDescription(type = Info.TYPE)
 public class Info extends CFObject {
-	public static final String RESOURCE = "Info"; //$NON-NLS-1$
+	public static final String RESOURCE = "info"; //$NON-NLS-1$
 	public static final String TYPE = "Info"; //$NON-NLS-1$
 
 	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();

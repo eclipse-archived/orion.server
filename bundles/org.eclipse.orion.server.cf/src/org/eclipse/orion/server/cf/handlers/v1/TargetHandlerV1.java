@@ -16,6 +16,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.cf.CFActivator;
+import org.eclipse.orion.server.cf.commands.LoginCommand;
+import org.eclipse.orion.server.cf.commands.LogoutCommand;
 import org.eclipse.orion.server.cf.jobs.CFJob;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.servlets.AbstractRESTHandler;
@@ -73,6 +75,14 @@ public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 				try {
 					Target target = new Target();
 					target.setUrl(new URL(jsonData.getString("Url")));
+
+					if (jsonData.has("Username") && jsonData.has("Password")) {
+						LoginCommand loginCommand = new LoginCommand(target, jsonData.getString("Username"), jsonData.getString("Password"));
+						IStatus result = loginCommand.doIt();
+						if (!result.isOK())
+							return result;
+					}
+
 					CFActivator.getDefault().getTargetMap().putTarget(this.userId, target);
 
 					return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, target.toJSON());
@@ -85,4 +95,29 @@ public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 			}
 		};
 	}
+
+	@Override
+	protected CFJob handleDelete(Target resource, HttpServletRequest request, HttpServletResponse response, final String path) {
+		final JSONObject jsonData = extractJSONData(request);
+
+		return new CFJob(request, false) {
+			@Override
+			protected IStatus performJob() {
+				try {
+					Target target = CFActivator.getDefault().getTargetMap().getTarget(this.userId);
+
+					LogoutCommand logoutCommand = new LogoutCommand(target);
+					IStatus result = logoutCommand.doIt();
+
+					return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, target.toJSON());
+				} catch (Exception e) {
+					String msg = NLS.bind("Failed to handle request for {0}", path); //$NON-NLS-1$
+					ServerStatus status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
+					logger.error(msg, e);
+					return status;
+				}
+			}
+		};
+	}
+
 }
