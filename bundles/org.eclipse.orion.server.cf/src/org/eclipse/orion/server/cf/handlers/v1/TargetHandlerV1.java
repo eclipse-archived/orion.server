@@ -16,8 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.cf.CFActivator;
-import org.eclipse.orion.server.cf.commands.LoginCommand;
-import org.eclipse.orion.server.cf.commands.LogoutCommand;
+import org.eclipse.orion.server.cf.commands.*;
 import org.eclipse.orion.server.cf.jobs.CFJob;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.servlets.AbstractRESTHandler;
@@ -73,12 +72,28 @@ public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 			@Override
 			protected IStatus performJob() {
 				try {
-					Target target = new Target();
-					target.setUrl(new URL(jsonData.getString("Url")));
+					Target target = CFActivator.getDefault().getTargetMap().getTarget(this.userId);
+
+					if (target == null)
+						target = new Target();
+
+					if (jsonData.has("Url")) {
+						target.setUrl(new URL(jsonData.getString("Url")));
+						target.setAccessToken(null);
+					}
 
 					if (jsonData.has("Username") && jsonData.has("Password")) {
-						LoginCommand loginCommand = new LoginCommand(target, jsonData.getString("Username"), jsonData.getString("Password"));
-						IStatus result = loginCommand.doIt();
+						IStatus result = new LoginCommand(target, jsonData.getString("Username"), jsonData.getString("Password")).doIt();
+						if (!result.isOK())
+							return result;
+					}
+
+					if (target.getAccessToken() != null) {
+						IStatus result = new SetOrgCommand(target, jsonData.optString("Org")).doIt();
+						if (!result.isOK())
+							return result;
+
+						result = new SetSpaceCommand(target, jsonData.optString("Space")).doIt();
 						if (!result.isOK())
 							return result;
 					}

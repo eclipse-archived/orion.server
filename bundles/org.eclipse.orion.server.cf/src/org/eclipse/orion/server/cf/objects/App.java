@@ -10,19 +10,19 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.objects;
 
-import java.net.*;
+import java.net.URI;
+import java.net.URISyntaxException;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.core.resources.Property;
 import org.eclipse.orion.server.core.resources.ResourceShape;
-import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-@ResourceDescription(type = Target.TYPE)
-public class Target extends CFObject {
-	public static final String RESOURCE = "target"; //$NON-NLS-1$
-	public static final String TYPE = "Target"; //$NON-NLS-1$
+@ResourceDescription(type = App.TYPE)
+public class App extends CFObject {
+	public static final String RESOURCE = "apps"; //$NON-NLS-1$
+	public static final String TYPE = "App"; //$NON-NLS-1$
 
 	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
 	{
@@ -32,70 +32,10 @@ public class Target extends CFObject {
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
 
-	private String name;
-
-	private URL url;
-
-	private String user;
-
-	private JSONObject accessToken;
-
-	private JSONObject org;
-
-	private JSONObject space;
-
 	@Override
 	protected URI getLocation() throws URISyntaxException {
+		// TODO Auto-generated method stub
 		return null;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public String getUser() {
-		return user;
-	}
-
-	public void setUser(String user) {
-		this.user = user;
-	}
-
-	@PropertyDescription(name = CFProtocolConstants.KEY_URL)
-	public URL getUrl() {
-		return url;
-	}
-
-	public void setUrl(URL url) {
-		this.url = url;
-	}
-
-	public JSONObject getAccessToken() {
-		return accessToken;
-	}
-
-	public void setAccessToken(JSONObject accessToken) {
-		this.accessToken = accessToken;
-	}
-
-	public JSONObject getOrg() {
-		return org;
-	}
-
-	public void setOrg(JSONObject org) {
-		this.org = org;
-	}
-
-	public JSONObject getSpace() {
-		return space;
-	}
-
-	public void setSpace(JSONObject space) {
-		this.space = space;
 	}
 
 	@Override

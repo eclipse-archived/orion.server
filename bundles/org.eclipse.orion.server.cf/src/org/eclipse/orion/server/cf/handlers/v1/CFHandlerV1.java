@@ -15,8 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-import org.eclipse.orion.server.cf.objects.Info;
-import org.eclipse.orion.server.cf.objects.Target;
+import org.eclipse.orion.server.cf.objects.*;
 
 /**
  * A Jazz handler for Orion CF API v 1.0.
@@ -25,10 +24,12 @@ public class CFHandlerV1 extends ServletResourceHandler<String> {
 
 	private ServletResourceHandler<String> targetHandlerV1;
 	private ServletResourceHandler<String> infoHandlerV1;
+	private ServletResourceHandler<String> appsHandlerV1;
 
 	public CFHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
 		targetHandlerV1 = new TargetHandlerV1(statusHandler);
 		infoHandlerV1 = new InfoHandlerV1(statusHandler);
+		appsHandlerV1 = new AppsHandlerV1(statusHandler);
 	}
 
 	@Override
@@ -52,6 +53,8 @@ public class CFHandlerV1 extends ServletResourceHandler<String> {
 			return targetHandlerV1.handleRequest(request, response, pathString);
 		} else if (infoParts[1].equals(Info.RESOURCE)) {
 			return infoHandlerV1.handleRequest(request, response, pathString);
+		} else if (infoParts[1].equals(App.RESOURCE)) {
+			return appsHandlerV1.handleRequest(request, response, pathString);
 		}
 
 		return false;

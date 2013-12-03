@@ -59,7 +59,8 @@ public class InfoHandlerV1 extends AbstractRESTHandler<Info> {
 					GetMethod getMethod = new GetMethod(infoURI.toString());
 					getMethod.addRequestHeader(new Header("Accept", "application/json"));
 					getMethod.addRequestHeader(new Header("Content-Type", "application/json"));
-					getMethod.addRequestHeader(new Header("Authorization", "bearer " + target.getAccessToken().getString("access_token")));
+					if (target.getAccessToken() != null)
+						getMethod.addRequestHeader(new Header("Authorization", "bearer " + target.getAccessToken().getString("access_token")));
 					CFActivator.getDefault().getHttpClient().executeMethod(getMethod);
 
 					String response = getMethod.getResponseBodyAsString();
