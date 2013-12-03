@@ -14,41 +14,20 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.io.*;
+import java.net.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.FileLocator;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.xml.sax.SAXException;
 
-import com.meterware.httpunit.GetMethodWebRequest;
-import com.meterware.httpunit.PostMethodWebRequest;
-import com.meterware.httpunit.PutMethodWebRequest;
-import com.meterware.httpunit.WebConversation;
-import com.meterware.httpunit.WebResponse;
+import com.meterware.httpunit.*;
 
 /**
  * 
@@ -60,16 +39,30 @@ public class TransferTest extends FileSystemTest {
 	}
 
 	private void doImport(File source, long length, String location) throws FileNotFoundException, IOException, SAXException {
+		doImport(source, length, location, "application/zip");
+	}
+
+	private void doImport(File source, long length, String location, String contentType) throws FileNotFoundException, IOException, SAXException {
+		if (source.length() == 0) {
+			PutMethodWebRequest put = new PutMethodWebRequest(location, new ByteArrayInputStream(new byte[0], 0, 0), contentType);
+			put.setHeaderField("Content-Range", "bytes 0-0/0");
+			put.setHeaderField("Content-Length", "0");
+			put.setHeaderField("Content-Type", "application/zip");
+			setAuthentication(put);
+			WebResponse putResponse = webConversation.getResponse(put);
+			assertEquals(HttpURLConnection.HTTP_CREATED, putResponse.getResponseCode());
+			return;
+		}
 		//repeat putting chunks until done
 		byte[] chunk = new byte[64 * 1024];
 		InputStream in = new BufferedInputStream(new FileInputStream(source));
 		int chunkSize = 0;
 		int totalTransferred = 0;
 		while ((chunkSize = in.read(chunk, 0, chunk.length)) > 0) {
-			PutMethodWebRequest put = new PutMethodWebRequest(location, new ByteArrayInputStream(chunk, 0, chunkSize), "application/zip");
+			PutMethodWebRequest put = new PutMethodWebRequest(location, new ByteArrayInputStream(chunk, 0, chunkSize), contentType);
 			put.setHeaderField("Content-Range", "bytes " + totalTransferred + "-" + (totalTransferred + chunkSize - 1) + "/" + length);
 			put.setHeaderField("Content-Length", "" + length);
-			put.setHeaderField("Content-Type", "application/zip");
+			put.setHeaderField("Content-Type", contentType);
 			setAuthentication(put);
 			totalTransferred += chunkSize;
 			WebResponse putResponse = webConversation.getResponse(put);
@@ -286,6 +279,37 @@ public class TransferTest extends FileSystemTest {
 	}
 
 	@Test
+	public void testImportWithPostZeroByteFile() throws CoreException, IOException, SAXException, URISyntaxException {
+		//create a directory to upload to
+		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+		createDirectory(directoryPath);
+
+		//start the import
+		URL entry = ServerTestsActivator.getContext().getBundle().getEntry("testData/importTest/zeroByteFile.txt");
+		File source = new File(FileLocator.toFileURL(entry).getPath());
+		long length = source.length();
+		assertEquals(length, 0);
+		String importPath = getImportRequestPath(directoryPath);
+		PostMethodWebRequest request = new PostMethodWebRequest(importPath);
+		request.setHeaderField("X-Xfer-Content-Length", Long.toString(length));
+		request.setHeaderField("X-Xfer-Options", "raw");
+
+		request.setHeaderField("Slug", "zeroByteFile.txt");
+		setAuthentication(request);
+		WebResponse postResponse = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, postResponse.getResponseCode());
+		String location = postResponse.getHeaderField("Location");
+		assertNotNull(location);
+		URI importURI = URIUtil.fromString(importPath);
+		location = importURI.resolve(location).toString();
+
+		doImport(source, length, location, "text/plain");
+
+		//assert the file is present in the workspace
+		assertTrue(checkFileExists(directoryPath + "/zeroByteFile.txt"));
+	}
+
+	@Test
 	public void testImportWithPost() throws CoreException, IOException, SAXException {
 		//create a directory to upload to
 		String directoryPath = "sample/testImportWithPost/path" + System.currentTimeMillis();
@@ -311,4 +335,5 @@ public class TransferTest extends FileSystemTest {
 		//assert the file has been unzipped in the workspace
 		assertTrue(checkFileExists(directoryPath + "/org.eclipse.e4.webide/static/js/navigate-tree/navigate-tree.js"));
 	}
+
 }
