@@ -16,10 +16,12 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.*;
 import java.util.zip.*;
+
 import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
@@ -272,28 +274,35 @@ class ClientImport {
 		int transferred = getTransferred();
 		int length = getLength();
 		int headerLength = Integer.valueOf(req.getHeader(ProtocolConstants.HEADER_CONTENT_LENGTH));
-		String rangeString = req.getHeader(ProtocolConstants.HEADER_CONTENT_RANGE);
-		if (rangeString == null)
-			rangeString = "bytes 0-" + (length - 1) + '/' + length; //$NON-NLS-1$
-		ContentRange range = ContentRange.parse(rangeString);
-		if (length != range.getLength()) {
-			fail(req, resp, "Chunk specifies an incorrect document length");
-			return;
+		ContentRange range;
+		byte[] chunk;
+		if (length == 0) {
+			range = ContentRange.parse("bytes 0-0/0");
+			chunk = new byte[0];
+		} else {
+			String rangeString = req.getHeader(ProtocolConstants.HEADER_CONTENT_RANGE);
+			if (rangeString == null)
+				rangeString = "bytes 0-" + (length - 1) + '/' + length; //$NON-NLS-1$
+			range = ContentRange.parse(rangeString);
+			if (length != range.getLength()) {
+				fail(req, resp, "Chunk specifies an incorrect document length");
+				return;
+			}
+			if (range.getStartByte() > transferred) {
+				fail(req, resp, "Chunk missing; Expected start byte: " + transferred);
+				return;
+			}
+			if (range.getEndByte() < range.getStartByte()) {
+				fail(req, resp, "Invalid range: " + rangeString);
+				return;
+			}
+			int chunkSize = 1 + range.getEndByte() - range.getStartByte();
+			if (chunkSize != headerLength) {
+				fail(req, resp, "Content-Range doesn't agree with Content-Length");
+				return;
+			}
+			chunk = readChunk(req, chunkSize);
 		}
-		if (range.getStartByte() > transferred) {
-			fail(req, resp, "Chunk missing; Expected start byte: " + transferred);
-			return;
-		}
-		if (range.getEndByte() < range.getStartByte()) {
-			fail(req, resp, "Invalid range: " + rangeString);
-			return;
-		}
-		int chunkSize = 1 + range.getEndByte() - range.getStartByte();
-		if (chunkSize != headerLength) {
-			fail(req, resp, "Content-Range doesn't agree with Content-Length");
-			return;
-		}
-		byte[] chunk = readChunk(req, chunkSize);
 		FileOutputStream fout = null;
 		try {
 			fout = new FileOutputStream(new File(getStorageDirectory(), FILE_DATA), true);
