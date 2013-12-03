@@ -48,15 +48,16 @@ public class Indexer extends Job {
 	private static final long IDLE_DELAY = 300000;//five minutes
 
 	private static final long MAX_SEARCH_SIZE = 300000;//don't index files larger than 300,000 bytes
-	//private static final List<String> IGNORED_FILE_TYPES = Arrays.asList("png", "jpg", "gif", "bmp", "pdf", "tiff", "class", "so", "zip", "jar", "tar");
+	//private static final List<String> IGNORED_FILE_TYPES = Arrays.asList("png", "jpg", "jpeg", "gif", "bmp", "mpg", "mp4", "wmf", "pdf", "tiff", "class", "so", "zip", "jar", "tar", "tgz");
 	private final List<String> INDEXED_FILE_TYPES;
 	private final SolrServer server;
+	private final List<String> skippedFileTypes = new ArrayList<String>();
 
 	public Indexer(SolrServer server) {
 		super("Indexing"); //$NON-NLS-1$
 		this.server = server;
 		setSystem(true);
-		INDEXED_FILE_TYPES = Arrays.asList("css", "js", "html", "txt", "xml", "java", "properties", "php", "htm", "project", "conf", "pl", "sh", "text", "xhtml", "mf", "manifest", "md", "yaml", "yml");
+		INDEXED_FILE_TYPES = Arrays.asList("css", "js", "html", "txt", "xml", "java", "properties", "php", "htm", "project", "conf", "pl", "sh", "text", "xhtml", "mf", "manifest", "md", "yaml", "yml", "go");
 		Collections.sort(INDEXED_FILE_TYPES);
 	}
 
@@ -240,6 +241,11 @@ public class Indexer extends Job {
 		String extension = new Path(fileInfo.getName()).getFileExtension();
 		if (extension == null || (Collections.binarySearch(INDEXED_FILE_TYPES, extension.toLowerCase()) < 0))
 			return true;
+		if (skippedFileTypes.add(extension)) {
+			Logger logger = LoggerFactory.getLogger(Indexer.class);
+			if (logger.isDebugEnabled())
+				logger.debug("Skipping unknown file type: " + extension); //$NON-NLS-1$
+		}
 		return false;
 	}
 
