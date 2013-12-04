@@ -16,6 +16,7 @@ import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.cf.CFActivator;
+import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
@@ -31,12 +32,12 @@ public class StartAppCommand {
 	private String commandName;
 
 	private Target target;
-	private String org;
+	private App app;
 
-	public StartAppCommand(Target target, String org) {
-		this.commandName = "Set Org"; //$NON-NLS-1$
+	public StartAppCommand(Target target, App app) {
+		this.commandName = "Start App"; //$NON-NLS-1$
 		this.target = target;
-		this.org = org;
+		this.app = app;
 	}
 
 	public IStatus doIt() {

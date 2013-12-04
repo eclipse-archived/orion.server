@@ -24,6 +24,8 @@ public class App extends CFObject {
 	public static final String RESOURCE = "apps"; //$NON-NLS-1$
 	public static final String TYPE = "App"; //$NON-NLS-1$
 
+	private JSONObject summaryJSON;
+
 	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
 	{
 		Property[] defaultProperties = new Property[] { //
@@ -38,8 +40,17 @@ public class App extends CFObject {
 		return null;
 	}
 
+	public JSONObject getSummaryJSON() {
+		return summaryJSON;
+	}
+
+	public void setSummaryJSON(JSONObject summaryJSON) {
+		this.summaryJSON = summaryJSON;
+	}
+
 	@Override
 	public JSONObject toJSON() throws JSONException {
-		return jsonSerializer.serialize(this, DEFAULT_RESOURCE_SHAPE);
+		return summaryJSON;
+		//		return jsonSerializer.serialize(this, DEFAULT_RESOURCE_SHAPE);
 	}
 }

@@ -14,8 +14,10 @@ import java.net.URI;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.methods.MultipartPostMethod;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.cf.CFActivator;
+import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
@@ -31,12 +33,12 @@ public class PushAppCommand {
 	private String commandName;
 
 	private Target target;
-	private String org;
+	private App app;
 
-	public PushAppCommand(Target target, String org) {
+	public PushAppCommand(Target target, App app) {
 		this.commandName = "Set Org"; //$NON-NLS-1$
 		this.target = target;
-		this.org = org;
+		this.app = app;
 	}
 
 	public IStatus doIt() {
@@ -54,6 +56,8 @@ public class PushAppCommand {
 			getMethod.addRequestHeader(new Header("Content-Type", "application/json"));
 			getMethod.addRequestHeader(new Header("Authorization", "bearer " + target.getAccessToken().getString("access_token")));
 			CFActivator.getDefault().getHttpClient().executeMethod(getMethod);
+
+			MultipartPostMethod d = new MultipartPostMethod();
 
 			String response = getMethod.getResponseBodyAsString();
 			JSONObject result = new JSONObject(response);
