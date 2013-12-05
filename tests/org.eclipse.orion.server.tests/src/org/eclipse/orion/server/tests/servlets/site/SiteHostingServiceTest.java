@@ -85,4 +85,26 @@ public class SiteHostingServiceTest {
 		assertEquals("https://foo.sites.example.org", hostingService.get(site1, user).getUrl());
 		assertEquals("https://foo0.sites.example.org", hostingService.get(site2, user).getUrl());
 	}
+
+	@Test
+	public void testSiteHostingServiceMatchesVirtualHost() throws Exception {
+		IMetaStore metaStore = getMetaStore();
+
+		SiteHostingService hostingService = new SiteHostingService(SiteHostingConfig.getSiteHostingConfig("https://*.sites.example.org:1234"));
+
+		UserInfo user = new UserInfo();
+		user.setUniqueId("A");
+		user.setUserName("carlos");
+		metaStore.createUser(user);
+
+		SiteInfo site = SiteInfo.newSiteConfiguration(user, "mysite", "myworkspace");
+		site.setId("s1");
+		site.setName("Some site");
+		site.setHostHint("foo");
+		site.save(user);
+
+		// Should be recognized as matching a virtual host 
+		assertEquals(true, hostingService.matchesVirtualHost("fizzbuzz.sites.example.org"));
+	}
+
 }

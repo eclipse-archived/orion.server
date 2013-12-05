@@ -135,9 +135,17 @@ public class SiteHostingService implements ISiteHostingService {
 			if (h.equals(host)) {
 				return true;
 			} else {
-				String pattern = h.replace("*", ""); //$NON-NLS-1$ //$NON-NLS-2$
-				if (host.indexOf(pattern) != -1)
-					return true;
+				// Request URI does not matter here since we only care about the HostPattern's host, not scheme/port.
+				HostPattern pattern;
+				try {
+					pattern = getHostPattern(h, new URI("http", null, host, -1, null, null, null));
+					String configHost = pattern.getHost();
+					if (configHost != null && host.endsWith(configHost.replace("*", ""))) { //$NON-NLS-1$ //$NON-NLS-2$
+						return true;
+					}
+				} catch (URISyntaxException e) {
+					// Should not happen
+				}
 			}
 		}
 		return false;
