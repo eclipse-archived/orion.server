@@ -102,7 +102,7 @@
       </servlet>
       <servlet
             alias="/docker"
-            class="org.eclipse.orion.internal.server.servlets.docker.DockerServlet">
+            class="org.eclipse.orion.server.docker.servlets.DockerServlet">
       </servlet>
    </extension>
    <extension

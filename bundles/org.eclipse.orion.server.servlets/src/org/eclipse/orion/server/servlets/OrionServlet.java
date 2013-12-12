@@ -15,14 +15,25 @@ import java.io.StringWriter;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
+
 import javax.servlet.ServletException;
-import javax.servlet.http.*;
-import org.eclipse.core.runtime.*;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.eclipse.core.runtime.Assert;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
-import org.eclipse.orion.internal.server.servlets.*;
+import org.eclipse.orion.internal.server.servlets.Activator;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.internal.server.servlets.ServletStatusHandler;
 import org.eclipse.orion.server.core.ServerStatus;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.slf4j.LoggerFactory;
 
 /**

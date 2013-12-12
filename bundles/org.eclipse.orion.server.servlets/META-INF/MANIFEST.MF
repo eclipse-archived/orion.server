@@ -25,7 +25,6 @@ Export-Package: org.eclipse.orion.internal.server.servlets;
    org.eclipse.orion.server.authentication,
    org.eclipse.orion.server.configurator,
    org.eclipse.orion.server.tests",
- org.eclipse.orion.internal.server.servlets.docker,
  org.eclipse.orion.internal.server.servlets.file;
   x-friends:="org.eclipse.orion.server.configurator,
    org.eclipse.orion.server.npm,
