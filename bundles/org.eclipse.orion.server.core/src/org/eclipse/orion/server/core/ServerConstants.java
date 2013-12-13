@@ -16,10 +16,36 @@ package org.eclipse.orion.server.core;
 public class ServerConstants {
 
 	/**
+	 * The system property name for the secure storage master password.
+	 */
+	public static final String CONFIG_AUTH_ADMIN_DEFAULT_PASSWORD = "orion.auth.admin.default.password"; //$NON-NLS-1$
+
+	/**
+	 * The name of the configuration property that tells us what server to use for authentication purposes.
+	 * In a basic server configuration this will be undefined, and the direct Orion server will be treated as
+	 * the authentication host. If the Orion server is sitting behind a proxy, the server administrator
+	 * will typically need to set the value of this property to be the proxy host. Refer to the Orion
+	 * server administration guide for more details.
+	 */
+	public static final String CONFIG_AUTH_HOST = "orion.auth.host"; //$NON-NLS-1$
+
+	/**
 	 * The name of a configuration property specifying the name of the authorization
 	 * component to be used.
 	 */
 	public static final String CONFIG_AUTH_NAME = "orion.auth.name"; //$NON-NLS-1$
+
+	/**
+	 * The API used for verifying Persona logins.
+	 */
+	public static final String CONFIG_AUTH_PERSONA_VERIFIER = "orion.auth.persona.verifier"; //$NON-NLS-1$
+
+	/**
+	 * The name of a configuration property specifying an alternate URI to handle registrations for accounts.
+	 * If this variable is set AND the site does not allow for direct registrations the
+	 * Register Button will be visible and this URI will be opened taking the user off site.
+	 */
+	public static final String CONFIG_AUTH_REGISTRATION_URI = "orion.auth.registration.uri"; //$NON-NLS-1$
 
 	/**
 	 * The name of a configuration property specifying a comma-separated list of users
@@ -36,36 +62,11 @@ public class ServerConstants {
 	public static final String CONFIG_AUTH_USER_CREATION_FORCE_EMAIL = "orion.auth.user.creation.force.email"; //$NON-NLS-1$
 
 	/**
-	 * The system property name for the secure storage master password.
+	 * The name of a configuration property specifying a comma-separated list of server
+	 * file system paths where user content can be written. By default user content
+	 * can only appear within the server instance location (workspace).
 	 */
-	public static final String CONFIG_AUTH_ADMIN_DEFAULT_PASSWORD = "orion.auth.admin.default.password"; //$NON-NLS-1$
-
-	/**
-	 * The name of the configuration property that tells us what server to use for authentication purposes.
-	 * In a basic server configuration this will be undefined, and the direct Orion server will be treated as
-	 * the authentication host. If the Orion server is sitting behind a proxy, the server administrator
-	 * will typically need to set the value of this property to be the proxy host. Refer to the Orion
-	 * server administration guide for more details.
-	 */
-	public static final String CONFIG_AUTH_HOST = "orion.auth.host"; //$NON-NLS-1$
-
-	/**
-	 * The API used for verifying Persona logins.
-	 */
-	public static final String CONFIG_AUTH_PERSONA_VERIFIER = "orion.auth.persona.verifier"; //$NON-NLS-1$
-
-	/**
-	 * The name of a configuration property specifying an alternate URI to handle registrations for accounts.
-	 * If this variable is set AND the site does not allow for direct registrations the
-	 * Register Button will be visible and this URI will be opened taking the user off site.
-	 */
-	public static final String CONFIG_AUTH_REGISTRATION_URI = "orion.auth.registration.uri"; //$NON-NLS-1$
-
-	/**
-	 * The name of a configuration property specifying the default source configuration management
-	 * system to use for newly created top level folders.
-	 */
-	public static final String CONFIG_FILE_DEFAULT_SCM = "orion.file.defaultSCM"; //$NON-NLS-1$
+	public static final String CONFIG_FILE_ALLOWED_PATHS = "orion.file.allowedPaths"; //$NON-NLS-1$
 
 	/**
 	 * The name of a configuration property specifying whether anonymous read access
@@ -75,11 +76,10 @@ public class ServerConstants {
 	public static final String CONFIG_FILE_ANONYMOUS_READ = "orion.file.anonymous.read"; //$NON-NLS-1$
 
 	/**
-	 * The name of a configuration property specifying a comma-separated list of server
-	 * file system paths where user content can be written. By default user content
-	 * can only appear within the server instance location (workspace).
+	 * The name of a configuration property specifying the default source configuration management
+	 * system to use for newly created top level folders.
 	 */
-	public static final String CONFIG_FILE_ALLOWED_PATHS = "orion.file.allowedPaths"; //$NON-NLS-1$
+	public static final String CONFIG_FILE_DEFAULT_SCM = "orion.file.defaultSCM"; //$NON-NLS-1$
 
 	/**
 	 * The name of a configuration property specifying the layout format for user data files.
@@ -97,22 +97,15 @@ public class ServerConstants {
 	 */
 	public static final String CONFIG_FILE_LAYOUT_USERTREE = "usertree"; //$NON-NLS-1$
 	/**
-	 * The name of a configuration property specifying the virtual hosts to use for
-	 * test sites launched by this server. The property value is a comma-separated 
-	 * list of host names.
-	 */
-	public static final String CONFIG_SITE_VIRTUAL_HOSTS = "orion.site.virtualHosts"; //$NON-NLS-1$
-
-	/**
 	 * The name of configuration property specifying the SMTP host for sending mail
 	 */
 	public static final String CONFIG_MAIL_SMTP_HOST = "mail.smtp.host"; //$NON-NLS-1$
-	
+
 	/**
 	 * The name of configuration property specifying if TLS should be enabled
 	 */
 	public static final String CONFIG_MAIL_SMTP_STARTTLS = "mail.smtp.starttls.enable"; //$NON-NLS-1$
-
+	
 	/**
 	 * The name of configuration property specifying which meta store should be enabled
 	 */
@@ -127,6 +120,13 @@ public class ServerConstants {
 	 * The name of configuration property specifying the simple meta store
 	 */
 	public static final String CONFIG_META_STORE_SIMPLE = "simple"; //$NON-NLS-1$
+
+	/**
+	 * The name of a configuration property specifying the virtual hosts to use for
+	 * test sites launched by this server. The property value is a comma-separated 
+	 * list of host names.
+	 */
+	public static final String CONFIG_SITE_VIRTUAL_HOSTS = "orion.site.virtualHosts"; //$NON-NLS-1$
 
 	/**
 	 * The bundle ID of the server core. 
