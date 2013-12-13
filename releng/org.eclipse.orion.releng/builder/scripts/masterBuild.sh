@@ -247,7 +247,8 @@ runTests () {
 			$fetchTag \
 			-DJ2SE-1.4=$j2se142 \
 			-DJ2SE-1.5=$j2se150 \
-			-DJavaSE-1.6=$javase160"
+			-DJavaSE-1.6=$javase160 \
+			-DJavaSE-1.7=$javase170"
 	
 	echo "[`date +%H\:%M\:%S`] Starting Tests"
 	$cmd
