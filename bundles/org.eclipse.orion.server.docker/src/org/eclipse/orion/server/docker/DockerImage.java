@@ -10,9 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.docker;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.eclipse.orion.server.docker.servlets.DockerResponse;
 
 /**
@@ -26,9 +23,17 @@ public class DockerImage extends DockerResponse {
 
 	public static final String ID = "Id";
 
+	public static final String IMAGE = "Image";
+
+	public static final String IMAGE_PATH = "image";
+
+	public static final String REPOSITORY = "Repository";
+
 	public static final String REPOTAGS = "RepoTags";
 
 	public static final String SIZE = "Size";
+	
+	public static final String TAG = "Tag";
 
 	public static final String VIRTUAL_SIZE = "VirtualSize";
 
@@ -40,17 +45,12 @@ public class DockerImage extends DockerResponse {
 
 	private long size;
 
-	private List<String> tags;
+	private String tag;
 
 	private long virtualSize;
 
 	public DockerImage() {
 		super();
-		this.tags = new ArrayList<String>();
-	}
-
-	public void addTag(String repoTag) {
-		this.tags.add(repoTag);
 	}
 
 	public String getCreated() {
@@ -69,8 +69,8 @@ public class DockerImage extends DockerResponse {
 		return size;
 	}
 
-	public List<String> getTags() {
-		return tags;
+	public String getTag() {
+		return tag;
 	}
 
 	public long getVirtualSize() {
@@ -91,6 +91,10 @@ public class DockerImage extends DockerResponse {
 
 	public void setSize(long size) {
 		this.size = size;
+	}
+
+	public void setTag(String tag) {
+		this.tag = tag;
 	}
 
 	public void setVirtualSize(long virtualSize) {

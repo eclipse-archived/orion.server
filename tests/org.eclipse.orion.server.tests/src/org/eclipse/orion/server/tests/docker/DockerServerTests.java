@@ -15,7 +15,12 @@ import static org.junit.Assert.assertEquals;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import org.eclipse.orion.server.docker.*;
+import org.eclipse.orion.server.docker.DockerContainer;
+import org.eclipse.orion.server.docker.DockerContainers;
+import org.eclipse.orion.server.docker.DockerImage;
+import org.eclipse.orion.server.docker.DockerImages;
+import org.eclipse.orion.server.docker.DockerServer;
+import org.eclipse.orion.server.docker.DockerVersion;
 import org.eclipse.orion.server.docker.servlets.DockerResponse;
 import org.junit.Test;
 
@@ -36,16 +41,16 @@ public class DockerServerTests {
 		URI dockerLocationURI = new URI(dockerLocation);
 		DockerServer dockerServer = new DockerServer(dockerLocationURI);
 
-		String containerName = "testCreateDockerContainer";
+		String containerName = "user";
 
 		// create the container
-		DockerContainer dockerContainer = dockerServer.createDockerContainer("ubuntu", containerName, null);
+		DockerContainer dockerContainer = dockerServer.createDockerContainer("orion.base", containerName, "orionuser", null);
 		assertEquals(dockerContainer.getStatusMessage(), DockerResponse.StatusCode.CREATED, dockerContainer.getStatusCode());
-		//System.out.println("Created Docker Container: Container Id " + dockerContainer.getId() + " Name " + dockerContainer.getName());
+		System.out.println("Created Docker Container: Container Id " + dockerContainer.getId() + " Name " + dockerContainer.getName());
 
 		// delete the container
-		DockerResponse dockerResponse = dockerServer.deleteDockerContainer(containerName);
-		assertEquals(dockerResponse.getStatusMessage(), DockerResponse.StatusCode.DELETED, dockerResponse.getStatusCode());
+		//DockerResponse dockerResponse = dockerServer.deleteDockerContainer(containerName);
+		//assertEquals(dockerResponse.getStatusMessage(), DockerResponse.StatusCode.DELETED, dockerResponse.getStatusCode());
 		//System.out.println("Deleted Docker Container: Container Id " + dockerContainer.getId());
 	}
 
@@ -53,7 +58,6 @@ public class DockerServerTests {
 	 * Test docker container life cycle.
 	 * @throws URISyntaxException 
 	 */
-	@Test
 	public void testDockerContainerLifeCycle() throws URISyntaxException {
 		// the name of our docker container
 		String containerName = "lifecycle";
@@ -72,7 +76,7 @@ public class DockerServerTests {
 		System.out.println("Docker Container " + containerName + " does not exist");
 
 		// create the container
-		dockerContainer = dockerServer.createDockerContainer("ubuntu", containerName, null);
+		dockerContainer = dockerServer.createDockerContainer("orion.base", containerName, "orionuser", null);
 		assertEquals(dockerContainer.getStatusMessage(), DockerResponse.StatusCode.CREATED, dockerContainer.getStatusCode());
 		System.out.println("Docker Container " + containerName + " status is " + dockerContainer.getStatus());
 
@@ -132,10 +136,10 @@ public class DockerServerTests {
 		DockerServer dockerServer = new DockerServer(dockerLocationURI);
 		DockerContainers dockerContainers = dockerServer.getDockerContainers();
 		assertEquals(dockerContainers.getStatusMessage(), DockerResponse.StatusCode.OK, dockerContainers.getStatusCode());
-		//System.out.println("Docker Containers: ");
-		//for (DockerContainer dockerContainer : dockerContainers.getContainers()) {
-		//	System.out.println("Container Id " + dockerContainer.getId() + " Image " + dockerContainer.getImage() + " Name " + dockerContainer.getName());
-		//}
+		System.out.println("Docker Containers: ");
+		for (DockerContainer dockerContainer : dockerContainers.getContainers()) {
+			System.out.println("Container Id " + dockerContainer.getId() + " Image " + dockerContainer.getImage() + " Name " + dockerContainer.getName());
+		}
 	}
 
 	/**
@@ -161,14 +165,14 @@ public class DockerServerTests {
 		DockerServer dockerServer = new DockerServer(dockerLocationURI);
 		DockerImages dockerImages = dockerServer.getDockerImages();
 		assertEquals(dockerImages.getStatusMessage(), DockerResponse.StatusCode.OK, dockerImages.getStatusCode());
-		//System.out.println("Docker Images: ");
-		//for (DockerImage dockerImage : dockerImages.getImages()) {
-		//	System.out.print("Image Id " + dockerImage.getId() + " Repository " + dockerImage.getRepository() + " Tags { ");
-		//	for (String tag : dockerImage.getTags()) {
-		//		System.out.print(tag + " ");
-		//	}
-		//	System.out.println("}");
-		//}
+		System.out.println("Docker Images: ");
+		for (DockerImage dockerImage : dockerImages.getImages()) {
+			System.out.println("Repository " + dockerImage.getRepository());
+			System.out.print("Tag " + dockerImage.getTag());
+			System.out.print("Image Id " + dockerImage.getId());
+			System.out.print("Created " + dockerImage.getCreated());
+			System.out.println("Size " + dockerImage.getSize());
+		}
 	}
 
 	/**
@@ -181,6 +185,20 @@ public class DockerServerTests {
 		DockerVersion dockerVersion = dockerServer.getDockerVersion();
 		assertEquals(dockerVersion.getStatusMessage(), DockerResponse.StatusCode.OK, dockerVersion.getStatusCode());
 		assertEquals("unknown docker version", "0.6.7", dockerVersion.getVersion());
+	}
+
+	/**
+	 * Test create docker container.
+	 * @throws URISyntaxException
+	 */
+	public void testCreateDockerOrionBaseImage() throws URISyntaxException {
+		URI dockerLocationURI = new URI(dockerLocation);
+		DockerServer dockerServer = new DockerServer(dockerLocationURI);
+
+		// create the image
+		DockerImage dockerImage = dockerServer.createDockerOrionBaseImage();
+		assertEquals(dockerImage.getStatusMessage(), DockerResponse.StatusCode.CREATED, dockerImage.getStatusCode());
+		System.out.println("Created Docker Image: Image Id " + dockerImage.getId() + " Repository " + dockerImage.getRepository());
 	}
 
 }

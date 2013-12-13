@@ -11,10 +11,15 @@
 package org.eclipse.orion.server.docker;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -143,11 +148,11 @@ public class DockerServer {
 			} catch (Throwable t) {
 				t.printStackTrace();
 			} finally {
-//				try {
-//					client.stop();
-//				} catch (Exception e) {
-//					e.printStackTrace();
-//				}
+				//				try {
+				//					client.stop();
+				//				} catch (Exception e) {
+				//					e.printStackTrace();
+				//				}
 			}
 		} catch (URISyntaxException e) {
 			setDockerResponse(dockerResponse, e);
@@ -155,7 +160,7 @@ public class DockerServer {
 
 		return dockerResponse;
 	}
-	
+
 	public DockerResponse detachWSDockerContainer(ClientSocket socket) {
 		DockerResponse dockerResponse = new DockerResponse();
 		try {
@@ -166,7 +171,7 @@ public class DockerServer {
 		}
 		return dockerResponse;
 	}
-	
+
 	public DockerResponse processCommand(ClientSocket client, String command) {
 		DockerResponse dockerResponse = new DockerResponse();
 		DockerSocket socket = client.getSocket();
@@ -183,7 +188,7 @@ public class DockerServer {
 		return dockerResponse;
 	}
 
-	public DockerContainer createDockerContainer(String imageName, String containerName, List<String> volumes) {
+	public DockerContainer createDockerContainer(String imageName, String containerName, String userName, List<String> volumes) {
 		DockerContainer dockerContainer = new DockerContainer();
 		HttpURLConnection httpURLConnection = null;
 		try {
@@ -192,6 +197,7 @@ public class DockerServer {
 			cmdArray.put("bash");
 			requestJSONObject.put("Cmd", cmdArray);
 			requestJSONObject.put("Image", imageName);
+			requestJSONObject.put("User", userName);
 			requestJSONObject.put("AttachStdin", true);
 			requestJSONObject.put("AttachStdout", true);
 			requestJSONObject.put("AttachStderr", true);
@@ -209,8 +215,8 @@ public class DockerServer {
 			}
 			byte[] outputBytes = requestJSONObject.toString().getBytes("UTF-8");
 
-			URL dockerVersionURL = new URL(dockerServer.toString() + "/containers/create?name=" + containerName);
-			httpURLConnection = (HttpURLConnection) dockerVersionURL.openConnection();
+			URL dockerCreateContainerURL = new URL(dockerServer.toString() + "/containers/create?name=" + containerName);
+			httpURLConnection = (HttpURLConnection) dockerCreateContainerURL.openConnection();
 			httpURLConnection.setDoOutput(true);
 			httpURLConnection.setRequestProperty("Content-Type", "application/json");
 			httpURLConnection.setRequestProperty("Accept", "application/json");
@@ -234,6 +240,44 @@ public class DockerServer {
 			httpURLConnection.disconnect();
 		}
 		return dockerContainer;
+	}
+
+	public DockerImage createDockerOrionBaseImage() {
+		DockerImage dockerImage = new DockerImage();
+		HttpURLConnection httpURLConnection = null;
+		try {
+			URL createDockerOrionBaseImageURL = new URL(dockerServer.toString() + "/images/create?fromSrc&t=orion.base");
+			httpURLConnection = (HttpURLConnection) createDockerOrionBaseImageURL.openConnection();
+			httpURLConnection.setDoOutput(true);
+			httpURLConnection.setRequestProperty("Content-Type", "application/tar");
+			httpURLConnection.setRequestProperty("Accept", "application/json");
+			httpURLConnection.setRequestMethod("POST");
+			httpURLConnection.connect();
+
+			String orionBaseTar = "/workspace/orion-dev/git/org.eclipse.orion.server/bundles/org.eclipse.orion.server.servlets/src/org/eclipse/orion/internal/server/servlets/docker/orion.base.tar";
+			File orionBaseTarFile = new File(orionBaseTar);
+			PrintWriter writer = new PrintWriter(new OutputStreamWriter(httpURLConnection.getOutputStream(), "UTF-8"));
+			BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(orionBaseTarFile)));
+			for (String line; (line = reader.readLine()) != null;) {
+				writer.print(line);
+			}
+
+			if (getDockerResponse(dockerImage, httpURLConnection).equals(DockerResponse.StatusCode.OK)) {
+				JSONObject jsonObject = readDockerResponseAsJSONObject(dockerImage, httpURLConnection);
+				String id = jsonObject.getString(DockerContainer.ID);
+				dockerImage = getDockerImage(id);
+				dockerImage.setStatusCode(DockerResponse.StatusCode.CREATED);
+			}
+			reader.close();
+			writer.close();
+		} catch (IOException e) {
+			setDockerResponse(dockerImage, e);
+		} catch (JSONException e) {
+			setDockerResponse(dockerImage, e);
+		} finally {
+			httpURLConnection.disconnect();
+		}
+		return dockerImage;
 	}
 
 	public DockerResponse deleteDockerContainer(String containerId) {
@@ -436,11 +480,24 @@ public class DockerServer {
 						dockerImage.setVirtualSize(jsonObject.getLong(DockerImage.VIRTUAL_SIZE));
 					}
 					if (jsonObject.has(DockerImage.REPOTAGS)) {
+						// Create a separate image for each tag in the repository
 						JSONArray repotags = jsonObject.getJSONArray(DockerImage.REPOTAGS);
 						for (int j = 0, jsize = repotags.length(); j < jsize; j++) {
 							String[] repoTag = repotags.getString(j).split(":");
-							dockerImage.setRepository(repoTag[0]);
-							dockerImage.addTag(repoTag[1]);
+							if (j == 0) {
+								// first tag
+								dockerImage.setRepository(repoTag[0]);
+								dockerImage.setTag(repoTag[1]);
+							} else {
+								// second and other tags
+								DockerImage nextDockerImage = new DockerImage();
+								nextDockerImage.setId(dockerImage.getId());
+								nextDockerImage.setCreated(dockerImage.getCreated());
+								nextDockerImage.setSize(dockerImage.getSize());
+								nextDockerImage.setRepository(dockerImage.getRepository());
+								nextDockerImage.setTag(repoTag[1]);
+								dockerImages.addImage(nextDockerImage);
+							}
 						}
 					}
 					dockerImages.addImage(dockerImage);
@@ -485,6 +542,11 @@ public class DockerServer {
 			}
 		} catch (IOException e) {
 			setDockerResponse(dockerResponse, e);
+			if (e instanceof ConnectException && e.getLocalizedMessage().contains("Connection refused")) {
+				// connection refused means the docker server is not running.
+				dockerResponse.setStatusCode(DockerResponse.StatusCode.CONNECTION_REFUSED);
+				return DockerResponse.StatusCode.CONNECTION_REFUSED;
+			}
 		}
 		return DockerResponse.StatusCode.SERVER_ERROR;
 	}

@@ -62,6 +62,11 @@ public class ServerConstants {
 	public static final String CONFIG_AUTH_USER_CREATION_FORCE_EMAIL = "orion.auth.user.creation.force.email"; //$NON-NLS-1$
 
 	/**
+	 * The name of configuration property specifying the uri for the docker server.
+	 */
+	public static final String CONFIG_DOCKER_URI = "orion.core.docker.uri"; //$NON-NLS-1$
+
+	/**
 	 * The name of a configuration property specifying a comma-separated list of server
 	 * file system paths where user content can be written. By default user content
 	 * can only appear within the server instance location (workspace).
@@ -105,7 +110,7 @@ public class ServerConstants {
 	 * The name of configuration property specifying if TLS should be enabled
 	 */
 	public static final String CONFIG_MAIL_SMTP_STARTTLS = "mail.smtp.starttls.enable"; //$NON-NLS-1$
-	
+
 	/**
 	 * The name of configuration property specifying which meta store should be enabled
 	 */

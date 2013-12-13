@@ -27,7 +27,7 @@ public class DockerResponse {
 	 * 500 - server error
 	 */
 	public enum StatusCode {
-		ATTACHED, DETACHED, BAD_PARAMETER, CREATED, DELETED, NO_SUCH_CONTAINER, NO_SUCH_IMAGE, OK, SERVER_ERROR, STARTED, STOPPED
+		ATTACHED, BAD_PARAMETER, CONNECTION_REFUSED, CREATED, DELETED, DETACHED, NO_SUCH_CONTAINER, NO_SUCH_IMAGE, OK, SERVER_ERROR, STARTED, STOPPED
 	};
 
 	private StatusCode statusCode;
@@ -39,8 +39,8 @@ public class DockerResponse {
 
 	public DockerResponse() {
 		super();
-		// set the status code to server error on creation, we have not connected to the docker server yet.
-		statusCode = StatusCode.SERVER_ERROR;
+		// set the status code to connection refused, we have not been able to connect to the docker server yet.
+		statusCode = StatusCode.CONNECTION_REFUSED;
 	}
 
 	public StatusCode getStatusCode() {
@@ -58,4 +58,10 @@ public class DockerResponse {
 	public void setStatusMessage(String statusMessage) {
 		this.statusMessage = statusMessage;
 	}
+
+	@Override
+	public String toString() {
+		return "statusCode = " + statusCode.toString() + ", statusMessage = " + statusMessage;
+	}
+
 }

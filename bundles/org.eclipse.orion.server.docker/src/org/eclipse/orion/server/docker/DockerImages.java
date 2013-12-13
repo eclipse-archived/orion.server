@@ -21,6 +21,11 @@ import org.eclipse.orion.server.docker.servlets.DockerResponse;
  * @author Anthony Hunter
  */
 public class DockerImages extends DockerResponse {
+	
+    public static final String IMAGES = "Images";
+
+    public static final String IMAGES_PATH = "images";
+
 	private List<DockerImage> images;
 
 	public DockerImages() {
@@ -28,12 +33,12 @@ public class DockerImages extends DockerResponse {
 		this.images = new ArrayList<DockerImage>();
 	}
 
-	public List<DockerImage> getImages() {
-		return images;
-	}
-
 	public void addImage(DockerImage image) {
 		this.images.add(image);
+	}
+
+	public List<DockerImage> getImages() {
+		return images;
 	}
 
 }
