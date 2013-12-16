@@ -128,7 +128,11 @@ public class Indexer extends Job {
 			SubMonitor progress = SubMonitor.convert(monitor, workspaceIds.size());
 			for (String workspaceId : workspaceIds) {
 				WorkspaceInfo workspace = store.readWorkspace(workspaceId);
-				indexed += indexWorkspace(user, workspace, progress.newChild(1), documents);
+				if (workspace != null) {
+					indexed += indexWorkspace(user, workspace, progress.newChild(1), documents);
+				} else {
+					handleIndexingFailure(new RuntimeException("Unexpected missing workspace: " + workspaceId), null); //$NON-NLS-1$
+				}
 			}
 		} catch (CoreException e) {
 			handleIndexingFailure(e, null);
