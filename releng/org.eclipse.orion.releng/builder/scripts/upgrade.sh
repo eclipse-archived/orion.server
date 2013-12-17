@@ -73,6 +73,10 @@ sed -i 's/384m/5000m/g' $serverHome/eclipse/orion.ini
 sed -i '/^-console$/ d' $serverHome/eclipse/orion.ini
 #set workspace location
 sed -i 's/serverworkspace/\/home\/data\/nfs\/serverworkspace/g' $serverHome/eclipse/orion.ini
+#specify Java 7 VM
+sed -i '/^-vmargs$/i \
+-vm \
+$serverHome/jdk1.7.0_25/jre/bin/java' $serverHome/eclipse/orion.ini
 
 #copy orion.conf file into server
 cp $serverHome/orion.conf $serverHome/eclipse/orion.conf
