@@ -255,10 +255,13 @@ public class DockerHandler extends ServletResourceHandler<String> {
 
 				// start the container for the user
 				dockerContainer = dockerServer.startDockerContainer(user, volumes);
-				if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.STARTED) {
+				if (dockerContainer.getStatusCode() == DockerResponse.StatusCode.STARTED) {
+					logger.debug("Started Docker Container " + dockerContainer.getId() + " for user " + user);
+				} else if (dockerContainer.getStatusCode() == DockerResponse.StatusCode.RUNNING) {
+					logger.debug("Docker Container " + dockerContainer.getId() + " for user " + user + " is already running");
+				} else {
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
 				}
-				logger.debug("Started Docker Container " + dockerContainer.getId() + " for user " + user);
 
 				return true;
 			} else if (dockerRequest.equals("stop")) {
@@ -294,14 +297,15 @@ public class DockerHandler extends ServletResourceHandler<String> {
 				}
 
 				if (sockets.containsKey(user)) {
-					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Already attached to container", null));
+					logger.debug("Docker Container " + dockerContainer.getId() + " for user " + user + " is already attached");
+					return true;
 				}
 
 				DockerResponse dockerResponse = dockerServer.attachWSDockerContainer(user, sockets);
 				if (dockerResponse.getStatusCode() != DockerResponse.StatusCode.ATTACHED) {
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
 				}
-				logger.debug("Attach Docker Container " + dockerContainer.getId() + "successful, result is");
+				logger.debug("Attach Docker Container " + dockerContainer.getId() + " successful, result is ");
 				logger.debug(dockerResponse.getStatusMessage());
 				JSONObject jsonObject = new JSONObject();
 				jsonObject.put("result", dockerResponse.getStatusMessage());
@@ -317,7 +321,7 @@ public class DockerHandler extends ServletResourceHandler<String> {
 				if (dockerResponse.getStatusCode() != DockerResponse.StatusCode.OK) {
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
 				}
-				logger.debug("Process command " + dockerContainer.getId() + "successful, result is");
+				logger.debug("Process command " + dockerContainer.getId() + " successful, result is ");
 				logger.debug(dockerResponse.getStatusMessage());
 
 				JSONObject jsonObject = new JSONObject();

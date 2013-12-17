@@ -680,6 +680,12 @@ public class DockerServer {
 				// return the docker container with updated status information.
 				dockerContainer = getDockerContainer(containerId);
 				dockerContainer.setStatusCode(DockerResponse.StatusCode.STARTED);
+			} else if (dockerContainer.getStatusCode().equals(DockerResponse.StatusCode.SERVER_ERROR)) {
+				// handle HTTP Error: statusCode=500 start: Cannot start container: The container is already running.
+				dockerContainer = getDockerContainer(containerId);
+				if (dockerContainer.getStatus().startsWith("Started at")) {
+					dockerContainer.setStatusCode(DockerResponse.StatusCode.RUNNING);
+				}
 			}
 			outputStream.close();
 		} catch (IOException e) {
