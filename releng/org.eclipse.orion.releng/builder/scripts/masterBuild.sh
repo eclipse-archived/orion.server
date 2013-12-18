@@ -41,6 +41,9 @@ do
 			compareMaps="";
 			fetchTag="-DfetchTag=CVS=HEAD,GIT=origin/master";;
 
+        "-fetchTag")
+                fetchTag="$2"; shift;;
+
 		"-baseBuilder")
 			baseBuilderBranch="$2"; shift;;
 			
