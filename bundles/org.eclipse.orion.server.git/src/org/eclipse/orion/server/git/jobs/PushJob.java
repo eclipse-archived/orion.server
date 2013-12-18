@@ -13,8 +13,7 @@ package org.eclipse.orion.server.git.jobs;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.Git;
@@ -66,6 +65,11 @@ public class PushJob extends GitJob {
 		pushCommand.setCredentialsProvider(credentials);
 
 		RefSpec spec = new RefSpec(srcRef + ':' + Constants.R_HEADS + branch);
+		List<RefSpec> pushRefSpecs = remoteConfig.getPushRefSpecs();
+		if (pushRefSpecs.size() > 0) {
+			spec = pushRefSpecs.get(0);
+		}
+
 		pushCommand.setRemote(remote).setRefSpecs(spec);
 		if (tags)
 			pushCommand.setPushTags();
@@ -95,7 +99,7 @@ public class PushJob extends GitJob {
 		else
 			// if there is no OK status in the set -> only UP_TO_DATE status is possible
 			return new Status(IStatus.WARNING, GitActivator.PI_GIT, RemoteRefUpdate.Status.UP_TO_DATE.name());
-	}
+		}
 
 	@Override
 	protected IStatus performJob() {
