@@ -177,14 +177,24 @@ public class DockerServer {
 		DockerSocket socket = client.getSocket();
 		socket.sendCmd(command);
 		try {
+			String outMessage = "";
 			if (socket.waitResponse(5, TimeUnit.SECONDS)) {
-				dockerResponse.setStatusMessage(socket.getOutMessage());
+				outMessage = socket.getOutMessage();
 			}
+			if (command.equals("\r")) {
+				// when a user hits return, the response to the command could span multiple lines or take a while to process
+				// keep looking for the default command prompt
+				while (!outMessage.contains("orionuser@")) {
+					if (socket.waitResponse(5, TimeUnit.SECONDS)) {
+						outMessage = socket.getOutMessage();
+					}
+				}
+			}
+			dockerResponse.setStatusMessage(outMessage);
+			dockerResponse.setStatusCode(DockerResponse.StatusCode.OK);
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			setDockerResponse(dockerResponse, e);
 		}
-		dockerResponse.setStatusCode(DockerResponse.StatusCode.OK);
 		return dockerResponse;
 	}
 

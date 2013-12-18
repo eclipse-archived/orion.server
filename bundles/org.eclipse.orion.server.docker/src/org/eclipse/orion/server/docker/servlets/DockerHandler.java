@@ -305,10 +305,10 @@ public class DockerHandler extends ServletResourceHandler<String> {
 				if (dockerResponse.getStatusCode() != DockerResponse.StatusCode.ATTACHED) {
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
 				}
-				logger.debug("Attach Docker Container " + dockerContainer.getId() + " successful, result is ");
-				logger.debug(dockerResponse.getStatusMessage());
 				JSONObject jsonObject = new JSONObject();
 				jsonObject.put("result", dockerResponse.getStatusMessage());
+				logger.debug("Attach Docker Container " + dockerContainer.getId() + " successful, result is " + jsonObject.getString("result"));
+
 				return true;
 			} else if (dockerRequest.equals("process")) {
 				DockerContainer dockerContainer = dockerServer.getDockerContainer(user);
@@ -321,11 +321,10 @@ public class DockerHandler extends ServletResourceHandler<String> {
 				if (dockerResponse.getStatusCode() != DockerResponse.StatusCode.OK) {
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
 				}
-				logger.debug("Process command " + dockerContainer.getId() + " successful, result is ");
-				logger.debug(dockerResponse.getStatusMessage());
 
 				JSONObject jsonObject = new JSONObject();
 				jsonObject.put("result", dockerResponse.getStatusMessage());
+				logger.debug("Process command " + dockerContainer.getId() + " successful, result is " + jsonObject.getString("result"));
 				OrionServlet.writeJSONResponse(request, response, jsonObject);
 
 				return true;
