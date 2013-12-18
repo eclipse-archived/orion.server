@@ -283,6 +283,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			}
 
 			boolean amend = Boolean.parseBoolean(requestObject.optString(GitConstants.KEY_COMMIT_AMEND, null));
+			boolean insertChangeId = Boolean.parseBoolean(requestObject.optString(GitConstants.KEY_CHANGE_ID, null));
 
 			String committerName = requestObject.optString(GitConstants.KEY_COMMITTER_NAME, null);
 			String committerEmail = requestObject.optString(GitConstants.KEY_COMMITTER_EMAIL, null);
@@ -305,6 +306,8 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 				authorEmail = committerEmail;
 			cc.setCommitter(committerName, committerEmail);
 			cc.setAuthor(authorName, authorEmail);
+			if (insertChangeId)
+				cc.setInsertChangeId(true);
 
 			// support for committing by path: "git commit -o path"
 			if (!pattern.isEmpty()) {

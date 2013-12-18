@@ -141,6 +141,8 @@ public class GitConstants {
 
 	public static final String KEY_COMMITTER_EMAIL = "CommitterEmail"; //$NON-NLS-1$
 
+	public static final String KEY_CHANGE_ID = "ChangeId"; //$NON-NLS-1$
+
 	public static final String KEY_FETCH = "Fetch"; //$NON-NLS-1$
 
 	public static final String KEY_PULL = "Pull"; //$NON-NLS-1$
