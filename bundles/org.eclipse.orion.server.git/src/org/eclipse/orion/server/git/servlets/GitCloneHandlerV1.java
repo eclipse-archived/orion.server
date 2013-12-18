@@ -427,7 +427,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			UserInfo user = OrionConfiguration.getMetaStore().readUser(userName);
 			for (String workspaceId : user.getWorkspaceIds()) {
 				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(workspaceId);
-				if (workspace.getProjectNames().contains(webProject.getFullName()))
+				if (workspace != null && workspace.getProjectNames().contains(webProject.getFullName()))
 					return true;
 			}
 		} catch (Exception e) {
@@ -452,6 +452,8 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			UserInfo user = OrionConfiguration.getMetaStore().readUser(userId);
 			for (String workspaceId : user.getWorkspaceIds()) {
 				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(workspaceId);
+				if (workspace == null)
+					continue;
 				for (String projectName : workspace.getProjectNames()) {
 					if (projectName.equals(project.getFullName())) {
 						//If found, remove project from workspace
