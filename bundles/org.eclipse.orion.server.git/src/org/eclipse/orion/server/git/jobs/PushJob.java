@@ -13,6 +13,7 @@ package org.eclipse.orion.server.git.jobs;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -65,8 +66,14 @@ public class PushJob extends GitJob {
 		credentials.setUri(remoteConfig.getURIs().get(0));
 		pushCommand.setCredentialsProvider(credentials);
 
-		RefSpec spec = new RefSpec(srcRef + ':' + Constants.R_HEADS + branch);
-		pushCommand.setRemote(remote).setRefSpecs(spec);
+		pushCommand.setRemote(remote);
+		List<RefSpec> pushRefSpecs = remoteConfig.getPushRefSpecs();
+		if (pushRefSpecs.size() > 0) {
+			pushCommand.setRefSpecs(pushRefSpecs);
+		} else {
+			pushCommand.setRefSpecs(new RefSpec(srcRef + ':' + Constants.R_HEADS + branch));
+		}
+
 		if (tags)
 			pushCommand.setPushTags();
 		pushCommand.setForce(force);
