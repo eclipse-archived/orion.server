@@ -55,12 +55,10 @@ import org.slf4j.LoggerFactory;
  */
 public class DockerHandler extends ServletResourceHandler<String> {
 
-	private String boundary = "byuTZNvet4LtXx5jdzVbHP";
-
 	private DockerServer dockerServer = null;
 
 	private Map<String, ClientSocket> sockets;
-	
+
 	protected ServletResourceHandler<IStatus> statusHandler;
 
 	public DockerHandler(ServletResourceHandler<IStatus> statusHandler) {
@@ -250,15 +248,21 @@ public class DockerHandler extends ServletResourceHandler<String> {
 					if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.CREATED) {
 						return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
 					}
-					logger.debug("Created Docker Container " + dockerContainer.getId() + " for user " + user);
+					if (logger.isDebugEnabled()) {
+						logger.debug("Created Docker Container " + dockerContainer.getIdShort() + " for user " + user);
+					}
 				}
 
 				// start the container for the user
 				dockerContainer = dockerServer.startDockerContainer(user, volumes);
 				if (dockerContainer.getStatusCode() == DockerResponse.StatusCode.STARTED) {
-					logger.debug("Started Docker Container " + dockerContainer.getId() + " for user " + user);
+					if (logger.isDebugEnabled()) {
+						logger.debug("Started Docker Container " + dockerContainer.getIdShort() + " for user " + user);
+					}
 				} else if (dockerContainer.getStatusCode() == DockerResponse.StatusCode.RUNNING) {
-					logger.debug("Docker Container " + dockerContainer.getId() + " for user " + user + " is already running");
+					if (logger.isDebugEnabled()) {
+						logger.debug("Docker Container " + dockerContainer.getIdShort() + " for user " + user + " is already running");
+					}
 				} else {
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
 				}
@@ -275,9 +279,13 @@ public class DockerHandler extends ServletResourceHandler<String> {
 					ClientSocket socket = sockets.get(user);
 					DockerResponse detachResponse = dockerServer.detachWSDockerContainer(socket);
 					if (detachResponse.getStatusCode() == DockerResponse.StatusCode.DETACHED) {
-						logger.debug("Detached from Docker Container " + dockerContainer.getId() + " for user " + user);
+						if (logger.isDebugEnabled()) {
+							logger.debug("Detached from Docker Container " + dockerContainer.getIdShort() + " for user " + user);
+						}
 					} else {
-						logger.debug("Problem detaching from Docker Container " + dockerContainer.getId() + " for user " + user);
+						if (logger.isDebugEnabled()) {
+							logger.debug("Problem detaching from Docker Container " + dockerContainer.getIdShort() + " for user " + user);
+						}
 					}
 					sockets.remove(user);
 				}
@@ -286,7 +294,9 @@ public class DockerHandler extends ServletResourceHandler<String> {
 				if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.STOPPED) {
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
 				}
-				logger.debug("Stopped Docker Container " + dockerContainer.getId() + " for user " + user);
+				if (logger.isDebugEnabled()) {
+					logger.debug("Stopped Docker Container " + dockerContainer.getIdShort() + " for user " + user);
+				}
 
 				return true;
 			} else if (dockerRequest.equals("attach")) {
@@ -297,7 +307,9 @@ public class DockerHandler extends ServletResourceHandler<String> {
 				}
 
 				if (sockets.containsKey(user)) {
-					logger.debug("Docker Container " + dockerContainer.getId() + " for user " + user + " is already attached");
+					if (logger.isDebugEnabled()) {
+						logger.debug("Docker Container " + dockerContainer.getIdShort() + " for user " + user + " is already attached");
+					}
 					return true;
 				}
 
@@ -305,9 +317,9 @@ public class DockerHandler extends ServletResourceHandler<String> {
 				if (dockerResponse.getStatusCode() != DockerResponse.StatusCode.ATTACHED) {
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
 				}
-				JSONObject jsonObject = new JSONObject();
-				jsonObject.put("result", dockerResponse.getStatusMessage());
-				logger.debug("Attach Docker Container " + dockerContainer.getId() + " successful, result is " + jsonObject.getString("result"));
+				if (logger.isDebugEnabled()) {
+					logger.debug("Attach Docker Container " + dockerContainer.getIdShort() + " for user " + user + " successful");
+				}
 
 				return true;
 			} else if (dockerRequest.equals("process")) {
@@ -324,7 +336,9 @@ public class DockerHandler extends ServletResourceHandler<String> {
 
 				JSONObject jsonObject = new JSONObject();
 				jsonObject.put("result", dockerResponse.getStatusMessage());
-				logger.debug("Process command " + dockerContainer.getId() + " successful, result is " + jsonObject.getString("result"));
+				if (logger.isDebugEnabled()) {
+					logger.debug("Process command in docker container " + dockerContainer.getIdShort() + " for user " + user + " successful");
+				}
 				OrionServlet.writeJSONResponse(request, response, jsonObject);
 
 				return true;
@@ -362,10 +376,12 @@ public class DockerHandler extends ServletResourceHandler<String> {
 			dockerServer = new DockerServer(dockerLocationURI);
 			DockerVersion dockerVersion = dockerServer.getDockerVersion();
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
-			if (dockerVersion.getStatusCode() != DockerResponse.StatusCode.OK) {
-				logger.error("Cound not connect to docker server " + dockerLocation + ": " + dockerVersion.getStatusMessage());
-			} else {
-				logger.debug("Docker Server " + dockerLocation + " is running version " + dockerVersion.getVersion());
+			if (logger.isDebugEnabled()) {
+				if (dockerVersion.getStatusCode() != DockerResponse.StatusCode.OK) {
+					logger.error("Cound not connect to docker server " + dockerLocation + ": " + dockerVersion.getStatusMessage());
+				} else {
+					logger.debug("Docker Server " + dockerLocation + " is running version " + dockerVersion.getVersion());
+				}
 			}
 
 		} catch (URISyntaxException e) {

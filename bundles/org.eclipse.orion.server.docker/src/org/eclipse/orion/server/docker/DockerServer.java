@@ -182,11 +182,17 @@ public class DockerServer {
 				outMessage = socket.getOutMessage();
 			}
 			if (command.equals("\r")) {
+				long timeout = System.currentTimeMillis() + 10000;
 				// when a user hits return, the response to the command could span multiple lines or take a while to process
 				// keep looking for the default command prompt
 				while (!outMessage.contains("orionuser@")) {
 					if (socket.waitResponse(5, TimeUnit.SECONDS)) {
 						outMessage = socket.getOutMessage();
+					}
+					if (System.currentTimeMillis() > timeout) {
+						// if the command takes longer than 10 seconds and we have not seen the command prompt back, then return.
+						outMessage += " timeout";
+						break;
 					}
 				}
 			}

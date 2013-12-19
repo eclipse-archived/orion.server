@@ -69,6 +69,13 @@ public class DockerContainer extends DockerResponse {
 		return id;
 	}
 
+	/**
+	 * Get the short version of the container id, the first 12 characters.
+	 */
+	public String getIdShort() {
+		return id.substring(0, 12);
+	}
+
 	public String getImage() {
 		return image;
 	}
