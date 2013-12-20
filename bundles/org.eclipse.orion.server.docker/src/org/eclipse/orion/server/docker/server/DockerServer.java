@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.server.docker;
+package org.eclipse.orion.server.docker.server;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -28,16 +28,13 @@ import java.nio.charset.Charset;
 import java.text.Format;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
-import org.eclipse.orion.server.docker.server.ClientSocket;
-import org.eclipse.orion.server.docker.servlets.DockerResponse;
-import org.eclipse.orion.server.docker.servlets.DockerSocket;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -51,100 +48,34 @@ import org.slf4j.LoggerFactory;
  */
 public class DockerServer {
 
+	private Map<String, DockerContainerConnection> containerConnections;
+
 	private URI dockerServer;
 
 	public DockerServer(URI dockerServer) {
 		super();
 		this.dockerServer = dockerServer;
+		this.containerConnections = new HashMap<String, DockerContainerConnection>();
 	}
 
-	public DockerResponse attachDockerContainer(String containerId, String command) {
-		DockerResponse dockerResponse = new DockerResponse();
-		HttpURLConnection httpURLConnection = null;
-		StringBuilder stringBuilder = new StringBuilder();
-		try {
-			URL dockerAttachURL = new URL(dockerServer.toString() + "/containers/" + containerId + "/attach?stream=1&stdout=1&stdin=1&stderr=1");
-			httpURLConnection = (HttpURLConnection) dockerAttachURL.openConnection();
-			httpURLConnection.setDoOutput(true);
-			httpURLConnection.setDoInput(true);
-			httpURLConnection.setConnectTimeout(10 * 1000);
-			httpURLConnection.setReadTimeout(5 * 1000);
-			httpURLConnection.setAllowUserInteraction(false);
-			//httpURLConnection.setRequestProperty("Content-Type", "application/vnd.docker.raw-stream");
-			httpURLConnection.setRequestProperty("Content-Type", "text/plain; charset=utf-8");
-			httpURLConnection.setRequestMethod("POST");
-			httpURLConnection.connect();
-			OutputStream outputStream = httpURLConnection.getOutputStream();
-			outputStream.write(command.getBytes());
-			outputStream.flush();
-			outputStream.close();
-
-			getDockerResponse(dockerResponse, httpURLConnection);
-
-			InputStream inputStream = httpURLConnection.getInputStream();
-			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-			String line = null;
-			while ((line = bufferedReader.readLine()) != null) {
-				stringBuilder.append(line).append("\n");
-			}
-			inputStream.close();
-			dockerResponse.setStatusMessage(stringBuilder.toString());
-			/*
-			// first read the 8 byte header
-			byte[] header = new byte[8];
-			int count = inputStream.read(header);
-			if (count != 8) {
-				System.err.println("something is wrong, cannot read first 8 bytes");
-			}
-			System.out.println(new String(header));
-
-			// get the size of the characters in the response
-			long uint32 = ((header[4] & 0xFF) << 24) | ((header[5] & 0xFF) << 16) | ((header[6] & 0xFF) << 8) | (header[7] & 0xFF);
-			if (uint32 > Integer.MAX_VALUE) {
-				System.err.println("buffer is too big, something is wrong");
-			}
-			int size = (int) uint32;
-
-			// get the rest of the response
-			byte[] chars = new byte[size];
-			count = inputStream.read(chars);
-			if (count != size) {
-				System.err.println("something is wrong, size is not right");
-			}
-
-			inputStream.close();
-			String result = new String(chars);
-			System.out.print(result);
-			*/
-			inputStream.close();
-		} catch (IOException e) {
-			if (stringBuilder.length() > 0) {
-				// the input stream is hanging, put what we have received in the response.
-				dockerResponse.setStatusMessage(stringBuilder.toString());
-			} else {
-				setDockerResponse(dockerResponse, e);
-			}
-		} finally {
-			httpURLConnection.disconnect();
-		}
-		return dockerResponse;
-	}
-
-	public DockerResponse attachWSDockerContainer(String containerId, String originURL, Map<String, ClientSocket> sockets) {
+	public DockerResponse attachDockerContainer(String containerId, String originURL) {
 		DockerResponse dockerResponse = new DockerResponse();
 		try {
 			String wsServer = dockerServer.toString().replaceFirst("http", "ws");
 			URI dockerAttachURI = new URI(wsServer + "/containers/" + containerId + "/attach/ws?stream=1&stdin=1&stdout=1&stderr=1");
 			WebSocketClient client = new WebSocketClient();
-			DockerSocket socket = new DockerSocket();
+			DockerWebSocket socket = new DockerWebSocket();
 			try {
 				client.start();
 				ClientUpgradeRequest request = new ClientUpgradeRequest();
 				request.setHeader("Origin", originURL);
 				Future<org.eclipse.jetty.websocket.api.Session> future = client.connect(socket, dockerAttachURI, request);
-				System.out.printf("Connecting to : %s%n", dockerAttachURI);
+				Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+				if (logger.isDebugEnabled()) {
+					logger.debug("Docker attach: connecting to : %s%n", dockerAttachURI);
+				}
 				future.get();
-				sockets.put(containerId, new ClientSocket(socket, client));
+				containerConnections.put(containerId, new DockerContainerConnection(socket, client));
 				dockerResponse.setStatusCode(DockerResponse.StatusCode.ATTACHED);
 			} catch (Throwable t) {
 				t.printStackTrace();
@@ -159,49 +90,6 @@ public class DockerServer {
 			setDockerResponse(dockerResponse, e);
 		}
 
-		return dockerResponse;
-	}
-
-	public DockerResponse detachWSDockerContainer(ClientSocket socket) {
-		DockerResponse dockerResponse = new DockerResponse();
-		try {
-			socket.getSocketClient().stop();
-			dockerResponse.setStatusCode(DockerResponse.StatusCode.DETACHED);
-		} catch (Exception e) {
-			dockerResponse.setStatusCode(DockerResponse.StatusCode.SERVER_ERROR);
-		}
-		return dockerResponse;
-	}
-
-	public DockerResponse processCommand(ClientSocket client, String command) {
-		DockerResponse dockerResponse = new DockerResponse();
-		DockerSocket socket = client.getSocket();
-		socket.sendCmd(command);
-		try {
-			String outMessage = "";
-			if (socket.waitResponse(5, TimeUnit.SECONDS)) {
-				outMessage = socket.getOutMessage();
-			}
-			if (command.equals("\r")) {
-				long timeout = System.currentTimeMillis() + 10000;
-				// when a user hits return, the response to the command could span multiple lines or take a while to process
-				// keep looking for the default command prompt
-				while (!outMessage.contains("orionuser@")) {
-					if (socket.waitResponse(5, TimeUnit.SECONDS)) {
-						outMessage = socket.getOutMessage();
-					}
-					if (System.currentTimeMillis() > timeout) {
-						// if the command takes longer than 10 seconds and we have not seen the command prompt back, then return.
-						outMessage += " timeout";
-						break;
-					}
-				}
-			}
-			dockerResponse.setStatusMessage(outMessage);
-			dockerResponse.setStatusCode(DockerResponse.StatusCode.OK);
-		} catch (InterruptedException e) {
-			setDockerResponse(dockerResponse, e);
-		}
 		return dockerResponse;
 	}
 
@@ -314,6 +202,23 @@ public class DockerServer {
 			setDockerResponse(dockerResponse, e);
 		} finally {
 			httpURLConnection.disconnect();
+		}
+		return dockerResponse;
+	}
+
+	public DockerResponse detachDockerContainer(String user) {
+		DockerContainerConnection clientSocket = containerConnections.get(user);
+		DockerResponse dockerResponse = new DockerResponse();
+		try {
+			if (clientSocket == null) {
+				dockerResponse.setStatusCode(DockerResponse.StatusCode.SERVER_ERROR);
+			} else {
+				clientSocket.getWebSocketClient().stop();
+				dockerResponse.setStatusCode(DockerResponse.StatusCode.DETACHED);
+				containerConnections.remove(user);
+			}
+		} catch (Exception e) {
+			dockerResponse.setStatusCode(DockerResponse.StatusCode.SERVER_ERROR);
 		}
 		return dockerResponse;
 	}
@@ -611,6 +516,10 @@ public class DockerServer {
 		return dockerVersion;
 	}
 
+	public boolean isAttachedDockerContainer(String user) {
+		return containerConnections.containsKey(user);
+	}
+
 	private JSONArray readDockerResponseAsJSONArray(DockerResponse dockerResponse, HttpURLConnection httpURLConnection) {
 		try {
 			String dockerResponseAsString = readDockerResponseAsString(dockerResponse, httpURLConnection);
@@ -659,6 +568,39 @@ public class DockerServer {
 			logger.error(e.getLocalizedMessage(), e);
 		}
 		return "{}";
+	}
+
+	public DockerResponse sendTextDockerContainer(String user, String text) {
+		DockerResponse dockerResponse = new DockerResponse();
+		DockerContainerConnection client = containerConnections.get(user);
+		DockerWebSocket socket = client.getWebSocket();
+		socket.send(text);
+		try {
+			String response = "";
+			if (socket.waitResponse()) {
+				response = socket.getResponse();
+			}
+			if (text.equals("\r")) {
+				long timeout = System.currentTimeMillis() + 10000;
+				// when a user hits return, the response to the command could span multiple lines or take a while to process
+				// keep looking for the default command prompt
+				while (!response.contains("orionuser@")) {
+					if (socket.waitResponse()) {
+						response = socket.getResponse();
+					}
+					if (System.currentTimeMillis() > timeout) {
+						// if the command takes longer than 10 seconds and we have not seen the command prompt back, then return.
+						response += " timeout";
+						break;
+					}
+				}
+			}
+			dockerResponse.setStatusMessage(response);
+			dockerResponse.setStatusCode(DockerResponse.StatusCode.OK);
+		} catch (InterruptedException e) {
+			setDockerResponse(dockerResponse, e);
+		}
+		return dockerResponse;
 	}
 
 	private void setDockerResponse(DockerResponse dockerResponse, Exception e) {

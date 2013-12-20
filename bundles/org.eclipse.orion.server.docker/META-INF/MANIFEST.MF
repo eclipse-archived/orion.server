@@ -12,6 +12,7 @@ Require-Bundle: org.eclipse.core.runtime,
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
 Export-Package: org.eclipse.orion.server.docker,
+ org.eclipse.orion.server.docker.server,
  org.eclipse.orion.server.docker.servlets
 Import-Package: javax.servlet;version="2.6.0",
  javax.servlet.http;version="2.6.0",

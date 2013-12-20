@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.server.docker.servlets;
+package org.eclipse.orion.server.docker.server;
 
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
@@ -25,17 +25,28 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Handles a web socket connection to a docker container.
+ *  
+ * @author Anthony Hunter
+ * @author Bogdan Gheorghe
+ */
 @WebSocket
-public class DockerSocket {
+public class DockerWebSocket {
 
 	private CountDownLatch messageLatch;
 
-	private String outMessage;
+	private String response;
 
 	private Session session;
 
-	public String getOutMessage() {
-		return this.outMessage;
+	/**
+	 * Get the current response received from the web socket.
+	 * 
+	 * @return the current response.
+	 */
+	public String getResponse() {
+		return this.response;
 	}
 
 	@OnWebSocketConnect
@@ -58,7 +69,7 @@ public class DockerSocket {
 			}
 			logger.debug("Docker Socket received: " + received);
 		}
-		this.outMessage += msg;
+		this.response += msg;
 		this.messageLatch.countDown();
 	}
 
@@ -71,22 +82,27 @@ public class DockerSocket {
 		session.close();
 	}
 
-	public void sendCmd(String cmd) {
+	/**
+	 * Send the message through the web socket.
+	 * 
+	 * @param msg the message.
+	 */
+	public void send(String msg) {
 		try {
 			if (!session.isOpen()) {
 				// session has been closed, just return
 				return;
 			}
 			this.messageLatch = new CountDownLatch(1);
-			this.outMessage = "";
-			this.session.getRemote().sendString(cmd);
+			this.response = "";
+			this.session.getRemote().sendString(msg);
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
 			if (logger.isDebugEnabled()) {
 				// Create a JSONObject as a good way to print out the control characters as \r, \n, etc.
 				JSONObject jsonObject = new JSONObject();
-				String sent = cmd;
+				String sent = msg;
 				try {
-					jsonObject.put("message", cmd);
+					jsonObject.put("message", msg);
 					sent = jsonObject.toString();
 				} catch (JSONException e) {
 					// do not do anything here, just use the cmd
@@ -100,7 +116,13 @@ public class DockerSocket {
 		}
 	}
 
-	public boolean waitResponse(int amount, TimeUnit unit) throws InterruptedException {
-		return this.messageLatch.await(amount, unit);
+	/**
+	 * Wait for a message on the web socket.
+	 * 
+	 * @return true if a message has been received.
+	 * @throws InterruptedException
+	 */
+	public boolean waitResponse() throws InterruptedException {
+		return this.messageLatch.await(5, TimeUnit.SECONDS);
 	}
 }

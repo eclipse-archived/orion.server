@@ -15,13 +15,13 @@ import static org.junit.Assert.assertEquals;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import org.eclipse.orion.server.docker.DockerContainer;
-import org.eclipse.orion.server.docker.DockerContainers;
-import org.eclipse.orion.server.docker.DockerImage;
-import org.eclipse.orion.server.docker.DockerImages;
-import org.eclipse.orion.server.docker.DockerServer;
-import org.eclipse.orion.server.docker.DockerVersion;
-import org.eclipse.orion.server.docker.servlets.DockerResponse;
+import org.eclipse.orion.server.docker.server.DockerContainer;
+import org.eclipse.orion.server.docker.server.DockerContainers;
+import org.eclipse.orion.server.docker.server.DockerImage;
+import org.eclipse.orion.server.docker.server.DockerImages;
+import org.eclipse.orion.server.docker.server.DockerResponse;
+import org.eclipse.orion.server.docker.server.DockerServer;
+import org.eclipse.orion.server.docker.server.DockerVersion;
 import org.junit.Test;
 
 /**

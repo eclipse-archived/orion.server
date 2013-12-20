@@ -14,9 +14,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -34,13 +32,13 @@ import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
-import org.eclipse.orion.server.docker.DockerContainer;
-import org.eclipse.orion.server.docker.DockerContainers;
-import org.eclipse.orion.server.docker.DockerImage;
-import org.eclipse.orion.server.docker.DockerImages;
-import org.eclipse.orion.server.docker.DockerServer;
-import org.eclipse.orion.server.docker.DockerVersion;
-import org.eclipse.orion.server.docker.server.ClientSocket;
+import org.eclipse.orion.server.docker.server.DockerContainer;
+import org.eclipse.orion.server.docker.server.DockerContainers;
+import org.eclipse.orion.server.docker.server.DockerImage;
+import org.eclipse.orion.server.docker.server.DockerImages;
+import org.eclipse.orion.server.docker.server.DockerResponse;
+import org.eclipse.orion.server.docker.server.DockerServer;
+import org.eclipse.orion.server.docker.server.DockerVersion;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -58,13 +56,10 @@ public class DockerHandler extends ServletResourceHandler<String> {
 
 	private DockerServer dockerServer = null;
 
-	private Map<String, ClientSocket> sockets;
-
 	protected ServletResourceHandler<IStatus> statusHandler;
 
 	public DockerHandler(ServletResourceHandler<IStatus> statusHandler) {
 		this.statusHandler = statusHandler;
-		this.sockets = new HashMap<String, ClientSocket>();
 		initDockerServer();
 	}
 
@@ -319,10 +314,9 @@ public class DockerHandler extends ServletResourceHandler<String> {
 				if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.OK) {
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
 				}
-				// detach if connected
-				if (sockets.containsKey(user)) {
-					ClientSocket socket = sockets.get(user);
-					DockerResponse detachResponse = dockerServer.detachWSDockerContainer(socket);
+				// detach if we have an open connection for the user
+				if (dockerServer.isAttachedDockerContainer(user)) {
+					DockerResponse detachResponse = dockerServer.detachDockerContainer(user);
 					if (detachResponse.getStatusCode() == DockerResponse.StatusCode.DETACHED) {
 						if (logger.isDebugEnabled()) {
 							logger.debug("Detached from Docker Container " + dockerContainer.getIdShort() + " for user " + user);
@@ -332,7 +326,6 @@ public class DockerHandler extends ServletResourceHandler<String> {
 							logger.debug("Problem detaching from Docker Container " + dockerContainer.getIdShort() + " for user " + user);
 						}
 					}
-					sockets.remove(user);
 				}
 				// stop the container for the user
 				dockerContainer = dockerServer.stopDockerContainer(user);
@@ -351,7 +344,7 @@ public class DockerHandler extends ServletResourceHandler<String> {
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
 				}
 
-				if (sockets.containsKey(user)) {
+				if (dockerServer.isAttachedDockerContainer(user)) {
 					if (logger.isDebugEnabled()) {
 						logger.debug("Docker Container " + dockerContainer.getIdShort() + " for user " + user + " is already attached");
 					}
@@ -359,7 +352,7 @@ public class DockerHandler extends ServletResourceHandler<String> {
 				}
 				
 				String originURL = request.getRequestURL().toString();
-				DockerResponse dockerResponse = dockerServer.attachWSDockerContainer(user, originURL, sockets);
+				DockerResponse dockerResponse = dockerServer.attachDockerContainer(user, originURL);
 				if (dockerResponse.getStatusCode() != DockerResponse.StatusCode.ATTACHED) {
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
 				}
@@ -369,13 +362,17 @@ public class DockerHandler extends ServletResourceHandler<String> {
 
 				return true;
 			} else if (dockerRequest.equals("process")) {
+				// get the container for the user
 				DockerContainer dockerContainer = dockerServer.getDockerContainer(user);
-				if (!sockets.containsKey(user)) {
-					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "No socket connection", null));
+				if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.OK) {
+					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
 				}
-				ClientSocket clientSocket = sockets.get(user);
 
-				DockerResponse dockerResponse = dockerServer.processCommand(clientSocket, command);
+				if (! dockerServer.isAttachedDockerContainer(user)) {
+					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "No socket connection to the container", null));
+				}
+
+				DockerResponse dockerResponse = dockerServer.sendTextDockerContainer(user, command);
 				if (dockerResponse.getStatusCode() != DockerResponse.StatusCode.OK) {
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
 				}

@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.server.docker.servlets;
+package org.eclipse.orion.server.docker.server;
 
 /**
  * The response received from the Docker Remote API call.

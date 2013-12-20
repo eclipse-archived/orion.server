@@ -8,37 +8,35 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.server.docker;
+package org.eclipse.orion.server.docker.server;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.orion.server.docker.servlets.DockerResponse;
-
 /**
- * The response for container list request using the Docker Remote API.
+ * The response for image list request using the Docker Remote API.
  *  
  * @author Anthony Hunter
  */
-public class DockerContainers extends DockerResponse {
+public class DockerImages extends DockerResponse {
+	
+    public static final String IMAGES = "Images";
 
-	public static final String CONTAINERS = "Containers";
+    public static final String IMAGES_PATH = "images";
 
-	public static final String CONTAINERS_PATH = "containers";
+	private List<DockerImage> images;
 
-	private List<DockerContainer> containers;
-
-	public DockerContainers() {
+	public DockerImages() {
 		super();
-		this.containers = new ArrayList<DockerContainer>();
+		this.images = new ArrayList<DockerImage>();
 	}
 
-	public List<DockerContainer> getContainers() {
-		return containers;
+	public void addImage(DockerImage image) {
+		this.images.add(image);
 	}
 
-	public void addContainer(DockerContainer Container) {
-		this.containers.add(Container);
+	public List<DockerImage> getImages() {
+		return images;
 	}
 
 }
