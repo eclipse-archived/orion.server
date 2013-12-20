@@ -357,8 +357,9 @@ public class DockerHandler extends ServletResourceHandler<String> {
 					}
 					return true;
 				}
-
-				DockerResponse dockerResponse = dockerServer.attachWSDockerContainer(user, sockets);
+				
+				String originURL = request.getRequestURL().toString();
+				DockerResponse dockerResponse = dockerServer.attachWSDockerContainer(user, originURL, sockets);
 				if (dockerResponse.getStatusCode() != DockerResponse.StatusCode.ATTACHED) {
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
 				}

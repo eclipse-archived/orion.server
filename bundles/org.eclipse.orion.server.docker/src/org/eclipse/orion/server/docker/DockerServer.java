@@ -129,7 +129,7 @@ public class DockerServer {
 		return dockerResponse;
 	}
 
-	public DockerResponse attachWSDockerContainer(String containerId, Map<String, ClientSocket> sockets) {
+	public DockerResponse attachWSDockerContainer(String containerId, String originURL, Map<String, ClientSocket> sockets) {
 		DockerResponse dockerResponse = new DockerResponse();
 		try {
 			String wsServer = dockerServer.toString().replaceFirst("http", "ws");
@@ -139,7 +139,7 @@ public class DockerServer {
 			try {
 				client.start();
 				ClientUpgradeRequest request = new ClientUpgradeRequest();
-				request.setHeader("Origin", "http://localhost:8080");
+				request.setHeader("Origin", originURL);
 				Future<org.eclipse.jetty.websocket.api.Session> future = client.connect(socket, dockerAttachURI, request);
 				System.out.printf("Connecting to : %s%n", dockerAttachURI);
 				future.get();
