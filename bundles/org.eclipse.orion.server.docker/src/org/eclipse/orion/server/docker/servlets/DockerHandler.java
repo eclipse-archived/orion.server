@@ -262,136 +262,168 @@ public class DockerHandler extends ServletResourceHandler<String> {
 		return false;
 	}
 
-	private boolean handlePostRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException {
+	private boolean handlePostRequest(HttpServletRequest request, HttpServletResponse response, String path) throws ServletException {
+		String[] pathSplit = path.split("\\/", 2);
+		String dockerRequest = pathSplit[0];
+		if (dockerRequest.equals(DockerContainer.CONTAINER_START_PATH)) {
+			return handleStartDockerContainerRequest(request, response);
+		} else if (dockerRequest.equals(DockerContainer.CONTAINER_ATTACH_PATH)) {
+			return handleAttachDockerContainerRequest(request, response);
+		} else if (dockerRequest.equals(DockerContainer.CONTAINER_SEND_PATH)) {
+			return handleSendTextDockerContainerRequest(request, response);
+		} else if (dockerRequest.equals(DockerContainer.CONTAINER_STOP_PATH)) {
+			return handleStopDockerContainerRequest(request, response);
+		}
+		return false;
+	}
+
+	private boolean handleStopDockerContainerRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException {
+		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
+
+		String user = request.getRemoteUser();
+
+		DockerServer dockerServer = getDockerServer();
+
+		// get the container for the user
+		DockerContainer dockerContainer = dockerServer.getDockerContainer(user);
+		if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.OK) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
+		}
+		// detach if we have an open connection for the user
+		if (dockerServer.isAttachedDockerContainer(user)) {
+			DockerResponse detachResponse = dockerServer.detachDockerContainer(user);
+			if (detachResponse.getStatusCode() == DockerResponse.StatusCode.DETACHED) {
+				if (logger.isDebugEnabled()) {
+					logger.debug("Detached from Docker Container " + dockerContainer.getIdShort() + " for user " + user);
+				}
+			} else {
+				if (logger.isDebugEnabled()) {
+					logger.debug("Problem detaching from Docker Container " + dockerContainer.getIdShort() + " for user " + user);
+				}
+			}
+		}
+		// stop the container for the user
+		dockerContainer = dockerServer.stopDockerContainer(user);
+		if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.STOPPED) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
+		}
+		if (logger.isDebugEnabled()) {
+			logger.debug("Stopped Docker Container " + dockerContainer.getIdShort() + " for user " + user);
+		}
+
+		return true;
+	}
+
+	private boolean handleSendTextDockerContainerRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException {
 		try {
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
-
-			String command = "";
-			JSONObject requestObject = OrionServlet.readJSONRequest(request);
-			String dockerRequest = (String) requestObject.get("dockerCmd");
-			if (dockerRequest.equals("process")) {
-				command = (String) requestObject.get("line");
-			}
 
 			String user = request.getRemoteUser();
 
 			DockerServer dockerServer = getDockerServer();
 
-			if (dockerRequest.equals("start")) {
-				// get the volumes (projects) for the user
-				List<String> volumes = getDockerVolumes(user);
-				// get the container for the user
-				DockerContainer dockerContainer = dockerServer.getDockerContainer(user);
-				if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.OK) {
-					// user does not have a container, create one
-					dockerContainer = dockerServer.createDockerContainer("orion.base", user, "orionuser", volumes);
-					if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.CREATED) {
-						return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
-					}
-					if (logger.isDebugEnabled()) {
-						logger.debug("Created Docker Container " + dockerContainer.getIdShort() + " for user " + user);
-					}
-				}
-
-				// start the container for the user
-				dockerContainer = dockerServer.startDockerContainer(user, volumes);
-				if (dockerContainer.getStatusCode() == DockerResponse.StatusCode.STARTED) {
-					if (logger.isDebugEnabled()) {
-						logger.debug("Started Docker Container " + dockerContainer.getIdShort() + " for user " + user);
-					}
-				} else if (dockerContainer.getStatusCode() == DockerResponse.StatusCode.RUNNING) {
-					if (logger.isDebugEnabled()) {
-						logger.debug("Docker Container " + dockerContainer.getIdShort() + " for user " + user + " is already running");
-					}
-				} else {
-					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
-				}
-
-				return true;
-			} else if (dockerRequest.equals("stop")) {
-				// get the container for the user
-				DockerContainer dockerContainer = dockerServer.getDockerContainer(user);
-				if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.OK) {
-					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
-				}
-				// detach if we have an open connection for the user
-				if (dockerServer.isAttachedDockerContainer(user)) {
-					DockerResponse detachResponse = dockerServer.detachDockerContainer(user);
-					if (detachResponse.getStatusCode() == DockerResponse.StatusCode.DETACHED) {
-						if (logger.isDebugEnabled()) {
-							logger.debug("Detached from Docker Container " + dockerContainer.getIdShort() + " for user " + user);
-						}
-					} else {
-						if (logger.isDebugEnabled()) {
-							logger.debug("Problem detaching from Docker Container " + dockerContainer.getIdShort() + " for user " + user);
-						}
-					}
-				}
-				// stop the container for the user
-				dockerContainer = dockerServer.stopDockerContainer(user);
-				if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.STOPPED) {
-					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
-				}
-				if (logger.isDebugEnabled()) {
-					logger.debug("Stopped Docker Container " + dockerContainer.getIdShort() + " for user " + user);
-				}
-
-				return true;
-			} else if (dockerRequest.equals("attach")) {
-				// get the container for the user
-				DockerContainer dockerContainer = dockerServer.getDockerContainer(user);
-				if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.OK) {
-					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
-				}
-
-				if (dockerServer.isAttachedDockerContainer(user)) {
-					if (logger.isDebugEnabled()) {
-						logger.debug("Docker Container " + dockerContainer.getIdShort() + " for user " + user + " is already attached");
-					}
-					return true;
-				}
-				
-				String originURL = request.getRequestURL().toString();
-				DockerResponse dockerResponse = dockerServer.attachDockerContainer(user, originURL);
-				if (dockerResponse.getStatusCode() != DockerResponse.StatusCode.ATTACHED) {
-					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
-				}
-				if (logger.isDebugEnabled()) {
-					logger.debug("Attach Docker Container " + dockerContainer.getIdShort() + " for user " + user + " successful");
-				}
-
-				return true;
-			} else if (dockerRequest.equals("process")) {
-				// get the container for the user
-				DockerContainer dockerContainer = dockerServer.getDockerContainer(user);
-				if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.OK) {
-					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
-				}
-
-				if (! dockerServer.isAttachedDockerContainer(user)) {
-					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "No socket connection to the container", null));
-				}
-
-				DockerResponse dockerResponse = dockerServer.sendTextDockerContainer(user, command);
-				if (dockerResponse.getStatusCode() != DockerResponse.StatusCode.OK) {
-					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
-				}
-
-				JSONObject jsonObject = new JSONObject();
-				jsonObject.put("result", dockerResponse.getStatusMessage());
-				if (logger.isDebugEnabled()) {
-					logger.debug("Process command in docker container " + dockerContainer.getIdShort() + " for user " + user + " successful");
-				}
-				OrionServlet.writeJSONResponse(request, response, jsonObject);
-
-				return true;
+			// get the container for the user
+			DockerContainer dockerContainer = dockerServer.getDockerContainer(user);
+			if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.OK) {
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
 			}
+
+			if (!dockerServer.isAttachedDockerContainer(user)) {
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "No socket connection to the container", null));
+			}
+
+			JSONObject requestObject = OrionServlet.readJSONRequest(request);
+			String text = (String) requestObject.get("text");
+
+			DockerResponse dockerResponse = dockerServer.sendTextDockerContainer(user, text);
+			if (dockerResponse.getStatusCode() != DockerResponse.StatusCode.OK) {
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
+			}
+
+			JSONObject jsonObject = new JSONObject();
+			jsonObject.put("result", dockerResponse.getStatusMessage());
+			if (logger.isDebugEnabled()) {
+				logger.debug("Process command in docker container " + dockerContainer.getIdShort() + " for user " + user + " successful");
+			}
+			OrionServlet.writeJSONResponse(request, response, jsonObject);
+
+			return true;
 		} catch (IOException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "IOException with request", e));
 		} catch (JSONException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "JSONException with request", e));
 		}
-		return false;
+	}
+
+	private boolean handleAttachDockerContainerRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException {
+		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
+
+		String user = request.getRemoteUser();
+
+		DockerServer dockerServer = getDockerServer();
+
+		// get the container for the user
+		DockerContainer dockerContainer = dockerServer.getDockerContainer(user);
+		if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.OK) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
+		}
+
+		if (dockerServer.isAttachedDockerContainer(user)) {
+			if (logger.isDebugEnabled()) {
+				logger.debug("Docker Container " + dockerContainer.getIdShort() + " for user " + user + " is already attached");
+			}
+			return true;
+		}
+
+		String originURL = request.getRequestURL().toString();
+		DockerResponse dockerResponse = dockerServer.attachDockerContainer(user, originURL);
+		if (dockerResponse.getStatusCode() != DockerResponse.StatusCode.ATTACHED) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
+		}
+		if (logger.isDebugEnabled()) {
+			logger.debug("Attach Docker Container " + dockerContainer.getIdShort() + " for user " + user + " successful");
+		}
+
+		return true;
+	}
+
+	private boolean handleStartDockerContainerRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException {
+		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
+
+		String user = request.getRemoteUser();
+
+		DockerServer dockerServer = getDockerServer();
+
+		// get the volumes (projects) for the user
+		List<String> volumes = getDockerVolumes(user);
+		// get the container for the user
+		DockerContainer dockerContainer = dockerServer.getDockerContainer(user);
+		if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.OK) {
+			// user does not have a container, create one
+			dockerContainer = dockerServer.createDockerContainer("orion.base", user, "orionuser", volumes);
+			if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.CREATED) {
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
+			}
+			if (logger.isDebugEnabled()) {
+				logger.debug("Created Docker Container " + dockerContainer.getIdShort() + " for user " + user);
+			}
+		}
+
+		// start the container for the user
+		dockerContainer = dockerServer.startDockerContainer(user, volumes);
+		if (dockerContainer.getStatusCode() == DockerResponse.StatusCode.STARTED) {
+			if (logger.isDebugEnabled()) {
+				logger.debug("Started Docker Container " + dockerContainer.getIdShort() + " for user " + user);
+			}
+		} else if (dockerContainer.getStatusCode() == DockerResponse.StatusCode.RUNNING) {
+			if (logger.isDebugEnabled()) {
+				logger.debug("Docker Container " + dockerContainer.getIdShort() + " for user " + user + " is already running");
+			}
+		} else {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
+		}
+
+		return true;
 	}
 
 	@Override
@@ -400,7 +432,7 @@ public class DockerHandler extends ServletResourceHandler<String> {
 			case GET :
 				return handleGetRequest(request, response, path);
 			case POST :
-				return handlePostRequest(request, response);
+				return handlePostRequest(request, response, path);
 			default :
 				return false;
 		}

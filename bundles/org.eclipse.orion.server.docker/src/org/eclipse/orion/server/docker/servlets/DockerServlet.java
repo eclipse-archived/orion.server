@@ -52,10 +52,6 @@ public class DockerServlet extends OrionServlet {
 
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		traceRequest(req);
-		if (dockerHandler.handleRequest(req, resp, "")) {
-			return;
-		} // finally invoke super to return an error for requests we don't know how to handle
-		super.doPost(req, resp);
+		doGet(req, resp);
 	}
 }

@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.docker.server;
 
-
 /**
  * The response for container requests using the Docker Remote API.
  *  
@@ -22,7 +21,15 @@ public class DockerContainer extends DockerResponse {
 
 	public static final String CONTAINER = "Container";
 
+	public static final String CONTAINER_ATTACH_PATH = "attach";
+
 	public static final String CONTAINER_PATH = "container";
+
+	public static final String CONTAINER_SEND_PATH = "send";
+
+	public static final String CONTAINER_START_PATH = "start";
+
+	public static final String CONTAINER_STOP_PATH = "stop";
 
 	public static final String CREATED = "Created";
 
