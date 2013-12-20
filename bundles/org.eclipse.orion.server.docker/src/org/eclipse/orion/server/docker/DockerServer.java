@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
+import org.eclipse.orion.server.docker.server.ClientSocket;
 import org.eclipse.orion.server.docker.servlets.DockerResponse;
 import org.eclipse.orion.server.docker.servlets.DockerSocket;
 import org.json.JSONArray;
@@ -164,7 +165,7 @@ public class DockerServer {
 	public DockerResponse detachWSDockerContainer(ClientSocket socket) {
 		DockerResponse dockerResponse = new DockerResponse();
 		try {
-			socket.client.stop();
+			socket.getSocketClient().stop();
 			dockerResponse.setStatusCode(DockerResponse.StatusCode.DETACHED);
 		} catch (Exception e) {
 			dockerResponse.setStatusCode(DockerResponse.StatusCode.SERVER_ERROR);

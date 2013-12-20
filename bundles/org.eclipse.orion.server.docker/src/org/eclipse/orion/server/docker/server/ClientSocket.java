@@ -1,4 +1,4 @@
-package org.eclipse.orion.server.docker;
+package org.eclipse.orion.server.docker.server;
 
 import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.eclipse.orion.server.docker.servlets.DockerSocket;
