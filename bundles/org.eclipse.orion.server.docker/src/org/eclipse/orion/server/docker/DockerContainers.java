@@ -21,6 +21,11 @@ import org.eclipse.orion.server.docker.servlets.DockerResponse;
  * @author Anthony Hunter
  */
 public class DockerContainers extends DockerResponse {
+
+	public static final String CONTAINERS = "Containers";
+
+	public static final String CONTAINERS_PATH = "containers";
+
 	private List<DockerContainer> containers;
 
 	public DockerContainers() {

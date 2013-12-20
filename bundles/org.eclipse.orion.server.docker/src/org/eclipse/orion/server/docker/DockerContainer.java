@@ -21,6 +21,10 @@ public class DockerContainer extends DockerResponse {
 
 	public static final String COMMAND = "Command";
 
+	public static final String CONTAINER = "Container";
+
+	public static final String CONTAINER_PATH = "container";
+
 	public static final String CREATED = "Created";
 
 	public static final String ID = "Id";

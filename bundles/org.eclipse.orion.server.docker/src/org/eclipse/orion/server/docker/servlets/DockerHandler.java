@@ -36,6 +36,7 @@ import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.docker.ClientSocket;
 import org.eclipse.orion.server.docker.DockerContainer;
+import org.eclipse.orion.server.docker.DockerContainers;
 import org.eclipse.orion.server.docker.DockerImage;
 import org.eclipse.orion.server.docker.DockerImages;
 import org.eclipse.orion.server.docker.DockerServer;
@@ -178,6 +179,46 @@ public class DockerHandler extends ServletResourceHandler<String> {
 		}
 	}
 
+	private boolean handleDockerContainersRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException {
+		try {
+			DockerServer dockerServer = getDockerServer();
+			DockerContainers dockerContainers = dockerServer.getDockerContainers();
+			switch (dockerContainers.getStatusCode()) {
+				case SERVER_ERROR :
+					response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, dockerContainers.getStatusMessage());
+					return false;
+				case CONNECTION_REFUSED :
+					JSONObject jsonObject = new JSONObject();
+					jsonObject.put(DockerContainers.CONTAINERS, dockerContainers.getStatusMessage());
+					OrionServlet.writeJSONResponse(request, response, jsonObject);
+					return true;
+				case OK :
+					JSONArray jsonArray = new JSONArray();
+					for (DockerContainer dockerContainer : dockerContainers.getContainers()) {
+						jsonObject = new JSONObject();
+						jsonObject.put(DockerContainer.ID, dockerContainer.getIdShort());
+						jsonObject.put(DockerContainer.IMAGE, dockerContainer.getImage());
+						jsonObject.put(DockerContainer.COMMAND, dockerContainer.getCommand());
+						jsonObject.put(DockerContainer.CREATED, dockerContainer.getCreated());
+						jsonObject.put(DockerContainer.STATUS, dockerContainer.getStatus());
+						jsonObject.put(DockerContainer.PORTS, dockerContainer.getPorts());
+						jsonObject.put(DockerContainer.NAME, dockerContainer.getName());
+						jsonArray.put(jsonObject);
+					}
+					jsonObject = new JSONObject();
+					jsonObject.put(DockerContainers.CONTAINERS, jsonArray);
+					OrionServlet.writeJSONResponse(request, response, jsonObject);
+					return true;
+				default :
+					return false;
+			}
+		} catch (IOException e) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "IOException with request", e));
+		} catch (JSONException e) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "JSONException with request", e));
+		}
+	}
+
 	private boolean handleDockerVersionRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException {
 		try {
 			DockerServer dockerServer = getDockerServer();
@@ -218,6 +259,10 @@ public class DockerHandler extends ServletResourceHandler<String> {
 			return handleDockerImagesRequest(request, response);
 		} else if (dockerRequest.equals(DockerImage.IMAGE_PATH)) {
 			return handleDockerImageRequest(request, response, pathSplit[1]);
+		} else if (dockerRequest.equals(DockerContainers.CONTAINERS_PATH)) {
+			return handleDockerContainersRequest(request, response);
+		} else if (dockerRequest.equals(DockerContainer.CONTAINER_PATH)) {
+			return handleDockerContainerRequest(request, response, pathSplit[1]);
 		}
 		return false;
 	}
@@ -388,6 +433,45 @@ public class DockerHandler extends ServletResourceHandler<String> {
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
 			logger.error(e.getLocalizedMessage(), e);
 			dockerServer = null;
+		}
+	}
+
+	private boolean handleDockerContainerRequest(HttpServletRequest request, HttpServletResponse response, String string) throws ServletException {
+		try {
+			DockerServer dockerServer = getDockerServer();
+			DockerContainer dockerContainer = dockerServer.getDockerContainer(string);
+			switch (dockerContainer.getStatusCode()) {
+				case SERVER_ERROR :
+					response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, dockerContainer.getStatusMessage());
+					return false;
+				case NO_SUCH_IMAGE :
+					JSONObject jsonObject = new JSONObject();
+					jsonObject.put(DockerContainer.IMAGE, dockerContainer.getStatusMessage());
+					OrionServlet.writeJSONResponse(request, response, jsonObject);
+					return true;
+				case CONNECTION_REFUSED :
+					jsonObject = new JSONObject();
+					jsonObject.put(DockerContainer.IMAGE, dockerContainer.getStatusMessage());
+					OrionServlet.writeJSONResponse(request, response, jsonObject);
+					return true;
+				case OK :
+					jsonObject = new JSONObject();
+					jsonObject.put(DockerContainer.ID, dockerContainer.getIdShort());
+					jsonObject.put(DockerContainer.IMAGE, dockerContainer.getImage());
+					jsonObject.put(DockerContainer.COMMAND, dockerContainer.getCommand());
+					jsonObject.put(DockerContainer.CREATED, dockerContainer.getCreated());
+					jsonObject.put(DockerContainer.STATUS, dockerContainer.getStatus());
+					jsonObject.put(DockerContainer.PORTS, dockerContainer.getPorts());
+					jsonObject.put(DockerContainer.NAME, dockerContainer.getName());
+					OrionServlet.writeJSONResponse(request, response, jsonObject);
+					return true;
+				default :
+					return false;
+			}
+		} catch (IOException e) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "IOException with request", e));
+		} catch (JSONException e) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "JSONException with request", e));
 		}
 	}
 }
