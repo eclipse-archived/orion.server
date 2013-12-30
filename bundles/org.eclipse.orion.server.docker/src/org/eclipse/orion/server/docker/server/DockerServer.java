@@ -65,28 +65,20 @@ public class DockerServer {
 			URI dockerAttachURI = new URI(wsServer + "/containers/" + containerId + "/attach/ws?stream=1&stdin=1&stdout=1&stderr=1");
 			WebSocketClient client = new WebSocketClient();
 			DockerWebSocket socket = new DockerWebSocket();
-			try {
-				client.start();
-				ClientUpgradeRequest request = new ClientUpgradeRequest();
-				request.setHeader("Origin", originURL);
-				Future<org.eclipse.jetty.websocket.api.Session> future = client.connect(socket, dockerAttachURI, request);
-				Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-				if (logger.isDebugEnabled()) {
-					logger.debug("Docker attach: connecting to : %s%n", dockerAttachURI);
-				}
-				future.get();
-				containerConnections.put(containerId, new DockerContainerConnection(socket, client));
-				dockerResponse.setStatusCode(DockerResponse.StatusCode.ATTACHED);
-			} catch (Throwable t) {
-				t.printStackTrace();
-			} finally {
-				//				try {
-				//					client.stop();
-				//				} catch (Exception e) {
-				//					e.printStackTrace();
-				//				}
+			client.start();
+			ClientUpgradeRequest request = new ClientUpgradeRequest();
+			request.setHeader("Origin", originURL);
+			Future<org.eclipse.jetty.websocket.api.Session> future = client.connect(socket, dockerAttachURI, request);
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+			if (logger.isDebugEnabled()) {
+				logger.debug("Docker attach: connecting to : %s%n", dockerAttachURI);
 			}
+			future.get();
+			containerConnections.put(containerId, new DockerContainerConnection(socket, client));
+			dockerResponse.setStatusCode(DockerResponse.StatusCode.ATTACHED);
 		} catch (URISyntaxException e) {
+			setDockerResponse(dockerResponse, e);
+		} catch (Exception e) {
 			setDockerResponse(dockerResponse, e);
 		}
 
