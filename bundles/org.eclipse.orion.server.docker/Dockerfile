@@ -33,4 +33,4 @@ RUN npm install -g grunt
 RUN npm install -g grunt-cli
 
 # install git client
-RUN apt-get -y install git
+RUN apt-get -y install git vim
