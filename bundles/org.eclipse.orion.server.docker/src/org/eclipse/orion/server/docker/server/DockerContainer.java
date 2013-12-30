@@ -21,15 +21,13 @@ public class DockerContainer extends DockerResponse {
 
 	public static final String CONTAINER = "Container";
 
-	public static final String CONTAINER_ATTACH_PATH = "attach";
-
 	public static final String CONTAINER_PATH = "container";
 
 	public static final String CONTAINER_SEND_PATH = "send";
 
-	public static final String CONTAINER_START_PATH = "start";
+	public static final String CONTAINER_CONNECT_PATH = "connect";
 
-	public static final String CONTAINER_STOP_PATH = "stop";
+	public static final String CONTAINER_DISCONNECT_PATH = "disconnect";
 
 	public static final String CREATED = "Created";
 

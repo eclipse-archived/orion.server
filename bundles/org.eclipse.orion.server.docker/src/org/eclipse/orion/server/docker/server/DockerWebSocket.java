@@ -49,6 +49,10 @@ public class DockerWebSocket {
 		return this.response;
 	}
 
+	public Session getSession() {
+		return this.session;
+	}
+
 	@OnWebSocketConnect
 	public void onConnect(Session session) {
 		this.session = session;
@@ -70,7 +74,9 @@ public class DockerWebSocket {
 			logger.debug("Docker Socket received: " + received);
 		}
 		this.response += msg;
-		this.messageLatch.countDown();
+		if (messageLatch != null) {
+			this.messageLatch.countDown();
+		}
 	}
 
 	@OnWebSocketClose

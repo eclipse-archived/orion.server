@@ -205,7 +205,11 @@ public class DockerServer {
 			if (clientSocket == null) {
 				dockerResponse.setStatusCode(DockerResponse.StatusCode.SERVER_ERROR);
 			} else {
-				clientSocket.getWebSocketClient().stop();
+				DockerWebSocket socket = clientSocket.getWebSocket();
+				socket.getSession().close();
+				WebSocketClient client = clientSocket.getWebSocketClient();
+				client.stop();
+				client.destroy();
 				dockerResponse.setStatusCode(DockerResponse.StatusCode.DETACHED);
 				containerConnections.remove(user);
 			}
