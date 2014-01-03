@@ -15,23 +15,17 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 
+import com.meterware.httpunit.*;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
-
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.*;
 import org.junit.Test;
 import org.xml.sax.SAXException;
-
-import com.meterware.httpunit.GetMethodWebRequest;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 
 public class GitBlameTest extends GitTest {
 
@@ -63,7 +57,6 @@ public class GitBlameTest extends GitTest {
 			// test
 			JSONObject blameObject = new JSONObject(response.getText());
 
-			assertEquals(blameObject.length(), 4);
 			assertEquals(blameObject.get("Severity"), "Error");
 			assertEquals(blameObject.get("HttpCode"), 400);
 			assertEquals(blameObject.get("Code"), 0);
@@ -460,8 +453,6 @@ public class GitBlameTest extends GitTest {
 			JSONObject blameObject = new JSONObject(response.getText());
 
 			//Test
-
-			assertEquals(blameObject.length(), 4);
 
 			assertEquals(blameObject.get("Severity"), "Error");
 			assertEquals(blameObject.get("HttpCode"), 400);
