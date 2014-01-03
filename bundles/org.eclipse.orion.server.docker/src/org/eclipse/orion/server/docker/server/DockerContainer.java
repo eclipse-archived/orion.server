@@ -17,13 +17,13 @@ package org.eclipse.orion.server.docker.server;
  */
 public class DockerContainer extends DockerResponse {
 
+	public static final String ATTACH_WS = "attachWsURI";
+	
 	public static final String COMMAND = "Command";
 
 	public static final String CONTAINER = "Container";
 
 	public static final String CONTAINER_PATH = "container";
-
-	public static final String CONTAINER_SEND_PATH = "send";
 
 	public static final String CONTAINER_CONNECT_PATH = "connect";
 
