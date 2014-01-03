@@ -58,6 +58,7 @@ public abstract class GitTest extends FileSystemTest {
 	File gitDir;
 	File testFile;
 	protected Repository db;
+	protected static final List<Repository> toClose = new ArrayList<Repository>();
 
 	@BeforeClass
 	public static void setupWorkspace() {
@@ -122,7 +123,11 @@ public abstract class GitTest extends FileSystemTest {
 
 	@After
 	public void tearDown() throws Exception {
-		db.close();
+		//close all repositories
+		for (Repository repo : toClose) {
+			repo.close();
+		}
+		toClose.clear();
 		FileUtils.delete(gitDir, FileUtils.RECURSIVE);
 	}
 
@@ -178,6 +183,7 @@ public abstract class GitTest extends FileSystemTest {
 		randomLocation = randomLocation.addTrailingSeparator().append(Constants.DOT_GIT);
 		File dotGitDir = randomLocation.toFile().getCanonicalFile();
 		db = FileRepositoryBuilder.create(dotGitDir);
+		toClose.add(db);
 		assertFalse(dotGitDir.exists());
 		db.create(false /* non bare */);
 
@@ -313,7 +319,9 @@ public abstract class GitTest extends FileSystemTest {
 		} else {
 			fail(fileLocation + " is not a repository");
 		}
-		return FileRepositoryBuilder.create(file);
+		Repository result = FileRepositoryBuilder.create(file);
+		toClose.add(result);
+		return result;
 	}
 
 	// see org.eclipse.orion.internal.server.servlets.workspace.WorkspaceResourceHandler.generateProjectLocation(WebProject, String)

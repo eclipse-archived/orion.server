@@ -15,11 +15,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import com.meterware.httpunit.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
-
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
@@ -30,15 +30,9 @@ import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.*;
 import org.junit.Ignore;
 import org.junit.Test;
-
-import com.meterware.httpunit.PutMethodWebRequest;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 
 public class GitCheckoutTest extends GitTest {
 
@@ -542,6 +536,7 @@ public class GitCheckoutTest extends GitTest {
 			randomLocation = randomLocation.addTrailingSeparator().append(Constants.DOT_GIT);
 			File dotGitDir = randomLocation.toFile().getCanonicalFile();
 			Repository db2 = FileRepositoryBuilder.create(dotGitDir);
+			toClose.add(db2);
 			assertFalse(dotGitDir.exists());
 			db2.create(false /* non bare */);
 
