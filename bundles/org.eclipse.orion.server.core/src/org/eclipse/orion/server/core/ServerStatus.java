@@ -35,6 +35,11 @@ public class ServerStatus extends Status {
 	 * A detailed human readable error message string.
 	 */
 	public static final String PROP_DETAILED_MESSAGE = "DetailedMessage"; //$NON-NLS-1$
+
+	/**
+	 * The id of the OSGi bundle where the error originated.
+	 */
+	public static final String PROP_BUNDLE_ID = "BundleId"; //$NON-NLS-1$
 	/**
 	 * The integer HTTP response code.
 	 */
@@ -43,12 +48,12 @@ public class ServerStatus extends Status {
 	 * A high level error message string, suitable for display to a user.
 	 */
 	public static final String PROP_MESSAGE = "Message"; //$NON-NLS-1$
-	
+
 	/**
 	 * A property containing JSON object with data needed to handle exception
 	 */
 	static final String JSON_DATA = "JsonData"; //$NON-NLS-1$
-	
+
 	/**
 	 * A property defining a URL of a page with further details about the
 	 * exception and how it can be resolved.
@@ -67,13 +72,13 @@ public class ServerStatus extends Status {
 
 	private int httpCode;
 	private JSONObject jsonData;
-	
+
 	/**
 	 * Converts a status into a server status.
 	 */
 	public static ServerStatus convert(IStatus status) {
 		int httpCode = 200;
-		if (status.getSeverity()==IStatus.ERROR || status.getSeverity()==IStatus.CANCEL)
+		if (status.getSeverity() == IStatus.ERROR || status.getSeverity() == IStatus.CANCEL)
 			httpCode = 500;
 		return convert(status, httpCode);
 	}
@@ -83,7 +88,7 @@ public class ServerStatus extends Status {
 	 */
 	public static ServerStatus convert(IStatus status, int httpCode) {
 		if (status instanceof ServerStatus)
-			return (ServerStatus)status;
+			return (ServerStatus) status;
 		return new ServerStatus(status, httpCode);
 	}
 
@@ -101,17 +106,20 @@ public class ServerStatus extends Status {
 		int code = object.getInt(PROP_CODE);
 		String message = object.getString(PROP_MESSAGE);
 		int severity = fromSeverityString(object.getString(PROP_SEVERITY));
+		String pluginId = object.optString(PROP_BUNDLE_ID);
+		if (pluginId == null)
+			pluginId = ServerConstants.PI_SERVER_CORE;
 		String detailMessage = object.optString(PROP_DETAILED_MESSAGE, null);
 		Exception cause = detailMessage == null ? null : new Exception(detailMessage);
 		JSONObject jsonData = object.optJSONObject(JSON_DATA);
-		return new ServerStatus(new Status(severity, ServerConstants.PI_SERVER_CORE, code, message, cause), httpCode, jsonData);
+		return new ServerStatus(new Status(severity, pluginId, code, message, cause), httpCode, jsonData);
 	}
 
 	public ServerStatus(int severity, int httpCode, String message, Throwable exception) {
 		super(severity, ServerConstants.PI_SERVER_CORE, message, exception);
 		this.httpCode = httpCode;
 	}
-	
+
 	public ServerStatus(int severity, int httpCode, String message, JSONObject jsonData, Throwable exception) {
 		super(severity, ServerConstants.PI_SERVER_CORE, message, exception);
 		this.httpCode = httpCode;
@@ -122,7 +130,7 @@ public class ServerStatus extends Status {
 		super(status.getSeverity(), status.getPlugin(), status.getCode(), status.getMessage(), status.getException());
 		this.httpCode = httpCode;
 	}
-	
+
 	public ServerStatus(IStatus status, int httpCode, JSONObject jsonData) {
 		super(status.getSeverity(), status.getPlugin(), status.getCode(), status.getMessage(), status.getException());
 		this.httpCode = httpCode;
@@ -162,7 +170,7 @@ public class ServerStatus extends Status {
 		}
 		return null;
 	}
-	
+
 	static int fromSeverityString(String s) {
 		if (SEVERITY_ERROR.equals(s)) {
 			return ERROR;
@@ -188,6 +196,7 @@ public class ServerStatus extends Status {
 			result.put(PROP_HTTP_CODE, httpCode);
 			result.put(PROP_CODE, getCode());
 			result.put(PROP_MESSAGE, getMessage());
+			result.put(PROP_BUNDLE_ID, getPlugin());
 			result.put(PROP_SEVERITY, getSeverityString());
 			if (jsonData != null)
 				result.put(JSON_DATA, jsonData);
