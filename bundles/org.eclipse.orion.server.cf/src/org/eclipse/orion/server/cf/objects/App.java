@@ -25,6 +25,8 @@ public class App extends CFObject {
 	public static final String TYPE = "App"; //$NON-NLS-1$
 
 	private JSONObject summaryJSON;
+	private String name;
+	private String contentLocation;
 
 	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
 	{
@@ -46,6 +48,22 @@ public class App extends CFObject {
 
 	public void setSummaryJSON(JSONObject summaryJSON) {
 		this.summaryJSON = summaryJSON;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getContentLocation() {
+		return contentLocation;
+	}
+
+	public void setContentLocation(String contentLocation) {
+		this.contentLocation = contentLocation;
 	}
 
 	@Override

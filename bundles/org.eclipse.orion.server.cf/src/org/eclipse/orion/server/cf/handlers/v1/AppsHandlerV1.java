@@ -98,9 +98,9 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null);
 					}
 
-					String state = jsonData.getString(CFProtocolConstants.KEY_STATE);
-					String name = jsonData.getString(CFProtocolConstants.KEY_NAME);
-					String dir = jsonData.getString(CFProtocolConstants.KEY_DIR);
+					String state = jsonData.optString(CFProtocolConstants.KEY_STATE);
+					String name = jsonData.optString(CFProtocolConstants.KEY_NAME);
+					String dir = jsonData.optString(CFProtocolConstants.KEY_DIR);
 
 					GetAppCommand getAppCommand = new GetAppCommand(target, name, dir);
 					getAppCommand.doIt();
@@ -111,6 +111,17 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 					} else if (CFProtocolConstants.KEY_STOPPED.equals(state)) {
 						return new StopAppCommand(target, app).doIt();
 					}
+
+					/* push new application */
+					if (app == null) {
+						String application = jsonData.getString(CFProtocolConstants.KEY_APP);
+						String contentLocation = jsonData.getString(CFProtocolConstants.KEY_CONTENT_LOCATION);
+
+						app = new App();
+						app.setName(application);
+						app.setContentLocation(contentLocation);
+					}
+
 					return new PushAppCommand(target, app).doIt();
 				} catch (Exception e) {
 					String msg = NLS.bind("Failed to handle request for {0}", path); //$NON-NLS-1$
