@@ -27,6 +27,9 @@ import org.json.*;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
+/**
+ * Tests for servlet implementation of Git blame.
+ */
 public class GitBlameTest extends GitTest {
 
 	@Test
@@ -56,7 +59,6 @@ public class GitBlameTest extends GitTest {
 
 			// test
 			JSONObject blameObject = new JSONObject(response.getText());
-
 			assertEquals(blameObject.get("Severity"), "Error");
 			assertEquals(blameObject.get("HttpCode"), 400);
 			assertEquals(blameObject.get("Code"), 0);
@@ -453,7 +455,6 @@ public class GitBlameTest extends GitTest {
 			JSONObject blameObject = new JSONObject(response.getText());
 
 			//Test
-
 			assertEquals(blameObject.get("Severity"), "Error");
 			assertEquals(blameObject.get("HttpCode"), 400);
 			assertEquals(blameObject.get("Code"), 0);
