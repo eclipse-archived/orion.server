@@ -107,7 +107,7 @@ public class ServerStatus extends Status {
 		String message = object.getString(PROP_MESSAGE);
 		int severity = fromSeverityString(object.getString(PROP_SEVERITY));
 		String pluginId = object.optString(PROP_BUNDLE_ID);
-		if (pluginId == null)
+		if (pluginId == null || pluginId.length() == 0)
 			pluginId = ServerConstants.PI_SERVER_CORE;
 		String detailMessage = object.optString(PROP_DETAILED_MESSAGE, null);
 		Exception cause = detailMessage == null ? null : new Exception(detailMessage);
