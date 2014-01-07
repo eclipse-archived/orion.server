@@ -30,6 +30,6 @@ public class CFProtocolConstants {
 
 	public static final String KEY_STOPPED = "Stopped";
 
-	public static final String KEY_DIR = "Dir";
+	public static final String KEY_TARGET = "Target";
 
 }

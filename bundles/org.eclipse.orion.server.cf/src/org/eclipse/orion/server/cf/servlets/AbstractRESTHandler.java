@@ -179,9 +179,6 @@ public abstract class AbstractRESTHandler<T extends CFObject> extends ServletRes
 					return TaskHandler.handleTaskJob(request, response, postJob, statusHandler);
 
 				case DELETE :
-					if (resource == null)
-						return handleNotExistingResource(request, response, path);
-
 					CFJob deleteJob = handleDelete(resource, request, response, path);
 					return TaskHandler.handleTaskJob(request, response, deleteJob, statusHandler);
 

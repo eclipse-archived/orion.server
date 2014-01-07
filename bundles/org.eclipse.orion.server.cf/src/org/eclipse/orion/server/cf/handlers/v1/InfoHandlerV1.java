@@ -13,7 +13,6 @@ package org.eclipse.orion.server.cf.handlers.v1;
 import java.net.URI;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
@@ -22,6 +21,7 @@ import org.eclipse.orion.server.cf.jobs.CFJob;
 import org.eclipse.orion.server.cf.objects.Info;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.servlets.AbstractRESTHandler;
+import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONObject;
@@ -53,17 +53,12 @@ public class InfoHandlerV1 extends AbstractRESTHandler<Info> {
 						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null);
 					}
 
-					URI infoURI = URIUtil.toURI(target.getUrl());
-					infoURI = infoURI.resolve("/v2/info");
+					URI infoURI = URIUtil.toURI(target.getUrl()).resolve("/v2/info");
+					GetMethod getInfoMethod = new GetMethod(infoURI.toString());
+					HttpUtil.configureHttpMethod(getInfoMethod, target);
 
-					GetMethod getMethod = new GetMethod(infoURI.toString());
-					getMethod.addRequestHeader(new Header("Accept", "application/json"));
-					getMethod.addRequestHeader(new Header("Content-Type", "application/json"));
-					if (target.getAccessToken() != null)
-						getMethod.addRequestHeader(new Header("Authorization", "bearer " + target.getAccessToken().getString("access_token")));
-					CFActivator.getDefault().getHttpClient().executeMethod(getMethod);
-
-					String response = getMethod.getResponseBodyAsString();
+					CFActivator.getDefault().getHttpClient().executeMethod(getInfoMethod);
+					String response = getInfoMethod.getResponseBodyAsString();
 					JSONObject result = new JSONObject(response);
 
 					return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);

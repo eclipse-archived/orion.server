@@ -16,6 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.core.IOUtilities;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.cf.CFActivator;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
@@ -100,7 +101,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 
 					String state = jsonData.getString(CFProtocolConstants.KEY_STATE);
 					String name = jsonData.getString(CFProtocolConstants.KEY_NAME);
-					String dir = jsonData.getString(CFProtocolConstants.KEY_DIR);
+					String dir = jsonData.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 					GetAppCommand getAppCommand = new GetAppCommand(target, name, dir);
 					getAppCommand.doIt();
