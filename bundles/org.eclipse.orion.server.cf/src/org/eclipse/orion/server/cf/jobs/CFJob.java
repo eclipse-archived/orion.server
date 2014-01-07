@@ -18,6 +18,7 @@ import org.eclipse.orion.server.core.tasks.TaskJob;
 public abstract class CFJob extends TaskJob {
 
 	protected final String userId;
+	protected final String requestLocation;
 
 	@Override
 	public synchronized TaskInfo startTask() {
@@ -29,6 +30,7 @@ public abstract class CFJob extends TaskJob {
 	public CFJob(HttpServletRequest req, boolean keep) {
 		super(req.getRemoteUser(), keep);
 		this.userId = req.getRemoteUser();
+		this.requestLocation = req.getRequestURI();
 		setTaskExpirationTime(TimeUnit.DAYS.toMillis(1));
 	}
 }

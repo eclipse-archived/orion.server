@@ -25,11 +25,13 @@ public class CFHandlerV1 extends ServletResourceHandler<String> {
 	private ServletResourceHandler<String> targetHandlerV1;
 	private ServletResourceHandler<String> infoHandlerV1;
 	private ServletResourceHandler<String> appsHandlerV1;
+	private ServletResourceHandler<String> logsHandlerV1;
 
 	public CFHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
 		targetHandlerV1 = new TargetHandlerV1(statusHandler);
 		infoHandlerV1 = new InfoHandlerV1(statusHandler);
 		appsHandlerV1 = new AppsHandlerV1(statusHandler);
+		logsHandlerV1 = new LogsHandlerV1(statusHandler);
 	}
 
 	@Override
@@ -55,6 +57,8 @@ public class CFHandlerV1 extends ServletResourceHandler<String> {
 			return infoHandlerV1.handleRequest(request, response, pathString);
 		} else if (infoParts[1].equals(App.RESOURCE)) {
 			return appsHandlerV1.handleRequest(request, response, pathString);
+		} else if (infoParts[1].equals(Log.RESOURCE)) {
+			return logsHandlerV1.handleRequest(request, response, pathString);
 		}
 
 		return false;

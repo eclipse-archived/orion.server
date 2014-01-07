@@ -32,4 +32,10 @@ public class CFProtocolConstants {
 
 	public static final String KEY_TARGET = "Target";
 
+	public static final String KEY_CONTENTS = "Contents";
+
+	public static final String KEY_APPLICATION = "Application";
+
+	public static final String KEY_SIZE = "Size";
+
 }
