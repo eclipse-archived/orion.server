@@ -48,16 +48,22 @@ public class DockerServer {
 
 	private URI dockerServer;
 
-	public DockerServer(URI dockerServer) {
+	private URI dockerProxy;
+
+	public DockerServer(URI dockerServer, URI dockerProxy) {
 		super();
 		this.dockerServer = dockerServer;
+		this.dockerProxy = dockerProxy;
 		this.containerConnections = new ArrayList<String>();
 	}
 
 	public DockerResponse attachDockerContainer(String containerId, String originURL) {
 		DockerResponse dockerResponse = new DockerResponse();
 		try {
-			String wsServer = dockerServer.toString().replaceFirst("http", "ws");
+			String wsServer = dockerProxy.toString().replaceFirst("http", "ws");
+			if (dockerProxy.toString().startsWith("https")) {
+				wsServer = dockerProxy.toString().replaceFirst("https", "ws");
+			}
 			URI dockerAttachURI = new URI(wsServer + "/containers/" + containerId + "/attach/ws?stream=1&stdin=1&stdout=1&stderr=1");
 			containerConnections.add(containerId);
 			dockerResponse.setStatusCode(DockerResponse.StatusCode.ATTACHED);

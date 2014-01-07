@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others.
+ * Copyright (c) 2013, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -487,14 +487,15 @@ public class DockerHandler extends ServletResourceHandler<String> {
 	private void initDockerServer() {
 		try {
 			String dockerLocation = PreferenceHelper.getString(ServerConstants.CONFIG_DOCKER_URI, "none").toLowerCase(); //$NON-NLS-1$
-			if ("none".equals(dockerLocation)) {
-				// there is no docker URI value in the orion.conf, so no docker
-				// support
+			String dockerProxy = PreferenceHelper.getString(ServerConstants.CONFIG_DOCKER_PROXY_URI, "none").toLowerCase(); //$NON-NLS-1$
+			if ("none".equals(dockerLocation) || "none".equals(dockerProxy)) {
+				// there is no docker URI or docker proxy URI value in the orion.conf, so no docker support
 				dockerServer = null;
 				return;
 			}
 			URI dockerLocationURI = new URI(dockerLocation);
-			dockerServer = new DockerServer(dockerLocationURI);
+			URI dockerProxyURI = new URI(dockerProxy);
+			dockerServer = new DockerServer(dockerLocationURI, dockerProxyURI);
 			DockerVersion dockerVersion = dockerServer.getDockerVersion();
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
 			if (logger.isDebugEnabled()) {

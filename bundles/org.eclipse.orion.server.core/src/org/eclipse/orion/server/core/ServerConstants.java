@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2013 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -62,7 +62,12 @@ public class ServerConstants {
 	public static final String CONFIG_AUTH_USER_CREATION_FORCE_EMAIL = "orion.auth.user.creation.force.email"; //$NON-NLS-1$
 
 	/**
-	 * The name of configuration property specifying the uri for the docker server.
+	 * The name of configuration property specifying the uri for the reverse proxy for the docker websocket.
+	 */
+	public static final String CONFIG_DOCKER_PROXY_URI = "orion.core.docker.proxy.uri"; //$NON-NLS-1$
+
+	/**
+	 * The name of configuration property specifying the uri for the docker server for the docker remote API.
 	 */
 	public static final String CONFIG_DOCKER_URI = "orion.core.docker.uri"; //$NON-NLS-1$
 
