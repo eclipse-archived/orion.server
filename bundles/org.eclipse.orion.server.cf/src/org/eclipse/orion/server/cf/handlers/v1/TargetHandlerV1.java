@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others 
+ * Copyright (c) 2013, 2014 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -72,14 +72,17 @@ public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 			@Override
 			protected IStatus performJob() {
 				try {
-					Target target = CFActivator.getDefault().getTargetMap().getTarget(this.userId);
-
-					if (target == null)
-						target = new Target();
+					Target target = null;
 
 					if (jsonData.has("Url")) {
-						target.setUrl(new URL(jsonData.getString("Url")));
-						target.setAccessToken(null);
+						URL targetUrl = new URL(jsonData.getString("Url"));
+						target = CFActivator.getDefault().getTargetMap().getTarget(this.userId, targetUrl);
+						if (target == null) {
+							target = new Target();
+							target.setUrl(new URL(jsonData.getString("Url")));
+						}
+					} else {
+						target = CFActivator.getDefault().getTargetMap().getTarget(this.userId);
 					}
 
 					if (jsonData.has("Username") && jsonData.has("Password")) {
@@ -87,6 +90,9 @@ public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 						if (!result.isOK())
 							return result;
 					}
+
+					//					JSONObject token = new Test().getToken("Szymon.Brandys@pl.ibm.com");
+					//					target.setAccessToken(token);
 
 					if (target.getAccessToken() != null) {
 						IStatus result = new SetOrgCommand(target, jsonData.optString("Org")).doIt();
@@ -98,7 +104,7 @@ public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 							return result;
 					}
 
-					CFActivator.getDefault().getTargetMap().putTarget(this.userId, target);
+					CFActivator.getDefault().getTargetMap().putTarget(this.userId, target, true);
 
 					return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, target.toJSON());
 				} catch (Exception e) {

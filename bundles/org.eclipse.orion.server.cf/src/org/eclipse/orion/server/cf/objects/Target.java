@@ -21,6 +21,7 @@ import org.json.JSONObject;
 
 @ResourceDescription(type = Target.TYPE)
 public class Target extends CFObject {
+
 	public static final String RESOURCE = "target"; //$NON-NLS-1$
 	public static final String TYPE = "Target"; //$NON-NLS-1$
 
@@ -101,5 +102,30 @@ public class Target extends CFObject {
 	@Override
 	public JSONObject toJSON() throws JSONException {
 		return jsonSerializer.serialize(this, DEFAULT_RESOURCE_SHAPE);
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((url == null) ? 0 : url.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Target other = (Target) obj;
+		if (url == null) {
+			if (other.url != null)
+				return false;
+		} else if (!url.equals(other.url))
+			return false;
+		return true;
 	}
 }
