@@ -97,7 +97,7 @@ public class DockerHandler extends ServletResourceHandler<String> {
 						if (logger.isWarnEnabled()) {
 							logger.warn("Cannot handle mapped project " + contentLocation.toString() + " for user " + user);
 						}
-					} 
+					}
 				} else {
 					// we do not handle ftp projects right now
 					if (logger.isWarnEnabled()) {
@@ -474,6 +474,9 @@ public class DockerHandler extends ServletResourceHandler<String> {
 
 	@Override
 	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String path) throws ServletException {
+		if (dockerServer == null) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "A Docker server required for terminal support is not enabled for this server.", null));
+		}
 		switch (getMethod(request)) {
 			case GET :
 				return handleGetRequest(request, response, path);
@@ -486,18 +489,26 @@ public class DockerHandler extends ServletResourceHandler<String> {
 
 	private void initDockerServer() {
 		try {
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
 			String dockerLocation = PreferenceHelper.getString(ServerConstants.CONFIG_DOCKER_URI, "none").toLowerCase(); //$NON-NLS-1$
-			String dockerProxy = PreferenceHelper.getString(ServerConstants.CONFIG_DOCKER_PROXY_URI, "none").toLowerCase(); //$NON-NLS-1$
-			if ("none".equals(dockerLocation) || "none".equals(dockerProxy)) {
-				// there is no docker URI or docker proxy URI value in the orion.conf, so no docker support
+			if ("none".equals(dockerLocation)) {
+				// there is no docker URI value in the orion.conf, so no docker support
 				dockerServer = null;
+				logger.debug("No Docker Server specified by \"" + ServerConstants.CONFIG_DOCKER_URI + "\" in orion.conf");
 				return;
 			}
 			URI dockerLocationURI = new URI(dockerLocation);
-			URI dockerProxyURI = new URI(dockerProxy);
+			URI dockerProxyURI = dockerLocationURI;
+
+			String dockerProxy = PreferenceHelper.getString(ServerConstants.CONFIG_DOCKER_PROXY_URI, "none").toLowerCase(); //$NON-NLS-1$
+			if (!"none".equals(dockerProxy)) {
+				// there is a docker proxy URI value in the orion.conf
+				dockerProxyURI = new URI(dockerProxy);
+				logger.debug("Docker Proxy Server " + dockerProxy + " is enabled");
+			}
+
 			dockerServer = new DockerServer(dockerLocationURI, dockerProxyURI);
 			DockerVersion dockerVersion = dockerServer.getDockerVersion();
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
 			if (logger.isDebugEnabled()) {
 				if (dockerVersion.getStatusCode() != DockerResponse.StatusCode.OK) {
 					logger.error("Cound not connect to docker server " + dockerLocation + ": " + dockerVersion.getStatusMessage());
