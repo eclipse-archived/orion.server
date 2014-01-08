@@ -12,11 +12,11 @@ package org.eclipse.orion.server.cf.commands;
 
 import java.net.URI;
 import javax.servlet.http.HttpServletResponse;
-import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.cf.CFActivator;
 import org.eclipse.orion.server.cf.objects.Target;
+import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONArray;
@@ -31,12 +31,12 @@ public class SetSpaceCommand {
 	private String commandName;
 
 	private Target target;
-	private String space;
+	private String spaceName;
 
-	public SetSpaceCommand(Target target, String space) {
+	public SetSpaceCommand(Target target, String spaceName) {
 		this.commandName = "Login"; //$NON-NLS-1$
 		this.target = target;
-		this.space = space;
+		this.spaceName = spaceName;
 	}
 
 	public IStatus doIt() {
@@ -50,17 +50,32 @@ public class SetSpaceCommand {
 			spaceURI = spaceURI.resolve(spaceUrl);
 
 			GetMethod getMethod = new GetMethod(spaceURI.toString());
-			getMethod.addRequestHeader(new Header("Accept", "application/json"));
-			getMethod.addRequestHeader(new Header("Content-Type", "application/json"));
-			getMethod.addRequestHeader(new Header("Authorization", "bearer " + target.getAccessToken().getString("access_token")));
+			HttpUtil.configureHttpMethod(getMethod, target);
 			CFActivator.getDefault().getHttpClient().executeMethod(getMethod);
 
 			String response = getMethod.getResponseBodyAsString();
 			JSONObject result = new JSONObject(response);
 
+			if (result.has("error_code")) {
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_OK, "", result, null);
+			}
+
 			JSONArray spaces = result.getJSONArray("resources");
-			JSONObject space = spaces.getJSONObject(0);
-			target.setSpace(space);
+
+			if (spaces.length() == 0) {
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Space not found", null);
+			}
+
+			if (this.spaceName == null || "".equals(this.spaceName)) {
+				JSONObject space = spaces.getJSONObject(0);
+				target.setSpace(space);
+			} else {
+				for (int i = 0; i < spaces.length(); i++) {
+					JSONObject space = spaces.getJSONObject(i);
+					if (spaceName.equals(space.getJSONObject("entity").getString("name")))
+						target.setSpace(space);
+				}
+			}
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);

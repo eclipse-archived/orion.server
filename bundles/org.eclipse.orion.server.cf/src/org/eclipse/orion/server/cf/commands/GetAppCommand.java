@@ -38,7 +38,7 @@ public class GetAppCommand {
 	private App app;
 
 	public GetAppCommand(Target target, String name, String contentLocation) {
-		this.commandName = "Start App"; //$NON-NLS-1$
+		this.commandName = "Get App"; //$NON-NLS-1$
 		this.target = target;
 		this.name = name;
 		this.contentLocation = contentLocation;
@@ -64,7 +64,7 @@ public class GetAppCommand {
 			JSONObject apps = new JSONObject(response);
 
 			if (!apps.has("resources") || apps.getJSONArray("resources").length() == 0)
-				return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_NOT_FOUND);
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Application not found", null);
 
 			// Get more details about the app
 			JSONObject app = apps.getJSONArray("resources").getJSONObject(0).getJSONObject("metadata");

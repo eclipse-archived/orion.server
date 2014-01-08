@@ -12,11 +12,11 @@ package org.eclipse.orion.server.cf.commands;
 
 import java.net.URI;
 import javax.servlet.http.HttpServletResponse;
-import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.cf.CFActivator;
 import org.eclipse.orion.server.cf.objects.Target;
+import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONArray;
@@ -31,12 +31,12 @@ public class SetOrgCommand {
 	private String commandName;
 
 	private Target target;
-	private String org;
+	private String orgName;
 
-	public SetOrgCommand(Target target, String org) {
+	public SetOrgCommand(Target target, String orgName) {
 		this.commandName = "Set Org"; //$NON-NLS-1$
 		this.target = target;
-		this.org = org;
+		this.orgName = orgName;
 	}
 
 	public IStatus doIt() {
@@ -50,17 +50,32 @@ public class SetOrgCommand {
 			infoURI = infoURI.resolve("/v2/organizations");
 
 			GetMethod getMethod = new GetMethod(infoURI.toString());
-			getMethod.addRequestHeader(new Header("Accept", "application/json"));
-			getMethod.addRequestHeader(new Header("Content-Type", "application/json"));
-			getMethod.addRequestHeader(new Header("Authorization", "bearer " + target.getAccessToken().getString("access_token")));
+			HttpUtil.configureHttpMethod(getMethod, target);
 			CFActivator.getDefault().getHttpClient().executeMethod(getMethod);
 
 			String response = getMethod.getResponseBodyAsString();
 			JSONObject result = new JSONObject(response);
 
+			if (result.has("error_code")) {
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_OK, "", result, null);
+			}
+
 			JSONArray orgs = result.getJSONArray("resources");
-			JSONObject org = orgs.getJSONObject(0);
-			target.setOrg(org);
+
+			if (orgs.length() == 0) {
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Organization not found", null);
+			}
+
+			if (this.orgName == null || "".equals(this.orgName)) {
+				JSONObject org = orgs.getJSONObject(0);
+				target.setOrg(org);
+			} else {
+				for (int i = 0; i < orgs.length(); i++) {
+					JSONObject org = orgs.getJSONObject(i);
+					if (orgName.equals(org.getJSONObject("entity").getString("name")))
+						target.setOrg(org);
+				}
+			}
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);

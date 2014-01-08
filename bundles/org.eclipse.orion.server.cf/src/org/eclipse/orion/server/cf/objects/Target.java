@@ -33,11 +33,11 @@ public class Target extends CFObject {
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
 
-	private String name;
+	//	private String name;
 
 	private URL url;
 
-	private String user;
+	//	private String user;
 
 	private JSONObject accessToken;
 
@@ -45,26 +45,36 @@ public class Target extends CFObject {
 
 	private JSONObject space;
 
+	public Target() {
+	}
+
+	public Target(Target target) {
+		this.setUrl(target.getUrl());
+		this.setAccessToken(target.getAccessToken());
+		this.setOrg(target.getOrg());
+		this.setSpace(target.getSpace());
+	}
+
 	@Override
 	protected URI getLocation() throws URISyntaxException {
 		return null;
 	}
 
-	public String getName() {
-		return name;
-	}
+	//	public String getName() {
+	//		return name;
+	//	}
+	//
+	//	public void setName(String name) {
+	//		this.name = name;
+	//	}
 
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public String getUser() {
-		return user;
-	}
-
-	public void setUser(String user) {
-		this.user = user;
-	}
+	//	public String getUser() {
+	//		return user;
+	//	}
+	//
+	//	public void setUser(String user) {
+	//		this.user = user;
+	//	}
 
 	@PropertyDescription(name = CFProtocolConstants.KEY_URL)
 	public URL getUrl() {

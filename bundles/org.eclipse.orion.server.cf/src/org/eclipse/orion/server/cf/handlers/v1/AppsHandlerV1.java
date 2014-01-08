@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.handlers.v1;
 
-import java.net.URI;
+import java.net.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -48,27 +48,44 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 
 	@Override
 	protected CFJob handleGet(App app, HttpServletRequest request, HttpServletResponse response, final String path) {
-		final String contentLocation = IOUtilities.getQueryParameter(request, "contentLocation");
-		final String name = IOUtilities.getQueryParameter(request, "name");
+		final String contentLocation = IOUtilities.getQueryParameter(request, ProtocolConstants.KEY_CONTENT_LOCATION);
+		final String name = IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_NAME);
+		final String targetStr = IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_TARGET);
 
 		return new CFJob(request, false) {
 			@Override
 			protected IStatus performJob() {
 				try {
-					Target target = CFActivator.getDefault().getTargetMap().getTarget(userId);
-					if (target == null) {
-						String msg = "Target not set"; //$NON-NLS-1$
-						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null);
+					Target target = null;
+					if (targetStr != null) {
+						JSONObject targetJSON = new JSONObject(URLDecoder.decode(targetStr, "UTF8"));
+						URL targetUrl = new URL(targetJSON.getString(CFProtocolConstants.KEY_URL));
+
+						target = CFActivator.getDefault().getTargetMap().getTarget(userId, targetUrl);
+						if (target == null) {
+							target = new Target();
+							target.setUrl(targetUrl);
+						}
+
+						IStatus result = new SetOrgCommand(target, targetJSON.optString("Org")).doIt();
+						if (!result.isOK())
+							return result;
+
+						result = new SetSpaceCommand(target, targetJSON.optString("Space")).doIt();
+						if (!result.isOK())
+							return result;
+					} else {
+						target = CFActivator.getDefault().getTargetMap().getTarget(userId);
 					}
 
-					if (target.getSpace() == null) {
-						String msg = "Space not set"; //$NON-NLS-1$
-						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null);
+					if (target == null) {
+						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Target not set", null);
 					}
 
 					if (contentLocation != null || name != null) {
 						return new GetAppCommand(target, name, contentLocation).doIt();
 					}
+
 					return getApps(target);
 				} catch (Exception e) {
 					String msg = NLS.bind("Failed to handle request for {0}", path); //$NON-NLS-1$

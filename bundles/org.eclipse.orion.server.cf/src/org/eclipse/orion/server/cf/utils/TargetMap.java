@@ -61,7 +61,8 @@ public class TargetMap {
 
 		Target get(URL url) {
 			url = (url != null ? url : defaultTargetUrl);
-			return userTargetMap.get(url);
+			Target target = userTargetMap.get(url);
+			return target != null ? new Target(target) : null;
 		}
 
 		void put(Target target, boolean isDefault) {
