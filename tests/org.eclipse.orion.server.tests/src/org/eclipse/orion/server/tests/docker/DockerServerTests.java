@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others.
+ * Copyright (c) 2013, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -39,7 +39,7 @@ public class DockerServerTests {
 	@Test
 	public void testCreateDockerContainer() throws URISyntaxException {
 		URI dockerLocationURI = new URI(dockerLocation);
-		DockerServer dockerServer = new DockerServer(dockerLocationURI);
+		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI);
 
 		String containerName = "user";
 
@@ -63,7 +63,7 @@ public class DockerServerTests {
 		String containerName = "lifecycle";
 
 		URI dockerLocationURI = new URI(dockerLocation);
-		DockerServer dockerServer = new DockerServer(dockerLocationURI);
+		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI);
 
 		// make sure docker is running
 		DockerVersion dockerVersion = dockerServer.getDockerVersion();
@@ -119,7 +119,7 @@ public class DockerServerTests {
 	 */
 	public void testGetDockerContainer() throws URISyntaxException {
 		URI dockerLocationURI = new URI(dockerLocation);
-		DockerServer dockerServer = new DockerServer(dockerLocationURI);
+		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI);
 		DockerContainer dockerContainer = dockerServer.getDockerContainer("admin");
 		assertEquals(dockerContainer.getStatusMessage(), DockerResponse.StatusCode.OK, dockerContainer.getStatusCode());
 
@@ -133,7 +133,7 @@ public class DockerServerTests {
 	 */
 	public void testGetDockerContainers() throws URISyntaxException {
 		URI dockerLocationURI = new URI(dockerLocation);
-		DockerServer dockerServer = new DockerServer(dockerLocationURI);
+		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI);
 		DockerContainers dockerContainers = dockerServer.getDockerContainers();
 		assertEquals(dockerContainers.getStatusMessage(), DockerResponse.StatusCode.OK, dockerContainers.getStatusCode());
 		System.out.println("Docker Containers: ");
@@ -148,7 +148,7 @@ public class DockerServerTests {
 	 */
 	public void testGetDockerImage() throws URISyntaxException {
 		URI dockerLocationURI = new URI(dockerLocation);
-		DockerServer dockerServer = new DockerServer(dockerLocationURI);
+		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI);
 		DockerImage dockerImage = dockerServer.getDockerImage("ubuntu");
 		assertEquals(dockerImage.getStatusMessage(), DockerResponse.StatusCode.OK, dockerImage.getStatusCode());
 
@@ -162,7 +162,7 @@ public class DockerServerTests {
 	 */
 	public void testGetDockerImages() throws URISyntaxException {
 		URI dockerLocationURI = new URI(dockerLocation);
-		DockerServer dockerServer = new DockerServer(dockerLocationURI);
+		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI);
 		DockerImages dockerImages = dockerServer.getDockerImages();
 		assertEquals(dockerImages.getStatusMessage(), DockerResponse.StatusCode.OK, dockerImages.getStatusCode());
 		System.out.println("Docker Images: ");
@@ -181,7 +181,7 @@ public class DockerServerTests {
 	 */
 	public void testGetDockerVersion() throws URISyntaxException {
 		URI dockerLocationURI = new URI(dockerLocation);
-		DockerServer dockerServer = new DockerServer(dockerLocationURI);
+		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI);
 		DockerVersion dockerVersion = dockerServer.getDockerVersion();
 		assertEquals(dockerVersion.getStatusMessage(), DockerResponse.StatusCode.OK, dockerVersion.getStatusCode());
 		assertEquals("unknown docker version", "0.6.7", dockerVersion.getVersion());
@@ -193,7 +193,7 @@ public class DockerServerTests {
 	 */
 	public void testCreateDockerOrionBaseImage() throws URISyntaxException {
 		URI dockerLocationURI = new URI(dockerLocation);
-		DockerServer dockerServer = new DockerServer(dockerLocationURI);
+		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI);
 
 		// create the image
 		DockerImage dockerImage = dockerServer.createDockerOrionBaseImage();
