@@ -105,8 +105,8 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 			@Override
 			protected IStatus performJob() {
 				try {
-					String state = jsonData.getString(CFProtocolConstants.KEY_STATE);
-					String name = jsonData.getString(CFProtocolConstants.KEY_NAME);
+					String state = jsonData.optString(CFProtocolConstants.KEY_STATE);
+					String name = jsonData.optString(CFProtocolConstants.KEY_NAME);
 					String contentLocation = jsonData.optString(CFProtocolConstants.KEY_CONTENT_LOCATION);
 					JSONObject targetJSON = jsonData.optJSONObject(CFProtocolConstants.KEY_TARGET);
 
@@ -137,9 +137,6 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 
 					GetAppCommand getAppCommand = new GetAppCommand(target, name, contentLocation);
 					IStatus result = getAppCommand.doIt();
-					if (!result.isOK())
-						return result;
-
 					App app = getAppCommand.getApp();
 
 					if (CFProtocolConstants.KEY_STARTED.equals(state)) {
@@ -150,7 +147,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 
 					/* push new application */
 					if (app == null) {
-						String application = jsonData.getString(CFProtocolConstants.KEY_APP);
+						String application = jsonData.getString(CFProtocolConstants.KEY_NAME);
 
 						app = new App();
 						app.setName(application);

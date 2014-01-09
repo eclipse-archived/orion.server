@@ -77,6 +77,7 @@ public class PushAppCommand {
 
 			/* send request */
 			int responseCode = CFActivator.getDefault().getHttpClient().executeMethod(createAppMethod);
+
 			if (responseCode != HttpStatus.SC_CREATED)
 				return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_BAD_REQUEST);
 
@@ -135,10 +136,8 @@ public class PushAppCommand {
 			if (responseCode != HttpStatus.SC_CREATED)
 				return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 
-			/* upload project content */
+			/* upload project contents */
 			File zippedApplication = zipApplication(this.app.getContentLocation());
-			System.out.println(zippedApplication.getAbsolutePath());
-
 			PutMethod uploadMethod = new PutMethod(targetURI.resolve("/v2/apps/" + appGUID + "/bits?async=true").toString());
 			uploadMethod.addRequestHeader(new Header("Authorization", "bearer " + target.getAccessToken().getString("access_token")));
 
@@ -189,14 +188,29 @@ public class PushAppCommand {
 	}
 
 	private File zipApplication(String sourcePath) throws IOException, CoreException {
-		IFileStore source = NewFileServlet.getFileStore(null, new Path(sourcePath).removeFirstSegments(1));
-		File tmp = File.createTempFile(String.valueOf(System.currentTimeMillis()), ".zip");
-		ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(tmp));
-		writeZip(source, Path.EMPTY, zos);
-		zos.close();
+
+		/* get the underlying file store */
+		IFileStore fileStore = NewFileServlet.getFileStore(null, new Path(sourcePath).removeFirstSegments(1));
+		if (fileStore == null)
+			return null;
+
+		/* zip application to a temporary file */
+		String randomName = UUID.randomUUID().toString();
+		File tmp = File.createTempFile(randomName, ".zip");
+
+		try {
+			ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(tmp));
+			writeZip(fileStore, Path.EMPTY, zos);
+			zos.close();
+		} catch (Exception ex) {
+			/* delete corrupted zip file */
+			tmp.delete();
+		}
+
 		return tmp;
 	}
 
+	/* recursively zip the entire directory */
 	private void writeZip(IFileStore source, IPath path, ZipOutputStream zos) throws IOException, CoreException {
 		IFileInfo info = source.fetchInfo(EFS.NONE, null);
 		if (info.isDirectory()) {
