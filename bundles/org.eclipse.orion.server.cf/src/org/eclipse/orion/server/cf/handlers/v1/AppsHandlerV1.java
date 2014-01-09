@@ -98,29 +98,44 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 	}
 
 	@Override
-	protected CFJob handlePost(App resource, HttpServletRequest request, HttpServletResponse response, final String path) {
+	protected CFJob handlePut(App resource, HttpServletRequest request, HttpServletResponse response, final String path) {
 		final JSONObject jsonData = extractJSONData(request);
 
 		return new CFJob(request, false) {
 			@Override
 			protected IStatus performJob() {
 				try {
-					Target target = CFActivator.getDefault().getTargetMap().getTarget(userId);
-					if (target == null) {
-						String msg = "Target not set"; //$NON-NLS-1$
-						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null);
-					}
-
-					if (target.getSpace() == null) {
-						String msg = "Space not set"; //$NON-NLS-1$
-						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null);
-					}
-
 					String state = jsonData.getString(CFProtocolConstants.KEY_STATE);
 					String name = jsonData.getString(CFProtocolConstants.KEY_NAME);
-					String dir = jsonData.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+					String contentLocation = jsonData.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+					JSONObject targetJSON = jsonData.optJSONObject(CFProtocolConstants.KEY_TARGET);
 
-					GetAppCommand getAppCommand = new GetAppCommand(target, name, dir);
+					Target target = null;
+					if (targetJSON != null) {
+						URL targetUrl = new URL(targetJSON.getString(CFProtocolConstants.KEY_URL));
+
+						target = CFActivator.getDefault().getTargetMap().getTarget(userId, targetUrl);
+						if (target == null) {
+							target = new Target();
+							target.setUrl(targetUrl);
+						}
+
+						IStatus result = new SetOrgCommand(target, targetJSON.optString("Org")).doIt();
+						if (!result.isOK())
+							return result;
+
+						result = new SetSpaceCommand(target, targetJSON.optString("Space")).doIt();
+						if (!result.isOK())
+							return result;
+					} else {
+						target = CFActivator.getDefault().getTargetMap().getTarget(userId);
+					}
+
+					if (target == null) {
+						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Target not set", null);
+					}
+
+					GetAppCommand getAppCommand = new GetAppCommand(target, name, contentLocation);
 					getAppCommand.doIt();
 					App app = getAppCommand.getApp();
 

@@ -38,4 +38,6 @@ public class CFProtocolConstants {
 
 	public static final String KEY_SIZE = "Size";
 
+	public static final String JSON_CONTENT_TYPE = "application/json";
+
 }

@@ -67,9 +67,9 @@ public class GetAppCommand {
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Application not found", null);
 
 			// Get more details about the app
-			JSONObject app = apps.getJSONArray("resources").getJSONObject(0).getJSONObject("metadata");
+			JSONObject appJSON = apps.getJSONArray("resources").getJSONObject(0).getJSONObject("metadata");
 
-			String summaryAppUrl = app.getString("url") + "/summary";
+			String summaryAppUrl = appJSON.getString("url") + "/summary";
 			URI summaryAppURI = targetURI.resolve(summaryAppUrl);
 
 			GetMethod getSummaryMethod = new GetMethod(summaryAppURI.toString());
@@ -77,10 +77,11 @@ public class GetAppCommand {
 
 			CFActivator.getDefault().getHttpClient().executeMethod(getSummaryMethod);
 			response = getSummaryMethod.getResponseBodyAsString();
-			JSONObject summary = new MagicJSONObject(response);
+			JSONObject summaryJSON = new MagicJSONObject(response);
 
 			this.app = new App();
-			this.app.setSummaryJSON(summary);
+			this.app.setAppJSON(appJSON);
+			this.app.setSummaryJSON(summaryJSON);
 
 			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, this.app.toJSON());
 		} catch (Exception e) {

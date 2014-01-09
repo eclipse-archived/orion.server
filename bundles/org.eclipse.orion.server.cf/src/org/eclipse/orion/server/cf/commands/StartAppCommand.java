@@ -12,15 +12,16 @@ package org.eclipse.orion.server.cf.commands;
 
 import java.net.URI;
 import javax.servlet.http.HttpServletResponse;
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.methods.PutMethod;
+import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.cf.CFActivator;
+import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
+import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,29 +47,30 @@ public class StartAppCommand {
 			return status;
 
 		try {
-			URI infoURI = URIUtil.toURI(target.getUrl());
+			URI targetURI = URIUtil.toURI(target.getUrl());
 
-			infoURI = infoURI.resolve("/v2/organizations");
+			String appUrl = this.app.getAppJSON().getString("url");
+			URI appURI = targetURI.resolve(appUrl);
 
-			GetMethod getMethod = new GetMethod(infoURI.toString());
-			getMethod.addRequestHeader(new Header("Accept", "application/json"));
-			getMethod.addRequestHeader(new Header("Content-Type", "application/json"));
-			getMethod.addRequestHeader(new Header("Authorization", "bearer " + target.getAccessToken().getString("access_token")));
-			CFActivator.getDefault().getHttpClient().executeMethod(getMethod);
+			PutMethod stopMethod = new PutMethod(appURI.toString());
+			HttpUtil.configureHttpMethod(stopMethod, target);
+			stopMethod.setQueryString("inline-relations-depth=1");
 
-			String response = getMethod.getResponseBodyAsString();
+			JSONObject stopComand = new JSONObject();
+			stopComand.put("console", true);
+			stopComand.put("state", "STARTED");
+			StringRequestEntity requestEntity = new StringRequestEntity(stopComand.toString(), CFProtocolConstants.JSON_CONTENT_TYPE, "UTF-8");
+			stopMethod.setRequestEntity(requestEntity);
+
+			CFActivator.getDefault().getHttpClient().executeMethod(stopMethod);
+			String response = stopMethod.getResponseBodyAsString();
 			JSONObject result = new JSONObject(response);
-
-			JSONArray orgs = result.getJSONArray("resources");
-			JSONObject org = orgs.getJSONObject(0);
-			target.setOrg(org);
+			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);
 			return new Status(IStatus.ERROR, CFActivator.PI_CF, msg, e);
 		}
-
-		return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
 	}
 
 	private IStatus validateParams() {
