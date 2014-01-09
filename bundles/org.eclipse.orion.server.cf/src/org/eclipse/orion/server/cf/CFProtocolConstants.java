@@ -24,20 +24,63 @@ public class CFProtocolConstants {
 
 	public static final String KEY_SPACE = "Space"; //$NON-NLS-1$
 
-	public static final String KEY_STATE = "State";
+	public static final String KEY_STATE = "State"; //$NON-NLS-1$
 
-	public static final String KEY_STARTED = "Started";
+	public static final String KEY_STARTED = "Started"; //$NON-NLS-1$
 
-	public static final String KEY_STOPPED = "Stopped";
+	public static final String KEY_STOPPED = "Stopped"; //$NON-NLS-1$
 
-	public static final String KEY_TARGET = "Target";
+	public static final String KEY_TARGET = "Target"; //$NON-NLS-1$
 
-	public static final String KEY_CONTENTS = "Contents";
+	public static final String KEY_CONTENTS = "Contents"; //$NON-NLS-1$
 
-	public static final String KEY_APPLICATION = "Application";
+	public static final String KEY_APPLICATION = "Application"; //$NON-NLS-1$
 
-	public static final String KEY_SIZE = "Size";
+	public static final String KEY_SIZE = "Size"; //$NON-NLS-1$
 
-	public static final String JSON_CONTENT_TYPE = "application/json";
+	public static final String JSON_CONTENT_TYPE = "application/json"; //$NON-NLS-1$
 
+	public static final String KEY_DIR = "Dir"; //$NON-NLS-1$
+
+	public static final String KEY_APP = "App"; //$NON-NLS-1$
+
+	public static final String KEY_CONTENT_LOCATION = "ContentLocation"; //$NON-NLS-1$
+
+	public static final String V2_KEY_METADATA = "metadata"; //$NON-NLS-1$
+
+	public static final String V2_KEY_GUID = "guid"; //$NON-NLS-1$
+
+	public static final String V2_KEY_SPACE_GUID = "space_guid"; //$NON-NLS-1$
+
+	public static final String V2_KEY_NAME = "name"; //$NON-NLS-1$
+
+	public static final String V2_KEY_INSTANCES = "instances"; //$NON-NLS-1$
+
+	public static final String V2_KEY_BUILDPACK = "buildpack"; //$NON-NLS-1$
+
+	public static final String V2_KEY_COMMAND = "command"; //$NON-NLS-1$
+
+	public static final String V2_KEY_MEMORY = "memory"; //$NON-NLS-1$
+
+	public static final String V2_KEY_STACK_GUID = "stack_guid"; //$NON-NLS-1$
+
+	public static final String V2_KEY_ENTITY = "entity"; //$NON-NLS-1$
+
+	public static final String V2_KEY_DOMAINS_URL = "domains_url"; //$NON-NLS-1$
+
+	public static final String V2_KEY_TOTAL_RESULTS = "total_results"; //$NON-NLS-1$
+
+	public static final String V2_KEY_RESOURCES = "resources"; //$NON-NLS-1$
+
+	public static final String V2_KEY_HOST = "host"; //$NON-NLS-1$
+
+	public static final String V2_KEY_DOMAIN_GUID = "domain_guid"; //$NON-NLS-1$
+
+	public static final String V2_KEY_APPLICATION = "application"; //$NON-NLS-1$
+
+	public static final String V2_KEY_STATUS = "status"; //$NON-NLS-1$
+
+	public static final String V2_KEY_FINISHED = "finished"; //$NON-NLS-1$
+
+	public static final String V2_KEY_URL = "url"; //$NON-NLS-1$
 }
