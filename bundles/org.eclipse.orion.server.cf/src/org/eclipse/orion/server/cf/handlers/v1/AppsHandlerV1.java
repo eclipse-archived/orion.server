@@ -107,7 +107,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 				try {
 					String state = jsonData.getString(CFProtocolConstants.KEY_STATE);
 					String name = jsonData.getString(CFProtocolConstants.KEY_NAME);
-					String contentLocation = jsonData.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+					String contentLocation = jsonData.optString(ProtocolConstants.KEY_CONTENT_LOCATION);
 					JSONObject targetJSON = jsonData.optJSONObject(CFProtocolConstants.KEY_TARGET);
 
 					Target target = null;
@@ -136,7 +136,10 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 					}
 
 					GetAppCommand getAppCommand = new GetAppCommand(target, name, contentLocation);
-					getAppCommand.doIt();
+					IStatus result = getAppCommand.doIt();
+					if (!result.isOK())
+						return result;
+
 					App app = getAppCommand.getApp();
 
 					if (CFProtocolConstants.KEY_STARTED.equals(state)) {
