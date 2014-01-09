@@ -82,5 +82,7 @@ public class CFProtocolConstants {
 
 	public static final String V2_KEY_FINISHED = "finished"; //$NON-NLS-1$
 
+	public static final String V2_KEY_FAILURE = "failure"; //$NON-NLS-1$
+
 	public static final String V2_KEY_URL = "url"; //$NON-NLS-1$
 }

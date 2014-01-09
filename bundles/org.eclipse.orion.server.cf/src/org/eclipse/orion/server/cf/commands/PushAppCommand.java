@@ -138,6 +138,9 @@ public class PushAppCommand {
 
 			/* upload project contents */
 			File zippedApplication = zipApplication(this.app.getContentLocation());
+			if (zippedApplication == null)
+				return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+
 			PutMethod uploadMethod = new PutMethod(targetURI.resolve("/v2/apps/" + appGUID + "/bits?async=true").toString());
 			uploadMethod.addRequestHeader(new Header("Authorization", "bearer " + target.getAccessToken().getString("access_token")));
 
@@ -152,7 +155,7 @@ public class PushAppCommand {
 			/* long running task, keep track */
 			resp = new JSONObject(uploadMethod.getResponseBodyAsString());
 			String jobStatus = resp.getJSONObject(CFProtocolConstants.V2_KEY_ENTITY).getString(CFProtocolConstants.V2_KEY_STATUS);
-			while (!CFProtocolConstants.V2_KEY_FINISHED.equals(jobStatus)) {
+			while (!CFProtocolConstants.V2_KEY_FINISHED.equals(jobStatus) && !CFProtocolConstants.V2_KEY_FAILURE.equals(jobStatus)) {
 
 				/* two seconds */
 				Thread.sleep(2000);
@@ -170,6 +173,9 @@ public class PushAppCommand {
 				resp = new JSONObject(jobRequest.getResponseBodyAsString());
 				jobStatus = resp.getJSONObject(CFProtocolConstants.V2_KEY_ENTITY).getString(CFProtocolConstants.V2_KEY_STATUS);
 			}
+
+			if (CFProtocolConstants.V2_KEY_FAILURE.equals(jobStatus))
+				return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_BAD_REQUEST);
 
 			/* delete the tmp file */
 			zippedApplication.delete();
