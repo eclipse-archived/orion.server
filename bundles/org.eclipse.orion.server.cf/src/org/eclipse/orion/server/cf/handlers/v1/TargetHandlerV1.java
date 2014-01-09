@@ -91,9 +91,6 @@ public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 							return result;
 					}
 
-					//					JSONObject token = new Test().getToken("Szymon.Brandys@pl.ibm.com");
-					//					target.setAccessToken(token);
-
 					if (target.getAccessToken() != null) {
 						IStatus result = new SetOrgCommand(target, jsonData.optString("Org")).doIt();
 						if (!result.isOK())
@@ -129,6 +126,7 @@ public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 
 					LogoutCommand logoutCommand = new LogoutCommand(target);
 					IStatus result = logoutCommand.doIt();
+					CFActivator.getDefault().getTargetMap().putTarget(this.userId, target);
 
 					return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, target.toJSON());
 				} catch (Exception e) {
