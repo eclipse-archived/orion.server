@@ -61,7 +61,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 						JSONObject targetJSON = new JSONObject(URLDecoder.decode(targetStr, "UTF8"));
 						URL targetUrl = new URL(targetJSON.getString(CFProtocolConstants.KEY_URL));
 
-						target = CFActivator.getDefault().getTargetMap().getTarget(userId, targetUrl);
+						target = CFActivator.getDefault().getTargetRegistry().getTarget(userId, targetUrl);
 						if (target == null) {
 							target = new Target();
 							target.setUrl(targetUrl);
@@ -75,7 +75,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 						if (!result.isOK())
 							return result;
 					} else {
-						target = CFActivator.getDefault().getTargetMap().getTarget(userId);
+						target = CFActivator.getDefault().getTargetRegistry().getTarget(userId);
 					}
 
 					if (target == null) {
@@ -114,7 +114,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 					if (targetJSON != null) {
 						URL targetUrl = new URL(targetJSON.getString(CFProtocolConstants.KEY_URL));
 
-						target = CFActivator.getDefault().getTargetMap().getTarget(userId, targetUrl);
+						target = CFActivator.getDefault().getTargetRegistry().getTarget(userId, targetUrl);
 						if (target == null) {
 							target = new Target();
 							target.setUrl(targetUrl);
@@ -128,7 +128,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 						if (!result.isOK())
 							return result;
 					} else {
-						target = CFActivator.getDefault().getTargetMap().getTarget(userId);
+						target = CFActivator.getDefault().getTargetRegistry().getTarget(userId);
 					}
 
 					if (target == null) {

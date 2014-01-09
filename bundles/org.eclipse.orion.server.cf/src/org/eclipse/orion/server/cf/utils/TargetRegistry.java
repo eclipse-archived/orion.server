@@ -15,11 +15,11 @@ import java.util.*;
 import org.eclipse.orion.server.cf.CFAuthServiceHelper;
 import org.eclipse.orion.server.cf.objects.Target;
 
-public class TargetMap {
+public class TargetRegistry {
 
 	private Map<String, UserTargets> targetMap;
 
-	public TargetMap() {
+	public TargetRegistry() {
 		this.targetMap = Collections.synchronizedMap(new HashMap<String, UserTargets>());
 	}
 

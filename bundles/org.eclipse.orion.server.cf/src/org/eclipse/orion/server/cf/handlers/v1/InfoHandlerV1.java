@@ -47,7 +47,7 @@ public class InfoHandlerV1 extends AbstractRESTHandler<Info> {
 			@Override
 			protected IStatus performJob() {
 				try {
-					Target target = CFActivator.getDefault().getTargetMap().getTarget(this.userId);
+					Target target = CFActivator.getDefault().getTargetRegistry().getTarget(this.userId);
 					if (target == null) {
 						String msg = "Target not set"; //$NON-NLS-1$
 						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null);

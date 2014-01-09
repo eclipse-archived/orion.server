@@ -13,7 +13,7 @@ package org.eclipse.orion.server.cf;
 import java.security.Security;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
-import org.eclipse.orion.server.cf.utils.TargetMap;
+import org.eclipse.orion.server.cf.utils.TargetRegistry;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
@@ -30,7 +30,7 @@ public class CFActivator implements BundleActivator {
 
 	private BundleContext bundleContext;
 
-	private TargetMap targetMap = new TargetMap();
+	private TargetRegistry targetRegistry = new TargetRegistry();
 
 	public CFActivator() {
 	}
@@ -65,8 +65,8 @@ public class CFActivator implements BundleActivator {
 		return bundleContext;
 	}
 
-	public TargetMap getTargetMap() {
-		return targetMap;
+	public TargetRegistry getTargetRegistry() {
+		return targetRegistry;
 	}
 
 	/**

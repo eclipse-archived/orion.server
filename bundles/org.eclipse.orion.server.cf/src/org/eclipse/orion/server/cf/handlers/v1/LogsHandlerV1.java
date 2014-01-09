@@ -51,7 +51,7 @@ public class LogsHandlerV1 extends AbstractRESTHandler<Log> {
 			@Override
 			protected IStatus performJob() {
 				try {
-					Target target = CFActivator.getDefault().getTargetMap().getTarget(userId);
+					Target target = CFActivator.getDefault().getTargetRegistry().getTarget(userId);
 					if (target == null) {
 						String msg = "Target not set"; //$NON-NLS-1$
 						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null);

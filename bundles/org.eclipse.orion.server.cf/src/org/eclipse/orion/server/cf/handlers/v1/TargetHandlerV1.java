@@ -47,7 +47,7 @@ public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 			@Override
 			protected IStatus performJob() {
 				try {
-					Target target = CFActivator.getDefault().getTargetMap().getTarget(this.userId);
+					Target target = CFActivator.getDefault().getTargetRegistry().getTarget(this.userId);
 					if (target == null) {
 						String msg = "Target not set"; //$NON-NLS-1$
 						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null);
@@ -76,13 +76,13 @@ public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 
 					if (jsonData.has("Url")) {
 						URL targetUrl = new URL(jsonData.getString("Url"));
-						target = CFActivator.getDefault().getTargetMap().getTarget(this.userId, targetUrl);
+						target = CFActivator.getDefault().getTargetRegistry().getTarget(this.userId, targetUrl);
 						if (target == null) {
 							target = new Target();
 							target.setUrl(new URL(jsonData.getString("Url")));
 						}
 					} else {
-						target = CFActivator.getDefault().getTargetMap().getTarget(this.userId);
+						target = CFActivator.getDefault().getTargetRegistry().getTarget(this.userId);
 					}
 
 					if (jsonData.has("Username") && jsonData.has("Password")) {
@@ -101,7 +101,7 @@ public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 							return result;
 					}
 
-					CFActivator.getDefault().getTargetMap().putTarget(this.userId, target, true);
+					CFActivator.getDefault().getTargetRegistry().putTarget(this.userId, target, true);
 
 					return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, target.toJSON());
 				} catch (Exception e) {
@@ -122,11 +122,11 @@ public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 			@Override
 			protected IStatus performJob() {
 				try {
-					Target target = CFActivator.getDefault().getTargetMap().getTarget(this.userId);
+					Target target = CFActivator.getDefault().getTargetRegistry().getTarget(this.userId);
 
 					LogoutCommand logoutCommand = new LogoutCommand(target);
 					IStatus result = logoutCommand.doIt();
-					CFActivator.getDefault().getTargetMap().putTarget(this.userId, target);
+					CFActivator.getDefault().getTargetRegistry().putTarget(this.userId, target);
 
 					return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, target.toJSON());
 				} catch (Exception e) {
