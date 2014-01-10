@@ -1,0 +1,9 @@
+Code-Review+2: Matthias Sohn <matthias.sohn@sap.com>
+IP-Clean+1: Matthias Sohn <matthias.sohn@sap.com>
+Verified+1: Matthias Sohn <matthias.sohn@sap.com>
+Code-Review+1: Stefan Lay <stefan.lay@sap.com>
+Submitted-by: Matthias Sohn <matthias.sohn@sap.com>
+Submitted-at: Fri, 10 Jan 2014 10:43:38 -0500
+Reviewed-on: https://git.eclipse.org/r/19985
+Project: orion/org.eclipse.orion.server
+Branch: refs/heads/master
