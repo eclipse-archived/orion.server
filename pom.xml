@@ -109,7 +109,7 @@
 				<activeByDefault>true</activeByDefault>
 			</activation>
 			<modules>
-				<module>../h</module>
+				<module>../org.eclipse.orion.client</module>
 			</modules>
 		</profile>
 		<profile>
