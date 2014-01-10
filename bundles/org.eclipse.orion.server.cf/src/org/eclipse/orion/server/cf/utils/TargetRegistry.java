@@ -64,6 +64,9 @@ public class TargetRegistry {
 
 		Target get(URL url) {
 			url = (url != null ? url : defaultTargetUrl);
+			if (url == null) {
+				return null;
+			}
 			Target target = userTargetMap.get(url);
 			if (target == null) {
 				target = new Target();
