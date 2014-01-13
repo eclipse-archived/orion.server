@@ -85,4 +85,26 @@ public class CFProtocolConstants {
 	public static final String V2_KEY_FAILURE = "failure"; //$NON-NLS-1$
 
 	public static final String V2_KEY_URL = "url"; //$NON-NLS-1$
+
+	public static final String V2_KEY_SERVICES = "services"; //$NON-NLS-1$
+
+	public static final String V2_KEY_TYPE = "type"; //$NON-NLS-1$
+
+	public static final String V2_KEY_PROVIDER = "provider"; //$NON-NLS-1$
+
+	public static final String V2_KEY_PLAN = "plan"; //$NON-NLS-1$
+
+	public static final String V2_KEY_SERVICE_PLAN_GUID = "service_plan_guid"; //$NON-NLS-1$
+
+	public static final String V2_KEY_SERVICE_INSTANCE_GUID = "service_instance_guid"; //$NON-NLS-1$
+
+	public static final String V2_KEY_APP_GUID = "app_guid"; //$NON-NLS-1$
+
+	public static final String V2_KEY_LABEL = "label"; //$NON-NLS-1$
+
+	public static final String V2_KEY_SERVICE_PLANS = "service_plans"; //$NON-NLS-1$
+
+	public static final String V2_KEY_APPLICATIONS = "applications"; //$NON-NLS-1$
+
+	public static final String V2_KEY_DOMAIN = "domain"; //$NON-NLS-1$
 }

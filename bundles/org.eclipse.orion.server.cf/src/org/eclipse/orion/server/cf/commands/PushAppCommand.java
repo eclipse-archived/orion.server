@@ -34,7 +34,7 @@ import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
-import org.json.JSONObject;
+import org.json.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,22 +72,22 @@ public class PushAppCommand {
 				return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_BAD_REQUEST);
 
 			/* read deploy parameters */
-			JSONObject appJSON = manifestJSON.getJSONArray("applications").getJSONObject(0);
+			JSONObject appJSON = manifestJSON.getJSONArray(CFProtocolConstants.V2_KEY_APPLICATIONS).getJSONObject(0);
 			String appName, appCommand, appHost, appDomain;
 			int appInstances, appMemory;
 
 			try {
-				appName = appJSON.getString("name"); /* required */
-				appCommand = appJSON.getString("command"); /* required */
+				appName = appJSON.getString(CFProtocolConstants.V2_KEY_NAME); /* required */
+				appCommand = appJSON.getString(CFProtocolConstants.V2_KEY_COMMAND); /* required */
 
 				/* if none provided, sets a default one */
-				String inputHost = appJSON.optString("host");
+				String inputHost = appJSON.optString(CFProtocolConstants.V2_KEY_HOST);
 				appHost = (!inputHost.isEmpty()) ? inputHost : (appName + "-" + UUID.randomUUID());
 
-				appDomain = appJSON.optString("domain"); /* optional */
+				appDomain = appJSON.optString(CFProtocolConstants.V2_KEY_DOMAIN); /* optional */
 
-				appInstances = ManifestUtils.getInstances(appJSON.optString("instances")); /* optional */
-				appMemory = ManifestUtils.getMemoryLimit(appJSON.optString("memory")); /* optional */
+				appInstances = ManifestUtils.getInstances(appJSON.optString(CFProtocolConstants.V2_KEY_INSTANCES)); /* optional */
+				appMemory = ManifestUtils.getMemoryLimit(appJSON.optString(CFProtocolConstants.V2_KEY_MEMORY)); /* optional */
 			} catch (Exception ex) {
 				/* parse exception, fail */
 				return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_BAD_REQUEST);
@@ -236,6 +236,70 @@ public class PushAppCommand {
 			/* delete the tmp file */
 			zippedApplication.delete();
 
+			/* bind services */
+			if (appJSON.has(CFProtocolConstants.V2_KEY_SERVICES)) {
+
+				/* fetch all services */
+				URI servicesURI = targetURI.resolve("/v2/services");
+				GetMethod getServicesMethod = new GetMethod(servicesURI.toString());
+				HttpUtil.configureHttpMethod(getServicesMethod, target);
+				getServicesMethod.setQueryString("inline-relations-depth=1");
+
+				/* send request */
+				responseCode = CFActivator.getDefault().getHttpClient().executeMethod(getServicesMethod);
+				if (responseCode != HttpStatus.SC_OK)
+					return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+
+				resp = new JSONObject(getServicesMethod.getResponseBodyAsString());
+				JSONArray servicesJSON = resp.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES);
+
+				JSONObject services = appJSON.getJSONObject(CFProtocolConstants.V2_KEY_SERVICES);
+				for (String serviceName : JSONObject.getNames(services)) {
+
+					String service = services.getJSONObject(serviceName).getString(CFProtocolConstants.V2_KEY_TYPE);
+					String provider = services.getJSONObject(serviceName).getString(CFProtocolConstants.V2_KEY_PROVIDER);
+					String plan = services.getJSONObject(serviceName).getString(CFProtocolConstants.V2_KEY_PLAN);
+
+					String servicePlanGUID = findServicePlanGUID(service, provider, plan, servicesJSON);
+					if (servicePlanGUID == null)
+						return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_BAD_REQUEST);
+
+					/* create service instance */
+					URI serviceInstancesURI = targetURI.resolve("/v2/service_instances");
+					PostMethod createServiceMethod = new PostMethod(serviceInstancesURI.toString());
+					HttpUtil.configureHttpMethod(createServiceMethod, target);
+
+					/* set request body */
+					JSONObject createServiceRequest = new JSONObject();
+					createServiceRequest.put(CFProtocolConstants.V2_KEY_SPACE_GUID, target.getSpace().getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID));
+					createServiceRequest.put(CFProtocolConstants.V2_KEY_NAME, serviceName);
+					createServiceRequest.put(CFProtocolConstants.V2_KEY_SERVICE_PLAN_GUID, servicePlanGUID);
+					createServiceMethod.setRequestEntity(new StringRequestEntity(createServiceRequest.toString(), "application/json", "utf-8"));
+
+					responseCode = CFActivator.getDefault().getHttpClient().executeMethod(createServiceMethod);
+					if (responseCode != HttpStatus.SC_CREATED)
+						return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_BAD_REQUEST);
+
+					resp = new JSONObject(createServiceMethod.getResponseBodyAsString());
+					String serviceInstanceGUID = resp.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID);
+
+					/* bind service to the application */
+					URI serviceBindingsURI = targetURI.resolve("/v2/service_bindings");
+					PostMethod bindServiceMethod = new PostMethod(serviceBindingsURI.toString());
+					HttpUtil.configureHttpMethod(bindServiceMethod, target);
+
+					/* set request body */
+					JSONObject bindServiceRequest = new JSONObject();
+					bindServiceRequest.put(CFProtocolConstants.V2_KEY_APP_GUID, appGUID);
+					bindServiceRequest.put(CFProtocolConstants.V2_KEY_SERVICE_INSTANCE_GUID, serviceInstanceGUID);
+					bindServiceMethod.setRequestEntity(new StringRequestEntity(bindServiceRequest.toString(), "application/json", "utf-8"));
+
+					responseCode = CFActivator.getDefault().getHttpClient().executeMethod(bindServiceMethod);
+					if (responseCode != HttpStatus.SC_CREATED)
+						return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_BAD_REQUEST);
+				}
+			}
+
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);
@@ -247,6 +311,25 @@ public class PushAppCommand {
 
 	private IStatus validateParams() {
 		return Status.OK_STATUS;
+	}
+
+	/* helper method to find the appropriate service plan guid */
+	private String findServicePlanGUID(String service, String provider, String plan, JSONArray servicesJSON) throws JSONException {
+		for (int i = 0; i < servicesJSON.length(); ++i) {
+			JSONObject serviceJSON = servicesJSON.getJSONObject(i).getJSONObject(CFProtocolConstants.V2_KEY_ENTITY);
+			if (service.equals(serviceJSON.getString(CFProtocolConstants.V2_KEY_LABEL)) && provider.equals(serviceJSON.getString(CFProtocolConstants.V2_KEY_PROVIDER))) {
+
+				/* find correct service plan */
+				JSONArray servicePlans = serviceJSON.getJSONArray(CFProtocolConstants.V2_KEY_SERVICE_PLANS);
+				for (int j = 0; j < servicePlans.length(); ++j) {
+					JSONObject servicePlan = servicePlans.getJSONObject(j);
+					if (plan.equals(servicePlan.getJSONObject(CFProtocolConstants.V2_KEY_ENTITY).getString(CFProtocolConstants.V2_KEY_NAME)))
+						return servicePlan.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID);
+				}
+			}
+		}
+
+		return null;
 	}
 
 	private JSONObject parseManifest(String sourcePath) throws ParseException, CoreException {
