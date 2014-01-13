@@ -62,10 +62,6 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 						URL targetUrl = new URL(targetJSON.getString(CFProtocolConstants.KEY_URL));
 
 						target = CFActivator.getDefault().getTargetRegistry().getTarget(userId, targetUrl);
-						if (target == null) {
-							target = new Target();
-							target.setUrl(targetUrl);
-						}
 
 						IStatus result = new SetOrgCommand(target, targetJSON.optString("Org")).doIt();
 						if (!result.isOK())
@@ -106,7 +102,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 			protected IStatus performJob() {
 				try {
 					String state = jsonData.optString(CFProtocolConstants.KEY_STATE);
-					String name = jsonData.optString(CFProtocolConstants.KEY_NAME);
+					String appName = jsonData.optString(CFProtocolConstants.KEY_NAME);
 					String contentLocation = jsonData.optString(CFProtocolConstants.KEY_CONTENT_LOCATION);
 					JSONObject targetJSON = jsonData.optJSONObject(CFProtocolConstants.KEY_TARGET);
 
@@ -135,7 +131,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Target not set", null);
 					}
 
-					GetAppCommand getAppCommand = new GetAppCommand(target, name, contentLocation);
+					GetAppCommand getAppCommand = new GetAppCommand(target, appName, contentLocation);
 					IStatus result = getAppCommand.doIt();
 					App app = getAppCommand.getApp();
 
@@ -145,12 +141,10 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 						return new StopAppCommand(target, app).doIt();
 					}
 
-					/* push new application */
+					// push new application
 					if (app == null) {
-						String application = jsonData.getString(CFProtocolConstants.KEY_NAME);
-
 						app = new App();
-						app.setName(application);
+						app.setName(appName);
 						app.setContentLocation(contentLocation);
 					}
 

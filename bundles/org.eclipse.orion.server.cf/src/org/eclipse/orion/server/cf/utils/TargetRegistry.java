@@ -59,6 +59,7 @@ public class TargetRegistry {
 		private URL defaultTargetUrl;
 
 		UserTargets(String userId) {
+			this.userId = userId;
 			this.userTargetMap = Collections.synchronizedMap(new HashMap<URL, Target>());
 		}
 

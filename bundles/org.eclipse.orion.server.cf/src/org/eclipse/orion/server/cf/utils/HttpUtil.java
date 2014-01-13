@@ -21,13 +21,5 @@ public class HttpUtil {
 		method.addRequestHeader(new Header("Content-Type", "application/json"));
 		if (target.getAccessToken() != null)
 			method.addRequestHeader(new Header("Authorization", "bearer " + target.getAccessToken().getString("access_token")));
-		//		else {
-		//			try {
-		//				JSONObject token = new Test().getToken("Szymon.Brandys@pl.ibm.com");
-		//				method.addRequestHeader(new Header("Authorization", "bearer " + token.getString("access_token")));
-		//			} catch (Exception e) {
-		//				e.printStackTrace();
-		//			}
-		//		}
 	}
 }
