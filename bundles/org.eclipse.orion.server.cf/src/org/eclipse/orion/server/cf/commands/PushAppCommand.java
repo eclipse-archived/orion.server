@@ -12,6 +12,7 @@ package org.eclipse.orion.server.cf.commands;
 
 import java.io.*;
 import java.net.URI;
+import java.util.Scanner;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -27,6 +28,7 @@ import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.server.cf.CFActivator;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
+import org.eclipse.orion.server.cf.manifest.*;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
@@ -57,6 +59,40 @@ public class PushAppCommand {
 			return status;
 
 		try {
+
+			JSONObject manifestJSON = null;
+			try {
+				/* parse manifest if present */
+				manifestJSON = parseManifest(this.app.getContentLocation());
+			} catch (ParseException ex) {
+				/* we could handle an error message at this point, fail over */
+			}
+
+			if (manifestJSON == null)
+				return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_BAD_REQUEST);
+
+			/* read deploy parameters */
+			JSONObject appJSON = manifestJSON.getJSONArray("applications").getJSONObject(0);
+			String appName, appCommand, appHost, appDomain;
+			int appInstances, appMemory;
+
+			try {
+				appName = appJSON.getString("name"); /* required */
+				appCommand = appJSON.getString("command"); /* required */
+
+				/* if none provided, sets a default one */
+				String inputHost = appJSON.optString("host");
+				appHost = (!inputHost.isEmpty()) ? inputHost : (appName + "-" + UUID.randomUUID());
+
+				appDomain = appJSON.optString("domain"); /* optional */
+
+				appInstances = ManifestUtils.getInstances(appJSON.optString("instances")); /* optional */
+				appMemory = ManifestUtils.getMemoryLimit(appJSON.optString("memory")); /* optional */
+			} catch (Exception ex) {
+				/* parse exception, fail */
+				return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_BAD_REQUEST);
+			}
+
 			/* create cloud foundry application */
 			URI targetURI = URIUtil.toURI(target.getUrl());
 			URI appsURI = targetURI.resolve("/v2/apps");
@@ -67,11 +103,11 @@ public class PushAppCommand {
 			/* set request body */
 			JSONObject createAppRequst = new JSONObject();
 			createAppRequst.put(CFProtocolConstants.V2_KEY_SPACE_GUID, target.getSpace().getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID));
-			createAppRequst.put(CFProtocolConstants.V2_KEY_NAME, this.app.getName());
-			createAppRequst.put(CFProtocolConstants.V2_KEY_INSTANCES, 1);
+			createAppRequst.put(CFProtocolConstants.V2_KEY_NAME, appName);
+			createAppRequst.put(CFProtocolConstants.V2_KEY_INSTANCES, appInstances);
 			createAppRequst.put(CFProtocolConstants.V2_KEY_BUILDPACK, JSONObject.NULL);
-			createAppRequst.put(CFProtocolConstants.V2_KEY_COMMAND, "node app.js");
-			createAppRequst.put(CFProtocolConstants.V2_KEY_MEMORY, 128);
+			createAppRequst.put(CFProtocolConstants.V2_KEY_COMMAND, appCommand);
+			createAppRequst.put(CFProtocolConstants.V2_KEY_MEMORY, appMemory);
 			createAppRequst.put(CFProtocolConstants.V2_KEY_STACK_GUID, JSONObject.NULL);
 			createAppMethod.setRequestEntity(new StringRequestEntity(createAppRequst.toString(), "application/json", "utf-8"));
 
@@ -101,11 +137,31 @@ public class PushAppCommand {
 			/* extract available domains */
 			JSONObject domains = new JSONObject(getDomainsMethod.getResponseBodyAsString());
 
-			/* get first available domain */
 			if (domains.getInt(CFProtocolConstants.V2_KEY_TOTAL_RESULTS) < 1)
 				return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 
-			String domainGUID = domains.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES).getJSONObject(0).getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID);
+			String domainGUID = null;
+			if (!appDomain.isEmpty()) {
+				/* look if the domain is available */
+				int resources = domains.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES).length();
+				for (int k = 0; k < resources; ++k) {
+					JSONObject resource = domains.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES).getJSONObject(k);
+					String domainName = resource.getJSONObject(CFProtocolConstants.V2_KEY_ENTITY).getString(CFProtocolConstants.V2_KEY_NAME);
+					if (appDomain.equals(domainName)) {
+						domainGUID = resource.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID);
+						break;
+					}
+				}
+
+				/* client requested an unavailable domain, fail */
+				if (domainGUID == null)
+					return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_BAD_REQUEST);
+
+			} else {
+				/* client has not requested a specific domain, get the first available */
+				JSONObject resource = domains.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES).getJSONObject(0);
+				domainGUID = resource.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID);
+			}
 
 			/* new application, we do not need to check for attached routes, create a new one */
 			URI routesURI = targetURI.resolve("/v2/routes");
@@ -115,7 +171,7 @@ public class PushAppCommand {
 			/* set request body */
 			JSONObject routeRequest = new JSONObject();
 			routeRequest.put(CFProtocolConstants.V2_KEY_SPACE_GUID, target.getSpace().getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID));
-			routeRequest.put(CFProtocolConstants.V2_KEY_HOST, this.app.getName() + "-" + UUID.randomUUID());
+			routeRequest.put(CFProtocolConstants.V2_KEY_HOST, appHost);
 			routeRequest.put(CFProtocolConstants.V2_KEY_DOMAIN_GUID, domainGUID);
 			createRouteMethod.setRequestEntity(new StringRequestEntity(routeRequest.toString(), "application/json", "utf-8"));
 
@@ -191,6 +247,24 @@ public class PushAppCommand {
 
 	private IStatus validateParams() {
 		return Status.OK_STATUS;
+	}
+
+	private JSONObject parseManifest(String sourcePath) throws ParseException, CoreException {
+		/* get the underlying file store */
+		IFileStore fileStore = NewFileServlet.getFileStore(null, new Path(sourcePath).removeFirstSegments(1));
+		if (fileStore == null)
+			return null;
+
+		/* lookup the manifest description */
+		IFileStore manifestStore = fileStore.getChild(ManifestUtils.MANIFEST_FILE_NAME);
+		if (!manifestStore.fetchInfo().exists())
+			return null;
+
+		Scanner manifestScanner = new Scanner(manifestStore.openInputStream(EFS.NONE, null));
+		ManifestNode manifestTree = ManifestParser.parse(manifestScanner);
+		manifestScanner.close();
+
+		return manifestTree.toJSON();
 	}
 
 	private File zipApplication(String sourcePath) throws IOException, CoreException {

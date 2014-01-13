@@ -37,6 +37,11 @@ public class ManifestParser {
 
 		while (scanner.hasNextLine()) {
 			input = ManifestUtils.removeComments(scanner.nextLine());
+
+			/* ignore the (possibly) initial '---' line */
+			if ("---".equals(input.trim()))
+				continue;
+
 			if (input.length() > 0)
 				break;
 		}

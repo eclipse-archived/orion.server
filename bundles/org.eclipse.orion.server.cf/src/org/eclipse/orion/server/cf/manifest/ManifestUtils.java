@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
  * Common manifest parser utilities.
  */
 public class ManifestUtils {
-
+	public static final String MANIFEST_FILE_NAME = "manifest.yml";
 	private static final Pattern pattern = Pattern.compile("[^ ]");
 
 	/**
@@ -59,5 +59,21 @@ public class ManifestUtils {
 			return matcher.start();
 		else
 			return 0;
+	}
+
+	/**
+	 * Parses the number of MB from the input
+	 * string in form of <Integer>M. Defaults to 128.
+	 */
+	public static int getMemoryLimit(String input) {
+		return (!input.isEmpty()) ? Integer.parseInt(input.split("M")[0]) : 128;
+	}
+
+	/**
+	 * Parses the number of instances from 
+	 * the input string. Defaults to 1.
+	 */
+	public static int getInstances(String input) {
+		return (!input.isEmpty()) ? Integer.parseInt(input) : 1;
 	}
 }
