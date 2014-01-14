@@ -127,7 +127,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 
 	private IStatus getApps(Target target) throws Exception {
 		URI appsURI = URIUtil.toURI(target.getUrl());
-		String appsUrl = target.getSpace().getJSONObject("entity").getString("apps_url");
+		String appsUrl = target.getSpace().getCFJSON().getJSONObject("entity").getString("apps_url");
 		appsUrl = appsUrl.replaceAll("apps", "summary");
 		appsURI = appsURI.resolve(appsUrl);
 

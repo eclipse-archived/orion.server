@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.cf.CFActivator;
+import org.eclipse.orion.server.cf.objects.Space;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -46,7 +47,7 @@ public class SetSpaceCommand {
 
 		try {
 			URI spaceURI = URIUtil.toURI(target.getUrl());
-			String spaceUrl = target.getOrg().getJSONObject("entity").getString("spaces_url");
+			String spaceUrl = target.getOrg().getCFJSON().getJSONObject("entity").getString("spaces_url");
 			spaceURI = spaceURI.resolve(spaceUrl);
 
 			GetMethod getMethod = new GetMethod(spaceURI.toString());
@@ -68,12 +69,12 @@ public class SetSpaceCommand {
 
 			if (this.spaceName == null || "".equals(this.spaceName)) {
 				JSONObject space = spaces.getJSONObject(0);
-				target.setSpace(space);
+				target.setSpace(new Space().setCFJSON(space));
 			} else {
 				for (int i = 0; i < spaces.length(); i++) {
 					JSONObject space = spaces.getJSONObject(i);
 					if (spaceName.equals(space.getJSONObject("entity").getString("name")))
-						target.setSpace(space);
+						target.setSpace(new Space().setCFJSON(space));
 				}
 			}
 		} catch (Exception e) {

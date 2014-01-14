@@ -28,7 +28,9 @@ public class Target extends CFObject {
 	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
 	{
 		Property[] defaultProperties = new Property[] { //
-		new Property(CFProtocolConstants.KEY_URL) //
+		new Property(CFProtocolConstants.KEY_URL), //
+				new Property(Space.TYPE), //
+				new Property(Org.TYPE) //
 		};
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
@@ -37,9 +39,9 @@ public class Target extends CFObject {
 
 	private JSONObject accessToken;
 
-	private JSONObject org;
+	private Org org;
 
-	private JSONObject space;
+	private Space space;
 
 	public Target() {
 	}
@@ -73,19 +75,37 @@ public class Target extends CFObject {
 		this.accessToken = accessToken;
 	}
 
-	public JSONObject getOrg() {
+	public Org getOrg() {
 		return org;
 	}
 
-	public void setOrg(JSONObject org) {
+	@PropertyDescription(name = Org.TYPE)
+	private JSONObject getOrgJSON() {
+		try {
+			return org.toJSON();
+		} catch (JSONException e) {
+			return null;
+		}
+	}
+
+	public void setOrg(Org org) {
 		this.org = org;
 	}
 
-	public JSONObject getSpace() {
+	public Space getSpace() {
 		return space;
 	}
 
-	public void setSpace(JSONObject space) {
+	@PropertyDescription(name = Space.TYPE)
+	private JSONObject getSpaceJSON() {
+		try {
+			return space.toJSON();
+		} catch (JSONException e) {
+			return null;
+		}
+	}
+
+	public void setSpace(Space space) {
 		this.space = space;
 	}
 

@@ -56,7 +56,7 @@ public class GetLogsCommand {
 			URI targetURI = URIUtil.toURI(target.getUrl());
 
 			// Find the app
-			String appsUrl = target.getSpace().getJSONObject("entity").getString("apps_url");
+			String appsUrl = target.getSpace().getCFJSON().getJSONObject("entity").getString("apps_url");
 			URI appsURI = targetURI.resolve(appsUrl);
 			GetMethod getAppsMethod = new GetMethod(appsURI.toString());
 			HttpUtil.configureHttpMethod(getAppsMethod, target);

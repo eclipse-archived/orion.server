@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.cf.CFActivator;
+import org.eclipse.orion.server.cf.objects.Org;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -68,12 +69,12 @@ public class SetOrgCommand {
 
 			if (this.orgName == null || "".equals(this.orgName)) {
 				JSONObject org = orgs.getJSONObject(0);
-				target.setOrg(org);
+				target.setOrg(new Org().setCFJSON(org));
 			} else {
 				for (int i = 0; i < orgs.length(); i++) {
 					JSONObject org = orgs.getJSONObject(i);
 					if (orgName.equals(org.getJSONObject("entity").getString("name")))
-						target.setOrg(org);
+						target.setOrg(new Org().setCFJSON(org));
 				}
 			}
 		} catch (Exception e) {

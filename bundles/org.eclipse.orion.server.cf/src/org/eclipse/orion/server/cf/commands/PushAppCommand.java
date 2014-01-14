@@ -102,7 +102,7 @@ public class PushAppCommand {
 
 			/* set request body */
 			JSONObject createAppRequst = new JSONObject();
-			createAppRequst.put(CFProtocolConstants.V2_KEY_SPACE_GUID, target.getSpace().getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID));
+			createAppRequst.put(CFProtocolConstants.V2_KEY_SPACE_GUID, target.getSpace().getCFJSON().getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID));
 			createAppRequst.put(CFProtocolConstants.V2_KEY_NAME, appName);
 			createAppRequst.put(CFProtocolConstants.V2_KEY_INSTANCES, appInstances);
 			createAppRequst.put(CFProtocolConstants.V2_KEY_BUILDPACK, JSONObject.NULL);
@@ -117,12 +117,18 @@ public class PushAppCommand {
 			if (responseCode != HttpStatus.SC_CREATED)
 				return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_BAD_REQUEST);
 
+			JSONObject result = new JSONObject();
+			result.put("Target", target.toJSON());
+
 			/* extract application guid */
 			JSONObject resp = new JSONObject(createAppMethod.getResponseBodyAsString());
 			String appGUID = resp.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID);
 
+			result.put("ManageUrl", target.getUrl().toString() + "#/resources/appGuid=" + appGUID);
+			result.put("App", resp);
+
 			/* get available domains */
-			String domainsURL = target.getSpace().getJSONObject(CFProtocolConstants.V2_KEY_ENTITY).getString(CFProtocolConstants.V2_KEY_DOMAINS_URL);
+			String domainsURL = target.getSpace().getCFJSON().getJSONObject(CFProtocolConstants.V2_KEY_ENTITY).getString(CFProtocolConstants.V2_KEY_DOMAINS_URL);
 			URI domainsURI = targetURI.resolve(domainsURL);
 
 			GetMethod getDomainsMethod = new GetMethod(domainsURI.toString());
@@ -149,6 +155,7 @@ public class PushAppCommand {
 					String domainName = resource.getJSONObject(CFProtocolConstants.V2_KEY_ENTITY).getString(CFProtocolConstants.V2_KEY_NAME);
 					if (appDomain.equals(domainName)) {
 						domainGUID = resource.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID);
+						result.put("Domain", domainName);
 						break;
 					}
 				}
@@ -160,6 +167,7 @@ public class PushAppCommand {
 			} else {
 				/* client has not requested a specific domain, get the first available */
 				JSONObject resource = domains.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES).getJSONObject(0);
+				result.put("Domain", resource.getJSONObject(CFProtocolConstants.V2_KEY_ENTITY).getString(CFProtocolConstants.V2_KEY_NAME));
 				domainGUID = resource.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID);
 			}
 
@@ -170,7 +178,7 @@ public class PushAppCommand {
 
 			/* set request body */
 			JSONObject routeRequest = new JSONObject();
-			routeRequest.put(CFProtocolConstants.V2_KEY_SPACE_GUID, target.getSpace().getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID));
+			routeRequest.put(CFProtocolConstants.V2_KEY_SPACE_GUID, target.getSpace().getCFJSON().getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID));
 			routeRequest.put(CFProtocolConstants.V2_KEY_HOST, appHost);
 			routeRequest.put(CFProtocolConstants.V2_KEY_DOMAIN_GUID, domainGUID);
 			createRouteMethod.setRequestEntity(new StringRequestEntity(routeRequest.toString(), "application/json", "utf-8"));
@@ -183,6 +191,7 @@ public class PushAppCommand {
 			/* extract route guid */
 			JSONObject route = new JSONObject(createRouteMethod.getResponseBodyAsString());
 			String routeGUID = route.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID);
+			result.put("Route", route);
 
 			/* attach route to application */
 			PutMethod attachRouteMethod = new PutMethod(targetURI.resolve("/v2/apps/" + appGUID + "/routes/" + routeGUID).toString());
@@ -271,7 +280,7 @@ public class PushAppCommand {
 
 					/* set request body */
 					JSONObject createServiceRequest = new JSONObject();
-					createServiceRequest.put(CFProtocolConstants.V2_KEY_SPACE_GUID, target.getSpace().getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID));
+					createServiceRequest.put(CFProtocolConstants.V2_KEY_SPACE_GUID, target.getSpace().getCFJSON().getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID));
 					createServiceRequest.put(CFProtocolConstants.V2_KEY_NAME, serviceName);
 					createServiceRequest.put(CFProtocolConstants.V2_KEY_SERVICE_PLAN_GUID, servicePlanGUID);
 					createServiceMethod.setRequestEntity(new StringRequestEntity(createServiceRequest.toString(), "application/json", "utf-8"));
@@ -300,13 +309,13 @@ public class PushAppCommand {
 				}
 			}
 
+			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
+
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);
 			return new Status(IStatus.ERROR, CFActivator.PI_CF, msg, e);
 		}
-
-		return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
 	}
 
 	private IStatus validateParams() {
