@@ -82,15 +82,16 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 	protected CFJob handlePut(App resource, HttpServletRequest request, HttpServletResponse response, final String path) {
 		final JSONObject jsonData = extractJSONData(request);
 
+		final String state = jsonData.optString(CFProtocolConstants.KEY_STATE);
+		final String appName = jsonData.optString(CFProtocolConstants.KEY_NAME);
+		final JSONObject targetJSON = jsonData.optJSONObject(CFProtocolConstants.KEY_TARGET);
+		String _contentLocation = jsonData.optString(CFProtocolConstants.KEY_CONTENT_LOCATION);
+		final String contentLocation = ServletResourceHandler.toOrionLocation(request, _contentLocation);
+
 		return new CFJob(request, false) {
 			@Override
 			protected IStatus performJob() {
 				try {
-					String state = jsonData.optString(CFProtocolConstants.KEY_STATE);
-					String appName = jsonData.optString(CFProtocolConstants.KEY_NAME);
-					String contentLocation = jsonData.optString(CFProtocolConstants.KEY_CONTENT_LOCATION);
-					JSONObject targetJSON = jsonData.optJSONObject(CFProtocolConstants.KEY_TARGET);
-
 					Target target = computeTarget(this.userId, targetJSON);
 					if (target == null) {
 						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Target not set", null);
