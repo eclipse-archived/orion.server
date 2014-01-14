@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.handlers.v1;
 
-import java.net.URL;
 import java.net.URLDecoder;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -19,7 +18,7 @@ import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.cf.CFActivator;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
-import org.eclipse.orion.server.cf.commands.*;
+import org.eclipse.orion.server.cf.commands.GetLogsCommand;
 import org.eclipse.orion.server.cf.jobs.CFJob;
 import org.eclipse.orion.server.cf.objects.Log;
 import org.eclipse.orion.server.cf.objects.Target;
@@ -60,26 +59,12 @@ public class LogsHandlerV1 extends AbstractRESTHandler<Log> {
 					Target target = null;
 					if (targetStr != null) {
 						JSONObject targetJSON = new JSONObject(URLDecoder.decode(targetStr, "UTF8"));
-						URL targetUrl = new URL(targetJSON.getString(CFProtocolConstants.KEY_URL));
-
-						target = CFActivator.getDefault().getTargetRegistry().getTarget(userId, targetUrl);
+						target = computeTarget(this.userId, targetJSON);
 						if (target == null) {
-							return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Target not set", null);
+							return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Target not set", null);
 						}
-
-						IStatus result = new SetOrgCommand(target, targetJSON.optString("Org")).doIt();
-						if (!result.isOK())
-							return result;
-
-						result = new SetSpaceCommand(target, targetJSON.optString("Space")).doIt();
-						if (!result.isOK())
-							return result;
 					} else {
 						target = CFActivator.getDefault().getTargetRegistry().getTarget(userId);
-					}
-
-					if (target == null) {
-						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Target not set", null);
 					}
 
 					if (target.getSpace() == null) {

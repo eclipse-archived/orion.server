@@ -65,9 +65,12 @@ public class GetLogsCommand {
 			CFActivator.getDefault().getHttpClient().executeMethod(getAppsMethod);
 			String response = getAppsMethod.getResponseBodyAsString();
 			JSONObject apps = new JSONObject(response);
+			if (apps.has("error_code")) {
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, apps.optString("description"), apps, null);
+			}
 
 			if (!apps.has("resources") || apps.getJSONArray("resources").length() == 0)
-				return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_NOT_FOUND);
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Application does not exist on the server", null);
 
 			// Get more details about the app
 			JSONObject app = apps.getJSONArray("resources").getJSONObject(0).getJSONObject("metadata");
@@ -81,6 +84,9 @@ public class GetLogsCommand {
 			CFActivator.getDefault().getHttpClient().executeMethod(getInstancesMethod);
 			response = getInstancesMethod.getResponseBodyAsString();
 			JSONObject instances = new MagicJSONObject(response);
+			if (instances.has("error_code")) {
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, instances.optString("description"), instances, null);
+			}
 
 			Iterator<String> instancesIterator = instances.keys();
 			JSONObject jsonResp = new JSONObject();
