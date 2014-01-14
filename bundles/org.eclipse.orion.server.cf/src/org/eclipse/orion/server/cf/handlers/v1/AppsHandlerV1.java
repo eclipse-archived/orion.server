@@ -10,7 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.handlers.v1;
 
-import java.net.*;
+import java.net.URI;
+import java.net.URLDecoder;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -56,26 +57,10 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 			@Override
 			protected IStatus performJob() {
 				try {
-					Target target = null;
-					if (targetStr != null) {
-						JSONObject targetJSON = new JSONObject(URLDecoder.decode(targetStr, "UTF8"));
-						URL targetUrl = new URL(targetJSON.getString(CFProtocolConstants.KEY_URL));
-
-						target = CFActivator.getDefault().getTargetRegistry().getTarget(userId, targetUrl);
-
-						IStatus result = new SetOrgCommand(target, targetJSON.optString("Org")).doIt();
-						if (!result.isOK())
-							return result;
-
-						result = new SetSpaceCommand(target, targetJSON.optString("Space")).doIt();
-						if (!result.isOK())
-							return result;
-					} else {
-						target = CFActivator.getDefault().getTargetRegistry().getTarget(userId);
-					}
-
+					JSONObject targetJSON = new JSONObject(URLDecoder.decode(targetStr, "UTF8"));
+					Target target = computeTarget(this.userId, targetJSON);
 					if (target == null) {
-						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Target not set", null);
+						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Target not set", null);
 					}
 
 					if (contentLocation != null || name != null) {
@@ -106,33 +91,13 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 					String contentLocation = jsonData.optString(CFProtocolConstants.KEY_CONTENT_LOCATION);
 					JSONObject targetJSON = jsonData.optJSONObject(CFProtocolConstants.KEY_TARGET);
 
-					Target target = null;
-					if (targetJSON != null) {
-						URL targetUrl = new URL(targetJSON.getString(CFProtocolConstants.KEY_URL));
-
-						target = CFActivator.getDefault().getTargetRegistry().getTarget(userId, targetUrl);
-						if (target == null) {
-							target = new Target();
-							target.setUrl(targetUrl);
-						}
-
-						IStatus result = new SetOrgCommand(target, targetJSON.optString("Org")).doIt();
-						if (!result.isOK())
-							return result;
-
-						result = new SetSpaceCommand(target, targetJSON.optString("Space")).doIt();
-						if (!result.isOK())
-							return result;
-					} else {
-						target = CFActivator.getDefault().getTargetRegistry().getTarget(userId);
-					}
-
+					Target target = computeTarget(this.userId, targetJSON);
 					if (target == null) {
-						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Target not set", null);
+						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Target not set", null);
 					}
 
 					GetAppCommand getAppCommand = new GetAppCommand(target, appName, contentLocation);
-					IStatus result = getAppCommand.doIt();
+					getAppCommand.doIt();
 					App app = getAppCommand.getApp();
 
 					if (CFProtocolConstants.KEY_STARTED.equals(state)) {

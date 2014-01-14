@@ -17,4 +17,6 @@ public interface ICFAuthService {
 
 	public JSONObject getToken(String userId, Target target);
 
+	public String getDefaultUrl();
+
 }
