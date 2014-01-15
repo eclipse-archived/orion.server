@@ -11,19 +11,15 @@
 package org.eclipse.orion.server.cf.servlets;
 
 import java.io.InputStreamReader;
-import java.net.URL;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-import org.eclipse.orion.server.cf.*;
-import org.eclipse.orion.server.cf.commands.SetOrgCommand;
-import org.eclipse.orion.server.cf.commands.SetSpaceCommand;
+import org.eclipse.orion.server.cf.TaskHandler;
 import org.eclipse.orion.server.cf.jobs.CFJob;
 import org.eclipse.orion.server.cf.objects.CFObject;
-import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONObject;
@@ -66,32 +62,6 @@ public abstract class AbstractRESTHandler<T extends CFObject> extends ServletRes
 		} catch (Exception ex) {
 			return null;
 		}
-	}
-
-	protected Target computeTarget(String userId, JSONObject targetJSON) {
-		URL targetUrl = null;
-
-		if (targetJSON != null) {
-			try {
-				targetUrl = new URL(targetJSON.getString(CFProtocolConstants.KEY_URL));
-			} catch (Exception e) {
-				return null;
-			}
-		}
-
-		Target target = CFActivator.getDefault().getTargetRegistry().getTarget(userId, targetUrl);
-		if (target == null)
-			return null;
-
-		IStatus result = new SetOrgCommand(target, targetJSON != null ? targetJSON.optString("Org") : null).doIt();
-		if (!result.isOK())
-			return null;
-
-		result = new SetSpaceCommand(target, targetJSON != null ? targetJSON.optString("Space") : null).doIt();
-		if (!result.isOK())
-			return null;
-
-		return target;
 	}
 
 	/**

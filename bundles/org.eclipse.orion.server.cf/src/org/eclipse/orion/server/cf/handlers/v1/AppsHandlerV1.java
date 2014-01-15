@@ -58,10 +58,11 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 			protected IStatus performJob() {
 				try {
 					JSONObject targetJSON = new JSONObject(URLDecoder.decode(targetStr, "UTF8"));
-					Target target = computeTarget(this.userId, targetJSON);
-					if (target == null) {
-						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Target not set", null);
-					}
+					ComputeTargetCommand computeTarget = new ComputeTargetCommand(this.userId, targetJSON);
+					IStatus result = computeTarget.doIt();
+					if (!result.isOK())
+						return result;
+					Target target = computeTarget.getTarget();
 
 					if (contentLocation != null || name != null) {
 						return new GetAppCommand(target, name, contentLocation).doIt();
@@ -92,10 +93,11 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 			@Override
 			protected IStatus performJob() {
 				try {
-					Target target = computeTarget(this.userId, targetJSON);
-					if (target == null) {
-						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Target not set", null);
-					}
+					ComputeTargetCommand computeTarget = new ComputeTargetCommand(this.userId, targetJSON);
+					IStatus result = computeTarget.doIt();
+					if (!result.isOK())
+						return result;
+					Target target = computeTarget.getTarget();
 
 					GetAppCommand getAppCommand = new GetAppCommand(target, appName, contentLocation);
 					getAppCommand.doIt();

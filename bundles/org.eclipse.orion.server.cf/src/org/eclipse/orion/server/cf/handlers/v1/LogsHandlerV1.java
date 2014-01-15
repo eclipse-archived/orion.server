@@ -16,8 +16,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-import org.eclipse.orion.server.cf.CFActivator;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
+import org.eclipse.orion.server.cf.commands.ComputeTargetCommand;
 import org.eclipse.orion.server.cf.commands.GetLogsCommand;
 import org.eclipse.orion.server.cf.jobs.CFJob;
 import org.eclipse.orion.server.cf.objects.Log;
@@ -55,17 +55,12 @@ public class LogsHandlerV1 extends AbstractRESTHandler<Log> {
 			@Override
 			protected IStatus performJob() {
 				try {
-
-					Target target = null;
-					if (targetStr != null) {
-						JSONObject targetJSON = new JSONObject(URLDecoder.decode(targetStr, "UTF8"));
-						target = computeTarget(this.userId, targetJSON);
-						if (target == null) {
-							return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Target not set", null);
-						}
-					} else {
-						target = CFActivator.getDefault().getTargetRegistry().getTarget(userId);
-					}
+					JSONObject targetJSON = new JSONObject(URLDecoder.decode(targetStr, "UTF8"));
+					ComputeTargetCommand computeTarget = new ComputeTargetCommand(this.userId, targetJSON);
+					IStatus result = computeTarget.doIt();
+					if (!result.isOK())
+						return result;
+					Target target = computeTarget.getTarget();
 
 					if (target.getSpace() == null) {
 						String msg = "Space not set"; //$NON-NLS-1$
