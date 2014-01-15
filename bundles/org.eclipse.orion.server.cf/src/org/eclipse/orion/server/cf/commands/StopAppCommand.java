@@ -11,7 +11,6 @@
 package org.eclipse.orion.server.cf.commands;
 
 import java.net.URI;
-import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.eclipse.core.runtime.*;
@@ -20,7 +19,6 @@ import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
-import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -62,10 +60,7 @@ public class StopAppCommand {
 			StringRequestEntity requestEntity = new StringRequestEntity(stopComand.toString(), CFProtocolConstants.JSON_CONTENT_TYPE, "UTF-8");
 			stopMethod.setRequestEntity(requestEntity);
 
-			CFActivator.getDefault().getHttpClient().executeMethod(stopMethod);
-			String response = stopMethod.getResponseBodyAsString();
-			JSONObject result = new JSONObject(response);
-			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
+			return HttpUtil.executeMethod(stopMethod);
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);
