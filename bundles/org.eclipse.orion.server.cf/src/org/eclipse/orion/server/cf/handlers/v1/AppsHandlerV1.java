@@ -96,9 +96,8 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 					Target target = computeTarget.getTarget();
 
 					GetAppCommand getAppCommand = new GetAppCommand(target, appName, contentLocation);
+
 					status = getAppCommand.doIt();
-					if (!status.isOK())
-						return status;
 					App app = getAppCommand.getApp();
 
 					if (CFProtocolConstants.KEY_STARTED.equals(state)) {
