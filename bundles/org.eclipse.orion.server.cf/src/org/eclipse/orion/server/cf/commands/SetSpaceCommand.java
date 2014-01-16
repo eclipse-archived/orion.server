@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others 
+ * Copyright (c) 2013, 2014 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -46,21 +46,17 @@ public class SetSpaceCommand {
 			return status;
 
 		try {
-			URI spaceURI = URIUtil.toURI(target.getUrl());
+			URI targetURI = URIUtil.toURI(target.getUrl());
 			String spaceUrl = target.getOrg().getCFJSON().getJSONObject("entity").getString("spaces_url");
-			spaceURI = spaceURI.resolve(spaceUrl);
+			URI spaceURI = targetURI.resolve(spaceUrl);
 
 			GetMethod getMethod = new GetMethod(spaceURI.toString());
 			HttpUtil.configureHttpMethod(getMethod, target);
-			CFActivator.getDefault().getHttpClient().executeMethod(getMethod);
+			ServerStatus getStatus = HttpUtil.executeMethod(getMethod);
+			if (!getStatus.isOK())
+				return getStatus;
 
-			String response = getMethod.getResponseBodyAsString();
-			JSONObject result = new JSONObject(response);
-
-			if (result.has("error_code")) {
-				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_OK, "", result, null);
-			}
-
+			JSONObject result = getStatus.getJsonData();
 			JSONArray spaces = result.getJSONArray("resources");
 
 			if (spaces.length() == 0) {
@@ -77,13 +73,17 @@ public class SetSpaceCommand {
 						target.setSpace(new Space().setCFJSON(space));
 				}
 			}
+
+			if (target.getSpace() == null) {
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Space not found", null);
+			}
+
+			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, target.getSpace().toJSON());
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);
 			return new Status(IStatus.ERROR, CFActivator.PI_CF, msg, e);
 		}
-
-		return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
 	}
 
 	private IStatus validateParams() {

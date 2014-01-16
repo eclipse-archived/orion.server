@@ -52,15 +52,11 @@ public class SetOrgCommand {
 
 			GetMethod getMethod = new GetMethod(infoURI.toString());
 			HttpUtil.configureHttpMethod(getMethod, target);
-			CFActivator.getDefault().getHttpClient().executeMethod(getMethod);
+			ServerStatus getStatus = HttpUtil.executeMethod(getMethod);
+			if (!getStatus.isOK())
+				return getStatus;
 
-			String response = getMethod.getResponseBodyAsString();
-			JSONObject result = new JSONObject(response);
-
-			if (result.has("error_code")) {
-				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_OK, "", result, null);
-			}
-
+			JSONObject result = getStatus.getJsonData();
 			JSONArray orgs = result.getJSONArray("resources");
 
 			if (orgs.length() == 0) {
@@ -77,13 +73,17 @@ public class SetOrgCommand {
 						target.setOrg(new Org().setCFJSON(org));
 				}
 			}
+
+			if (target.getOrg() == null) {
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Organization not found", null);
+			}
+
+			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, target.getOrg().toJSON());
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);
 			return new Status(IStatus.ERROR, CFActivator.PI_CF, msg, e);
 		}
-
-		return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
 	}
 
 	private IStatus validateParams() {
