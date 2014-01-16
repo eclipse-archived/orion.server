@@ -19,7 +19,6 @@ import org.eclipse.orion.server.cf.CFActivator;
 import org.eclipse.orion.server.cf.objects.Log;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
-import org.eclipse.orion.server.cf.utils.MagicJSONObject;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONArray;
@@ -62,9 +61,11 @@ public class GetLogsCommand {
 			HttpUtil.configureHttpMethod(getAppsMethod, target);
 			getAppsMethod.setQueryString("q=name:" + applicationName + "&inline-relations-depth=1");
 
-			CFActivator.getDefault().getHttpClient().executeMethod(getAppsMethod);
-			String response = getAppsMethod.getResponseBodyAsString();
-			JSONObject apps = new JSONObject(response);
+			ServerStatus getStatus = HttpUtil.executeMethod(getAppsMethod);
+			if (!getStatus.isOK()) {
+				return getStatus;
+			}
+			JSONObject apps = getStatus.getJsonData();
 			if (apps.has("error_code")) {
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, apps.optString("description"), apps, null);
 			}
@@ -81,9 +82,11 @@ public class GetLogsCommand {
 			GetMethod getInstancesMethod = new GetMethod(instancesAppURI.toString());
 			HttpUtil.configureHttpMethod(getInstancesMethod, target);
 
-			CFActivator.getDefault().getHttpClient().executeMethod(getInstancesMethod);
-			response = getInstancesMethod.getResponseBodyAsString();
-			JSONObject instances = new MagicJSONObject(response);
+			getStatus = HttpUtil.executeMethod(getInstancesMethod);
+			if (!getStatus.isOK()) {
+				return getStatus;
+			}
+			JSONObject instances = getStatus.getJsonData();
 			if (instances.has("error_code")) {
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, instances.optString("description"), instances, null);
 			}
@@ -102,8 +105,15 @@ public class GetLogsCommand {
 				GetMethod getInstanceLogsMethod = new GetMethod(instanceLogsAppURI.toString());
 				HttpUtil.configureHttpMethod(getInstanceLogsMethod, target);
 
-				CFActivator.getDefault().getHttpClient().executeMethod(getInstanceLogsMethod);
-				response = getInstanceLogsMethod.getResponseBodyAsString();
+				getStatus = HttpUtil.executeMethod(getInstanceLogsMethod);
+				if (!getStatus.isOK()) {
+					return getStatus;
+				}
+				String response = getStatus.getJsonData().optString("response");
+
+				if (response == null) {
+					return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Log request: invalid response from the server", getStatus.getJsonData(), null);
+				}
 
 				if (logFileName == null) {
 					JSONArray logs = new JSONArray();
