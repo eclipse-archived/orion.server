@@ -26,6 +26,7 @@ import org.eclipse.orion.internal.server.servlets.workspace.authorization.Author
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.objects.Status;
 import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
+import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 
@@ -65,7 +66,7 @@ public class GitStatusHandlerV1 extends ServletResourceHandler<String> {
 			String relativePath = GitUtils.getRelativePath(path, set.iterator().next().getKey());
 			IPath basePath = new Path(relativePath);
 			Status status = new Status(baseLocation, db, gitStatus, basePath);
-			OrionServlet.writeJSONResponse(request, response, status.toJSON());
+			OrionServlet.writeJSONResponse(request, response, status.toJSON(), JsonURIUnqualificationStrategy.ALL_NO_GIT);
 			return true;
 
 		} catch (Exception e) {

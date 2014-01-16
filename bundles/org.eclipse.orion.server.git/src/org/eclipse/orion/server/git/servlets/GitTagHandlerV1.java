@@ -30,6 +30,7 @@ import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.jobs.ListTagsJob;
 import org.eclipse.orion.server.git.objects.Tag;
+import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONObject;
@@ -60,7 +61,7 @@ public class GitTagHandlerV1 extends AbstractGitHandler {
 				Ref ref = db.getRefDatabase().getRef(Constants.R_TAGS + tagName);
 				if (ref != null) {
 					Tag tag = new Tag(cloneLocation, db, ref);
-					OrionServlet.writeJSONResponse(request, response, tag.toJSON());
+					OrionServlet.writeJSONResponse(request, response, tag.toJSON(), JsonURIUnqualificationStrategy.ALL_NO_GIT);
 					return true;
 				} else {
 					String msg = NLS.bind("Tag not found: {0}", tagName);
@@ -78,7 +79,7 @@ public class GitTagHandlerV1 extends AbstractGitHandler {
 				} else {
 					job = new ListTagsJob(TaskJobHandler.getUserId(request), filePath, BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.TAG_LIST), commitsNumber);
 				}
-				return TaskJobHandler.handleTaskJob(request, response, job, statusHandler);
+				return TaskJobHandler.handleTaskJob(request, response, job, statusHandler, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 			}
 		} catch (Exception e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when looking for a tag.", e));
@@ -102,7 +103,7 @@ public class GitTagHandlerV1 extends AbstractGitHandler {
 			Ref ref = tag(git, revCommit, tagName);
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.TAG_LIST);
 			Tag tag = new Tag(cloneLocation, db, ref);
-			OrionServlet.writeJSONResponse(request, response, tag.toJSON());
+			OrionServlet.writeJSONResponse(request, response, tag.toJSON(), JsonURIUnqualificationStrategy.ALL_NO_GIT);
 			return true;
 		} catch (Exception e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when tagging.", e));

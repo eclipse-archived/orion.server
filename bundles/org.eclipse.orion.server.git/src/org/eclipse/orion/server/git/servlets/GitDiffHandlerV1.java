@@ -74,7 +74,7 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 			if (parts == null || "uris,diff".equals(parts) || "diff,uris".equals(parts)) //$NON-NLS-1$ //$NON-NLS-2$
 				return handleMultiPartGet(request, response, db, gitSegment, pattern);
 			if ("uris".equals(parts)) { //$NON-NLS-1$
-				OrionServlet.writeJSONResponse(request, response, new Diff(getURI(request), db).toJSON());
+				OrionServlet.writeJSONResponse(request, response, new Diff(getURI(request), db).toJSON(), JsonURIUnqualificationStrategy.ALL_NO_GIT);
 				return true;
 			}
 			if ("diff".equals(parts)) //$NON-NLS-1$
@@ -246,7 +246,7 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 			URI nu = new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), np.toString(), u.getQuery(), u.getFragment());
 			JSONObject result = new JSONObject();
 			result.put(ProtocolConstants.KEY_LOCATION, nu.toString());
-			OrionServlet.writeJSONResponse(request, response, result);
+			OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 			response.setHeader(ProtocolConstants.HEADER_LOCATION, resovleOrionURI(request, nu).toString());
 			return true;
 		} catch (Exception e) {

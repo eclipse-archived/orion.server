@@ -31,6 +31,7 @@ import org.eclipse.orion.server.git.*;
 import org.eclipse.orion.server.git.jobs.*;
 import org.eclipse.orion.server.git.objects.Remote;
 import org.eclipse.orion.server.git.objects.RemoteBranch;
+import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
@@ -92,7 +93,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			}
 			result.put(ProtocolConstants.KEY_CHILDREN, children);
 			result.put(ProtocolConstants.KEY_TYPE, Remote.TYPE);
-			OrionServlet.writeJSONResponse(request, response, result);
+			OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 			return true;
 		} else if (p.segment(1).equals("file")) { //$NON-NLS-1$
 			// /git/remote/{remote}/file/{path}
@@ -107,7 +108,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			} else {
 				job = new RemoteDetailsJob(TaskJobHandler.getUserId(request), p.segment(0), p.removeFirstSegments(1), BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.REMOTE), commitsNumber);
 			}
-			return TaskJobHandler.handleTaskJob(request, response, job, statusHandler);
+			return TaskJobHandler.handleTaskJob(request, response, job, statusHandler, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 		} else if (p.segment(2).equals("file")) { //$NON-NLS-1$
 			// /git/remote/{remote}/{branch}/file/{path}
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2));
@@ -117,7 +118,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			RemoteBranch remoteBranch = new RemoteBranch(cloneLocation, db, remote, GitUtils.decode(p.segment(1)));
 			if (remoteBranch.exists()) {
 				JSONObject result = remoteBranch.toJSON();
-				OrionServlet.writeJSONResponse(request, response, result);
+				OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 				return true;
 			}
 			JSONObject errorData = new JSONObject();
@@ -228,7 +229,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		Remote remote = new Remote(cloneLocation, db, remoteName);
 		JSONObject result = new JSONObject();
 		result.put(ProtocolConstants.KEY_LOCATION, remote.getLocation());
-		OrionServlet.writeJSONResponse(request, response, result);
+		OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 		response.setHeader(ProtocolConstants.HEADER_LOCATION, result.getString(ProtocolConstants.KEY_LOCATION));
 		response.setStatus(HttpServletResponse.SC_CREATED);
 		return true;
@@ -239,7 +240,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		Path p = new Path(path);
 		FetchJob job = new FetchJob(TaskJobHandler.getUserId(request), cp, p, force);
 
-		return TaskJobHandler.handleTaskJob(request, response, job, statusHandler);
+		return TaskJobHandler.handleTaskJob(request, response, job, statusHandler, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 	}
 
 	private boolean push(HttpServletRequest request, HttpServletResponse response, String path, GitCredentialsProvider cp, String srcRef, boolean tags, boolean force) throws ServletException, CoreException, IOException, JSONException, URISyntaxException {
@@ -248,7 +249,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		if (p.segment(2).equals("file")) { //$NON-NLS-1$
 			// /git/remote/{remote}/{branch}/file/{path}
 			PushJob job = new PushJob(TaskJobHandler.getUserId(request), cp, p, srcRef, tags, force);
-			return TaskJobHandler.handleTaskJob(request, response, job, statusHandler);
+			return TaskJobHandler.handleTaskJob(request, response, job, statusHandler, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 		}
 		return false;
 	}

@@ -36,6 +36,7 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.*;
 import org.eclipse.orion.server.git.jobs.LogJob;
 import org.eclipse.orion.server.git.objects.Commit;
+import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.orion.server.useradmin.*;
 import org.eclipse.osgi.util.NLS;
@@ -110,7 +111,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			URI nu = new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), np.toString(), u.getQuery(), u.getFragment());
 			JSONObject result = new JSONObject();
 			result.put(ProtocolConstants.KEY_LOCATION, nu);
-			OrionServlet.writeJSONResponse(request, response, result);
+			OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 			response.setHeader(ProtocolConstants.HEADER_LOCATION, resovleOrionURI(request, nu).toString());
 			return true;
 		} catch (Exception e) {
@@ -215,7 +216,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 		URI cloneLocation = BaseToCloneConverter.getCloneLocation(baseLocation, refIdsRange == null ? BaseToCloneConverter.COMMIT : BaseToCloneConverter.COMMIT_REFRANGE);
 
 		LogJob job = new LogJob(TaskJobHandler.getUserId(request), filePath, cloneLocation, page, pageSize, toObjectId, fromObjectId, toRefId, fromRefId, refIdsRange, pattern);
-		return TaskJobHandler.handleTaskJob(request, response, job, statusHandler);
+		return TaskJobHandler.handleTaskJob(request, response, job, statusHandler, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 	}
 
 	private ObjectId getCommitObjectId(Repository db, ObjectId oid) throws MissingObjectException, IncorrectObjectTypeException, IOException {
@@ -321,7 +322,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 				URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.COMMIT_REFRANGE);
 				Commit commit = new Commit(cloneLocation, db, lastCommit, pattern);
 				JSONObject result = commit.toJSON();
-				OrionServlet.writeJSONResponse(request, response, result);
+				OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 				return true;
 			} catch (GitAPIException e) {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "An error occured when commiting.", e));
@@ -342,7 +343,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			result.put(GitConstants.KEY_RESULT, mergeResult.getMergeStatus().name());
 			if (mergeResult.getFailingPaths() != null && !mergeResult.getFailingPaths().isEmpty())
 				result.put(GitConstants.KEY_FAILING_PATHS, mergeResult.getFailingPaths());
-			OrionServlet.writeJSONResponse(request, response, result);
+			OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 			return true;
 		} catch (CheckoutConflictException e) {
 			return workaroundBug356918(request, response, e);
@@ -365,7 +366,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			}
 			result.put(GitConstants.KEY_FAILING_PATHS, failingPaths);
 			try {
-				OrionServlet.writeJSONResponse(request, response, result);
+				OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 				return true;
 			} catch (IOException e1) {
 				e = e1;
@@ -411,7 +412,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when rebasing.", e));
 			}
 		}
-		OrionServlet.writeJSONResponse(request, response, result);
+		OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 		return true;
 	}
 
@@ -432,7 +433,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			JSONObject result = new JSONObject();
 			result.put(GitConstants.KEY_RESULT, cherryPickResult.getStatus().name());
 			result.put(GitConstants.KEY_HEAD_UPDATED, !head.equals(newHead));
-			OrionServlet.writeJSONResponse(request, response, result);
+			OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 			return true;
 		} catch (IOException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when cherry-picking.", e));
@@ -460,13 +461,13 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			if (revertedCommit == null) {
 				JSONObject result = new JSONObject();
 				result.put(GitConstants.KEY_RESULT, "FAILURE"); //$NON-NLS-1$
-				OrionServlet.writeJSONResponse(request, response, result);
+				OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 				return true;
 			}
 
 			JSONObject result = new JSONObject();
 			result.put(GitConstants.KEY_RESULT, "OK"); //$NON-NLS-1$
-			OrionServlet.writeJSONResponse(request, response, result);
+			OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 			return true;
 		} catch (IOException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when reverting.", e));
@@ -495,7 +496,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 
 			JSONObject result = new JSONObject();
 			result.put(GitConstants.KEY_RESULT, "Email sent");
-			OrionServlet.writeJSONResponse(request, response, result);
+			OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 			return true;
 		} catch (Exception e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "User doesn't exist", null));
@@ -535,7 +536,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.COMMIT_REFRANGE);
 			Commit commit = new Commit(cloneLocation, db, revCommit, null);
 			JSONObject result = commit.toJSON();
-			OrionServlet.writeJSONResponse(request, response, result);
+			OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 			return true;
 		} catch (IOException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when tagging.", e));

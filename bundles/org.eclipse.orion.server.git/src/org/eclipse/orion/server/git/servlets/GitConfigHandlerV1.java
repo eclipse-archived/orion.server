@@ -29,6 +29,7 @@ import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.git.objects.ConfigOption;
+import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONException;
@@ -89,7 +90,7 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 			Repository db = FileRepositoryBuilder.create(gitDir);
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(baseLocation, BaseToCloneConverter.CONFIG);
 			ConfigOption configOption = new ConfigOption(cloneLocation, db);
-			OrionServlet.writeJSONResponse(request, response, configOption.toJSON(/* all */));
+			OrionServlet.writeJSONResponse(request, response, configOption.toJSON(/* all */), JsonURIUnqualificationStrategy.ALL_NO_GIT);
 			return true;
 		} else if (p.segment(1).equals(Clone.RESOURCE) && p.segment(2).equals("file")) { //$NON-NLS-1$
 			// expected path /gitapi/config/{key}/clone/file/{path}
@@ -102,7 +103,7 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 				ConfigOption configOption = new ConfigOption(cloneLocation, db, p.segment(0));
 				if (!configOption.exists())
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "There is no config entry with key provided", null));
-				OrionServlet.writeJSONResponse(request, response, configOption.toJSON());
+				OrionServlet.writeJSONResponse(request, response, configOption.toJSON(), JsonURIUnqualificationStrategy.ALL_NO_GIT);
 				return true;
 			} catch (IllegalArgumentException e) {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), e));
@@ -135,7 +136,7 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 				save(configOption, value);
 
 				JSONObject result = configOption.toJSON();
-				OrionServlet.writeJSONResponse(request, response, result);
+				OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 				response.setHeader(ProtocolConstants.HEADER_LOCATION, result.getString(ProtocolConstants.KEY_LOCATION));
 				response.setStatus(HttpServletResponse.SC_CREATED);
 				return true;

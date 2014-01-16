@@ -39,6 +39,7 @@ import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.git.jobs.*;
 import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
+import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
@@ -199,7 +200,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		if (initOnly) {
 			// git init
 			InitJob job = new InitJob(clone, TaskJobHandler.getUserId(request), request.getRemoteUser(), cloneLocation, gitUserName, gitUserMail);
-			return TaskJobHandler.handleTaskJob(request, response, job, statusHandler);
+			return TaskJobHandler.handleTaskJob(request, response, job, statusHandler, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 		}
 		// git clone
 		// prepare creds
@@ -208,7 +209,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 
 		// if all went well, clone
 		CloneJob job = new CloneJob(clone, TaskJobHandler.getUserId(request), cp, request.getRemoteUser(), cloneLocation, webProjectExists ? null : project /* used for cleaning up, so null when not needed */, gitUserName, gitUserMail, initProject);
-		return TaskJobHandler.handleTaskJob(request, response, job, statusHandler);
+		return TaskJobHandler.handleTaskJob(request, response, job, statusHandler, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 	}
 
 	/**
@@ -271,7 +272,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 				}
 				result.put(ProtocolConstants.KEY_TYPE, Clone.TYPE);
 				result.put(ProtocolConstants.KEY_CHILDREN, children);
-				OrionServlet.writeJSONResponse(request, response, result);
+				OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 				return true;
 			}
 			String msg = NLS.bind("Nothing found for the given ID: {0}", path);
@@ -289,7 +290,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 				}
 				result.put(ProtocolConstants.KEY_TYPE, Clone.TYPE);
 				result.put(ProtocolConstants.KEY_CHILDREN, children);
-				OrionServlet.writeJSONResponse(request, response, result);
+				OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 				return true;
 			}
 			String msg = NLS.bind("Nothing found for the given ID: {0}", path);
@@ -518,7 +519,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 	private boolean pull(HttpServletRequest request, HttpServletResponse response, GitCredentialsProvider cp, String path, boolean force) throws URISyntaxException, JSONException, IOException, ServletException {
 		Path p = new Path(path); // /{file}/{path}
 		PullJob job = new PullJob(TaskJobHandler.getUserId(request), cp, p, force);
-		return TaskJobHandler.handleTaskJob(request, response, job, statusHandler);
+		return TaskJobHandler.handleTaskJob(request, response, job, statusHandler, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 	}
 
 }

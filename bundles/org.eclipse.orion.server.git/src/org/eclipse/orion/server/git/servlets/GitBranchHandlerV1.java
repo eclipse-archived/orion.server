@@ -30,6 +30,7 @@ import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.jobs.ListBranchesJob;
 import org.eclipse.orion.server.git.objects.Branch;
+import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONObject;
@@ -63,7 +64,7 @@ public class GitBranchHandlerV1 extends AbstractGitHandler {
 				} else {
 					job = new ListBranchesJob(TaskJobHandler.getUserId(request), filePath, BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.BRANCH_LIST), commitsNumber);
 				}
-				return TaskJobHandler.handleTaskJob(request, response, job, statusHandler);
+				return TaskJobHandler.handleTaskJob(request, response, job, statusHandler, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 			}
 			// branch details: expected path /git/branch/{name}/file/{filePath}
 			List<Ref> branches = new Git(db).branchList().call();
@@ -79,7 +80,7 @@ public class GitBranchHandlerV1 extends AbstractGitHandler {
 				String msg = NLS.bind("Branch {0} not found", gitSegment);
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
 			}
-			OrionServlet.writeJSONResponse(request, response, result);
+			OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 			return true;
 		} catch (Exception e) {
 			final ServerStatus error = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when looking for a branch.", e);
@@ -123,7 +124,7 @@ public class GitBranchHandlerV1 extends AbstractGitHandler {
 
 				URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.BRANCH_LIST);
 				JSONObject result = new Branch(cloneLocation, db, ref).toJSON();
-				OrionServlet.writeJSONResponse(request, response, result);
+				OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 				response.setHeader(ProtocolConstants.HEADER_LOCATION, result.getString(ProtocolConstants.KEY_LOCATION));
 				response.setStatus(HttpServletResponse.SC_CREATED);
 				return true;

@@ -28,6 +28,7 @@ import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.eclipse.orion.server.git.objects.Blame;
+import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 
@@ -64,7 +65,7 @@ public class GitBlameHandlerV1 extends AbstractGitHandler {
 			blame.setFilePath(path);
 			blame.setBlameLocation(getURI(request));
 			doBlame(blame, requestInfo.db);
-			OrionServlet.writeJSONResponse(request, response, blame.toJSON());
+			OrionServlet.writeJSONResponse(request, response, blame.toJSON(), JsonURIUnqualificationStrategy.ALL_NO_GIT);
 			return true;
 		} catch (Exception e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error generating blame response", e));

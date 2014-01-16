@@ -12,9 +12,13 @@ package org.eclipse.orion.server.servlets;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+
 import javax.servlet.http.HttpServletRequest;
+
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Controls which URLs found in JSON API response bodies will be "unqualified" (rewritten to remove the hostname 
@@ -27,6 +31,10 @@ public abstract class JsonURIUnqualificationStrategy {
 	public static final JsonURIUnqualificationStrategy ALL = new JsonURIUnqualificationStrategy() {
 		@Override
 		protected URI unqualifyObjectProperty(String key, URI uri, String scheme, String hostname, int port) {
+			//temp hack
+			if ("GitUrl".equals(key)) {
+				return uri;
+			}
 			return unqualifyURI(uri, scheme, hostname, port);
 		}
 
@@ -41,7 +49,30 @@ public abstract class JsonURIUnqualificationStrategy {
 	public static final JsonURIUnqualificationStrategy LOCATION_ONLY = new JsonURIUnqualificationStrategy() {
 		@Override
 		protected URI unqualifyObjectProperty(String key, URI uri, String scheme, String hostname, int port) {
+			//temp hack
+			if ("GitUrl".equals(key)) {
+				return uri;
+			}
+
 			if (!ProtocolConstants.KEY_LOCATION.equals(key))
+				return uri;
+			else
+				return unqualifyURI(uri, scheme, hostname, port);
+		}
+
+		@Override
+		protected URI unqualifyArrayValue(int index, URI uri, String scheme, String hostname, int port) {
+			return uri;
+		}
+	};
+	/**
+	 * A strategy that unqualifies all URLs but doesn't alter URLS that are values of a "GitUrl" key in JSON objects.
+	 */
+	public static final JsonURIUnqualificationStrategy ALL_NO_GIT = new JsonURIUnqualificationStrategy() {
+		@Override
+		protected URI unqualifyObjectProperty(String key, URI uri, String scheme, String hostname, int port) {
+			//need to make this real constant
+			if ("GitUrl".equals(key))
 				return uri;
 			else
 				return unqualifyURI(uri, scheme, hostname, port);
