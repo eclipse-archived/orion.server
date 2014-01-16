@@ -19,7 +19,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class LogoutCommand extends AbstractCFCommand {
+public class LogoutCommand implements ICFCommand {
 
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
@@ -35,10 +35,6 @@ public class LogoutCommand extends AbstractCFCommand {
 	}
 
 	public IStatus doIt() {
-		IStatus status = super.doIt();
-		if (!status.isOK())
-			return status;
-
 		target.setAccessToken(null);
 		return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
 	}

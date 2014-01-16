@@ -53,13 +53,8 @@ public class PushAppCommand extends AbstractCFCommand {
 		this.app = app;
 	}
 
-	public IStatus doIt() {
-		IStatus status = super.doIt();
-		if (!status.isOK())
-			return status;
-
+	public IStatus _doIt() {
 		try {
-
 			/* create cloud foundry application */
 			URI targetURI = URIUtil.toURI(target.getUrl());
 			URI appsURI = targetURI.resolve("/v2/apps");

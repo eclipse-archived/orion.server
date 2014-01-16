@@ -13,24 +13,18 @@ package org.eclipse.orion.server.cf.commands;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 
-public class AbstractCFCommand implements ICFCommand {
+public abstract class AbstractCFCommand implements ICFCommand {
 
 	@Override
 	public IStatus doIt() {
-		return validateParams();
+		IStatus status = validateParams();
+		if (!status.isOK())
+			return status;
+
+		return this._doIt();
 	}
 
-	@Override
-	public IStatus undoIt() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public IStatus redoIt() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	protected abstract IStatus _doIt();
 
 	protected IStatus validateParams() {
 		return Status.OK_STATUS;

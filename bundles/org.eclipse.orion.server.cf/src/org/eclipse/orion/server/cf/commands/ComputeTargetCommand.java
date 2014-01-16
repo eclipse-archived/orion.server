@@ -38,11 +38,7 @@ public class ComputeTargetCommand extends AbstractCFCommand {
 		this.targetJSON = targetJSON;
 	}
 
-	public IStatus doIt() {
-		IStatus status = super.doIt();
-		if (!status.isOK())
-			return status;
-
+	public IStatus _doIt() {
 		URL targetUrl = null;
 
 		if (targetJSON != null) {

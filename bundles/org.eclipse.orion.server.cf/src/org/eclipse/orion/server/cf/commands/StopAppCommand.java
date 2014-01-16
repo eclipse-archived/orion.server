@@ -39,11 +39,7 @@ public class StopAppCommand extends AbstractCFCommand {
 		this.app = app;
 	}
 
-	public IStatus doIt() {
-		IStatus status = super.doIt();
-		if (!status.isOK())
-			return status;
-
+	public IStatus _doIt() {
 		try {
 			URI targetURI = URIUtil.toURI(target.getUrl());
 

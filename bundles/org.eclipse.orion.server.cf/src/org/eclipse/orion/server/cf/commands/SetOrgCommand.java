@@ -40,11 +40,7 @@ public class SetOrgCommand extends AbstractCFCommand {
 		this.orgName = orgName;
 	}
 
-	public IStatus doIt() {
-		IStatus status = super.doIt();
-		if (!status.isOK())
-			return status;
-
+	public IStatus _doIt() {
 		try {
 			URI infoURI = URIUtil.toURI(target.getUrl());
 

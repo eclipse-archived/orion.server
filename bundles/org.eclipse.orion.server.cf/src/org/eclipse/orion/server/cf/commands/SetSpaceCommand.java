@@ -40,11 +40,7 @@ public class SetSpaceCommand extends AbstractCFCommand {
 		this.spaceName = spaceName;
 	}
 
-	public IStatus doIt() {
-		IStatus status = super.doIt();
-		if (!status.isOK())
-			return status;
-
+	public IStatus _doIt() {
 		try {
 			URI targetURI = URIUtil.toURI(target.getUrl());
 			String spaceUrl = target.getOrg().getCFJSON().getJSONObject("entity").getString("spaces_url");

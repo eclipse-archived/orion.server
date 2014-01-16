@@ -24,7 +24,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class LoginCommand extends AbstractCFCommand {
+public class LoginCommand implements ICFCommand {
 
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
@@ -44,10 +44,6 @@ public class LoginCommand extends AbstractCFCommand {
 	}
 
 	public IStatus doIt() {
-		IStatus status = super.doIt();
-		if (!status.isOK())
-			return status;
-
 		try {
 			URI infoURI = URIUtil.toURI(target.getUrl());
 

@@ -14,8 +14,4 @@ import org.eclipse.core.runtime.IStatus;
 
 public interface ICFCommand {
 	public IStatus doIt();
-
-	public IStatus undoIt();
-
-	public IStatus redoIt();
 }
