@@ -25,7 +25,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SetSpaceCommand {
+public class SetSpaceCommand extends AbstractCFCommand {
 
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
@@ -41,7 +41,7 @@ public class SetSpaceCommand {
 	}
 
 	public IStatus doIt() {
-		IStatus status = validateParams();
+		IStatus status = super.doIt();
 		if (!status.isOK())
 			return status;
 
@@ -84,9 +84,5 @@ public class SetSpaceCommand {
 			logger.error(msg, e);
 			return new Status(IStatus.ERROR, CFActivator.PI_CF, msg, e);
 		}
-	}
-
-	private IStatus validateParams() {
-		return Status.OK_STATUS;
 	}
 }

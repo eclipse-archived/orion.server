@@ -38,7 +38,7 @@ import org.json.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PushAppCommand {
+public class PushAppCommand extends AbstractCFCommand {
 
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
@@ -54,7 +54,7 @@ public class PushAppCommand {
 	}
 
 	public IStatus doIt() {
-		IStatus status = validateParams();
+		IStatus status = super.doIt();
 		if (!status.isOK())
 			return status;
 
@@ -316,10 +316,6 @@ public class PushAppCommand {
 			logger.error(msg, e);
 			return new Status(IStatus.ERROR, CFActivator.PI_CF, msg, e);
 		}
-	}
-
-	private IStatus validateParams() {
-		return Status.OK_STATUS;
 	}
 
 	/* helper method to find the appropriate service plan guid */
