@@ -101,8 +101,12 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 					App app = getAppCommand.getApp();
 
 					if (CFProtocolConstants.KEY_STARTED.equals(state)) {
+						if (!status.isOK())
+							return status;
 						return new StartAppCommand(target, app).doIt();
 					} else if (CFProtocolConstants.KEY_STOPPED.equals(state)) {
+						if (!status.isOK())
+							return status;
 						return new StopAppCommand(target, app).doIt();
 					}
 

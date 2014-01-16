@@ -10,10 +10,9 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.utils;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
-import org.eclipse.orion.server.cf.CFAuthServiceHelper;
+import org.eclipse.orion.server.cf.CFExtServiceHelper;
 import org.eclipse.orion.server.cf.objects.Target;
 
 public class TargetRegistry {
@@ -87,20 +86,16 @@ public class TargetRegistry {
 		}
 
 		private void setAuthToken(Target target) {
-			CFAuthServiceHelper helper = CFAuthServiceHelper.getDefault();
+			CFExtServiceHelper helper = CFExtServiceHelper.getDefault();
 			if (target.getAccessToken() == null && helper != null && helper.getService() != null) {
 				target.setAccessToken(helper.getService().getToken(userId, target));
 			}
 		}
 
 		private URL getDefaultTargetUrl() {
-			CFAuthServiceHelper helper = CFAuthServiceHelper.getDefault();
+			CFExtServiceHelper helper = CFExtServiceHelper.getDefault();
 			if (helper != null && helper.getService() != null) {
-				try {
-					return new URL(helper.getService().getDefaultUrl());
-				} catch (MalformedURLException e) {
-					return null;
-				}
+				return helper.getService().getDefaultCloud().getApiUrl();
 			}
 			return null;
 		}

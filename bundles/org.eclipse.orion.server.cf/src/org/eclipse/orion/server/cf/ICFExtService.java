@@ -10,33 +10,14 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf;
 
-public class CFAuthServiceHelper {
+import org.eclipse.orion.server.cf.objects.Cloud;
+import org.eclipse.orion.server.cf.objects.Target;
+import org.json.JSONObject;
 
-	private ICFAuthService authService;
+public interface ICFExtService {
 
-	private static CFAuthServiceHelper singleton;
+	public JSONObject getToken(String userId, Target target);
 
-	public static CFAuthServiceHelper getDefault() {
-		return singleton;
-	}
+	public Cloud getDefaultCloud();
 
-	public void activate() {
-		singleton = this;
-	}
-
-	public void deactivate() {
-		singleton = null;
-	}
-
-	public void bind(ICFAuthService authService) {
-		this.authService = authService;
-	}
-
-	public void unbind(ICFAuthService authService) {
-		this.authService = null;
-	}
-
-	public ICFAuthService getService() {
-		return this.authService;
-	}
 }

@@ -10,13 +10,33 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf;
 
-import org.eclipse.orion.server.cf.objects.Target;
-import org.json.JSONObject;
+public class CFExtServiceHelper {
 
-public interface ICFAuthService {
+	private ICFExtService authService;
 
-	public JSONObject getToken(String userId, Target target);
+	private static CFExtServiceHelper singleton;
 
-	public String getDefaultUrl();
+	public static CFExtServiceHelper getDefault() {
+		return singleton;
+	}
 
+	public void activate() {
+		singleton = this;
+	}
+
+	public void deactivate() {
+		singleton = null;
+	}
+
+	public void bind(ICFExtService authService) {
+		this.authService = authService;
+	}
+
+	public void unbind(ICFExtService authService) {
+		this.authService = null;
+	}
+
+	public ICFExtService getService() {
+		return this.authService;
+	}
 }
