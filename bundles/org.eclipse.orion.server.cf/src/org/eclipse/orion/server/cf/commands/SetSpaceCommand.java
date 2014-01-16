@@ -14,7 +14,6 @@ import java.net.URI;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.*;
-import org.eclipse.orion.server.cf.CFActivator;
 import org.eclipse.orion.server.cf.objects.Space;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
@@ -30,17 +29,15 @@ public class SetSpaceCommand extends AbstractCFCommand {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
-
-	private Target target;
 	private String spaceName;
 
-	public SetSpaceCommand(Target target, String spaceName) {
+	public SetSpaceCommand(String userId, Target target, String spaceName) {
+		super(target, userId);
 		this.commandName = "Login"; //$NON-NLS-1$
-		this.target = target;
 		this.spaceName = spaceName;
 	}
 
-	public IStatus _doIt() {
+	public ServerStatus _doIt() {
 		try {
 			URI targetURI = URIUtil.toURI(target.getUrl());
 			String spaceUrl = target.getOrg().getCFJSON().getJSONObject("entity").getString("spaces_url");
@@ -78,7 +75,7 @@ public class SetSpaceCommand extends AbstractCFCommand {
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);
-			return new Status(IStatus.ERROR, CFActivator.PI_CF, msg, e);
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 		}
 	}
 }

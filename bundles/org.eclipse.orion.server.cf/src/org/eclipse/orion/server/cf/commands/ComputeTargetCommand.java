@@ -22,7 +22,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ComputeTargetCommand extends AbstractCFCommand {
+public class ComputeTargetCommand implements ICFCommand {
 
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
@@ -38,7 +38,7 @@ public class ComputeTargetCommand extends AbstractCFCommand {
 		this.targetJSON = targetJSON;
 	}
 
-	public IStatus _doIt() {
+	public IStatus doIt() {
 		URL targetUrl = null;
 
 		if (targetJSON != null) {
@@ -54,11 +54,11 @@ public class ComputeTargetCommand extends AbstractCFCommand {
 			return new Status(IStatus.ERROR, CFActivator.PI_CF, "Target not set", null);
 		}
 
-		IStatus result = new SetOrgCommand(this.target, targetJSON != null ? targetJSON.optString("Org") : null).doIt();
+		IStatus result = new SetOrgCommand(userId, this.target, targetJSON != null ? targetJSON.optString("Org") : null).doIt();
 		if (!result.isOK())
 			return result;
 
-		result = new SetSpaceCommand(this.target, targetJSON != null ? targetJSON.optString("Space") : null).doIt();
+		result = new SetSpaceCommand(userId, this.target, targetJSON != null ? targetJSON.optString("Space") : null).doIt();
 		if (!result.isOK())
 			return result;
 

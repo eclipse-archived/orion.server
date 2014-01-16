@@ -11,14 +11,16 @@
 package org.eclipse.orion.server.cf.commands;
 
 import java.net.URI;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
-import org.eclipse.core.runtime.*;
-import org.eclipse.orion.server.cf.CFActivator;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -29,17 +31,15 @@ public class StopAppCommand extends AbstractCFCommand {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
-
-	private Target target;
 	private App app;
 
-	public StopAppCommand(Target target, App app) {
+	public StopAppCommand(String userId, Target target, App app) {
+		super(target, userId);
 		this.commandName = "Stop App"; //$NON-NLS-1$
-		this.target = target;
 		this.app = app;
 	}
 
-	public IStatus _doIt() {
+	public ServerStatus _doIt() {
 		try {
 			URI targetURI = URIUtil.toURI(target.getUrl());
 
@@ -60,7 +60,7 @@ public class StopAppCommand extends AbstractCFCommand {
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);
-			return new Status(IStatus.ERROR, CFActivator.PI_CF, msg, e);
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 		}
 	}
 }

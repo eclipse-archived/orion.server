@@ -15,7 +15,6 @@ import java.util.Iterator;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.*;
-import org.eclipse.orion.server.cf.CFActivator;
 import org.eclipse.orion.server.cf.objects.Log;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
@@ -31,22 +30,19 @@ public class GetLogsCommand extends AbstractCFCommand {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
-
-	private Target target;
 	private String applicationName;
 	private String logFileName;
-
 	private String baseRequestLocation;
 
-	public GetLogsCommand(Target target, String applicationName, String logFileName, String baseRequestLocation) {
+	public GetLogsCommand(String userId, Target target, String applicationName, String logFileName, String baseRequestLocation) {
+		super(target, userId);
 		this.commandName = "Get App Logs"; //$NON-NLS-1$
-		this.target = target;
 		this.applicationName = applicationName;
 		this.logFileName = logFileName;
 		this.baseRequestLocation = baseRequestLocation;
 	}
 
-	public IStatus _doIt() {
+	public ServerStatus _doIt() {
 		try {
 			URI targetURI = URIUtil.toURI(target.getUrl());
 
@@ -141,7 +137,7 @@ public class GetLogsCommand extends AbstractCFCommand {
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);
-			return new Status(IStatus.ERROR, CFActivator.PI_CF, msg, e);
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 		}
 	}
 }

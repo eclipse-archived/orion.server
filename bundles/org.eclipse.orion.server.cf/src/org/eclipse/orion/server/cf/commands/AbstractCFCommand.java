@@ -12,8 +12,19 @@ package org.eclipse.orion.server.cf.commands;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.orion.server.cf.CFExtServiceHelper;
+import org.eclipse.orion.server.cf.objects.Target;
+import org.eclipse.orion.server.core.ServerStatus;
 
 public abstract class AbstractCFCommand implements ICFCommand {
+
+	protected Target target;
+	protected String userId;
+
+	protected AbstractCFCommand(Target target, String userId) {
+		this.target = target;
+		this.userId = userId;
+	}
 
 	@Override
 	public IStatus doIt() {
@@ -21,10 +32,20 @@ public abstract class AbstractCFCommand implements ICFCommand {
 		if (!status.isOK())
 			return status;
 
-		return this._doIt();
+		ServerStatus doItStatus = this._doIt();
+		return retryIfNeeded(doItStatus);
 	}
 
-	protected abstract IStatus _doIt();
+	private ServerStatus retryIfNeeded(ServerStatus doItStatus) {
+		CFExtServiceHelper helper = CFExtServiceHelper.getDefault();
+		if (doItStatus.getHttpCode() == 401 && target.getAccessToken() != null && helper != null && helper.getService() != null) {
+			target.setAccessToken(helper.getService().getToken(userId, target));
+			return _doIt();
+		}
+		return doItStatus;
+	}
+
+	protected abstract ServerStatus _doIt();
 
 	protected IStatus validateParams() {
 		return Status.OK_STATUS;

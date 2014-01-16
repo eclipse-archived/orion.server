@@ -14,7 +14,6 @@ import java.net.URI;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.*;
-import org.eclipse.orion.server.cf.CFActivator;
 import org.eclipse.orion.server.cf.objects.Org;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
@@ -30,17 +29,15 @@ public class SetOrgCommand extends AbstractCFCommand {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
-
-	private Target target;
 	private String orgName;
 
-	public SetOrgCommand(Target target, String orgName) {
+	public SetOrgCommand(String userId, Target target, String orgName) {
+		super(target, userId);
 		this.commandName = "Set Org"; //$NON-NLS-1$
-		this.target = target;
 		this.orgName = orgName;
 	}
 
-	public IStatus _doIt() {
+	public ServerStatus _doIt() {
 		try {
 			URI infoURI = URIUtil.toURI(target.getUrl());
 
@@ -78,7 +75,7 @@ public class SetOrgCommand extends AbstractCFCommand {
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);
-			return new Status(IStatus.ERROR, CFActivator.PI_CF, msg, e);
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 		}
 	}
 }

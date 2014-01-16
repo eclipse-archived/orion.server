@@ -43,17 +43,15 @@ public class PushAppCommand extends AbstractCFCommand {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
-
-	private Target target;
 	private App app;
 
-	public PushAppCommand(Target target, App app) {
+	public PushAppCommand(String userId, Target target, App app) {
+		super(target, userId);
 		this.commandName = "Push application"; //$NON-NLS-1$
-		this.target = target;
 		this.app = app;
 	}
 
-	public IStatus _doIt() {
+	public ServerStatus _doIt() {
 		try {
 			/* create cloud foundry application */
 			URI targetURI = URIUtil.toURI(target.getUrl());
@@ -309,7 +307,7 @@ public class PushAppCommand extends AbstractCFCommand {
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);
-			return new Status(IStatus.ERROR, CFActivator.PI_CF, msg, e);
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 		}
 	}
 
