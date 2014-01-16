@@ -106,7 +106,6 @@ public class GetLogsCommand {
 				response = getInstanceLogsMethod.getResponseBodyAsString();
 
 				if (logFileName == null) {
-
 					JSONArray logs = new JSONArray();
 					String[] logFiles = response.split("\n");
 

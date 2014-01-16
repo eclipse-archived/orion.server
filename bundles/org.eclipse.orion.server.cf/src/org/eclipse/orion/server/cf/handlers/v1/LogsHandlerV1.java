@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.handlers.v1;
 
-import java.net.URLDecoder;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
@@ -50,12 +49,12 @@ public class LogsHandlerV1 extends AbstractRESTHandler<Log> {
 
 	@Override
 	protected CFJob handleGet(final Log resource, HttpServletRequest request, HttpServletResponse response, final String path) {
-		final String targetStr = IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_TARGET);
+		final JSONObject targetJSON = extractJSONData(IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_TARGET));
+
 		return new CFJob(request, false) {
 			@Override
 			protected IStatus performJob() {
 				try {
-					JSONObject targetJSON = new JSONObject(URLDecoder.decode(targetStr, "UTF8"));
 					ComputeTargetCommand computeTarget = new ComputeTargetCommand(this.userId, targetJSON);
 					IStatus result = computeTarget.doIt();
 					if (!result.isOK())

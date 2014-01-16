@@ -11,7 +11,6 @@
 package org.eclipse.orion.server.cf.handlers.v1;
 
 import java.net.URI;
-import java.net.URLDecoder;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -19,7 +18,6 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-import org.eclipse.orion.server.cf.CFActivator;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.commands.*;
 import org.eclipse.orion.server.cf.jobs.CFJob;
@@ -51,13 +49,12 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 	protected CFJob handleGet(App app, HttpServletRequest request, HttpServletResponse response, final String path) {
 		final String contentLocation = IOUtilities.getQueryParameter(request, ProtocolConstants.KEY_CONTENT_LOCATION);
 		final String name = IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_NAME);
-		final String targetStr = IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_TARGET);
+		final JSONObject targetJSON = extractJSONData(IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_TARGET));
 
 		return new CFJob(request, false) {
 			@Override
 			protected IStatus performJob() {
 				try {
-					JSONObject targetJSON = new JSONObject(URLDecoder.decode(targetStr, "UTF8"));
 					ComputeTargetCommand computeTarget = new ComputeTargetCommand(this.userId, targetJSON);
 					IStatus result = computeTarget.doIt();
 					if (!result.isOK())
@@ -94,13 +91,15 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 			protected IStatus performJob() {
 				try {
 					ComputeTargetCommand computeTarget = new ComputeTargetCommand(this.userId, targetJSON);
-					IStatus result = computeTarget.doIt();
-					if (!result.isOK())
-						return result;
+					IStatus status = computeTarget.doIt();
+					if (!status.isOK())
+						return status;
 					Target target = computeTarget.getTarget();
 
 					GetAppCommand getAppCommand = new GetAppCommand(target, appName, contentLocation);
-					getAppCommand.doIt();
+					status = getAppCommand.doIt();
+					if (!status.isOK())
+						return status;
 					App app = getAppCommand.getApp();
 
 					if (CFProtocolConstants.KEY_STARTED.equals(state)) {
@@ -128,18 +127,12 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 	}
 
 	private IStatus getApps(Target target) throws Exception {
-		URI appsURI = URIUtil.toURI(target.getUrl());
 		String appsUrl = target.getSpace().getCFJSON().getJSONObject("entity").getString("apps_url");
 		appsUrl = appsUrl.replaceAll("apps", "summary");
-		appsURI = appsURI.resolve(appsUrl);
+		URI appsURI = URIUtil.toURI(target.getUrl()).resolve(appsUrl);
 
 		GetMethod getMethod = new GetMethod(appsURI.toString());
 		HttpUtil.configureHttpMethod(getMethod, target);
-		CFActivator.getDefault().getHttpClient().executeMethod(getMethod);
-
-		String response = getMethod.getResponseBodyAsString();
-		JSONObject result = new JSONObject(response);
-
-		return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
+		return HttpUtil.executeMethod(getMethod);
 	}
 }

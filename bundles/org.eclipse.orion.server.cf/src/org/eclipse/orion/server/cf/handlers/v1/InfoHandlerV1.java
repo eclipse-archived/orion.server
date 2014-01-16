@@ -24,7 +24,6 @@ import org.eclipse.orion.server.cf.servlets.AbstractRESTHandler;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,12 +55,7 @@ public class InfoHandlerV1 extends AbstractRESTHandler<Info> {
 					URI infoURI = URIUtil.toURI(target.getUrl()).resolve("/v2/info");
 					GetMethod getInfoMethod = new GetMethod(infoURI.toString());
 					HttpUtil.configureHttpMethod(getInfoMethod, target);
-
-					CFActivator.getDefault().getHttpClient().executeMethod(getInfoMethod);
-					String response = getInfoMethod.getResponseBodyAsString();
-					JSONObject result = new JSONObject(response);
-
-					return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
+					return HttpUtil.executeMethod(getInfoMethod);
 				} catch (Exception e) {
 					String msg = NLS.bind("Failed to handle request for {0}", path); //$NON-NLS-1$
 					ServerStatus status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);

@@ -11,6 +11,7 @@
 package org.eclipse.orion.server.cf.servlets;
 
 import java.io.InputStreamReader;
+import java.net.URLDecoder;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -60,6 +61,14 @@ public abstract class AbstractRESTHandler<T extends CFObject> extends ServletRes
 			JSONTokener tokener = new JSONTokener(new InputStreamReader(request.getInputStream()));
 			return new JSONObject(tokener);
 		} catch (Exception ex) {
+			return null;
+		}
+	}
+
+	protected JSONObject extractJSONData(final String param) {
+		try {
+			return param != null ? new JSONObject(URLDecoder.decode(param, "UTF8")) : null;
+		} catch (Exception e) {
 			return null;
 		}
 	}

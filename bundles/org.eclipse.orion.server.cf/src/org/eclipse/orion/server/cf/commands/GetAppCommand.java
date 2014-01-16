@@ -18,7 +18,6 @@ import org.eclipse.orion.server.cf.CFActivator;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
-import org.eclipse.orion.server.cf.utils.MagicJSONObject;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONObject;
@@ -59,9 +58,11 @@ public class GetAppCommand {
 			HttpUtil.configureHttpMethod(getAppsMethod, target);
 			getAppsMethod.setQueryString("q=name:" + name + "&inline-relations-depth=1");
 
-			CFActivator.getDefault().getHttpClient().executeMethod(getAppsMethod);
-			String response = getAppsMethod.getResponseBodyAsString();
-			JSONObject apps = new JSONObject(response);
+			ServerStatus getStatus = HttpUtil.executeMethod(getAppsMethod);
+			if (!getStatus.isOK())
+				return getStatus;
+
+			JSONObject apps = getStatus.getJsonData();
 
 			if (!apps.has("resources") || apps.getJSONArray("resources").length() == 0)
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Application not found", null);
@@ -75,9 +76,11 @@ public class GetAppCommand {
 			GetMethod getSummaryMethod = new GetMethod(summaryAppURI.toString());
 			HttpUtil.configureHttpMethod(getSummaryMethod, target);
 
-			CFActivator.getDefault().getHttpClient().executeMethod(getSummaryMethod);
-			response = getSummaryMethod.getResponseBodyAsString();
-			JSONObject summaryJSON = new MagicJSONObject(response);
+			getStatus = HttpUtil.executeMethod(getSummaryMethod);
+			if (!getStatus.isOK())
+				return getStatus;
+
+			JSONObject summaryJSON = getStatus.getJsonData();
 
 			this.app = new App();
 			this.app.setAppJSON(appJSON);

@@ -31,7 +31,7 @@ public class HttpUtil {
 	public static ServerStatus executeMethod(HttpMethod method) throws HttpException, IOException, JSONException {
 		int code = CFActivator.getDefault().getHttpClient().executeMethod(method);
 		String response = method.getResponseBodyAsString();
-		JSONObject result = new JSONObject(response);
+		JSONObject result = new MagicJSONObject(response);
 		if (code != 200 && code != 201) {
 			return new ServerStatus(Status.ERROR, code, result.getString("description"), result, null);
 		}
