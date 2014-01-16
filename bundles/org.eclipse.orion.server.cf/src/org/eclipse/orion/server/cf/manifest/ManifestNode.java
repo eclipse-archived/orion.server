@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.manifest;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import org.json.JSONArray;
@@ -20,7 +21,7 @@ import org.json.JSONObject;
  * used for further translation to JSON format. 
  * 
  * Supported YAML constructs:
- * block sequences, mappings, scalars, comments.
+ * block sequences, mappings, scalars, comments, symbols.
  */
 public class ManifestNode {
 	private List<ManifestNode> children;
@@ -65,13 +66,13 @@ public class ManifestNode {
 	/**
 	 * Parses a JSON representation from the manifest tree.
 	 */
-	public JSONObject toJSON() throws ParseException {
+	public JSONObject toJSON(URI target) throws ParseException {
 		try {
 			if (getChildren().isEmpty()) {
 				/* leaf node */
 				JSONObject res = new JSONObject();
 				String[] sLabel = ManifestUtils.splitLabel(label);
-				res.put(sLabel[0], sLabel[1]);
+				res.put(sLabel[0], ManifestUtils.resolve(sLabel[1], target));
 				return res;
 			}
 
@@ -83,7 +84,7 @@ public class ManifestNode {
 
 					JSONObject itemRepresentation = new JSONObject();
 					for (ManifestNode fieldNode : item) {
-						JSONObject representation = fieldNode.toJSON();
+						JSONObject representation = fieldNode.toJSON(target);
 						String key = JSONObject.getNames(representation)[0];
 						itemRepresentation.put(key, representation.get(key));
 					}
@@ -99,7 +100,7 @@ public class ManifestNode {
 
 			JSONObject inner = new JSONObject();
 			for (ManifestNode child : getChildren()) {
-				JSONObject childNode = child.toJSON();
+				JSONObject childNode = child.toJSON(target);
 				String key = JSONObject.getNames(childNode)[0];
 				inner.put(key, childNode.get(key));
 			}

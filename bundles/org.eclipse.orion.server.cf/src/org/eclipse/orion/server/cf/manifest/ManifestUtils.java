@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.manifest;
 
+import java.net.URI;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,7 +20,13 @@ import java.util.regex.Pattern;
  */
 public class ManifestUtils {
 	public static final String MANIFEST_FILE_NAME = "manifest.yml";
+
 	private static final Pattern pattern = Pattern.compile("[^ ]");
+	private static final String MANIFEST_TARGET_BASE_SYMBOL = "${target-base}";
+	private static final String MANIFEST_TARGET_BASE_SYMBOL_PATTERN = "\\$\\{target-base\\}";
+
+	private static final String MANIFEST_RANDOM_WORD_SYMBOL = "${random-word}";
+	private static final String MANIFEST_RANDOM_WORD_SYMBOL_PATTERN = "\\$\\{random-word\\}";
 
 	/**
 	 * Removes in-line comments form the single input line.
@@ -75,5 +83,27 @@ public class ManifestUtils {
 	 */
 	public static int getInstances(String input) {
 		return (!input.isEmpty()) ? Integer.parseInt(input) : 1;
+	}
+
+	/**
+	 * Resolves supported ruby symbols to
+	 * actual values using the target URI.
+	 */
+	public static String resolve(String input, URI target) {
+		if (target == null)
+			return input;
+
+		if (input.contains(MANIFEST_TARGET_BASE_SYMBOL)) {
+			/* expected format: api.mycloud.com, target base should be mycloud.com */
+			String targetBase = target.getHost().substring(4);
+			input = input.replaceAll(MANIFEST_TARGET_BASE_SYMBOL_PATTERN, targetBase);
+		}
+
+		if (input.contains(MANIFEST_RANDOM_WORD_SYMBOL)) {
+			String randomWord = UUID.randomUUID().toString();
+			input = input.replaceAll(MANIFEST_RANDOM_WORD_SYMBOL_PATTERN, randomWord);
+		}
+
+		return input;
 	}
 }

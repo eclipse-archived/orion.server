@@ -60,10 +60,14 @@ public class PushAppCommand {
 
 		try {
 
+			/* create cloud foundry application */
+			URI targetURI = URIUtil.toURI(target.getUrl());
+			URI appsURI = targetURI.resolve("/v2/apps");
+
 			JSONObject manifestJSON = null;
 			try {
 				/* parse manifest if present */
-				manifestJSON = parseManifest(this.app.getContentLocation());
+				manifestJSON = parseManifest(this.app.getContentLocation(), targetURI);
 			} catch (ParseException ex) {
 				/* we could handle an error message at this point, fail over */
 			}
@@ -92,10 +96,6 @@ public class PushAppCommand {
 				/* parse exception, fail */
 				return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_BAD_REQUEST);
 			}
-
-			/* create cloud foundry application */
-			URI targetURI = URIUtil.toURI(target.getUrl());
-			URI appsURI = targetURI.resolve("/v2/apps");
 
 			PostMethod createAppMethod = new PostMethod(appsURI.toString());
 			HttpUtil.configureHttpMethod(createAppMethod, target);
@@ -341,7 +341,7 @@ public class PushAppCommand {
 		return null;
 	}
 
-	private JSONObject parseManifest(String sourcePath) throws ParseException, CoreException {
+	private JSONObject parseManifest(String sourcePath, URI targetURI) throws ParseException, CoreException {
 		/* get the underlying file store */
 		IFileStore fileStore = NewFileServlet.getFileStore(null, new Path(sourcePath).removeFirstSegments(1));
 		if (fileStore == null)
@@ -356,7 +356,8 @@ public class PushAppCommand {
 		ManifestNode manifestTree = ManifestParser.parse(manifestScanner);
 		manifestScanner.close();
 
-		return manifestTree.toJSON();
+		/* parse within the context of target */
+		return manifestTree.toJSON(targetURI);
 	}
 
 	private File zipApplication(String sourcePath) throws IOException, CoreException {
