@@ -26,8 +26,10 @@ public class App extends CFObject {
 
 	private JSONObject summaryJSON;
 	private JSONObject appJSON;
+
 	private String name;
 	private String contentLocation;
+	private String guid;
 
 	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
 	{
@@ -35,6 +37,14 @@ public class App extends CFObject {
 		new Property(CFProtocolConstants.KEY_URL) //
 		};
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
+	}
+
+	public String getGuid() {
+		return guid;
+	}
+
+	public void setGuid(String guid) {
+		this.guid = guid;
 	}
 
 	@Override
