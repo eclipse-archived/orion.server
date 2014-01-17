@@ -57,41 +57,65 @@ public class PushAppCommand extends AbstractCFCommand {
 			if (manifestJSON == null)
 				return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_BAD_REQUEST);
 
-			/* create application */
-			CreateApplicationCommand createApplication = new CreateApplicationCommand(userId, target, manifestJSON);
-			ServerStatus jobStatus = (ServerStatus) createApplication.doIt(); /* TODO: unsafe type cast */
-			if (!jobStatus.isOK())
-				return jobStatus;
+			if (app.getSummaryJSON() == null) {
 
-			/* extract application guid */
-			JSONObject appResp = jobStatus.getJsonData();
-			app.setGuid(appResp.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID));
+				/* create new application */
+				CreateApplicationCommand createApplication = new CreateApplicationCommand(userId, target, manifestJSON);
+				ServerStatus jobStatus = (ServerStatus) createApplication.doIt(); /* TODO: unsafe type cast */
+				if (!jobStatus.isOK())
+					return jobStatus;
 
-			/* bind route to application */
-			BindRouteCommand bindRoute = new BindRouteCommand(userId, target, app, manifestJSON);
-			jobStatus = (ServerStatus) bindRoute.doIt(); /* TODO: unsafe type cast */
-			if (!jobStatus.isOK())
-				return jobStatus;
+				/* extract application guid */
+				JSONObject appResp = jobStatus.getJsonData();
+				app.setGuid(appResp.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID));
+
+				/* bind route to application */
+				BindRouteCommand bindRoute = new BindRouteCommand(userId, target, app, manifestJSON);
+				jobStatus = (ServerStatus) bindRoute.doIt(); /* TODO: unsafe type cast */
+				if (!jobStatus.isOK())
+					return jobStatus;
+
+				/* upload project contents */
+				UploadBitsCommand uploadBits = new UploadBitsCommand(userId, target, app);
+				jobStatus = (ServerStatus) uploadBits.doIt(); /* TODO: unsafe type cast */
+				if (!jobStatus.isOK())
+					return jobStatus;
+
+				/* bind application specific services */
+				BindServicesCommand bindServices = new BindServicesCommand(userId, target, app, manifestJSON);
+				jobStatus = (ServerStatus) bindServices.doIt(); /* TODO: unsafe type cast */
+				if (!jobStatus.isOK())
+					return jobStatus;
+
+				/* craft command result */
+				JSONObject result = new JSONObject();
+				result.put("Target", target.toJSON());
+				result.put("ManageUrl", target.getUrl().toString() + "#/resources/appGuid=" + app.getGuid());
+				result.put("App", appResp);
+				result.put("Domain", bindRoute.getDomainName());
+				result.put("Route", bindRoute.getRoute());
+
+				return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
+			}
+
+			/* set known application guid */
+			app.setGuid(app.getSummaryJSON().getString(CFProtocolConstants.V2_KEY_GUID));
 
 			/* upload project contents */
 			UploadBitsCommand uploadBits = new UploadBitsCommand(userId, target, app);
-			jobStatus = (ServerStatus) uploadBits.doIt(); /* TODO: unsafe type cast */
-			if (!jobStatus.isOK())
-				return jobStatus;
-
-			/* bind application specific services */
-			BindServicesCommand bindServices = new BindServicesCommand(userId, target, app, manifestJSON);
-			jobStatus = (ServerStatus) bindServices.doIt(); /* TODO: unsafe type cast */
+			ServerStatus jobStatus = (ServerStatus) uploadBits.doIt(); /* TODO: unsafe type cast */
 			if (!jobStatus.isOK())
 				return jobStatus;
 
 			/* craft command result */
+			JSONObject route = app.getSummaryJSON().getJSONArray("routes").getJSONObject(0);
 			JSONObject result = new JSONObject();
+
 			result.put("Target", target.toJSON());
 			result.put("ManageUrl", target.getUrl().toString() + "#/resources/appGuid=" + app.getGuid());
-			result.put("App", appResp);
-			result.put("Domain", bindRoute.getDomainName());
-			result.put("Route", bindRoute.getRoute());
+			result.put("App", app.getSummaryJSON());
+			result.put("Domain", route.getJSONObject("domain").getString("name"));
+			result.put("Route", route);
 
 			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
 

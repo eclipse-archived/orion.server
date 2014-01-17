@@ -114,9 +114,9 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 					if (app == null) {
 						app = new App();
 						app.setName(appName);
-						app.setContentLocation(contentLocation);
 					}
 
+					app.setContentLocation(contentLocation);
 					return new PushAppCommand(this.userId, target, app).doIt();
 				} catch (Exception e) {
 					String msg = NLS.bind("Failed to handle request for {0}", path); //$NON-NLS-1$
