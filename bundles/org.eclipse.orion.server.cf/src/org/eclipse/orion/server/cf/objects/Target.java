@@ -71,6 +71,11 @@ public class Target extends CFObject {
 		return accessToken;
 	}
 
+	public Object getManageUrl() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 	public void setAccessToken(JSONObject accessToken) {
 		this.accessToken = accessToken;
 	}
