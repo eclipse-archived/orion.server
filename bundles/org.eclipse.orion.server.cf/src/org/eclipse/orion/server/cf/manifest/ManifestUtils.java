@@ -31,7 +31,7 @@ public class ManifestUtils {
 	/**
 	 * Removes in-line comments form the single input line.
 	 */
-	public static String removeComments(String input) {
+	static String removeComments(String input) {
 		return input.split("#")[0];
 	}
 
@@ -39,14 +39,14 @@ public class ManifestUtils {
 	 * Determines whether the given line
 	 * starts a new sequence item or not.
 	 */
-	public static boolean isSequenceItem(String input) {
+	static boolean isSequenceItem(String input) {
 		return input.trim().startsWith("- ");
 	}
 
 	/**
 	 * Parses <A>:<B> from the input line.
 	 */
-	public static String[] splitLabel(String input) {
+	static String[] splitLabel(String input) {
 		String[] sLabel = input.split(":");
 		if (sLabel[0].startsWith("- "))
 			sLabel[0] = sLabel[0].substring(2);
@@ -61,7 +61,7 @@ public class ManifestUtils {
 	 * Determines the input line depth, defined as
 	 * the number of prefix spaces (indentation).
 	 */
-	public static int getDepth(String input) {
+	static int getDepth(String input) {
 		Matcher matcher = pattern.matcher(input);
 		if (matcher.find())
 			return matcher.start();
@@ -89,7 +89,7 @@ public class ManifestUtils {
 	 * Resolves supported ruby symbols to
 	 * actual values using the target URI.
 	 */
-	public static String resolve(String input, URI target) {
+	static String resolve(String input, URI target) {
 		if (target == null)
 			return input;
 
@@ -105,5 +105,18 @@ public class ManifestUtils {
 		}
 
 		return input;
+	}
+
+	/**
+	 * Drops the surrounding quotation marks 
+	 * from the given input.
+	 */
+	static String normalize(String input) {
+		boolean openingQuot = (input.startsWith("\"") || input.startsWith("\'"));
+		boolean endingQuot = (input.endsWith("\"") || input.endsWith("\'"));
+		if (openingQuot && endingQuot)
+			return input.substring(1, input.length() - 1);
+		else
+			return input;
 	}
 }

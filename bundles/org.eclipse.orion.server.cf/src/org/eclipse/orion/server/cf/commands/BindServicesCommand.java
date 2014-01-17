@@ -67,13 +67,19 @@ public class BindServicesCommand extends AbstractCFCommand {
 				JSONObject services = appJSON.getJSONObject(CFProtocolConstants.V2_KEY_SERVICES);
 				for (String serviceName : JSONObject.getNames(services)) {
 
-					String service = services.getJSONObject(serviceName).getString(CFProtocolConstants.V2_KEY_TYPE);
+					/* support both 'type' and 'label' field as service name */
+					String service = services.getJSONObject(serviceName).optString(CFProtocolConstants.V2_KEY_TYPE);
+					if (service.isEmpty())
+						service = services.getJSONObject(serviceName).getString(CFProtocolConstants.V2_KEY_LABEL);
+
 					String provider = services.getJSONObject(serviceName).getString(CFProtocolConstants.V2_KEY_PROVIDER);
 					String plan = services.getJSONObject(serviceName).getString(CFProtocolConstants.V2_KEY_PLAN);
 
 					String servicePlanGUID = findServicePlanGUID(service, provider, plan, servicesJSON);
-					if (servicePlanGUID == null)
-						return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_BAD_REQUEST);
+					if (servicePlanGUID == null) {
+						String msg = NLS.bind("Failed to find service {0} with plan {1} in target", serviceName, plan);
+						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
+					}
 
 					/* create service instance */
 					URI serviceInstancesURI = targetURI.resolve("/v2/service_instances");

@@ -72,7 +72,7 @@ public class ManifestNode {
 				/* leaf node */
 				JSONObject res = new JSONObject();
 				String[] sLabel = ManifestUtils.splitLabel(label);
-				res.put(sLabel[0], ManifestUtils.resolve(sLabel[1], target));
+				res.put(sLabel[0], ManifestUtils.normalize(ManifestUtils.resolve(sLabel[1], target)));
 				return res;
 			}
 
