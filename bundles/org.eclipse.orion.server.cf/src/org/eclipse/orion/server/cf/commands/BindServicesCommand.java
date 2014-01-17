@@ -77,7 +77,7 @@ public class BindServicesCommand extends AbstractCFCommand {
 
 					String servicePlanGUID = findServicePlanGUID(service, provider, plan, servicesJSON);
 					if (servicePlanGUID == null) {
-						String msg = NLS.bind("Failed to find service {0} with plan {1} in target", serviceName, plan);
+						String msg = NLS.bind("Failed to find service {0} with plan {1} in target", service, plan);
 						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
 					}
 
