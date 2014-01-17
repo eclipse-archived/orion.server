@@ -61,7 +61,6 @@ public class TargetRegistry {
 		UserTargets(String userId) {
 			this.userId = userId;
 			this.userTargetMap = Collections.synchronizedMap(new HashMap<URL, Target>());
-			this.defaultTargetUrl = getDefaultTargetUrl();
 		}
 
 		Target get(URL url) {
@@ -90,14 +89,6 @@ public class TargetRegistry {
 			if (target.getAccessToken() == null && helper != null && helper.getService() != null) {
 				target.setAccessToken(helper.getService().getToken(userId, target));
 			}
-		}
-
-		private URL getDefaultTargetUrl() {
-			CFExtServiceHelper helper = CFExtServiceHelper.getDefault();
-			if (helper != null && helper.getService() != null) {
-				return helper.getService().getDefaultCloud().getApiUrl();
-			}
-			return null;
 		}
 	}
 }
