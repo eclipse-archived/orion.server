@@ -40,6 +40,7 @@ public class ComputeTargetCommand implements ICFCommand {
 
 	public IStatus doIt() {
 		URL targetUrl = null;
+		URL manageUrl = null;
 
 		if (targetJSON != null) {
 			try {
@@ -47,12 +48,20 @@ public class ComputeTargetCommand implements ICFCommand {
 			} catch (Exception e) {
 				return null;
 			}
+			try {
+				manageUrl = new URL(targetJSON.getString(CFProtocolConstants.KEY_MANAGE_URL));
+			} catch (Exception e) {
+				// do nothing
+			}
 		}
 
 		this.target = CFActivator.getDefault().getTargetRegistry().getTarget(userId, targetUrl);
+
 		if (target == null) {
 			return new Status(IStatus.ERROR, CFActivator.PI_CF, "Target not set", null);
 		}
+
+		target.setManageUrl(manageUrl);
 
 		IStatus result = new SetOrgCommand(userId, this.target, targetJSON != null ? targetJSON.optString("Org") : null).doIt();
 		if (!result.isOK())

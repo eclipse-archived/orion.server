@@ -91,7 +91,8 @@ public class PushAppCommand extends AbstractCFCommand {
 				/* craft command result */
 				JSONObject result = new JSONObject();
 				result.put("Target", target.toJSON());
-				result.put("ManageUrl", target.getUrl().toString() + "#/resources/appGuid=" + app.getGuid());
+				if (target.getManageUrl() != null)
+					result.put("ManageUrl", target.getManageUrl().toString() + "#/resources/appGuid=" + app.getGuid());
 				result.put("App", appResp);
 				result.put("Domain", bindRoute.getDomainName());
 				result.put("Route", bindRoute.getRoute());
@@ -119,7 +120,8 @@ public class PushAppCommand extends AbstractCFCommand {
 			JSONObject result = new JSONObject();
 
 			result.put("Target", target.toJSON());
-			result.put("ManageUrl", target.getUrl().toString() + "#/resources/appGuid=" + app.getGuid());
+			if (target.getManageUrl() != null)
+				result.put("ManageUrl", target.getManageUrl().toString() + "#/resources/appGuid=" + app.getGuid());
 			result.put("App", app.getSummaryJSON());
 			result.put("Domain", route.getJSONObject("domain").getString("name"));
 			result.put("Route", route);

@@ -36,11 +36,9 @@ public class Target extends CFObject {
 	}
 
 	private URL url;
-
+	private Object manageUrl;
 	private JSONObject accessToken;
-
 	private Org org;
-
 	private Space space;
 
 	public Target() {
@@ -72,8 +70,11 @@ public class Target extends CFObject {
 	}
 
 	public Object getManageUrl() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.manageUrl;
+	}
+
+	public void setManageUrl(URL manageUrl) {
+		this.manageUrl = manageUrl;
 	}
 
 	public void setAccessToken(JSONObject accessToken) {
