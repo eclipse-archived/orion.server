@@ -30,7 +30,7 @@ public class GetDomainsCommand extends AbstractCFCommand {
 
 	public GetDomainsCommand(String userId, Target target) {
 		super(target, userId);
-		this.commandName = "Get available domains";
+		this.commandName = "Get available target domains";
 	}
 
 	@Override

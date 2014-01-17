@@ -62,7 +62,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 					Target target = computeTarget.getTarget();
 
 					if (contentLocation != null || name != null) {
-						return new GetAppCommand(this.userId, target, name, contentLocation).doIt();
+						return new GetAppCommand(this.userId, target, name).doIt();
 					}
 
 					return getApps(target);
@@ -95,7 +95,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 						return status;
 					Target target = computeTarget.getTarget();
 
-					GetAppCommand getAppCommand = new GetAppCommand(this.userId, target, appName, contentLocation);
+					GetAppCommand getAppCommand = new GetAppCommand(this.userId, target, appName);
 
 					status = getAppCommand.doIt();
 					App app = getAppCommand.getApp();
@@ -111,12 +111,12 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 					}
 
 					// push new application
-					if (app == null) {
+					if (app == null)
 						app = new App();
-						app.setName(appName);
-					}
 
+					app.setName(appName);
 					app.setContentLocation(contentLocation);
+
 					return new PushAppCommand(this.userId, target, app).doIt();
 				} catch (Exception e) {
 					String msg = NLS.bind("Failed to handle request for {0}", path); //$NON-NLS-1$

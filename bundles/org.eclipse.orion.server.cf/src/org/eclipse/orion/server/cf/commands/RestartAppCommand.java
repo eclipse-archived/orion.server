@@ -28,7 +28,10 @@ public class RestartAppCommand extends AbstractCFCommand {
 
 	protected RestartAppCommand(String userId, Target target, App app) {
 		super(target, userId);
-		this.commandName = "Restart application";
+
+		String[] bindings = {app.getName(), app.getGuid()};
+		this.commandName = NLS.bind("Restart application {0} (guid: {1})", bindings);
+
 		this.application = app;
 	}
 

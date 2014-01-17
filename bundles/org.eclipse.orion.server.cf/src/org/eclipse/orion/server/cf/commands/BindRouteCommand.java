@@ -48,7 +48,10 @@ public class BindRouteCommand extends AbstractCFCommand {
 
 	public BindRouteCommand(String userId, Target target, App app, JSONObject manifest) {
 		super(target, userId);
-		this.commandName = "Bind route to application";
+
+		String[] bindings = {app.getName(), app.getGuid()};
+		this.commandName = NLS.bind("Bind a new route to application {1} (guid: {2})", bindings);
+
 		this.application = app;
 		this.manifest = manifest;
 	}
@@ -129,7 +132,8 @@ public class BindRouteCommand extends AbstractCFCommand {
 
 		} catch (Exception ex) {
 			/* parse exception, fail */
-			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_BAD_REQUEST);
+			String msg = "Corrupted or unsupported manifest format";
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
 		}
 	}
 }

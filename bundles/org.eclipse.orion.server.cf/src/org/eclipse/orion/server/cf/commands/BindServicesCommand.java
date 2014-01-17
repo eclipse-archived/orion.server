@@ -33,7 +33,10 @@ public class BindServicesCommand extends AbstractCFCommand {
 
 	public BindServicesCommand(String userId, Target target, App app, JSONObject manifest) {
 		super(target, userId);
-		this.commandName = "Bind services to application";
+
+		String[] bindings = {app.getName(), app.getGuid()};
+		this.commandName = NLS.bind("Bind new services to application {1} (guid: {2})", bindings);
+
 		this.manifest = manifest;
 		this.application = app;
 	}

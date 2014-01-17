@@ -39,7 +39,7 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 
 	public CreateApplicationCommand(String userId, Target target, JSONObject manifest) {
 		super(target, userId);
-		this.commandName = "Create application";
+		this.commandName = "Create a new application";
 		this.manifest = manifest;
 	}
 
@@ -89,7 +89,8 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 
 		} catch (Exception ex) {
 			/* parse exception, fail */
-			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_BAD_REQUEST);
+			String msg = "Corrupted or unsupported manifest format";
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
 		}
 	}
 }

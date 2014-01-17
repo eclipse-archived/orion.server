@@ -29,14 +29,15 @@ public class GetAppCommand extends AbstractCFCommand {
 
 	private String commandName;
 	private String name;
-	private String contentLocation;
 	private App app;
 
-	public GetAppCommand(String userId, Target target, String name, String contentLocation) {
+	public GetAppCommand(String userId, Target target, String name) {
 		super(target, userId);
-		this.commandName = "Get App"; //$NON-NLS-1$
+
+		String[] bindings = {name};
+		this.commandName = NLS.bind("Get application {0}", bindings);
+
 		this.name = name;
-		this.contentLocation = contentLocation;
 	}
 
 	public ServerStatus _doIt() {

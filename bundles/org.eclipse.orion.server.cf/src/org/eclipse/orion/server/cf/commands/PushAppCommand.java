@@ -40,6 +40,7 @@ public class PushAppCommand extends AbstractCFCommand {
 		this.app = app;
 	}
 
+	@Override
 	public ServerStatus _doIt() {
 		try {
 
@@ -51,11 +52,11 @@ public class PushAppCommand extends AbstractCFCommand {
 				manifestJSON = parseManifest(this.app.getContentLocation(), targetURI);
 			} catch (ParseException ex) {
 				/* parse error, fail */
-				return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_BAD_REQUEST);
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, ex.getMessage(), ex);
 			}
 
 			if (manifestJSON == null)
-				return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_BAD_REQUEST);
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Failed to find application manifest", null);
 
 			if (app.getSummaryJSON() == null) {
 

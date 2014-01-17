@@ -32,7 +32,10 @@ public class AttachRouteCommand extends AbstractCFCommand {
 
 	public AttachRouteCommand(String userId, Target target, App app, String routeGUID) {
 		super(target, userId);
-		this.commandName = "Attach route";
+
+		String[] bindings = {routeGUID, app.getName(), app.getGuid()};
+		this.commandName = NLS.bind("Attach route (guid: {0}) to application {1} (guid: {2})", bindings);
+
 		this.application = app;
 		this.routeGUID = routeGUID;
 	}
@@ -40,11 +43,11 @@ public class AttachRouteCommand extends AbstractCFCommand {
 	@Override
 	protected ServerStatus _doIt() {
 		try {
+
 			/* attach route to application */
 			URI targetURI = URIUtil.toURI(target.getUrl());
 			PutMethod attachRouteMethod = new PutMethod(targetURI.resolve("/v2/apps/" + application.getGuid() + "/routes/" + routeGUID).toString());
 			HttpUtil.configureHttpMethod(attachRouteMethod, target);
-
 			return HttpUtil.executeMethod(attachRouteMethod);
 
 		} catch (Exception e) {

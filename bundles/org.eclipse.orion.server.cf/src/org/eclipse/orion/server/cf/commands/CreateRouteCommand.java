@@ -37,7 +37,10 @@ public class CreateRouteCommand extends AbstractCFCommand {
 
 	public CreateRouteCommand(String userId, Target target, JSONObject manifest, String domainGUID) {
 		super(target, userId);
-		this.commandName = "Create route";
+
+		String[] bindings = {domainGUID};
+		this.commandName = NLS.bind("Create a new route (domain guid: {0})", bindings);
+
 		this.manifest = manifest;
 		this.domainGUID = domainGUID;
 	}
@@ -84,7 +87,8 @@ public class CreateRouteCommand extends AbstractCFCommand {
 
 		} catch (Exception ex) {
 			/* parse exception, fail */
-			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_BAD_REQUEST);
+			String msg = "Corrupted or unsupported manifest format";
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
 		}
 	}
 }
