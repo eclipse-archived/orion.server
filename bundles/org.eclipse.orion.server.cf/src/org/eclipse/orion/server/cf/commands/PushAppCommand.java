@@ -107,6 +107,12 @@ public class PushAppCommand extends AbstractCFCommand {
 			if (!jobStatus.isOK())
 				return jobStatus;
 
+			/* restart the application */
+			RestartAppCommand restartApp = new RestartAppCommand(userId, target, app);
+			jobStatus = (ServerStatus) restartApp.doIt(); /* TODO: unsafe type cast */
+			if (!jobStatus.isOK())
+				return jobStatus;
+
 			/* craft command result */
 			JSONObject route = app.getSummaryJSON().getJSONArray("routes").getJSONObject(0);
 			JSONObject result = new JSONObject();
