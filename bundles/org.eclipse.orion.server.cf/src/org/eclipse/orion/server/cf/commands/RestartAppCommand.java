@@ -12,15 +12,15 @@ package org.eclipse.orion.server.cf.commands;
 
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
+import org.eclipse.orion.server.cf.utils.MultiServerStatus;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RestartAppCommand extends AbstractCFCommand {
+public class RestartAppCommand extends AbstractCFMultiCommand {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
@@ -36,27 +36,33 @@ public class RestartAppCommand extends AbstractCFCommand {
 	}
 
 	@Override
-	protected ServerStatus _doIt() {
+	protected MultiServerStatus _doIt() {
+		/* multi server status */
+		MultiServerStatus status = new MultiServerStatus();
+
 		try {
 
 			/* stop the application */
 			StopAppCommand stopApp = new StopAppCommand(commandName, target, application);
 			ServerStatus jobStatus = (ServerStatus) stopApp.doIt();
+			status.add(jobStatus);
 			if (!jobStatus.isOK())
-				return jobStatus;
+				return status;
 
 			/* start again */
 			StartAppCommand startApp = new StartAppCommand(commandName, target, application);
 			jobStatus = (ServerStatus) startApp.doIt();
+			status.add(jobStatus);
 			if (!jobStatus.isOK())
-				return jobStatus;
+				return status;
 
-			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
+			return status;
 
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);
-			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
+			status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+			return status;
 		}
 	}
 }

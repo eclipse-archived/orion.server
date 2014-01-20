@@ -21,13 +21,14 @@ import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.manifest.*;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
+import org.eclipse.orion.server.cf.utils.MultiServerStatus;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PushAppCommand extends AbstractCFCommand {
+public class PushAppCommand extends AbstractCFMultiCommand {
 
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
@@ -41,7 +42,10 @@ public class PushAppCommand extends AbstractCFCommand {
 	}
 
 	@Override
-	public ServerStatus _doIt() {
+	protected MultiServerStatus _doIt() {
+		/* multi server status */
+		MultiServerStatus status = new MultiServerStatus();
+
 		try {
 
 			URI targetURI = URIUtil.toURI(target.getUrl());
@@ -52,19 +56,23 @@ public class PushAppCommand extends AbstractCFCommand {
 				manifestJSON = parseManifest(this.app.getContentLocation(), targetURI);
 			} catch (ParseException ex) {
 				/* parse error, fail */
-				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, ex.getMessage(), ex);
+				status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, ex.getMessage(), ex));
+				return status;
 			}
 
-			if (manifestJSON == null)
-				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Failed to find application manifest", null);
+			if (manifestJSON == null) {
+				status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Failed to find application manifest", null));
+				return status;
+			}
 
 			if (app.getSummaryJSON() == null) {
 
 				/* create new application */
 				CreateApplicationCommand createApplication = new CreateApplicationCommand(userId, target, manifestJSON);
 				ServerStatus jobStatus = (ServerStatus) createApplication.doIt(); /* TODO: unsafe type cast */
+				status.add(jobStatus);
 				if (!jobStatus.isOK())
-					return jobStatus;
+					return status;
 
 				/* extract application guid */
 				JSONObject appResp = jobStatus.getJsonData();
@@ -72,21 +80,24 @@ public class PushAppCommand extends AbstractCFCommand {
 
 				/* bind route to application */
 				BindRouteCommand bindRoute = new BindRouteCommand(userId, target, app, manifestJSON);
-				jobStatus = (ServerStatus) bindRoute.doIt(); /* TODO: unsafe type cast */
-				if (!jobStatus.isOK())
-					return jobStatus;
+				MultiServerStatus multijobStatus = (MultiServerStatus) bindRoute.doIt(); /* TODO: unsafe type cast */
+				status.add(multijobStatus);
+				if (!multijobStatus.isOK())
+					return status;
 
 				/* upload project contents */
 				UploadBitsCommand uploadBits = new UploadBitsCommand(userId, target, app, manifestJSON);
-				jobStatus = (ServerStatus) uploadBits.doIt(); /* TODO: unsafe type cast */
-				if (!jobStatus.isOK())
-					return jobStatus;
+				multijobStatus = (MultiServerStatus) uploadBits.doIt(); /* TODO: unsafe type cast */
+				status.add(multijobStatus);
+				if (!multijobStatus.isOK())
+					return status;
 
 				/* bind application specific services */
 				BindServicesCommand bindServices = new BindServicesCommand(userId, target, app, manifestJSON);
-				jobStatus = (ServerStatus) bindServices.doIt(); /* TODO: unsafe type cast */
-				if (!jobStatus.isOK())
-					return jobStatus;
+				multijobStatus = (MultiServerStatus) bindServices.doIt(); /* TODO: unsafe type cast */
+				status.add(multijobStatus);
+				if (!multijobStatus.isOK())
+					return status;
 
 				/* craft command result */
 				JSONObject result = new JSONObject();
@@ -97,7 +108,8 @@ public class PushAppCommand extends AbstractCFCommand {
 				result.put("Domain", bindRoute.getDomainName());
 				result.put("Route", bindRoute.getRoute());
 
-				return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
+				status.add(new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result));
+				return status;
 			}
 
 			/* set known application guid */
@@ -105,15 +117,17 @@ public class PushAppCommand extends AbstractCFCommand {
 
 			/* upload project contents */
 			UploadBitsCommand uploadBits = new UploadBitsCommand(userId, target, app, manifestJSON);
-			ServerStatus jobStatus = (ServerStatus) uploadBits.doIt(); /* TODO: unsafe type cast */
-			if (!jobStatus.isOK())
-				return jobStatus;
+			MultiServerStatus multijobStatus = (MultiServerStatus) uploadBits.doIt(); /* TODO: unsafe type cast */
+			status.add(multijobStatus);
+			if (!multijobStatus.isOK())
+				return status;
 
 			/* restart the application */
 			RestartAppCommand restartApp = new RestartAppCommand(userId, target, app);
-			jobStatus = (ServerStatus) restartApp.doIt(); /* TODO: unsafe type cast */
-			if (!jobStatus.isOK())
-				return jobStatus;
+			multijobStatus = (MultiServerStatus) restartApp.doIt(); /* TODO: unsafe type cast */
+			status.add(multijobStatus);
+			if (!multijobStatus.isOK())
+				return status;
 
 			/* craft command result */
 			JSONObject route = app.getSummaryJSON().getJSONArray("routes").getJSONObject(0);
@@ -126,12 +140,14 @@ public class PushAppCommand extends AbstractCFCommand {
 			result.put("Domain", route.getJSONObject("domain").getString("name"));
 			result.put("Route", route);
 
-			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
+			status.add(new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result));
+			return status;
 
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);
-			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
+			status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+			return status;
 		}
 	}
 

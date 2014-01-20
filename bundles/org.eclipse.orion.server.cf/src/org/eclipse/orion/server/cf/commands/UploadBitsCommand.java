@@ -29,13 +29,14 @@ import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
+import org.eclipse.orion.server.cf.utils.MultiServerStatus;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class UploadBitsCommand extends AbstractCFCommand {
+public class UploadBitsCommand extends AbstractCFMultiCommand {
 	private static final int MAX_ATTEMPTS = 150;
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
@@ -55,13 +56,18 @@ public class UploadBitsCommand extends AbstractCFCommand {
 	}
 
 	@Override
-	protected ServerStatus _doIt() {
+	protected MultiServerStatus _doIt() {
+		/* multi server status */
+		MultiServerStatus status = new MultiServerStatus();
+
 		try {
 			/* upload project contents */
 			String contentLocation = new URI(application.getContentLocation()).resolve(path).toString();
 			File zippedApplication = zipApplication(contentLocation);
-			if (zippedApplication == null)
-				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to read application content", null);
+			if (zippedApplication == null) {
+				status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to read application content", null));
+				return status;
+			}
 
 			URI targetURI = URIUtil.toURI(target.getUrl());
 			PutMethod uploadMethod = new PutMethod(targetURI.resolve("/v2/apps/" + application.getGuid() + "/bits?async=true").toString());
@@ -72,8 +78,9 @@ public class UploadBitsCommand extends AbstractCFCommand {
 
 			/* send request */
 			ServerStatus jobStatus = HttpUtil.executeMethod(uploadMethod);
+			status.add(jobStatus);
 			if (!jobStatus.isOK())
-				return jobStatus;
+				return status;
 
 			/* long running task, keep track */
 			int attemptsLeft = MAX_ATTEMPTS;
@@ -84,7 +91,8 @@ public class UploadBitsCommand extends AbstractCFCommand {
 				if (attemptsLeft == 0) {
 					/* delete the tmp file */
 					zippedApplication.delete();
-					return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Upload timeout exceeded", null);
+					status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Upload timeout exceeded", null));
+					return status;
 				}
 
 				/* two seconds */
@@ -97,8 +105,9 @@ public class UploadBitsCommand extends AbstractCFCommand {
 
 				/* send request */
 				jobStatus = HttpUtil.executeMethod(jobRequest);
+				status.add(jobStatus);
 				if (!jobStatus.isOK())
-					return jobStatus;
+					return status;
 
 				resp = jobStatus.getJsonData();
 				taksStatus = resp.getJSONObject(CFProtocolConstants.V2_KEY_ENTITY).getString(CFProtocolConstants.V2_KEY_STATUS);
@@ -106,18 +115,21 @@ public class UploadBitsCommand extends AbstractCFCommand {
 				--attemptsLeft;
 			}
 
-			if (CFProtocolConstants.V2_KEY_FAILURE.equals(jobStatus))
-				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to upload application bits", null);
+			if (CFProtocolConstants.V2_KEY_FAILURE.equals(jobStatus)) {
+				status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to upload application bits", null));
+				return status;
+			}
 
 			/* delete the tmp file */
 			zippedApplication.delete();
 
-			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
+			return status;
 
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);
-			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
+			status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+			return status;
 		}
 	}
 
@@ -135,7 +147,7 @@ public class UploadBitsCommand extends AbstractCFCommand {
 		} catch (Exception ex) {
 			/* parse exception, fail */
 			String msg = "Corrupted or unsupported manifest format";
-			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
+			return new MultiServerStatus(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 		}
 	}
 

@@ -13,18 +13,20 @@ package org.eclipse.orion.server.cf.commands;
 import java.net.URI;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.*;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
+import org.eclipse.orion.server.cf.utils.MultiServerStatus;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BindServicesCommand extends AbstractCFCommand {
+public class BindServicesCommand extends AbstractCFMultiCommand {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
@@ -42,8 +44,12 @@ public class BindServicesCommand extends AbstractCFCommand {
 	}
 
 	@Override
-	protected ServerStatus _doIt() {
+	protected MultiServerStatus _doIt() {
+		/* multi server status */
+		MultiServerStatus status = new MultiServerStatus();
+
 		try {
+
 			/* bind services */
 			URI targetURI = URIUtil.toURI(target.getUrl());
 			JSONObject appJSON = manifest.getJSONArray(CFProtocolConstants.V2_KEY_APPLICATIONS).getJSONObject(0);
@@ -58,8 +64,9 @@ public class BindServicesCommand extends AbstractCFCommand {
 
 				/* send request */
 				ServerStatus jobStatus = HttpUtil.executeMethod(getServicesMethod);
+				status.add(jobStatus);
 				if (!jobStatus.isOK())
-					return jobStatus;
+					return status;
 
 				JSONObject resp = jobStatus.getJsonData();
 				JSONArray servicesJSON = resp.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES);
@@ -78,7 +85,8 @@ public class BindServicesCommand extends AbstractCFCommand {
 					String servicePlanGUID = findServicePlanGUID(service, provider, plan, servicesJSON);
 					if (servicePlanGUID == null) {
 						String msg = NLS.bind("Failed to find service {0} with plan {1} in target", service, plan);
-						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
+						status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+						return status;
 					}
 
 					/* create service instance */
@@ -95,8 +103,9 @@ public class BindServicesCommand extends AbstractCFCommand {
 
 					/* send request */
 					jobStatus = HttpUtil.executeMethod(createServiceMethod);
+					status.add(jobStatus);
 					if (!jobStatus.isOK())
-						return jobStatus;
+						return status;
 
 					resp = jobStatus.getJsonData();
 					String serviceInstanceGUID = resp.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID);
@@ -114,17 +123,19 @@ public class BindServicesCommand extends AbstractCFCommand {
 
 					/* send request */
 					jobStatus = HttpUtil.executeMethod(bindServiceMethod);
+					status.add(jobStatus);
 					if (!jobStatus.isOK())
-						return jobStatus;
+						return status;
 				}
 			}
 
-			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
+			return status;
 
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);
-			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
+			status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+			return status;
 		}
 	}
 

@@ -16,13 +16,14 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
+import org.eclipse.orion.server.cf.utils.MultiServerStatus;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BindRouteCommand extends AbstractCFCommand {
+public class BindRouteCommand extends AbstractCFMultiCommand {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
@@ -57,19 +58,27 @@ public class BindRouteCommand extends AbstractCFCommand {
 	}
 
 	@Override
-	protected ServerStatus _doIt() {
+	protected MultiServerStatus _doIt() {
+		/* multi server status */
+		MultiServerStatus status = new MultiServerStatus();
+
 		try {
+
 			/* get available domains */
 			GetDomainsCommand getDomains = new GetDomainsCommand(userId, target);
 			ServerStatus jobStatus = (ServerStatus) getDomains.doIt(); /* TODO: unsafe type cast */
+			status.add(jobStatus);
+
 			if (!jobStatus.isOK())
-				return jobStatus;
+				return status;
 
 			/* extract available domains */
 			JSONObject domains = jobStatus.getJsonData();
 
-			if (domains.getInt(CFProtocolConstants.V2_KEY_TOTAL_RESULTS) < 1)
-				return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			if (domains.getInt(CFProtocolConstants.V2_KEY_TOTAL_RESULTS) < 1) {
+				status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Failed to find available domains in target", null));
+				return status;
+			}
 
 			String domainGUID = null;
 			if (!appDomain.isEmpty()) {
@@ -86,8 +95,11 @@ public class BindRouteCommand extends AbstractCFCommand {
 				}
 
 				/* client requested an unavailable domain, fail */
-				if (domainGUID == null)
-					return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_BAD_REQUEST);
+				if (domainGUID == null) {
+					String msg = NLS.bind("Failed to find domain {1} in target", appDomain);
+					status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+					return status;
+				}
 
 			} else {
 				/* client has not requested a specific domain, get the first available */
@@ -99,8 +111,10 @@ public class BindRouteCommand extends AbstractCFCommand {
 			/* new application, we do not need to check for attached routes, create a new one */
 			CreateRouteCommand createRoute = new CreateRouteCommand(userId, target, manifest, domainGUID);
 			jobStatus = (ServerStatus) createRoute.doIt(); /* TODO: unsafe type cast */
+			status.add(jobStatus);
+
 			if (!jobStatus.isOK())
-				return jobStatus;
+				return status;
 
 			/* extract route guid */
 			route = jobStatus.getJsonData();
@@ -109,15 +123,18 @@ public class BindRouteCommand extends AbstractCFCommand {
 			/* attach route to application */
 			AttachRouteCommand attachRoute = new AttachRouteCommand(userId, target, application, routeGUID);
 			jobStatus = (ServerStatus) attachRoute.doIt(); /* TODO: unsafe type cast */
-			if (!jobStatus.isOK())
-				return jobStatus;
+			status.add(jobStatus);
 
-			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
+			if (!jobStatus.isOK())
+				return status;
+
+			return status;
 
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);
-			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
+			status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+			return status;
 		}
 	}
 
@@ -133,7 +150,7 @@ public class BindRouteCommand extends AbstractCFCommand {
 		} catch (Exception ex) {
 			/* parse exception, fail */
 			String msg = "Corrupted or unsupported manifest format";
-			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
+			return new MultiServerStatus(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 		}
 	}
 }
