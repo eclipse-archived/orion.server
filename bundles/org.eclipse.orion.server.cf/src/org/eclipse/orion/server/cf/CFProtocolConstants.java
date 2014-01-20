@@ -111,4 +111,6 @@ public class CFProtocolConstants {
 	public static final String V2_KEY_APPLICATIONS = "applications"; //$NON-NLS-1$
 
 	public static final String V2_KEY_DOMAIN = "domain"; //$NON-NLS-1$
+
+	public static final String V2_KEY_PATH = "path"; //$NON-NLS-1$
 }

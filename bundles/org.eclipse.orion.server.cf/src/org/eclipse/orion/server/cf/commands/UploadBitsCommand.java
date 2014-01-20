@@ -41,21 +41,25 @@ public class UploadBitsCommand extends AbstractCFCommand {
 
 	private String commandName;
 	private App application;
+	private JSONObject manifest;
+	private String path;
 
-	public UploadBitsCommand(String userId, Target target, App app) {
+	public UploadBitsCommand(String userId, Target target, App app, JSONObject manifest) {
 		super(target, userId);
 
 		String[] bindings = {app.getName(), app.getGuid()};
 		this.commandName = NLS.bind("Upload application {0} bits (guid: {1})", bindings);
 
 		this.application = app;
+		this.manifest = manifest;
 	}
 
 	@Override
 	protected ServerStatus _doIt() {
 		try {
 			/* upload project contents */
-			File zippedApplication = zipApplication(application.getContentLocation());
+			String contentLocation = new URI(application.getContentLocation()).resolve(path).toString();
+			File zippedApplication = zipApplication(contentLocation);
 			if (zippedApplication == null)
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to read application content", null);
 
@@ -114,6 +118,24 @@ public class UploadBitsCommand extends AbstractCFCommand {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
+		}
+	}
+
+	@Override
+	protected IStatus validateParams() {
+		try {
+			/* read deploy parameters */
+			JSONObject appJSON = manifest.getJSONArray(CFProtocolConstants.V2_KEY_APPLICATIONS).getJSONObject(0);
+			path = appJSON.optString(CFProtocolConstants.V2_KEY_PATH); /* optional */
+			if (path.isEmpty())
+				path = ".";
+
+			return Status.OK_STATUS;
+
+		} catch (Exception ex) {
+			/* parse exception, fail */
+			String msg = "Corrupted or unsupported manifest format";
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
 		}
 	}
 

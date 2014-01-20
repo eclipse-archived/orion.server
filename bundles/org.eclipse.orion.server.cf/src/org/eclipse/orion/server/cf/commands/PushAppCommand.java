@@ -77,7 +77,7 @@ public class PushAppCommand extends AbstractCFCommand {
 					return jobStatus;
 
 				/* upload project contents */
-				UploadBitsCommand uploadBits = new UploadBitsCommand(userId, target, app);
+				UploadBitsCommand uploadBits = new UploadBitsCommand(userId, target, app, manifestJSON);
 				jobStatus = (ServerStatus) uploadBits.doIt(); /* TODO: unsafe type cast */
 				if (!jobStatus.isOK())
 					return jobStatus;
@@ -104,7 +104,7 @@ public class PushAppCommand extends AbstractCFCommand {
 			app.setGuid(app.getSummaryJSON().getString(CFProtocolConstants.V2_KEY_GUID));
 
 			/* upload project contents */
-			UploadBitsCommand uploadBits = new UploadBitsCommand(userId, target, app);
+			UploadBitsCommand uploadBits = new UploadBitsCommand(userId, target, app, manifestJSON);
 			ServerStatus jobStatus = (ServerStatus) uploadBits.doIt(); /* TODO: unsafe type cast */
 			if (!jobStatus.isOK())
 				return jobStatus;
