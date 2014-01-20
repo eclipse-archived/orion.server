@@ -283,16 +283,17 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Missing commit message.", null));
 			}
 
+			Git git = new Git(db);
+			CommitCommand cc = git.commit();
+			Config config = git.getRepository().getConfig();
+
 			boolean amend = Boolean.parseBoolean(requestObject.optString(GitConstants.KEY_COMMIT_AMEND, null));
-			boolean insertChangeId = Boolean.parseBoolean(requestObject.optString(GitConstants.KEY_CHANGE_ID, null));
+			boolean insertChangeId = getCreateGerritChangeId(config) || Boolean.parseBoolean(requestObject.optString(GitConstants.KEY_CHANGE_ID, null));
 
 			String committerName = requestObject.optString(GitConstants.KEY_COMMITTER_NAME, null);
 			String committerEmail = requestObject.optString(GitConstants.KEY_COMMITTER_EMAIL, null);
 			String authorName = requestObject.optString(GitConstants.KEY_AUTHOR_NAME, null);
 			String authorEmail = requestObject.optString(GitConstants.KEY_AUTHOR_EMAIL, null);
-
-			Git git = new Git(db);
-			CommitCommand cc = git.commit();
 
 			// workaround of a bug in JGit which causes invalid 
 			// support of null values of author/committer name/email, see bug 352984
@@ -332,6 +333,14 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 		} catch (Exception e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when requesting a commit info.", e));
 		}
+	}
+
+	/**
+	 * @param config
+	 * @return
+	 */
+	private boolean getCreateGerritChangeId(Config config) {
+		return config.getBoolean(ConfigConstants.CONFIG_GERRIT_SECTION, ConfigConstants.CONFIG_KEY_CREATECHANGEID, false);
 	}
 
 	private boolean merge(HttpServletRequest request, HttpServletResponse response, Repository db, String commitToMerge, boolean squash) throws ServletException, JSONException {
