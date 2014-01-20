@@ -16,6 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.core.ServerStatus;
+import org.json.JSONObject;
 
 public class MultiServerStatus extends ServerStatus {
 	private List<ServerStatus> statuses;
@@ -69,7 +70,7 @@ public class MultiServerStatus extends ServerStatus {
 
 	@Override
 	public int getCode() {
-		if (statuses.isEmpty())
+		if (!statuses.isEmpty())
 			return getLastStatus().getCode();
 		else
 			return super.getCode();
@@ -77,7 +78,7 @@ public class MultiServerStatus extends ServerStatus {
 
 	@Override
 	public Throwable getException() {
-		if (statuses.isEmpty())
+		if (!statuses.isEmpty())
 			return getLastStatus().getException();
 		else
 			return super.getException();
@@ -85,7 +86,7 @@ public class MultiServerStatus extends ServerStatus {
 
 	@Override
 	public String getMessage() {
-		if (statuses.isEmpty())
+		if (!statuses.isEmpty())
 			return getLastStatus().getMessage();
 		else
 			return super.getMessage();
@@ -93,7 +94,7 @@ public class MultiServerStatus extends ServerStatus {
 
 	@Override
 	public String getPlugin() {
-		if (statuses.isEmpty())
+		if (!statuses.isEmpty())
 			return getLastStatus().getPlugin();
 		else
 			return super.getPlugin();
@@ -101,7 +102,7 @@ public class MultiServerStatus extends ServerStatus {
 
 	@Override
 	public int getSeverity() {
-		if (statuses.isEmpty())
+		if (!statuses.isEmpty())
 			return getLastStatus().getSeverity();
 		else
 			return super.getSeverity();
@@ -109,12 +110,12 @@ public class MultiServerStatus extends ServerStatus {
 
 	@Override
 	public boolean isMultiStatus() {
-		return true;
+		return false;
 	}
 
 	@Override
 	public boolean isOK() {
-		if (statuses.isEmpty())
+		if (!statuses.isEmpty())
 			return getLastStatus().isOK();
 		else
 			return super.isOK();
@@ -122,9 +123,25 @@ public class MultiServerStatus extends ServerStatus {
 
 	@Override
 	public boolean matches(int severityMask) {
-		if (statuses.isEmpty())
+		if (!statuses.isEmpty())
 			return getLastStatus().matches(severityMask);
 		else
 			return super.matches(severityMask);
+	}
+
+	@Override
+	public JSONObject getJsonData() {
+		if (!statuses.isEmpty())
+			return getLastStatus().getJsonData();
+		else
+			return super.getJsonData();
+	}
+
+	@Override
+	public JSONObject toJSON() {
+		if (!statuses.isEmpty())
+			return getLastStatus().toJSON();
+		else
+			return super.toJSON();
 	}
 }
