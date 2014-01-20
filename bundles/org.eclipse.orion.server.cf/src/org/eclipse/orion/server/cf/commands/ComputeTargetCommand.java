@@ -17,6 +17,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.cf.CFActivator;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.objects.Target;
+import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -58,7 +59,7 @@ public class ComputeTargetCommand implements ICFCommand {
 		this.target = CFActivator.getDefault().getTargetRegistry().getTarget(userId, targetUrl);
 
 		if (target == null) {
-			return new Status(IStatus.ERROR, CFActivator.PI_CF, "Target not set", null);
+			return HttpUtil.createErrorStatus(IStatus.WARNING, "CF-TargetNotSet", "Target not set");
 		}
 
 		target.setManageUrl(manageUrl);
