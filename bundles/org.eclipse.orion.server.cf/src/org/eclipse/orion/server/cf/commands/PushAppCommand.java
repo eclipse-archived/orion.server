@@ -77,6 +77,7 @@ public class PushAppCommand extends AbstractCFMultiCommand {
 				/* extract application guid */
 				JSONObject appResp = jobStatus.getJsonData();
 				app.setGuid(appResp.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID));
+				app.setName(manifestJSON.getJSONArray(CFProtocolConstants.V2_KEY_APPLICATIONS).getJSONObject(0).getString(CFProtocolConstants.V2_KEY_NAME));
 
 				/* bind route to application */
 				BindRouteCommand bindRoute = new BindRouteCommand(userId, target, app, manifestJSON);

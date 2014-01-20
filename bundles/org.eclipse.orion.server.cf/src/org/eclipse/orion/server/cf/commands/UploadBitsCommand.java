@@ -62,8 +62,7 @@ public class UploadBitsCommand extends AbstractCFMultiCommand {
 
 		try {
 			/* upload project contents */
-			String contentLocation = new URI(application.getContentLocation()).resolve(path).toString();
-			File zippedApplication = zipApplication(contentLocation);
+			File zippedApplication = zipApplication(application.getContentLocation());
 			if (zippedApplication == null) {
 				status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to read application content", null));
 				return status;
