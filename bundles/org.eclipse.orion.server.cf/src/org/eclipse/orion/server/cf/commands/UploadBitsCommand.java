@@ -70,7 +70,7 @@ public class UploadBitsCommand extends AbstractCFMultiCommand {
 
 			URI targetURI = URIUtil.toURI(target.getUrl());
 			PutMethod uploadMethod = new PutMethod(targetURI.resolve("/v2/apps/" + application.getGuid() + "/bits?async=true").toString());
-			uploadMethod.addRequestHeader(new Header("Authorization", "bearer " + target.getAccessToken().getString("access_token")));
+			uploadMethod.addRequestHeader(new Header("Authorization", "bearer " + target.getCloud().getAccessToken().getString("access_token")));
 
 			Part[] parts = {new StringPart(CFProtocolConstants.V2_KEY_RESOURCES, "[]"), new FilePart(CFProtocolConstants.V2_KEY_APPLICATION, zippedApplication)};
 			uploadMethod.setRequestEntity(new MultipartRequestEntity(parts, uploadMethod.getParams()));

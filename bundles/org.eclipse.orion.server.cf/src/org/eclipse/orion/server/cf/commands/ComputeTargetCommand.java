@@ -62,7 +62,7 @@ public class ComputeTargetCommand implements ICFCommand {
 			return HttpUtil.createErrorStatus(IStatus.WARNING, "CF-TargetNotSet", "Target not set");
 		}
 
-		target.setManageUrl(manageUrl);
+		target.getCloud().setManageUrl(manageUrl);
 
 		IStatus result = new SetOrgCommand(userId, this.target, targetJSON != null ? targetJSON.optString("Org") : null).doIt();
 		if (!result.isOK())

@@ -11,9 +11,6 @@
 package org.eclipse.orion.server.cf.objects;
 
 import java.net.*;
-import org.eclipse.orion.server.cf.CFProtocolConstants;
-import org.eclipse.orion.server.core.resources.Property;
-import org.eclipse.orion.server.core.resources.ResourceShape;
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -24,17 +21,9 @@ public class Cloud extends CFObject {
 	public static final String RESOURCE = "cloud"; //$NON-NLS-1$
 	public static final String TYPE = "Cloud"; //$NON-NLS-1$
 
-	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
-	{
-		Property[] defaultProperties = new Property[] { //
-		new Property(CFProtocolConstants.KEY_URL) //
-		};
-		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
-	}
-
 	private URL apiUrl;
-
 	private URL manageUrl;
+	private JSONObject accessToken;
 
 	public Cloud(URL apiUrl, URL manageUrl) {
 		super();
@@ -58,6 +47,14 @@ public class Cloud extends CFObject {
 		this.manageUrl = manageUrl;
 	}
 
+	public JSONObject getAccessToken() {
+		return accessToken;
+	}
+
+	public void setAccessToken(JSONObject accessToken) {
+		this.accessToken = accessToken;
+	}
+
 	@Override
 	protected URI getLocation() throws URISyntaxException {
 		// TODO Auto-generated method stub
@@ -70,4 +67,34 @@ public class Cloud extends CFObject {
 		return null;
 	}
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((apiUrl == null) ? 0 : apiUrl.hashCode());
+		result = prime * result + ((manageUrl == null) ? 0 : manageUrl.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Cloud other = (Cloud) obj;
+		if (apiUrl == null) {
+			if (other.apiUrl != null)
+				return false;
+		} else if (!apiUrl.equals(other.apiUrl))
+			return false;
+		if (manageUrl == null) {
+			if (other.manageUrl != null)
+				return false;
+		} else if (!manageUrl.equals(other.manageUrl))
+			return false;
+		return true;
+	}
 }

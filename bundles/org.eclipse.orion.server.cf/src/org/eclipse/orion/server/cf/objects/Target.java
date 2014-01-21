@@ -35,20 +35,12 @@ public class Target extends CFObject {
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
 
-	private URL url;
-	private Object manageUrl;
-	private JSONObject accessToken;
 	private Org org;
 	private Space space;
+	private Cloud cloud;
 
-	public Target() {
-	}
-
-	public Target(Target target) {
-		this.setUrl(target.getUrl());
-		this.setAccessToken(target.getAccessToken());
-		this.setOrg(target.getOrg());
-		this.setSpace(target.getSpace());
+	public Target(Cloud cloud) {
+		this.cloud = cloud;
 	}
 
 	@Override
@@ -58,27 +50,15 @@ public class Target extends CFObject {
 
 	@PropertyDescription(name = CFProtocolConstants.KEY_URL)
 	public URL getUrl() {
-		return url;
+		return cloud.getApiUrl();
 	}
 
-	public void setUrl(URL url) {
-		this.url = url;
+	public URL getManageUrl() {
+		return cloud.getManageUrl();
 	}
 
-	public JSONObject getAccessToken() {
-		return accessToken;
-	}
-
-	public Object getManageUrl() {
-		return this.manageUrl;
-	}
-
-	public void setManageUrl(URL manageUrl) {
-		this.manageUrl = manageUrl;
-	}
-
-	public void setAccessToken(JSONObject accessToken) {
-		this.accessToken = accessToken;
+	public Cloud getCloud() {
+		return cloud;
 	}
 
 	public Org getOrg() {
@@ -124,7 +104,9 @@ public class Target extends CFObject {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((url == null) ? 0 : url.hashCode());
+		result = prime * result + ((cloud == null) ? 0 : cloud.hashCode());
+		result = prime * result + ((org == null) ? 0 : org.hashCode());
+		result = prime * result + ((space == null) ? 0 : space.hashCode());
 		return result;
 	}
 
@@ -137,10 +119,20 @@ public class Target extends CFObject {
 		if (getClass() != obj.getClass())
 			return false;
 		Target other = (Target) obj;
-		if (url == null) {
-			if (other.url != null)
+		if (cloud == null) {
+			if (other.cloud != null)
 				return false;
-		} else if (!url.equals(other.url))
+		} else if (!cloud.equals(other.cloud))
+			return false;
+		if (org == null) {
+			if (other.org != null)
+				return false;
+		} else if (!org.equals(other.org))
+			return false;
+		if (space == null) {
+			if (other.space != null)
+				return false;
+		} else if (!space.equals(other.space))
 			return false;
 		return true;
 	}

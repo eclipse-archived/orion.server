@@ -25,8 +25,8 @@ public class HttpUtil {
 	public static void configureHttpMethod(HttpMethod method, Target target) throws JSONException {
 		method.addRequestHeader(new Header("Accept", "application/json"));
 		method.addRequestHeader(new Header("Content-Type", "application/json"));
-		if (target.getAccessToken() != null)
-			method.addRequestHeader(new Header("Authorization", "bearer " + target.getAccessToken().getString("access_token")));
+		if (target.getCloud().getAccessToken() != null)
+			method.addRequestHeader(new Header("Authorization", "bearer " + target.getCloud().getAccessToken().getString("access_token")));
 	}
 
 	public static ServerStatus executeMethod(HttpMethod method) throws HttpException, IOException, JSONException {

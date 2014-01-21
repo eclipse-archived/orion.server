@@ -77,10 +77,6 @@ public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 					if (jsonData.has("Url")) {
 						URL targetUrl = new URL(jsonData.getString("Url"));
 						target = CFActivator.getDefault().getTargetRegistry().getTarget(this.userId, targetUrl);
-						if (target == null) {
-							target = new Target();
-							target.setUrl(new URL(jsonData.getString("Url")));
-						}
 					} else {
 						target = CFActivator.getDefault().getTargetRegistry().getTarget(this.userId);
 					}
@@ -91,17 +87,15 @@ public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 							return result;
 					}
 
-					if (target.getAccessToken() != null) {
-						IStatus result = new SetOrgCommand(this.userId, target, jsonData.optString("Org")).doIt();
-						if (!result.isOK())
-							return result;
+					IStatus result = new SetOrgCommand(this.userId, target, jsonData.optString("Org")).doIt();
+					if (!result.isOK())
+						return result;
 
-						result = new SetSpaceCommand(this.userId, target, jsonData.optString("Space")).doIt();
-						if (!result.isOK())
-							return result;
-					}
+					result = new SetSpaceCommand(this.userId, target, jsonData.optString("Space")).doIt();
+					if (!result.isOK())
+						return result;
 
-					CFActivator.getDefault().getTargetRegistry().putTarget(this.userId, target, true);
+					CFActivator.getDefault().getTargetRegistry().markDefault(this.userId, target.getCloud());
 
 					return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, target.toJSON());
 				} catch (Exception e) {
@@ -125,10 +119,7 @@ public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 					Target target = CFActivator.getDefault().getTargetRegistry().getTarget(this.userId);
 
 					LogoutCommand logoutCommand = new LogoutCommand(target);
-					IStatus result = logoutCommand.doIt();
-					CFActivator.getDefault().getTargetRegistry().putTarget(this.userId, target);
-
-					return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, target.toJSON());
+					return logoutCommand.doIt();
 				} catch (Exception e) {
 					String msg = NLS.bind("Failed to handle request for {0}", path); //$NON-NLS-1$
 					ServerStatus status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);

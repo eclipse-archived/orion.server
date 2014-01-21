@@ -10,11 +10,11 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf;
 
-import org.eclipse.orion.server.cf.objects.Target;
+import org.eclipse.orion.server.cf.objects.Cloud;
 import org.json.JSONObject;
 
 public interface ICFExtService {
 
-	public JSONObject getToken(String userId, Target target);
+	public JSONObject getToken(String userId, Cloud cloud);
 
 }

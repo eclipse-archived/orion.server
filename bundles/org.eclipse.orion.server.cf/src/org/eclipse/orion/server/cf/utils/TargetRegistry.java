@@ -13,14 +13,15 @@ package org.eclipse.orion.server.cf.utils;
 import java.net.URL;
 import java.util.*;
 import org.eclipse.orion.server.cf.CFExtServiceHelper;
+import org.eclipse.orion.server.cf.objects.Cloud;
 import org.eclipse.orion.server.cf.objects.Target;
 
 public class TargetRegistry {
 
-	private Map<String, UserTargets> targetMap;
+	private Map<String, UserClouds> cloudMap;
 
 	public TargetRegistry() {
-		this.targetMap = Collections.synchronizedMap(new HashMap<String, UserTargets>());
+		this.cloudMap = Collections.synchronizedMap(new HashMap<String, UserClouds>());
 	}
 
 	public Target getTarget(String userId) {
@@ -28,66 +29,63 @@ public class TargetRegistry {
 	}
 
 	public Target getTarget(String userId, URL url) {
-		UserTargets userTargets = getUserTargets(userId);
-		return userTargets.get(url);
+		UserClouds userClouds = getUserClouds(userId);
+		Cloud cloud = userClouds.get(url);
+		if (cloud == null)
+			return null;
+		return new Target(userClouds.get(url));
 	}
 
-	public void putTarget(String userId, Target target) {
-		this.putTarget(userId, target, false);
+	public void markDefault(String userId, Cloud cloud) {
+		UserClouds userClouds = getUserClouds(userId);
+		userClouds.markDefault(cloud);
 	}
 
-	public void putTarget(String userId, Target target, boolean isDefault) {
-		UserTargets userTargets = getUserTargets(userId);
-		userTargets.put(target, isDefault);
-	}
-
-	private UserTargets getUserTargets(String userId) {
-		UserTargets userTargets = targetMap.get(userId);
-		if (userTargets == null) {
-			userTargets = new UserTargets(userId);
-			targetMap.put(userId, userTargets);
+	private UserClouds getUserClouds(String userId) {
+		UserClouds userClouds = cloudMap.get(userId);
+		if (userClouds == null) {
+			userClouds = new UserClouds(userId);
+			cloudMap.put(userId, userClouds);
 		}
-		return userTargets;
+		return userClouds;
 	}
 
-	private class UserTargets {
+	private class UserClouds {
 
 		private String userId;
 
-		private Map<URL, Target> userTargetMap;
+		private Map<URL, Cloud> userCloudMap;
 
-		private URL defaultTargetUrl;
+		private URL defaultCloudUrl;
 
-		UserTargets(String userId) {
+		UserClouds(String userId) {
 			this.userId = userId;
-			this.userTargetMap = Collections.synchronizedMap(new HashMap<URL, Target>());
+			this.userCloudMap = Collections.synchronizedMap(new HashMap<URL, Cloud>());
 		}
 
-		Target get(URL url) {
-			url = (url != null ? url : defaultTargetUrl);
+		Cloud get(URL url) {
+			url = (url != null ? url : defaultCloudUrl);
 			if (url == null) {
 				return null;
 			}
-			Target target = userTargetMap.get(url);
-			if (target == null) {
-				target = new Target();
-				target.setUrl(url);
-				userTargetMap.put(target.getUrl(), target);
+			Cloud cloud = userCloudMap.get(url);
+			if (cloud == null) {
+				cloud = new Cloud(url, null);
+				userCloudMap.put(cloud.getApiUrl(), cloud);
 			}
-			setAuthToken(target);
-			return new Target(target);
+			setAuthToken(cloud);
+			return cloud;
 		}
 
-		void put(Target target, boolean isDefault) {
-			userTargetMap.put(target.getUrl(), target);
-			if (isDefault)
-				defaultTargetUrl = target.getUrl();
+		void markDefault(Cloud cloud) {
+			userCloudMap.get(cloud.getApiUrl());
+			defaultCloudUrl = cloud.getApiUrl();
 		}
 
-		private void setAuthToken(Target target) {
+		private void setAuthToken(Cloud cloud) {
 			CFExtServiceHelper helper = CFExtServiceHelper.getDefault();
-			if (target.getAccessToken() == null && helper != null && helper.getService() != null) {
-				target.setAccessToken(helper.getService().getToken(userId, target));
+			if (cloud.getAccessToken() == null && helper != null && helper.getService() != null) {
+				cloud.setAccessToken(helper.getService().getToken(userId, cloud));
 			}
 		}
 	}

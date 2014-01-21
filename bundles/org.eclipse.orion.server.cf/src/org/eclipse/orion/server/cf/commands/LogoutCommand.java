@@ -35,7 +35,7 @@ public class LogoutCommand implements ICFCommand {
 	}
 
 	public IStatus doIt() {
-		target.setAccessToken(null);
+		target.getCloud().setAccessToken(null);
 		return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
 	}
 

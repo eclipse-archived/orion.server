@@ -85,7 +85,7 @@ public class LoginCommand implements ICFCommand {
 				}
 			}
 
-			target.setAccessToken(new JSONObject(response));
+			target.getCloud().setAccessToken(new JSONObject(response));
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);
