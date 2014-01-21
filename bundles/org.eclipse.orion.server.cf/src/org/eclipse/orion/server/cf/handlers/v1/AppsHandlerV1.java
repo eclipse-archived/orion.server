@@ -103,11 +103,11 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 					if (CFProtocolConstants.KEY_STARTED.equals(state)) {
 						if (!status.isOK())
 							return status;
-						return new StartAppCommand(this.userId, target, app).doIt();
+						return new StartAppCommand(target, app).doIt();
 					} else if (CFProtocolConstants.KEY_STOPPED.equals(state)) {
 						if (!status.isOK())
 							return status;
-						return new StopAppCommand(this.userId, target, app).doIt();
+						return new StopAppCommand(target, app).doIt();
 					}
 
 					// push new application
@@ -117,7 +117,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 					app.setName(appName);
 					app.setContentLocation(contentLocation);
 
-					return new PushAppCommand(this.userId, target, app).doIt();
+					return new PushAppCommand(target, app).doIt();
 				} catch (Exception e) {
 					String msg = NLS.bind("Failed to handle request for {0}", path); //$NON-NLS-1$
 					ServerStatus status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);

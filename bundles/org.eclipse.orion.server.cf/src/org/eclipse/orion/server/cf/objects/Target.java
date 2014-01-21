@@ -50,7 +50,7 @@ public class Target extends CFObject {
 
 	@PropertyDescription(name = CFProtocolConstants.KEY_URL)
 	public URL getUrl() {
-		return cloud.getApiUrl();
+		return cloud.getUrl();
 	}
 
 	public URL getManageUrl() {

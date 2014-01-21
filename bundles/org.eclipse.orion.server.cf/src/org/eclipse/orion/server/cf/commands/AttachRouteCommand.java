@@ -30,8 +30,8 @@ public class AttachRouteCommand extends AbstractCFCommand {
 	private App application;
 	private String routeGUID;
 
-	public AttachRouteCommand(String userId, Target target, App app, String routeGUID) {
-		super(target, userId);
+	public AttachRouteCommand(Target target, App app, String routeGUID) {
+		super(target);
 
 		String[] bindings = {routeGUID, app.getName(), app.getGuid()};
 		this.commandName = NLS.bind("Attach route (guid: {0}) to application {1} (guid: {2})", bindings);

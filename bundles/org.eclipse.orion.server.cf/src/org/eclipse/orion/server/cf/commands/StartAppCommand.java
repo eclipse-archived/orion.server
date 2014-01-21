@@ -33,8 +33,8 @@ public class StartAppCommand extends AbstractCFCommand {
 	private String commandName;
 	private App app;
 
-	public StartAppCommand(String userId, Target target, App app) {
-		super(target, userId);
+	public StartAppCommand(Target target, App app) {
+		super(target);
 		this.commandName = "Start App"; //$NON-NLS-1$
 		this.app = app;
 	}

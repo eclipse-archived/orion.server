@@ -31,8 +31,8 @@ public class SetSpaceCommand extends AbstractCFCommand {
 	private String commandName;
 	private String spaceName;
 
-	public SetSpaceCommand(String userId, Target target, String spaceName) {
-		super(target, userId);
+	public SetSpaceCommand(Target target, String spaceName) {
+		super(target);
 		this.commandName = "Login"; //$NON-NLS-1$
 		this.spaceName = spaceName;
 	}

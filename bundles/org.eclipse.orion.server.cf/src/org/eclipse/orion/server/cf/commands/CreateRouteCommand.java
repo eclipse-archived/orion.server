@@ -35,8 +35,8 @@ public class CreateRouteCommand extends AbstractCFCommand {
 	private String appHost;
 	private String domainGUID;
 
-	public CreateRouteCommand(String userId, Target target, JSONObject manifest, String domainGUID) {
-		super(target, userId);
+	public CreateRouteCommand(Target target, JSONObject manifest, String domainGUID) {
+		super(target);
 
 		String[] bindings = {domainGUID};
 		this.commandName = NLS.bind("Create a new route (domain guid: {0})", bindings);

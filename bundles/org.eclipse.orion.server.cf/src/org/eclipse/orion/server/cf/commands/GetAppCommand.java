@@ -32,7 +32,7 @@ public class GetAppCommand extends AbstractCFCommand {
 	private App app;
 
 	public GetAppCommand(String userId, Target target, String name) {
-		super(target, userId);
+		super(target);
 
 		String[] bindings = {name};
 		this.commandName = NLS.bind("Get application {0}", bindings);

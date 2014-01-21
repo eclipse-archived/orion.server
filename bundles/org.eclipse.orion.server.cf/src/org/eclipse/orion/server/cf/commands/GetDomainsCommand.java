@@ -28,8 +28,8 @@ public class GetDomainsCommand extends AbstractCFCommand {
 
 	private String commandName;
 
-	public GetDomainsCommand(String userId, Target target) {
-		super(target, userId);
+	public GetDomainsCommand(Target target) {
+		super(target);
 		this.commandName = "Get available target domains";
 	}
 

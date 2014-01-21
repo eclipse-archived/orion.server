@@ -31,8 +31,8 @@ public class SetOrgCommand extends AbstractCFCommand {
 	private String commandName;
 	private String orgName;
 
-	public SetOrgCommand(String userId, Target target, String orgName) {
-		super(target, userId);
+	public SetOrgCommand(Target target, String orgName) {
+		super(target);
 		this.commandName = "Set Org"; //$NON-NLS-1$
 		this.orgName = orgName;
 	}

@@ -35,8 +35,8 @@ public class PushAppCommand extends AbstractCFMultiCommand {
 	private String commandName;
 	private App app;
 
-	public PushAppCommand(String userId, Target target, App app) {
-		super(target, userId);
+	public PushAppCommand(Target target, App app) {
+		super(target);
 		this.commandName = "Push application"; //$NON-NLS-1$
 		this.app = app;
 	}
@@ -68,7 +68,7 @@ public class PushAppCommand extends AbstractCFMultiCommand {
 			if (app.getSummaryJSON() == null) {
 
 				/* create new application */
-				CreateApplicationCommand createApplication = new CreateApplicationCommand(userId, target, manifestJSON);
+				CreateApplicationCommand createApplication = new CreateApplicationCommand(target, manifestJSON);
 				ServerStatus jobStatus = (ServerStatus) createApplication.doIt(); /* TODO: unsafe type cast */
 				status.add(jobStatus);
 				if (!jobStatus.isOK())
@@ -80,21 +80,21 @@ public class PushAppCommand extends AbstractCFMultiCommand {
 				app.setName(manifestJSON.getJSONArray(CFProtocolConstants.V2_KEY_APPLICATIONS).getJSONObject(0).getString(CFProtocolConstants.V2_KEY_NAME));
 
 				/* bind route to application */
-				BindRouteCommand bindRoute = new BindRouteCommand(userId, target, app, manifestJSON);
+				BindRouteCommand bindRoute = new BindRouteCommand(target, app, manifestJSON);
 				MultiServerStatus multijobStatus = (MultiServerStatus) bindRoute.doIt(); /* TODO: unsafe type cast */
 				status.add(multijobStatus);
 				if (!multijobStatus.isOK())
 					return status;
 
 				/* upload project contents */
-				UploadBitsCommand uploadBits = new UploadBitsCommand(userId, target, app, manifestJSON);
+				UploadBitsCommand uploadBits = new UploadBitsCommand(target, app, manifestJSON);
 				multijobStatus = (MultiServerStatus) uploadBits.doIt(); /* TODO: unsafe type cast */
 				status.add(multijobStatus);
 				if (!multijobStatus.isOK())
 					return status;
 
 				/* bind application specific services */
-				BindServicesCommand bindServices = new BindServicesCommand(userId, target, app, manifestJSON);
+				BindServicesCommand bindServices = new BindServicesCommand(target, app, manifestJSON);
 				multijobStatus = (MultiServerStatus) bindServices.doIt(); /* TODO: unsafe type cast */
 				status.add(multijobStatus);
 				if (!multijobStatus.isOK())
@@ -117,14 +117,14 @@ public class PushAppCommand extends AbstractCFMultiCommand {
 			app.setGuid(app.getSummaryJSON().getString(CFProtocolConstants.V2_KEY_GUID));
 
 			/* upload project contents */
-			UploadBitsCommand uploadBits = new UploadBitsCommand(userId, target, app, manifestJSON);
+			UploadBitsCommand uploadBits = new UploadBitsCommand(target, app, manifestJSON);
 			MultiServerStatus multijobStatus = (MultiServerStatus) uploadBits.doIt(); /* TODO: unsafe type cast */
 			status.add(multijobStatus);
 			if (!multijobStatus.isOK())
 				return status;
 
 			/* restart the application */
-			RestartAppCommand restartApp = new RestartAppCommand(userId, target, app);
+			RestartAppCommand restartApp = new RestartAppCommand(target, app);
 			multijobStatus = (MultiServerStatus) restartApp.doIt(); /* TODO: unsafe type cast */
 			status.add(multijobStatus);
 			if (!multijobStatus.isOK())

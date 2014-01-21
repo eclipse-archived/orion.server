@@ -47,8 +47,8 @@ public class BindRouteCommand extends AbstractCFMultiCommand {
 		return domainName;
 	}
 
-	public BindRouteCommand(String userId, Target target, App app, JSONObject manifest) {
-		super(target, userId);
+	public BindRouteCommand(Target target, App app, JSONObject manifest) {
+		super(target);
 
 		String[] bindings = {app.getName(), app.getGuid()};
 		this.commandName = NLS.bind("Bind a new route to application {1} (guid: {2})", bindings);
@@ -65,7 +65,7 @@ public class BindRouteCommand extends AbstractCFMultiCommand {
 		try {
 
 			/* get available domains */
-			GetDomainsCommand getDomains = new GetDomainsCommand(userId, target);
+			GetDomainsCommand getDomains = new GetDomainsCommand(target);
 			ServerStatus jobStatus = (ServerStatus) getDomains.doIt(); /* TODO: unsafe type cast */
 			status.add(jobStatus);
 
@@ -109,7 +109,7 @@ public class BindRouteCommand extends AbstractCFMultiCommand {
 			}
 
 			/* new application, we do not need to check for attached routes, create a new one */
-			CreateRouteCommand createRoute = new CreateRouteCommand(userId, target, manifest, domainGUID);
+			CreateRouteCommand createRoute = new CreateRouteCommand(target, manifest, domainGUID);
 			jobStatus = (ServerStatus) createRoute.doIt(); /* TODO: unsafe type cast */
 			status.add(jobStatus);
 
@@ -121,7 +121,7 @@ public class BindRouteCommand extends AbstractCFMultiCommand {
 			String routeGUID = route.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID);
 
 			/* attach route to application */
-			AttachRouteCommand attachRoute = new AttachRouteCommand(userId, target, application, routeGUID);
+			AttachRouteCommand attachRoute = new AttachRouteCommand(target, application, routeGUID);
 			jobStatus = (ServerStatus) attachRoute.doIt(); /* TODO: unsafe type cast */
 			status.add(jobStatus);
 

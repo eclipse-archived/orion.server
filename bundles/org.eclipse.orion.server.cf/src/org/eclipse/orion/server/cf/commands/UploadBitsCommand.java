@@ -45,8 +45,8 @@ public class UploadBitsCommand extends AbstractCFMultiCommand {
 	private JSONObject manifest;
 	private String path;
 
-	public UploadBitsCommand(String userId, Target target, App app, JSONObject manifest) {
-		super(target, userId);
+	public UploadBitsCommand(Target target, App app, JSONObject manifest) {
+		super(target);
 
 		String[] bindings = {app.getName(), app.getGuid()};
 		this.commandName = NLS.bind("Upload application {0} bits (guid: {1})", bindings);

@@ -87,11 +87,11 @@ public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 							return result;
 					}
 
-					IStatus result = new SetOrgCommand(this.userId, target, jsonData.optString("Org")).doIt();
+					IStatus result = new SetOrgCommand(target, jsonData.optString("Org")).doIt();
 					if (!result.isOK())
 						return result;
 
-					result = new SetSpaceCommand(this.userId, target, jsonData.optString("Space")).doIt();
+					result = new SetSpaceCommand(target, jsonData.optString("Space")).doIt();
 					if (!result.isOK())
 						return result;
 

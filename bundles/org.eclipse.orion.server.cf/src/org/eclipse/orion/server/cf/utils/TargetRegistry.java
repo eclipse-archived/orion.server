@@ -70,22 +70,22 @@ public class TargetRegistry {
 			}
 			Cloud cloud = userCloudMap.get(url);
 			if (cloud == null) {
-				cloud = new Cloud(url, null);
-				userCloudMap.put(cloud.getApiUrl(), cloud);
+				cloud = new Cloud(url, null, this.userId);
+				userCloudMap.put(cloud.getUrl(), cloud);
 			}
 			setAuthToken(cloud);
 			return cloud;
 		}
 
 		void markDefault(Cloud cloud) {
-			userCloudMap.get(cloud.getApiUrl());
-			defaultCloudUrl = cloud.getApiUrl();
+			userCloudMap.get(cloud.getUrl());
+			defaultCloudUrl = cloud.getUrl();
 		}
 
 		private void setAuthToken(Cloud cloud) {
 			CFExtServiceHelper helper = CFExtServiceHelper.getDefault();
 			if (cloud.getAccessToken() == null && helper != null && helper.getService() != null) {
-				cloud.setAccessToken(helper.getService().getToken(userId, cloud));
+				cloud.setAccessToken(helper.getService().getToken(cloud));
 			}
 		}
 	}

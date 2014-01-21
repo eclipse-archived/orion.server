@@ -34,8 +34,8 @@ public class GetLogsCommand extends AbstractCFCommand {
 	private String logFileName;
 	private String baseRequestLocation;
 
-	public GetLogsCommand(String userId, Target target, String applicationName, String logFileName, String baseRequestLocation) {
-		super(target, userId);
+	public GetLogsCommand(Target target, String applicationName, String logFileName, String baseRequestLocation) {
+		super(target);
 		this.commandName = "Get App Logs"; //$NON-NLS-1$
 		this.applicationName = applicationName;
 		this.logFileName = logFileName;

@@ -15,6 +15,6 @@ import org.json.JSONObject;
 
 public interface ICFExtService {
 
-	public JSONObject getToken(String userId, Cloud cloud);
+	public JSONObject getToken(Cloud cloud);
 
 }

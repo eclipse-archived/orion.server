@@ -26,8 +26,8 @@ public class RestartAppCommand extends AbstractCFMultiCommand {
 	private String commandName;
 	private App application;
 
-	protected RestartAppCommand(String userId, Target target, App app) {
-		super(target, userId);
+	protected RestartAppCommand(Target target, App app) {
+		super(target);
 
 		String[] bindings = {app.getName(), app.getGuid()};
 		this.commandName = NLS.bind("Restart application {0} (guid: {1})", bindings);
@@ -43,14 +43,14 @@ public class RestartAppCommand extends AbstractCFMultiCommand {
 		try {
 
 			/* stop the application */
-			StopAppCommand stopApp = new StopAppCommand(commandName, target, application);
+			StopAppCommand stopApp = new StopAppCommand(target, application);
 			ServerStatus jobStatus = (ServerStatus) stopApp.doIt();
 			status.add(jobStatus);
 			if (!jobStatus.isOK())
 				return status;
 
 			/* start again */
-			StartAppCommand startApp = new StartAppCommand(commandName, target, application);
+			StartAppCommand startApp = new StartAppCommand(target, application);
 			jobStatus = (ServerStatus) startApp.doIt();
 			status.add(jobStatus);
 			if (!jobStatus.isOK())

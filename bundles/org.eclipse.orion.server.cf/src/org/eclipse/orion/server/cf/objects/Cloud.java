@@ -21,22 +21,24 @@ public class Cloud extends CFObject {
 	public static final String RESOURCE = "cloud"; //$NON-NLS-1$
 	public static final String TYPE = "Cloud"; //$NON-NLS-1$
 
-	private URL apiUrl;
+	private URL url;
 	private URL manageUrl;
+	private String userId;
 	private JSONObject accessToken;
 
-	public Cloud(URL apiUrl, URL manageUrl) {
+	public Cloud(URL apiUrl, URL manageUrl, String userId) {
 		super();
-		this.apiUrl = apiUrl;
+		this.url = apiUrl;
 		this.manageUrl = manageUrl;
+		this.userId = userId;
 	}
 
-	public URL getApiUrl() {
-		return apiUrl;
+	public URL getUrl() {
+		return url;
 	}
 
-	public void setApiUrl(URL apiUrl) {
-		this.apiUrl = apiUrl;
+	public void setUrl(URL url) {
+		this.url = url;
 	}
 
 	public URL getManageUrl() {
@@ -55,6 +57,10 @@ public class Cloud extends CFObject {
 		this.accessToken = accessToken;
 	}
 
+	public String getUserId() {
+		return this.userId;
+	}
+
 	@Override
 	protected URI getLocation() throws URISyntaxException {
 		// TODO Auto-generated method stub
@@ -71,7 +77,7 @@ public class Cloud extends CFObject {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((apiUrl == null) ? 0 : apiUrl.hashCode());
+		result = prime * result + ((url == null) ? 0 : url.hashCode());
 		result = prime * result + ((manageUrl == null) ? 0 : manageUrl.hashCode());
 		return result;
 	}
@@ -85,10 +91,10 @@ public class Cloud extends CFObject {
 		if (getClass() != obj.getClass())
 			return false;
 		Cloud other = (Cloud) obj;
-		if (apiUrl == null) {
-			if (other.apiUrl != null)
+		if (url == null) {
+			if (other.url != null)
 				return false;
-		} else if (!apiUrl.equals(other.apiUrl))
+		} else if (!url.equals(other.url))
 			return false;
 		if (manageUrl == null) {
 			if (other.manageUrl != null)

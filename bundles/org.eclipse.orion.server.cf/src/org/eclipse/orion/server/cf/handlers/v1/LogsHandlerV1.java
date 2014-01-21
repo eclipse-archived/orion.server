@@ -67,7 +67,7 @@ public class LogsHandlerV1 extends AbstractRESTHandler<Log> {
 					}
 
 					if (resource.getApplication() != null) {
-						return new GetLogsCommand(this.userId, target, resource.getApplication(), resource.getName(), this.requestLocation).doIt();
+						return new GetLogsCommand(target, resource.getApplication(), resource.getName(), this.requestLocation).doIt();
 					}
 					return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "No application name", null);
 

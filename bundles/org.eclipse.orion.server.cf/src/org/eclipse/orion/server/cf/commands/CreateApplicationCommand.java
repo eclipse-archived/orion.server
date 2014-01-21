@@ -37,8 +37,8 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 	private int appInstances;
 	private int appMemory;
 
-	public CreateApplicationCommand(String userId, Target target, JSONObject manifest) {
-		super(target, userId);
+	public CreateApplicationCommand(Target target, JSONObject manifest) {
+		super(target);
 		this.commandName = "Create a new application";
 		this.manifest = manifest;
 	}

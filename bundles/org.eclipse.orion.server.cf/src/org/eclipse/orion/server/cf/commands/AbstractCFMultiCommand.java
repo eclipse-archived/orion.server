@@ -19,11 +19,9 @@ import org.eclipse.orion.server.cf.utils.MultiServerStatus;
 public abstract class AbstractCFMultiCommand implements ICFCommand {
 
 	protected Target target;
-	protected String userId;
 
-	protected AbstractCFMultiCommand(Target target, String userId) {
+	protected AbstractCFMultiCommand(Target target) {
 		this.target = target;
-		this.userId = userId;
 	}
 
 	@Override
@@ -39,7 +37,7 @@ public abstract class AbstractCFMultiCommand implements ICFCommand {
 	private MultiServerStatus retryIfNeeded(MultiServerStatus doItStatus) {
 		CFExtServiceHelper helper = CFExtServiceHelper.getDefault();
 		if (doItStatus.getHttpCode() == 401 && target.getCloud().getAccessToken() != null && helper != null && helper.getService() != null) {
-			target.getCloud().setAccessToken(helper.getService().getToken(userId, target.getCloud()));
+			target.getCloud().setAccessToken(helper.getService().getToken(target.getCloud()));
 			return _doIt();
 		}
 		return doItStatus;

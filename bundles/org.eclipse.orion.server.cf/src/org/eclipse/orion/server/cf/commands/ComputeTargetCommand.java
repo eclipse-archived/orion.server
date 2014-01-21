@@ -64,11 +64,11 @@ public class ComputeTargetCommand implements ICFCommand {
 
 		target.getCloud().setManageUrl(manageUrl);
 
-		IStatus result = new SetOrgCommand(userId, this.target, targetJSON != null ? targetJSON.optString("Org") : null).doIt();
+		IStatus result = new SetOrgCommand(this.target, targetJSON != null ? targetJSON.optString("Org") : null).doIt();
 		if (!result.isOK())
 			return result;
 
-		result = new SetSpaceCommand(userId, this.target, targetJSON != null ? targetJSON.optString("Space") : null).doIt();
+		result = new SetSpaceCommand(this.target, targetJSON != null ? targetJSON.optString("Space") : null).doIt();
 		if (!result.isOK())
 			return result;
 
