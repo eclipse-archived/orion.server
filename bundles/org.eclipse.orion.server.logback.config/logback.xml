@@ -21,10 +21,10 @@
   <logger name="org.eclipse.orion.internal.server.search.Indexer" level="INFO"/>
 
   <!-- Prints successful and failed logins -->
-  <logger name="org.eclipse.orion.server.login" level="WARN"/>
+  <logger name="org.eclipse.orion.server.login" level="INFO"/>
 
   <!-- Prints user account creations and deletions -->
-  <logger name="org.eclipse.orion.server.account" level="WARN"/>
+  <logger name="org.eclipse.orion.server.account" level="INFO"/>
 
   <!-- Prints details on openid handshakes -->
   <!--   <logger name="org.eclipse.orion.server.openid" level="INFO"/> -->
