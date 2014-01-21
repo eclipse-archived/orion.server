@@ -37,8 +37,6 @@
 
   <!-- Prints information on locating and reading the server configuration file -->
   <logger name="org.eclipse.orion.server.config" level="INFO"/>
-  
-  <logger name="com.ibm.cloudoe.autodeploy.server" level="INFO"/>
 
   <!-- Prints information on starting up the orion application -->
   <!--  <logger name="org.eclipse.orion.app" level="INFO"/> -->
