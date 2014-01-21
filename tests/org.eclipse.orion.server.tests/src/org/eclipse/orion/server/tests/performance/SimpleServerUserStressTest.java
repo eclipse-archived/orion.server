@@ -32,7 +32,7 @@ import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
 
 /**
- * Measure the performance of the user storage. See Bugzilla 426179.
+ * Measure the performance of the user storage.
  * 
  * @author Anthony Hunter
  */

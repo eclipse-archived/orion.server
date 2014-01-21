@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others 
+ * Copyright (c) 2013, 2014 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -16,7 +16,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -59,6 +61,12 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 	static final String ADMIN_LOGIN_VALUE = "admin"; //$NON-NLS-1$
 	static final String ADMIN_NAME_VALUE = "Administrative User"; //$NON-NLS-1$
 
+	// Map of email addresses to userids for an email cache
+	private Map<String, String> emailCache = new HashMap<String, String>();
+
+	// Map of openids to userids for an openid cache
+	private Map<String, String> openidCache = new HashMap<String, String>();
+
 	public SimpleUserCredentialsService() {
 		super();
 		initStorage();
@@ -90,6 +98,10 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 			admin = createUser(new User(userInfo.getUniqueId(), ADMIN_LOGIN_VALUE, ADMIN_NAME_VALUE, adminDefaultPassword));
 		}
 
+		// initialize the email and openid cache
+		Collection<User> users = getUsers();
+		users.clear();
+
 		if (admin == null) {
 			return;
 		}
@@ -105,6 +117,25 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 	}
 
 	public boolean deleteUser(User user) {
+		// remove the email from the email cache
+		String oldEmail = user.getEmail();
+		if (oldEmail != null && !oldEmail.equals("")) {
+			emailCache.remove(oldEmail.toLowerCase());
+			System.out.println("Removed " + oldEmail + " for user " + user.getLogin() + " from email cache");
+		}
+
+		// remove the openid from the openid cache
+		Enumeration<?> keys = user.getProperties().keys();
+		while (keys.hasMoreElements()) {
+			String property = (String) keys.nextElement();
+			String value = (String) user.getProperty(property);
+			if (property.equals("openid") && !value.equals("")) {
+				// update the openid cache
+				openidCache.remove(value);
+				System.out.println("Removed " + value + " for user " + user.getLogin() + " from openid cache");
+			}
+		}
+
 		// Since the user profile is stored with the user metadata, it will automatically be deleted when the user metadata is deleted.
 		return true;
 	}
@@ -148,20 +179,48 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 				userProfileNode.remove(UserConstants.KEY_BLOCKED);
 			}
 			if (user.getEmail() != null) {
-				if (user.getEmail().length() > 0 && !user.getEmail().equals(userProfileNode.get(UserConstants.KEY_EMAIL, null))) {
+				String oldEmail = userProfileNode.get(UserConstants.KEY_EMAIL, null);
+				if (user.getEmail().length() > 0 && !user.getEmail().equals(oldEmail)) {
 					user.setConfirmationId();
 				}
 				userProfileNode.put(UserConstants.KEY_EMAIL, user.getEmail(), false);
+				if (!user.getEmail().equals(oldEmail)) {
+					if (oldEmail != null && !oldEmail.equals("")) {
+						// remove the old email from the email cache
+						emailCache.remove(oldEmail.toLowerCase());
+					}
+					if (!user.getEmail().equals("")) {
+						// update the email cache
+						emailCache.put(user.getEmail().toLowerCase(), user.getLogin());
+					}
+				}
 			}
 			if (user.getConfirmationId() == null)
 				userProfileNode.remove(UserConstants.KEY_EMAIL_CONFIRMATION);
 			else
 				userProfileNode.put(UserConstants.KEY_EMAIL_CONFIRMATION, user.getConfirmationId(), false);
 			IOrionUserProfileNode profileProperties = userProfileNode.getUserProfileNode(USER_PROPERTIES);
+			String oldOpenid = profileProperties.get("openid", null);
+			String newOpenid = "";
 			Enumeration<?> keys = user.getProperties().keys();
 			while (keys.hasMoreElements()) {
 				String property = (String) keys.nextElement();
-				profileProperties.put(property, (String) user.getProperty(property), false);
+				String value = (String) user.getProperty(property);
+				profileProperties.put(property, value, false);
+				if (property.equals("openid")) {
+					newOpenid = value;
+				}
+			}
+			if (!newOpenid.equals(oldOpenid)) {
+				// update the openid cache
+				if (oldOpenid != null && !oldOpenid.equals("")) {
+					// remove the old openid from the openid cache
+					openidCache.remove(oldOpenid);
+				}
+				if (!newOpenid.equals("")) {
+					// update the openid cache
+					openidCache.put(newOpenid, user.getLogin());
+				}
 			}
 			if (user.getLogin() != null) {
 				userProfileNode.put(UserConstants.KEY_LOGIN, user.getLogin(), false);
@@ -189,6 +248,10 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 			try {
 				User user = new User(childName, userProfileNode.get(UserConstants.KEY_LOGIN, childName), userProfileNode.get(UserConstants.KEY_NAME, ""), userProfileNode.get(UserConstants.KEY_PASSWORD, null) == null ? null : "" /* don't expose the password */); //$NON-NLS-1$ //$NON-NLS-2$
 				user.setEmail(userProfileNode.get(UserConstants.KEY_EMAIL, "")); //$NON-NLS-1$
+				if (!user.getEmail().equals("")) {
+					// update the email cache
+					emailCache.put(user.getEmail(), childName);
+				}
 				String blocked = userProfileNode.get(UserConstants.KEY_BLOCKED, "false");
 				if (blocked.equals("true")) {
 					user.setBlocked(true);
@@ -201,6 +264,10 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 						String key = keys[i];
 						String value = userProfileNode.getUserProfileNode(USER_PROPERTIES).get(key, "");
 						user.addProperty(key, value);
+						if (key.equals("openid")) {
+							// update the openid cache
+							openidCache.put(value, childName);
+						}
 					}
 				}
 				users.add(user);
@@ -241,17 +308,12 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 				return formUser(userProfileNode);
 			}
 		} else if (key.equals(UserConstants.KEY_EMAIL)) {
-			for (String uid : root.childrenNames()) {
+			// Use the email cache to lookup the user
+			String email = value.toLowerCase();
+			if (emailCache.containsKey(email)) {
+				String uid = emailCache.get(email);
 				IOrionUserProfileNode userProfileNode = root.getUserProfileNode(uid);
-				try {
-					String email = userProfileNode.get(UserConstants.KEY_EMAIL, null);
-					if (email != null && email.equalsIgnoreCase(value)) {
-						return formUser(userProfileNode);
-					}
-				} catch (CoreException e) {
-					LogHelper.log(e);
-					return null;
-				}
+				return formUser(userProfileNode);
 			}
 		}
 		return null;
@@ -306,32 +368,51 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 	public Set<User> getUsersByProperty(String key, String value, boolean regExp, boolean ignoreCase) {
 		Set<User> ret = new HashSet<User>();
 		Pattern p = regExp ? Pattern.compile(value, Pattern.MULTILINE | Pattern.DOTALL) : null;
-		for (String uid : root.childrenNames()) {
-			IOrionUserProfileNode userNode = root.getUserProfileNode(uid);
-			IOrionUserProfileNode propsNode = userNode.getUserProfileNode(USER_PROPERTIES);
-			if (propsNode == null) {
-				continue;
-			}
-			try {
-				String propertyValue = propsNode.get(key, null);
-				if (propertyValue == null) {
-					continue;
-				}
+
+		if (key.equals("openid")) {
+			// Use the openid cache to lookup the user for the openid property
+			for (Map.Entry<String, String> entry : openidCache.entrySet()) {
+				String openid = entry.getKey();
+				String uid = entry.getValue();
 				boolean hasMatch;
 				if (p != null) {
-					hasMatch = p.matcher(propertyValue).matches();
+					hasMatch = p.matcher(openid).matches();
 				} else {
-					hasMatch = ignoreCase ? propertyValue.equalsIgnoreCase(value) : propertyValue.equals(value);
+					hasMatch = ignoreCase ? openid.equalsIgnoreCase(value) : openid.equals(value);
 				}
 				if (hasMatch) {
+					IOrionUserProfileNode userNode = root.getUserProfileNode(uid);
 					ret.add(formUser(userNode));
 				}
-
-			} catch (CoreException e) {
-				LogHelper.log(e);
 			}
+		} else {
+			for (String uid : root.childrenNames()) {
+				IOrionUserProfileNode userNode = root.getUserProfileNode(uid);
+				IOrionUserProfileNode propsNode = userNode.getUserProfileNode(USER_PROPERTIES);
+				if (propsNode == null) {
+					continue;
+				}
+				try {
+					String propertyValue = propsNode.get(key, null);
+					if (propertyValue == null) {
+						continue;
+					}
+					boolean hasMatch;
+					if (p != null) {
+						hasMatch = p.matcher(propertyValue).matches();
+					} else {
+						hasMatch = ignoreCase ? propertyValue.equalsIgnoreCase(value) : propertyValue.equals(value);
+					}
+					if (hasMatch) {
+						ret.add(formUser(userNode));
+					}
 
+				} catch (CoreException e) {
+					LogHelper.log(e);
+				}
+			}
 		}
+
 		return ret;
 	}
 
