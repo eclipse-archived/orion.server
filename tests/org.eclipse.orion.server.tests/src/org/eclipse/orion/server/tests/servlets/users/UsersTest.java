@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2012 IBM Corporation and others 
+ * Copyright (c) 2010, 2014 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -47,9 +47,9 @@ public abstract class UsersTest extends AbstractServerTest {
 		setAdminRights(adminUser);
 	}
 
-	abstract void setAdminRights(User adminUser) throws CoreException;
+	public abstract void setAdminRights(User adminUser) throws CoreException;
 
-	abstract void setTestUserRights(User testUser) throws CoreException;
+	public abstract void setTestUserRights(User testUser) throws CoreException;
 
 	private void setAuthenticationUser(WebRequest request) {
 		try {

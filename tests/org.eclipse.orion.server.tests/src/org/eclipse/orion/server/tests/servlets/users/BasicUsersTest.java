@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2013 IBM Corporation and others
+ * Copyright (c) 2010, 2014 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,19 +14,30 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.*;
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.OrionConfiguration;
-import org.eclipse.orion.server.useradmin.*;
-import org.json.*;
+import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
+import org.eclipse.orion.server.useradmin.User;
+import org.eclipse.orion.server.useradmin.UserConstants;
+import org.eclipse.orion.server.useradmin.UserServiceHelper;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.Test;
 import org.xml.sax.SAXException;
+
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 public class BasicUsersTest extends UsersTest {
 
@@ -448,14 +459,14 @@ public class BasicUsersTest extends UsersTest {
 	}
 
 	@Override
-	void setAdminRights(User adminUser) throws CoreException {
+	public void setAdminRights(User adminUser) throws CoreException {
 		//by default allow 'admin' to modify all users data
 		AuthorizationService.addUserRight(adminUser.getUid(), "/users");
 		AuthorizationService.addUserRight(adminUser.getUid(), "/users/*");
 	}
 
 	@Override
-	void setTestUserRights(User testUser) throws CoreException {
+	public void setTestUserRights(User testUser) throws CoreException {
 		//by default allow 'test' to modify his own data
 		AuthorizationService.addUserRight(testUser.getUid(), "/users/" + testUser.getUid());
 	}
