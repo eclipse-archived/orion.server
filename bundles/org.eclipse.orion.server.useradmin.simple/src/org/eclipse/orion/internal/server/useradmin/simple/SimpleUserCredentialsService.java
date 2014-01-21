@@ -121,7 +121,6 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 		String oldEmail = user.getEmail();
 		if (oldEmail != null && !oldEmail.equals("")) {
 			emailCache.remove(oldEmail.toLowerCase());
-			System.out.println("Removed " + oldEmail + " for user " + user.getLogin() + " from email cache");
 		}
 
 		// remove the openid from the openid cache
@@ -132,7 +131,6 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 			if (property.equals("openid") && !value.equals("")) {
 				// update the openid cache
 				openidCache.remove(value);
-				System.out.println("Removed " + value + " for user " + user.getLogin() + " from openid cache");
 			}
 		}
 
