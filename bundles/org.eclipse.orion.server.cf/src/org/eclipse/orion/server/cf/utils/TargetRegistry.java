@@ -77,7 +77,7 @@ public class TargetRegistry {
 			return cloud;
 		}
 
-		void markDefault(Cloud cloud) {
+		private void markDefault(Cloud cloud) {
 			userCloudMap.get(cloud.getUrl());
 			defaultCloudUrl = cloud.getUrl();
 		}

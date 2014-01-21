@@ -14,10 +14,12 @@ import java.net.URI;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.commands.*;
 import org.eclipse.orion.server.cf.jobs.CFJob;
@@ -62,7 +64,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 					Target target = computeTarget.getTarget();
 
 					if (contentLocation != null || name != null) {
-						return new GetAppCommand(this.userId, target, name).doIt();
+						return new GetAppCommand(target, name).doIt();
 					}
 
 					return getApps(target);
@@ -95,7 +97,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 						return status;
 					Target target = computeTarget.getTarget();
 
-					GetAppCommand getAppCommand = new GetAppCommand(this.userId, target, appName);
+					GetAppCommand getAppCommand = new GetAppCommand(target, appName);
 
 					status = getAppCommand.doIt();
 					App app = getAppCommand.getApp();
@@ -115,7 +117,9 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 						app = new App();
 
 					app.setName(appName);
-					app.setContentLocation(contentLocation);
+
+					IFileStore fileStore = NewFileServlet.getFileStore(null, new Path(contentLocation).removeFirstSegments(1));
+					app.setAppStore(fileStore);
 
 					return new PushAppCommand(target, app).doIt();
 				} catch (Exception e) {

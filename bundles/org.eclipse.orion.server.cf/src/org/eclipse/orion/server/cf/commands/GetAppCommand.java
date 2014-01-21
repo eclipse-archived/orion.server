@@ -31,7 +31,7 @@ public class GetAppCommand extends AbstractCFCommand {
 	private String name;
 	private App app;
 
-	public GetAppCommand(String userId, Target target, String name) {
+	public GetAppCommand(Target target, String name) {
 		super(target);
 
 		String[] bindings = {name};

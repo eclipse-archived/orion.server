@@ -16,7 +16,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
-import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.manifest.*;
 import org.eclipse.orion.server.cf.objects.App;
@@ -47,13 +46,12 @@ public class PushAppCommand extends AbstractCFMultiCommand {
 		MultiServerStatus status = new MultiServerStatus();
 
 		try {
-
 			URI targetURI = URIUtil.toURI(target.getUrl());
 			JSONObject manifestJSON = null;
 
 			try {
 				/* parse manifest if present */
-				manifestJSON = parseManifest(this.app.getContentLocation(), targetURI);
+				manifestJSON = parseManifest(app.getAppStore(), targetURI);
 			} catch (ParseException ex) {
 				/* parse error, fail */
 				status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, ex.getMessage(), ex));
@@ -152,14 +150,12 @@ public class PushAppCommand extends AbstractCFMultiCommand {
 		}
 	}
 
-	private JSONObject parseManifest(String sourcePath, URI targetURI) throws ParseException, CoreException {
-		/* get the underlying file store */
-		IFileStore fileStore = NewFileServlet.getFileStore(null, new Path(sourcePath).removeFirstSegments(1));
-		if (fileStore == null)
+	private JSONObject parseManifest(IFileStore appStore, URI targetURI) throws ParseException, CoreException {
+		if (appStore == null)
 			return null;
 
 		/* lookup the manifest description */
-		IFileStore manifestStore = fileStore.getChild(ManifestUtils.MANIFEST_FILE_NAME);
+		IFileStore manifestStore = appStore.getChild(ManifestUtils.MANIFEST_FILE_NAME);
 		if (!manifestStore.fetchInfo().exists())
 			return null;
 

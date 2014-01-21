@@ -12,6 +12,7 @@ package org.eclipse.orion.server.cf.objects;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.core.resources.Property;
 import org.eclipse.orion.server.core.resources.ResourceShape;
@@ -28,7 +29,7 @@ public class App extends CFObject {
 	private JSONObject appJSON;
 
 	private String name;
-	private String contentLocation;
+	private IFileStore appStore;
 	private String guid;
 
 	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
@@ -77,12 +78,12 @@ public class App extends CFObject {
 		this.name = name;
 	}
 
-	public String getContentLocation() {
-		return contentLocation;
+	public IFileStore getAppStore() {
+		return appStore;
 	}
 
-	public void setContentLocation(String contentLocation) {
-		this.contentLocation = contentLocation;
+	public void setAppStore(IFileStore appStore) {
+		this.appStore = appStore;
 	}
 
 	@Override

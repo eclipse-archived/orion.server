@@ -24,7 +24,6 @@ import org.eclipse.core.filesystem.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.core.IOUtilities;
-import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
@@ -62,7 +61,7 @@ public class UploadBitsCommand extends AbstractCFMultiCommand {
 
 		try {
 			/* upload project contents */
-			File zippedApplication = zipApplication(application.getContentLocation());
+			File zippedApplication = zipApplication(application.getAppStore());
 			if (zippedApplication == null) {
 				status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to read application content", null));
 				return status;
@@ -150,10 +149,8 @@ public class UploadBitsCommand extends AbstractCFMultiCommand {
 		}
 	}
 
-	private File zipApplication(String sourcePath) throws IOException, CoreException {
-		/* get the underlying file store */
-		IFileStore fileStore = NewFileServlet.getFileStore(null, new Path(sourcePath).removeFirstSegments(1));
-		if (fileStore == null)
+	private File zipApplication(IFileStore appStore) throws IOException, CoreException {
+		if (appStore == null)
 			return null;
 
 		/* zip application to a temporary file */
@@ -162,7 +159,7 @@ public class UploadBitsCommand extends AbstractCFMultiCommand {
 
 		try {
 			ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(tmp));
-			writeZip(fileStore, Path.EMPTY, zos);
+			writeZip(appStore, Path.EMPTY, zos);
 			zos.close();
 		} catch (Exception ex) {
 			/* delete corrupted zip file */
