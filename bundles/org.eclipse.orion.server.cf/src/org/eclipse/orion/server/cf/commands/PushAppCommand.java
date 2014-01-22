@@ -59,7 +59,7 @@ public class PushAppCommand extends AbstractCFMultiCommand {
 			}
 
 			if (manifestJSON == null) {
-				status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Failed to find application manifest", null));
+				status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Failed to find application manifest", null));
 				return status;
 			}
 
