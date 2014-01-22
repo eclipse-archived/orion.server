@@ -41,9 +41,18 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 		try {
 			URI base = new URI(resource.getScheme(), resource.getUserInfo(), resource.getHost(), resource.getPort(), request.getServletPath() + "/", null, null);
 			IPath basePath = new Path(base.getPath());
-			IPath resourcePath = new Path(resource.getPath());
-			if (resourcePath.hasTrailingSeparator() && !representation.getBoolean(ProtocolConstants.KEY_DIRECTORY)) {
-				resourcePath = resourcePath.append(representation.getString(ProtocolConstants.KEY_NAME));
+			IPath resourcePath = null;
+			try {
+				String locationString = representation.getString(ProtocolConstants.KEY_LOCATION);
+				URI location = new URI(locationString);
+				resourcePath = new Path(location.getPath());
+			} catch (JSONException je) {
+				// no String value found for ProtocolConstants.KEY_LOCATION,
+				// use resource path instead
+				resourcePath = new Path(resource.getPath());
+				if (resourcePath.hasTrailingSeparator() && !representation.getBoolean(ProtocolConstants.KEY_DIRECTORY)) {
+					resourcePath = resourcePath.append(representation.getString(ProtocolConstants.KEY_NAME));
+				}
 			}
 			IPath path = resourcePath.makeRelativeTo(basePath);
 			//nothing to do if request is not a folder or file
