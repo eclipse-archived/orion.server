@@ -70,9 +70,14 @@ public class ProtocolConstants {
 	public static final String HEADER_METHOD_OVERRIDE = "X-HTTP-Method-Override"; //$NON-NLS-1$
 
 	/**
-	 * Standard HTTP request header indicating an expected entity tag.
+	 * Standard HTTP request header indicating that operation shall be executed if the entity tag matches the resource representation.
 	 */
 	public static final String HEADER_IF_MATCH = "If-Match"; //$NON-NLS-1$
+
+	/**
+	 * Standard HTTP request header indicating that operation must not be executed if the entity tag matches the resource  representation.
+	 */
+	public static final String HEADER_IF_NONE_MATCH = "If-None-Match"; //$NON-NLS-1$
 
 	/**
 	 * Standard HTTP response header indicating location of the created resource.

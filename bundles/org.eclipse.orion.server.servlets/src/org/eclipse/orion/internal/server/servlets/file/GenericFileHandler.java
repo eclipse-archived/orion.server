@@ -12,10 +12,12 @@ package org.eclipse.orion.internal.server.servlets.file;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
+
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
@@ -37,11 +39,6 @@ class GenericFileHandler extends ServletResourceHandler<IFileStore> {
 	}
 
 	protected boolean handleFileContents(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws CoreException, IOException, NoSuchAlgorithmException {
-		String receivedETag = request.getHeader(ProtocolConstants.HEADER_IF_MATCH);
-		if (receivedETag != null && !receivedETag.equals(generateFileETag(file))) {
-			response.setStatus(HttpServletResponse.SC_PRECONDITION_FAILED);
-			return true;
-		}
 		switch (getMethod(request)) {
 			case GET :
 				IOUtilities.pipe(file.openInputStream(EFS.NONE, null), response.getOutputStream(), true, false);
@@ -66,6 +63,14 @@ class GenericFileHandler extends ServletResourceHandler<IFileStore> {
 		//	if (request.getQueryString() != null)
 		//		return false;
 		try {
+			String fileETag = generateFileETag(file);
+			if (handleIfMatchHeader(request, response, fileETag)) {
+				return true;
+			}
+			if (handleIfNoneMatchHeader(request, response, fileETag)) {
+				return true;
+			}
+
 			return handleFileContents(request, response, file);
 		} catch (Exception e) {
 			if (!handleAuthFailure(request, response, e))
@@ -82,5 +87,49 @@ class GenericFileHandler extends ServletResourceHandler<IFileStore> {
 		if (!file.fetchInfo().exists())
 			return ""; //$NON-NLS-1$
 		return HashUtilities.getHash(file.openInputStream(EFS.NONE, null), true, HashUtilities.SHA_1);
+	}
+
+	/**
+	 * Handles If-Match header precondition
+	 *
+	 * @param request The HTTP request object
+	 * @param response The servlet response object
+	 * @param etag The file's ETag
+	 * @return {@code true} if the If-Match header precondition failed (doesn't match the file's ETag), {@code false} otherwise
+	 */
+	protected boolean handleIfMatchHeader(HttpServletRequest request, HttpServletResponse response, String etag) {
+		String ifMatchHeader = request.getHeader(ProtocolConstants.HEADER_IF_MATCH);
+		if (ifMatchHeader != null && !ifMatchHeader.equals(etag)) {
+			response.setStatus(HttpServletResponse.SC_PRECONDITION_FAILED);
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Handles If-None-Match header precondition
+	 *
+	 * @param request The HTTP request object
+	 * @param response The servlet response object
+	 * @param etag The file's ETag
+	 * @return {@code true} if the If-None-Match header precondition failed (matches the file's ETag), {@code false} otherwise
+	 */
+	protected boolean handleIfNoneMatchHeader(HttpServletRequest request, HttpServletResponse response, String etag) {
+		String ifNoneMatchHeader = request.getHeader(ProtocolConstants.HEADER_IF_NONE_MATCH);
+		if (ifNoneMatchHeader != null && ifNoneMatchHeader.equals(etag)) {
+			switch (getMethod(request)) {
+				case HEAD :
+					// fall through
+				case GET :
+					response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
+					break;
+				default :
+					response.setStatus(HttpServletResponse.SC_PRECONDITION_FAILED);
+					break;
+			}
+			response.setHeader(ProtocolConstants.KEY_ETAG, etag);
+			return true;
+		}
+		return false;
 	}
 }
