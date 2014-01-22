@@ -10,15 +10,26 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.file;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.net.URL;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.filesystem.provider.FileInfo;
@@ -32,7 +43,9 @@ import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Handles files in version 1 of eclipse web protocol syntax.
@@ -167,11 +180,28 @@ class FileHandlerV1 extends GenericFileHandler {
 	@Override
 	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws ServletException {
 		try {
-			String receivedETag = request.getHeader(ProtocolConstants.HEADER_IF_MATCH);
-			if (receivedETag != null && !receivedETag.equals(generateFileETag(file))) {
+			String fileETag = generateFileETag(file);
+			String ifMatchHeader = request.getHeader(ProtocolConstants.HEADER_IF_MATCH);
+			if (ifMatchHeader != null && !ifMatchHeader.equals(fileETag)) {
 				response.setStatus(HttpServletResponse.SC_PRECONDITION_FAILED);
 				return true;
 			}
+			String ifNoneMatchHeader = request.getHeader(ProtocolConstants.HEADER_IF_NONE_MATCH);
+			if (ifNoneMatchHeader != null && ifNoneMatchHeader.equals(fileETag)) {
+				switch (getMethod(request)) {
+					case HEAD :
+						// fall through
+					case GET :
+						response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
+						break;
+					default :
+						response.setStatus(HttpServletResponse.SC_PRECONDITION_FAILED);
+						break;
+				}
+				response.setHeader(ProtocolConstants.KEY_ETAG, fileETag);
+				return true;
+			}
+
 			String parts = IOUtilities.getQueryParameter(request, "parts");
 			if (parts == null || "body".equals(parts)) { //$NON-NLS-1$
 				switch (getMethod(request)) {
