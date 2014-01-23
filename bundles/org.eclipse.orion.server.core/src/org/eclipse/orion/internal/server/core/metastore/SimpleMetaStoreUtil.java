@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others.
+ * Copyright (c) 2013, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -29,8 +29,8 @@ import org.slf4j.LoggerFactory;
 /**
  * A utility class to help with the create, read, update and delete of the files and folders
  * in a simple meta store.
+ * 
  * @author Anthony Hunter
- *
  */
 public class SimpleMetaStoreUtil {
 
@@ -65,6 +65,7 @@ public class SimpleMetaStoreUtil {
 			outputStreamWriter.write("\n");
 			outputStreamWriter.flush();
 			outputStreamWriter.close();
+			fileOutputStream.close();
 		} catch (FileNotFoundException e) {
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 			logger.warn("Meta File Error, cannot create file under " + parent.toString() + ": invalid file name: " + name); //$NON-NLS-1$
@@ -473,12 +474,12 @@ public class SimpleMetaStoreUtil {
 				return null;
 			}
 			File savedFile = retrieveMetaFile(parent, name);
-
 			FileInputStream fileInputStream = new FileInputStream(savedFile);
 			char[] chars = new char[(int) savedFile.length()];
 			Charset utf8 = Charset.forName("UTF-8");
 			InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, utf8);
 			inputStreamReader.read(chars);
+			inputStreamReader.close();
 			fileInputStream.close();
 			jsonObject = new JSONObject(new String(chars));
 		} catch (FileNotFoundException e) {
@@ -487,7 +488,7 @@ public class SimpleMetaStoreUtil {
 			throw new RuntimeException("Meta File Error, file IO error", e);
 		} catch (JSONException e) {
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-			logger.error("Meta File Error, cannot read JSON file " + parent.toString() + "/" + name + ".json: " + e.getLocalizedMessage()); //$NON-NLS-1$
+			logger.error("Meta File Error, cannot read JSON file " + parent.toString() + File.separator + name + METAFILE_EXTENSION + " from disk, reason: " + e.getLocalizedMessage()); //$NON-NLS-1$
 			return null;
 		}
 		return jsonObject;
@@ -526,7 +527,7 @@ public class SimpleMetaStoreUtil {
 	 * @return The MetaFile.
 	 */
 	public static File retrieveMetaFile(File parent, String name) {
-		return new File(parent, name + ".json");
+		return new File(parent, name + METAFILE_EXTENSION);
 	}
 
 	/**
@@ -552,7 +553,6 @@ public class SimpleMetaStoreUtil {
 				throw new RuntimeException("Meta File Error, cannot update, does not exist.");
 			}
 			File savedFile = retrieveMetaFile(parent, name);
-
 			FileOutputStream fileOutputStream = new FileOutputStream(savedFile);
 			Charset utf8 = Charset.forName("UTF-8");
 			OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, utf8);
@@ -560,6 +560,7 @@ public class SimpleMetaStoreUtil {
 			outputStreamWriter.write("\n");
 			outputStreamWriter.flush();
 			outputStreamWriter.close();
+			fileOutputStream.close();
 		} catch (FileNotFoundException e) {
 			throw new RuntimeException("Meta File Error, file not found", e);
 		} catch (IOException e) {
