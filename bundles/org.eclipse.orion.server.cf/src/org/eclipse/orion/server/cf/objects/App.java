@@ -31,6 +31,7 @@ public class App extends CFObject {
 	private String name;
 	private IFileStore appStore;
 	private String guid;
+	private JSONObject manifest;
 
 	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
 	{
@@ -38,6 +39,14 @@ public class App extends CFObject {
 		new Property(CFProtocolConstants.KEY_URL) //
 		};
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
+	}
+
+	public JSONObject getManifest() {
+		return manifest;
+	}
+
+	public void setManifest(JSONObject manifest) {
+		this.manifest = manifest;
 	}
 
 	public String getGuid() {

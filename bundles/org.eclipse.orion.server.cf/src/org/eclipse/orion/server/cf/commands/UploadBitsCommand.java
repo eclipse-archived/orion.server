@@ -41,17 +41,13 @@ public class UploadBitsCommand extends AbstractCFMultiCommand {
 
 	private String commandName;
 	private App application;
-	private JSONObject manifest;
-	private String path;
 
-	public UploadBitsCommand(Target target, App app, JSONObject manifest) {
+	public UploadBitsCommand(Target target, App app) {
 		super(target);
 
 		String[] bindings = {app.getName(), app.getGuid()};
 		this.commandName = NLS.bind("Upload application {0} bits (guid: {1})", bindings);
-
 		this.application = app;
-		this.manifest = manifest;
 	}
 
 	@Override
@@ -131,26 +127,11 @@ public class UploadBitsCommand extends AbstractCFMultiCommand {
 		}
 	}
 
-	@Override
-	protected IStatus validateParams() {
-		try {
-			/* read deploy parameters */
-			JSONObject appJSON = manifest.getJSONArray(CFProtocolConstants.V2_KEY_APPLICATIONS).getJSONObject(0);
-			path = appJSON.optString(CFProtocolConstants.V2_KEY_PATH); /* optional */
-			if (path.isEmpty())
-				path = ".";
-
-			return Status.OK_STATUS;
-
-		} catch (Exception ex) {
-			/* parse exception, fail */
-			String msg = "Corrupted or unsupported manifest format";
-			return new MultiServerStatus(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
-		}
-	}
-
 	private File zipApplication(IFileStore appStore) throws IOException, CoreException {
 		if (appStore == null)
+			return null;
+
+		if (!appStore.fetchInfo().exists())
 			return null;
 
 		/* zip application to a temporary file */

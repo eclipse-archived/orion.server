@@ -28,7 +28,6 @@ public class BindRouteCommand extends AbstractCFMultiCommand {
 
 	private String commandName;
 	private App application;
-	private JSONObject manifest;
 
 	/* shared properties */
 	private String appDomain;
@@ -47,14 +46,12 @@ public class BindRouteCommand extends AbstractCFMultiCommand {
 		return domainName;
 	}
 
-	public BindRouteCommand(Target target, App app, JSONObject manifest) {
+	public BindRouteCommand(Target target, App app) {
 		super(target);
 
 		String[] bindings = {app.getName(), app.getGuid()};
 		this.commandName = NLS.bind("Bind a new route to application {1} (guid: {2})", bindings);
-
 		this.application = app;
-		this.manifest = manifest;
 	}
 
 	@Override
@@ -109,7 +106,7 @@ public class BindRouteCommand extends AbstractCFMultiCommand {
 			}
 
 			/* new application, we do not need to check for attached routes, create a new one */
-			CreateRouteCommand createRoute = new CreateRouteCommand(target, manifest, domainGUID);
+			CreateRouteCommand createRoute = new CreateRouteCommand(target, application, domainGUID);
 			jobStatus = (ServerStatus) createRoute.doIt(); /* TODO: unsafe type cast */
 			status.add(jobStatus);
 
@@ -142,7 +139,7 @@ public class BindRouteCommand extends AbstractCFMultiCommand {
 	protected IStatus validateParams() {
 		try {
 			/* read deploy parameters */
-			JSONObject appJSON = manifest.getJSONArray(CFProtocolConstants.V2_KEY_APPLICATIONS).getJSONObject(0);
+			JSONObject appJSON = application.getManifest().getJSONArray(CFProtocolConstants.V2_KEY_APPLICATIONS).getJSONObject(0);
 			appDomain = appJSON.optString(CFProtocolConstants.V2_KEY_DOMAIN); /* optional */
 
 			return Status.OK_STATUS;

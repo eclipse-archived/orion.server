@@ -17,6 +17,7 @@ import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.manifest.ManifestUtils;
+import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -29,7 +30,7 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
-	private JSONObject manifest;
+	private App application;
 
 	/* shared parameters */
 	private String appName;
@@ -37,10 +38,10 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 	private int appInstances;
 	private int appMemory;
 
-	public CreateApplicationCommand(Target target, JSONObject manifest) {
+	public CreateApplicationCommand(Target target, App app) {
 		super(target);
 		this.commandName = "Create a new application";
-		this.manifest = manifest;
+		this.application = app;
 	}
 
 	@Override
@@ -64,7 +65,16 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 			createAppRequst.put(CFProtocolConstants.V2_KEY_STACK_GUID, JSONObject.NULL);
 			createAppMethod.setRequestEntity(new StringRequestEntity(createAppRequst.toString(), "application/json", "utf-8"));
 
-			return HttpUtil.executeMethod(createAppMethod);
+			ServerStatus status = HttpUtil.executeMethod(createAppMethod);
+			if (!status.isOK())
+				return status;
+
+			/* extract application guid */
+			JSONObject appResp = status.getJsonData();
+			application.setGuid(appResp.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID));
+			application.setName(application.getManifest().getJSONArray(CFProtocolConstants.V2_KEY_APPLICATIONS).getJSONObject(0).getString(CFProtocolConstants.V2_KEY_NAME));
+
+			return status;
 
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
@@ -77,7 +87,7 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 	protected IStatus validateParams() {
 		try {
 			/* read deploy parameters */
-			JSONObject appJSON = manifest.getJSONArray(CFProtocolConstants.V2_KEY_APPLICATIONS).getJSONObject(0);
+			JSONObject appJSON = application.getManifest().getJSONArray(CFProtocolConstants.V2_KEY_APPLICATIONS).getJSONObject(0);
 
 			appName = appJSON.getString(CFProtocolConstants.V2_KEY_NAME); /* required */
 			appCommand = appJSON.getString(CFProtocolConstants.V2_KEY_COMMAND); /* required */

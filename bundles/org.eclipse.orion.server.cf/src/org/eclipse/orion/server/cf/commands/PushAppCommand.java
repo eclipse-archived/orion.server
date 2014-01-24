@@ -10,14 +10,10 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.commands;
 
-import java.net.URI;
-import java.util.Scanner;
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.core.filesystem.EFS;
-import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
-import org.eclipse.orion.server.cf.manifest.*;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.MultiServerStatus;
@@ -46,53 +42,33 @@ public class PushAppCommand extends AbstractCFMultiCommand {
 		MultiServerStatus status = new MultiServerStatus();
 
 		try {
-			URI targetURI = URIUtil.toURI(target.getUrl());
-			JSONObject manifestJSON = null;
-
-			try {
-				/* parse manifest if present */
-				manifestJSON = parseManifest(app.getAppStore(), targetURI);
-			} catch (ParseException ex) {
-				/* parse error, fail */
-				status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, ex.getMessage(), ex));
-				return status;
-			}
-
-			if (manifestJSON == null) {
-				status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Failed to find application manifest", null));
-				return status;
-			}
-
 			if (app.getSummaryJSON() == null) {
 
 				/* create new application */
-				CreateApplicationCommand createApplication = new CreateApplicationCommand(target, manifestJSON);
+				CreateApplicationCommand createApplication = new CreateApplicationCommand(target, app);
 				ServerStatus jobStatus = (ServerStatus) createApplication.doIt(); /* TODO: unsafe type cast */
 				status.add(jobStatus);
 				if (!jobStatus.isOK())
 					return status;
 
-				/* extract application guid */
 				JSONObject appResp = jobStatus.getJsonData();
-				app.setGuid(appResp.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID));
-				app.setName(manifestJSON.getJSONArray(CFProtocolConstants.V2_KEY_APPLICATIONS).getJSONObject(0).getString(CFProtocolConstants.V2_KEY_NAME));
 
 				/* bind route to application */
-				BindRouteCommand bindRoute = new BindRouteCommand(target, app, manifestJSON);
+				BindRouteCommand bindRoute = new BindRouteCommand(target, app);
 				MultiServerStatus multijobStatus = (MultiServerStatus) bindRoute.doIt(); /* TODO: unsafe type cast */
 				status.add(multijobStatus);
 				if (!multijobStatus.isOK())
 					return status;
 
 				/* upload project contents */
-				UploadBitsCommand uploadBits = new UploadBitsCommand(target, app, manifestJSON);
+				UploadBitsCommand uploadBits = new UploadBitsCommand(target, app);
 				multijobStatus = (MultiServerStatus) uploadBits.doIt(); /* TODO: unsafe type cast */
 				status.add(multijobStatus);
 				if (!multijobStatus.isOK())
 					return status;
 
 				/* bind application specific services */
-				BindServicesCommand bindServices = new BindServicesCommand(target, app, manifestJSON);
+				BindServicesCommand bindServices = new BindServicesCommand(target, app);
 				multijobStatus = (MultiServerStatus) bindServices.doIt(); /* TODO: unsafe type cast */
 				status.add(multijobStatus);
 				if (!multijobStatus.isOK())
@@ -115,7 +91,7 @@ public class PushAppCommand extends AbstractCFMultiCommand {
 			app.setGuid(app.getSummaryJSON().getString(CFProtocolConstants.V2_KEY_GUID));
 
 			/* upload project contents */
-			UploadBitsCommand uploadBits = new UploadBitsCommand(target, app, manifestJSON);
+			UploadBitsCommand uploadBits = new UploadBitsCommand(target, app);
 			MultiServerStatus multijobStatus = (MultiServerStatus) uploadBits.doIt(); /* TODO: unsafe type cast */
 			status.add(multijobStatus);
 			if (!multijobStatus.isOK())
@@ -148,22 +124,5 @@ public class PushAppCommand extends AbstractCFMultiCommand {
 			status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
 			return status;
 		}
-	}
-
-	private JSONObject parseManifest(IFileStore appStore, URI targetURI) throws ParseException, CoreException {
-		if (appStore == null)
-			return null;
-
-		/* lookup the manifest description */
-		IFileStore manifestStore = appStore.getChild(ManifestUtils.MANIFEST_FILE_NAME);
-		if (!manifestStore.fetchInfo().exists())
-			return null;
-
-		Scanner manifestScanner = new Scanner(manifestStore.openInputStream(EFS.NONE, null));
-		ManifestNode manifestTree = ManifestParser.parse(manifestScanner);
-		manifestScanner.close();
-
-		/* parse within the context of target */
-		return manifestTree.toJSON(targetURI);
 	}
 }

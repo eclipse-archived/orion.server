@@ -17,6 +17,7 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
+import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -29,19 +30,19 @@ public class CreateRouteCommand extends AbstractCFCommand {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
-	private JSONObject manifest;
+	private App application;
 
 	private String appName;
 	private String appHost;
 	private String domainGUID;
 
-	public CreateRouteCommand(Target target, JSONObject manifest, String domainGUID) {
+	public CreateRouteCommand(Target target, App app, String domainGUID) {
 		super(target);
 
 		String[] bindings = {domainGUID};
 		this.commandName = NLS.bind("Create a new route (domain guid: {0})", bindings);
 
-		this.manifest = manifest;
+		this.application = app;
 		this.domainGUID = domainGUID;
 	}
 
@@ -75,7 +76,7 @@ public class CreateRouteCommand extends AbstractCFCommand {
 	protected IStatus validateParams() {
 		try {
 			/* read deploy parameters */
-			JSONObject appJSON = manifest.getJSONArray(CFProtocolConstants.V2_KEY_APPLICATIONS).getJSONObject(0);
+			JSONObject appJSON = application.getManifest().getJSONArray(CFProtocolConstants.V2_KEY_APPLICATIONS).getJSONObject(0);
 
 			appName = appJSON.getString(CFProtocolConstants.V2_KEY_NAME); /* required */
 

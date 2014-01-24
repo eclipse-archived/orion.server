@@ -14,12 +14,10 @@ import java.net.URI;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.commands.*;
 import org.eclipse.orion.server.cf.jobs.CFJob;
@@ -118,8 +116,11 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 
 					app.setName(appName);
 
-					IFileStore fileStore = NewFileServlet.getFileStore(null, new Path(contentLocation).removeFirstSegments(1));
-					app.setAppStore(fileStore);
+					/* parse the application manifest */
+					ParseManifestCommand parseManifestCommand = new ParseManifestCommand(target, app, this.userId, contentLocation);
+					status = parseManifestCommand.doIt();
+					if (!status.isOK())
+						return status;
 
 					return new PushAppCommand(target, app).doIt();
 				} catch (Exception e) {

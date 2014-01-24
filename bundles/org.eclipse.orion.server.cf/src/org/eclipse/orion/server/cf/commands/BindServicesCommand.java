@@ -30,16 +30,13 @@ public class BindServicesCommand extends AbstractCFMultiCommand {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
-	private JSONObject manifest;
 	private App application;
 
-	public BindServicesCommand(Target target, App app, JSONObject manifest) {
+	public BindServicesCommand(Target target, App app) {
 		super(target);
 
 		String[] bindings = {app.getName(), app.getGuid()};
 		this.commandName = NLS.bind("Bind new services to application {1} (guid: {2})", bindings);
-
-		this.manifest = manifest;
 		this.application = app;
 	}
 
@@ -52,7 +49,7 @@ public class BindServicesCommand extends AbstractCFMultiCommand {
 
 			/* bind services */
 			URI targetURI = URIUtil.toURI(target.getUrl());
-			JSONObject appJSON = manifest.getJSONArray(CFProtocolConstants.V2_KEY_APPLICATIONS).getJSONObject(0);
+			JSONObject appJSON = application.getManifest().getJSONArray(CFProtocolConstants.V2_KEY_APPLICATIONS).getJSONObject(0);
 
 			if (appJSON.has(CFProtocolConstants.V2_KEY_SERVICES)) {
 
