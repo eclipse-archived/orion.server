@@ -41,19 +41,24 @@ class GenericFileHandler extends ServletResourceHandler<IFileStore> {
 	protected boolean handleFileContents(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws CoreException, IOException, NoSuchAlgorithmException {
 		switch (getMethod(request)) {
 			case GET :
+				setCacheHeaders(response, file);
 				IOUtilities.pipe(file.openInputStream(EFS.NONE, null), response.getOutputStream(), true, false);
 				response.setHeader(ProtocolConstants.HEADER_CONTENT_TYPE, context.getMimeType(file.getName()));
 				response.setHeader(ProtocolConstants.HEADER_ACCEPT_PATCH, ProtocolConstants.CONTENT_TYPE_JSON_PATCH);
 				break;
 			case PUT :
+				setCacheHeaders(response, file);
 				IOUtilities.pipe(request.getInputStream(), file.openOutputStream(EFS.NONE, null), false, true);
 				break;
 			default :
 				return false;
 		}
+		return true;
+	}
+
+	private void setCacheHeaders(HttpServletResponse response, IFileStore file) throws NoSuchAlgorithmException, IOException, CoreException {
 		response.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 		response.setHeader(ProtocolConstants.KEY_ETAG, generateFileETag(file));
-		return true;
 	}
 
 	@Override
