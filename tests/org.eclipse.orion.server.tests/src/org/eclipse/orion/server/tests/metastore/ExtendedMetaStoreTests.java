@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others.
+ * Copyright (c) 2013, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -20,6 +20,7 @@ import static org.junit.Assert.fail;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -444,16 +445,30 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		workspaceInfo.setUserId(userInfo.getUniqueId());
 		metaStore.createWorkspace(workspaceInfo);
 
-		// create the project
+		// create a project directory and file
+		IFileStore userHome = OrionConfiguration.getUserHome(userInfo.getUniqueId());
+		String workspaceFolder = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceInfo.getUniqueId());
 		String projectName = "Orion Project";
+		IFileStore projectFolder = userHome.getChild(workspaceFolder).getChild(projectName);
+		assertFalse(projectFolder.fetchInfo().exists());
+		projectFolder.mkdir(EFS.NONE, null);
+		assertTrue(projectFolder.fetchInfo().exists() && projectFolder.fetchInfo().isDirectory());
+		String fileName = "file.html";
+		IFileStore file = projectFolder.getChild(fileName);
+		try {
+			OutputStream outputStream = file.openOutputStream(EFS.NONE, null);
+			outputStream.write("<!doctype html>".getBytes());
+			outputStream.close();
+		} catch (IOException e) {
+			fail("Count not create a test file in the Orion Project:" + e.getLocalizedMessage());
+		}
+		assertTrue("the file in the project folder should exist.", file.fetchInfo().exists());
+
+		// create the project
 		ProjectInfo projectInfo = new ProjectInfo();
 		projectInfo.setFullName(projectName);
-		try {
-			projectInfo.setContentLocation(new URI("file:/home/anthony/orion/project"));
-		} catch (URISyntaxException e) {
-			// should not get an exception here, simple URI
-		}
 		projectInfo.setWorkspaceId(workspaceInfo.getUniqueId());
+		projectInfo.setContentLocation(projectFolder.toLocalFile(EFS.NONE, null).toURI());
 		metaStore.createProject(projectInfo);
 
 		// move the project by renaming the project by changing the projectName
@@ -467,6 +482,19 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		ProjectInfo readProjectInfo = metaStore.readProject(workspaceInfo.getUniqueId(), projectInfo.getFullName());
 		assertNotNull(readProjectInfo);
 		assertTrue(readProjectInfo.getFullName().equals(movedProjectName));
+
+		// verify the local project has moved
+		projectFolder = userHome.getChild(workspaceFolder).getChild(projectName);
+		assertFalse("the original project folder should not exist.", projectFolder.fetchInfo().exists());
+		projectFolder = userHome.getChild(workspaceFolder).getChild(movedProjectName);
+		assertTrue("the new project folder should exist.", projectFolder.fetchInfo().exists() && projectFolder.fetchInfo().isDirectory());
+		file = projectFolder.getChild(fileName);
+		assertTrue("the file in the project folder should exist.", file.fetchInfo().exists());
+		assertEquals("The ContentLocation should have been updated.", projectFolder.toLocalFile(EFS.NONE, null).toURI(), projectInfo.getContentLocation());
+
+		// delete the project contents
+		file.delete(EFS.NONE, null);
+		assertFalse("the file in the project folder should not exist.", file.fetchInfo().exists());
 
 		// delete the user
 		metaStore.deleteUser(userInfo.getUniqueId());

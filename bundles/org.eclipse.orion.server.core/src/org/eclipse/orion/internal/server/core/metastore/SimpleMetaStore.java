@@ -578,7 +578,7 @@ public class SimpleMetaStore implements IMetaStore {
 			// if the content location is local, update the content location with the new name
 			if (projectInfo.getContentLocation().getScheme().equals("file")) {
 				File oldContentLocation = new File(projectInfo.getContentLocation());
-				if (workspaceMetaFolder.equals(oldContentLocation.getParent())) {
+				if (workspaceMetaFolder.toString().equals(oldContentLocation.getParent())) {
 					projectInfo.setContentLocation(new File(workspaceMetaFolder, newProjectId).toURI());
 				}
 			}
