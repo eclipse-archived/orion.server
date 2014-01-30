@@ -26,6 +26,6 @@ Export-Package: org.eclipse.orion.server.cf;x-internal:=true,
  org.eclipse.orion.server.cf.jobs;x-internal:=true,
  org.eclipse.orion.server.cf.manifest;x-internal:=true,
  org.eclipse.orion.server.cf.objects;x-internal:=true,
- org.eclipse.orion.server.cf.servlets;x-internal:=true,
+ org.eclipse.orion.server.cf.servlets;x-friends:="org.eclipse.orion.server.configurator",
  org.eclipse.orion.server.cf.utils;x-internal:=true
 Service-Component: OSGI-INF/component.xml
