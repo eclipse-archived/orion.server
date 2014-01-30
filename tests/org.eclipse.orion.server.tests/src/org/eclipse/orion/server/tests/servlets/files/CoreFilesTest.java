@@ -15,10 +15,12 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.List;
 
 import org.eclipse.core.filesystem.EFS;
@@ -861,4 +863,31 @@ public class CoreFilesTest extends FileSystemTest {
 		assertEquals("image/gif", response.getHeaderField("CONTENT-TYPE"));
 		assertEquals("857", response.getHeaderField("CONTENT-LENGTH"));
 	}
+
+	@Test
+	public void testWriteFileInvalidUTF8() throws Exception {
+		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+		createDirectory(directoryPath);
+		String fileName = "testfile.binary";
+
+		WebRequest request = getPostFilesRequest(directoryPath, getNewFileJSON(fileName).toString(), fileName);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+		// PUT content with invalid UTF-8 codes, see 
+		String location = response.getHeaderField("Location");
+		byte[] fileContent = new byte[] {0, (byte) 0xC0, (byte) 0xC1, (byte) 0xF5, (byte) 0xF6, (byte) 0xF7, (byte) 0xF8, (byte) 0xF9, (byte) 0xFA, (byte) 0xFB, (byte) 0xFC, (byte) 0xFD, (byte) 0xFE, (byte) 0xFF};
+		request = getPutFileRequest(location, fileContent);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// GET should return the binary content
+		request = getGetRequest(location);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+		IOUtilities.pipe(response.getInputStream(), bytes);
+		assertTrue("Invalid file content", Arrays.equals(fileContent, bytes.toByteArray()));
+	}
+
 }
