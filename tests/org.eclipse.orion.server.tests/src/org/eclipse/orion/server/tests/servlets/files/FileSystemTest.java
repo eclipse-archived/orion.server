@@ -419,6 +419,14 @@ public abstract class FileSystemTest extends AbstractServerTest {
 		return null;
 	}
 
+	protected WebRequest getPutFileRequest(String uri, byte[] body) {
+		ByteArrayInputStream source = new ByteArrayInputStream(body);
+		WebRequest request = new PutMethodWebRequest(makeResourceURIAbsolute(uri), source, "application/json");
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		return request;
+	}
+
 	/**
 	 * Makes a URI absolute. If the provided URI is relative, it is assumed to be relative to the workspace location (file servlet location).
 	 * If the provided URI is already absolute it is returned as-is.

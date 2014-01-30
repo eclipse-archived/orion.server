@@ -11,7 +11,6 @@
 package org.eclipse.orion.internal.server.servlets.file;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -27,6 +26,7 @@ import java.util.Map;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
+import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -97,15 +97,14 @@ class FileHandlerV1 extends GenericFileHandler {
 		return new UniversalUniqueIdentifier().toBase64String();
 	}
 
-	private void handlePutContents(HttpServletRequest request, BufferedReader requestReader, HttpServletResponse response, IFileStore file) throws IOException, CoreException, NoSuchAlgorithmException, JSONException {
+	private void handlePutContents(HttpServletRequest request, ServletInputStream requestStream, HttpServletResponse response, IFileStore file) throws IOException, CoreException, NoSuchAlgorithmException, JSONException {
 		String source = request.getParameter(ProtocolConstants.PARM_SOURCE);
 		if (source != null) {
 			//if source is specified, read contents from different URL rather than from this request stream
 			IOUtilities.pipe(new URL(source).openStream(), file.openOutputStream(EFS.NONE, null), true, true);
 		} else {
 			//read from the request stream
-			Writer fileWriter = new BufferedWriter(new OutputStreamWriter(file.openOutputStream(EFS.NONE, null), "UTF-8"));
-			IOUtilities.pipe(requestReader, fileWriter, false, true);
+			IOUtilities.pipe(requestStream, file.openOutputStream(EFS.NONE, null), false, true);
 		}
 
 		// return metadata with the new Etag
@@ -152,7 +151,8 @@ class FileHandlerV1 extends GenericFileHandler {
 	private void handleMultiPartPut(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws IOException, CoreException, JSONException, NoSuchAlgorithmException {
 		String typeHeader = request.getHeader(ProtocolConstants.HEADER_CONTENT_TYPE);
 		String boundary = typeHeader.substring(typeHeader.indexOf("boundary=\"") + 10, typeHeader.length() - 1); //$NON-NLS-1$
-		BufferedReader requestReader = request.getReader();
+		ServletInputStream requestStream = request.getInputStream();
+		BufferedReader requestReader = new BufferedReader(new InputStreamReader(requestStream, "UTF-8")); //$NON-NLS-1$
 		handlePutMetadata(requestReader, boundary, file);
 		// next come the headers for the content
 		Map<String, String> contentHeaders = new HashMap<String, String>();
@@ -163,7 +163,7 @@ class FileHandlerV1 extends GenericFileHandler {
 				contentHeaders.put(header[0], header[1]);
 		}
 		// now for the file contents
-		handlePutContents(request, requestReader, response, file);
+		handlePutContents(request, requestStream, response, file);
 	}
 
 	private void handlePutMetadata(BufferedReader reader, String boundary, IFileStore file) throws IOException, CoreException, JSONException {
@@ -195,7 +195,7 @@ class FileHandlerV1 extends GenericFileHandler {
 						file.delete(EFS.NONE, null);
 						break;
 					case PUT :
-						handlePutContents(request, request.getReader(), response, file);
+						handlePutContents(request, request.getInputStream(), response, file);
 						break;
 					case POST :
 						if ("PATCH".equals(request.getHeader(ProtocolConstants.HEADER_METHOD_OVERRIDE))) {
