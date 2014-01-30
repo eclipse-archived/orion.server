@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others 
+ * Copyright (c) 2013, 2014 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -124,23 +124,27 @@ public class SimpleUserProfileNode implements IOrionUserProfileNode {
 		}
 	}
 
-	public String get(String key, String def) throws CoreException {
+	public String get(String key, String defaultValue) throws CoreException {
 		try {
 			if (key.equals(UserConstants.KEY_NAME)) {
-				return userJSONObject.getString("FullName");
+				if (userJSONObject.has("FullName")) {
+					return userJSONObject.getString("FullName");
+				}
 			} else if (key.equals(UserConstants.KEY_UID)) {
-				return userJSONObject.getString("UniqueId");
+				if (userJSONObject.has("UniqueId")) {
+					return userJSONObject.getString("UniqueId");
+				}
 			} else if (key.equals(UserConstants.KEY_LOGIN)) {
-				return userJSONObject.getString("UserName");
+				if (userJSONObject.has("FullName")) {
+					return userJSONObject.getString("FullName");
+				}
 			} else if (userJSONObject.has(key)) {
 				return userJSONObject.getString(key);
-			} else {
-				return def;
 			}
 		} catch (JSONException e) {
 			LogHelper.log(e);
 		}
-		return null;
+		return defaultValue;
 	}
 
 	public void remove(String key) {
