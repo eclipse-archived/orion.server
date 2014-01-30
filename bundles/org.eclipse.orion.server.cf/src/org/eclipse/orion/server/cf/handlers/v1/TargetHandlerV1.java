@@ -37,7 +37,6 @@ public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 
 	@Override
 	protected Target buildResource(HttpServletRequest request, String path) throws CoreException {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -110,7 +109,7 @@ public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 
 	@Override
 	protected CFJob handleDelete(Target resource, HttpServletRequest request, HttpServletResponse response, final String path) {
-		final JSONObject jsonData = extractJSONData(request);
+		//final JSONObject jsonData = extractJSONData(request);
 
 		return new CFJob(request, false) {
 			@Override
