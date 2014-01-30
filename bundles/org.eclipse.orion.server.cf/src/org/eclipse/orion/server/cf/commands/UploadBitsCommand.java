@@ -35,7 +35,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class UploadBitsCommand extends AbstractCFMultiCommand {
+public class UploadBitsCommand extends AbstractCFCommand {
 	private static final int MAX_ATTEMPTS = 150;
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
@@ -51,7 +51,7 @@ public class UploadBitsCommand extends AbstractCFMultiCommand {
 	}
 
 	@Override
-	protected MultiServerStatus _doIt() {
+	protected ServerStatus _doIt() {
 		/* multi server status */
 		MultiServerStatus status = new MultiServerStatus();
 

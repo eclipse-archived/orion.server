@@ -23,7 +23,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BindRouteCommand extends AbstractCFMultiCommand {
+public class BindRouteCommand extends AbstractCFCommand {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
@@ -55,7 +55,7 @@ public class BindRouteCommand extends AbstractCFMultiCommand {
 	}
 
 	@Override
-	protected MultiServerStatus _doIt() {
+	protected ServerStatus _doIt() {
 		/* multi server status */
 		MultiServerStatus status = new MultiServerStatus();
 

@@ -26,7 +26,7 @@ import org.json.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BindServicesCommand extends AbstractCFMultiCommand {
+public class BindServicesCommand extends AbstractCFCommand {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
@@ -41,7 +41,7 @@ public class BindServicesCommand extends AbstractCFMultiCommand {
 	}
 
 	@Override
-	protected MultiServerStatus _doIt() {
+	protected ServerStatus _doIt() {
 		/* multi server status */
 		MultiServerStatus status = new MultiServerStatus();
 

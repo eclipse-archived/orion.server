@@ -23,7 +23,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PushAppCommand extends AbstractCFMultiCommand {
+public class PushAppCommand extends AbstractCFCommand {
 
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
@@ -37,7 +37,7 @@ public class PushAppCommand extends AbstractCFMultiCommand {
 	}
 
 	@Override
-	protected MultiServerStatus _doIt() {
+	protected ServerStatus _doIt() {
 		/* multi server status */
 		MultiServerStatus status = new MultiServerStatus();
 
