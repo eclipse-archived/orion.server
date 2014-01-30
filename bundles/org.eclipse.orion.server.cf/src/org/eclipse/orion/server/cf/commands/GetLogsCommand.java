@@ -83,11 +83,11 @@ public class GetLogsCommand extends AbstractCFCommand {
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, instances.optString("description"), instances, null);
 			}
 
-			Iterator<String> instancesIterator = instances.keys();
+			Iterator<?> instancesIterator = instances.keys();
 			JSONObject jsonResp = new JSONObject();
 
 			while (instancesIterator.hasNext()) {
-				String instance = instancesIterator.next();
+				String instance = (String) instancesIterator.next();
 				String instanceLogsAppUrl = app.getString("url") + "/instances/" + instance + "/files/logs";
 				if (logFileName != null) {
 					instanceLogsAppUrl += ("/" + logFileName);
