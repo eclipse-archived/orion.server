@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others.
+ * Copyright (c) 2013, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -350,6 +350,19 @@ public class SimpleMetaStoreMigration {
 				if (emailConfirmation != null) {
 					propertyMap.put("email_confirmation", emailConfirmation);
 				}
+				ISecurePreferences generalUserProfile = userProfileNode.node("profile/general");
+				if (generalUserProfile != null && generalUserProfile.get("lastlogintimestamp", null) != null) {
+					String lastlogintimestamp = generalUserProfile.get("lastlogintimestamp", "");
+					propertyMap.put("lastlogintimestamp", lastlogintimestamp);
+				}
+				if (generalUserProfile != null && generalUserProfile.get("GitName", null) != null) {
+					String gitName = generalUserProfile.get("GitName", "");
+					propertyMap.put("GitName", gitName);
+				}
+				if (generalUserProfile != null && generalUserProfile.get("GitMail", null) != null) {
+					String gitMail = generalUserProfile.get("GitMail", "");
+					propertyMap.put("GitMail", gitMail);
+				}
 
 				if (userProfileNode.nodeExists("properties")) {
 					JSONObject profileProperties = new JSONObject();
@@ -549,6 +562,26 @@ public class SimpleMetaStoreMigration {
 			if (usersSecureStorageProperties != null && usersSecureStorageProperties.containsKey("password")) {
 				String secureStoragePassword = usersSecureStorageProperties.get("password");
 				userJSON.put("password", secureStoragePassword);
+			}
+			if (usersSecureStorageProperties != null && usersSecureStorageProperties.containsKey("lastlogintimestamp")) {
+				String lastlogintimestamp = usersSecureStorageProperties.get("lastlogintimestamp");
+				userJSON.put("lastlogintimestamp", lastlogintimestamp);
+			}
+			if (usersSecureStorageProperties != null && usersSecureStorageProperties.containsKey("GitName")) {
+				String gitName = usersSecureStorageProperties.get("GitName");
+				userJSON.put("GitName", gitName);
+			}
+			if (usersSecureStorageProperties != null && usersSecureStorageProperties.containsKey("GitMail")) {
+				String gitMail = usersSecureStorageProperties.get("GitMail");
+				userJSON.put("GitMail", gitMail);
+			}
+			if (usersSecureStorageProperties != null && usersSecureStorageProperties.containsKey("blocked")) {
+				String blocked = usersSecureStorageProperties.get("blocked");
+				userJSON.put("blocked", blocked);
+			}
+			if (usersSecureStorageProperties != null && usersSecureStorageProperties.containsKey("email_confirmation")) {
+				String email_confirmation = usersSecureStorageProperties.get("email_confirmation");
+				userJSON.put("email_confirmation", email_confirmation);
 			}
 			userJSON.put("WorkspaceIds", new JSONArray());
 			if (usersSecureStorageProperties != null && usersSecureStorageProperties.containsKey("profileProperties")) {
