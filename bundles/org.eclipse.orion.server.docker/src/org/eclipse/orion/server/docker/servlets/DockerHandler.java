@@ -475,7 +475,7 @@ public class DockerHandler extends ServletResourceHandler<String> {
 	@Override
 	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String path) throws ServletException {
 		if (dockerServer == null) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "A Docker server required for terminal support is not enabled for this server.", null));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "A Docker server required for terminal support is not enabled on this Orion server.", null));
 		}
 		switch (getMethod(request)) {
 			case GET :
