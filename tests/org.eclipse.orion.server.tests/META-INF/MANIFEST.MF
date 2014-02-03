@@ -35,7 +35,8 @@ Require-Bundle: org.eclipse.equinox.ds;bundle-version="1.2.100",
  org.eclipse.orion.server.docker;bundle-version="1.0.0";resolution:=optional
 Bundle-ActivationPolicy: lazy
 Bundle-Activator: org.eclipse.orion.server.tests.ServerTestsActivator
-Import-Package: org.eclipse.equinox.http.jetty;version="1.1.0",
+Import-Package: org.apache.commons.io,
+ org.eclipse.equinox.http.jetty;version="1.1.0",
  org.osgi.service.http;version="1.2.1",
  org.osgi.service.useradmin;version="1.1.0",
  org.slf4j;version="1.5.11"

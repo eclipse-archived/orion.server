@@ -14,25 +14,51 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.*;
-import java.net.*;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.Arrays;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import org.eclipse.core.runtime.*;
+import org.apache.commons.io.FileUtils;
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.xml.sax.SAXException;
 
-import com.meterware.httpunit.*;
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.PutMethodWebRequest;
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebResponse;
 
 /**
  * 
  */
 public class TransferTest extends FileSystemTest {
+
 	@BeforeClass
 	public static void setupWorkspace() {
 		initializeWorkspaceLocation();
@@ -59,9 +85,10 @@ public class TransferTest extends FileSystemTest {
 		int chunkSize = 0;
 		int totalTransferred = 0;
 		while ((chunkSize = in.read(chunk, 0, chunk.length)) > 0) {
-			PutMethodWebRequest put = new PutMethodWebRequest(location, new ByteArrayInputStream(chunk, 0, chunkSize), contentType);
+			byte[] content = getContent(chunk, chunkSize, contentType);
+			PutMethodWebRequest put = new PutMethodWebRequest(location, new ByteArrayInputStream(content), contentType);
 			put.setHeaderField("Content-Range", "bytes " + totalTransferred + "-" + (totalTransferred + chunkSize - 1) + "/" + length);
-			put.setHeaderField("Content-Length", "" + length);
+			put.setHeaderField("Content-Length", "" + content.length);
 			put.setHeaderField("Content-Type", contentType);
 			setAuthentication(put);
 			totalTransferred += chunkSize;
@@ -75,6 +102,25 @@ public class TransferTest extends FileSystemTest {
 			}
 		}
 		in.close();
+	}
+
+	private byte[] getContent(byte[] chunk, int chunkSize, String contentType) throws IOException {
+		if (!contentType.startsWith("multipart/")) {
+			return Arrays.copyOf(chunk, chunkSize);
+		}
+		int boundaryOff = contentType.indexOf("boundary=");
+		String boundary = contentType.substring(boundaryOff + 9);
+		ByteArrayOutputStream bout = new ByteArrayOutputStream();
+		bout.write("--".getBytes("ISO-8859-1"));
+		bout.write(boundary.getBytes("ISO-8859-1"));
+		bout.write("\r\n".getBytes("ISO-8859-1"));
+		bout.write("Content-type: text/plain; charset=us-ascii\r\n".getBytes("ISO-8859-1"));
+		bout.write("\r\n".getBytes("ISO-8859-1")); // empty line separates chunk header from body
+		bout.write(chunk, 0, chunkSize);
+		bout.write("\r\n--".getBytes("ISO-8859-1"));
+		bout.write(boundary.getBytes("ISO-8859-1"));
+		bout.write("--\r\n".getBytes("ISO-8859-1"));
+		return bout.toByteArray();
 	}
 
 	/**
@@ -254,6 +300,44 @@ public class TransferTest extends FileSystemTest {
 
 		//assert the file is present in the workspace
 		assertTrue(checkFileExists(directoryPath + "/client.zip"));
+	}
+
+	@Test
+	public void testImportFileMultiPart() throws CoreException, IOException, SAXException, URISyntaxException {
+		//create a directory to upload to
+		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+		createDirectory(directoryPath);
+
+		URL entry = ServerTestsActivator.getContext().getBundle().getEntry("testData/importTest/client.zip");
+		File source = new File(FileLocator.toFileURL(entry).getPath());
+
+		// current server implementation cannot handle binary data, thus base64-encode client.zip before import
+		File expected = EFS.getStore(makeLocalPathAbsolute(directoryPath + "/expected.txt")).toLocalFile(EFS.NONE, null);
+		byte[] expectedContent = Base64.encode(FileUtils.readFileToByteArray(source));
+		FileUtils.writeByteArrayToFile(expected, expectedContent);
+
+		//start the import
+		long length = expectedContent.length;
+		String importPath = getImportRequestPath(directoryPath);
+		PostMethodWebRequest request = new PostMethodWebRequest(importPath);
+		request.setHeaderField("X-Xfer-Content-Length", Long.toString(length));
+		request.setHeaderField("X-Xfer-Options", "raw");
+		request.setHeaderField("Slug", "actual.txt");
+		setAuthentication(request);
+		WebResponse postResponse = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, postResponse.getResponseCode());
+		String location = postResponse.getHeaderField("Location");
+		assertNotNull(location);
+		URI importURI = URIUtil.fromString(importPath);
+		location = importURI.resolve(location).toString();
+
+		// perform the upload
+		doImport(expected, length, location, "multipart/mixed;boundary=foobar");
+
+		//assert the file is present in the workspace
+		assertTrue(checkFileExists(directoryPath + "/actual.txt"));
+		//assert that actual.txt has same content as expected.txt
+		assertTrue(checkContentEquals(expected, directoryPath + "/actual.txt"));
 	}
 
 	/**

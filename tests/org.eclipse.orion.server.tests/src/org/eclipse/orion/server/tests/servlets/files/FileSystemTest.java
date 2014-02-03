@@ -21,6 +21,7 @@ import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.commons.io.FileUtils;
 import org.eclipse.core.filesystem.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.URIUtil;
@@ -92,6 +93,11 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	protected boolean checkFileExists(String path) throws CoreException {
 		IFileStore file = EFS.getStore(makeLocalPathAbsolute(path));
 		return (file.fetchInfo().exists() && !file.fetchInfo().isDirectory());
+	}
+
+	protected boolean checkContentEquals(File expected, String actual) throws IOException, CoreException {
+		File actualContent = EFS.getStore(makeLocalPathAbsolute(actual)).toLocalFile(EFS.NONE, null);
+		return FileUtils.contentEquals(expected, actualContent);
 	}
 
 	protected static void clearWorkspace() throws CoreException {
