@@ -111,6 +111,7 @@ public class TransferTest extends FileSystemTest {
 		int boundaryOff = contentType.indexOf("boundary=");
 		String boundary = contentType.substring(boundaryOff + 9);
 		ByteArrayOutputStream bout = new ByteArrayOutputStream();
+		bout.write("PREAMBLE\r\n\r\nPREAMBLEr\n".getBytes("ISO-8859-1"));
 		bout.write("--".getBytes("ISO-8859-1"));
 		bout.write(boundary.getBytes("ISO-8859-1"));
 		bout.write("\r\n".getBytes("ISO-8859-1"));
@@ -120,6 +121,7 @@ public class TransferTest extends FileSystemTest {
 		bout.write("\r\n--".getBytes("ISO-8859-1"));
 		bout.write(boundary.getBytes("ISO-8859-1"));
 		bout.write("--\r\n".getBytes("ISO-8859-1"));
+		bout.write("EPILOGUE".getBytes("ISO-8859-1"));
 		return bout.toByteArray();
 	}
 
@@ -300,6 +302,8 @@ public class TransferTest extends FileSystemTest {
 
 		//assert the file is present in the workspace
 		assertTrue(checkFileExists(directoryPath + "/client.zip"));
+		//assert that imported file has same content as original client.zip
+		assertTrue(checkContentEquals(source, directoryPath + "/client.zip"));
 	}
 
 	@Test

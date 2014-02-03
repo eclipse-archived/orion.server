@@ -10,20 +10,17 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.xfer;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FilterInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,7 +32,6 @@ import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
 import javax.servlet.ServletException;
-import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -294,10 +290,9 @@ class ClientImport {
 		int transferred = getTransferred();
 		int length = getLength();
 		ContentRange range;
-		byte[] chunk;
+		int chunkSize = 0;
 		if (length == 0) {
 			range = ContentRange.parse("bytes 0-0/0");
-			chunk = new byte[0];
 		} else {
 			String rangeString = req.getHeader(ProtocolConstants.HEADER_CONTENT_RANGE);
 			if (rangeString == null)
@@ -315,28 +310,29 @@ class ClientImport {
 				fail(req, resp, "Invalid range: " + rangeString);
 				return;
 			}
-			int chunkSize = 1 + range.getEndByte() - range.getStartByte();
-			chunk = readChunk(req, chunkSize);
-			if (chunk.length != chunkSize) {
-				fail(req, resp, "Content-Range doesn't agree with actual content length");
+			chunkSize = 1 + range.getEndByte() - range.getStartByte();
+		}
+
+		long piped = 0;
+		String contentType = req.getHeader(ProtocolConstants.HEADER_CONTENT_TYPE);
+		if (contentType != null && contentType.startsWith("multipart")) { //$NON-NLS-1$
+			int boundaryOff = contentType.indexOf("boundary="); //$NON-NLS-1$
+			if (boundaryOff < 0) {
+				fail(req, resp, "Boundary parameter missing in Content-Type: " + contentType);
 				return;
 			}
+			String boundary = contentType.substring(boundaryOff + 9);
+			ImportStream in = new ImportStream(req.getInputStream());
+			piped = pipeMultiPartChunk(in, range.getStartByte(), chunkSize, boundary);
+		} else {
+			ImportStream in = new ImportStream(req.getInputStream());
+			piped = pipeChunk(in, range.getStartByte(), chunkSize, true);
 		}
-		FileOutputStream fout = null;
-		try {
-			fout = new FileOutputStream(new File(getStorageDirectory(), FILE_DATA), true);
-			FileChannel channel = fout.getChannel();
-			channel.position(range.getStartByte());
-			channel.write(ByteBuffer.wrap(chunk));
-			channel.close();
-		} finally {
-			try {
-				if (fout != null)
-					fout.close();
-			} catch (IOException e) {
-				//ignore secondary failure
-			}
+		if (chunkSize != piped) {
+			fail(req, resp, "Content-Range doesn't agree with actual content length");
+			return;
 		}
+
 		transferred = range.getEndByte() + 1;
 		setTransferred(transferred);
 		save();
@@ -345,43 +341,58 @@ class ClientImport {
 			return;
 		}
 		resp.setStatus(308);//Resume Incomplete
-		resp.setHeader("Range", "bytes 0-" + range.getEndByte()); //$NON-NLS-2$
+		resp.setHeader("Range", "bytes 0-" + range.getEndByte()); //$NON-NLS-1$ //$NON-NLS-2$
 		setResponseLocationHeader(req, resp);
 	}
 
-	/**
-	 * Reads the chunk of data to be imported from the request's input stream.
-	 */
-	private byte[] readChunk(HttpServletRequest req, int chunkSize) throws IOException {
-		ServletInputStream requestStream = req.getInputStream();
-		String contentType = req.getHeader(ProtocolConstants.HEADER_CONTENT_TYPE);
-		if (contentType != null && contentType.startsWith("multipart")) //$NON-NLS-1$
-			return readMultiPartChunk(requestStream, contentType);
-		ByteArrayOutputStream outputStream = new ByteArrayOutputStream(chunkSize);
-		IOUtilities.pipe(requestStream, outputStream, false, false);
-		return outputStream.toByteArray();
+	private long pipeMultiPartChunk(ImportStream in, long position, int count, String boundary) throws IOException {
+		try {
+			// skip the preamble, i.e. skip lines until we find the starting delimiter
+			String delimiter = "--" + boundary; //$NON-NLS-1$
+			String line = in.readLine();
+			while (!delimiter.equals(line))
+				line = in.readLine();
+
+			// skip part headers up to the first empty line
+			while (!"\r\n".equals(line)) //$NON-NLS-1$
+				line = in.readLine();
+
+			// pipe the chunk
+			long piped = pipeChunk(in, position, count, false);
+
+			// if next comes the delimiter, the chunk was successfully piped:
+			// return the number of piped bytes, which should be equal to count
+			line = in.readLine();
+			if ("\r\n".equals(line)) { //$NON-NLS-1$
+				line = in.readLine();
+				if (line.startsWith(delimiter)) {
+					return piped;
+				}
+			}
+		} finally {
+			in.skipAll();
+		}
+		// if the chunk was not correctly delimited or was larger than the given byte range,
+		// the actual number of bytes read from the stream is returned
+		return in.count();
 	}
 
-	private byte[] readMultiPartChunk(ServletInputStream requestStream, String contentType) throws IOException {
-		//fast forward stream past multi-part header
-		int boundaryOff = contentType.indexOf("boundary="); //$NON-NLS-1$
-		String boundary = contentType.substring(boundaryOff + 9);
-		BufferedReader reader = new BufferedReader(new InputStreamReader(requestStream, "ISO-8859-1")); //$NON-NLS-1$
-		StringBuffer out = new StringBuffer();
-		//skip headers up to the first blank line
-		String line = reader.readLine();
-		while (line != null && line.length() > 0)
-			line = reader.readLine();
-		//now process the file
-
-		char[] buf = new char[1000];
-		int read;
-		while ((read = reader.read(buf)) > 0) {
-			out.append(buf, 0, read);
+	private long pipeChunk(ImportStream in, long position, int count, boolean skipIn) throws IOException {
+		FileOutputStream fout = null;
+		FileChannel channel = null;
+		try {
+			in.resetCount();
+			fout = new FileOutputStream(new File(getStorageDirectory(), FILE_DATA), true);
+			channel = fout.getChannel();
+			channel.transferFrom(Channels.newChannel(in), position, count);
+			if (skipIn) {
+				in.skipAll();
+			}
+		} finally {
+			IOUtilities.safeClose(channel);
+			IOUtilities.safeClose(fout);
 		}
-		//remove the boundary from the output (end of input is \r\n--<boundary>--\r\n)
-		out.setLength(out.length() - (boundary.length() + 8));
-		return out.toString().getBytes("ISO-8859-1"); //$NON-NLS-1$
+		return in.count();
 	}
 
 	private void fail(HttpServletRequest req, HttpServletResponse resp, String msg) throws ServletException {
