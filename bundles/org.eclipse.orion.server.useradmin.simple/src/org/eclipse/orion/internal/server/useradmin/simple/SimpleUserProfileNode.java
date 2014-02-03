@@ -135,8 +135,8 @@ public class SimpleUserProfileNode implements IOrionUserProfileNode {
 					return userJSONObject.getString("UniqueId");
 				}
 			} else if (key.equals(UserConstants.KEY_LOGIN)) {
-				if (userJSONObject.has("FullName")) {
-					return userJSONObject.getString("FullName");
+				if (userJSONObject.has("UserName")) {
+					return userJSONObject.getString("UserName");
 				}
 			} else if (userJSONObject.has(key)) {
 				return userJSONObject.getString(key);
