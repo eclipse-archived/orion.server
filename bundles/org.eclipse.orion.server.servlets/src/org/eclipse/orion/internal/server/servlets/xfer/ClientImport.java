@@ -10,12 +10,29 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.xfer;
 
-import java.io.*;
-import java.net.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FilterInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.*;
-import java.util.zip.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Properties;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
+import java.util.zip.ZipFile;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
@@ -24,7 +41,10 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
@@ -273,7 +293,6 @@ class ClientImport {
 	void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		int transferred = getTransferred();
 		int length = getLength();
-		int headerLength = Integer.valueOf(req.getHeader(ProtocolConstants.HEADER_CONTENT_LENGTH));
 		ContentRange range;
 		byte[] chunk;
 		if (length == 0) {
@@ -297,11 +316,11 @@ class ClientImport {
 				return;
 			}
 			int chunkSize = 1 + range.getEndByte() - range.getStartByte();
-			if (chunkSize != headerLength) {
-				fail(req, resp, "Content-Range doesn't agree with Content-Length");
+			chunk = readChunk(req, chunkSize);
+			if (chunk.length != chunkSize) {
+				fail(req, resp, "Content-Range doesn't agree with actual content length");
 				return;
 			}
-			chunk = readChunk(req, chunkSize);
 		}
 		FileOutputStream fout = null;
 		try {
