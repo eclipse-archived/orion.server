@@ -248,8 +248,9 @@ lastMapTag=${mapsTagTag}
 
 		<!-- Stage files for optimization -->
 		<copy todir="${buildDirectory}/optimization" >
-			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.core/web" includes="**"/>
 			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.ui/web" includes="**"/>
+			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.core/web" includes="**"/>
+			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.cf/web" includes="**"/>
 			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.editor/web" includes="**"/>
 			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.git/web" includes="**"/>
 			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.javascript/web" includes="**"/>
