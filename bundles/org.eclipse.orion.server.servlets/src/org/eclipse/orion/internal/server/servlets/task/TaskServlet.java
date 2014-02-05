@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,18 +13,31 @@ package org.eclipse.orion.internal.server.servlets.task;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.core.runtime.*;
-import org.eclipse.orion.internal.server.servlets.*;
+
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.orion.internal.server.servlets.Activator;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
-import org.eclipse.orion.server.core.tasks.*;
+import org.eclipse.orion.server.core.tasks.ITaskService;
+import org.eclipse.orion.server.core.tasks.TaskDoesNotExistException;
+import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.core.tasks.TaskInfo.TaskStatus;
+import org.eclipse.orion.server.core.tasks.TaskOperationException;
 import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.osgi.util.tracker.ServiceTracker;
 
 /**
@@ -55,6 +68,7 @@ public class TaskServlet extends OrionServlet {
 
 	@Override
 	protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		traceRequest(req);
 		String pathInfo = req.getPathInfo();
 		IPath path = pathInfo == null ? Path.EMPTY : new Path(pathInfo);
 		if (path.segmentCount() != 2) {
@@ -87,6 +101,7 @@ public class TaskServlet extends OrionServlet {
 
 	@Override
 	protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		traceRequest(req);
 		String pathInfo = req.getPathInfo();
 		IPath path = pathInfo == null ? Path.EMPTY : new Path(pathInfo);
 		ITaskService taskService = taskTracker.getService();
@@ -158,6 +173,7 @@ public class TaskServlet extends OrionServlet {
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		traceRequest(req);
 		String pathInfo = req.getPathInfo();
 		IPath path = pathInfo == null ? Path.EMPTY : new Path(pathInfo);
 		ITaskService taskService = taskTracker.getService();
