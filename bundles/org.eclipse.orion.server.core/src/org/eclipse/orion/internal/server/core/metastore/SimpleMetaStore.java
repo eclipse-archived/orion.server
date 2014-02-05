@@ -657,14 +657,12 @@ public class SimpleMetaStore implements IMetaStore {
 			if (jsonObject.has("Properties")) {
 				properties = jsonObject.getJSONObject("Properties");
 			}
-			//System.out.print("UPDATE PROPERTIES BEFORE " + properties.length() + " OPERATIONS " + metadataInfo.getOperations().size());
 			for (String key : metadataInfo.getOperations().keySet()) {
 				MetadataInfo.OperationType operation = metadataInfo.getOperations().get(key);
 				if (MetadataInfo.OperationType.DELETE.equals(operation)) {
 					// delete the property
 					if (properties.has(key)) {
 						properties.remove(key);
-						//System.out.print(" DELETE");
 					}
 				} else {
 					// create or update the property
@@ -683,7 +681,6 @@ public class SimpleMetaStore implements IMetaStore {
 				}
 			}
 			metadataInfo.flush();
-			//System.out.println(" AFTER " + properties.length());
 		} catch (JSONException e) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.updateProperties: could not update", e));
 		}
