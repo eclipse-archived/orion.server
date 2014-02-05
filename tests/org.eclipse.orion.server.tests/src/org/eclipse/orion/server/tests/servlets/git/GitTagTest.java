@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others
+ * Copyright (c) 2011, 2013 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -15,11 +15,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 import java.io.File;
 import java.net.HttpURLConnection;
 import java.net.URI;
+
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -29,6 +28,9 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Assume;
 import org.junit.Test;
+
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 public class GitTagTest extends GitTest {
 	@Test
@@ -316,7 +318,20 @@ public class GitTagTest extends GitTest {
 		JSONArray tags = listTags(gitTagUri);
 		assertTrue(tags.length() > 0);
 		long lastTime = Long.MAX_VALUE;
-		for (int i = 0; i < tags.length(); i++) {
+		for (int i = 0; i < 5; i++) {
+			JSONObject tag = tags.getJSONObject(i);
+
+			// assert properly sorted, new first
+			long t = tag.getLong(ProtocolConstants.KEY_LOCAL_TIMESTAMP);
+			assertTrue(t <= lastTime);
+			lastTime = t;
+
+			// get 'tag' metadata
+			request = getGetGitTagRequest(tag.getString(ProtocolConstants.KEY_LOCATION).toString());
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		}
+		for (int i = tags.length() - 5; i < tags.length(); i++) {
 			JSONObject tag = tags.getJSONObject(i);
 
 			// assert properly sorted, new first
