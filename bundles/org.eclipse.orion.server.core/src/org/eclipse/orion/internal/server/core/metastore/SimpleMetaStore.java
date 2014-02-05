@@ -104,7 +104,7 @@ public class SimpleMetaStore implements IMetaStore {
 			jsonObject.put("WorkspaceId", projectInfo.getWorkspaceId());
 			jsonObject.put("FullName", projectInfo.getFullName());
 			jsonObject.put("ContentLocation", projectInfo.getContentLocation());
-			JSONObject properties = new JSONObject(projectInfo.getProperties());
+			JSONObject properties = updateProperties(jsonObject, projectInfo);
 			jsonObject.put("Properties", properties);
 		} catch (JSONException e) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createProject: could not create project: " + projectInfo.getFullName() + " for user " + userId, e));
@@ -149,7 +149,7 @@ public class SimpleMetaStore implements IMetaStore {
 				jsonObject.put("UserName", userId);
 				jsonObject.put("FullName", userInfo.getFullName());
 				jsonObject.put("WorkspaceIds", new JSONArray());
-				JSONObject properties = getUserProperties(userInfo);
+				JSONObject properties = updateProperties(jsonObject, userInfo);
 				jsonObject.put("Properties", properties);
 			} catch (JSONException e) {
 				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createUser: could not create user: " + userId, e));
@@ -209,7 +209,7 @@ public class SimpleMetaStore implements IMetaStore {
 			jsonObject.put("UserId", workspaceInfo.getUserId());
 			jsonObject.put("FullName", workspaceInfo.getFullName());
 			jsonObject.put("ProjectNames", new JSONArray());
-			JSONObject properties = new JSONObject(workspaceInfo.getProperties());
+			JSONObject properties = updateProperties(jsonObject, workspaceInfo);
 			jsonObject.put("Properties", properties);
 		} catch (JSONException e) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createWorkspace: could not create workspace: " + encodedWorkspaceName + " for user " + userInfo.getUserName(), e));
@@ -443,6 +443,7 @@ public class SimpleMetaStore implements IMetaStore {
 			projectInfo.setFullName(jsonObject.getString("FullName"));
 			projectInfo.setContentLocation(new URI(jsonObject.getString("ContentLocation")));
 			setProperties(projectInfo, jsonObject.getJSONObject("Properties"));
+			projectInfo.flush();
 		} catch (JSONException e) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.readProject: could not read project " + projectName + " for userId " + userId, e));
 		} catch (URISyntaxException e) {
@@ -481,6 +482,7 @@ public class SimpleMetaStore implements IMetaStore {
 					}
 					userInfo.setWorkspaceIds(userWorkspaceIds);
 					setProperties(userInfo, jsonObject.getJSONObject("Properties"));
+					userInfo.flush();
 				} catch (JSONException e) {
 					throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.readUser: could not read user " + userId, e));
 				}
@@ -535,6 +537,7 @@ public class SimpleMetaStore implements IMetaStore {
 			}
 			workspaceInfo.setProjectNames(workspaceProjectNames);
 			setProperties(workspaceInfo, jsonObject.getJSONObject("Properties"));
+			workspaceInfo.flush();
 		} catch (JSONException e) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.readWorkspace: could not read workspace " + encodedWorkspaceName + " for user id " + userName, e));
 		}
@@ -629,7 +632,7 @@ public class SimpleMetaStore implements IMetaStore {
 			jsonObject.put("WorkspaceId", projectInfo.getWorkspaceId());
 			jsonObject.put("FullName", projectInfo.getFullName());
 			jsonObject.put("ContentLocation", projectInfo.getContentLocation());
-			JSONObject properties = new JSONObject(projectInfo.getProperties());
+			JSONObject properties = updateProperties(jsonObject, projectInfo);
 			jsonObject.put("Properties", properties);
 		} catch (JSONException e) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.updateProject: could not update project: " + projectInfo.getFullName() + " for workspace " + encodedWorkspaceName, null));
@@ -637,6 +640,54 @@ public class SimpleMetaStore implements IMetaStore {
 		if (!SimpleMetaStoreUtil.updateMetaFile(workspaceMetaFolder, projectInfo.getUniqueId(), jsonObject)) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.updateProject: could not update project: " + projectInfo.getFullName() + " for workspace " + encodedWorkspaceName, null));
 		}
+	}
+
+	/**
+	 * Update the properties that have been updated in the provided metadataInfo. The updates are determined by 
+	 * looking at the the list of operations performed on the properties of this metadataInfo since the last read.
+	 * See Bug 426842 for details.
+	 * @param jsonObject The jsonObject to be updated with the properties changes.
+	 * @param metadataInfo The updated properties JSON metadata.
+	 * @return The updated JSONObject.
+	 * @throws CoreException
+	 */
+	private JSONObject updateProperties(JSONObject jsonObject, MetadataInfo metadataInfo) throws CoreException {
+		JSONObject properties = new JSONObject();
+		try {
+			if (jsonObject.has("Properties")) {
+				properties = jsonObject.getJSONObject("Properties");
+			}
+			//System.out.print("UPDATE PROPERTIES BEFORE " + properties.length() + " OPERATIONS " + metadataInfo.getOperations().size());
+			for (String key : metadataInfo.getOperations().keySet()) {
+				MetadataInfo.OperationType operation = metadataInfo.getOperations().get(key);
+				if (MetadataInfo.OperationType.DELETE.equals(operation)) {
+					// delete the property
+					if (properties.has(key)) {
+						properties.remove(key);
+						//System.out.print(" DELETE");
+					}
+				} else {
+					// create or update the property
+					String value = metadataInfo.getProperties().get(key);
+					if ("UserRights".equals(key)) {
+						// UserRights needs to be handled specifically since it is a JSONArray and not a string.
+						JSONArray userRights = new JSONArray(value);
+						properties.put("UserRights", userRights);
+					} else if ("SiteConfigurations".equals(key)) {
+						// UserRights needs to be handled specifically since it is a JSONObject and not a string.
+						JSONObject siteConfigurations = new JSONObject(value);
+						properties.put("SiteConfigurations", siteConfigurations);
+					} else {
+						properties.put(key, value);
+					}
+				}
+			}
+			metadataInfo.flush();
+			//System.out.println(" AFTER " + properties.length());
+		} catch (JSONException e) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.updateProperties: could not update", e));
+		}
+		return properties;
 	}
 
 	public void updateUser(UserInfo userInfo) throws CoreException {
@@ -730,7 +781,7 @@ public class SimpleMetaStore implements IMetaStore {
 				jsonObject.put("FullName", userInfo.getFullName());
 				JSONArray workspaceIds = new JSONArray(userInfo.getWorkspaceIds());
 				jsonObject.put("WorkspaceIds", workspaceIds);
-				JSONObject properties = getUserProperties(userInfo);
+				JSONObject properties = updateProperties(jsonObject, userInfo);
 				jsonObject.put("Properties", properties);
 			} catch (JSONException e) {
 				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.updateUser: could not update user: " + userId, e));
@@ -765,7 +816,7 @@ public class SimpleMetaStore implements IMetaStore {
 			jsonObject.put("FullName", workspaceInfo.getFullName());
 			JSONArray projectNames = new JSONArray(workspaceInfo.getProjectNames());
 			jsonObject.put("ProjectNames", projectNames);
-			JSONObject properties = new JSONObject(workspaceInfo.getProperties());
+			JSONObject properties = updateProperties(jsonObject, workspaceInfo);
 			jsonObject.put("Properties", properties);
 		} catch (JSONException e) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.updateWorkspace: could not update workspace: " + workspaceName + " for user " + userName, e));

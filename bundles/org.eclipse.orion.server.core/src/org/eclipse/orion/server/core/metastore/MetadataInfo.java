@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others.
+ * Copyright (c) 2013, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -21,9 +21,14 @@ public class MetadataInfo {
 
 	protected static final List<String> EMPTY = Collections.emptyList();
 
+	// List of operations that can be performed on the properties list
+	public enum OperationType {
+		CREATE, UPDATE, DELETE
+	};
+
 	private String fullName;
 	private String id;
-
+	private final Map<String, OperationType> operations = Collections.synchronizedMap(new HashMap<String, OperationType>());
 	private final Map<String, String> properties = Collections.synchronizedMap(new HashMap<String, String>());
 
 	/**
@@ -31,6 +36,14 @@ public class MetadataInfo {
 	 */
 	public MetadataInfo() {
 		super();
+	}
+
+	/** 
+	 * After this object has been persisted, calling flush clears the list of operations 
+	 * performed on the properties of this object since the last read.
+	 */
+	public void flush() {
+		operations.clear();
 	}
 
 	/**
@@ -53,6 +66,14 @@ public class MetadataInfo {
 	 */
 	public String getProperty(String key) {
 		return properties.get(key);
+	}
+
+	/**
+	 * Returns a read-only map of the keys and operations performed on the properties of this object
+	 * since the last read.
+	 */
+	public Map<String, OperationType> getOperations() {
+		return Collections.unmodifiableMap(operations);
 	}
 
 	/**
@@ -98,7 +119,19 @@ public class MetadataInfo {
 	 *   if there was previously no value associated with the key.
 	 */
 	public String setProperty(String key, String value) {
-		return value == null ? properties.remove(key) : properties.put(key, value);
+		if (value == null) {
+			if (properties.containsKey(key)) {
+				operations.put(key, OperationType.DELETE);
+			}
+			return properties.remove(key);
+		} else {
+			if (properties.containsKey(key)) {
+				operations.put(key, OperationType.UPDATE);
+			} else {
+				operations.put(key, OperationType.CREATE);
+			}
+			return properties.put(key, value);
+		}
 	}
 
 	/**
