@@ -10,11 +10,14 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
+import java.lang.reflect.InvocationTargetException;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.*;
 import org.eclipse.core.runtime.*;
+import org.eclipse.jgit.transport.TransportHttp;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.objects.*;
 import org.eclipse.orion.server.git.objects.Status;
 
@@ -34,6 +37,12 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 	private ServletResourceHandler<String> tagHandlerV1;
 	private ServletResourceHandler<String> blameHandlerV1;
 
+	private ServletResourceHandler<IStatus> statusHandler;
+
+	//Used for enabling SSO git operations over http
+	private static java.lang.reflect.Method SSO_METHOD;
+	private static boolean SSO_METHOD_INITIALIZED;
+
 	GitHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
 		branchHandlerV1 = new GitBranchHandlerV1(statusHandler);
 		blameHandlerV1 = new GitBlameHandlerV1(statusHandler);
@@ -45,7 +54,7 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 		remoteHandlerV1 = new GitRemoteHandlerV1(statusHandler);
 		statusHandlerV1 = new GitStatusHandlerV1(statusHandler);
 		tagHandlerV1 = new GitTagHandlerV1(statusHandler);
-
+		this.statusHandler = statusHandler;
 	}
 
 	@Override
@@ -59,6 +68,42 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 			IPath contextPath = new Path(request.getContextPath());
 			if (contextPath.isPrefixOf(path)) {
 				pathString = path.removeFirstSegments(contextPath.segmentCount()).toString();
+			}
+		}
+
+		//TODO: Add to constants
+		String tokenName = PreferenceHelper.getString("lpta.token.name"); //$NON-NLS-1$
+		if (tokenName != null) {
+			javax.servlet.http.Cookie[] cookies = request.getCookies();
+			if (cookies != null) {
+				for (int i = 0; i < cookies.length; i++) {
+					Cookie currentCookie = cookies[i];
+					if (tokenName.equals(currentCookie.getName())) {
+						Cookie loginCookie = new Cookie(currentCookie.getName(), currentCookie.getValue());
+						if (SSO_METHOD == null && !SSO_METHOD_INITIALIZED) {
+							try {
+								SSO_METHOD_INITIALIZED = true;
+								SSO_METHOD = TransportHttp.class.getMethod("setSSOToken", Cookie.class);
+							} catch (RuntimeException e) {
+								return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "RuntimeException while trying to look up JGit call", e));
+							} catch (NoSuchMethodException e) {
+								return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "NoSuchMethodException while trying to look up JGit call", e));
+							}
+						}
+						if (SSO_METHOD != null) {
+							try {
+								System.out.println("Setting Cookie " + Thread.currentThread().getId() + " Request " + request.getRequestURL());
+								SSO_METHOD.invoke(null, loginCookie);
+							} catch (IllegalArgumentException e) {
+								return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "IllegalArgumentException while trying to set token", e));
+							} catch (IllegalAccessException e) {
+								return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "IllegalAccessException while trying to set token", e));
+							} catch (InvocationTargetException e) {
+								return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "InvocationTargetException while trying to set token", e));
+							}
+						}
+					}
+				}
 			}
 		}
 
