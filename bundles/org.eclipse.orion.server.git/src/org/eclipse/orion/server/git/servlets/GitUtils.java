@@ -17,8 +17,7 @@ import java.util.*;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
-import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.RepositoryCache;
+import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.core.Activator;
@@ -270,6 +269,15 @@ public class GitUtils {
 		}
 
 		return isForbidden;
+	}
+
+	/**
+	 * Returns whether the key gerrit.createchangeid is set to true in the git configuration
+	 * @param config the configuration of the git repository
+	 * @return true if the key gerrit.createchangeid is set to true
+	 */
+	public static boolean getCreateGerritChangeId(Config config) {
+		return config.getBoolean(ConfigConstants.CONFIG_GERRIT_SECTION, ConfigConstants.CONFIG_KEY_CREATECHANGEID, false);
 	}
 
 	public static void _testAllowFileScheme(boolean allow) {
