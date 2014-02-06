@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.utils;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import org.eclipse.orion.server.cf.CFExtServiceHelper;
@@ -64,7 +65,7 @@ public class TargetRegistry {
 		}
 
 		Cloud get(URL url) {
-			url = (url != null ? url : defaultCloudUrl);
+			url = (url != null ? normalizeURL(url) : defaultCloudUrl);
 			if (url == null) {
 				return null;
 			}
@@ -86,6 +87,19 @@ public class TargetRegistry {
 			CFExtServiceHelper helper = CFExtServiceHelper.getDefault();
 			if (cloud.getAccessToken() == null && helper != null && helper.getService() != null) {
 				cloud.setAccessToken(helper.getService().getToken(cloud));
+			}
+		}
+
+		private URL normalizeURL(URL url) {
+			String urlString = url.toString();
+			if (urlString.endsWith("/")) {
+				urlString = urlString.substring(0, urlString.length() - 1);
+			}
+
+			try {
+				return new URL(urlString);
+			} catch (MalformedURLException e) {
+				return null;
 			}
 		}
 	}
