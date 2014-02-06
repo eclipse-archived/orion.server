@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2013 IBM Corporation and others 
+ * Copyright (c) 2009, 2014 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,7 +11,11 @@
 package org.eclipse.orion.internal.server.servlets;
 
 import java.net.URI;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
@@ -19,14 +23,15 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
-import org.eclipse.orion.internal.server.servlets.project.ProjectDecorator;
 import org.eclipse.orion.internal.server.servlets.workspace.CompatibilityMetaStore;
 import org.eclipse.orion.internal.server.servlets.workspace.ProjectParentDecorator;
 import org.eclipse.orion.internal.server.servlets.xfer.TransferResourceDecorator;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
-import org.osgi.framework.*;
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.util.tracker.ServiceTracker;
 
 /**
@@ -57,7 +62,6 @@ public class Activator implements BundleActivator {
 
 	private ServiceRegistration<IWebResourceDecorator> transferDecoratorRegistration;
 	private ServiceRegistration<IWebResourceDecorator> parentDecoratorRegistration;
-	private ServiceRegistration<IWebResourceDecorator> projectDecoratorRegistration;
 
 	private ServiceRegistration<IMetaStore> metastoreRegistration;
 
@@ -133,8 +137,6 @@ public class Activator implements BundleActivator {
 		transferDecoratorRegistration = bundleContext.registerService(IWebResourceDecorator.class, new TransferResourceDecorator(), null);
 		//adds parent links to representations
 		parentDecoratorRegistration = bundleContext.registerService(IWebResourceDecorator.class, new ProjectParentDecorator(), null);
-		//adds project information to representations
-		projectDecoratorRegistration = bundleContext.registerService(IWebResourceDecorator.class, new ProjectDecorator(), null);
 	}
 
 	public void start(BundleContext context) throws Exception {
@@ -170,10 +172,6 @@ public class Activator implements BundleActivator {
 		if (parentDecoratorRegistration != null) {
 			parentDecoratorRegistration.unregister();
 			parentDecoratorRegistration = null;
-		}
-		if (projectDecoratorRegistration != null) {
-			projectDecoratorRegistration.unregister();
-			projectDecoratorRegistration = null;
 		}
 		if (metastoreRegistration != null) {
 			metastoreRegistration.unregister();

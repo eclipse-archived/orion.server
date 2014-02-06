@@ -97,10 +97,6 @@
             class="org.eclipse.orion.server.useradmin.servlets.EmailConfirmationServlet">
       </servlet>
       <servlet
-            alias="/project"
-            class="org.eclipse.orion.internal.server.servlets.project.ProjectServlet">
-      </servlet>
-      <servlet
             alias="/docker"
             class="org.eclipse.orion.server.docker.servlets.DockerServlet">
       </servlet>

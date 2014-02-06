@@ -25,7 +25,6 @@ Export-Package: org.eclipse.orion.internal.server.core;
  org.eclipse.orion.server.core,
  org.eclipse.orion.server.core.authentication,
  org.eclipse.orion.server.core.metastore,
- org.eclipse.orion.server.core.project,
  org.eclipse.orion.server.core.resources,
  org.eclipse.orion.server.core.resources.annotations,
  org.eclipse.orion.server.core.tasks,

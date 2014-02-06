@@ -35,7 +35,6 @@ Export-Package: org.eclipse.orion.internal.server.servlets;
    org.eclipse.orion.server.tests,
    org.eclipse.orion.server.cf",
  org.eclipse.orion.internal.server.servlets.hosting;uses:="org.eclipse.orion.internal.server.servlets.site,org.eclipse.orion.internal.server.servlets.workspace",
- org.eclipse.orion.internal.server.servlets.project,
  org.eclipse.orion.internal.server.servlets.site;x-friends:="org.eclipse.orion.server.configurator,org.eclipse.orion.server.hosting,org.eclipse.orion.server.tests",
  org.eclipse.orion.internal.server.servlets.task;
   x-friends:="org.eclipse.orion.server.logs,
