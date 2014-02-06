@@ -11,15 +11,16 @@
 package org.eclipse.orion.server.cf.commands;
 
 import java.net.URI;
+import java.util.Iterator;
 import javax.servlet.http.HttpServletResponse;
-import org.apache.commons.httpclient.methods.PutMethod;
-import org.apache.commons.httpclient.methods.StringRequestEntity;
+import org.apache.commons.httpclient.methods.*;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
+import org.eclipse.orion.server.cf.utils.MultiServerStatus;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONObject;
@@ -28,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 public class StartAppCommand extends AbstractCFCommand {
 
+	private static final int MAX_ATTEMPTS = 150;
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
@@ -40,6 +42,9 @@ public class StartAppCommand extends AbstractCFCommand {
 	}
 
 	public ServerStatus _doIt() {
+		/* multi server status */
+		MultiServerStatus result = new MultiServerStatus();
+
 		try {
 			URI targetURI = URIUtil.toURI(target.getUrl());
 
@@ -50,13 +55,52 @@ public class StartAppCommand extends AbstractCFCommand {
 			HttpUtil.configureHttpMethod(startMethod, target);
 			startMethod.setQueryString("inline-relations-depth=1");
 
-			JSONObject startComand = new JSONObject();
-			startComand.put("console", true);
-			startComand.put("state", "STARTED");
-			StringRequestEntity requestEntity = new StringRequestEntity(startComand.toString(), CFProtocolConstants.JSON_CONTENT_TYPE, "UTF-8");
+			JSONObject startCommand = new JSONObject();
+			startCommand.put("console", true);
+			startCommand.put("state", "STARTED");
+			StringRequestEntity requestEntity = new StringRequestEntity(startCommand.toString(), CFProtocolConstants.JSON_CONTENT_TYPE, "UTF-8");
 			startMethod.setRequestEntity(requestEntity);
 
-			return HttpUtil.executeMethod(startMethod);
+			ServerStatus startStatus = HttpUtil.executeMethod(startMethod);
+			result.add(startStatus);
+			if (!result.isOK())
+				return result;
+
+			/* long running task, keep track */
+			int attemptsLeft = MAX_ATTEMPTS;
+			while (attemptsLeft > 0) {
+				/* two seconds */
+				Thread.sleep(2000);
+
+				String appInstancesUrl = appUrl + "/stats";
+				URI appInstancesURI = targetURI.resolve(appInstancesUrl);
+
+				GetMethod getInstancesMethod = new GetMethod(appInstancesURI.toString());
+				HttpUtil.configureHttpMethod(getInstancesMethod, target);
+
+				ServerStatus getInstancesStatus = HttpUtil.executeMethod(getInstancesMethod);
+				result.add(getInstancesStatus);
+				if (!result.isOK())
+					return result;
+
+				JSONObject appInstancesJSON = getInstancesStatus.getJsonData();
+
+				int instancesNo = appInstancesJSON.length();
+				int runningInstanceNo = 0;
+				Iterator<String> instanceIt = appInstancesJSON.keys();
+				while (instanceIt.hasNext()) {
+					JSONObject instanceJSON = appInstancesJSON.getJSONObject(instanceIt.next());
+					if ("RUNNING".equals(instanceJSON.optString("state")))
+						runningInstanceNo++;
+				};
+
+				if (runningInstanceNo == instancesNo)
+					break;
+
+				--attemptsLeft;
+			}
+
+			return result;
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);

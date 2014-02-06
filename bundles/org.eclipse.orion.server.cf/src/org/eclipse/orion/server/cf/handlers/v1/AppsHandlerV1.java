@@ -96,7 +96,6 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 					Target target = computeTarget.getTarget();
 
 					GetAppCommand getAppCommand = new GetAppCommand(target, appName);
-
 					status = getAppCommand.doIt();
 					App app = getAppCommand.getApp();
 
@@ -122,7 +121,17 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 					if (!status.isOK())
 						return status;
 
-					return new PushAppCommand(target, app).doIt();
+					status = new PushAppCommand(target, app).doIt();
+					if (!status.isOK())
+						return status;
+
+					getAppCommand = new GetAppCommand(target, app.getName());
+					getAppCommand.doIt();
+					app = getAppCommand.getApp();
+
+					new StartAppCommand(target, app).doIt();
+
+					return status;
 				} catch (Exception e) {
 					String msg = NLS.bind("Failed to handle request for {0}", path); //$NON-NLS-1$
 					ServerStatus status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
