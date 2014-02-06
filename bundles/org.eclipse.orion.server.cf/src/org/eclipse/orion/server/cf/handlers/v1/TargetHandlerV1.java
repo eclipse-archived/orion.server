@@ -116,6 +116,10 @@ public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 			protected IStatus performJob() {
 				try {
 					Target target = CFActivator.getDefault().getTargetRegistry().getTarget(this.userId);
+					if (target == null) {
+						String msg = "Target not set"; //$NON-NLS-1$
+						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null);
+					}
 
 					LogoutCommand logoutCommand = new LogoutCommand(target);
 					return logoutCommand.doIt();
