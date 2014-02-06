@@ -43,7 +43,8 @@ public class Remote extends GitObject {
 				new Property(GitConstants.KEY_CLONE), // super
 				new Property(ProtocolConstants.KEY_NAME), //
 				new Property(GitConstants.KEY_URL), //
-				new Property(GitConstants.KEY_PUSH_URL)};
+				new Property(GitConstants.KEY_PUSH_URL),//
+				new Property(GitConstants.KEY_IS_GERRIT)};
 		DEFAULT_RESOURCE_SHAPE_WITHOUT_CHILDREN.setProperties(defaultProperties);
 
 		DEFAULT_RESOURCE_SHAPE.setProperties(DEFAULT_RESOURCE_SHAPE_WITHOUT_CHILDREN.getProperties());
@@ -139,6 +140,11 @@ public class Remote extends GitObject {
 	@PropertyDescription(name = ProtocolConstants.KEY_NAME)
 	public String getName() {
 		return name;
+	}
+
+	@PropertyDescription(name = GitConstants.KEY_IS_GERRIT)
+	public boolean getIsGerrit() {
+		return GitUtils.isGerrit(getConfig());
 	}
 
 	@Override
