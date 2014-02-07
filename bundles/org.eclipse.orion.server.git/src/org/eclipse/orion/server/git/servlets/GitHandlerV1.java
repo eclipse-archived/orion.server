@@ -72,24 +72,24 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 		}
 
 		//TODO: Add to constants
-		System.out.println("==============================================================");
-		String tokenName = PreferenceHelper.getString("ltpa.token.name"); //$NON-NLS-1$
-		System.out.println("TokenName " + tokenName);
+		//		System.out.println("==============================================================");
+		String tokenName = PreferenceHelper.getString("lpta.token.name"); //$NON-NLS-1$
+		//		System.out.println("TokenName " + tokenName);
 		if (tokenName != null) {
 			javax.servlet.http.Cookie[] cookies = request.getCookies();
-			System.out.println("Cookies length " + cookies.length);
+			//			System.out.println("Cookies length " + cookies.length);
 			if (cookies != null) {
 				for (int i = 0; i < cookies.length; i++) {
 					Cookie currentCookie = cookies[i];
-					System.out.println("Current cookie " + currentCookie.getName());
+					//					System.out.println("Current cookie " + currentCookie.getName());
 					if (tokenName.equals(currentCookie.getName())) {
-						System.out.println("TOKEN cookie " + currentCookie.getName() + " " + currentCookie.getValue());
+						//						System.out.println("TOKEN cookie " + currentCookie.getName() + " " + currentCookie.getValue());
 						Cookie loginCookie = new Cookie(currentCookie.getName(), currentCookie.getValue());
 						if (SSO_METHOD == null && !SSO_METHOD_INITIALIZED) {
 							try {
 								SSO_METHOD_INITIALIZED = true;
 								SSO_METHOD = TransportHttp.class.getMethod("setSSOToken", Cookie.class);
-								System.out.println("Got TransportMethod");
+								//								System.out.println("Got TransportMethod");
 							} catch (RuntimeException e) {
 								return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "RuntimeException while trying to look up JGit call", e));
 							} catch (NoSuchMethodException e) {
@@ -98,7 +98,7 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 						}
 						if (SSO_METHOD != null) {
 							try {
-								System.out.println("Setting Cookie " + Thread.currentThread().getId() + " Request " + request.getRequestURL());
+								//								System.out.println("Setting Cookie " + Thread.currentThread().getId() + " Request " + request.getRequestURL());
 								SSO_METHOD.invoke(null, loginCookie);
 							} catch (IllegalArgumentException e) {
 								return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "IllegalArgumentException while trying to set token", e));
@@ -112,7 +112,7 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 				}
 			}
 		}
-		System.out.println("==============================================================");
+		//		System.out.println("==============================================================");
 
 		if (infoParts[1].equals(Branch.RESOURCE)) {
 			return branchHandlerV1.handleRequest(request, response, pathString);
