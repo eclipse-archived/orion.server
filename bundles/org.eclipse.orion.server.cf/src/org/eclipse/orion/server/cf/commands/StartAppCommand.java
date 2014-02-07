@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
 
 public class StartAppCommand extends AbstractCFCommand {
 
-	private static final int MAX_ATTEMPTS = 150;
+	private static final int MAX_ATTEMPTS = 30;
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
