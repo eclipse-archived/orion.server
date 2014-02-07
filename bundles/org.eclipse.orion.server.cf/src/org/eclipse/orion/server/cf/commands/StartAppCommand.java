@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
 
 public class StartAppCommand extends AbstractCFCommand {
 
-	private static final int MAX_ATTEMPTS = 30;
+	private static final int MAX_ATTEMPTS = 150;
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
@@ -68,38 +68,50 @@ public class StartAppCommand extends AbstractCFCommand {
 
 			/* long running task, keep track */
 			int attemptsLeft = MAX_ATTEMPTS;
+
+			String msg = NLS.bind("Can not start the application", commandName); //$NON-NLS-1$
+			ServerStatus getInstancesStatus = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
+
 			while (attemptsLeft > 0) {
 				/* two seconds */
 				Thread.sleep(2000);
 
-				String appInstancesUrl = appUrl + "/stats";
+				// check instances
+				String appInstancesUrl = appUrl + "/instances";
 				URI appInstancesURI = targetURI.resolve(appInstancesUrl);
 
 				GetMethod getInstancesMethod = new GetMethod(appInstancesURI.toString());
 				HttpUtil.configureHttpMethod(getInstancesMethod, target);
 
-				ServerStatus getInstancesStatus = HttpUtil.executeMethod(getInstancesMethod);
-				result.add(getInstancesStatus);
-				if (!result.isOK())
-					return result;
+				getInstancesStatus = HttpUtil.executeMethod(getInstancesMethod);
+				if (!getInstancesStatus.isOK())
+					continue;
 
 				JSONObject appInstancesJSON = getInstancesStatus.getJsonData();
 
 				int instancesNo = appInstancesJSON.length();
 				int runningInstanceNo = 0;
+				int flappingInstanceNo = 0;
+
 				Iterator<String> instanceIt = appInstancesJSON.keys();
 				while (instanceIt.hasNext()) {
 					JSONObject instanceJSON = appInstancesJSON.getJSONObject(instanceIt.next());
 					if ("RUNNING".equals(instanceJSON.optString("state")))
 						runningInstanceNo++;
+					else if ("FLAPPING".equals(instanceJSON.optString("state")))
+						flappingInstanceNo++;
 				};
 
 				if (runningInstanceNo == instancesNo)
 					break;
 
+				if (flappingInstanceNo > 0)
+					break;
+
 				--attemptsLeft;
 			}
 
+			result.add(getInstancesStatus);
 			return result;
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
