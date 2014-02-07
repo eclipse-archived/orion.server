@@ -73,7 +73,7 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 
 		//TODO: Add to constants
 		System.out.println("==============================================================");
-		String tokenName = PreferenceHelper.getString("ltpa.token.name"); //$NON-NLS-1$
+		String tokenName = PreferenceHelper.getString("lpta.token.name"); //$NON-NLS-1$
 		System.out.println("TokenName " + tokenName);
 		if (tokenName != null) {
 			javax.servlet.http.Cookie[] cookies = request.getCookies();
