@@ -52,7 +52,7 @@ if [ ! -z "$xvfbCommand" ]; then
 	    exit 1
 	fi
 	
-	$xvfb :9 -ac > /dev/null 2>&1 &	# launch virtual frame buffer into the background
+	$xvfb :63 -ac > /dev/null 2>&1 &	# launch virtual frame buffer into the background
 	pid_xvfb="$!"			# take the process ID
 	echo $pid_xvfb
 	exit
@@ -85,7 +85,7 @@ fi
 browsers=(\
        firefox-23.0.1/firefox,firefox-23.0.1/firefox-bin)
 
-export DISPLAY=:9		# set display to use that of the xvfb
+export DISPLAY=:63		# set display to use that of the xvfb
 
 #read the port number from the testConf file
 port=`head -1 $testConf | sed 's_.*:\([0-9]*\)$_\1_'`
