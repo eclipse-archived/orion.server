@@ -11,14 +11,16 @@
 package org.eclipse.orion.server.git.servlets;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.*;
+import javax.servlet.http.Cookie;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.lib.*;
-import org.eclipse.jgit.transport.URIish;
+import org.eclipse.jgit.transport.*;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.core.Activator;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
@@ -286,5 +288,64 @@ public class GitUtils {
 		} else {
 			uriSchemeWhitelist.remove("file"); //$NON-NLS-1$
 		}
+	}
+
+	//Used for enabling SSO git operations over http
+	private static java.lang.reflect.Method SET_SSO_METHOD;
+	private static boolean SET_SSO_METHOD_INITIALIZED;
+	//Touch the Transport class so it gets initalized before TransportHttp
+	//	private static final boolean FORCE_INITIALIZE = Transport.DEFAULT_PUSH_THIN;
+	private static final RefSpec FORCE_INITIALIZE = Transport.REFSPEC_TAGS;
+
+	public static void setSSOToken(Cookie c) {
+		if (SET_SSO_METHOD == null && !SET_SSO_METHOD_INITIALIZED) {
+			try {
+				SET_SSO_METHOD_INITIALIZED = true;
+				SET_SSO_METHOD = TransportHttp.class.getMethod("setSSOToken", Cookie.class);
+			} catch (RuntimeException e) {
+				//				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "RuntimeException while trying to look up JGit call", e));
+			} catch (NoSuchMethodException e) {
+				//				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "NoSuchMethodException while trying to look up JGit call", e));
+			}
+		}
+		if (SET_SSO_METHOD != null) {
+			try {
+				SET_SSO_METHOD.invoke(null, c);
+			} catch (IllegalArgumentException e) {
+				//				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "IllegalArgumentException while trying to set token", e));
+			} catch (IllegalAccessException e) {
+				//				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "IllegalAccessException while trying to set token", e));
+			} catch (InvocationTargetException e) {
+				//				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "InvocationTargetException while trying to set token", e));
+			}
+		}
+	}
+
+	private static java.lang.reflect.Method GET_SSO_METHOD;
+	private static boolean GET_SSO_METHOD_INITIALIZED;
+
+	public static Cookie getSSOToken() {
+		if (GET_SSO_METHOD == null && !GET_SSO_METHOD_INITIALIZED) {
+			try {
+				GET_SSO_METHOD_INITIALIZED = true;
+				GET_SSO_METHOD = TransportHttp.class.getMethod("getSSOToken");
+			} catch (RuntimeException e) {
+				//				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "RuntimeException while trying to look up JGit call", e));
+			} catch (NoSuchMethodException e) {
+				//				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "NoSuchMethodException while trying to look up JGit call", e));
+			}
+		}
+		if (GET_SSO_METHOD != null) {
+			try {
+				return (Cookie) GET_SSO_METHOD.invoke(null);
+			} catch (IllegalArgumentException e) {
+				//				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "IllegalArgumentException while trying to set token", e));
+			} catch (IllegalAccessException e) {
+				//				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "IllegalAccessException while trying to set token", e));
+			} catch (InvocationTargetException e) {
+				//				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "InvocationTargetException while trying to set token", e));
+			}
+		}
+		return null;
 	}
 }

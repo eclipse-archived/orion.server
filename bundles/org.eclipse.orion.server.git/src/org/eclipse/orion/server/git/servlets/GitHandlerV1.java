@@ -10,14 +10,11 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
-import java.lang.reflect.InvocationTargetException;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
 import org.eclipse.core.runtime.*;
-import org.eclipse.jgit.transport.TransportHttp;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.PreferenceHelper;
-import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.objects.*;
 import org.eclipse.orion.server.git.objects.Status;
 
@@ -38,10 +35,6 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 	private ServletResourceHandler<String> blameHandlerV1;
 
 	private ServletResourceHandler<IStatus> statusHandler;
-
-	//Used for enabling SSO git operations over http
-	private static java.lang.reflect.Method SSO_METHOD;
-	private static boolean SSO_METHOD_INITIALIZED;
 
 	GitHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
 		branchHandlerV1 = new GitBranchHandlerV1(statusHandler);
@@ -72,47 +65,19 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 		}
 
 		//TODO: Add to constants
-		System.out.println("==============================================================");
-		String tokenName = PreferenceHelper.getString("lpta.token.name"); //$NON-NLS-1$
-		System.out.println("TokenName " + tokenName);
+		String tokenName = PreferenceHelper.getString("ltpa.token.name"); //$NON-NLS-1$
 		if (tokenName != null) {
 			javax.servlet.http.Cookie[] cookies = request.getCookies();
-			System.out.println("Cookies length " + cookies.length);
 			if (cookies != null) {
 				for (int i = 0; i < cookies.length; i++) {
 					Cookie currentCookie = cookies[i];
-					System.out.println("Current cookie " + currentCookie.getName());
 					if (tokenName.equals(currentCookie.getName())) {
-						System.out.println("TOKEN cookie " + currentCookie.getName() + " " + currentCookie.getValue());
 						Cookie loginCookie = new Cookie(currentCookie.getName(), currentCookie.getValue());
-						if (SSO_METHOD == null && !SSO_METHOD_INITIALIZED) {
-							try {
-								SSO_METHOD_INITIALIZED = true;
-								SSO_METHOD = TransportHttp.class.getMethod("setSSOToken", Cookie.class);
-								System.out.println("Got TransportMethod");
-							} catch (RuntimeException e) {
-								return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "RuntimeException while trying to look up JGit call", e));
-							} catch (NoSuchMethodException e) {
-								return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "NoSuchMethodException while trying to look up JGit call", e));
-							}
-						}
-						if (SSO_METHOD != null) {
-							try {
-								System.out.println("Setting Cookie " + Thread.currentThread().getId() + " Request " + request.getRequestURL());
-								SSO_METHOD.invoke(null, loginCookie);
-							} catch (IllegalArgumentException e) {
-								return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "IllegalArgumentException while trying to set token", e));
-							} catch (IllegalAccessException e) {
-								return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "IllegalAccessException while trying to set token", e));
-							} catch (InvocationTargetException e) {
-								return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "InvocationTargetException while trying to set token", e));
-							}
-						}
+						GitUtils.setSSOToken(loginCookie);
 					}
 				}
 			}
 		}
-		System.out.println("==============================================================");
 
 		if (infoParts[1].equals(Branch.RESOURCE)) {
 			return branchHandlerV1.handleRequest(request, response, pathString);
