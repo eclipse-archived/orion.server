@@ -44,7 +44,7 @@ public class ComputeTargetCommand implements ICFCommand {
 			try {
 				targetUrl = new URL(targetJSON.getString(CFProtocolConstants.KEY_URL));
 			} catch (Exception e) {
-				return null;
+				// do nothing
 			}
 			try {
 				manageUrl = new URL(targetJSON.getString(CFProtocolConstants.KEY_MANAGE_URL));

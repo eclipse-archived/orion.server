@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.handlers.v1;
 
-import java.net.URL;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
@@ -71,30 +70,17 @@ public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 			@Override
 			protected IStatus performJob() {
 				try {
-					Target target = null;
-
-					if (jsonData.has("Url")) {
-						URL targetUrl = new URL(jsonData.getString("Url"));
-						target = CFActivator.getDefault().getTargetRegistry().getTarget(this.userId, targetUrl);
-					} else {
-						target = CFActivator.getDefault().getTargetRegistry().getTarget(this.userId);
-					}
+					ComputeTargetCommand computeTarget = new ComputeTargetCommand(this.userId, jsonData);
+					IStatus result = computeTarget.doIt();
+					Target target = computeTarget.getTarget();
 
 					if (jsonData.has("Username") && jsonData.has("Password")) {
-						IStatus result = new LoginCommand(target, jsonData.getString("Username"), jsonData.getString("Password")).doIt();
+						result = new LoginCommand(target, jsonData.getString("Username"), jsonData.getString("Password")).doIt();
 						if (!result.isOK())
 							return result;
 					}
 
-					IStatus result = new SetOrgCommand(target, jsonData.optString("Org")).doIt();
-					if (!result.isOK())
-						return result;
-
-					result = new SetSpaceCommand(target, jsonData.optString("Space")).doIt();
-					if (!result.isOK())
-						return result;
-
-					CFActivator.getDefault().getTargetRegistry().markDefault(this.userId, target.getCloud());
+					CFActivator.getDefault().getTargetRegistry().markDefault(this.userId, target);
 
 					return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, target.toJSON());
 				} catch (Exception e) {

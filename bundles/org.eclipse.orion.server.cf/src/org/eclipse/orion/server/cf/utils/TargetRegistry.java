@@ -19,10 +19,10 @@ import org.eclipse.orion.server.cf.objects.Target;
 
 public class TargetRegistry {
 
-	private Map<String, UserClouds> cloudMap;
+	private Map<String, UserTargets> cloudMap;
 
 	public TargetRegistry() {
-		this.cloudMap = Collections.synchronizedMap(new HashMap<String, UserClouds>());
+		this.cloudMap = Collections.synchronizedMap(new HashMap<String, UserTargets>());
 	}
 
 	public Target getTarget(String userId) {
@@ -30,45 +30,38 @@ public class TargetRegistry {
 	}
 
 	public Target getTarget(String userId, URL url) {
-		UserClouds userClouds = getUserClouds(userId);
-		Cloud cloud = userClouds.get(url);
-		if (cloud == null)
-			return null;
-		return new Target(userClouds.get(url));
+		UserTargets userClouds = getUserClouds(userId);
+		return userClouds.get(url);
 	}
 
-	public void markDefault(String userId, Cloud cloud) {
-		UserClouds userClouds = getUserClouds(userId);
-		userClouds.markDefault(cloud);
+	public void markDefault(String userId, Target target) {
+		UserTargets userClouds = getUserClouds(userId);
+		userClouds.markDefault(target);
 	}
 
-	private UserClouds getUserClouds(String userId) {
-		UserClouds userClouds = cloudMap.get(userId);
+	private UserTargets getUserClouds(String userId) {
+		UserTargets userClouds = cloudMap.get(userId);
 		if (userClouds == null) {
-			userClouds = new UserClouds(userId);
+			userClouds = new UserTargets(userId);
 			cloudMap.put(userId, userClouds);
 		}
 		return userClouds;
 	}
 
-	private class UserClouds {
+	private class UserTargets {
 
 		private String userId;
 
 		private Map<URL, Cloud> userCloudMap;
 
-		private URL defaultCloudUrl;
+		private Target defaultTarget;
 
-		UserClouds(String userId) {
+		private UserTargets(String userId) {
 			this.userId = userId;
 			this.userCloudMap = Collections.synchronizedMap(new HashMap<URL, Cloud>());
 		}
 
-		Cloud get(URL url) {
-			url = (url != null ? normalizeURL(url) : defaultCloudUrl);
-			if (url == null) {
-				return null;
-			}
+		private Cloud getCloud(URL url) {
 			Cloud cloud = userCloudMap.get(url);
 			if (cloud == null) {
 				cloud = new Cloud(url, null, this.userId);
@@ -78,9 +71,21 @@ public class TargetRegistry {
 			return cloud;
 		}
 
-		private void markDefault(Cloud cloud) {
-			userCloudMap.get(cloud.getUrl());
-			defaultCloudUrl = cloud.getUrl();
+		private Target get(URL url) {
+			url = normalizeURL(url);
+			if (url == null || (defaultTarget != null && url.equals(defaultTarget.getCloud().getUrl()))) {
+				return defaultTarget;
+			}
+			Cloud cloud = getCloud(url);
+			return new Target(cloud);
+		}
+
+		private void markDefault(Target target) {
+			Cloud cloud = getCloud(target.getCloud().getUrl());
+			Target newTarget = new Target(cloud);
+			newTarget.setOrg(target.getOrg());
+			newTarget.setSpace(target.getSpace());
+			defaultTarget = newTarget;
 		}
 
 		private void setAuthToken(Cloud cloud) {
@@ -91,6 +96,9 @@ public class TargetRegistry {
 		}
 
 		private URL normalizeURL(URL url) {
+			if (url == null)
+				return null;
+
 			String urlString = url.toString();
 			if (urlString.endsWith("/")) {
 				urlString = urlString.substring(0, urlString.length() - 1);
