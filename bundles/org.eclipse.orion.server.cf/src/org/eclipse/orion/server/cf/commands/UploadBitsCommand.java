@@ -21,6 +21,7 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.multipart.*;
 import org.eclipse.core.filesystem.*;
+import org.eclipse.core.internal.filesystem.local.LocalFile;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.core.IOUtilities;
@@ -57,8 +58,8 @@ public class UploadBitsCommand extends AbstractCFCommand {
 
 		try {
 			/* upload project contents */
-			File zippedApplication = zipApplication(application.getAppStore());
-			if (zippedApplication == null) {
+			File appPackage = getAppPackage(application.getAppStore());
+			if (appPackage == null) {
 				status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to read application content", null));
 				return status;
 			}
@@ -67,7 +68,7 @@ public class UploadBitsCommand extends AbstractCFCommand {
 			PutMethod uploadMethod = new PutMethod(targetURI.resolve("/v2/apps/" + application.getGuid() + "/bits?async=true").toString());
 			uploadMethod.addRequestHeader(new Header("Authorization", "bearer " + target.getCloud().getAccessToken().getString("access_token")));
 
-			Part[] parts = {new StringPart(CFProtocolConstants.V2_KEY_RESOURCES, "[]"), new FilePart(CFProtocolConstants.V2_KEY_APPLICATION, zippedApplication)};
+			Part[] parts = {new StringPart(CFProtocolConstants.V2_KEY_RESOURCES, "[]"), new FilePart(CFProtocolConstants.V2_KEY_APPLICATION, appPackage)};
 			uploadMethod.setRequestEntity(new MultipartRequestEntity(parts, uploadMethod.getParams()));
 
 			/* send request */
@@ -84,7 +85,7 @@ public class UploadBitsCommand extends AbstractCFCommand {
 
 				if (attemptsLeft == 0) {
 					/* delete the tmp file */
-					zippedApplication.delete();
+					appPackage.delete();
 					status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Upload timeout exceeded", null));
 					return status;
 				}
@@ -115,7 +116,7 @@ public class UploadBitsCommand extends AbstractCFCommand {
 			}
 
 			/* delete the tmp file */
-			zippedApplication.delete();
+			appPackage.delete();
 
 			return status;
 
@@ -127,7 +128,7 @@ public class UploadBitsCommand extends AbstractCFCommand {
 		}
 	}
 
-	private File zipApplication(IFileStore appStore) throws IOException, CoreException {
+	private File getAppPackage(IFileStore appStore) throws IOException, CoreException {
 		if (appStore == null)
 			return null;
 
@@ -137,6 +138,15 @@ public class UploadBitsCommand extends AbstractCFCommand {
 		/* zip application to a temporary file */
 		String randomName = UUID.randomUUID().toString();
 		File tmp = File.createTempFile(randomName, ".zip");
+
+		// try to find a war file
+		IFileStore[] children = appStore.childStores(EFS.NONE, null);
+		for (int i = 0; i < children.length; i++) {
+			if (children[i].getName().endsWith(".war")) {
+				children[i].copy(new LocalFile(tmp), EFS.OVERWRITE, null);
+				return tmp;
+			}
+		}
 
 		try {
 			ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(tmp));

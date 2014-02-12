@@ -90,8 +90,8 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 			JSONObject appJSON = application.getManifest().getJSONArray(CFProtocolConstants.V2_KEY_APPLICATIONS).getJSONObject(0);
 
 			appName = appJSON.getString(CFProtocolConstants.V2_KEY_NAME); /* required */
-			appCommand = appJSON.getString(CFProtocolConstants.V2_KEY_COMMAND); /* required */
 
+			appCommand = appJSON.optString(CFProtocolConstants.V2_KEY_COMMAND);
 			appInstances = ManifestUtils.getInstances(appJSON.optString(CFProtocolConstants.V2_KEY_INSTANCES)); /* optional */
 			appMemory = ManifestUtils.getMemoryLimit(appJSON.optString(CFProtocolConstants.V2_KEY_MEMORY)); /* optional */
 
