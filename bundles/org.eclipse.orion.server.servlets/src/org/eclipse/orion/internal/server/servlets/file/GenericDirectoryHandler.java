@@ -26,7 +26,7 @@ import org.eclipse.osgi.util.NLS;
  * A directory handler suitable for use by a generic HTTP client, such as a web browser.
  */
 public class GenericDirectoryHandler extends ServletResourceHandler<IFileStore> {
-	private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/DD HH:mm:ss"); //$NON-NLS-1$
+	private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss"); //$NON-NLS-1$
 
 	@Override
 	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, IFileStore dir) throws ServletException {
