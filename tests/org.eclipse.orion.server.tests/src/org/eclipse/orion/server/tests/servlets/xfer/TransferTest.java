@@ -142,7 +142,8 @@ public class TransferTest extends FileSystemTest {
 	}
 
 	@After
-	public void removeTempDir() throws CoreException {
+	public void tearDown() throws CoreException {
+		clearWorkspace();
 		remove("sample");
 	}
 
