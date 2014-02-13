@@ -38,18 +38,28 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 	private int appInstances;
 	private int appMemory;
 
-	public CreateApplicationCommand(Target target, App app) {
+	private boolean force;
+
+	public CreateApplicationCommand(Target target, App app, boolean force) {
 		super(target);
 		this.commandName = "Create a new application";
 		this.application = app;
+		this.force = force;
 	}
 
 	@Override
 	protected ServerStatus _doIt() {
 		try {
+
+			if (force) {
+				/* make sure we override the application */
+				DeleteApplicationCommand deleteApplicationCommand = new DeleteApplicationCommand(target, application);
+				deleteApplicationCommand.doIt(); /* we don't need to know whether the deletion succeeded or not */
+			}
+
 			/* create cloud foundry application */
 			URI targetURI = URIUtil.toURI(target.getUrl());
-			URI appsURI = targetURI.resolve("/v2/apps");
+			URI appsURI = targetURI.resolve("/v2/apps"); //$NON-NLS-1$
 
 			PostMethod createAppMethod = new PostMethod(appsURI.toString());
 			HttpUtil.configureHttpMethod(createAppMethod, target);
@@ -63,7 +73,7 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 			createAppRequst.put(CFProtocolConstants.V2_KEY_COMMAND, appCommand);
 			createAppRequst.put(CFProtocolConstants.V2_KEY_MEMORY, appMemory);
 			createAppRequst.put(CFProtocolConstants.V2_KEY_STACK_GUID, JSONObject.NULL);
-			createAppMethod.setRequestEntity(new StringRequestEntity(createAppRequst.toString(), "application/json", "utf-8"));
+			createAppMethod.setRequestEntity(new StringRequestEntity(createAppRequst.toString(), "application/json", "utf-8")); //$NON-NLS-1$ //$NON-NLS-2$
 
 			ServerStatus status = HttpUtil.executeMethod(createAppMethod);
 			if (!status.isOK())

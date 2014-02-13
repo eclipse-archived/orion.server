@@ -85,6 +85,9 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 		final JSONObject targetJSON = jsonData.optJSONObject(CFProtocolConstants.KEY_TARGET);
 		final String contentLocation = ServletResourceHandler.toOrionLocation(request, jsonData.optString(CFProtocolConstants.KEY_CONTENT_LOCATION));
 
+		/* TODO: The force shouldn't be always with us */
+		final boolean force = jsonData.optBoolean(CFProtocolConstants.KEY_FORCE, true);
+
 		return new CFJob(request, false) {
 			@Override
 			protected IStatus performJob() {
@@ -121,7 +124,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 					if (!status.isOK())
 						return status;
 
-					status = new PushAppCommand(target, app).doIt();
+					status = new PushAppCommand(target, app, force).doIt();
 					if (!status.isOK())
 						return status;
 
