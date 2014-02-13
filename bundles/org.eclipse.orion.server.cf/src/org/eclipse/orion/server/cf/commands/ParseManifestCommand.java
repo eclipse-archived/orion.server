@@ -69,14 +69,14 @@ public class ParseManifestCommand extends AbstractCFCommand {
 			IFileStore fileStore = NewFileServlet.getFileStore(null, contentPath);
 
 			if (fileStore == null) {
-				String msg = NLS.bind("Failed to find application manifest due to incorrect contentLocation: {0}", contentLocation);
+				String msg = "Failed to find application manifest. If you have one, please select it or the folder that contains it before deploying.";
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
 			}
 
 			/* lookup the manifest description */
 			IFileStore manifestStore = fileStore.getChild(ManifestUtils.MANIFEST_FILE_NAME);
 			if (!manifestStore.fetchInfo().exists()) {
-				String msg = NLS.bind("Failed to find application manifest in location: {0}", contentLocation);
+				String msg = "Failed to find application manifest. If you have one, please select it or the folder that contains it before deploying.";
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
 			}
 
