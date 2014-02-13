@@ -34,6 +34,11 @@ public class HttpUtil {
 		try {
 
 			int code = CFActivator.getDefault().getHttpClient().executeMethod(method);
+
+			if (code == 204)
+				/* no content response */
+				return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
+
 			String response = method.getResponseBodyAsString();
 			JSONObject result;
 
