@@ -14,25 +14,29 @@ import java.net.URI;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.eclipse.orion.server.cf.CFProtocolConstants;
+import org.eclipse.osgi.util.NLS;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Common manifest parser utilities.
  */
 public class ManifestUtils {
-	public static final String MANIFEST_FILE_NAME = "manifest.yml";
+	public static final String MANIFEST_FILE_NAME = "manifest.yml"; //$NON-NLS-1$
 
-	private static final Pattern pattern = Pattern.compile("[^ ]");
-	private static final String MANIFEST_TARGET_BASE_SYMBOL = "${target-base}";
-	private static final String MANIFEST_TARGET_BASE_SYMBOL_PATTERN = "\\$\\{target-base\\}";
+	private static final Pattern pattern = Pattern.compile("[^ ]"); //$NON-NLS-1$
+	private static final String MANIFEST_TARGET_BASE_SYMBOL = "${target-base}"; //$NON-NLS-1$
+	private static final String MANIFEST_TARGET_BASE_SYMBOL_PATTERN = "\\$\\{target-base\\}"; //$NON-NLS-1$
 
-	private static final String MANIFEST_RANDOM_WORD_SYMBOL = "${random-word}";
-	private static final String MANIFEST_RANDOM_WORD_SYMBOL_PATTERN = "\\$\\{random-word\\}";
+	private static final String MANIFEST_RANDOM_WORD_SYMBOL = "${random-word}"; //$NON-NLS-1$
+	private static final String MANIFEST_RANDOM_WORD_SYMBOL_PATTERN = "\\$\\{random-word\\}"; //$NON-NLS-1$
 
 	/**
 	 * Removes in-line comments form the single input line.
 	 */
 	static String removeComments(String input) {
-		return input.split("#")[0];
+		return input.split("#")[0]; //$NON-NLS-1$
 	}
 
 	/**
@@ -40,15 +44,15 @@ public class ManifestUtils {
 	 * starts a new sequence item or not.
 	 */
 	static boolean isSequenceItem(String input) {
-		return input.trim().startsWith("- ");
+		return input.trim().startsWith("- "); //$NON-NLS-1$
 	}
 
 	/**
 	 * Parses <A>:<B> from the input line.
 	 */
 	static String[] splitLabel(String input) {
-		String[] sLabel = input.split(":");
-		if (sLabel[0].startsWith("- "))
+		String[] sLabel = input.split(":"); //$NON-NLS-1$
+		if (sLabel[0].startsWith("- ")) //$NON-NLS-1$
 			sLabel[0] = sLabel[0].substring(2);
 
 		if (sLabel.length > 1)
@@ -74,7 +78,7 @@ public class ManifestUtils {
 	 * string in form of <Integer>M. Defaults to 128.
 	 */
 	public static int getMemoryLimit(String input) {
-		return (!input.isEmpty()) ? Integer.parseInt(input.split("M")[0]) : 128;
+		return (!input.isEmpty()) ? Integer.parseInt(input.split("M")[0]) : 128; //$NON-NLS-1$
 	}
 
 	/**
@@ -112,11 +116,44 @@ public class ManifestUtils {
 	 * from the given input.
 	 */
 	static String normalize(String input) {
-		boolean openingQuot = (input.startsWith("\"") || input.startsWith("\'"));
-		boolean endingQuot = (input.endsWith("\"") || input.endsWith("\'"));
+		boolean openingQuot = (input.startsWith("\"") || input.startsWith("\'")); //$NON-NLS-1$//$NON-NLS-2$
+		boolean endingQuot = (input.endsWith("\"") || input.endsWith("\'")); //$NON-NLS-1$ //$NON-NLS-2$
 		if (openingQuot && endingQuot)
 			return input.substring(1, input.length() - 1);
 		else
 			return input;
+	}
+
+	/* TODO: Replace helpers methods with intermediate manifest structure */
+	public static JSONObject getApplication(JSONObject manifest) throws ParseException {
+		try {
+			return manifest.getJSONArray(CFProtocolConstants.V2_KEY_APPLICATIONS).getJSONObject(0);
+		} catch (JSONException ex) {
+			throw new ParseException(ManifestConstants.PARSE_ERROR_MISSING_APPLICATION);
+		}
+	}
+
+	public static String getApplicationName(JSONObject application) throws ParseException {
+		try {
+			return application.getString(CFProtocolConstants.V2_KEY_NAME);
+		} catch (JSONException ex) {
+			throw new ParseException(ManifestConstants.PARSE_ERROR_MISSING_APPLICATION_NAME);
+		}
+	}
+
+	public static JSONObject getJSON(JSONObject parent, String child, String parentName) throws ParseException {
+		try {
+			return parent.getJSONObject(child);
+		} catch (JSONException ex) {
+			throw new ParseException(NLS.bind(ManifestConstants.PARSE_ERROR_MISSING_GROUP_TOKEN, child, parentName));
+		}
+	}
+
+	public static String getString(JSONObject parent, String child, String parentName) throws ParseException {
+		try {
+			return parent.getString(child);
+		} catch (JSONException ex) {
+			throw new ParseException(NLS.bind(ManifestConstants.PARSE_ERROR_MISSING_TOKEN, child, parentName));
+		}
 	}
 }

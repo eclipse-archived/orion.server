@@ -43,7 +43,7 @@ public class GetDomainsCommand extends AbstractCFCommand {
 
 			GetMethod getDomainsMethod = new GetMethod(domainsURI.toString());
 			HttpUtil.configureHttpMethod(getDomainsMethod, target);
-			getDomainsMethod.setQueryString("inline-relations-depth=1");
+			getDomainsMethod.setQueryString("inline-relations-depth=1"); //$NON-NLS-1$
 
 			return HttpUtil.executeMethod(getDomainsMethod);
 

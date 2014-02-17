@@ -59,11 +59,12 @@ public class ParseManifest_Command extends AbstractCFCommand {
 			URI targetURI = URIUtil.toURI(target.getUrl());
 			JSONObject manifest = manifestTree.toJSON(targetURI);
 
-			/* set application application store relative to the path parameter */
-			JSONObject appJSON = manifest.getJSONArray(CFProtocolConstants.V2_KEY_APPLICATIONS).getJSONObject(0);
+			/* set application store relative to the path parameter */
+			JSONObject appJSON = ManifestUtils.getApplication(manifest);
+
 			String path = appJSON.optString(CFProtocolConstants.V2_KEY_PATH); /* optional */
 			if (path.isEmpty())
-				path = ".";
+				path = "."; //$NON-NLS-1$
 
 			try {
 				IFileStore appStore = fileStore.getFileStore(new Path(path));
@@ -82,6 +83,8 @@ public class ParseManifest_Command extends AbstractCFCommand {
 
 			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
 
+		} catch (ParseException e) {
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null);
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);

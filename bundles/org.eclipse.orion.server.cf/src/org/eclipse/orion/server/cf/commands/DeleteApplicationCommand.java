@@ -15,9 +15,10 @@ import java.util.ArrayList;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.DeleteMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
+import org.eclipse.orion.server.cf.manifest.ManifestUtils;
+import org.eclipse.orion.server.cf.manifest.ParseException;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
@@ -34,6 +35,8 @@ public class DeleteApplicationCommand extends AbstractCFCommand {
 	private String commandName;
 	private App application;
 
+	private String appName;
+
 	public DeleteApplicationCommand(Target target, App app) {
 		super(target);
 		this.commandName = "Delete the application";
@@ -45,9 +48,6 @@ public class DeleteApplicationCommand extends AbstractCFCommand {
 		try {
 
 			/* read deploy parameters */
-			JSONObject appJSON = application.getManifest().getJSONArray(CFProtocolConstants.V2_KEY_APPLICATIONS).getJSONObject(0);
-			String appName = appJSON.getString(CFProtocolConstants.V2_KEY_NAME); /* required */
-
 			JSONObject appMetadata = null;
 			JSONObject appEntity = null;
 
@@ -125,6 +125,19 @@ public class DeleteApplicationCommand extends AbstractCFCommand {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName);
 			logger.error(msg, e);
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
+		}
+	}
+
+	@Override
+	protected IStatus validateParams() {
+		try {
+			/* read deploy parameters */
+			JSONObject appJSON = ManifestUtils.getApplication(application.getManifest());
+			appName = ManifestUtils.getApplicationName(appJSON); /* required */
+			return Status.OK_STATUS;
+
+		} catch (ParseException e) {
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null);
 		}
 	}
 }

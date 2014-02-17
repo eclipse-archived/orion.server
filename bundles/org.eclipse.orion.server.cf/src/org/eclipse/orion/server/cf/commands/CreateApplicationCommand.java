@@ -17,6 +17,7 @@ import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.manifest.ManifestUtils;
+import org.eclipse.orion.server.cf.manifest.ParseException;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
@@ -82,7 +83,7 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 			/* extract application guid */
 			JSONObject appResp = status.getJsonData();
 			application.setGuid(appResp.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID));
-			application.setName(application.getManifest().getJSONArray(CFProtocolConstants.V2_KEY_APPLICATIONS).getJSONObject(0).getString(CFProtocolConstants.V2_KEY_NAME));
+			application.setName(appName);
 
 			return status;
 
@@ -97,9 +98,8 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 	protected IStatus validateParams() {
 		try {
 			/* read deploy parameters */
-			JSONObject appJSON = application.getManifest().getJSONArray(CFProtocolConstants.V2_KEY_APPLICATIONS).getJSONObject(0);
-
-			appName = appJSON.getString(CFProtocolConstants.V2_KEY_NAME); /* required */
+			JSONObject appJSON = ManifestUtils.getApplication(application.getManifest());
+			appName = ManifestUtils.getApplicationName(appJSON); /* required */
 
 			appCommand = appJSON.optString(CFProtocolConstants.V2_KEY_COMMAND);
 			appInstances = ManifestUtils.getInstances(appJSON.optString(CFProtocolConstants.V2_KEY_INSTANCES)); /* optional */
@@ -107,10 +107,8 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 
 			return Status.OK_STATUS;
 
-		} catch (Exception ex) {
-			/* parse exception, fail */
-			String msg = "Corrupted or unsupported manifest format";
-			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
+		} catch (ParseException e) {
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null);
 		}
 	}
 }

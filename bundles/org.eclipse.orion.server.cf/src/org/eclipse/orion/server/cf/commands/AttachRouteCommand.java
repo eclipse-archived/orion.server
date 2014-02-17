@@ -46,7 +46,7 @@ public class AttachRouteCommand extends AbstractCFCommand {
 
 			/* attach route to application */
 			URI targetURI = URIUtil.toURI(target.getUrl());
-			PutMethod attachRouteMethod = new PutMethod(targetURI.resolve("/v2/apps/" + application.getGuid() + "/routes/" + routeGUID).toString());
+			PutMethod attachRouteMethod = new PutMethod(targetURI.resolve("/v2/apps/" + application.getGuid() + "/routes/" + routeGUID).toString()); //$NON-NLS-1$//$NON-NLS-2$
 			HttpUtil.configureHttpMethod(attachRouteMethod, target);
 			return HttpUtil.executeMethod(attachRouteMethod);
 

@@ -17,6 +17,8 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
+import org.eclipse.orion.server.cf.manifest.ManifestUtils;
+import org.eclipse.orion.server.cf.manifest.ParseException;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
@@ -51,7 +53,7 @@ public class CreateRouteCommand extends AbstractCFCommand {
 		try {
 			/* create cloud foundry application */
 			URI targetURI = URIUtil.toURI(target.getUrl());
-			URI routesURI = targetURI.resolve("/v2/routes");
+			URI routesURI = targetURI.resolve("/v2/routes"); //$NON-NLS-1$
 
 			PostMethod createRouteMethod = new PostMethod(routesURI.toString());
 			HttpUtil.configureHttpMethod(createRouteMethod, target);
@@ -61,7 +63,7 @@ public class CreateRouteCommand extends AbstractCFCommand {
 			routeRequest.put(CFProtocolConstants.V2_KEY_SPACE_GUID, target.getSpace().getCFJSON().getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID));
 			routeRequest.put(CFProtocolConstants.V2_KEY_HOST, appHost);
 			routeRequest.put(CFProtocolConstants.V2_KEY_DOMAIN_GUID, domainGUID);
-			createRouteMethod.setRequestEntity(new StringRequestEntity(routeRequest.toString(), "application/json", "utf-8"));
+			createRouteMethod.setRequestEntity(new StringRequestEntity(routeRequest.toString(), "application/json", "utf-8")); //$NON-NLS-1$//$NON-NLS-2$
 
 			return HttpUtil.executeMethod(createRouteMethod);
 
@@ -76,20 +78,17 @@ public class CreateRouteCommand extends AbstractCFCommand {
 	protected IStatus validateParams() {
 		try {
 			/* read deploy parameters */
-			JSONObject appJSON = application.getManifest().getJSONArray(CFProtocolConstants.V2_KEY_APPLICATIONS).getJSONObject(0);
-
-			appName = appJSON.getString(CFProtocolConstants.V2_KEY_NAME); /* required */
+			JSONObject appJSON = ManifestUtils.getApplication(application.getManifest());
+			appName = ManifestUtils.getApplicationName(appJSON); /* required */
 
 			/* if none provided, sets a default one */
 			String inputHost = appJSON.optString(CFProtocolConstants.V2_KEY_HOST);
-			appHost = (!inputHost.isEmpty()) ? inputHost : (appName + "-" + UUID.randomUUID());
+			appHost = (!inputHost.isEmpty()) ? inputHost : (appName + "-" + UUID.randomUUID()); //$NON-NLS-1$
 
 			return Status.OK_STATUS;
 
-		} catch (Exception ex) {
-			/* parse exception, fail */
-			String msg = "Corrupted or unsupported manifest format";
-			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
+		} catch (ParseException e) {
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null);
 		}
 	}
 }

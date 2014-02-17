@@ -14,6 +14,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
+import org.eclipse.orion.server.cf.manifest.ManifestUtils;
+import org.eclipse.orion.server.cf.manifest.ParseException;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.MultiServerStatus;
@@ -63,7 +65,7 @@ public class BindRouteCommand extends AbstractCFCommand {
 
 			/* get available domains */
 			GetDomainsCommand getDomains = new GetDomainsCommand(target);
-			ServerStatus jobStatus = (ServerStatus) getDomains.doIt(); /* TODO: unsafe type cast */
+			ServerStatus jobStatus = (ServerStatus) getDomains.doIt(); /* FIXME: unsafe type cast */
 			status.add(jobStatus);
 
 			if (!jobStatus.isOK())
@@ -107,7 +109,7 @@ public class BindRouteCommand extends AbstractCFCommand {
 
 			/* new application, we do not need to check for attached routes, create a new one */
 			CreateRouteCommand createRoute = new CreateRouteCommand(target, application, domainGUID);
-			jobStatus = (ServerStatus) createRoute.doIt(); /* TODO: unsafe type cast */
+			jobStatus = (ServerStatus) createRoute.doIt(); /* FIXME: unsafe type cast */
 			status.add(jobStatus);
 
 			if (!jobStatus.isOK())
@@ -119,7 +121,7 @@ public class BindRouteCommand extends AbstractCFCommand {
 
 			/* attach route to application */
 			AttachRouteCommand attachRoute = new AttachRouteCommand(target, application, routeGUID);
-			jobStatus = (ServerStatus) attachRoute.doIt(); /* TODO: unsafe type cast */
+			jobStatus = (ServerStatus) attachRoute.doIt(); /* FIXME: unsafe type cast */
 			status.add(jobStatus);
 
 			if (!jobStatus.isOK())
@@ -139,15 +141,12 @@ public class BindRouteCommand extends AbstractCFCommand {
 	protected IStatus validateParams() {
 		try {
 			/* read deploy parameters */
-			JSONObject appJSON = application.getManifest().getJSONArray(CFProtocolConstants.V2_KEY_APPLICATIONS).getJSONObject(0);
+			JSONObject appJSON = ManifestUtils.getApplication(application.getManifest());
 			appDomain = appJSON.optString(CFProtocolConstants.V2_KEY_DOMAIN); /* optional */
-
 			return Status.OK_STATUS;
 
-		} catch (Exception ex) {
-			/* parse exception, fail */
-			String msg = "Corrupted or unsupported manifest format";
-			return new MultiServerStatus(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+		} catch (ParseException e) {
+			return new MultiServerStatus(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null));
 		}
 	}
 }
