@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others.
+ * Copyright (c) 2013-2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,6 +12,7 @@ package org.eclipse.orion.server.cf.manifest;
 
 import java.util.LinkedList;
 import java.util.Scanner;
+import org.eclipse.osgi.util.NLS;
 
 public class ManifestParser {
 
@@ -35,29 +36,36 @@ public class ManifestParser {
 		/* scan the manifest root */
 		String input = null;
 
+		int currLine = 0;
 		while (scanner.hasNextLine()) {
 			input = ManifestUtils.removeComments(scanner.nextLine());
+			++currLine;
 
 			/* ignore the (possibly) initial '---' line */
-			if ("---".equals(input.trim()))
+			if ("---".equals(input.trim())) { //$NON-NLS-1$
+				input = null;
 				continue;
+			}
 
 			if (input.length() > 0)
 				break;
+
+			input = null;
 		}
 
 		if (input == null || input.length() == 0)
-			throw new ParseException("Corrupted or unsupported manifest format");
+			throw new ParseException(ManifestConstants.PARSE_ERROR_UNEXPECTED_EMPTY_LINE, currLine + 1);
 
 		int depth = ManifestUtils.getDepth(input);
 
-		ManifestNode tree = new ManifestNode(input, depth);
+		ManifestNode tree = new ManifestNode(input, depth, currLine);
 		LinkedList<ManifestNode> nodeList = new LinkedList<ManifestNode>();
 		nodeList.addFirst(tree);
 
 		while (scanner.hasNextLine()) {
 			input = ManifestUtils.removeComments(scanner.nextLine());
 			depth = ManifestUtils.getDepth(input);
+			++currLine;
 
 			if (input.length() == 0)
 				continue;
@@ -66,10 +74,10 @@ public class ManifestParser {
 				depth = depth + 2;
 
 			/* attach to last node with strictly smaller depth */
-			ManifestNode node = new ManifestNode(input, depth);
+			ManifestNode node = new ManifestNode(input, depth, currLine);
 			ManifestNode father = getFather(nodeList, node);
 			if (father == null)
-				throw new ParseException("Corrupted or unsupported manifest format");
+				throw new ParseException(NLS.bind(ManifestConstants.PARSE_ERROR_UNEXPECTED_TOKEN_INDENTATION, input), currLine);
 
 			father.getChildren().add(node);
 			nodeList.addFirst(node);

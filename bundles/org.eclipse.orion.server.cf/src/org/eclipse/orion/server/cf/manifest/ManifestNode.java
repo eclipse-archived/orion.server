@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others.
+ * Copyright (c) 2013-2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,6 +13,7 @@ package org.eclipse.orion.server.cf.manifest;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import org.eclipse.osgi.util.NLS;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -27,11 +28,13 @@ public class ManifestNode {
 	private List<ManifestNode> children;
 	private String label;
 	private int depth;
+	private int line;
 
-	public ManifestNode(String label, int depth) {
+	public ManifestNode(String label, int depth, int line) {
 		this.children = new ArrayList<ManifestNode>();
 		this.label = label.trim();
 		this.depth = depth;
+		this.line = line;
 	}
 
 	public List<ManifestNode> getChildren() {
@@ -52,10 +55,10 @@ public class ManifestNode {
 		int depth = getDepth();
 
 		while (depth-- > 0)
-			sb.append(" ");
+			sb.append(" "); //$NON-NLS-1$
 
 		sb.append(getLabel());
-		sb.append(System.getProperty("line.separator"));
+		sb.append(System.getProperty("line.separator")); //$NON-NLS-1$
 
 		for (ManifestNode child : getChildren())
 			sb.append(child.toString());
@@ -72,6 +75,9 @@ public class ManifestNode {
 				/* leaf node */
 				JSONObject res = new JSONObject();
 				String[] sLabel = ManifestUtils.splitLabel(label);
+				if (sLabel.length != 2)
+					throw new ParseException(NLS.bind(ManifestConstants.PARSE_ERROR_UNEXPECTED_TOKEN_MAPPING, label), line);
+
 				res.put(sLabel[0], ManifestUtils.normalize(ManifestUtils.resolve(sLabel[1], target)));
 				return res;
 			}
@@ -94,6 +100,9 @@ public class ManifestNode {
 
 				JSONObject res = new JSONObject();
 				String[] sLabel = ManifestUtils.splitLabel(label);
+				if (sLabel.length != 1)
+					throw new ParseException(NLS.bind(ManifestConstants.PARSE_ERROR_UNEXPECTED_TOKEN_GROUP, label), line);
+
 				res.put(sLabel[0], arrayRepresentation);
 				return res;
 			}
@@ -109,14 +118,17 @@ public class ManifestNode {
 			String[] sLabel = ManifestUtils.splitLabel(label);
 			res.put(sLabel[0], inner);
 			return res;
-		} catch (Exception ex) {
+		} catch (ParseException e) {
 			/* corrupted or unsupported manifest format, admit failure */
-			throw new ParseException("Corrupted or unsupported manifest format");
+			throw e;
+		} catch (Exception ex) {
+			/* unexpected error, send generic parse exception */
+			throw new ParseException();
 		}
 	}
 
 	private boolean isSequenceItem() {
-		return label.startsWith("- ");
+		return label.startsWith("- "); //$NON-NLS-1$
 	}
 
 	private boolean isArrayNode() {

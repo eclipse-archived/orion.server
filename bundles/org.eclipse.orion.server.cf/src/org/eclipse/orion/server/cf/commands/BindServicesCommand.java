@@ -16,6 +16,8 @@ import org.apache.commons.httpclient.methods.*;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
+import org.eclipse.orion.server.cf.manifest.ManifestUtils;
+import org.eclipse.orion.server.cf.manifest.ParseException;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
@@ -49,15 +51,15 @@ public class BindServicesCommand extends AbstractCFCommand {
 
 			/* bind services */
 			URI targetURI = URIUtil.toURI(target.getUrl());
-			JSONObject appJSON = application.getManifest().getJSONArray(CFProtocolConstants.V2_KEY_APPLICATIONS).getJSONObject(0);
+			JSONObject appJSON = ManifestUtils.getApplication(application.getManifest());
 
 			if (appJSON.has(CFProtocolConstants.V2_KEY_SERVICES)) {
 
 				/* fetch all services */
-				URI servicesURI = targetURI.resolve("/v2/services");
+				URI servicesURI = targetURI.resolve("/v2/services"); //$NON-NLS-1$
 				GetMethod getServicesMethod = new GetMethod(servicesURI.toString());
 				HttpUtil.configureHttpMethod(getServicesMethod, target);
-				getServicesMethod.setQueryString("inline-relations-depth=1");
+				getServicesMethod.setQueryString("inline-relations-depth=1"); //$NON-NLS-1$
 
 				/* send request */
 				ServerStatus jobStatus = HttpUtil.executeMethod(getServicesMethod);
@@ -68,16 +70,17 @@ public class BindServicesCommand extends AbstractCFCommand {
 				JSONObject resp = jobStatus.getJsonData();
 				JSONArray servicesJSON = resp.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES);
 
-				JSONObject services = appJSON.getJSONObject(CFProtocolConstants.V2_KEY_SERVICES);
+				JSONObject services = ManifestUtils.getJSON(appJSON, CFProtocolConstants.V2_KEY_SERVICES, CFProtocolConstants.V2_KEY_APPLICATIONS);
 				for (String serviceName : JSONObject.getNames(services)) {
+					JSONObject serviceJSON = ManifestUtils.getJSON(services, serviceName, CFProtocolConstants.V2_KEY_SERVICES);
 
 					/* support both 'type' and 'label' field as service name */
-					String service = services.getJSONObject(serviceName).optString(CFProtocolConstants.V2_KEY_TYPE);
+					String service = serviceJSON.optString(CFProtocolConstants.V2_KEY_TYPE);
 					if (service.isEmpty())
-						service = services.getJSONObject(serviceName).getString(CFProtocolConstants.V2_KEY_LABEL);
+						service = ManifestUtils.getString(serviceJSON, CFProtocolConstants.V2_KEY_LABEL, serviceName);
 
-					String provider = services.getJSONObject(serviceName).getString(CFProtocolConstants.V2_KEY_PROVIDER);
-					String plan = services.getJSONObject(serviceName).getString(CFProtocolConstants.V2_KEY_PLAN);
+					String provider = ManifestUtils.getString(serviceJSON, CFProtocolConstants.V2_KEY_PROVIDER, serviceName);
+					String plan = ManifestUtils.getString(serviceJSON, CFProtocolConstants.V2_KEY_PLAN, serviceName);
 
 					String servicePlanGUID = findServicePlanGUID(service, provider, plan, servicesJSON);
 					if (servicePlanGUID == null) {
@@ -87,7 +90,7 @@ public class BindServicesCommand extends AbstractCFCommand {
 					}
 
 					/* create service instance */
-					URI serviceInstancesURI = targetURI.resolve("/v2/service_instances");
+					URI serviceInstancesURI = targetURI.resolve("/v2/service_instances"); //$NON-NLS-1$
 					PostMethod createServiceMethod = new PostMethod(serviceInstancesURI.toString());
 					HttpUtil.configureHttpMethod(createServiceMethod, target);
 
@@ -96,7 +99,7 @@ public class BindServicesCommand extends AbstractCFCommand {
 					createServiceRequest.put(CFProtocolConstants.V2_KEY_SPACE_GUID, target.getSpace().getCFJSON().getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID));
 					createServiceRequest.put(CFProtocolConstants.V2_KEY_NAME, serviceName);
 					createServiceRequest.put(CFProtocolConstants.V2_KEY_SERVICE_PLAN_GUID, servicePlanGUID);
-					createServiceMethod.setRequestEntity(new StringRequestEntity(createServiceRequest.toString(), "application/json", "utf-8"));
+					createServiceMethod.setRequestEntity(new StringRequestEntity(createServiceRequest.toString(), "application/json", "utf-8")); //$NON-NLS-1$ //$NON-NLS-2$
 
 					/* send request */
 					jobStatus = HttpUtil.executeMethod(createServiceMethod);
@@ -108,7 +111,7 @@ public class BindServicesCommand extends AbstractCFCommand {
 					String serviceInstanceGUID = resp.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID);
 
 					/* bind service to the application */
-					URI serviceBindingsURI = targetURI.resolve("/v2/service_bindings");
+					URI serviceBindingsURI = targetURI.resolve("/v2/service_bindings"); //$NON-NLS-1$
 					PostMethod bindServiceMethod = new PostMethod(serviceBindingsURI.toString());
 					HttpUtil.configureHttpMethod(bindServiceMethod, target);
 
@@ -116,7 +119,7 @@ public class BindServicesCommand extends AbstractCFCommand {
 					JSONObject bindServiceRequest = new JSONObject();
 					bindServiceRequest.put(CFProtocolConstants.V2_KEY_APP_GUID, application.getGuid());
 					bindServiceRequest.put(CFProtocolConstants.V2_KEY_SERVICE_INSTANCE_GUID, serviceInstanceGUID);
-					bindServiceMethod.setRequestEntity(new StringRequestEntity(bindServiceRequest.toString(), "application/json", "utf-8"));
+					bindServiceMethod.setRequestEntity(new StringRequestEntity(bindServiceRequest.toString(), "application/json", "utf-8")); //$NON-NLS-1$ //$NON-NLS-2$
 
 					/* send request */
 					jobStatus = HttpUtil.executeMethod(bindServiceMethod);
@@ -128,6 +131,9 @@ public class BindServicesCommand extends AbstractCFCommand {
 
 			return status;
 
+		} catch (ParseException e) {
+			status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null));
+			return status;
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);

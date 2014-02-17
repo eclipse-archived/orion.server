@@ -137,12 +137,12 @@ public class UploadBitsCommand extends AbstractCFCommand {
 
 		/* zip application to a temporary file */
 		String randomName = UUID.randomUUID().toString();
-		File tmp = File.createTempFile(randomName, ".zip");
+		File tmp = File.createTempFile(randomName, ".zip"); //$NON-NLS-1$
 
 		// try to find a war file
 		IFileStore[] children = appStore.childStores(EFS.NONE, null);
 		for (int i = 0; i < children.length; i++) {
-			if (children[i].getName().endsWith(".war")) {
+			if (children[i].getName().endsWith(".war")) { //$NON-NLS-1$
 				children[i].copy(new LocalFile(tmp), EFS.OVERWRITE, null);
 				return tmp;
 			}
