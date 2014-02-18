@@ -69,6 +69,7 @@ public class ParseManifestCommand extends AbstractCFCommand {
 			IFileStore fileStore = NewFileServlet.getFileStore(null, contentPath);
 			if (!fileStore.fetchInfo().isDirectory()) {
 				fileStore = fileStore.getParent();
+				contentPath = contentPath.removeLastSegments(1);
 			}
 
 			if (fileStore == null) {

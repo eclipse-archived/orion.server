@@ -80,6 +80,12 @@ public class UploadBitsCommand extends AbstractRevertableCFCommand {
 			JSONObject resp = jobStatus.getJsonData();
 			String taksStatus = resp.getJSONObject(CFProtocolConstants.V2_KEY_ENTITY).getString(CFProtocolConstants.V2_KEY_STATUS);
 			while (!CFProtocolConstants.V2_KEY_FINISHED.equals(taksStatus) && !CFProtocolConstants.V2_KEY_FAILURE.equals(taksStatus)) {
+				if (CFProtocolConstants.V2_KEY_FAILED.equals(taksStatus)) {
+					/* delete the tmp file */
+					appPackage.delete();
+					status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Upload failed", null));
+					return status;
+				}
 
 				if (attemptsLeft == 0) {
 					/* delete the tmp file */
