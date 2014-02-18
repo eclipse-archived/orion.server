@@ -58,6 +58,14 @@ public class Space extends CFObject {
 		}
 	}
 
+	public String getGuid() {
+		try {
+			return spaceJSON.getJSONObject("metadata").getString("guid");
+		} catch (JSONException e) {
+			return null;
+		}
+	}
+
 	@Override
 	public JSONObject toJSON() throws JSONException {
 		return jsonSerializer.serialize(this, DEFAULT_RESOURCE_SHAPE);
