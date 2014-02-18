@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 IBM Corporation and others.
+ * Copyright (c) 2012, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -37,6 +37,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		traceRequest(req);
 		String[] userPathInfoParts = req.getPathInfo().split("\\/", 2);
 
 		// handle calls to /users/[userId]
@@ -99,7 +100,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 	private void confirmEmail(User user, HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		if (user.getConfirmationId() == null) {
 			resp.setContentType(ProtocolConstants.CONTENT_TYPE_HTML);
-			resp.getWriter().write("<html><body><p>Email address <b>" + user.getEmail() + "</b> has already been confirmed. Thank you!</p></body></html>");
+			resp.getWriter().write("<html><body><p>Your email address has already been confirmed. Thank you!</p></body></html>");
 			return;
 		}
 
@@ -121,13 +122,13 @@ public class EmailConfirmationServlet extends OrionServlet {
 			return;
 		}
 		resp.setContentType(ProtocolConstants.CONTENT_TYPE_HTML);
-		resp.getWriter().write("<html><body><p>Email address <b>" + user.getEmail() + "</b> has been confirmed. Thank you!</p></body></html>");
+		resp.getWriter().write("<html><body><p>Your email address has been confirmed. Thank you!</p></body></html>");
 		return;
 	}
 
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-
+		traceRequest(req);
 		String[] userPathInfoParts = req.getPathInfo() == null ? new String[0] : req.getPathInfo().split("\\/", 2);
 		if (userPathInfoParts.length > 1 && userPathInfoParts[1] != null && "cansendemails".equalsIgnoreCase(userPathInfoParts[1])) {
 			JSONObject jsonResp = new JSONObject();
