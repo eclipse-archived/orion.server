@@ -36,19 +36,17 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class UploadBitsCommand extends AbstractCFCommand {
+public class UploadBitsCommand extends AbstractRevertableCFCommand {
 	private static final int MAX_ATTEMPTS = 150;
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
-	private App application;
 
 	public UploadBitsCommand(Target target, App app) {
-		super(target);
+		super(target, app);
 
 		String[] bindings = {app.getName(), app.getGuid()};
 		this.commandName = NLS.bind("Upload application {0} bits (guid: {1})", bindings);
-		this.application = app;
 	}
 
 	@Override
@@ -61,7 +59,7 @@ public class UploadBitsCommand extends AbstractCFCommand {
 			File appPackage = getAppPackage(application.getAppStore());
 			if (appPackage == null) {
 				status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to read application content", null));
-				return status;
+				return revert(status);
 			}
 
 			URI targetURI = URIUtil.toURI(target.getUrl());
@@ -75,7 +73,7 @@ public class UploadBitsCommand extends AbstractCFCommand {
 			ServerStatus jobStatus = HttpUtil.executeMethod(uploadMethod);
 			status.add(jobStatus);
 			if (!jobStatus.isOK())
-				return status;
+				return revert(status);
 
 			/* long running task, keep track */
 			int attemptsLeft = MAX_ATTEMPTS;
@@ -87,7 +85,7 @@ public class UploadBitsCommand extends AbstractCFCommand {
 					/* delete the tmp file */
 					appPackage.delete();
 					status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Upload timeout exceeded", null));
-					return status;
+					return revert(status);
 				}
 
 				/* two seconds */
@@ -102,7 +100,7 @@ public class UploadBitsCommand extends AbstractCFCommand {
 				jobStatus = HttpUtil.executeMethod(jobRequest);
 				status.add(jobStatus);
 				if (!jobStatus.isOK())
-					return status;
+					return revert(status);
 
 				resp = jobStatus.getJsonData();
 				taksStatus = resp.getJSONObject(CFProtocolConstants.V2_KEY_ENTITY).getString(CFProtocolConstants.V2_KEY_STATUS);
@@ -112,7 +110,7 @@ public class UploadBitsCommand extends AbstractCFCommand {
 
 			if (CFProtocolConstants.V2_KEY_FAILURE.equals(jobStatus)) {
 				status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to upload application bits", null));
-				return status;
+				return revert(status);
 			}
 
 			/* delete the tmp file */
@@ -124,7 +122,7 @@ public class UploadBitsCommand extends AbstractCFCommand {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);
 			status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
-			return status;
+			return revert(status);
 		}
 	}
 

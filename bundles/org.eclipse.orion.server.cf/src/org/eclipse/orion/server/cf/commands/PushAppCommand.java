@@ -48,7 +48,7 @@ public class PushAppCommand extends AbstractCFCommand {
 
 				/* create new application */
 				CreateApplicationCommand createApplication = new CreateApplicationCommand(target, app, force);
-				ServerStatus jobStatus = (ServerStatus) createApplication.doIt(); /* TODO: unsafe type cast */
+				ServerStatus jobStatus = (ServerStatus) createApplication.doIt(); /* FIXME: unsafe type cast */
 				status.add(jobStatus);
 				if (!jobStatus.isOK())
 					return status;
@@ -57,21 +57,21 @@ public class PushAppCommand extends AbstractCFCommand {
 
 				/* bind route to application */
 				BindRouteCommand bindRoute = new BindRouteCommand(target, app);
-				MultiServerStatus multijobStatus = (MultiServerStatus) bindRoute.doIt(); /* TODO: unsafe type cast */
+				ServerStatus multijobStatus = (ServerStatus) bindRoute.doIt(); /* FIXME: unsafe type cast */
 				status.add(multijobStatus);
 				if (!multijobStatus.isOK())
 					return status;
 
 				/* upload project contents */
 				UploadBitsCommand uploadBits = new UploadBitsCommand(target, app);
-				multijobStatus = (MultiServerStatus) uploadBits.doIt(); /* TODO: unsafe type cast */
+				multijobStatus = (ServerStatus) uploadBits.doIt(); /* FIXME: unsafe type cast */
 				status.add(multijobStatus);
 				if (!multijobStatus.isOK())
 					return status;
 
 				/* bind application specific services */
 				BindServicesCommand bindServices = new BindServicesCommand(target, app);
-				multijobStatus = (MultiServerStatus) bindServices.doIt(); /* TODO: unsafe type cast */
+				multijobStatus = (ServerStatus) bindServices.doIt(); /* FIXME: unsafe type cast */
 				status.add(multijobStatus);
 				if (!multijobStatus.isOK())
 					return status;
@@ -94,14 +94,14 @@ public class PushAppCommand extends AbstractCFCommand {
 
 			/* upload project contents */
 			UploadBitsCommand uploadBits = new UploadBitsCommand(target, app);
-			MultiServerStatus multijobStatus = (MultiServerStatus) uploadBits.doIt(); /* TODO: unsafe type cast */
+			ServerStatus multijobStatus = (ServerStatus) uploadBits.doIt(); /* TODO: unsafe type cast */
 			status.add(multijobStatus);
 			if (!multijobStatus.isOK())
 				return status;
 
 			/* restart the application */
 			RestartAppCommand restartApp = new RestartAppCommand(target, app);
-			multijobStatus = (MultiServerStatus) restartApp.doIt(); /* TODO: unsafe type cast */
+			multijobStatus = (ServerStatus) restartApp.doIt(); /* TODO: unsafe type cast */
 			status.add(multijobStatus);
 			if (!multijobStatus.isOK())
 				return status;

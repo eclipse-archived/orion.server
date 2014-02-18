@@ -56,6 +56,9 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 				/* make sure we override the application */
 				DeleteApplicationCommand deleteApplicationCommand = new DeleteApplicationCommand(target, application);
 				deleteApplicationCommand.doIt(); /* we don't need to know whether the deletion succeeded or not */
+
+				DeleteApplicationRoutesCommand deleteRouteCommand = new DeleteApplicationRoutesCommand(target, application);
+				deleteRouteCommand.doIt(); /* we don't need to know whether the deletion succeeded or not */
 			}
 
 			/* create cloud foundry application */

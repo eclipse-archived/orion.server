@@ -28,18 +28,16 @@ import org.json.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BindServicesCommand extends AbstractCFCommand {
+public class BindServicesCommand extends AbstractRevertableCFCommand {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
-	private App application;
 
 	public BindServicesCommand(Target target, App app) {
-		super(target);
+		super(target, app);
 
 		String[] bindings = {app.getName(), app.getGuid()};
 		this.commandName = NLS.bind("Bind new services to application {1} (guid: {2})", bindings);
-		this.application = app;
 	}
 
 	@Override
@@ -65,7 +63,7 @@ public class BindServicesCommand extends AbstractCFCommand {
 				ServerStatus jobStatus = HttpUtil.executeMethod(getServicesMethod);
 				status.add(jobStatus);
 				if (!jobStatus.isOK())
-					return status;
+					return revert(status);
 
 				JSONObject resp = jobStatus.getJsonData();
 				JSONArray servicesJSON = resp.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES);
@@ -86,7 +84,7 @@ public class BindServicesCommand extends AbstractCFCommand {
 					if (servicePlanGUID == null) {
 						String msg = NLS.bind("Failed to find service {0} with plan {1} in target", service, plan);
 						status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
-						return status;
+						return revert(status);
 					}
 
 					/* create service instance */
@@ -105,7 +103,7 @@ public class BindServicesCommand extends AbstractCFCommand {
 					jobStatus = HttpUtil.executeMethod(createServiceMethod);
 					status.add(jobStatus);
 					if (!jobStatus.isOK())
-						return status;
+						return revert(status);
 
 					resp = jobStatus.getJsonData();
 					String serviceInstanceGUID = resp.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID);
@@ -125,7 +123,7 @@ public class BindServicesCommand extends AbstractCFCommand {
 					jobStatus = HttpUtil.executeMethod(bindServiceMethod);
 					status.add(jobStatus);
 					if (!jobStatus.isOK())
-						return status;
+						return revert(status);
 				}
 			}
 
@@ -133,12 +131,12 @@ public class BindServicesCommand extends AbstractCFCommand {
 
 		} catch (ParseException e) {
 			status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null));
-			return status;
+			return revert(status);
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);
 			status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
-			return status;
+			return revert(status);
 		}
 	}
 

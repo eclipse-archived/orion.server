@@ -116,7 +116,10 @@ public class CFProtocolConstants {
 
 	public static final String V2_KEY_PATH = "path"; //$NON-NLS-1$
 
+	public static final String V2_KEY_APPS = "apps"; //$NON-NLS-1$
+
 	public static final String V2_KEY_ERROR_CODE = "error_code"; //$NON-NLS-1$
 
 	public static final String V2_KEY_ERROR_DESCRIPTION = "description"; //$NON-NLS-1$
+
 }

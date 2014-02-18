@@ -25,11 +25,10 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BindRouteCommand extends AbstractCFCommand {
+public class BindRouteCommand extends AbstractRevertableCFCommand {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
-	private App application;
 
 	/* shared properties */
 	private String appDomain;
@@ -49,11 +48,10 @@ public class BindRouteCommand extends AbstractCFCommand {
 	}
 
 	public BindRouteCommand(Target target, App app) {
-		super(target);
+		super(target, app);
 
 		String[] bindings = {app.getName(), app.getGuid()};
 		this.commandName = NLS.bind("Bind a new route to application {1} (guid: {2})", bindings);
-		this.application = app;
 	}
 
 	@Override
@@ -69,14 +67,14 @@ public class BindRouteCommand extends AbstractCFCommand {
 			status.add(jobStatus);
 
 			if (!jobStatus.isOK())
-				return status;
+				return revert(status);
 
 			/* extract available domains */
 			JSONObject domains = jobStatus.getJsonData();
 
 			if (domains.getInt(CFProtocolConstants.V2_KEY_TOTAL_RESULTS) < 1) {
 				status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Failed to find available domains in target", null));
-				return status;
+				return revert(status);
 			}
 
 			String domainGUID = null;
@@ -97,7 +95,7 @@ public class BindRouteCommand extends AbstractCFCommand {
 				if (domainGUID == null) {
 					String msg = NLS.bind("Failed to find domain {1} in target", appDomain);
 					status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
-					return status;
+					return revert(status);
 				}
 
 			} else {
@@ -113,7 +111,7 @@ public class BindRouteCommand extends AbstractCFCommand {
 			status.add(jobStatus);
 
 			if (!jobStatus.isOK())
-				return status;
+				return revert(status);
 
 			/* extract route guid */
 			route = jobStatus.getJsonData();
@@ -125,7 +123,7 @@ public class BindRouteCommand extends AbstractCFCommand {
 			status.add(jobStatus);
 
 			if (!jobStatus.isOK())
-				return status;
+				return revert(status);
 
 			return status;
 
@@ -133,7 +131,7 @@ public class BindRouteCommand extends AbstractCFCommand {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);
 			status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
-			return status;
+			return revert(status);
 		}
 	}
 
@@ -146,7 +144,7 @@ public class BindRouteCommand extends AbstractCFCommand {
 			return Status.OK_STATUS;
 
 		} catch (ParseException e) {
-			return new MultiServerStatus(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null));
+			return revert(new MultiServerStatus(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null)));
 		}
 	}
 }
