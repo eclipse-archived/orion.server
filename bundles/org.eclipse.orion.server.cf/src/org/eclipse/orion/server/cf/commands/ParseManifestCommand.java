@@ -67,6 +67,9 @@ public class ParseManifestCommand extends AbstractCFCommand {
 				return accessStatus;
 
 			IFileStore fileStore = NewFileServlet.getFileStore(null, contentPath);
+			if (!fileStore.fetchInfo().isDirectory()) {
+				fileStore = fileStore.getParent();
+			}
 
 			if (fileStore == null) {
 				String msg = "Failed to find application manifest. If you have one, please select it or the folder that contains it before deploying.";
