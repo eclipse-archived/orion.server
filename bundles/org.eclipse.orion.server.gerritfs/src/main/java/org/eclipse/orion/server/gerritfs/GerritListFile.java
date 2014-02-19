@@ -13,10 +13,13 @@ package org.eclipse.orion.server.gerritfs;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -54,7 +57,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
-@Export("/list")
+@Export("/list/*")
 @Singleton
 public class GerritListFile extends HttpServlet {
 	private final GitRepositoryManager repoManager;
@@ -99,10 +102,34 @@ public class GerritListFile extends HttpServlet {
 		    
 		final PrintWriter out = resp.getWriter();
 		try {
-			String projectName = req.getParameter("project");
+			String pathInfo = req.getPathInfo();
+			Pattern pattern = Pattern.compile("/([^/]*)(?:/([^/]*)(?:/(.*))?)?");
+			Matcher matcher = pattern.matcher(pathInfo);
+			matcher.matches();
+			String projectName = null;
+			String refName = null;
+			String filePath = null;
+			if (matcher.groupCount() > 0) {
+				projectName = matcher.group(1);
+				refName = matcher.group(2);
+				filePath = matcher.group(3);
+				if (projectName == "" || projectName == null) {
+					projectName = null;
+				} else {
+					projectName = java.net.URLDecoder.decode(projectName, "UTF-8");
+				}
+				if (refName == "" || refName == null) {
+					refName = null;
+				} else {
+					refName = java.net.URLDecoder.decode(refName, "UTF-8");
+				}
+				if (filePath == "" || filePath == null) {
+					filePath = null;
+				} else {
+					filePath = java.net.URLDecoder.decode(filePath, "UTF-8");
+				}
+			}
 			if (projectName != null) {
-				String refName = req.getParameter("ref");
-				String filePath = req.getParameter("path");
 				if (filePath == null)
 					filePath = "";
 				NameKey projName = NameKey.parse(projectName);
