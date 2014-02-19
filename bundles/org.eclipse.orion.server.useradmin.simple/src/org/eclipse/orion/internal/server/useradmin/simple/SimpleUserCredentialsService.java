@@ -336,8 +336,8 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 			if (blocked.equals("true")) {
 				user.setBlocked(true);
 			}
-			String emailConfirmation = userProfileNode.get(UserConstants.KEY_EMAIL_CONFIRMATION, "false");
-			if (emailConfirmation.equals("true")) {
+			String emailConfirmation = userProfileNode.get(UserConstants.KEY_EMAIL_CONFIRMATION, "");
+			if (!emailConfirmation.equals("")) {
 				user.setConfirmationId(emailConfirmation);
 			}
 			String[] keys = userProfileNode.getUserProfileNode(USER_PROPERTIES).keys();
