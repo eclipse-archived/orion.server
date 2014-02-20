@@ -141,16 +141,24 @@ class ClientImport {
 		IPath destPath = new Path(getPath());
 		boolean force = false;
 		List<String> filesFailed = new ArrayList<String>();
-		if (req.getParameter("force") != null) {
-			force = req.getParameter("force").equals("true");
+		if (req.getParameter("force") != null) { //$NON-NLS-1$
+			force = req.getParameter("force").equals("true"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
+
 		List<String> excludedFiles = new ArrayList<String>();
 		if (req.getParameter(ProtocolConstants.PARAM_EXCLUDE) != null) {
-			excludedFiles = Arrays.asList(req.getParameter(ProtocolConstants.PARAM_EXCLUDE).split(","));
+			excludedFiles = Arrays.asList(req.getParameter(ProtocolConstants.PARAM_EXCLUDE).split(",")); //$NON-NLS-1$
 		}
+
+		/* exclude .git if already present in the destination root, see bug 428657 */
+		IFileStore destinationRoot = NewFileServlet.getFileStore(req, destPath);
+		IFileStore dotGitStorage = destinationRoot.getChild(".git"); //$NON-NLS-1$
+		if (dotGitStorage.fetchInfo().exists())
+			excludedFiles.add(".git"); //$NON-NLS-1$
+
 		try {
 			ZipFile source = new ZipFile(new File(getStorageDirectory(), FILE_DATA));
-			IFileStore destinationRoot = NewFileServlet.getFileStore(req, destPath);
+
 			Enumeration<? extends ZipEntry> entries = source.entries();
 			while (entries.hasMoreElements()) {
 				ZipEntry entry = entries.nextElement();
