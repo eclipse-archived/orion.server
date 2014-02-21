@@ -68,62 +68,70 @@ public class BindServicesCommand extends AbstractRevertableCFCommand {
 				JSONObject resp = jobStatus.getJsonData();
 				JSONArray servicesJSON = resp.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES);
 
-				JSONObject services = ManifestUtils.getJSON(appJSON, CFProtocolConstants.V2_KEY_SERVICES, CFProtocolConstants.V2_KEY_APPLICATIONS);
-				for (String serviceName : JSONObject.getNames(services)) {
-					JSONObject serviceJSON = ManifestUtils.getJSON(services, serviceName, CFProtocolConstants.V2_KEY_SERVICES);
+				JSONObject version2 = appJSON.optJSONObject(CFProtocolConstants.V2_KEY_SERVICES);
+				JSONArray version6 = appJSON.optJSONArray(CFProtocolConstants.V2_KEY_SERVICES);
 
-					/* support both 'type' and 'label' field as service name */
-					String service = serviceJSON.optString(CFProtocolConstants.V2_KEY_TYPE);
-					if (service.isEmpty())
-						service = ManifestUtils.getString(serviceJSON, CFProtocolConstants.V2_KEY_LABEL, serviceName);
+				if (version2 != null) {
+					JSONObject services = ManifestUtils.getJSON(appJSON, CFProtocolConstants.V2_KEY_SERVICES, CFProtocolConstants.V2_KEY_APPLICATIONS);
+					for (String serviceName : JSONObject.getNames(services)) {
+						JSONObject serviceJSON = ManifestUtils.getJSON(services, serviceName, CFProtocolConstants.V2_KEY_SERVICES);
 
-					String provider = ManifestUtils.getString(serviceJSON, CFProtocolConstants.V2_KEY_PROVIDER, serviceName);
-					String plan = ManifestUtils.getString(serviceJSON, CFProtocolConstants.V2_KEY_PLAN, serviceName);
+						/* support both 'type' and 'label' field as service name */
+						String service = serviceJSON.optString(CFProtocolConstants.V2_KEY_TYPE);
+						if (service.isEmpty())
+							service = ManifestUtils.getString(serviceJSON, CFProtocolConstants.V2_KEY_LABEL, serviceName);
 
-					String servicePlanGUID = findServicePlanGUID(service, provider, plan, servicesJSON);
-					if (servicePlanGUID == null) {
-						String msg = NLS.bind("Failed to find service {0} with plan {1} in target", service, plan);
-						status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
-						return revert(status);
+						String provider = ManifestUtils.getString(serviceJSON, CFProtocolConstants.V2_KEY_PROVIDER, serviceName);
+						String plan = ManifestUtils.getString(serviceJSON, CFProtocolConstants.V2_KEY_PLAN, serviceName);
+
+						String servicePlanGUID = findServicePlanGUID(service, provider, plan, servicesJSON);
+						if (servicePlanGUID == null) {
+							String msg = NLS.bind("Failed to find service {0} with plan {1} in target", service, plan);
+							status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+							return revert(status);
+						}
+
+						/* create service instance */
+						URI serviceInstancesURI = targetURI.resolve("/v2/service_instances"); //$NON-NLS-1$
+						PostMethod createServiceMethod = new PostMethod(serviceInstancesURI.toString());
+						HttpUtil.configureHttpMethod(createServiceMethod, target);
+
+						/* set request body */
+						JSONObject createServiceRequest = new JSONObject();
+						createServiceRequest.put(CFProtocolConstants.V2_KEY_SPACE_GUID, target.getSpace().getCFJSON().getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID));
+						createServiceRequest.put(CFProtocolConstants.V2_KEY_NAME, serviceName);
+						createServiceRequest.put(CFProtocolConstants.V2_KEY_SERVICE_PLAN_GUID, servicePlanGUID);
+						createServiceMethod.setRequestEntity(new StringRequestEntity(createServiceRequest.toString(), "application/json", "utf-8")); //$NON-NLS-1$ //$NON-NLS-2$
+
+						/* send request */
+						jobStatus = HttpUtil.executeMethod(createServiceMethod);
+						status.add(jobStatus);
+						if (!jobStatus.isOK())
+							return revert(status);
+
+						resp = jobStatus.getJsonData();
+						String serviceInstanceGUID = resp.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID);
+
+						/* bind service to the application */
+						URI serviceBindingsURI = targetURI.resolve("/v2/service_bindings"); //$NON-NLS-1$
+						PostMethod bindServiceMethod = new PostMethod(serviceBindingsURI.toString());
+						HttpUtil.configureHttpMethod(bindServiceMethod, target);
+
+						/* set request body */
+						JSONObject bindServiceRequest = new JSONObject();
+						bindServiceRequest.put(CFProtocolConstants.V2_KEY_APP_GUID, application.getGuid());
+						bindServiceRequest.put(CFProtocolConstants.V2_KEY_SERVICE_INSTANCE_GUID, serviceInstanceGUID);
+						bindServiceMethod.setRequestEntity(new StringRequestEntity(bindServiceRequest.toString(), "application/json", "utf-8")); //$NON-NLS-1$ //$NON-NLS-2$
+
+						/* send request */
+						jobStatus = HttpUtil.executeMethod(bindServiceMethod);
+						status.add(jobStatus);
+						if (!jobStatus.isOK())
+							return revert(status);
 					}
-
-					/* create service instance */
-					URI serviceInstancesURI = targetURI.resolve("/v2/service_instances"); //$NON-NLS-1$
-					PostMethod createServiceMethod = new PostMethod(serviceInstancesURI.toString());
-					HttpUtil.configureHttpMethod(createServiceMethod, target);
-
-					/* set request body */
-					JSONObject createServiceRequest = new JSONObject();
-					createServiceRequest.put(CFProtocolConstants.V2_KEY_SPACE_GUID, target.getSpace().getCFJSON().getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID));
-					createServiceRequest.put(CFProtocolConstants.V2_KEY_NAME, serviceName);
-					createServiceRequest.put(CFProtocolConstants.V2_KEY_SERVICE_PLAN_GUID, servicePlanGUID);
-					createServiceMethod.setRequestEntity(new StringRequestEntity(createServiceRequest.toString(), "application/json", "utf-8")); //$NON-NLS-1$ //$NON-NLS-2$
-
-					/* send request */
-					jobStatus = HttpUtil.executeMethod(createServiceMethod);
-					status.add(jobStatus);
-					if (!jobStatus.isOK())
-						return revert(status);
-
-					resp = jobStatus.getJsonData();
-					String serviceInstanceGUID = resp.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID);
-
-					/* bind service to the application */
-					URI serviceBindingsURI = targetURI.resolve("/v2/service_bindings"); //$NON-NLS-1$
-					PostMethod bindServiceMethod = new PostMethod(serviceBindingsURI.toString());
-					HttpUtil.configureHttpMethod(bindServiceMethod, target);
-
-					/* set request body */
-					JSONObject bindServiceRequest = new JSONObject();
-					bindServiceRequest.put(CFProtocolConstants.V2_KEY_APP_GUID, application.getGuid());
-					bindServiceRequest.put(CFProtocolConstants.V2_KEY_SERVICE_INSTANCE_GUID, serviceInstanceGUID);
-					bindServiceMethod.setRequestEntity(new StringRequestEntity(bindServiceRequest.toString(), "application/json", "utf-8")); //$NON-NLS-1$ //$NON-NLS-2$
-
-					/* send request */
-					jobStatus = HttpUtil.executeMethod(bindServiceMethod);
-					status.add(jobStatus);
-					if (!jobStatus.isOK())
-						return revert(status);
+				}
+				if (version6 != null) {
+					//skip binding services
 				}
 			}
 

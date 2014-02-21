@@ -106,7 +106,12 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 
 			appCommand = appJSON.optString(CFProtocolConstants.V2_KEY_COMMAND);
 			appInstances = ManifestUtils.getInstances(appJSON.optString(CFProtocolConstants.V2_KEY_INSTANCES)); /* optional */
-			appMemory = ManifestUtils.getMemoryLimit(appJSON.optString(CFProtocolConstants.V2_KEY_MEMORY)); /* optional */
+			//look for v2 memory constant first
+			String mem = appJSON.optString(CFProtocolConstants.V2_KEY_MEMORY);
+			if (mem.equals("")) {
+				mem = appJSON.optString(CFProtocolConstants.V6_KEY_MEMORY);
+			}
+			appMemory = ManifestUtils.getMemoryLimit(mem); /* optional */
 
 			return Status.OK_STATUS;
 

@@ -68,6 +68,8 @@ public class CFProtocolConstants {
 
 	public static final String V2_KEY_MEMORY = "memory"; //$NON-NLS-1$
 
+	public static final String V6_KEY_MEMORY = "mem"; //$NON-NLS-1$
+
 	public static final String V2_KEY_STACK_GUID = "stack_guid"; //$NON-NLS-1$
 
 	public static final String V2_KEY_ENTITY = "entity"; //$NON-NLS-1$

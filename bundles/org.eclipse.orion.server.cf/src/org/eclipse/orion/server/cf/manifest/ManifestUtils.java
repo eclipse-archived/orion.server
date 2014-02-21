@@ -16,8 +16,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.osgi.util.NLS;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.*;
 
 /**
  * Common manifest parser utilities.
@@ -144,6 +143,14 @@ public class ManifestUtils {
 	public static JSONObject getJSON(JSONObject parent, String child, String parentName) throws ParseException {
 		try {
 			return parent.getJSONObject(child);
+		} catch (JSONException ex) {
+			throw new ParseException(NLS.bind(ManifestConstants.PARSE_ERROR_MISSING_GROUP_TOKEN, child, parentName));
+		}
+	}
+
+	public static JSONArray getJSONArray(JSONObject parent, String child, String parentName) throws ParseException {
+		try {
+			return parent.getJSONArray(child);
 		} catch (JSONException ex) {
 			throw new ParseException(NLS.bind(ManifestConstants.PARSE_ERROR_MISSING_GROUP_TOKEN, child, parentName));
 		}
