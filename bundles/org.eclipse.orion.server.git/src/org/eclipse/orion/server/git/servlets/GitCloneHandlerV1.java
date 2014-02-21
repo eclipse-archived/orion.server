@@ -233,21 +233,38 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		return uniqueName;
 	}
 
-	public static void doConfigureClone(Git git, String user, String gitUserName, String gitUserMail) throws IOException, CoreException {
+	public static void doConfigureClone(Git git, String user, String gitUserName, String gitUserMail) throws IOException, JSONException, CoreException {
 		StoredConfig config = git.getRepository().getConfig();
+		if (gitUserName == null && gitUserMail == null) {
+			JSONObject gitUserConfig = getUserGitConfig(user);
+			if (gitUserConfig != null) {
+				gitUserName = gitUserConfig.getString("GitName"); //$NON-NLS-1$
+				gitUserMail = gitUserConfig.getString("GitMail"); //$NON-NLS-1$
+			}
+		}
 		if (gitUserName != null)
 			config.setString(ConfigConstants.CONFIG_USER_SECTION, null, ConfigConstants.CONFIG_KEY_NAME, gitUserName);
 		if (gitUserMail != null)
 			config.setString(ConfigConstants.CONFIG_USER_SECTION, null, ConfigConstants.CONFIG_KEY_EMAIL, gitUserMail);
-		/*
-		IOrionUserProfileNode userNode = UserServiceHelper.getDefault().getUserProfileService().getUserProfileNode(user, true).getUserProfileNode(IOrionUserProfileConstants.GENERAL_PROFILE_PART);
-		if (userNode != null && userNode.get(GitConstants.KEY_NAME, null) != null)
-			config.setString(ConfigConstants.CONFIG_USER_SECTION, null, ConfigConstants.CONFIG_KEY_NAME, userNode.get(GitConstants.KEY_NAME, null));
-		if (userNode != null && userNode.get(GitConstants.KEY_MAIL, null) != null)
-			config.setString(ConfigConstants.CONFIG_USER_SECTION, null, ConfigConstants.CONFIG_KEY_EMAIL, userNode.get(GitConstants.KEY_MAIL, null));
-		*/
+
 		config.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_FILEMODE, false);
 		config.save();
+	}
+
+	private static JSONObject getUserGitConfig(String user) throws CoreException {
+		JSONObject userGitConfig = null;
+		UserInfo userInfo = OrionConfiguration.getMetaStore().readUser(user);
+		if (userInfo != null) {
+			String gitUserInfo = userInfo.getProperty("git/config/userInfo"); //$NON-NLS-1$
+			if (gitUserInfo != null) {
+				try {
+					userGitConfig = new JSONObject(gitUserInfo);
+				} catch (JSONException e) {
+					//treat as no git options available
+				}
+			}
+		}
+		return userGitConfig;
 	}
 
 	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, String pathString) throws IOException, JSONException, ServletException, URISyntaxException, CoreException {
