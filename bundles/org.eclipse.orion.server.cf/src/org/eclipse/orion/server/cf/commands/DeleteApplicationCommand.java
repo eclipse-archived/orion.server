@@ -107,18 +107,21 @@ public class DeleteApplicationCommand extends AbstractCFCommand {
 			ServerStatus status = HttpUtil.executeMethod(deleteAppMethod);
 			if (!status.isOK())
 				return status;
+			//only delete services from version2
+			JSONObject appJSON = ManifestUtils.getApplication(application.getManifest());
+			JSONObject version2 = appJSON.optJSONObject(CFProtocolConstants.V2_KEY_SERVICES);
+			if (version2 != null) {
+				/* forcefully delete the gathered service instances */
+				for (String serviceInstanceURL : serviceInstances) {
+					URI serviceInstanceURI = targetURI.resolve(serviceInstanceURL);
+					DeleteMethod deleteServiceInstanceMethod = new DeleteMethod(serviceInstanceURI.toString());
+					HttpUtil.configureHttpMethod(deleteServiceInstanceMethod, target);
 
-			/* forcefully delete the gathered service instances */
-			for (String serviceInstanceURL : serviceInstances) {
-				URI serviceInstanceURI = targetURI.resolve(serviceInstanceURL);
-				DeleteMethod deleteServiceInstanceMethod = new DeleteMethod(serviceInstanceURI.toString());
-				HttpUtil.configureHttpMethod(deleteServiceInstanceMethod, target);
-
-				ServerStatus serviceStatus = HttpUtil.executeMethod(deleteServiceInstanceMethod);
-				if (!serviceStatus.isOK())
-					return serviceStatus;
+					ServerStatus serviceStatus = HttpUtil.executeMethod(deleteServiceInstanceMethod);
+					if (!serviceStatus.isOK())
+						return serviceStatus;
+				}
 			}
-
 			return status;
 
 		} catch (Exception e) {
