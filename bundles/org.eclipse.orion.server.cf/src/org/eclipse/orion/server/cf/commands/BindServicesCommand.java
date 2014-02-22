@@ -141,7 +141,7 @@ public class BindServicesCommand extends AbstractRevertableCFCommand {
 					while (iter.hasNext()) {
 						String key = (String) iter.next();
 						String value = (String) serviceName.get(key);
-						nameService = "name:" + key + ":" + value;
+						nameService = "name:" + value;
 					}
 					NameValuePair[] pa = new NameValuePair[] {new NameValuePair("return_user_provided_service_instance", "true"), new NameValuePair("q", nameService), new NameValuePair("inline-relations-depth", "2")};
 					getServiceMethod.setQueryString(pa);

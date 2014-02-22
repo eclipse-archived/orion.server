@@ -75,6 +75,10 @@ public class ManifestNode {
 				/* leaf node */
 				JSONObject res = new JSONObject();
 				String[] sLabel = ManifestUtils.splitLabel(label);
+				// TODO: workaround for v6 service definition
+				if (sLabel.length < 2)
+					sLabel = new String[] {"", sLabel[0]};
+
 				if (sLabel.length != 2)
 					throw new ParseException(NLS.bind(ManifestConstants.PARSE_ERROR_UNEXPECTED_TOKEN_MAPPING, label), line);
 
