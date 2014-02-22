@@ -144,6 +144,11 @@ public class UploadBitsCommand extends AbstractRevertableCFCommand {
 		File tmp = File.createTempFile(randomName, ".zip"); //$NON-NLS-1$
 
 		// try to find a war file
+		if (appStore.getName().endsWith(".war")) { //$NON-NLS-1$
+			appStore.copy(new LocalFile(tmp), EFS.OVERWRITE, null);
+			return tmp;
+		}
+
 		IFileStore[] children = appStore.childStores(EFS.NONE, null);
 		for (int i = 0; i < children.length; i++) {
 			if (children[i].getName().endsWith(".war")) { //$NON-NLS-1$
