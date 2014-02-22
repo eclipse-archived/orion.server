@@ -165,6 +165,12 @@ public class BindServicesCommand extends AbstractRevertableCFCommand {
 								}
 							}
 						}
+
+						if (serviceInstanceGUID == null) {
+							status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Service " + nameService + " can not be found", null));
+							return revert(status);
+						}
+
 						/* bind service to the application */
 						URI serviceBindingsURI = targetURI.resolve("/v2/service_bindings"); //$NON-NLS-1$
 						PostMethod bindServiceMethod = new PostMethod(serviceBindingsURI.toString());
