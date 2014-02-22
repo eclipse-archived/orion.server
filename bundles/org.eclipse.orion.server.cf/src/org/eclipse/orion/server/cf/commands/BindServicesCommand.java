@@ -134,51 +134,54 @@ public class BindServicesCommand extends AbstractRevertableCFCommand {
 				if (version6 != null) {
 					String spaceGuid = target.getSpace().getGuid();
 					URI serviceInstancesURI = targetURI.resolve("/v2/spaces/" + spaceGuid + "/service_instances");
-					GetMethod getServiceMethod = new GetMethod(serviceInstancesURI.toString());
-					JSONObject serviceName = version6.getJSONObject(0);
-					Iterator iter = serviceName.keys();
-					String nameService = null;
-					while (iter.hasNext()) {
-						String key = (String) iter.next();
-						String value = (String) serviceName.get(key);
-						nameService = "name:" + value;
-					}
-					NameValuePair[] pa = new NameValuePair[] {new NameValuePair("return_user_provided_service_instance", "true"), new NameValuePair("q", nameService), new NameValuePair("inline-relations-depth", "2")};
-					getServiceMethod.setQueryString(pa);
-					HttpUtil.configureHttpMethod(getServiceMethod, target);
-					/* send request */
-					jobStatus = HttpUtil.executeMethod(getServiceMethod);
-					status.add(jobStatus);
-					if (!jobStatus.isOK())
-						return revert(status);
-					resp = jobStatus.getJsonData();
-					String serviceInstanceGUID = null;
-					JSONArray respArray = resp.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES);
-					for (int i = 0; i < respArray.length(); i++) {
-						JSONObject o = respArray.optJSONObject(i);
-						if (o != null) {
-							JSONObject str = o.optJSONObject(CFProtocolConstants.V2_KEY_METADATA);
-							if (str != null) {
-								serviceInstanceGUID = str.getString(CFProtocolConstants.V2_KEY_GUID);
+
+					for (int k = 0; k < version6.length(); k++) {
+						JSONObject serviceName = version6.getJSONObject(k);
+						Iterator iter = serviceName.keys();
+						String nameService = null;
+						while (iter.hasNext()) {
+							String key = (String) iter.next();
+							String value = (String) serviceName.get(key);
+							nameService = "name:" + (key != "" ? key + ":" : "") + value;
+						}
+						NameValuePair[] pa = new NameValuePair[] {new NameValuePair("return_user_provided_service_instance", "true"), new NameValuePair("q", nameService), new NameValuePair("inline-relations-depth", "2")};
+						GetMethod getServiceMethod = new GetMethod(serviceInstancesURI.toString());
+						getServiceMethod.setQueryString(pa);
+						HttpUtil.configureHttpMethod(getServiceMethod, target);
+						/* send request */
+						jobStatus = HttpUtil.executeMethod(getServiceMethod);
+						status.add(jobStatus);
+						if (!jobStatus.isOK())
+							return revert(status);
+						resp = jobStatus.getJsonData();
+						String serviceInstanceGUID = null;
+						JSONArray respArray = resp.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES);
+						for (int i = 0; i < respArray.length(); i++) {
+							JSONObject o = respArray.optJSONObject(i);
+							if (o != null) {
+								JSONObject str = o.optJSONObject(CFProtocolConstants.V2_KEY_METADATA);
+								if (str != null) {
+									serviceInstanceGUID = str.getString(CFProtocolConstants.V2_KEY_GUID);
+								}
 							}
 						}
+						/* bind service to the application */
+						URI serviceBindingsURI = targetURI.resolve("/v2/service_bindings"); //$NON-NLS-1$
+						PostMethod bindServiceMethod = new PostMethod(serviceBindingsURI.toString());
+						HttpUtil.configureHttpMethod(bindServiceMethod, target);
+
+						/* set request body */
+						JSONObject bindServiceRequest = new JSONObject();
+						bindServiceRequest.put(CFProtocolConstants.V2_KEY_APP_GUID, application.getGuid());
+						bindServiceRequest.put(CFProtocolConstants.V2_KEY_SERVICE_INSTANCE_GUID, serviceInstanceGUID);
+						bindServiceMethod.setRequestEntity(new StringRequestEntity(bindServiceRequest.toString(), "application/json", "utf-8")); //$NON-NLS-1$ //$NON-NLS-2$
+
+						/* send request */
+						jobStatus = HttpUtil.executeMethod(bindServiceMethod);
+						status.add(jobStatus);
+						if (!jobStatus.isOK())
+							return revert(status);
 					}
-					/* bind service to the application */
-					URI serviceBindingsURI = targetURI.resolve("/v2/service_bindings"); //$NON-NLS-1$
-					PostMethod bindServiceMethod = new PostMethod(serviceBindingsURI.toString());
-					HttpUtil.configureHttpMethod(bindServiceMethod, target);
-
-					/* set request body */
-					JSONObject bindServiceRequest = new JSONObject();
-					bindServiceRequest.put(CFProtocolConstants.V2_KEY_APP_GUID, application.getGuid());
-					bindServiceRequest.put(CFProtocolConstants.V2_KEY_SERVICE_INSTANCE_GUID, serviceInstanceGUID);
-					bindServiceMethod.setRequestEntity(new StringRequestEntity(bindServiceRequest.toString(), "application/json", "utf-8")); //$NON-NLS-1$ //$NON-NLS-2$
-
-					/* send request */
-					jobStatus = HttpUtil.executeMethod(bindServiceMethod);
-					status.add(jobStatus);
-					if (!jobStatus.isOK())
-						return revert(status);
 				}
 			}
 
