@@ -13,7 +13,6 @@ package org.eclipse.orion.server.gerritfs;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -158,7 +157,8 @@ public class GerritFileContents  extends HttpServlet {
 				
 				ObjectId objId = treeWalk.getObjectId(0);
 				ObjectLoader loader = repo.open(objId);
-				
+				resp.setHeader("Cache-Control", "no-cache");
+				resp.setHeader("ETag", "\"" + tree.getId().getName() + "\"");
 				resp.setContentType("application/octet-stream");
 				loader.copyTo(out);
 				walk.release();

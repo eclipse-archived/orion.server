@@ -13,7 +13,6 @@ package org.eclipse.orion.server.gerritfs;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -162,6 +161,8 @@ public class GerritListFile extends HttpServlet {
 						}
 						String response = JSONUtil.write(contents);
 						resp.setContentType("application/json");
+						resp.setHeader("Cache-Control", "no-cache");
+						resp.setHeader("ETag", "W/\"" + response.length() + "-" + response.hashCode() + "\"");
 						log.debug(response);
 						out.write(response);
 					} catch (GitAPIException e) {
@@ -172,6 +173,8 @@ public class GerritListFile extends HttpServlet {
 						ArrayList<HashMap<String, String>> contents = new ArrayList<HashMap<String, String>>();
 						String response = JSONUtil.write(contents);
 						resp.setContentType("application/json");
+						resp.setHeader("Cache-Control", "no-cache");
+						resp.setHeader("ETag", "W/\"" + response.length() + "-" + response.hashCode() + "\"");
 						log.debug(response);
 						out.write(response);
 						return;
@@ -213,6 +216,8 @@ public class GerritListFile extends HttpServlet {
 						}
 						String response = JSONUtil.write(contents);
 						resp.setContentType("application/json");
+						resp.setHeader("Cache-Control", "no-cache");
+						resp.setHeader("ETag", "\"" + tree.getId().getName() + "\"");
 						log.debug(response);
 						out.write(response);
 					} else {
@@ -257,6 +262,8 @@ public class GerritListFile extends HttpServlet {
 						} while (treeWalk.next());
 						String response = JSONUtil.write(contents);
 						resp.setContentType("application/json");
+						resp.setHeader("Cache-Control", "no-cache");
+						resp.setHeader("ETag", "\"" + tree.getId().getName() + "\"");
 						log.debug(response);
 						out.write(response);
 					}
