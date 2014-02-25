@@ -1,9 +1,20 @@
-<project name="WebIDE customTargets overrides" >
+<project name="WebIDE customTargets overrides" xmlns:ac="antlib:net.sf.antcontrib">
+	<!--
+	Required properties
+	======================================================================
+		${buildLabel}       Build ID to inject
+		${buildDirectory}   Path to the directory where build will be performed.
+	-->
 
 	<property name="super" value="Build specific targets and properties" />
-	<property name="minifyDirectory" value="${buildDirectory}/built-js" />
-	<import file="${eclipse.pdebuild.templates}/headless-build/customTargets.xml"/>
 
+	<import file="${eclipse.pdebuild.templates}/headless-build/customTargets.xml"/>
+	
+	<!-- These files are found in the org.eclipse.orion.client repo, releng/org.eclipse.orion.client.releng/builder/ -->
+	<!-- They are expected to have been copied into the CWD by masterBuild.sh before customTargets is called. -->
+	<import file="orion.mini.xml" />
+	<import file="orion.jsdoc.xml" />
+	
 	<!-- Map files are here in the releng project -->
 	<target name="getMapFiles"  unless="skipMaps">
 		<!--<property name="mapsCheckoutTag" value="HEAD" /> -->
@@ -106,242 +117,17 @@ lastMapTag=${mapsTagTag}
 		<available property="jsdocHome" value="${base}/jsdoc-toolkit" file="${base}/jsdoc-toolkit" />
 		<available property="requirejsHome" value="${base}/requirejs" file="${base}/requirejs" />
 		<property name="closureJar" value="/shared/common/closure/compiler.jar" />
+		<property name="minify" value="" />
+		<property name="minifyEditor" value="" />
+		<property name="buildConfig" value="${builder}/scripts/orion.build.js" />
 
-		<antcall target="jsdocs" />
         <record name="optimizer-log.txt" loglevel="debug" action="start"/>
+		<!-- Invoke orion.mini.xml -->
+		
 		<antcall target="requirejs" />
         <record name="optimizer-log.txt" action="stop"/>
-	</target>
 
-	<target name="jsdocs" if="jsdocHome" >
-		<java jar="${jsdocHome}/jsrun.jar" fork="true">
-			<arg line="${jsdocHome}/app/run.js -s -v -a " />
-			<arg value="-r=3" />
-			<arg value="-t=${jsdocHome}/templates/jsdoc" />
-			<arg value="-d=${buildDirectory}/plugins/org.eclipse.orion.doc.isv/jsdoc" />
-			<arg value="${buildDirectory}/plugins/org.eclipse.orion.client.core/web/orion/" />
-			<arg value="${buildDirectory}/plugins/org.eclipse.orion.client.ui/web/orion/" />
-			<arg value="${buildDirectory}/plugins/org.eclipse.orion.client.editor/web/orion/" />
-			<arg value="${buildDirectory}/plugins/org.eclipse.orion.client.git/web/orion/" />
-			<arg value="${buildDirectory}/plugins/org.eclipse.orion.client.javascript/web/orion/" />
-			<arg value="${buildDirectory}/plugins/org.eclipse.orion.client.users/web/orion/" />
-		</java>
-	</target>
-
-	<macrodef name="optimize" >
-		<attribute name="name" />
-		<attribute name="pageDir" default = "." />
-		<attribute name="bundle"  />
-		<sequential>
-			<java classname="org.mozilla.javascript.tools.shell.Main" fork="true" 
-				  dir="${buildDirectory}/optimization">
-				<classpath>
-					<pathelement location="${requirejsHome}/lib/rhino/js.jar" />
-					<pathelement location="${requirejsHome}/lib/closure/compiler.jar" />
-				</classpath>
-				<!-- JavaScript language version -->
-				<arg value="-version" />
-				<arg value="180" />
-				<arg value="${requirejsHome}/dist/r.js"/>
-				<arg value="-o" />
-				<arg value="./orion.build.js"/>
-				<arg value="optimize=closure" />
-				<arg value="name=@{pageDir}/@{name}" />
-				<arg value="out=@{pageDir}/built-@{name}.js"/>
-				<arg value="dir=" />
-			</java>
-
-			<!-- optimize the page css -->
-			<java classname="org.mozilla.javascript.tools.shell.Main" fork="true" dir="${buildDirectory}/optimization">
-				<classpath>
-					<pathelement location="${requirejsHome}/lib/rhino/js.jar" />
-					<pathelement location="${requirejsHome}/lib/closure/compiler.jar" />
-				</classpath>
-				<arg value="${requirejsHome}/dist/r.js"/>
-				<arg value="-o" />
-				<arg value="./orion.build.js"/>
-				<arg value="cssIn=@{pageDir}/@{name}.css" />
-				<arg value="out=@{pageDir}/@{name}.css" />
-			</java>
-
-			<antcall target="updateHTML">
-				<param name="minifiedScript" value="${buildDirectory}/optimization/@{pageDir}/built-@{name}.js" />
-				<param name="pageDir" value="@{pageDir}" />
-				<param name="name" value="@{name}" />
-			</antcall>
-
-			<antcall target="updateJS">
-				<param name="minifiedScript" value="${buildDirectory}/optimization/@{pageDir}/built-@{name}.js" />
-				<param name="pageDir" value="@{pageDir}" />
-				<param name="name" value="@{name}" />
-			</antcall>
-
-			<copy todir="${buildDirectory}/plugins/@{bundle}/web/@{pageDir}" >
-				<fileset dir="${buildDirectory}/optimization/@{pageDir}" includes="built-@{name}.js, @{name}.html" >
-					<size when="more" value="0" />
-				</fileset>
-			</copy>
-		</sequential>
-	</macrodef>
-
-	<macrodef name="editorOptimize" >
-		<attribute name="scriptName" />
-		<attribute name="fileName" />
-		<attribute name="optimize" />
-		<sequential>
-			<java classname="org.mozilla.javascript.tools.shell.Main" fork="true" 
-				 dir="${buildDirectory}/optimization">
-				<classpath>
-					<pathelement location="${requirejsHome}/lib/rhino/js.jar" />
-					<pathelement location="${requirejsHome}/lib/closure/compiler.jar" />
-				</classpath>
-				<!-- JavaScript language version -->
-				<arg value="-version" />
-				<arg value="180" />
-				<arg value="${requirejsHome}/dist/r.js"/>
-				<arg value="-o" />
-				<arg value="@{scriptName}"/>
-				<arg value="optimize=@{optimize}" />
-				<arg value="out=${minifyDirectory}/@{fileName}"/>
-				<arg value="dir=" />
-			</java>
-		</sequential>
-	</macrodef>
-
-	<target name="updateHTML" >
-		<condition property="builtResult" value="built-${name}" else="${name}" >
-			<length file="${minifiedScript}" when="greater" length="0" />
-		</condition>
-		<replace file="${buildDirectory}/optimization/${pageDir}/${name}.html" token="require([&quot;${name}.js&quot;]);" value="require([&quot;${builtResult}.js&quot;]);" />
-		<replace file="${buildDirectory}/optimization/${pageDir}/${name}.html" token="require([&apos;${name}.js&apos;]);" value="require([&quot;${builtResult}.js&quot;]);" />
-		<replace file="${buildDirectory}/optimization/${pageDir}/${name}.html" token="requirejs/require.js" value="requirejs/require.min.js" />
-		<replace file="${buildDirectory}/optimization/${pageDir}/${name}.html" token="data-main=&quot;${name}.js&quot;" value="data-main=&quot;${builtResult}.js&quot;" />
-		<replace file="${buildDirectory}/optimization/${pageDir}/${name}.html" token="data-main=&apos;${name}.js&apos;" value="data-main=&quot;${builtResult}.js&quot;" />
-	</target>
-
-	<target name="checkBuiltResult">
-		<condition property="builtResultExists" value="1" >
-			<length file="${minifiedScript}" when="greater" length="0" />
-		</condition>
-	</target>
-
-	<!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=404957 -->
-	<target name="updateJS" depends="checkBuiltResult" if="builtResultExists">
-		<!-- Omit superfluous prefix "./" if we're dealing with module in the cwd -->
-		<condition property="moduleName" value="${name}" else="${pageDir}/${name}">
-			<equals arg1="${pageDir}" arg2="." />
-		</condition>
-		<property name="builtModuleName" value="built-${name}.js" />
-
-		<replace file="${minifiedScript}" value="define(&apos;${builtModuleName}&apos;">
-			<replacefilter token="define(&quot;${moduleName}&quot;" />
-			<replacefilter token="define(&apos;${moduleName}&apos;" />
-		</replace>
-	</target>
-
-	<target name="requirejs" if="requirejsHome" >
-		<delete dir="${buildDirectory}/optimization" />
-		<delete dir="${minifyDirectory}" />
-		<mkdir dir="${minifyDirectory}" />
-		<copy file="${builder}/scripts/orion.build.js" tofile="${buildDirectory}/optimization/orion.build.js" overwrite="true"/>
-		<copy file="${builder}/scripts/editor.build-js.js" tofile="${buildDirectory}/optimization/editor.build-js.js" overwrite="true"/>
-		<copy file="${builder}/scripts/editor.build.almond-js.js" tofile="${buildDirectory}/optimization/editor.build.almond-js.js" overwrite="true"/>
-		<copy file="${builder}/scripts/editor.build-css.js" tofile="${buildDirectory}/optimization/editor.build-css.js" overwrite="true"/>
-
-		<!-- Stage files for optimization -->
-		<copy todir="${buildDirectory}/optimization" >
-			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.ui/web" includes="**"/>
-			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.core/web" includes="**"/>
-			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.cf/web" includes="**"/>
-			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.editor/web" includes="**"/>
-			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.git/web" includes="**"/>
-			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.javascript/web" includes="**"/>
-			<fileset dir="${buildDirectory}/plugins/org.eclipse.orion.client.users/web" includes="**"/>
-		</copy>
-		
-		<!-- build standalone editor -->
-		<editorOptimize  filename="built-editor.css" scriptname="editor.build-css.js" optimize="closure"/>
-		<editorOptimize  filename="built-editor-amd.min.js" scriptname="editor.build-js.js" optimize="closure"/>
-		<editorOptimize  filename="built-editor-amd.js" scriptname="editor.build-js.js" optimize="none"/>
-		<editorOptimize  filename="built-editor.min.js" scriptname="editor.build.almond-js.js" optimize="closure"/>
-		<editorOptimize  filename="built-editor.js" scriptname="editor.build.almond-js.js" optimize="none"/>
-		
-		<!-- build orion pages and plugins -->
-		<optimize pageDir="." name="index" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="cfui" name="deploy" bundle="org.eclipse.orion.client.cf" />
-		<optimize pageDir="cfui" name="logs" bundle="org.eclipse.orion.client.cf" />
-		<optimize pageDir="cfui/plugins" name="cFPlugin" bundle="org.eclipse.orion.client.cf" />
-		<optimize pageDir="edit" name="edit" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="edit/content" name="jsonEditorPlugin" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="edit/content" name="imageViewerPlugin" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="compare" name="compare" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="operations" name="list" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="search" name="search" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="settings" name="settings" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="shell" name="shellPage" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="shell/plugins" name="shellPagePlugin" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="javascript/plugins" name="javascriptPlugin" bundle="org.eclipse.orion.client.javascript" />
-		<optimize pageDir="plugins/site" name="sitePlugin" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="plugins" name="authenticationPlugin" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="plugins" name="csslintPlugin" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="plugins" name="fileClientPlugin" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="plugins" name="GerritFilePlugin" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="plugins" name="GitHubFilePlugin" bundle="org.eclipse.orion.client.ui" />		
-		<optimize pageDir="plugins" name="jslintPlugin" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="plugins" name="npmPlugin" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="plugins" name="pageLinksPlugin" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="plugins" name="preferencesPlugin" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="plugins" name="taskPlugin" bundle="org.eclipse.orion.client.ui" />		
-		<optimize pageDir="plugins" name="webEditingPlugin" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="plugins/languages/css" name="cssPlugin" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="plugins/languages/html" name="htmlPlugin" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="plugins/languages/java" name="javaPlugin" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="plugins/languages/php" name="phpPlugin" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="plugins/languages/python" name="pythonPlugin" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="plugins/languages/ruby" name="rubyPlugin" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="plugins/languages/xml" name="xmlPlugin" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="plugins/languages/yaml" name="yamlPlugin" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="plugins" name="gitBlamePlugin" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="sites" name="site" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="sites" name="sites" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="sites" name="view" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="mixloginstatic" name="LoginWindow" bundle="org.eclipse.orion.client.ui" />		
-		<optimize pageDir="mixloginstatic" name="manageOpenids" bundle="org.eclipse.orion.client.ui" />
-		<optimize pageDir="git/plugins" name="gitPlugin" bundle="org.eclipse.orion.client.git" />
-		<optimize pageDir="git" name="git-log" bundle="org.eclipse.orion.client.git" />
-		<optimize pageDir="git" name="git-status" bundle="org.eclipse.orion.client.git" />
-		<optimize pageDir="git" name="git-repository" bundle="org.eclipse.orion.client.git" />
-		<optimize pageDir="git" name="git-commit" bundle="org.eclipse.orion.client.git" />
-		<optimize pageDir="profile" name="user-list" bundle="org.eclipse.orion.client.users" />
-		<optimize pageDir="profile" name="userservicePlugin" bundle="org.eclipse.orion.client.users" />
-
-		<!-- build CSS -->
-		<!-- this is now handled inside the "optimize" target for each page-->
-		<!--
-		<java classname="org.mozilla.javascript.tools.shell.Main">
-			<classpath>
-				<pathelement location="${requirejsHome}/lib/rhino/js.jar" />
-				<pathelement location="${requirejsHome}/lib/closure/compiler.jar" />
-			</classpath>
-			<arg value="${requirejsHome}/dist/r.js"/>
-			<arg value="-o" />
-				<arg value="${builder}/scripts/orion.build.js"/>
-				<arg value="optimize=none" />
-			<arg value="appDir=${buildDirectory}/optimization" />
-			<arg value="dir=${buildDirectory}/optimization" />
-		</java>
-		-->
-
-		<!-- copy css back -->
-		<copy todir="${buildDirectory}/plugins/org.eclipse.orion.client.ui/web" >
-			<fileset dir="${buildDirectory}/optimization" includes="**/*.css" excludes="git/,profile/"/>
-		</copy>
-		<copy todir="${buildDirectory}/plugins/org.eclipse.orion.client.git/web" >
-			<fileset dir="${buildDirectory}/optimization" includes="git/**/*.css" />
-		</copy>
-		<copy todir="${buildDirectory}/plugins/org.eclipse.orion.client.users/web" >
-			<fileset dir="${buildDirectory}/optimization" includes="profile/**/*.css" />
-		</copy>
+		<antcall target="jsdocs" />
 	</target>
 
 	<!--
@@ -379,8 +165,9 @@ lastMapTag=${mapsTagTag}
 		<copy todir="${dropLocation}" >
 			<fileset dir="${buildResultLocation}" includes="${archiveNamePrefix}*" />
 		</copy>
+		<property name="editorOutDirectory" value="${buildDirectory}/built-js" />
 		<copy todir="${dropLocation}">
-			<fileset dir="${minifyDirectory}"></fileset>
+			<fileset dir="${editorOutDirectory}"></fileset>
 		</copy>
 
 		<!-- generate the build index, guess the component version numbers -->
