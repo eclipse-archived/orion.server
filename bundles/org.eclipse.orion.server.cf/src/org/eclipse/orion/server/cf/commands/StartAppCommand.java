@@ -84,8 +84,9 @@ public class StartAppCommand extends AbstractCFCommand {
 				HttpUtil.configureHttpMethod(getInstancesMethod, target);
 
 				getInstancesStatus = HttpUtil.executeMethod(getInstancesMethod);
-				if (!getInstancesStatus.isOK())
-					continue;
+				if (!getInstancesStatus.isOK()) {
+					break;
+				}
 
 				JSONObject appInstancesJSON = getInstancesStatus.getJsonData();
 
