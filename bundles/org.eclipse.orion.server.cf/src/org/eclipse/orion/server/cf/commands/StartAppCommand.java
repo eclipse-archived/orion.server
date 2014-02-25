@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
 
 public class StartAppCommand extends AbstractCFCommand {
 
-	private static final int MAX_ATTEMPTS = 150;
+	private static final int MAX_ATTEMPTS = 30;
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
@@ -85,7 +85,8 @@ public class StartAppCommand extends AbstractCFCommand {
 
 				getInstancesStatus = HttpUtil.executeMethod(getInstancesMethod);
 				if (!getInstancesStatus.isOK()) {
-					break;
+					--attemptsLeft;
+					continue;
 				}
 
 				JSONObject appInstancesJSON = getInstancesStatus.getJsonData();
