@@ -38,6 +38,7 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 	private String appCommand;
 	private int appInstances;
 	private int appMemory;
+	private String buildPack;
 
 	private boolean force;
 
@@ -73,7 +74,7 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 			createAppRequst.put(CFProtocolConstants.V2_KEY_SPACE_GUID, target.getSpace().getCFJSON().getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID));
 			createAppRequst.put(CFProtocolConstants.V2_KEY_NAME, appName);
 			createAppRequst.put(CFProtocolConstants.V2_KEY_INSTANCES, appInstances);
-			createAppRequst.put(CFProtocolConstants.V2_KEY_BUILDPACK, JSONObject.NULL);
+			createAppRequst.put(CFProtocolConstants.V2_KEY_BUILDPACK, buildPack != null ? buildPack : JSONObject.NULL);
 			createAppRequst.put(CFProtocolConstants.V2_KEY_COMMAND, appCommand);
 			createAppRequst.put(CFProtocolConstants.V2_KEY_MEMORY, appMemory);
 			createAppRequst.put(CFProtocolConstants.V2_KEY_STACK_GUID, JSONObject.NULL);
@@ -112,6 +113,9 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 				mem = appJSON.optString(CFProtocolConstants.V6_KEY_MEMORY);
 			}
 			appMemory = ManifestUtils.getMemoryLimit(mem); /* optional */
+
+			//buildpack
+			buildPack = appJSON.optString(CFProtocolConstants.V2_KEY_BUILDPACK, null);
 
 			return Status.OK_STATUS;
 

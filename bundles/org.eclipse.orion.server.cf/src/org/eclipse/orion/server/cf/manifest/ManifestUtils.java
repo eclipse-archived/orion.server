@@ -50,12 +50,25 @@ public class ManifestUtils {
 	 * Parses <A>:<B> from the input line.
 	 */
 	static String[] splitLabel(String input) {
-		String[] sLabel = input.split(":"); //$NON-NLS-1$
-		if (sLabel[0].startsWith("- ")) //$NON-NLS-1$
-			sLabel[0] = sLabel[0].substring(2);
+		int idx = input.indexOf(":");
+		String head = null;
+		String tail = null;
+		if (idx != -1) {
+			head = input.substring(0, idx);
+			tail = input.substring(idx + 1);
+			tail = tail.trim();
+		} else {
+			head = input;
+		}
 
-		if (sLabel.length > 1)
-			sLabel[1] = sLabel[1].trim();
+		if (head.startsWith("- ")) //$NON-NLS-1$
+			head = head.substring(2);
+
+		String[] sLabel;
+		if (tail != null && !tail.isEmpty())
+			sLabel = new String[] {head, tail};
+		else
+			sLabel = new String[] {head};
 
 		return sLabel;
 	}
