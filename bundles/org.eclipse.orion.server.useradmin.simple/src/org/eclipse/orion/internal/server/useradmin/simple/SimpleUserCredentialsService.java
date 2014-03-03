@@ -41,6 +41,7 @@ import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.Role;
 import org.eclipse.orion.server.useradmin.User;
 import org.eclipse.orion.server.useradmin.UserConstants;
+import org.eclipse.orion.server.useradmin.UserServiceHelper;
 import org.eclipse.orion.server.useradmin.WebIdeAuthorization;
 import org.eclipse.orion.server.useradmin.servlets.UserServlet;
 import org.osgi.framework.InvalidSyntaxException;
@@ -145,6 +146,13 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 		IOrionUserProfileNode userProfileNode = root.getUserProfileNode(uid);
 		if (userProfileNode == null) {
 			return new ServerStatus(IStatus.ERROR, 404, "User not found: " + uid, null);
+		}
+		if (!uid.equals(user.getLogin())) {
+			// We are changing the login value, which is a user rename
+			// Ensure the new user does not already exist
+			if (UserServiceHelper.getDefault().getUserProfileService().getUserProfileNode(user.getLogin(), false) != null) {
+				return new ServerStatus(IStatus.ERROR, 409, "Cannot update profile: a user already exists with login " + user.getLogin(), null);
+			}
 		}
 		createOrUpdateUser(userProfileNode, user);
 		return new Status(IStatus.OK, Activator.PI_USER_SIMPLE, "User updated " + user.getLogin());
