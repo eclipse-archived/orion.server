@@ -13,18 +13,26 @@ package org.eclipse.orion.server.tests.servlets.users;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.metastore.ProjectInfo;
+import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.User;
 import org.eclipse.orion.server.useradmin.UserConstants;
@@ -202,6 +210,38 @@ public class BasicUsersTest extends UsersTest {
 		// check if user can authenticate
 		request = getGetUsersRequest("", true);
 
+		// create some project contents to test that delete user also deletes all project contents
+		try {
+			UserInfo userInfo = OrionConfiguration.getMetaStore().readUser(params.get("login"));
+			String workspaceName = "Orion Content";
+			WorkspaceInfo workspaceInfo = new WorkspaceInfo();
+			workspaceInfo.setFullName(workspaceName);
+			workspaceInfo.setUserId(userInfo.getUniqueId());
+			OrionConfiguration.getMetaStore().createWorkspace(workspaceInfo);
+			IFileStore userHome = OrionConfiguration.getUserHome(userInfo.getUniqueId());
+			String workspaceFolder = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceInfo.getUniqueId());
+			String projectName = "Orion Project";
+			IFileStore projectFolder = userHome.getChild(workspaceFolder).getChild(projectName);
+			ProjectInfo projectInfo = new ProjectInfo();
+			projectInfo.setFullName(projectName);
+			projectInfo.setWorkspaceId(workspaceInfo.getUniqueId());
+			projectInfo.setContentLocation(projectFolder.toURI());
+			OrionConfiguration.getMetaStore().createProject(projectInfo);
+			assertTrue(projectFolder.fetchInfo().exists() && projectFolder.fetchInfo().isDirectory());
+			String fileName = "file.html";
+			IFileStore file = projectFolder.getChild(fileName);
+			try {
+				OutputStream outputStream = file.openOutputStream(EFS.NONE, null);
+				outputStream.write("<!doctype html>".getBytes());
+				outputStream.close();
+			} catch (IOException e) {
+				fail("Count not create a test file in the Orion Project:" + e.getLocalizedMessage());
+			}
+			assertTrue("the file in the project folder should exist.", file.fetchInfo().exists());
+		} catch (CoreException e) {
+			fail("Could not create project contents for the user");
+		}
+
 		// delete user
 		request = getAuthenticatedRequest(location, METHOD_DELETE, true);
 		setAuthentication(request, params.get("login"), params.get("password"));
@@ -237,7 +277,6 @@ public class BasicUsersTest extends UsersTest {
 		response = webConversation.getResponse(request);
 		assertEquals("User with no roles has admin privileges", HttpURLConnection.HTTP_FORBIDDEN, response.getResponseCode());
 		// add admin rights
-		//TODO
 
 		AuthorizationService.addUserRight(uid, "/users");
 		AuthorizationService.addUserRight(uid, "/users/*");

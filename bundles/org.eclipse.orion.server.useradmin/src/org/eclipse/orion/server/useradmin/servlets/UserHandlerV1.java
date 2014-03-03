@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2013 IBM Corporation and others.
+ * Copyright (c) 2010, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -29,6 +29,7 @@ import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.internal.server.servlets.workspace.WorkspaceResourceHandler;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
@@ -36,7 +37,9 @@ import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
+import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
@@ -414,11 +417,24 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (!userAdmin.deleteUser(user)) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + userId + " could not be found.", null));
 		}
+		
 		// Delete user from metadata store
 		try {
 			@SuppressWarnings("unused")
 			Activator r = Activator.getDefault();
 			final IMetaStore metastore = OrionConfiguration.getMetaStore();
+			UserInfo userInfo = metastore.readUser(userId);
+			if (userInfo.getWorkspaceIds().size() > 0) {
+				for (String workspaceId : userInfo.getWorkspaceIds()) {
+					WorkspaceInfo workspaceInfo = metastore.readWorkspace(workspaceId);
+					if (workspaceInfo.getProjectNames().size() > 0) {
+						for (String projectName : workspaceInfo.getProjectNames()) {
+							ProjectInfo projectInfo = metastore.readProject(workspaceId, projectName);
+							WorkspaceResourceHandler.removeProject(userId, workspaceInfo, projectInfo);
+						}
+					}
+				}
+			}
 			metastore.deleteUser(userId);
 		} catch (CoreException e) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Removing " + userId + " failed.", e));
