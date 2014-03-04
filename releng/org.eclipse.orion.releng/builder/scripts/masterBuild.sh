@@ -195,7 +195,6 @@ runBuild () {
 	cmd="$javaHome/bin/java -enableassertions -jar $launcherJar \
 			-application org.eclipse.ant.core.antRunner \
 			-buildfile $builderDir/buildWebIDE.xml \
-			-verbose \
 			-Dbuilder=$builderDir/builder \
 			-Dbase=$writableBuildRoot \
 			-DbuildType=$buildType -Dtimestamp=$timestamp -DbuildLabel=$buildLabel \
