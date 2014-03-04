@@ -121,6 +121,15 @@ lastMapTag=${mapsTagTag}
 		<property name="minifyEditor" value="" />
 		<property name="buildConfig" value="${builder}/scripts/orion.build.js" />
 
+		<!--
+			This is a hack to make the shape of our buildDirectory match the shape expected by orion.mini.xml.
+			Plugins are supposed to be in a ./bundles/ directory, so copy them in there.
+		-->
+		<mkdir dir="${buildDirectory}/bundles" />
+		<copy todir="${buildDirectory}/bundles" failonerror="false">
+			<fileset dir="${buildDirectory}/plugins" includes="**" />
+		</copy>
+
         <record name="optimizer-log.txt" loglevel="debug" action="start"/>
 		<!-- Invoke orion.mini.xml -->
 		
