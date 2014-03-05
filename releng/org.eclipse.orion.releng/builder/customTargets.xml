@@ -136,7 +136,18 @@ lastMapTag=${mapsTagTag}
 		<antcall target="requirejs" />
         <record name="optimizer-log.txt" action="stop"/>
 
+		<!-- Copy minified bundles/ back to plugins/ -->
+		<copy todir="${buildDirectory}/plugins" failonerror="false">
+			<fileset dir="${buildDirectory}/bundles" includes="**" />
+		</copy>
+
 		<antcall target="jsdocs" />
+
+		<!-- Copy JSDocs back -->
+		<copy todir="${buildDirectory}/plugins" failonerror="false">
+			<fileset dir="${buildDirectory}/doc" includes="**" />
+		</copy>
+
 	</target>
 
 	<!--
