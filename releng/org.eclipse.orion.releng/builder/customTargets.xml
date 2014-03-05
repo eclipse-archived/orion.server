@@ -130,11 +130,11 @@ lastMapTag=${mapsTagTag}
 			<fileset dir="${buildDirectory}/plugins" includes="**" />
 		</copy>
 
-        <record name="optimizer-log.txt" loglevel="debug" action="start"/>
+        <record name="${buildDirectory}/optimizer-log.txt" loglevel="debug" action="start"/>
 		<!-- Invoke orion.mini.xml -->
 		
 		<antcall target="requirejs" />
-        <record name="optimizer-log.txt" action="stop"/>
+        <record name="${buildDirectory}/optimizer-log.txt" action="stop"/>
 
 		<!-- Copy minified bundles/ back to plugins/ -->
 		<copy todir="${buildDirectory}/plugins" failonerror="false">
