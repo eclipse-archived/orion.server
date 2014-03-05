@@ -130,7 +130,7 @@ lastMapTag=${mapsTagTag}
 			<fileset dir="${buildDirectory}/plugins" includes="**" />
 		</copy>
 
-        <record name="${buildDirectory}/optimizer-log.txt" loglevel="debug" action="start"/>
+        <record name="${buildDirectory}/optimizer-log.txt" loglevel="verbose" action="start"/>
 		<!-- Invoke orion.mini.xml -->
 		
 		<antcall target="requirejs" />
