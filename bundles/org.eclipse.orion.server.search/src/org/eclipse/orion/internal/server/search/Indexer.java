@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2013 IBM Corporation and others.
+ * Copyright (c) 2010, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -17,6 +17,7 @@ import java.util.*;
 import org.apache.solr.client.solrj.*;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.util.ClientUtils;
+import org.apache.solr.common.SolrException;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.CommonParams;
 import org.eclipse.core.filesystem.*;
@@ -25,7 +26,6 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.*;
 import org.eclipse.osgi.util.NLS;
@@ -52,6 +52,7 @@ public class Indexer extends Job {
 	private final List<String> INDEXED_FILE_TYPES;
 	private final SolrServer server;
 	private final List<String> skippedFileTypes = new ArrayList<String>();
+	Logger logger;
 
 	public Indexer(SolrServer server) {
 		super("Indexing"); //$NON-NLS-1$
@@ -59,6 +60,8 @@ public class Indexer extends Job {
 		setSystem(true);
 		INDEXED_FILE_TYPES = Arrays.asList("css", "js", "html", "txt", "xml", "java", "properties", "php", "htm", "project", "conf", "pl", "sh", "text", "xhtml", "mf", "manifest", "md", "yaml", "yml", "go");
 		Collections.sort(INDEXED_FILE_TYPES);
+		logger = LoggerFactory.getLogger(Indexer.class);
+
 	}
 
 	@Override
@@ -108,12 +111,17 @@ public class Indexer extends Job {
 	private void handleIndexingFailure(Throwable t, IFileStore file) {
 		String message;
 		if (file != null) {
-			message = NLS.bind("Error during searching indexing on file: {0}", file.toString());
+			message = NLS.bind("Error during searching indexing on file: {0}", file.toString()); //$NON-NLS-1$
 		} else {
-			message = "Error during searching indexing";
+			message = "Error during searching indexing"; //$NON-NLS-1$
 
 		}
-		LogHelper.log(new Status(IStatus.ERROR, SearchActivator.PI_SEARCH, message, t));
+		//SolrException is a failure in Solr itself, see bug 384299
+		if (t instanceof SolrException) {
+			logger.debug(message, t);
+		} else {
+			logger.error(message, t);
+		}
 	}
 
 	/**
@@ -163,7 +171,6 @@ public class Indexer extends Job {
 	}
 
 	private int indexProject(UserInfo user, WorkspaceInfo workspace, ProjectInfo project, SubMonitor monitor, List<SolrInputDocument> documents) {
-		Logger logger = LoggerFactory.getLogger(Indexer.class);
 		if (logger.isDebugEnabled())
 			logger.debug("Indexing project id: " + project.getUniqueId() + " name: " + project.getFullName()); //$NON-NLS-1$ //$NON-NLS-2$
 		checkCanceled(monitor);
@@ -246,7 +253,6 @@ public class Indexer extends Job {
 		if (extension == null || (Collections.binarySearch(INDEXED_FILE_TYPES, extension.toLowerCase()) < 0))
 			return true;
 		if (skippedFileTypes.add(extension)) {
-			Logger logger = LoggerFactory.getLogger(Indexer.class);
 			if (logger.isDebugEnabled())
 				logger.debug("Skipping unknown file type: " + extension); //$NON-NLS-1$
 		}
@@ -281,7 +287,6 @@ public class Indexer extends Job {
 
 	@Override
 	protected IStatus run(IProgressMonitor monitor) {
-		Logger logger = LoggerFactory.getLogger(Indexer.class);
 		IMetaStore metaStore;
 		try {
 			metaStore = OrionConfiguration.getMetaStore();
