@@ -191,11 +191,15 @@ public class GitConstants {
 
 	public static final String KEY_REVIEW_REQ_MESSAGE = "ReviewMessage"; //$NON-NLS-1$
 
-	public static final String KEY_BLAME = "BlameLocation";
+	public static final String KEY_BLAME = "BlameLocation"; //$NON-NLS-1$
 
-	public static final String KEY_START_RANGE = "Start";
+	public static final String KEY_START_RANGE = "Start"; //$NON-NLS-1$
 
-	public static final String KEY_END_RANGE = "End";
+	public static final String KEY_END_RANGE = "End"; //$NON-NLS-1$
 
 	public static final String KEY_INIT_PROJECT = "initProject"; //$NON-NLS-1$
+
+	public static final String KEY_SSO_TOKEN = "SSOToken"; //$NON-NLS-1$
+
+	public static final String KEY_COOKIE = "Cookie"; //$NON-NLS-1$
 }

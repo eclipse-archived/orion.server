@@ -15,6 +15,7 @@ import javax.servlet.http.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.*;
 import org.eclipse.orion.server.git.objects.Status;
 
@@ -33,7 +34,6 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 	private ServletResourceHandler<String> statusHandlerV1;
 	private ServletResourceHandler<String> tagHandlerV1;
 	private ServletResourceHandler<String> blameHandlerV1;
-
 	private ServletResourceHandler<IStatus> statusHandler;
 
 	GitHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
@@ -73,7 +73,7 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 					Cookie currentCookie = cookies[i];
 					if (tokenName.equals(currentCookie.getName())) {
 						Cookie loginCookie = new Cookie(currentCookie.getName(), currentCookie.getValue());
-						GitUtils.setSSOToken(loginCookie);
+						request.setAttribute(GitConstants.KEY_SSO_TOKEN, loginCookie);
 					}
 				}
 			}

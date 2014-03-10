@@ -12,22 +12,23 @@ package org.eclipse.orion.server.git.jobs;
 
 import java.io.*;
 import java.net.URI;
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
-import org.eclipse.jgit.api.CloneCommand;
-import org.eclipse.jgit.api.Git;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.*;
 import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
-import org.eclipse.orion.server.git.GitActivator;
-import org.eclipse.orion.server.git.GitCredentialsProvider;
+import org.eclipse.orion.server.git.*;
 import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.git.servlets.GitCloneHandlerV1;
 import org.json.JSONException;
@@ -63,6 +64,11 @@ public class CloneJob extends GitJob {
 		this(clone, userRunningTask, credentials, user, cloneLocation, project, gitUserName, gitUserMail, false);
 	}
 
+	public CloneJob(Clone clone, String userRunningTask, CredentialsProvider credentials, String user, String cloneLocation, ProjectInfo project, String gitUserName, String gitUserMail, boolean initProject, Object cookie) {
+		this(clone, userRunningTask, credentials, user, cloneLocation, project, gitUserName, gitUserMail, initProject);
+		this.cookie = (Cookie) cookie;
+	}
+
 	private IStatus doClone() {
 		try {
 			File cloneFolder = new File(clone.getContentLocation().getPath());
@@ -75,6 +81,18 @@ public class CloneJob extends GitJob {
 			cc.setDirectory(cloneFolder);
 			cc.setRemote(Constants.DEFAULT_REMOTE_NAME);
 			cc.setURI(clone.getUrl());
+			if (this.cookie != null) {
+				cc.setTransportConfigCallback(new TransportConfigCallback() {
+					@Override
+					public void configure(Transport transport) {
+						if (transport instanceof TransportHttp) {
+							HashMap<String, String> map = new HashMap<String, String>();
+							map.put(GitConstants.KEY_COOKIE, cookie.getName() + "=" + cookie.getValue());
+							((TransportHttp) transport).setAdditionalHeaders(map);
+						}
+					}
+				});
+			}
 			Git git = cc.call();
 
 			// Configure the clone, see Bug 337820

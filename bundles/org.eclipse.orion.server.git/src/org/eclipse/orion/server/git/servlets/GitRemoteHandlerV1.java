@@ -238,8 +238,9 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 	private boolean fetch(HttpServletRequest request, HttpServletResponse response, GitCredentialsProvider cp, String path, boolean force) throws URISyntaxException, JSONException, IOException, ServletException {
 		// {remote}/{branch}/{file}/{path}
 		Path p = new Path(path);
-		FetchJob job = new FetchJob(TaskJobHandler.getUserId(request), cp, p, force);
-
+		//check for SSO token
+		Object cookie = request.getAttribute(GitConstants.KEY_SSO_TOKEN);
+		FetchJob job = new FetchJob(TaskJobHandler.getUserId(request), cp, p, force, cookie);
 		return TaskJobHandler.handleTaskJob(request, response, job, statusHandler, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 	}
 
@@ -248,7 +249,8 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		// FIXME: what if a remote or branch is named "file"?
 		if (p.segment(2).equals("file")) { //$NON-NLS-1$
 			// /git/remote/{remote}/{branch}/file/{path}
-			PushJob job = new PushJob(TaskJobHandler.getUserId(request), cp, p, srcRef, tags, force);
+			Object cookie = request.getAttribute(GitConstants.KEY_SSO_TOKEN);
+			PushJob job = new PushJob(TaskJobHandler.getUserId(request), cp, p, srcRef, tags, force, cookie);
 			return TaskJobHandler.handleTaskJob(request, response, job, statusHandler, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 		}
 		return false;

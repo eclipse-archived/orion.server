@@ -11,7 +11,9 @@
 package org.eclipse.orion.server.git.jobs;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
+import javax.servlet.http.Cookie;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jgit.api.*;
@@ -21,8 +23,7 @@ import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.*;
-import org.eclipse.orion.server.git.GitActivator;
-import org.eclipse.orion.server.git.GitCredentialsProvider;
+import org.eclipse.orion.server.git.*;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.osgi.util.NLS;
 
@@ -45,6 +46,11 @@ public class PullJob extends GitJob {
 		setTaskExpirationTime(TimeUnit.DAYS.toMillis(7));
 	}
 
+	public PullJob(String userRunningTask, CredentialsProvider credentials, Path path, boolean force, Object cookie) {
+		this(userRunningTask, credentials, path, force);
+		this.cookie = (Cookie) cookie;
+	}
+
 	private IStatus doPull() throws IOException, GitAPIException, CoreException {
 		Repository db = FileRepositoryBuilder.create(GitUtils.getGitDir(path));
 
@@ -55,6 +61,11 @@ public class PullJob extends GitJob {
 			@Override
 			public void configure(Transport t) {
 				credentials.setUri(t.getURI());
+				if (t instanceof TransportHttp && cookie != null) {
+					HashMap<String, String> map = new HashMap<String, String>();
+					map.put(GitConstants.KEY_COOKIE, cookie.getName() + "=" + cookie.getValue());
+					((TransportHttp) t).setAdditionalHeaders(map);
+				}
 			}
 		});
 		PullResult pullResult = pc.call();

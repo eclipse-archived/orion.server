@@ -16,7 +16,8 @@ import java.util.Locale;
 import java.util.regex.Pattern;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.errors.TransportException;
@@ -25,7 +26,6 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.TaskJob;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
-import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.orion.server.jsch.HostFingerprintException;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -139,7 +139,6 @@ public abstract class GitJob extends TaskJob {
 	public GitJob(String userRunningTask, boolean keep, GitCredentialsProvider credentials) {
 		super(userRunningTask, keep);
 		this.credentials = credentials;
-		this.cookie = GitUtils.getSSOToken();
 	}
 
 	public GitJob(String userRunningTask, boolean keep) {
@@ -170,11 +169,5 @@ public abstract class GitJob extends TaskJob {
 		}
 
 		return Pattern.matches(".*" + MessageFormat.format(pattern, args) + ".*", message); //$NON-NLS-1$ //$NON-NLS-2$
-	}
-
-	@Override
-	protected IStatus run(IProgressMonitor progressMonitor) {
-		GitUtils.setSSOToken(this.cookie);
-		return super.run(progressMonitor);
 	}
 }

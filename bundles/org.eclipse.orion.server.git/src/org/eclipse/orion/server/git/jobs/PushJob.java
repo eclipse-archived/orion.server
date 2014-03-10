@@ -13,19 +13,18 @@ package org.eclipse.orion.server.git.jobs;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import javax.servlet.http.Cookie;
 import org.eclipse.core.runtime.*;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.PushCommand;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.*;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.*;
-import org.eclipse.orion.server.git.GitActivator;
-import org.eclipse.orion.server.git.GitCredentialsProvider;
+import org.eclipse.orion.server.git.*;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.osgi.util.NLS;
 
@@ -53,6 +52,11 @@ public class PushJob extends GitJob {
 		setTaskExpirationTime(TimeUnit.DAYS.toMillis(7));
 	}
 
+	public PushJob(String userRunningTask, CredentialsProvider credentials, Path path, String srcRef, boolean tags, boolean force, Object cookie) {
+		this(userRunningTask, credentials, path, srcRef, tags, force);
+		this.cookie = (Cookie) cookie;
+	}
+
 	private IStatus doPush() throws IOException, CoreException, URISyntaxException, GitAPIException {
 		// /git/remote/{remote}/{branch}/file/{path}
 		File gitDir = GitUtils.getGitDir(path.removeFirstSegments(2));
@@ -60,7 +64,17 @@ public class PushJob extends GitJob {
 		Git git = new Git(db);
 
 		PushCommand pushCommand = git.push();
-
+		pushCommand.setTransportConfigCallback(new TransportConfigCallback() {
+			@Override
+			public void configure(Transport t) {
+				credentials.setUri(t.getURI());
+				if (t instanceof TransportHttp && cookie != null) {
+					HashMap<String, String> map = new HashMap<String, String>();
+					map.put(GitConstants.KEY_COOKIE, cookie.getName() + "=" + cookie.getValue());
+					((TransportHttp) t).setAdditionalHeaders(map);
+				}
+			}
+		});
 		RemoteConfig remoteConfig = new RemoteConfig(git.getRepository().getConfig(), remote);
 		credentials.setUri(remoteConfig.getURIs().get(0));
 		pushCommand.setCredentialsProvider(credentials);

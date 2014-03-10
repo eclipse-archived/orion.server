@@ -12,17 +12,18 @@ package org.eclipse.orion.server.git.jobs;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
+import javax.servlet.http.Cookie;
 import org.eclipse.core.runtime.*;
-import org.eclipse.jgit.api.FetchCommand;
-import org.eclipse.jgit.api.Git;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.*;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.lib.RefUpdate.Result;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.*;
-import org.eclipse.orion.server.git.GitActivator;
-import org.eclipse.orion.server.git.GitCredentialsProvider;
+import org.eclipse.orion.server.git.*;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.osgi.util.NLS;
 
@@ -45,6 +46,11 @@ public class FetchJob extends GitJob {
 		this.branch = path.segment(1).equals("file") ? null : GitUtils.decode(path.segment(1)); //$NON-NLS-1$
 		builtMessages();
 		setTaskExpirationTime(TimeUnit.DAYS.toMillis(7));
+	}
+
+	public FetchJob(String userRunningTask, CredentialsProvider credentials, Path path, boolean force, Object cookie) {
+		this(userRunningTask, credentials, path, force);
+		this.cookie = (Cookie) cookie;
 	}
 
 	private void builtMessages() {
@@ -70,7 +76,18 @@ public class FetchJob extends GitJob {
 
 		RemoteConfig remoteConfig = new RemoteConfig(git.getRepository().getConfig(), remote);
 		credentials.setUri(remoteConfig.getURIs().get(0));
-
+		if (this.cookie != null) {
+			fc.setTransportConfigCallback(new TransportConfigCallback() {
+				@Override
+				public void configure(Transport transport) {
+					if (transport instanceof TransportHttp) {
+						HashMap<String, String> map = new HashMap<String, String>();
+						map.put(GitConstants.KEY_COOKIE, cookie.getName() + "=" + cookie.getValue());
+						((TransportHttp) transport).setAdditionalHeaders(map);
+					}
+				}
+			});
+		}
 		fc.setCredentialsProvider(credentials);
 		fc.setRemote(remote);
 		if (branch != null) {

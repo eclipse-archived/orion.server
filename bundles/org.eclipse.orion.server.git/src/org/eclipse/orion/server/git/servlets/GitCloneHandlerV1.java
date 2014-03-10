@@ -208,7 +208,9 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		cp.setUri(new URIish(clone.getUrl()));
 
 		// if all went well, clone
-		CloneJob job = new CloneJob(clone, TaskJobHandler.getUserId(request), cp, request.getRemoteUser(), cloneLocation, webProjectExists ? null : project /* used for cleaning up, so null when not needed */, gitUserName, gitUserMail, initProject);
+		//check for SSO token
+		Object cookie = request.getAttribute(GitConstants.KEY_SSO_TOKEN);
+		CloneJob job = new CloneJob(clone, TaskJobHandler.getUserId(request), cp, request.getRemoteUser(), cloneLocation, webProjectExists ? null : project /* used for cleaning up, so null when not needed */, gitUserName, gitUserMail, initProject, cookie);
 		return TaskJobHandler.handleTaskJob(request, response, job, statusHandler, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 	}
 
@@ -518,7 +520,8 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 
 	private boolean pull(HttpServletRequest request, HttpServletResponse response, GitCredentialsProvider cp, String path, boolean force) throws URISyntaxException, JSONException, IOException, ServletException {
 		Path p = new Path(path); // /{file}/{path}
-		PullJob job = new PullJob(TaskJobHandler.getUserId(request), cp, p, force);
+		Object cookie = request.getAttribute(GitConstants.KEY_SSO_TOKEN);
+		PullJob job = new PullJob(TaskJobHandler.getUserId(request), cp, p, force, cookie);
 		return TaskJobHandler.handleTaskJob(request, response, job, statusHandler, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 	}
 
