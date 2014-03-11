@@ -11,6 +11,8 @@
 package org.eclipse.orion.server.git.jobs;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
@@ -36,6 +38,9 @@ public class FetchJob extends GitJob {
 	private String remote;
 	private boolean force;
 	private String branch; // can be null if fetching the whole branch
+
+	static boolean InitSetAdditionalHeaders;
+	static Method SetAdditionalHeadersM;
 
 	public FetchJob(String userRunningTask, CredentialsProvider credentials, Path path, boolean force) {
 		super(userRunningTask, true, (GitCredentialsProvider) credentials);
@@ -79,11 +84,25 @@ public class FetchJob extends GitJob {
 		if (this.cookie != null) {
 			fc.setTransportConfigCallback(new TransportConfigCallback() {
 				@Override
-				public void configure(Transport transport) {
-					if (transport instanceof TransportHttp) {
+				public void configure(Transport t) {
+					if (t instanceof TransportHttp && cookie != null) {
 						HashMap<String, String> map = new HashMap<String, String>();
 						map.put(GitConstants.KEY_COOKIE, cookie.getName() + "=" + cookie.getValue());
-						((TransportHttp) transport).setAdditionalHeaders(map);
+						//Temp. until JGit fix
+						try {
+							if (!InitSetAdditionalHeaders) {
+								InitSetAdditionalHeaders = true;
+								SetAdditionalHeadersM = TransportHttp.class.getMethod("setAdditionalHeaders", HashMap.class);
+							}
+							if (SetAdditionalHeadersM != null) {
+								SetAdditionalHeadersM.invoke(t, map);
+							}
+						} catch (SecurityException e) {
+						} catch (NoSuchMethodException e) {
+						} catch (IllegalArgumentException e) {
+						} catch (IllegalAccessException e) {
+						} catch (InvocationTargetException e) {
+						}
 					}
 				}
 			});

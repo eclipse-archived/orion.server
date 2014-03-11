@@ -11,6 +11,8 @@
 package org.eclipse.orion.server.git.jobs;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
@@ -46,6 +48,9 @@ public class CloneJob extends GitJob {
 	private final String gitUserMail;
 	private String cloneLocation;
 	private final boolean initProject;
+
+	static boolean InitSetAdditionalHeaders;
+	static Method SetAdditionalHeadersM;
 
 	public CloneJob(Clone clone, String userRunningTask, CredentialsProvider credentials, String user, String cloneLocation, ProjectInfo project, String gitUserName, String gitUserMail, boolean initProject) {
 		super(userRunningTask, true, (GitCredentialsProvider) credentials);
@@ -84,11 +89,25 @@ public class CloneJob extends GitJob {
 			if (this.cookie != null) {
 				cc.setTransportConfigCallback(new TransportConfigCallback() {
 					@Override
-					public void configure(Transport transport) {
-						if (transport instanceof TransportHttp) {
+					public void configure(Transport t) {
+						if (t instanceof TransportHttp && cookie != null) {
 							HashMap<String, String> map = new HashMap<String, String>();
 							map.put(GitConstants.KEY_COOKIE, cookie.getName() + "=" + cookie.getValue());
-							((TransportHttp) transport).setAdditionalHeaders(map);
+							//Temp. until JGit fix
+							try {
+								if (!InitSetAdditionalHeaders) {
+									InitSetAdditionalHeaders = true;
+									SetAdditionalHeadersM = TransportHttp.class.getMethod("setAdditionalHeaders", HashMap.class);
+								}
+								if (SetAdditionalHeadersM != null) {
+									SetAdditionalHeadersM.invoke(t, map);
+								}
+							} catch (SecurityException e) {
+							} catch (NoSuchMethodException e) {
+							} catch (IllegalArgumentException e) {
+							} catch (IllegalAccessException e) {
+							} catch (InvocationTargetException e) {
+							}
 						}
 					}
 				});

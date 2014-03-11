@@ -11,6 +11,8 @@
 package org.eclipse.orion.server.git.jobs;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 import javax.servlet.http.Cookie;
@@ -34,6 +36,9 @@ public class PullJob extends GitJob {
 
 	private IPath path;
 	private String projectName;
+
+	static boolean InitSetAdditionalHeaders;
+	static Method SetAdditionalHeadersM;
 
 	public PullJob(String userRunningTask, CredentialsProvider credentials, Path path, boolean force) {
 		super(userRunningTask, true, (GitCredentialsProvider) credentials);
@@ -64,7 +69,21 @@ public class PullJob extends GitJob {
 				if (t instanceof TransportHttp && cookie != null) {
 					HashMap<String, String> map = new HashMap<String, String>();
 					map.put(GitConstants.KEY_COOKIE, cookie.getName() + "=" + cookie.getValue());
-					((TransportHttp) t).setAdditionalHeaders(map);
+					//Temp. until JGit fix
+					try {
+						if (!InitSetAdditionalHeaders) {
+							InitSetAdditionalHeaders = true;
+							SetAdditionalHeadersM = TransportHttp.class.getMethod("setAdditionalHeaders", HashMap.class);
+						}
+						if (SetAdditionalHeadersM != null) {
+							SetAdditionalHeadersM.invoke(t, map);
+						}
+					} catch (SecurityException e) {
+					} catch (NoSuchMethodException e) {
+					} catch (IllegalArgumentException e) {
+					} catch (IllegalAccessException e) {
+					} catch (InvocationTargetException e) {
+					}
 				}
 			}
 		});
