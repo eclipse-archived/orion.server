@@ -105,9 +105,9 @@ public class ManifestParseTree {
 		if (getParent() == this) {
 
 			/* special case: manifest root */
-			sb.append("---" + System.lineSeparator()); //$NON-NLS-1$
+			sb.append("---" + System.getProperty("line.separator")); //$NON-NLS-1$ //$NON-NLS-0$
 			for (ManifestParseTree child : children)
-				sb.append(child.toString(0) + System.lineSeparator());
+				sb.append(child.toString(0) + System.getProperty("line.separator")); //$NON-NLS-0$
 
 			return sb.toString();
 		}
@@ -139,7 +139,7 @@ public class ManifestParseTree {
 				sb.append(" "); //$NON-NLS-1$
 				sb.append(child.toString(0));
 			} else {
-				sb.append(System.lineSeparator());
+				sb.append(System.getProperty("line.separator")); //$NON-NLS-0$
 
 				if (!child.isItemNode())
 					sb.append(child.toString(indentation + 2));
