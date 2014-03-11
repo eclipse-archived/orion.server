@@ -22,7 +22,11 @@ public class CFProtocolConstants {
 
 	public static final String KEY_PASSWORD = "Password"; //$NON-NLS-1$
 
-	public static final String KEY_ORGANIZATION = "Organization"; //$NON-NLS-1$
+	public static final String KEY_ORGS = "Orgs"; //$NON-NLS-1$
+
+	public static final String KEY_ORG = "Org"; //$NON-NLS-1$
+
+	public static final String KEY_SPACES = "Spaces";
 
 	public static final String KEY_SPACE = "Space"; //$NON-NLS-1$
 
@@ -73,6 +77,8 @@ public class CFProtocolConstants {
 	public static final String V2_KEY_STACK_GUID = "stack_guid"; //$NON-NLS-1$
 
 	public static final String V2_KEY_ENTITY = "entity"; //$NON-NLS-1$
+
+	public static final String V2_KEY_ORGS = "organizations"; //$NON-NLS-1$
 
 	public static final String V2_KEY_DOMAINS_URL = "domains_url"; //$NON-NLS-1$
 

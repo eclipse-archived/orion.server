@@ -23,9 +23,10 @@ import org.json.JSONObject;
 @ResourceDescription(type = Org.TYPE)
 public class Org extends CFObject {
 
+	public static final String RESOURCE = "orgs"; //$NON-NLS-1$
 	public static final String TYPE = "Org"; //$NON-NLS-1$
 
-	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
+	protected static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
 	{
 		Property[] defaultProperties = new Property[] { //
 		new Property(CFProtocolConstants.KEY_NAME) //
