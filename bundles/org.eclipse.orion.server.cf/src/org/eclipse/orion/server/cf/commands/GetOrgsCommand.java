@@ -47,6 +47,8 @@ public class GetOrgsCommand extends AbstractCFCommand {
 			getDomainsMethod.setQueryString("inline-relations-depth=1"); //$NON-NLS-1$
 
 			ServerStatus status = HttpUtil.executeMethod(getDomainsMethod);
+			if (!status.isOK())
+				return status;
 
 			/* extract available orgs */
 			JSONObject orgs = status.getJsonData();
@@ -60,7 +62,10 @@ public class GetOrgsCommand extends AbstractCFCommand {
 			int resources = orgs.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES).length();
 			for (int k = 0; k < resources; ++k) {
 				JSONObject orgJSON = orgs.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES).getJSONObject(k);
-				List<Space> spaces = getSpaces(orgJSON);
+				List<Space> spaces = new ArrayList<Space>();
+				status = getSpaces(spaces, orgJSON);
+				if (!status.isOK())
+					return status;
 				OrgWithSpaces orgWithSpaces = new OrgWithSpaces();
 				orgWithSpaces.setCFJSON(orgJSON);
 				orgWithSpaces.setSpaces(spaces);
@@ -75,7 +80,7 @@ public class GetOrgsCommand extends AbstractCFCommand {
 		}
 	}
 
-	private List<Space> getSpaces(JSONObject orgJSON) throws Exception {
+	private ServerStatus getSpaces(List<Space> spaces, JSONObject orgJSON) throws Exception {
 		URI targetURI = URIUtil.toURI(target.getUrl());
 		URI spaceURI = targetURI.resolve(orgJSON.getJSONObject("entity").getString("spaces_url"));
 
@@ -84,22 +89,23 @@ public class GetOrgsCommand extends AbstractCFCommand {
 		getDomainsMethod.setQueryString("inline-relations-depth=1"); //$NON-NLS-1$
 
 		ServerStatus status = HttpUtil.executeMethod(getDomainsMethod);
+		if (!status.isOK())
+			return status;
 
 		/* extract available spaces */
 		JSONObject orgs = status.getJsonData();
 
 		if (orgs.getInt(CFProtocolConstants.V2_KEY_TOTAL_RESULTS) < 1) {
-			return null;
+			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
 		}
 
 		/* look if the domain is available */
-		List<Space> result = new ArrayList<Space>();
 		int resources = orgs.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES).length();
 		for (int k = 0; k < resources; ++k) {
 			JSONObject spaceJSON = orgs.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES).getJSONObject(k);
-			result.add(new Space().setCFJSON(spaceJSON));
+			spaces.add(new Space().setCFJSON(spaceJSON));
 		}
 
-		return result;
+		return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
 	}
 }
