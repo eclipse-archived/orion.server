@@ -13,7 +13,10 @@ package org.eclipse.orion.server.cf.manifest.v2.utils;
 import java.util.UUID;
 import org.eclipse.orion.server.cf.manifest.v2.*;
 
-public class SymbolResolver implements Functor {
+/**
+ * Resolves supported manifest symbols
+ */
+public class SymbolResolver implements Analyzer {
 
 	private String targetBase;
 

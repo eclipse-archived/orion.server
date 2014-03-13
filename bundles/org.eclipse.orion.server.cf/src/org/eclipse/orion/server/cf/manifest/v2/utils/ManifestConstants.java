@@ -12,15 +12,27 @@ package org.eclipse.orion.server.cf.manifest.v2.utils;
 
 public class ManifestConstants {
 
+	/* Manifest error messages */
 	public static String UNEXPECTED_INPUT_ERROR = "Unexpected token around line {0}.";
 
 	public static String UNSUPPORTED_TOKEN_ERROR = "Unsupported token around line {0}.";
 
 	public static String ILLEGAL_ITEM_TOKEN = "Unexpected token \"{1}\" around line {0}. Instead, expected a string literal.";
 
+	public static String ILLEGAL_ITEM_TOKEN_MIX = "Unexpected item token \"{1}\" around line {0}. Instead, expected a string literal mapping, i.e. \"property : value\".";
+
+	public static String ILLEGAL_MAPPING_TOKEN_MIX = "Unexpected string literal mapping \"{1}\" around line {0}. Instead, expected an item token, i.e. \" - property: value\".";
+
 	public static String ILLEGAL_MAPPING_TOKEN = "Unexpected token \"{1}\" around line {0}. Instead, expected \":\".";
+
+	public static String DUPLICATE_MAPPING_TOKEN = "Unexpected token \"{1}\" around line {0}. Instead, expected a string literal or item symbol \"- \".";
 
 	public static String MISSING_ITEM_ACCESS = "Expected {0} to have at least {1} item members.";
 
 	public static String MISSING_MEMBER_ACCESS = "Expected {0} to have a member \"{1}\".";
+
+	/* Manifest content constants */
+	public static String MANIFEST_APPLICATIONS = "applications";
+
+	public static String MANIFEST_APPLICATION_NAME = "name";
 }

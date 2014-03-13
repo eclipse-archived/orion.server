@@ -10,11 +10,17 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.manifest.v2;
 
-public interface Functor {
+public class AnalyzerException extends Exception {
+	private static final long serialVersionUID = 1L;
 
-	/**
-	 * Applies in-place a functor to the manifest representation.
-	 * @param parseTree Intermediate manifest tree representation to be modified.
-	 */
-	public void apply(ManifestParseTree parseTree);
+	private String message;
+
+	public AnalyzerException(String message) {
+		this.message = message;
+	}
+
+	@Override
+	public String getMessage() {
+		return message;
+	}
 }

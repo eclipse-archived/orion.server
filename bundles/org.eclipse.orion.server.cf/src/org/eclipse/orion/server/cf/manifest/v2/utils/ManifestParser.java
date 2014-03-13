@@ -40,6 +40,10 @@ public class ManifestParser implements Parser {
 				case TokenType.MAPPING_CONSTANT :
 
 					nextToken = getNextToken(tokenizer);
+					if (nextToken != null && TokenType.MAPPING_CONSTANT == nextToken.getType())
+						/* we're in a wrong state, admit failure */
+						throw new ParserException(ManifestConstants.DUPLICATE_MAPPING_TOKEN, nextToken);
+
 					if (nextToken != null && nextToken.getLineNumber() == currentToken.getLineNumber()) {
 
 						/* there are token mappings */
@@ -63,6 +67,13 @@ public class ManifestParser implements Parser {
 
 					/* attach to father node */
 					setItemFather(node.getLevel());
+
+					/* parent cannot have mapping values */
+					for (ManifestParseTree child : currentParent.getChildren())
+						if (!child.isItemNode())
+							/* we're in a wrong state, admit failure */
+							throw new ParserException(ManifestConstants.ILLEGAL_ITEM_TOKEN_MIX, currentToken);
+
 					currentParent.getChildren().add(node);
 					node.setParent(currentParent);
 
@@ -84,6 +95,13 @@ public class ManifestParser implements Parser {
 
 					/* find father node */
 					setFather(node.getLevel());
+
+					/* parent cannot have item values */
+					for (ManifestParseTree child : currentParent.getChildren())
+						if (child.isItemNode())
+							/* we're in a wrong state, admit failure */
+							throw new ParserException(ManifestConstants.ILLEGAL_MAPPING_TOKEN_MIX, currentToken);
+
 					currentParent.getChildren().add(node);
 					node.setParent(currentParent);
 
