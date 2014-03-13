@@ -29,11 +29,11 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.ITaskService;
+import org.eclipse.orion.server.core.tasks.IURIUnqualificationStrategy;
 import org.eclipse.orion.server.core.tasks.TaskDoesNotExistException;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.core.tasks.TaskInfo.TaskStatus;
 import org.eclipse.orion.server.core.tasks.TaskOperationException;
-import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -226,17 +226,7 @@ public class TaskServlet extends OrionServlet {
 				handleException(resp, e.getMessage(), e);
 			}
 		}
-		writeJSONResponse(req, resp, result);
-	}
-
-	public static void writeJSONResponse(HttpServletRequest req, HttpServletResponse resp, Object result) throws IOException {
-		if (result instanceof JSONObject) {
-			JSONObject jsonResult = (JSONObject) result;
-			if (jsonResult.optBoolean("LocationOnly")) {
-				writeJSONResponse(req, resp, result, JsonURIUnqualificationStrategy.LOCATION_ONLY);
-				return;
-			}
-		}
-		writeJSONResponse(req, resp, result, JsonURIUnqualificationStrategy.ALL);
+		IURIUnqualificationStrategy strategy = task.getUnqualificationStrategy();
+		writeJSONResponse(req, resp, result, strategy);
 	}
 }

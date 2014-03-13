@@ -16,6 +16,7 @@ import java.net.URISyntaxException;
 import javax.servlet.http.HttpServletRequest;
 
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.tasks.IURIUnqualificationStrategy;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -24,17 +25,13 @@ import org.json.JSONObject;
  * Controls which URLs found in JSON API response bodies will be "unqualified" (rewritten to remove the hostname 
  * and port of this server).
  */
-public abstract class JsonURIUnqualificationStrategy {
+public abstract class JsonURIUnqualificationStrategy implements IURIUnqualificationStrategy {
 	/**
 	 * A strategy that unqualifies all URLs in the JSON body.
 	 */
-	public static final JsonURIUnqualificationStrategy ALL = new JsonURIUnqualificationStrategy() {
+	public static final IURIUnqualificationStrategy ALL = new JsonURIUnqualificationStrategy() {
 		@Override
 		protected URI unqualifyObjectProperty(String key, URI uri, String scheme, String hostname, int port) {
-			//temp hack
-			if ("GitUrl".equals(key)) {
-				return uri;
-			}
 			return unqualifyURI(uri, scheme, hostname, port);
 		}
 
@@ -46,14 +43,9 @@ public abstract class JsonURIUnqualificationStrategy {
 	/**
 	 * A strategy that unqualifies only the URLs that are values of a "Location" key in JSON objects.
 	 */
-	public static final JsonURIUnqualificationStrategy LOCATION_ONLY = new JsonURIUnqualificationStrategy() {
+	public static final IURIUnqualificationStrategy LOCATION_ONLY = new JsonURIUnqualificationStrategy() {
 		@Override
 		protected URI unqualifyObjectProperty(String key, URI uri, String scheme, String hostname, int port) {
-			//temp hack
-			if ("GitUrl".equals(key)) {
-				return uri;
-			}
-
 			if (!ProtocolConstants.KEY_LOCATION.equals(key))
 				return uri;
 			else
@@ -68,7 +60,7 @@ public abstract class JsonURIUnqualificationStrategy {
 	/**
 	 * A strategy that unqualifies all URLs but doesn't alter URLS that are values of a "GitUrl" key in JSON objects.
 	 */
-	public static final JsonURIUnqualificationStrategy ALL_NO_GIT = new JsonURIUnqualificationStrategy() {
+	public static final IURIUnqualificationStrategy ALL_NO_GIT = new JsonURIUnqualificationStrategy() {
 		@Override
 		protected URI unqualifyObjectProperty(String key, URI uri, String scheme, String hostname, int port) {
 			//need to make this real constant
@@ -84,6 +76,9 @@ public abstract class JsonURIUnqualificationStrategy {
 		}
 	};
 
+	/* (non-Javadoc)
+	 * @see org.eclipse.orion.server.servlets.IURIUnqualificationStrategy#run(javax.servlet.http.HttpServletRequest, java.lang.Object)
+	 */
 	public void run(HttpServletRequest req, Object result) {
 		rewrite(result, req.getScheme(), req.getServerName(), req.getServerPort(), req.getContextPath());
 	}

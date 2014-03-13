@@ -31,6 +31,7 @@ import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.ServletStatusHandler;
 import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.tasks.IURIUnqualificationStrategy;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -63,7 +64,7 @@ public abstract class OrionServlet extends HttpServlet {
 		writeJSONResponse(req, resp, result, JsonURIUnqualificationStrategy.ALL);
 	}
 
-	public static void writeJSONResponse(HttpServletRequest req, HttpServletResponse resp, Object result, JsonURIUnqualificationStrategy strategy) throws IOException {
+	public static void writeJSONResponse(HttpServletRequest req, HttpServletResponse resp, Object result, IURIUnqualificationStrategy strategy) throws IOException {
 		Assert.isLegal(result instanceof JSONObject || result instanceof JSONArray);
 		resp.setCharacterEncoding("UTF-8"); //$NON-NLS-1$
 		resp.setStatus(HttpServletResponse.SC_OK);
@@ -71,6 +72,9 @@ public abstract class OrionServlet extends HttpServlet {
 		resp.setHeader("Cache-Control", "no-store"); //$NON-NLS-1$ //$NON-NLS-2$
 		if (result instanceof JSONObject) {
 			decorateResponse(req, (JSONObject) result);
+		}
+		if (strategy == null) {
+			strategy = JsonURIUnqualificationStrategy.ALL;
 		}
 		strategy.run(req, result);
 
@@ -87,7 +91,7 @@ public abstract class OrionServlet extends HttpServlet {
 	 * @param result
 	 * @param strategy
 	 */
-	public static void decorateResponse(HttpServletRequest req, JSONObject result, JsonURIUnqualificationStrategy strategy) {
+	public static void decorateResponse(HttpServletRequest req, JSONObject result, IURIUnqualificationStrategy strategy) {
 		decorateResponse(req, result);
 		strategy.run(req, result);
 		//if ("XMLHttpRequest".equals(req.getHeader("X-Requested-With"))) { //$NON-NLS-1$ //$NON-NLS-2$

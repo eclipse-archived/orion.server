@@ -25,6 +25,7 @@ import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.tasks.IURIUnqualificationStrategy;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.core.tasks.TaskJob;
 import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
@@ -78,7 +79,7 @@ public class TaskJobHandler {
 	 * @throws URISyntaxException
 	 * @throws JSONException
 	 */
-	public static boolean handleTaskJob(HttpServletRequest request, HttpServletResponse response, TaskJob job, ServletResourceHandler<IStatus> statusHandler, JsonURIUnqualificationStrategy strategy) throws IOException, ServletException, URISyntaxException, JSONException {
+	public static boolean handleTaskJob(HttpServletRequest request, HttpServletResponse response, TaskJob job, ServletResourceHandler<IStatus> statusHandler, IURIUnqualificationStrategy strategy) throws IOException, ServletException, URISyntaxException, JSONException {
 		job.schedule();
 
 		final Object jobIsDone = new Object();
@@ -105,6 +106,7 @@ public class TaskJobHandler {
 			return writeResult(request, response, job, statusHandler, strategy);
 		} else {
 			TaskInfo task = job.startTask();
+			task.setUnqualificationStrategy(strategy);
 			JSONObject result = task.toJSON();
 			URI taskLocation = createTaskLocation(ServletResourceHandler.getURI(request), task.getId(), task.isKeep());
 			result.put(ProtocolConstants.KEY_LOCATION, taskLocation);
@@ -119,7 +121,7 @@ public class TaskJobHandler {
 		}
 	}
 
-	private static boolean writeResult(HttpServletRequest request, HttpServletResponse response, TaskJob job, ServletResourceHandler<IStatus> statusHandler, JsonURIUnqualificationStrategy strategy) throws ServletException, IOException, JSONException {
+	private static boolean writeResult(HttpServletRequest request, HttpServletResponse response, TaskJob job, ServletResourceHandler<IStatus> statusHandler, IURIUnqualificationStrategy strategy) throws ServletException, IOException, JSONException {
 		IStatus result = job.getRealResult();
 		if (!result.isOK()) {
 			return statusHandler.handleRequest(request, response, result);

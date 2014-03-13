@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 import javax.servlet.http.HttpServletRequest;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.core.tasks.TaskJob;
+import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 
 public abstract class CFJob extends TaskJob {
 
@@ -23,7 +24,7 @@ public abstract class CFJob extends TaskJob {
 	@Override
 	public synchronized TaskInfo startTask() {
 		TaskInfo task = super.startTask();
-		task.setLocationOnly(true);
+		task.setUnqualificationStrategy(JsonURIUnqualificationStrategy.LOCATION_ONLY);
 		return task;
 	}
 
