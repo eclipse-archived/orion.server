@@ -117,8 +117,6 @@ lastMapTag=${mapsTagTag}
 		<available property="jsdocHome" value="${base}/jsdoc-toolkit" file="${base}/jsdoc-toolkit" />
 		<available property="requirejsHome" value="${base}/requirejs" file="${base}/requirejs" />
 		<property name="closureJar" value="/shared/common/closure/compiler.jar" />
-		<property name="minify" value="" />
-		<property name="minifyEditor" value="" />
 		<property name="buildConfig" value="${builder}/scripts/orion.build.js" />
 
 		<!--
