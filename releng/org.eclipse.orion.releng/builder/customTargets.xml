@@ -183,9 +183,9 @@ lastMapTag=${mapsTagTag}
 		<copy todir="${dropLocation}" >
 			<fileset dir="${buildResultLocation}" includes="${archiveNamePrefix}*" />
 		</copy>
-		<property name="editorOutDirectory" value="${buildDirectory}/built-js" />
+		<property name="widgetOutDirectory" value="${buildDirectory}/built-js" />
 		<copy todir="${dropLocation}">
-			<fileset dir="${editorOutDirectory}"></fileset>
+			<fileset dir="${widgetOutDirectory}"></fileset>
 		</copy>
 
 		<!-- generate the build index, guess the component version numbers -->
