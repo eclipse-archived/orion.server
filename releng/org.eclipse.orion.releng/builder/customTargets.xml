@@ -118,6 +118,7 @@ lastMapTag=${mapsTagTag}
 		<available property="requirejsHome" value="${base}/requirejs" file="${base}/requirejs" />
 		<property name="closureJar" value="/shared/common/closure/compiler.jar" />
 		<property name="buildConfig" value="${builder}/scripts/orion.build.js" />
+		<property name="orionClient" value="${buildDirectory}" />
 
 		<!--
 			This is a hack to make the shape of our buildDirectory match the shape expected by orion.mini.xml.
