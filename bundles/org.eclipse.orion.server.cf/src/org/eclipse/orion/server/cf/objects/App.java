@@ -14,6 +14,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
+import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
 import org.eclipse.orion.server.core.resources.Property;
 import org.eclipse.orion.server.core.resources.ResourceShape;
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
@@ -31,7 +32,8 @@ public class App extends CFObject {
 	private String name;
 	private IFileStore appStore;
 	private String guid;
-	private JSONObject manifest;
+
+	private ManifestParseTree manifest;
 
 	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
 	{
@@ -41,11 +43,11 @@ public class App extends CFObject {
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
 
-	public JSONObject getManifest() {
+	public ManifestParseTree getManifest() {
 		return manifest;
 	}
 
-	public void setManifest(JSONObject manifest) {
+	public void setManifest(ManifestParseTree manifest) {
 		this.manifest = manifest;
 	}
 

@@ -46,13 +46,11 @@ public class SymbolResolver implements Analyzer {
 
 		if ("${target-base}".equals(token.getContent())) { //$NON-NLS-1$
 			token.setContent(targetBase);
-			token.setType(TokenType.LITERAL);
 			return;
 		}
 
 		if ("${random-word}".equals(token.getContent())) { //$NON-NLS-1$
 			token.setContent(UUID.randomUUID().toString());
-			token.setType(TokenType.LITERAL);
 			return;
 		}
 	}

@@ -14,8 +14,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
-import org.eclipse.orion.server.cf.manifest.ManifestUtils;
-import org.eclipse.orion.server.cf.manifest.ParseException;
+import org.eclipse.orion.server.cf.manifest.v2.InvalidAccessException;
+import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.MultiServerStatus;
@@ -93,7 +93,7 @@ public class BindRouteCommand extends AbstractRevertableCFCommand {
 
 				/* client requested an unavailable domain, fail */
 				if (domainGUID == null) {
-					String msg = NLS.bind("Failed to find domain {1} in target", appDomain);
+					String msg = NLS.bind("Failed to find domain {0} in target", appDomain);
 					status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 					return revert(status);
 				}
@@ -139,11 +139,15 @@ public class BindRouteCommand extends AbstractRevertableCFCommand {
 	protected IStatus validateParams() {
 		try {
 			/* read deploy parameters */
-			JSONObject appJSON = ManifestUtils.getApplication(application.getManifest());
-			appDomain = appJSON.optString(CFProtocolConstants.V2_KEY_DOMAIN); /* optional */
+			ManifestParseTree manifest = application.getManifest();
+			ManifestParseTree app = manifest.get("applications").get(0); //$NON-NLS-1$
+
+			/* optional */
+			ManifestParseTree domainNode = app.getOpt(CFProtocolConstants.V2_KEY_DOMAIN);
+			appDomain = (domainNode != null) ? domainNode.getValue() : ""; //$NON-NLS-1$
 			return Status.OK_STATUS;
 
-		} catch (ParseException e) {
+		} catch (InvalidAccessException e) {
 			return revert(new MultiServerStatus(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null)));
 		}
 	}

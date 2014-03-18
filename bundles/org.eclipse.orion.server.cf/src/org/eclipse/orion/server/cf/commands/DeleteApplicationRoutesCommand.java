@@ -16,8 +16,8 @@ import org.apache.commons.httpclient.methods.DeleteMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
-import org.eclipse.orion.server.cf.manifest.ManifestUtils;
-import org.eclipse.orion.server.cf.manifest.ParseException;
+import org.eclipse.orion.server.cf.manifest.v2.InvalidAccessException;
+import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
@@ -100,16 +100,19 @@ public class DeleteApplicationRoutesCommand extends AbstractCFCommand {
 	protected IStatus validateParams() {
 		try {
 			/* read deploy parameters */
-			JSONObject appJSON = ManifestUtils.getApplication(application.getManifest());
-			appDomain = appJSON.optString(CFProtocolConstants.V2_KEY_DOMAIN); /* optional */
+			ManifestParseTree manifest = application.getManifest();
+			ManifestParseTree app = manifest.get("applications").get(0); //$NON-NLS-1$
 
-			/* if none provided, sets a default one */
-			String inputHost = appJSON.optString(CFProtocolConstants.V2_KEY_HOST);
-			appHost = (!inputHost.isEmpty()) ? inputHost : ""; //$NON-NLS-1$
+			ManifestParseTree domainNode = app.getOpt(CFProtocolConstants.V2_KEY_DOMAIN);
+			appDomain = (domainNode != null) ? domainNode.getValue() : ""; //$NON-NLS-1$
+
+			/* if none provided, set a default one */
+			ManifestParseTree hostNode = app.getOpt(CFProtocolConstants.V2_KEY_HOST);
+			appHost = (hostNode != null) ? hostNode.getValue() : ""; //$NON-NLS-1$
 
 			return Status.OK_STATUS;
 
-		} catch (ParseException e) {
+		} catch (InvalidAccessException e) {
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null);
 		}
 	}
@@ -143,7 +146,7 @@ public class DeleteApplicationRoutesCommand extends AbstractCFCommand {
 
 				/* client requested an unavailable domain, fail */
 				if (domainGUID == null) {
-					String msg = NLS.bind("Failed to find domain {1} in target", appDomain);
+					String msg = NLS.bind("Failed to find domain {0} in target", appDomain);
 					return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
 				}
 

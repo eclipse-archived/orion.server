@@ -11,18 +11,17 @@
 package org.eclipse.orion.server.cf.commands;
 
 import java.net.URI;
-import java.util.Scanner;
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
-import org.eclipse.orion.server.cf.manifest.*;
+import org.eclipse.orion.server.cf.manifest.v2.*;
+import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestConstants;
+import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestUtils;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,25 +43,21 @@ public class ParseManifest_Command extends AbstractCFCommand {
 	protected ServerStatus _doIt() {
 		try {
 			/* lookup the manifest description */
-			IFileStore manifestStore = fileStore.getChild(ManifestUtils.MANIFEST_FILE_NAME);
+			IFileStore manifestStore = fileStore.getChild(ManifestConstants.MANIFEST_FILE_NAME);
 			if (!manifestStore.fetchInfo().exists()) {
 				String msg = "Failed to find application manifest. If you have one, please select it or the folder that contains it before deploying.";
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
 			}
 
-			/* parse the manifest token tree */
-			Scanner manifestScanner = new Scanner(manifestStore.openInputStream(EFS.NONE, null));
-			ManifestNode manifestTree = ManifestParser.parse(manifestScanner);
-			manifestScanner.close();
-
 			/* parse the manifest */
 			URI targetURI = URIUtil.toURI(target.getUrl());
-			JSONObject manifest = manifestTree.toJSON(targetURI);
+			ManifestParseTree manifest = ManifestUtils.parse(manifestStore, targetURI.toString());
+			ManifestParseTree app = manifest.get("applications").get(0); //$NON-NLS-1$
 
-			/* set application store relative to the path parameter */
-			JSONObject appJSON = ManifestUtils.getApplication(manifest);
+			/* optional */
+			ManifestParseTree pathNode = app.getOpt(CFProtocolConstants.V2_KEY_PATH);
+			String path = pathNode != null ? pathNode.getLabel() : ""; //$NON-NLS-1$
 
-			String path = appJSON.optString(CFProtocolConstants.V2_KEY_PATH); /* optional */
 			if (path.isEmpty())
 				path = "."; //$NON-NLS-1$
 
@@ -83,7 +78,11 @@ public class ParseManifest_Command extends AbstractCFCommand {
 
 			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
 
-		} catch (ParseException e) {
+		} catch (TokenizerException e) {
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null);
+		} catch (ParserException e) {
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null);
+		} catch (InvalidAccessException e) {
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null);
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$

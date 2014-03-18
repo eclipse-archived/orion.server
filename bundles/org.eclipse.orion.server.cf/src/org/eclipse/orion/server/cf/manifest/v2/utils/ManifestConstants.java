@@ -31,7 +31,11 @@ public class ManifestConstants {
 
 	public static String MISSING_MEMBER_ACCESS = "Expected {0} to have a member \"{1}\".";
 
-	/* Manifest content constants */
+	public static String MISSING_MAPPING_ACCESS = "Expected {0} to have a value.";
+
+	/* Manifest constants */
+	public static final String MANIFEST_FILE_NAME = "manifest.yml"; //$NON-NLS-1$
+
 	public static String MANIFEST_APPLICATIONS = "applications";
 
 	public static String MANIFEST_APPLICATION_NAME = "name";

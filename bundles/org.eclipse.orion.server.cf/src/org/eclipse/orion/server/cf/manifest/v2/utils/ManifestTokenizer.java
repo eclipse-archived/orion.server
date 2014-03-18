@@ -21,8 +21,8 @@ public class ManifestTokenizer implements Tokenizer {
 	private static TokenPattern indentationPattern = new TokenPattern(" {1,}", TokenType.INDENTATION); //$NON-NLS-1$
 	private static TokenPattern[] tokenPatterns = {new TokenPattern("- ", TokenType.ITEM_CONSTANT), //$NON-NLS-1$
 			new TokenPattern("(: +)|(:$)", TokenType.MAPPING_CONSTANT), //$NON-NLS-1$
-			new TokenPattern("\\$\\{[^ \\t\\n\\x0b\\r\\f]+\\} *", TokenType.SYMBOL), //$NON-NLS-1$
-			new TokenPattern("(\"[^\\t\\n\\x0b\\r\\f]*\")|([^ \\t\\n\\x0b\\r\\f:][^ \\t\\n\\x0b\\r\\f]*[^ \\t\\n\\x0b\\r\\f:] *)|([^ \\t\\n\\x0b\\r\\f] *)", TokenType.LITERAL), //$NON-NLS-1$
+			new TokenPattern("\\$\\{[^ \\t\\n\\x0b\\r\\f\\$\\{\\}]+\\} *", TokenType.SYMBOL), //$NON-NLS-1$
+			new TokenPattern("(\"[^\\t\\n\\x0b\\r\\f\\$\\{\\}]*\")|([^ \\t\\n\\x0b\\r\\f\\$\\{\\}:][^ \\t\\n\\x0b\\r\\f\\$\\{\\}]*[^ \\t\\n\\x0b\\r\\f\\$\\{\\}:] *)|([^ \\t\\n\\x0b\\r\\f\\$\\{\\}] *)|(\\$[a-zA-Z0-9]+)", TokenType.LITERAL), //$NON-NLS-1$
 	};
 
 	private List<InputLine> input;

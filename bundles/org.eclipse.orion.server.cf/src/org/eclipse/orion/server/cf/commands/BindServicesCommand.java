@@ -11,15 +11,14 @@
 package org.eclipse.orion.server.cf.commands;
 
 import java.net.URI;
-import java.util.Iterator;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.methods.*;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
-import org.eclipse.orion.server.cf.manifest.ManifestUtils;
-import org.eclipse.orion.server.cf.manifest.ParseException;
+import org.eclipse.orion.server.cf.manifest.v2.InvalidAccessException;
+import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
@@ -51,9 +50,11 @@ public class BindServicesCommand extends AbstractRevertableCFCommand {
 
 			/* bind services */
 			URI targetURI = URIUtil.toURI(target.getUrl());
-			JSONObject appJSON = ManifestUtils.getApplication(application.getManifest());
 
-			if (appJSON.has(CFProtocolConstants.V2_KEY_SERVICES)) {
+			ManifestParseTree manifest = application.getManifest();
+			ManifestParseTree app = manifest.get("applications").get(0); //$NON-NLS-1$
+
+			if (app.has(CFProtocolConstants.V2_KEY_SERVICES)) {
 
 				/* fetch all services */
 				URI servicesURI = targetURI.resolve("/v2/services"); //$NON-NLS-1$
@@ -70,29 +71,40 @@ public class BindServicesCommand extends AbstractRevertableCFCommand {
 				JSONObject resp = jobStatus.getJsonData();
 				JSONArray servicesJSON = resp.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES);
 
-				JSONObject version2 = appJSON.optJSONObject(CFProtocolConstants.V2_KEY_SERVICES);
-				JSONArray version6 = appJSON.optJSONArray(CFProtocolConstants.V2_KEY_SERVICES);
-				if (version2 != null) {
+				/* check for manifest version */
+				ManifestParseTree services = app.getOpt(CFProtocolConstants.V2_KEY_SERVICES);
+				if (services == null)
+					/* nothing to do */
+					return status;
+
+				int version = services.isList() ? 6 : 2;
+
+				if (version == 2) {
 					String spaceGuid = target.getSpace().getGuid();
-					URI serviceInstancesURI2 = targetURI.resolve("/v2/spaces/" + spaceGuid + "/service_instances");
+					URI serviceInstancesURI2 = targetURI.resolve("/v2/spaces/" + spaceGuid + "/service_instances"); //$NON-NLS-1$//$NON-NLS-2$
 
-					JSONObject services = ManifestUtils.getJSON(appJSON, CFProtocolConstants.V2_KEY_SERVICES, CFProtocolConstants.V2_KEY_APPLICATIONS);
-					for (String serviceName : JSONObject.getNames(services)) {
+					for (ManifestParseTree service : services.getChildren()) {
+						String serviceName = service.getLabel();
 
-						String nameService = "name:" + serviceName;
-						NameValuePair[] pa = new NameValuePair[] {new NameValuePair("return_user_provided_service_instance", "false"), new NameValuePair("q", nameService), new NameValuePair("inline-relations-depth", "2")};
+						String nameService = "name:" + serviceName; //$NON-NLS-1$
+						NameValuePair[] pa = new NameValuePair[] {new NameValuePair("return_user_provided_service_instance", "false"), //  //$NON-NLS-1$//$NON-NLS-2$
+								new NameValuePair("q", nameService), new NameValuePair("inline-relations-depth", "2") //  //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+						};
+
 						GetMethod getServiceMethod = new GetMethod(serviceInstancesURI2.toString());
 						getServiceMethod.setQueryString(pa);
 						HttpUtil.configureHttpMethod(getServiceMethod, target);
+
 						/* send request */
 						jobStatus = HttpUtil.executeMethod(getServiceMethod);
 						status.add(jobStatus);
 						if (!jobStatus.isOK())
 							return revert(status);
+
 						resp = jobStatus.getJsonData();
 						String serviceInstanceGUID = null;
 						JSONArray respArray = resp.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES);
-						for (int i = 0; i < respArray.length(); i++) {
+						for (int i = 0; i < respArray.length(); ++i) {
 							JSONObject o = respArray.optJSONObject(i);
 							if (o != null) {
 								JSONObject str = o.optJSONObject(CFProtocolConstants.V2_KEY_METADATA);
@@ -102,24 +114,17 @@ public class BindServicesCommand extends AbstractRevertableCFCommand {
 							}
 						}
 
-						//						if (serviceInstanceGUID == null) {
-						//							status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Service " + nameService + " can not be found", null));
-						//							return revert(status);
-						//						}
+						/* support both 'type' and 'label' fields as service name */
+						ManifestParseTree serviceType = service.getOpt(CFProtocolConstants.V2_KEY_TYPE);
+						if (serviceType == null)
+							serviceType = service.get(CFProtocolConstants.V2_KEY_LABEL);
 
-						JSONObject serviceJSON = ManifestUtils.getJSON(services, serviceName, CFProtocolConstants.V2_KEY_SERVICES);
+						ManifestParseTree provider = service.get(CFProtocolConstants.V2_KEY_PROVIDER);
+						ManifestParseTree plan = service.get(CFProtocolConstants.V2_KEY_PLAN);
 
-						/* support both 'type' and 'label' field as service name */
-						String service = serviceJSON.optString(CFProtocolConstants.V2_KEY_TYPE);
-						if (service.isEmpty())
-							service = ManifestUtils.getString(serviceJSON, CFProtocolConstants.V2_KEY_LABEL, serviceName);
-
-						String provider = ManifestUtils.getString(serviceJSON, CFProtocolConstants.V2_KEY_PROVIDER, serviceName);
-						String plan = ManifestUtils.getString(serviceJSON, CFProtocolConstants.V2_KEY_PLAN, serviceName);
-
-						String servicePlanGUID = findServicePlanGUID(service, provider, plan, servicesJSON);
+						String servicePlanGUID = findServicePlanGUID(serviceType.getValue(), provider.getValue(), plan.getValue(), servicesJSON);
 						if (servicePlanGUID == null) {
-							String msg = NLS.bind("Failed to find service {0} with plan {1} in target", service, plan);
+							String msg = NLS.bind("Failed to find service {0} with plan {1} in target", serviceType.getValue(), plan.getValue());
 							status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 							return revert(status);
 						}
@@ -165,28 +170,28 @@ public class BindServicesCommand extends AbstractRevertableCFCommand {
 							return revert(status);
 					}
 				}
-				if (version6 != null) {
-					String spaceGuid = target.getSpace().getGuid();
-					URI serviceInstancesURI = targetURI.resolve("/v2/spaces/" + spaceGuid + "/service_instances");
 
-					for (int k = 0; k < version6.length(); k++) {
-						JSONObject serviceName = version6.getJSONObject(k);
-						Iterator iter = serviceName.keys();
-						String nameService = null;
-						while (iter.hasNext()) {
-							String key = (String) iter.next();
-							String value = (String) serviceName.get(key);
-							nameService = "name:" + (key != "" ? key + ":" : "") + value;
-						}
-						NameValuePair[] pa = new NameValuePair[] {new NameValuePair("return_user_provided_service_instance", "true"), new NameValuePair("q", nameService), new NameValuePair("inline-relations-depth", "2")};
+				if (version == 6) {
+
+					String spaceGuid = target.getSpace().getGuid();
+					URI serviceInstancesURI = targetURI.resolve("/v2/spaces/" + spaceGuid + "/service_instances"); //$NON-NLS-1$//$NON-NLS-2$
+
+					for (ManifestParseTree service : services.getChildren()) {
+						String nameService = service.getValue();
+
+						NameValuePair[] pa = new NameValuePair[] {new NameValuePair("return_user_provided_service_instance", "true"), // //$NON-NLS-1$ //$NON-NLS-2$
+								new NameValuePair("q", "name:" + nameService), new NameValuePair("inline-relations-depth", "2")}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+
 						GetMethod getServiceMethod = new GetMethod(serviceInstancesURI.toString());
 						getServiceMethod.setQueryString(pa);
 						HttpUtil.configureHttpMethod(getServiceMethod, target);
+
 						/* send request */
 						jobStatus = HttpUtil.executeMethod(getServiceMethod);
 						status.add(jobStatus);
 						if (!jobStatus.isOK())
 							return revert(status);
+
 						resp = jobStatus.getJsonData();
 						String serviceInstanceGUID = null;
 						JSONArray respArray = resp.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES);
@@ -201,7 +206,7 @@ public class BindServicesCommand extends AbstractRevertableCFCommand {
 						}
 
 						if (serviceInstanceGUID == null) {
-							status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Service " + nameService + " can not be found", null));
+							status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Service instance " + nameService + " can not be found in target space", null));
 							return revert(status);
 						}
 
@@ -227,7 +232,7 @@ public class BindServicesCommand extends AbstractRevertableCFCommand {
 
 			return status;
 
-		} catch (ParseException e) {
+		} catch (InvalidAccessException e) {
 			status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null));
 			return revert(status);
 		} catch (Exception e) {

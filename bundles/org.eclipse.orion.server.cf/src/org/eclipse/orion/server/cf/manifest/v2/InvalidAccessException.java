@@ -23,6 +23,12 @@ public class InvalidAccessException extends Exception {
 	private String expectedChild;
 	private int expectedChildNumber;
 
+	public InvalidAccessException(ManifestParseTree node) {
+		this.node = node;
+		this.expectedChild = null;
+		this.expectedChildNumber = -1;
+	}
+
 	public InvalidAccessException(ManifestParseTree node, String expectedChild) {
 		this.node = node;
 		this.expectedChild = expectedChild;
@@ -37,6 +43,10 @@ public class InvalidAccessException extends Exception {
 
 	@Override
 	public String getMessage() {
+		if (expectedChildNumber < 0 && expectedChild == null)
+			/* invalid mapping access */
+			return NLS.bind(ManifestConstants.MISSING_MAPPING_ACCESS, node.getLabel());
+
 		if (expectedChildNumber < 0)
 			/* invalid member access */
 			return NLS.bind(ManifestConstants.MISSING_MEMBER_ACCESS, node.getLabel(), expectedChild);
