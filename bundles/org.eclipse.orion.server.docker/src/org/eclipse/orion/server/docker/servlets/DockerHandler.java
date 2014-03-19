@@ -81,16 +81,18 @@ public class DockerHandler extends ServletResourceHandler<String> {
 			String workspaceId = workspaceIds.get(0);
 			WorkspaceInfo workspaceInfo = metaStore.readWorkspace(workspaceId);
 			List<String> projectNames = workspaceInfo.getProjectNames();
+
+			// create volumes for each of the projects
 			for (String projectName : projectNames) {
 				ProjectInfo projectInfo = metaStore.readProject(workspaceId, projectName);
 				URI contentLocation = projectInfo.getContentLocation();
 				if (contentLocation.getScheme().equals(EFS.SCHEME_FILE)) {
-					// the orion volume /OrionContent/project mounts
-					// /serverworkspace/us/user/OrionContent/project
+					// the docker volume /home/user/project mounts local volume
+					// serverworkspace/us/user/OrionContent/project
 					String localVolume = EFS.getStore(contentLocation).toLocalFile(EFS.NONE, null).getAbsolutePath();
 					if (localVolume.indexOf("/OrionContent") != -1) {
-						String orionVolume = localVolume.substring(localVolume.indexOf("/OrionContent"));
-						String volume = localVolume + ":" + orionVolume + ":rw";
+						String dockerVolume = localVolume.substring(localVolume.indexOf("/OrionContent") + 13);
+						String volume = localVolume + ":/home/" + user + dockerVolume + ":rw";
 						volumes.add(volume);
 					} else {
 						// we do not handle mapped projects right now
@@ -113,9 +115,10 @@ public class DockerHandler extends ServletResourceHandler<String> {
 	}
 
 	/**
-	 * Handle the connect request for a user. The request creates a container for the user, starts the container and then
-	 * attaches to the container via a web socket. An existing container for the user is reused if it already exists. if
-	 * the singleton container for a user is already attached, no operation is needed.
+	 * Handle the connect request for a user. The request creates an image for the user, a container for the user based 
+	 * on that image, starts the container and then attaches to the container via a web socket. An existing container 
+	 * for the user is reused if it already exists. if the singleton container for a user is already attached, 
+	 * no operation is needed.
 	 * @param request
 	 * @param response
 	 * @return true if the connect was successful.
@@ -135,29 +138,20 @@ public class DockerHandler extends ServletResourceHandler<String> {
 
 				// detach the connection for the user
 				dockerServer.detachDockerContainer(user);
+			}
 
-				// get the container for the user
-				DockerContainer dockerContainer = dockerServer.getDockerContainer(user);
-				if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.OK) {
-					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
-				}
+			// make sure the image for the user has been created
+			String userBase = user + ".base";
+			DockerImage dockerImage = dockerServer.getDockerImage(userBase);
+			if (dockerImage.getStatusCode() != DockerResponse.StatusCode.OK) {
 
-				// stop the container for the user
-				dockerContainer = dockerServer.stopDockerContainer(user);
-				if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.STOPPED) {
-					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
+				// user does not have a image, create one
+				dockerImage = dockerServer.createDockerUserBaseImage(user);
+				if (dockerImage.getStatusCode() != DockerResponse.StatusCode.CREATED) {
+					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerImage.getStatusMessage(), null));
 				}
 				if (logger.isDebugEnabled()) {
-					logger.debug("Stopped Docker Container " + dockerContainer.getIdShort() + " for user " + user);
-				}
-
-				// delete the container for the user
-				DockerResponse deleteResponse = dockerServer.deleteDockerContainer(user);
-				if (deleteResponse.getStatusCode() != DockerResponse.StatusCode.DELETED) {
-					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
-				}
-				if (logger.isDebugEnabled()) {
-					logger.debug("Deleted Docker Container " + dockerContainer.getIdShort() + " for user " + user);
+					logger.debug("Created Docker Image " + userBase + " for user " + user);
 				}
 			}
 
@@ -167,8 +161,9 @@ public class DockerHandler extends ServletResourceHandler<String> {
 			// get the container for the user
 			DockerContainer dockerContainer = dockerServer.getDockerContainer(user);
 			if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.OK) {
+
 				// user does not have a container, create one
-				dockerContainer = dockerServer.createDockerContainer("orion.base", user, "orionuser", volumes);
+				dockerContainer = dockerServer.createDockerContainer(userBase, user, volumes);
 				if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.CREATED) {
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
 				}
@@ -213,16 +208,13 @@ public class DockerHandler extends ServletResourceHandler<String> {
 	}
 
 	/**
-	 * Handle the disconnect request for the user. The request detaches the web socket from the container for the user, stops
-	 * the container and then deletes the container.
+	 * Handle the disconnect request for the user. The request detaches the web socket from the container for the user
 	 * @param request
 	 * @param response
 	 * @return true if the disconnect was successful.
 	 * @throws ServletException
 	 */
 	private boolean handleDisconnectDockerContainerRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException {
-		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
-
 		String user = request.getRemoteUser();
 
 		DockerServer dockerServer = getDockerServer();
@@ -236,24 +228,6 @@ public class DockerHandler extends ServletResourceHandler<String> {
 		// detach if we have an open connection for the user
 		if (dockerServer.isAttachedDockerContainer(user)) {
 			dockerServer.detachDockerContainer(user);
-		}
-
-		// stop the container for the user
-		dockerContainer = dockerServer.stopDockerContainer(user);
-		if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.STOPPED) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
-		}
-		if (logger.isDebugEnabled()) {
-			logger.debug("Stopped Docker Container " + dockerContainer.getIdShort() + " for user " + user);
-		}
-
-		// delete the container for the user
-		DockerResponse deleteResponse = dockerServer.deleteDockerContainer(user);
-		if (deleteResponse.getStatusCode() != DockerResponse.StatusCode.DELETED) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
-		}
-		if (logger.isDebugEnabled()) {
-			logger.debug("Deleted Docker Container " + dockerContainer.getIdShort() + " for user " + user);
 		}
 
 		return true;

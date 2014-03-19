@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others.
+ * Copyright (c) 2013, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -78,7 +78,7 @@ public class DockerServer {
 		return dockerResponse;
 	}
 
-	public DockerContainer createDockerContainer(String imageName, String containerName, String userName, List<String> volumes) {
+	public DockerContainer createDockerContainer(String imageName, String userName, List<String> volumes) {
 		DockerContainer dockerContainer = new DockerContainer();
 		HttpURLConnection httpURLConnection = null;
 		try {
@@ -95,7 +95,7 @@ public class DockerServer {
 			requestJSONObject.put("OpenStdin", true);
 			requestJSONObject.put("StdinOnce", true);
 			if (volumes != null && !volumes.isEmpty()) {
-				// volumes in create are in the format :  "Volumes": { "/OrionContent/project": {} }
+				// volumes in create are in the format :  "Volumes": { "/home/user/project": {} }
 				JSONObject volumesObject = new JSONObject();
 				for (String volume : volumes) {
 					String orionVolume = volume.substring(volume.indexOf(':') + 1, volume.lastIndexOf(':'));
@@ -105,7 +105,7 @@ public class DockerServer {
 			}
 			byte[] outputBytes = requestJSONObject.toString().getBytes("UTF-8");
 
-			URL dockerCreateContainerURL = new URL(dockerServer.toString() + "/containers/create?name=" + containerName);
+			URL dockerCreateContainerURL = new URL(dockerServer.toString() + "/containers/create?name=" + userName);
 			httpURLConnection = (HttpURLConnection) dockerCreateContainerURL.openConnection();
 			httpURLConnection.setDoOutput(true);
 			httpURLConnection.setRequestProperty("Content-Type", "application/json");
@@ -163,6 +163,49 @@ public class DockerServer {
 		} catch (IOException e) {
 			setDockerResponse(dockerImage, e);
 		} catch (JSONException e) {
+			setDockerResponse(dockerImage, e);
+		} finally {
+			httpURLConnection.disconnect();
+		}
+		return dockerImage;
+	}
+
+	public DockerImage createDockerUserBaseImage(String userName) {
+		DockerImage dockerImage = new DockerImage();
+		HttpURLConnection httpURLConnection = null;
+		try {
+			String userBase = userName + ".base";
+			URL createDockerUserBaseImageURL = new URL(dockerServer.toString() + "/build?t=" + userBase);
+			httpURLConnection = (HttpURLConnection) createDockerUserBaseImageURL.openConnection();
+			httpURLConnection.setDoOutput(true);
+			httpURLConnection.setRequestProperty("Content-Type", "application/tar");
+			httpURLConnection.setRequestProperty("Accept", "application/json");
+			httpURLConnection.setRequestMethod("POST");
+			httpURLConnection.connect();
+
+			DockerFile userDockerFile = new DockerFile(userName); 
+			File userBaseTarFile = userDockerFile.getTarFile();
+			
+			FileInputStream fileInputStream = new FileInputStream(userBaseTarFile);
+			OutputStream outputStream = httpURLConnection.getOutputStream();
+			byte[] buffer = new byte[4096];
+			int bytes_read;
+			while((bytes_read = fileInputStream.read(buffer)) != -1) {
+			   outputStream.write(buffer, 0, bytes_read);
+			}
+			fileInputStream.close();
+			
+			if (getDockerResponse(dockerImage, httpURLConnection).equals(DockerResponse.StatusCode.OK)) {
+				String responseString = readDockerResponseAsString(dockerImage, httpURLConnection);
+		        if (responseString.indexOf("Successfully built") == -1) {
+					dockerImage.setStatusCode(DockerResponse.StatusCode.SERVER_ERROR);
+					dockerImage.setStatusMessage(responseString);
+		        } else {
+					dockerImage = getDockerImage(userBase);
+					dockerImage.setStatusCode(DockerResponse.StatusCode.CREATED);
+		        }
+			}
+		} catch (IOException e) {
 			setDockerResponse(dockerImage, e);
 		} finally {
 			httpURLConnection.disconnect();
@@ -525,15 +568,14 @@ public class DockerServer {
 	private String readDockerResponseAsString(DockerResponse dockerResponse, HttpURLConnection httpURLConnection) {
 		try {
 			InputStream inputStream = httpURLConnection.getInputStream();
-			char[] chars = new char[1024];
 			Charset utf8 = Charset.forName("UTF-8");
-			InputStreamReader inputStreamReader = new InputStreamReader(inputStream, utf8);
+			BufferedReader rd= new BufferedReader(new InputStreamReader(inputStream, utf8));
 			StringBuilder stringBuilder = new StringBuilder();
-			int count;
-			while ((count = inputStreamReader.read(chars, 0, chars.length)) != -1) {
-				stringBuilder.append(chars, 0, count);
-			}
-			inputStreamReader.close();
+			String line;
+            while ((line=rd.readLine())!=null)
+            {
+            	stringBuilder.append(line);
+            }
 			return stringBuilder.toString();
 		} catch (IOException e) {
 			dockerResponse.setStatusCode(DockerResponse.StatusCode.SERVER_ERROR);
