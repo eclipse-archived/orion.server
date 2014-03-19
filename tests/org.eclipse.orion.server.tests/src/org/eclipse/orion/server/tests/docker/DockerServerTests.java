@@ -36,15 +36,12 @@ public class DockerServerTests {
 	 * Test create docker container.
 	 * @throws URISyntaxException
 	 */
-	@Test
 	public void testCreateDockerContainer() throws URISyntaxException {
 		URI dockerLocationURI = new URI(dockerLocation);
 		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI);
 
-		String containerName = "user";
-
 		// create the container
-		DockerContainer dockerContainer = dockerServer.createDockerContainer("orion.base", containerName, "orionuser", null);
+		DockerContainer dockerContainer = dockerServer.createDockerContainer("orion.base", "user", null);
 		assertEquals(dockerContainer.getStatusMessage(), DockerResponse.StatusCode.CREATED, dockerContainer.getStatusCode());
 		System.out.println("Created Docker Container: Container Id " + dockerContainer.getId() + " Name " + dockerContainer.getName());
 
@@ -52,6 +49,20 @@ public class DockerServerTests {
 		//DockerResponse dockerResponse = dockerServer.deleteDockerContainer(containerName);
 		//assertEquals(dockerResponse.getStatusMessage(), DockerResponse.StatusCode.DELETED, dockerResponse.getStatusCode());
 		//System.out.println("Deleted Docker Container: Container Id " + dockerContainer.getId());
+	}
+
+	/**
+	 * Test create docker container.
+	 * @throws URISyntaxException
+	 */
+	public void testCreateDockerOrionBaseImage() throws URISyntaxException {
+		URI dockerLocationURI = new URI(dockerLocation);
+		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI);
+
+		// create the image
+		DockerImage dockerImage = dockerServer.createDockerOrionBaseImage();
+		assertEquals(dockerImage.getStatusMessage(), DockerResponse.StatusCode.CREATED, dockerImage.getStatusCode());
+		System.out.println("Created Docker Image: Image Id " + dockerImage.getId() + " Repository " + dockerImage.getRepository());
 	}
 
 	/**
@@ -76,7 +87,7 @@ public class DockerServerTests {
 		System.out.println("Docker Container " + containerName + " does not exist");
 
 		// create the container
-		dockerContainer = dockerServer.createDockerContainer("orion.base", containerName, "orionuser", null);
+		dockerContainer = dockerServer.createDockerContainer("orion.base", containerName, null);
 		assertEquals(dockerContainer.getStatusMessage(), DockerResponse.StatusCode.CREATED, dockerContainer.getStatusCode());
 		System.out.println("Docker Container " + containerName + " status is " + dockerContainer.getStatus());
 
@@ -110,6 +121,42 @@ public class DockerServerTests {
 		dockerResponse = dockerServer.deleteDockerContainer(containerName);
 		assertEquals(dockerResponse.getStatusMessage(), DockerResponse.StatusCode.DELETED, dockerResponse.getStatusCode());
 		System.out.println("Docker Container " + containerName + " status is deleted");
+
+	}
+
+	/**
+	 * Test docker user image life cycle.
+	 * @throws URISyntaxException 
+	 */
+	@Test
+	public void testDockerUserImageLifeCycle() throws URISyntaxException {
+		// the name of our docker user
+		String userName = "lifecycle";
+		String orionBase = "orion.base";
+		String userBase = userName + ".base";
+
+		URI dockerLocationURI = new URI(dockerLocation);
+		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI);
+
+		// make sure docker is running
+		DockerVersion dockerVersion = dockerServer.getDockerVersion();
+		assertEquals(dockerVersion.getStatusMessage(), DockerResponse.StatusCode.OK, dockerVersion.getStatusCode());
+		System.out.println("Docker Server " + dockerLocation + " is running version " + dockerVersion.getVersion());
+
+		// make sure the orion base image exists
+		DockerImage dockerImage = dockerServer.getDockerImage(orionBase);
+		assertEquals(dockerImage.getStatusMessage(), DockerResponse.StatusCode.OK, dockerImage.getStatusCode());
+		System.out.println("Docker Image " + "orion.base" + " exists");
+
+		// make sure the image for the test user is not there
+		dockerImage = dockerServer.getDockerImage(userBase);
+		assertEquals(dockerImage.getStatusMessage(), DockerResponse.StatusCode.NO_SUCH_IMAGE, dockerImage.getStatusCode());
+		System.out.println("Docker Image " + userBase + " does not exist");
+
+		// create the image for the test user
+		dockerImage = dockerServer.createDockerUserBaseImage(userName);
+		assertEquals(dockerImage.getStatusMessage(), DockerResponse.StatusCode.CREATED, dockerImage.getStatusCode());
+		System.out.println("Docker Image " + dockerImage.getId() + " was created for user " + userName);
 
 	}
 
@@ -185,20 +232,6 @@ public class DockerServerTests {
 		DockerVersion dockerVersion = dockerServer.getDockerVersion();
 		assertEquals(dockerVersion.getStatusMessage(), DockerResponse.StatusCode.OK, dockerVersion.getStatusCode());
 		assertEquals("unknown docker version", "0.6.7", dockerVersion.getVersion());
-	}
-
-	/**
-	 * Test create docker container.
-	 * @throws URISyntaxException
-	 */
-	public void testCreateDockerOrionBaseImage() throws URISyntaxException {
-		URI dockerLocationURI = new URI(dockerLocation);
-		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI);
-
-		// create the image
-		DockerImage dockerImage = dockerServer.createDockerOrionBaseImage();
-		assertEquals(dockerImage.getStatusMessage(), DockerResponse.StatusCode.CREATED, dockerImage.getStatusCode());
-		System.out.println("Created Docker Image: Image Id " + dockerImage.getId() + " Repository " + dockerImage.getRepository());
 	}
 
 }
