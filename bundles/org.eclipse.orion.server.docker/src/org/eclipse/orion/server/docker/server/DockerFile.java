@@ -19,7 +19,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
+import java.security.SecureRandom;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
@@ -35,12 +35,46 @@ import org.slf4j.LoggerFactory;
  */
 public class DockerFile {
 
+	private static final SecureRandom random = new SecureRandom();
+
 	private String userName;
+	
+	private File tempFolder;
+	
+	private File dockerfile;
+	
+	private File dockerTarFile;
 
 	public DockerFile(String userName) {
 		this.userName = userName;
+		this.tempFolder = null;
+		this.dockerfile = null;
+		this.dockerTarFile = null;
 	}
 
+	/**
+	 * Cleanup the files created under the temporary-file directory.
+	 */
+	public void cleanup() {
+		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+		if (dockerfile != null && dockerfile.exists()) {
+			dockerfile.delete();
+			logger.debug("Dockerfile: Deleted " + dockerfile.toString());
+			dockerfile = null;
+		}
+		
+		if (dockerTarFile != null && dockerTarFile.exists()) {
+			dockerTarFile.delete();
+			logger.debug("Dockerfile: Deleted " + dockerTarFile.toString());
+			dockerTarFile = null;
+		}
+		
+		if (tempFolder != null && tempFolder.exists()) {
+			tempFolder.delete();
+			logger.debug("Dockerfile: Deleted folder " + tempFolder.toString());
+			tempFolder = null;
+		}
+	}
 	/**
 	 * Get the tar file containing the Dockerfile that can be sent to the Docker 
 	 * build API to create an image. 
@@ -48,13 +82,29 @@ public class DockerFile {
 	 * @return The tar file.
 	 */
 	public File getTarFile() {
+		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 		try {
-			// create a temporary folder
-			File tempFolder = Files.createTempDirectory(null).toFile();
-			tempFolder.deleteOnExit();
+			// get the temporary folder location.
+			String tmpDirName = System.getProperty("java.io.tmpdir");
+			File tmpDir = new File(tmpDirName);
+			if (!tmpDir.exists() || !tmpDir.isDirectory()) {
+				logger.error("Cannot find the default temporary-file directory: " + tmpDirName);
+				return null;
+			}
+			
+			// get a temporary folder name
+			long n = random.nextLong();
+			n = (n == Long.MIN_VALUE) ? 0 : Math.abs(n);
+			String tmpDirStr = Long.toString(n);
+			tempFolder = new File(tmpDir, tmpDirStr);
+			if (! tempFolder.mkdir()) {
+				logger.error("Cannot create a temporary directory at " + tempFolder.toString());
+				return null;
+			}
+			logger.debug("Dockerfile: Created a temporary directory at " + tempFolder.toString());
 
 			// create the Dockerfile
-			File dockerfile = new File(tempFolder, "Dockerfile");
+			dockerfile = new File(tempFolder, "Dockerfile");
 			FileOutputStream fileOutputStream = new FileOutputStream(dockerfile);
 			Charset utf8 = Charset.forName("UTF-8");
 			OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, utf8);
@@ -63,9 +113,9 @@ public class DockerFile {
 			outputStreamWriter.close();
 			fileOutputStream.close();
 
-			File tarFile = new File(tempFolder, "Dockerfile.tar");
+			dockerTarFile = new File(tempFolder, "Dockerfile.tar");
 
-			TarArchiveOutputStream tarArchiveOutputStream = new TarArchiveOutputStream(new FileOutputStream(tarFile));
+			TarArchiveOutputStream tarArchiveOutputStream = new TarArchiveOutputStream(new FileOutputStream(dockerTarFile));
 			tarArchiveOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_GNU);
 
 			TarArchiveEntry tarEntry = new TarArchiveEntry(dockerfile);
@@ -83,9 +133,10 @@ public class DockerFile {
 
 			tarArchiveOutputStream.closeArchiveEntry();
 			tarArchiveOutputStream.close();
-			return tarFile;
+			
+			logger.debug("Dockerfile: Created a docker tar file at " + dockerTarFile.toString());
+			return dockerTarFile;
 		} catch (IOException e) {
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 			logger.error(e.getLocalizedMessage(), e);
 		}
 		return null;
@@ -101,7 +152,7 @@ public class DockerFile {
 			String dockerfileName = "Dockerfile.user";
 			URL dockerFileURL = Platform.getBundle("org.eclipse.orion.server.docker").getEntry(dockerfileName);
 			File dockerfile = new File(FileLocator.toFileURL(dockerFileURL).getPath());
-			
+
 			FileInputStream fileInputStream = new FileInputStream(dockerfile);
 			char[] chars = new char[(int) dockerfile.length()];
 			Charset utf8 = Charset.forName("UTF-8");

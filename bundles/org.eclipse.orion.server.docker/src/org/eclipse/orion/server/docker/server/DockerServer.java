@@ -205,6 +205,8 @@ public class DockerServer {
 					dockerImage.setStatusCode(DockerResponse.StatusCode.CREATED);
 		        }
 			}
+			
+			userDockerFile.cleanup();
 		} catch (IOException e) {
 			setDockerResponse(dockerImage, e);
 		} finally {
