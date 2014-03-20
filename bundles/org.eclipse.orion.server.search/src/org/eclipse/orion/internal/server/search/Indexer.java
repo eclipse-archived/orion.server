@@ -10,24 +10,44 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.search;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
-import org.apache.solr.client.solrj.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.CommonParams;
-import org.eclipse.core.filesystem.*;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileInfo;
+import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.OrionConfiguration;
-import org.eclipse.orion.server.core.metastore.*;
+import org.eclipse.orion.server.core.metastore.IMetaStore;
+import org.eclipse.orion.server.core.metastore.ProjectInfo;
+import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.osgi.util.NLS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -226,8 +246,17 @@ public class Indexer extends Job {
 				continue;
 			doc.addField(ProtocolConstants.KEY_PATH, new Path(projectName).append(projectRelativePath));
 			//don't index body of non-text files
-			if (!skip(fileInfo))
-				doc.addField("Text", getContentsAsString(file)); //$NON-NLS-1$
+			if (!skip(fileInfo)) {
+				String contents = getContentsAsString(file);
+				// don't index body of files that contain invalid XML characters, see bug 384299
+				if (contents.contains("\uFFFF")) {
+					if (logger.isDebugEnabled()) {
+						logger.debug("Skipping file with invalid XML characters: " + file.toURI().toString()); //$NON-NLS-1$
+					}
+				} else {
+					doc.addField("Text", contents); //$NON-NLS-1$
+				}
+			}
 			doc.addField(ProtocolConstants.KEY_USER_NAME, user.getUniqueId());
 			try {
 				server.add(doc);
