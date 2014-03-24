@@ -155,7 +155,7 @@ if [ "$dropFiles" = y ]; then
 	fi
 				
 	for zip in win32.win32.x86 macosx.cocoa.x86 linux.gtk.x86 macosx.cocoa.x86_64 win32.win32.x86_64 linux.gtk.x86_64 ; do
-		cp ${WORKSPACE}/releng/org.eclipse.orion.server.repository/target/products/org.eclipse.orion-${zip}.zip ${localDropDir}/org.eclipse.orion-${version}-${zip}.zip
+		cp ${WORKSPACE}/releng/org.eclipse.orion.server.repository/target/products/org.eclipse.orion-${zip}.zip ${localDropDir}/eclipse-orion-${version}-${zip}.zip
 		#md5sum $localDropDir/org.eclipse.orion-${version}-${zip}.zip > $localDropDir/org.eclipse.orion-${version}-${zip}.zip.md5
 		echo "Created org.eclipse.orion-${version}-${zip}.zip"
 	done
