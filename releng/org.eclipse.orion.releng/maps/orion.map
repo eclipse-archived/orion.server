@@ -52,4 +52,4 @@ feature@org.eclipse.orion.server.ui.feature=GIT,tag=v20130826-2010,repo=git://gi
 feature@org.eclipse.orion.client.feature=GIT,tag=v20131119-1121,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git,path=features/org.eclipse.orion.client-feature
 feature@org.eclipse.orion.server.tests.feature=GIT,tag=v20130826-2010,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=features/org.eclipse.orion.server.tests-feature
 feature@org.eclipse.orion.releng.test.master=GIT,tag=v20130417-0829,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=features/org.eclipse.orion.releng.test.master-feature
-feature@org.eclipse.orion=GIT,tag=v20130826-2010,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=features/org.eclipse.orion-feature
+feature@org.eclipse.orion=GIT,tag=v20140322-0148,repo=git://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git,path=features/org.eclipse.orion-feature
