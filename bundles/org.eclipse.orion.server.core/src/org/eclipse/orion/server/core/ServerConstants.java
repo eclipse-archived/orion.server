@@ -72,6 +72,16 @@ public class ServerConstants {
 	public static final String CONFIG_DOCKER_URI = "orion.core.docker.uri"; //$NON-NLS-1$
 
 	/**
+	 * The name of configuration property specifying the start of the port range for the docker server to use for port mapping the docker remote API.
+	 */
+	public static final String CONFIG_DOCKER_PORT_START = "orion.core.docker.port.start"; //$NON-NLS-1$
+
+	/**
+	 * The name of configuration property specifying the end of the port range for the docker server to use for port mapping the docker remote API.
+	 */
+	public static final String CONFIG_DOCKER_PORT_END = "orion.core.docker.port.end"; //$NON-NLS-1$
+
+	/**
 	 * The name of a configuration property specifying a comma-separated list of server
 	 * file system paths where user content can be written. By default user content
 	 * can only appear within the server instance location (workspace).

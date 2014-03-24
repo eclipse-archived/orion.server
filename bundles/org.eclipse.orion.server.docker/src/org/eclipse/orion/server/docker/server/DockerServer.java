@@ -29,6 +29,7 @@ import java.text.Format;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 import org.json.JSONArray;
@@ -50,11 +51,20 @@ public class DockerServer {
 
 	private URI dockerProxy;
 
-	public DockerServer(URI dockerServer, URI dockerProxy) {
+	private String portStart;
+
+	private String portEnd;
+
+	private List<String> portsUsed;
+
+	public DockerServer(URI dockerServer, URI dockerProxy, String portStart, String portEnd) {
 		super();
 		this.dockerServer = dockerServer;
 		this.dockerProxy = dockerProxy;
+		this.portStart = portStart;
+		this.portEnd = portEnd;
 		this.containerConnections = new ArrayList<String>();
+		this.portsUsed = new ArrayList<String>();
 	}
 
 	public DockerResponse attachDockerContainer(String containerId, String originURL) {
@@ -183,29 +193,29 @@ public class DockerServer {
 			httpURLConnection.setRequestMethod("POST");
 			httpURLConnection.connect();
 
-			DockerFile userDockerFile = new DockerFile(userName); 
+			DockerFile userDockerFile = new DockerFile(userName);
 			File userBaseTarFile = userDockerFile.getTarFile();
-			
+
 			FileInputStream fileInputStream = new FileInputStream(userBaseTarFile);
 			OutputStream outputStream = httpURLConnection.getOutputStream();
 			byte[] buffer = new byte[4096];
 			int bytes_read;
-			while((bytes_read = fileInputStream.read(buffer)) != -1) {
-			   outputStream.write(buffer, 0, bytes_read);
+			while ((bytes_read = fileInputStream.read(buffer)) != -1) {
+				outputStream.write(buffer, 0, bytes_read);
 			}
 			fileInputStream.close();
-			
+
 			if (getDockerResponse(dockerImage, httpURLConnection).equals(DockerResponse.StatusCode.OK)) {
 				String responseString = readDockerResponseAsString(dockerImage, httpURLConnection);
-		        if (responseString.indexOf("Successfully built") == -1) {
+				if (responseString.indexOf("Successfully built") == -1) {
 					dockerImage.setStatusCode(DockerResponse.StatusCode.SERVER_ERROR);
 					dockerImage.setStatusMessage(responseString);
-		        } else {
+				} else {
 					dockerImage = getDockerImage(userBase);
 					dockerImage.setStatusCode(DockerResponse.StatusCode.CREATED);
-		        }
+				}
 			}
-			
+
 			userDockerFile.cleanup();
 		} catch (IOException e) {
 			setDockerResponse(dockerImage, e);
@@ -238,8 +248,8 @@ public class DockerServer {
 
 	public void detachDockerContainer(String user) {
 		if (containerConnections.contains(user)) {
-				containerConnections.remove(user);
-			}
+			containerConnections.remove(user);
+		}
 	}
 
 	public DockerContainer getDockerContainer(String name) {
@@ -282,8 +292,11 @@ public class DockerServer {
 						dockerContainer.setStatus("Stopped at " + finishedAt);
 					}
 				}
-				if (jsonObject.has(DockerContainer.PORTS)) {
-					dockerContainer.setPorts(jsonObject.getString(DockerContainer.PORTS));
+				if (jsonObject.has("NetworkSettings")) {
+					JSONObject networkSettings = jsonObject.getJSONObject("NetworkSettings");
+					if (networkSettings.has(DockerContainer.PORTS)) {
+						dockerContainer.setPorts(networkSettings.getString(DockerContainer.PORTS));
+					}
 				}
 				if (jsonObject.has(DockerContainer.SIZE_RW)) {
 					dockerContainer.setSize(jsonObject.getInt(DockerContainer.SIZE_RW));
@@ -379,6 +392,17 @@ public class DockerServer {
 				}
 				if (jsonObject.has(DockerImage.CREATED)) {
 					dockerImage.setCreated(jsonObject.getString(DockerImage.CREATED));
+				}
+				if (jsonObject.has(DockerImage.CONFIG)) {
+					JSONObject config = jsonObject.getJSONObject(DockerImage.CONFIG);
+					if (config.has(DockerImage.EXPOSED_PORTS)) {
+						JSONObject exposedPorts = config.getJSONObject(DockerImage.EXPOSED_PORTS);
+						Iterator<?> iterator = exposedPorts.keys();
+						while (iterator.hasNext()) {
+							String port = (String) iterator.next();
+							dockerImage.addPort(port);
+						}
+					}
 				}
 			} else if (dockerImage.getStatusCode().equals(DockerResponse.StatusCode.NO_SUCH_CONTAINER)) {
 				// generic method returns 404 - no such container, change to no such image
@@ -571,13 +595,12 @@ public class DockerServer {
 		try {
 			InputStream inputStream = httpURLConnection.getInputStream();
 			Charset utf8 = Charset.forName("UTF-8");
-			BufferedReader rd= new BufferedReader(new InputStreamReader(inputStream, utf8));
+			BufferedReader rd = new BufferedReader(new InputStreamReader(inputStream, utf8));
 			StringBuilder stringBuilder = new StringBuilder();
 			String line;
-            while ((line=rd.readLine())!=null)
-            {
-            	stringBuilder.append(line);
-            }
+			while ((line = rd.readLine()) != null) {
+				stringBuilder.append(line);
+			}
 			return stringBuilder.toString();
 		} catch (IOException e) {
 			dockerResponse.setStatusCode(DockerResponse.StatusCode.SERVER_ERROR);
@@ -595,7 +618,7 @@ public class DockerServer {
 		logger.error(e.getLocalizedMessage(), e);
 	}
 
-	public DockerContainer startDockerContainer(String containerId, List<String> binds) {
+	public DockerContainer startDockerContainer(String containerId, List<String> binds, List<String> portBindings) {
 		DockerContainer dockerContainer = new DockerContainer();
 		HttpURLConnection httpURLConnection = null;
 		try {
@@ -607,6 +630,21 @@ public class DockerServer {
 					bindsArray.put(volume);
 				}
 				requestJSONObject.put("Binds", bindsArray);
+			}
+			if (portBindings != null && !portBindings.isEmpty()) {
+				// PortBindings are in the format : {"PortBindings": { "22/tcp": [{ "HostPort": "11022" }]} }
+				JSONObject portsObject = new JSONObject();
+				for (String port : portBindings) {
+					String nextAvailablePort = getNextAvailablePort();
+					if (nextAvailablePort != null) {
+						JSONObject hostPort = new JSONObject();
+						hostPort.put("HostPort", nextAvailablePort);
+						JSONArray hostArray = new JSONArray();
+						hostArray.put(hostPort);
+						portsObject.put(port + "/tcp", hostArray);
+					}
+				}
+				requestJSONObject.put("PortBindings", portsObject);
 			}
 			byte[] outputBytes = requestJSONObject.toString().getBytes("UTF-8");
 
@@ -640,6 +678,34 @@ public class DockerServer {
 			httpURLConnection.disconnect();
 		}
 		return dockerContainer;
+	}
+
+	private String getNextAvailablePort() {
+		if (portStart == null) {
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
+			logger.error("Docker Server: port range not defined, orion.core.docker.port.start not set in orion.conf");
+			return null;
+		}
+		String nextAvailablePort = portStart;
+		while (portsUsed.contains(nextAvailablePort)) {
+			int nextPort = Integer.parseInt(nextAvailablePort) + 1;
+			nextAvailablePort = Integer.toString(nextPort);
+			if (portEnd.equals(nextAvailablePort)) {
+				Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
+				logger.error("Docker Server: no free ports, used " + nextAvailablePort);
+				return null;
+			}
+		}
+		portsUsed.add(nextAvailablePort);
+		return nextAvailablePort;
+	}
+
+	public String getPortStart() {
+		return portStart;
+	}
+
+	public String getPortEnd() {
+		return portEnd;
 	}
 
 	public DockerContainer stopDockerContainer(String containerId) {

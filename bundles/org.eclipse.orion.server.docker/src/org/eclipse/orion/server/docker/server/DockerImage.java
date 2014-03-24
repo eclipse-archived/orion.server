@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others.
+ * Copyright (c) 2013, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,6 +10,9 @@
  *******************************************************************************/
 package org.eclipse.orion.server.docker.server;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 /**
  * The response for image requests using the Docker Remote API.
@@ -17,9 +20,13 @@ package org.eclipse.orion.server.docker.server;
  * @author Anthony Hunter
  */
 public class DockerImage extends DockerResponse {
+	
+	public static final String CONFIG = "config";
 
 	public static final String CREATED = "Created";
 
+	public static final String EXPOSED_PORTS = "ExposedPorts";
+	
 	public static final String ID = "Id";
 
 	public static final String IMAGE = "Image";
@@ -39,6 +46,8 @@ public class DockerImage extends DockerResponse {
 	private String created;
 
 	private String id;
+	
+	private List<String> ports;
 
 	private String repository;
 
@@ -50,6 +59,11 @@ public class DockerImage extends DockerResponse {
 
 	public DockerImage() {
 		super();
+		ports = new ArrayList<String>();
+	}
+
+	public void addPort(String port) {
+		ports.add(port);
 	}
 
 	public String getCreated() {
@@ -58,6 +72,10 @@ public class DockerImage extends DockerResponse {
 
 	public String getId() {
 		return id;
+	}
+	
+	public List<String> getPorts() {
+		return ports;
 	}
 
 	public String getRepository() {

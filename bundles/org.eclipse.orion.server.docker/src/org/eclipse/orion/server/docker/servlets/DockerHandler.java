@@ -172,8 +172,17 @@ public class DockerHandler extends ServletResourceHandler<String> {
 				}
 			}
 
+			// get the exposed ports from the docker image
+			List<String> portNumbers = new ArrayList<String>();
+			for (String port : dockerImage.getPorts()) {
+				if (port.contains("/tcp")) {
+					port = port.substring(0, port.indexOf("/tcp"));
+				}
+				portNumbers.add(port);
+			}
+
 			// start the container for the user
-			dockerContainer = dockerServer.startDockerContainer(user, volumes);
+			dockerContainer = dockerServer.startDockerContainer(user, volumes, portNumbers);
 			if (dockerContainer.getStatusCode() == DockerResponse.StatusCode.STARTED) {
 				if (logger.isDebugEnabled()) {
 					logger.debug("Started Docker Container " + dockerContainer.getIdShort() + " for user " + user);
@@ -337,6 +346,11 @@ public class DockerHandler extends ServletResourceHandler<String> {
 					jsonObject.put(DockerImage.ID, dockerImage.getId());
 					jsonObject.put(DockerImage.CREATED, dockerImage.getCreated());
 					jsonObject.put(DockerImage.SIZE, dockerImage.getSize());
+					JSONObject ports = new JSONObject();
+					for (String port : dockerImage.getPorts()) {
+						ports.put(port, new JSONObject());
+					}
+					jsonObject.put(DockerImage.EXPOSED_PORTS, ports);
 					OrionServlet.writeJSONResponse(request, response, jsonObject);
 					return true;
 				default :
@@ -481,7 +495,18 @@ public class DockerHandler extends ServletResourceHandler<String> {
 				logger.debug("Docker Proxy Server " + dockerProxy + " is enabled");
 			}
 
-			dockerServer = new DockerServer(dockerLocationURI, dockerProxyURI);
+			String portStart = PreferenceHelper.getString(ServerConstants.CONFIG_DOCKER_PORT_START, "none").toLowerCase(); //$NON-NLS-1$
+			String portEnd = PreferenceHelper.getString(ServerConstants.CONFIG_DOCKER_PORT_END, "none").toLowerCase(); //$NON-NLS-1$
+			if ("none".equals(portStart) || "none".equals(portEnd)) {
+				// there is a no docker port start value in the orion.conf
+				portStart = null;
+				portEnd = null;
+				logger.info("Docker Server does not have port mapping enabled, start and end host ports not specified");
+			} else {
+				logger.debug("Docker Server using ports " + portStart + " to " + portEnd + " for host port mapping");
+			}
+
+			dockerServer = new DockerServer(dockerLocationURI, dockerProxyURI, portStart, portEnd);
 			DockerVersion dockerVersion = dockerServer.getDockerVersion();
 			if (logger.isDebugEnabled()) {
 				if (dockerVersion.getStatusCode() != DockerResponse.StatusCode.OK) {

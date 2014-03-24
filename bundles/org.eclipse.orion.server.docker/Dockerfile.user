@@ -28,4 +28,8 @@ WORKDIR /home/USERNAME
 
 ENV HOME /home/USERNAME
 
+EXPOSE 8080
+
+EXPOSE 5858
+
 CMD ["/bin/bash"] 
