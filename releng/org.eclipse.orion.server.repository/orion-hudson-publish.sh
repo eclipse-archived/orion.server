@@ -160,7 +160,7 @@ if [ "$dropFiles" = y ]; then
 		echo "Created org.eclipse.orion-${version}-${zip}.zip"
 	done
 
-	CLIENT_WORKSPACE=/home/hudson/genie.eclipse.orion/.hudson/jobs/orion-client/workspace				
+	CLIENT_WORKSPACE=${HUDSON_HOME}/jobs/orion-client/workspace				
 	if [ -d ${CLIENT_WORKSPACE}/built-js ] ; then
 		for file in built-editor-amd.min.js built-editor-amd.js built-editor.min.js built-editor.js built-editor.css built-compare-amd.min.js built-compare-amd.js built-compare.min.js built-compare.js built-compare.css OrionIconFont-Regular.eot OrionIconFont-Regular.woff OrionIconFont-Regular.ttf OrionIconFont-Regular.svg ; do \
 			cp ${CLIENT_WORKSPACE}/built-js/${file} ${localDropDir}/${file}
@@ -183,9 +183,9 @@ if [ "$dropFiles" = y ]; then
 	cp ${WORKSPACE}/releng/org.eclipse.orion.server.repository/html/build.download.php ${localDropDir}/download.php
 
 	#copy the consoleText
-	JOB_DIR=${WORKSPACE/workspace/$BUILD_NUMBER}
+	JOB_DIR=${HUDSON_HOME}/jobs/${JOB_NAME}/builds/${BUILD_NUMBER}
 	if [ -d ${JOB_DIR} ] ; then
-		cp ${JOB_DIR}/consoleText ${localDropDir}/consoleText.txt
+		cp ${JOB_DIR}/log ${localDropDir}/consoleText.txt
 	else
 		echo "Did not copy consoleText"
 	fi
