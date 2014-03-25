@@ -159,14 +159,15 @@ if [ "$dropFiles" = y ]; then
 		#md5sum $localDropDir/org.eclipse.orion-${version}-${zip}.zip > $localDropDir/org.eclipse.orion-${version}-${zip}.zip.md5
 		echo "Created org.eclipse.orion-${version}-${zip}.zip"
 	done
-				
-	if [ -d ${WORKSPACE}/../org.eclipse.orion.client/built-js ] ; then
-		for file in built-editor-amd.js built-editor-amd.min.js built-editor.css built-editor.js built-editor.min.js ; do
-			cp ${WORKSPACE}/../org.eclipse.orion.client/built-js/${file} ${localDropDir}/${file}
+
+	CLIENT_WORKSPACE=/home/hudson/genie.eclipse.orion/.hudson/jobs/orion-client/workspace				
+	if [ -d ${CLIENT_WORKSPACE}/built-js ] ; then
+		for file in built-editor-amd.min.js built-editor-amd.js built-editor.min.js built-editor.js built-editor.css built-compare-amd.min.js built-compare-amd.js built-compare.min.js built-compare.js built-compare.css OrionIconFont-Regular.eot OrionIconFont-Regular.woff OrionIconFont-Regular.ttf OrionIconFont-Regular.svg ; do \
+			cp ${CLIENT_WORKSPACE}/built-js/${file} ${localDropDir}/${file}
 		echo "Copied ${file}"
 		done
 	else
-		echo "Did not copy built-editor-amd.js built-editor-amd.min.js built-editor.css built-editor.js built-editor.min.js"
+		echo "Did not copy built-editor.css built-editor.js built-editor.min.js etc."
 	fi
 
 	#generating build.cfg file to be referenced from downloads web page
@@ -175,13 +176,19 @@ if [ "$dropFiles" = y ]; then
 	echo "hudson.job.url=${BUILD_URL}" >> $localDropDir/build.cfg
 
 	#generate the index.html for the build
-	cat ${WORKSPACE}/releng/org.eclipse.orion.server.repository/html/build.index.html | sed -e "s/@buildDate@/`date`/" -e "s/@repbuildlabel@/${version}/" > ${localDropDir}/index.html
+	ServerTestResults=`egrep "Tests run" ${WORKSPACE}/tests/org.eclipse.orion.server.tests/target/surefire-reports/org.eclipse.orion.server.tests.AllServerTests.txt`
+	cat ${WORKSPACE}/releng/org.eclipse.orion.server.repository/html/build.index.html | sed -e "s/@version@/${version}/" -e "s/@repbuildlabel@/${version}/" -e "s/@ServerTestResults@/${ServerTestResults}/" > ${localDropDir}/index.html
 
 	#copy the download script
 	cp ${WORKSPACE}/releng/org.eclipse.orion.server.repository/html/build.download.php ${localDropDir}/download.php
 
 	#copy the consoleText
-	#https://hudson.eclipse.org/orion/job/orion-server/180/consoleText
+	JOB_DIR=${WORKSPACE/workspace/$BUILD_NUMBER}
+	if [ -d ${JOB_DIR} ] ; then
+		cp ${JOB_DIR}/consoleText ${localDropDir}/consoleText.txt
+	else
+		echo "Did not copy consoleText"
+	fi
 
 	#copy the test results
 	cp ${WORKSPACE}/tests/org.eclipse.orion.server.tests/target/surefire-reports/org.eclipse.orion.server.tests.AllServerTests.txt ${localDropDir}

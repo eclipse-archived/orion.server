@@ -6,7 +6,7 @@
 		<tr>
 			<td style="width: 150px;"><img src="http://www.eclipse.org/orion/images/orion-transparent-large.png" height="86" width="114"/></td>
 			<td><font class=indextop>Eclipse Orion Build: @repbuildlabel@</font><br/>
-			<font class=indexsub>@buildDate@</font></td>
+			<font class=indexsub>Orion release @version@</font></td>
 		</tr>
 	</table>
 	<table width="100%" cellspacing=0 cellpadding=3 align=center>
@@ -153,16 +153,17 @@
 		</tr>
 		<tr>
 			<td>
-<table BORDER="0" CELLSPACING="2" CELLPADDING="0" WIDTH="97%" bordercolor="#999999" align="center" > 
-<tr><th align="left" width="10%">Test</th><th width="7%"># Tests</th><th width="7%">Failures</th><th width="7%">Errors</th><th width="10%">Success Rate</th><th width="7%">Time</th><th align="left">&nbsp;</th></tr>
-<tr><td>&nbsp;<a href="Firefox-23.0-testResults.html">JS Tests - Firefox 23.0</a></td><td align="center" style="color:red">2120</td><td align="center" style="color:red">2</td><td align="center" style="color:red">0</td><td align="center" style="color:red">99.91%</td><td align="center" style="color:red">91.318</td></tr>
+				Server @ServerTestResults@
+<!-- <table BORDER="0" CELLSPACING="2" CELLPADDING="0" WIDTH="97%" bordercolor="#999999" align="center" > --> 
+<!-- <tr><th align="left" width="10%">Test</th><th width="7%"># Tests</th><th width="7%">Failures</th><th width="7%">Errors</th><th width="10%">Success Rate</th><th width="7%">Time</th><th align="left">&nbsp;</th></tr> -->
+<!-- <tr><td>&nbsp;<a href="Firefox-23.0-testResults.html">JS Tests - Firefox 23.0</a></td><td align="center" style="color:red">2120</td><td align="center" style="color:red">2</td><td align="center" style="color:red">0</td><td align="center" style="color:red">99.91%</td><td align="center" style="color:red">91.318</td></tr> -->
 <!-- <tr><td>&nbsp;<a href="IE-9.0-testResults.html">JS Tests - Internet Explorer 9.0</a></td><td>@JS-IE9@</tr> -->
 <!-- <tr><td>&nbsp;<a href="Chrome-testResults.html">JS Tests - Chrome Windows</a></td><td>@JS-WIN-CHROME@</tr> -->
 <!-- <tr><td>&nbsp;<a href="Performance-testResults.html">JS Performance Tests</a></td><td align="center" style="color:red">0</td><td align="center" style="color:red">0</td><td align="center" style="color:red">0</td><td align="center" style="color:red">NaN</td><td align="center" style="color:red">0.000</td></tr> -->
 <!-- <tr><td>&nbsp;<a href="org.eclipse.orion.server.tests.performance.AllPerformanceTests.html">Performance Tests vs baseline</a></td><td align="center" style="color:red">0</td><td align="center" style="color:red">0</td><td align="center" style="color:red">0</td><td align="center" style="color:red">NaN</td><td align="center" style="color:red">0.006</td></tr> -->
-<tr><td>&nbsp;<a href="org.eclipse.orion.server.tests.AllServerTests.html">JUnit Tests: Server Tests</a></td><td align="center" style="color:black">420</td><td align="center" style="color:black">0</td><td align="center" style="color:black">0</td><td align="center" style="color:black">100.00%</td><td align="center" style="color:black">367.640</td></tr>
-</tr>
-</table>
+<!-- <tr><td>&nbsp;<a href="org.eclipse.orion.server.tests.AllServerTests.html">JUnit Tests: Server Tests</a></td><td align="center" style="color:black">420</td><td align="center" style="color:black">0</td><td align="center" style="color:black">0</td><td align="center" style="color:black">100.00%</td><td align="center" style="color:black">367.640</td></tr> -->
+<!-- </tr> -->
+<!-- </table> -->
 			</td>
 		</tr>
 		<tr>
@@ -177,6 +178,7 @@
 				<li><a href="build.cfg">View the <b>Hudson build configuration</b> for this build.</a></li>
 				<li><a href="consoleText.txt">View the <b>build log</b> for this build.</a></li>
 				<li><a href="org.eclipse.orion.server.tests.AllServerTests.txt">View the <b>failed tests log</b> for this build.</a></li>
+				<li><a href="TEST-org.eclipse.orion.server.tests.AllServerTests.xml">View the <b>tests log</b> for this build.</a></li>
 				<!-- <li><a href="junitLog-@repbuildlabel@.txt">View the <b>server test workspace logs</b> for the current build.</a></li> -->
 				<!-- <li><a href="directory.txt">View the <b>map file entries</b> for the current build.</a></li></ul> -->
 			</td>
