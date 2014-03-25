@@ -14,6 +14,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
+import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
+import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestConstants;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.MultiServerStatus;
@@ -76,6 +78,11 @@ public class PushAppCommand extends AbstractCFCommand {
 				if (!multijobStatus.isOK())
 					return status;
 
+				/* extract user defined timeout if present */
+				ManifestParseTree manifest = app.getManifest();
+				ManifestParseTree timeoutNode = manifest.get(CFProtocolConstants.V2_KEY_APPLICATIONS).get(0).getOpt(CFProtocolConstants.V2_KEY_TIMEOUT);
+				int timeout = (timeoutNode != null) ? Integer.parseInt(timeoutNode.getValue()) : ManifestConstants.DEFAULT_TIMEOUT;
+
 				/* craft command result */
 				JSONObject result = new JSONObject();
 				result.put("Target", target.toJSON());
@@ -84,6 +91,7 @@ public class PushAppCommand extends AbstractCFCommand {
 				result.put("App", appResp);
 				result.put("Domain", bindRoute.getDomainName());
 				result.put("Route", bindRoute.getRoute());
+				result.put("Timeout", timeout);
 
 				status.add(new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result));
 				return status;
@@ -106,6 +114,11 @@ public class PushAppCommand extends AbstractCFCommand {
 			if (!multijobStatus.isOK())
 				return status;
 
+			/* extract user defined timeout if present */
+			ManifestParseTree manifest = app.getManifest();
+			ManifestParseTree timeoutNode = manifest.get(CFProtocolConstants.V2_KEY_APPLICATIONS).get(0).getOpt(CFProtocolConstants.V2_KEY_TIMEOUT);
+			int timeout = (timeoutNode != null) ? Integer.parseInt(timeoutNode.getValue()) : ManifestConstants.DEFAULT_TIMEOUT;
+
 			/* craft command result */
 			JSONObject route = app.getSummaryJSON().getJSONArray("routes").getJSONObject(0);
 			JSONObject result = new JSONObject();
@@ -117,6 +130,7 @@ public class PushAppCommand extends AbstractCFCommand {
 			result.put("App", app.getSummaryJSON());
 			result.put("Domain", route.getJSONObject("domain").getString("name"));
 			result.put("Route", route);
+			result.put("Timeout", timeout);
 
 			status.add(new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result));
 			return status;

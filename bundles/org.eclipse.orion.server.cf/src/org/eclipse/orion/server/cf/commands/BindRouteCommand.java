@@ -34,6 +34,7 @@ public class BindRouteCommand extends AbstractRevertableCFCommand {
 	private String appDomain;
 	private String domainName;
 	private JSONObject route;
+	private boolean noRoute;
 
 	public JSONObject getRoute() {
 		return route;
@@ -60,6 +61,10 @@ public class BindRouteCommand extends AbstractRevertableCFCommand {
 		MultiServerStatus status = new MultiServerStatus();
 
 		try {
+
+			if (noRoute)
+				/* nothing to do */
+				return status;
 
 			/* get available domains */
 			GetDomainsCommand getDomains = new GetDomainsCommand(target);
@@ -145,6 +150,10 @@ public class BindRouteCommand extends AbstractRevertableCFCommand {
 			/* optional */
 			ManifestParseTree domainNode = app.getOpt(CFProtocolConstants.V2_KEY_DOMAIN);
 			appDomain = (domainNode != null) ? domainNode.getValue() : ""; //$NON-NLS-1$
+
+			ManifestParseTree noRouteNode = app.getOpt(CFProtocolConstants.V2_KEY_NO_ROUTE);
+			noRoute = (noRouteNode != null) ? Boolean.parseBoolean(noRouteNode.getValue()) : false;
+
 			return Status.OK_STATUS;
 
 		} catch (InvalidAccessException e) {

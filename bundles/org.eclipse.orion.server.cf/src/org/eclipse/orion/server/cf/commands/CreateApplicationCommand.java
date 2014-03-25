@@ -18,6 +18,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.manifest.v2.InvalidAccessException;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
+import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestUtils;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
@@ -39,6 +40,7 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 	private int appInstances;
 	private int appMemory;
 	private String buildPack;
+	private JSONObject env;
 
 	private boolean force;
 
@@ -78,6 +80,9 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 			createAppRequst.put(CFProtocolConstants.V2_KEY_COMMAND, appCommand);
 			createAppRequst.put(CFProtocolConstants.V2_KEY_MEMORY, appMemory);
 			createAppRequst.put(CFProtocolConstants.V2_KEY_STACK_GUID, JSONObject.NULL);
+			if (env != null)
+				createAppRequst.put(CFProtocolConstants.V2_KEY_ENVIRONMENT_JSON, env);
+
 			createAppMethod.setRequestEntity(new StringRequestEntity(createAppRequst.toString(), "application/json", "utf-8")); //$NON-NLS-1$ //$NON-NLS-2$
 
 			ServerStatus status = HttpUtil.executeMethod(createAppMethod);
@@ -103,7 +108,7 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 		try {
 			/* read deploy parameters */
 			ManifestParseTree manifest = application.getManifest();
-			ManifestParseTree app = manifest.get("applications").get(0); //$NON-NLS-1$
+			ManifestParseTree app = manifest.get(CFProtocolConstants.V2_KEY_APPLICATIONS).get(0);
 
 			appName = app.get(CFProtocolConstants.V2_KEY_NAME).getValue();
 
@@ -116,19 +121,35 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 			/* look for v2 memory property first */
 			ManifestParseTree memoryNode = app.getOpt(CFProtocolConstants.V2_KEY_MEMORY);
 			if (memoryNode != null)
-				appMemory = Integer.parseInt(memoryNode.getValue().split("M")[0]); //$NON-NLS-1$
+				appMemory = ManifestUtils.normalizeMemoryMeasure(memoryNode.getValue());
 			else {
 				memoryNode = app.getOpt(CFProtocolConstants.V6_KEY_MEMORY);
-				appMemory = (memoryNode != null) ? Integer.parseInt(memoryNode.getValue().split("M")[0]) : 128; //$NON-NLS-1$
+				if (memoryNode != null)
+					appMemory = ManifestUtils.normalizeMemoryMeasure(memoryNode.getValue());
+				else
+					/* default memory value */
+					appMemory = 1024;
 			}
 
 			ManifestParseTree buildpackNode = app.getOpt(CFProtocolConstants.V2_KEY_BUILDPACK);
 			buildPack = (buildpackNode != null) ? buildpackNode.getValue() : null;
 
+			/* look for environment variables */
+			ManifestParseTree envNode = manifest.getOpt(CFProtocolConstants.V2_KEY_ENV);
+			if (envNode != null) {
+				env = new JSONObject();
+				for (ManifestParseTree var : envNode.getChildren())
+					env.put(var.getLabel(), var.getValue());
+			}
+
 			return Status.OK_STATUS;
 
 		} catch (InvalidAccessException e) {
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null);
+		} catch (Exception e) {
+			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
+			logger.error(msg, e);
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 		}
 	}
 }

@@ -44,7 +44,7 @@ public class SymbolResolver implements Analyzer {
 
 	private void resolve(Token token) {
 
-		if ("${target-base}".equals(token.getContent())) { //$NON-NLS-1$
+		if (targetBase != null && "${target-base}".equals(token.getContent())) { //$NON-NLS-1$
 			token.setContent(targetBase);
 			return;
 		}

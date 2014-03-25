@@ -21,6 +21,7 @@ import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.commands.*;
 import org.eclipse.orion.server.cf.jobs.CFJob;
+import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.servlets.AbstractRESTHandler;
@@ -85,6 +86,10 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 		final JSONObject targetJSON = jsonData.optJSONObject(CFProtocolConstants.KEY_TARGET);
 		final String contentLocation = ServletResourceHandler.toOrionLocation(request, jsonData.optString(CFProtocolConstants.KEY_CONTENT_LOCATION));
 
+		/* default application startup is one minute */
+		int userTimeout = jsonData.optInt(CFProtocolConstants.KEY_TIMEOUT, 60);
+		final int timeout = (userTimeout > 0) ? userTimeout : 0;
+
 		/* TODO: The force shouldn't be always with us */
 		final boolean force = jsonData.optBoolean(CFProtocolConstants.KEY_FORCE, true);
 
@@ -105,7 +110,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 					if (CFProtocolConstants.KEY_STARTED.equals(state)) {
 						if (!status.isOK())
 							return status;
-						return new StartAppCommand(target, app).doIt();
+						return new StartAppCommand(target, app, timeout).doIt();
 					} else if (CFProtocolConstants.KEY_STOPPED.equals(state)) {
 						if (!status.isOK())
 							return status;
@@ -128,9 +133,12 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 					if (!status.isOK())
 						return status;
 
+					ManifestParseTree manifest = app.getManifest();
+
 					getAppCommand = new GetAppCommand(target, app.getName());
 					getAppCommand.doIt();
 					app = getAppCommand.getApp();
+					app.setManifest(manifest);
 
 					new StartAppCommand(target, app).doIt();
 

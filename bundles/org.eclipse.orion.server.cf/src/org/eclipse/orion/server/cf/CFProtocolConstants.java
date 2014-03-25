@@ -14,6 +14,8 @@ public class CFProtocolConstants {
 
 	public static final String KEY_NAME = "Name"; //$NON-NLS-1$
 
+	public static final String KEY_TIMEOUT = "Timeout"; //$NON-NLS-1$
+
 	public static final String KEY_URL = "Url"; //$NON-NLS-1$
 
 	public static final String KEY_MANAGE_URL = "ManageUrl"; //$NON-NLS-1$
@@ -26,7 +28,7 @@ public class CFProtocolConstants {
 
 	public static final String KEY_ORG = "Org"; //$NON-NLS-1$
 
-	public static final String KEY_SPACES = "Spaces";
+	public static final String KEY_SPACES = "Spaces"; //$NON-NLS-1$
 
 	public static final String KEY_SPACE = "Space"; //$NON-NLS-1$
 
@@ -132,4 +134,11 @@ public class CFProtocolConstants {
 
 	public static final String V2_KEY_ERROR_DESCRIPTION = "description"; //$NON-NLS-1$
 
+	public static final String V2_KEY_ENV = "env"; //$NON-NLS-1$
+
+	public static final String V2_KEY_ENVIRONMENT_JSON = "environment_json"; //$NON-NLS-1$
+
+	public static final String V2_KEY_NO_ROUTE = "no-route"; //$NON-NLS-1$
+
+	public static final String V2_KEY_TIMEOUT = "timeout"; //$NON-NLS-1$
 }

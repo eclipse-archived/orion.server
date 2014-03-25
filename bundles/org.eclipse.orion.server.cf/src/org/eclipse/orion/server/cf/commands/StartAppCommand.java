@@ -17,6 +17,8 @@ import org.apache.commons.httpclient.methods.*;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
+import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
+import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestConstants;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
@@ -28,17 +30,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class StartAppCommand extends AbstractCFCommand {
-
-	private static final int MAX_ATTEMPTS = 30;
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
 	private App app;
+	private int timeout;
+
+	public StartAppCommand(Target target, App app, int timeout) {
+		super(target);
+		this.commandName = "Start App"; //$NON-NLS-1$
+		this.app = app;
+		this.timeout = timeout;
+	}
 
 	public StartAppCommand(Target target, App app) {
 		super(target);
 		this.commandName = "Start App"; //$NON-NLS-1$
 		this.app = app;
+		this.timeout = -1;
 	}
 
 	public ServerStatus _doIt() {
@@ -48,17 +57,17 @@ public class StartAppCommand extends AbstractCFCommand {
 		try {
 			URI targetURI = URIUtil.toURI(target.getUrl());
 
-			String appUrl = this.app.getAppJSON().getString("url");
+			String appUrl = this.app.getAppJSON().getString("url"); //$NON-NLS-1$
 			URI appURI = targetURI.resolve(appUrl);
 
 			PutMethod startMethod = new PutMethod(appURI.toString());
 			HttpUtil.configureHttpMethod(startMethod, target);
-			startMethod.setQueryString("inline-relations-depth=1");
+			startMethod.setQueryString("inline-relations-depth=1"); //$NON-NLS-1$
 
 			JSONObject startCommand = new JSONObject();
-			startCommand.put("console", true);
-			startCommand.put("state", "STARTED");
-			StringRequestEntity requestEntity = new StringRequestEntity(startCommand.toString(), CFProtocolConstants.JSON_CONTENT_TYPE, "UTF-8");
+			startCommand.put("console", true); //$NON-NLS-1$
+			startCommand.put("state", "STARTED"); //$NON-NLS-1$ //$NON-NLS-2$
+			StringRequestEntity requestEntity = new StringRequestEntity(startCommand.toString(), CFProtocolConstants.JSON_CONTENT_TYPE, "UTF-8"); //$NON-NLS-1$
 			startMethod.setRequestEntity(requestEntity);
 
 			ServerStatus startStatus = HttpUtil.executeMethod(startMethod);
@@ -66,18 +75,27 @@ public class StartAppCommand extends AbstractCFCommand {
 			if (!result.isOK())
 				return result;
 
+			if (timeout < 0) {
+				/* extract user defined timeout if present */
+				ManifestParseTree manifest = app.getManifest();
+				ManifestParseTree timeoutNode = manifest.get(CFProtocolConstants.V2_KEY_APPLICATIONS).get(0).getOpt(CFProtocolConstants.V2_KEY_TIMEOUT);
+				timeout = (timeoutNode != null) ? Integer.parseInt(timeoutNode.getValue()) : ManifestConstants.DEFAULT_TIMEOUT;
+			}
+
 			/* long running task, keep track */
-			int attemptsLeft = MAX_ATTEMPTS;
+			timeout = Math.min(timeout, ManifestConstants.MAX_TIMEOUT);
+			int attemptsLeft = timeout / 2;
 
 			String msg = NLS.bind("Can not start the application", commandName); //$NON-NLS-1$
 			ServerStatus getInstancesStatus = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
 
 			while (attemptsLeft > 0) {
+
 				/* two seconds */
 				Thread.sleep(2000);
 
 				// check instances
-				String appInstancesUrl = appUrl + "/instances";
+				String appInstancesUrl = appUrl + "/instances"; //$NON-NLS-1$
 				URI appInstancesURI = targetURI.resolve(appInstancesUrl);
 
 				GetMethod getInstancesMethod = new GetMethod(appInstancesURI.toString());
@@ -98,9 +116,9 @@ public class StartAppCommand extends AbstractCFCommand {
 				Iterator<String> instanceIt = appInstancesJSON.keys();
 				while (instanceIt.hasNext()) {
 					JSONObject instanceJSON = appInstancesJSON.getJSONObject(instanceIt.next());
-					if ("RUNNING".equals(instanceJSON.optString("state")))
+					if ("RUNNING".equals(instanceJSON.optString("state"))) //$NON-NLS-1$ //$NON-NLS-2$
 						runningInstanceNo++;
-					else if ("FLAPPING".equals(instanceJSON.optString("state")))
+					else if ("FLAPPING".equals(instanceJSON.optString("state"))) //$NON-NLS-1$ //$NON-NLS-2$
 						flappingInstanceNo++;
 				};
 

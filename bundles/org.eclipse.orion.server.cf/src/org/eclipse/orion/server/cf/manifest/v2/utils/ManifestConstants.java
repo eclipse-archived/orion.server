@@ -12,6 +12,18 @@ package org.eclipse.orion.server.cf.manifest.v2.utils;
 
 public class ManifestConstants {
 
+	/* application start timeout */
+	public static int MAX_TIMEOUT = 180; /* 3 minutes */
+
+	public static int DEFAULT_TIMEOUT = 60; /* 1 minute */
+
+	/* manifest file limit */
+	public static long MANIFEST_SIZE_LIMIT = (100 * 1024); /* specified in bytes */
+
+	public static String MISSING_OR_INVALID_MANIFEST = "Could not read the manifest. Missing or invalid file.";
+
+	public static String MANIFEST_FILE_SIZE_EXCEEDED = "Refused to read the manifest. Exceeded maximum file size limit.";
+
 	/* Manifest error messages */
 	public static String UNEXPECTED_INPUT_ERROR = "Unexpected token around line {0}.";
 
