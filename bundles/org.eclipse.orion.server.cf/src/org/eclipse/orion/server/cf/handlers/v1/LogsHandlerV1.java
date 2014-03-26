@@ -16,8 +16,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
-import org.eclipse.orion.server.cf.commands.ComputeTargetCommand;
-import org.eclipse.orion.server.cf.commands.GetLogsCommand;
+import org.eclipse.orion.server.cf.commands.*;
 import org.eclipse.orion.server.cf.jobs.CFJob;
 import org.eclipse.orion.server.cf.objects.Log;
 import org.eclipse.orion.server.cf.objects.Target;
@@ -38,41 +37,37 @@ public class LogsHandlerV1 extends AbstractRESTHandler<Log> {
 
 	@Override
 	protected Log buildResource(HttpServletRequest request, String pathString) throws CoreException {
-
-		if (pathString == null) {
-			return null;
-		}
-
-		IPath path = new Path(pathString);
-		return new Log(path.segment(0), path.segment(1));
+		return null;
 	}
 
 	@Override
-	protected CFJob handleGet(final Log resource, HttpServletRequest request, HttpServletResponse response, final String path) {
+	protected CFJob handleGet(final Log log, HttpServletRequest request, HttpServletResponse response, final String pathString) {
 		final JSONObject targetJSON = extractJSONData(IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_TARGET));
+		IPath path = new Path(pathString);
+		final String appName = path.segment(0);
+		final String logName = path.segment(1);
+		final String instanceNo = path.segment(2);
 
 		return new CFJob(request, false) {
 			@Override
 			protected IStatus performJob() {
 				try {
-					ComputeTargetCommand computeTarget = new ComputeTargetCommand(this.userId, targetJSON);
-					IStatus result = computeTarget.doIt();
+					ComputeTargetCommand computeTargetCommand = new ComputeTargetCommand(this.userId, targetJSON);
+					IStatus result = computeTargetCommand.doIt();
 					if (!result.isOK())
 						return result;
-					Target target = computeTarget.getTarget();
+					Target target = computeTargetCommand.getTarget();
 
-					if (target.getSpace() == null) {
-						String msg = "Space not set"; //$NON-NLS-1$
-						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null);
+					if (appName != null && instanceNo != null && logName != null) {
+						return new GetLogCommand(target, appName, instanceNo, logName, this.requestLocation).doIt();
+					} else if (appName != null) {
+						return new GetLogsCommand(target, appName, this.requestLocation).doIt();
 					}
 
-					if (resource.getApplication() != null) {
-						return new GetLogsCommand(target, resource.getApplication(), resource.getName(), this.requestLocation).doIt();
-					}
 					return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "No application name", null);
 
 				} catch (Exception e) {
-					String msg = NLS.bind("Failed to handle request for {0}", path); //$NON-NLS-1$
+					String msg = NLS.bind("Failed to handle request for {0}", pathString); //$NON-NLS-1$
 					ServerStatus status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 					logger.error(msg, e);
 					return status;

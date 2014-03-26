@@ -14,6 +14,7 @@ import java.io.IOException;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.params.HttpMethodParams;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.cf.CFActivator;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
@@ -42,7 +43,6 @@ public class HttpUtil {
 	public static ServerStatus executeMethod(HttpMethod method) throws HttpException, IOException, JSONException {
 
 		try {
-
 			int code = CFActivator.getDefault().getHttpClient().executeMethod(method);
 
 			if (code == 204)
@@ -61,6 +61,10 @@ public class HttpUtil {
 
 			if (code != 200 && code != 201)
 				return new ServerStatus(Status.ERROR, code, result.optString("description"), result, null);
+
+			if (result.has("error_code")) {
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, result.optString("description"), result, null);
+			}
 
 			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
 
