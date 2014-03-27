@@ -13,6 +13,7 @@ package org.eclipse.orion.internal.server.core;
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 
 /**
@@ -110,40 +111,82 @@ public class IOUtilities {
 
 	public static Map<String, String> parseMultiPart(final InputStream requestStream, final String boundary) throws IOException {
 		String string = IOUtilities.toString(requestStream);
+		System.out.println(string);
 		BufferedReader reader = new BufferedReader(new StringReader(string));
 		StringBuilder buf = new StringBuilder();
 		Map<String, String> parts = new HashMap<String, String>();
 		String name = null;
+		String prev = "";
+		boolean end = false;	//flag which tells that there is no more content left to read (but the one already read should be parsed)
 		try {
-			String line;
-			while ((line = reader.readLine()) != null) {
-				if (line.equals("--" + boundary)) { //$NON-NLS-1$
+			String[] line;
+			while (!end) {
+				line = getLine(reader);
+				if ("".equals(line[1])) //$NON-NLS-1$
+					end = true;
+				if (line[0].equals("--" + boundary)) { //$NON-NLS-1$
 					if (buf.length() > 0) {
 						parts.put(name, buf.toString());
 						buf.setLength(0);
 					}
-					line = reader.readLine(); // Content-Disposition: form-data; name="{name}"...
-					int i = line.indexOf("name=\""); //$NON-NLS-1$
-					String s = line.substring(i + "name=\"".length()); //$NON-NLS-1$
+					line = getLine(reader); // Content-Disposition: form-data; name="{name}"...
+					int i = line[0].indexOf("name=\""); //$NON-NLS-1$
+					String s = line[0].substring(i + "name=\"".length()); //$NON-NLS-1$
 					name = s.substring(0, s.indexOf('"'));
-					reader.readLine(); // an empty line
+					getLine(reader); // an empty line
 					if (name.equals("uploadedfile")) { //$NON-NLS-1$
-						reader.readLine(); // "Content-Type: application/octet-stream"
+						getLine(reader); // "Content-Type: application/octet-stream"
 					}
-				} else if (line.equals("--" + boundary + "--")) { //$NON-NLS-1$ //$NON-NLS-2$
+				} else if (line[0].equals("--" + boundary + "--")) { //$NON-NLS-1$ //$NON-NLS-2$
 					parts.put(name, buf.toString());
 				} else {
-					if ("uploadedfile".equals(name) && "".equals(line)) { //$NON-NLS-1$ //$NON-NLS-2$
-						continue; // skip empty lines
-					}
 					if (buf.length() > 0)
-						buf.append("\n"); //$NON-NLS-1$
-					buf.append(line);
+						buf.append(prev);
+					buf.append(line[0]);
+					prev = line[1];
 				}
 			}
 		} finally {
 			IOUtilities.safeClose(reader);
 		}
 		return parts;
+	}
+
+	public static String[] getLine(BufferedReader reader) throws IOException {
+		StringBuilder lineBuilder = new StringBuilder();
+		String lineDelimiter = "";
+		String line = "";
+		char first = '0';
+		while (true) {
+			first = (char) reader.read();
+			if (first == (char) -1) {
+				line = lineBuilder.toString();
+				lineDelimiter = "";
+				return new String[] {line, lineDelimiter};
+			} else if (first == '\n') {
+				line = lineBuilder.toString();
+				lineDelimiter = "\n";
+				return new String[] {line, lineDelimiter};
+			} else if (first == '\r') {
+				char second = (char) reader.read();
+				if (second == (char) -1) {
+					lineBuilder.append(first);
+					line = lineBuilder.toString();
+					lineDelimiter = "";
+					return new String[] {line, lineDelimiter};
+				};
+				if (second == '\n') {
+					line = lineBuilder.toString();
+					lineDelimiter = "\r\n";
+					return new String[] {line, lineDelimiter};
+				} else {
+					lineBuilder.append(first);
+					lineBuilder.append(second);
+				}
+
+			} else {
+				lineBuilder.append(first);
+			}
+		}
 	}
 }
