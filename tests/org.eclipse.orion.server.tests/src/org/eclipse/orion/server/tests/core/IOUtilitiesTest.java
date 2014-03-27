@@ -14,7 +14,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.Map;
 
 import org.eclipse.orion.internal.server.core.IOUtilities;
@@ -35,7 +38,7 @@ public class IOUtilitiesTest {
 		sb.append("--24464570528145").append("\n");
 		sb.append("Content-Disposition: form-data; name=\"uploadedfile\"; filename=\"\"").append("\n");
 		sb.append("Content-Type: application/octet-stream").append("\n");
-		sb.append("").append("\n");
+		sb.append("").append("\r\n");
 		sb.append("").append("\n");
 		sb.append("--24464570528145--").append("\n");
 
@@ -44,7 +47,7 @@ public class IOUtilitiesTest {
 		assertNotNull(parts);
 		assertEquals("urlRadio", parts.get("radio"));
 		assertEquals("http://localhost:8080/gitapi/diff/Default/file/r6/?parts=diff&Path=file.txt", parts.get("url"));
-		assertEquals("\n", parts.get("uploadedfile"));
+		assertEquals("", parts.get("uploadedfile"));
 	}
 
 	@Test
@@ -68,9 +71,9 @@ public class IOUtilitiesTest {
 		sb.append("--24464570528145").append("\n");
 		sb.append("Content-Disposition: form-data; name=\"uploadedfile\"; filename=\"\"").append("\n");
 		sb.append("Content-Type: application/octet-stream").append("\n");
-		sb.append("").append("\n");
-		sb.append(patch);
-		sb.append("--24464570528145--").append("\n");
+		sb.append("asd").append("\n");
+		sb.append(patch.toString()).append("\n");
+		sb.append("--24464570528145--");
 
 		ByteArrayInputStream is = new ByteArrayInputStream(sb.toString().getBytes());
 		Map<String, String> parts = IOUtilities.parseMultiPart(is, "24464570528145");
@@ -78,5 +81,27 @@ public class IOUtilitiesTest {
 		assertEquals("fileRadio", parts.get("radio"));
 		assertNull(parts.get("url"));
 		assertEquals(patch.toString(), parts.get("uploadedfile"));
+	}
+
+	@Test
+	public void testGetLine() throws IOException {
+		StringBuilder testStringBuilder = new StringBuilder();
+		testStringBuilder.append("test content test content test content test content test content");
+		testStringBuilder.append("\n");
+		testStringBuilder.append("");
+		testStringBuilder.append("\r\n");
+		testStringBuilder.append("\r");
+		testStringBuilder.append("test content test content test content");
+		String testString = testStringBuilder.toString();
+
+		StringBuilder readStringBuilder = new StringBuilder();
+		BufferedReader reader = new BufferedReader(new StringReader(testString));
+		String[] line;
+		while ((line = IOUtilities.getLine(reader))[1] != "") {
+			readStringBuilder.append(line[0]);
+			readStringBuilder.append(line[1]);
+		}
+		readStringBuilder.append(line[0]);
+		assertEquals(readStringBuilder.toString(), testString);
 	}
 }
