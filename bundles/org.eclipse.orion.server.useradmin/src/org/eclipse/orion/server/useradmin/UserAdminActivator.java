@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others 
+ * Copyright (c) 2010, 2014 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,6 +11,7 @@
 package org.eclipse.orion.server.useradmin;
 
 import org.eclipse.orion.server.core.authentication.IAuthenticationService;
+import org.eclipse.orion.server.useradmin.diskusage.DiskUsageJob;
 import org.osgi.framework.*;
 import org.osgi.util.tracker.ServiceTracker;
 
@@ -23,6 +24,7 @@ public class UserAdminActivator implements BundleActivator {
 
 	private static UserAdminActivator singleton;
 	private BundleContext bundleContext;
+	private DiskUsageJob diskUsageJob;
 
 	public BundleContext getBundleContext() {
 		return bundleContext;
@@ -54,6 +56,9 @@ public class UserAdminActivator implements BundleActivator {
 
 		authServiceTracker = new ServiceTracker<IAuthenticationService, IAuthenticationService>(bundleContext, authFilter, null);
 		authServiceTracker.open();
+
+		diskUsageJob = new DiskUsageJob();
+		diskUsageJob.schedule();
 	}
 
 	/*
