@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others.
+ * Copyright (c) 2010, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -28,7 +28,6 @@ import org.eclipse.equinox.http.jetty.JettyConstants;
 import org.eclipse.orion.server.configurator.configuration.ConfigurationFormat;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerConstants;
-
 import java.io.File;
 import java.io.IOException;
 import org.eclipse.equinox.app.IApplication;
@@ -65,6 +64,8 @@ public class WebApplication implements IApplication {
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(JettyConstants.CONTEXT_SESSIONINACTIVEINTERVAL, new Integer(4 * 60 * 60)); // 4 hours
+		properties.put(JettyConstants.CUSTOMIZER_CLASS, "org.eclipse.orion.server.jettycustomizer.OrionJettyCustomizer");
+
 		//properties.put(JettyConstants.CONTEXT_PATH, "/cc");
 		if (httpsEnabled) {
 			LogHelper.log(new Status(IStatus.INFO, ConfiguratorActivator.PI_CONFIGURATOR, "Https is enabled", null)); //$NON-NLS-1$
