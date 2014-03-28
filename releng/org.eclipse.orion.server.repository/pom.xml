@@ -73,6 +73,14 @@
 						</goals>
 					</execution>
 				</executions>
+				<configuration>
+					<products>
+						<product>
+							<id>org.eclipse.orion</id>
+							<rootFolder>eclipse</rootFolder>
+						</product>
+					</products>
+				</configuration>
    		 	</plugin>
         </plugins>
     </build>
