@@ -71,7 +71,6 @@ public class Indexer extends Job {
 	//private static final List<String> IGNORED_FILE_TYPES = Arrays.asList("png", "jpg", "jpeg", "gif", "bmp", "mpg", "mp4", "wmf", "pdf", "tiff", "class", "so", "zip", "jar", "tar", "tgz");
 	private final List<String> INDEXED_FILE_TYPES;
 	private final SolrServer server;
-	private final List<String> skippedFileTypes = new ArrayList<String>();
 	Logger logger;
 
 	public Indexer(SolrServer server) {
@@ -255,6 +254,10 @@ public class Indexer extends Job {
 					}
 				} else {
 					doc.addField("Text", contents); //$NON-NLS-1$
+					if (logger.isDebugEnabled()) {
+						logger.debug("Indexing contents of file: " + file.toURI().toString()); //$NON-NLS-1$ //$NON-NLS-2$
+					}
+
 				}
 			}
 			doc.addField(ProtocolConstants.KEY_USER_NAME, user.getUniqueId());
@@ -279,12 +282,19 @@ public class Indexer extends Job {
 			return true;
 		//skip files with no extension, or known binary file type extensions
 		String extension = new Path(fileInfo.getName()).getFileExtension();
-		if (extension == null || (Collections.binarySearch(INDEXED_FILE_TYPES, extension.toLowerCase()) < 0))
+		if (extension == null) {
+			if (logger.isDebugEnabled()) {
+				logger.debug("Skipping indexing the contents of a file with no file extension: " + fileInfo.getName()); //$NON-NLS-1$
+			}
 			return true;
-		if (skippedFileTypes.add(extension)) {
-			if (logger.isDebugEnabled())
-				logger.debug("Skipping unknown file type: " + extension); //$NON-NLS-1$
 		}
+		if (extension == null || !INDEXED_FILE_TYPES.contains(extension.toLowerCase())) {
+			if (logger.isDebugEnabled()) {
+				logger.debug("Skipping indexing the contents of a file with an unsupported file extension: " + fileInfo.getName()); //$NON-NLS-1$
+			}
+			return true;
+		}
+
 		return false;
 	}
 
