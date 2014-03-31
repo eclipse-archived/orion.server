@@ -29,12 +29,20 @@ public class SetOrgCommand extends AbstractCFCommand {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
-	private String orgName;
+	private String org;
+	private boolean isGuid = false;
 
 	public SetOrgCommand(Target target, String orgName) {
 		super(target);
 		this.commandName = "Set Org"; //$NON-NLS-1$
-		this.orgName = orgName;
+		this.org = orgName;
+	}
+
+	public SetOrgCommand(Target target, String org, boolean isGuid) {
+		super(target);
+		this.commandName = "Set Org"; //$NON-NLS-1$
+		this.org = org;
+		this.isGuid = isGuid;
 	}
 
 	public ServerStatus _doIt() {
@@ -56,14 +64,16 @@ public class SetOrgCommand extends AbstractCFCommand {
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Organization not found", null);
 			}
 
-			if (this.orgName == null || "".equals(this.orgName)) {
+			if (this.org == null || "".equals(this.org)) {
 				JSONObject org = orgs.getJSONObject(0);
 				target.setOrg(new Org().setCFJSON(org));
 			} else {
 				for (int i = 0; i < orgs.length(); i++) {
-					JSONObject org = orgs.getJSONObject(i);
-					if (orgName.equals(org.getJSONObject("entity").getString("name")))
-						target.setOrg(new Org().setCFJSON(org));
+					JSONObject orgJSON = orgs.getJSONObject(i);
+					if ((!isGuid && org.equals(orgJSON.getJSONObject("entity").getString("name"))) || (isGuid && org.equals(orgJSON.getJSONObject("metadata").getString("guid")))) {
+						target.setOrg(new Org().setCFJSON(orgJSON));
+						break;
+					}
 				}
 			}
 
