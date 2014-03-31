@@ -162,7 +162,7 @@ if [ "$dropFiles" = y ]; then
 
 	CLIENT_WORKSPACE=${HUDSON_HOME}/jobs/orion-client/workspace				
 	if [ -d ${CLIENT_WORKSPACE}/built-js ] ; then
-		for file in built-editor-amd.min.js built-editor-amd.js built-editor.min.js built-editor.js built-editor.css built-compare-amd.min.js built-compare-amd.js built-compare.min.js built-compare.js built-compare.css OrionIconFont-Regular.eot OrionIconFont-Regular.woff OrionIconFont-Regular.ttf OrionIconFont-Regular.svg ; do \
+		for file in built-editor.zip built-editor-amd.min.js built-editor-amd.js built-editor.min.js built-editor.js built-editor.css built-compare.zip built-compare-amd.min.js built-compare-amd.js built-compare.min.js built-compare.js built-compare.css OrionIconFont-Regular.eot OrionIconFont-Regular.woff OrionIconFont-Regular.ttf OrionIconFont-Regular.svg ; do \
 			cp ${CLIENT_WORKSPACE}/built-js/${file} ${localDropDir}/${file}
 		echo "Copied ${file}"
 		done
