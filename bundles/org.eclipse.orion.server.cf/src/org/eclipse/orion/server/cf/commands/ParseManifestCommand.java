@@ -90,7 +90,7 @@ public class ParseManifestCommand extends AbstractCFCommand {
 
 			/* optional */
 			ManifestParseTree pathNode = app.getOpt(CFProtocolConstants.V2_KEY_PATH);
-			String path = (pathNode != null) ? pathNode.getValue() : ""; //$NON-NLS-1$
+			String path = (pathNode != null) ? pathNode.getUnquotedValue() : ""; //$NON-NLS-1$
 
 			if (path.isEmpty())
 				path = "."; //$NON-NLS-1$

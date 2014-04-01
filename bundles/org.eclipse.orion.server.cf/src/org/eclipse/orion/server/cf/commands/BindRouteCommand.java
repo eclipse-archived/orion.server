@@ -149,7 +149,7 @@ public class BindRouteCommand extends AbstractRevertableCFCommand {
 
 			/* optional */
 			ManifestParseTree domainNode = app.getOpt(CFProtocolConstants.V2_KEY_DOMAIN);
-			appDomain = (domainNode != null) ? domainNode.getValue() : ""; //$NON-NLS-1$
+			appDomain = (domainNode != null) ? domainNode.getUnquotedValue() : ""; //$NON-NLS-1$
 
 			ManifestParseTree noRouteNode = app.getOpt(CFProtocolConstants.V2_KEY_NO_ROUTE);
 			noRoute = (noRouteNode != null) ? Boolean.parseBoolean(noRouteNode.getValue()) : false;

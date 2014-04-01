@@ -126,7 +126,7 @@ public class ManifestParseTree {
 	}
 
 	/**
-	 * Access helper method. Should be used for key:value mappings only.
+	 * Access helper method. Should be used for (key:value) mappings only.
 	 * @return Label of the first child.
 	 * @throws InvalidAccessException If the nodes has no children.
 	 */
@@ -135,6 +135,16 @@ public class ManifestParseTree {
 			throw new InvalidAccessException(this);
 
 		return children.get(0).getLabel();
+	}
+
+	/**
+	 * Access helper method. Should be used for (key:value) mappings only.
+	 * Removes any starting or ending quotation marks, i.e. " and '.
+	 * @return Label of the first child.
+	 * @throws InvalidAccessException If the nodes has no children.
+	 */
+	public String getUnquotedValue() throws InvalidAccessException {
+		return getValue().replaceAll("^\"|^\'|\"$|\'$", ""); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
 	/**
@@ -169,12 +179,6 @@ public class ManifestParseTree {
 
 		/* print tokens */
 		sb.append(getLabel());
-		/*int tokensSize = tokens.size();
-		for (int i = 0; i < tokensSize; ++i) {
-			sb.append(tokens.get(i).getContent());
-			if (i < tokensSize - 1)
-				sb.append(" "); //$NON-NLS-1$
-		}*/
 
 		/* print mapping symbol if required */
 		boolean isItemNode = (tokens.size() == 1 && TokenType.ITEM_CONSTANT == tokens.get(0).getType());

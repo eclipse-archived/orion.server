@@ -40,6 +40,7 @@ public class ManifestParserTest {
 
 	private static String CORRECT_MANIFEST_LOCATION = "testData/manifestTest/correct"; //$NON-NLS-1$
 	private static String INCORRECT_MANIFEST_LOCATION = "testData/manifestTest/incorrect"; //$NON-NLS-1$
+	private static String MANIFEST_LOCATION = "testData/manifestTest"; //$NON-NLS-1$
 
 	@Test
 	public void testParserAgainsCorrectManifests() throws Exception {
@@ -96,14 +97,43 @@ public class ManifestParserTest {
 		}
 	}
 
-	private String exportManifest(InputStream inputStream) throws IOException, TokenizerException, ParserException {
+	@Test
+	public void testQuotedManifestProperties() throws Exception {
+		String manifestName = "quotedPropertiesManifest.yml"; //$NON-NLS-1$
 
+		URL entry = ServerTestsActivator.getContext().getBundle().getEntry(MANIFEST_LOCATION);
+		File manifestFile = new File(FileLocator.toFileURL(entry).getPath().concat(manifestName));
+
+		InputStream inputStream = new FileInputStream(manifestFile);
+		ManifestParseTree manifest = parse(inputStream);
+
+		ManifestParseTree application = manifest.get("applications").get(0); //$NON-NLS-1$
+		ManifestParseTree path = application.get("path"); //$NON-NLS-1$
+
+		assertEquals("\".\"", path.getValue()); //$NON-NLS-1$
+		assertEquals(".", path.getUnquotedValue()); //$NON-NLS-1$
+
+		ManifestParseTree host = application.get("host"); //$NON-NLS-1$
+
+		assertEquals("\'quoted-path-application\'", host.getValue()); //$NON-NLS-1$
+		assertEquals("quoted-path-application", host.getUnquotedValue()); //$NON-NLS-1$
+
+		ManifestParseTree domain = application.get("domain"); //$NON-NLS-1$
+
+		assertEquals("cloud-foundry-domain.org", domain.getValue()); //$NON-NLS-1$
+		assertEquals("cloud-foundry-domain.org", domain.getUnquotedValue()); //$NON-NLS-1$
+	}
+
+	private ManifestParseTree parse(InputStream inputStream) throws IOException, TokenizerException, ParserException {
 		Preprocessor preprocessor = new ManifestPreprocessor();
 		List<InputLine> contents = preprocessor.process(inputStream);
 		Tokenizer tokenizer = new ManifestTokenizer(contents);
 
 		Parser parser = new ManifestParser();
-		ManifestParseTree parseTree = parser.parse(tokenizer);
-		return parseTree.toString();
+		return parser.parse(tokenizer);
+	}
+
+	private String exportManifest(InputStream inputStream) throws IOException, TokenizerException, ParserException {
+		return parse(inputStream).toString();
 	}
 }

@@ -104,11 +104,11 @@ public class DeleteApplicationRoutesCommand extends AbstractCFCommand {
 			ManifestParseTree app = manifest.get("applications").get(0); //$NON-NLS-1$
 
 			ManifestParseTree domainNode = app.getOpt(CFProtocolConstants.V2_KEY_DOMAIN);
-			appDomain = (domainNode != null) ? domainNode.getValue() : ""; //$NON-NLS-1$
+			appDomain = (domainNode != null) ? domainNode.getUnquotedValue() : ""; //$NON-NLS-1$
 
 			/* if none provided, set a default one */
 			ManifestParseTree hostNode = app.getOpt(CFProtocolConstants.V2_KEY_HOST);
-			appHost = (hostNode != null) ? hostNode.getValue() : ""; //$NON-NLS-1$
+			appHost = (hostNode != null) ? hostNode.getUnquotedValue() : ""; //$NON-NLS-1$
 
 			return Status.OK_STATUS;
 
