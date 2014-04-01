@@ -13,6 +13,7 @@ package org.eclipse.orion.internal.server.core;
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 
 /**
@@ -110,35 +111,35 @@ public class IOUtilities {
 
 	public static Map<String, String> parseMultiPart(final InputStream requestStream, final String boundary) throws IOException {
 		String string = IOUtilities.toString(requestStream);
-		BufferedReader reader = new BufferedReader(new StringReader(string));
+		EndingAwareLineReader reader = new EndingAwareLineReader(new StringReader(string));
 		StringBuilder buf = new StringBuilder();
 		Map<String, String> parts = new HashMap<String, String>();
 		String name = null;
+		String prev = "";
 		try {
-			String line;
-			while ((line = reader.readLine()) != null) {
+			String line = null;
+			while (reader.hasNext()) {
+				line = reader.getLine();
 				if (line.equals("--" + boundary)) { //$NON-NLS-1$
 					if (buf.length() > 0) {
 						parts.put(name, buf.toString());
 						buf.setLength(0);
 					}
-					line = reader.readLine(); // Content-Disposition: form-data; name="{name}"...
+					line = reader.getLine(); // Content-Disposition: form-data; name="{name}"...
 					int i = line.indexOf("name=\""); //$NON-NLS-1$
 					String s = line.substring(i + "name=\"".length()); //$NON-NLS-1$
 					name = s.substring(0, s.indexOf('"'));
-					reader.readLine(); // an empty line
+					reader.getLine(); // an empty line
 					if (name.equals("uploadedfile")) { //$NON-NLS-1$
-						reader.readLine(); // "Content-Type: application/octet-stream"
+						reader.getLine(); // "Content-Type: application/octet-stream"
 					}
 				} else if (line.equals("--" + boundary + "--")) { //$NON-NLS-1$ //$NON-NLS-2$
 					parts.put(name, buf.toString());
 				} else {
-					if ("uploadedfile".equals(name) && "".equals(line)) { //$NON-NLS-1$ //$NON-NLS-2$
-						continue; // skip empty lines
-					}
 					if (buf.length() > 0)
-						buf.append("\n"); //$NON-NLS-1$
+						buf.append(prev);
 					buf.append(line);
+					prev = reader.getLineDelimiter(); //returns line delimiter associated with current line
 				}
 			}
 		} finally {
