@@ -10,10 +10,23 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.core;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
+import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
+
+import org.eclipse.orion.internal.server.core.EndingAwareLineReader.LineDelimiter;
 
 /**
  * Various static helper methods for I/O processing.
@@ -110,12 +123,13 @@ public class IOUtilities {
 
 	public static Map<String, String> parseMultiPart(final InputStream requestStream, final String boundary) throws IOException {
 		String string = IOUtilities.toString(requestStream);
-		BufferedReader reader = new BufferedReader(new StringReader(string));
+		EndingAwareLineReader reader = new EndingAwareLineReader(new StringReader(string));
 		StringBuilder buf = new StringBuilder();
 		Map<String, String> parts = new HashMap<String, String>();
 		String name = null;
+		LineDelimiter prev = LineDelimiter.EMPTY;
 		try {
-			String line;
+			String line = null;
 			while ((line = reader.readLine()) != null) {
 				if (line.equals("--" + boundary)) { //$NON-NLS-1$
 					if (buf.length() > 0) {
@@ -133,12 +147,10 @@ public class IOUtilities {
 				} else if (line.equals("--" + boundary + "--")) { //$NON-NLS-1$ //$NON-NLS-2$
 					parts.put(name, buf.toString());
 				} else {
-					if ("uploadedfile".equals(name) && "".equals(line)) { //$NON-NLS-1$ //$NON-NLS-2$
-						continue; // skip empty lines
-					}
 					if (buf.length() > 0)
-						buf.append("\n"); //$NON-NLS-1$
+						buf.append(prev);
 					buf.append(line);
+					prev = reader.getLineDelimiter(); //returns line delimiter associated with current line
 				}
 			}
 		} finally {
