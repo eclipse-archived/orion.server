@@ -35,7 +35,7 @@ public class IOUtilitiesTest {
 		sb.append("--24464570528145").append("\n");
 		sb.append("Content-Disposition: form-data; name=\"uploadedfile\"; filename=\"\"").append("\n");
 		sb.append("Content-Type: application/octet-stream").append("\n");
-		sb.append("").append("\n");
+		sb.append("").append("\r\n");
 		sb.append("").append("\n");
 		sb.append("--24464570528145--").append("\n");
 
@@ -44,7 +44,7 @@ public class IOUtilitiesTest {
 		assertNotNull(parts);
 		assertEquals("urlRadio", parts.get("radio"));
 		assertEquals("http://localhost:8080/gitapi/diff/Default/file/r6/?parts=diff&Path=file.txt", parts.get("url"));
-		assertEquals("\n", parts.get("uploadedfile"));
+		assertEquals("", parts.get("uploadedfile"));
 	}
 
 	@Test
@@ -68,9 +68,9 @@ public class IOUtilitiesTest {
 		sb.append("--24464570528145").append("\n");
 		sb.append("Content-Disposition: form-data; name=\"uploadedfile\"; filename=\"\"").append("\n");
 		sb.append("Content-Type: application/octet-stream").append("\n");
-		sb.append("").append("\n");
-		sb.append(patch);
-		sb.append("--24464570528145--").append("\n");
+		sb.append("asd").append("\n");
+		sb.append(patch.toString()).append("\n");
+		sb.append("--24464570528145--");
 
 		ByteArrayInputStream is = new ByteArrayInputStream(sb.toString().getBytes());
 		Map<String, String> parts = IOUtilities.parseMultiPart(is, "24464570528145");
