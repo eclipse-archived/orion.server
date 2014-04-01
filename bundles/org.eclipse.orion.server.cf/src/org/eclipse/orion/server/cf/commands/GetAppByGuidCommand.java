@@ -15,7 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.cf.objects.App;
-import org.eclipse.orion.server.cf.objects.Target;
+import org.eclipse.orion.server.cf.objects.Cloud;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
@@ -31,38 +31,38 @@ public class GetAppByGuidCommand extends AbstractCFCommand {
 	private String appGuid;
 	private App app;
 
-	public GetAppByGuidCommand(Target target, String appGuid) {
-		super(target);
+	public GetAppByGuidCommand(Cloud cloud, String appGuid) {
+		super(cloud);
 		this.commandName = "Get application";
 		this.appGuid = appGuid;
 	}
 
 	public ServerStatus _doIt() {
 		try {
-			URI targetURI = URIUtil.toURI(target.getUrl());
+			URI targetURI = URIUtil.toURI(getCloud().getUrl());
 
 			// Get the app
 			URI appsURI = targetURI.resolve("/v2/apps/" + appGuid);
 			GetMethod getAppsMethod = new GetMethod(appsURI.toString());
-			HttpUtil.configureHttpMethod(getAppsMethod, target);
+			HttpUtil.configureHttpMethod(getAppsMethod, getCloud());
 
 			ServerStatus getStatus = HttpUtil.executeMethod(getAppsMethod);
 			if (!getStatus.isOK())
 				return getStatus;
 
-			JSONObject apps = getStatus.getJsonData();
+			JSONObject app = getStatus.getJsonData();
 
-			if (!apps.has("resources") || apps.getJSONArray("resources").length() == 0)
-				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Application not found", null);
+			//			if (!apps.has("resources") || apps.getJSONArray("resources").length() == 0)
+			//				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Application not found", null);
 
 			// Get more details about the app
-			JSONObject appJSON = apps.getJSONArray("resources").getJSONObject(0).getJSONObject("metadata");
+			JSONObject appJSON = app.getJSONObject("metadata");
 
 			String summaryAppUrl = appJSON.getString("url") + "/summary";
 			URI summaryAppURI = targetURI.resolve(summaryAppUrl);
 
 			GetMethod getSummaryMethod = new GetMethod(summaryAppURI.toString());
-			HttpUtil.configureHttpMethod(getSummaryMethod, target);
+			HttpUtil.configureHttpMethod(getSummaryMethod, getCloud());
 
 			getStatus = HttpUtil.executeMethod(getSummaryMethod);
 			if (!getStatus.isOK())
