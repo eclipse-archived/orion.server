@@ -29,12 +29,20 @@ public class SetSpaceCommand extends AbstractCFCommand {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
-	private String spaceName;
+	private String space;
+	private boolean isGuid = false;
 
 	public SetSpaceCommand(Target target, String spaceName) {
 		super(target);
-		this.commandName = "Login"; //$NON-NLS-1$
-		this.spaceName = spaceName;
+		this.commandName = "Set Space"; //$NON-NLS-1$
+		this.space = spaceName;
+	}
+
+	public SetSpaceCommand(Target target, String space, boolean isGuid) {
+		super(target);
+		this.commandName = "Set Space"; //$NON-NLS-1$
+		this.space = space;
+		this.isGuid = isGuid;
 	}
 
 	public ServerStatus _doIt() {
@@ -56,14 +64,16 @@ public class SetSpaceCommand extends AbstractCFCommand {
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Space not found", null);
 			}
 
-			if (this.spaceName == null || "".equals(this.spaceName)) {
+			if (this.space == null || "".equals(this.space)) {
 				JSONObject space = spaces.getJSONObject(0);
 				target.setSpace(new Space().setCFJSON(space));
 			} else {
 				for (int i = 0; i < spaces.length(); i++) {
-					JSONObject space = spaces.getJSONObject(i);
-					if (spaceName.equals(space.getJSONObject("entity").getString("name")))
-						target.setSpace(new Space().setCFJSON(space));
+					JSONObject spaceJSON = spaces.getJSONObject(i);
+					if ((!isGuid && space.equals(spaceJSON.getJSONObject("entity").getString("name"))) || (isGuid && space.equals(spaceJSON.getJSONObject("metadata").getString("guid")))) {
+						target.setSpace(new Space().setCFJSON(spaceJSON));
+						break;
+					}
 				}
 			}
 

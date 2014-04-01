@@ -13,15 +13,31 @@ package org.eclipse.orion.server.cf.commands;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.cf.CFExtServiceHelper;
+import org.eclipse.orion.server.cf.objects.Cloud;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.core.ServerStatus;
 
 public abstract class AbstractCFCommand implements ICFCommand {
 
 	protected Target target;
+	private Cloud cloud;
 
 	protected AbstractCFCommand(Target target) {
 		this.target = target;
+	}
+
+	protected AbstractCFCommand(Cloud cloud) {
+		this.cloud = cloud;
+	}
+
+	public Cloud getCloud() {
+		if (target != null)
+			return target.getCloud();
+		return cloud;
+	}
+
+	public Target getTarget() {
+		return target;
 	}
 
 	@Override
