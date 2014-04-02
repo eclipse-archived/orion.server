@@ -28,6 +28,7 @@ import java.nio.charset.Charset;
 import java.text.Format;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -64,7 +65,6 @@ public class DockerServer {
 		this.portStart = portStart;
 		this.portEnd = portEnd;
 		this.containerConnections = new ArrayList<String>();
-		this.portsUsed = new ArrayList<String>();
 	}
 
 	public DockerResponse attachDockerContainer(String containerId, String originURL) {
@@ -559,6 +559,57 @@ public class DockerServer {
 		return dockerVersion;
 	}
 
+	private void initPortsUsed() {
+		try {
+			// use our docker version to make sure that docker is running 
+			DockerVersion dockerVersion = getDockerVersion();
+			if (dockerVersion.getStatusCode() != DockerResponse.StatusCode.OK) {
+				// just return
+				return;
+			}
+			DockerContainers dockerContainers = getDockerContainers();
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+			switch (dockerContainers.getStatusCode()) {
+				case SERVER_ERROR :
+				case CONNECTION_REFUSED :
+					logger.error(dockerContainers.getStatusMessage());
+					return;
+				case OK :
+					portsUsed = new ArrayList<String>();
+					for (DockerContainer dockerContainer : dockerContainers.getContainers()) {
+						if (dockerContainer.getPorts() != null) {
+							JSONArray portsArray = new JSONArray(dockerContainer.getPorts());
+							for (int i = 0; i < portsArray.length(); i++) {
+								JSONObject portsObject = portsArray.getJSONObject(i);
+								if (portsObject.has("PublicPort")) {
+									int portValue = portsObject.getInt("PublicPort");
+									portsUsed.add(Integer.toString(portValue));
+								}
+							}
+						}
+					}
+					Collections.sort(portsUsed);
+					if (logger.isDebugEnabled()) {
+						logger.debug("Docker Server has mapped " + portsUsed.size() + " ports already");
+						if (portsUsed.size() > 0) {
+							StringBuffer portsUsedList = new StringBuffer("Docker Server ports mapped: ");
+							for (String port : portsUsed) {
+								portsUsedList.append(port);
+								portsUsedList.append(" ");
+							}
+							logger.debug(portsUsedList.toString());
+						}
+					}
+					return;
+				default :
+					return;
+			}
+		} catch (JSONException e) {
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+			logger.error(e.getLocalizedMessage(), e);
+		}
+	}
+
 	public boolean isAttachedDockerContainer(String user) {
 		return containerConnections.contains(user);
 	}
@@ -685,6 +736,14 @@ public class DockerServer {
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
 			logger.error("Docker Server: port range not defined, orion.core.docker.port.start not set in orion.conf");
 			return null;
+		}
+		if (portsUsed == null) {
+			// initialize the mapped ports that are already used
+			initPortsUsed();
+			if (portsUsed == null) {
+				// the list of mapped ports is still null, there is a problem logged already
+				return null;
+			}
 		}
 		String nextAvailablePort = portStart;
 		while (portsUsed.contains(nextAvailablePort)) {
