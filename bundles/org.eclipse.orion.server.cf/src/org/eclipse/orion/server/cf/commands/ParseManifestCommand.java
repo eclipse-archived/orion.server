@@ -85,7 +85,8 @@ public class ParseManifestCommand extends AbstractCFCommand {
 
 			/* parse the manifest */
 			URI targetURI = URIUtil.toURI(target.getUrl());
-			ManifestParseTree manifest = ManifestUtils.parse(manifestStore, targetURI.toString());
+			String targetBase = targetURI.getHost().substring(4);
+			ManifestParseTree manifest = ManifestUtils.parse(manifestStore, targetBase);
 			ManifestParseTree app = manifest.get("applications").get(0); //$NON-NLS-1$
 
 			/* optional */

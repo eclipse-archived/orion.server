@@ -33,6 +33,7 @@ import org.eclipse.orion.server.cf.manifest.v2.TokenizerException;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestParser;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestPreprocessor;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestTokenizer;
+import org.eclipse.orion.server.cf.manifest.v2.utils.SymbolResolver;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.junit.Test;
 
@@ -122,6 +123,22 @@ public class ManifestParserTest {
 
 		assertEquals("cloud-foundry-domain.org", domain.getValue()); //$NON-NLS-1$
 		assertEquals("cloud-foundry-domain.org", domain.getUnquotedValue()); //$NON-NLS-1$
+	}
+
+	@Test
+	public void testTargetBaseManifestProperties() throws Exception {
+		String manifestName = "targetBaseManifest.yml"; //$NON-NLS-1$
+
+		URL entry = ServerTestsActivator.getContext().getBundle().getEntry(MANIFEST_LOCATION);
+		File manifestFile = new File(FileLocator.toFileURL(entry).getPath().concat(manifestName));
+
+		InputStream inputStream = new FileInputStream(manifestFile);
+		ManifestParseTree manifest = parse(inputStream);
+		SymbolResolver resolver = new SymbolResolver("api.sauron.mordor.com"); //$NON-NLS-1$
+		resolver.apply(manifest);
+
+		assertEquals("api.sauron.mordor.com", manifest.get("applications").get(0).get("domain").getValue()); //$NON-NLS-1$ //$NON-NLS-2$//$NON-NLS-3$
+		assertTrue(manifest.get("applications").get(0).get("url").getValue().endsWith(".api.sauron.mordor.com")); //$NON-NLS-1$//$NON-NLS-2$//$NON-NLS-3$
 	}
 
 	private ManifestParseTree parse(InputStream inputStream) throws IOException, TokenizerException, ParserException {
