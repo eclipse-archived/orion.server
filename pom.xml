@@ -62,6 +62,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<java-version>1.6</java-version>
 		<orion-repository>https://repo.eclipse.org/content/repositories/orion/</orion-repository>
+		<antrun-version>1.6</antrun-version>
 	</properties>
 
 	<distributionManagement>
@@ -258,6 +259,44 @@
 						</environment>
 					</environments>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>${antrun-version}</version>
+				<executions>
+					<execution>
+						<id>replace-build-token</id>
+						<phase>generate-sources</phase>
+						<configuration>
+							<target>
+								<taskdef resource="net/sf/antcontrib/antcontrib.properties"
+									classpathref="maven.plugin.classpath" />
+								<if>
+									<available file="orion.product" />
+									<then>
+										<echo
+											message="Replacing @qualifier@ token within orion.product with build id ${unqualifiedVersion}.${buildQualifier}" />
+										<replace file="orion.product">
+											<replacefilter token="@qualifier@"
+												value="${unqualifiedVersion}.${buildQualifier}" />
+										</replace>
+									</then>
+								</if>
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+				<dependencies>
+					<dependency>
+						<groupId>ant-contrib</groupId>
+						<artifactId>ant-contrib</artifactId>
+						<version>20020829</version>
+					</dependency>
+				</dependencies>
 			</plugin>
 		</plugins>
 		<pluginManagement>
