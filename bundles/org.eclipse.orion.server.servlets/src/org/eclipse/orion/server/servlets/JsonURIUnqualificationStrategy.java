@@ -39,6 +39,10 @@ public abstract class JsonURIUnqualificationStrategy implements IURIUnqualificat
 		protected URI unqualifyArrayValue(int index, URI uri, String scheme, String hostname, int port) {
 			return unqualifyURI(uri, scheme, hostname, port);
 		}
+
+		public String getName() {
+			return "ALL";
+		}
 	};
 	/**
 	 * A strategy that unqualifies only the URLs that are values of a "Location" key in JSON objects.
@@ -55,6 +59,10 @@ public abstract class JsonURIUnqualificationStrategy implements IURIUnqualificat
 		@Override
 		protected URI unqualifyArrayValue(int index, URI uri, String scheme, String hostname, int port) {
 			return uri;
+		}
+
+		public String getName() {
+			return "LOCATION_ONLY";
 		}
 	};
 	/**
@@ -73,6 +81,10 @@ public abstract class JsonURIUnqualificationStrategy implements IURIUnqualificat
 		@Override
 		protected URI unqualifyArrayValue(int index, URI uri, String scheme, String hostname, int port) {
 			return uri;
+		}
+
+		public String getName() {
+			return "ALL_NO_GIT";
 		}
 	};
 

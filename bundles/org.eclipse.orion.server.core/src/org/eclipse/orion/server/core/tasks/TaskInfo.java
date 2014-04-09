@@ -12,6 +12,7 @@ package org.eclipse.orion.server.core.tasks;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.internal.server.core.tasks.TaskDescription;
@@ -31,6 +32,7 @@ public class TaskInfo {
 	public static final String KEY_EXPIRES = "expires";
 	public static final String KEY_RESULT = "Result";
 	public static final String KEY_CANCELABLE = "cancelable";
+	public static final String KEY_URI_UNQUALIFICATION = "uriUnqualStrategy";
 
 	private static final String STATUS_LOADSTART = "loadstart";
 	private static final String STATUS_PROGRESS = "progress";
@@ -86,6 +88,17 @@ public class TaskInfo {
 	private boolean cancelable = false;
 	private IURIUnqualificationStrategy strategy;
 	
+	static HashMap<String, IURIUnqualificationStrategy> registry = new HashMap<String, IURIUnqualificationStrategy>();
+	static void addStrategy(IURIUnqualificationStrategy strategy) {
+		String name = strategy.getName();
+		if (!registry.containsKey(name)) {
+			registry.put(name, strategy);
+		}
+	}
+	static IURIUnqualificationStrategy getStrategy(String name) {
+		return registry.get(name);
+	}
+	
 	/**
 	 * Returns a task object based on its JSON representation. Returns
 	 * null if the given string is not a valid JSON task representation.
@@ -115,6 +128,9 @@ public class TaskInfo {
 
 			if (json.has(KEY_RESULT))
 				info.result = ServerStatus.fromJSON(json.optString(KEY_RESULT));
+			
+			if (json.has(KEY_URI_UNQUALIFICATION)) 
+				info.strategy = getStrategy(json.optString(KEY_URI_UNQUALIFICATION));
 
 			return info;
 		} catch (JSONException e) {
@@ -178,6 +194,7 @@ public class TaskInfo {
 	}
 	
 	public void setUnqualificationStrategy (IURIUnqualificationStrategy strategy) {
+		addStrategy(strategy);
 		this.strategy = strategy;
 	}
 
@@ -262,6 +279,10 @@ public class TaskInfo {
 				resultObject.put(KEY_TIMESTAMP, getTimestamp());
 			if(getExpires()!=null)
 				resultObject.put(KEY_EXPIRES, getExpires());
+			IURIUnqualificationStrategy strategy = getUnqualificationStrategy();
+			if(strategy != null) {
+				resultObject.put(KEY_URI_UNQUALIFICATION, strategy.getName());
+			}
 			resultObject.put(KEY_TYPE, getStatus().toString());
 		} catch (JSONException e) {
 			//can only happen if key is null
@@ -288,6 +309,10 @@ public class TaskInfo {
 				resultObject.put(KEY_EXPIRES, getExpires());
 			if(isCancelable())
 				resultObject.put(KEY_CANCELABLE, isCancelable());
+			IURIUnqualificationStrategy strategy = getUnqualificationStrategy();
+			if(strategy != null) {
+				resultObject.put(KEY_URI_UNQUALIFICATION, strategy.getName());
+			}
 			resultObject.put(KEY_TYPE, getStatus().toString());
 		} catch (JSONException e) {
 			//can only happen if key is null

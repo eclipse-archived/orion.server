@@ -14,6 +14,8 @@ import javax.servlet.http.HttpServletRequest;
 
 public interface IURIUnqualificationStrategy {
 
+	public String getName();
+	
 	public void run(HttpServletRequest req, Object result);
 
 }
