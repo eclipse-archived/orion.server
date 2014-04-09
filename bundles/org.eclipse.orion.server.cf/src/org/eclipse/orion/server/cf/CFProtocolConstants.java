@@ -12,6 +12,8 @@ package org.eclipse.orion.server.cf;
 
 public class CFProtocolConstants {
 
+	public static final String KEY_GUID = "Guid"; //$NON-NLS-1$
+
 	public static final String KEY_NAME = "Name"; //$NON-NLS-1$
 
 	public static final String KEY_TIMEOUT = "Timeout"; //$NON-NLS-1$
@@ -141,4 +143,5 @@ public class CFProtocolConstants {
 	public static final String V2_KEY_NO_ROUTE = "no-route"; //$NON-NLS-1$
 
 	public static final String V2_KEY_TIMEOUT = "timeout"; //$NON-NLS-1$
+
 }

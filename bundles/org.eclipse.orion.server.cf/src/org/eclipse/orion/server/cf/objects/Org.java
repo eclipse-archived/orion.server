@@ -29,7 +29,8 @@ public class Org extends CFObject {
 	protected static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
 	{
 		Property[] defaultProperties = new Property[] { //
-		new Property(CFProtocolConstants.KEY_NAME) //
+		new Property(CFProtocolConstants.KEY_NAME), //
+				new Property(CFProtocolConstants.KEY_GUID) //
 		};
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
@@ -59,6 +60,7 @@ public class Org extends CFObject {
 		}
 	}
 
+	@PropertyDescription(name = CFProtocolConstants.KEY_GUID)
 	public String getGuid() {
 		try {
 			return orgJSON.getJSONObject("metadata").getString("guid");
