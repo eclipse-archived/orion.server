@@ -185,7 +185,7 @@ public class DockerServer {
 		HttpURLConnection httpURLConnection = null;
 		try {
 			String userBase = userName + ".base";
-			URL createDockerUserBaseImageURL = new URL(dockerServer.toString() + "/build?t=" + userBase);
+			URL createDockerUserBaseImageURL = new URL(dockerServer.toString() + "/build?t=" + userBase + "&rm=true");
 			httpURLConnection = (HttpURLConnection) createDockerUserBaseImageURL.openConnection();
 			httpURLConnection.setDoOutput(true);
 			httpURLConnection.setRequestProperty("Content-Type", "application/tar");
