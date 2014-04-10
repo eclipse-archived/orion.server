@@ -46,6 +46,11 @@ RUN npm install -g grunt-cli
 # install node-inspector
 RUN npm install -g node-inspector
 
+# install Cloud Foundry CLI
+RUN apt-get -y install wget
+RUN wget http://go-cli.s3-website-us-east-1.amazonaws.com/releases/latest/cf-linux-amd64.tgz
+RUN tar zxvf cf-linux-amd64.tgz ; mv cf /usr/local/bin/cf
+
 # allow end user npm install -g without needing root by adding group privileges
 RUN chgrp -R users /usr/local/
 RUN chmod -R g+w /usr/local/
