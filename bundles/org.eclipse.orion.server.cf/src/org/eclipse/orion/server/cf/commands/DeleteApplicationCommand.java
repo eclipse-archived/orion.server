@@ -121,6 +121,11 @@ public class DeleteApplicationCommand extends AbstractCFCommand {
 			ManifestParseTree manifest = application.getManifest();
 			ManifestParseTree app = manifest.get("applications").get(0); //$NON-NLS-1$
 
+			if (application.getName() != null) {
+				appName = application.getName();
+				return Status.OK_STATUS;
+			}
+
 			appName = app.get(CFProtocolConstants.V2_KEY_NAME).getValue();
 			return Status.OK_STATUS;
 
