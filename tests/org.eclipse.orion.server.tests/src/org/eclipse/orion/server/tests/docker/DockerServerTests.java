@@ -33,6 +33,8 @@ public class DockerServerTests {
 	private final static String dockerLocation = "http://localhost:4243";
 	private final static String dockerPortStart = "12000";
 	private final static String dockerPortEnd = "13000";
+	private final static String dockerUserId = "1000";
+	private final static String dockerGroupId = "100";
 
 	/**
 	 * Test create docker container.
@@ -40,7 +42,7 @@ public class DockerServerTests {
 	 */
 	public void testCreateDockerContainer() throws URISyntaxException {
 		URI dockerLocationURI = new URI(dockerLocation);
-		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI, dockerPortStart, dockerPortEnd);
+		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI, dockerPortStart, dockerPortEnd, dockerUserId, dockerGroupId);
 
 		// create the container
 		DockerContainer dockerContainer = dockerServer.createDockerContainer("orion.base", "user", null);
@@ -59,7 +61,7 @@ public class DockerServerTests {
 	 */
 	public void testCreateDockerOrionBaseImage() throws URISyntaxException {
 		URI dockerLocationURI = new URI(dockerLocation);
-		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI, dockerPortStart, dockerPortEnd);
+		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI, dockerPortStart, dockerPortEnd, dockerUserId, dockerGroupId);
 
 		// create the image
 		DockerImage dockerImage = dockerServer.createDockerOrionBaseImage();
@@ -76,7 +78,7 @@ public class DockerServerTests {
 		String containerName = "lifecycle";
 
 		URI dockerLocationURI = new URI(dockerLocation);
-		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI, dockerPortStart, dockerPortEnd);
+		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI, dockerPortStart, dockerPortEnd, dockerUserId, dockerGroupId);
 
 		// make sure docker is running
 		DockerVersion dockerVersion = dockerServer.getDockerVersion();
@@ -138,7 +140,7 @@ public class DockerServerTests {
 		String userBase = userName + ".base";
 
 		URI dockerLocationURI = new URI(dockerLocation);
-		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI, dockerPortStart, dockerPortEnd);
+		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI, dockerPortStart, dockerPortEnd, dockerUserId, dockerGroupId);
 
 		// make sure docker is running
 		DockerVersion dockerVersion = dockerServer.getDockerVersion();
@@ -168,7 +170,7 @@ public class DockerServerTests {
 	 */
 	public void testGetDockerContainer() throws URISyntaxException {
 		URI dockerLocationURI = new URI(dockerLocation);
-		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI, dockerPortStart, dockerPortEnd);
+		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI, dockerPortStart, dockerPortEnd, dockerUserId, dockerGroupId);
 		DockerContainer dockerContainer = dockerServer.getDockerContainer("admin");
 		assertEquals(dockerContainer.getStatusMessage(), DockerResponse.StatusCode.OK, dockerContainer.getStatusCode());
 
@@ -182,7 +184,7 @@ public class DockerServerTests {
 	 */
 	public void testGetDockerContainers() throws URISyntaxException {
 		URI dockerLocationURI = new URI(dockerLocation);
-		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI, dockerPortStart, dockerPortEnd);
+		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI, dockerPortStart, dockerPortEnd, dockerUserId, dockerGroupId);
 		DockerContainers dockerContainers = dockerServer.getDockerContainers();
 		assertEquals(dockerContainers.getStatusMessage(), DockerResponse.StatusCode.OK, dockerContainers.getStatusCode());
 		System.out.println("Docker Containers: ");
@@ -197,7 +199,7 @@ public class DockerServerTests {
 	 */
 	public void testGetDockerImage() throws URISyntaxException {
 		URI dockerLocationURI = new URI(dockerLocation);
-		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI, dockerPortStart, dockerPortEnd);
+		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI, dockerPortStart, dockerPortEnd, dockerUserId, dockerGroupId);
 		DockerImage dockerImage = dockerServer.getDockerImage("ubuntu");
 		assertEquals(dockerImage.getStatusMessage(), DockerResponse.StatusCode.OK, dockerImage.getStatusCode());
 
@@ -211,7 +213,7 @@ public class DockerServerTests {
 	 */
 	public void testGetDockerImages() throws URISyntaxException {
 		URI dockerLocationURI = new URI(dockerLocation);
-		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI, dockerPortStart, dockerPortEnd);
+		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI, dockerPortStart, dockerPortEnd, dockerUserId, dockerGroupId);
 		DockerImages dockerImages = dockerServer.getDockerImages();
 		assertEquals(dockerImages.getStatusMessage(), DockerResponse.StatusCode.OK, dockerImages.getStatusCode());
 		System.out.println("Docker Images: ");
@@ -230,7 +232,7 @@ public class DockerServerTests {
 	 */
 	public void testGetDockerVersion() throws URISyntaxException {
 		URI dockerLocationURI = new URI(dockerLocation);
-		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI, dockerPortStart, dockerPortEnd);
+		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI, dockerPortStart, dockerPortEnd, dockerUserId, dockerGroupId);
 		DockerVersion dockerVersion = dockerServer.getDockerVersion();
 		assertEquals(dockerVersion.getStatusMessage(), DockerResponse.StatusCode.OK, dockerVersion.getStatusCode());
 		assertEquals("unknown docker version", "0.6.7", dockerVersion.getVersion());

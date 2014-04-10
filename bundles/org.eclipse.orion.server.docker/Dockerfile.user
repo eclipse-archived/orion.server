@@ -14,7 +14,7 @@ FROM orion.base
 MAINTAINER Anthony Hunter anthonyh@ca.ibm.com
 
 # Configure a local user to interact with the volumes
-RUN adduser --disabled-password --gecos "Orion User,,," --ingroup users USERNAME
+RUN adduser --uid UID --disabled-password --gecos "Orion User,,," --gid GID USERNAME
 
 # set the bash shell to vi mode
 RUN echo 'set -o vi' >> /home/USERNAME/.bashrc

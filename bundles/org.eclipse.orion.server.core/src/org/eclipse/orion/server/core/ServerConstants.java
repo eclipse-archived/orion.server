@@ -82,6 +82,16 @@ public class ServerConstants {
 	public static final String CONFIG_DOCKER_PORT_END = "orion.core.docker.port.end"; //$NON-NLS-1$
 
 	/**
+	 * The name of configuration property specifying the UID of the process running the orion server, default is 1000
+	 */
+	public static final String CONFIG_DOCKER_UID = "orion.core.docker.uid"; //$NON-NLS-1$
+
+	/**
+	 * The name of configuration property specifying the GID of the process running the orion server, default is 100
+	 */
+	public static final String CONFIG_DOCKER_GID = "orion.core.docker.gid"; //$NON-NLS-1$
+
+	/**
 	 * The name of a configuration property specifying a comma-separated list of server
 	 * file system paths where user content can be written. By default user content
 	 * can only appear within the server instance location (workspace).

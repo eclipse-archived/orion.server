@@ -51,6 +51,8 @@ public class DockerServer {
 	private URI dockerServer;
 
 	private URI dockerProxy;
+	
+	private String groupId;
 
 	private String portStart;
 
@@ -58,12 +60,16 @@ public class DockerServer {
 
 	private List<String> portsUsed;
 
-	public DockerServer(URI dockerServer, URI dockerProxy, String portStart, String portEnd) {
+	private String userId;
+	
+	public DockerServer(URI dockerServer, URI dockerProxy, String portStart, String portEnd, String userId, String groupId) {
 		super();
 		this.dockerServer = dockerServer;
 		this.dockerProxy = dockerProxy;
 		this.portStart = portStart;
 		this.portEnd = portEnd;
+		this.userId = userId;
+		this.groupId = groupId;
 		this.containerConnections = new ArrayList<String>();
 	}
 
@@ -193,7 +199,7 @@ public class DockerServer {
 			httpURLConnection.setRequestMethod("POST");
 			httpURLConnection.connect();
 
-			DockerFile userDockerFile = new DockerFile(userName);
+			DockerFile userDockerFile = new DockerFile(userName, userId, groupId);
 			File userBaseTarFile = userDockerFile.getTarFile();
 
 			FileInputStream fileInputStream = new FileInputStream(userBaseTarFile);

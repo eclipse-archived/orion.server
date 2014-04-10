@@ -37,16 +37,22 @@ public class DockerFile {
 
 	private static final SecureRandom random = new SecureRandom();
 
-	private String userName;
-	
-	private File tempFolder;
-	
 	private File dockerfile;
 	
 	private File dockerTarFile;
 
-	public DockerFile(String userName) {
+	private String groupId;
+	
+	private File tempFolder;
+	
+	private String userName;
+	
+	private String userId;
+	
+	public DockerFile(String userName, String userId, String groupId) {
 		this.userName = userName;
+		this.userId = userId;
+		this.groupId = groupId;
 		this.tempFolder = null;
 		this.dockerfile = null;
 		this.dockerTarFile = null;
@@ -163,6 +169,8 @@ public class DockerFile {
 
 			String result = new String(chars);
 			result = result.replaceAll("USERNAME", userName);
+			result = result.replaceAll("UID", userId);
+			result = result.replaceAll("GID", groupId);
 			return result;
 		} catch (IOException e) {
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$

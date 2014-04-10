@@ -506,7 +506,13 @@ public class DockerHandler extends ServletResourceHandler<String> {
 				logger.debug("Docker Server using ports " + portStart + " to " + portEnd + " for host port mapping");
 			}
 
-			dockerServer = new DockerServer(dockerLocationURI, dockerProxyURI, portStart, portEnd);
+			String userId = PreferenceHelper.getString(ServerConstants.CONFIG_DOCKER_UID, "1000").toLowerCase(); //$NON-NLS-1$
+			logger.debug("Orion Server running as UID " + userId);
+
+			String groupId = PreferenceHelper.getString(ServerConstants.CONFIG_DOCKER_UID, "100").toLowerCase(); //$NON-NLS-1$
+			logger.debug("Orion Server running as GID " + groupId);
+
+			dockerServer = new DockerServer(dockerLocationURI, dockerProxyURI, portStart, portEnd, userId, groupId);
 			DockerVersion dockerVersion = dockerServer.getDockerVersion();
 			if (logger.isDebugEnabled()) {
 				if (dockerVersion.getStatusCode() != DockerResponse.StatusCode.OK) {
