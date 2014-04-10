@@ -509,7 +509,7 @@ public class DockerHandler extends ServletResourceHandler<String> {
 			String userId = PreferenceHelper.getString(ServerConstants.CONFIG_DOCKER_UID, "1000").toLowerCase(); //$NON-NLS-1$
 			logger.debug("Orion Server running as UID " + userId);
 
-			String groupId = PreferenceHelper.getString(ServerConstants.CONFIG_DOCKER_UID, "100").toLowerCase(); //$NON-NLS-1$
+			String groupId = PreferenceHelper.getString(ServerConstants.CONFIG_DOCKER_GID, "1000").toLowerCase(); //$NON-NLS-1$
 			logger.debug("Orion Server running as GID " + groupId);
 
 			dockerServer = new DockerServer(dockerLocationURI, dockerProxyURI, portStart, portEnd, userId, groupId);
