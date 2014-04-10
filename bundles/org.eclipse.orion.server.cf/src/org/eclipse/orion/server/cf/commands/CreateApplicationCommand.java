@@ -110,7 +110,10 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 			ManifestParseTree manifest = application.getManifest();
 			ManifestParseTree app = manifest.get(CFProtocolConstants.V2_KEY_APPLICATIONS).get(0);
 
-			appName = app.get(CFProtocolConstants.V2_KEY_NAME).getValue();
+			if (application.getName() != null)
+				appName = application.getName();
+			else
+				appName = app.get(CFProtocolConstants.V2_KEY_NAME).getValue();
 
 			ManifestParseTree commandNode = app.getOpt(CFProtocolConstants.V2_KEY_COMMAND);
 			appCommand = (commandNode != null) ? commandNode.getValue() : ""; //$NON-NLS-1$

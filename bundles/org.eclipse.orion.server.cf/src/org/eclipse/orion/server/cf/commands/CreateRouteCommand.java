@@ -80,7 +80,11 @@ public class CreateRouteCommand extends AbstractCFCommand {
 			/* read deploy parameters */
 			ManifestParseTree manifest = application.getManifest();
 			ManifestParseTree app = manifest.get("applications").get(0); //$NON-NLS-1$
-			appName = app.get(CFProtocolConstants.V2_KEY_NAME).getValue();
+
+			if (application.getName() != null)
+				appName = application.getName();
+			else
+				appName = app.get(CFProtocolConstants.V2_KEY_NAME).getValue();
 
 			/* if none provided, generate a default one */
 			ManifestParseTree hostNode = app.getOpt(CFProtocolConstants.V2_KEY_HOST);
