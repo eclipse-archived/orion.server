@@ -81,10 +81,10 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 	protected CFJob handlePut(App resource, HttpServletRequest request, HttpServletResponse response, final String path) {
 		final JSONObject jsonData = extractJSONData(request);
 
-		final String state = jsonData.optString(CFProtocolConstants.KEY_STATE);
-		final String appName = jsonData.optString(CFProtocolConstants.KEY_NAME);
+		final String state = jsonData.optString(CFProtocolConstants.KEY_STATE, null);
+		final String appName = jsonData.optString(CFProtocolConstants.KEY_NAME, null);
 		final JSONObject targetJSON = jsonData.optJSONObject(CFProtocolConstants.KEY_TARGET);
-		final String contentLocation = ServletResourceHandler.toOrionLocation(request, jsonData.optString(CFProtocolConstants.KEY_CONTENT_LOCATION));
+		final String contentLocation = ServletResourceHandler.toOrionLocation(request, jsonData.optString(CFProtocolConstants.KEY_CONTENT_LOCATION, null));
 
 		/* default application startup is one minute */
 		int userTimeout = jsonData.optInt(CFProtocolConstants.KEY_TIMEOUT, 60);
