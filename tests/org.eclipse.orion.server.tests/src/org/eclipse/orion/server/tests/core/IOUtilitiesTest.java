@@ -58,7 +58,7 @@ public class IOUtilitiesTest {
 		patch.append("-test").append("\n");
 		patch.append("\\ No newline at end of file").append("\n");
 		patch.append("+patched").append("\n");
-		patch.append("\\ No newline at end of file").append("\n");
+		patch.append("\\ No newline at end of file");
 
 		StringBuilder sb = new StringBuilder();
 		sb.append("--24464570528145").append("\n");
