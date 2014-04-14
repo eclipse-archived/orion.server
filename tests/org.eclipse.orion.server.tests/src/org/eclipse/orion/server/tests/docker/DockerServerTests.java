@@ -45,7 +45,7 @@ public class DockerServerTests {
 		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI, dockerPortStart, dockerPortEnd, dockerUserId, dockerGroupId);
 
 		// create the container
-		DockerContainer dockerContainer = dockerServer.createDockerContainer("orion.base", "user", null);
+		DockerContainer dockerContainer = dockerServer.createDockerContainer("orion-base", "user", null);
 		assertEquals(dockerContainer.getStatusMessage(), DockerResponse.StatusCode.CREATED, dockerContainer.getStatusCode());
 		System.out.println("Created Docker Container: Container Id " + dockerContainer.getId() + " Name " + dockerContainer.getName());
 
@@ -91,7 +91,7 @@ public class DockerServerTests {
 		System.out.println("Docker Container " + containerName + " does not exist");
 
 		// create the container
-		dockerContainer = dockerServer.createDockerContainer("orion.base", containerName, null);
+		dockerContainer = dockerServer.createDockerContainer("orion-base", containerName, null);
 		assertEquals(dockerContainer.getStatusMessage(), DockerResponse.StatusCode.CREATED, dockerContainer.getStatusCode());
 		System.out.println("Docker Container " + containerName + " status is " + dockerContainer.getStatus());
 
@@ -136,8 +136,8 @@ public class DockerServerTests {
 	public void testDockerUserImageLifeCycle() throws URISyntaxException {
 		// the name of our docker user
 		String userName = "lifecycle";
-		String orionBase = "orion.base";
-		String userBase = userName + ".base";
+		String orionBase = "orion-base";
+		String userBase = userName + "-base";
 
 		URI dockerLocationURI = new URI(dockerLocation);
 		DockerServer dockerServer = new DockerServer(dockerLocationURI, dockerLocationURI, dockerPortStart, dockerPortEnd, dockerUserId, dockerGroupId);
@@ -150,7 +150,7 @@ public class DockerServerTests {
 		// make sure the orion base image exists
 		DockerImage dockerImage = dockerServer.getDockerImage(orionBase);
 		assertEquals(dockerImage.getStatusMessage(), DockerResponse.StatusCode.OK, dockerImage.getStatusCode());
-		System.out.println("Docker Image " + "orion.base" + " exists");
+		System.out.println("Docker Image " + orionBase + " exists");
 
 		// make sure the image for the test user is not there
 		dockerImage = dockerServer.getDockerImage(userBase);

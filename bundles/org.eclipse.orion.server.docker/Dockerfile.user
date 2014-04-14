@@ -10,7 +10,7 @@
 #################################################################################
 # Dockerfile for an Orion terminal user
 
-FROM orion.base
+FROM orion-base
 MAINTAINER Anthony Hunter anthonyh@ca.ibm.com
 
 # Configure a local user to interact with the volumes

@@ -141,7 +141,7 @@ public class DockerHandler extends ServletResourceHandler<String> {
 			}
 
 			// make sure the image for the user has been created
-			String userBase = user + ".base";
+			String userBase = user + "-base";
 			DockerImage dockerImage = dockerServer.getDockerImage(userBase);
 			if (dockerImage.getStatusCode() != DockerResponse.StatusCode.OK) {
 

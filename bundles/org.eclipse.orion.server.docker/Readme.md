@@ -36,18 +36,18 @@ In the case above, we specify `anonuid` and `anongid` so that all access is via 
 daemon can read and write within the Orion serverworkspace, a simple test if to  make sure `touch /opt/mnt/serverworkspace/newfile.txt` runs successfully
 as root on the Docker server and the resulting file is visible as an update on the Orion server.
 
-# Create a default Docker image named orion.base
-Orion has provided a default Dockerfile that can be used to create an orion.base Docker image. Each user gets a container created using this image.
+# Create a default Docker image named orion-base
+Orion has provided a default Dockerfile that can be used to create an orion-base Docker image. Each user gets a container created using this image.
 To create the image, run the command
 ```
-sudo docker build -t="orion.base" .
+sudo docker build -t="orion-base" .
 ```
 The command needs to be run in the folder containing the Dockerfile
 
 # Handle Orion user file access
 It is expected that the Orion server process is not running as root. You may have an non administrative account on your server that you use to run Orion.
 Docker needs to use a similar account, otherwise files Docker creates from the shell will be owned by root.
-The orion.base Dockerfile creates an account:
+The orion-base Dockerfile creates an account:
 ```
 # Configure a local user to interact with the volumes
 RUN addgroup oriongroup

@@ -152,7 +152,7 @@ public class DockerServer {
 		DockerImage dockerImage = new DockerImage();
 		HttpURLConnection httpURLConnection = null;
 		try {
-			URL createDockerOrionBaseImageURL = new URL(dockerServer.toString() + "/images/create?fromSrc&t=orion.base");
+			URL createDockerOrionBaseImageURL = new URL(dockerServer.toString() + "/images/create?fromSrc&t=orion-base");
 			httpURLConnection = (HttpURLConnection) createDockerOrionBaseImageURL.openConnection();
 			httpURLConnection.setDoOutput(true);
 			httpURLConnection.setRequestProperty("Content-Type", "application/tar");
@@ -160,7 +160,7 @@ public class DockerServer {
 			httpURLConnection.setRequestMethod("POST");
 			httpURLConnection.connect();
 
-			String orionBaseTar = "/workspace/orion-dev/git/org.eclipse.orion.server/bundles/org.eclipse.orion.server.servlets/src/org/eclipse/orion/internal/server/servlets/docker/orion.base.tar";
+			String orionBaseTar = "/workspace/orion-dev/git/org.eclipse.orion.server/bundles/org.eclipse.orion.server.servlets/src/org/eclipse/orion/internal/server/servlets/docker/orion-base.tar";
 			File orionBaseTarFile = new File(orionBaseTar);
 			PrintWriter writer = new PrintWriter(new OutputStreamWriter(httpURLConnection.getOutputStream(), "UTF-8"));
 			BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(orionBaseTarFile)));
@@ -190,7 +190,7 @@ public class DockerServer {
 		DockerImage dockerImage = new DockerImage();
 		HttpURLConnection httpURLConnection = null;
 		try {
-			String userBase = userName + ".base";
+			String userBase = userName + "-base";
 			URL createDockerUserBaseImageURL = new URL(dockerServer.toString() + "/build?t=" + userBase + "&rm=true");
 			httpURLConnection = (HttpURLConnection) createDockerUserBaseImageURL.openConnection();
 			httpURLConnection.setDoOutput(true);
