@@ -24,7 +24,7 @@ import org.eclipse.osgi.util.NLS;
  * d) timeouts are non-negative integers if present
  * e) no-routes are strings literals "true" if present
  */
-public class ApplicationAnalyzer implements Analyzer {
+public class ApplicationSanizator implements Analyzer {
 	Pattern memoryPattern = Pattern.compile("[1-9][0-9]*(M|MB|G|GB|m|mb|g|gb)"); //$NON-NLS-1$
 	Pattern nonNegativePattern = Pattern.compile("[1-9][0-9]*"); //$NON-NLS-1$
 

@@ -1,0 +1,12 @@
+---
+
+propertyA: valueA
+propertyB: valueB
+
+applications:
+- name: A
+  services:
+  - mysql-flint-99
+- name: B
+  services:
+  - redis-burnin-77

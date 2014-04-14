@@ -32,7 +32,7 @@ public class ManifestUtils {
 	 */
 	public static ManifestParseTree parse(IFileStore manifestFileStore, String targetBase) throws CoreException, IOException, TokenizerException, ParserException, AnalyzerException {
 
-		/* sanity checks */
+		/* basic sanity checks */
 		IFileInfo manifestFileInfo = manifestFileStore.fetchInfo();
 		if (!manifestFileInfo.exists() || manifestFileInfo.isDirectory())
 			throw new IOException(ManifestConstants.MISSING_OR_INVALID_MANIFEST);
@@ -51,12 +51,16 @@ public class ManifestUtils {
 		ManifestParser parser = new ManifestParser();
 		ManifestParseTree parseTree = parser.parse(tokenizer);
 
+		/* perform inheritance transformations */
+		ManifestTransformator transformator = new ManifestTransformator();
+		transformator.apply(parseTree);
+
 		/* resolve symbols */
 		SymbolResolver symbolResolver = new SymbolResolver(targetBase);
 		symbolResolver.apply(parseTree);
 
 		/* validate common field values */
-		ApplicationAnalyzer applicationAnalyzer = new ApplicationAnalyzer();
+		ApplicationSanizator applicationAnalyzer = new ApplicationSanizator();
 		applicationAnalyzer.apply(parseTree);
 
 		return parseTree;

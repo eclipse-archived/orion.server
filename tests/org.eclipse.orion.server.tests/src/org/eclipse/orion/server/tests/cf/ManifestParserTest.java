@@ -33,6 +33,7 @@ import org.eclipse.orion.server.cf.manifest.v2.TokenizerException;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestParser;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestPreprocessor;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestTokenizer;
+import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestTransformator;
 import org.eclipse.orion.server.cf.manifest.v2.utils.SymbolResolver;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.junit.Test;
@@ -41,6 +42,7 @@ public class ManifestParserTest {
 
 	private static String CORRECT_MANIFEST_LOCATION = "testData/manifestTest/correct"; //$NON-NLS-1$
 	private static String INCORRECT_MANIFEST_LOCATION = "testData/manifestTest/incorrect"; //$NON-NLS-1$
+	private static String INHERITANCE_MANIFEST_LOCATION = "testData/manifestTest/inheritance"; //$NON-NLS-1$
 	private static String MANIFEST_LOCATION = "testData/manifestTest"; //$NON-NLS-1$
 
 	@Test
@@ -139,6 +141,54 @@ public class ManifestParserTest {
 
 		assertEquals("api.sauron.mordor.com", manifest.get("applications").get(0).get("domain").getValue()); //$NON-NLS-1$ //$NON-NLS-2$//$NON-NLS-3$
 		assertTrue(manifest.get("applications").get(0).get("url").getValue().endsWith(".api.sauron.mordor.com")); //$NON-NLS-1$//$NON-NLS-2$//$NON-NLS-3$
+	}
+
+	@Test
+	public void testManifestGlobalProperties() throws Exception {
+		URL entry = ServerTestsActivator.getContext().getBundle().getEntry(INHERITANCE_MANIFEST_LOCATION);
+
+		String manifestName = "01.yml"; //$NON-NLS-1$
+		File manifestFile = new File(FileLocator.toFileURL(entry).getPath().concat(manifestName));
+
+		InputStream inputStream = new FileInputStream(manifestFile);
+		ManifestParseTree manifest = parse(inputStream);
+
+		ManifestTransformator transformator = new ManifestTransformator();
+		transformator.apply(manifest);
+
+		ManifestParseTree applications = manifest.get("applications"); //$NON-NLS-1$
+		for (ManifestParseTree application : applications.getChildren())
+			assertTrue(application.get("propertyA").getValue().equals("valueA") && application.get("propertyB").getValue().equals("valueB")); //$NON-NLS-1$ //$NON-NLS-2$//$NON-NLS-3$//$NON-NLS-4$
+
+		manifestName = "02.yml"; //$NON-NLS-1$
+		manifestFile = new File(FileLocator.toFileURL(entry).getPath().concat(manifestName));
+
+		inputStream = new FileInputStream(manifestFile);
+		manifest = parse(inputStream);
+
+		transformator = new ManifestTransformator();
+		transformator.apply(manifest);
+
+		applications = manifest.get("applications"); //$NON-NLS-1$
+		assertEquals("nativeA", applications.get(0).get("A").getValue()); //$NON-NLS-1$//$NON-NLS-2$
+		assertEquals("nativeB", applications.get(0).get("B").getValue()); //$NON-NLS-1$//$NON-NLS-2$
+		assertEquals("overriddenC", applications.get(0).get("C").getValue()); //$NON-NLS-1$//$NON-NLS-2$
+		assertEquals("valueD", applications.get(0).get("D").get("overriddenD").getValue()); //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$
+
+		assertEquals("overriddenA", applications.get(1).get("A").getValue()); //$NON-NLS-1$//$NON-NLS-2$
+		assertEquals("nativeB", applications.get(1).get("B").getValue()); //$NON-NLS-1$//$NON-NLS-2$
+		assertEquals("nativeC", applications.get(1).get("C").getValue()); //$NON-NLS-1$//$NON-NLS-2$
+		assertEquals("valueD", applications.get(1).get("D").get("overriddenD").getValue()); //$NON-NLS-1$ //$NON-NLS-2$//$NON-NLS-3$
+
+		assertEquals("nativeA", applications.get(2).get("A").getValue()); //$NON-NLS-1$//$NON-NLS-2$
+		assertEquals("overriddenB", applications.get(2).get("B").getValue()); //$NON-NLS-1$//$NON-NLS-2$
+		assertEquals("nativeC", applications.get(2).get("C").getValue()); //$NON-NLS-1$//$NON-NLS-2$
+		assertEquals("valueD", applications.get(2).get("D").get("overriddenD").getValue()); //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$
+
+		assertEquals("overriddenA", applications.get(3).get("A").getValue()); //$NON-NLS-1$//$NON-NLS-2$
+		assertEquals("overriddenB", applications.get(3).get("B").getValue()); //$NON-NLS-1$//$NON-NLS-2$
+		assertEquals("overriddenC", applications.get(3).get("C").getValue()); //$NON-NLS-1$//$NON-NLS-2$
+		assertEquals("valueD", applications.get(3).get("D").get("nativeD").getValue()); //$NON-NLS-1$ //$NON-NLS-2$//$NON-NLS-3$
 	}
 
 	private ManifestParseTree parse(InputStream inputStream) throws IOException, TokenizerException, ParserException {

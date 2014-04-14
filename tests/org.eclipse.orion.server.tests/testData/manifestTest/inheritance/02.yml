@@ -1,0 +1,21 @@
+---
+
+A: overriddenA
+B: overriddenB
+C: overriddenC
+D:
+  overriddenD: valueD
+
+applications:
+- name: A
+  A: nativeA
+  B: nativeB
+- name: B
+  C: nativeC
+  B: nativeB
+- name: C
+  A: nativeA
+  C: nativeC
+- name: D
+  D:
+    nativeD: valueD
