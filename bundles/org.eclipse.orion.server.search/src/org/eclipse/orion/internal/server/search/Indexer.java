@@ -204,6 +204,10 @@ public class Indexer extends Job {
 		//don't index remote file systems for now
 		if (!EFS.getLocalFileSystem().getScheme().equals(projectStore.getFileSystem().getScheme()))
 			return 0;
+		//don't index projects with a colon (Illegal character in scheme name) See Bug 427064
+		if (project.getFullName().contains(":")) {
+			return 0;
+		}
 		String encodedProjectName;
 		try {
 			//project location field is an encoded URI
