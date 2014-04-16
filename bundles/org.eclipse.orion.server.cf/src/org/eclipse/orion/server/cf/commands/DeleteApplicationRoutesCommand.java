@@ -21,6 +21,7 @@ import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
+import org.eclipse.orion.server.cf.utils.MultiServerStatus;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONArray;
@@ -32,59 +33,69 @@ public class DeleteApplicationRoutesCommand extends AbstractCFCommand {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
-	private App application;
-	private String appHost;
-	private String appDomain;
-	private String domainGUID;
+	private String appName;
+	private App app;
 
 	public DeleteApplicationRoutesCommand(Target target, App app) {
 		super(target);
 		this.commandName = "Delete application route";
-		this.application = app;
+		this.app = app;
 	}
 
 	@Override
 	protected ServerStatus _doIt() {
+		MultiServerStatus status = new MultiServerStatus();
+
 		try {
-
-			if (appHost.isEmpty())
-				/* application route is generated at random, nothing to delete */
-				return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
-
-			ServerStatus getDomainJob = getDomainGUID();
-			if (!getDomainJob.isOK())
-				return getDomainJob;
-
 			URI targetURI = URIUtil.toURI(target.getUrl());
 
-			/* find routes attached to the application */
-			URI routesURI = targetURI.resolve("/v2/routes"); //$NON-NLS-1$
-			GetMethod getRoutesMethod = new GetMethod(routesURI.toString());
-			HttpUtil.configureHttpMethod(getRoutesMethod, target);
-			getRoutesMethod.setQueryString("inline-relations-depth=1&results-per-page=1000"); //$NON-NLS-1$ /* FIXME: Replace with page traversing */
+			// get app details
+			// TODO: it should be passed along with App object
+			String appsUrl = target.getSpace().getCFJSON().getJSONObject("entity").getString("apps_url"); //$NON-NLS-1$//$NON-NLS-2$
+			URI appsURI = targetURI.resolve(appsUrl);
+			GetMethod getAppsMethod = new GetMethod(appsURI.toString());
+			HttpUtil.configureHttpMethod(getAppsMethod, target);
+			getAppsMethod.setQueryString("q=name:" + appName + "&inline-relations-depth=1"); //$NON-NLS-1$ //$NON-NLS-2$
 
-			ServerStatus status = HttpUtil.executeMethod(getRoutesMethod);
+			ServerStatus appsStatus = HttpUtil.executeMethod(getAppsMethod);
+			status.add(appsStatus);
 			if (!status.isOK())
 				return status;
 
-			JSONArray routes = status.getJsonData().getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES);
+			JSONObject jsonData = appsStatus.getJsonData();
+			if (!jsonData.has("resources") || jsonData.getJSONArray("resources").length() == 0) //$NON-NLS-1$//$NON-NLS-2$
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Application not found", null);
+			JSONArray apps = jsonData.getJSONArray("resources");
+
+			// get app routes
+			String routesUrl = apps.getJSONObject(0).getJSONObject("entity").getString("routes_url");
+			URI routesURI = targetURI.resolve(routesUrl);
+			GetMethod getRoutesMethod = new GetMethod(routesURI.toString());
+			HttpUtil.configureHttpMethod(getRoutesMethod, target);
+
+			ServerStatus routesStatus = HttpUtil.executeMethod(getRoutesMethod);
+			status.add(routesStatus);
+			if (!status.isOK())
+				return status;
+
+			jsonData = routesStatus.getJsonData();
+			if (!jsonData.has("resources") || jsonData.getJSONArray("resources").length() == 0) //$NON-NLS-1$//$NON-NLS-2$
+				return new ServerStatus(IStatus.OK, HttpServletResponse.SC_OK, "No routes for the app", null);
+			JSONArray routes = jsonData.getJSONArray("resources");
+
 			for (int i = 0; i < routes.length(); ++i) {
-
 				JSONObject route = routes.getJSONObject(i);
-				JSONObject routeEntity = route.getJSONObject(CFProtocolConstants.V2_KEY_ENTITY);
 
-				if (routeEntity.getString("host").equals(appHost) && routeEntity.getString("domain_guid").equals(domainGUID)) { //$NON-NLS-1$ //$NON-NLS-2$
+				// delete route
+				String routeUrl = route.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_URL);
+				URI routeURI = targetURI.resolve(routeUrl); //$NON-NLS-1$
+				DeleteMethod deleteRouteMethod = new DeleteMethod(routeURI.toString());
+				HttpUtil.configureHttpMethod(deleteRouteMethod, target);
 
-					/* delete route */
-					String routeGUID = route.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID);
-					URI routeURI = targetURI.resolve("/v2/routes/" + routeGUID); //$NON-NLS-1$
-					DeleteMethod deleteRouteMethod = new DeleteMethod(routeURI.toString());
-					HttpUtil.configureHttpMethod(deleteRouteMethod, target);
-
-					status = HttpUtil.executeMethod(deleteRouteMethod);
-					if (!status.isOK())
-						return status;
-				}
+				ServerStatus deleteStatus = HttpUtil.executeMethod(deleteRouteMethod);
+				status.add(deleteStatus);
+				if (!status.isOK())
+					return status;
 			}
 
 			return status;
@@ -100,67 +111,18 @@ public class DeleteApplicationRoutesCommand extends AbstractCFCommand {
 	protected IStatus validateParams() {
 		try {
 			/* read deploy parameters */
-			ManifestParseTree manifest = application.getManifest();
-			ManifestParseTree app = manifest.get("applications").get(0); //$NON-NLS-1$
+			ManifestParseTree manifest = app.getManifest();
+			ManifestParseTree manifestApp = manifest.get("applications").get(0); //$NON-NLS-1$
 
-			ManifestParseTree domainNode = app.getOpt(CFProtocolConstants.V2_KEY_DOMAIN);
-			appDomain = (domainNode != null) ? domainNode.getUnquotedValue() : ""; //$NON-NLS-1$
-
-			/* if none provided, set a default one */
-			ManifestParseTree hostNode = app.getOpt(CFProtocolConstants.V2_KEY_HOST);
-			appHost = (hostNode != null) ? hostNode.getUnquotedValue() : ""; //$NON-NLS-1$
-
-			return Status.OK_STATUS;
-
-		} catch (InvalidAccessException e) {
-			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null);
-		}
-	}
-
-	private ServerStatus getDomainGUID() {
-		try {
-			/* get available domains */
-			GetDomainsCommand getDomains = new GetDomainsCommand(target);
-			ServerStatus status = (ServerStatus) getDomains.doIt(); /* FIXME: unsafe type cast */
-
-			if (!status.isOK())
-				return status;
-
-			/* extract available domains */
-			JSONObject domains = status.getJsonData();
-
-			if (domains.getInt(CFProtocolConstants.V2_KEY_TOTAL_RESULTS) < 1)
-				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Failed to find available domains in target", null);
-
-			if (!appDomain.isEmpty()) {
-				/* look if the domain is available */
-				int resources = domains.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES).length();
-				for (int k = 0; k < resources; ++k) {
-					JSONObject resource = domains.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES).getJSONObject(k);
-					String tmpDomainName = resource.getJSONObject(CFProtocolConstants.V2_KEY_ENTITY).getString(CFProtocolConstants.V2_KEY_NAME);
-					if (appDomain.equals(tmpDomainName)) {
-						domainGUID = resource.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID);
-						break;
-					}
-				}
-
-				/* client requested an unavailable domain, fail */
-				if (domainGUID == null) {
-					String msg = NLS.bind("Failed to find domain {0} in target", appDomain);
-					return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
-				}
-
-			} else {
-				/* client has not requested a specific domain, get the first available */
-				JSONObject resource = domains.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES).getJSONObject(0);
-				domainGUID = resource.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID);
+			if (app.getName() != null) {
+				appName = app.getName();
+				return Status.OK_STATUS;
 			}
 
-			return status;
-		} catch (Exception e) {
-			String msg = NLS.bind("An error occured when performing operation {0}", commandName);
-			logger.error(msg, e);
-			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
+			appName = manifestApp.get(CFProtocolConstants.V2_KEY_NAME).getValue();
+			return Status.OK_STATUS;
+		} catch (InvalidAccessException e) {
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null);
 		}
 	}
 }
