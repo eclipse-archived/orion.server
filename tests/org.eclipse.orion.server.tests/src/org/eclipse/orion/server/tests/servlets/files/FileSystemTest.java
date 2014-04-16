@@ -16,11 +16,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.meterware.httpunit.*;
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.apache.commons.io.FileUtils;
 import org.eclipse.core.filesystem.*;
 import org.eclipse.core.runtime.*;
@@ -29,6 +29,7 @@ import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.servlets.Slug;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.*;
@@ -37,6 +38,8 @@ import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
 import org.json.*;
 import org.xml.sax.SAXException;
+
+import com.meterware.httpunit.*;
 
 /**
  * Common base class for file system tests.
@@ -369,39 +372,10 @@ public abstract class FileSystemTest extends AbstractServerTest {
 		return json;
 	}
 
-	private static char hexDigit(int val) {
-		return (val < 10) ? (char) ('0' + val) : (char) ('A' + val - 10);
-	}
-
-	/**
-	 * http://tools.ietf.org/html/rfc5023#section-9.7.1
-	 * @param s
-	 * @return
-	 */
-	private static String encodeSlug(String s) {
-		final byte percent = 0x25;
-		try {
-			byte bytes[] = s.getBytes("UTF-8");
-			StringBuilder buf = new StringBuilder();
-			for (int i = 0; i < bytes.length; i++) {
-				byte b = bytes[i];
-				if (b < 0x20 || b > 0x7e || b == percent) {
-					buf.append('%').append(hexDigit((b >> 4) & 0x0f)).append(hexDigit(b & 0x0f));
-				} else {
-					buf.append((char) b); // ASCII
-				}
-			}
-			return buf.toString();
-		} catch (UnsupportedEncodingException e) {
-			// Should not happen
-			return null;
-		}
-	}
-
 	protected WebRequest getPostFilesRequest(String uri, String json, String slug) {
 		try {
 			WebRequest request = new PostMethodWebRequest(makeResourceURIAbsolute(uri), IOUtilities.toInputStream(json), "application/json");
-			request.setHeaderField(ProtocolConstants.HEADER_SLUG, encodeSlug(slug));
+			request.setHeaderField(ProtocolConstants.HEADER_SLUG, Slug.encode(slug));
 			request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 			setAuthentication(request);
 			return request;

@@ -12,7 +12,6 @@ package org.eclipse.orion.internal.server.servlets.xfer;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URLDecoder;
 import java.util.Arrays;
 import java.util.List;
 
@@ -23,6 +22,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.servlets.Slug;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.servlets.OrionServlet;
 
@@ -108,10 +108,7 @@ public class TransferServlet extends OrionServlet {
 		}
 		boolean unzip = !options.contains("raw"); //$NON-NLS-1$
 		String slugHeader = req.getHeader(ProtocolConstants.HEADER_SLUG);
-		String fileName = null;
-		if (slugHeader != null) {
-			fileName = URLDecoder.decode(slugHeader, "UTF-8");
-		}
+		String fileName = Slug.decode(slugHeader);
 
 		//if file name is not provided we can guess from the source URL
 		if (fileName == null && sourceURL != null) {
