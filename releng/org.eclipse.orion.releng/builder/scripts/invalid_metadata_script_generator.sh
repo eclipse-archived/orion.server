@@ -18,6 +18,7 @@
 # Run this script and it will create another script called invalid_metadata_cleanup_YYMMDD.sh
 # Review the script and then run ./invalid_metadata_cleanup_YYMMDD.sh
 #
+IFS=$'\n'
 LOGFILE=./.log
 if [ ! -e ${LOGFILE} ]; then
 	echo "There is no ${LOGFILE} in the current folder, cd to serverworkspace/.metadata first"
@@ -27,10 +28,10 @@ SCRIPT=invalid_metadata_cleanup_`date +%Y%m%d`.sh
 echo Cleanup script is saved in ${SCRIPT}
 touch ${SCRIPT}
 
-FOLDERS=`egrep "Meta File Error, root contains invalid metadata: folder" ${LOGFILE} | awk '{print $NF}' | sort -u`
+FOLDERS=`egrep "Meta File Error, root contains invalid metadata: folder" ${LOGFILE} | awk -F':' '{print $NF}' | sed -e 's/^ folder //' | sort -u`
 
 for FOLDER in ${FOLDERS} ; do
-	if [ -e ${FOLDER} ]; then
-		echo "rm -rf ${FOLDER}" >> ${SCRIPT}
+	if [ -e "${FOLDER}" ]; then
+		echo "rm -rf \"${FOLDER}\"" >> ${SCRIPT}
 	fi
 done
