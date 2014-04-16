@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -26,6 +26,7 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -49,6 +50,7 @@ import org.junit.Test;
 import org.xml.sax.SAXException;
 
 import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.HttpUnitOptions;
 import com.meterware.httpunit.PostMethodWebRequest;
 import com.meterware.httpunit.PutMethodWebRequest;
 import com.meterware.httpunit.WebConversation;
@@ -149,6 +151,7 @@ public class TransferTest extends FileSystemTest {
 
 	@Before
 	public void setUp() throws Exception {
+		HttpUnitOptions.setDefaultCharacterSet("UTF-8");
 		webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 		setUpAuthorization();
@@ -305,6 +308,77 @@ public class TransferTest extends FileSystemTest {
 		assertTrue(checkFileExists(directoryPath + "/client.zip"));
 		//assert that imported file has same content as original client.zip
 		assertTrue(checkContentEquals(source, directoryPath + "/client.zip"));
+	}
+
+	@Test
+	public void testImportEmojiFilename() throws CoreException, IOException, SAXException, URISyntaxException {
+		//create a directory to upload to
+		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+		createDirectory(directoryPath);
+
+		//start the import
+		// file with Emoji characters in the filename.
+		// U+1F60A: SMILING FACE WITH SMILING EYES ("\ud83d\ude0a")
+		// U+1F431: CAT FACE ("\ud83d\udc31")
+		// U+1F435: MONKEY FACE ("\ud83d\udc35")
+		String filename = "\ud83d\ude0a\ud83d\udc31\ud83d\udc35.txt";
+		URL entry = ServerTestsActivator.getContext().getBundle().getEntry("testData/importTest/" + filename);
+		File source = new File(FileLocator.toFileURL(entry).getPath());
+		long length = source.length();
+		String importPath = getImportRequestPath(directoryPath);
+		PostMethodWebRequest request = new PostMethodWebRequest(importPath);
+		request.setHeaderField("X-Xfer-Content-Length", Long.toString(length));
+		request.setHeaderField("X-Xfer-Options", "raw");
+
+		request.setHeaderField("Slug", URLEncoder.encode(filename, "UTF-8"));
+		setAuthentication(request);
+		WebResponse postResponse = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, postResponse.getResponseCode());
+		String location = postResponse.getHeaderField("Location");
+		assertNotNull(location);
+		URI importURI = URIUtil.fromString(importPath);
+		location = importURI.resolve(location).toString();
+
+		doImport(source, length, location, "text/plain");
+
+		//assert the file is present in the workspace
+		assertTrue(checkFileExists(directoryPath + File.separator + filename));
+		//assert that imported file has same content as original client.zip
+		assertTrue(checkContentEquals(source, directoryPath + File.separator + filename));
+	}
+
+	@Test
+	public void testImportDBCSFilename() throws CoreException, IOException, SAXException, URISyntaxException {
+		//create a directory to upload to
+		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+		createDirectory(directoryPath);
+
+		//start the import
+		// file with DBCS character in the filename.
+		String filename = "\u3042.txt";
+		URL entry = ServerTestsActivator.getContext().getBundle().getEntry("testData/importTest/" + filename);
+		File source = new File(FileLocator.toFileURL(entry).getPath());
+		long length = source.length();
+		String importPath = getImportRequestPath(directoryPath);
+		PostMethodWebRequest request = new PostMethodWebRequest(importPath);
+		request.setHeaderField("X-Xfer-Content-Length", Long.toString(length));
+		request.setHeaderField("X-Xfer-Options", "raw");
+
+		request.setHeaderField("Slug", URLEncoder.encode(filename, "UTF-8"));
+		setAuthentication(request);
+		WebResponse postResponse = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, postResponse.getResponseCode());
+		String location = postResponse.getHeaderField("Location");
+		assertNotNull(location);
+		URI importURI = URIUtil.fromString(importPath);
+		location = importURI.resolve(location).toString();
+
+		doImport(source, length, location, "text/plain");
+
+		//assert the file is present in the workspace
+		assertTrue(checkFileExists(directoryPath + File.separator + filename));
+		//assert that imported file has same content as original client.zip
+		assertTrue(checkContentEquals(source, directoryPath + File.separator + filename));
 	}
 
 	@Test

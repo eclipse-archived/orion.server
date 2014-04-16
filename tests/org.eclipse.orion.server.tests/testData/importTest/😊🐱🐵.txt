@@ -1,0 +1,5 @@
+Emoji characters
+// U+1F60A: SMILING FACE WITH SMILING EYES ("\ud83d\ude0a")
+// U+1F431: CAT FACE ("\ud83d\udc31")
+// U+1F435: MONKEY FACE ("\ud83d\udc35")
+😊🐱🐵

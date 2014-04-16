@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,11 +12,14 @@ package org.eclipse.orion.internal.server.servlets.xfer;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URLDecoder;
 import java.util.Arrays;
 import java.util.List;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -104,7 +107,12 @@ public class TransferServlet extends OrionServlet {
 			return;
 		}
 		boolean unzip = !options.contains("raw"); //$NON-NLS-1$
-		String fileName = req.getHeader(ProtocolConstants.HEADER_SLUG);
+		String slugHeader = req.getHeader(ProtocolConstants.HEADER_SLUG);
+		String fileName = null;
+		if (slugHeader != null) {
+			fileName = URLDecoder.decode(slugHeader, "UTF-8");
+		}
+
 		//if file name is not provided we can guess from the source URL
 		if (fileName == null && sourceURL != null) {
 			int lastSlash = sourceURL.lastIndexOf('/');
