@@ -103,7 +103,22 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 						return status;
 					Target target = computeTarget.getTarget();
 
-					GetAppCommand getAppCommand = new GetAppCommand(target, appName);
+					/* parse the application manifest */
+					ParseManifestCommand parseManifestCommand = new ParseManifestCommand(target, this.userId, contentLocation);
+					status = parseManifestCommand.doIt();
+					if (!status.isOK())
+						return status;
+
+					/* get the manifest name */
+					String manifestAppName = null;
+					ManifestParseTree manifest = parseManifestCommand.getManifest();
+					if (manifest != null) {
+						ManifestParseTree applications = manifest.get(CFProtocolConstants.V2_KEY_APPLICATIONS);
+						if (applications.getChildren().size() > 0)
+							manifestAppName = applications.get(0).get(CFProtocolConstants.V2_KEY_NAME).getValue();
+					}
+
+					GetAppCommand getAppCommand = new GetAppCommand(target, appName != null ? appName : manifestAppName);
 					status = getAppCommand.doIt();
 					App app = getAppCommand.getApp();
 
@@ -121,20 +136,15 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 					if (app == null)
 						app = new App();
 
-					app.setName(appName);
-
-					/* parse the application manifest */
-					ParseManifestCommand parseManifestCommand = new ParseManifestCommand(target, app, this.userId, contentLocation);
-					status = parseManifestCommand.doIt();
-					if (!status.isOK())
-						return status;
+					app.setName(appName != null ? appName : manifestAppName);
+					app.setManifest(manifest);
+					app.setAppStore(parseManifestCommand.getAppStore());
 
 					status = new PushAppCommand(target, app, force).doIt();
 					if (!status.isOK())
 						return status;
 
-					ManifestParseTree manifest = app.getManifest();
-
+					// get the app again
 					getAppCommand = new GetAppCommand(target, app.getName());
 					getAppCommand.doIt();
 					app = getAppCommand.getApp();

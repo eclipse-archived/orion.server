@@ -20,7 +20,6 @@ import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.manifest.v2.*;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestConstants;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestUtils;
-import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
@@ -30,17 +29,26 @@ import org.slf4j.LoggerFactory;
 public class ParseManifestCommand extends AbstractCFCommand {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
-	private App application;
 	private String userId;
 	private String contentLocation;
 	private String commandName;
 
-	public ParseManifestCommand(Target target, App app, String userId, String contentLocation) {
+	private ManifestParseTree manifest;
+	private IFileStore appStore;
+
+	public ParseManifestCommand(Target target, String userId, String contentLocation) {
 		super(target);
-		this.application = app;
 		this.userId = userId;
 		this.contentLocation = contentLocation;
 		this.commandName = NLS.bind("Parse application manifest: {0}", contentLocation);
+	}
+
+	public ManifestParseTree getManifest() {
+		return manifest;
+	}
+
+	public IFileStore getAppStore() {
+		return appStore;
 	}
 
 	/* checks whether the given path may be access by the user */
@@ -103,15 +111,14 @@ public class ParseManifestCommand extends AbstractCFCommand {
 				if (!accessStatus.isOK())
 					return accessStatus;
 
-				IFileStore appStore = NewFileServlet.getFileStore(null, appStorePath);
+				this.appStore = NewFileServlet.getFileStore(null, appStorePath);
 
 				if (appStore == null) {
 					String msg = NLS.bind("Failed to find application content due to incorrect path parameter: {0}", appStorePath);
 					return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
 				}
 
-				application.setAppStore(appStore);
-				application.setManifest(manifest);
+				this.manifest = manifest;
 
 			} catch (Exception ex) {
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Failed to locate application contents as specified in the manifest.", null);

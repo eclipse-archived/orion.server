@@ -42,26 +42,21 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 	private String buildPack;
 	private JSONObject env;
 
-	private boolean force;
+	private boolean reset;
 
-	public CreateApplicationCommand(Target target, App app, boolean force) {
+	public CreateApplicationCommand(Target target, App app, boolean reset) {
 		super(target);
 		this.commandName = "Create a new application";
 		this.application = app;
-		this.force = force;
+		this.reset = reset;
 	}
 
 	@Override
 	protected ServerStatus _doIt() {
 		try {
 
-			if (force) {
-				DeleteApplicationRoutesCommand deleteRouteCommand = new DeleteApplicationRoutesCommand(target, application);
-				deleteRouteCommand.doIt(); /* we don't need to know whether the deletion succeeded or not */
-
-				/* make sure we override the application */
-				DeleteApplicationCommand deleteApplicationCommand = new DeleteApplicationCommand(target, application);
-				deleteApplicationCommand.doIt(); /* we don't need to know whether the deletion succeeded or not */
+			if (reset) {
+				// TODO: if the app exists, and reset flag is true, we need to reset the app first
 			}
 
 			/* create cloud foundry application */

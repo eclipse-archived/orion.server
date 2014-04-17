@@ -31,13 +31,13 @@ public class PushAppCommand extends AbstractCFCommand {
 
 	private String commandName;
 	private App app;
-	private boolean force;
+	private boolean reset;
 
-	public PushAppCommand(Target target, App app, boolean force) {
+	public PushAppCommand(Target target, App app, boolean reset) {
 		super(target);
 		this.commandName = "Push application"; //$NON-NLS-1$
 		this.app = app;
-		this.force = force;
+		this.reset = reset;
 	}
 
 	@Override
@@ -49,7 +49,7 @@ public class PushAppCommand extends AbstractCFCommand {
 			if (app.getSummaryJSON() == null) {
 
 				/* create new application */
-				CreateApplicationCommand createApplication = new CreateApplicationCommand(target, app, force);
+				CreateApplicationCommand createApplication = new CreateApplicationCommand(target, app, reset);
 				ServerStatus jobStatus = (ServerStatus) createApplication.doIt(); /* FIXME: unsafe type cast */
 				status.add(jobStatus);
 				if (!jobStatus.isOK())
