@@ -129,6 +129,11 @@ public class BindRouteCommand extends AbstractRevertableCFCommand {
 
 				if (jobStatus.isOK())
 					return status;
+
+				/* the route is bound to another space */
+				String msg = NLS.bind("The host {0} is already used in another space.", findRouteCommand.getAppHost());
+				status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_CONFLICT, msg, null));
+				return status;
 			}
 
 			/* create a new route */

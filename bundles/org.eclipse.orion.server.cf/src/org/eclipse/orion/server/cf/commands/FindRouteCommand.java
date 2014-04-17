@@ -34,6 +34,10 @@ public class FindRouteCommand extends AbstractCFCommand {
 	private String domainGUID;
 	private String appHost;
 
+	public String getAppHost() {
+		return appHost;
+	}
+
 	private String commandName;
 
 	protected FindRouteCommand(Target target, App app, String domainGUID) {
