@@ -110,7 +110,28 @@ public class BindRouteCommand extends AbstractRevertableCFCommand {
 				domainGUID = resource.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID);
 			}
 
-			/* new application, we do not need to check for attached routes, create a new one */
+			/* find out whether the declared host can be reused */
+			String routeGUID = null;
+			FindRouteCommand findRouteCommand = new FindRouteCommand(target, application, domainGUID);
+			jobStatus = (ServerStatus) findRouteCommand.doIt(); /* FIXME: unsafe type cast */
+			status.add(jobStatus);
+
+			if (jobStatus.isOK()) {
+
+				/* extract route guid */
+				route = jobStatus.getJsonData();
+				routeGUID = route.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID);
+
+				/* attach route to application */
+				AttachRouteCommand attachRoute = new AttachRouteCommand(target, application, routeGUID);
+				jobStatus = (ServerStatus) attachRoute.doIt(); /* FIXME: unsafe type cast */
+				status.add(jobStatus);
+
+				if (jobStatus.isOK())
+					return status;
+			}
+
+			/* create a new route */
 			CreateRouteCommand createRoute = new CreateRouteCommand(target, application, domainGUID);
 			jobStatus = (ServerStatus) createRoute.doIt(); /* FIXME: unsafe type cast */
 			status.add(jobStatus);
@@ -120,7 +141,7 @@ public class BindRouteCommand extends AbstractRevertableCFCommand {
 
 			/* extract route guid */
 			route = jobStatus.getJsonData();
-			String routeGUID = route.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID);
+			routeGUID = route.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID);
 
 			/* attach route to application */
 			AttachRouteCommand attachRoute = new AttachRouteCommand(target, application, routeGUID);
