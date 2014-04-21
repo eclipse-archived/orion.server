@@ -41,7 +41,11 @@ import com.google.gerrit.httpd.WebSession;
 import com.google.gerrit.reviewdb.client.Project.NameKey;
 import com.google.gerrit.server.AccessPath;
 import com.google.gerrit.server.account.AccountCache;
+import com.google.gerrit.server.account.AccountException;
+import com.google.gerrit.server.account.AccountManager;
 import com.google.gerrit.server.account.AccountState;
+import com.google.gerrit.server.account.AuthRequest;
+import com.google.gerrit.server.account.AuthResult;
 import com.google.gerrit.server.config.GerritServerConfig;
 import com.google.gerrit.server.git.GitRepositoryManager;
 import com.google.gerrit.server.project.NoSuchProjectException;
@@ -58,33 +62,51 @@ public class GerritFileContents  extends HttpServlet {
 	private final Provider<WebSession> session;
 	private final AccountCache accountCache;
 	private final Config config;
+	private final AccountManager accountManager;
 	
 	private static Logger log = LoggerFactory
 			.getLogger(GerritFileContents.class);
 	@Inject
 	public GerritFileContents(final GitRepositoryManager repoManager, final ProjectControl.Factory project, Provider<WebSession> session, AccountCache accountCache,
-		    @GerritServerConfig Config config) {
+		    @GerritServerConfig Config config,
+		    final AccountManager accountManager) {
 		this.repoManager = repoManager;
 		this.projControlFactory = project;
 		this.session = session;
 		this.accountCache = accountCache;
 		this.config = config;
+		this.accountManager = accountManager;
 	}
 	
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
 		final ServletOutputStream out = resp.getOutputStream();
-		ByteArrayOutputStream baos;
-		
 		String username = req.getRemoteUser();
 		if (username != null) {
 			 if (config.getBoolean("auth", "userNameToLowerCase", false)) {
 			      username = username.toLowerCase(Locale.US);
 		    }
 			log.debug("User name: " + username);
-		 	final AccountState who = accountCache.getByUsername(username);
+		 	AccountState who = accountCache.getByUsername(username);
 		 	log.debug("AccountState " + who);
+			if (who == null) {
+				log.debug("User is not registered with Gerrit. Register now."); // This approach assumes an auth type of HTTP_LDAP
+				final AuthRequest areq = AuthRequest.forUser(username);
+				try {
+					accountManager.authenticate(areq);
+					who = accountCache.getByUsername(username);
+					if (who == null) {
+						log.warn("Unable to register user \"" + username
+								+ "\". Continue as anonymous.");
+					} else {
+						log.debug("User registered.");
+					}
+				} catch (AccountException e) {
+					log.warn("Exception registering user \"" + username
+							+ "\". Continue as anonymous.", e);
+				}
+			}
 		 	if (who != null && who.getAccount().isActive()) {
 		 		log.debug("Not anonymous user");
 		 		WebSession ws = session.get();
