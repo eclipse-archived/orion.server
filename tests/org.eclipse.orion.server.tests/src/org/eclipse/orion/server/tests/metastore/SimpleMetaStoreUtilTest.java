@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others.
+ * Copyright (c) 2013, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -17,22 +17,25 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.File;
+import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.List;
 
-import org.eclipse.core.tests.harness.FileSystemHelper;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.junit.FixMethodOrder;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
-import org.junit.runners.MethodSorters;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class SimpleMetaStoreUtilTest {
 
-	public static void deleteFile(File parentFile) {
+	private static final SecureRandom random = new SecureRandom();
+
+	private File tempDir = null;
+
+	private void deleteFile(File parentFile) {
 		if (parentFile.isDirectory()) {
 			File[] allFiles = parentFile.listFiles();
 			if (allFiles.length == 0) {
@@ -48,14 +51,40 @@ public class SimpleMetaStoreUtilTest {
 		}
 	}
 
-	private File tempDir = null;
+	@After
+	public void deleteTempDir() {
+		// delete the temporary folder after each test
+		File parent = getTempDir();
+		if (parent.exists()) {
+			// delete the root
+			deleteFile(parent);
+		}
+		if (parent.exists()) {
+			fail("Could not delete the temporary folder, something is wrong.");
+		}
+	}
 
 	private File getTempDir() {
-		if (tempDir == null) {
-			tempDir = new File(FileSystemHelper.getRandomLocation(FileSystemHelper.getTempDir()).toOSString());
-			tempDir.mkdir();
-		}
 		return tempDir;
+	}
+
+	@Before
+	public void initializeTempDir() {
+		// get the temporary folder location.
+		String tmpDirName = System.getProperty("java.io.tmpdir");
+		File tmpDir = new File(tmpDirName);
+		if (!tmpDir.exists() || !tmpDir.isDirectory()) {
+			fail("Cannot find the default temporary-file directory: " + tmpDirName);
+		}
+
+		// get a temporary folder name
+		long n = random.nextLong();
+		n = (n == Long.MIN_VALUE) ? 0 : Math.abs(n);
+		String tmpDirStr = Long.toString(n);
+		tempDir = new File(tmpDir, tmpDirStr);
+		if (!tempDir.mkdir()) {
+			fail("Cannot create a temporary directory at " + tempDir.toString());
+		}
 	}
 
 	@Test
@@ -88,6 +117,38 @@ public class SimpleMetaStoreUtilTest {
 		// check the filesystem, the file is really gone now
 		files = Arrays.asList(parent.list());
 		assertFalse(files.contains(createdName));
+	}
+
+	@Test
+	public void testCreateMetaFileWithBadName() throws JSONException {
+		JSONObject jsonObject = new JSONObject();
+		jsonObject.put("int", 1);
+		File parent = getTempDir();
+		String name = "this//is//bad";
+		// try to create the file
+		assertFalse(SimpleMetaStoreUtil.createMetaFile(parent, name, jsonObject));
+	}
+
+	@Test
+	public void testCreateMetaFolder() {
+		File parent = getTempDir();
+		String name = "test";
+		// the folder is not there at the start
+		assertFalse(SimpleMetaStoreUtil.isMetaFolder(parent, name));
+		// create the folder.
+		assertTrue(SimpleMetaStoreUtil.createMetaFolder(parent, name));
+		// the folder is now there.
+		assertTrue(SimpleMetaStoreUtil.isMetaFolder(parent, name));
+		// check the filesystem, the folder is really there
+		List<String> files = Arrays.asList(parent.list());
+		assertTrue(files.contains(name));
+		// delete the folder.
+		assertTrue(SimpleMetaStoreUtil.deleteMetaFolder(parent, name, true));
+		// the folder is not there now.
+		assertFalse(SimpleMetaStoreUtil.isMetaFolder(parent, name));
+		// check the filesystem, the folder is really gone now
+		files = Arrays.asList(parent.list());
+		assertFalse(files.contains(name));
 	}
 
 	@Test
@@ -133,38 +194,6 @@ public class SimpleMetaStoreUtilTest {
 		assertTrue(SimpleMetaStoreUtil.isMetaFolder(parent, name));
 		// check the filesystem, the folder is really there
 		files = Arrays.asList(parent.list());
-		assertTrue(files.contains(name));
-		// delete the folder.
-		assertTrue(SimpleMetaStoreUtil.deleteMetaFolder(parent, name, true));
-		// the folder is not there now.
-		assertFalse(SimpleMetaStoreUtil.isMetaFolder(parent, name));
-		// check the filesystem, the folder is really gone now
-		files = Arrays.asList(parent.list());
-		assertFalse(files.contains(name));
-	}
-
-	@Test
-	public void testCreateMetaFileWithBadName() throws JSONException {
-		JSONObject jsonObject = new JSONObject();
-		jsonObject.put("int", 1);
-		File parent = getTempDir();
-		String name = "this//is//bad";
-		// try to create the file
-		assertFalse(SimpleMetaStoreUtil.createMetaFile(parent, name, jsonObject));
-	}
-
-	@Test
-	public void testCreateMetaFolder() {
-		File parent = getTempDir();
-		String name = "test";
-		// the folder is not there at the start
-		assertFalse(SimpleMetaStoreUtil.isMetaFolder(parent, name));
-		// create the folder.
-		assertTrue(SimpleMetaStoreUtil.createMetaFolder(parent, name));
-		// the folder is now there.
-		assertTrue(SimpleMetaStoreUtil.isMetaFolder(parent, name));
-		// check the filesystem, the folder is really there
-		List<String> files = Arrays.asList(parent.list());
 		assertTrue(files.contains(name));
 		// delete the folder.
 		assertTrue(SimpleMetaStoreUtil.deleteMetaFolder(parent, name, true));
@@ -333,18 +362,5 @@ public class SimpleMetaStoreUtilTest {
 		assertEquals(monkeyFace, jsonObjectNew.getString("String"));
 		// delete the file
 		assertTrue(SimpleMetaStoreUtil.deleteMetaFile(parent, name));
-	}
-
-	@Test
-	public void testZDeleteTempDir() {
-		// Very last test, delete the temporary folder
-		File parent = getTempDir();
-		if (parent.exists()) {
-			// delete the root
-			deleteFile(parent);
-		}
-		if (parent.exists()) {
-			fail("Could not delete the temporary folder, something is wrong.");
-		}
 	}
 }
