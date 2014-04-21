@@ -15,9 +15,12 @@ import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.text.Format;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.solr.client.solrj.SolrQuery;
@@ -362,8 +365,12 @@ public class Indexer extends Job {
 		delay = Math.min(delay, IDLE_DELAY);
 		//if there was nothing to index then back off for awhile
 		delay = Math.max(delay, IDLE_DELAY);
-		if (logger.isInfoEnabled())
-			logger.info("Rescheduling indexing in " + delay + "ms"); //$NON-NLS-1$//$NON-NLS-2$
+		if (logger.isInfoEnabled()) {
+			long time = System.currentTimeMillis();
+			Date date = new Date(time + delay);
+			Format format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+			logger.info("Scheduling indexing to start again at " + format.format(date).toString()); //$NON-NLS-1$//$NON-NLS-2$
+		}
 		schedule(delay);
 		return Status.OK_STATUS;
 	}
