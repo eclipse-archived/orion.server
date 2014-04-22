@@ -19,21 +19,6 @@ import org.eclipse.orion.server.cf.manifest.v2.*;
  */
 public class ManifestTransformator implements Analyzer {
 
-	private static final String[] RESERVED_PROPERTIES = {//
-	"env", // //$NON-NLS-1$
-			"inherit", // //$NON-NLS-1$
-			"applications" // //$NON-NLS-1$
-	};
-
-	private boolean isReserved(ManifestParseTree node) {
-		String value = node.getLabel();
-		for (String property : RESERVED_PROPERTIES)
-			if (property.equals(value))
-				return true;
-
-		return false;
-	}
-
 	/* populate without overriding */
 	private void populate(ManifestParseTree application, List<ManifestParseTree> globals) {
 		for (ManifestParseTree property : globals)
@@ -44,7 +29,7 @@ public class ManifestTransformator implements Analyzer {
 	@Override
 	public void apply(ManifestParseTree node) throws AnalyzerException {
 
-		ManifestParseTree applications = node.getOpt(ManifestConstants.MANIFEST_APPLICATIONS);
+		ManifestParseTree applications = node.getOpt(ManifestConstants.APPLICATIONS);
 		if (applications == null)
 			/* nothing to do */
 			return;
@@ -52,7 +37,7 @@ public class ManifestTransformator implements Analyzer {
 		/* find global properties */
 		List<ManifestParseTree> globals = new LinkedList<ManifestParseTree>();
 		for (ManifestParseTree property : node.getChildren())
-			if (!isReserved(property))
+			if (!ManifestUtils.isReserved(property))
 				globals.add(property);
 
 		if (globals.isEmpty())

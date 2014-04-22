@@ -21,7 +21,9 @@ import org.eclipse.orion.server.cf.manifest.v2.*;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestConstants;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestUtils;
 import org.eclipse.orion.server.cf.objects.Target;
+import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.osgi.util.NLS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,10 +98,14 @@ public class ParseManifestCommand extends AbstractCFCommand {
 				return cannotFindManifest(contentPath);
 			}
 
+			/* parse within the project sandbox */
+			ProjectInfo project = OrionConfiguration.getMetaStore().readProject(contentPath.segment(0), contentPath.segment(1));
+			IFileStore projectStore = NewFileServlet.getFileStore(null, project);
+
 			/* parse the manifest */
 			URI targetURI = URIUtil.toURI(target.getUrl());
 			String targetBase = targetURI.getHost().substring(4);
-			ManifestParseTree manifest = ManifestUtils.parse(manifestStore, targetBase);
+			ManifestParseTree manifest = ManifestUtils.parse(projectStore, manifestStore, targetBase);
 			ManifestParseTree app = manifest.get("applications").get(0); //$NON-NLS-1$
 
 			/* optional */

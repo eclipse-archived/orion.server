@@ -190,7 +190,7 @@ public class ManifestParserTest {
 		assertEquals("overriddenC", applications.get(3).get("C").getValue()); //$NON-NLS-1$//$NON-NLS-2$
 		assertEquals("valueD", applications.get(3).get("D").get("nativeD").getValue()); //$NON-NLS-1$ //$NON-NLS-2$//$NON-NLS-3$
 	}
-
+	
 	private ManifestParseTree parse(InputStream inputStream) throws IOException, TokenizerException, ParserException {
 		Preprocessor preprocessor = new ManifestPreprocessor();
 		List<InputLine> contents = preprocessor.process(inputStream);
