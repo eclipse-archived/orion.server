@@ -1,0 +1,7 @@
+---
+inherit: ../A/base-manifest.yml
+domain: example.com
+
+applications:
+ - name: A
+   instances: 2

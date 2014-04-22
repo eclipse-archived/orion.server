@@ -24,6 +24,11 @@ public class ManifestConstants {
 
 	public static String MANIFEST_FILE_SIZE_EXCEEDED = "Refused to read the manifest. Exceeded maximum file size limit.";
 
+	/* manifest inheritance errors */
+	public static String FORBIDDEN_ACCESS_ERROR = "Forbidden access to parent manifest {0}.";
+
+	public static String INHERITANCE_CYCLE_ERROR = "Could not parse the manifest. Inheritance cycle detected.";
+
 	/* Manifest error messages */
 	public static String UNEXPECTED_INPUT_ERROR = "Unexpected token around line {0}.";
 
@@ -48,7 +53,13 @@ public class ManifestConstants {
 	/* Manifest constants */
 	public static final String MANIFEST_FILE_NAME = "manifest.yml"; //$NON-NLS-1$
 
-	public static String MANIFEST_APPLICATIONS = "applications";
+	public static final String APPLICATIONS = "applications"; //$NON-NLS-1$
 
-	public static String MANIFEST_APPLICATION_NAME = "name";
+	public static final String NAME = "name"; //$NON-NLS-1$
+
+	public static final String INHERIT = "inherit"; //$NON-NLS-1$
+
+	public static final String ENV = "env"; //$NON-NLS-1$
+
+	public static final String SERVICES = "services"; //$NON-NLS-1$
 }

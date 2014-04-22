@@ -31,6 +31,10 @@ public class ApplicationSanizator implements Analyzer {
 	@Override
 	public void apply(ManifestParseTree node) throws AnalyzerException {
 
+		if (!node.has("applications")) //$NON-NLS-1$
+			/* nothing to do */
+			return;
+
 		try {
 			ManifestParseTree applications = node.get("applications"); //$NON-NLS-1$
 			for (ManifestParseTree application : applications.getChildren()) {

@@ -12,25 +12,34 @@ package org.eclipse.orion.server.cf.manifest.v2.utils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import org.eclipse.core.filesystem.*;
-import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.cf.manifest.v2.*;
+import org.eclipse.osgi.util.NLS;
 
 public class ManifestUtils {
 
+	public static final String[] RESERVED_PROPERTIES = {//
+	"env", // //$NON-NLS-1$
+			"inherit", // //$NON-NLS-1$
+			"applications" // //$NON-NLS-1$
+	};
+
+	public static boolean isReserved(ManifestParseTree node) {
+		String value = node.getLabel();
+		for (String property : RESERVED_PROPERTIES)
+			if (property.equals(value))
+				return true;
+
+		return false;
+	}
+
 	/**
-	 * Utility method wrapping the manifest parse process with additional semantic analysis.
-	 * 
-	 * @param manifestFileStore Manifest file store used to fetch the manifest contents.
-	 * @param targetBase Cloud foundry target base used to resolve manifest symbols.
-	 * @return An intermediate manifest tree representation.
-	 * @throws CoreException If the manifest store input stream could not be opened.
-	 * @throws IOException If the manifest store could not be closed successfully.
-	 * @throws TokenizerException If the manifest tokenizer failed to tokenize the input.
-	 * @throws ParserException If the manifest parser failed to parse the input.
+	 * Inner helper method parsing single manifests with additional semantic analysis.
 	 */
-	public static ManifestParseTree parse(IFileStore manifestFileStore, String targetBase) throws CoreException, IOException, TokenizerException, ParserException, AnalyzerException {
+	private static ManifestParseTree parseManifest(IFileStore manifestFileStore, String targetBase) throws CoreException, IOException, TokenizerException, ParserException, AnalyzerException {
 
 		/* basic sanity checks */
 		IFileInfo manifestFileInfo = manifestFileStore.fetchInfo();
@@ -62,22 +71,84 @@ public class ManifestUtils {
 		/* validate common field values */
 		ApplicationSanizator applicationAnalyzer = new ApplicationSanizator();
 		applicationAnalyzer.apply(parseTree);
-
 		return parseTree;
 	}
 
 	/**
-	 * Utility method wrapping the manifest parse process with additional semantic analysis.
-	 * 
-	 * @param manifestFileStore Manifest file store used to fetch the manifest contents.
+	 * Utility method wrapping manifest parse process including inheritance and additional semantic analysis.
+	 * @param sandbox The file store used to limit manifest inheritance, i.e. each parent manifest has to be a
+	 *  transitive child of the sandbox.
+	 * @param manifestStore Manifest file store used to fetch the manifest contents.
+	 * @param targetBase Cloud foundry target base used to resolve manifest symbols.
+	 * @param manifestList List of forbidden manifest paths considered in the recursive inheritance process.
+	 * Used to detect inheritance cycles.
 	 * @return An intermediate manifest tree representation.
-	 * @throws CoreException If the manifest store input stream could not be opened.
-	 * @throws IOException If the manifest store could not be closed successfully.
-	 * @throws TokenizerException If the manifest tokenizer failed to tokenize the input.
-	 * @throws ParserException If the manifest parser failed to parse the input.
+	 * @throws CoreException
+	 * @throws IOException
+	 * @throws TokenizerException
+	 * @throws ParserException
+	 * @throws AnalyzerException
+	 * @throws InvalidAccessException
 	 */
-	public static ManifestParseTree parse(IFileStore manifestFileStore) throws CoreException, IOException, TokenizerException, ParserException, AnalyzerException {
-		return parse(manifestFileStore, null);
+	public static ManifestParseTree parse(IFileStore sandbox, IFileStore manifestStore, String targetBase, List<IPath> manifestList) throws CoreException, IOException, TokenizerException, ParserException, AnalyzerException, InvalidAccessException {
+		ManifestParseTree manifest = parseManifest(manifestStore, targetBase);
+
+		if (!manifest.has(ManifestConstants.INHERIT))
+			/* nothing to do */
+			return manifest;
+
+		/* check if the parent manifest is within the given sandbox */
+		IPath parentLocation = new Path(manifest.get(ManifestConstants.INHERIT).getValue());
+		if (!InheritanceUtils.isWithinSandbox(sandbox, manifestStore, parentLocation))
+			throw new AnalyzerException(NLS.bind(ManifestConstants.FORBIDDEN_ACCESS_ERROR, manifest.get(ManifestConstants.INHERIT).getValue()));
+
+		/* detect inheritance cycles */
+		if (manifestList.contains(parentLocation))
+			throw new AnalyzerException(ManifestConstants.INHERITANCE_CYCLE_ERROR);
+
+		manifestList.add(parentLocation);
+
+		IFileStore parentStore = manifestStore.getParent().getFileStore(parentLocation);
+		ManifestParseTree parentManifest = parse(sandbox, parentStore, targetBase, manifestList);
+		InheritanceUtils.inherit(parentManifest, manifest);
+
+		/* perform additional inheritance transformations */
+		ManifestTransformator transformator = new ManifestTransformator();
+		transformator.apply(manifest);
+		return manifest;
+	}
+
+	/**
+	 * Helper method for {@link #parse(IFileStore, IFileStore, String, List<IPath>)}
+	 * @param sandbox
+	 * @param manifestStore
+	 * @return
+	 * @throws CoreException
+	 * @throws IOException
+	 * @throws TokenizerException
+	 * @throws ParserException
+	 * @throws AnalyzerException
+	 * @throws InvalidAccessException
+	 */
+	public static ManifestParseTree parse(IFileStore sandbox, IFileStore manifestStore) throws CoreException, IOException, TokenizerException, ParserException, AnalyzerException, InvalidAccessException {
+		return parse(sandbox, manifestStore, null, new ArrayList<IPath>());
+	}
+
+	/**
+	 * Helper method for {@link #parse(IFileStore, IFileStore, String, List<IPath>)}
+	 * @param sandbox
+	 * @param manifestStore
+	 * @param targetBase
+	 * @return
+	 * @throws CoreException
+	 * @throws IOException
+	 * @throws TokenizerException
+	 * @throws ParserException
+	 * @throws AnalyzerException
+	 * @throws InvalidAccessException
+	 */
+	public static ManifestParseTree parse(IFileStore sandbox, IFileStore manifestStore, String targetBase) throws CoreException, IOException, TokenizerException, ParserException, AnalyzerException, InvalidAccessException {
+		return parse(sandbox, manifestStore, targetBase, new ArrayList<IPath>());
 	}
 
 	/**
