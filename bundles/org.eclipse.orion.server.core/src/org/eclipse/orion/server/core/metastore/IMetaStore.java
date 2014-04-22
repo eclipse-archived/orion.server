@@ -11,6 +11,8 @@
 package org.eclipse.orion.server.core.metastore;
 
 import java.util.List;
+
+import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 
 /**
@@ -91,6 +93,12 @@ public interface IMetaStore {
 	 * @throws CoreException If the workspace could not be deleted
 	 */
 	public void deleteWorkspace(String userId, String workspaceId) throws CoreException;
+
+	/**
+	 * Returns the root location where user data files for the given user are stored. 
+	 * @return The file store for the given user.
+	 */
+	public IFileStore getUserHome(String userId);
 
 	/**
 	 * Returns a list of all user ids in this store. Manipulating the returned

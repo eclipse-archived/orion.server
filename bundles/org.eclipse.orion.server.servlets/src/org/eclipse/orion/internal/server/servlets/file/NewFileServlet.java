@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2013 IBM Corporation and others.
+ * Copyright (c) 2010, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,15 +14,26 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Locale;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.core.filesystem.*;
-import org.eclipse.core.runtime.*;
+
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileInfo;
+import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.core.resources.Base64;
@@ -158,7 +169,7 @@ public class NewFileServlet extends OrionServlet {
 			if (workspace.getUserId() == null) {
 				return null;
 			}
-			IFileStore userHome = OrionConfiguration.getUserHome(workspace.getUserId());
+			IFileStore userHome = OrionConfiguration.getMetaStore().getUserHome(workspace.getUserId());
 			String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspace.getUniqueId());
 			return userHome.getChild(encodedWorkspaceName);
 		}
@@ -197,7 +208,7 @@ public class NewFileServlet extends OrionServlet {
 			return EFS.getLocalFileSystem().getStore(localPath);
 		}
 		//treat relative location as relative to the file system root
-		IFileStore root = OrionConfiguration.getUserHome(request.getRemoteUser());
+		IFileStore root = OrionConfiguration.getMetaStore().getUserHome(request.getRemoteUser());
 		return root.getChild(location.toString());
 	}
 

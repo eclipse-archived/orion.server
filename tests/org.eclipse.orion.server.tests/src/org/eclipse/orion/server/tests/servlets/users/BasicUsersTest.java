@@ -218,7 +218,7 @@ public class BasicUsersTest extends UsersTest {
 			workspaceInfo.setFullName(workspaceName);
 			workspaceInfo.setUserId(userInfo.getUniqueId());
 			OrionConfiguration.getMetaStore().createWorkspace(workspaceInfo);
-			IFileStore userHome = OrionConfiguration.getUserHome(userInfo.getUniqueId());
+			IFileStore userHome = OrionConfiguration.getMetaStore().getUserHome(userInfo.getUniqueId());
 			String workspaceFolder = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceInfo.getUniqueId());
 			String projectName = "Orion Project";
 			IFileStore projectFolder = userHome.getChild(workspaceFolder).getChild(projectName);

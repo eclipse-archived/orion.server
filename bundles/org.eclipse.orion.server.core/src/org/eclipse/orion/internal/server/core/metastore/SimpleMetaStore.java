@@ -21,9 +21,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.metastore.MetadataInfo;
@@ -336,6 +338,17 @@ public class SimpleMetaStore implements IMetaStore {
 	 */
 	public File getRootLocation() {
 		return rootLocation;
+	}
+
+	public IFileStore getUserHome(String userId) {
+		IFileStore root = OrionConfiguration.getRootLocation();
+		if (userId != null) {
+			//the format of the user home is /serverworkspace/an/anthony
+			String userPrefix = userId.substring(0, Math.min(2, userId.length()));
+			return root.getChild(userPrefix).getChild(userId);
+		}
+		//for backwards compatibility, if userId is null, the old API used to return the root location;
+		return root;
 	}
 
 	/**

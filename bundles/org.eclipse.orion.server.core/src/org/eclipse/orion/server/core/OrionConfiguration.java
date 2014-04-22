@@ -59,38 +59,12 @@ public class OrionConfiguration {
 	 * Returns the root location where user data files for the given user are stored. In some
 	 * configurations this location might be shared across users, so clients will need to ensure
 	 * resulting files are segmented appropriately by user.
+	 * @deprecated Use {@link IMetaStore#getUserHome(String)}
 	 */
 	public static IFileStore getUserHome(String userId) {
-		IFileStore root = getRootLocation();
-		String layout = getFileLayout();
-
-		if (ServerConstants.CONFIG_FILE_LAYOUT_USERTREE.equals(layout) && userId != null) { //$NON-NLS-1$
-			//the user-tree layout organises projects by the user who created it
-			String userPrefix = userId.substring(0, Math.min(2, userId.length()));
-			return root.getChild(userPrefix).getChild(userId);
-		}
-		//the layout is a flat list of projects at the root
-		return root;
+		return getMetaStore().getUserHome(userId);
 	}
 
-	/**
-	 * Returns the file layout used on the Orion server. The legacy meta store supports flat 
-	 * or userTree file layout. The simple meta store only supports userTree file layout.
-	 * @return either {@link ServerConstants#CONFIG_FILE_LAYOUT_FLAT} or {@link ServerConstants#CONFIG_FILE_LAYOUT_USERTREE}
-	 */
-	public static String getFileLayout() {
-		// consult layout preference
-		String layout = PreferenceHelper.getString(ServerConstants.CONFIG_FILE_LAYOUT, ServerConstants.CONFIG_FILE_LAYOUT_FLAT).toLowerCase(); //$NON-NLS-1$
-		// consult the metastore preference 
-		String metastore = getMetaStorePreference();
-
-		if (metastore.equals(ServerConstants.CONFIG_META_STORE_SIMPLE) || layout.equals(ServerConstants.CONFIG_FILE_LAYOUT_USERTREE)) {
-			return ServerConstants.CONFIG_FILE_LAYOUT_USERTREE;
-		} else {
-			return ServerConstants.CONFIG_FILE_LAYOUT_FLAT;
-		}
-	}
-	
 	/** 
 	 * Consults the Orion configuration and files on disk if needed to determine which server metadata storage 
 	 * should be used.

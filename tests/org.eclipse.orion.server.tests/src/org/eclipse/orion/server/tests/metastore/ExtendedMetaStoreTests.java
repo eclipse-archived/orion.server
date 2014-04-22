@@ -116,7 +116,7 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		metaStore.createWorkspace(workspaceInfo);
 
 		// create a folder under the user on the filesystem
-		IFileStore userHome = OrionConfiguration.getUserHome(userInfo.getUniqueId());
+		IFileStore userHome = OrionConfiguration.getMetaStore().getUserHome(userInfo.getUniqueId());
 		String workspaceFolder = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceInfo.getUniqueId());
 		String projectName = "Orion Project";
 		IFileStore projectFolder = userHome.getChild(workspaceFolder).getChild(projectName);
@@ -446,7 +446,7 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		metaStore.createWorkspace(workspaceInfo);
 
 		// create a project directory and file
-		IFileStore userHome = OrionConfiguration.getUserHome(userInfo.getUniqueId());
+		IFileStore userHome = OrionConfiguration.getMetaStore().getUserHome(userInfo.getUniqueId());
 		String workspaceFolder = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceInfo.getUniqueId());
 		String projectName = "Orion Project";
 		IFileStore projectFolder = userHome.getChild(workspaceFolder).getChild(projectName);

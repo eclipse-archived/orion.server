@@ -92,7 +92,7 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 	 * folder in the file system and ensures it is empty.
 	 */
 	private static URI generateProjectLocation(ProjectInfo project, String user) throws CoreException {
-		IFileStore root = OrionConfiguration.getUserHome(user);
+		IFileStore root = OrionConfiguration.getMetaStore().getUserHome(user);
 		IFileStore projectStore = null;
 		if (OrionConfiguration.getMetaStorePreference().equals(ServerConstants.CONFIG_META_STORE_SIMPLE)) {
 			// simple metastore, projects located in user/workspace/project
@@ -141,7 +141,7 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		URI contentURI = project.getContentLocation();
 
 		// only delete projects if they are in default location
-		IFileStore root = OrionConfiguration.getUserHome(user);
+		IFileStore root = OrionConfiguration.getMetaStore().getUserHome(user);
 		IFileStore projectStore = null;
 		URI defaultLocation = null;
 		if (OrionConfiguration.getMetaStorePreference().equals(ServerConstants.CONFIG_META_STORE_SIMPLE)) {
