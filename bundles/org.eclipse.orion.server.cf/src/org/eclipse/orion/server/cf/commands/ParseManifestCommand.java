@@ -63,6 +63,13 @@ public class ParseManifestCommand extends AbstractCFCommand {
 			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
 	}
 
+	private ServerStatus cannotFindManifest(IPath contentPath) {
+		// Note: we are assuming the content path is inside a project folder
+		IPath manifestPath = contentPath.removeFirstSegments(2).append(ManifestConstants.MANIFEST_FILE_NAME);
+		String msg = "Failed to find " + manifestPath + ". If the manifest is in a different folder, please select the manifest file or folder before deploying.";
+		return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
+	}
+
 	@Override
 	protected ServerStatus _doIt() {
 		try {
@@ -80,15 +87,13 @@ public class ParseManifestCommand extends AbstractCFCommand {
 			}
 
 			if (fileStore == null) {
-				String msg = "Failed to find application manifest. If you have one, please select it or the folder that contains it before deploying.";
-				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
+				return cannotFindManifest(contentPath);
 			}
 
 			/* lookup the manifest description */
 			IFileStore manifestStore = fileStore.getChild(ManifestConstants.MANIFEST_FILE_NAME);
 			if (!manifestStore.fetchInfo().exists()) {
-				String msg = "Failed to find application manifest. If you have one, please select it or the folder that contains it before deploying.";
-				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
+				return cannotFindManifest(contentPath);
 			}
 
 			/* parse the manifest */
