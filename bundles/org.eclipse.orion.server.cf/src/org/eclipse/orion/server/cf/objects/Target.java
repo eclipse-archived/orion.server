@@ -68,7 +68,7 @@ public class Target extends CFObject {
 	@PropertyDescription(name = Org.TYPE)
 	private JSONObject getOrgJSON() {
 		try {
-			return org.toJSON();
+			return org == null ? null : org.toJSON();
 		} catch (JSONException e) {
 			return null;
 		}
@@ -85,7 +85,7 @@ public class Target extends CFObject {
 	@PropertyDescription(name = Space.TYPE)
 	private JSONObject getSpaceJSON() {
 		try {
-			return space.toJSON();
+			return space == null ? null : space.toJSON();
 		} catch (JSONException e) {
 			return null;
 		}
