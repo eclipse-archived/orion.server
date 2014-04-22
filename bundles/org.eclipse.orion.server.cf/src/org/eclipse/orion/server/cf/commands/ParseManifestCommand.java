@@ -66,7 +66,7 @@ public class ParseManifestCommand extends AbstractCFCommand {
 	private ServerStatus cannotFindManifest(IPath contentPath) {
 		// Note: we are assuming the content path is inside a project folder
 		IPath manifestPath = contentPath.removeFirstSegments(2).append(ManifestConstants.MANIFEST_FILE_NAME);
-		String msg = "Failed to find " + manifestPath + ". If the manifest is in a different folder, please select the manifest file or folder before deploying.";
+		String msg = "Failed to find /" + manifestPath + ". If the manifest is in a different folder, please select the manifest file or folder before deploying.";
 		return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
 	}
 
