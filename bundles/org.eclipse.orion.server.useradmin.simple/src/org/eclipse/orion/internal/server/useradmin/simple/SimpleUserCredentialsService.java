@@ -76,7 +76,7 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 	private void initStorage() {
 
 		try {
-			IFileStore fileStore = OrionConfiguration.getUserHome(null);
+			IFileStore fileStore = OrionConfiguration.getRootLocation();
 			File rootLocation = fileStore.toLocalFile(EFS.NONE, null);
 			root = new SimpleUserProfileRoot(rootLocation);
 		} catch (CoreException e) {

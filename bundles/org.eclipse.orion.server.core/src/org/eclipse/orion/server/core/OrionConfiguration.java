@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others.
+ * Copyright (c) 2013, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -38,7 +38,12 @@ public class OrionConfiguration {
 		return Activator.getDefault().getMetastore();
 	}
 	
-	private static IFileStore getRoot() {
+	/**
+	 * Returns the root location where data files are stored. This is the value of the serverworkspace.
+	 * 
+	 * @return the root location.
+	 */
+	public static IFileStore getRootLocation() {
 		URI platformLocationURI = Activator.getDefault().getRootLocationURI();
 		IFileStore root = null;
 		try {
@@ -56,7 +61,7 @@ public class OrionConfiguration {
 	 * resulting files are segmented appropriately by user.
 	 */
 	public static IFileStore getUserHome(String userId) {
-		IFileStore root = getRoot();
+		IFileStore root = getRootLocation();
 		String layout = getFileLayout();
 
 		if (ServerConstants.CONFIG_FILE_LAYOUT_USERTREE.equals(layout) && userId != null) { //$NON-NLS-1$
@@ -105,7 +110,7 @@ public class OrionConfiguration {
 		
 		// metastore preference was not specified by the user.
 		try {
-			File rootFile = getRoot().toLocalFile(EFS.NONE, null);
+			File rootFile = getRootLocation().toLocalFile(EFS.NONE, null);
 			File securestorage = new File(rootFile, SECURESTORAGE);
 			File users_prefs = new File(rootFile, USERS_PREFS);
 			if (securestorage.exists() || users_prefs.exists()) {

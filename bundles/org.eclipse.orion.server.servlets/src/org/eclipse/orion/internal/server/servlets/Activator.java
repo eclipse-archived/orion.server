@@ -101,7 +101,7 @@ public class Activator implements BundleActivator {
 	}
 
 	private void initializeFileSystem() {
-		IFileStore rootStore = OrionConfiguration.getUserHome(null);
+		IFileStore rootStore = OrionConfiguration.getRootLocation();
 		try {
 			rootStore.mkdir(EFS.NONE, null);
 		} catch (CoreException e) {
@@ -119,7 +119,7 @@ public class Activator implements BundleActivator {
 
 		if (ServerConstants.CONFIG_META_STORE_SIMPLE.equals(metastore)) {
 			try {
-				metastoreRegistration = bundleContext.registerService(IMetaStore.class, new SimpleMetaStore(OrionConfiguration.getUserHome(null).toLocalFile(EFS.NONE, null)), null);
+				metastoreRegistration = bundleContext.registerService(IMetaStore.class, new SimpleMetaStore(OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null)), null);
 			} catch (CoreException e) {
 				throw new RuntimeException("Cannot initialize MetaStore", e); //$NON-NLS-1$
 			}

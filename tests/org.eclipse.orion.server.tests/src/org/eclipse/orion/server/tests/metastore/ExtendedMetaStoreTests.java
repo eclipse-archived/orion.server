@@ -645,7 +645,7 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 
 		// create a folder and project.json for the bad project on the filesystem
 		String projectName = "Bad Project";
-		File rootLocation = OrionConfiguration.getUserHome(null).toLocalFile(EFS.NONE, null);
+		File rootLocation = OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null);
 		String workspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(userInfo.getUniqueId(), workspaceName);
 		String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
 		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(rootLocation, userInfo.getUniqueId());
@@ -688,7 +688,7 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 
 		// create a folder and user.json for the bad user on the filesystem
 		String baduser = "baduser";
-		File rootLocation = OrionConfiguration.getUserHome(null).toLocalFile(EFS.NONE, null);
+		File rootLocation = OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null);
 		assertTrue(SimpleMetaStoreUtil.createMetaUserFolder(rootLocation, baduser));
 		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(rootLocation, baduser);
 		String corruptedUserJson = "{\n\"FullName\": \"Administrator\",\n\"OrionVersion\": 4,";
@@ -728,7 +728,7 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		metaStore.createUser(userInfo);
 
 		// create a folder and workspace.json for the bad workspace on the filesystem
-		File rootLocation = OrionConfiguration.getUserHome(null).toLocalFile(EFS.NONE, null);
+		File rootLocation = OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null);
 		String workspaceName = "Orion Content";
 		String workspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(userInfo.getUniqueId(), workspaceName);
 		String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
