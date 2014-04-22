@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others.
+ * Copyright (c) 2013, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -138,17 +138,17 @@ public interface IMetaStore {
 
 	/**
 	 * Updates the metadata in this store based on the provided data.
-	 * @param info The new workspace data
-	 * @throws CoreException If the new data could not be stored, or if
-	 * no such workspace exists
-	 */
-	public void updateWorkspace(WorkspaceInfo info) throws CoreException;
-
-	/**
-	 * Updates the metadata in this store based on the provided data.
 	 * @param info The new user data
 	 * @throws CoreException If the new data could not be stored, or if
 	 * no such user exists
 	 */
 	public void updateUser(UserInfo info) throws CoreException;
+
+	/**
+	 * Updates the metadata in this store based on the provided data.
+	 * @param info The new workspace data
+	 * @throws CoreException If the new data could not be stored, or if
+	 * no such workspace exists
+	 */
+	public void updateWorkspace(WorkspaceInfo info) throws CoreException;
 }
