@@ -215,6 +215,9 @@ public abstract class FileSystemTest extends AbstractServerTest {
 			String workspaceId = basePath.segment(0);
 			String projectName = basePath.segment(1);
 			ProjectInfo projectInfo = OrionConfiguration.getMetaStore().readProject(workspaceId, projectName);
+			if (projectInfo == null) {
+				return null;
+			}
 			IFileStore projectStore = OrionConfiguration.getMetaStore().getDefaultContentLocation(projectInfo);
 			String encodedProjectRoot = projectStore.toURI().toString() + "/";
 			String projectRoot = URLDecoder.decode(encodedProjectRoot, "UTF-8");
