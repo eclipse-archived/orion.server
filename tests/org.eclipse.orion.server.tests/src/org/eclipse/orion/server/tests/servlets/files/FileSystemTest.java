@@ -25,6 +25,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -207,19 +208,21 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	 */
 	private String getAbsolutePath(String path) {
 		try {
-			final String baseLocation = getTestBaseResourceURILocation();
+			String baseLocation = getTestBaseResourceURILocation();
 			Path basePath = new Path(baseLocation);
 			if (basePath.segmentCount() < 2)
 				return null;
 			String workspaceId = basePath.segment(0);
 			String projectName = basePath.segment(1);
-			ProjectInfo projectInfo = new ProjectInfo();
-			projectInfo.setFullName(projectName);
-			projectInfo.setWorkspaceId(workspaceId);
-			IFileStore fileStore = OrionConfiguration.getMetaStore().getDefaultContentLocation(projectInfo);
-			String absolutePath = fileStore.toLocalFile(EFS.NONE, null).toString();
+			ProjectInfo projectInfo = OrionConfiguration.getMetaStore().readProject(workspaceId, projectName);
+			IFileStore projectStore = OrionConfiguration.getMetaStore().getDefaultContentLocation(projectInfo);
+			String encodedProjectRoot = projectStore.toURI().toString() + "/";
+			String projectRoot = URLDecoder.decode(encodedProjectRoot, "UTF-8");
+			String absolutePath = new Path(projectRoot).append(path).toString();
 			return absolutePath;
 		} catch (CoreException e) {
+			fail(e.getLocalizedMessage());
+		} catch (UnsupportedEncodingException e) {
 			fail(e.getLocalizedMessage());
 		}
 		return null;
