@@ -39,8 +39,6 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.core.IOUtilities;
-import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
-import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.Slug;
 import org.eclipse.orion.server.core.LogHelper;
@@ -208,23 +206,23 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	 * relative path. Returns <code>null</code> if there is no test project configured.
 	 */
 	private String getAbsolutePath(String path) {
-		String userRoot = OrionConfiguration.getMetaStore().getUserHome(testUserId).toURI().toString() + "/";
-		String absolutePath;
-		if (OrionConfiguration.getMetaStore() instanceof SimpleMetaStore) {
-			// simple metastore, projects located in user/workspace/project
+		try {
 			final String baseLocation = getTestBaseResourceURILocation();
 			Path basePath = new Path(baseLocation);
 			if (basePath.segmentCount() < 2)
 				return null;
 			String workspaceId = basePath.segment(0);
-			String workspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
 			String projectName = basePath.segment(1);
-			absolutePath = new Path(userRoot).append(workspaceName).append(projectName).append(path).toString();
-		} else {
-			// legacy metastore, projects located in user/project
-			absolutePath = new Path(userRoot).append(getTestBaseFileSystemLocation()).append(path).toString();
+			ProjectInfo projectInfo = new ProjectInfo();
+			projectInfo.setFullName(projectName);
+			projectInfo.setWorkspaceId(workspaceId);
+			IFileStore fileStore = OrionConfiguration.getMetaStore().getDefaultContentLocation(projectInfo);
+			String absolutePath = fileStore.toLocalFile(EFS.NONE, null).toString();
+			return absolutePath;
+		} catch (CoreException e) {
+			fail(e.getLocalizedMessage());
 		}
-		return absolutePath;
+		return null;
 	}
 
 	protected URI makeLocalPathAbsolute(String path) {

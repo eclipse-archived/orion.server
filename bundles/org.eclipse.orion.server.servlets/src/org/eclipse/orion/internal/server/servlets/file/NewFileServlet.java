@@ -27,7 +27,6 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.LogHelper;
@@ -165,13 +164,15 @@ public class NewFileServlet extends OrionServlet {
 	 * @param project The workspace to obtain the store for.
 	 */
 	public static IFileStore getFileStore(HttpServletRequest request, WorkspaceInfo workspace) {
-		if (OrionConfiguration.getMetaStorePreference().equals(ServerConstants.CONFIG_META_STORE_SIMPLE)) {
-			if (workspace.getUserId() == null) {
+		try {
+			if (workspace.getUniqueId() == null) {
 				return null;
 			}
-			IFileStore userHome = OrionConfiguration.getMetaStore().getUserHome(workspace.getUserId());
-			String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspace.getUniqueId());
-			return userHome.getChild(encodedWorkspaceName);
+			IFileStore fileStore = OrionConfiguration.getMetaStore().getWorkspaceContentLocation(workspace.getUniqueId());
+			return fileStore;
+		} catch (CoreException e) {
+			LogHelper.log(new Status(IStatus.WARNING, Activator.PI_SERVER_SERVLETS, 1, "An error occurred when getting workspace store for path", e));
+			// fallback and return null
 		}
 		return null;
 	}

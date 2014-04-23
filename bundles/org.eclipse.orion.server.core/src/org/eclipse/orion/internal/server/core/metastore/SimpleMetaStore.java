@@ -324,20 +324,25 @@ public class SimpleMetaStore implements IMetaStore {
 		}
 	}
 
+	public IFileStore getDefaultContentLocation(ProjectInfo projectInfo) throws CoreException {
+		if (projectInfo.getWorkspaceId() == null) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.getDefaultContentLocation: workspace id is null.", null));
+		}
+		if (projectInfo.getFullName() == null) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.getDefaultContentLocation: project name is null.", null));
+		}
+		IFileStore workspaceFolder = getWorkspaceContentLocation(projectInfo.getWorkspaceId());
+		String projectId = SimpleMetaStoreUtil.encodeProjectIdFromProjectName(projectInfo.getFullName());
+		IFileStore projectFolder = workspaceFolder.getChild(projectId);
+		return projectFolder;
+	}
+
 	private ReadWriteLock getLockForUser(String userId) {
 		if (!lockMap.containsKey(userId)) {
 			ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 			lockMap.put(userId, lock);
 		}
 		return lockMap.get(userId);
-	}
-
-	/**
-	 * Gets the root location for this meta store. This method should only be used by unit tests.
-	 * @return The root location.
-	 */
-	public File getRootLocation() {
-		return rootLocation;
 	}
 
 	public IFileStore getUserHome(String userId) {
@@ -375,6 +380,19 @@ public class SimpleMetaStore implements IMetaStore {
 			}
 		}
 		return jsonObject;
+	}
+
+	public IFileStore getWorkspaceContentLocation(String workspaceId) throws CoreException{
+		if (workspaceId == null) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.getWorkspaceContentLocation: workspace id is null.", null));
+		}
+		String userId = SimpleMetaStoreUtil.decodeUserIdFromWorkspaceId(workspaceId);
+		String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
+		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(rootLocation, userId);
+		File workspaceMetaFolder = SimpleMetaStoreUtil.readMetaFolder(userMetaFolder, encodedWorkspaceName);
+		IFileStore userHome = getUserHome(userId);
+		IFileStore workspaceFolder = userHome.getChild(workspaceMetaFolder.getName());
+		return workspaceFolder;
 	}
 
 	/**

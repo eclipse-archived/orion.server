@@ -28,7 +28,6 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.URIUtil;
-import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
@@ -92,15 +91,8 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 	 * folder in the file system and ensures it is empty.
 	 */
 	private static URI generateProjectLocation(ProjectInfo project, String user) throws CoreException {
-		IFileStore root = OrionConfiguration.getMetaStore().getUserHome(user);
-		IFileStore projectStore = null;
-		if (OrionConfiguration.getMetaStorePreference().equals(ServerConstants.CONFIG_META_STORE_SIMPLE)) {
-			// simple metastore, projects located in user/workspace/project
-			String workspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(project.getWorkspaceId());
-			projectStore = root.getChild(workspaceName).getChild(project.getUniqueId());
-		} else {
-			// legacy metastore, projects under the user home
-			projectStore = root.getChild(project.getUniqueId());
+		IFileStore projectStore = OrionConfiguration.getMetaStore().getDefaultContentLocation(project);
+		if (projectStore.fetchInfo().exists()) {
 			//This folder must be empty initially or we risk showing another user's old private data
 			projectStore.delete(EFS.NONE, null);
 			projectStore.mkdir(EFS.NONE, null);
@@ -140,20 +132,9 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		// remove the project folder
 		URI contentURI = project.getContentLocation();
 
-		// only delete projects if they are in default location
-		IFileStore root = OrionConfiguration.getMetaStore().getUserHome(user);
-		IFileStore projectStore = null;
-		URI defaultLocation = null;
-		if (OrionConfiguration.getMetaStorePreference().equals(ServerConstants.CONFIG_META_STORE_SIMPLE)) {
-			// simple metastore, projects located in user/workspace/project
-			String workspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspace.getUniqueId());
-			projectStore = root.getChild(workspaceName).getChild(project.getUniqueId());
-			defaultLocation = projectStore.toURI();
-		} else {
-			// legacy metastore, projects under the user home
-			projectStore = root.getChild(project.getUniqueId());
-			defaultLocation = projectStore.toURI();
-		}
+		// only delete project contents if they are in default location
+		IFileStore projectStore = OrionConfiguration.getMetaStore().getDefaultContentLocation(project);
+		URI defaultLocation = projectStore.toURI();
 		if (URIUtil.sameURI(defaultLocation, contentURI)) {
 			projectStore.delete(EFS.NONE, null);
 		}

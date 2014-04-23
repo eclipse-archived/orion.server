@@ -128,6 +128,21 @@ public class CompatibilityMetaStore implements IMetaStore {
 		WebUser.fromUserId(userId).deleteWorkspace(workspaceId);
 	}
 
+	public IFileStore getDefaultContentLocation(ProjectInfo projectInfo) throws CoreException {
+		if (projectInfo.getUniqueId() == null) {
+			return null;
+		}
+		if (!WebWorkspace.exists(projectInfo.getWorkspaceId())) {
+			return null;
+		}
+		IFileStore fileStore = getWorkspaceContentLocation(projectInfo.getWorkspaceId());
+		if (fileStore != null) {
+			IFileStore projectStore = fileStore.getChild(projectInfo.getUniqueId());
+			return projectStore;
+		}
+		return null;
+	}
+
 	/**
 	 * Returns the file layout used on the Orion server. The legacy meta store supports flat 
 	 * or userTree file layout.
@@ -155,6 +170,21 @@ public class CompatibilityMetaStore implements IMetaStore {
 		}
 		//the layout is a flat list of projects at the root
 		return root;
+	}
+
+	public IFileStore getWorkspaceContentLocation(String workspaceId) throws CoreException {
+		if (!WebWorkspace.exists(workspaceId)) {
+			return null;
+		}
+		List<String> users = readAllUsers();
+		for (String user : users) {
+			UserInfo userInfo = readUser(user);
+			if (userInfo.getWorkspaceIds().contains(workspaceId)) {
+				IFileStore fileStore = getUserHome(user);
+				return fileStore;
+			}
+		}
+		return null;
 	}
 
 	/**

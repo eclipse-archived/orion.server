@@ -95,10 +95,22 @@ public interface IMetaStore {
 	public void deleteWorkspace(String userId, String workspaceId) throws CoreException;
 
 	/**
+	 * Returns the default local location where user data files for the given project would be stored. 
+	 * @return The file store for the given project.
+	 */
+	public IFileStore getDefaultContentLocation(ProjectInfo projectInfo) throws CoreException;
+	
+	/**
 	 * Returns the root location where user data files for the given user are stored. 
 	 * @return The file store for the given user.
 	 */
 	public IFileStore getUserHome(String userId);
+
+	/**
+	 * Returns the location for the the given workspace. 
+	 * @return The file store for the given workspace.
+	 */
+	public IFileStore getWorkspaceContentLocation(String workspaceId) throws CoreException;
 
 	/**
 	 * Returns a list of all user ids in this store. Manipulating the returned
