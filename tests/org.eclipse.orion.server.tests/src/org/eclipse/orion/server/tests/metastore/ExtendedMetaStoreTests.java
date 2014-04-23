@@ -877,6 +877,29 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 	}
 
 	@Test
+	public void testReadProjectWithWorkspaceThatDoesNotExist() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = getMetaStore();
+
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName("anthony");
+		userInfo.setFullName("Anthony Hunter");
+		metaStore.createUser(userInfo);
+
+		// create the workspace id of a workspace that does not exist
+		String workspaceName = "Orion Content";
+		String workspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(userInfo.getUniqueId(), workspaceName);
+
+		// read the project
+		ProjectInfo readProjectInfo = metaStore.readProject(workspaceId, "Project Zero");
+		assertNull(readProjectInfo);
+
+		// delete the user
+		metaStore.deleteUser(userInfo.getUniqueId());
+	}
+
+	@Test
 	public void testReadUserThatDoesNotExist() throws CoreException {
 		// create the MetaStore
 		IMetaStore metaStore = getMetaStore();

@@ -449,6 +449,9 @@ public class SimpleMetaStore implements IMetaStore {
 		}
 		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(rootLocation, userId);
 		File workspaceMetaFolder = SimpleMetaStoreUtil.readMetaFolder(userMetaFolder, encodedWorkspaceName);
+		if (workspaceMetaFolder == null) {
+			return null;
+		}
 		String projectId = SimpleMetaStoreUtil.encodeProjectIdFromProjectName(projectName);
 		JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(workspaceMetaFolder, projectId);
 		ProjectInfo projectInfo = new ProjectInfo();
