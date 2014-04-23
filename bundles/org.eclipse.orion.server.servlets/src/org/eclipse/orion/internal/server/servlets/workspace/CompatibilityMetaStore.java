@@ -132,13 +132,18 @@ public class CompatibilityMetaStore implements IMetaStore {
 		if (projectInfo.getUniqueId() == null) {
 			return null;
 		}
-		if (!WebWorkspace.exists(projectInfo.getWorkspaceId())) {
-			return null;
-		}
-		IFileStore fileStore = getWorkspaceContentLocation(projectInfo.getWorkspaceId());
-		if (fileStore != null) {
-			IFileStore projectStore = fileStore.getChild(projectInfo.getUniqueId());
-			return projectStore;
+		for (String userId : OrionConfiguration.getMetaStore().readAllUsers()) {
+			UserInfo userInfo = OrionConfiguration.getMetaStore().readUser(userId);
+			for (String workspaceId : userInfo.getWorkspaceIds()) {
+				WorkspaceInfo workspaceInfo = OrionConfiguration.getMetaStore().readWorkspace(workspaceId);
+				for (String projectName : workspaceInfo.getProjectNames()) {
+					ProjectInfo anotherProjectInfo = OrionConfiguration.getMetaStore().readProject(workspaceId, projectName);
+					if (anotherProjectInfo.getUniqueId().equals(projectInfo.getUniqueId())) {
+						IFileStore userHome = getUserHome(userId);
+						return userHome.getChild(projectInfo.getUniqueId());
+					}
+				}
+			}
 		}
 		return null;
 	}
