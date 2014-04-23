@@ -95,8 +95,8 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		if (projectStore.fetchInfo().exists()) {
 			//This folder must be empty initially or we risk showing another user's old private data
 			projectStore.delete(EFS.NONE, null);
-			projectStore.mkdir(EFS.NONE, null);
 		}
+		projectStore.mkdir(EFS.NONE, null);
 		return projectStore.toURI();
 	}
 
