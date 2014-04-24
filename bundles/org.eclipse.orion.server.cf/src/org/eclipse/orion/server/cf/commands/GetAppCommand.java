@@ -11,6 +11,7 @@
 package org.eclipse.orion.server.cf.commands;
 
 import java.net.URI;
+import java.net.URLEncoder;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.*;
@@ -49,7 +50,7 @@ public class GetAppCommand extends AbstractCFCommand {
 			URI appsURI = targetURI.resolve(appsUrl);
 			GetMethod getAppsMethod = new GetMethod(appsURI.toString());
 			HttpUtil.configureHttpMethod(getAppsMethod, target);
-			getAppsMethod.setQueryString("q=name:" + name + "&inline-relations-depth=1");
+			getAppsMethod.setQueryString("q=name:" + URLEncoder.encode(name, "UTF8") + "&inline-relations-depth=1");
 
 			ServerStatus getStatus = HttpUtil.executeMethod(getAppsMethod);
 			if (!getStatus.isOK())
