@@ -120,7 +120,6 @@ public class PushAppCommand extends AbstractCFCommand {
 			int timeout = (timeoutNode != null) ? Integer.parseInt(timeoutNode.getValue()) : ManifestConstants.DEFAULT_TIMEOUT;
 
 			/* craft command result */
-			JSONObject route = app.getSummaryJSON().getJSONArray("routes").getJSONObject(0);
 			JSONObject result = new JSONObject();
 
 			result.put("Target", target.toJSON());
@@ -128,8 +127,11 @@ public class PushAppCommand extends AbstractCFCommand {
 				result.put("ManageUrl", target.getManageUrl().toString() + "#/resources/appGuid=" + app.getGuid() + "&orgGuid=" + target.getOrg().getGuid() + "&spaceGuid=" + target.getSpace().getGuid());
 
 			result.put("App", app.getSummaryJSON());
-			result.put("Domain", route.getJSONObject("domain").getString("name"));
-			result.put("Route", route);
+			if (app.getSummaryJSON().has("routes") && app.getSummaryJSON().getJSONArray("routes").length() > 0) {
+				JSONObject route = app.getSummaryJSON().getJSONArray("routes").getJSONObject(0);
+				result.put("Domain", route.getJSONObject("domain").getString("name"));
+				result.put("Route", route);
+			}
 			result.put("Timeout", timeout);
 
 			status.add(new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result));
