@@ -11,12 +11,12 @@
 package org.eclipse.orion.server.cf.handlers.v1;
 
 import java.net.URI;
+import java.net.URLDecoder;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.core.IOUtilities;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.commands.*;
@@ -48,21 +48,25 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 
 	@Override
 	protected CFJob handleGet(App app, HttpServletRequest request, HttpServletResponse response, final String path) {
-		final String contentLocation = IOUtilities.getQueryParameter(request, ProtocolConstants.KEY_CONTENT_LOCATION);
-		final String name = IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_NAME);
+		//		final String contentLocation = IOUtilities.getQueryParameter(request, ProtocolConstants.KEY_CONTENT_LOCATION);
+		final String encodedName = IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_NAME);
 		final JSONObject targetJSON = extractJSONData(IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_TARGET));
 
 		return new CFJob(request, false) {
 			@Override
 			protected IStatus performJob() {
 				try {
+					String name = null;
+					if (encodedName != null)
+						name = URLDecoder.decode(encodedName, "UTF8");
+
 					ComputeTargetCommand computeTarget = new ComputeTargetCommand(this.userId, targetJSON);
 					IStatus result = computeTarget.doIt();
 					if (!result.isOK())
 						return result;
 					Target target = computeTarget.getTarget();
 
-					if (contentLocation != null || name != null) {
+					if (name != null) {
 						return new GetAppCommand(target, name).doIt();
 					}
 
@@ -104,18 +108,21 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 					Target target = computeTarget.getTarget();
 
 					/* parse the application manifest */
-					ParseManifestCommand parseManifestCommand = new ParseManifestCommand(target, this.userId, contentLocation);
-					status = parseManifestCommand.doIt();
-					if (!status.isOK())
-						return status;
-
-					/* get the manifest name */
 					String manifestAppName = null;
-					ManifestParseTree manifest = parseManifestCommand.getManifest();
-					if (manifest != null) {
-						ManifestParseTree applications = manifest.get(CFProtocolConstants.V2_KEY_APPLICATIONS);
-						if (applications.getChildren().size() > 0)
-							manifestAppName = applications.get(0).get(CFProtocolConstants.V2_KEY_NAME).getValue();
+					ParseManifestCommand parseManifestCommand = null;
+					if (contentLocation != null) {
+						parseManifestCommand = new ParseManifestCommand(target, this.userId, contentLocation);
+						status = parseManifestCommand.doIt();
+						if (!status.isOK())
+							return status;
+
+						/* get the manifest name */
+						ManifestParseTree manifest = parseManifestCommand.getManifest();
+						if (manifest != null) {
+							ManifestParseTree applications = manifest.get(CFProtocolConstants.V2_KEY_APPLICATIONS);
+							if (applications.getChildren().size() > 0)
+								manifestAppName = applications.get(0).get(CFProtocolConstants.V2_KEY_NAME).getValue();
+						}
 					}
 
 					GetAppCommand getAppCommand = new GetAppCommand(target, appName != null ? appName : manifestAppName);
@@ -130,6 +137,13 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 						if (!status.isOK())
 							return status;
 						return new StopAppCommand(target, app).doIt();
+					} else {
+						if (parseManifestCommand == null) {
+							String msg = NLS.bind("Failed to handle request for {0}", path); //$NON-NLS-1$
+							status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, null);
+							logger.error(msg);
+							return status;
+						}
 					}
 
 					// push new application
@@ -137,7 +151,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 						app = new App();
 
 					app.setName(appName != null ? appName : manifestAppName);
-					app.setManifest(manifest);
+					app.setManifest(parseManifestCommand.getManifest());
 					app.setAppStore(parseManifestCommand.getAppStore());
 
 					status = new PushAppCommand(target, app, force).doIt();
@@ -148,7 +162,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 					getAppCommand = new GetAppCommand(target, app.getName());
 					getAppCommand.doIt();
 					app = getAppCommand.getApp();
-					app.setManifest(manifest);
+					app.setManifest(parseManifestCommand.getManifest());
 
 					new StartAppCommand(target, app).doIt();
 
