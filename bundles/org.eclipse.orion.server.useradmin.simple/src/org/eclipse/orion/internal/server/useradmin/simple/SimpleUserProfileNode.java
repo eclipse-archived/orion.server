@@ -152,7 +152,9 @@ public class SimpleUserProfileNode implements IOrionUserProfileNode {
 	}
 
 	public String[] keys() {
-		throw new UnsupportedOperationException("Keys not supported by SimpleUserProfileNode");
+		// even though there are many more values, stick with what is in IOrionUserProfileConstants
+		// to match the legacy metastore
+		return new String[] { IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP };
 	}
 
 	public IOrionUserProfileNode getUserProfileNode(String pathName) {
@@ -185,7 +187,7 @@ public class SimpleUserProfileNode implements IOrionUserProfileNode {
 	}
 
 	public String[] childrenNames() {
-		return new String[] {};
+		return new String[] {IOrionUserProfileConstants.GENERAL_PROFILE_PART};
 	}
 
 	public void flush() throws CoreException {
