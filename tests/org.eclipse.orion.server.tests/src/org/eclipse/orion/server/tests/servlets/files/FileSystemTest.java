@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2013 IBM Corporation and others 
+ * Copyright (c) 2010, 2014 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -16,30 +16,52 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.io.*;
-import java.net.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
-import org.eclipse.core.filesystem.*;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileInfo;
+import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.core.IOUtilities;
-import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
-import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.Slug;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
-import org.eclipse.orion.server.core.metastore.*;
+import org.eclipse.orion.server.core.metastore.IMetaStore;
+import org.eclipse.orion.server.core.metastore.ProjectInfo;
+import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.tests.AbstractServerTest;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.xml.sax.SAXException;
 
-import com.meterware.httpunit.*;
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.PutMethodWebRequest;
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 /**
  * Common base class for file system tests.
@@ -107,7 +129,7 @@ public abstract class FileSystemTest extends AbstractServerTest {
 		IMetaStore store = OrionConfiguration.getMetaStore();
 		List<String> userIds = store.readAllUsers();
 		for (String userId : userIds) {
-			IFileStore userHome = OrionConfiguration.getUserHome(userId);
+			IFileStore userHome = OrionConfiguration.getMetaStore().getUserHome(userId);
 			UserInfo user = store.readUser(userId);
 			for (String workspaceId : user.getWorkspaceIds()) {
 				WorkspaceInfo workspace = store.readWorkspace(workspaceId);
@@ -185,23 +207,28 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	 * relative path. Returns <code>null</code> if there is no test project configured.
 	 */
 	private String getAbsolutePath(String path) {
-		String userRoot = OrionConfiguration.getUserHome(testUserId).toURI().toString() + "/";
-		String absolutePath;
-		if (OrionConfiguration.getMetaStore() instanceof SimpleMetaStore) {
-			// simple metastore, projects located in user/workspace/project
-			final String baseLocation = getTestBaseResourceURILocation();
+		try {
+			String baseLocation = getTestBaseResourceURILocation();
 			Path basePath = new Path(baseLocation);
 			if (basePath.segmentCount() < 2)
 				return null;
 			String workspaceId = basePath.segment(0);
-			String workspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
 			String projectName = basePath.segment(1);
-			absolutePath = new Path(userRoot).append(workspaceName).append(projectName).append(path).toString();
-		} else {
-			// legacy metastore, projects located in user/project
-			absolutePath = new Path(userRoot).append(getTestBaseFileSystemLocation()).append(path).toString();
+			ProjectInfo projectInfo = OrionConfiguration.getMetaStore().readProject(workspaceId, projectName);
+			if (projectInfo == null) {
+				return null;
+			}
+			IFileStore projectStore = OrionConfiguration.getMetaStore().getDefaultContentLocation(projectInfo);
+			String encodedProjectRoot = projectStore.toURI().toString() + "/";
+			String projectRoot = URLDecoder.decode(encodedProjectRoot, "UTF-8");
+			String absolutePath = new Path(projectRoot).append(path).toString();
+			return absolutePath;
+		} catch (CoreException e) {
+			fail(e.getLocalizedMessage());
+		} catch (UnsupportedEncodingException e) {
+			fail(e.getLocalizedMessage());
 		}
-		return absolutePath;
+		return null;
 	}
 
 	protected URI makeLocalPathAbsolute(String path) {
@@ -215,7 +242,7 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	}
 
 	protected static void initializeWorkspaceLocation() {
-		IFileStore root = OrionConfiguration.getUserHome(null);
+		IFileStore root = OrionConfiguration.getRootLocation();
 		FILESTORE_PREFIX = root.toURI().toString() + "/";
 	}
 

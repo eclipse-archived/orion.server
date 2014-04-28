@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2013 IBM Corporation and others 
+ * Copyright (c) 2010, 2014 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -23,7 +23,6 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
 
-import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -33,7 +32,6 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
-import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.server.core.OrionConfiguration;
@@ -370,10 +368,8 @@ public class CoreFilesTest extends FileSystemTest {
 		JSONObject responseObject = new JSONObject(response.getText());
 		assertNotNull("No directory information in response", responseObject);
 
-		String userRoot = OrionConfiguration.getUserHome(testUserId).toURI().toString();
-		String workspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
-		URI localFolderURI = new URI(new Path(userRoot).append(workspaceName).append(newDirectoryName).toString());
-		IFileStore localFolder = EFS.getStore(localFolderURI);
+		IFileStore workspaceStore = OrionConfiguration.getMetaStore().getWorkspaceContentLocation(workspaceId);
+		IFileStore localFolder = workspaceStore.getChild(newDirectoryName);
 		assertTrue("Create directory response was OK, but the directory does not exist", localFolder.fetchInfo().exists() && localFolder.fetchInfo().isDirectory());
 		checkDirectoryMetadata(responseObject, newDirectoryName, null, null, null, null, null);
 

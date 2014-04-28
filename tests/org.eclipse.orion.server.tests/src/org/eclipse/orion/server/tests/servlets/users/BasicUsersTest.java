@@ -26,7 +26,6 @@ import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
-import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.OrionConfiguration;
@@ -218,15 +217,19 @@ public class BasicUsersTest extends UsersTest {
 			workspaceInfo.setFullName(workspaceName);
 			workspaceInfo.setUserId(userInfo.getUniqueId());
 			OrionConfiguration.getMetaStore().createWorkspace(workspaceInfo);
-			IFileStore userHome = OrionConfiguration.getUserHome(userInfo.getUniqueId());
-			String workspaceFolder = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceInfo.getUniqueId());
+
 			String projectName = "Orion Project";
-			IFileStore projectFolder = userHome.getChild(workspaceFolder).getChild(projectName);
 			ProjectInfo projectInfo = new ProjectInfo();
 			projectInfo.setFullName(projectName);
 			projectInfo.setWorkspaceId(workspaceInfo.getUniqueId());
-			projectInfo.setContentLocation(projectFolder.toURI());
 			OrionConfiguration.getMetaStore().createProject(projectInfo);
+
+			IFileStore projectFolder = OrionConfiguration.getMetaStore().getDefaultContentLocation(projectInfo);
+			projectInfo.setContentLocation(projectFolder.toURI());
+			OrionConfiguration.getMetaStore().updateProject(projectInfo);
+			if (!projectFolder.fetchInfo().exists()) {
+				projectFolder.mkdir(EFS.NONE, null);
+			}
 			assertTrue(projectFolder.fetchInfo().exists() && projectFolder.fetchInfo().isDirectory());
 			String fileName = "file.html";
 			IFileStore file = projectFolder.getChild(fileName);

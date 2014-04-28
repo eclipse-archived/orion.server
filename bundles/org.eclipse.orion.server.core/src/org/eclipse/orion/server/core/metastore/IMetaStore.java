@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others.
+ * Copyright (c) 2013, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,6 +11,8 @@
 package org.eclipse.orion.server.core.metastore;
 
 import java.util.List;
+
+import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 
 /**
@@ -93,6 +95,24 @@ public interface IMetaStore {
 	public void deleteWorkspace(String userId, String workspaceId) throws CoreException;
 
 	/**
+	 * Returns the default local location where user data files for the given project would be stored. 
+	 * @return The file store for the given project.
+	 */
+	public IFileStore getDefaultContentLocation(ProjectInfo projectInfo) throws CoreException;
+	
+	/**
+	 * Returns the root location where user data files for the given user are stored. 
+	 * @return The file store for the given user.
+	 */
+	public IFileStore getUserHome(String userId);
+
+	/**
+	 * Returns the location for the the given workspace. 
+	 * @return The file store for the given workspace.
+	 */
+	public IFileStore getWorkspaceContentLocation(String workspaceId) throws CoreException;
+
+	/**
 	 * Returns a list of all user ids in this store. Manipulating the returned
 	 * list is not supported. Adding or removing users can only be achieved using
 	 * {@link #createUser(UserInfo)} and {@link #deleteUser(String)}.
@@ -138,17 +158,17 @@ public interface IMetaStore {
 
 	/**
 	 * Updates the metadata in this store based on the provided data.
-	 * @param info The new workspace data
-	 * @throws CoreException If the new data could not be stored, or if
-	 * no such workspace exists
-	 */
-	public void updateWorkspace(WorkspaceInfo info) throws CoreException;
-
-	/**
-	 * Updates the metadata in this store based on the provided data.
 	 * @param info The new user data
 	 * @throws CoreException If the new data could not be stored, or if
 	 * no such user exists
 	 */
 	public void updateUser(UserInfo info) throws CoreException;
+
+	/**
+	 * Updates the metadata in this store based on the provided data.
+	 * @param info The new workspace data
+	 * @throws CoreException If the new data could not be stored, or if
+	 * no such workspace exists
+	 */
+	public void updateWorkspace(WorkspaceInfo info) throws CoreException;
 }

@@ -152,6 +152,11 @@ public class ServerConstants {
 	public static final String CONFIG_META_STORE_SIMPLE = "simple"; //$NON-NLS-1$
 
 	/**
+	 * The name of configuration property specifying the second version of the simple meta store
+	 */
+	public static final String CONFIG_META_STORE_SIMPLE_V2 = "simple2"; //$NON-NLS-1$
+
+	/**
 	 * The name of a configuration property specifying the virtual hosts to use for
 	 * test sites launched by this server. The property value is a comma-separated 
 	 * list of host names.

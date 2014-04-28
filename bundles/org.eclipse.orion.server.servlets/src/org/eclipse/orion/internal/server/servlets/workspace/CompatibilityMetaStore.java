@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others.
+ * Copyright (c) 2013, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,16 +10,36 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.workspace;
 
-import java.util.*;
-import org.eclipse.core.runtime.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.site.*;
+import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
+import org.eclipse.orion.internal.server.servlets.site.SiteInfo;
 import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.metastore.*;
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.core.metastore.IMetaStore;
+import org.eclipse.orion.server.core.metastore.MetadataInfo;
+import org.eclipse.orion.server.core.metastore.ProjectInfo;
+import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.core.users.OrionScope;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.osgi.service.prefs.BackingStoreException;
 import org.osgi.service.prefs.Preferences;
 
@@ -106,6 +126,70 @@ public class CompatibilityMetaStore implements IMetaStore {
 
 		// delete the workspace from the user
 		WebUser.fromUserId(userId).deleteWorkspace(workspaceId);
+	}
+
+	public IFileStore getDefaultContentLocation(ProjectInfo projectInfo) throws CoreException {
+		if (projectInfo.getUniqueId() == null) {
+			return null;
+		}
+		for (String userId : OrionConfiguration.getMetaStore().readAllUsers()) {
+			UserInfo userInfo = OrionConfiguration.getMetaStore().readUser(userId);
+			for (String workspaceId : userInfo.getWorkspaceIds()) {
+				WorkspaceInfo workspaceInfo = OrionConfiguration.getMetaStore().readWorkspace(workspaceId);
+				for (String projectName : workspaceInfo.getProjectNames()) {
+					ProjectInfo anotherProjectInfo = OrionConfiguration.getMetaStore().readProject(workspaceId, projectName);
+					if (anotherProjectInfo.getUniqueId().equals(projectInfo.getUniqueId())) {
+						IFileStore userHome = getUserHome(userId);
+						return userHome.getChild(projectInfo.getUniqueId());
+					}
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Returns the file layout used on the Orion server. The legacy meta store supports flat 
+	 * or userTree file layout.
+	 * @return either {@link ServerConstants#CONFIG_FILE_LAYOUT_FLAT} or {@link ServerConstants#CONFIG_FILE_LAYOUT_USERTREE}
+	 */
+	private String getFileLayout() {
+		// consult layout preference
+		String layout = PreferenceHelper.getString(ServerConstants.CONFIG_FILE_LAYOUT, ServerConstants.CONFIG_FILE_LAYOUT_FLAT).toLowerCase(); //$NON-NLS-1$
+
+		if (layout.equals(ServerConstants.CONFIG_FILE_LAYOUT_USERTREE)) {
+			return ServerConstants.CONFIG_FILE_LAYOUT_USERTREE;
+		} else {
+			return ServerConstants.CONFIG_FILE_LAYOUT_FLAT;
+		}
+	}
+
+	public IFileStore getUserHome(String userId) {
+		IFileStore root = OrionConfiguration.getRootLocation();
+		String layout = getFileLayout();
+
+		if (ServerConstants.CONFIG_FILE_LAYOUT_USERTREE.equals(layout) && userId != null) { //$NON-NLS-1$
+			//the user-tree layout organises projects by the user who created it
+			String userPrefix = userId.substring(0, Math.min(2, userId.length()));
+			return root.getChild(userPrefix).getChild(userId);
+		}
+		//the layout is a flat list of projects at the root
+		return root;
+	}
+
+	public IFileStore getWorkspaceContentLocation(String workspaceId) throws CoreException {
+		if (!WebWorkspace.exists(workspaceId)) {
+			return null;
+		}
+		List<String> users = readAllUsers();
+		for (String user : users) {
+			UserInfo userInfo = readUser(user);
+			if (userInfo.getWorkspaceIds().contains(workspaceId)) {
+				IFileStore fileStore = getUserHome(user);
+				return fileStore;
+			}
+		}
+		return null;
 	}
 
 	/**
