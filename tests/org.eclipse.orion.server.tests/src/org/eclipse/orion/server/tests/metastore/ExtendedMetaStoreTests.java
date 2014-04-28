@@ -30,6 +30,8 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreV1;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreV2;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
@@ -52,6 +54,11 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 	public void testCreateProjectNamedWorkspace() throws CoreException {
 		// create the MetaStore
 		IMetaStore metaStore = getMetaStore();
+
+		if (metaStore instanceof SimpleMetaStoreV2) {
+			// you are allowed to create a project named workspace with SimpleMetaStoreV2 
+			return;
+		}
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -749,7 +756,13 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		assertTrue(SimpleMetaStoreUtil.createMetaFolder(workspaceMetaFolder, projectName));
 		File newFolder = SimpleMetaStoreUtil.retrieveMetaFolder(workspaceMetaFolder, projectName);
 		String corruptedProjectJson = "{\n\"OrionVersion\": 4,";
-		File newFile = SimpleMetaStoreUtil.retrieveMetaFile(workspaceMetaFolder, projectName);
+		File newFile;
+		if (getMetaStore() instanceof SimpleMetaStoreV1) {
+			newFile = SimpleMetaStoreUtil.retrieveMetaFile(workspaceMetaFolder, projectName);
+		} else {
+			// SimpleMetaStoreV2
+			newFile = SimpleMetaStoreUtil.retrieveMetaFile(userMetaFolder, projectName);
+		}
 		FileWriter fileWriter = new FileWriter(newFile);
 		fileWriter.write(corruptedProjectJson);
 		fileWriter.write("\n");
@@ -831,7 +844,13 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		assertTrue(SimpleMetaStoreUtil.createMetaFolder(userMetaFolder, encodedWorkspaceName));
 		File workspaceMetaFolder = SimpleMetaStoreUtil.readMetaFolder(userMetaFolder, encodedWorkspaceName);
 		String corruptedWorkspaceJson = "{\n\"OrionVersion\": 4,";
-		File newFile = SimpleMetaStoreUtil.retrieveMetaFile(workspaceMetaFolder, SimpleMetaStore.WORKSPACE);
+		File newFile;
+		if (getMetaStore() instanceof SimpleMetaStoreV1) {
+			newFile = SimpleMetaStoreUtil.retrieveMetaFile(workspaceMetaFolder, SimpleMetaStore.WORKSPACE);
+		} else {
+			// SimpleMetaStoreV2
+			newFile = SimpleMetaStoreUtil.retrieveMetaFile(userMetaFolder, encodedWorkspaceName);
+		}
 		FileWriter fileWriter = new FileWriter(newFile);
 		fileWriter.write(corruptedWorkspaceJson);
 		fileWriter.write("\n");

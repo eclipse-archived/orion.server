@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others 
+ * Copyright (c) 2013, 2014 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -42,7 +42,7 @@ public class Activator implements BundleActivator {
 		singleton = this;
 		String metastore = OrionConfiguration.getMetaStorePreference();
 
-		if (ServerConstants.CONFIG_META_STORE_SIMPLE.equals(metastore)) {
+		if (ServerConstants.CONFIG_META_STORE_SIMPLE.equals(metastore) || ServerConstants.CONFIG_META_STORE_SIMPLE_V2.equals(metastore) ) {
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 			userCredentialsService = bundleContext.registerService(IOrionCredentialsService.class, new SimpleUserCredentialsService(), null);
 			logger.debug("Started simple user credentials service."); //$NON-NLS-1$

@@ -17,6 +17,8 @@ import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.core.Activator;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreV1;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,7 +79,7 @@ public class OrionConfiguration {
 		// consult the metastore preference 
 		String metastore = PreferenceHelper.getString(ServerConstants.CONFIG_META_STORE, "none").toLowerCase(); //$NON-NLS-1$
 		
-		if (metastore.equals(ServerConstants.CONFIG_META_STORE_SIMPLE) || metastore.equals(ServerConstants.CONFIG_META_STORE_LEGACY)) {
+		if (ServerConstants.CONFIG_META_STORE_SIMPLE.equals(metastore) || ServerConstants.CONFIG_META_STORE_SIMPLE_V2.equals(metastore) || ServerConstants.CONFIG_META_STORE_LEGACY.equals(metastore)) {
 			metaStorePreference = metastore;
 			return metaStorePreference;
 		}
@@ -87,14 +89,20 @@ public class OrionConfiguration {
 			File rootFile = getRootLocation().toLocalFile(EFS.NONE, null);
 			File securestorage = new File(rootFile, SECURESTORAGE);
 			File users_prefs = new File(rootFile, USERS_PREFS);
-			if (securestorage.exists() || users_prefs.exists()) {
+			int version = SimpleMetaStore.getOrionVersion(rootFile);
+			if (SimpleMetaStoreV1.ORION_VERSION.equals(version)){
+				// version one of the simple metadata storage
+				metaStorePreference = ServerConstants.CONFIG_META_STORE_SIMPLE;
+				return metaStorePreference;
+			} else if (securestorage.exists() || users_prefs.exists()) {
 				// the metastore preference was not provided and legacy metadata files exist.
 				Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 				logger.error("Preference orion.core.metastore was not supplied and legacy files exist, see https://wiki.eclipse.org/Orion/Metadata_migration to migrate to the current version");
 				metaStorePreference = ServerConstants.CONFIG_META_STORE_LEGACY;
 				return metaStorePreference;
 			} else {
-				metaStorePreference = ServerConstants.CONFIG_META_STORE_SIMPLE;
+				// version two of the simple metadata storage
+				metaStorePreference = ServerConstants.CONFIG_META_STORE_SIMPLE_V2;
 				return metaStorePreference;
 			}
 		} catch (CoreException e) {

@@ -21,7 +21,8 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
-import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreV1;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreV2;
 import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
 import org.eclipse.orion.internal.server.servlets.workspace.CompatibilityMetaStore;
 import org.eclipse.orion.internal.server.servlets.workspace.ProjectParentDecorator;
@@ -117,9 +118,15 @@ public class Activator implements BundleActivator {
 	private void initializeMetaStore() {
 		String metastore = OrionConfiguration.getMetaStorePreference();
 
-		if (ServerConstants.CONFIG_META_STORE_SIMPLE.equals(metastore)) {
+		if (ServerConstants.CONFIG_META_STORE_SIMPLE_V2.equals(metastore)) {
 			try {
-				metastoreRegistration = bundleContext.registerService(IMetaStore.class, new SimpleMetaStore(OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null)), null);
+				metastoreRegistration = bundleContext.registerService(IMetaStore.class, new SimpleMetaStoreV2(OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null)), null);
+			} catch (CoreException e) {
+				throw new RuntimeException("Cannot initialize MetaStore", e); //$NON-NLS-1$
+			}
+		} else if (ServerConstants.CONFIG_META_STORE_SIMPLE.equals(metastore)) {
+			try {
+				metastoreRegistration = bundleContext.registerService(IMetaStore.class, new SimpleMetaStoreV1(OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null)), null);
 			} catch (CoreException e) {
 				throw new RuntimeException("Cannot initialize MetaStore", e); //$NON-NLS-1$
 			}

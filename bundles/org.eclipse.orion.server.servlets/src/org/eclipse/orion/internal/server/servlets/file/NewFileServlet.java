@@ -128,7 +128,7 @@ public class NewFileServlet extends OrionServlet {
 			if (path.segmentCount() == 0) {
 				return null;
 			} else if (path.segmentCount() == 1) {
-				if (OrionConfiguration.getMetaStorePreference().equals(ServerConstants.CONFIG_META_STORE_SIMPLE)) {
+				if (!OrionConfiguration.getMetaStorePreference().equals(ServerConstants.CONFIG_META_STORE_LEGACY)) {
 					// Bug 415700: handle path format /workspaceId, only supported by SimpleMetaStore 
 					WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(0));
 					if (workspace != null) {
@@ -143,7 +143,7 @@ public class NewFileServlet extends OrionServlet {
 				return getFileStore(request, project).getFileStore(path.removeFirstSegments(2));
 			}
 			// Bug 415700: handle path format /workspaceId/[file] only supported by SimpleMetaStore 
-			if (path.segmentCount() == 2 && OrionConfiguration.getMetaStorePreference().equals(ServerConstants.CONFIG_META_STORE_SIMPLE)) {
+			if (path.segmentCount() == 2 && !OrionConfiguration.getMetaStorePreference().equals(ServerConstants.CONFIG_META_STORE_LEGACY)) {
 				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(0));
 				if (workspace != null) {
 					return getFileStore(request, workspace).getChild(path.segment(1));
