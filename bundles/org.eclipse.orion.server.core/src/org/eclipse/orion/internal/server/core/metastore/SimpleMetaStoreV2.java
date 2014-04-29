@@ -420,7 +420,7 @@ public class SimpleMetaStoreV2 extends SimpleMetaStore {
 		}
 
 		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-		logger.debug("Loaded simple metadata store (version " + VERSION + ")."); //$NON-NLS-1$
+		logger.info("Loaded simple metadata store (version " + VERSION + ")."); //$NON-NLS-1$
 	}
 
 	public List<String> readAllUsers() throws CoreException {
