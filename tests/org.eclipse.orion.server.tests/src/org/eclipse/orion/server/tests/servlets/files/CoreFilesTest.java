@@ -42,6 +42,7 @@ import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.osgi.service.prefs.BackingStoreException;
 import org.xml.sax.SAXException;
@@ -391,7 +392,7 @@ public class CoreFilesTest extends FileSystemTest {
 	 * @throws URISyntaxException
 	 * @throws JSONException
 	 */
-	@Test
+	@Ignore
 	public void testReadWorkspaceJsonTopLevelFile() throws IOException, SAXException, URISyntaxException, JSONException {
 		if (!(OrionConfiguration.getMetaStore() instanceof SimpleMetaStore)) {
 			// This test is only supported by a SimpleMetaStore
