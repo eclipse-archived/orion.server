@@ -208,7 +208,7 @@ public class SimpleMetaStoreV2 extends SimpleMetaStore {
 		if (!SimpleMetaStoreUtil.createMetaFolder(userMetaFolder, encodedWorkspaceName)) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createWorkspace: could not create workspace: " + encodedWorkspaceName + " for user " + userInfo.getUserName(), null));
 		}
-		if (!SimpleMetaStoreUtil.createMetaFile(userMetaFolder, encodedWorkspaceName, jsonObject)) {
+		if (!SimpleMetaStoreUtil.createMetaFile(userMetaFolder, workspaceId, jsonObject)) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createWorkspace: could not create workspace: " + encodedWorkspaceName + " for user " + userInfo.getUserName(), null));
 		}
 
@@ -303,7 +303,7 @@ public class SimpleMetaStoreV2 extends SimpleMetaStore {
 		updateUser(userInfo);
 
 		// delete the meta file and folder
-		if (!SimpleMetaStoreUtil.deleteMetaFile(userMetaFolder, encodedWorkspaceName)) {
+		if (!SimpleMetaStoreUtil.deleteMetaFile(userMetaFolder, workspaceId)) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.deleteWorkspace: could not delete workspace: " + encodedWorkspaceName, null));
 		}
 		if (!SimpleMetaStoreUtil.deleteMetaFolder(userMetaFolder, encodedWorkspaceName, true)) {
@@ -538,7 +538,7 @@ public class SimpleMetaStoreV2 extends SimpleMetaStore {
 		if (!SimpleMetaStoreUtil.isMetaFolder(userMetaFolder, encodedWorkspaceName)) {
 			return null;
 		}
-		JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, encodedWorkspaceName);
+		JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, workspaceId);
 		if (jsonObject == null) {
 			return null;
 		}
@@ -838,10 +838,12 @@ public class SimpleMetaStoreV2 extends SimpleMetaStore {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.updateWorkspace: could not update workspace: " + encodedWorkspaceName + " for user " + userName, e));
 		}
 		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getRootLocation(), userName);
-		if (!SimpleMetaStoreUtil.updateMetaFile(userMetaFolder, encodedWorkspaceName, jsonObject)) {
+		if (!SimpleMetaStoreUtil.updateMetaFile(userMetaFolder, workspaceInfo.getUniqueId(), jsonObject)) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.updateWorkspace: could not update workspace: " + encodedWorkspaceName + " for user " + userName, null));
 		}
 		if (renameUser) {
+			SimpleMetaStoreUtil.moveMetaFile(userMetaFolder, workspaceInfo.getUniqueId(), newWorkspaceId);
+
 			workspaceInfo.setUniqueId(newWorkspaceId);
 		}
 	}

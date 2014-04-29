@@ -51,6 +51,47 @@ import org.junit.runners.MethodSorters;
 public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 
 	@Test
+	public void testCreateProjectNamedOrionContent() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = getMetaStore();
+
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName("anthony");
+		userInfo.setFullName("Anthony Hunter");
+		metaStore.createUser(userInfo);
+
+		// create the workspace
+		String workspaceName = "Orion Content";
+		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
+		workspaceInfo.setFullName(workspaceName);
+		workspaceInfo.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo);
+
+		// create the project named OrionContent
+		String projectName = "OrionContent";
+		ProjectInfo projectInfo = new ProjectInfo();
+		projectInfo.setFullName(projectName);
+		try {
+			projectInfo.setContentLocation(new URI("file:/home/anthony/orion/project"));
+		} catch (URISyntaxException e) {
+			// should not get an exception here, simple URI
+			fail("URISyntaxException: " + e.getLocalizedMessage());
+		}
+		projectInfo.setWorkspaceId(workspaceInfo.getUniqueId());
+		try {
+			metaStore.createProject(projectInfo);
+		} catch (CoreException e) {
+			// we expect to get a core exception here
+			String message = e.getMessage();
+			assertTrue(message.contains("cannot create a project named \"workspace\""));
+		}
+
+		// delete the user
+		metaStore.deleteUser(userInfo.getUniqueId());
+	}
+
+	@Test
 	public void testCreateProjectNamedWorkspace() throws CoreException {
 		// create the MetaStore
 		IMetaStore metaStore = getMetaStore();
