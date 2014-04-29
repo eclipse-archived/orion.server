@@ -19,6 +19,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.core.Activator;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreV1;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreV2;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,9 +91,13 @@ public class OrionConfiguration {
 			File securestorage = new File(rootFile, SECURESTORAGE);
 			File users_prefs = new File(rootFile, USERS_PREFS);
 			int version = SimpleMetaStore.getOrionVersion(rootFile);
-			if (SimpleMetaStoreV1.ORION_VERSION.equals(version)){
+			if (SimpleMetaStoreV1.VERSION == version){
 				// version one of the simple metadata storage
 				metaStorePreference = ServerConstants.CONFIG_META_STORE_SIMPLE;
+				return metaStorePreference;
+			} else if (SimpleMetaStoreV2.VERSION == version){
+				// version two of the simple metadata storage
+				metaStorePreference = ServerConstants.CONFIG_META_STORE_SIMPLE_V2;
 				return metaStorePreference;
 			} else if (securestorage.exists() || users_prefs.exists()) {
 				// the metastore preference was not provided and legacy metadata files exist.
@@ -101,8 +106,8 @@ public class OrionConfiguration {
 				metaStorePreference = ServerConstants.CONFIG_META_STORE_LEGACY;
 				return metaStorePreference;
 			} else {
-				// version two of the simple metadata storage
-				metaStorePreference = ServerConstants.CONFIG_META_STORE_SIMPLE_V2;
+				// version one of the simple metadata storage is the default
+				metaStorePreference = ServerConstants.CONFIG_META_STORE_SIMPLE;
 				return metaStorePreference;
 			}
 		} catch (CoreException e) {
