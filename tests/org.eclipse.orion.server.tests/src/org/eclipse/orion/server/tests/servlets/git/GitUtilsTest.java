@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2013 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -105,7 +105,14 @@ public class GitUtilsTest extends GitTest {
 		command.setDirectory(parent);
 		Repository repository = command.call().getRepository();
 		assertNotNull(repository);
-		testGitDirPathNoGit();
+
+		URI workspaceLocation = createWorkspace(getMethodName());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		URI uri = URI.create(location);
+		File dir = GitUtils.getGitDir(new Path(uri.getPath()));
+		assertNull(dir == null ? "N/A" : dir.toURI().toURL().toString(), dir);
+
 		File[] parentChildren = parent.listFiles();
 		for (int i = 0; i < parentChildren.length; i++) {
 			if (parentChildren[i].getName().equals(".git")) {

@@ -312,9 +312,14 @@ public abstract class GitTest extends FileSystemTest {
 		final StackTraceElement[] ste = Thread.currentThread().getStackTrace();
 		//this method is sometimes called from a helper method rather than by the test itself
 		String name = ste[2].getMethodName();
-		if (name.startsWith("test"))
-			return name;
-		return ste[3].getMethodName();
+		if (!name.startsWith("test")) {
+			name = ste[3].getMethodName();
+		}
+		if (name.equals("testUriCheck")) {
+			// get the name of the actual test rather than testUriCheck() 
+			name = ste[4].getMethodName();
+		}
+		return name;
 	}
 
 	protected static JSONObject getChildByKey(List<JSONObject> children, String key, String value) throws JSONException {
