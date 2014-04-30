@@ -93,8 +93,8 @@ public abstract class GitJob extends TaskJob {
 			HostFingerprintException cause = (HostFingerprintException) jschEx;
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, cause.getMessage(), addRepositoryInfo(cause.formJson()), cause);
 		}
-		//JSch handles auth fail by exception message
-		if (jschEx != null && jschEx.getMessage() != null && jschEx.getMessage().toLowerCase(Locale.ENGLISH).contains("auth fail")) { //$NON-NLS-1$
+		//JSch handles auth fail by exception message, another one handles only by exception message is "invalid privatekey: ..." 
+		if (jschEx != null && jschEx.getMessage() != null && (jschEx.getMessage().toLowerCase(Locale.ENGLISH).contains("auth fail") || jschEx.getMessage().toLowerCase(Locale.ENGLISH).contains("invalid privatekey"))) { //$NON-NLS-1$
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_UNAUTHORIZED, jschEx.getMessage(), addRepositoryInfo(new JSONObject()), jschEx);
 		}
 
