@@ -94,7 +94,7 @@ public class DockerServer {
 		return dockerResponse;
 	}
 
-	public DockerContainer createDockerContainer(String imageName, String userName, List<String> volumes) {
+	public DockerContainer createDockerContainer(String imageName, String userName, String volume) {
 		DockerContainer dockerContainer = new DockerContainer();
 		HttpURLConnection httpURLConnection = null;
 		try {
@@ -110,13 +110,11 @@ public class DockerServer {
 			requestJSONObject.put("Tty", true);
 			requestJSONObject.put("OpenStdin", true);
 			requestJSONObject.put("StdinOnce", true);
-			if (volumes != null && !volumes.isEmpty()) {
+			if (volume != null) {
 				// volumes in create are in the format :  "Volumes": { "/home/user/project": {} }
 				JSONObject volumesObject = new JSONObject();
-				for (String volume : volumes) {
-					String orionVolume = volume.substring(volume.indexOf(':') + 1, volume.lastIndexOf(':'));
-					volumesObject.put(orionVolume, new JSONObject());
-				}
+				String orionVolume = volume.substring(volume.indexOf(':') + 1, volume.lastIndexOf(':'));
+				volumesObject.put(orionVolume, new JSONObject());
 				requestJSONObject.put("Volumes", volumesObject);
 			}
 			byte[] outputBytes = requestJSONObject.toString().getBytes("UTF-8");
@@ -675,17 +673,15 @@ public class DockerServer {
 		logger.error(e.getLocalizedMessage(), e);
 	}
 
-	public DockerContainer startDockerContainer(String containerId, List<String> binds, List<String> portBindings) {
+	public DockerContainer startDockerContainer(String containerId, String volume, List<String> portBindings) {
 		DockerContainer dockerContainer = new DockerContainer();
 		HttpURLConnection httpURLConnection = null;
 		try {
 			JSONObject requestJSONObject = new JSONObject();
-			if (binds != null && !binds.isEmpty()) {
+			if (volume != null) {
 				// binds are in the format : "Binds": [ "/host/path/serverworkspace/us/user/OrionContent/project:/OrionContent/project:rw" ]
 				JSONArray bindsArray = new JSONArray();
-				for (String volume : binds) {
-					bindsArray.put(volume);
-				}
+				bindsArray.put(volume);
 				requestJSONObject.put("Binds", bindsArray);
 			}
 			if (portBindings != null && !portBindings.isEmpty()) {

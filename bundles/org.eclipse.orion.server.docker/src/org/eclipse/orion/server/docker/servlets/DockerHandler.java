@@ -21,6 +21,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
@@ -29,9 +30,7 @@ import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
-import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.UserInfo;
-import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.docker.server.DockerContainer;
 import org.eclipse.orion.server.docker.server.DockerContainers;
 import org.eclipse.orion.server.docker.server.DockerImage;
@@ -67,49 +66,26 @@ public class DockerHandler extends ServletResourceHandler<String> {
 		return dockerServer;
 	}
 
-	private List<String> getDockerVolumes(String user) {
+	private String getDockerVolume(String user) {
 		try {
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
-			List<String> volumes = new ArrayList<String>();
 			IMetaStore metaStore = OrionConfiguration.getMetaStore();
 			UserInfo userInfo = metaStore.readUser(user);
 			List<String> workspaceIds = userInfo.getWorkspaceIds();
 			if (workspaceIds.isEmpty()) {
 				// the user has no workspaces so no projects
-				return volumes;
+				return null;
 			}
 			String workspaceId = workspaceIds.get(0);
-			WorkspaceInfo workspaceInfo = metaStore.readWorkspace(workspaceId);
-			List<String> projectNames = workspaceInfo.getProjectNames();
 
-			// create volumes for each of the projects
-			for (String projectName : projectNames) {
-				ProjectInfo projectInfo = metaStore.readProject(workspaceId, projectName);
-				URI contentLocation = projectInfo.getContentLocation();
-				if (contentLocation.getScheme().equals(EFS.SCHEME_FILE)) {
-					// the docker volume /home/user/project mounts local volume
-					// serverworkspace/us/user/OrionContent/project
-					String localVolume = EFS.getStore(contentLocation).toLocalFile(EFS.NONE, null).getAbsolutePath();
-					if (localVolume.indexOf("/OrionContent") != -1) {
-						String dockerVolume = localVolume.substring(localVolume.indexOf("/OrionContent") + 13);
-						String volume = localVolume + ":/home/" + user + dockerVolume + ":rw";
-						volumes.add(volume);
-					} else {
-						// we do not handle mapped projects right now
-						if (logger.isWarnEnabled()) {
-							logger.warn("Cannot handle mapped project " + contentLocation.toString() + " for user " + user);
-						}
-					}
-				} else {
-					// we do not handle ftp projects right now
-					if (logger.isWarnEnabled()) {
-						logger.warn("Cannot handle ftp project " + contentLocation.toString() + " for user " + user);
-					}
-				}
-			}
-			return volumes;
+			IFileStore workspaceContentLocation = metaStore.getWorkspaceContentLocation(workspaceId);
+			String localVolume = workspaceContentLocation.toLocalFile(EFS.NONE, null).getAbsolutePath();
+			String volume = localVolume + ":/home/" + user + ":rw";
+			logger.debug("Created Docker Volume \"" + volume + "\" for user " + user);
+			return volume;
 		} catch (CoreException e) {
-			e.printStackTrace();
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
+			logger.error(e.getLocalizedMessage(), e);
 		}
 		return null;
 	}
@@ -155,15 +131,15 @@ public class DockerHandler extends ServletResourceHandler<String> {
 				}
 			}
 
-			// get the volumes (projects) for the user
-			List<String> volumes = getDockerVolumes(user);
+			// get the volume (workspace root) for the user
+			String volume = getDockerVolume(user);
 
 			// get the container for the user
 			DockerContainer dockerContainer = dockerServer.getDockerContainer(user);
 			if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.OK) {
 
 				// user does not have a container, create one
-				dockerContainer = dockerServer.createDockerContainer(userBase, user, volumes);
+				dockerContainer = dockerServer.createDockerContainer(userBase, user, volume);
 				if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.CREATED) {
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
 				}
@@ -182,7 +158,7 @@ public class DockerHandler extends ServletResourceHandler<String> {
 			}
 
 			// start the container for the user
-			dockerContainer = dockerServer.startDockerContainer(user, volumes, portNumbers);
+			dockerContainer = dockerServer.startDockerContainer(user, volume, portNumbers);
 			if (dockerContainer.getStatusCode() == DockerResponse.StatusCode.STARTED) {
 				if (logger.isDebugEnabled()) {
 					logger.debug("Started Docker Container " + dockerContainer.getIdShort() + " for user " + user);
@@ -483,6 +459,12 @@ public class DockerHandler extends ServletResourceHandler<String> {
 				// there is no docker URI value in the orion.conf, so no docker support
 				dockerServer = null;
 				logger.debug("No Docker Server specified by \"" + ServerConstants.CONFIG_DOCKER_URI + "\" in orion.conf");
+				return;
+			}
+			if (! OrionConfiguration.getMetaStorePreference().equals(ServerConstants.CONFIG_META_STORE_SIMPLE_V2)) {
+				// the docker feature requires version two of the simple metadata storage, so no docker support
+				dockerServer = null;
+				logger.error("Docker Support requires version two of the simple metadata storage, see https://wiki.eclipse.org/Orion/Metadata_migration to migrate to the current version");
 				return;
 			}
 			URI dockerLocationURI = new URI(dockerLocation);
