@@ -10,6 +10,9 @@
  *******************************************************************************/
 package org.eclipse.orion.server.docker.servlets;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -60,6 +63,51 @@ public class DockerHandler extends ServletResourceHandler<String> {
 	public DockerHandler(ServletResourceHandler<IStatus> statusHandler) {
 		this.statusHandler = statusHandler;
 		initDockerServer();
+	}
+
+	private void createBashrc(String user) {
+		try {
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
+			IMetaStore metaStore = OrionConfiguration.getMetaStore();
+			UserInfo userInfo = metaStore.readUser(user);
+			List<String> workspaceIds = userInfo.getWorkspaceIds();
+			if (workspaceIds.isEmpty()) {
+				// the user has no workspaces, just return
+				return;
+			}
+			String workspaceId = workspaceIds.get(0);
+
+			// see if the .bashrc already exists
+			IFileStore workspaceContentLocation = metaStore.getWorkspaceContentLocation(workspaceId);
+			IFileStore bashrc = workspaceContentLocation.getChild(".bashrc");
+			if (bashrc.fetchInfo().exists()) {
+				// .bashrc already exists, return
+				return;
+			}
+
+			// copy the default bashrc if one exists on this system
+			File skelFile = new File("/etc/skel/.bashrc");
+			IFileStore skel = EFS.getLocalFileSystem().fromLocalFile(skelFile);
+			if (skel.fetchInfo().exists()) {
+				skel.copy(bashrc, EFS.NONE, null);
+			}
+			File bashrcFile = bashrc.toLocalFile(EFS.NONE, null);
+
+			// append lines to the bashrc
+			String lines = new String("set -o vi\nPS1=\"\\u:\\w[\\!] % \"\n");
+			FileWriter fileWritter = new FileWriter(bashrcFile, true);
+			BufferedWriter bufferWritter = new BufferedWriter(fileWritter);
+			bufferWritter.write(lines);
+			bufferWritter.close();
+
+			logger.debug("Created new file " + bashrcFile.toString() + " for user " + user);
+		} catch (CoreException e) {
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
+			logger.error(e.getLocalizedMessage(), e);
+		} catch (IOException e) {
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
+			logger.error(e.getLocalizedMessage(), e);
+		}
 	}
 
 	private DockerServer getDockerServer() {
@@ -146,6 +194,9 @@ public class DockerHandler extends ServletResourceHandler<String> {
 				if (logger.isDebugEnabled()) {
 					logger.debug("Created Docker Container " + dockerContainer.getIdShort() + " for user " + user);
 				}
+
+				// if the user does not have a bashrc, create one
+				createBashrc(user);
 			}
 
 			// get the exposed ports from the docker image
@@ -461,7 +512,7 @@ public class DockerHandler extends ServletResourceHandler<String> {
 				logger.debug("No Docker Server specified by \"" + ServerConstants.CONFIG_DOCKER_URI + "\" in orion.conf");
 				return;
 			}
-			if (! OrionConfiguration.getMetaStorePreference().equals(ServerConstants.CONFIG_META_STORE_SIMPLE_V2)) {
+			if (!OrionConfiguration.getMetaStorePreference().equals(ServerConstants.CONFIG_META_STORE_SIMPLE_V2)) {
 				// the docker feature requires version two of the simple metadata storage, so no docker support
 				dockerServer = null;
 				logger.error("Docker Support requires version two of the simple metadata storage, see https://wiki.eclipse.org/Orion/Metadata_migration to migrate to the current version");
