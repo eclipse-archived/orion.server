@@ -31,14 +31,24 @@ import org.slf4j.LoggerFactory;
  */
 public class SimpleMetaStoreMigrationV2 {
 
+	private static final String LEGACY_METADATA_DIR = "/.metadata/.plugins/org.eclipse.orion.server.core/.settings/";
+	private static final String SECURESTORAGE_DIR = "/.metadata/.plugins/org.eclipse.orion.server.user.securestorage";
 	private PrintStream migrationLog;
 
-	public boolean isMigrationRequired(File rootLocation) {
-		if (SimpleMetaStore.getOrionVersion(rootLocation) == SimpleMetaStoreV1.VERSION) {
-			// version one exists, migration is required
-			return true;
+	private void deleteFile(File parentFile) {
+		if (parentFile.isDirectory()) {
+			File[] allFiles = parentFile.listFiles();
+			if (allFiles.length == 0) {
+				parentFile.delete();
+			} else {
+				for (File file : allFiles) {
+					deleteFile(file);
+				}
+				parentFile.delete();
+			}
+		} else {
+			parentFile.delete();
 		}
-		return false;
 	}
 
 	public void doMigration(File rootLocation) {
@@ -62,101 +72,68 @@ public class SimpleMetaStoreMigrationV2 {
 				// process organizational folder "an" in /serverworkspace/an/anthony
 				updateOrganizationalFolder(next);
 			} else {
-				migrationLogPrint("ERROR: workspace root contains invalid metadata: orphan folder " + next.toString()); //$NON-NLS-1$
+				migrationLogPrint("ERROR: workspace root contains invalid metadata: deleted orphan folder " + next.toString()); //$NON-NLS-1$
+				deleteFile(next);
 			}
+		}
+		
+		File secureStorage = new File(rootLocation, SECURESTORAGE_DIR);
+		if (secureStorage.exists()) {
+			migrationLogPrint("ERROR: deleted legacy secure storage folder: " + secureStorage.toString()); //$NON-NLS-1$
+			deleteFile(secureStorage);
+		}
+		File orionLegacyPrefs = new File(rootLocation, LEGACY_METADATA_DIR);
+		if (orionLegacyPrefs.exists()) {
+			migrationLogPrint("ERROR: deleted legacy metadata storage folder: " + orionLegacyPrefs.toString()); //$NON-NLS-1$
+			deleteFile(orionLegacyPrefs);
 		}
 
 		migrationLogClose();
 		logger.info("Completed simple storage migration."); //$NON-NLS-1$
 	}
-
-	private void updateOrganizationalFolder(File folder) {
-		File[] files = folder.listFiles();
-		for (int i = 0; i < files.length; i++) {
-			File next = files[i];
-			if (next.isDirectory()) {
-				// process user folder "anthony" in /serverworkspace/an/anthony
-				updateUserFolder(next);
-			} else {
-				migrationLogPrint("ERROR: organizational folder contains invalid metadata: orphan file " + next.toString()); //$NON-NLS-1$
-			}
+	
+	public boolean isMigrationRequired(File rootLocation) {
+		if (SimpleMetaStore.getOrionVersion(rootLocation) == SimpleMetaStoreV1.VERSION) {
+			// version one exists, migration is required
+			return true;
 		}
+		return false;
 	}
 
-	private void updateUserFolder(File folder) {
-		if (!SimpleMetaStoreUtil.isMetaFile(folder, SimpleMetaStore.USER)) {
-			migrationLogPrint("ERROR: user folder contains invalid metadata: orphan folder " + folder.toString()); //$NON-NLS-1$
-			return;
-		}
-		migrationLogPrint("Processing user: " + folder.getName());
-		updateOrionVersion(folder, SimpleMetaStore.USER);
-		File userMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(folder, SimpleMetaStore.USER);
-		File[] files = folder.listFiles();
-		for (int i = 0; i < files.length; i++) {
-			File next = files[i];
-			if (next.getName().equals(userMetaFile.getName())) {
-				continue;
-			} else if (next.isDirectory()) {
-				// process workspace folder in /serverworkspace/an/anthony
-				updateWorkspaceFolder(next);
-			} else {
-				migrationLogPrint("ERROR: user folder contains invalid metadata: orphan file " + next.toString()); //$NON-NLS-1$
-			}
-		}
+	/**
+	 * Close the migration log.
+	 */
+	private void migrationLogClose() {
+		migrationLog.close();
 	}
 
-	private void updateWorkspaceFolder(File folder) {
+	/** 
+	 * Open the migration log, the log is stored at the user provided workspace root.
+	 * @param workspaceRoot the workspace root.
+	 * @throws FileNotFoundException
+	 */
+	private void migrationLogOpen(File workspaceRoot) {
 		try {
-			if (!SimpleMetaStoreUtil.isMetaFile(folder, SimpleMetaStore.WORKSPACE)) {
-				migrationLogPrint("ERROR: workspace folder contains invalid metadata: orphan folder " + folder.toString()); //$NON-NLS-1$
-				return;
-			}
-			updateOrionVersion(folder, SimpleMetaStore.WORKSPACE);
-			String workspaceId = moveWorkspaceJsonFile(folder);
-			if (workspaceId == null) {
-				return;
-			}
-			File workspaceMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(folder.getParentFile(), workspaceId);
-			JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(folder.getParentFile(), workspaceId);
-			if (!jsonObject.has("ProjectNames")) {
-				migrationLogPrint("ERROR: workspace metadata is missing ProjectNames " + workspaceMetaFile.toString()); //$NON-NLS-1$
-				return;
-			}
-			JSONArray projectNames = jsonObject.getJSONArray("ProjectNames");
-			List<String> projectNameList = new ArrayList<String>();
-			for (int i = 0; i < projectNames.length(); i++) {
-				projectNameList.add(projectNames.getString(i));
-			}
-			File[] files = folder.listFiles();
-			for (int i = 0; i < files.length; i++) {
-				File next = files[i];
-				if (next.getName().equals(workspaceMetaFile.getName())) {
-					continue;
-				} else if (next.isDirectory()) {
-					// process project folder in /serverworkspace/an/anthony/workspace
-					if (!projectNameList.contains(next.getName())) {
-						migrationLogPrint("ERROR: workspace folder contains invalid metadata: orphan project folder " + next.toString()); //$NON-NLS-1$
-					}
-				} else if (next.isFile()) {
-					// process project folder in /serverworkspace/an/anthony/workspace
-					if (next.getName().endsWith(SimpleMetaStoreUtil.METAFILE_EXTENSION)) {
-						String name = next.getName().substring(0, next.getName().length() - SimpleMetaStoreUtil.METAFILE_EXTENSION.length());
-						if (!projectNameList.contains(name)) {
-							migrationLogPrint("ERROR: workspace folder contains invalid metadata: orphan project file " + next.toString()); //$NON-NLS-1$
-						} else {
-							updateOrionVersion(folder, name);
-							moveProjectJsonFile(folder, name);
-						}
-					} else {
-						migrationLogPrint("ERROR: workspace folder contains invalid metadata: orphan file " + next.toString()); //$NON-NLS-1$
-					}
-				} else {
-					migrationLogPrint("ERROR: workspace folder contains invalid metadata: orphan file " + next.toString()); //$NON-NLS-1$
-				}
-			}
-		} catch (JSONException e) {
-			throw new RuntimeException("SimpleMetaStoreMigrationV2: could not update file: " + e.getLocalizedMessage());
+			File metadataFolder = new File(workspaceRoot, ".metadata");
+			File logFile = new File(metadataFolder, "migration2.log");
+			FileOutputStream stream = new FileOutputStream(logFile);
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+			logger.info("Simple storage version two migration log is at " + logFile.getAbsolutePath());
+			migrationLog = new PrintStream(stream);
+		} catch (FileNotFoundException e) {
+			throw new RuntimeException("SimpleMetaStoreMigration.migrationLogOpen: could not create migration log.");
 		}
+	}
+
+	/**
+	 * Print a message to the migration log.
+	 * @param message the message.
+	 */
+	private void migrationLogPrint(String message) {
+		migrationLog.println(message);
+		// If debugging is turned on print the message to the logger as well
+		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+		logger.debug(message); //$NON-NLS-1$
 	}
 
 	private void moveProjectJsonFile(File folder, String projectName) {
@@ -194,6 +171,20 @@ public class SimpleMetaStoreMigrationV2 {
 		}
 	}
 
+	private void updateOrganizationalFolder(File folder) {
+		File[] files = folder.listFiles();
+		for (int i = 0; i < files.length; i++) {
+			File next = files[i];
+			if (next.isDirectory()) {
+				// process user folder "anthony" in /serverworkspace/an/anthony
+				updateUserFolder(next);
+			} else {
+				migrationLogPrint("ERROR: organizational folder contains invalid metadata: deleted orphan file " + next.toString()); //$NON-NLS-1$
+				deleteFile(next);
+			}
+		}
+	}
+
 	private void updateOrionVersion(File parent, String name) {
 		try {
 			JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(parent, name);
@@ -206,40 +197,87 @@ public class SimpleMetaStoreMigrationV2 {
 		}
 	}
 
-	/**
-	 * Close the migration log.
-	 */
-	private void migrationLogClose() {
-		migrationLog.close();
-	}
-
-	/** 
-	 * Open the migration log, the log is stored at the user provided workspace root.
-	 * @param workspaceRoot the workspace root.
-	 * @throws FileNotFoundException
-	 */
-	private void migrationLogOpen(File workspaceRoot) {
-		try {
-			File metadataFolder = new File(workspaceRoot, ".metadata");
-			File logFile = new File(metadataFolder, "migration2.log");
-			FileOutputStream stream = new FileOutputStream(logFile);
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-			logger.info("Simple storage version two migration log is at " + logFile.getAbsolutePath());
-			migrationLog = new PrintStream(stream);
-		} catch (FileNotFoundException e) {
-			throw new RuntimeException("SimpleMetaStoreMigration.migrationLogOpen: could not create migration log.");
+	private void updateUserFolder(File folder) {
+		if (!SimpleMetaStoreUtil.isMetaFile(folder, SimpleMetaStore.USER)) {
+			migrationLogPrint("ERROR: user folder contains invalid metadata: deleted orphan folder " + folder.toString()); //$NON-NLS-1$
+			deleteFile(folder);
+			return;
+		}
+		migrationLogPrint("Processing user: " + folder.getName());
+		updateOrionVersion(folder, SimpleMetaStore.USER);
+		File userMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(folder, SimpleMetaStore.USER);
+		File[] files = folder.listFiles();
+		for (int i = 0; i < files.length; i++) {
+			File next = files[i];
+			if (next.getName().equals(userMetaFile.getName())) {
+				continue;
+			} else if (next.isDirectory()) {
+				// process workspace folder in /serverworkspace/an/anthony
+				updateWorkspaceFolder(next);
+			} else {
+				migrationLogPrint("ERROR: user folder contains invalid metadata: orphan orphan file " + next.toString()); //$NON-NLS-1$
+				deleteFile(next);
+			}
 		}
 	}
 
-	/**
-	 * Print a message to the migration log.
-	 * @param message the message.
-	 */
-	private void migrationLogPrint(String message) {
-		migrationLog.println(message);
-		// If debugging is turned on print the message to the logger as well
-		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-		logger.debug(message); //$NON-NLS-1$
+	private void updateWorkspaceFolder(File folder) {
+		try {
+			if (!SimpleMetaStoreUtil.isMetaFile(folder, SimpleMetaStore.WORKSPACE)) {
+				migrationLogPrint("ERROR: workspace folder contains invalid metadata: deleted orphan folder " + folder.toString()); //$NON-NLS-1$
+				deleteFile(folder);
+				return;
+			}
+			updateOrionVersion(folder, SimpleMetaStore.WORKSPACE);
+			String workspaceId = moveWorkspaceJsonFile(folder);
+			if (workspaceId == null) {
+				return;
+			}
+			File workspaceMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(folder.getParentFile(), workspaceId);
+			JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(folder.getParentFile(), workspaceId);
+			if (!jsonObject.has("ProjectNames")) {
+				migrationLogPrint("ERROR: workspace metadata is missing ProjectNames " + workspaceMetaFile.toString()); //$NON-NLS-1$
+				return;
+			}
+			JSONArray projectNames = jsonObject.getJSONArray("ProjectNames");
+			List<String> projectNameList = new ArrayList<String>();
+			for (int i = 0; i < projectNames.length(); i++) {
+				projectNameList.add(projectNames.getString(i));
+			}
+			File[] files = folder.listFiles();
+			for (int i = 0; i < files.length; i++) {
+				File next = files[i];
+				if (next.getName().equals(workspaceMetaFile.getName())) {
+					continue;
+				} else if (next.isDirectory()) {
+					// process project folder in /serverworkspace/an/anthony/workspace
+					if (!projectNameList.contains(next.getName())) {
+						migrationLogPrint("ERROR: workspace folder contains invalid metadata: deleted orphan project folder " + next.toString()); //$NON-NLS-1$
+						deleteFile(next);
+					}
+				} else if (next.isFile()) {
+					// process project folder in /serverworkspace/an/anthony/workspace
+					if (next.getName().endsWith(SimpleMetaStoreUtil.METAFILE_EXTENSION)) {
+						String name = next.getName().substring(0, next.getName().length() - SimpleMetaStoreUtil.METAFILE_EXTENSION.length());
+						if (!projectNameList.contains(name)) {
+							migrationLogPrint("ERROR: workspace folder contains invalid metadata: deleted orphan project file " + next.toString()); //$NON-NLS-1$
+							deleteFile(next);
+						} else {
+							updateOrionVersion(folder, name);
+							moveProjectJsonFile(folder, name);
+						}
+					} else {
+						migrationLogPrint("ERROR: workspace folder contains invalid metadata: deleted orphan file " + next.toString()); //$NON-NLS-1$
+						deleteFile(next);
+					}
+				} else {
+					migrationLogPrint("ERROR: workspace folder contains invalid metadata: deleted orphan file " + next.toString()); //$NON-NLS-1$
+					deleteFile(next);
+				}
+			}
+		} catch (JSONException e) {
+			throw new RuntimeException("SimpleMetaStoreMigrationV2: could not update file: " + e.getLocalizedMessage());
+		}
 	}
 
 }
