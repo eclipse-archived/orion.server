@@ -1,6 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %Bundle-Name
+Bundle-Localization: bundle
 Bundle-SymbolicName: org.eclipse.orion.server.logs;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: org.eclipse.orion.server.logs.LogsActivator
