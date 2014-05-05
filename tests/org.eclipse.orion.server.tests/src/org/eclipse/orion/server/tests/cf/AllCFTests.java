@@ -15,7 +15,7 @@ import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
 @RunWith(Suite.class)
-@SuiteClasses({ManifestParserTest.class, ManifestUtilsTest.class})
+@SuiteClasses({ManifestParserTest.class, ManifestUtilsTest.class, PackagerTest.class})
 public class AllCFTests {
 
 }

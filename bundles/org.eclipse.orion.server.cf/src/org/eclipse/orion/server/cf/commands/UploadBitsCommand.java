@@ -10,26 +10,19 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.commands;
 
-import java.io.*;
+import java.io.File;
 import java.net.URI;
-import java.util.UUID;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.multipart.*;
-import org.eclipse.core.filesystem.*;
-import org.eclipse.core.internal.filesystem.local.LocalFile;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.URIUtil;
-import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
-import org.eclipse.orion.server.cf.utils.HttpUtil;
-import org.eclipse.orion.server.cf.utils.MultiServerStatus;
+import org.eclipse.orion.server.cf.utils.*;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONObject;
@@ -56,7 +49,7 @@ public class UploadBitsCommand extends AbstractRevertableCFCommand {
 
 		try {
 			/* upload project contents */
-			File appPackage = getAppPackage(application.getAppStore());
+			File appPackage = PackageUtils.getApplicationPackage(application.getAppStore());
 			if (appPackage == null) {
 				status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to read application content", null));
 				return revert(status);
@@ -129,56 +122,6 @@ public class UploadBitsCommand extends AbstractRevertableCFCommand {
 			logger.error(msg, e);
 			status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
 			return revert(status);
-		}
-	}
-
-	private File getAppPackage(IFileStore appStore) throws IOException, CoreException {
-		if (appStore == null)
-			return null;
-
-		if (!appStore.fetchInfo().exists())
-			return null;
-
-		/* zip application to a temporary file */
-		String randomName = UUID.randomUUID().toString();
-		File tmp = File.createTempFile(randomName, ".zip"); //$NON-NLS-1$
-
-		// try to find a war file
-		if (appStore.getName().endsWith(".war")) { //$NON-NLS-1$
-			appStore.copy(new LocalFile(tmp), EFS.OVERWRITE, null);
-			return tmp;
-		}
-
-		IFileStore[] children = appStore.childStores(EFS.NONE, null);
-		for (int i = 0; i < children.length; i++) {
-			if (children[i].getName().endsWith(".war")) { //$NON-NLS-1$
-				children[i].copy(new LocalFile(tmp), EFS.OVERWRITE, null);
-				return tmp;
-			}
-		}
-
-		try {
-			ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(tmp));
-			writeZip(appStore, Path.EMPTY, zos);
-			zos.close();
-		} catch (Exception ex) {
-			/* delete corrupted zip file */
-			tmp.delete();
-		}
-
-		return tmp;
-	}
-
-	/* recursively zip the entire directory */
-	private void writeZip(IFileStore source, IPath path, ZipOutputStream zos) throws IOException, CoreException {
-		IFileInfo info = source.fetchInfo(EFS.NONE, null);
-		if (info.isDirectory()) {
-			for (IFileStore child : source.childStores(EFS.NONE, null))
-				writeZip(child, path.append(child.getName()), zos);
-		} else {
-			ZipEntry entry = new ZipEntry(path.toString());
-			zos.putNextEntry(entry);
-			IOUtilities.pipe(source.openInputStream(EFS.NONE, null), zos, true, false);
 		}
 	}
 }
