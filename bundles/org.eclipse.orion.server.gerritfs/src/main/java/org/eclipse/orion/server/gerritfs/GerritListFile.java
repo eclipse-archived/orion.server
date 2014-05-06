@@ -121,7 +121,7 @@ public class GerritListFile extends HttpServlet {
 		    	log.debug("Anonymous user");
 		    }
 		}
-		    
+		resp.setCharacterEncoding("UTF-8");
 		final PrintWriter out = resp.getWriter();
 		try {
 			String pathInfo = req.getPathInfo();
