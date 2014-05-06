@@ -10,13 +10,14 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.handlers.v1;
 
+import org.eclipse.orion.server.core.IOUtilities;
+
 import java.net.URI;
 import java.net.URLDecoder;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.*;
-import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.commands.*;

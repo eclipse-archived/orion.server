@@ -10,12 +10,12 @@
  *******************************************************************************/
 package org.eclipse.orion.server.configurator.configuration;
 
+import org.eclipse.orion.server.core.IOUtilities;
+
 import java.io.*;
 import java.net.URL;
 import java.util.Properties;
 import org.eclipse.core.runtime.preferences.*;
-import org.eclipse.orion.internal.server.core.Activator;
-import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.server.configurator.ConfiguratorActivator;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerConstants;
@@ -33,7 +33,7 @@ public class OrionPreferenceInitializer extends AbstractPreferenceInitializer {
 	 * Locate and return the server configuration file. Returns null if the file could not be found.
 	 */
 	private File findServerConfigFile() {
-		String location = Activator.getDefault().getContext().getProperty(ServerConstants.PROP_CONFIG_FILE_LOCATION);
+		String location = ConfiguratorActivator.getDefault().getContext().getProperty(ServerConstants.PROP_CONFIG_FILE_LOCATION);
 		if (location == null)
 			location = DEFAULT_CONFIG_FILE;
 

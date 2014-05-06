@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git;
 
+import org.eclipse.orion.server.core.IWebResourceDecorator;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -22,7 +24,6 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler.Method;
 import org.eclipse.orion.internal.server.servlets.workspace.WorkspaceResourceHandler;

@@ -13,9 +13,10 @@ package org.eclipse.orion.server.authentication.formpersona;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.*;
+
 import javax.servlet.http.*;
+
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.user.profile.*;

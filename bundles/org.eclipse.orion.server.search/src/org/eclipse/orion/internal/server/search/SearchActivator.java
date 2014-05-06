@@ -34,11 +34,11 @@ import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.orion.internal.server.core.Activator;
-import org.eclipse.orion.internal.server.core.IOUtilities;
-import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.IOUtilities;
+import org.eclipse.orion.server.core.IWebResourceDecorator;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.OrionConfiguration;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.framework.BundleActivator;
@@ -103,7 +103,7 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 	 */
 	private void createServer() {
 		try {
-			File rootFile = Activator.getDefault().getPlatformLocation().toFile();
+			File rootFile = OrionConfiguration.getPlatformLocation().toFile();
 			File baseDir = new File(rootFile, ".metadata/.plugins/" + PI_SEARCH); //$NON-NLS-1$
 			// discard all server data if the index generation has changed
 			if (readIndexGeneration(baseDir) != CURRENT_INDEX_GENERATION) {

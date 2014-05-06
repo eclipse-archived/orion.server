@@ -10,11 +10,12 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.hosting;
 
+import org.eclipse.orion.server.core.IWebResourceDecorator;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import javax.servlet.http.HttpServletRequest;
 import org.eclipse.core.runtime.*;
-import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.hosting.IHostedSite;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;

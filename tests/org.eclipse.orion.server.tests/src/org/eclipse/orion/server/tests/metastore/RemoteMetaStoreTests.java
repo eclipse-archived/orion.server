@@ -19,9 +19,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Iterator;
 
-import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
+import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.useradmin.UserConstants;
 import org.json.JSONArray;

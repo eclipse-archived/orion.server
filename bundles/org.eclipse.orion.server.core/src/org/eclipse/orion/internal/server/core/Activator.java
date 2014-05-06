@@ -14,12 +14,16 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.util.Collection;
+
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.preferences.IPreferencesService;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreV1;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreV2;
 import org.eclipse.orion.internal.server.core.tasks.TaskService;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.tasks.ITaskService;
@@ -27,8 +31,6 @@ import org.eclipse.osgi.framework.log.FrameworkLog;
 import org.eclipse.osgi.service.datalocation.Location;
 import org.osgi.framework.*;
 import org.osgi.util.tracker.ServiceTracker;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Activator for the server core bundle.
@@ -43,7 +45,6 @@ public class Activator implements BundleActivator {
 	ServiceTracker<IPreferencesService, IPreferencesService> prefTracker;
 	private ServiceRegistration<ITaskService> taskServiceRegistration;
 	private IMetaStore metastore;
-	private ServiceReference<IMetaStore> metastoreServiceReference;
 	private URI rootStoreURI;
 
 	public static Activator getDefault() {
@@ -69,35 +70,6 @@ public class Activator implements BundleActivator {
 	 * @throws IllegalStateException if the server is not properly configured to have an @link {@link IMetaStore}. 
 	 */
 	public synchronized IMetaStore getMetastore() {
-		//note we intentionally only initialize this once rather than dynamically reacting
-		//to further service changes at runtime. If the backing metastore were to switch dynamically
-		//after this point it would break everything because the metadata would be lost
-		if (metastore == null) {
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-			logger.info("Initializing server metadata store"); //$NON-NLS-1$
-
-			//todo orion configuration should specify which metadata store to use
-			String filter = null;
-			Collection<ServiceReference<IMetaStore>> services;
-			try {
-				services = bundleContext.getServiceReferences(IMetaStore.class, filter);
-			} catch (InvalidSyntaxException e) {
-				//can only happen if our filter is malformed, which it should never be
-				throw new RuntimeException(e);
-			}
-			if (services.size() == 1) {
-				metastoreServiceReference = services.iterator().next();
-				logger.debug("Found metastore service: " + metastoreServiceReference); //$NON-NLS-1$
-				metastore = bundleContext.getService(metastoreServiceReference);
-			}
-			if (metastore == null) {
-				//if we still don't have a store then something is wrong with server configuration
-				final String msg = "Invalid server configuration. Failed to initialize a metadata store"; //$NON-NLS-1$
-				final IllegalStateException failure = new IllegalStateException(msg);
-				logger.debug(msg, failure);
-				throw failure;
-			}
-		}
 		return metastore;
 	}
 
@@ -169,6 +141,27 @@ public class Activator implements BundleActivator {
 		}
 	}
 
+	private void initializeMetaStore() {
+		String pref = OrionConfiguration.getMetaStorePreference();
+		if (ServerConstants.CONFIG_META_STORE_SIMPLE_V2.equals(pref)) {
+			try {
+				metastore =  new SimpleMetaStoreV2(OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null));
+			} catch (CoreException e) {
+				throw new RuntimeException("Cannot initialize MetaStore", e); //$NON-NLS-1$
+			}
+		} else if (ServerConstants.CONFIG_META_STORE_SIMPLE.equals(pref)) {
+			try {
+				metastore = new SimpleMetaStoreV1(OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null));
+			} catch (CoreException e) {
+				throw new RuntimeException("Cannot initialize MetaStore", e); //$NON-NLS-1$
+			}
+		} else {
+			throw new RuntimeException("Cannot initialize MetaStore - old metadata must be upgraded!"); //$NON-NLS-1$
+		}
+		bundleContext.registerService(IMetaStore.class, metastore, null);
+	}
+	
+	
 	/*(non-Javadoc)
 	 * @see org.osgi.framework.BundleActivator#start(org.osgi.framework.BundleContext)
 	 */
@@ -176,6 +169,7 @@ public class Activator implements BundleActivator {
 		singleton = this;
 		bundleContext = context;
 		initializeFileSystem();
+		initializeMetaStore();
 		registerServices();
 	}
 
@@ -203,10 +197,6 @@ public class Activator implements BundleActivator {
 			logTracker = null;
 		}
 		metastore = null;
-		if (metastoreServiceReference != null) {
-			bundleContext.ungetService(metastoreServiceReference);
-			metastoreServiceReference = null;
-		}
 		bundleContext = null;
 	}
 

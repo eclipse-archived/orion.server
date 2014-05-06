@@ -10,26 +10,12 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets;
 
-import java.net.URI;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
-import org.eclipse.core.filesystem.EFS;
-import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.Path;
-import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
-import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreV1;
-import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreV2;
 import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
-import org.eclipse.orion.internal.server.servlets.workspace.CompatibilityMetaStore;
 import org.eclipse.orion.internal.server.servlets.workspace.ProjectParentDecorator;
 import org.eclipse.orion.internal.server.servlets.xfer.TransferResourceDecorator;
-import org.eclipse.orion.server.core.OrionConfiguration;
-import org.eclipse.orion.server.core.ServerConstants;
-import org.eclipse.orion.server.core.metastore.IMetaStore;
+import org.eclipse.orion.server.core.IWebResourceDecorator;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
@@ -39,7 +25,6 @@ import org.osgi.util.tracker.ServiceTracker;
  * Activator for the server servlet bundle. Responsible for tracking required services
  * and registering/unregistering servlets.
  */
-@SuppressWarnings("deprecation")
 public class Activator implements BundleActivator {
 
 	public static volatile BundleContext bundleContext;
@@ -57,14 +42,11 @@ public class Activator implements BundleActivator {
 
 	static Activator singleton;
 
-	private Map<String, URI> aliases = Collections.synchronizedMap(new HashMap<String, URI>());
 	private ServiceTracker<IWebResourceDecorator, IWebResourceDecorator> decoratorTracker;
 	private ServiceTracker<ISiteHostingService, ISiteHostingService> siteHostingTracker;
 
 	private ServiceRegistration<IWebResourceDecorator> transferDecoratorRegistration;
 	private ServiceRegistration<IWebResourceDecorator> parentDecoratorRegistration;
-
-	private ServiceRegistration<IMetaStore> metastoreRegistration;
 
 	public static Activator getDefault() {
 		return singleton;
@@ -101,41 +83,6 @@ public class Activator implements BundleActivator {
 		return hostingServices.size() == 0 ? null : hostingServices.iterator().next();
 	}
 
-	private void initializeFileSystem() {
-		IFileStore rootStore = OrionConfiguration.getRootLocation();
-		try {
-			rootStore.mkdir(EFS.NONE, null);
-		} catch (CoreException e) {
-			throw new RuntimeException("Instance location is read only: " + rootStore, e); //$NON-NLS-1$
-		}
-
-		//initialize user area if not specified
-		if (System.getProperty(PROP_USER_AREA) == null) {
-			System.setProperty(PROP_USER_AREA, rootStore.getFileStore(new Path(".metadata/.plugins/org.eclipse.orion.server.core/userArea")).toString()); //$NON-NLS-1$
-		}
-	}
-
-	private void initializeMetaStore() {
-		String metastore = OrionConfiguration.getMetaStorePreference();
-
-		if (ServerConstants.CONFIG_META_STORE_SIMPLE_V2.equals(metastore)) {
-			try {
-				metastoreRegistration = bundleContext.registerService(IMetaStore.class, new SimpleMetaStoreV2(OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null)), null);
-			} catch (CoreException e) {
-				throw new RuntimeException("Cannot initialize MetaStore", e); //$NON-NLS-1$
-			}
-		} else if (ServerConstants.CONFIG_META_STORE_SIMPLE.equals(metastore)) {
-			try {
-				metastoreRegistration = bundleContext.registerService(IMetaStore.class, new SimpleMetaStoreV1(OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null)), null);
-			} catch (CoreException e) {
-				throw new RuntimeException("Cannot initialize MetaStore", e); //$NON-NLS-1$
-			}
-		} else {
-			//legacy metadata store implementation
-			metastoreRegistration = bundleContext.registerService(IMetaStore.class, new CompatibilityMetaStore(), null);
-		}
-	}
-
 	/**
 	 * Registers services supplied by this bundle
 	 */
@@ -149,8 +96,6 @@ public class Activator implements BundleActivator {
 	public void start(BundleContext context) throws Exception {
 		singleton = this;
 		bundleContext = context;
-		initializeMetaStore();
-		initializeFileSystem();
 		registerServices();
 	}
 
@@ -167,10 +112,6 @@ public class Activator implements BundleActivator {
 		bundleContext = null;
 	}
 
-	public void unregisterAlias(String alias) {
-		aliases.remove(alias);
-	}
-
 	private void unregisterServices() {
 		if (transferDecoratorRegistration != null) {
 			transferDecoratorRegistration.unregister();
@@ -180,10 +121,5 @@ public class Activator implements BundleActivator {
 			parentDecoratorRegistration.unregister();
 			parentDecoratorRegistration = null;
 		}
-		if (metastoreRegistration != null) {
-			metastoreRegistration.unregister();
-			metastoreRegistration = null;
-		}
 	}
-
 }

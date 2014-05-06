@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
+import org.eclipse.orion.server.core.IOUtilities;
+
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -28,7 +30,6 @@ import org.eclipse.jgit.merge.ResolveMerger.MergeFailureReason;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.filter.*;
-import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;

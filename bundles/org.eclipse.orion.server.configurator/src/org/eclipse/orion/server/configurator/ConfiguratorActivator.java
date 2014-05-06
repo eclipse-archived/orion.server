@@ -13,6 +13,8 @@ package org.eclipse.orion.server.configurator;
 
 import static org.eclipse.orion.server.configurator.configuration.ConfigurationFormat.DEFAULT_AUTHENTICATION_NAME;
 
+import org.osgi.framework.BundleContext;
+
 import java.util.*;
 import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.core.authentication.IAuthenticationService;
@@ -85,6 +87,10 @@ public class ConfiguratorActivator implements BundleActivator {
 
 	public static ConfiguratorActivator getDefault() {
 		return singleton;
+	}
+
+	public BundleContext getContext() {
+		return bundleContext;
 	}
 
 	public void start(BundleContext context) throws Exception {

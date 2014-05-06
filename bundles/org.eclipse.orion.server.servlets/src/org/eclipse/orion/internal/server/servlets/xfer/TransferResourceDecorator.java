@@ -12,13 +12,15 @@ package org.eclipse.orion.internal.server.servlets.xfer;
 
 import java.io.UnsupportedEncodingException;
 import java.net.*;
+
 import javax.servlet.http.HttpServletRequest;
+
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
-import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
+import org.eclipse.orion.server.core.IWebResourceDecorator;
 import org.eclipse.orion.server.core.LogHelper;
 import org.json.*;
 

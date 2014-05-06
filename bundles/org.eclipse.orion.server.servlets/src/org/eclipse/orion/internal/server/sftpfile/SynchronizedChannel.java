@@ -12,9 +12,11 @@ package org.eclipse.orion.internal.server.sftpfile;
 
 import com.jcraft.jsch.*;
 import com.jcraft.jsch.ChannelSftp.LsEntry;
+
 import java.io.*;
 import java.util.Vector;
-import org.eclipse.orion.internal.server.core.IOUtilities;
+
+import org.eclipse.orion.server.core.IOUtilities;
 
 /**
  * A thread safe wrapper for a jsch channel object. Individual channels

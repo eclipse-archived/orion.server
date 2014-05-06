@@ -14,7 +14,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.orion.internal.server.core.IOUtilities;
+import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.tests.AbstractServerTest;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;

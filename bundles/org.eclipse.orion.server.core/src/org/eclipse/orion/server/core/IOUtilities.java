@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.internal.server.core;
+package org.eclipse.orion.server.core;
 
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
@@ -26,7 +26,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.eclipse.orion.internal.server.core.EndingAwareLineReader.LineDelimiter;
+import org.eclipse.orion.server.core.EndingAwareLineReader.LineDelimiter;
 
 /**
  * Various static helper methods for I/O processing.

@@ -1,4 +1,4 @@
-package org.eclipse.orion.internal.server.core;
+package org.eclipse.orion.server.core;
 
 import java.io.BufferedReader;
 import java.io.IOException;

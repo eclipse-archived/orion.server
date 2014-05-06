@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.internal.server.core;
+package org.eclipse.orion.server.core;
 
 import java.io.IOException;
 import java.io.InputStream;

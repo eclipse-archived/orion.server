@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
+import org.eclipse.orion.server.core.IOUtilities;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Map.Entry;
@@ -24,7 +26,6 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoFilepatternException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;

@@ -12,15 +12,19 @@ package org.eclipse.orion.server.core;
 
 import java.io.File;
 import java.net.URI;
+import java.net.URL;
 
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.core.Activator;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreV1;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreV2;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
+import org.eclipse.osgi.service.datalocation.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -114,5 +118,12 @@ public class OrionConfiguration {
 			//this is fatal, we can't access the root location
 			throw new Error("Failed to access platform instance location", e); //$NON-NLS-1$
 		}
+	}
+	
+	/**
+	 * Returns the root file system location for the workspace.
+	 */
+	public static IPath getPlatformLocation() {
+		return Activator.getDefault().getPlatformLocation();
 	}
 }

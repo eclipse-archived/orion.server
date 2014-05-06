@@ -17,7 +17,7 @@ import static org.junit.Assert.assertNull;
 import java.io.ByteArrayInputStream;
 import java.util.Map;
 
-import org.eclipse.orion.internal.server.core.IOUtilities;
+import org.eclipse.orion.server.core.IOUtilities;
 import org.junit.Test;
 
 public class IOUtilitiesTest {

@@ -10,9 +10,10 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git;
 
+import org.eclipse.orion.server.core.IWebResourceDecorator;
+
 import org.eclipse.core.runtime.preferences.IPreferencesService;
 import org.eclipse.jgit.transport.SshSessionFactory;
-import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.util.tracker.ServiceTracker;

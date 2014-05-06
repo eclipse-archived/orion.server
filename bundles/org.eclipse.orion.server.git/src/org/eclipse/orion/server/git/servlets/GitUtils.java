@@ -20,7 +20,6 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
-import org.eclipse.orion.internal.server.core.Activator;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
@@ -116,7 +115,7 @@ public class GitUtils {
 
 	private static void getGitDirsInParents(File file, Map<IPath, File> gitDirs) {
 		int levelUp = 0;
-		File workspaceRoot = Activator.getDefault().getPlatformLocation().toFile();
+		File workspaceRoot = OrionConfiguration.getPlatformLocation().toFile();
 		while (file != null && !file.getAbsolutePath().equals(workspaceRoot.getAbsolutePath())) {
 			if (file.exists()) {
 				if (RepositoryCache.FileKey.isGitRepository(file, FS.DETECTED)) {

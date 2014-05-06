@@ -24,7 +24,7 @@ import java.util.List;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.orion.internal.server.core.IOUtilities;
+import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.json.JSONException;

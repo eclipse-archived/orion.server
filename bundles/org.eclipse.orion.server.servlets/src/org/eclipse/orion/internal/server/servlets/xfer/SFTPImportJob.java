@@ -12,12 +12,14 @@ package org.eclipse.orion.internal.server.servlets.xfer;
 
 import com.jcraft.jsch.*;
 import com.jcraft.jsch.ChannelSftp.LsEntry;
+
 import java.io.*;
 import java.util.List;
 import java.util.Vector;
+
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.orion.internal.server.core.IOUtilities;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.osgi.util.NLS;
 
 /**

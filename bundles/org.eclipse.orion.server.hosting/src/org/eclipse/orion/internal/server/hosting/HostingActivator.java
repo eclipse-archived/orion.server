@@ -10,8 +10,9 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.hosting;
 
+import org.eclipse.orion.server.core.IWebResourceDecorator;
+
 import java.util.Collection;
-import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
 import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
 import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;

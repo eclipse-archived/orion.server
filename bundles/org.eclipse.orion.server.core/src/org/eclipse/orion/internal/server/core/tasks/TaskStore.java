@@ -13,9 +13,10 @@ package org.eclipse.orion.internal.server.core.tasks;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.orion.internal.server.core.IOUtilities;
+import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.resources.Base64;

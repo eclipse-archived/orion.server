@@ -5,8 +5,8 @@ import static org.junit.Assert.assertEquals;
 import java.io.IOException;
 import java.io.StringReader;
 
-import org.eclipse.orion.internal.server.core.EndingAwareLineReader;
-import org.eclipse.orion.internal.server.core.EndingAwareLineReader.LineDelimiter;
+import org.eclipse.orion.server.core.EndingAwareLineReader;
+import org.eclipse.orion.server.core.EndingAwareLineReader.LineDelimiter;
 import org.junit.Test;
 
 public class EndingAwareLineReaderTest {

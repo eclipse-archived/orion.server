@@ -20,7 +20,7 @@ import org.eclipse.core.filesystem.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.jgit.ignore.IgnoreNode;
-import org.eclipse.orion.internal.server.core.IOUtilities;
+import org.eclipse.orion.server.core.IOUtilities;
 
 /**
  * Utility class responsible for compressing application
