@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="org.eclipse.orion.server.gerritfs" default="default" basedir=".">
+	<target name="default">
+		<echo message="Updating Gerritfs jar with client build..." />
+		<available file="${org.eclipse.orion:org.eclipse.orion.client.core:eclipse-plugin}" property="orion.client.core.present" />
+		<antcall target="no.client.jar.properties" />
+		<antcall target="create.gerritfs.jar" />
+	</target>
+
+	<target name="no.client.jar.properties" unless="${orion.client.core.present}">
+		<fail message="ERROR path to org.eclipse.orion.client.ui is not set, need to set the property org.eclipse.orion\:org.eclipse.orion.client.ui\:eclipse-plugin" />
+	</target>
+
+	<target name="create.gerritfs.jar" if="${orion.client.core.present}">
+		<echo message="path to org.eclipse.orion.client.ui is ${org.eclipse.orion:org.eclipse.orion.client.ui:eclipse-plugin}" />
+		<echo message="path to org.eclipse.orion.client.core is ${org.eclipse.orion:org.eclipse.orion.client.core:eclipse-plugin}" />
+		<mkdir dir="gerritfs" />
+		<unzip src="${org.eclipse.orion:org.eclipse.orion.client.core:eclipse-plugin}" dest="gerritfs" />
+		<unzip src="${org.eclipse.orion:org.eclipse.orion.client.ui:eclipse-plugin}" dest="gerritfs" />
+
+		<mkdir dir="gerritfs/static" />
+		<mkdir dir="gerritfs/static/orion" />
+		<copy file="gerritfs/web/orion/Deferred.js" tofile="gerritfs/static/orion/Deferred.js" />
+		<copy file="gerritfs/web/orion/plugin.js" tofile="gerritfs/static/orion/plugin.js" />
+		<copy file="gerritfs/web/orion/URITemplate.js" tofile="gerritfs/static/orion/URITemplate.js" />
+		<copy file="gerritfs/web/orion/URL-shim.js" tofile="gerritfs/static/orion/URL-shim.js" />
+		<copy file="gerritfs/web/orion/xhr.js" tofile="gerritfs/static/orion/xhr.js" />
+		<mkdir dir="gerritfs/static/requirejs" />
+		<copydir src="gerritfs/web/requirejs" dest="gerritfs/static/requirejs" includes="**/*.js" />
+		<mkdir dir="gerritfs/static/plugins" />
+		<mkdir dir="gerritfs/static/plugins/filePlugin" />
+		<copy file="gerritfs/web/plugins/filePlugin/GerritFileImpl.js" tofile="gerritfs/static/plugins/filePlugin/GerritFileImpl.js" />
+		<copy file="gerritfs/web/plugins/GerritFilePlugin.html" tofile="gerritfs/static/plugins/GerritFilePlugin.html" />
+		<copy file="gerritfs/web/plugins/GerritFilePlugin.js" tofile="gerritfs/static/plugins/GerritFilePlugin.js" />
+
+		<copy file="../../bundles/org.eclipse.orion.server.gerritfs/target/gerritfs-1.0-SNAPSHOT.jar" tofile="gerritfs/gerritfs.jar" />
+		<jar update="true" destfile="gerritfs/gerritfs.jar">
+			<fileset dir="gerritfs/static" />
+		</jar>
+	</target>
+</project>
+

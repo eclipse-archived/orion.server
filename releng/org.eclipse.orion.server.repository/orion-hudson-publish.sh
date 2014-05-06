@@ -170,6 +170,12 @@ if [ "$dropFiles" = y ]; then
 		echo "Did not copy built-editor.css built-editor.js built-editor.min.js etc."
 	fi
 
+	if [ -e ${WORKSPACE}/releng/org.eclipse.orion.server.repository/gerritfs/gerritfs.jar ] ; then
+		cp ${WORKSPACE}/releng/org.eclipse.orion.server.repository/gerritfs/gerritfs.jar ${localDropDir}/gerritfs.jar
+	else
+		echo "Did not copy gerritfs.jar"
+	fi
+	
 	#generating build.cfg file to be referenced from downloads web page
 	echo "hudson.job.name=${JOB_NAME}" > $localDropDir/build.cfg
 	echo "hudson.job.id=${BUILD_NUMBER} (${jobDir##*/})" >> $localDropDir/build.cfg
