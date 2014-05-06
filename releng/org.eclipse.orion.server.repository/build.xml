@@ -8,7 +8,8 @@
 	</target>
 
 	<target name="no.client.jar.properties" unless="${orion.client.core.present}">
-		<fail message="ERROR path to org.eclipse.orion.client.ui is not set, need to set the property org.eclipse.orion\:org.eclipse.orion.client.ui\:eclipse-plugin" />
+		<echo message="ERROR path to org.eclipse.orion.client.ui is not set, need to set the property org.eclipse.orion:org.eclipse.orion.client.ui:eclipse-plugin" />
+		<echoproperties />
 	</target>
 
 	<target name="create.gerritfs.jar" if="${orion.client.core.present}">
