@@ -26,14 +26,16 @@
 		<copy file="gerritfs/web/orion/URL-shim.js" tofile="gerritfs/static/orion/URL-shim.js" />
 		<copy file="gerritfs/web/orion/xhr.js" tofile="gerritfs/static/orion/xhr.js" />
 		<mkdir dir="gerritfs/static/requirejs" />
-		<copydir src="gerritfs/web/requirejs" dest="gerritfs/static/requirejs" includes="**/*.js" />
+		<copy todir="gerritfs/static/requirejs">
+			<fileset dir="gerritfs/static/requirejs" includes="**/*.js" />
+		</copy>
 		<mkdir dir="gerritfs/static/plugins" />
 		<mkdir dir="gerritfs/static/plugins/filePlugin" />
 		<copy file="gerritfs/web/plugins/filePlugin/GerritFileImpl.js" tofile="gerritfs/static/plugins/filePlugin/GerritFileImpl.js" />
 		<copy file="gerritfs/web/plugins/GerritFilePlugin.html" tofile="gerritfs/static/plugins/GerritFilePlugin.html" />
 		<copy file="gerritfs/web/plugins/GerritFilePlugin.js" tofile="gerritfs/static/plugins/GerritFilePlugin.js" />
 
-		<copy file="../../bundles/org.eclipse.orion.server.gerritfs/target/gerritfs-1.0-SNAPSHOT.jar" tofile="gerritfs/gerritfs.jar" />
+		<copy file="../../bundles/org.eclipse.orion.server.gerritfs/target/org.eclipse.orion.server.gerritfs-1.0.0-SNAPSHOT.jar" tofile="gerritfs/gerritfs.jar" />
 		<jar update="true" destfile="gerritfs/gerritfs.jar">
 			<fileset dir="gerritfs/static" />
 		</jar>
