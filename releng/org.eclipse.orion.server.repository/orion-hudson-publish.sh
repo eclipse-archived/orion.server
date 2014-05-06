@@ -181,8 +181,17 @@ if [ "$dropFiles" = y ]; then
 	echo "hudson.job.id=${BUILD_NUMBER} (${jobDir##*/})" >> $localDropDir/build.cfg
 	echo "hudson.job.url=${BUILD_URL}" >> $localDropDir/build.cfg
 
+	if [ -e ${WORKSPACE}/tests/org.eclipse.orion.server.tests/target/surefire-reports/org.eclipse.orion.server.tests.AllServerTests.txt ]; then
+		#copy the test results
+		ServerTestResults=`egrep "Tests run" ${WORKSPACE}/tests/org.eclipse.orion.server.tests/target/surefire-reports/org.eclipse.orion.server.tests.AllServerTests.txt`
+		cp ${WORKSPACE}/tests/org.eclipse.orion.server.tests/target/surefire-reports/org.eclipse.orion.server.tests.AllServerTests.txt ${localDropDir}
+		cp ${WORKSPACE}/tests/org.eclipse.orion.server.tests/target/surefire-reports/TEST-org.eclipse.orion.server.tests.AllServerTests.xml ${localDropDir}
+	else
+		#tests did not run
+		ServerTestResults="Tests run: 0 <<< FAILURE!" 
+	fi
+	
 	#generate the index.html for the build
-	ServerTestResults=`egrep "Tests run" ${WORKSPACE}/tests/org.eclipse.orion.server.tests/target/surefire-reports/org.eclipse.orion.server.tests.AllServerTests.txt`
 	cat ${WORKSPACE}/releng/org.eclipse.orion.server.repository/html/build.index.html | sed -e "s/@version@/${version}/" -e "s/@repbuildlabel@/${version}/" -e "s/@ServerTestResults@/${ServerTestResults}/" > ${localDropDir}/index.html
 
 	#copy the download script
@@ -195,10 +204,6 @@ if [ "$dropFiles" = y ]; then
 	else
 		echo "Did not copy consoleText"
 	fi
-
-	#copy the test results
-	cp ${WORKSPACE}/tests/org.eclipse.orion.server.tests/target/surefire-reports/org.eclipse.orion.server.tests.AllServerTests.txt ${localDropDir}
-	cp ${WORKSPACE}/tests/org.eclipse.orion.server.tests/target/surefire-reports/TEST-org.eclipse.orion.server.tests.AllServerTests.xml ${localDropDir}
 
 	remoteDropDir=/home/data/httpd/download.eclipse.org/orion/drops/$dropDir
 	mkdir -p $remoteDropDir

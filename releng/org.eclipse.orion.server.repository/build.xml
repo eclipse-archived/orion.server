@@ -2,22 +2,21 @@
 <project name="org.eclipse.orion.server.gerritfs" default="default" basedir=".">
 	<target name="default">
 		<echo message="Updating Gerritfs jar with client build..." />
-		<available file="${org.eclipse.orion:org.eclipse.orion.client.core:eclipse-plugin}" property="orion.client.core.present" />
+		<available file="${maven.dependency.p2.eclipse-plugin.org.eclipse.orion.client.core.jar.path}" property="orion.client.core.present" />
 		<antcall target="no.client.jar.properties" />
 		<antcall target="create.gerritfs.jar" />
 	</target>
 
 	<target name="no.client.jar.properties" unless="${orion.client.core.present}">
-		<echo message="ERROR path to org.eclipse.orion.client.ui is not set, need to set the property org.eclipse.orion:org.eclipse.orion.client.ui:eclipse-plugin" />
-		<echoproperties />
+		<echo message="ERROR path to org.eclipse.orion.client.ui is not set, need to set the property maven.dependency.p2.eclipse-plugin.org.eclipse.orion.client.ui.jar.path" />
 	</target>
 
 	<target name="create.gerritfs.jar" if="${orion.client.core.present}">
-		<echo message="path to org.eclipse.orion.client.ui is ${org.eclipse.orion:org.eclipse.orion.client.ui:eclipse-plugin}" />
-		<echo message="path to org.eclipse.orion.client.core is ${org.eclipse.orion:org.eclipse.orion.client.core:eclipse-plugin}" />
+		<echo message="path to org.eclipse.orion.client.ui is ${maven.dependency.p2.eclipse-plugin.org.eclipse.orion.client.ui.jar.path}" />
+		<echo message="path to org.eclipse.orion.client.core is ${maven.dependency.p2.eclipse-plugin.org.eclipse.orion.client.core.jar.path}" />
 		<mkdir dir="gerritfs" />
-		<unzip src="${org.eclipse.orion:org.eclipse.orion.client.core:eclipse-plugin}" dest="gerritfs" />
-		<unzip src="${org.eclipse.orion:org.eclipse.orion.client.ui:eclipse-plugin}" dest="gerritfs" />
+		<unzip src="${maven.dependency.p2.eclipse-plugin.org.eclipse.orion.client.core.jar.path}" dest="gerritfs" />
+		<unzip src="${maven.dependency.p2.eclipse-plugin.org.eclipse.orion.client.ui.jar.path}" dest="gerritfs" />
 
 		<mkdir dir="gerritfs/static" />
 		<mkdir dir="gerritfs/static/orion" />
