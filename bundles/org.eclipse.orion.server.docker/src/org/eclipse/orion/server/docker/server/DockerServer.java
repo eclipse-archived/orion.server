@@ -62,6 +62,8 @@ public class DockerServer {
 
 	private String userId;
 	
+	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.docker"); //$NON-NLS-1$
+	
 	public DockerServer(URI dockerServer, URI dockerProxy, String portStart, String portEnd, String userId, String groupId) {
 		super();
 		this.dockerServer = dockerServer;
@@ -548,15 +550,9 @@ public class DockerServer {
 				}
 			}
 		} catch (IOException e) {
-			dockerVersion.setStatusCode(DockerResponse.StatusCode.SERVER_ERROR);
-			dockerVersion.setStatusMessage(e.getLocalizedMessage());
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-			logger.error(e.getLocalizedMessage(), e);
+			setDockerResponse(dockerVersion, e);
 		} catch (JSONException e) {
-			dockerVersion.setStatusCode(DockerResponse.StatusCode.SERVER_ERROR);
-			dockerVersion.setStatusMessage(e.getLocalizedMessage());
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-			logger.error(e.getLocalizedMessage(), e);
+			setDockerResponse(dockerVersion, e);
 		} finally {
 			httpURLConnection.disconnect();
 		}
@@ -572,7 +568,6 @@ public class DockerServer {
 				return;
 			}
 			DockerContainers dockerContainers = getDockerContainers();
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 			switch (dockerContainers.getStatusCode()) {
 				case SERVER_ERROR :
 				case CONNECTION_REFUSED :
@@ -609,7 +604,6 @@ public class DockerServer {
 					return;
 			}
 		} catch (JSONException e) {
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 			logger.error(e.getLocalizedMessage(), e);
 		}
 	}
@@ -624,10 +618,7 @@ public class DockerServer {
 			JSONArray jsonArray = new JSONArray(dockerResponseAsString);
 			return jsonArray;
 		} catch (JSONException e) {
-			dockerResponse.setStatusCode(DockerResponse.StatusCode.SERVER_ERROR);
-			dockerResponse.setStatusMessage(e.getLocalizedMessage());
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-			logger.error(e.getLocalizedMessage(), e);
+			setDockerResponse(dockerResponse, e);
 		}
 		return new JSONArray();
 	}
@@ -638,10 +629,7 @@ public class DockerServer {
 			JSONObject jsonObject = new JSONObject(dockerResponseAsString);
 			return jsonObject;
 		} catch (JSONException e) {
-			dockerResponse.setStatusCode(DockerResponse.StatusCode.SERVER_ERROR);
-			dockerResponse.setStatusMessage(e.getLocalizedMessage());
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-			logger.error(e.getLocalizedMessage(), e);
+			setDockerResponse(dockerResponse, e);
 		}
 		return new JSONObject();
 	}
@@ -658,10 +646,7 @@ public class DockerServer {
 			}
 			return stringBuilder.toString();
 		} catch (IOException e) {
-			dockerResponse.setStatusCode(DockerResponse.StatusCode.SERVER_ERROR);
-			dockerResponse.setStatusMessage(e.getLocalizedMessage());
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-			logger.error(e.getLocalizedMessage(), e);
+			setDockerResponse(dockerResponse, e);
 		}
 		return "{}";
 	}
@@ -669,7 +654,6 @@ public class DockerServer {
 	private void setDockerResponse(DockerResponse dockerResponse, Exception e) {
 		dockerResponse.setStatusCode(DockerResponse.StatusCode.SERVER_ERROR);
 		dockerResponse.setStatusMessage(e.getLocalizedMessage());
-		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
 		logger.error(e.getLocalizedMessage(), e);
 	}
 
@@ -695,6 +679,9 @@ public class DockerServer {
 						JSONArray hostArray = new JSONArray();
 						hostArray.put(hostPort);
 						portsObject.put(port + "/tcp", hostArray);
+					} else {
+						// nextAvailablePort is null, do not assign any bindings
+						break;
 					}
 				}
 				requestJSONObject.put("PortBindings", portsObject);
@@ -735,8 +722,9 @@ public class DockerServer {
 
 	private String getNextAvailablePort() {
 		if (portStart == null) {
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
-			logger.error("Docker Server: port range not defined, orion.core.docker.port.start not set in orion.conf");
+			if (logger.isDebugEnabled()) {
+				logger.debug("Docker Server: port range not defined, orion.core.docker.port.start not set in orion.conf");
+			}
 			return null;
 		}
 		if (portsUsed == null) {
@@ -752,7 +740,6 @@ public class DockerServer {
 			int nextPort = Integer.parseInt(nextAvailablePort) + 1;
 			nextAvailablePort = Integer.toString(nextPort);
 			if (portEnd.equals(nextAvailablePort)) {
-				Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
 				logger.error("Docker Server: no free ports, used " + nextAvailablePort);
 				return null;
 			}

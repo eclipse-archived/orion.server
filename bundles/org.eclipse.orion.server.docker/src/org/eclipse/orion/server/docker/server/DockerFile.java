@@ -49,6 +49,8 @@ public class DockerFile {
 	
 	private String userId;
 	
+	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.docker"); //$NON-NLS-1$
+	
 	public DockerFile(String userName, String userId, String groupId) {
 		this.userName = userName;
 		this.userId = userId;
@@ -62,22 +64,27 @@ public class DockerFile {
 	 * Cleanup the files created under the temporary-file directory.
 	 */
 	public void cleanup() {
-		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 		if (dockerfile != null && dockerfile.exists()) {
 			dockerfile.delete();
-			logger.debug("Dockerfile: Deleted " + dockerfile.toString());
+			if (logger.isDebugEnabled()) {
+				logger.debug("Dockerfile: Deleted " + dockerfile.toString());
+			}
 			dockerfile = null;
 		}
 		
 		if (dockerTarFile != null && dockerTarFile.exists()) {
 			dockerTarFile.delete();
-			logger.debug("Dockerfile: Deleted " + dockerTarFile.toString());
+			if (logger.isDebugEnabled()) {
+				logger.debug("Dockerfile: Deleted " + dockerTarFile.toString());
+			}
 			dockerTarFile = null;
 		}
 		
 		if (tempFolder != null && tempFolder.exists()) {
 			tempFolder.delete();
-			logger.debug("Dockerfile: Deleted folder " + tempFolder.toString());
+			if (logger.isDebugEnabled()) {
+				logger.debug("Dockerfile: Deleted folder " + tempFolder.toString());
+			}
 			tempFolder = null;
 		}
 	}
@@ -88,13 +95,14 @@ public class DockerFile {
 	 * @return The tar file.
 	 */
 	public File getTarFile() {
-		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 		try {
 			// get the temporary folder location.
 			String tmpDirName = System.getProperty("java.io.tmpdir");
 			File tmpDir = new File(tmpDirName);
 			if (!tmpDir.exists() || !tmpDir.isDirectory()) {
-				logger.error("Cannot find the default temporary-file directory: " + tmpDirName);
+				if (logger.isDebugEnabled()) {
+					logger.error("Cannot find the default temporary-file directory: " + tmpDirName);
+				}
 				return null;
 			}
 			
@@ -104,10 +112,14 @@ public class DockerFile {
 			String tmpDirStr = Long.toString(n);
 			tempFolder = new File(tmpDir, tmpDirStr);
 			if (! tempFolder.mkdir()) {
-				logger.error("Cannot create a temporary directory at " + tempFolder.toString());
+				if (logger.isDebugEnabled()) {
+					logger.error("Cannot create a temporary directory at " + tempFolder.toString());
+				}
 				return null;
 			}
-			logger.debug("Dockerfile: Created a temporary directory at " + tempFolder.toString());
+			if (logger.isDebugEnabled()) {
+				logger.debug("Dockerfile: Created a temporary directory at " + tempFolder.toString());
+			}
 
 			// create the Dockerfile
 			dockerfile = new File(tempFolder, "Dockerfile");
@@ -140,7 +152,9 @@ public class DockerFile {
 			tarArchiveOutputStream.closeArchiveEntry();
 			tarArchiveOutputStream.close();
 			
-			logger.debug("Dockerfile: Created a docker tar file at " + dockerTarFile.toString());
+			if (logger.isDebugEnabled()) {
+				logger.debug("Dockerfile: Created a docker tar file at " + dockerTarFile.toString());
+			}
 			return dockerTarFile;
 		} catch (IOException e) {
 			logger.error(e.getLocalizedMessage(), e);
@@ -173,7 +187,6 @@ public class DockerFile {
 			result = result.replaceAll("GID", groupId);
 			return result;
 		} catch (IOException e) {
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 			logger.error(e.getLocalizedMessage(), e);
 		}
 		return null;

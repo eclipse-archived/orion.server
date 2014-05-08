@@ -59,6 +59,8 @@ public class DockerHandler extends ServletResourceHandler<String> {
 	private DockerServer dockerServer = null;
 
 	protected ServletResourceHandler<IStatus> statusHandler;
+	
+	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.docker"); //$NON-NLS-1$
 
 	public DockerHandler(ServletResourceHandler<IStatus> statusHandler) {
 		this.statusHandler = statusHandler;
@@ -67,7 +69,6 @@ public class DockerHandler extends ServletResourceHandler<String> {
 
 	private void createBashrc(String user) {
 		try {
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
 			IMetaStore metaStore = OrionConfiguration.getMetaStore();
 			UserInfo userInfo = metaStore.readUser(user);
 			List<String> workspaceIds = userInfo.getWorkspaceIds();
@@ -100,12 +101,12 @@ public class DockerHandler extends ServletResourceHandler<String> {
 			bufferWritter.write(lines);
 			bufferWritter.close();
 
-			logger.debug("Created new file " + bashrcFile.toString() + " for user " + user);
+			if (logger.isDebugEnabled()) {
+				logger.debug("Created new file " + bashrcFile.toString() + " for user " + user);
+			}
 		} catch (CoreException e) {
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
 			logger.error(e.getLocalizedMessage(), e);
 		} catch (IOException e) {
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
 			logger.error(e.getLocalizedMessage(), e);
 		}
 	}
@@ -116,7 +117,6 @@ public class DockerHandler extends ServletResourceHandler<String> {
 
 	private String getDockerVolume(String user) {
 		try {
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
 			IMetaStore metaStore = OrionConfiguration.getMetaStore();
 			UserInfo userInfo = metaStore.readUser(user);
 			List<String> workspaceIds = userInfo.getWorkspaceIds();
@@ -129,10 +129,11 @@ public class DockerHandler extends ServletResourceHandler<String> {
 			IFileStore workspaceContentLocation = metaStore.getWorkspaceContentLocation(workspaceId);
 			String localVolume = workspaceContentLocation.toLocalFile(EFS.NONE, null).getAbsolutePath();
 			String volume = localVolume + ":/home/" + user + ":rw";
-			logger.debug("Created Docker Volume \"" + volume + "\" for user " + user);
+			if (logger.isDebugEnabled()) {
+				logger.debug("Created Docker Volume \"" + volume + "\" for user " + user);
+			}
 			return volume;
 		} catch (CoreException e) {
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
 			logger.error(e.getLocalizedMessage(), e);
 		}
 		return null;
@@ -150,8 +151,6 @@ public class DockerHandler extends ServletResourceHandler<String> {
 	 */
 	private boolean handleConnectDockerContainerRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException {
 		try {
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
-
 			// get the Orion user from the request
 			String user = request.getRemoteUser();
 
@@ -174,8 +173,8 @@ public class DockerHandler extends ServletResourceHandler<String> {
 				if (dockerImage.getStatusCode() != DockerResponse.StatusCode.CREATED) {
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerImage.getStatusMessage(), null));
 				}
-				if (logger.isDebugEnabled()) {
-					logger.debug("Created Docker Image " + userBase + " for user " + user);
+				if (logger.isInfoEnabled()) {
+					logger.info("Created Docker Image " + userBase + " for user " + user);
 				}
 			}
 
@@ -191,8 +190,8 @@ public class DockerHandler extends ServletResourceHandler<String> {
 				if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.CREATED) {
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
 				}
-				if (logger.isDebugEnabled()) {
-					logger.debug("Created Docker Container " + dockerContainer.getIdShort() + " for user " + user);
+				if (logger.isInfoEnabled()) {
+					logger.info("Created Docker Container " + dockerContainer.getIdShort() + " for user " + user);
 				}
 
 				// if the user does not have a bashrc, create one
@@ -211,12 +210,12 @@ public class DockerHandler extends ServletResourceHandler<String> {
 			// start the container for the user
 			dockerContainer = dockerServer.startDockerContainer(user, volume, portNumbers);
 			if (dockerContainer.getStatusCode() == DockerResponse.StatusCode.STARTED) {
-				if (logger.isDebugEnabled()) {
-					logger.debug("Started Docker Container " + dockerContainer.getIdShort() + " for user " + user);
+				if (logger.isInfoEnabled()) {
+					logger.info("Started Docker Container " + dockerContainer.getIdShort() + " for user " + user);
 				}
 			} else if (dockerContainer.getStatusCode() == DockerResponse.StatusCode.RUNNING) {
-				if (logger.isDebugEnabled()) {
-					logger.debug("Docker Container " + dockerContainer.getIdShort() + " for user " + user + " is already running");
+				if (logger.isInfoEnabled()) {
+					logger.info("Docker Container " + dockerContainer.getIdShort() + " for user " + user + " is already running");
 				}
 			} else {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
@@ -228,8 +227,8 @@ public class DockerHandler extends ServletResourceHandler<String> {
 			if (dockerResponse.getStatusCode() != DockerResponse.StatusCode.ATTACHED) {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
 			}
-			if (logger.isDebugEnabled()) {
-				logger.debug("Attach Docker Container " + dockerContainer.getIdShort() + " for user " + user + " successful");
+			if (logger.isInfoEnabled()) {
+				logger.info("Attach Docker Container " + dockerContainer.getIdShort() + " for user " + user + " successful");
 			}
 
 			JSONObject jsonObject = new JSONObject();
@@ -504,13 +503,13 @@ public class DockerHandler extends ServletResourceHandler<String> {
 
 	private void initDockerServer() {
 		try {
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
 			String dockerLocation = PreferenceHelper.getString(ServerConstants.CONFIG_DOCKER_URI, "none").toLowerCase(); //$NON-NLS-1$
 			if ("none".equals(dockerLocation)) {
-				// there is no docker URI value in the orion.conf, so no docker support
-				dockerServer = null;
-				logger.debug("No Docker Server specified by \"" + ServerConstants.CONFIG_DOCKER_URI + "\" in orion.conf");
-				return;
+				// there is no docker URI value in the orion.conf, try using a default
+				dockerLocation = "http://localhost:4243";
+				if (logger.isWarnEnabled()) {
+					logger.warn("No Docker Server specified by \"" + ServerConstants.CONFIG_DOCKER_URI + "\" in orion.conf, trying " + dockerLocation);
+				}
 			}
 			if (!OrionConfiguration.getMetaStorePreference().equals(ServerConstants.CONFIG_META_STORE_SIMPLE_V2)) {
 				// the docker feature requires version two of the simple metadata storage, so no docker support
@@ -525,7 +524,9 @@ public class DockerHandler extends ServletResourceHandler<String> {
 			if (!"none".equals(dockerProxy)) {
 				// there is a docker proxy URI value in the orion.conf
 				dockerProxyURI = new URI(dockerProxy);
-				logger.debug("Docker Proxy Server " + dockerProxy + " is enabled");
+				if (logger.isDebugEnabled()) {
+					logger.debug("Docker Proxy Server " + dockerProxy + " is enabled");
+				}
 			}
 
 			String portStart = PreferenceHelper.getString(ServerConstants.CONFIG_DOCKER_PORT_START, "none").toLowerCase(); //$NON-NLS-1$
@@ -534,16 +535,24 @@ public class DockerHandler extends ServletResourceHandler<String> {
 				// there is a no docker port start value in the orion.conf
 				portStart = null;
 				portEnd = null;
-				logger.info("Docker Server does not have port mapping enabled, start and end host ports not specified");
+				if (logger.isInfoEnabled()) {
+					logger.info("Docker Server does not have port mapping enabled, start and end host ports not specified");
+				}
 			} else {
-				logger.debug("Docker Server using ports " + portStart + " to " + portEnd + " for host port mapping");
+				if (logger.isDebugEnabled()) {
+					logger.debug("Docker Server using ports " + portStart + " to " + portEnd + " for host port mapping");
+				}
 			}
 
 			String userId = PreferenceHelper.getString(ServerConstants.CONFIG_DOCKER_UID, "1000").toLowerCase(); //$NON-NLS-1$
-			logger.debug("Orion Server running as UID " + userId);
+			if (logger.isDebugEnabled()) {
+				logger.debug("Orion Server running as UID " + userId);
+			}
 
 			String groupId = PreferenceHelper.getString(ServerConstants.CONFIG_DOCKER_GID, "1000").toLowerCase(); //$NON-NLS-1$
-			logger.debug("Orion Server running as GID " + groupId);
+			if (logger.isDebugEnabled()) {
+				logger.debug("Orion Server running as GID " + groupId);
+			}
 
 			dockerServer = new DockerServer(dockerLocationURI, dockerProxyURI, portStart, portEnd, userId, groupId);
 			DockerVersion dockerVersion = dockerServer.getDockerVersion();
@@ -551,12 +560,13 @@ public class DockerHandler extends ServletResourceHandler<String> {
 				if (dockerVersion.getStatusCode() != DockerResponse.StatusCode.OK) {
 					logger.error("Cound not connect to docker server " + dockerLocation + ": " + dockerVersion.getStatusMessage());
 				} else {
-					logger.debug("Docker Server " + dockerLocation + " is running version " + dockerVersion.getVersion());
+					if (logger.isInfoEnabled()) {
+						logger.info("Docker Server " + dockerLocation + " is running version " + dockerVersion.getVersion());
+					}
 				}
 			}
 
 		} catch (URISyntaxException e) {
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
 			logger.error(e.getLocalizedMessage(), e);
 			dockerServer = null;
 		}

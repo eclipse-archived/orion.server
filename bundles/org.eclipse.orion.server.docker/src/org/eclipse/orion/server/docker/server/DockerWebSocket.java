@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others.
+ * Copyright (c) 2013, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -39,6 +39,8 @@ public class DockerWebSocket {
 	private String response;
 
 	private Session session;
+	
+	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.docker"); //$NON-NLS-1$
 
 	/**
 	 * Get the current response received from the web socket.
@@ -60,7 +62,6 @@ public class DockerWebSocket {
 
 	@OnWebSocketMessage
 	public void onMessage(String msg) {
-		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
 		if (logger.isDebugEnabled()) {
 			// Create a JSONObject as a good way to print out the control characters as \r, \n, etc.
 			JSONObject jsonObject = new JSONObject();
@@ -81,7 +82,6 @@ public class DockerWebSocket {
 
 	@OnWebSocketClose
 	public void onClose(int statusCode, String reason) {
-		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
 		if (logger.isDebugEnabled()) {
 			logger.debug("Docker Socket closed" + (statusCode != StatusCode.NORMAL ? ": " + reason : ""));
 		}
@@ -102,7 +102,6 @@ public class DockerWebSocket {
 			this.messageLatch = new CountDownLatch(1);
 			this.response = "";
 			this.session.getRemote().sendString(msg);
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
 			if (logger.isDebugEnabled()) {
 				// Create a JSONObject as a good way to print out the control characters as \r, \n, etc.
 				JSONObject jsonObject = new JSONObject();
@@ -116,7 +115,6 @@ public class DockerWebSocket {
 				logger.debug("Docker Socket sent: " + sent);
 			}
 		} catch (IOException e) {
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.servlets.OrionServlet"); //$NON-NLS-1$
 			logger.error(e.getLocalizedMessage(), e);
 			session.close();
 		}
