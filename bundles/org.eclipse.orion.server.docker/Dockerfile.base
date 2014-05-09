@@ -40,7 +40,6 @@ RUN apt-get -y update
 RUN apt-get -y install nodejs
 
 # install grunt
-RUN npm install -g grunt
 RUN npm install -g grunt-cli
 
 # install node-inspector
