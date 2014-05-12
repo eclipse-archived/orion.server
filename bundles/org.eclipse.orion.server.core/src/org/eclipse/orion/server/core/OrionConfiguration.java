@@ -12,19 +12,13 @@ package org.eclipse.orion.server.core;
 
 import java.io.File;
 import java.net.URI;
-import java.net.URL;
-
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.core.Activator;
-import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
-import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreV1;
-import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreV2;
+import org.eclipse.orion.internal.server.core.metastore.*;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
-import org.eclipse.osgi.service.datalocation.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,8 +27,8 @@ import org.slf4j.LoggerFactory;
  * configuration is stored and how it is represented is hidden within this class.
  */
 public class OrionConfiguration {
-	private static final String SECURESTORAGE = "/.metadata/.plugins/org.eclipse.orion.server.user.securestorage/user_store";
-	private static final String USERS_PREFS = "/.metadata/.plugins/org.eclipse.orion.server.core/.settings/Users.prefs";
+	private static final String SECURESTORAGE = "/.metadata/.plugins/org.eclipse.orion.server.user.securestorage/user_store"; //$NON-NLS-1$
+	private static final String USERS_PREFS = "/.metadata/.plugins/org.eclipse.orion.server.core/.settings/Users.prefs"; //$NON-NLS-1$
 	private static String metaStorePreference = null;
 
 	/**
@@ -44,7 +38,7 @@ public class OrionConfiguration {
 	public static IMetaStore getMetaStore() {
 		return Activator.getDefault().getMetastore();
 	}
-	
+
 	/**
 	 * Returns the root location where data files are stored. This is the value of the serverworkspace.
 	 * 
@@ -83,23 +77,23 @@ public class OrionConfiguration {
 		}
 		// consult the metastore preference 
 		String metastore = PreferenceHelper.getString(ServerConstants.CONFIG_META_STORE, "none").toLowerCase(); //$NON-NLS-1$
-		
+
 		if (ServerConstants.CONFIG_META_STORE_SIMPLE.equals(metastore) || ServerConstants.CONFIG_META_STORE_SIMPLE_V2.equals(metastore) || ServerConstants.CONFIG_META_STORE_LEGACY.equals(metastore)) {
 			metaStorePreference = metastore;
 			return metaStorePreference;
 		}
-		
+
 		// metastore preference was not specified by the user.
 		try {
 			File rootFile = getRootLocation().toLocalFile(EFS.NONE, null);
 			File securestorage = new File(rootFile, SECURESTORAGE);
 			File users_prefs = new File(rootFile, USERS_PREFS);
 			int version = SimpleMetaStore.getOrionVersion(rootFile);
-			if (SimpleMetaStoreV1.VERSION == version){
+			if (SimpleMetaStoreV1.VERSION == version) {
 				// version one of the simple metadata storage
 				metaStorePreference = ServerConstants.CONFIG_META_STORE_SIMPLE;
 				return metaStorePreference;
-			} else if (SimpleMetaStoreV2.VERSION == version){
+			} else if (SimpleMetaStoreV2.VERSION == version) {
 				// version two of the simple metadata storage
 				metaStorePreference = ServerConstants.CONFIG_META_STORE_SIMPLE_V2;
 				return metaStorePreference;
@@ -119,7 +113,7 @@ public class OrionConfiguration {
 			throw new Error("Failed to access platform instance location", e); //$NON-NLS-1$
 		}
 	}
-	
+
 	/**
 	 * Returns the root file system location for the workspace.
 	 */

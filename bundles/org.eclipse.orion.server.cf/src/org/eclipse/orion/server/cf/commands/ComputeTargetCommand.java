@@ -23,15 +23,11 @@ import org.json.JSONObject;
 
 public class ComputeTargetCommand implements ICFCommand {
 
-	@SuppressWarnings("unused")
-	private String commandName;
-
 	private String userId;
 	private JSONObject targetJSON;
 	private Target target;
 
 	public ComputeTargetCommand(String userId, JSONObject targetJSON) {
-		this.commandName = "Compute Target"; //$NON-NLS-1$
 		this.userId = userId;
 		this.targetJSON = targetJSON;
 	}

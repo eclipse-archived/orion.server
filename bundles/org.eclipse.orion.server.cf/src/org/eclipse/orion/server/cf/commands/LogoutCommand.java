@@ -19,15 +19,11 @@ import org.json.JSONObject;
 
 public class LogoutCommand implements ICFCommand {
 
-	@SuppressWarnings("unused")
-	private String commandName;
-
 	private Target target;
 
 	private JSONObject accessToken;
 
 	public LogoutCommand(Target target) {
-		this.commandName = "Logout"; //$NON-NLS-1$
 		this.target = target;
 	}
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2013 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -34,7 +34,6 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 	private ServletResourceHandler<String> statusHandlerV1;
 	private ServletResourceHandler<String> tagHandlerV1;
 	private ServletResourceHandler<String> blameHandlerV1;
-	private ServletResourceHandler<IStatus> statusHandler;
 
 	GitHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
 		branchHandlerV1 = new GitBranchHandlerV1(statusHandler);
@@ -47,7 +46,6 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 		remoteHandlerV1 = new GitRemoteHandlerV1(statusHandler);
 		statusHandlerV1 = new GitStatusHandlerV1(statusHandler);
 		tagHandlerV1 = new GitTagHandlerV1(statusHandler);
-		this.statusHandler = statusHandler;
 	}
 
 	@Override
