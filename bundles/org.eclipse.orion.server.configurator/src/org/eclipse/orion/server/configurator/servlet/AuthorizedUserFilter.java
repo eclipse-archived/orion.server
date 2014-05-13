@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.server.configurator.servlet;
 
+import org.eclipse.orion.server.authentication.IAuthenticationService;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -23,7 +25,6 @@ import org.eclipse.orion.internal.server.servlets.workspace.authorization.Author
 import org.eclipse.orion.server.configurator.ConfiguratorActivator;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
-import org.eclipse.orion.server.core.authentication.IAuthenticationService;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.JSONException;
 import org.json.JSONObject;

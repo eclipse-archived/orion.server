@@ -11,14 +11,19 @@
 package org.eclipse.orion.internal.server.servlets.workspace.authorization;
 
 import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.server.core.*;
-import org.eclipse.orion.server.core.authentication.IAuthenticationService;
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.UserInfo;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Handles access and persistence of user authorization information.
@@ -31,6 +36,7 @@ public class AuthorizationService {
 	public static final int DELETE = 8;
 	private static final String PREFIX_EXPORT = "/xfer/export/"; //$NON-NLS-1$
 	private static final String PREFIX_IMPORT = "/xfer/import/"; //$NON-NLS-1$
+	private static final String ANONYMOUS_LOGIN_VALUE = "Anonymous"; //$NON-NLS-1$
 
 	/**
 	 * Adds the right for the given user to put, post, get, or delete the given URI.
@@ -64,15 +70,15 @@ public class AuthorizationService {
 	}
 
 	public static boolean checkRights(String userId, String uri, String method) throws CoreException {
-		if (uri.equals(Activator.LOCATION_WORKSPACE_SERVLET) && !IAuthenticationService.ANONYMOUS_LOGIN_VALUE.equals(userId))
+		if (uri.equals(Activator.LOCATION_WORKSPACE_SERVLET) && !ANONYMOUS_LOGIN_VALUE.equals(userId))
 			return true;
 
 		// any user can access their site configurations
-		if (uri.startsWith("/site") && !IAuthenticationService.ANONYMOUS_LOGIN_VALUE.equals(userId)) //$NON-NLS-1$
+		if (uri.startsWith("/site") && !ANONYMOUS_LOGIN_VALUE.equals(userId)) //$NON-NLS-1$
 			return true;
 
 		// any user can access their own profile
-		if (uri.equals("/users/" + userId) && !IAuthenticationService.ANONYMOUS_LOGIN_VALUE.equals(userId)) //$NON-NLS-1$
+		if (uri.equals("/users/" + userId) && !ANONYMOUS_LOGIN_VALUE.equals(userId)) //$NON-NLS-1$
 			return true;
 
 		// any user can access tasks

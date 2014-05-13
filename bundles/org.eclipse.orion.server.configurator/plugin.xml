@@ -190,7 +190,7 @@
       </filter>
       <filter
             alias="/users"
-            class="org.eclipse.orion.server.useradmin.servlets.UserAuthFilter">
+            class="org.eclipse.orion.server.configurator.servlet.LoggedInUserFilter">
       </filter>
       <filter
             alias="/workspace"

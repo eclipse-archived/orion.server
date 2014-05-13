@@ -168,9 +168,9 @@ public class Activator implements BundleActivator {
 	public void start(BundleContext context) throws Exception {
 		singleton = this;
 		bundleContext = context;
+		registerServices();
 		initializeFileSystem();
 		initializeMetaStore();
-		registerServices();
 	}
 
 	private void registerServices() {
@@ -187,6 +187,7 @@ public class Activator implements BundleActivator {
 	 * @see org.osgi.framework.BundleActivator#stop(org.osgi.framework.BundleContext)
 	 */
 	public void stop(BundleContext context) throws Exception {
+		metastore = null;
 		stopTaskService();
 		if (prefTracker != null) {
 			prefTracker.close();
@@ -196,7 +197,6 @@ public class Activator implements BundleActivator {
 			logTracker.close();
 			logTracker = null;
 		}
-		metastore = null;
 		bundleContext = null;
 	}
 

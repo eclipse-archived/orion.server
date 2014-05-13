@@ -8,7 +8,7 @@
  * Contributors:
  * IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.server.core.authentication;
+package org.eclipse.orion.server.authentication;
 
 import java.io.IOException;
 import java.util.Properties;

@@ -11,13 +11,23 @@
 package org.eclipse.orion.server.useradmin.servlets;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
+import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.servlets.OrionServlet;
+import org.eclipse.orion.server.useradmin.UserConstants;
 import org.eclipse.orion.server.useradmin.UserServiceHelper;
 import org.eclipse.osgi.util.NLS;
 
@@ -41,14 +51,48 @@ public class UserServlet extends OrionServlet {
 
 	public static final String USERS_URI = "/users";
 
+	private List<String> authorizedAccountCreators;
 	private ServletResourceHandler<String> userSerializer;
 
-	public UserServlet() {
+	@Override
+	public void init() throws ServletException {
 		userSerializer = new ServletUserHandler(UserServiceHelper.getDefault(), getStatusHandler());
+		String creators = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION, null);
+		if (creators != null) {
+			authorizedAccountCreators = new ArrayList<String>();
+			authorizedAccountCreators.addAll(Arrays.asList(creators.split(","))); //$NON-NLS-1$
+		}
 	}
 
 	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+	protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		String login = req.getRemoteUser();
+		if ("POST".equals(req.getMethod())) { //$NON-NLS-1$
+			if (req.getParameter(UserConstants.KEY_RESET) == null) {
+				// either everyone can create users, or only the specific list
+				if (authorizedAccountCreators != null && !authorizedAccountCreators.contains(login)) {
+					resp.sendError(HttpServletResponse.SC_FORBIDDEN);
+					return;
+				}
+			}
+		}
+
+		if (login == null) {
+			resp.sendError(HttpServletResponse.SC_FORBIDDEN);
+			return;
+		}
+
+		try {
+			String requestPath = req.getServletPath() + (req.getPathInfo() == null ? "" : req.getPathInfo());
+			if (!AuthorizationService.checkRights(login, requestPath, req.getMethod())) {
+				resp.sendError(HttpServletResponse.SC_FORBIDDEN);
+				return;
+			}
+		} catch (CoreException e) {
+			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			return;
+		}
+		
 		traceRequest(req);
 		String pathInfo = req.getPathInfo();
 
@@ -63,21 +107,6 @@ public class UserServlet extends OrionServlet {
 		if (userSerializer.handleRequest(req, resp, pathInfo))
 			return;
 		// finally invoke super to return an error for requests we don't know how to handle
-		super.doGet(req, resp);
-	}
-
-	@Override
-	protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		doGet(req, resp);
-	}
-
-	@Override
-	protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		doGet(req, resp);
-	}
-
-	@Override
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		doGet(req, resp);
+		super.service(req, resp);
 	}
 }

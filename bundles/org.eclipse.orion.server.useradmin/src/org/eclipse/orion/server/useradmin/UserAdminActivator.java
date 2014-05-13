@@ -10,9 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.server.useradmin;
 
-import org.eclipse.orion.server.core.authentication.IAuthenticationService;
 import org.osgi.framework.*;
-import org.osgi.util.tracker.ServiceTracker;
 
 public class UserAdminActivator implements BundleActivator {
 
@@ -32,8 +30,6 @@ public class UserAdminActivator implements BundleActivator {
 		return singleton;
 	}
 
-	private ServiceTracker<IAuthenticationService, IAuthenticationService> authServiceTracker;
-
 	/**
 	 * If an {@link IOrionCredentialsService} of this name exists it will be returned as default by {@link #getUserStore()}
 	 */
@@ -49,11 +45,6 @@ public class UserAdminActivator implements BundleActivator {
 	public void start(BundleContext bundleContext) throws Exception {
 		singleton = this;
 		this.bundleContext = bundleContext;
-
-		Filter authFilter = FrameworkUtil.createFilter("(&(" + Constants.OBJECTCLASS + "=" + IAuthenticationService.class.getName() + ")(configured=true))");
-
-		authServiceTracker = new ServiceTracker<IAuthenticationService, IAuthenticationService>(bundleContext, authFilter, null);
-		authServiceTracker.open();
 	}
 
 	/*
@@ -63,16 +54,6 @@ public class UserAdminActivator implements BundleActivator {
 	 * org.osgi.framework.BundleActivator#stop(org.osgi.framework.BundleContext)
 	 */
 	public void stop(BundleContext bundleContext) throws Exception {
-		if (authServiceTracker != null) {
-			authServiceTracker.close();
-			authServiceTracker = null;
-		}
-
 		this.bundleContext = null;
 	}
-
-	public IAuthenticationService getAuthenticationService() {
-		return authServiceTracker.getService();
-	}
-
 }

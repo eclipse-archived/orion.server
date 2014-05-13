@@ -13,12 +13,12 @@ package org.eclipse.orion.server.configurator;
 
 import static org.eclipse.orion.server.configurator.configuration.ConfigurationFormat.DEFAULT_AUTHENTICATION_NAME;
 
-import org.osgi.framework.BundleContext;
+import org.eclipse.orion.server.authentication.IAuthenticationService;
+import org.eclipse.orion.server.authentication.NoneAuthenticationService;
 
+import org.osgi.framework.BundleContext;
 import java.util.*;
 import org.eclipse.orion.server.core.*;
-import org.eclipse.orion.server.core.authentication.IAuthenticationService;
-import org.eclipse.orion.server.core.authentication.NoneAuthenticationService;
 import org.eclipse.osgi.service.datalocation.Location;
 import org.osgi.framework.*;
 import org.osgi.service.packageadmin.PackageAdmin;

@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.server.configurator.servlet;
 
+import org.eclipse.orion.server.authentication.IAuthenticationService;
+
 import java.io.IOException;
 import java.util.Properties;
 import javax.servlet.*;
@@ -19,7 +21,6 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.configurator.ConfiguratorActivator;
 import org.eclipse.orion.server.core.*;
-import org.eclipse.orion.server.core.authentication.IAuthenticationService;
 import org.osgi.service.http.HttpContext;
 
 /**
