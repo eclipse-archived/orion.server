@@ -46,6 +46,7 @@ public class SearchServlet extends OrionServlet {
 	 * Separator between query terms
 	 */
 	private static final String AND = " AND "; //$NON-NLS-1$
+	private static final String OR = " OR "; //$NON-NLS-1$
 	private static final long serialVersionUID = 1L;
 	private static final String FIELD_NAMES = "Name,NameLower,Length,Directory,LastModified,Location,Path"; //$NON-NLS-1$
 	private static final List<String> FIELD_LIST = Arrays.asList(FIELD_NAMES.split(",")); //$NON-NLS-1$
@@ -99,6 +100,13 @@ public class SearchServlet extends OrionServlet {
 						//processedQuery += "Location:" + term.substring(9 + req.getContextPath().length()); //$NON-NLS-1$
 						query.addFilterQuery("Location:" + term.substring(9 + req.getContextPath().length()));
 						continue;
+					} else if (term.startsWith("Name:")) { //$NON-NLS-1$
+						try {
+							term = URLDecoder.decode(term, "UTF-8"); //$NON-NLS-1$
+						} catch (UnsupportedEncodingException e) {
+							//try with encoded term
+						}
+						processedQuery += "Name:(" + term.substring(5).replaceAll(",", OR) + ")";
 					} else {
 						//all other field searches are case sensitive
 						processedQuery += term;
