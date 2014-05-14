@@ -191,6 +191,10 @@
       <filter
             alias="/users"
             class="org.eclipse.orion.server.configurator.servlet.LoggedInUserFilter">
+            <init-param
+               name="redirect"
+               value="false">
+         </init-param>
       </filter>
       <filter
             alias="/workspace"

@@ -11,7 +11,6 @@
 package org.eclipse.orion.server.configurator.servlet;
 
 import org.eclipse.orion.server.authentication.IAuthenticationService;
-
 import java.io.IOException;
 import java.util.Properties;
 import javax.servlet.*;
@@ -31,8 +30,13 @@ public class LoggedInUserFilter implements Filter {
 
 	private IAuthenticationService authenticationService;
 	private Properties authProperties;
+	private boolean redirect = true;
 
 	public void init(FilterConfig filterConfig) throws ServletException {
+		if (Boolean.FALSE.toString().equals(filterConfig.getInitParameter("redirect"))) {
+			redirect = false;
+		};
+
 		authenticationService = ConfiguratorActivator.getDefault().getAuthService();
 		// treat lack of authentication as an error. Administrator should use
 		// "None" to disable authentication entirely
@@ -52,9 +56,18 @@ public class LoggedInUserFilter implements Filter {
 			return;
 		}
 
-		String login = authenticationService.authenticateUser(httpRequest, httpResponse, authProperties);
-		if (login == null) {
-			return;
+		String login;
+		if (redirect) {
+			login = authenticationService.authenticateUser(httpRequest, httpResponse, authProperties);
+			if (login == null) {
+				return;
+			}
+		} else {
+			login = authenticationService.getAuthenticatedUser(httpRequest, httpResponse, authProperties);
+			if (login == null) {
+				chain.doFilter(request, response);
+				return;
+			}
 		}
 
 		request.setAttribute(HttpContext.REMOTE_USER, login);

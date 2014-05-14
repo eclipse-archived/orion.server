@@ -75,22 +75,22 @@ public class UserServlet extends OrionServlet {
 					return;
 				}
 			}
-		}
-
-		if (login == null) {
-			resp.sendError(HttpServletResponse.SC_FORBIDDEN);
-			return;
-		}
-
-		try {
-			String requestPath = req.getServletPath() + (req.getPathInfo() == null ? "" : req.getPathInfo());
-			if (!AuthorizationService.checkRights(login, requestPath, req.getMethod())) {
+		} else {
+			if (login == null) {
 				resp.sendError(HttpServletResponse.SC_FORBIDDEN);
 				return;
 			}
-		} catch (CoreException e) {
-			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-			return;
+	
+			try {
+				String requestPath = req.getServletPath() + (req.getPathInfo() == null ? "" : req.getPathInfo());
+				if (!AuthorizationService.checkRights(login, requestPath, req.getMethod())) {
+					resp.sendError(HttpServletResponse.SC_FORBIDDEN);
+					return;
+				}
+			} catch (CoreException e) {
+				resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+				return;
+			}
 		}
 		
 		traceRequest(req);
