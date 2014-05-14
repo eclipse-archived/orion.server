@@ -338,6 +338,6 @@ public class PreferenceTest extends FileSystemTest {
 	 * Returns preference nodes the client should not have access to.
 	 */
 	private List<String> getIllegalPreferenceNodes() {
-		return Arrays.asList(toAbsoluteURI("prefs/Users"), toAbsoluteURI("prefs/Workspaces"), toAbsoluteURI("prefs/Projects"));
+		return Arrays.asList(toAbsoluteURI("prefs/Users"), toAbsoluteURI("prefs/user"), toAbsoluteURI("prefs/Workspaces"), toAbsoluteURI("prefs/workspace"), toAbsoluteURI("prefs/Projects"), toAbsoluteURI("prefs/project"));
 	}
 }

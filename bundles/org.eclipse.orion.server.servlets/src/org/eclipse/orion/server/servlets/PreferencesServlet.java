@@ -58,12 +58,24 @@ public class PreferencesServlet extends OrionServlet {
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
-		MetadataInfo node = getNode(req, resp);
-		if (node == null)
+
+		// ensure that there is at least one additional segment following
+		// the /user, /workspace or /project segment
+		IPath path = getPath(req);
+		if (path.segmentCount() < 2) {
+			handleNotFound(req, resp, HttpServletResponse.SC_METHOD_NOT_ALLOWED);
 			return;
+		}
+
+		MetadataInfo node = getNode(path, req, resp);
+		if (node == null) {
+			handleNotFound(req, resp, HttpServletResponse.SC_NOT_FOUND);
+			return;
+		}
+
 		String key = req.getParameter("key"); //$NON-NLS-1$
 		try {
-			String prefix = getPrefix(req);
+			String prefix = getPrefix(path);
 
 			//if a key is specified get that single value, otherwise get the entire node
 			JSONObject result = null;
@@ -90,14 +102,18 @@ public class PreferencesServlet extends OrionServlet {
 		}
 	}
 
+	private IPath getPath(HttpServletRequest req) {
+		String pathString = req.getPathInfo();
+		if (pathString == null) {
+			pathString = ""; //$NON-NLS-1$
+		}
+		return new Path(pathString);
+	}
+
 	/**
 	 * Returns the prefix for the preference to be retrieved or manipulated.
 	 */
-	private String getPrefix(HttpServletRequest req) {
-		String pathString = req.getPathInfo();
-		if (pathString == null)
-			pathString = ""; //$NON-NLS-1$
-		IPath path = new Path(pathString);
+	private String getPrefix(IPath path) {
 		String scope = path.segment(0);
 		if ("user".equalsIgnoreCase(scope)) { //$NON-NLS-1$
 			//format is /user/prefix
@@ -115,7 +131,16 @@ public class PreferencesServlet extends OrionServlet {
 	@Override
 	protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
-		MetadataInfo info = getNode(req, resp);
+
+		// ensure that there is at least one additional segment following
+		// the /user, /workspace or /project segment
+		IPath path = getPath(req);
+		if (path.segmentCount() < 2) {
+			handleNotFound(req, resp, HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+			return;
+		}
+
+		MetadataInfo info = getNode(path, req, resp);
 		if (info == null) {
 			//should not fail on delete when resource doesn't exist
 			resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
@@ -124,7 +149,7 @@ public class PreferencesServlet extends OrionServlet {
 		}
 		String key = req.getParameter("key");
 		try {
-			String prefix = getPrefix(req);
+			String prefix = getPrefix(path);
 			//if a key is specified write that single value, otherwise write the entire node
 			boolean changed = false;
 			if (key != null) {
@@ -132,7 +157,7 @@ public class PreferencesServlet extends OrionServlet {
 				changed = info.setProperty(prefix.toString(), null) != null;
 			} else {
 				//can't overwrite base user settings via preference servlet
-				if (prefix.startsWith("user/")) {
+				if (prefix.startsWith("User")) {
 					resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
 					return;
 				}
@@ -155,11 +180,7 @@ public class PreferencesServlet extends OrionServlet {
 	 * @param req
 	 * @param resp
 	 */
-	private MetadataInfo getNode(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
-		String pathString = req.getPathInfo();
-		if (pathString == null)
-			pathString = ""; //$NON-NLS-1$
-		IPath path = new Path(pathString);
+	private MetadataInfo getNode(IPath path, HttpServletRequest req, HttpServletResponse resp) throws ServletException {
 		int segmentCount = path.segmentCount();
 		String scope = path.segment(0);
 		try {
@@ -196,11 +217,22 @@ public class PreferencesServlet extends OrionServlet {
 	@Override
 	protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
-		MetadataInfo info = getNode(req, resp);
-		if (info == null)
+
+		// ensure that there is at least one additional segment following
+		// the /user, /workspace or /project segment
+		IPath path = getPath(req);
+		if (path.segmentCount() < 2) {
+			handleNotFound(req, resp, HttpServletResponse.SC_METHOD_NOT_ALLOWED);
 			return;
+		}
+		MetadataInfo info = getNode(path, req, resp);
+		if (info == null) {
+			handleNotFound(req, resp, HttpServletResponse.SC_NOT_FOUND);
+			return;
+		}
+
 		String key = req.getParameter("key"); //$NON-NLS-1$
-		String prefix = getPrefix(req);
+		String prefix = getPrefix(path);
 		try {
 			boolean changed = false;
 			if (key != null) {
@@ -211,7 +243,7 @@ public class PreferencesServlet extends OrionServlet {
 			} else {
 				JSONObject newNode = new JSONObject(new JSONTokener(req.getReader()));
 				//can't overwrite base user settings via preference servlet
-				if (prefix.startsWith("user/")) {
+				if (prefix.startsWith("User")) {
 					resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
 					return;
 				}
@@ -272,7 +304,7 @@ public class PreferencesServlet extends OrionServlet {
 		final Map<String, String> properties = info.getProperties();
 		//from client's perspective key is the part after prefix
 		for (String key : properties.keySet()) {
-			if (key.startsWith(prefix))
+			if (key.startsWith(prefix) && !key.startsWith("User"))
 				result.put(key.substring(prefix.length() + 1), stringToJSON(properties.get(key)));
 		}
 		return result;
@@ -305,4 +337,5 @@ public class PreferencesServlet extends OrionServlet {
 		return result;
 
 	}
+
 }

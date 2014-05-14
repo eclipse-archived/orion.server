@@ -307,7 +307,7 @@ public class HostingTest extends CoreSiteTest {
 		// For this we'll call the 'prefs' API which uses query parameters
 		String prefKey = "foo[-]bar baz+quux";
 		String prefValue = "pref value";
-		String remotePrefUrl = hostedURL + remotePrefPath + "/user";
+		String remotePrefUrl = hostedURL + remotePrefPath + "/user/myprefs";
 		WebRequest putPrefReq = createSetPreferenceRequest(remotePrefUrl, prefKey, prefValue);
 		setAuthentication(putPrefReq);
 		WebResponse putPrefResp = webConversation.getResponse(putPrefReq);
