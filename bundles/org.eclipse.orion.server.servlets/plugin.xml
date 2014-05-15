@@ -133,6 +133,10 @@
                value="false">
          </init-param>
       </filter>
+      <filter
+            alias="/"
+            class="org.eclipse.orion.server.servlets.XSRFPreventionFilter">
+      </filter>
       <serviceSelector
             filter="(other.info=org.eclipse.orion)">
       </serviceSelector>

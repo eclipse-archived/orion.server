@@ -214,4 +214,9 @@ public class ServerConstants {
 	 * current working directory of the server process.
 	 */
 	public static final String PROP_CONFIG_FILE_LOCATION = "orion.core.configFile"; //$NON-NLS-1$
+
+	/**
+	 * The name of a configuration property to disable XSRF protection when set to true.
+	 */
+	public static final String CONFIG_XSRF_PROTECTION_DISABLED = "orion.XSRFPreventionFilterDisabled"; //$NON-NLS-1$
 }
