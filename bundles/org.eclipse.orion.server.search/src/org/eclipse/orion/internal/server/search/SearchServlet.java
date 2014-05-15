@@ -106,7 +106,7 @@ public class SearchServlet extends OrionServlet {
 						} catch (UnsupportedEncodingException e) {
 							//try with encoded term
 						}
-						processedQuery += "Name:(" + term.substring(5).replaceAll(",", OR) + ")";
+						processedQuery += "Name:(" + term.substring(5).replaceAll("/", OR) + ")";
 					} else {
 						//all other field searches are case sensitive
 						processedQuery += term;
