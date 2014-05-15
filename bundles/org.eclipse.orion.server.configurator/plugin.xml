@@ -134,8 +134,11 @@
                name="directives"
                value="public, max-age=86400, must-revalidate">
          </init-param>
-      </filter>      
- 
+      </filter>
+      <filter
+            alias="/"
+            class="org.eclipse.orion.server.configurator.servlet.XSRFPreventionFilter">
+      </filter>
       <filter
             alias="/"
             class="org.eclipse.orion.server.configurator.servlet.CacheFilter">
