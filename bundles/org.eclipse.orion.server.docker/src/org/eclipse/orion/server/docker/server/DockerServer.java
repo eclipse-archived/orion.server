@@ -704,9 +704,10 @@ public class DockerServer {
 				dockerContainer.setStatusCode(DockerResponse.StatusCode.STARTED);
 			} else if (dockerContainer.getStatusCode().equals(DockerResponse.StatusCode.SERVER_ERROR)) {
 				// handle HTTP Error: statusCode=500 start: Cannot start container: The container is already running.
-				dockerContainer = getDockerContainer(containerId);
-				if (dockerContainer.getStatus().startsWith("Started at")) {
+				DockerContainer newDockerContainer = getDockerContainer(containerId);
+				if (newDockerContainer.getStatus().startsWith("Started at")) {
 					dockerContainer.setStatusCode(DockerResponse.StatusCode.RUNNING);
+					dockerContainer.setStatusMessage(newDockerContainer.getStatusMessage());
 				}
 			}
 			outputStream.close();
@@ -721,10 +722,7 @@ public class DockerServer {
 	}
 
 	private String getNextAvailablePort() {
-		if (portStart == null) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("Docker Server: port range not defined, orion.core.docker.port.start not set in orion.conf");
-			}
+		if (portStart == null || portEnd == null) {
 			return null;
 		}
 		if (portsUsed == null) {

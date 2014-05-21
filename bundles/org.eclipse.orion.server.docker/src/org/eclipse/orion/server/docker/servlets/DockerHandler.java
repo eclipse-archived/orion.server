@@ -59,7 +59,7 @@ public class DockerHandler extends ServletResourceHandler<String> {
 	private DockerServer dockerServer = null;
 
 	protected ServletResourceHandler<IStatus> statusHandler;
-	
+
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.docker"); //$NON-NLS-1$
 
 	public DockerHandler(ServletResourceHandler<IStatus> statusHandler) {
@@ -158,6 +158,16 @@ public class DockerHandler extends ServletResourceHandler<String> {
 
 			// check if the user is already attached to a docker container
 			if (dockerServer.isAttachedDockerContainer(user)) {
+				// stop the container
+				DockerContainer dockerContainer = dockerServer.getDockerContainer(user);
+				if (dockerContainer.getStatusCode() == DockerResponse.StatusCode.OK) {
+					dockerContainer = dockerServer.stopDockerContainer(dockerContainer.getId());
+					if (dockerContainer.getStatusCode() == DockerResponse.StatusCode.STOPPED) {
+						if (logger.isInfoEnabled()) {
+							logger.info("Stopped Docker Container " + dockerContainer.getIdShort() + " for user " + user);
+						}
+					}
+				}
 
 				// detach the connection for the user
 				dockerServer.detachDockerContainer(user);
@@ -256,12 +266,24 @@ public class DockerHandler extends ServletResourceHandler<String> {
 
 		// get the container for the user
 		DockerContainer dockerContainer = dockerServer.getDockerContainer(user);
-		if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.OK) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
+		if (dockerContainer.getStatusCode() == DockerResponse.StatusCode.NO_SUCH_CONTAINER) {
+			if (logger.isDebugEnabled()) {
+				logger.debug("Docker Container for user " + user + " is not running, no need to stop it.");
+			}
+			return true;
 		}
 
 		// detach if we have an open connection for the user
 		if (dockerServer.isAttachedDockerContainer(user)) {
+			// stop the running container
+			dockerContainer = dockerServer.stopDockerContainer(dockerContainer.getId());
+			if (dockerContainer.getStatusCode() != DockerResponse.StatusCode.STOPPED) {
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, dockerContainer.getStatusMessage(), null));
+			} else {
+				if (logger.isInfoEnabled()) {
+					logger.info("Stopped Docker Container " + dockerContainer.getIdShort() + " for user " + user);
+				}
+			}
 			dockerServer.detachDockerContainer(user);
 		}
 
