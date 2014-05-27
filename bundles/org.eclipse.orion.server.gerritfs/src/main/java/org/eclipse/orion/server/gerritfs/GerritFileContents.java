@@ -80,40 +80,7 @@ public class GerritFileContents  extends HttpServlet {
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
 		final ServletOutputStream out = resp.getOutputStream();
-		String username = req.getRemoteUser();
-		if (username != null) {
-			 if (config.getBoolean("auth", "userNameToLowerCase", false)) {
-			      username = username.toLowerCase(Locale.US);
-		    }
-			log.debug("User name: " + username);
-		 	AccountState who = accountCache.getByUsername(username);
-		 	log.debug("AccountState " + who);
-			if (who == null) {
-				log.debug("User is not registered with Gerrit. Register now."); // This approach assumes an auth type of HTTP_LDAP
-				final AuthRequest areq = AuthRequest.forUser(username);
-				try {
-					accountManager.authenticate(areq);
-					who = accountCache.getByUsername(username);
-					if (who == null) {
-						log.warn("Unable to register user \"" + username
-								+ "\". Continue as anonymous.");
-					} else {
-						log.debug("User registered.");
-					}
-				} catch (AccountException e) {
-					log.warn("Exception registering user \"" + username
-							+ "\". Continue as anonymous.", e);
-				}
-			}
-		 	if (who != null && who.getAccount().isActive()) {
-		 		log.debug("Not anonymous user");
-		 		WebSession ws = session.get();
-		 		ws.setUserAccountId(who.getAccount().getId());
-		 		ws.setAccessPathOk(AccessPath.REST_API, true);
-		    } else {
-		    	log.debug("Anonymous user");
-		    }
-		}
+		handleAuth(req);
 		try {
 			String pathInfo = req.getPathInfo();
 			Pattern pattern = Pattern.compile("/([^/]*)(?:/([^/]*)(?:/(.*))?)?");
@@ -126,17 +93,17 @@ public class GerritFileContents  extends HttpServlet {
 				projectName = matcher.group(1);
 				refName = matcher.group(2);
 				filePath = matcher.group(3);
-				if (projectName == ""  || projectName == null) {
+				if (projectName == null || projectName.equals("")) {
 					projectName = null;
 				} else {
 					projectName = java.net.URLDecoder.decode(projectName, "UTF-8");
 				}
-				if (refName == ""  || refName == null) {
+				if (refName == null || refName.equals("")) {
 					refName = null;
 				} else {
 					refName = java.net.URLDecoder.decode(refName, "UTF-8");
 				}
-				if (filePath == "" || filePath == null) {
+				if (filePath == null || filePath.equals("")) {
 					filePath = null;
 				} else {
 					filePath = java.net.URLDecoder.decode(filePath, "UTF-8");
@@ -186,6 +153,43 @@ public class GerritFileContents  extends HttpServlet {
 			}
 		} finally {
 			out.close();
+		}
+	}
+
+	private void handleAuth(HttpServletRequest req) {
+		String username = req.getRemoteUser();
+		if (username != null) {
+			 if (config.getBoolean("auth", "userNameToLowerCase", false)) {
+			      username = username.toLowerCase(Locale.US);
+		    }
+			log.debug("User name: " + username);
+		 	AccountState who = accountCache.getByUsername(username);
+		 	log.debug("AccountState " + who);
+			if (who == null) {
+				log.debug("User is not registered with Gerrit. Register now."); // This approach assumes an auth type of HTTP_LDAP
+				final AuthRequest areq = AuthRequest.forUser(username);
+				try {
+					accountManager.authenticate(areq);
+					who = accountCache.getByUsername(username);
+					if (who == null) {
+						log.warn("Unable to register user \"" + username
+								+ "\". Continue as anonymous.");
+					} else {
+						log.debug("User registered.");
+					}
+				} catch (AccountException e) {
+					log.warn("Exception registering user \"" + username
+							+ "\". Continue as anonymous.", e);
+				}
+			}
+		 	if (who != null && who.getAccount().isActive()) {
+		 		log.debug("Not anonymous user");
+		 		WebSession ws = session.get();
+		 		ws.setUserAccountId(who.getAccount().getId());
+		 		ws.setAccessPathOk(AccessPath.REST_API, true);
+		    } else {
+		    	log.debug("Anonymous user");
+		    }
 		}
 	}
 
