@@ -155,6 +155,7 @@
 		<module>bundles/org.eclipse.orion.server.user.securestorage</module>
 		<module>bundles/org.eclipse.orion.server.user.ldap</module>
 		<module>bundles/org.eclipse.orion.server.gerritfs</module>
+		<module>bundles/org.eclipse.orion.server.events</module>
 
 		<module>tests/org.eclipse.orion.server.tests</module>
 

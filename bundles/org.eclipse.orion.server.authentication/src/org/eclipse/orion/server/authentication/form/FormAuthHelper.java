@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2013 IBM Corporation and others 
+ * Copyright (c) 2010, 2014 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,14 +11,23 @@
 package org.eclipse.orion.server.authentication.form;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.orion.server.authentication.Activator;
 import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.events.IEventService;
 import org.eclipse.orion.server.user.profile.*;
 import org.eclipse.orion.server.useradmin.*;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +43,8 @@ public class FormAuthHelper {
 	public enum LoginResult {
 		OK, FAIL, BLOCKED
 	}
+
+	private static IEventService eventService;
 
 	/**
 	 * Authenticates user by credentials send in <code>login</code> and
@@ -59,6 +70,20 @@ public class FormAuthHelper {
 			if (logger.isInfoEnabled())
 				logger.info("Login success: " + login); //$NON-NLS-1$ 
 			req.getSession().setAttribute("user", userId); //$NON-NLS-1$
+
+			if (getEventService() != null) {
+				JSONObject message = new JSONObject();
+				try {
+					SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
+					Date date = new Date(System.currentTimeMillis());
+					message.put("event", "login");
+					message.put("published", format.format(date));
+					message.put("user", userId);
+				} catch (JSONException e1) {
+					LogHelper.log(e1);
+				}
+				getEventService().publish("orion/login", message);
+			}
 
 			IOrionUserProfileNode userProfileNode = getUserProfileService().getUserProfileNode(userId, IOrionUserProfileConstants.GENERAL_PROFILE_PART);
 			try {
@@ -166,5 +191,22 @@ public class FormAuthHelper {
 
 	public static void unbindUserProfileService(IOrionUserProfileService userProfileService) {
 		userProfileService = null;
+	}
+
+	private static IEventService getEventService() {
+		if (eventService == null) {
+			BundleContext context = Activator.getBundleContext();
+			ServiceReference<IEventService> eventServiceRef = context.getServiceReference(IEventService.class);
+			if (eventServiceRef == null) {
+				// Event service not available
+				return null;
+			}
+			eventService = context.getService(eventServiceRef);
+			if (eventService == null) {
+				// Event service not available
+				return null;
+			}
+		}
+		return eventService;
 	}
 }

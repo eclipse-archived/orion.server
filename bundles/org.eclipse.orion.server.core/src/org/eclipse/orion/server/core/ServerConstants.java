@@ -92,6 +92,21 @@ public class ServerConstants {
 	public static final String CONFIG_DOCKER_GID = "orion.core.docker.gid"; //$NON-NLS-1$
 
 	/**
+	 * The name of configuration property specifying the username for the MQTT message broker
+	 */
+	public static final String CONFIG_EVENT_USERNAME = "orion.events.username"; //$NON-NLS-1$
+
+	/**
+	 * The name of configuration property specifying the password for the MQTT message broker
+	 */
+	public static final String CONFIG_EVENT_PASSWORD = "orion.events.password"; //$NON-NLS-1$
+
+	/**
+	 * The name of configuration property specifying the URI for the MQTT message broker
+	 */
+	public static final String CONFIG_EVENT_HOST = "orion.events.uri"; //$NON-NLS-1$
+	
+	/**
 	 * The name of a configuration property specifying a comma-separated list of server
 	 * file system paths where user content can be written. By default user content
 	 * can only appear within the server instance location (workspace).
