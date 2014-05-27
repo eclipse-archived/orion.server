@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2012 IBM Corporation and others 
+ * Copyright (c) 2010, 2014 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,14 +12,18 @@ package org.eclipse.orion.server.authentication.openid;
 
 import java.io.*;
 import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
 import java.util.*;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.authentication.Activator;
 import org.eclipse.orion.server.authentication.formopenid.OpenIdConstants;
 import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.events.IEventService;
 import org.eclipse.orion.server.user.profile.*;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.User;
@@ -28,6 +32,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.openid4java.consumer.ConsumerException;
 import org.openid4java.discovery.Identifier;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
 import org.osgi.service.http.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +53,7 @@ public class OpenIdHelper {
 	private static List<OpendIdProviderDescription> defaultOpenids;
 
 	private static IOrionUserProfileService userProfileService;
+	private static IEventService eventService;
 
 	private HttpService httpService;
 
@@ -118,6 +125,20 @@ public class OpenIdHelper {
 			}
 
 			req.getSession().setAttribute("user", user.getUid()); //$NON-NLS-1$
+
+			if (getEventService() != null) {
+				JSONObject message = new JSONObject();
+				try {
+					SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
+					Date date = new Date(System.currentTimeMillis());
+					message.put("event", "login");
+					message.put("published", format.format(date));
+					message.put("user", user.getUid());
+				} catch (JSONException e1) {
+					LogHelper.log(e1);
+				}
+				getEventService().publish("orion/login", message);
+			}
 
 			IOrionUserProfileNode userProfileNode = getUserProfileService().getUserProfileNode(user.getUid(), IOrionUserProfileConstants.GENERAL_PROFILE_PART);
 			try {
@@ -294,5 +315,22 @@ public class OpenIdHelper {
 			return new ArrayList<OpendIdProviderDescription>();
 		}
 		return defaultOpenids;
+	}
+
+	private static IEventService getEventService() {
+		if (eventService == null) {
+			BundleContext context = Activator.getBundleContext();
+			ServiceReference<IEventService> eventServiceRef = context.getServiceReference(IEventService.class);
+			if (eventServiceRef == null) {
+				// Event service not available
+				return null;
+			}
+			eventService = context.getService(eventServiceRef);
+			if (eventService == null) {
+				// Event service not available
+				return null;
+			}
+		}
+		return eventService;
 	}
 }
