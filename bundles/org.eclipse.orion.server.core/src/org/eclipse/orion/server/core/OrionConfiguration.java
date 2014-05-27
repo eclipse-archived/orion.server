@@ -104,8 +104,8 @@ public class OrionConfiguration {
 				metaStorePreference = ServerConstants.CONFIG_META_STORE_LEGACY;
 				return metaStorePreference;
 			} else {
-				// version one of the simple metadata storage is the default
-				metaStorePreference = ServerConstants.CONFIG_META_STORE_SIMPLE;
+				// version two of the simple metadata storage is the default
+				metaStorePreference = ServerConstants.CONFIG_META_STORE_SIMPLE_V2;
 				return metaStorePreference;
 			}
 		} catch (CoreException e) {
