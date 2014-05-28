@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2013 IBM Corporation and others 
+ * Copyright (c) 2009, 2014 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -31,6 +31,8 @@ import org.eclipse.osgi.framework.log.FrameworkLog;
 import org.eclipse.osgi.service.datalocation.Location;
 import org.osgi.framework.*;
 import org.osgi.util.tracker.ServiceTracker;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Activator for the server core bundle.
@@ -156,7 +158,9 @@ public class Activator implements BundleActivator {
 				throw new RuntimeException("Cannot initialize MetaStore", e); //$NON-NLS-1$
 			}
 		} else {
-			throw new RuntimeException("Cannot initialize MetaStore - old metadata must be upgraded!"); //$NON-NLS-1$
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+			logger.error("Preference orion.core.metastore was not supplied and legacy files exist, see https://wiki.eclipse.org/Orion/Metadata_migration to migrate to the current version");
+			return;
 		}
 		bundleContext.registerService(IMetaStore.class, metastore, null);
 	}

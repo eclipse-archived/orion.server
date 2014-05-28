@@ -47,12 +47,12 @@ public class Activator implements BundleActivator {
 		String metastore = OrionConfiguration.getMetaStorePreference();
 
 		if (ServerConstants.CONFIG_META_STORE_LEGACY.equals(metastore)) {
-			Activator.bundleContext = bundleContext;
+			//Activator.bundleContext = bundleContext;
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-			userCredentialsService = bundleContext.registerService(IOrionCredentialsService.class, new SecureStorageCredentialsService(), null);
-			logger.debug("Started legacy user credentials service."); //$NON-NLS-1$
-			userProfileService = bundleContext.registerService(IOrionUserProfileService.class, new SecureStorageUserProfileService(), null);
-			logger.debug("Started legacy user profile service."); //$NON-NLS-1$
+			//userCredentialsService = bundleContext.registerService(IOrionCredentialsService.class, new SecureStorageCredentialsService(), null);
+			logger.error("Legacy user credentials service is no longer supported."); //$NON-NLS-1$
+			//userProfileService = bundleContext.registerService(IOrionUserProfileService.class, new SecureStorageUserProfileService(), null);
+			logger.error("Legacy user profile service is no longer supported."); //$NON-NLS-1$
 		}
 	}
 
