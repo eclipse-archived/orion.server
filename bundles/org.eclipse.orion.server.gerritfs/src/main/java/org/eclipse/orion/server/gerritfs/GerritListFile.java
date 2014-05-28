@@ -295,7 +295,7 @@ public class GerritListFile extends HttpServlet {
 				latestCommitObj.put("Author", authorObj);
 				latestCommitObj.put("Committer", committerObj);
 				latestCommitObj.put("Message", rev.getFullMessage());
-				latestCommitObj.put("URL", rev.getId().getName());
+				latestCommitObj.put("SHA1", rev.getId().getName());
 				latestCommitObj.put("AvatarURL", getImageLink(authorEmail));
 				
 				jsonObject.put("LastCommit", latestCommitObj);
