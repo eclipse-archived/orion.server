@@ -343,6 +343,10 @@ public class Indexer extends Job {
 			schedule(5000);
 			return Status.OK_STATUS;
 		}
+		if (metaStore == null) {
+			logger.error("Search indexer cannot find a metastore service");
+			return Status.OK_STATUS;
+		}
 		long start = System.currentTimeMillis();
 		int indexed = 0;
 		try {
