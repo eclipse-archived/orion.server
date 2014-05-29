@@ -25,27 +25,15 @@ public class LogServlet extends OrionServlet {
 
 	private static final long serialVersionUID = 1L;
 	private final ServletResourceHandler<String> logHandler;
-	private boolean enabled = false;
 
 	public LogServlet() {
 		logHandler = new LogHandler(getStatusHandler());
 	}
 
 	@Override
-	public void init() throws ServletException {
-		enabled = Boolean.valueOf(getServletConfig().getInitParameter("enabled"));
-	}
-
-	@Override
 	protected void doGet(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
 
-		// temporary until we provide proper authorization
-		if (!enabled) {
-			response.sendError(403);
-			return;
-		}
-		
 		String pathInfo = request.getPathInfo();
 		if (logHandler.handleRequest(request, response, pathInfo))
 			return;
