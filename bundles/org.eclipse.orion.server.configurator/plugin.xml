@@ -88,6 +88,10 @@
       <servlet
             alias="/logapi"
             class="org.eclipse.orion.server.logs.servlets.LogServlet">
+         <init-param
+               name="enabled"
+               value="false">
+         </init-param>
       </servlet>
       <serviceSelector
             filter="(other.info=org.eclipse.orion)">
