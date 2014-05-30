@@ -9,7 +9,7 @@
 
    Contributors:
       Matthias Sohn, Michael Ochmann - initial implementation
-      IBM - Updated for Orion 6.0
+      IBM Corporation - Updated for Orion 6.0
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
@@ -281,6 +281,17 @@
 										<echo
 											message="Replacing @qualifier@ token within orion.product with build id ${unqualifiedVersion}.${buildQualifier}" />
 										<replace file="orion.product">
+											<replacefilter token="@qualifier@"
+												value="${unqualifiedVersion}.${buildQualifier}" />
+										</replace>
+									</then>
+								</if>
+								<if>
+									<available file="about.properties" />
+									<then>
+										<echo
+											message="Replacing @qualifier@ token within about.properties with build id ${unqualifiedVersion}.${buildQualifier}" />
+										<replace file="about.properties">
 											<replacefilter token="@qualifier@"
 												value="${unqualifiedVersion}.${buildQualifier}" />
 										</replace>
