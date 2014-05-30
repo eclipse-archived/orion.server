@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
-import org.eclipse.orion.server.core.IOUtilities;
-
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -33,6 +31,7 @@ import org.eclipse.jgit.treewalk.filter.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;
+import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.*;
 import org.eclipse.orion.server.git.jobs.LogJob;
@@ -103,7 +102,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			for (int i = 0; i < p.segmentCount(); i++) {
 				String s = p.segment(i);
 				if (i == 2) {
-					s += ".." + newCommit; //$NON-NLS-1$
+					s += ".." + GitUtils.encode(newCommit); //$NON-NLS-1$
 				}
 				np = np.append(s);
 			}
