@@ -64,6 +64,8 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 
 		//TODO: Add to constants
 		String tokenName = PreferenceHelper.getString("ltpa.token.name"); //$NON-NLS-1$
+		System.out.println("============================");
+		System.out.println("Token name " + tokenName);
 		if (tokenName != null) {
 			javax.servlet.http.Cookie[] cookies = request.getCookies();
 			if (cookies != null) {
@@ -72,10 +74,12 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 					if (tokenName.equals(currentCookie.getName())) {
 						Cookie loginCookie = new Cookie(currentCookie.getName(), currentCookie.getValue());
 						request.setAttribute(GitConstants.KEY_SSO_TOKEN, loginCookie);
+						System.out.println("Saving Cookie" + loginCookie);
 					}
 				}
 			}
 		}
+		System.out.println("============================");
 
 		if (infoParts[1].equals(Branch.RESOURCE)) {
 			return branchHandlerV1.handleRequest(request, response, pathString);

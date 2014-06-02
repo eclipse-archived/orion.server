@@ -69,6 +69,7 @@ public class PullJob extends GitJob {
 				if (t instanceof TransportHttp && cookie != null) {
 					HashMap<String, String> map = new HashMap<String, String>();
 					map.put(GitConstants.KEY_COOKIE, cookie.getName() + "=" + cookie.getValue());
+					System.out.println("!!!!! Callback in PullJob " + cookie.getName() + " " + cookie.getValue());
 					//Temp. until JGit fix
 					try {
 						if (!InitSetAdditionalHeaders) {
@@ -76,6 +77,7 @@ public class PullJob extends GitJob {
 							SetAdditionalHeadersM = TransportHttp.class.getMethod("setAdditionalHeaders", HashMap.class);
 						}
 						if (SetAdditionalHeadersM != null) {
+							System.out.println("!!!!! Invoking PullJob");
 							SetAdditionalHeadersM.invoke(t, map);
 						}
 					} catch (SecurityException e) {
