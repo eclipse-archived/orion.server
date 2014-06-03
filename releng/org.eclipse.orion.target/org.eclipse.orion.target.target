@@ -99,6 +99,10 @@
 <unit id="org.hamcrest.text.source" version="1.1.0.v20090501071000"/>
 <unit id="org.hamcrest.core" version="1.3.0.v201303031735"/>
 <unit id="org.hamcrest.core.source" version="1.3.0.v201303031735"/>
+<unit id="org.hamcrest.library" version="1.3.0.v201305281000"/>
+<unit id="org.hamcrest.library.source" version="1.3.0.v201305281000"/>
+<unit id="org.hamcrest.integration" version="1.1.0.v201303031500"/>
+<unit id="org.hamcrest.integration.source" version="1.1.0.v201303031500"/>
 <unit id="org.json" version="1.0.0.v201011060100"/>
 <unit id="org.junit" version="4.11.0.v201303080030"/>
 <unit id="org.junit.source" version="4.11.0.v201303080030"/>
@@ -106,6 +110,8 @@
 <unit id="org.mockito.source" version="1.9.5.v201311280930"/>
 <unit id="org.mozilla.javascript" version="1.7.4.v201209142200"/>
 <unit id="org.mozilla.javascript.source" version="1.7.4.v201209142200"/>
+<unit id="org.objenesis" version="1.0.0.v201105211943"/>
+<unit id="org.objenesis.source" version="1.0.0.v201105211943"/>
 <unit id="org.openid4java" version="0.9.5.v201105210655"/>
 <unit id="org.slf4j.api" version="1.7.2.v20121108-1250"/>
 <unit id="org.slf4j.api.source" version="1.7.2.v20121108-1250"/>
