@@ -121,11 +121,66 @@
 <repository location="http://download.eclipse.org/tools/orbit/downloads/drops/R20140525021250/repository/"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
-<unit id="org.eclipse.sdk.ide" version="4.4.0.I20140522-1330"/>
-<unit id="org.eclipse.equinox.sdk.feature.group" version="3.10.0.v20140522-0452"/>
-<unit id="org.eclipse.test.feature.group" version="3.6.100.v20140518-1929"/>
-<unit id="org.eclipse.sdk.tests.feature.group" version="4.4.0.v20140522-1832"/>
-<unit id="org.eclipse.platform.ide" version="4.4.0.I20140522-1330"/>
+<unit id="org.eclipse.compare.core" version="0.0.0"/>
+<unit id="org.eclipse.core.commands" version="0.0.0"/>
+<unit id="org.eclipse.core.contenttype" version="0.0.0"/>
+<unit id="org.eclipse.core.expressions" version="0.0.0"/>
+<unit id="org.eclipse.core.filesystem" version="0.0.0"/>
+<unit id="org.eclipse.core.jobs" version="0.0.0"/>
+<unit id="org.eclipse.core.net" version="0.0.0"/>
+<unit id="org.eclipse.core.resources" version="0.0.0"/>
+<unit id="org.eclipse.core.runtime" version="0.0.0"/>
+<unit id="org.eclipse.core.runtime.compatibility" version="0.0.0"/>
+<unit id="org.eclipse.core.tests.harness" version="0.0.0"/>
+<unit id="org.eclipse.core.tests.resources" version="0.0.0"/>
+<unit id="org.eclipse.core.variables" version="0.0.0"/>
+<unit id="org.eclipse.debug.core" version="0.0.0"/>
+<unit id="org.eclipse.equinox.app" version="0.0.0"/>
+<unit id="org.eclipse.equinox.common" version="0.0.0"/>
+<unit id="org.eclipse.equinox.console" version="0.0.0"/>
+<unit id="org.eclipse.equinox.ds" version="0.0.0"/>
+<unit id="org.eclipse.equinox.executable.feature.group" version="0.0.0"/>
+<unit id="org.eclipse.equinox.http.jetty" version="0.0.0"/>
+<unit id="org.eclipse.equinox.http.registry" version="0.0.0"/>
+<unit id="org.eclipse.equinox.http.servlet" version="0.0.0"/>
+<unit id="org.eclipse.equinox.jsp.jasper" version="0.0.0"/>
+<unit id="org.eclipse.equinox.jsp.jasper.registry" version="0.0.0"/>
+<unit id="org.eclipse.equinox.preferences" version="0.0.0"/>
+<unit id="org.eclipse.equinox.registry" version="0.0.0"/>
+<unit id="org.eclipse.equinox.security" version="0.0.0"/>
+<unit id="org.eclipse.equinox.simpleconfigurator" version="0.0.0"/>
+<unit id="org.eclipse.equinox.util" version="0.0.0"/>
+<unit id="org.eclipse.help.base" version="0.0.0"/>
+<unit id="org.eclipse.help" version="0.0.0"/>
+<unit id="org.eclipse.help.webapp" version="0.0.0"/>
+<unit id="org.eclipse.osgi" version="0.0.0"/>
+<unit id="org.eclipse.osgi.services" version="0.0.0"/>
+<unit id="org.eclipse.jdt.core.compiler.batch" version="0.0.0"/>
+<unit id="org.eclipse.jdt.junit.runtime" version="0.0.0"/>
+<unit id="org.eclipse.jetty.security" version="0.0.0"/>
+<unit id="org.eclipse.jetty.server" version="0.0.0"/>
+<unit id="org.eclipse.jetty.servlet" version="0.0.0"/>
+<unit id="org.eclipse.jetty.util" version="0.0.0"/>
+<unit id="org.eclipse.jetty.http" version="0.0.0"/>
+<unit id="org.eclipse.jetty.io" version="0.0.0"/>
+<unit id="org.eclipse.jetty.continuation" version="0.0.0"/>
+<unit id="org.eclipse.jface" version="0.0.0"/>
+<unit id="org.eclipse.jface.text" version="0.0.0"/>
+<unit id="org.eclipse.jsch.core" version="0.0.0"/>
+<unit id="org.eclipse.pde.junit.runtime" version="0.0.0"/>
+<unit id="org.eclipse.swt" version="0.0.0"/>
+<unit id="org.eclipse.team.core" version="0.0.0"/>
+<unit id="org.eclipse.test.performance" version="0.0.0"/>
+<unit id="org.eclipse.text" version="0.0.0"/>
+<unit id="org.eclipse.ui" version="0.0.0"/>
+<unit id="org.eclipse.ui.console" version="0.0.0"/>
+<unit id="org.eclipse.ui.workbench.texteditor" version="0.0.0"/>
+<unit id="org.eclipse.ui.workbench" version="0.0.0"/>
+<unit id="org.eclipse.update.configurator" version="0.0.0"/>
+<unit id="org.eclipse.ui.console" version="0.0.0"/>
+<unit id="org.eclipse.ui.workbench.texteditor" version="0.0.0"/>
+<unit id="org.eclipse.platform.feature.group" version="0.0.0"/>
+<unit id="org.eclipse.rcp.feature.group" version="0.0.0"/>
 <repository location="http://download.eclipse.org/eclipse/updates/4.4milestones"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
