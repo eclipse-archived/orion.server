@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.servlet.http.Cookie;
 import org.eclipse.core.runtime.*;
@@ -69,15 +70,13 @@ public class PullJob extends GitJob {
 				if (t instanceof TransportHttp && cookie != null) {
 					HashMap<String, String> map = new HashMap<String, String>();
 					map.put(GitConstants.KEY_COOKIE, cookie.getName() + "=" + cookie.getValue());
-					System.out.println("!!!!! Callback in PullJob " + cookie.getName() + " " + cookie.getValue());
 					//Temp. until JGit fix
 					try {
 						if (!InitSetAdditionalHeaders) {
 							InitSetAdditionalHeaders = true;
-							SetAdditionalHeadersM = TransportHttp.class.getMethod("setAdditionalHeaders", HashMap.class);
+							SetAdditionalHeadersM = TransportHttp.class.getMethod("setAdditionalHeaders", Map.class);
 						}
 						if (SetAdditionalHeadersM != null) {
-							System.out.println("!!!!! Invoking PullJob");
 							SetAdditionalHeadersM.invoke(t, map);
 						}
 					} catch (SecurityException e) {

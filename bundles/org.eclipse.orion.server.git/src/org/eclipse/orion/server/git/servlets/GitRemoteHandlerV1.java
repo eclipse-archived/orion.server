@@ -240,7 +240,6 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		Path p = new Path(path);
 		//check for SSO token
 		Object cookie = request.getAttribute(GitConstants.KEY_SSO_TOKEN);
-		System.out.println(">>>> Setting cookie in FetchJob: " + cookie);
 		FetchJob job = new FetchJob(TaskJobHandler.getUserId(request), cp, p, force, cookie);
 		return TaskJobHandler.handleTaskJob(request, response, job, statusHandler, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 	}
@@ -251,7 +250,6 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		if (p.segment(2).equals("file")) { //$NON-NLS-1$
 			// /git/remote/{remote}/{branch}/file/{path}
 			Object cookie = request.getAttribute(GitConstants.KEY_SSO_TOKEN);
-			System.out.println(">>>> Setting cookie in PushJob: " + cookie);
 			PushJob job = new PushJob(TaskJobHandler.getUserId(request), cp, p, srcRef, tags, force, cookie);
 			return TaskJobHandler.handleTaskJob(request, response, job, statusHandler, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 		}
