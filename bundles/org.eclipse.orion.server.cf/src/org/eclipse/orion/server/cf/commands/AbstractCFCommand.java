@@ -10,8 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.commands;
 
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.cf.CFExtServiceHelper;
 import org.eclipse.orion.server.cf.objects.Cloud;
 import org.eclipse.orion.server.cf.objects.Target;
@@ -21,6 +20,7 @@ public abstract class AbstractCFCommand implements ICFCommand {
 
 	protected Target target;
 	private Cloud cloud;
+	private boolean wasRun = false;
 
 	protected AbstractCFCommand(Target target) {
 		this.target = target;
@@ -47,7 +47,9 @@ public abstract class AbstractCFCommand implements ICFCommand {
 			return status;
 
 		ServerStatus doItStatus = this._doIt();
-		return retryIfNeeded(doItStatus);
+		ServerStatus result = retryIfNeeded(doItStatus);
+		wasRun = true;
+		return result;
 	}
 
 	private ServerStatus retryIfNeeded(ServerStatus doItStatus) {
@@ -60,6 +62,10 @@ public abstract class AbstractCFCommand implements ICFCommand {
 	}
 
 	protected abstract ServerStatus _doIt();
+
+	protected void assertWasRun() {
+		Assert.isTrue(wasRun);
+	}
 
 	protected IStatus validateParams() {
 		return Status.OK_STATUS;
