@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
-import org.eclipse.orion.server.core.IOUtilities;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Map.Entry;
@@ -29,8 +27,7 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Index;
 import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
@@ -142,6 +139,7 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 				switch (type) {
 					case MIXED :
 					case HARD :
+					case SOFT :
 						Git git = new Git(db);
 						// "git reset --{type} HEAD ."
 						try {
@@ -152,7 +150,6 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 						return true;
 					case KEEP :
 					case MERGE :
-					case SOFT :
 						String msg = NLS.bind("The reset type is not yet supported: {0}.", resetType);
 						return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_IMPLEMENTED, msg, null));
 				}
