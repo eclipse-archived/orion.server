@@ -139,7 +139,7 @@ public class Log extends GitObject {
 				c.append(Repository.shortenRefName(toRefId.getName()));
 			final String q = "page=%d&pageSize=%d"; //$NON-NLS-1$
 			if (page > 1) {
-				return BaseToCommitConverter.getCommitLocation(cloneLocation, c.toString(), pattern, BaseToCommitConverter.REMOVE_FIRST_2.setQuery(String.format(q, page - 1, pageSize)));
+				return BaseToCommitConverter.getCommitLocation(cloneLocation, GitUtils.encode(c.toString()), pattern, BaseToCommitConverter.REMOVE_FIRST_2.setQuery(String.format(q, page - 1, pageSize)));
 			}
 		}
 		return null;
@@ -156,7 +156,7 @@ public class Log extends GitObject {
 			if (toRefId != null)
 				c.append(Repository.shortenRefName(toRefId.getName()));
 			final String q = "page=%d&pageSize=%d"; //$NON-NLS-1$
-			return BaseToCommitConverter.getCommitLocation(cloneLocation, c.toString(), pattern, BaseToCommitConverter.REMOVE_FIRST_2.setQuery(String.format(q, page + 1, pageSize)));
+			return BaseToCommitConverter.getCommitLocation(cloneLocation, GitUtils.encode(c.toString()), pattern, BaseToCommitConverter.REMOVE_FIRST_2.setQuery(String.format(q, page + 1, pageSize)));
 		}
 		return null;
 	}
