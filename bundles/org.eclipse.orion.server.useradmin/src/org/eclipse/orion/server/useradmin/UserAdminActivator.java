@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others 
+ * Copyright (c) 2010, 2014 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,7 +10,11 @@
  *******************************************************************************/
 package org.eclipse.orion.server.useradmin;
 
-import org.osgi.framework.*;
+import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.useradmin.diskusage.DiskUsageJob;
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
 
 public class UserAdminActivator implements BundleActivator {
 
@@ -21,6 +25,7 @@ public class UserAdminActivator implements BundleActivator {
 
 	private static UserAdminActivator singleton;
 	private BundleContext bundleContext;
+	private DiskUsageJob diskUsageJob;
 
 	public BundleContext getBundleContext() {
 		return bundleContext;
@@ -45,6 +50,13 @@ public class UserAdminActivator implements BundleActivator {
 	public void start(BundleContext bundleContext) throws Exception {
 		singleton = this;
 		this.bundleContext = bundleContext;
+
+		String diskUsageEnabled = PreferenceHelper.getString(ServerConstants.CONFIG_DISK_USAGE_ENABLED, "false").toLowerCase(); //$NON-NLS-1$
+		if ("true".equals(diskUsageEnabled)) {
+			diskUsageJob = new DiskUsageJob();
+			// Collect the disk usage data in ten seconds.
+			diskUsageJob.schedule(10000);
+		}
 	}
 
 	/*

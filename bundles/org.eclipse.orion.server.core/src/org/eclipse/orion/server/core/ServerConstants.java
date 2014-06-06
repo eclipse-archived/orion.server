@@ -172,6 +172,12 @@ public class ServerConstants {
 	public static final String CONFIG_META_STORE_SIMPLE_V2 = "simple2"; //$NON-NLS-1$
 
 	/**
+	 * name of configuration property for the disk usage calculation support.
+	 * When this property is set to true, the disk usage calculation support is enabled.
+	 */
+	public static final String CONFIG_DISK_USAGE_ENABLED = "orion.file.diskUsageEnabled"; //$NON-NLS-1$
+
+	/**
 	 * The name of a configuration property specifying the virtual hosts to use for
 	 * test sites launched by this server. The property value is a comma-separated 
 	 * list of host names.

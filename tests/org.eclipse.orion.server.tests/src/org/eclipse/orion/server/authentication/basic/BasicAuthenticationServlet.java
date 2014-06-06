@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others 
+ * Copyright (c) 2011, 2014 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -46,7 +46,6 @@ public class BasicAuthenticationServlet extends OrionServlet {
 			if (user == null) {
 				return null;
 			}
-			// try to add the login timestamp to the user info
 			IOrionUserProfileNode generalUserProfile = authService.getUserProfileService().getUserProfileNode(uid, IOrionUserProfileConstants.GENERAL_PROFILE_PART);
 			obj.put(UserConstants.KEY_UID, uid);
 			obj.put(UserConstants.KEY_LOGIN, user.getLogin());
@@ -54,8 +53,15 @@ public class BasicAuthenticationServlet extends OrionServlet {
 			obj.put("Name", user.getName());
 			if (generalUserProfile.get(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, null) != null) {
 				Long lastLogin = Long.parseLong(generalUserProfile.get(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, ""));
-
 				obj.put(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, lastLogin);
+			}
+			if (generalUserProfile.get(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP, null) != null) {
+				Long lastLogin = Long.parseLong(generalUserProfile.get(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP, ""));
+				obj.put(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP, lastLogin);
+			}
+			if (generalUserProfile.get(IOrionUserProfileConstants.DISK_USAGE, null) != null) {
+				Long lastLogin = Long.parseLong(generalUserProfile.get(IOrionUserProfileConstants.DISK_USAGE, ""));
+				obj.put(IOrionUserProfileConstants.DISK_USAGE, lastLogin);
 			}
 		} catch (IllegalArgumentException e) {
 			LogHelper.log(e);

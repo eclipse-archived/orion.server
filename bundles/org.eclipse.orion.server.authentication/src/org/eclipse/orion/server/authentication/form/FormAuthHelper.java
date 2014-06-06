@@ -160,7 +160,6 @@ public class FormAuthHelper {
 			if (user == null) {
 				return null;
 			}
-			// try to add the login timestamp to the user info
 			IOrionUserProfileNode generalUserProfile = FormAuthHelper.getUserProfileService().getUserProfileNode(uid, IOrionUserProfileConstants.GENERAL_PROFILE_PART);
 			obj.put(UserConstants.KEY_UID, uid);
 			obj.put(UserConstants.KEY_LOGIN, user.getLogin());
@@ -168,8 +167,15 @@ public class FormAuthHelper {
 			obj.put("Name", user.getName());
 			if (generalUserProfile.get(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, null) != null) {
 				Long lastLogin = Long.parseLong(generalUserProfile.get(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, ""));
-
 				obj.put(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, lastLogin);
+			}
+			if (generalUserProfile.get(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP, null) != null) {
+				Long lastLogin = Long.parseLong(generalUserProfile.get(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP, ""));
+				obj.put(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP, lastLogin);
+			}
+			if (generalUserProfile.get(IOrionUserProfileConstants.DISK_USAGE, null) != null) {
+				String lastLogin = generalUserProfile.get(IOrionUserProfileConstants.DISK_USAGE, "");
+				obj.put(IOrionUserProfileConstants.DISK_USAGE, lastLogin);
 			}
 		} catch (IllegalArgumentException e) {
 			LogHelper.log(e);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 IBM Corporation and others.
+ * Copyright (c) 2012, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -56,7 +56,11 @@ public interface UserConstants {
 	public static final String KEY_RESET = "reset"; //$NON-NLS-1$
 	
 	public static final String KEY_LAST_LOGIN_TIMESTAMP = "LastLogInTimestamp"; //$NON-NLS-1$
+
+	public static final String KEY_DISK_USAGE = "diskUsage";
 	
+	public static final String KEY_DISK_USAGE_TIMESTAMP = "diskUsageTimestamp";
+
 	public static final String KEY_CONFIRMATION_ID = "confirmationId"; //$NON-NLS-1$
 	
 	public static final String KEY_PASSWORD_RESET_CONFIRMATION_ID = "passwordResetId"; //$NON-NLS-1$

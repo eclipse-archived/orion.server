@@ -154,7 +154,7 @@ public class SimpleUserProfileNode implements IOrionUserProfileNode {
 	public String[] keys() {
 		// even though there are many more values, stick with what is in IOrionUserProfileConstants
 		// to match the legacy metastore
-		return new String[] { IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP };
+		return new String[] {IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, IOrionUserProfileConstants.DISK_USAGE, IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP};
 	}
 
 	public IOrionUserProfileNode getUserProfileNode(String pathName) {

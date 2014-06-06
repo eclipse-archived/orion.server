@@ -466,6 +466,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 		if (userProfile != null) {
 			json.put(UserConstants.KEY_LAST_LOGIN_TIMESTAMP, userProfile.get(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, ""));
+			json.put(UserConstants.KEY_DISK_USAGE_TIMESTAMP, userProfile.get(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP, null));
+			json.put(UserConstants.KEY_DISK_USAGE, userProfile.get(IOrionUserProfileConstants.DISK_USAGE, null));
 			json.put("GitMail", userProfile.get("GitMail", null));
 			json.put("GitName", userProfile.get("GitName", null));
 		}
