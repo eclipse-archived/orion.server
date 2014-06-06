@@ -92,7 +92,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 			return;
 		}
 		resp.setContentType(ProtocolConstants.CONTENT_TYPE_HTML);
-		resp.getWriter().write("<html><body><p>Your password has been reset. New password has been sent to the email address associated with your account.</p></body></html>");
+		resp.getWriter().write("<html><body><p>Your password has been successfully reset. Your new password has been sent to the email address associated with your account.</p></body></html>");
 		return;
 
 	}
@@ -110,7 +110,6 @@ public class EmailConfirmationServlet extends OrionServlet {
 		}
 
 		user.confirmEmail();
-
 		IStatus status = getUserAdmin().updateUser(user.getUid(), user);
 
 		if (!status.isOK()) {
@@ -122,7 +121,16 @@ public class EmailConfirmationServlet extends OrionServlet {
 			return;
 		}
 		resp.setContentType(ProtocolConstants.CONTENT_TYPE_HTML);
-		resp.getWriter().write("<html><body><p>Your email address has been confirmed. Thank you!</p></body></html>");
+		StringBuffer host = new StringBuffer();
+		String scheme = req.getScheme();
+		host.append(scheme);
+		host.append(":////");
+		String servername = req.getServerName();
+		host.append(servername);
+		host.append(":");
+		int port = req.getServerPort();
+		host.append(port);
+		resp.getWriter().write("<html><body><p>Your email address has been confirmed. Thank you! <a href=\"" + host + "\">Click here</a> to continue and login to your Orion account.</p></body></html>");
 		return;
 	}
 

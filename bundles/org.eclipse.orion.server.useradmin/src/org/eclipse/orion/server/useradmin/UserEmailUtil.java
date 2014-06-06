@@ -51,6 +51,7 @@ public class UserEmailUtil {
 	private static final String EMAIL_URL_LINK = "<URL>"; //$NON-NLS-1$
 	private static final String EMAIL_USER_LINK = "<USER>"; //$NON-NLS-1$
 	private static final String EMAIL_PASSWORD_LINK = "<PASSWORD>"; //$NON-NLS-1$
+	private static final String EMAIL_ADDRESS_LINK = "<EMAIL>"; //$NON-NLS-1$
 	private Properties properties;
 	private EmailContent confirmationEmail;
 	private EmailContent confirmationResetPassEmail;
@@ -155,7 +156,7 @@ public class UserEmailUtil {
 		String confirmURL = confirmLocation.toURL().toString();
 		confirmURL += "/" + user.getUid();
 		confirmURL += "?" + UserConstants.KEY_CONFIRMATION_ID + "=" + user.getConfirmationId();
-		sendEmail(confirmationEmail.getTitle(), confirmationEmail.getContent().replaceAll(EMAIL_USER_LINK, user.getLogin()).replaceAll(EMAIL_URL_LINK, confirmURL), user.getEmail());
+		sendEmail(confirmationEmail.getTitle(), confirmationEmail.getContent().replaceAll(EMAIL_USER_LINK, user.getLogin()).replaceAll(EMAIL_URL_LINK, confirmURL).replaceAll(EMAIL_ADDRESS_LINK, user.getEmail()), user.getEmail());
 	}
 
 	public void sendResetPasswordConfirmation(URI baseURI, User user) throws URISyntaxException, IOException, CoreException {
