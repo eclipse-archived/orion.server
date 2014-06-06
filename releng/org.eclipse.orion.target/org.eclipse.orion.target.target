@@ -2,7 +2,7 @@
 <locations>
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.jgit" version="3.4.0.201406041058-rc3"/>
-<repository location="http://download.eclipse.org/egit/staging/3.4.0.201406041058-rc3"/>
+<repository location="http://download.eclipse.org/egit/staging/v3.4.0.201406041058-rc3"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
 <unit id="ch.qos.logback.core" version="1.0.7.v20121108-1250"/>
