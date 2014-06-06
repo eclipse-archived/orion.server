@@ -201,7 +201,6 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 			//add basic fields to workspace result
 			result.put(ProtocolConstants.KEY_LOCATION, workspaceLocation);
 			result.put(ProtocolConstants.KEY_CHILDREN_LOCATION, workspaceLocation);
-			result.put(ProtocolConstants.KEY_DRIVE_LOCATION, URIUtil.append(workspaceLocation, ProtocolConstants.PATH_DRIVE));
 			result.put(ProtocolConstants.KEY_PROJECTS, projects);
 			result.put(ProtocolConstants.KEY_DIRECTORY, "true"); //$NON-NLS-1$
 			//add children to match file API
