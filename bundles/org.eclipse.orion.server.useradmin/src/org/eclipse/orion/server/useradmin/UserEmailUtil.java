@@ -149,11 +149,14 @@ public class UserEmailUtil {
 	}
 
 	public void sendEmailConfirmation(HttpServletRequest req, User user) throws URISyntaxException, IOException, CoreException {
-		URI confirmLocation = URI.create(req.getRequestURL().toString()).resolve(PATH_EMAIL_CONFIRMATION);
+		URL confirmLocation = new URL(req.getScheme(),
+                req.getServerName(),
+                req.getServerPort(),
+                "/" + PATH_EMAIL_CONFIRMATION);
 		if (confirmationEmail == null) {
 			confirmationEmail = new EmailContent(EMAIL_CONFIRMATION_FILE);
 		}
-		String confirmURL = confirmLocation.toURL().toString();
+		String confirmURL = confirmLocation.toString();
 		confirmURL += "/" + user.getUid();
 		confirmURL += "?" + UserConstants.KEY_CONFIRMATION_ID + "=" + user.getConfirmationId();
 		sendEmail(confirmationEmail.getTitle(), confirmationEmail.getContent().replaceAll(EMAIL_USER_LINK, user.getLogin()).replaceAll(EMAIL_URL_LINK, confirmURL).replaceAll(EMAIL_ADDRESS_LINK, user.getEmail()), user.getEmail());
