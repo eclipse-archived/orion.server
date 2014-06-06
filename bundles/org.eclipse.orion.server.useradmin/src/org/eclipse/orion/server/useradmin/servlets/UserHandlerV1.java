@@ -288,7 +288,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (newUser.getBlocked()) {
 			try {
 				UserEmailUtil.getUtil().sendEmailConfirmation(req, newUser);
-				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_CREATED, NLS.bind("User {0} has been succesfully created. To log in please confirm your email first.", login), null));
+				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_CREATED, NLS.bind("Your account {0} has been successfully created. You have been sent an email address verification. Follow the instructions in this email to login to your Orion account.", login), null));
 			} catch (URISyntaxException e) {
 				LogHelper.log(e);
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Could not send confirmation email to " + newUser.getEmail(), null));
