@@ -132,6 +132,7 @@ class GenericFileHandler extends ServletResourceHandler<IFileStore> {
 					response.setStatus(HttpServletResponse.SC_PRECONDITION_FAILED);
 					break;
 			}
+			response.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 			response.setHeader(ProtocolConstants.KEY_ETAG, etag);
 			return true;
 		}
