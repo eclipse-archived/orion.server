@@ -10,14 +10,15 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.commands;
 
+import java.util.Iterator;
+import java.util.List;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.manifest.v2.InvalidAccessException;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
-import org.eclipse.orion.server.cf.objects.App;
-import org.eclipse.orion.server.cf.objects.Target;
+import org.eclipse.orion.server.cf.objects.*;
 import org.eclipse.orion.server.cf.utils.MultiServerStatus;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
@@ -67,17 +68,15 @@ public class BindRouteCommand extends AbstractRevertableCFCommand {
 				return status;
 
 			/* get available domains */
-			GetDomainsCommand getDomains = new GetDomainsCommand(target);
-			ServerStatus jobStatus = (ServerStatus) getDomains.doIt(); /* FIXME: unsafe type cast */
+			GetDomainsCommand getDomainsCommand = new GetDomainsCommand(target);
+			ServerStatus jobStatus = (ServerStatus) getDomainsCommand.doIt(); /* FIXME: unsafe type cast */
 			status.add(jobStatus);
 
 			if (!jobStatus.isOK())
 				return revert(status);
 
-			/* extract available domains */
-			JSONObject domains = jobStatus.getJsonData();
-
-			if (domains.getInt(CFProtocolConstants.V2_KEY_TOTAL_RESULTS) < 1) {
+			List<Domain> domains = getDomainsCommand.getDomains();
+			if (domains == null || domains.size() == 0) {
 				status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Failed to find available domains in target", null));
 				return revert(status);
 			}
@@ -85,13 +84,11 @@ public class BindRouteCommand extends AbstractRevertableCFCommand {
 			String domainGUID = null;
 			if (!appDomain.isEmpty()) {
 				/* look if the domain is available */
-				int resources = domains.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES).length();
-				for (int k = 0; k < resources; ++k) {
-					JSONObject resource = domains.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES).getJSONObject(k);
-					String tmpDomainName = resource.getJSONObject(CFProtocolConstants.V2_KEY_ENTITY).getString(CFProtocolConstants.V2_KEY_NAME);
-					if (appDomain.equals(tmpDomainName)) {
-						domainGUID = resource.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID);
-						domainName = tmpDomainName;
+				for (Iterator<Domain> iterator = domains.iterator(); iterator.hasNext();) {
+					Domain domain = iterator.next();
+					if (appDomain.equals(domain.getDomainName())) {
+						domainGUID = domain.getGuid();
+						domainName = domain.getDomainName();
 						break;
 					}
 				}
@@ -105,9 +102,9 @@ public class BindRouteCommand extends AbstractRevertableCFCommand {
 
 			} else {
 				/* client has not requested a specific domain, get the first available */
-				JSONObject resource = domains.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES).getJSONObject(0);
-				domainName = resource.getJSONObject(CFProtocolConstants.V2_KEY_ENTITY).getString(CFProtocolConstants.V2_KEY_NAME);
-				domainGUID = resource.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID);
+				Domain domain = domains.get(0);
+				domainName = domain.getDomainName();
+				domainGUID = domain.getGuid();
 			}
 
 			/* find out whether the declared host can be reused */

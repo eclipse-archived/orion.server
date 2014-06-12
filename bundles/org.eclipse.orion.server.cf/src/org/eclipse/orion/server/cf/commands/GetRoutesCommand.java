@@ -11,12 +11,13 @@
 package org.eclipse.orion.server.cf.commands;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
-import org.eclipse.orion.server.cf.objects.Route;
-import org.eclipse.orion.server.cf.objects.Target;
+import org.eclipse.orion.server.cf.objects.*;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
@@ -29,10 +30,26 @@ public class GetRoutesCommand extends AbstractCFCommand {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
+	private Domain domain;
+	private String hostName;
 
-	public GetRoutesCommand(String userId, Target target) {
+	private List<Route> routes;
+
+	public GetRoutesCommand(Target target) {
 		super(target);
-		this.commandName = "Get Spaces";
+		this.commandName = "Get Routes";
+	}
+
+	public GetRoutesCommand(Target target, Domain domain, String hostName) {
+		super(target);
+		this.commandName = "Get Routes";
+		this.domain = domain;
+		this.hostName = hostName;
+	}
+
+	public List<Route> getRoutes() {
+		assertWasRun();
+		return routes;
 	}
 
 	@Override
@@ -46,24 +63,29 @@ public class GetRoutesCommand extends AbstractCFCommand {
 			HttpUtil.configureHttpMethod(getRoutesMethod, target);
 			getRoutesMethod.setQueryString("inline-relations-depth=1"); //$NON-NLS-1$
 
-			ServerStatus status = HttpUtil.executeMethod(getRoutesMethod);
-			if (!status.isOK())
-				return status;
+			ServerStatus getRouteStatus = HttpUtil.executeMethod(getRoutesMethod);
+			if (!getRouteStatus.isOK())
+				return getRouteStatus;
 
 			/* extract available routes */
-			JSONObject routes = status.getJsonData();
+			JSONObject routesJSON = getRouteStatus.getJsonData();
 
-			if (routes.getInt(CFProtocolConstants.V2_KEY_TOTAL_RESULTS) < 1) {
+			if (routesJSON.getInt(CFProtocolConstants.V2_KEY_TOTAL_RESULTS) < 1) {
 				return new ServerStatus(IStatus.OK, HttpServletResponse.SC_OK, null, null);
 			}
 
 			JSONObject result = new JSONObject();
-			JSONArray resources = routes.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES);
+			routes = new ArrayList<Route>();
+			JSONArray resources = routesJSON.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES);
 			for (int k = 0; k < resources.length(); ++k) {
 				JSONObject routeJSON = resources.getJSONObject(k);
 				Route route = new Route();
 				route.setCFJSON(routeJSON);
-				result.append("Routes", route.toJSON());
+
+				if (hostName == null || hostName.equals(route.getHost())) {
+					routes.add(route);
+					result.append("Routes", route.toJSON());
+				}
 			}
 
 			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
