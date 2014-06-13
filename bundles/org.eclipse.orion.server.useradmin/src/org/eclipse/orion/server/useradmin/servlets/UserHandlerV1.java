@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.regex.Pattern;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -69,6 +70,10 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	 * The maximum length of a username.
 	 */
 	private static final int USERNAME_MAX_LENGTH = 20;
+	/**
+	 * The minimum length of a password.
+	 */
+	private static final int PASSWORD_MIN_LENGTH = 8;
 
 	private ServletResourceHandler<IStatus> statusHandler;
 
@@ -201,10 +206,11 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (user == null)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "User " + login + " could not be found.", null));
 
-		if (password == null) {
-			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Provide new password", null));
+		String passwordMsg = validatePassword(password);
+		if (passwordMsg != null){
+			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, passwordMsg, null));
 		}
-
+		
 		user.setPassword(password);
 		IStatus status = userAdmin.updateUser(user.getUid(), user);
 		if (!status.isOK()) {
@@ -231,8 +237,9 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (msg != null)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 
-		if ((password == null || password.length() == 0)) {
-			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Cannot create user with empty password.", null));
+		String passwordMsg = validatePassword(password);
+		if (passwordMsg != null){
+			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, passwordMsg, null));
 		}
 
 		if (isEmailRequired && (email == null || email.length() == 0)) {
@@ -328,6 +335,29 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		}
 		return null;
 	}
+	
+	/**
+	 * Validates the provided password is valid. The password must be at least PASSWORD_MIN_LENGTH characters
+	 * long and contain a mix of alpha and non alpha characters.
+	 * @param password The provided password
+	 * @return <code>null</code> if the password is valid, and otherwise a string message stating the reason
+	 * why it is not valid.
+	 */
+	private String validatePassword(String password) {
+		if ((password == null || password.length() == 0)) {
+			return "Password not specified.";
+		}
+
+		if (password.length() < PASSWORD_MIN_LENGTH) {
+			return NLS.bind("Password must be at least {0} characters long", PASSWORD_MIN_LENGTH);
+		}
+
+		if (Pattern.matches("[a-zA-Z]+", password) || Pattern.matches("[^a-zA-Z]+", password)) {
+			return "Password must contain at least one alpha character and one non alpha character";
+		}
+		
+		return null;
+	}
 
 	private boolean handleUserPut(HttpServletRequest req, HttpServletResponse resp, String userId) throws ServletException, IOException, CoreException, JSONException {
 		JSONObject data = OrionServlet.readJSONRequest(req);
@@ -345,10 +375,16 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Invalid old password", null));
 			}
 		}
-
-		if (data.has(UserConstants.KEY_OLD_PASSWORD) && (!data.has(UserConstants.KEY_PASSWORD) || data.getString(UserConstants.KEY_PASSWORD).length() == 0)) {
-			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Password cannot be empty", null));
+		
+		String newPassword = null;
+		if (data.has(UserConstants.KEY_PASSWORD)) {
+			newPassword = data.getString(UserConstants.KEY_PASSWORD);
 		}
+		String passwordMsg = validatePassword(newPassword);
+		if (data.has(UserConstants.KEY_OLD_PASSWORD) && passwordMsg != null) {
+			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, passwordMsg, null));
+		}
+
 		if (data.has(UserConstants.KEY_LOGIN))
 			user.setLogin(data.getString(UserConstants.KEY_LOGIN));
 		if (data.has(ProtocolConstants.KEY_NAME))
@@ -417,7 +453,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (!userAdmin.deleteUser(user)) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + userId + " could not be found.", null));
 		}
-		
+
 		// Delete user from metadata store
 		try {
 			@SuppressWarnings("unused")
