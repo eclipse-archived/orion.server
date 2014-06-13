@@ -34,6 +34,7 @@ import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.metastore.MetadataInfo;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.core.resources.Base64;
@@ -170,7 +171,7 @@ public class NewFileServlet extends OrionServlet {
 				return null;
 			}
 			IFileStore fileStore = OrionConfiguration.getMetaStore().getWorkspaceContentLocation(workspace.getUniqueId());
-			return fileStore;
+			return wrap(workspace, fileStore);
 		} catch (CoreException e) {
 			LogHelper.log(new Status(IStatus.WARNING, Activator.PI_SERVER_SERVLETS, 1, "An error occurred when getting workspace store for path", e));
 			// fallback and return null
@@ -202,16 +203,23 @@ public class NewFileServlet extends OrionServlet {
 					}
 				}
 			}
-			return EFS.getStore(location);
+			return wrap(project, EFS.getStore(location));
 		}
 		//there is no scheme but it could still be an absolute path
 		IPath localPath = new Path(location.getPath());
 		if (localPath.isAbsolute()) {
-			return EFS.getLocalFileSystem().getStore(localPath);
+			return wrap(project, EFS.getLocalFileSystem().getStore(localPath));
 		}
 		//treat relative location as relative to the file system root
 		IFileStore root = OrionConfiguration.getMetaStore().getUserHome(request.getRemoteUser());
-		return root.getChild(location.toString());
+		return wrap(project, root.getChild(location.toString()));
 	}
 
+	private static IFileStore wrap(MetadataInfo info, IFileStore store) {
+		if (FilesystemModificationListenerManager.getInstance().hasListeners()) {
+			return FileStoreNotificationWrapper.wrap(info, store);
+		}
+
+		return store;
+	}
 }

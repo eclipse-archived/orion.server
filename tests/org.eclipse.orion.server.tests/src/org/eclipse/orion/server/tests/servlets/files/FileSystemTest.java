@@ -154,26 +154,30 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	/**
 	 * Creates a new directory in the server's local file system at the root location for the file servlet.
 	 */
-	protected void createDirectory(String path) throws CoreException {
+	protected IFileStore createDirectory(String path) throws CoreException {
 		IFileInfo info = null;
 		URI location = makeLocalPathAbsolute(path);
 		IFileStore dir = EFS.getStore(location);
 		dir.mkdir(EFS.NONE, null);
 		info = dir.fetchInfo();
 		assertTrue("Coudn't create directory " + path, info.exists() && info.isDirectory());
+
+		return dir;
 	}
 
-	protected static void createFile(URI uri, String fileContent) throws CoreException {
+	protected static IFileStore createFile(URI uri, String fileContent) throws CoreException {
 		IFileStore outputFile = EFS.getStore(uri);
 		outputFile.delete(EFS.NONE, null);
 		InputStream input = new ByteArrayInputStream(fileContent.getBytes());
 		transferData(input, outputFile.openOutputStream(EFS.NONE, null));
 		IFileInfo info = outputFile.fetchInfo();
 		assertTrue("Coudn't create file " + uri, info.exists() && !info.isDirectory());
+
+		return outputFile;
 	}
 
-	protected void createFile(String path, String fileContent) throws CoreException {
-		createFile(makeLocalPathAbsolute(path), fileContent);
+	protected IFileStore createFile(String path, String fileContent) throws CoreException {
+		return createFile(makeLocalPathAbsolute(path), fileContent);
 	}
 
 	/**

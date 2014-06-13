@@ -23,6 +23,7 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
 
+import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -31,7 +32,9 @@ import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
+import org.eclipse.orion.internal.server.servlets.IFileStoreModificationListener.ChangeType;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.servlets.file.FilesystemModificationListenerManager;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.OrionConfiguration;
@@ -58,6 +61,8 @@ import com.meterware.httpunit.WebResponse;
  */
 public class CoreFilesTest extends FileSystemTest {
 
+	TestFilesystemModificationListener modListener;
+
 	@BeforeClass
 	public static void setupWorkspace() {
 		initializeWorkspaceLocation();
@@ -79,6 +84,7 @@ public class CoreFilesTest extends FileSystemTest {
 	public void tearDown() throws Exception {
 		clearWorkspace();
 		remove("sample");
+		TestFilesystemModificationListener.cleanup(modListener);
 	}
 
 	@Test
@@ -114,6 +120,29 @@ public class CoreFilesTest extends FileSystemTest {
 		checkFileMetadata(responseObject, destName, null, null, null, null, null, null, null, null);
 		assertTrue(checkFileExists(sourcePath));
 		assertTrue(checkFileExists(destPath));
+	}
+
+	@Test
+	public void testListenerCopyFile() throws Exception {
+		String directoryPath = "testCopyFile/directory/path" + System.currentTimeMillis();
+		String sourcePath = directoryPath + "/source.txt";
+		String destName = "destination.txt";
+		String destPath = directoryPath + "/" + destName;
+		createDirectory(directoryPath);
+		IFileStore sourceStore = createFile(sourcePath, "This is the contents");
+
+		modListener = new TestFilesystemModificationListener();
+
+		JSONObject requestObject = new JSONObject();
+		addSourceLocation(requestObject, sourcePath);
+		WebRequest request = getPostFilesRequest(directoryPath, requestObject.toString(), "destination.txt");
+		request.setHeaderField("X-Create-Options", "copy");
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+		IFileStore destStore = EFS.getStore(makeLocalPathAbsolute(destPath));
+
+		modListener.assertListenerNotified(sourceStore, destStore, ChangeType.COPY_INTO);
 	}
 
 	@Test
@@ -173,6 +202,24 @@ public class CoreFilesTest extends FileSystemTest {
 		assertNotNull("No direcory information in response", responseObject);
 		checkDirectoryMetadata(responseObject, dirName, null, null, null, null, null);
 
+	}
+
+	@Test
+	public void testListenerCreateDirectory() throws CoreException, IOException, SAXException, JSONException {
+		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+		IFileStore parent = createDirectory(directoryPath);
+
+		String dirName = "testdir";
+		webConversation.setExceptionsThrownOnErrorStatus(false);
+
+		modListener = new TestFilesystemModificationListener();
+
+		WebRequest request = getPostFilesRequest(directoryPath, getNewDirJSON(dirName).toString(), dirName);
+		WebResponse response = webConversation.getResponse(request);
+
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+		modListener.assertListenerNotified(parent.getChild(dirName), ChangeType.MKDIR);
 	}
 
 	@Test
@@ -426,7 +473,20 @@ public class CoreFilesTest extends FileSystemTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		assertFalse("Delete request returned OK, but the directory still exists", checkDirectoryExists(dirPath));
+	}
 
+	@Test
+	public void testListenerDeleteEmptyDir() throws CoreException, IOException, SAXException {
+		String dirPath = "sample/directory/path/sample" + System.currentTimeMillis();
+		IFileStore dir = createDirectory(dirPath);
+
+		modListener = new TestFilesystemModificationListener();
+
+		WebRequest request = getDeleteFilesRequest(dirPath);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		modListener.assertListenerNotified(dir, ChangeType.DELETE);
 	}
 
 	@Test
@@ -446,6 +506,24 @@ public class CoreFilesTest extends FileSystemTest {
 
 		assertTrue("File was deleted but the above directory was deleted as well", checkDirectoryExists(dirPath));
 
+	}
+
+	@Test
+	public void testListenerDeleteFile() throws CoreException, IOException, SAXException {
+		String dirPath = "sample/directory/path";
+		String fileName = System.currentTimeMillis() + ".txt";
+		String filePath = dirPath + "/" + fileName;
+
+		createDirectory(dirPath);
+		IFileStore fileStore = createFile(filePath, "Sample file content");
+
+		modListener = new TestFilesystemModificationListener();
+
+		WebRequest request = getDeleteFilesRequest(filePath);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		modListener.assertListenerNotified(fileStore, ChangeType.DELETE);
 	}
 
 	@Test
@@ -471,6 +549,35 @@ public class CoreFilesTest extends FileSystemTest {
 
 		assertFalse("Delete directory with subdirectory request returned OK, but the file still exists", checkDirectoryExists(dirPath2));
 
+	}
+
+	@Test
+	public void testListenerDeleteNonEmptyDirectory() throws CoreException, IOException, SAXException {
+		String dirPath1 = "sample/directory/path/sample1" + System.currentTimeMillis();
+		String dirPath2 = "sample/directory/path/sample2" + System.currentTimeMillis();
+		String fileName = "subfile.txt";
+		String subDirectory = "subdirectory";
+
+		IFileStore dirStore1 = createDirectory(dirPath1);
+		createFile(dirPath1 + "/" + fileName, "Sample file content");
+		IFileStore dirStore2subDir = createDirectory(dirPath2 + "/" + subDirectory);
+
+		modListener = new TestFilesystemModificationListener();
+
+		WebRequest request = getDeleteFilesRequest(dirPath1);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals("Could not delete directory with file", HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		modListener.assertListenerNotified(dirStore1, ChangeType.DELETE);
+
+		modListener.clear();
+
+		request = getDeleteFilesRequest(dirPath2);
+		response = webConversation.getResponse(request);
+		assertEquals("Could not delete directory with subdirectory", HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertFalse("Delete directory with subdirectory request returned OK, but the file still exists", checkDirectoryExists(dirPath2));
+
+		modListener.assertListenerNotified(dirStore2subDir.getParent(), ChangeType.DELETE);
 	}
 
 	@Test
@@ -606,6 +713,27 @@ public class CoreFilesTest extends FileSystemTest {
 		checkFileMetadata(responseObject, destName, null, null, null, null, null, null, null, null);
 		assertFalse(checkFileExists(sourcePath));
 		assertTrue(checkFileExists(destPath));
+	}
+
+	@Test
+	public void testListenerMoveFileNoOverwrite() throws Exception {
+		String directoryPath = "testMoveFile/directory/path" + System.currentTimeMillis();
+		String sourcePath = directoryPath + "/source.txt";
+		String destName = "destination.txt";
+		IFileStore destParent = createDirectory(directoryPath);
+		IFileStore sourceStore = createFile(sourcePath, "This is the contents");
+
+		modListener = new TestFilesystemModificationListener();
+		FilesystemModificationListenerManager.getInstance().addListener(modListener);
+
+		JSONObject requestObject = new JSONObject();
+		addSourceLocation(requestObject, sourcePath);
+		WebRequest request = getPostFilesRequest(directoryPath, requestObject.toString(), "destination.txt");
+		request.setHeaderField("X-Create-Options", "move");
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+		modListener.assertListenerNotified(sourceStore, destParent.getChild(destName), ChangeType.MOVE);
 	}
 
 	/**
@@ -811,6 +939,28 @@ public class CoreFilesTest extends FileSystemTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("Invalid file content", fileContent, response.getText());
+	}
+
+	@Test
+	public void testListenerWriteFile() throws CoreException, IOException, SAXException, JSONException {
+		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+		IFileStore dir = createDirectory(directoryPath);
+		String fileName = "testfile.txt";
+
+		WebRequest request = getPostFilesRequest(directoryPath, getNewFileJSON(fileName).toString(), fileName);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+		modListener = new TestFilesystemModificationListener();
+
+		//put to file location should succeed
+		String location = response.getHeaderField("Location");
+		String fileContent = "New contents";
+		request = getPutFileRequest(location, fileContent);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		modListener.assertListenerNotified(dir.getChild(fileName), ChangeType.WRITE);
 	}
 
 	@Test
