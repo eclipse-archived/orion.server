@@ -15,21 +15,26 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.orion.internal.server.servlets.IFilesystemModificationListener.ChangeType;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.xml.sax.SAXException;
+
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 public class AdvancedFilesTest extends FileSystemTest {
 	private JSONObject getFileMetadataObject(Boolean readonly, Boolean executable) throws JSONException {
@@ -213,4 +218,35 @@ public class AdvancedFilesTest extends FileSystemTest {
 		assertEquals(HttpURLConnection.HTTP_NO_CONTENT, response.getResponseCode());
 
 	}
+
+	@Test
+	public void testListenerMetadataHandling() throws JSONException, IOException, SAXException, CoreException {
+
+		String fileName = "testListenerMetadataHandling.txt";
+
+		//setup: create a file
+		WebRequest request = getPostFilesRequest("", getNewFileJSON(fileName).toString(), fileName);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+		TestFilesystemModificationListener l = new TestFilesystemModificationListener();
+		try {
+			//modify the metadata
+			request = getPutFileRequest(fileName + "?parts=meta", getFileMetadataObject(true, true).toString());
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_NO_CONTENT, response.getResponseCode());
+
+			IFileStore fileStore = EFS.getStore(makeLocalPathAbsolute(fileName));
+			l.assertListenerNotified(fileStore, ChangeType.PUTINFO);
+		} finally {
+			TestFilesystemModificationListener.cleanup(l);
+		}
+
+		//make the file writeable again so test can clean up
+		request = getPutFileRequest(fileName + "?parts=meta", getFileMetadataObject(false, false).toString());
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_NO_CONTENT, response.getResponseCode());
+
+	}
+
 }
