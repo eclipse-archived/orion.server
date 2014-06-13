@@ -88,6 +88,10 @@
       <servlet
             alias="/logapi"
             class="org.eclipse.orion.server.logs.servlets.LogServlet">
+         <init-param
+               name="enabled"
+               value="false">
+         </init-param>
       </servlet>
       <serviceSelector
             filter="(other.info=org.eclipse.orion)">
@@ -105,7 +109,7 @@
          point="org.eclipse.equinox.http.registry.filters">
       <filter
             alias="/"
-            class="org.eclipse.orion.server.configurator.servlet.ExcludedExtensionGzipFilter">
+            class="org.eclipse.orion.server.servlets.ExcludedExtensionGzipFilter">
          <init-param
                name="excludedExtensions"
                value="jsp, jspx, gif, jpg, png">
@@ -113,7 +117,7 @@
       </filter>
       <filter
             alias="/"
-            class="org.eclipse.orion.server.configurator.servlet.CacheFilter">
+            class="org.eclipse.orion.server.servlets.CacheFilter">
          <init-param
                name="directives"
                value="public, max-age=86400, must-revalidate">
@@ -129,7 +133,7 @@
       </filter>
       <filter
             alias="/requirejs"
-            class="org.eclipse.orion.server.configurator.servlet.CacheFilter">
+            class="org.eclipse.orion.server.servlets.CacheFilter">
          <init-param
                name="directives"
                value="public, max-age=86400, must-revalidate">
@@ -138,7 +142,7 @@
  
       <filter
             alias="/"
-            class="org.eclipse.orion.server.configurator.servlet.CacheFilter">
+            class="org.eclipse.orion.server.servlets.CacheFilter">
          <init-param
                name="directives"
                value="max-age=900, must-revalidate">
@@ -154,7 +158,7 @@
       </filter>
       <filter
             alias="/"
-            class="org.eclipse.orion.server.configurator.servlet.WelcomeFileFilter">
+            class="org.eclipse.orion.server.servlets.WelcomeFileFilter">
          <init-param
                name="includes"
                value="/">

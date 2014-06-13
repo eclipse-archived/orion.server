@@ -8,26 +8,30 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.server.configurator.servlet;
+package org.eclipse.orion.server.servlets;
 
-import java.io.OutputStream;
-
-import java.util.zip.GZIPOutputStream;
-import java.io.PrintWriter;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpServletResponseWrapper;
-import javax.servlet.ServletResponse;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.util.HashSet;
 import java.util.StringTokenizer;
-import javax.servlet.*;
+import java.util.zip.GZIPOutputStream;
+
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponseWrapper;
 
 /**
  * A filter that gzips all contents except excluded extensions and server-side includes.
  */
-public class ExcludedExtensionGzipFilter extends org.eclipse.jetty.servlets.GzipFilter {
+public class ExcludedExtensionGzipFilter implements Filter {
 	public static class ServletOutputStreamWrapper extends ServletOutputStream {
 		private OutputStream _outputStream;
 
@@ -117,7 +121,6 @@ public class ExcludedExtensionGzipFilter extends org.eclipse.jetty.servlets.Gzip
 	private HashSet<String> _excludedExtensions = new HashSet<String>();
 
 	public void init(FilterConfig filterConfig) throws ServletException {
-		super.init(filterConfig);
 		String excludedExtensionsParam = filterConfig.getInitParameter("excludedExtensions");
 		if (excludedExtensionsParam != null) {
 			StringTokenizer tokenizer = new StringTokenizer(excludedExtensionsParam, ",", false);
@@ -160,5 +163,8 @@ public class ExcludedExtensionGzipFilter extends org.eclipse.jetty.servlets.Gzip
 			}
 		}
 		return true;
+	}
+
+	public void destroy() {
 	}
 }

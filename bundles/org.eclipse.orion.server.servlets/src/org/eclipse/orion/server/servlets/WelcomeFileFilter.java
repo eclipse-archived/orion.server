@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.server.configurator.servlet;
+package org.eclipse.orion.server.servlets;
 
 import java.io.IOException;
 import java.util.*;
