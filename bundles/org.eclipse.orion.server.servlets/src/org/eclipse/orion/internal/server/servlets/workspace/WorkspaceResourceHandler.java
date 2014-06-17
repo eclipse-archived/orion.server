@@ -256,11 +256,12 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		//resolve the source location to a file system location
 		String sourceLocation = data.optString(ProtocolConstants.HEADER_LOCATION);
 		IFileStore source = null;
+		ProjectInfo sourceProject = null;
 		try {
 			if (sourceLocation != null) {
 				//could be either a workspace or file location
 				if (sourceLocation.startsWith(Activator.LOCATION_WORKSPACE_SERVLET)) {
-					ProjectInfo sourceProject = projectForMetadataLocation(getMetaStore(), toOrionLocation(request, sourceLocation));
+					sourceProject = projectForMetadataLocation(getMetaStore(), toOrionLocation(request, sourceLocation));
 					if (sourceProject != null)
 						source = sourceProject.getProjectStore();
 				} else {
@@ -296,7 +297,7 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 			return true;
 
 		if ((options1 & CREATE_MOVE) != 0) {
-			return handleMoveProject(request, response, workspace, source, sourceLocation, destinationName);
+			return handleMoveProject(request, response, workspace, source, sourceProject, sourceLocation, destinationName);
 		} else if ((options1 & CREATE_COPY) != 0) {
 			//first create the destination project
 			JSONObject projectObject = new JSONObject();
@@ -431,11 +432,10 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 	 * Implementation of project move. Returns whether the move requested was handled.
 	 * Returns <code>false</code> if this method doesn't know how to interpret the request.
 	 */
-	private boolean handleMoveProject(HttpServletRequest request, HttpServletResponse response, WorkspaceInfo workspace, IFileStore source, String sourceLocation, String destinationName) throws ServletException, IOException {
-		String sourceName = source.getName();
+	private boolean handleMoveProject(HttpServletRequest request, HttpServletResponse response, WorkspaceInfo workspace, IFileStore source, ProjectInfo projectInfo, String sourceLocation, String destinationName) throws ServletException, IOException {
 		try {
 			final IMetaStore metaStore = getMetaStore();
-			ProjectInfo projectInfo = metaStore.readProject(workspace.getUniqueId(), sourceName);
+
 			boolean created = false;
 			if (projectInfo == null) {
 				//moving a folder to become a project
@@ -464,7 +464,7 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 			response.setHeader(ProtocolConstants.HEADER_LOCATION, sourceLocation);
 			response.setStatus(created ? HttpServletResponse.SC_CREATED : HttpServletResponse.SC_OK);
 		} catch (CoreException e) {
-			String msg = NLS.bind("Error persisting project state: {0}", sourceName);
+			String msg = NLS.bind("Error persisting project state: {0}", source.getName());
 			return handleError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 		}
 		return true;
