@@ -79,7 +79,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			}
 
 		} catch (Exception e) {
-			String msg = NLS.bind("Failed to handle /git/clone request for {0}", path);
+			String msg = NLS.bind("Failed to handle /git/clone request for {0}", EncodingUtils.encodeForHTML(path.toString()));
 			ServerStatus status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 			LogHelper.log(status);
 			return statusHandler.handleRequest(request, response, status);
@@ -277,7 +277,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 				OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 				return true;
 			}
-			String msg = NLS.bind("Nothing found for the given ID: {0}", path);
+			String msg = NLS.bind("Nothing found for the given ID: {0}", EncodingUtils.encodeForHTML(path.toString()));
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
 		} else if ("file".equals(path.segment(0)) && path.segmentCount() > 1) { //$NON-NLS-1$
 			// clones under given path
@@ -295,11 +295,11 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 				OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 				return true;
 			}
-			String msg = NLS.bind("Nothing found for the given ID: {0}", path);
+			String msg = NLS.bind("Nothing found for the given ID: {0}", EncodingUtils.encodeForHTML(path.toString()));
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
 		}
 		//else the request is malformed
-		String msg = NLS.bind("Invalid clone request: {0}", path);
+		String msg = NLS.bind("Invalid clone request: {0}", EncodingUtils.encodeForHTML(path.toString()));
 		return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 	}
 
@@ -312,7 +312,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			if (isAccessAllowed(request.getRemoteUser(), webProject)) {
 				Map<IPath, File> gitDirs = GitUtils.getGitDirs(path, Traverse.CURRENT);
 				if (gitDirs.isEmpty()) {
-					String msg = NLS.bind("Request path is not a git repository: {0}", path);
+					String msg = NLS.bind("Request path is not a git repository: {0}", EncodingUtils.encodeForHTML(path.toString()));
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 				}
 				File gitDir = gitDirs.values().iterator().next();
@@ -350,7 +350,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 						co.setName(branch).setStartPoint(tag).setCreateBranch(true).call();
 						return true;
 					} catch (RefNotFoundException e) {
-						String msg = NLS.bind("Tag not found: {0}", tag);
+						String msg = NLS.bind("Tag not found: {0}", EncodingUtils.encodeForHTML(tag));
 						return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, e));
 					} catch (GitAPIException e) {
 						if (org.eclipse.jgit.api.CheckoutResult.Status.CONFLICTS.equals(co.getResult().getStatus())) {
@@ -361,7 +361,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 				} else if (branch != null) {
 
 					if (!isLocalBranch(git, branch)) {
-						String msg = NLS.bind("{0} is not a branch.", branch);
+						String msg = NLS.bind("{0} is not a branch.", EncodingUtils.encodeForHTML(branch));
 						return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
 					}
 
@@ -372,12 +372,12 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 					} catch (CheckoutConflictException e) {
 						return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_CONFLICT, "Checkout aborted.", e));
 					} catch (RefNotFoundException e) {
-						String msg = NLS.bind("Branch name not found: {0}", branch);
+						String msg = NLS.bind("Branch name not found: {0}", EncodingUtils.encodeForHTML(branch));
 						return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, e));
 					} // TODO: handle other exceptions
 				}
 			} else {
-				String msg = NLS.bind("Nothing found for the given ID: {0}", path);
+				String msg = NLS.bind("Nothing found for the given ID: {0}", EncodingUtils.encodeForHTML(path.toString()));
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
 			}
 		}
@@ -415,10 +415,10 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 					return statusHandler.handleRequest(request, response, removeProject(request.getRemoteUser(), webProject));
 				return true;
 			}
-			String msg = NLS.bind("Nothing found for the given ID: {0}", path);
+			String msg = NLS.bind("Nothing found for the given ID: {0}", EncodingUtils.encodeForHTML(path.toString()));
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
 		}
-		String msg = NLS.bind("Invalid delete request {0}", pathString);
+		String msg = NLS.bind("Invalid delete request {0}", EncodingUtils.encodeForHTML(pathString));
 		return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 	}
 
@@ -494,7 +494,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			return false;
 		}
 		if (name.contains("/")) { //$NON-NLS-1$
-			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Invalid repository name: {0}", name), null));
+			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Invalid repository name: {0}", EncodingUtils.encodeForHTML(name)), null));
 			return false;
 		}
 		return true;
@@ -508,11 +508,11 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		try {
 			URIish uri = new URIish(url);
 			if (GitUtils.isForbiddenGitUri(uri)) {
-				statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Clone URL {0} does not appear to be a git repository", uri), null)); //$NON-NLS-1$
+				statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Clone URL {0} does not appear to be a git repository", EncodingUtils.encodeForHTML(uri.toString())), null)); //$NON-NLS-1$
 				return false;
 			}
 		} catch (URISyntaxException e) {
-			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Invalid clone URL: {0}", url), e)); //$NON-NLS-1$
+			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Invalid clone URL: {0}", EncodingUtils.encodeForHTML(url)), e)); //$NON-NLS-1$
 			return false;
 		}
 		return true;

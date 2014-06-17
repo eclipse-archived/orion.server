@@ -10,8 +10,9 @@
  *******************************************************************************/
 package org.eclipse.orion.server.configurator.servlet;
 
-import org.eclipse.orion.server.authentication.IAuthenticationService;
+import org.eclipse.orion.server.core.EncodingUtils;
 
+import org.eclipse.orion.server.authentication.IAuthenticationService;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -122,7 +123,7 @@ public class AuthorizedUserFilter implements Filter {
 			resp.sendError(HttpServletResponse.SC_FORBIDDEN, msg);
 		} else {
 			resp.setContentType(ProtocolConstants.CONTENT_TYPE_JSON);
-			ServerStatus serverStatus = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, msg, null);
+			ServerStatus serverStatus = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, EncodingUtils.encodeForHTML(msg), null);
 			resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
 			resp.getWriter().print(serverStatus.toJSON().toString());
 		}

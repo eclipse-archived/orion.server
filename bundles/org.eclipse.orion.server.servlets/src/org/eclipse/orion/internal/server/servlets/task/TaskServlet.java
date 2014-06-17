@@ -27,6 +27,7 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.server.core.EncodingUtils;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.tasks.IURIUnqualificationStrategy;
@@ -72,7 +73,7 @@ public class TaskServlet extends OrionServlet {
 		String pathInfo = req.getPathInfo();
 		IPath path = pathInfo == null ? Path.EMPTY : new Path(pathInfo);
 		if (path.segmentCount() != 2) {
-			handleException(resp, "Invalid request path: " + path, null, HttpServletResponse.SC_BAD_REQUEST);
+			handleException(resp, "Invalid request path: " + EncodingUtils.encodeForHTML(path.toString()), null, HttpServletResponse.SC_BAD_REQUEST);
 			return;
 		}
 
@@ -121,7 +122,7 @@ public class TaskServlet extends OrionServlet {
 		}
 
 		if (path.segmentCount() != 2 || (!"id".equals(path.segment(0)) && !"temp".equals(path.segment(0)))) {//$NON-NLS-1$
-			handleException(resp, "Invalid request path: " + path, null, HttpServletResponse.SC_BAD_REQUEST);
+			handleException(resp, "Invalid request path: " + EncodingUtils.encodeForHTML(path.toString()), null, HttpServletResponse.SC_BAD_REQUEST);
 			return;
 		}
 
@@ -195,7 +196,7 @@ public class TaskServlet extends OrionServlet {
 		}
 
 		if (path.segmentCount() != 2 || (!"id".equals(path.segment(0)) && !"temp".equals(path.segment(0)))) {//$NON-NLS-1$
-			handleException(resp, "Invalid request path: " + path, null, HttpServletResponse.SC_BAD_REQUEST);
+			handleException(resp, "Invalid request path: " + EncodingUtils.encodeForHTML(path.toString()), null, HttpServletResponse.SC_BAD_REQUEST);
 			return;
 		}
 		if (taskService == null) {

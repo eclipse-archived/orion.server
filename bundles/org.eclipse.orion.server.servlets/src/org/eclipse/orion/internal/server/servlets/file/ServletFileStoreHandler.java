@@ -13,16 +13,22 @@ package org.eclipse.orion.internal.server.servlets.file;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.core.filesystem.*;
+
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileInfo;
+import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.filesystem.provider.FileInfo;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.server.core.EncodingUtils;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.service.resolver.VersionRange;
@@ -162,7 +168,7 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 			((FileInfo) fileInfo).setExists(false);
 		}
 		if (!request.getMethod().equals("PUT") && !fileInfo.exists()) //$NON-NLS-1$
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, 404, NLS.bind("File not found: {0}", request.getPathInfo()), null));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, 404, NLS.bind("File not found: {0}", EncodingUtils.encodeForHTML(request.getPathInfo())), null));
 		if (fileInfo.isDirectory())
 			return handleDirectory(request, response, file);
 		return handleFile(request, response, file);

@@ -29,6 +29,7 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.server.core.EncodingUtils;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ServerConstants;
@@ -83,9 +84,9 @@ public class NewFileServlet extends OrionServlet {
 			IFileInfo info = testLink.fetchInfo();
 			if (info.getAttribute(EFS.ATTRIBUTE_SYMLINK)) {
 				if (file == testLink) {
-					handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, NLS.bind("Forbidden: {0}", pathInfo), null));
+					handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, NLS.bind("Forbidden: {0}", EncodingUtils.encodeForHTML(pathInfo.toString())), null));
 				} else {
-					handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("File not found: {0}", pathInfo), null));
+					handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("File not found: {0}", EncodingUtils.encodeForHTML(pathInfo.toString())), null));
 				}
 				return;
 			}
@@ -93,7 +94,7 @@ public class NewFileServlet extends OrionServlet {
 		}
 
 		if (file == null) {
-			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("File not found: {0}", pathInfo), null));
+			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("File not found: {0}", EncodingUtils.encodeForHTML(pathInfo.toString())), null));
 			return;
 		}
 		if (fileSerializer.handleRequest(req, resp, file))

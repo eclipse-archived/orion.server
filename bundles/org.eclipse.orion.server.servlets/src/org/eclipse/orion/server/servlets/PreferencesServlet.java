@@ -25,6 +25,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.internal.server.servlets.Activator;
+import org.eclipse.orion.server.core.EncodingUtils;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.metastore.MetadataInfo;
@@ -188,7 +189,7 @@ public class PreferencesServlet extends OrionServlet {
 	private void handleNotFound(HttpServletRequest req, HttpServletResponse resp, int code) throws ServletException {
 		String path = req.getPathInfo() == null ? "/" : req.getPathInfo();
 		String msg = code == HttpServletResponse.SC_NOT_FOUND ? "No preferences found for path {0}" : "Invalid preference path {0}";
-		handleException(resp, new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, NLS.bind(msg, path)), code);
+		handleException(resp, new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, NLS.bind(msg, EncodingUtils.encodeForHTML(path.toString()))), code);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -216,7 +217,7 @@ public class PreferencesServlet extends OrionServlet {
 				}
 				//operations should not be removed by PUT
 				if (!prefix.equals("operations")) {
-					
+
 					//clear existing values matching prefix
 					changed |= removeMatchingProperties(info, prefix.toString());
 				}
