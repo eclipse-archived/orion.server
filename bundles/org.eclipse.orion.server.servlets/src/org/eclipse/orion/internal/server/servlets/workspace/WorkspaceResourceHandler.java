@@ -435,7 +435,16 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		String sourceName = source.getName();
 		try {
 			final IMetaStore metaStore = getMetaStore();
+
+			ProjectInfo sourceProject = null;
+			if (sourceLocation.startsWith(Activator.LOCATION_WORKSPACE_SERVLET))
+				sourceProject = projectForMetadataLocation(getMetaStore(), toOrionLocation(request, sourceLocation));
+
 			ProjectInfo projectInfo = metaStore.readProject(workspace.getUniqueId(), sourceName);
+			if (projectInfo == null && sourceProject != null && source.equals(sourceProject.getProjectStore())) {
+				// project is linked
+				projectInfo = sourceProject;
+			}
 			boolean created = false;
 			if (projectInfo == null) {
 				//moving a folder to become a project
