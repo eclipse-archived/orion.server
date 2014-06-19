@@ -92,6 +92,7 @@ public class PushAppCommand extends AbstractCFCommand {
 				result.put("Domain", bindRoute.getDomainName());
 				result.put("Route", bindRoute.getRoute());
 				result.put("Timeout", timeout);
+				result.put("DeployedPackage", uploadBits.getDeployedAppPackageName());
 
 				status.add(new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result));
 				return status;
@@ -133,6 +134,7 @@ public class PushAppCommand extends AbstractCFCommand {
 				result.put("Route", route);
 			}
 			result.put("Timeout", timeout);
+			result.put("DeployedPackage", uploadBits.getDeployedAppPackageName());
 
 			status.add(new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result));
 			return status;

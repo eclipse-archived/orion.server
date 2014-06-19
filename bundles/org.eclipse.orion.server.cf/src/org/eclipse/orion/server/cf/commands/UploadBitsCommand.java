@@ -34,12 +34,17 @@ public class UploadBitsCommand extends AbstractRevertableCFCommand {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
+	private String deployedAppPackageName;
 
 	public UploadBitsCommand(Target target, App app) {
 		super(target, app);
 
 		String[] bindings = {app.getName(), app.getGuid()};
 		this.commandName = NLS.bind("Upload application {0} bits (guid: {1})", bindings);
+	}
+
+	public String getDeployedAppPackageName() {
+		return deployedAppPackageName;
 	}
 
 	@Override
@@ -111,6 +116,12 @@ public class UploadBitsCommand extends AbstractRevertableCFCommand {
 				status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to upload application bits", null));
 				return revert(status);
 			}
+
+			int extIndex = appPackage.getName().lastIndexOf(".");
+			if (extIndex > 0)
+				deployedAppPackageName = appPackage.getName().substring(extIndex + 1);
+			else
+				deployedAppPackageName = "unknown";
 
 			/* delete the tmp file */
 			appPackage.delete();
