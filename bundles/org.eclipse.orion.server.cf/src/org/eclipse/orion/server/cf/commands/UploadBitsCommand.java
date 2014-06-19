@@ -55,6 +55,8 @@ public class UploadBitsCommand extends AbstractRevertableCFCommand {
 		try {
 			/* upload project contents */
 			File appPackage = PackageUtils.getApplicationPackage(application.getAppStore());
+			deployedAppPackageName = PackageUtils.getApplicationPackageType(application.getAppStore());
+
 			if (appPackage == null) {
 				status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to read application content", null));
 				return revert(status);
@@ -116,12 +118,6 @@ public class UploadBitsCommand extends AbstractRevertableCFCommand {
 				status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to upload application bits", null));
 				return revert(status);
 			}
-
-			int extIndex = appPackage.getName().lastIndexOf(".");
-			if (extIndex > 0)
-				deployedAppPackageName = appPackage.getName().substring(extIndex + 1);
-			else
-				deployedAppPackageName = "unknown";
 
 			/* delete the tmp file */
 			appPackage.delete();

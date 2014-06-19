@@ -85,4 +85,24 @@ public class PackageUtils {
 				zos.close();
 		}
 	}
+
+	public static String getApplicationPackageType(IFileStore applicationStore) throws IOException, CoreException {
+		if (applicationStore == null || !applicationStore.fetchInfo().exists())
+			return "unknown";
+
+		/* check whether the application store is a war file */
+		if (applicationStore.getName().endsWith(".war")) { //$NON-NLS-1$
+			return "war";
+		}
+
+		/* check whether the application store contains a war file */
+		for (IFileStore child : applicationStore.childStores(EFS.NONE, null)) {
+			if (child.getName().endsWith(".war")) { //$NON-NLS-1$
+				return "war";
+			}
+		}
+
+		/* war is not the answer, zip application contents */
+		return "zip";
+	}
 }
