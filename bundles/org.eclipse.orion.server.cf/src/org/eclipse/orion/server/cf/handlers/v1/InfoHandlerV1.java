@@ -11,19 +11,23 @@
 package org.eclipse.orion.server.cf.handlers.v1;
 
 import java.net.URI;
+import java.net.URL;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.cf.CFActivator;
+import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.jobs.CFJob;
 import org.eclipse.orion.server.cf.objects.Info;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.servlets.AbstractRESTHandler;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
+import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,14 +46,24 @@ public class InfoHandlerV1 extends AbstractRESTHandler<Info> {
 
 	@Override
 	protected CFJob handleGet(Info info, HttpServletRequest request, HttpServletResponse response, final String path) {
+		final JSONObject targetJSON = extractJSONData(IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_TARGET));
+
 		return new CFJob(request, false) {
 			@Override
 			protected IStatus performJob() {
 				try {
-					Target target = CFActivator.getDefault().getTargetRegistry().getTarget(this.userId);
+					URL targetUrl = null;
+					if (targetJSON != null) {
+						try {
+							targetUrl = new URL(targetJSON.getString(CFProtocolConstants.KEY_URL));
+						} catch (Exception e) {
+							// do nothing
+						}
+					}
+
+					Target target = CFActivator.getDefault().getTargetRegistry().getTarget(userId, targetUrl);
 					if (target == null) {
-						String msg = "Target not set"; //$NON-NLS-1$
-						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null);
+						return HttpUtil.createErrorStatus(IStatus.WARNING, "CF-TargetNotSet", "Target not set");
 					}
 
 					URI infoURI = URIUtil.toURI(target.getUrl()).resolve("/v2/info");
