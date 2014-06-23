@@ -57,9 +57,10 @@ public class HttpUtil {
 		try {
 			int code = CFActivator.getDefault().getHttpClient().executeMethod(method);
 
-			if (code == 204)
+			if (code == 204) {
 				/* no content response */
 				return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
+			}
 
 			String response = method.getResponseBodyAsString();
 			JSONObject result;
@@ -71,8 +72,16 @@ public class HttpUtil {
 				result.put("response", response);
 			}
 
-			if (code != 200 && code != 201)
-				return new ServerStatus(Status.ERROR, code, result.optString("description"), result, null);
+			if (code != 200 && code != 201) {
+				String desctiption = result.optString("description");
+				if (desctiption == null || desctiption.length() == 0) {
+					desctiption = result.optString("response", "Could not connect to host. Error: " + code);
+					if (desctiption.length() > 1000) {
+						desctiption = "Could not connect to host. Error: " + code;
+					}
+				}
+				return new ServerStatus(Status.ERROR, code, desctiption, result, null);
+			}
 
 			if (result.has("error_code")) {
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, result.optString("description"), result, null);

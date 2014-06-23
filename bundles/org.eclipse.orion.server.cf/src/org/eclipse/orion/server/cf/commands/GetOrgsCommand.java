@@ -53,8 +53,8 @@ public class GetOrgsCommand extends AbstractCFCommand {
 			/* extract available orgs */
 			JSONObject orgs = status.getJsonData();
 
-			if (orgs.getInt(CFProtocolConstants.V2_KEY_TOTAL_RESULTS) < 1) {
-				return new ServerStatus(IStatus.OK, HttpServletResponse.SC_OK, null, null);
+			if (orgs == null || orgs.optInt(CFProtocolConstants.V2_KEY_TOTAL_RESULTS, 0) < 1) {
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NO_CONTENT, "Server did not return any organizations.", null);
 			}
 
 			/* look if the domain is available */
