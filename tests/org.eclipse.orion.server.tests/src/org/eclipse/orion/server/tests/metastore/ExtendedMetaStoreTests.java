@@ -649,6 +649,78 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 	}
 
 	@Test
+	public void testMoveProjectLinked() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = getMetaStore();
+
+		// read the user from the previous test
+		UserInfo userInfo = metaStore.readUser("anthony");
+
+		// create the workspace
+		String workspaceName = "Orion Content";
+		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
+		workspaceInfo.setFullName(workspaceName);
+		workspaceInfo.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo);
+
+		// create the project
+		String projectName = "Orion Project";
+		ProjectInfo projectInfo = new ProjectInfo();
+		projectInfo.setFullName(projectName);
+		projectInfo.setWorkspaceId(workspaceInfo.getUniqueId());
+		IFileStore linkedFolder = metaStore.getUserHome(userInfo.getUniqueId()).getChild("Linked Project");
+		projectInfo.setContentLocation(linkedFolder.toURI());
+
+		metaStore.createProject(projectInfo);
+
+		// create a project directory and file
+		IFileStore projectFolder = projectInfo.getProjectStore();
+		if (!projectFolder.fetchInfo().exists()) {
+			projectFolder.mkdir(EFS.NONE, null);
+		}
+		assertTrue(projectFolder.fetchInfo().exists() && projectFolder.fetchInfo().isDirectory());
+		String fileName = "file.html";
+		IFileStore file = projectFolder.getChild(fileName);
+		try {
+			OutputStream outputStream = file.openOutputStream(EFS.NONE, null);
+			outputStream.write("<!doctype html>".getBytes());
+			outputStream.close();
+		} catch (IOException e) {
+			fail("Count not create a test file in the Orion Project:" + e.getLocalizedMessage());
+		}
+		assertTrue("the file in the project folder should exist.", file.fetchInfo().exists());
+
+		// move the project by renaming the project by changing the projectName
+		String movedProjectName = "Moved Orion Project";
+		projectInfo.setFullName(movedProjectName);
+
+		// update the project
+		metaStore.updateProject(projectInfo);
+
+		// read the project back again
+		ProjectInfo readProjectInfo = metaStore.readProject(workspaceInfo.getUniqueId(), projectInfo.getFullName());
+		assertNotNull(readProjectInfo);
+		assertTrue(readProjectInfo.getFullName().equals(movedProjectName));
+
+		// linked folder hasn't moved
+		projectFolder = readProjectInfo.getProjectStore();
+		assertTrue("the linked project folder should stay the same", projectFolder.equals(linkedFolder));
+		assertTrue("the linked project folder should exist.", projectFolder.fetchInfo().exists());
+		file = projectFolder.getChild(fileName);
+		assertTrue("the file in the linked project folder should exist.", file.fetchInfo().exists());
+
+		// delete the project contents
+		file.delete(EFS.NONE, null);
+		assertFalse("the file in the project folder should not exist.", file.fetchInfo().exists());
+		// delete the linked project
+		projectFolder.delete(EFS.NONE, null);
+		assertFalse("the linked project should not exist.", projectFolder.fetchInfo().exists());
+
+		// delete the user
+		metaStore.deleteUser(userInfo.getUniqueId());
+	}
+
+	@Test
 	public void testMoveProjectWithBarInProjectName() throws CoreException {
 		// create the MetaStore
 		IMetaStore metaStore = getMetaStore();
