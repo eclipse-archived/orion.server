@@ -23,6 +23,7 @@ import org.json.JSONObject;
 @ResourceDescription(type = Space.TYPE)
 public class Space extends CFObject {
 
+	public static final String RESOURCE = "spaces"; //$NON-NLS-1$
 	public static final String TYPE = "Space"; //$NON-NLS-1$
 
 	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
