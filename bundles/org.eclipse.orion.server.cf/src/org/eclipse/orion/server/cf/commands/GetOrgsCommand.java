@@ -74,7 +74,7 @@ public class GetOrgsCommand extends AbstractCFCommand {
 
 			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
 		} catch (Exception e) {
-			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
+			String msg = NLS.bind("An error occurred when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 		}
