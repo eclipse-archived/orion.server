@@ -382,12 +382,16 @@ public class SimpleMetaStoreUtil {
 						continue;
 					}
 					Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-					logger.warn("Meta File Error, root contains invalid metadata: folder " + file.toString() + File.separator + userFolder.getName()); //$NON-NLS-1$
+					if (logger.isDebugEnabled()) {
+						logger.debug("Meta File Error, root contains invalid metadata: folder " + file.toString() + File.separator + userFolder.getName()); //$NON-NLS-1$
+					}
 				}
 				continue;
 			}
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-			logger.warn("Meta File Error, root contains invalid metadata: file " + file.toString()); //$NON-NLS-1$
+			if (logger.isDebugEnabled()) {
+				logger.debug("Meta File Error, root contains invalid metadata: file " + file.toString()); //$NON-NLS-1$
+			}
 		}
 		return userMetaFolders;
 	}
