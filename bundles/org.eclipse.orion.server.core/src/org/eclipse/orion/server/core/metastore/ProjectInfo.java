@@ -50,7 +50,7 @@ public class ProjectInfo extends MetadataInfo {
 	public String getWorkspaceId() {
 		return workspaceId;
 	}
-
+	
 	/**
 	 * Sets the absolute location of the contents of this project.
 	 */
