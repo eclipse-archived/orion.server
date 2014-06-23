@@ -110,32 +110,36 @@ public class BindServicesCommand extends AbstractRevertableCFCommand {
 								JSONObject str = o.optJSONObject(CFProtocolConstants.V2_KEY_METADATA);
 								if (str != null) {
 									serviceInstanceGUID = str.getString(CFProtocolConstants.V2_KEY_GUID);
+									break;
 								}
 							}
 						}
 
-						/* support both 'type' and 'label' fields as service name */
-						ManifestParseTree serviceType = service.getOpt(CFProtocolConstants.V2_KEY_TYPE);
-						if (serviceType == null)
-							serviceType = service.get(CFProtocolConstants.V2_KEY_LABEL);
-
-						ManifestParseTree provider = service.get(CFProtocolConstants.V2_KEY_PROVIDER);
-						ManifestParseTree plan = service.get(CFProtocolConstants.V2_KEY_PLAN);
-
-						String servicePlanGUID = findServicePlanGUID(serviceType.getValue(), provider.getValue(), plan.getValue(), servicesJSON);
-						if (servicePlanGUID == null) {
-							String msg = NLS.bind("Failed to find service {0} with plan {1} in target", serviceType.getValue(), plan.getValue());
-							status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
-							return revert(status);
-						}
-
-						/* create service instance */
-						URI serviceInstancesURI = targetURI.resolve("/v2/service_instances"); //$NON-NLS-1$
-						PostMethod createServiceMethod = new PostMethod(serviceInstancesURI.toString());
-						HttpUtil.configureHttpMethod(createServiceMethod, target);
-
-						/* set request body */
 						if (serviceInstanceGUID == null) {
+							/* no service instance bound to the application, create one if possible */
+
+							/* support both 'type' and 'label' fields as service type */
+							ManifestParseTree serviceType = service.getOpt(CFProtocolConstants.V2_KEY_TYPE);
+							if (serviceType == null)
+								serviceType = service.get(CFProtocolConstants.V2_KEY_LABEL);
+
+							ManifestParseTree provider = service.get(CFProtocolConstants.V2_KEY_PROVIDER);
+							ManifestParseTree plan = service.get(CFProtocolConstants.V2_KEY_PLAN);
+
+							String servicePlanGUID = findServicePlanGUID(serviceType.getValue(), provider.getValue(), plan.getValue(), servicesJSON);
+							if (servicePlanGUID == null) {
+								String[] bindings = {serviceName, serviceType.getValue(), plan.getValue()};
+								String msg = NLS.bind("Could not find service instance {0} nor service {1} with plan {2} in target.", bindings);
+								status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+								return revert(status);
+							}
+
+							/* create service instance */
+							URI serviceInstancesURI = targetURI.resolve("/v2/service_instances"); //$NON-NLS-1$
+							PostMethod createServiceMethod = new PostMethod(serviceInstancesURI.toString());
+							HttpUtil.configureHttpMethod(createServiceMethod, target);
+
+							/* set request body */
 							JSONObject createServiceRequest = new JSONObject();
 							createServiceRequest.put(CFProtocolConstants.V2_KEY_SPACE_GUID, target.getSpace().getCFJSON().getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID));
 							createServiceRequest.put(CFProtocolConstants.V2_KEY_NAME, serviceName);
@@ -149,7 +153,7 @@ public class BindServicesCommand extends AbstractRevertableCFCommand {
 								return revert(status);
 
 							resp = jobStatus.getJsonData();
-							/*String*/serviceInstanceGUID = resp.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID);
+							serviceInstanceGUID = resp.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID);
 						}
 
 						/* bind service to the application */
