@@ -52,6 +52,15 @@ public class ProjectInfo extends MetadataInfo {
 	}
 
 	/**
+	 * Returns if the project is a linked project or not
+	 * @return <code>True</code> if the projected is linked
+	 * @throws CoreException
+	 */
+	public boolean isLinked() throws CoreException {
+		return getProjectStore().getName() != getUniqueId();
+	}
+	
+	/**
 	 * Sets the absolute location of the contents of this project.
 	 */
 	public void setContentLocation(URI contentURI) {

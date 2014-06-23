@@ -103,8 +103,8 @@ public class SimpleMetaStoreV2 extends SimpleMetaStore {
 		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getRootLocation(), userId);
 		File workspaceMetaFolder = SimpleMetaStoreUtil.readMetaFolder(userMetaFolder, encodedWorkspaceName);
 		if (!SimpleMetaStoreUtil.isMetaFolder(workspaceMetaFolder, projectId)) {
-			// try to create the project folder since it does not exist
-			if (!SimpleMetaStoreUtil.createMetaFolder(workspaceMetaFolder, projectId)) {
+			// try to create the project folder if the folder is not linked
+			if (!projectInfo.isLinked() && !SimpleMetaStoreUtil.createMetaFolder(workspaceMetaFolder, projectId)) {
 				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createProject: could not create project: " + projectInfo.getFullName() + " for user " + userId, null));
 			}
 		}
@@ -594,7 +594,7 @@ public class SimpleMetaStoreV2 extends SimpleMetaStore {
 			if (!SimpleMetaStoreUtil.moveMetaFile(userMetaFolder, projectInfo.getUniqueId(), newProjectId)) {
 				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.updateProject: could not move project: " + projectInfo.getUniqueId() + " to " + projectInfo.getFullName() + " for workspace " + encodedWorkspaceName, null));
 			}
-			if (!SimpleMetaStoreUtil.moveMetaFolder(workspaceMetaFolder, projectInfo.getUniqueId(), newProjectId)) {
+			if (!projectInfo.isLinked() && !SimpleMetaStoreUtil.moveMetaFolder(workspaceMetaFolder, projectInfo.getUniqueId(), newProjectId)) {
 				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.updateProject: could not move project: " + projectInfo.getUniqueId() + " to " + projectInfo.getFullName() + " for workspace " + encodedWorkspaceName, null));
 			}
 			// if the content location is local, update the content location with the new name
