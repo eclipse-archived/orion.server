@@ -103,8 +103,8 @@ public class SimpleMetaStoreV2 extends SimpleMetaStore {
 		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getRootLocation(), userId);
 		File workspaceMetaFolder = SimpleMetaStoreUtil.readMetaFolder(userMetaFolder, encodedWorkspaceName);
 		if (!SimpleMetaStoreUtil.isMetaFolder(workspaceMetaFolder, projectId)) {
-			// try to create the project folder since it does not exist
-			if (!SimpleMetaStoreUtil.createMetaFolder(workspaceMetaFolder, projectId)) {
+			// try to create the project folder if the folder is not linked
+			if ((projectInfo.getContentLocation() == null || projectInfo.getProjectStore().equals(getDefaultContentLocation(projectInfo))) && !SimpleMetaStoreUtil.createMetaFolder(workspaceMetaFolder, projectId)) {
 				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createProject: could not create project: " + projectInfo.getFullName() + " for user " + userId, null));
 			}
 		}
@@ -422,7 +422,7 @@ public class SimpleMetaStoreV2 extends SimpleMetaStore {
 		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 		logger.info("Loaded simple metadata store (version " + VERSION + ")."); //$NON-NLS-1$
 	}
-
+	
 	public List<String> readAllUsers() throws CoreException {
 		return SimpleMetaStoreUtil.listMetaUserFolders(getRootLocation());
 	}
@@ -589,12 +589,16 @@ public class SimpleMetaStoreV2 extends SimpleMetaStore {
 		}
 		JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, projectInfo.getUniqueId());
 		if (!projectInfo.getUniqueId().equals(SimpleMetaStoreUtil.encodeProjectIdFromProjectName(projectInfo.getFullName()))) {
+			IFileStore projectStore = projectInfo.getProjectStore();
+			IFileStore defaultProjectStore = getDefaultContentLocation(readProject(projectInfo.getWorkspaceId(), projectInfo.getUniqueId()));
 			// full name has changed, this is a project move
 			String newProjectId = SimpleMetaStoreUtil.encodeProjectIdFromProjectName(projectInfo.getFullName());
 			if (!SimpleMetaStoreUtil.moveMetaFile(userMetaFolder, projectInfo.getUniqueId(), newProjectId)) {
 				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.updateProject: could not move project: " + projectInfo.getUniqueId() + " to " + projectInfo.getFullName() + " for workspace " + encodedWorkspaceName, null));
 			}
-			if (!SimpleMetaStoreUtil.moveMetaFolder(workspaceMetaFolder, projectInfo.getUniqueId(), newProjectId)) {
+			
+			// Move the meta folder if the project is not linked	
+			if (projectStore.equals(defaultProjectStore) && !SimpleMetaStoreUtil.moveMetaFolder(workspaceMetaFolder, projectInfo.getUniqueId(), newProjectId)) {
 				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.updateProject: could not move project: " + projectInfo.getUniqueId() + " to " + projectInfo.getFullName() + " for workspace " + encodedWorkspaceName, null));
 			}
 			// if the content location is local, update the content location with the new name

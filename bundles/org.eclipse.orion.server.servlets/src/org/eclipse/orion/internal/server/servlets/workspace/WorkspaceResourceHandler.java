@@ -372,7 +372,9 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, msg, null));
 			return null;
 		}
+
 		try {
+			computeProjectLocation(request, project, content, getInit(toAdd));
 			//project creation will assign unique project id
 			getMetaStore().createProject(project);
 		} catch (CoreException e) {
@@ -381,7 +383,6 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 			return null;
 		}
 		try {
-			computeProjectLocation(request, project, content, getInit(toAdd));
 			getMetaStore().updateProject(project);
 		} catch (CoreException e) {
 			boolean authFail = handleAuthFailure(request, response, e);
@@ -401,6 +402,7 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
 			return null;
 		}
+
 		return project;
 	}
 

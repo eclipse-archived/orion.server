@@ -19,6 +19,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
+import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
@@ -74,6 +75,11 @@ public abstract class MetaStoreTests {
 		projectInfo.setWorkspaceId(workspaceInfo.getUniqueId());
 		metaStore.createProject(projectInfo);
 
+		IFileStore defaultLocation = metaStore.getDefaultContentLocation(projectInfo);
+		// Test that the project is linked
+		assertFalse(defaultLocation == projectInfo.getProjectStore());
+		// Test that no content folder is created
+		assertFalse(defaultLocation.fetchInfo().exists());
 		// delete the user
 		metaStore.deleteUser(userInfo.getUniqueId());
 	}
